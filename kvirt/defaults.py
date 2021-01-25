@@ -30,6 +30,11 @@ TUNNELDIR = '/var/www/html'
 TUNNELPORT = 22
 VMUSER = None
 VMPORT = None
+BSD = "https://object-storage.public.mtl1.vexxhost.net/swift/v1/1dbafeefbd4f4c80864414a441e72dd2"
+BSD += "/bsd-cloud-image.org/images/"
+RHCOS = "https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases"
+FEDORA = "http://mirror.uv.es/mirror/fedora/linux/releases/"
+FEDORA_ARCHIVE = "https://archives.fedoraproject.org/pub/archive/fedora/linux/releases"
 IMAGES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-image-bootstrap.qcow2',
           'centos6': 'https://cloud.centos.org/centos/6/images/CentOS-6-x86_64-GenericCloud.qcow2',
           'centos7': 'https://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2',
@@ -44,36 +49,32 @@ IMAGES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-i
           'debian9': 'https://cdimage.debian.org/cdimage/openstack/current-9/debian-9-openstack-amd64.qcow2',
           'debian10': 'https://cdimage.debian.org/cdimage/openstack/current-10/debian-10-openstack-amd64.qcow2',
           'fcos': 'https://builds.coreos.fedoraproject.org/streams/stable.json',
-          'fedora28': 'https://archives.fedoraproject.org/pub/archive/fedora/linux/releases/28/Cloud/x86_64/images/'
-          'Fedora-Cloud-Base-28-1.1.x86_64.qcow2',
-          'fedora29': 'https://archives.fedoraproject.org/pub/archive/fedora/linux/releases/29/Cloud/x86_64/images/'
-          'Fedora-Cloud-Base-29-1.2.x86_64.qcow2',
-          'fedora30': 'https://archives.fedoraproject.org/pub/archive/fedora/linux/releases/30/Cloud/x86_64/images/'
-          'Fedora-Cloud-Base-30-1.2.x86_64.qcow2',
-          'fedora31': 'https://archives.fedoraproject.org/pub/archive/fedora/linux/releases/31/Cloud/x86_64/images/'
-          'Fedora-Cloud-Base-31-1.9.x86_64.qcow2',
-          'fedora32': 'http://mirror.uv.es/mirror/fedora/linux/releases/32/Cloud/x86_64/images/'
-          'Fedora-Cloud-Base-32-1.6.x86_64.qcow2',
-          'fedora33': 'http://mirror.uv.es/mirror/fedora/linux/releases/33/Cloud/x86_64/images/'
-          'Fedora-Cloud-Base-33-1.2.x86_64.qcow2',
-          'freebsd112': 'https://bsd-cloud-image.org/images/freebsd/11.2/freebsd-11.2.qcow2',
-          'freebsd121': 'https://bsd-cloud-image.org/images/freebsd/12.1/freebsd-12.1.qcow2',
-          'netbsd81': 'https://bsd-cloud-image.org/images/netbsd/8.1/netbsd-8.1.qcow2',
-          'netbsd90': 'https://bsd-cloud-image.org/images/netbsd/9.0/netbsd-9.0.qcow2',
-          'openbsd66': 'https://bsd-cloud-image.org/images/openbsd/6.6/openbsd-6.6.qcow2',
-          'openbsd67': 'https://bsd-cloud-image.org/images/openbsd/6.7/openbsd-6.7.qcow2',
+          'fedora28': FEDORA_ARCHIVE + '28/Cloud/x86_64/images/Fedora-Cloud-Base-28-1.1.x86_64.qcow2',
+          'fedora29': FEDORA_ARCHIVE + '29/Cloud/x86_64/images/Fedora-Cloud-Base-29-1.2.x86_64.qcow2',
+          'fedora30': FEDORA_ARCHIVE + '30/Cloud/x86_64/images/Fedora-Cloud-Base-30-1.2.x86_64.qcow2',
+          'fedora31': FEDORA_ARCHIVE + '31/Cloud/x86_64/images/Fedora-Cloud-Base-31-1.9.x86_64.qcow2',
+          'fedora32': FEDORA + '32/Cloud/x86_64/images/Fedora-Cloud-Base-32-1.6.x86_64.qcow2',
+          'fedora33': FEDORA + '33/Cloud/x86_64/images/Fedora-Cloud-Base-33-1.2.x86_64.qcow2',
+          'freebsd114': BSD + "freebsd/11.4/freebsd-11.4.qcow2",
+          'freebsd122': BSD + "freebsd/12.2/freebsd-12.2.qcow2",
+          'netbsd82': BSD + "netbsd/8.2/netbsd-8.2.qcow2",
+          'netbsd91': BSD + "netbsd/9.1/netbsd-9.1.qcow2",
+          'openbsd67': BSD + "openbsd/6.7/openbsd-6.7.qcow2",
+          'openbsd68': BSD + "openbsd/6.8/openbsd-6.8.qcow2",
+          'dragonflybsd563': BSD + "dragonflybsd/5.6.3/dragonflybsd-5.6.3.qcow2",
+          'dragonflybsd583': BSD + "dragonflybsd/5.8.3/dragonflybsd-5.8.3.qcow2",
           'gentoo': 'https://gentoo.osuosl.org/experimental/amd64/openstack/gentoo-openstack-amd64-default-20180621.'
           'qcow2',
           'opensuse': 'https://download.opensuse.org/repositories/Cloud:/Images:/Leap_15.2/images/'
           'openSUSE-Leap-15.2-OpenStack.x86_64.qcow2',
-          'rhcos41': 'https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.1',
-          'rhcos42': 'https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.2',
-          'rhcos43': 'https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.3',
-          'rhcos44': 'https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.4',
-          'rhcos45': 'https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.5',
-          'rhcos46': 'https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.6',
-          'rhcos47': 'https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.7',
-          'rhcoslatest': 'https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.7',
+          'rhcos41': RHCOS + 'rhcos-4.1',
+          'rhcos42': RHCOS + 'rhcos-4.2',
+          'rhcos43': RHCOS + 'rhcos-4.3',
+          'rhcos44': RHCOS + 'rhcos-4.4',
+          'rhcos45': RHCOS + 'rhcos-4.5',
+          'rhcos46': RHCOS + 'rhcos-4.6',
+          'rhcos47': RHCOS + 'rhcos-4.7',
+          'rhcoslatest': RHCOS + 'rhcos-4.7',
           'rhel7': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7',
           'rhel8': 'https://access.redhat.com/downloads/content/479/ver=/rhel---8',
           'ubuntu1804': 'https://cloud-images.ubuntu.com/bionic/current/bionic-server-cloudimg-amd64.img',

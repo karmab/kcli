@@ -26,9 +26,9 @@ VERSION = 'v1alpha3'
 MULTUSDOMAIN = 'k8s.cni.cncf.io'
 MULTUSVERSION = 'v1'
 CONTAINERDISKS = ['kubevirt/alpine-container-disk-demo', 'kubevirt/cirros-container-disk-demo',
-                  'quay.io/karmab/debian-container-disk-demo', 'kubevirt/fedora-cloud-container-disk-demo',
-                  'quay.io/karmab/fedora-coreos-container-disk-demo', 'quay.io/karmab/gentoo-container-disk-demo',
-                  'quay.io/karmab/ubuntu-container-disk-demo']
+                  'quay.io/karmab/debian-container-disk-demo', 'quay.io/karmab/freebsd-container-disk-demo',
+                  'kubevirt/fedora-cloud-container-disk-demo', 'quay.io/karmab/fedora-coreos-container-disk-demo',
+                  'quay.io/karmab/gentoo-container-disk-demo', 'quay.io/karmab/ubuntu-container-disk-demo']
 KUBECTL_LINUX = "https://storage.googleapis.com/kubernetes-release/release/v1.16.1/bin/linux/amd64/kubectl"
 KUBECTL_MACOSX = KUBECTL_LINUX.replace('linux', 'darwin')
 
@@ -213,6 +213,10 @@ class Kubevirt(Kubecommon):
                     newnet['name'] = netname
                 if 'mac' in net:
                     newif['macAddress'] = net['mac']
+                if 'type' in net:
+                    newif['model'] = net['type']
+                if 'model' in net:
+                    newif['model'] = net['model']
                 if index == 0:
                     if 'ip' in nets[index]:
                         vm['metadata']['annotations']['kcli/ip'] = nets[index]['ip']
