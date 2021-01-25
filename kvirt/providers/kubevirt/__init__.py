@@ -159,7 +159,13 @@ class Kubevirt(Kubecommon):
                 vm['spec']['template']['spec']['hostname'] = name
                 vm['spec']['template']['spec']['subdomain'] = domain
                 vm['spec']['template']['metadata']['labels']['subdomain'] = domain
-        vm['spec']['template']['spec']['domain']['machine'] = {'type': 'q35'}
+        machine = 'q35'
+        if 'machine' in overrides:
+            warning("Forcing machine type to %s" % machine)
+            machine = overrides['machine']
+        vm['spec']['template']['spec']['domain']['machine'] = {'type': machine}
+        if overrides.get('uefi', False):
+            vm['spec']['template']['spec']['domain']['firmware'] = {'bootloader': {'efi': {}}}
         features = {}
         for flag in cpuflags:
             if isinstance(flag, str):
