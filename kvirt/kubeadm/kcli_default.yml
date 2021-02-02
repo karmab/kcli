@@ -62,3 +62,7 @@ autolabel: true
 virtual_router_id:
 zerotier_nets: []
 zerotier_kubelet: false
+registry: false
+registry_pvc: false
+registry_user: dummy
+registry_password: dummy

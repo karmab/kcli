@@ -60,6 +60,7 @@
  disks: {{ [disk_size] + extra_disks }}
  files:
   - keepalived.conf
+  - registry.yml
 {% if number == 0 %}
 {% if metallb %}
   - metal_lb.sh

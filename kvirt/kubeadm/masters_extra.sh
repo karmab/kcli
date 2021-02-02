@@ -11,3 +11,9 @@ bash /var/www/html/mastercmd.sh | tee /root/$(hostname).log 2>&1
 mkdir -p /root/.kube
 cp -i /etc/kubernetes/admin.conf /root/.kube/config
 chown root:root /root/.kube/config
+{% if registry %}
+mkdir -p /opt/registry/{auth,certs,data,conf}
+curl -Lk http://{{ api_ip }}/domain.crt > /opt/registry/certs/domain.crt
+curl -Lk http://{{ api_ip }}/domain.key > /opt/registry/certs/domain.key
+curl -Lk http://{{ api_ip }}/htpasswd > /opt/registry/auth/htpasswd
+{% endif %}

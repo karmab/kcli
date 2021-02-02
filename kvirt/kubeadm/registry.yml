@@ -1,0 +1,95 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: registry
+---
+{% if registry_pvc %}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: registry-claim
+  namespace: registry
+spec:
+  accessModes:
+  - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 10Gi
+{% endif %}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: registry
+  namespace: registry
+  labels:
+    app: registry
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: registry
+  template:
+    metadata:
+      labels:
+        app: registry
+    spec:
+      volumes:
+      - name: certs-vol
+        hostPath:
+          path: /opt/registry/certs
+          type: Directory
+      - name: data-vol
+{% if registry_pvc %}
+        persistentVolumeClaim:
+          claimName: registry-claim
+{% else %}
+        hostPath:
+          path: /opt/registry/data
+          type: Directory
+{% endif %}
+      - name: auth-vol
+        hostPath:
+          path: /opt/registry/auth
+          type: Directory
+      containers:
+        - image: quay.io/saledort/registry:2
+          name: registry
+          imagePullPolicy: IfNotPresent
+          env:
+          - name: REGISTRY_HTTP_TLS_CERTIFICATE
+            value: "/certs/domain.crt"
+          - name: REGISTRY_HTTP_TLS_KEY
+            value: "/certs/domain.key"
+          - name: REGISTRY_AUTH
+            value: "htpasswd"
+          - name: REGISTRY_AUTH_HTPASSWD_REALM
+            value: "Registry"
+          - name: REGISTRY_HTTP_SECRET
+            value: "ALongRandomSecretForRegistry"
+          - name: REGISTRY_AUTH_HTPASSWD_PATH
+            value: "/auth/htpasswd"
+          ports:
+            - containerPort: 5000
+          volumeMounts:
+          - name: certs-vol
+            mountPath: /certs
+          - name: data-vol
+            mountPath: /var/lib/registry
+          - name: auth-vol
+            mountPath: /auth
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: registry-service
+  namespace: registry
+spec:
+  selector:
+    app: registry
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000
+  type: {{ 'LoadBalancer' if metallb else 'NodePort' }} 

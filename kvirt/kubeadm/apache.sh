@@ -1,4 +1,5 @@
 PKGMGR="{{ 'apt-get' if ubuntu else 'yum' }}"
-PKG="{{ 'apache2' if ubuntu else 'httpd' }}"
-$PKGMGR -y install $PKG
-systemctl enable --now $PKG
+PKGS="{{ 'apache2 apache2-utils' if ubuntu else 'httpd httpd-tools' }}"
+SERVICE="{{ 'apache2' if ubuntu else 'httpd' }}"
+$PKGMGR -y install $PKGS
+systemctl enable --now $SERVICE

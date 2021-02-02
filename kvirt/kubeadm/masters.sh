@@ -50,3 +50,16 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/mast
 {% if autolabel %}
 kubectl apply -f https://raw.githubusercontent.com/karmab/autolabeller/master/autorules.yml
 {% endif %}
+
+{% if registry %}
+mkdir -p /opt/registry/{auth,certs,data,conf}
+REGISTRY_NAME="api.{{ cluster }}.{{ domain }}"
+REGISTRY_USER={{ registry_user }}
+REGISTRY_PASSWORD={{ registry_password }}
+openssl req -newkey rsa:4096 -nodes -sha256 -keyout /opt/registry/certs/domain.key -x509 -days 365 -out /opt/registry/certs/domain.crt -subj "/C=US/ST=Madrid/L=San Bernardo/O=Karmalabs/OU=Guitar/CN=$REGISTRY_NAME" -addext "subjectAltName=DNS:$REGISTRY_NAME"
+update-ca-trust extract
+htpasswd -bBc /opt/registry/auth/htpasswd $REGISTRY_USER $REGISTRY_PASSWORD
+kubectl apply -f /root/registry.yml
+cp /opt/registry/certs/domain.{key,crt} /var/www/html
+cp /opt/registry/auth/htpasswd /var/www/html
+{% endif %}
