@@ -57,6 +57,7 @@ REGISTRY_NAME="api.{{ cluster }}.{{ domain }}"
 REGISTRY_USER={{ registry_user }}
 REGISTRY_PASSWORD={{ registry_password }}
 openssl req -newkey rsa:4096 -nodes -sha256 -keyout /opt/registry/certs/domain.key -x509 -days 365 -out /opt/registry/certs/domain.crt -subj "/C=US/ST=Madrid/L=San Bernardo/O=Karmalabs/OU=Guitar/CN=$REGISTRY_NAME" -addext "subjectAltName=DNS:$REGISTRY_NAME"
+cp /opt/registry/certs/domain.crt /etc/pki/ca-trust/source/anchors/
 update-ca-trust extract
 htpasswd -bBc /opt/registry/auth/htpasswd $REGISTRY_USER $REGISTRY_PASSWORD
 kubectl apply -f /root/registry.yml

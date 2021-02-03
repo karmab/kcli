@@ -16,4 +16,6 @@ mkdir -p /opt/registry/{auth,certs,data,conf}
 curl -Lk http://{{ api_ip }}/domain.crt > /opt/registry/certs/domain.crt
 curl -Lk http://{{ api_ip }}/domain.key > /opt/registry/certs/domain.key
 curl -Lk http://{{ api_ip }}/htpasswd > /opt/registry/auth/htpasswd
+cp /opt/registry/certs/domain.crt /etc/pki/ca-trust/source/anchors/
+update-ca-trust extract
 {% endif %}
