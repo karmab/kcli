@@ -1,0 +1,10 @@
+[Unit]
+Description=complete-bootstrap-installation
+Wants=bootkube.service
+After=bootkube.service
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/complete-installation.sh
+RestartSec=5s
+[Install]
+WantedBy=multi-user.target
