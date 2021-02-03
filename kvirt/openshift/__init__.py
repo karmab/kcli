@@ -669,7 +669,7 @@ def create(config, plandir, cluster, overrides):
                      tunneluser=config.tunneluser, download=False, insecure=True, vmport=bootstrap_helper_vmport)
         os.system(scpcmd)
         sedcmd = 'sed "s@https://api-int.%s.%s:22623/config/master@' % (cluster, domain)
-        sedcmd += 'http://%s-bootstrap-helper.%s.%s/bootstrap@ "' % (cluster, domain)
+        sedcmd += 'http://%s-bootstrap-helper.%s.%s/bootstrap@ "' % (cluster, cluster, domain)
         sedcmd += '%s/master.ign' % clusterdir
         sedcmd += ' > %s/bootstrap.ign' % clusterdir
         call(sedcmd, shell=True)
