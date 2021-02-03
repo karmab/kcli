@@ -32,9 +32,9 @@ VMUSER = None
 VMPORT = None
 BSD = "https://object-storage.public.mtl1.vexxhost.net/swift/v1/1dbafeefbd4f4c80864414a441e72dd2"
 BSD += "/bsd-cloud-image.org/images/"
-RHCOS = "https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases"
+RHCOS = "https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/"
 FEDORA = "http://mirror.uv.es/mirror/fedora/linux/releases/"
-FEDORA_ARCHIVE = "https://archives.fedoraproject.org/pub/archive/fedora/linux/releases"
+FEDORA_ARCHIVE = "https://archives.fedoraproject.org/pub/archive/fedora/linux/releases/"
 IMAGES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-image-bootstrap.qcow2',
           'centos6': 'https://cloud.centos.org/centos/6/images/CentOS-6-x86_64-GenericCloud.qcow2',
           'centos7': 'https://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2',
