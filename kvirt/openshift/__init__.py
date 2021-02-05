@@ -24,6 +24,48 @@ cloudplatforms = ['aws', 'gcp']
 DEFAULT_TAG = '4.6'
 
 
+def update_etc_hosts(cluster, domain, host_ip, ingress_ip=None):
+    if not os.path.exists("/i_am_a_container"):
+        hosts = open("/etc/hosts").readlines()
+        wronglines = [e for e in hosts if not e.startswith('#') and "api.%s.%s" % (cluster, domain) in e and
+                      host_ip not in e]
+        if ingress_ip is not None:
+            o = "oauth-openshift.apps.%s.%s" % (cluster, domain)
+            wrongingresses = [e for e in hosts if not e.startswith('#') and o in e and ingress_ip not in e]
+            wronglines.extend(wrongingresses)
+        for wrong in wronglines:
+            warning("Cleaning wrong entry %s in /etc/hosts" % wrong)
+            call("sudo sed -i '/%s/d' /etc/hosts" % wrong.strip(), shell=True)
+        hosts = open("/etc/hosts").readlines()
+        correct = [e for e in hosts if not e.startswith('#') and "api.%s.%s" % (cluster, domain) in e and
+                   host_ip in e]
+        if not correct:
+            entries = ["api.%s.%s" % (cluster, domain)]
+            ingress_entries = ["%s.%s.%s" % (x, cluster, domain) for x in ['console-openshift-console.apps',
+                               'oauth-openshift.apps', 'prometheus-k8s-openshift-monitoring.apps']]
+            if ingress_ip is None:
+                entries.extend(ingress_entries)
+            entries = ' '.join(entries)
+            call("sudo sh -c 'echo %s %s >> /etc/hosts'" % (host_ip, entries), shell=True)
+            if ingress_ip is not None:
+                entries = ' '.join(ingress_entries)
+                call("sudo sh -c 'echo %s %s >> /etc/hosts'" % (ingress_ip, entries), shell=True)
+    else:
+        entries = ["api.%s.%s" % (cluster, domain)]
+        ingress_entries = ["%s.%s.%s" % (x, cluster, domain) for x in ['console-openshift-console.apps',
+                                                                       'oauth-openshift.apps',
+                                                                       'prometheus-k8s-openshift-monitoring.apps']]
+        if ingress_ip is None:
+            entries.extend(ingress_entries)
+        entries = ' '.join(entries)
+        call("sh -c 'echo %s %s >> /etc/hosts'" % (host_ip, entries), shell=True)
+        if os.path.exists('/etcdir/hosts'):
+            call("sh -c 'echo %s %s >> /etcdir/hosts'" % (host_ip, entries), shell=True)
+            if ingress_ip is not None:
+                entries = ' '.join(ingress_entries)
+                call("sudo sh -c 'echo %s %s >> /etcdir/hosts'" % (ingress_ip, entries), shell=True)
+
+
 def get_installer_version():
     INSTALLER_VERSION = os.popen('openshift-install version').readlines()[0].split(" ")[1].strip()
     if INSTALLER_VERSION.startswith('v'):
@@ -257,7 +299,10 @@ def create(config, plandir, cluster, overrides):
             'fips': False,
             'apps': [],
             'minimal': False,
-            'dualstack': False}
+            'dualstack': False,
+            'sno': False,
+            'sno_baremetal': False,
+            'sno_disk': 'vda'}
     data.update(overrides)
     if 'cluster' in overrides:
         clustervalue = overrides.get('cluster')
@@ -266,6 +311,7 @@ def create(config, plandir, cluster, overrides):
     else:
         clustervalue = 'testk'
     data['cluster'] = clustervalue
+    domain = data.get('domain')
     pprint("Deploying cluster %s" % clustervalue)
     plan = cluster if cluster is not None else clustervalue
     overrides['kubetype'] = 'openshift'
@@ -275,6 +321,14 @@ def create(config, plandir, cluster, overrides):
         warning("Storage apps require extra disks to be set")
     overrides['kube'] = data['cluster']
     installparam = overrides.copy()
+    sno = data.get('sno', False)
+    if sno:
+        data['version'] = 'ci'
+        tag = 'registry.svc.ci.openshift.org/sno-dev/openshift-bip:0.3.0'
+        print("Using %s" % tag)
+        data['tag'] = tag
+        masters = 1
+        workers = 0
     masters = data.get('masters', 1)
     if masters == 0:
         error("Invalid number of masters")
@@ -297,7 +351,7 @@ def create(config, plandir, cluster, overrides):
     helper_image = data.get('helper_image')
     image = data.get('image')
     api_ip = data.get('api_ip')
-    if platform in virtplatforms and api_ip is None:
+    if platform in virtplatforms and not sno and api_ip is None:
         if network == 'default' and platform == 'kvm':
             warning("Using 192.168.122.253 as api_ip")
             overrides['api_ip'] = "192.168.122.253"
@@ -305,7 +359,7 @@ def create(config, plandir, cluster, overrides):
         else:
             error("You need to define api_ip in your parameters file")
             os._exit(1)
-    if ':' in api_ip:
+    if not sno and ':' in api_ip:
         ipv6 = True
     ingress_ip = data.get('ingress_ip')
     public_api_ip = data.get('public_api_ip')
@@ -397,7 +451,9 @@ def create(config, plandir, cluster, overrides):
     elif OPENSHIFT_VERSION.isdigit() and int(OPENSHIFT_VERSION) < 46:
         curl_header = "User-Agent: Ignition/0.35.0"
     overrides['curl_header'] = curl_header
-    if image is None:
+    if sno:
+        pass
+    elif image is None:
         if upstream:
             fcos_base = 'stable' if version == 'stable' else 'testing'
             fcos_url = "https://builds.coreos.fedoraproject.org/streams/%s.json" % fcos_base
@@ -522,6 +578,65 @@ def create(config, plandir, cluster, overrides):
             fetch(asset, manifestsdir)
     if dualstack:
         copy2("%s/dualstack.yml" % plandir, "%s/openshift" % clusterdir)
+    if sno:
+        sno_name = "%s-sno" % cluster
+        sno_baremetal = data.get('sno_baremetal', False)
+        call('openshift-install --dir=%s create single-node-ignition-config' % clusterdir, shell=True)
+        os.rename("%s/bootstrap-in-place-for-live-iso.ign" % clusterdir, "./%s.ign" % sno_name)
+        with open("iso.ign", 'w') as f:
+            _files = [{"path": "/root/complete-installation.service",
+                       "origin": "%s/sno-finish.service" % plandir},
+                      {"path": "/usr/local/bin/complete-installation.sh", "origin": "%s/sno-finish.sh" % plandir,
+                      "mode": 700}]
+            iso_overrides = {'files': _files, 'sno_disk': data['sno_disk']}
+            result = config.create_vm(sno_name, 'rhcos46', overrides=iso_overrides, onlyassets=True)
+            pprint("Writing iso.ign to current dir")
+            f.write(result['data'])
+        if config.type != 'kvm':
+            pprint("Additional workflow not available on %s" % config.type)
+            pprint("Embed iso.ign in rhcos live iso")
+            os._exit(0)
+        else:
+            pool = data['pool']
+            if 'rhcos-live.x86_64.iso' not in k.volumes(iso=True):
+                pprint("Downloading rhcos-live.x86_64.iso")
+                liveiso = "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/"
+                liveiso += "latest/latest/rhcos-live.x86_64.iso"
+                k.add_image(liveiso, data['pool'])
+            if '%s.iso' % cluster in [os.path.basename(iso) for iso in k.volumes(iso=True)]:
+                warning("Deleting old iso %s" % '%s.iso' % cluster)
+                k.delete_image('%s.iso' % cluster)
+            poolpath = k.get_pool_path(pool)
+            coreosinstaller = "podman run --privileged --rm -w /data -v %s:/data -v /dev:/dev" % poolpath
+            if not os.path.exists('/Users'):
+                coreosinstaller += " -v /run/udev:/run/udev"
+            coreosinstaller += " quay.io/coreos/coreos-installer:release"
+            isocmd = "%s iso ignition embed -fi iso.ign -o %s.iso rhcos-live.x86_64.iso" % (coreosinstaller, cluster)
+            if k.host in ['localhost', '127.0.0.1']:
+                if find_executable('podman') is None:
+                    error("podman is required in order to embed iso ignition")
+                    os._exit(1)
+                os.system(isocmd)
+            elif k.protocol == 'ssh':
+                scpcmd = 'scp %s -P %s iso.ign %s@%s:%s' % (k.identitycommand, k.port, k.user, k.host, poolpath)
+                os.system(scpcmd)
+                isocmd = 'ssh %s -p %s %s@%s "%s"' % (k.identitycommand, k.port, k.user, k.host, isocmd)
+                os.system(isocmd)
+            if not sno_baremetal:
+                pprint("Deploying sno")
+                result = config.plan(plan, inputfile='%s/sno.yml' % plandir, overrides=data)
+                if result['result'] != 'success':
+                    os._exit(1)
+                while api_ip is None:
+                    api_ip = k.info(sno_name).get('ip')
+                    pprint("Waiting 5s to retrieve sno ip...")
+                    sleep(5)
+                update_etc_hosts(cluster, domain, api_ip)
+                installcommand = 'openshift-install --dir=%s wait-for install-complete' % clusterdir
+                installcommand += " || %s" % installcommand
+                pprint("Launching install-complete step. It will be retried one extra time in case of timeouts")
+                call(installcommand, shell=True)
+        os._exit(0)
     call('openshift-install --dir=%s create ignition-configs' % clusterdir, shell=True)
     for role in ['master', 'worker']:
         ori = "%s/%s.ign" % (clusterdir, role)
@@ -534,7 +649,6 @@ def create(config, plandir, cluster, overrides):
             bootstrap_service = open('%s/bootstrap_patch.service' % plandir).read()
             patch_bootstrap("%s/bootstrap.ign" % clusterdir, bootstrap_patch, bootstrap_service)
     staticdata = gather_dhcp(data, platform)
-    domain = data.get('domain')
     if staticdata:
         pprint("Deploying helper dhcp node" % image)
         staticdata.update({'network': network, 'dhcp_image': helper_image, 'prefix': cluster,
@@ -551,45 +665,8 @@ def create(config, plandir, cluster, overrides):
         ignore_hosts = data.get('ignore_hosts', False)
         if ignore_hosts:
             warning("Ignoring /etc/hosts")
-        elif not os.path.exists("/i_am_a_container"):
-            hosts = open("/etc/hosts").readlines()
-            wronglines = [e for e in hosts if not e.startswith('#') and "api.%s.%s" % (cluster, domain) in e and
-                          host_ip not in e]
-            if ingress_ip is not None:
-                o = "oauth-openshift.apps.%s.%s" % (cluster, domain)
-                wrongingresses = [e for e in hosts if not e.startswith('#') and o in e and ingress_ip not in e]
-                wronglines.extend(wrongingresses)
-            for wrong in wronglines:
-                warning("Cleaning wrong entry %s in /etc/hosts" % wrong)
-                call("sudo sed -i '/%s/d' /etc/hosts" % wrong.strip(), shell=True)
-            hosts = open("/etc/hosts").readlines()
-            correct = [e for e in hosts if not e.startswith('#') and "api.%s.%s" % (cluster, domain) in e and
-                       host_ip in e]
-            if not correct:
-                entries = ["api.%s.%s" % (cluster, domain)]
-                ingress_entries = ["%s.%s.%s" % (x, cluster, domain) for x in ['console-openshift-console.apps',
-                                   'oauth-openshift.apps', 'prometheus-k8s-openshift-monitoring.apps']]
-                if ingress_ip is None:
-                    entries.extend(ingress_entries)
-                entries = ' '.join(entries)
-                call("sudo sh -c 'echo %s %s >> /etc/hosts'" % (host_ip, entries), shell=True)
-                if ingress_ip is not None:
-                    entries = ' '.join(ingress_entries)
-                    call("sudo sh -c 'echo %s %s >> /etc/hosts'" % (ingress_ip, entries), shell=True)
         else:
-            entries = ["api.%s.%s" % (cluster, domain)]
-            ingress_entries = ["%s.%s.%s" % (x, cluster, domain) for x in ['console-openshift-console.apps',
-                                                                           'oauth-openshift.apps',
-                                                                           'prometheus-k8s-openshift-monitoring.apps']]
-            if ingress_ip is None:
-                entries.extend(ingress_entries)
-            entries = ' '.join(entries)
-            call("sh -c 'echo %s %s >> /etc/hosts'" % (host_ip, entries), shell=True)
-            if os.path.exists('/etcdir/hosts'):
-                call("sh -c 'echo %s %s >> /etcdir/hosts'" % (host_ip, entries), shell=True)
-                if ingress_ip is not None:
-                    entries = ' '.join(ingress_entries)
-                    call("sudo sh -c 'echo %s %s >> /etcdir/hosts'" % (ingress_ip, entries), shell=True)
+            update_etc_hosts(cluster, domain, host_ip, ingress_ip)
         if platform in ['openstack', 'vsphere'] or (platform == 'packet' and config.k.tunnelhost is None):
             # bootstrap ignition is too big in those platforms so we deploy a temporary web server to serve it
             helper_overrides = {}

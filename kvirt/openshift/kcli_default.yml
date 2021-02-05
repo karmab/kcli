@@ -90,3 +90,6 @@ zerotier_ip:
 zerotier_kubelet: false
 http_proxy:
 no_proxy:
+sno: false
+sno_baremetal: false
+sno_disk: vda
