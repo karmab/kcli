@@ -9,11 +9,13 @@
     reload
     hosts {{ cluster }}.{{ domain }} {
         {% if  sno %}
-        {{ api_ip }} {{ cluster }}-sno api-int.{{ cluster }}.{{ domain }} api.{{ cluster }}.{{ domain }}
+        {{ api_ip }} {{ cluster }}-sno {{ cluster }}-sno.{{ cluster }}.{{ domain }} api-int.{{ cluster }}.{{ domain }} api.{{ cluster }}.{{ domain }}
         {% else %}
         {{ api_ip }} api-int.{{ cluster }}.{{ domain }} api.{{ cluster }}.{{ domain }}
         {% endif %}
         fallthrough
     }
-    file /etc/coredns/apps.db apps.{{ cluster }}.{{ domain }}
+    template ANY ANY apps.{{ cluster }}.{{ domain }} {
+       answer "{% raw %}{{ .Name }}{% endraw %} {{ 'AAAA' if ipv6 else 'A' }} {{ ingress_ip if ingress_ip != None else api_ip }}"
+    }
 }

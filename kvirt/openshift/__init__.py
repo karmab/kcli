@@ -589,7 +589,6 @@ def create(config, plandir, cluster, overrides):
                        "origin": "%s/sno-finish.service" % plandir},
                       {"path": "/usr/local/bin/complete-installation.sh", "origin": "%s/sno-finish.sh" % plandir,
                       "mode": 700},
-                      {"path": "/root/apps.db", "origin": "%s/apps.db" % plandir},
                       {"path": "/root/coredns.yml", "origin": "%s/staticpods/coredns.yml" % plandir},
                       {"path": "/root/Corefile", "origin": "%s/Corefile" % plandir},
                       {"path": "/root/99-forcedns", "origin": "%s/99-forcedns" % plandir}]

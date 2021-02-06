@@ -56,8 +56,6 @@
   - path: /etc/kubernetes/config.hcl.templ
     origin: config.hcl.templ
 {% endif %}
-  - path: /etc/kubernetes/apps.db
-    origin: apps.db
 {% if numa != None %}
  numa: {{ numa }}
 {% endif %}
