@@ -102,9 +102,9 @@ class Kconfig(Kbaseconfig):
                 registry = self.options.get('registry')
                 access_mode = self.options.get('access_mode', 'NodePort')
                 if access_mode not in ['External', 'LoadBalancer', 'NodePort']:
-                        msg = "Incorrect access_mode %s. Should be External, NodePort or LoadBalancer" % access_mode
-                        error(msg)
-                        os._exit(1)
+                    msg = "Incorrect access_mode %s. Should be External, NodePort or LoadBalancer" % access_mode
+                    error(msg)
+                    os._exit(1)
                 from kvirt.providers.kubevirt import Kubevirt
                 k = Kubevirt(context=context, token=token, ca_file=ca_file, host=self.host,
                              port=self.port, user=self.user, debug=debug, namespace=namespace, cdi=cdi,
@@ -2231,7 +2231,10 @@ $INFO
             iso_overrides = {'scripts': ['%s/iso.sh' % plandir], 'files': _files}
             iso_overrides.update(overrides)
             result = config.create_vm('autoinstaller', 'rhcos46', overrides=iso_overrides, onlyassets=True)
-            f.write(result['data'])
+            if 'reason' in result:
+                error(result['reason'])
+            else:
+                f.write(result['data'])
         if iso:
             if not os.path.exists('rhcos-live.x86_64.iso'):
                 pprint("Downloading rhcos-live.x86_64.iso")

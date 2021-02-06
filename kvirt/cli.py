@@ -1067,8 +1067,8 @@ def create_vm(args):
             and not os.path.exists(os.path.expanduser("~/.ssh/id_dsa.pub"))\
             and not os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub"))\
             and not os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub")):
-                error("No usable public key found, which is mandatory when using wait")
-                os._exit(1)
+        error("No usable public key found, which is mandatory when using wait")
+        os._exit(1)
     customprofile = {}
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     for key in overrides:
@@ -1118,6 +1118,8 @@ def create_vm(args):
         if not onlyassets:
             code = common.handle_response(result, name, element='', action='created', client=config.client)
             return code
+        elif 'reason' in result:
+            error(result['reason'])
         else:
             print(result['data'])
     else:
@@ -1984,7 +1986,7 @@ def create_plandata(args):
         if outputdir is not None:
             renderplan = config.process_inputfile(plan, inputfile, overrides=overrides, onfly=False)
             with open("%s/kcli_plan.yml" % outputdir, 'w') as f:
-                    f.write(renderplan)
+                f.write(renderplan)
     return 0
 
 
@@ -2090,8 +2092,8 @@ def create_product(args):
 
 def ssh_vm(args):
     """Ssh into vm"""
-    l = args.L
-    r = args.R
+    local = args.L
+    remote = args.R
     D = args.D
     X = args.X
     Y = args.Y
@@ -2133,7 +2135,7 @@ def ssh_vm(args):
                     user = baseconfig.vmuser if baseconfig.vmuser is not None else vm.get('user')
                 if vmport is None:
                     vmport = baseconfig.vmport if baseconfig.vmport is not None else vm.get('vmport')
-                sshcommand = common.ssh(name, ip=ip, user=user, local=l, remote=r, tunnel=tunnel,
+                sshcommand = common.ssh(name, ip=ip, user=user, local=local, remote=remote, tunnel=tunnel,
                                         tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser,
                                         insecure=insecure, cmd=cmd, X=X, Y=Y, D=D, debug=args.debug, vmport=vmport,
                                         identityfile=identityfile)
@@ -2151,7 +2153,7 @@ def ssh_vm(args):
         if config.type in ['kvm', 'packet'] and '.' not in ip and ':' not in ip:
             vmport = ip
             ip = config.host
-        sshcommand = common.ssh(name, ip=ip, user=user, local=l, remote=r, tunnel=tunnel,
+        sshcommand = common.ssh(name, ip=ip, user=user, local=local, remote=remote, tunnel=tunnel,
                                 tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser,
                                 insecure=insecure, cmd=cmd, X=X, Y=Y, D=D, debug=args.debug, vmport=vmport,
                                 identityfile=identityfile)
