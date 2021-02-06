@@ -621,6 +621,7 @@ def create(config, plandir, cluster, overrides):
                 if find_executable('podman') is None:
                     error("podman is required in order to embed iso ignition")
                     os._exit(1)
+                copy2('iso.ign', poolpath)
                 os.system(isocmd)
             elif k.protocol == 'ssh':
                 scpcmd = 'scp %s -P %s iso.ign %s@%s:%s' % (k.identitycommand, k.port, k.user, k.host, poolpath)
