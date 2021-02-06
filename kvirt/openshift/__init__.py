@@ -329,6 +329,7 @@ def create(config, plandir, cluster, overrides):
         data['tag'] = tag
         masters = 1
         workers = 0
+        data['mdns'] = False
     masters = data.get('masters', 1)
     if masters == 0:
         error("Invalid number of masters")
@@ -587,8 +588,13 @@ def create(config, plandir, cluster, overrides):
             _files = [{"path": "/root/complete-installation.service",
                        "origin": "%s/sno-finish.service" % plandir},
                       {"path": "/usr/local/bin/complete-installation.sh", "origin": "%s/sno-finish.sh" % plandir,
-                      "mode": 700}]
-            iso_overrides = {'files': _files, 'sno_disk': data['sno_disk']}
+                      "mode": 700},
+                      {"path": "/root/apps.db", "origin": "%s/apps.db" % plandir},
+                      {"path": "/root/coredns.yml", "origin": "%s/staticpods/coredns.yml" % plandir},
+                      {"path": "/root/Corefile", "origin": "%s/Corefile" % plandir},
+                      {"path": "/root/99-forcedns", "origin": "%s/99-forcedns" % plandir}]
+            iso_overrides = {'files': _files}
+            iso_overrides.update(data)
             result = config.create_vm(sno_name, 'rhcos46', overrides=iso_overrides, onlyassets=True)
             pprint("Writing iso.ign to current dir")
             f.write(result['data'])

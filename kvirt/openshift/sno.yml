@@ -1,4 +1,3 @@
-{% set net0 = {"name": network, "alias": ["api." + cluster + "." + domain, "api-int." + cluster + "." + domain, "console-openshift-console.apps." + cluster + "." + domain, "oauth-openshift.apps." + cluster + "." + domain, "canary-openshift-ingress-canary.apps" + cluster + "." + domain] } %}
 {% if extra_master_networks %}
 {% set extra_networks = extra_master_networks %}
 {% endif %}
@@ -30,7 +29,7 @@
  rng: {{ master_rng }}
  tpm: {{ master_tpm }}
  autostart: {{ autostart }}
- nets: {{ [net0] + extra_networks }}
+ nets: {{ [network] + extra_networks }}
  zerotier_nets: {{ zerotier_nets }}
  zerotier_kubelet: {{ zerotier_kubelet }}
  disks: {{ [disk_size] + extra_disks }}
