@@ -634,10 +634,7 @@ def create(config, plandir, cluster, overrides):
                 result = config.plan(plan, inputfile='%s/sno.yml' % plandir, overrides=data)
                 if result['result'] != 'success':
                     os._exit(1)
-                bridged = k.list_networks()[network]['mode'] == 'bridge'
-                if bridged:
-                    warning("Not updating /etc/hosts since network is a bridge")
-                elif ignore_hosts:
+                if ignore_hosts:
                     warning("Not updating /etc/hosts as per your request")
                 else:
                     while api_ip is None:

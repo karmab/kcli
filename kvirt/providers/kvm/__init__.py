@@ -620,8 +620,8 @@ class Kvirt(object):
                                                                overrides=overrides, storemetadata=storemetadata,
                                                                image=image, ipv6=ipv6)
                 with TemporaryDirectory() as tmpdir:
-                        common.make_iso(name, tmpdir, userdata, metadata, netdata)
-                        self._uploadimage(name, pool=default_storagepool, origin=tmpdir)
+                    common.make_iso(name, tmpdir, userdata, metadata, netdata)
+                    self._uploadimage(name, pool=default_storagepool, origin=tmpdir)
         listen = '0.0.0.0' if self.host not in ['localhost', '127.0.0.1'] else '127.0.0.1'
         displayxml = """<input type='tablet' bus='usb'/>
 <input type='mouse' bus='ps2'/>
@@ -1344,7 +1344,7 @@ class Kvirt(object):
         ifaces = {}
         if vm.isActive():
             networktypes = [element.get('type') for element in list(root.iter('interface'))]
-            if 'bridge' in networktypes and image is not None:
+            if 'bridge' in networktypes:
                 try:
                     agentfaces = vm.interfaceAddresses(vir_src_agent, 0)
                 except:
