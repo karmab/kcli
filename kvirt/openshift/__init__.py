@@ -322,6 +322,7 @@ def create(config, plandir, cluster, overrides):
     overrides['kube'] = data['cluster']
     installparam = overrides.copy()
     sno = data.get('sno', False)
+    ignore_hosts = data.get('ignore_hosts', False)
     if sno:
         data['version'] = 'ci'
         tag = 'registry.svc.ci.openshift.org/sno-dev/openshift-bip:0.3.0'
@@ -633,12 +634,18 @@ def create(config, plandir, cluster, overrides):
                 result = config.plan(plan, inputfile='%s/sno.yml' % plandir, overrides=data)
                 if result['result'] != 'success':
                     os._exit(1)
-                while api_ip is None:
-                    api_ip = k.info(sno_name).get('ip')
-                    pprint("Waiting 5s to retrieve sno ip...")
-                    sleep(5)
-                update_etc_hosts(cluster, domain, api_ip)
-                installcommand = 'openshift-install --dir=%s wait-for install-complete' % clusterdir
+                bridged = k.list_networks()[network]['mode'] == 'bridge'
+                if bridged:
+                    warning("Not updating /etc/hosts since network is a bridge")
+                elif ignore_hosts:
+                    warning("Not updating /etc/hosts as per your request")
+                else:
+                    while api_ip is None:
+                        api_ip = k.info(sno_name).get('ip')
+                        pprint("Waiting 5s to retrieve sno ip...")
+                        sleep(5)
+                    update_etc_hosts(cluster, domain, api_ip)
+                installcommand = 'openshift-install --dir=%s --log-level=debug wait-for install-complete' % clusterdir
                 installcommand += " || %s" % installcommand
                 pprint("Launching install-complete step. It will be retried one extra time in case of timeouts")
                 call(installcommand, shell=True)
@@ -668,7 +675,6 @@ def create(config, plandir, cluster, overrides):
         pprint("Using keepalived virtual_router_id %s" % overrides['virtual_router_id'])
         pprint("Using %s for api vip...." % api_ip)
         host_ip = api_ip if platform != "openstack" else public_api_ip
-        ignore_hosts = data.get('ignore_hosts', False)
         if ignore_hosts:
             warning("Ignoring /etc/hosts")
         else:
