@@ -341,7 +341,7 @@ class Kubevirt(Kubecommon):
             if index == 0 and image is not None and image not in CONTAINERDISKS:
                 if cdi:
                     if datavolumes:
-                        dvt = {'metadata': {'name': diskname, 'sidecar.istio.io/inject': 'false'},
+                        dvt = {'metadata': {'name': diskname, 'annotations': {'sidecar.istio.io/inject': False}},
                                'spec': {'pvc': {'accessModes': [self.accessmode],
                                                 'resources':
                                                 {'requests': {'storage': '%sGi' % pvcsize}}},
