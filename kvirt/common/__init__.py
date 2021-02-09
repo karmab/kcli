@@ -1376,9 +1376,10 @@ def mergeignition(name, ignitionextrapath, data):
     with open(ignitionextrapath, 'r') as extra:
         try:
             ignitionextra = json.load(extra)
-        except:
-            warning("Couldn't process %s. Ignoring" % (ignitionextrapath))
-            return data
+        except Exception as e:
+            error("Couldn't process %s. Ignoring" % (ignitionextrapath))
+            error(e)
+            os._exit(1)
         children = {'storage': 'files', 'passwd': 'users', 'systemd': 'units'}
         for key in children:
             childrenkey2 = 'path' if key == 'storage' else 'name'
