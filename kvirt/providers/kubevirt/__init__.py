@@ -325,11 +325,13 @@ class Kubevirt(Kubecommon):
                                            plan=plan, compact=True, image=image)
             else:
                 cloudinitsource = "cloudInitNoCloud"
-                cloudinitdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
-                                                 domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
-                                                 overrides=overrides, storemetadata=storemetadata)
-                userdata = cloudinitdata[0]
-                netdata = cloudinitdata[2]
+                userdata, metadata, netdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets,
+                                                               gateway=gateway, dns=dns, domain=domain,
+                                                               reserveip=reserveip, files=files, enableroot=enableroot,
+                                                               overrides=overrides, storemetadata=storemetadata,
+                                                               image=image)
+                if 'network-interfaces' in metadata:
+                    netdata = metadata
             cloudinitdisk = {'cdrom': {'bus': 'sata'}, 'name': 'cloudinitdisk'}
             vm['spec']['template']['spec']['domain']['devices']['disks'].append(cloudinitdisk)
             self.create_secret("%s-userdata-secret" % name, namespace, userdata, field='userdata')
