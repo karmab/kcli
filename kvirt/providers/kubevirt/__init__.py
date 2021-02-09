@@ -315,6 +315,7 @@ class Kubevirt(Kubecommon):
                     idx = subindex.pop() + 1
             cmds = cmds[:idx] + gcmds + cmds[idx:]
         if cloudinit:
+            netdata = None
             if image is not None and common.needs_ignition(image):
                 cloudinitsource = "cloudInitConfigDrive"
                 version = common.ignition_version(image)
@@ -324,12 +325,14 @@ class Kubevirt(Kubecommon):
                                            plan=plan, compact=True, image=image)
             else:
                 cloudinitsource = "cloudInitNoCloud"
-                userdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
-                                            domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
-                                            overrides=overrides, storemetadata=storemetadata)[0]
+                cloudinitdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
+                                                 domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
+                                                 overrides=overrides, storemetadata=storemetadata)
+                userdata = cloudinitdata[0]
+                netdata = cloudinitdata[2]
             cloudinitdisk = {'cdrom': {'bus': 'sata'}, 'name': 'cloudinitdisk'}
             vm['spec']['template']['spec']['domain']['devices']['disks'].append(cloudinitdisk)
-            self.create_secret("%s-userdata-secret" % name, namespace, userdata)
+            self.create_secret("%s-userdata-secret" % name, namespace, userdata, netdata)
             cloudinitvolume = {cloudinitsource: {'secretRef': {'name': "%s-userdata-secret" % name}},
                                'name': 'cloudinitdisk'}
             vm['spec']['template']['spec']['volumes'].append(cloudinitvolume)
@@ -1306,10 +1309,13 @@ class Kubevirt(Kubecommon):
         except:
             return None
 
-    def create_secret(self, name, namespace, data):
-        userdata = base64.b64encode(data.encode()).decode("UTF-8")
+    def create_secret(self, name, namespace, userdata, netdata=None):
+        userdata = base64.b64encode(userdata.encode()).decode("UTF-8")
+        data = {'userdata': userdata}
+        if netdata is not None and netdata != '':
+            data['networkdata'] = base64.b64encode(netdata.encode()).decode("UTF-8")
         spec = {'kind': 'Secret', 'apiVersion': 'v1', 'metadata': {'namespace': namespace, 'name': name},
-                'data': {'userdata': userdata}, 'type': 'Opaque'}
+                'data': data, 'type': 'Opaque'}
         self.core.create_namespaced_secret(namespace, spec)
 
     def delete_secret(self, name, namespace):
