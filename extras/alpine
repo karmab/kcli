@@ -18,7 +18,8 @@ RUN apk add --update --no-cache g++ gcc libvirt libvirt-dev libc6-compat python3
 RUN mkdir /root/kcli
 ADD kvirt /root/kcli/kvirt
 COPY setup.py /root/kcli
-RUN pip3 install -e /root/kcli[all]
+ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
+RUN pip3 install -U pip && pip3 install -e /root/kcli[all]
 ADD extras/i_am_a_container /i_am_a_container
 
 RUN echo eval \"\$\(register-python-argcomplete kcli\)\" >> /root/.bashrc && apk del g++ gcc libvirt-dev curl-dev libressl-dev libxml2-dev linux-headers libffi-dev
