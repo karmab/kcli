@@ -332,9 +332,12 @@ class Kubevirt(Kubecommon):
                 netdata = cloudinitdata[2]
             cloudinitdisk = {'cdrom': {'bus': 'sata'}, 'name': 'cloudinitdisk'}
             vm['spec']['template']['spec']['domain']['devices']['disks'].append(cloudinitdisk)
-            self.create_secret("%s-userdata-secret" % name, namespace, userdata, netdata)
+            self.create_secret("%s-userdata-secret" % name, namespace, userdata, field='userdata')
             cloudinitvolume = {cloudinitsource: {'secretRef': {'name': "%s-userdata-secret" % name}},
                                'name': 'cloudinitdisk'}
+            if netdata is not None and netdata != '':
+                cloudinitvolume[cloudinitsource]['networkDataSecretRef'] = {'name': "%s-netdata-secret" % name}
+                self.create_secret("%s-netdata-secret" % name, namespace, netdata, field='networkdata')
             vm['spec']['template']['spec']['volumes'].append(cloudinitvolume)
         if self.debug:
             common.pretty_print(vm)
@@ -749,6 +752,10 @@ class Kubevirt(Kubecommon):
             pass
         try:
             core.delete_namespaced_secret('%s-userdata-secret' % name, namespace)
+        except:
+            pass
+        try:
+            core.delete_namespaced_secret('%s-netdata-secret' % name, namespace)
         except:
             pass
         return {'result': 'success'}
@@ -1309,11 +1316,9 @@ class Kubevirt(Kubecommon):
         except:
             return None
 
-    def create_secret(self, name, namespace, userdata, netdata=None):
-        userdata = base64.b64encode(userdata.encode()).decode("UTF-8")
-        data = {'userdata': userdata}
-        if netdata is not None and netdata != '':
-            data['networkdata'] = base64.b64encode(netdata.encode()).decode("UTF-8")
+    def create_secret(self, name, namespace, data, field='userdata'):
+        data = base64.b64encode(data.encode()).decode("UTF-8")
+        data = {field: data}
         spec = {'kind': 'Secret', 'apiVersion': 'v1', 'metadata': {'namespace': namespace, 'name': name},
                 'data': data, 'type': 'Opaque'}
         self.core.create_namespaced_secret(namespace, spec)
