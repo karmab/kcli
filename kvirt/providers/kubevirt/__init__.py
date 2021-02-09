@@ -331,7 +331,8 @@ class Kubevirt(Kubecommon):
                                                                overrides=overrides, storemetadata=storemetadata,
                                                                image=image)
                 if 'network-interfaces' in metadata:
-                    netdata = metadata
+                    warning("Legacy network not supported in kubevirt. Ignoring")
+                    netdata = None
             cloudinitdisk = {'cdrom': {'bus': 'sata'}, 'name': 'cloudinitdisk'}
             vm['spec']['template']['spec']['domain']['devices']['disks'].append(cloudinitdisk)
             self.create_secret("%s-userdata-secret" % name, namespace, userdata, field='userdata')

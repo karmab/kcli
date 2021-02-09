@@ -1471,7 +1471,7 @@ def get_values(data, element, field):
 
 
 def is_debian(image):
-    if 'debian' in image.lower():
+    if 'debian-9' in image.lower():
         return True
     else:
         return False
