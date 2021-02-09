@@ -60,7 +60,7 @@ def githubversion(repo, version=None):
         tags = sorted([x['tag_name'] for x in data], key=LooseVersion, reverse=True)
         for tag in tags:
             if 'rc' not in tag and 'alpha' not in tag and 'beta' not in tag:
-                print('\033[0;36mUsing version %s\033[0;0m' % tag)
+                print('\033[0;36mUsing version %s %s\033[0;0m' % (os.path.basename(repo), tag))
                 return tag
         return tags[0]
 
