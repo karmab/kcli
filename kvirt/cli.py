@@ -1061,6 +1061,8 @@ def create_vm(args):
     profilefile = args.profilefile
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
     wait = args.wait
+    console = args.console
+    serial = args.serial
     if 'wait' in overrides and isinstance(overrides['wait'], bool) and overrides['wait']:
         wait = True
     if wait and 'keys' not in overrides and not os.path.exists(os.path.expanduser("~/.ssh/id_rsa.pub"))\
@@ -1116,8 +1118,13 @@ def create_vm(args):
         result = config.create_vm(name, profile, overrides=overrides, customprofile=customprofile, wait=wait,
                                   onlyassets=onlyassets)
         if not onlyassets:
-            code = common.handle_response(result, name, element='', action='created', client=config.client)
-            return code
+            if console:
+                config.k.console(name=name, tunnel=config.tunnel)
+            elif serial:
+                config.k.serialconsole(name)
+            else:
+                code = common.handle_response(result, name, element='', action='created', client=config.client)
+                return code
         elif 'reason' in result:
             error(result['reason'])
         else:
@@ -1918,6 +1925,8 @@ def create_vmdata(args):
     args.profile = None
     args.profilefile = None
     args.wait = False
+    args.console = None
+    args.serial = None
     args.count = 1
     create_vm(args)
     return 0
@@ -3585,6 +3594,7 @@ def cli():
     vmcreate_epilog = "examples:\n%s" % vmcreate
     vmcreate_parser = argparse.ArgumentParser(add_help=False)
     vmcreate_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
+    vmcreate_parser.add_argument('--console', help='Directly switch to console after creation', action='store_true')
     vmcreate_parser.add_argument('-c', '--count', help='How many vms to create', type=int, default=1, metavar='COUNT')
     vmcreate_parser.add_argument('-i', '--image', help='Image to use', metavar='IMAGE')
     vmcreate_parser.add_argument('--profilefile', help='File to load profiles from', metavar='PROFILEFILE')
@@ -3592,6 +3602,8 @@ def cli():
                                  help='specify parameter or keyword for rendering (multiple can be specified)',
                                  metavar='PARAM')
     vmcreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    vmcreate_parser.add_argument('-s', '--serial', help='Directly switch to serial console after creation',
+                                 action='store_true')
     vmcreate_parser.add_argument('-w', '--wait', action='store_true', help='Wait for cloudinit to finish')
     vmcreate_parser.add_argument('name', metavar='VMNAME', nargs='?', type=valid_fqdn)
     vmcreate_parser.set_defaults(func=create_vm)
