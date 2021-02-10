@@ -52,17 +52,22 @@ def certificate(value):
         return "-----BEGIN CERTIFICATE-----\n%s\n-----END CERTIFICATE-----" % value
 
 
+def stable_release(tag):
+    return True if 'rc' not in tag and 'alpha' not in tag and 'beta' not in tag else False
+
+
 def githubversion(repo, version=None):
     if version is None or version == 'latest':
         data = requests.get("https://api.github.com/repos/%s/releases" % repo).json()
         if 'message' in data and data['message'] == 'Not Found':
             return ''
-        tags = sorted([x['tag_name'] for x in data], key=LooseVersion, reverse=True)
-        for tag in tags:
-            if 'rc' not in tag and 'alpha' not in tag and 'beta' not in tag:
-                print('\033[0;36mUsing version %s %s\033[0;0m' % (os.path.basename(repo), tag))
-                return tag
-        return tags[0]
+        tags = sorted([x['tag_name'] for x in data if stable_release(x['tag_name'])], key=LooseVersion, reverse=True)
+        if tags:
+            tag = tags[0]
+        else:
+            tag = data[0]['tag_name']
+        print('\033[0;36mUsing version %s %s\033[0;0m' % (os.path.basename(repo), tag))
+        return tag
 
 
 def defaultnodes(replicas, cluster, domain, masters, workers):
