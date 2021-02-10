@@ -81,8 +81,8 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
     """
     userdata, metadata, netdata = None, None, None
     default_gateway = gateway
-    legacy = True if image is not None and (is_7(image) or is_debian(image)) else False
-    prefix = 'ens' if image is not None and is_ubuntu(image) else 'eth'
+    legacy = True if image is not None and (is_7(image) or is_debian9(image)) else False
+    prefix = 'ens' if image is not None and (is_ubuntu(image) or is_debian10(image)) else 'eth'
     netdata = {} if not legacy else ''
     if nets:
         bridges = {}
@@ -1470,8 +1470,15 @@ def get_values(data, element, field):
     return results
 
 
-def is_debian(image):
+def is_debian9(image):
     if 'debian-9' in image.lower():
+        return True
+    else:
+        return False
+
+
+def is_debian10(image):
+    if 'debian-10' in image.lower():
         return True
     else:
         return False

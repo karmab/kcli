@@ -32,6 +32,7 @@ VMUSER = None
 VMPORT = None
 BSD = "https://object-storage.public.mtl1.vexxhost.net/swift/v1/1dbafeefbd4f4c80864414a441e72dd2"
 BSD += "/bsd-cloud-image.org/images/"
+DEBIAN = "https://cdimage.debian.org/cdimage/"
 RHCOS = "https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/"
 FEDORA = "http://mirror.uv.es/mirror/fedora/linux/releases/"
 FEDORA_ARCHIVE = "https://archives.fedoraproject.org/pub/archive/fedora/linux/releases/"
@@ -44,10 +45,9 @@ IMAGES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-i
           'images/CentOS-Stream-GenericCloud-8-20201019.1.x86_64.qcow2',
           'cirros': 'http://download.cirros-cloud.net/0.4.0/cirros-0.4.0-x86_64-disk.img',
           'coreos': 'https://stable.release.core-os.net/amd64-usr/current/coreos_production_qemu_image.img.bz2',
-          'debian8': 'https://cdimage.debian.org/cdimage/openstack/archive/8.11.0/'
-          'debian-8.11.0-openstack-amd64.qcow2',
-          'debian9': 'https://cdimage.debian.org/cdimage/openstack/current-9/debian-9-openstack-amd64.qcow2',
-          'debian10': 'https://cdimage.debian.org/cdimage/openstack/current-10/debian-10-openstack-amd64.qcow2',
+          'debian8': DEBIAN + 'openstack/archive/8.11.0/debian-8.11.0-openstack-amd64.qcow2',
+          'debian9': DEBIAN + 'openstack/current-9/debian-9-openstack-amd64.qcow2',
+          'debian10': DEBIAN + 'cloud/buster/daily/20210209-543/debian-10-generic-amd64-daily-20210209-543.qcow2',
           'fcos': 'https://builds.coreos.fedoraproject.org/streams/stable.json',
           'fedora28': FEDORA_ARCHIVE + '28/Cloud/x86_64/images/Fedora-Cloud-Base-28-1.1.x86_64.qcow2',
           'fedora29': FEDORA_ARCHIVE + '29/Cloud/x86_64/images/Fedora-Cloud-Base-29-1.2.x86_64.qcow2',
