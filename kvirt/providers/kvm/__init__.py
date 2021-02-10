@@ -2094,7 +2094,7 @@ class Kvirt(object):
 
     def update_iso(self, name, iso):
         warning("Note it will only be effective upon next start")
-        if iso != 'None':
+        if iso is not None:
             isos = self.volumes(iso=True)
             isofound = False
             for i in isos:
@@ -2108,8 +2108,6 @@ class Kvirt(object):
             if not isofound:
                 error("Iso %s not found.Leaving..." % iso)
                 return {'result': 'failure', 'reason': "Iso %s not found" % iso}
-        else:
-            iso = None
         conn = self.conn
         try:
             vm = conn.lookupByName(name)

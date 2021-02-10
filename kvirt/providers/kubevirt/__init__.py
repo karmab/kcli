@@ -834,7 +834,7 @@ class Kubevirt(Kubecommon):
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         for diskindex, disk in enumerate(vm['spec']['template']['spec']['domain']['devices']['disks']):
             diskname = vm['spec']['template']['spec']['domain']['devices']['disks'][diskindex]['name']
-            if iso == 'None' and diskname.endswith('-iso'):
+            if iso is None and diskname.endswith('-iso'):
                 del vm['spec']['template']['spec']['domain']['devices']['disks'][diskindex]
                 for volindex, vol in enumerate(vm['spec']['template']['spec']['volumes']):
                     if vol['name'] == diskname:

@@ -1218,6 +1218,8 @@ def update_vm(args):
             k.update_information(name, information)
         elif iso is not None:
             pprint("Switching iso for vm %s to %s..." % (name, iso))
+            if iso == 'None':
+                iso = None
             k.update_iso(name, iso)
         elif flavor is not None:
             pprint("Updating flavor of vm %s to %s..." % (name, flavor))
