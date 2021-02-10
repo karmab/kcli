@@ -238,15 +238,6 @@ class Kubevirt(Kubecommon):
             vm['spec']['template']['spec']['networks'] = networks
         pvcs = []
         sizes = []
-        if iso is not None:
-            if iso not in self.volumes(iso=True):
-                return {'result': 'failure', 'reason': "you don't have iso %s" % iso}
-            diskname = '%s-iso' % name
-            newdisk = {'disk': {'cdrom': {'readOnly': False, 'bus': 'sata'}}, 'name': diskname}
-            good_iso = iso.replace('_', '-').replace('.', '-').lower()
-            myvolume = {'name': diskname, 'persistentVolumeClaim': {'claimName': good_iso}}
-            vm['spec']['template']['spec']['domain']['devices']['disks'].append(newdisk)
-            vm['spec']['template']['spec']['volumes'].append(myvolume)
         for index, disk in enumerate(disks):
             existingpvc = False
             diskname = '%s-disk%d' % (name, index)
@@ -297,6 +288,16 @@ class Kubevirt(Kubecommon):
                 pvc['metadata']['labels'] = {'app': 'Host-Assisted-Cloning'}
             pvcs.append(pvc)
             sizes.append(disksize)
+        if iso is not None:
+            if iso not in self.volumes(iso=True):
+                return {'result': 'failure', 'reason': "you don't have iso %s" % iso}
+            diskname = '%s-iso' % name
+            newdisk = {'bootOrder': 1, 'cdrom': {'readOnly': False, 'bus': 'sata'}, 'name': diskname}
+            good_iso = iso.replace('_', '-').replace('.', '-').lower()
+            myvolume = {'name': diskname, 'persistentVolumeClaim': {'claimName': good_iso}}
+            vm['spec']['template']['spec']['domain']['devices']['disks'].append(newdisk)
+            vm['spec']['template']['spec']['volumes'].append(myvolume)
+            cloudinit = False
         if guestagent:
             gcmds = []
             if image is not None and common.need_guest_agent(image):
@@ -330,7 +331,7 @@ class Kubevirt(Kubecommon):
                                                                reserveip=reserveip, files=files, enableroot=enableroot,
                                                                overrides=overrides, storemetadata=storemetadata,
                                                                image=image)
-                if 'network-interfaces' in metadata:
+                if 'static' in metadata:
                     warning("Legacy network not supported in kubevirt. Ignoring")
                     netdata = None
             cloudinitdisk = {'cdrom': {'bus': 'sata'}, 'name': 'cloudinitdisk'}
@@ -640,6 +641,9 @@ class Kubevirt(Kubecommon):
             size = '0'
             if 'persistentVolumeClaim' in volumeinfo:
                 pvcname = volumeinfo['persistentVolumeClaim']['claimName']
+                if pvcname.endswith('iso'):
+                    yamlinfo['iso'] = pvcname.replace('-iso', '.iso')
+                    continue
                 _type = 'pvc'
                 try:
                     pvc = core.read_namespaced_persistent_volume_claim(pvcname, namespace)
@@ -747,6 +751,8 @@ class Kubevirt(Kubecommon):
                 if pvc.metadata.name in pvcvolumes]
         for p in pvcs:
             pvcname = p.metadata.name
+            if pvcname.endswith('iso'):
+                continue
             pprint("Deleting pvc %s" % pvcname)
             core.delete_namespaced_persistent_volume_claim(pvcname, namespace)
         try:
@@ -819,7 +825,22 @@ class Kubevirt(Kubecommon):
         return
 
     def update_iso(self, name, iso):
-        print("not implemented")
+        crds = self.crds
+        namespace = self.namespace
+        try:
+            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
+        except:
+            error("VM %s not found" % name)
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        for diskindex, disk in enumerate(vm['spec']['template']['spec']['domain']['devices']['disks']):
+            diskname = vm['spec']['template']['spec']['domain']['devices']['disks'][diskindex]['name']
+            if iso == 'None' and diskname.endswith('-iso'):
+                del vm['spec']['template']['spec']['domain']['devices']['disks'][diskindex]
+                for volindex, vol in enumerate(vm['spec']['template']['spec']['volumes']):
+                    if vol['name'] == diskname:
+                        del vm['spec']['template']['spec']['volumes'][volindex]
+                crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
+                return
         return
 
     def update_flavor(self, name, flavor):
