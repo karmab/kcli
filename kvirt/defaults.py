@@ -1,5 +1,5 @@
 # coding=utf-8
-UBUNTUS = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety', 'zesty', 'artful', 'bionic', 'cosmic', 'eoan', 'focal']
+UBUNTUS = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety', 'zesty', 'artful', 'bionic', 'cosmic', 'eoan', 'focal', 'groovy']
 VERSION = "99.0"
 NETS = ['default']
 POOL = 'default'
@@ -82,7 +82,8 @@ IMAGES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-i
           'ubuntu-18.10-server-cloudimg-amd64.img',
           'ubuntu1904': 'https://cloud-images.ubuntu.com/releases/disco/release/ubuntu-19.04-server-cloudimg-amd64.img',
           'ubuntu1910': 'https://cloud-images.ubuntu.com/releases/eoan/release/ubuntu-19.10-server-cloudimg-amd64.img',
-          'ubuntu2004': 'https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64.img'}
+          'ubuntu2004': 'https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64.img',
+          'ubuntu2010': 'https://cloud-images.ubuntu.com/groovy/current/groovy-server-cloudimg-amd64.img'}
 
 IMAGESCOMMANDS = {'debian8': 'echo datasource_list: [NoCloud, ConfigDrive, Openstack, Ec2] > /etc/cloud/cloud.cfg.d/'
                   '90_dpkg.cfg'}
