@@ -9,7 +9,7 @@ import sys
 from kvirt.common import error, pprint, success, warning, info2
 from kvirt.common import gen_mac, get_oc, get_values, pwd_path, fetch
 from kvirt.common import get_commit_rhcos, get_latest_fcos, kube_create_app, patch_bootstrap
-from kvirt.common import ssh, scp, _ssh_credentials, word2number
+from kvirt.common import ssh, scp, _ssh_credentials
 from kvirt.openshift.calico import calicoassets
 import re
 from shutil import copy2, rmtree
@@ -245,7 +245,7 @@ def scale(config, plandir, cluster, overrides):
                 error("You need to define api_ip in your parameters file")
                 os._exit(1)
         if data.get('virtual_router_id') is None:
-            data['virtual_router_id'] = word2number(cluster)
+            data['virtual_router_id'] = hash(cluster) % 255
         pprint("Using keepalived virtual_router_id %s" % data['virtual_router_id'])
     if platform == 'packet':
         network = data.get('network')
@@ -364,6 +364,9 @@ def create(config, plandir, cluster, overrides):
     if not sno and ':' in api_ip:
         ipv6 = True
     ingress_ip = data.get('ingress_ip')
+    if ingress_ip is not None and api_ip is not None and ingress_ip == api_ip:
+        ingress_ip = None
+        overrides['ingress_ip'] = None
     public_api_ip = data.get('public_api_ip')
     network = data.get('network')
     if platform == 'packet':
@@ -668,7 +671,7 @@ def create(config, plandir, cluster, overrides):
             os._exit(1)
     if platform in virtplatforms:
         if data.get('virtual_router_id') is None:
-            overrides['virtual_router_id'] = word2number(cluster)
+            overrides['virtual_router_id'] = hash(cluster) % 255
         pprint("Using keepalived virtual_router_id %s" % overrides['virtual_router_id'])
         pprint("Using %s for api vip...." % api_ip)
         host_ip = api_ip if platform != "openstack" else public_api_ip

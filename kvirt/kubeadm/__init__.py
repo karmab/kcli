@@ -2,7 +2,7 @@
 
 from distutils.spawn import find_executable
 from kvirt.common import success, error, pprint, warning, info2
-from kvirt.common import get_kubectl, kube_create_app, scp, word2number, _ssh_credentials
+from kvirt.common import get_kubectl, kube_create_app, scp, _ssh_credentials
 from kvirt.defaults import UBUNTUS
 import os
 import sys
@@ -90,7 +90,7 @@ def create(config, plandir, cluster, overrides):
     if xip and platform not in cloudplatforms:
         data['domain'] = "%s.xip.io" % api_ip
     if data.get('virtual_router_id') is None:
-        data['virtual_router_id'] = word2number(data['cluster'])
+        data['virtual_router_id'] = hash(data['cluster']) % 255
     pprint("Using keepalived virtual_router_id %s" % data['virtual_router_id'])
     version = data.get('version')
     if version is not None and not str(version).startswith('1.'):

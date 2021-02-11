@@ -1651,13 +1651,5 @@ def patch_bootstrap(path, patch, service):
     return data
 
 
-def word2number(cluster):
-    result = 0
-    for c in cluster:
-        entry = ord(c) - 96 if not c.isdigit() else int(c)
-        result += entry
-    return result if result < 255 else 200
-
-
 def filter_compression_extension(name):
     return name.replace('.gz', '').replace('.xz', '').replace('.bz2', '')
