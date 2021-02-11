@@ -90,7 +90,7 @@ def create(config, plandir, cluster, overrides):
     if xip and platform not in cloudplatforms:
         data['domain'] = "%s.xip.io" % api_ip
     if data.get('virtual_router_id') is None:
-        data['virtual_router_id'] = hash(data['cluster']) % 255
+        data['virtual_router_id'] = hash(data['cluster']) % 254 + 1
     pprint("Using keepalived virtual_router_id %s" % data['virtual_router_id'])
     version = data.get('version')
     if version is not None and not str(version).startswith('1.'):

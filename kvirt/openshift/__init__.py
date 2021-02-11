@@ -245,7 +245,7 @@ def scale(config, plandir, cluster, overrides):
                 error("You need to define api_ip in your parameters file")
                 os._exit(1)
         if data.get('virtual_router_id') is None:
-            data['virtual_router_id'] = hash(cluster) % 255
+            data['virtual_router_id'] = hash(cluster) % 254 + 1
         pprint("Using keepalived virtual_router_id %s" % data['virtual_router_id'])
     if platform == 'packet':
         network = data.get('network')
@@ -671,7 +671,7 @@ def create(config, plandir, cluster, overrides):
             os._exit(1)
     if platform in virtplatforms:
         if data.get('virtual_router_id') is None:
-            overrides['virtual_router_id'] = hash(cluster) % 255
+            overrides['virtual_router_id'] = hash(cluster) % 254 + 1
         pprint("Using keepalived virtual_router_id %s" % overrides['virtual_router_id'])
         pprint("Using %s for api vip...." % api_ip)
         host_ip = api_ip if platform != "openstack" else public_api_ip
