@@ -324,7 +324,10 @@ class Kconfig(Kbaseconfig):
                         and self.type not in ['aws', 'gcp', 'packet']:
                     pprint("Image %s not found. Downloading" % profile)
                     self.handle_host(pool=self.pool, image=profile, download=True, update_profile=True)
-                    vmprofiles[profile] = {'image': os.path.basename(IMAGES[profile])}
+                    good_image = os.path.basename(IMAGES[profile])
+                    if not good_image.endswith('.qcow2') and not good_image.endswith('.img'):
+                        good_image = [x[4] for x in self.list_profiles() if x[0] == clientprofile][0]
+                    vmprofiles[profile] = {'image': good_image}
                 else:
                     pprint("Profile %s not found. Using the image as profile..." % profile)
                     vmprofiles[profile] = {'image': profile}
