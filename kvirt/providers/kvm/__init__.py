@@ -1350,7 +1350,10 @@ class Kvirt(object):
                 except:
                     pass
             if 'network' in networktypes:
-                leasefaces = vm.interfaceAddresses(vir_src_lease, 0)
+                try:
+                    leasefaces = vm.interfaceAddresses(vir_src_lease, 0)
+                except:
+                    pass
             ifaces = {**agentfaces, **leasefaces}
         interfaces = list(root.iter('interface'))
         for index, element in enumerate(interfaces):
@@ -1474,7 +1477,10 @@ class Kvirt(object):
                 except:
                     pass
             if 'network' in networktypes:
-                leasefaces = vm.interfaceAddresses(vir_src_lease, 0)
+                try:
+                    leasefaces = vm.interfaceAddresses(vir_src_lease, 0)
+                except:
+                    pass
             ifaces = {**agentfaces, **leasefaces}
             ips = []
             for x in ifaces:
