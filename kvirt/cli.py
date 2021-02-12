@@ -305,8 +305,8 @@ def download_image(args):
 def download_iso(args):
     """Download ISO"""
     pool = args.pool
-    url = args.iso
-    iso = os.path.basename(url)
+    url = args.url
+    iso = args.iso if args.iso is not None else os.path.basename(url)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     result = config.handle_host(pool=pool, image=iso, download=True, url=url, update_profile=False)
     if result['result'] == 'success':
@@ -3521,10 +3521,11 @@ def cli():
                                    help=imagedownload_desc)
 
     isodownload_desc = 'Download Iso'
-    isodownload_help = "Iso url"
+    isodownload_help = "Iso name"
     isodownload_parser = argparse.ArgumentParser(add_help=False)
     isodownload_parser.add_argument('-p', '--pool', help='Pool to use. Defaults to default', metavar='POOL')
-    isodownload_parser.add_argument('iso', help=isodownload_help, metavar='ISO')
+    isodownload_parser.add_argument('-u', '--url', help='Url to use', metavar='URL', required=True)
+    isodownload_parser.add_argument('iso', help=isodownload_help, metavar='ISO', nargs='?')
     isodownload_parser.set_defaults(func=download_iso)
     download_subparsers.add_parser('iso', parents=[isodownload_parser], description=isodownload_desc,
                                    help=isodownload_desc)
