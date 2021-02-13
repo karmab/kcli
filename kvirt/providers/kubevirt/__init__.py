@@ -981,12 +981,12 @@ class Kubevirt(Kubecommon):
                 return {'result': 'success'}
         return {'result': 'failure', 'reason': 'image %s not found' % image}
 
-    def add_image(self, image, pool, short=None, cmd=None, name=None):
-        if common.is_debian9(image) or common.is_debian10(image) or common.is_ubuntu(image):
+    def add_image(self, url, pool, short=None, cmd=None, name=None):
+        if common.is_debian9(url) or common.is_debian10(url) or common.is_ubuntu(url):
             size = 3
-        elif 'fedora' in image.lower():
+        elif 'fedora' in url.lower():
             size = 5
-        elif 'rhcos' in image.lower():
+        elif 'rhcos' in url.lower():
             size = 20
         else:
             size = 11
@@ -994,10 +994,10 @@ class Kubevirt(Kubecommon):
         pool = self.check_pool(pool)
         namespace = self.namespace
         cdi = self.cdi
-        shortimage = os.path.basename(image).split('?')[0]
+        shortimage = os.path.basename(url).split('?')[0]
         uncompressed = shortimage.replace('.gz', '').replace('.xz', '').replace('.bz2', '')
         if name is None:
-            volname = [k for k in IMAGES if IMAGES[k] == image][0]
+            volname = [k for k in IMAGES if IMAGES[k] == url][0]
         else:
             volname = name.replace('_', '-').replace('.', '-').lower()
         now = datetime.datetime.now().strftime("%Y%M%d%H%M")
@@ -1008,7 +1008,7 @@ class Kubevirt(Kubecommon):
                'apiVersion': 'v1', 'metadata': {'name': volname, 'annotations': {'kcli/image': uncompressed}}}
         if cdi:
             pprint("Cloning in namespace %s" % namespace)
-            pvc['metadata']['annotations'] = {'cdi.kubevirt.io/storage.import.endpoint': image}
+            pvc['metadata']['annotations'] = {'cdi.kubevirt.io/storage.import.endpoint': url}
         else:
             pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'Never',
                                            'containers': [{'image': 'kubevirtci/disk-importer',
@@ -1018,7 +1018,7 @@ class Kubevirt(Kubecommon):
                                                            'env': [{'name': 'CURL_OPTS', 'value': '-L'},
                                                                    {'name': 'INSTALL_TO',
                                                                     'value': '/storage/disk.img'},
-                                                                   {'name': 'URL', 'value': image}]}],
+                                                                   {'name': 'URL', 'value': url}]}],
                                            'volumes': [{'name': 'storage1',
                                                         'persistentVolumeClaim': {'claimName': volname}}]},
                    'apiVersion': 'v1', 'metadata': {'name': podname}}

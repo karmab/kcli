@@ -780,16 +780,16 @@ class Kgcp(object):
         except:
             return {'result': 'failure', 'reason': 'Image %s not found' % image}
 
-    def add_image(self, image, pool, short=None, cmd=None, name=None):
+    def add_image(self, url, pool, short=None, cmd=None, name=None):
         conn = self.conn
         project = self.project
-        shortimage = os.path.basename(image).split('?')[0].replace('.tar.gz', '').replace('.', '-').replace('-', '.')
-        if 'rhcos' in image:
+        shortimage = os.path.basename(url).split('?')[0].replace('.tar.gz', '').replace('.', '-').replace('-', '.')
+        if 'rhcos' in url:
             shortimage = "rhcos-%s" % shortimage
         pprint("Adding image %s" % shortimage)
         image_body = {'name': shortimage, 'licenses': ["projects/vm-options/global/licenses/enable-vmx"]}
-        if image.endswith('tar.gz'):
-            image_body['rawDisk'] = {'source': image}
+        if url.endswith('tar.gz'):
+            image_body['rawDisk'] = {'source': url}
         operation = conn.images().insert(project=project, body=image_body).execute()
         self._wait_for_operation(operation)
         return {'result': 'success'}

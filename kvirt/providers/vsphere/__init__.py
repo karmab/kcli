@@ -1105,13 +1105,13 @@ class Ksphere:
     def vm_ports(self, name):
         return []
 
-    def add_image(self, image, pool, short=None, cmd=None, name=None):
+    def add_image(self, url, pool, short=None, cmd=None, name=None):
         si = self.si
         rootFolder = self.rootFolder
-        shortimage = os.path.basename(image).split('?')[0]
+        shortimage = os.path.basename(url).split('?')[0]
         if name is None:
             name = name.replace('.ova', '').replace('.x86_64', '')
-        if not image.endswith('ova'):
+        if not url.endswith('ova'):
             return {'result': 'failure', 'reason': "Invalid image. Only ovas are supported"}
         if shortimage in self.volumes():
             pprint("Template %s already there" % shortimage)
@@ -1120,7 +1120,7 @@ class Ksphere:
             return {'result': 'failure', 'reason': "Pool %s not found" % pool}
         if not os.path.exists('/tmp/%s' % shortimage):
             pprint("Downloading locally %s" % shortimage)
-            downloadcmd = "curl -Lo /tmp/%s -f '%s'" % (shortimage, image)
+            downloadcmd = "curl -Lo /tmp/%s -f '%s'" % (shortimage, url)
             code = os.system(downloadcmd)
             if code != 0:
                 return {'result': 'failure', 'reason': "Unable to download indicated image"}

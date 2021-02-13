@@ -2231,7 +2231,12 @@ $INFO
                 hosts_content = base64.b64encode(hosts_content.encode()).decode("UTF-8")
             finaldata = templ.render(api_ip=api_ip, role=role, hosts_content=hosts_content)
             _files = [{"path": "/root/config.ign", "content": finaldata}]
-            iso_overrides = {'scripts': ['%s/iso.sh' % plandir], 'files': _files}
+            if os.path.exists('iso.sh'):
+                pprint("Using local iso.sh script")
+                isoscript = 'iso.sh'
+            else:
+                isoscript = '%s/iso.sh' % plandir
+            iso_overrides = {'scripts': [isoscript], 'files': _files}
             iso_overrides.update(overrides)
             result = config.create_vm('autoinstaller', 'rhcos46', overrides=iso_overrides, onlyassets=True)
             if 'reason' in result:

@@ -2580,9 +2580,11 @@ class Kvirt(object):
                     continue
         return {'result': 'failure', 'reason': 'Image %s not found' % image}
 
-    def add_image(self, image, pool, cmd=None, name=None):
+    def add_image(self, url, pool, cmd=None, name=None):
         poolname = pool
-        shortimage = os.path.basename(image).split('?')[0]
+        shortimage = os.path.basename(url).split('?')[0]
+        if name is not None and name.endswith('iso'):
+            shortimage = name
         shortimage_uncompressed = shortimage.replace('.gz', '').replace('.xz', '').replace('.bz2', '')
         conn = self.conn
         volumes = []
@@ -2603,10 +2605,10 @@ class Kvirt(object):
         if name == 'rhcos42':
             shortimage += '.gz'
         if self.host == 'localhost' or self.host == '127.0.0.1':
-            downloadcmd = "curl -Lo %s/%s -f '%s'" % (downloadpath, shortimage, image)
+            downloadcmd = "curl -Lo %s/%s -f '%s'" % (downloadpath, shortimage, url)
         elif self.protocol == 'ssh':
             downloadcmd = 'ssh %s -p %s %s@%s "curl -Lo %s/%s -f \'%s\'"' % (self.identitycommand, self.port, self.user,
-                                                                             self.host, downloadpath, shortimage, image)
+                                                                             self.host, downloadpath, shortimage, url)
         code = call(downloadcmd, shell=True)
         if code == 23:
             pprint("Consider running the following command on the hypervisor:")

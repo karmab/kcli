@@ -930,8 +930,8 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                 return {'result': 'success'}
         return {'result': 'failure', 'reason': "Image %s not found" % image}
 
-    def add_image(self, image, pool, short=None, cmd=None, name=None):
-        shortimage = os.path.basename(image).split('?')[0]
+    def add_image(self, url, pool, short=None, cmd=None, name=None):
+        shortimage = os.path.basename(url).split('?')[0]
         if shortimage in self.volumes():
             pprint("Template %s already there" % shortimage)
             return {'result': 'success'}
@@ -984,7 +984,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         if not disksearch:
             if not os.path.exists('/tmp/%s' % shortimage):
                 pprint("Downloading locally %s" % shortimage)
-                downloadcmd = "curl -Lo /tmp/%s -f '%s'" % (shortimage, image)
+                downloadcmd = "curl -Lo /tmp/%s -f '%s'" % (shortimage, url)
                 code = os.system(downloadcmd)
                 if code != 0:
                     return {'result': 'failure', 'reason': "Unable to download indicated image"}
