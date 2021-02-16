@@ -325,8 +325,8 @@ def create(config, plandir, cluster, overrides):
     ignore_hosts = data.get('ignore_hosts', False)
     if sno:
         data['version'] = 'ci'
-        tag = 'registry.svc.ci.openshift.org/sno-dev/openshift-bip:0.3.0'
-        print("Using %s" % tag)
+        tag = 'registry.svc.ci.openshift.org/sno-dev/openshift-bip:0.5.0'
+        pprint("Using %s" % tag)
         data['tag'] = tag
         masters = 1
         workers = 0

@@ -72,6 +72,10 @@ platform:
 {% else %} 
   none: {}
 {% endif %}
+{% if sno %}
+BootstrapInPlace:
+  InstallationDisk: /dev/{{ sno_disk | basename }}
+{% endif %}
 {% if ca != None %}
 additionalTrustBundle: |
  {{ ca | replace('\n', '\n ') }}
