@@ -333,6 +333,8 @@ def create(config, plandir, cluster, overrides):
         masters = 1
         workers = 0
         data['mdns'] = False
+        data['kubetype'] = 'openshift'
+        data['kube'] = data['cluster']
     masters = data.get('masters', 1)
     if masters == 0:
         error("Invalid number of masters")

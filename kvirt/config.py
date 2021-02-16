@@ -2148,6 +2148,8 @@ $INFO
     def delete_kube(self, cluster, overrides={}):
         k = self.k
         cluster = overrides.get('cluster', cluster)
+        if cluster is None:
+            cluster = 'testk'
         clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
         if os.path.exists(clusterdir):
             pprint("Deleting directory %s" % clusterdir)
