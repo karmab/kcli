@@ -8,7 +8,7 @@ import os
 import sys
 from kvirt.common import error, pprint, success, warning, info2
 from kvirt.common import gen_mac, get_oc, get_values, pwd_path, fetch
-from kvirt.common import get_commit_rhcos, get_latest_fcos, kube_create_app, patch_bootstrap
+from kvirt.common import get_commit_rhcos, get_latest_fcos, kube_create_app, patch_bootstrap, generate_rhcos_iso
 from kvirt.common import ssh, scp, _ssh_credentials
 from kvirt.openshift.calico import calicoassets
 import re
@@ -606,32 +606,7 @@ def create(config, plandir, cluster, overrides):
             pprint("Embed iso.ign in rhcos live iso")
             os._exit(0)
         else:
-            pool = data['pool']
-            if 'rhcos-live.x86_64.iso' not in k.volumes(iso=True):
-                pprint("Downloading rhcos-live.x86_64.iso")
-                liveiso = "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/"
-                liveiso += "latest/latest/rhcos-live.x86_64.iso"
-                k.add_image(liveiso, data['pool'])
-            if '%s.iso' % cluster in [os.path.basename(iso) for iso in k.volumes(iso=True)]:
-                warning("Deleting old iso %s" % '%s.iso' % cluster)
-                k.delete_image('%s.iso' % cluster)
-            poolpath = k.get_pool_path(pool)
-            coreosinstaller = "podman run --privileged --rm -w /data -v %s:/data -v /dev:/dev" % poolpath
-            if not os.path.exists('/Users'):
-                coreosinstaller += " -v /run/udev:/run/udev"
-            coreosinstaller += " quay.io/coreos/coreos-installer:release"
-            isocmd = "%s iso ignition embed -fi iso.ign -o %s.iso rhcos-live.x86_64.iso" % (coreosinstaller, cluster)
-            if k.host in ['localhost', '127.0.0.1']:
-                if find_executable('podman') is None:
-                    error("podman is required in order to embed iso ignition")
-                    os._exit(1)
-                copy2('iso.ign', poolpath)
-                os.system(isocmd)
-            elif k.protocol == 'ssh':
-                scpcmd = 'scp %s -P %s iso.ign %s@%s:%s' % (k.identitycommand, k.port, k.user, k.host, poolpath)
-                os.system(scpcmd)
-                isocmd = 'ssh %s -p %s %s@%s "%s"' % (k.identitycommand, k.port, k.user, k.host, isocmd)
-                os.system(isocmd)
+            generate_rhcos_iso(k, cluster, data['pool'])
             if not sno_baremetal:
                 pprint("Deploying sno")
                 result = config.plan(plan, inputfile='%s/sno.yml' % plandir, overrides=data)
@@ -649,6 +624,8 @@ def create(config, plandir, cluster, overrides):
                 installcommand += " || %s" % installcommand
                 pprint("Launching install-complete step. It will be retried one extra time in case of timeouts")
                 call(installcommand, shell=True)
+            else:
+                warning("You might need to create manual entries in /etc/hosts to reach the sno installation")
         os._exit(0)
     call('openshift-install --dir=%s create ignition-configs' % clusterdir, shell=True)
     for role in ['master', 'worker']:

@@ -14,7 +14,7 @@ from kvirt import ansibleutils
 from kvirt.jinjafilters import jinjafilters
 from kvirt import nameutils
 from kvirt import common
-from kvirt.common import error, pprint, success, warning
+from kvirt.common import error, pprint, success, warning, generate_rhcos_iso
 from kvirt import k3s
 from kvirt import kubeadm
 from kvirt.expose import Kexposer
@@ -31,7 +31,6 @@ import socket
 from shutil import rmtree
 import sys
 from time import sleep
-from subprocess import call
 import webbrowser
 import yaml
 
@@ -2244,24 +2243,10 @@ $INFO
             else:
                 f.write(result['data'])
         if iso:
-            if not os.path.exists('rhcos-live.x86_64.iso'):
-                pprint("Downloading rhcos-live.x86_64.iso")
-                download = "curl %s > rhcos-live.x86_64.iso" % liveiso
-                call(download, shell=True)
-            if find_executable('podman') is not None:
-                engine = 'podman'
-            elif find_executable('docker') is None:
-                engine = 'docker'
+            if config.type != 'kvm':
+                warning("Iso only get generated for kvm type")
             else:
-                error("Neither podman or docker found so can't embed iso ignition in live iso")
-                os._exit(1)
-            pprint("Using %s to embed iso ignition in live iso" % engine)
-            coreosinstaller = "%s run --privileged --rm -w /data -v $PWD:/data -v /dev:/dev" % engine
-            if not os.path.exists('/Users'):
-                coreosinstaller += " -v /run/udev:/run/udev"
-            coreosinstaller += " quay.io/coreos/coreos-installer:release"
-            embedcmd = "%s iso ignition embed -fi iso.ign rhcos-live.x86_64.iso" % coreosinstaller
-            os.popen(embedcmd)
+                generate_rhcos_iso(self.k, cluster, overrides.get('pool', 'default'))
 
     def handle_finishfiles(self, name, finishfiles):
         current_ip = common._ssh_credentials(self.k, name)[1]

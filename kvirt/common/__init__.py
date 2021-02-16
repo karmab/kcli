@@ -20,7 +20,7 @@ from urllib.request import urlretrieve, urlopen, Request
 import json
 import os
 from subprocess import call
-from shutil import move
+from shutil import copy2, move
 from tempfile import TemporaryDirectory
 import yaml
 
@@ -1653,3 +1653,31 @@ def patch_bootstrap(path, patch, service):
 
 def filter_compression_extension(name):
     return name.replace('.gz', '').replace('.xz', '').replace('.bz2', '')
+
+
+def generate_rhcos_iso(k, cluster, pool):
+    if 'rhcos-live.x86_64.iso' not in k.volumes(iso=True):
+        pprint("Downloading rhcos-live.x86_64.iso")
+        liveiso = "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/"
+        liveiso += "latest/latest/rhcos-live.x86_64.iso"
+        k.add_image(liveiso, pool)
+    if '%s.iso' % cluster in [os.path.basename(iso) for iso in k.volumes(iso=True)]:
+        warning("Deleting old iso %s" % '%s.iso' % cluster)
+        k.delete_image('%s.iso' % cluster)
+    poolpath = k.get_pool_path(pool)
+    coreosinstaller = "podman run --privileged --rm -w /data -v %s:/data -v /dev:/dev" % poolpath
+    if not os.path.exists('/Users'):
+        coreosinstaller += " -v /run/udev:/run/udev"
+    coreosinstaller += " quay.io/coreos/coreos-installer:release"
+    isocmd = "%s iso ignition embed -fi iso.ign -o %s.iso rhcos-live.x86_64.iso" % (coreosinstaller, cluster)
+    if k.host in ['localhost', '127.0.0.1']:
+        if find_executable('podman') is None:
+            error("podman is required in order to embed iso ignition")
+            os._exit(1)
+        copy2('iso.ign', poolpath)
+        os.system(isocmd)
+    elif k.protocol == 'ssh':
+        scpcmd = 'scp %s -P %s iso.ign %s@%s:%s' % (k.identitycommand, k.port, k.user, k.host, poolpath)
+        os.system(scpcmd)
+        isocmd = 'ssh %s -p %s %s@%s "%s"' % (k.identitycommand, k.port, k.user, k.host, isocmd)
+        os.system(isocmd)
