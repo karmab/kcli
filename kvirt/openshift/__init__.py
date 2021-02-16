@@ -324,10 +324,12 @@ def create(config, plandir, cluster, overrides):
     sno = data.get('sno', False)
     ignore_hosts = data.get('ignore_hosts', False)
     if sno:
-        data['version'] = 'ci'
-        tag = 'registry.svc.ci.openshift.org/sno-dev/openshift-bip:0.5.0'
-        pprint("Using %s" % tag)
-        data['tag'] = tag
+        sno_baremetal = data.get('sno_baremetal', False)
+        sno_disk = data.get('sno_disk', 'vda')
+        if sno_baremetal and 'vda' in sno_disk:
+            error("You need to define correct sno_disk for baremetal")
+            os._exit(1)
+        # tag = 'registry.svc.ci.openshift.org/sno-dev/openshift-bip:0.5.0'
         masters = 1
         workers = 0
         data['mdns'] = False
@@ -585,18 +587,24 @@ def create(config, plandir, cluster, overrides):
         copy2("%s/dualstack.yml" % plandir, "%s/openshift" % clusterdir)
     if sno:
         sno_name = "%s-sno" % cluster
-        sno_baremetal = data.get('sno_baremetal', False)
-        call('openshift-install --dir=%s create single-node-ignition-config' % clusterdir, shell=True)
+        sno_dns = data.get('sno_dns', True)
+        run = call('openshift-install --dir=%s create single-node-ignition-config' % clusterdir, shell=True)
+        if run != 0:
+            error("Hit issue.Leaving")
+            os._exit(run)
         os.rename("%s/bootstrap-in-place-for-live-iso.ign" % clusterdir, "./%s.ign" % sno_name)
         with open("iso.ign", 'w') as f:
-            _files = [{"path": "/root/complete-installation.service",
-                       "origin": "%s/sno-finish.service" % plandir},
-                      {"path": "/usr/local/bin/complete-installation.sh", "origin": "%s/sno-finish.sh" % plandir,
-                      "mode": 700},
-                      {"path": "/root/coredns.yml", "origin": "%s/staticpods/coredns.yml" % plandir},
-                      {"path": "/root/Corefile", "origin": "%s/Corefile" % plandir},
-                      {"path": "/root/99-forcedns", "origin": "%s/99-forcedns" % plandir}]
-            iso_overrides = {'files': _files}
+            if sno_dns:
+                _files = [{"path": "/root/sno-finish.service",
+                           "origin": "%s/sno-finish.service" % plandir},
+                          {"path": "/usr/local/bin/sno-finish.sh", "origin": "%s/sno-finish.sh" % plandir,
+                          "mode": 700},
+                          {"path": "/root/coredns.yml", "origin": "%s/staticpods/coredns.yml" % plandir},
+                          {"path": "/root/Corefile", "origin": "%s/Corefile" % plandir},
+                          {"path": "/root/99-forcedns", "origin": "%s/99-forcedns" % plandir}]
+                iso_overrides = {'files': _files}
+            else:
+                iso_overrides = {}
             iso_overrides.update(data)
             result = config.create_vm(sno_name, 'rhcos46', overrides=iso_overrides, onlyassets=True)
             pprint("Writing iso.ign to current dir")
