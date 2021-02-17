@@ -11,6 +11,7 @@ from kvirt.common import gen_mac, get_oc, get_values, pwd_path, fetch
 from kvirt.common import get_commit_rhcos, get_latest_fcos, kube_create_app, patch_bootstrap, generate_rhcos_iso
 from kvirt.common import ssh, scp, _ssh_credentials
 from kvirt.openshift.calico import calicoassets
+from kvirt.openshift.contrail import contrail_manifests, contrail_openshifts
 import re
 from shutil import copy2, rmtree
 from subprocess import call
@@ -585,6 +586,31 @@ def create(config, plandir, cluster, overrides):
     if 'network_type' in data and data['network_type'] == 'Calico':
         for asset in calicoassets:
             fetch(asset, manifestsdir)
+    if 'network_type' in data and data['network_type'] == 'Contrail':
+        pprint("Fetching contrail assets")
+        for asset in contrail_manifests:
+            fetch(asset, "%s/manifests" % clusterdir)
+        for asset in contrail_openshifts:
+            fetch(asset, "%s/openshift" % clusterdir)
+        contrail_registry = data.get('contrail_registry', "hub.juniper.net")
+        contrail_user = data.get('contrail_user')
+        contrail_password = data.get('contrail_password')
+        if contrail_user is None:
+            error("Missing contrail_user")
+            os._exit(1)
+        if contrail_password is None:
+            error("Missing contrail_password")
+            os._exit(1)
+        contrail_creds = "%s:%s" % (contrail_user, contrail_password)
+        contrail_auth = b64encode(contrail_creds.encode()).decode("UTF-8")
+        contrail_auth = {"auths": {contrail_registry: {"username": contrail_user, "password": contrail_password,
+                                                       "auth": contrail_auth}}}
+        contrail_auth = json.dumps(contrail_auth)
+        contrail_data = {'contrail_auth': contrail_auth}
+        contrail_secret = config.process_inputfile(cluster, "%s/contrail_registry_secret.j2" % plandir,
+                                                   overrides=contrail_data)
+        with open("%s/manifests/00-contrail-02-registry-secret.yaml" % clusterdir, 'w') as f:
+            f.write(contrail_secret)
     if dualstack:
         copy2("%s/dualstack.yml" % plandir, "%s/openshift" % clusterdir)
     if sno:
