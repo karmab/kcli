@@ -606,7 +606,7 @@ def create(config, plandir, cluster, overrides):
         contrail_auth = {"auths": {contrail_registry: {"username": contrail_user, "password": contrail_password,
                                                        "auth": contrail_auth}}}
         contrail_auth = json.dumps(contrail_auth)
-        contrail_data = {'contrail_auth': contrail_auth}
+        contrail_data = {'contrail_auth': b64encode(contrail_auth.encode()).decode("UTF-8")}
         contrail_secret = config.process_inputfile(cluster, "%s/contrail_registry_secret.j2" % plandir,
                                                    overrides=contrail_data)
         with open("%s/manifests/00-contrail-02-registry-secret.yaml" % clusterdir, 'w') as f:
