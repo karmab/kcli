@@ -928,9 +928,9 @@ class Kvirt(object):
         secureboot = overrides.get('secureboot', False)
         secure = 'yes' if secureboot else 'no'
         if uefi or secureboot:
+            machine = 'q35'
             osfirmware = "firmware='efi'"
             if secureboot:
-                machine = 'q35'
                 smmxml = "<smm state='on'/>"
             ramxml = "<loader readonly='yes' secure='%s'/>" % secure
         vmxml = """<domain type='{virttype}' {namespace}>
@@ -1600,7 +1600,8 @@ class Kvirt(object):
             vm.destroy()
         nvram = False
         for element in list(root.iter('os')):
-            if element.find('nvram') is not None:
+            firmware = element.get('firmware')
+            if element.find('nvram') is not None or (firmware is not None and firmware == 'efi'):
                 nvram = True
                 break
         if nvram:
