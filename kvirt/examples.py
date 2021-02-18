@@ -112,6 +112,8 @@ $ kcli create vm -i CentOS-7-x86_64-GenericCloud.qcow2 -P disks=[10,20] -P nets=
 # Use more advanced information for nets
 $ kcli create vm -i centos8 -P nets=['{"name": "default", "type": "e1000"}']
 
+# Or specify a custom mtu
+$ kcli create vm -i centos8 -P nets=['{"name": "default", "mtu": 1400}']
 
 # Use more advanced information for disks
 $ kcli create vm -i centos8 -P disks=['{"size": 10, "interface": "sata"}']

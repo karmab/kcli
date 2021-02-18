@@ -440,6 +440,7 @@ class Kvirt(object):
             nicnuma = None
             macxml = ''
             ovsxml = ''
+            mtuxml = ''
             nettype = 'virtio'
             if isinstance(net, str):
                 netname = net
@@ -460,6 +461,8 @@ class Kvirt(object):
                     metadataxml += "<kvirt:ip >%s</kvirt:ip>" % nets[index]['ip']
                 if 'numa' in nets[index] and numa:
                     nicnuma = nets[index]['numa']
+                if 'mtu' in nets[index]:
+                    mtuxml = "<mtu size='%s'/>" % nets[index]['mtu']
             if ips and len(ips) > index and ips[index] is not None and\
                     netmasks and len(netmasks) > index and netmasks[index] is not None and gateway is not None:
                 nets[index]['ip'] = ips[index]
@@ -504,8 +507,9 @@ class Kvirt(object):
 %s
 %s
 %s
+%s
 <model type='%s'/>
-</interface>""" % (netxml, iftype, macxml, sourcexml, ovsxml, nicnumaxml, nettype)
+</interface>""" % (netxml, iftype, mtuxml, macxml, sourcexml, ovsxml, nicnumaxml, nettype)
         metadataxml += "</kvirt:info></metadata>"
         if guestagent:
             gcmds = []
@@ -2721,7 +2725,9 @@ class Kvirt(object):
         <kvirt:plan>%s</kvirt:plan>
         </kvirt:info>
         </metadata>""" % plan
+        mtuxml = '<mtu size="%s"/>' % overrides['mtu'] if 'mtu' in overrides else ''
         networkxml = """<network><name>%s</name>
+                    %s
                     %s
                     %s
                     %s
@@ -2729,7 +2735,8 @@ class Kvirt(object):
                     <ip address='%s' prefix='%s' family='%s'>
                     %s
                     </ip>
-                    </network>""" % (name, metadata, natxml, bridgexml, domainxml, gateway, cidr, family, dhcpxml)
+                    </network>""" % (name, metadata, mtuxml, natxml, bridgexml, domainxml, gateway, cidr, family,
+                                     dhcpxml)
         new_net = conn.networkDefineXML(networkxml)
         new_net.setAutostart(True)
         new_net.create()
