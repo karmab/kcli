@@ -503,6 +503,9 @@ def create(config, plandir, cluster, overrides):
         pprint("Deploying disconnected vm %s" % disconnected_vm)
         data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
         disconnected_plan = "%s-reuse" % plan if disconnected_reuse else plan
+        if disconnected_deploy and version == 'ci' and 'disconnected_origin' not in overrides:
+            warning("Forcing disconnected_origin to registry.ci.openshift.org")
+            data['disconnected_origin'] = "registry.ci.openshift.org"
         result = config.plan(disconnected_plan, inputfile='%s/disconnected.yml' % plandir, overrides=data)
         if result['result'] != 'success':
             os._exit(1)
@@ -545,6 +548,9 @@ def create(config, plandir, cluster, overrides):
         data['network_type'] = 'OVNKubernetes'
         data['ipv6'] = True
         overrides['ipv6'] = True
+        if not disconnected_deploy and disconnected_url is None:
+            error("ipv6 requires to set disconnected_deploy to True or to define disconnected_url/user/password")
+            os._exit(1)
     installconfig = config.process_inputfile(cluster, "%s/install-config.yaml" % plandir, overrides=data)
     with open("%s/install-config.yaml" % clusterdir, 'w') as f:
         f.write(installconfig)
