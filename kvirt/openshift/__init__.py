@@ -342,6 +342,12 @@ def create(config, plandir, cluster, overrides):
         os._exit(1)
     network = data.get('network')
     ipv6 = data['ipv6']
+    disconnected_deploy = data.get('disconnected_deploy', False)
+    disconnected_reuse = data.get('disconnected_reuse', False)
+    disconnected_url = data.get('disconnected_url')
+    disconnected_user = data.get('disconnected_user')
+    disconnected_password = data.get('disconnected_password')
+    disconnected_prefix = data.get('disconnected_prefix', 'ocp4')
     dualstack = data.get('dualstack')
     upstream = data.get('upstream')
     version = data.get('version')
@@ -368,6 +374,14 @@ def create(config, plandir, cluster, overrides):
             os._exit(1)
     if not sno and ':' in api_ip:
         ipv6 = True
+    if ipv6:
+        data['network_type'] = 'OVNKubernetes'
+        data['ipv6'] = True
+        overrides['ipv6'] = True
+        if not disconnected_deploy and disconnected_url is None:
+            warning("Forcing disconnected_deploy to True as no disconnected_url was provided")
+            data['disconnected_deploy'] = True
+            disconnected_deploy = True
     ingress_ip = data.get('ingress_ip')
     if ingress_ip is not None and api_ip is not None and ingress_ip == api_ip:
         ingress_ip = None
@@ -388,12 +402,6 @@ def create(config, plandir, cluster, overrides):
                 os._exit(1)
     masters = data.get('masters')
     workers = data.get('workers')
-    disconnected_deploy = data.get('disconnected_deploy', False)
-    disconnected_reuse = data.get('disconnected_reuse', False)
-    disconnected_url = data.get('disconnected_url')
-    disconnected_user = data.get('disconnected_user')
-    disconnected_password = data.get('disconnected_password')
-    disconnected_prefix = data.get('disconnected_prefix', 'ocp4')
     tag = data.get('tag')
     pub_key = data.get('pub_key')
     pull_secret = pwd_path(data.get('pull_secret')) if not upstream else "%s/fake_pull.json" % plandir
@@ -503,7 +511,7 @@ def create(config, plandir, cluster, overrides):
         pprint("Deploying disconnected vm %s" % disconnected_vm)
         data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
         disconnected_plan = "%s-reuse" % plan if disconnected_reuse else plan
-        if disconnected_deploy and version == 'ci' and 'disconnected_origin' not in overrides:
+        if version == 'ci' and 'disconnected_origin' not in overrides:
             warning("Forcing disconnected_origin to registry.ci.openshift.org")
             data['disconnected_origin'] = "registry.ci.openshift.org"
         result = config.plan(disconnected_plan, inputfile='%s/disconnected.yml' % plandir, overrides=data)
@@ -544,13 +552,6 @@ def create(config, plandir, cluster, overrides):
         data['pull_secret'] = json.dumps(auths)
     else:
         data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
-    if ipv6:
-        data['network_type'] = 'OVNKubernetes'
-        data['ipv6'] = True
-        overrides['ipv6'] = True
-        if not disconnected_deploy and disconnected_url is None:
-            error("ipv6 requires to set disconnected_deploy to True or to define disconnected_url/user/password")
-            os._exit(1)
     installconfig = config.process_inputfile(cluster, "%s/install-config.yaml" % plandir, overrides=data)
     with open("%s/install-config.yaml" % clusterdir, 'w') as f:
         f.write(installconfig)
