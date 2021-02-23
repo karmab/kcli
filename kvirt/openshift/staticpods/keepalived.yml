@@ -34,7 +34,7 @@ spec:
         {% if name != cluster + '-bootstrap' %}
         NIC=br-ex
         {% endif %}
-        {% elif network_type == 'Contrail' %}
+        {% elif network_type == 'Contrail' and 'bootstrap' not in name %}
         NIC=vhost0
         NETMASK=$(ip -o -f inet addr show | awk '/scope global/ {print $4}' | head -1 | cut -d'/' -f2)
         {% elif config_type == 'packet' %}

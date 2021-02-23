@@ -833,6 +833,9 @@ $INFO
             else:
                 msg = "Incorrect first disk spec"
                 return {'result': 'failure', 'reason': msg}
+            if 'rhcos' in image and memory < 1024:
+                pprint("Adjusting memory to 1024Mb")
+                memory = 1024
         metadata = {'plan': plan, 'profile': profilename}
         if reservedns and domain is not None:
             metadata['domain'] = domain
