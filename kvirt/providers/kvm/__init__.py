@@ -2424,7 +2424,7 @@ class Kvirt(object):
         networks = {}
         nicnumber = 0
         for n in conn.listInterfaces():
-            networks[n.name()] = 'bridge'
+            networks[n] = 'bridge'
         for n in conn.listAllNetworks():
             networks[n.name()] = 'network'
         try:
