@@ -2223,17 +2223,20 @@ $INFO
         ignitionfile = "%s.ign" % role
         config = Kconfig()
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
+        finaldata = None
         if os.path.exists(ignitionfile):
             warning("Using existing %s" % ignitionfile)
+            finaldata = open(ignitionfile).read()
         with open("iso.ign", 'w') as f:
             pprint("Writing file iso.ign for %s in %s.%s" % (role, cluster, domain))
             isodir = os.path.dirname(common.__file__)
-            env = Environment(loader=FileSystemLoader(isodir), extensions=['jinja2.ext.do'], trim_blocks=True,
-                              lstrip_blocks=True)
-            templ = env.get_template(os.path.basename("ignition.j2"))
-            if hosts_content is not None:
-                hosts_content = base64.b64encode(hosts_content.encode()).decode("UTF-8")
-            finaldata = templ.render(api_ip=api_ip, role=role, hosts_content=hosts_content)
+            if finaldata is None:
+                env = Environment(loader=FileSystemLoader(isodir), extensions=['jinja2.ext.do'], trim_blocks=True,
+                                  lstrip_blocks=True)
+                templ = env.get_template(os.path.basename("ignition.j2"))
+                if hosts_content is not None:
+                    hosts_content = base64.b64encode(hosts_content.encode()).decode("UTF-8")
+                finaldata = templ.render(api_ip=api_ip, role=role, hosts_content=hosts_content)
             _files = [{"path": "/root/config.ign", "content": finaldata}]
             if os.path.exists('iso.sh'):
                 pprint("Using local iso.sh script")

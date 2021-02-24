@@ -1660,9 +1660,10 @@ def generate_rhcos_iso(k, cluster, pool):
         pprint("Downloading rhcos-live.x86_64.iso")
         liveiso = "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/"
         liveiso += "latest/latest/rhcos-live.x86_64.iso"
+        success("Creating iso %s.iso" % cluster)
         k.add_image(liveiso, pool)
     if '%s.iso' % cluster in [os.path.basename(iso) for iso in k.volumes(iso=True)]:
-        warning("Deleting old iso %s" % '%s.iso' % cluster)
+        warning("Deleting old iso %s.iso" % cluster)
         k.delete_image('%s.iso' % cluster)
     poolpath = k.get_pool_path(pool)
     coreosinstaller = "podman run --privileged --rm -w /data -v %s:/data -v /dev:/dev" % poolpath
