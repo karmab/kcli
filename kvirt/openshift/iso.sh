@@ -5,7 +5,7 @@
 {% do nics.append("ip=" + nic + ":off") %}
 {% endfor %}
 {% endif %}
-firstboot_args='console=tty0 rd.neednet=1 {{ nics | join(" ") }}'
+firstboot_args='console=tty0 rd.neednet=1 {{ nics | join(" ") }} {{ extra_args|default("") }}'
 for vg in $(vgs -o name --noheadings) ; do vgremove -y $vg ; done
 for pv in $(pvs -o name --noheadings) ; do pvremove -y $pv ; done
 if [ -b /dev/vda ]; then
