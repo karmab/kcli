@@ -836,10 +836,12 @@ def create(config, plandir, cluster, overrides):
                 allnodes = ["%s-worker-%s" % (cluster, num) for num in range(workers)]
                 for node in allnodes:
                     k.add_nic(node, network)
+    if 'network_type' in data and data['network_type'] == 'Contrail':
+        pprint("Waiting 7mn on install to be stable")
+        sleep(420)
     call("oc adm taint nodes -l node-role.kubernetes.io/master node-role.kubernetes.io/master:NoSchedule-", shell=True)
     pprint("Deploying certs autoapprover cronjob")
-    timeout = 900 if 'network_type' in data and data['network_type'] == 'Contrail' else 60
-    autoapprovercmd = 'oc create -f %s/autoapprovercron.yml --request-timeout=%s' % (clusterdir, timeout)
+    autoapprovercmd = 'oc create -f %s/autoapprovercron.yml' % clusterdir
     call(autoapprovercmd, shell=True)
     if not minimal:
         installcommand = 'openshift-install --dir=%s wait-for install-complete' % clusterdir
