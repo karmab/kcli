@@ -806,7 +806,7 @@ def create(config, plandir, cluster, overrides):
             error("Leaving environment for debugging purposes")
             error("You can delete it with kcli delete cluster --yes %s" % cluster)
             os._exit(run)
-        todelete = ["%s-bootstrap" % cluster]
+        todelete = ["%s-bootstrap" % cluster] if 'network_type' in data and data['network_type'] == 'Contrail' else []
         if platform in ['openstack', 'vsphere', 'packet']:
             todelete.append("%s-bootstrap-helper" % cluster)
     else:
@@ -819,7 +819,9 @@ def create(config, plandir, cluster, overrides):
         if result['result'] != 'success':
             os._exit(1)
         call('openshift-install --dir=%s wait-for bootstrap-complete || exit 1' % clusterdir, shell=True)
-        todelete = ["%s-bootstrap" % cluster, "%s-bootstrap-helper" % cluster]
+        todelete = ["%s-bootstrap-helper" % cluster]
+        if 'network_type' not in data or data['network_type'] != 'Contrail':
+            todelete.insert(0, "%s-bootstrap" % cluster)
     if platform in virtplatforms:
         if workers > 0:
             pprint("Deploying workers")

@@ -42,6 +42,12 @@
     origin: staticpods/keepalived.yml
   - path: /etc/kubernetes/keepalived.conf
     origin: keepalived.conf
+{% if network_type == 'Contrail' %}
+  - path: /etc/kubernetes/manifests/haproxy.yml
+    origin: staticpods/haproxy.yml
+  - path: /etc/kubernetes/haproxy.cfg
+    origin: haproxy.cfg
+{% endif %}
 {% if config_type == 'packet' %}
   - path: /etc/kubernetes/packet-hack.sh
     origin: packet-hack.sh
