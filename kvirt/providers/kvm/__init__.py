@@ -254,8 +254,8 @@ class Kvirt(object):
         ipv6 = []
         machine = 'pc'
         if 'machine' in overrides:
-            warning("Forcing machine type to %s" % machine)
             machine = overrides['machine']
+            warning("Forcing machine type to %s" % machine)
         # sysinfo = "<smbios mode='sysinfo'/>"
         disksxml = ''
         fixqcow2path, fixqcow2backing = None, None
