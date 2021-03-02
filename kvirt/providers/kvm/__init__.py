@@ -494,11 +494,16 @@ class Kvirt(object):
                 else:
                     ovsxml.format("")
             if nicnuma is not None:
-                bus = nicnuma + 1
-                slot = nicslots[int(nicnuma)]
+                slot = nicslots[nicnuma] + 1
+                nicslots[nicnuma] = slot
+                if machine == 'q35':
+                    expandernumber = nicslots[nicnuma - 1] + 2 if nicnuma > 0 else 1
+                    bus = expandernumber + slot
+                    slot = 0
+                else:
+                    bus = nicnuma + 1
                 nicnumaxml = "<address type='pci' domain='0x0000' bus='0x0%s' slot='0x0%s' function='0x0'/>" % (bus,
                                                                                                                 slot)
-                nicslots[int(nicnuma)] += 1
             else:
                 nicnumaxml = ""
             netxml = """%s
@@ -673,8 +678,11 @@ class Kvirt(object):
         busxml = ""
         if cpuxml != '':
             if numa:
+                expander = 'pcie-expander-bus' if machine == 'q35' else 'pci-expander-bus'
+                pxb = 'pxb-pcie' if machine == 'q35' else 'pxb'
                 numamemory = 0
                 numaxml = '<numa>'
+                count = 1
                 for index, cell in enumerate(numa):
                     if not isinstance(cell, dict):
                         msg = "Can't process entry %s in numa block" % index
@@ -688,14 +696,25 @@ class Kvirt(object):
                             return {'result': 'failure', 'reason': msg}
                         numaxml += "<cell id='%s' cpus='%s' memory='%s' unit='MiB'/>" % (cellid, cellcpus, cellmemory)
                         numamemory += int(cellmemory)
-                        busxml += """<controller type='pci' index='%s' model='pci-expander-bus'>
-<model name='pxb'/>
+                        busxml += """<controller type='pci' index='%s' model='%s'>
+<model name='%s'/>
 <target busNr='%s'>
 <node>%s</node>
 </target>
 <alias name='pci.%s'/>
 <address type='pci' domain='0x0000' bus='0x00' function='0x0'/>
-</controller>""" % (index + 1, 254 - index * 2, cellid, index + 1)
+</controller>\n""" % (count, expander, pxb, 254 - index * 2, cellid, count)
+                        count += 1
+                        if machine == "q35":
+                            buscount = count - 1
+                            for slot in range(0, nicslots[cellid]):
+                                count += slot
+                                busxml += """<controller type='pci' index='%s' model='pcie-root-port'>
+<target chassis='%s' port='0x0'/>
+<alias name='pci.%s'/>
+<address type='pci' domain='0x0000' bus='0x0%s' slot='0x0%s' function='0x0'/>
+</controller>\n""" % (count, count, count, buscount, slot)
+                            count += 1
                 cpuxml += '%s</numa>' % numaxml
                 if numamemory > memory:
                     msg = "Can't use more memory for numa than assigned memory"
