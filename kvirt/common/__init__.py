@@ -1090,6 +1090,8 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
         storage["files"].append(cmdsdata)
         firstpath = "/usr/local/bin/first.sh"
         content = "[Service]\nType=oneshot\nExecStart=%s\n[Install]\nWantedBy=multi-user.target\n" % firstpath
+        if 'need_network' in overrides:
+            content += "[Unit]\nAfter=network-online.target\nWants=network-online.target\n"
         cmdunit = {"contents": content, "name": "first-boot.service", "enabled": True}
     if cmdunit is not None:
         systemd["units"].append(cmdunit)
@@ -1654,11 +1656,11 @@ def filter_compression_extension(name):
     return name.replace('.gz', '').replace('.xz', '').replace('.bz2', '')
 
 
-def generate_rhcos_iso(k, cluster, pool):
+def generate_rhcos_iso(k, cluster, pool, version='latest'):
     if 'rhcos-live.x86_64.iso' not in k.volumes(iso=True):
         pprint("Downloading rhcos-live.x86_64.iso")
         liveiso = "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/"
-        liveiso += "latest/latest/rhcos-live.x86_64.iso"
+        liveiso += "%s/latest/rhcos-live.x86_64.iso" % version
         success("Creating iso %s.iso" % cluster)
         k.add_image(liveiso, pool)
     if '%s.iso' % cluster in [os.path.basename(iso) for iso in k.volumes(iso=True)]:

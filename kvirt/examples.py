@@ -186,6 +186,9 @@ $ kcli create plandata -f my_plan.yml
 isocreate = """# Generate an openshift iso
 $ kcli create openshift-iso testk.karmalabs.com
 
+# Do the same for a 4.5 install
+$ kcli create openshift-iso -P version=4.5 testk.karmalabs.com
+
 # Only creates the ignition for the iso
 $ kcli create openshift-iso -P iso=false testk.karmalabs.com
 

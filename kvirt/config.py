@@ -2193,12 +2193,18 @@ $INFO
         kexposer.run()
 
     def create_openshift_iso(self, cluster, overrides={}):
-        liveiso_version = overrides.get('version', 'latest')
-        if liveiso_version not in ['latest', 'pre-release']:
-            error("Incorrect live iso version. Choose between latest and pre-release")
+        metal_url = None
+        iso_version = overrides.get('version', 'latest')
+        if iso_version not in ['latest', 'pre-release'] and not iso_version.startswith('4.'):
+            error("Incorrect live iso version. Choose between latest, pre-release or 4.X")
             os._exit(1)
-        liveiso = "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/"
-        liveiso += "%s/latest/rhcos-live.x86_64.iso" % liveiso_version
+        elif iso_version.startswith('4.'):
+            minor_version = iso_version.split('.')[1]
+            if minor_version.isdigit() and int(minor_version) < 6:
+                metal_url = "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/%s/latest/" % iso_version
+                metal_url += "rhcos-metal.x86_64.raw.gz"
+                warning("Embedding metal url in iso for target version and installing with a more recent iso")
+                iso_version = 'latest'
         api_ip = overrides.get('api_ip')
         domain = overrides.get('domain')
         role = overrides.get('role', 'worker')
@@ -2243,7 +2249,9 @@ $INFO
                 isoscript = 'iso.sh'
             else:
                 isoscript = '%s/iso.sh' % plandir
-            iso_overrides = {'scripts': [isoscript], 'files': _files}
+            iso_overrides = {'scripts': [isoscript], 'files': _files, 'metal_url': metal_url}
+            if metal_url is not None:
+                iso_overrides['need_network'] = True
             iso_overrides.update(overrides)
             result = config.create_vm('autoinstaller', 'rhcos46', overrides=iso_overrides, onlyassets=True)
             if 'reason' in result:
@@ -2254,7 +2262,7 @@ $INFO
             if config.type != 'kvm':
                 warning("Iso only get generated for kvm type")
             else:
-                generate_rhcos_iso(self.k, cluster, overrides.get('pool', 'default'))
+                generate_rhcos_iso(self.k, cluster, overrides.get('pool', 'default'), version=iso_version)
 
     def handle_finishfiles(self, name, finishfiles):
         current_ip = common._ssh_credentials(self.k, name)[1]
