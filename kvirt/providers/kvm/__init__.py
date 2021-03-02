@@ -186,6 +186,8 @@ class Kvirt(object):
         macosx = False
         diskpath = None
         qemuextra = overrides.get('qemuextra')
+        iommuxml = ""
+        ioapicxml = ""
         if 'session' in self.url:
             usermode = True
             userport = common.get_free_port()
@@ -463,6 +465,10 @@ class Kvirt(object):
                     nicnuma = nets[index]['numa']
                 if 'mtu' in nets[index]:
                     mtuxml = "<mtu size='%s'/>" % nets[index]['mtu']
+                if 'vfio' in nets[index] and nets[index]['vfio']:
+                    machine = 'q35'
+                    iommuxml = "<iommu model='intel'/>"
+                    ioapicxml = "<ioapic driver='qemu'/>"
             if ips and len(ips) > index and ips[index] is not None and\
                     netmasks and len(netmasks) > index and netmasks[index] is not None and gateway is not None:
                 nets[index]['ip'] = ips[index]
@@ -703,7 +709,7 @@ class Kvirt(object):
 </target>
 <alias name='pci.%s'/>
 <address type='pci' domain='0x0000' bus='0x00' function='0x0'/>
-</controller>\n""" % (count, expander, pxb, 254 - index * 2, cellid, count)
+</controller>\n""" % (count, expander, pxb, 20 * (index + 1), cellid, count)
                         count += 1
                         if machine == "q35":
                             buscount = count - 1
@@ -970,6 +976,7 @@ class Kvirt(object):
 </os>
 <features>
 {smmxml}
+{ioapicxml}
 <acpi/>
 <apic/>
 <pae/>
@@ -991,6 +998,7 @@ class Kvirt(object):
 {hostdevxml}
 {rngxml}
 {tpmxml}
+{iommuxml}
 </devices>
 {cpuxml}
 {qemuextraxml}
@@ -1000,7 +1008,7 @@ class Kvirt(object):
                     firmwarexml=firmwarexml, bootdev=bootdev, kernelxml=kernelxml, smmxml=smmxml, disksxml=disksxml,
                     busxml=busxml, netxml=netxml, isoxml=isoxml, displayxml=displayxml, serialxml=serialxml,
                     sharedxml=sharedxml, guestxml=guestxml, videoxml=videoxml, hostdevxml=hostdevxml, rngxml=rngxml,
-                    tpmxml=tpmxml, cpuxml=cpuxml, qemuextraxml=qemuextraxml)
+                    tpmxml=tpmxml, cpuxml=cpuxml, qemuextraxml=qemuextraxml, ioapicxml=ioapicxml, iommuxml=iommuxml)
         if self.debug:
             print(vmxml.replace('\n\n', ''))
         conn.defineXML(vmxml)
