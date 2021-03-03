@@ -7,7 +7,7 @@ workers: 0
 api_ip:
 version: stable
 pool: default
-image: debian9
+image: ubuntu2004
 network: default
 cluster: testk
 domain: karmalabs.com

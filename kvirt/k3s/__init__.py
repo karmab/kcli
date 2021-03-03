@@ -57,6 +57,7 @@ def create(config, plandir, cluster, overrides):
             if network == 'default' and platform == 'kvm':
                 warning("Using 192.168.122.253 as api_ip")
                 data['api_ip'] = "192.168.122.253"
+                api_ip = "192.168.122.253"
             elif platform == 'kubevirt':
                 selector = {'kcli/plan': plan, 'kcli/role': 'master'}
                 api_ip = config.k.create_service("%s-api" % cluster, config.k.namespace, selector,
@@ -69,7 +70,7 @@ def create(config, plandir, cluster, overrides):
             else:
                 error("You need to define api_ip in your parameters file")
                 os._exit(1)
-    version = data.get('version')
+    version = data.get('version', 'stable')
     if version not in ['stable', 'latest', 'testing']:
         error("Invalid version %s" % version)
         os._exit(1)
@@ -87,7 +88,7 @@ def create(config, plandir, cluster, overrides):
         os.mkdir("%s/auth" % clusterdir)
         with open("%s/kcli_parameters.yml" % clusterdir, 'w') as p:
             installparam = overrides.copy()
-            installparam['api_ip'] = plan
+            installparam['api_ip'] = api_ip
             installparam['plan'] = plan
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     k = config.k

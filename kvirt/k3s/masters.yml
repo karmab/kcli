@@ -1,7 +1,7 @@
 {{ image }}:
   type: image
 
-{% for number in range(0, masters) %}
+{% for number in range(1, masters) %}
 {% if extra_master_networks %}
  {% set extra_networks = extra_master_networks %}
 {% endif %}
@@ -20,9 +20,6 @@
 
 {{cluster}}-master-{{ number }}:
  image: {{ image }}
-{% if number == 0 %}
- wait: true
-{% endif %}
  pool: {{ pool }}
  numcpus: {{ master_numcpus | default(numcpus, numcpus) }}
  memory: {{ master_memory | default(memory, memory) }}
@@ -31,7 +28,7 @@
  files: [keepalived.conf]
  scripts:
   - masters.sh
-{% if number == 0 and masters > 1 and config_type not in ['aws', 'gcp'] %}
+{% if config_type not in ['aws', 'gcp'] %}
   - keepalived.sh
 {% endif %}
 {% if numa != None %}
