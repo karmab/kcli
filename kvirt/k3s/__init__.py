@@ -92,14 +92,14 @@ def create(config, plandir, cluster, overrides):
             installparam['plan'] = plan
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     k = config.k
-    result = config.plan(cluster, inputfile='%s/bootstrap.yml' % plandir, overrides=data)
+    result = config.plan(plan, inputfile='%s/bootstrap.yml' % plandir, overrides=data)
     if result['result'] != "success":
         os._exit(1)
     if masters > 1:
         pprint("Deploying extra masters")
         if 'name' in data:
             del data['name']
-        config.plan(cluster, inputfile='%s/masters.yml' % plandir, overrides=data)
+        config.plan(plan, inputfile='%s/masters.yml' % plandir, overrides=data)
     firstmasterip, firstmastervmport = _ssh_credentials(k, firstmaster)[1:]
     with open("%s/join.sh" % clusterdir, 'w') as f:
         if api_ip is None:
@@ -116,7 +116,7 @@ def create(config, plandir, cluster, overrides):
         if 'name' in data:
             del data['name']
         os.chdir(os.path.expanduser("~/.kcli"))
-        config.plan(cluster, inputfile='%s/workers.yml' % plandir, overrides=data)
+        config.plan(plan, inputfile='%s/workers.yml' % plandir, overrides=data)
     success("K3s cluster %s deployed!!!" % cluster)
     info2("export KUBECONFIG=$HOME/.kcli/clusters/%s/auth/kubeconfig" % cluster)
     info2("export PATH=$PWD:$PATH")
