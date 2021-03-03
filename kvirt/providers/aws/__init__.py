@@ -863,7 +863,24 @@ class Kaws(object):
         return {'result': 'success'}
 
     def list_dns(self, domain):
-        return []
+        results = []
+        dns = self.dns
+        zone = [z['Id'].split('/')[2] for z in dns.list_hosted_zones_by_name()['HostedZones']
+                if z['Name'] == '%s.' % domain]
+        if not zone:
+            error("Domain not found")
+        else:
+            zoneid = zone[0]
+            for record in dns.list_resource_record_sets(HostedZoneId=zoneid)['ResourceRecordSets']:
+                name = record['Name']
+                _type = record['Type']
+                ttl = record['TTL']
+                if _type not in ['NS', 'SOA']:
+                    name = name.replace("%s." % domain, '')
+                name = name[:-1]
+                data = ' '.join(x['Value'] for x in record['ResourceRecords'])
+                results.append([name, _type, ttl, data])
+        return results
 
     def flavors(self):
         results = []
