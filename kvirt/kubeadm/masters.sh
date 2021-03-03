@@ -44,6 +44,38 @@ bash /root/metal_lb.sh
 {% if ingress %}
 {% if ingress_method == 'nginx' %}
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/{{ 'cloud' if metallb else 'baremetal' }}/deploy.yaml
+{% if not metallb %}
+# Patch to disable hsts 
+cat << _EOF_ | kubectl patch cm ingress-nginx-controller -n ingress-nginx -p "$(cat)"
+data:
+  hsts: "false"
+_EOF_
+# Patch to use the hostNetwork and enable passthrough ssl
+cat << _EOF_ | kubectl patch deployment ingress-nginx-controller -n ingress-nginx -p "$(cat)"
+spec:
+  template:
+    spec:
+      hostNetwork: true
+      containers:
+        - name: controller
+          args: 
+            - "/nginx-ingress-controller"
+            - "--election-id=ingress-controller-leader"
+            - "--ingress-class=nginx"
+            - "--enable-ssl-passthrough"
+            - "--configmap='\$(POD_NAMESPACE)'/ingress-nginx-controller"
+            - "--validating-webhook=:8443"
+            - "--validating-webhook-certificate=/usr/local/certificates/cert"
+            - "--validating-webhook-key=/usr/local/certificates/key"
+          ports:
+            - containerPort: 80
+              hostPort: 80
+            - containerPort: 443
+              hostPort: 443
+_EOF_
+# Remove the nodeport service
+kubectl delete service ingress-nginx-controller -n ingress-nginx
+{% endif %}
 {% endif %}
 {% endif %}
 
