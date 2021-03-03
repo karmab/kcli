@@ -466,7 +466,8 @@ class Kvirt(object):
                 if 'mtu' in nets[index]:
                     mtuxml = "<mtu size='%s'/>" % nets[index]['mtu']
                 if 'vfio' in nets[index] and nets[index]['vfio']:
-                    machine = 'q35'
+                    if 'machine' not in overrides:
+                        machine = 'q35'
                     iommuxml = "<iommu model='intel'/>"
                     ioapicxml = "<ioapic driver='qemu'/>"
             if ips and len(ips) > index and ips[index] is not None and\
@@ -502,7 +503,7 @@ class Kvirt(object):
             if nicnuma is not None:
                 slot = nicslots[nicnuma] + 1
                 nicslots[nicnuma] = slot
-                if machine == 'q35':
+                if 'q35' in machine:
                     expandernumber = nicslots[nicnuma - 1] + 2 if nicnuma > 0 else 1
                     bus = expandernumber + slot
                     slot = 0
@@ -684,8 +685,8 @@ class Kvirt(object):
         busxml = ""
         if cpuxml != '':
             if numa:
-                expander = 'pcie-expander-bus' if machine == 'q35' else 'pci-expander-bus'
-                pxb = 'pxb-pcie' if machine == 'q35' else 'pxb'
+                expander = 'pcie-expander-bus' if 'q35' in machine else 'pci-expander-bus'
+                pxb = 'pxb-pcie' if 'q35' in machine else 'pxb'
                 numamemory = 0
                 numaxml = '<numa>'
                 count = 1
@@ -711,7 +712,7 @@ class Kvirt(object):
 <address type='pci' domain='0x0000' bus='0x00' function='0x0'/>
 </controller>\n""" % (count, expander, pxb, 20 * (index + 1), cellid, count)
                         count += 1
-                        if machine == "q35":
+                        if "q35" in machine:
                             buscount = count - 1
                             for slot in range(0, nicslots[cellid]):
                                 count += slot
