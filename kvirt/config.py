@@ -2192,7 +2192,7 @@ $INFO
                             installermode=installermode)
         kexposer.run()
 
-    def create_openshift_iso(self, cluster, overrides={}):
+    def create_openshift_iso(self, cluster, overrides={}, ignitionfile=None):
         metal_url = None
         iso_version = overrides.get('version', 'latest')
         if iso_version not in ['latest', 'pre-release'] and not iso_version.startswith('4.'):
@@ -2214,27 +2214,34 @@ $INFO
             pprint("Using domain %s" % domain)
             cluster = cluster.replace(".%s" % domain, '')
         hosts_content = None
-        if api_ip is None:
-            try:
-                api_ip = socket.gethostbyname('api.%s.%s' % (cluster, domain))
-            except:
-                pass
-        if api_ip is None:
-            warning("Couldn't figure out api_ip. Relying on dns")
-            api_ip = "api.%s.%s" % (cluster, domain)
+        finaldata = None
+        if ignitionfile is not None:
+            if not os.path.exists(ignitionfile):
+                error("%s not found" % ignitionfile)
+                os._exit(1)
+            finaldata = open(ignitionfile).read()
         else:
-            hosts_content = "127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4\n"
-            hosts_content += "::1         localhost localhost.localdomain localhost6 localhost6.localdomain6\n"
-            hosts_content += "%s api-int.%s.%s api.%s.%s" % (api_ip, cluster, domain, cluster, domain)
-        ignitionfile = "%s.ign" % role
+            ignitionfile = "%s.ign" % role
+            if os.path.exists(ignitionfile):
+                warning("Using existing %s" % ignitionfile)
+                finaldata = open(ignitionfile).read()
+            else:
+                if api_ip is None:
+                    try:
+                        api_ip = socket.gethostbyname('api.%s.%s' % (cluster, domain))
+                    except:
+                        pass
+                if api_ip is None:
+                    warning("Couldn't figure out api_ip. Relying on dns")
+                    api_ip = "api.%s.%s" % (cluster, domain)
+                else:
+                    hosts_content = "127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4\n"
+                    hosts_content += "::1         localhost localhost.localdomain localhost6 localhost6.localdomain6\n"
+                    hosts_content += "%s api-int.%s.%s api.%s.%s" % (api_ip, cluster, domain, cluster, domain)
         config = Kconfig()
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
-        finaldata = None
-        if os.path.exists(ignitionfile):
-            warning("Using existing %s" % ignitionfile)
-            finaldata = open(ignitionfile).read()
         with open("iso.ign", 'w') as f:
-            pprint("Writing file iso.ign for %s in %s.%s" % (role, cluster, domain))
+            pprint("Writing file iso.ign for %s in %s.%s" % (role, cluster, domain if domain is not None else ''))
             isodir = os.path.dirname(common.__file__)
             if finaldata is None:
                 env = Environment(loader=FileSystemLoader(isodir), extensions=['jinja2.ext.do'], trim_blocks=True,

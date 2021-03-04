@@ -189,6 +189,9 @@ $ kcli create openshift-iso testk.karmalabs.com
 # Do the same for a 4.5 install
 $ kcli create openshift-iso -P version=4.5 testk.karmalabs.com
 
+# Embed a local target ignition in the iso
+$ kcli create openshift-iso -f my_ignition.ign testk
+
 # Only creates the ignition for the iso
 $ kcli create openshift-iso -P iso=false testk.karmalabs.com
 
