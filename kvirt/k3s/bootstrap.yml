@@ -20,6 +20,7 @@
 {{cluster}}-master-0:
  image: {{ image }}
  wait: true
+ enableroot: true
  pool: {{ pool }}
  numcpus: {{ master_numcpus | default(numcpus, numcpus) }}
  memory: {{ master_memory | default(memory, memory) }}
