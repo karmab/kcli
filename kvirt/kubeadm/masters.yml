@@ -49,6 +49,9 @@
  pool: {{ pool }}
  numcpus: {{ master_numcpus | default(numcpus, numcpus) }}
  memory: {{ master_memory | default(memory, memory) }}
+{% if number == 0 %}
+ enableroot: true
+{% endif %}
  domain: {{ domain }}
  zerotier_nets: {{ ztier }}
 {% if number == 0 %}

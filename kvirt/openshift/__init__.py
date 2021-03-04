@@ -720,6 +720,7 @@ def create(config, plandir, cluster, overrides):
             if platform == 'openstack':
                 helper_overrides['flavor'] = "m1.medium"
             helper_overrides['nets'] = [network]
+            helper_overrides['enableroot'] = True
             helper_overrides['plan'] = cluster
             bootstrap_helper_name = "%s-bootstrap-helper" % cluster
             cmds = ["iptables -F", "yum -y install httpd", "setenforce 0"]
@@ -758,7 +759,7 @@ def create(config, plandir, cluster, overrides):
     if platform in cloudplatforms:
         bootstrap_helper_name = "%s-bootstrap-helper" % cluster
         helper_overrides = {'reservedns': True, 'domain': '%s.%s' % (cluster, domain), 'tags': [tag], 'plan': cluster,
-                            'nets': [network]}
+                            'nets': [network], 'enableroot': True}
         config.create_vm("%s-bootstrap-helper" % cluster, helper_image, overrides=helper_overrides)
         status = ""
         while status != "running":
