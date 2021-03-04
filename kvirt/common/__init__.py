@@ -83,6 +83,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
     default_gateway = gateway
     legacy = True if image is not None and (is_7(image) or is_debian9(image)) else False
     prefix = 'ens' if image is not None and (is_ubuntu(image) or is_debian10(image)) else 'eth'
+    dns_hack = True if image is not None and is_debian10(image) else False
     netdata = {} if not legacy else ''
     if nets:
         bridges = {}
@@ -158,6 +159,14 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                         netdata += "  dns-nameservers %s\n" % dns
                     else:
                         netdata[nicname]['nameservers']['addresses'] = [dns]
+                    if dns_hack:
+                        dnscontent = "nameserver %s\n" % dns
+                        dnsdata = {'path': 'etc/resolvconf/resolv.conf.d/base', 'content': dnscontent}
+                        if files:
+                            files.append(dnsdata)
+                        else:
+                            files = [dnsdata]
+                        cmds.append('systemctl restart resolvconf')
                 domain = net.get('domain')
                 if domain is not None:
                     if legacy:
