@@ -599,6 +599,11 @@ def create(config, plandir, cluster, overrides):
             fetch(asset, "%s/manifests" % clusterdir)
         for asset in contrail_openshifts:
             fetch(asset, "%s/openshift" % clusterdir)
+        for role in ['master', 'worker']:
+            contrailmount = config.process_inputfile(cluster, "%s/99-contrail-mount.yaml" % plandir,
+                                                     overrides={'role': role})
+            with open("%s/openshift/99-contrail-mount-%s.yaml" % (clusterdir, role), 'w') as f:
+                f.write(contrailmount)
         contrail_registry = data.get('contrail_registry', "hub.juniper.net")
         contrail_user = data.get('contrail_user')
         contrail_password = data.get('contrail_password')

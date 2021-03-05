@@ -1,0 +1,34 @@
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  labels:
+    machineconfiguration.openshift.io/role: {{ role }}
+  name: 02-{{ role }}-modules
+spec:
+  config:
+    ignition:
+      version: 2.2.0
+    storage:
+      directories:
+        - filesystem: "root"
+          path: "/opt/modules"
+          mode: 0755
+        - filesystem: "root"
+          path: "/opt/modules.wd"
+          mode: 0755
+    systemd:
+      units:
+      - name: usr-lib-modules.mount
+        enabled: true
+        contents: |
+          [Unit]
+          Description=contrail mount
+          Wants=network-online.target
+          After=network-online.target ignition-firstboot-complete.service
+          [Mount]
+          Where=/usr/lib/modules
+          What=overlay
+          Type=overlay
+          Options=lowerdir=/usr/lib/modules,upperdir=/opt/modules,workdir=/opt/modules.wd
+          [Install]
+          WantedBy=multi-user.target

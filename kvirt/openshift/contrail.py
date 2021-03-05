@@ -33,12 +33,12 @@ contrail_manifests = ['openshift/manifests/00-contrail-01-namespace.yaml',
 
 
 contrail_openshifts = ['openshift/openshift/99_master-iptables-machine-config.yaml',
-                       'openshift/openshift/99_master-kernel-modules-overlay.yaml',
+                       # 'openshift/openshift/99_master-kernel-modules-overlay.yaml',
                        'openshift/openshift/99_master_network_functions.yaml',
                        'openshift/openshift/99_master_network_manager_stop_service.yaml',
                        'openshift/openshift/99_master-pv-mounts.yaml',
                        'openshift/openshift/99_worker-iptables-machine-config.yaml',
-                       'openshift/openshift/99_worker-kernel-modules-overlay.yaml',
+                       # 'openshift/openshift/99_worker-kernel-modules-overlay.yaml',
                        'openshift/openshift/99_worker_network_functions.yaml',
                        'openshift/openshift/99_worker_network_manager_stop_service.yaml']
 
