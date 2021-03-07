@@ -26,7 +26,7 @@
  memory: {{ master_memory | default(memory, memory) }}
  nets: {{ [network] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
- files: [keepalived.conf]
+ files: {{ files + ["keepalived.conf"] if files|default([]) else ["keepalived.conf"] }}
  scripts:
   - bootstrap.sh
 {% if masters > 1 and config_type not in ['aws', 'gcp'] %}
