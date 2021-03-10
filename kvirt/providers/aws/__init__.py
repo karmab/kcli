@@ -138,6 +138,8 @@ class Kaws(object):
         networkinterfaces = []
         blockdevicemappings = []
         privateips = []
+        vpcs = conn.describe_vpcs()
+        subnets = conn.describe_subnets()
         for index, net in enumerate(nets):
             networkinterface = {'DeleteOnTermination': True, 'Description': "eth%s" % index, 'DeviceIndex': index,
                                 'Groups': ['string'], 'SubnetId': 'string'}
@@ -150,19 +152,34 @@ class Kaws(object):
                 ip = net.get('ip')
                 alias = net.get('alias')
                 netpublic = net.get('public', True)
+            # if securitygroups:
+            #    netpublic = False
             networkinterface['AssociatePublicIpAddress'] = netpublic if index == 0 else False
-            if netname == 'default':
+            if netname in [subnet['SubnetId'] for subnet in subnets['Subnets']]:
+                pass
+            elif netname == 'default':
                 if defaultsubnetid is not None:
                     netname = defaultsubnetid
                 else:
-                    vpcs = conn.describe_vpcs()
                     vpcid = [vpc['VpcId'] for vpc in vpcs['Vpcs'] if vpc['IsDefault']][0]
-                    subnets = conn.describe_subnets()
                     subnetid = [subnet['SubnetId'] for subnet in subnets['Subnets']
                                 if subnet['DefaultForAz'] and subnet['VpcId'] == vpcid][0]
                     netname = subnetid
                     defaultsubnetid = netname
                     pprint("Using subnet %s as default" % defaultsubnetid)
+            else:
+                vpcids = [vpc['VpcId'] for vpc in vpcs['Vpcs'] if vpc['VpcId'] == netname]
+                if vpcids:
+                    vpcid = vpcids[0]
+                else:
+                    error("Couldn't find vpc %s" % netname)
+                    os._exit(1)
+                subnetids = [subnet['SubnetId'] for subnet in subnets['Subnets'] if subnet['VpcId'] == vpcid]
+                if subnetids:
+                    netname = subnetids[0]
+                else:
+                    error("Couldn't find valid subnet for vpc %s" % netname)
+                    os._exit(1)
             if ips and len(ips) > index and ips[index] is not None:
                 ip = ips[index]
                 if index == 0:
@@ -172,6 +189,13 @@ class Kaws(object):
                     privateip = {'Primary': False, 'PrivateIpAddress': ip}
                 privateips = privateips.append(privateip)
             networkinterface['SubnetId'] = netname
+            if index == 0:
+                SecurityGroupIds = []
+                for sg in securitygroups:
+                    sgid = self.get_security_group_id(sg, vpcid)
+                    if sgid is not None:
+                        SecurityGroupIds.append(sgid)
+                networkinterface['Groups'] = SecurityGroupIds
             networkinterfaces.append(networkinterface)
         if len(privateips) > 1:
             networkinterface['PrivateIpAddresses'] = privateips
@@ -192,14 +216,9 @@ class Kaws(object):
                 blockdevicemapping['Ebs']['VolumeType'] = disk.get('type', 'standard')
             blockdevicemapping['Ebs']['VolumeSize'] = disksize
             blockdevicemappings.append(blockdevicemapping)
-        SecurityGroupIds = []
-        for sg in securitygroups:
-            sgid = self.get_security_group_id(sg, vpcid)
-            if sgid is not None:
-                SecurityGroupIds.append(sgid)
         conn.run_instances(ImageId=imageid, MinCount=1, MaxCount=1, InstanceType=flavor,
                            KeyName=keypair, BlockDeviceMappings=blockdevicemappings,
-                           UserData=userdata, TagSpecifications=vmtags, SecurityGroupIds=SecurityGroupIds)
+                           NetworkInterfaces=networkinterfaces, UserData=userdata, TagSpecifications=vmtags)
         if reservedns and domain is not None:
             # eip = conn.allocate_address(Domain='vpc')
             # vmid = reservation.instances[0].id
@@ -357,8 +376,8 @@ class Kaws(object):
         az = vm['Placement']['AvailabilityZone']
         image = resource.Image(amid)
         source = os.path.basename(image.image_location)
-        plan = ''
-        profile = ''
+        yamlinfo['plan'] = ''
+        yamlinfo['profile'] = ''
         if 'Tags' in vm:
             for tag in vm['Tags']:
                 yamlinfo[tag['Key']] = tag['Value']
@@ -377,8 +396,6 @@ class Kaws(object):
         yamlinfo['image'] = source
         yamlinfo['user'] = common.get_user(yamlinfo['image'])
         # yamlinfo['creationdate'] = dateparser.parse(vm['creationTimestamp']).strftime("%d-%m-%Y %H:%M")
-        yamlinfo['plan'] = plan
-        yamlinfo['profile'] = profile
         yamlinfo['instanceid'] = instanceid
         nets = []
         for interface in vm['NetworkInterfaces']:
@@ -874,11 +891,16 @@ class Kaws(object):
             for record in dns.list_resource_record_sets(HostedZoneId=zoneid)['ResourceRecordSets']:
                 name = record['Name']
                 _type = record['Type']
-                ttl = record['TTL']
+                ttl = record.get('TTL', 'N/A')
                 if _type not in ['NS', 'SOA']:
                     name = name.replace("%s." % domain, '')
                 name = name[:-1]
-                data = ' '.join(x['Value'] for x in record['ResourceRecords'])
+                if 'ResourceRecords' in record:
+                    data = ' '.join(x['Value'] for x in record['ResourceRecords'])
+                elif 'AliasTarget' in record:
+                    data = record['AliasTarget']['DNSName'][:-1]
+                else:
+                    continue
                 results.append([name, _type, ttl, data])
         return results
 
