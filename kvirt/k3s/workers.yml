@@ -25,6 +25,9 @@
     origin: {{ basedir }}/clusters/{{ cluster }}/join.sh
  cmds:
  - apt-get -y install curl
+{% if sdn == 'cilium' %}
+ - mount bpffs -t bpf /sys/fs/bpf
+{% endif %}
  - bash /root/join.sh
 {% if numa != None %}
  numa: {{ numa }}

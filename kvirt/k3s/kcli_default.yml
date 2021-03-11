@@ -4,6 +4,7 @@ info: |
     version defaults to stable, although latest or testing can also be selected
 masters: 1
 workers: 0
+sdn: flannel
 api_ip:
 version: stable
 pool: default

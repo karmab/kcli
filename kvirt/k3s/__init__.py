@@ -35,7 +35,12 @@ def scale(config, plandir, cluster, overrides):
         pprint("Using image %s" % image)
     data['image'] = image
     os.chdir(os.path.expanduser("~/.kcli"))
-    config.plan(plan, inputfile='%s/workers.yml' % plandir, overrides=data)
+    # config.plan(plan, inputfile='%s/workers.yml' % plandir, overrides=data)
+    for role in ['masters', 'workers']:
+        overrides = data.copy()
+        # if overrides.get(role, 0) == 0:
+        #    continue
+        config.plan(plan, inputfile='%s/%s.yml' % (plandir, role), overrides=overrides)
 
 
 def create(config, plandir, cluster, overrides):
@@ -106,7 +111,10 @@ def create(config, plandir, cluster, overrides):
     with open("%s/join.sh" % clusterdir, 'w') as f:
         if api_ip is None:
             api_ip = k.info(firstmaster)['ip']
-        f.write("curl -sfL https://get.k3s.io | K3S_URL=https://%s:6443 K3S_TOKEN=%s sh -\n" % (api_ip, token))
+        joincmd = "curl -sfL https://get.k3s.io | K3S_URL=https://%s:6443 K3S_TOKEN=%s" % (api_ip, token)
+        if data['sdn'] != "flannel":
+            joincmd += " INSTALL_K3S_EXEC='--no-flannel'"
+        f.write("%s sh -\n" % joincmd)
     source, destination = "/root/kubeconfig", "%s/auth/kubeconfig" % clusterdir
     scpcmd = scp(firstmaster, ip=firstmasterip, user='root', source=source, destination=destination,
                  tunnel=config.tunnel, tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
