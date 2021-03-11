@@ -13,6 +13,7 @@ from netaddr import IPNetwork
 import os
 from string import ascii_lowercase
 from time import sleep
+import webbrowser
 
 staticf = {'t2.nano': {'cpus': 1, 'memory': 512}, 't2.micro': {'cpus': 1, 'memory': 1024},
            't2.small': {'cpus': 1, 'memory': 2048}, 't2.medium': {'cpus': 2, 'memory': 4096},
@@ -290,7 +291,29 @@ class Kaws(object):
         return sorted(vms, key=lambda x: x['name'])
 
     def console(self, name, tunnel=False, web=False):
-        print("not implemented")
+        try:
+            if name.startswith('i-'):
+                vm = self.conn.describe_instances(InstanceIds=[name])['Reservations'][0]['Instances'][0]
+            else:
+                Filters = {'Name': "tag:Name", 'Values': [name]}
+                vm = self.conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
+        except:
+            error("VM %s not found" % name)
+        instanceid = vm['InstanceId']
+        amid = vm['ImageId']
+        image = self.resource.Image(amid)
+        source = os.path.basename(image.image_location)
+        user = common.get_user(source)
+        user = 'ec2-user'
+        url = "https://eu-west-3.console.aws.amazon.com/ec2/v2/connect/%s/%s" % (user, instanceid)
+        if web:
+            return url
+        if self.debug or os.path.exists("/i_am_a_container"):
+            msg = "Open the following url:\n%s" % url if os.path.exists("/i_am_a_container") else url
+            pprint(msg)
+        else:
+            pprint("Opening url: %s" % url)
+            webbrowser.open(url, new=2, autoraise=True)
         return
 
     def serialconsole(self, name, web=False):
