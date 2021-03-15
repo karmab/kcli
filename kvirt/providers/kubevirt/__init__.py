@@ -639,8 +639,11 @@ class Kubevirt(Kubecommon):
             volumename = d['name']
             volumeinfo = [volume for volume in volumes if volume['name'] == volumename][0]
             size = '0'
-            if 'persistentVolumeClaim' in volumeinfo:
-                pvcname = volumeinfo['persistentVolumeClaim']['claimName']
+            if 'persistentVolumeClaim' in volumeinfo or 'dataVolume' in volumeinfo:
+                if 'persistentVolumeClaim' in volumeinfo:
+                    pvcname = volumeinfo['persistentVolumeClaim']['claimName']
+                else:
+                    pvcname = volumeinfo['dataVolume']['name']
                 if pvcname.endswith('iso'):
                     yamlinfo['iso'] = pvcname.replace('-iso', '.iso')
                     continue
