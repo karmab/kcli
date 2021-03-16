@@ -985,11 +985,15 @@ class Kubevirt(Kubecommon):
         return {'result': 'failure', 'reason': 'image %s not found' % image}
 
     def add_image(self, url, pool, short=None, cmd=None, name=None):
-        if common.is_debian9(url) or common.is_debian10(url) or common.is_ubuntu(url):
-            size = 3
-        elif 'fedora' in url.lower():
-            size = 5
-        elif 'rhcos' in url.lower():
+        # if common.is_debian9(url) or common.is_debian10(url) or common.is_ubuntu(url):
+        #     size = 3
+        # elif 'fedora' in url.lower():
+        #     size = 5
+        # elif 'rhcos' in url.lower():
+        #     size = 20
+        # else:
+        #     size = 11
+        if 'rhcos' in url.lower():
             size = 20
         else:
             size = 11
