@@ -634,7 +634,7 @@ class Kvirt(object):
                                                                gateway=gateway, dns=dns, domain=domain,
                                                                reserveip=reserveip, files=files, enableroot=enableroot,
                                                                overrides=overrides, storemetadata=storemetadata,
-                                                               image=image, ipv6=ipv6)
+                                                               image=image, ipv6=ipv6, machine=machine)
                 with TemporaryDirectory() as tmpdir:
                     common.make_iso(name, tmpdir, userdata, metadata, netdata)
                     self._uploadimage(name, pool=default_storagepool, origin=tmpdir)

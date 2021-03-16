@@ -61,8 +61,9 @@ def fetch(url, path):
     urlretrieve(url, "%s/%s" % (path, shortname))
 
 
-def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[],
-              enableroot=True, overrides={}, fqdn=False, storemetadata=True, image=None, ipv6=[]):
+def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False,
+              files=[], enableroot=True, overrides={}, fqdn=False, storemetadata=True, image=None, ipv6=[],
+              machine='pc'):
     """
 
     :param name:
@@ -82,7 +83,12 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
     userdata, metadata, netdata = None, None, None
     default_gateway = gateway
     legacy = True if image is not None and (is_7(image) or is_debian9(image)) else False
-    prefix = 'ens' if image is not None and (is_ubuntu(image) or is_debian10(image)) else 'eth'
+    prefix = 'eth'
+    if image is not None and (is_ubuntu(image) or is_debian10(image)):
+        if machine == 'pc':
+            prefix = 'ens'
+        else:
+            prefix = 'enp1s'
     dns_hack = True if image is not None and is_debian10(image) else False
     netdata = {} if not legacy else ''
     if nets:

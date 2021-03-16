@@ -330,7 +330,7 @@ class Kubevirt(Kubecommon):
                                                                gateway=gateway, dns=dns, domain=domain,
                                                                reserveip=reserveip, files=files, enableroot=enableroot,
                                                                overrides=overrides, storemetadata=storemetadata,
-                                                               image=image)
+                                                               image=image, machine=machine)
                 if 'static' in metadata:
                     warning("Legacy network not supported in kubevirt. Ignoring")
                     netdata = None
