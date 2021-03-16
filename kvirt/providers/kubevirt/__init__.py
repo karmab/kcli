@@ -370,7 +370,7 @@ class Kubevirt(Kubecommon):
                             return {'result': 'failure', 'reason': 'timeout waiting for cdi importer pod to complete'}
                         continue
                 else:
-                    copy = self.copy_image(diskpool, image, diskname)
+                    copy = self.copy_image(diskpool, images[image], diskname)
                     if copy['result'] == 'failure':
                         reason = copy['reason']
                         return {'result': 'failure', 'reason': reason}
@@ -650,16 +650,20 @@ class Kubevirt(Kubecommon):
                 _type = 'pvc'
                 try:
                     pvc = core.read_namespaced_persistent_volume_claim(pvcname, namespace)
-                    size = pvc.spec.resources.requests['storage'].replace('Gi', '')
                 except:
                     error("pvc %s not found. That can't be good" % pvcname)
+                size = pvc.spec.resources.requests['storage'].replace('Gi', '')
+                if 'Mi' in size:
+                    size = int(size.replace('Mi', '')) / 1024
+                else:
+                    size = int(size)
             elif 'cloudInitNoCloud' in volumeinfo:
                 continue
             elif 'containerDisk' in volumeinfo:
                 _type = 'containerdisk'
             else:
                 _type = 'other'
-            disk = {'device': d['name'], 'size': int(size), 'format': bus, 'type': _type, 'path': volumename}
+            disk = {'device': d['name'], 'size': size, 'format': bus, 'type': _type, 'path': volumename}
             disks.append(disk)
         yamlinfo['disks'] = disks
         interfaces = vm['spec']['template']['spec']['domain']['devices']['interfaces']
