@@ -995,7 +995,7 @@ class Kubevirt(Kubecommon):
         if 'rhcos' in url.lower():
             size = 20
         else:
-            size = 10
+            size = 9
         core = self.core
         pool = self.check_pool(pool)
         namespace = self.namespace
