@@ -653,7 +653,6 @@ class Kubevirt(Kubecommon):
                     size = pvc.spec.resources.requests['storage'].replace('Gi', '')
                 except:
                     error("pvc %s not found. That can't be good" % pvcname)
-                    size = 'N/A'
             elif 'cloudInitNoCloud' in volumeinfo:
                 continue
             elif 'containerDisk' in volumeinfo:
@@ -996,7 +995,7 @@ class Kubevirt(Kubecommon):
         if 'rhcos' in url.lower():
             size = 20
         else:
-            size = 11
+            size = 10
         core = self.core
         pool = self.check_pool(pool)
         namespace = self.namespace
