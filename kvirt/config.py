@@ -1265,6 +1265,10 @@ $INFO
                 toclean = True if info else False
                 os.mkdir(path)
                 common.fetch(url, path)
+                try:
+                    common.fetch(os.path.dirname(url) + '/kcli_default.yml', path)
+                except:
+                    pass
             elif download:
                 msg = "target directory %s already there" % (path)
                 error(msg)
