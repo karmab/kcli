@@ -92,5 +92,5 @@ http_proxy:
 no_proxy:
 sno: false
 sno_baremetal: false
-sno_disk: vda
+sno_disk:
 sno_dns: true

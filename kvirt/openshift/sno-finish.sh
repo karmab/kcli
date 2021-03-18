@@ -15,5 +15,17 @@ COREFILE="$(cat /root/Corefile | base64 -w0)"
 FORCEDNS="$(cat /root/99-forcedns | base64 -w0)"
 cat /opt/openshift/master.ign | jq ".storage.files |= . + [{\"filesystem\": \"root\", \"mode\": 448, \"path\": \"/etc/kubernetes/manifests/coredns.yml\", \"contents\": {\"source\": \"data:text/plain;charset=utf-8;base64,$COREDNS\", \"verification\": {}}},{\"filesystem\": \"root\", \"mode\": 448, \"path\": \"/etc/kubernetes/Corefile\", \"contents\": {\"source\":\"data:text/plain;charset=utf-8;base64,$COREFILE\",\"verification\": {}}},{\"filesystem\": \"root\", \"mode\": 448, \"path\": \"/etc/NetworkManager/dispatcher.d/99-forcedns\", \"contents\": {\"source\":\"data:text/plain;charset=utf-8;base64,$FORCEDNS\",\"verification\": {}}}]" > /root/master.ign
 
-echo "Executing coreos-installer with ignition file /root/master.ign and device /dev/{{ sno_disk | basename }}"
-coreos-installer install --firstboot-args="console=tty0 rd.neednet=1" --ignition=/root/master.ign /dev/{{ sno_disk |basename }} && shutdown -r now "Bootstrap completed, restarting node"
+for vg in $(vgs -o name --noheadings) ; do vgremove -y $vg ; done
+for pv in $(pvs -o name --noheadings) ; do pvremove -y $pv ; done
+{% if sno_disk != None %}
+install_device='/dev/{{ sno_disk | basename }}'
+{% else %}
+install_device=$(lsblk | grep disk | head -1 | cut -d" " -f1)
+if [ "$install_device" == "" ]; then
+  echo "Can't find appropriate device to install to"
+  exit 1
+fi
+{% endif %}
+
+echo "Executing coreos-installer with ignition file /root/master.ign and device $install_device"
+coreos-installer install --firstboot-args="console=tty0 rd.neednet=1" --ignition=/root/master.ign $install_device && shutdown -r now "Bootstrap completed, restarting node"

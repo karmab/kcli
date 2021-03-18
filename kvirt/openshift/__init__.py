@@ -302,8 +302,7 @@ def create(config, plandir, cluster, overrides):
             'minimal': False,
             'dualstack': False,
             'sno': False,
-            'sno_baremetal': False,
-            'sno_disk': 'vda'}
+            'sno_baremetal': False}
     data.update(overrides)
     if 'cluster' in overrides:
         clustervalue = overrides.get('cluster')
@@ -328,8 +327,7 @@ def create(config, plandir, cluster, overrides):
         sno_baremetal = data.get('sno_baremetal', False)
         sno_disk = data.get('sno_disk')
         if sno_disk is None:
-            sno_disk = 'sda' if sno_baremetal else 'vda'
-            pprint("Setting sno_disk to %s" % sno_disk)
+            warning("sno_disk will be discovered")
         # tag = 'registry.svc.ci.openshift.org/sno-dev/openshift-bip:0.5.0'
         masters = 1
         workers = 0

@@ -74,7 +74,7 @@ platform:
 {% endif %}
 {% if sno %}
 BootstrapInPlace:
-  InstallationDisk: /dev/{{ sno_disk | basename }}
+  InstallationDisk: /dev/sda
 {% endif %}
 {% if ca != None %}
 additionalTrustBundle: |
