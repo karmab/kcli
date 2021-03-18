@@ -91,6 +91,6 @@ zerotier_kubelet: false
 http_proxy:
 no_proxy:
 sno: false
-sno_baremetal: false
+sno_virtual: false
 sno_disk:
 sno_dns: true

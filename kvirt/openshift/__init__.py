@@ -302,7 +302,7 @@ def create(config, plandir, cluster, overrides):
             'minimal': False,
             'dualstack': False,
             'sno': False,
-            'sno_baremetal': False}
+            'sno_virtual': False}
     data.update(overrides)
     if 'cluster' in overrides:
         clustervalue = overrides.get('cluster')
@@ -324,7 +324,7 @@ def create(config, plandir, cluster, overrides):
     sno = data.get('sno', False)
     ignore_hosts = data.get('ignore_hosts', False)
     if sno:
-        sno_baremetal = data.get('sno_baremetal', False)
+        sno_virtual = data.get('sno_virtual', False)
         sno_disk = data.get('sno_disk')
         if sno_disk is None:
             warning("sno_disk will be discovered")
@@ -653,8 +653,8 @@ def create(config, plandir, cluster, overrides):
             os._exit(0)
         else:
             generate_rhcos_iso(k, cluster, data['pool'])
-            if not sno_baremetal:
-                pprint("Deploying sno")
+            if sno_virtual:
+                pprint("Deploying sno vm")
                 result = config.plan(plan, inputfile='%s/sno.yml' % plandir, overrides=data)
                 if result['result'] != 'success':
                     os._exit(1)
@@ -671,7 +671,11 @@ def create(config, plandir, cluster, overrides):
                 pprint("Launching install-complete step. It will be retried one extra time in case of timeouts")
                 call(installcommand, shell=True)
             else:
-                warning("You might need to create manual entries in /etc/hosts to reach the sno installation")
+                warning("You might need to manually add the following entry in /etc/hosts")
+                dnsentries = ['api', 'console-openshift-console.apps', 'oauth-openshift.apps',
+                              'prometheus-k8s-openshift-monitoring.apps']
+                dnsentry = ' '.join(["%s.%s.%s" % (entry, cluster, domain) for entry in dnsentries])
+                warning("$your_node_ip %s" % dnsentry)
         os._exit(0)
     call('openshift-install --dir=%s create ignition-configs' % clusterdir, shell=True)
     for role in ['master', 'worker']:
