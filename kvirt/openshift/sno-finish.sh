@@ -20,8 +20,8 @@ for pv in $(pvs -o name --noheadings) ; do pvremove -y $pv ; done
 {% if sno_disk != None %}
 install_device='/dev/{{ sno_disk | basename }}'
 {% else %}
-install_device=$(lsblk | grep disk | head -1 | cut -d" " -f1)
-if [ "$install_device" == "" ]; then
+install_device=/dev/$(lsblk | grep disk | head -1 | cut -d" " -f1)
+if [ "$install_device" == "/dev/" ]; then
   echo "Can't find appropriate device to install to"
   exit 1
 fi
