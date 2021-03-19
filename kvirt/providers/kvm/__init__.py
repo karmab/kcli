@@ -1908,9 +1908,10 @@ class Kvirt(object):
             if not reservedns:
                 continue
             netname = net.get('name')
-            pprint("Creating Dns entry for %s.%s" % (name, netname))
             if domain is not None and domain != netname:
-                pprint("Creating Dns entry for %s.%s" % (name, domain))
+                pprint("Creating dns entry for %s.%s in network %s" % (name, domain, netname))
+            else:
+                pprint("Creating dns entry for %s in network %s" % (name, netname))
             try:
                 network = conn.networkLookupByName(netname)
             except:
@@ -1929,7 +1930,7 @@ class Kvirt(object):
                         else:
                             break
             if ip is None:
-                error("Couldn't assign DNS for net %s" % index)
+                error("Couldn't assign dns entry %s in net %s" % (name, net))
                 continue
             if bridged:
                 self._create_host_entry(name, ip, netname, domain, dnsmasq=True)
@@ -1943,10 +1944,10 @@ class Kvirt(object):
                     base.append(dns)
                     newxml = ET.tostring(root)
                     conn.networkDefineXML(newxml.decode("utf-8"))
-                dnsentry = '<host ip="%s"><hostname>%s</hostname>' % (ip, name)
-                dnsentry += '<hostname>%s.%s</hostname>' % (name, netname)
-                if domain is not None and domain != netname:
-                    dnsentry += '<hostname>%s.%s</hostname>' % (name, domain)
+                if domain is not None:
+                    dnsentry = '<host ip="%s"><hostname>%s.%s</hostname>' % (ip, name, domain)
+                else:
+                    dnsentry = '<host ip="%s"><hostname>%s</hostname>' % (ip, name)
                 for entry in alias:
                     dnsentry += "%s<hostname>%s</hostname>" % (entry, entry)
                 dnsentry += "</host>"
