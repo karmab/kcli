@@ -4,6 +4,9 @@
 # Copyright (c) 2017 Karim Boumedhel
 #
 
+%global debug_package %{nil}
+%global __python /usr/bin/python3
+
 Name:           {{{ git_dir_name }}}
 Version:        99.{{{ git_custom_version }}}
 Release:        1%{?dist}
@@ -16,15 +19,19 @@ Source:         kcli-{{{ git_custom_version }}}.tar.gz
 AutoReq:        no
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildRequires:  python3-devel rubygem-ronn gzip
-Requires:       python3 libvirt-python3 genisoimage nmap-ncat python3-prettytable python3-PyYAML python3-flask python3-netaddr python3-argcomplete python3-requests
+Requires:       python3 libvirt-python3 genisoimage nmap-ncat python3-prettytable python3-PyYAML python3-netaddr python3-argcomplete python3-requests
 
 %description
 Kcli is meant to interact with a local/remote libvirt, gcp, aws ovirt,
 openstack, vsphere and kubevirt and to easily deploy single vms from cloud images or several using plans
 
-%global debug_package %{nil}
-%global __python /usr/bin/python3
-%{!?python_sitelib: %global python_sitelib %(%{__python} -c "import sys; from distutils.sysconfig import get_python_lib; sys.stdout.write(get_python_lib())")}
+%package        web
+Summary:        web fronted files for %{name}
+BuildArch:      noarch
+Requires:       %{name} = %{version}-%{release}
+Requires:       python3-flask
+%description    web
+Web fronted files for %{name}.
 
 %prep
 %setup -q -n kcli-99.{{{ git_custom_version }}}
@@ -53,13 +60,16 @@ rm -rf %{buildroot}
 %defattr(-,root,root,-)
 %doc %{_docdir}/kcli
 %{_mandir}/man1/kcli.1.gz
-%{python_sitelib}/*
+%{python3_sitelib}/*
 %attr(0755,root,root) %{_bindir}/kcli
-%attr(0755,root,root) %{_bindir}/kweb
 %attr(0755,root,root) %{_bindir}/klist.py
 %attr(0755,root,root) %{_bindir}/kbmc
 %attr(0755,root,root) %{_bindir}/kclirpc
 %attr(0755,root,root) %{_bindir}/krpc
+
+%files web
+%attr(0755,root,root) %{_bindir}/kweb
+%{python3_sitelib}/kvirt/web/
 
 %changelog
 {{{ git_dir_changelog }}}
