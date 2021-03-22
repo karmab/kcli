@@ -97,7 +97,7 @@ def get_minimal_rhcos():
     return int(ver.replace('.', ''))
 
 
-def get_downstream_installer(nightly=False, macosx=False, tag=None):
+def get_downstream_installer(nightly=False, macosx=False, tag=None, debug=False):
     repo = 'ocp-dev-preview' if nightly else 'ocp'
     if tag is None:
         repo += '/latest'
@@ -121,10 +121,12 @@ def get_downstream_installer(nightly=False, macosx=False, tag=None):
     cmd += "openshift-install-%s-%s.tar.gz " % (INSTALLSYSTEM, version)
     cmd += "| tar zxf - openshift-install"
     cmd += "; chmod 700 openshift-install"
+    if debug:
+        pprint(cmd)
     return call(cmd, shell=True)
 
 
-def get_ci_installer(pull_secret, tag=None, macosx=False, upstream=False):
+def get_ci_installer(pull_secret, tag=None, macosx=False, upstream=False, debug=False):
     base = 'openshift' if not upstream else 'origin'
     if tag is None:
         tags = []
@@ -145,10 +147,12 @@ def get_ci_installer(pull_secret, tag=None, macosx=False, upstream=False):
     else:
         cmd = "oc adm release extract --registry-config %s --command=openshift-install --to . %s" % (pull_secret, tag)
     cmd += "; chmod 700 openshift-install"
+    if debug:
+        pprint(cmd)
     return call(cmd, shell=True)
 
 
-def get_upstream_installer(macosx=False, tag=None):
+def get_upstream_installer(macosx=False, tag=None, debug=False):
     INSTALLSYSTEM = 'mac' if os.path.exists('/Users') or macosx else 'linux'
     msg = 'Downloading okd openshift-install from github in current directory'
     pprint(msg)
@@ -159,6 +163,8 @@ def get_upstream_installer(macosx=False, tag=None):
     cmd += "%s/openshift-install-%s-%s.tar.gz" % (version, INSTALLSYSTEM, version)
     cmd += "| tar zxf - openshift-install"
     cmd += "; chmod 700 openshift-install"
+    if debug:
+        pprint(cmd)
     return call(cmd, shell=True)
 
 

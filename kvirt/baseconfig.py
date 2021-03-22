@@ -1042,16 +1042,16 @@ class Kbaseconfig:
         upstream = overrides.get('upstream', False)
         macosx = True if os.path.exists('/Users') else False
         if version == 'ci':
-            run = openshift.get_ci_installer(pull_secret, tag=tag, macosx=macosx, upstream=upstream)
+            run = openshift.get_ci_installer(pull_secret, tag=tag, macosx=macosx, upstream=upstream, debug=self.debug)
         elif version == 'nightly':
-            run = openshift.get_downstream_installer(nightly=True, tag=tag, macosx=macosx)
+            run = openshift.get_downstream_installer(nightly=True, tag=tag, macosx=macosx, debug=self.debug)
         elif upstream:
-            run = openshift.get_upstream_installer(tag=tag, macosx=macosx)
+            run = openshift.get_upstream_installer(tag=tag, macosx=macosx, debug=self.debug)
         else:
-            run = openshift.get_downstream_installer(tag=tag, macosx=macosx)
+            run = openshift.get_downstream_installer(tag=tag, macosx=macosx, debug=self.debug)
         if run != 0:
             error("Couldn't download openshift-install")
-            os._exit(run)
+        return run
 
     def create_vm_playbook(self, name, profile, overrides={}, store=False, env=None):
         jinjadir = os.path.dirname(jinjafilters.__file__)
