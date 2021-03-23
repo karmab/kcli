@@ -1,7 +1,10 @@
 export PATH=/root/bin:$PATH
 yum -y install podman httpd httpd-tools jq bind-utils
-IP=$(hostname -I | cut -d' ' -f1)
+#IP=$(hostname -I | cut -d' ' -f1)
+#REVERSE_NAME=$(dig -x $IP +short | sed 's/\.[^\.]*$//')
+IP=$(hostname -I | awk -F' ' '{print $NF}')
 REVERSE_NAME=$(dig -x $IP +short | sed 's/\.[^\.]*$//')
+echo $IP | grep -q ':' && REVERSE_NAME=$(dig -6x $IP +short | sed 's/\.[^\.]*$//')
 REGISTRY_NAME=${REVERSE_NAME:-$(hostname -f)}
 echo $REGISTRY_NAME:5000 > /root/url.txt
 REGISTRY_USER={{ disconnected_user if disconnected_user != None else 'dummy' }}
@@ -42,7 +45,7 @@ export RELEASE_NAME=ocp/release
 export OCP_RELEASE={{ tag }}
 {% else %}
 export RELEASE_NAME=openshift-release-dev/ocp-release
-export OCP_RELEASE={{ tag }}-x86_64
+export OCP_RELEASE={{ openshift_version|default(tag) }}-x86_64
 {% endif %}
 export LOCAL_REGISTRY=$REGISTRY_NAME:5000
 export PULL_SECRET=/root/openshift_pull.json

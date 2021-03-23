@@ -518,6 +518,8 @@ def create(config, plandir, cluster, overrides):
         if version == 'ci' and 'disconnected_origin' not in overrides:
             warning("Forcing disconnected_origin to registry.ci.openshift.org")
             data['disconnected_origin'] = "registry.ci.openshift.org"
+        if version == 'stable' and str(tag).count('.') == 1:
+            data['openshift_version'] = INSTALLER_VERSION
         result = config.plan(disconnected_plan, inputfile='%s/disconnected.yml' % plandir, overrides=data)
         if result['result'] != 'success':
             os._exit(1)
