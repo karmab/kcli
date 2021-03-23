@@ -6,6 +6,7 @@ IP=$(hostname -I | awk -F' ' '{print $NF}')
 REVERSE_NAME=$(dig -x $IP +short | sed 's/\.[^\.]*$//')
 echo $IP | grep -q ':' && REVERSE_NAME=$(dig -6x $IP +short | sed 's/\.[^\.]*$//')
 REGISTRY_NAME=${REVERSE_NAME:-$(hostname -f)}
+echo $IP $REGISTRY_NAME >> /etc/hosts 
 echo $REGISTRY_NAME:5000 > /root/url.txt
 REGISTRY_USER={{ disconnected_user if disconnected_user != None else 'dummy' }}
 REGISTRY_PASSWORD={{ disconnected_password if disconnected_password != None else 'dummy' }}
