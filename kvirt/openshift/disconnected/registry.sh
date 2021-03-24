@@ -42,7 +42,7 @@ podman create --name registry --net host --security-opt label=disable -v /opt/re
 podman start registry
 export UPSTREAM_REGISTRY={{ disconnected_origin }}
 {% if ':' in tag|string %}
-{% set release_name, ocp_release = str(tag).split(':') %}
+{% set release_name, ocp_release = (tag|string).split(':') %}
 export RELEASE_NAME={{ release_name }}
 export OCP_RELEASE={{ ocp_release }}
 {% elif disconnected_origin != 'quay.io' %}
