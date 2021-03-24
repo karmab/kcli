@@ -90,7 +90,15 @@ imageContentSources:
   source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
 - mirrors:
   - {{ disconnected_url }}/{{ disconnected_prefix }}
-  source: {{ disconnected_origin }}/{{ 'ocp/release' if disconnected_origin != 'quay.io' else "ocp-release" }}
+{% if disconnected_origin == 'registry.build01.ci.openshift.org' %}
+  source: {{ disconnected_origin }}/{{ tag.split(':')[0] }}/stable
+{% elif ':' in tag %}
+  source: {{ disconnected_origin }}/{{ tag.split(':')[0] }}
+{% elif disconnected_origin != 'quay.io' %}
+  source: {{ disconnected_origin }}/ocp/release
+{% else %}
+  source: {{ disconnected_origin }}/ocp-release
+{% endif %}
 {% elif imagecontentsources %}
 imageContentSources:
 {% for source in imagecontentsources %}

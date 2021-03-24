@@ -136,6 +136,8 @@ def get_ci_installer(pull_secret, tag=None, macosx=False, upstream=False, debug=
             if tag_match is not None:
                 tags.append(tag_match.group(1))
         tag = sorted(tags)[-1]
+    elif str(tag).startswith('ci-ln'):
+        tag = 'registry.build01.ci.openshift.org/%s' % tag
     elif '/' not in str(tag):
         basetag = 'ocp' if not upstream else 'origin'
         tag = 'registry.ci.openshift.org/%s/release:%s' % (basetag, tag)
@@ -516,8 +518,9 @@ def create(config, plandir, cluster, overrides):
         data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
         disconnected_plan = "%s-reuse" % plan if disconnected_reuse else plan
         if version == 'ci' and 'disconnected_origin' not in overrides:
-            warning("Forcing disconnected_origin to registry.ci.openshift.org")
-            data['disconnected_origin'] = "registry.ci.openshift.org"
+            reg = 'registry.build01.ci.openshift.org' if str(tag).startswith('ci-') else 'registry.ci.openshift.org'
+            warning("Forcing disconnected_origin to %s" % reg)
+            data['disconnected_origin'] = reg
         if version == 'stable' and str(tag).count('.') == 1:
             data['openshift_version'] = INSTALLER_VERSION
         result = config.plan(disconnected_plan, inputfile='%s/disconnected.yml' % plandir, overrides=data)
