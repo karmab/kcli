@@ -91,7 +91,7 @@ imageContentSources:
 - mirrors:
   - {{ disconnected_url }}/{{ disconnected_prefix }}
 {% if disconnected_origin == 'registry.build01.ci.openshift.org' %}
-  source: {{ disconnected_origin }}/{{ (tag|string).split(':')[0] }}/stable
+  source: {{ disconnected_origin }}/{{ (tag|string).split('/')[0] }}/stable
 {% elif ':' in tag|string %}
   source: {{ disconnected_origin }}/{{ (tag|string).split(':')[0] }}
 {% elif disconnected_origin != 'quay.io' %}
