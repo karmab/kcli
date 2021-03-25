@@ -3046,19 +3046,20 @@ class Kvirt(object):
         return {'result': 'success'}
 
     def _create_host_entry(self, name, ip, netname, domain, dnsmasq=False):
+        hostsfile = '/etcdir/hosts' if os.path.exists("/i_am_a_container") else '/etc/hosts'
         hosts = "%s %s %s.%s" % (ip, name, name, netname)
         if domain is not None and domain != netname:
             hosts = "%s %s.%s" % (hosts, name, domain)
         hosts = '"%s # KVIRT"' % hosts
         oldentry = "%s %s.* # KVIRT" % (ip, name)
-        for line in open('/etc/hosts'):
+        for line in open(hostsfile):
             if re.findall(oldentry, line):
                 warning("Old entry found.Leaving...")
                 return
         if not dnsmasq:
-            hostscmd = "sh -c 'echo %s >>/etc/hosts'" % hosts
+            hostscmd = "sh -c 'echo %s >>%s'" % (hosts, hostsfile)
         else:
-            hostscmd = "sh -c 'echo %s >>/etc/hosts'" % hosts.replace('"', '\\"')
+            hostscmd = "sh -c 'echo %s >>%s'" % (hosts.replace('"', '\\"'), hostsfile)
         pprint("Creating hosts entry. Password for sudo might be asked")
         if not dnsmasq or self.user != 'root':
             hostscmd = "sudo %s" % hostscmd
