@@ -65,6 +65,9 @@ def update_etc_hosts(cluster, domain, host_ip, ingress_ip=None):
             if ingress_ip is not None:
                 entries = ' '.join(ingress_entries)
                 call("sudo sh -c 'echo %s %s >> /etcdir/hosts'" % (ingress_ip, entries), shell=True)
+        else:
+            warning("Make sure to have the following entry in your /etc/hosts")
+            warning("%s %s" % (host_ip, entries))
 
 
 def get_installer_version():
@@ -483,7 +486,12 @@ def create(config, plandir, cluster, overrides):
             fcos_url = "https://builds.coreos.fedoraproject.org/streams/%s.json" % fcos_base
             image_url = get_latest_fcos(fcos_url, _type=config.type)
         else:
-            image_url = get_commit_rhcos(COMMIT_ID, _type=config.type)
+            try:
+                image_url = get_commit_rhcos(COMMIT_ID, _type=config.type)
+            except:
+                error("Couldn't gather the %s image associated to commit %s" % (config.type, COMMIT_ID))
+                error("Force an image in your parameter file")
+                os._exit(1)
         image = os.path.basename(os.path.splitext(image_url)[0])
         images = [v for v in k.volumes() if image in v]
         if not images:
