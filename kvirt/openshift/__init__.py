@@ -384,7 +384,9 @@ def create(config, plandir, cluster, overrides):
     if not sno and ':' in api_ip:
         ipv6 = True
     if ipv6:
-        data['network_type'] = 'OVNKubernetes'
+        if data['network_type'] == 'OpenShiftSDN':
+            warning("Forcing network_type to OVNKubernetes")
+            data['network_type'] = 'OVNKubernetes'
         data['ipv6'] = True
         overrides['ipv6'] = True
         if not disconnected_deploy and disconnected_url is None:
