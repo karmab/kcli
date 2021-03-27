@@ -7,7 +7,7 @@ metadata:
 spec:
   config:
     ignition:
-      version: 2.2.0
+      version: {{ ignition_version|default('3.1.0') }}
     storage:
       directories:
         - filesystem: "root"
@@ -32,3 +32,4 @@ spec:
           Options=lowerdir=/usr/lib/modules,upperdir=/opt/modules,workdir=/opt/modules.wd
           [Install]
           WantedBy=multi-user.target
+
