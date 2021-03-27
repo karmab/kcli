@@ -384,7 +384,7 @@ def create(config, plandir, cluster, overrides):
     if not sno and ':' in api_ip:
         ipv6 = True
     if ipv6:
-        if data['network_type'] == 'OpenShiftSDN':
+        if data('network_type', 'OpenShiftSDN') == 'OpenShiftSDN':
             warning("Forcing network_type to OVNKubernetes")
             data['network_type'] = 'OVNKubernetes'
         data['ipv6'] = True
