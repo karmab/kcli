@@ -836,7 +836,11 @@ def create(config, plandir, cluster, overrides):
             error("Leaving environment for debugging purposes")
             error("You can delete it with kcli delete cluster --yes %s" % cluster)
             os._exit(run)
-        todelete = [] if 'network_type' in data and data['network_type'] == 'Contrail' else ["%s-bootstrap" % cluster]
+        if 'network_type' in data and data['network_type'] == 'Contrail':
+            warning("Keeping bootstrap vm to do act as loadbalancer because of contrail issues with keepalived")
+            todelete = []
+        else:
+            todelete = ["%s-bootstrap" % cluster]
         if platform in ['openstack', 'vsphere', 'packet']:
             todelete.append("%s-bootstrap-helper" % cluster)
     else:
