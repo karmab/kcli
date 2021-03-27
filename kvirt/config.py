@@ -619,6 +619,7 @@ class Kconfig(Kbaseconfig):
                 return {'result': 'failure', 'reason': msg}
         if scripts:
             for script in scripts:
+                scriptname = os.path.basename(script)
                 if onfly is not None and '~' not in script:
                     destdir = basedir
                     if '/' in script:
@@ -649,6 +650,7 @@ class Kconfig(Kbaseconfig):
                         return {'result': 'failure', 'reason': msg}
                     scriptlines = [line.strip() for line in scriptentries.split('\n') if line.strip() != '']
                     if scriptlines:
+                        scriptlines.insert(0, "echo Running script %s" % scriptname)
                         scriptcmds.extend(scriptlines)
         if skip_rhnregister_script and cloudinit and image is not None and image.lower().startswith('rhel'):
             rhncommands = []
