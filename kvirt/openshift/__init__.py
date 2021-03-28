@@ -903,3 +903,7 @@ def create(config, plandir, cluster, overrides):
             else:
                 pprint("Adding app %s" % app)
                 kube_create_app(config, appdir, overrides=overrides)
+    postsdir = pwd_path("post-manifests")
+    if os.path.exists(postsdir) and os.path.isdir(postsdir):
+        pprint("Applying post-manifests")
+        call('oc apply -f %s' % postsdir, shell=True)
