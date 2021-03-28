@@ -903,7 +903,9 @@ def create(config, plandir, cluster, overrides):
             else:
                 pprint("Adding app %s" % app)
                 kube_create_app(config, appdir, overrides=overrides)
-    postsdir = pwd_path("post-manifests")
-    if os.path.exists(postsdir) and os.path.isdir(postsdir):
-        pprint("Applying post-manifests")
-        call('oc apply -f %s' % postsdir, shell=True)
+    if data.get('postscripts', []):
+        currentdir = pwd_path(".")
+        for script in data['postscripts']:
+            script_path = os.path.expanduser(script) if script.startswith('/') else '%s/%s' % (currentdir, script)
+            pprint("Running script %s" % os.path.basename(script))
+            call(script_path, shell=True)

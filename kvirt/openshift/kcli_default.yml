@@ -10,10 +10,11 @@ info: |
     To avoid keepalived collision, you can force virtual_router_id. Otherwise, the id is calculated from cluster variable
     You can deploy extra apps with the apps array and for each of the supported app, indicate with the variable
     ${app}_version with version to target (instead of latest)
+    You can also define a list of scripts to launch at the end with the postscripts array.
 version: nightly
-tag: '4.6'
+tag: '4.7'
 pull_secret: openshift_pull.json
-image: rhcos45
+image: rhcos47
 helper_image: CentOS-7-x86_64-GenericCloud.qcow2
 network: default
 api_ip: 
@@ -47,6 +48,7 @@ disk_size: 30
 autostart: false
 keys: []
 apps: []
+postscripts: []
 extra_disks: []
 extra_master_disks: []
 extra_worker_disks: []
