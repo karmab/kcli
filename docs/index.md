@@ -361,6 +361,8 @@ You can use additional parameters for the kubevirt section:
 - cdi: whether to use cdi. Defaults to true. A check on whether cdi is actually present will be performed.
 - registry: Registry where to pull containerdisk images. Defaults to none, in which case your configured registries will be used.
 - access_mode: Way to access vms other ssh. Defaults to NodePort,in which case a svc with a nodeport pointing to the ssh port of the vm will be created. Otherpossible values are LoadBalancer to create a svc of type loadbalancer to point to the vm or External to connect using the sdn ip of the vm. If tunnel options are set, they take precedence
+- volume_mode: Volume Mode. Defaults to FileSystem (Block can be specified instead).
+- volume_access: Volume access mode. Defaults to ReadWriteOnce.
 
 You can use the following indications to gather context, create a suitable service account and retrieve its associated token:
 

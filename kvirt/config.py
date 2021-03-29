@@ -104,11 +104,21 @@ class Kconfig(Kbaseconfig):
                     msg = "Incorrect access_mode %s. Should be External, NodePort or LoadBalancer" % access_mode
                     error(msg)
                     os._exit(1)
+                volume_mode = self.options.get('volume_mode', 'FileSystem')
+                if volume_mode not in ['FileSystem', 'Block']:
+                    msg = "Incorrect volume_mode %s. Should be FileSystem or Block" % volume_mode
+                    error(msg)
+                    os._exit(1)
+                volume_access = self.options.get('volume_access', 'ReadWriteOnce')
+                if volume_access not in ['ReadWriteMany', 'ReadWriteOnce']:
+                    msg = "Incorrect volume_access %s. Should be ReadWriteOnce or ReadWriteOnce" % volume_access
+                    error(msg)
+                    os._exit(1)
                 from kvirt.providers.kubevirt import Kubevirt
                 k = Kubevirt(context=context, token=token, ca_file=ca_file, host=self.host,
                              port=self.port, user=self.user, debug=debug, namespace=namespace, cdi=cdi,
                              datavolumes=datavolumes, readwritemany=readwritemany, registry=registry,
-                             access_mode=access_mode)
+                             access_mode=access_mode, volume_mode=volume_mode, volume_access=volume_access)
                 self.host = k.host
             elif self.type == 'gcp':
                 credentials = self.options.get('credentials')

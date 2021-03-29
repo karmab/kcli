@@ -39,7 +39,7 @@ class Kubevirt(Kubecommon):
     """
     def __init__(self, token=None, ca_file=None, context=None, host='127.0.0.1', port=443, user='root', debug=False,
                  namespace=None, cdi=True, datavolumes=False, readwritemany=False, registry=None,
-                 access_mode='NodePort'):
+                 access_mode='NodePort', volume_mode='FileSystem', volume_access='ReadWriteOnce'):
         Kubecommon.__init__(self, token=token, ca_file=ca_file, context=context, host=host, port=port,
                             namespace=namespace, readwritemany=readwritemany)
         self.crds = client.CustomObjectsApi(api_client=self.api_client)
@@ -48,6 +48,8 @@ class Kubevirt(Kubecommon):
         self.datavolumes = datavolumes
         self.registry = registry
         self.access_mode = access_mode
+        self.volume_mode = volume_mode
+        self.volume_access = volume_access
         self.cdi = cdi
         return
 
@@ -279,7 +281,8 @@ class Kubevirt(Kubecommon):
                 continue
             diskpool = self.check_pool(pool)
             pvc = {'kind': 'PersistentVolumeClaim', 'spec': {'storageClassName': diskpool,
-                                                             'accessModes': [self.accessmode],
+                                                             'volumeMode': self.volume_mode,
+                                                             'accessModes': [self.volume_access],
                                                              'resources': {'requests': {'storage': '%sGi' % disksize}}},
                    'apiVersion': 'v1', 'metadata': {'name': diskname}}
             if image is not None and index == 0 and image not in CONTAINERDISKS and cdi:
@@ -352,7 +355,8 @@ class Kubevirt(Kubecommon):
                 if cdi:
                     if datavolumes:
                         dvt = {'metadata': {'name': diskname, 'annotations': {'sidecar.istio.io/inject': 'false'}},
-                               'spec': {'pvc': {'accessModes': [self.accessmode],
+                               'spec': {'pvc': {'volumeMode': self.volume_mode,
+                                                'accessModes': [self.volume_access],
                                                 'resources':
                                                 {'requests': {'storage': '%sGi' % pvcsize}}},
                                         'source': {'pvc': {'name': images[image], 'namespace': self.namespace}}},
