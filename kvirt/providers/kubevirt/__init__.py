@@ -870,7 +870,8 @@ class Kubevirt(Kubecommon):
         except:
             pass
         pvc = {'kind': 'PersistentVolumeClaim', 'spec': {'storageClassName': pool,
-                                                         'accessModes': [self.accessmode],
+                                                         'volumeMode': self.volume_mode,
+                                                         'accessModes': [self.volume_access],
                                                          'resources': {'requests': {'storage': '%sGi' % size}}},
                'apiVersion': 'v1', 'metadata': {'name': name}}
         if image is not None:
@@ -1017,7 +1018,8 @@ class Kubevirt(Kubecommon):
         now = datetime.datetime.now().strftime("%Y%M%d%H%M")
         podname = '%s-%s-importer' % (now, volname)
         pvc = {'kind': 'PersistentVolumeClaim', 'spec': {'storageClassName': pool,
-                                                         'accessModes': [self.accessmode],
+                                                         'volumeMode': self.volume_mode,
+                                                         'accessModes': [self.volume_access],
                                                          'resources': {'requests': {'storage': '%sGi' % size}}},
                'apiVersion': 'v1', 'metadata': {'name': volname, 'annotations': {'kcli/image': uncompressed}}}
         if cdi:
@@ -1072,7 +1074,8 @@ class Kubevirt(Kubecommon):
         size = 1024 * int(size) + 100
         now = datetime.datetime.now().strftime("%Y%M%d%H%M")
         podname = '%s-%s-copy' % (now, dest)
-        pvc = {'kind': 'PersistentVolumeClaim', 'spec': {'storageClassName': pool, 'accessModes': [self.accessmode],
+        pvc = {'kind': 'PersistentVolumeClaim', 'spec': {'storageClassName': pool, 'accessModes': [self.volume_access],
+                                                         'volumeMode': self.volume_mode,
                                                          'resources': {'requests': {'storage': '%sMi' % size}}},
                'apiVersion': 'v1', 'metadata': {'name': dest}}
         pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'Never',
