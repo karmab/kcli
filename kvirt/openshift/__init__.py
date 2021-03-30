@@ -570,7 +570,7 @@ def create(config, plandir, cluster, overrides):
                          tunnelport=config.tunnelport, tunneluser=config.tunneluser, download=True, insecure=True,
                          vmport=disconnected_vmport)
             os.system(scpcmd)
-            source, destination = "/root/catalogsource.yaml", clusterdir
+            source, destination = "/root/catalogSource.yaml", clusterdir
             scpcmd = scp(disconnected_vm, ip=disconnected_ip, user='root', source=source,
                          destination=destination, tunnel=config.tunnel, tunnelhost=config.tunnelhost,
                          tunnelport=config.tunnelport, tunneluser=config.tunneluser, download=True, insecure=True,

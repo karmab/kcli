@@ -42,4 +42,4 @@ podman push $LOCAL_REGISTRY/$LOCAL_REGISTRY_INDEX_TAG --authfile $OCP_PULLSECRET
 oc adm catalog mirror $LOCAL_REGISTRY/$LOCAL_REGISTRY_INDEX_TAG $LOCAL_REGISTRY/$LOCAL_REGISTRY_IMAGE_TAG --registry-config=$OCP_PULLSECRET_AUTHFILE
 
 cp /root/manifests-redhat-operator-index-*/imageContentSourcePolicy.yaml /root
-cp /root/manifests-redhat-operator-index-*/catalogsource.yaml /root
+cp /root/manifests-redhat-operator-index-*/catalogSource.yaml /root
