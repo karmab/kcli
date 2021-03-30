@@ -27,5 +27,6 @@ if [ "$install_device" == "/dev/" ]; then
 fi
 {% endif %}
 
+firstboot_args='console=tty0 rd.neednet=1 {{ extra_args|default("") }}'
 echo "Executing coreos-installer with ignition file /root/master.ign and device $install_device"
-coreos-installer install --firstboot-args="console=tty0 rd.neednet=1" --ignition=/root/master.ign $install_device && shutdown -r now "Bootstrap completed, restarting node"
+coreos-installer install --firstboot-args="${firstboot_args}" --ignition=/root/master.ign $install_device && shutdown -r now "Bootstrap completed, restarting node"
