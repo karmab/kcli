@@ -1215,6 +1215,14 @@ def get_commit_rhcos(commitid, _type='kvm'):
         return path
 
 
+def get_installer_rhcos(_type='kvm'):
+    keys = {'ovirt': 'openstack', 'kubevirt': 'openstack', 'kvm': 'qemu', 'vsphere': 'vmware'}
+    key = keys.get(_type, _type)
+    INSTALLER_COREOS = os.popen('openshift-install coreos print-stream-json').read()
+    data = json.loads(INSTALLER_COREOS)
+    return data['architectures']['x86_64']['artifacts'][key]['formats']['qcow2.gz']['disk']['location']
+
+
 def get_commit_rhcos_metal(commitid):
     buildurl = "https://raw.githubusercontent.com/openshift/installer/%s/data/data/rhcos.json" % commitid
     with urlopen(buildurl) as b:
@@ -1224,6 +1232,22 @@ def get_commit_rhcos_metal(commitid):
         initrd = "%s%s" % (baseuri, data['images']['initramfs']['path'])
         metal = "%s%s" % (baseuri, data['images']['metal']['path'])
         return kernel, initrd, metal
+
+
+def get_installer_rhcos_metal():
+    INSTALLER_COREOS = os.popen('openshift-install coreos print-stream-json').read()
+    data = json.loads(INSTALLER_COREOS)
+    base = data['architectures']['x86_64']['artifacts']['metal']['formats']['pxe']
+    kernel = base['kernel']['location']
+    initrd = base['initramfs']['location']
+    metal = base['rootfs']['location']
+    return kernel, initrd, metal
+
+
+def get_installer_iso():
+    INSTALLER_COREOS = os.popen('openshift-install coreos print-stream-json').read()
+    data = json.loads(INSTALLER_COREOS)
+    return data['architectures']['x86_64']['artifacts']['metal']['formats']['iso']['disk']['location']
 
 
 def get_latest_rhcos_metal(url):
@@ -1676,22 +1700,26 @@ def filter_compression_extension(name):
     return name.replace('.gz', '').replace('.xz', '').replace('.bz2', '')
 
 
-def generate_rhcos_iso(k, cluster, pool, version='latest'):
-    if 'rhcos-live.x86_64.iso' not in k.volumes(iso=True):
-        pprint("Downloading rhcos-live.x86_64.iso")
-        liveiso = "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/"
-        liveiso += "%s/latest/rhcos-live.x86_64.iso" % version
-        success("Creating iso %s.iso" % cluster)
+def generate_rhcos_iso(k, cluster, pool, version='latest', force=False):
+    if force:
+        liveiso = get_installer_iso()
+        baseiso = os.path.basename(liveiso)
+    else:
+        baseiso = 'rhcos-live.x86_64.iso'
+        liveiso = "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/%s/latest/%s" % (version, baseiso)
+    if baseiso not in k.volumes(iso=True):
+        pprint("Downloading %s" % baseiso)
         k.add_image(liveiso, pool)
     if '%s.iso' % cluster in [os.path.basename(iso) for iso in k.volumes(iso=True)]:
         warning("Deleting old iso %s.iso" % cluster)
         k.delete_image('%s.iso' % cluster)
+    pprint("Creating iso %s.iso" % cluster)
     poolpath = k.get_pool_path(pool)
     coreosinstaller = "podman run --privileged --rm -w /data -v %s:/data -v /dev:/dev" % poolpath
     if not os.path.exists('/Users'):
         coreosinstaller += " -v /run/udev:/run/udev"
     coreosinstaller += " quay.io/coreos/coreos-installer:release"
-    isocmd = "%s iso ignition embed -fi iso.ign -o %s.iso rhcos-live.x86_64.iso" % (coreosinstaller, cluster)
+    isocmd = "%s iso ignition embed -fi iso.ign -o %s.iso %s" % (coreosinstaller, cluster, baseiso)
     if k.host in ['localhost', '127.0.0.1']:
         if find_executable('podman') is None:
             error("podman is required in order to embed iso ignition")
