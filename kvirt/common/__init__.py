@@ -1116,7 +1116,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     if cmdunit is not None:
         systemd["units"].append(cmdunit)
     data = {'ignition': {'version': version, 'config': {}}, 'storage': storage, 'systemd': systemd,
-            'networkd': {}, 'passwd': {'users': []}}
+            'passwd': {'users': []}}
     if publickeys:
         data['passwd']['users'] = [{'name': 'core', 'sshAuthorizedKeys': publickeys}]
     role = None
@@ -1557,8 +1557,11 @@ def ignition_version(image):
         version = '2.2.0'
         image = os.path.basename(image)
         version_match = re.match('rhcos-*(..).*', image)
-        if version_match is not None and int(version_match.group(1)) >= 46:
-            version = '3.1.0'
+        if version_match is not None:
+            if int(version_match.group(1)) >= 46:
+                version = '3.1.0'
+            if int(version_match.group(1)) >= 48:
+                version = '3.2.0'
     return version
 
 

@@ -478,6 +478,8 @@ def create(config, plandir, cluster, overrides):
     curl_header = "Accept: application/vnd.coreos.ignition+json; version=3.1.0"
     if upstream:
         curl_header = "User-Agent: Ignition/2.3.0"
+    elif OPENSHIFT_VERSION.isdigit() and int(OPENSHIFT_VERSION) > 47:
+        curl_header = "User-Agent: Ignition/3.2.0"
     elif OPENSHIFT_VERSION.isdigit() and int(OPENSHIFT_VERSION) < 46:
         curl_header = "User-Agent: Ignition/0.35.0"
     overrides['curl_header'] = curl_header
