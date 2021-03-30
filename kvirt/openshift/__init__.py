@@ -353,6 +353,7 @@ def create(config, plandir, cluster, overrides):
     ipv6 = data['ipv6']
     disconnected_deploy = data.get('disconnected_deploy', False)
     disconnected_reuse = data.get('disconnected_reuse', False)
+    disconnected_operators = data.get('disconnected_operators', False)
     disconnected_url = data.get('disconnected_url')
     disconnected_user = data.get('disconnected_user')
     disconnected_password = data.get('disconnected_password')
@@ -562,6 +563,20 @@ def create(config, plandir, cluster, overrides):
                          tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
                          insecure=True, cmd=versioncmd, vmport=disconnected_vmport)
         disconnected_version = os.popen(versioncmd).read().strip()
+        if disconnected_operators:
+            source, destination = "/root/imageContentSourcePolicy.yaml", clusterdir
+            scpcmd = scp(disconnected_vm, ip=disconnected_ip, user='root', source=source,
+                         destination=destination, tunnel=config.tunnel, tunnelhost=config.tunnelhost,
+                         tunnelport=config.tunnelport, tunneluser=config.tunneluser, download=True, insecure=True,
+                         vmport=disconnected_vmport)
+            os.system(scpcmd)
+            source, destination = "/root/catalogsource.yaml", clusterdir
+            scpcmd = scp(disconnected_vm, ip=disconnected_ip, user='root', source=source,
+                         destination=destination, tunnel=config.tunnel, tunnelhost=config.tunnelhost,
+                         tunnelport=config.tunnelport, tunneluser=config.tunneluser, download=True, insecure=True,
+                         vmport=disconnected_vmport)
+            os.system(scpcmd)
+
         os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = disconnected_version
         pprint("Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to %s" % disconnected_version)
     if disconnected_url is not None and disconnected_user is not None and disconnected_password is not None:
@@ -645,6 +660,11 @@ def create(config, plandir, cluster, overrides):
             f.write(contrail_secret)
     if dualstack:
         copy2("%s/dualstack.yml" % plandir, "%s/openshift" % clusterdir)
+    if disconnected_operators:
+        if os.path.exists('%s/imageContentSourcePolicy.yaml' % clusterdir):
+            copy2('%s/imageContentSourcePolicy.yaml' % clusterdir, "%s/openshift" % clusterdir)
+        if os.path.exists('%s/catalogsource.yaml' % clusterdir):
+            copy2('%s/catalogsource.yaml' % clusterdir, "%s/openshift" % clusterdir)
     if sno:
         sno_name = "%s-sno" % cluster
         sno_dns = data.get('sno_dns', True)

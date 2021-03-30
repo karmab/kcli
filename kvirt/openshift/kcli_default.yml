@@ -79,6 +79,7 @@ disconnected_user:
 disconnected_password:
 disconnected_origin: quay.io
 disconnected_prefix: ocp4
+disconnected_operators: []
 imagecontentsources: []
 ca:
 ipv6: false
