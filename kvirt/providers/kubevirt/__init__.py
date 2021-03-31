@@ -39,7 +39,7 @@ class Kubevirt(Kubecommon):
     """
     def __init__(self, token=None, ca_file=None, context=None, host='127.0.0.1', port=443, user='root', debug=False,
                  namespace=None, cdi=True, datavolumes=False, readwritemany=False, registry=None,
-                 access_mode='NodePort', volume_mode='FileSystem', volume_access='ReadWriteOnce'):
+                 access_mode='NodePort', volume_mode='Filesystem', volume_access='ReadWriteOnce'):
         Kubecommon.__init__(self, token=token, ca_file=ca_file, context=context, host=host, port=port,
                             namespace=namespace, readwritemany=readwritemany)
         self.crds = client.CustomObjectsApi(api_client=self.api_client)
