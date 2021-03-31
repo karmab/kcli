@@ -1218,7 +1218,7 @@ def get_commit_rhcos(commitid, _type='kvm'):
 def get_installer_rhcos(_type='kvm'):
     keys = {'ovirt': 'openstack', 'kubevirt': 'openstack', 'kvm': 'qemu', 'vsphere': 'vmware'}
     key = keys.get(_type, _type)
-    INSTALLER_COREOS = os.popen('openshift-install coreos print-stream-json').read()
+    INSTALLER_COREOS = os.popen('openshift-install coreos print-stream-json 2>/dev/null').read()
     data = json.loads(INSTALLER_COREOS)
     return data['architectures']['x86_64']['artifacts'][key]['formats']['qcow2.gz']['disk']['location']
 
@@ -1235,7 +1235,7 @@ def get_commit_rhcos_metal(commitid):
 
 
 def get_installer_rhcos_metal():
-    INSTALLER_COREOS = os.popen('openshift-install coreos print-stream-json').read()
+    INSTALLER_COREOS = os.popen('openshift-install coreos print-stream-json 2>/dev/null').read()
     data = json.loads(INSTALLER_COREOS)
     base = data['architectures']['x86_64']['artifacts']['metal']['formats']['pxe']
     kernel = base['kernel']['location']
@@ -1245,7 +1245,7 @@ def get_installer_rhcos_metal():
 
 
 def get_installer_iso():
-    INSTALLER_COREOS = os.popen('openshift-install coreos print-stream-json').read()
+    INSTALLER_COREOS = os.popen('openshift-install coreos print-stream-json 2>/dev/null').read()
     data = json.loads(INSTALLER_COREOS)
     return data['architectures']['x86_64']['artifacts']['metal']['formats']['iso']['disk']['location']
 

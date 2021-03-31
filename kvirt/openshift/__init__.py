@@ -9,6 +9,7 @@ import sys
 from kvirt.common import error, pprint, success, warning, info2
 from kvirt.common import gen_mac, get_oc, get_values, pwd_path, fetch
 from kvirt.common import get_commit_rhcos, get_latest_fcos, kube_create_app, patch_bootstrap, generate_rhcos_iso
+from kvirt.common import get_installer_rhcos
 from kvirt.common import ssh, scp, _ssh_credentials
 from kvirt.openshift.calico import calicoassets
 from kvirt.openshift.contrail import contrail_manifests, contrail_openshifts
@@ -492,11 +493,14 @@ def create(config, plandir, cluster, overrides):
             image_url = get_latest_fcos(fcos_url, _type=config.type)
         else:
             try:
-                image_url = get_commit_rhcos(COMMIT_ID, _type=config.type)
+                image_url = get_installer_rhcos(_type=config.type)
             except:
-                error("Couldn't gather the %s image associated to commit %s" % (config.type, COMMIT_ID))
-                error("Force an image in your parameter file")
-                os._exit(1)
+                try:
+                    image_url = get_commit_rhcos(COMMIT_ID, _type=config.type)
+                except:
+                    error("Couldn't gather the %s image associated to commit %s" % (config.type, COMMIT_ID))
+                    error("Force an image in your parameter file")
+                    os._exit(1)
         image = os.path.basename(os.path.splitext(image_url)[0])
         images = [v for v in k.volumes() if image in v]
         if not images:
