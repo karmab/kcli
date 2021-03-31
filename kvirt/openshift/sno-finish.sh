@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-echo exit 0 > /usr/local/bin/install-to-disk.sh
+echo -e "#/bin/sh\n exit 0" > /usr/local/bin/install-to-disk.sh
 echo "Waiting for /opt/openshift/.bootkube.done"
 until ls /opt/openshift/.bootkube.done; do
   sleep 5
