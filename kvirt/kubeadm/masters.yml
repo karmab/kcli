@@ -65,6 +65,9 @@
   - keepalived.conf
   - registry.yml
 {% if number == 0 %}
+{% if engine == 'crio' %}
+  - fixcrio.yml
+{% endif %}
 {% if metallb %}
   - metal_lb.sh
   - metal_lb_cm.yml
