@@ -104,9 +104,9 @@ class Kconfig(Kbaseconfig):
                     msg = "Incorrect access_mode %s. Should be External, NodePort or LoadBalancer" % access_mode
                     error(msg)
                     os._exit(1)
-                volume_mode = self.options.get('volume_mode', 'FileSystem')
-                if volume_mode not in ['FileSystem', 'Block']:
-                    msg = "Incorrect volume_mode %s. Should be FileSystem or Block" % volume_mode
+                volume_mode = self.options.get('volume_mode', 'Filesystem')
+                if volume_mode not in ['Filesystem', 'Block']:
+                    msg = "Incorrect volume_mode %s. Should be Filesystem or Block" % volume_mode
                     error(msg)
                     os._exit(1)
                 volume_access = self.options.get('volume_access', 'ReadWriteOnce')
