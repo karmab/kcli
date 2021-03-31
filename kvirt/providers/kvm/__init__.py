@@ -1953,7 +1953,10 @@ class Kvirt(object):
                 else:
                     dnsentry = '<host ip="%s"><hostname>%s</hostname>' % (ip, name)
                 for entry in alias:
-                    dnsentry += "%s<hostname>%s</hostname>" % (entry, entry)
+                    if domain is not None:
+                        dnsentry += "%s<hostname>%s.%s</hostname>" % (entry, entry, domain)
+                    else:
+                        dnsentry += "%s<hostname>%s</hostname>" % (entry, entry)
                 dnsentry += "</host>"
                 if force:
                     for host in list(root.iter('host')):
@@ -1970,8 +1973,8 @@ class Kvirt(object):
                             network.update(2, 10, 0, oldentry, 1)
                 try:
                     network.update(4, 10, 0, dnsentry, 1)
-                except:
-                    error("Skipping existing dns entry for %s" % name)
+                except Exception as e:
+                    error(e)
 
     def reserve_host(self, name, nets, domain):
         net = nets[0]

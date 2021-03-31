@@ -1277,7 +1277,7 @@ def delete_vmdisk(args):
 
 def create_dns(args):
     """Create dns entries"""
-    name = args.name
+    names = args.names
     net = args.net
     domain = args.domain
     ip = args.ip
@@ -1286,19 +1286,24 @@ def create_dns(args):
         alias = []
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
-    pprint("Creating dns entry for %s..." % name)
+    name = names[0]
+    if len(names) > 1:
+        alias.extend(names[1:])
+    if alias:
+        pprint("Creating alias entries for %s" % ' '.join(alias))
     k.reserve_dns(name=name, nets=[net], domain=domain, ip=ip, alias=alias, primary=True)
 
 
 def delete_dns(args):
     """Delete dns entries"""
-    name = args.name
+    names = args.names
     net = args.net
     domain = args.domain if args.domain is not None else net
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
-    pprint("Deleting Dns entry for %s..." % name)
-    k.delete_dns(name, domain)
+    for name in names:
+        pprint("Deleting Dns entry for %s..." % name)
+        k.delete_dns(name, domain)
 
 
 def export_vm(args):
@@ -2871,7 +2876,7 @@ def cli():
     dnscreate_parser.add_argument('-n', '--net', help='Network where to create entry. Defaults to default',
                                   default='default', metavar='NET')
     dnscreate_parser.add_argument('-i', '--ip', help='Ip', metavar='IP')
-    dnscreate_parser.add_argument('name', metavar='NAME', nargs='?')
+    dnscreate_parser.add_argument('names', metavar='NAMES', nargs='*')
     dnscreate_parser.set_defaults(func=create_dns)
 
     dnsdelete_desc = 'Delete Dns Entries'
@@ -2879,7 +2884,7 @@ def cli():
     dnsdelete_parser.add_argument('-d', '--domain', help='Domain of the entry', metavar='DOMAIN')
     dnsdelete_parser.add_argument('-n', '--net', help='Network where to delete entry. Defaults to default',
                                   default='default', metavar='NET')
-    dnsdelete_parser.add_argument('name', metavar='NAME', nargs='?')
+    dnsdelete_parser.add_argument('names', metavar='NAMES', nargs='*')
     dnsdelete_parser.set_defaults(func=delete_dns)
 
     dnslist_desc = 'List Dns Entries'
