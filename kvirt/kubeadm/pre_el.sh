@@ -50,6 +50,6 @@ systemctl restart containerd
 
 dnf -y install -y kubelet-$VERSION kubectl-$VERSION kubeadm-$VERSION git
 {% if engine == 'crio' %}
-echo KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime-endpoint=unix:///var/run/crio/crio.sock --cloud-provider=external > /etc/sysconfig/kubelet
+echo KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime-endpoint=unix:///var/run/crio/crio.sock > /etc/sysconfig/kubelet
 {% endif %}
 systemctl enable --now kubelet

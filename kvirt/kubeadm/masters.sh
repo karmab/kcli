@@ -53,10 +53,6 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/mast
 kubectl apply -f https://raw.githubusercontent.com/karmab/autolabeller/master/autorules.yml
 {% endif %}
 
-{% if engine == 'crio' %}
-kubectl apply -f /root/fixcrio.yml
-{% endif %}
-
 {% if registry %}
 mkdir -p /opt/registry/{auth,certs,data,conf}
 REGISTRY_NAME="api.{{ cluster }}.{{ domain }}"
