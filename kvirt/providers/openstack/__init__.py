@@ -587,7 +587,7 @@ class Kopenstack(object):
         return {'result': 'success'}
 
     def add_disk(self, name, size, pool=None, thin=True, image=None,
-                 shareable=False, existing=None, interface='virtio', novm=False):
+                 shareable=False, existing=None, interface='virtio', novm=False, overrides={}):
         glance = self.glance
         cinder = self.cinder
         nova = self.nova

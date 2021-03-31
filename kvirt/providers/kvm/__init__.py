@@ -2264,7 +2264,7 @@ class Kvirt(object):
         return diskpath
 
     def add_disk(self, name, size=1, pool=None, thin=True, image=None, shareable=False, existing=None,
-                 interface='virtio', novm=False):
+                 interface='virtio', novm=False, overrides={}):
         conn = self.conn
         diskformat = 'qcow2'
         diskbus = interface

@@ -943,7 +943,7 @@ class Ksphere:
         return pool
 
     def add_disk(self, name, size=1, pool=None, thin=True, image=None, shareable=False, existing=None,
-                 interface='virtio', novm=False):
+                 interface='virtio', novm=False, overrides={}):
         si = self.si
         dc = self.dc
         vmFolder = dc.vmFolder

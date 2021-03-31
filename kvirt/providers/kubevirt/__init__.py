@@ -243,6 +243,8 @@ class Kubevirt(Kubecommon):
         for index, disk in enumerate(disks):
             existingpvc = False
             diskname = '%s-disk%d' % (name, index)
+            volume_mode = self.volume_mode
+            volume_access = self.volume_access
             if disk is None:
                 disksize = default_disksize
                 diskpool = default_pool
@@ -259,6 +261,8 @@ class Kubevirt(Kubecommon):
                 disksize = disk.get('size', default_disksize)
                 diskpool = disk.get('pool', default_pool)
                 diskinterface = disk.get('interface', default_diskinterface)
+                volume_mode = disk.get('volume_mode', volume_mode)
+                volume_access = disk.get('volume_access', volume_access)
                 if 'name' in disk:
                     existingpvc = True
             myvolume = {'name': diskname}
@@ -281,8 +285,8 @@ class Kubevirt(Kubecommon):
                 continue
             diskpool = self.check_pool(pool)
             pvc = {'kind': 'PersistentVolumeClaim', 'spec': {'storageClassName': diskpool,
-                                                             'volumeMode': self.volume_mode,
-                                                             'accessModes': [self.volume_access],
+                                                             'volumeMode': volume_mode,
+                                                             'accessModes': [volume_access],
                                                              'resources': {'requests': {'storage': '%sGi' % disksize}}},
                    'apiVersion': 'v1', 'metadata': {'name': diskname}}
             if image is not None and index == 0 and image not in CONTAINERDISKS and cdi:
@@ -351,12 +355,14 @@ class Kubevirt(Kubecommon):
         for pvc in pvcs:
             pvcname = pvc['metadata']['name']
             pvcsize = pvc['spec']['resources']['requests']['storage'].replace('Gi', '')
+            pvc_volume_mode = pvc['spec']['volumeMode']
+            pvc_access_mode = pvc['sec']['accessModes']
             if index == 0 and image is not None and image not in CONTAINERDISKS:
                 if cdi:
                     if datavolumes:
                         dvt = {'metadata': {'name': diskname, 'annotations': {'sidecar.istio.io/inject': 'false'}},
-                               'spec': {'pvc': {'volumeMode': self.volume_mode,
-                                                'accessModes': [self.volume_access],
+                               'spec': {'pvc': {'volumeMode': pvc_volume_mode,
+                                                'accessModes': pvc_access_mode,
                                                 'resources':
                                                 {'requests': {'storage': '%sGi' % pvcsize}}},
                                         'source': {'pvc': {'name': images[image], 'namespace': self.namespace}}},
@@ -857,7 +863,7 @@ class Kubevirt(Kubecommon):
         print("Not implemented")
         return {'result': 'success'}
 
-    def create_disk(self, name, size, pool=None, thin=True, image=None):
+    def create_disk(self, name, size, pool=None, thin=True, image=None, overrides={}):
         core = self.core
         namespace = self.namespace
         pvc = core.list_namespaced_persistent_volume_claim(namespace)
@@ -869,9 +875,11 @@ class Kubevirt(Kubecommon):
             return 1
         except:
             pass
+        volume_mode = overrides.get('volume_mode', self.volume_mode)
+        volume_access = overrides.get('volume_access', self.volume_access)
         pvc = {'kind': 'PersistentVolumeClaim', 'spec': {'storageClassName': pool,
-                                                         'volumeMode': self.volume_mode,
-                                                         'accessModes': [self.volume_access],
+                                                         'volumeMode': volume_mode,
+                                                         'accessModes': [volume_access],
                                                          'resources': {'requests': {'storage': '%sGi' % size}}},
                'apiVersion': 'v1', 'metadata': {'name': name}}
         if image is not None:
@@ -880,7 +888,7 @@ class Kubevirt(Kubecommon):
         return
 
     def add_disk(self, name, size, pool=None, thin=True, image=None, shareable=False, existing=None,
-                 interface='virtio', novm=False):
+                 interface='virtio', novm=False, overrides={}):
         crds = self.crds
         namespace = self.namespace
         try:
@@ -893,7 +901,7 @@ class Kubevirt(Kubecommon):
                         if disk['name'] != 'cloudinitdisk']
         index = len(currentdisks)
         diskname = '%s-disk%d' % (name, index)
-        self.create_disk(diskname, size=size, pool=pool, thin=thin, image=image)
+        self.create_disk(diskname, size=size, pool=pool, thin=thin, image=image, overrides=overrides)
         bound = self.pvc_bound(diskname, namespace)
         if not bound:
             return {'result': 'failure', 'reason': 'timeout waiting for pvc %s to get bound' % diskname}

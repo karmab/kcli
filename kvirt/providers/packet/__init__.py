@@ -711,7 +711,7 @@ class Kpacket(object):
         return volume.id
 
     def add_disk(self, name, size, pool=None, thin=True, image=None,
-                 shareable=False, existing=None, interface='virtio', novm=False):
+                 shareable=False, existing=None, interface='virtio', novm=False, overrides={}):
         """
 
         :param name:

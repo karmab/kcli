@@ -1237,6 +1237,7 @@ def update_vm(args):
 
 def create_vmdisk(args):
     """Add disk to vm"""
+    overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
     name = args.name
     novm = args.novm
     size = args.size
@@ -1258,7 +1259,7 @@ def create_vmdisk(args):
         pprint("Creating disk %s..." % name)
     else:
         pprint("Adding disk to %s..." % name)
-    k.add_disk(name=name, size=size, pool=pool, image=image, interface=interface, novm=novm)
+    k.add_disk(name=name, size=size, pool=pool, image=image, interface=interface, novm=novm, overrides=overrides)
 
 
 def delete_vmdisk(args):
@@ -3639,6 +3640,10 @@ def cli():
                                   metavar='INTERFACE')
     vmdiskadd_parser.add_argument('-n', '--novm', action='store_true', help='Dont attach to any vm')
     vmdiskadd_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
+    vmdiskadd_parser.add_argument('-P', '--param', action='append',
+                                  help='specify parameter or keyword for rendering (can specify multiple)',
+                                  metavar='PARAM')
+    vmdiskadd_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
     vmdiskadd_parser.add_argument('name', metavar='VMNAME')
     vmdiskadd_parser.set_defaults(func=create_vmdisk)
     create_subparsers.add_parser('vm-disk', parents=[vmdiskadd_parser], description=vmdiskadd_desc, help=vmdiskadd_desc,
