@@ -356,7 +356,7 @@ class Kubevirt(Kubecommon):
             pvcname = pvc['metadata']['name']
             pvcsize = pvc['spec']['resources']['requests']['storage'].replace('Gi', '')
             pvc_volume_mode = pvc['spec']['volumeMode']
-            pvc_access_mode = pvc['sec']['accessModes']
+            pvc_access_mode = pvc['spec']['accessModes']
             if index == 0 and image is not None and image not in CONTAINERDISKS:
                 if cdi:
                     if datavolumes:
