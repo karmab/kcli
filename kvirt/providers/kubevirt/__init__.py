@@ -385,10 +385,14 @@ class Kubevirt(Kubecommon):
                         reason = copy['reason']
                         return {'result': 'failure', 'reason': reason}
                     continue
-            core.create_namespaced_persistent_volume_claim(namespace, pvc)
-            bound = self.pvc_bound(pvcname, namespace)
-            if not bound:
-                return {'result': 'failure', 'reason': 'timeout waiting for pvc %s to get bound' % pvcname}
+            try:
+                core.read_namespaced_persistent_volume_claim(pvcname, namespace)
+                pprint("Using existing pvc %s" % pvcname)
+            except:
+                core.create_namespaced_persistent_volume_claim(namespace, pvc)
+                bound = self.pvc_bound(pvcname, namespace)
+                if not bound:
+                    return {'result': 'failure', 'reason': 'timeout waiting for pvc %s to get bound' % pvcname}
         if 'affinity' in overrides and isinstance(overrides['affinity'], dict):
             vm['spec']['template']['spec']['affinity'] = overrides['affinity']
         crds.create_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', vm)
