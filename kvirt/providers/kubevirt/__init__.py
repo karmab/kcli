@@ -1015,6 +1015,8 @@ class Kubevirt(Kubecommon):
         #     size = 11
         if 'rhcos' in url.lower():
             size = 20
+        elif 'centos' in url.lower():
+            size = 11
         else:
             size = 9
         core = self.core
