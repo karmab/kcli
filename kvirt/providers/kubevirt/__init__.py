@@ -364,7 +364,7 @@ class Kubevirt(Kubecommon):
             vm['spec']['template']['spec']['volumes'].append(cloudinitvolume)
         if self.debug:
             common.pretty_print(vm)
-        for pvc in pvcs:
+        for index, pvc in enumerate(pvcs):
             pvcname = pvc['metadata']['name']
             pvcsize = pvc['spec']['resources']['requests']['storage'].replace('Gi', '')
             pvc_volume_mode = pvc['spec']['volumeMode']
@@ -372,7 +372,7 @@ class Kubevirt(Kubecommon):
             if index == 0 and image is not None and image not in CONTAINERDISKS:
                 if cdi:
                     if datavolumes:
-                        dvt = {'metadata': {'name': diskname, 'annotations': {'sidecar.istio.io/inject': 'false'}},
+                        dvt = {'metadata': {'name': pvcname, 'annotations': {'sidecar.istio.io/inject': 'false'}},
                                'spec': {'pvc': {'volumeMode': pvc_volume_mode,
                                                 'accessModes': pvc_access_mode,
                                                 'resources':
