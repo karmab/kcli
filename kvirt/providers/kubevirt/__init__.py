@@ -998,7 +998,28 @@ class Kubevirt(Kubecommon):
         return disks
 
     def add_nic(self, name, network):
-        print("not implemented")
+        crds = self.crds
+        namespace = self.namespace
+        try:
+            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
+        except:
+            error("VM %s not found" % name)
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        newif = {'bridge': {}, 'name': network}
+        newnet = {'name': network}
+        if network != 'default':
+            if network not in self.list_networks():
+                error("network %s not found" % network)
+                return {'result': 'failure', 'reason': "network %s not found" % network}
+            newnet['multus'] = {'networkName': network}
+        elif [entry for entry in vm['spec']['template']['spec']['networks'] if 'pod' in entry]:
+            error("only one nic is allowed to be connected to default pod network")
+            return {'result': 'failure', 'reason': "only one nic is allowed to be connected to default pod network"}
+        else:
+            newnet['pod'] = {}
+        vm['spec']['template']['spec']['domain']['devices']['interfaces'].append(newif)
+        vm['spec']['template']['spec']['networks'].append(newnet)
+        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
         return
 
     def delete_nic(self, name, interface):
