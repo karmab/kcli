@@ -33,6 +33,16 @@ KUBECTL_LINUX = "https://storage.googleapis.com/kubernetes-release/release/v1.16
 KUBECTL_MACOSX = KUBECTL_LINUX.replace('linux', 'darwin')
 
 
+def _base_image_size(image):
+    if 'rhcos' in image.lower():
+        size = 20
+    elif 'centos' in image.lower():
+        size = 11
+    else:
+        size = 9
+    return size
+
+
 class Kubevirt(Kubecommon):
     """
 
@@ -270,10 +280,12 @@ class Kubevirt(Kubecommon):
                 if image in CONTAINERDISKS or '/' in image:
                     containerdiskimage = "%s/%s" % (self.registry, image) if self.registry is not None else image
                     myvolume['containerDisk'] = {'image': containerdiskimage}
-                elif cdi and datavolumes:
-                    myvolume['dataVolume'] = {'name': diskname}
                 else:
-                    myvolume['persistentVolumeClaim'] = {'claimName': diskname}
+                    disksize = _base_image_size(image) + 1
+                    if cdi and datavolumes:
+                        myvolume['dataVolume'] = {'name': diskname}
+                    else:
+                        myvolume['persistentVolumeClaim'] = {'claimName': diskname}
             if index > 0 or image is None:
                 myvolume['persistentVolumeClaim'] = {'claimName': diskname}
             newdisk = {'disk': {'bus': diskinterface}, 'name': diskname}
@@ -1005,20 +1017,7 @@ class Kubevirt(Kubecommon):
         return {'result': 'failure', 'reason': 'image %s not found' % image}
 
     def add_image(self, url, pool, short=None, cmd=None, name=None):
-        # if common.is_debian9(url) or common.is_debian10(url) or common.is_ubuntu(url):
-        #     size = 3
-        # elif 'fedora' in url.lower():
-        #     size = 5
-        # elif 'rhcos' in url.lower():
-        #     size = 20
-        # else:
-        #     size = 11
-        if 'rhcos' in url.lower():
-            size = 20
-        elif 'centos' in url.lower():
-            size = 11
-        else:
-            size = 9
+        size = _base_image_size(url)
         core = self.core
         pool = self.check_pool(pool)
         namespace = self.namespace
