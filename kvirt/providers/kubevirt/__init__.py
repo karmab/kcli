@@ -1011,6 +1011,9 @@ class Kubevirt(Kubecommon):
             if network not in self.list_networks():
                 error("network %s not found" % network)
                 return {'result': 'failure', 'reason': "network %s not found" % network}
+            elif [entry for entry in vm['spec']['template']['spec']['networks'] if entry['name'] == network]:
+                error("vm already connected to network %s" % network)
+                return {'result': 'failure', 'reason': "vm already connected to network %s" % network}
             newnet['multus'] = {'networkName': network}
         elif [entry for entry in vm['spec']['template']['spec']['networks'] if 'pod' in entry]:
             error("only one nic is allowed to be connected to default pod network")
