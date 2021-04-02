@@ -395,6 +395,7 @@ class Kubevirt(Kubecommon):
                     copy = self.copy_image(diskpool, images[image], diskname)
                     if copy['result'] == 'failure':
                         reason = copy['reason']
+                        error(reason)
                         return {'result': 'failure', 'reason': reason}
                     continue
             try:
@@ -404,6 +405,7 @@ class Kubevirt(Kubecommon):
                 core.create_namespaced_persistent_volume_claim(namespace, pvc)
                 bound = self.pvc_bound(pvcname, namespace)
                 if not bound:
+                    error('timeout waiting for pvc %s to get bound' % pvcname)
                     return {'result': 'failure', 'reason': 'timeout waiting for pvc %s to get bound' % pvcname}
         if 'affinity' in overrides and isinstance(overrides['affinity'], dict):
             vm['spec']['template']['spec']['affinity'] = overrides['affinity']
@@ -917,16 +919,17 @@ class Kubevirt(Kubecommon):
                         if disk['name'] != 'cloudinitdisk']
         index = len(currentdisks)
         diskname = '%s-disk%d' % (name, index)
-        self.create_disk(diskname, size=size, pool=pool, thin=thin, image=image, overrides=overrides)
+        diskpool = self.check_pool(pool)
+        self.create_disk(diskname, size=size, pool=diskpool, thin=thin, image=image, overrides=overrides)
         bound = self.pvc_bound(diskname, namespace)
         if not bound:
             return {'result': 'failure', 'reason': 'timeout waiting for pvc %s to get bound' % diskname}
-        prepare = self.prepare_pvc(diskname, size=size)
-        if prepare['result'] == 'failure':
-            reason = prepare['reason']
-            return {'result': 'failure', 'reason': reason}
+        # prepare = self.prepare_pvc(diskname, size=size)
+        # if prepare['result'] == 'failure':
+        #    reason = prepare['reason']
+        #    return {'result': 'failure', 'reason': reason}
         myvolume = {'name': diskname, 'persistentVolumeClaim': {'claimName': diskname}}
-        newdisk = {'name': diskname}
+        newdisk = {'disk': {'bus': overrides.get('interface', 'virtio')}, 'name': diskname}
         vm['spec'][t]['spec']['domain']['devices']['disks'].append(newdisk)
         vm['spec'][t]['spec']['volumes'].append(myvolume)
         crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
