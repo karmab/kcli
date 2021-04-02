@@ -52,8 +52,13 @@ def certificate(value):
         return "-----BEGIN CERTIFICATE-----\n%s\n-----END CERTIFICATE-----" % value
 
 
-def stable_release(tag):
-    return True if 'rc' not in tag and 'alpha' not in tag and 'beta' not in tag else False
+def stable_release(release):
+    tag = release['tag_name']
+    if 'rc' in tag or 'alpha' in tag or 'beta' in tag:
+        return False
+    if 'prerelease' in release and release['prerelease']:
+        return False
+    return True
 
 
 def githubversion(repo, version=None):
@@ -61,7 +66,7 @@ def githubversion(repo, version=None):
         data = requests.get("https://api.github.com/repos/%s/releases" % repo).json()
         if 'message' in data and data['message'] == 'Not Found':
             return ''
-        tags = sorted([x['tag_name'] for x in data if stable_release(x['tag_name'])], key=LooseVersion, reverse=True)
+        tags = sorted([x['tag_name'] for x in data if stable_release(x)], key=LooseVersion, reverse=True)
         if tags:
             tag = tags[0]
         else:
