@@ -124,7 +124,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             vips = net.get('vips', [])
             enableipv6 = net.get('ipv6', False)
             bridge = net.get('bridge', False)
-            bridgename = net.get('bridgename', 'br%s' % index)
+            bridgename = net.get('bridgename', netname)
             if bridge:
                 if legacy:
                     netdata += "  auto %s\n" % nicname
