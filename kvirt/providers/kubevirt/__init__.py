@@ -226,6 +226,18 @@ class Kubevirt(Kubecommon):
                     newnet['name'] = netname
                 if 'mac' in net:
                     newif['macAddress'] = net['mac']
+                if 'sriov' in net and net['sriov']:
+                    newif['sriov'] = {}
+                    del newif['bridge']
+                elif 'macvtap' in net and net['macvtap']:
+                    newif['macvtap'] = {}
+                    del newif['bridge']
+                elif 'masquerade' in net and net['masquerade']:
+                    newif['masquerade'] = {}
+                    del newif['bridge']
+                elif 'slirp' in net and net['slirp']:
+                    newif['slirp'] = {}
+                    del newif['bridge']
                 if 'type' in net:
                     newif['model'] = net['type']
                 if 'model' in net:
