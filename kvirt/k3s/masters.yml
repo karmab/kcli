@@ -1,6 +1,3 @@
-{{ image }}:
-  type: image
-
 {% for number in range(1, masters) %}
 {% if extra_master_networks %}
  {% set extra_networks = extra_master_networks %}
