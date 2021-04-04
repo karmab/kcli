@@ -18,6 +18,7 @@ from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_AGENT as vir_src_agent
 from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE as vir_src_lease
 from libvirt import (VIR_DOMAIN_NOSTATE, VIR_DOMAIN_RUNNING, VIR_DOMAIN_BLOCKED, VIR_DOMAIN_PAUSED,
                      VIR_DOMAIN_SHUTDOWN, VIR_DOMAIN_SHUTOFF, VIR_DOMAIN_CRASHED)
+from libvirt import VIR_CONNECT_LIST_STORAGE_POOLS_ACTIVE
 try:
     from libvirt import VIR_DOMAIN_UNDEFINE_KEEP_NVRAM
 except:
@@ -234,12 +235,11 @@ class Kvirt(object):
             display = 'spice'
         volumes = {}
         volumespaths = {}
-        for poolname in conn.listStoragePools():
-            poo = conn.storagePoolLookupByName(poolname)
+        for poo in conn.listAllStoragePools(VIR_CONNECT_LIST_STORAGE_POOLS_ACTIVE):
             try:
                 poo.refresh(0)
             except Exception as e:
-                warning("Hit %s when refreshing pool %s" % (e, poolname))
+                warning("Hit %s when refreshing pool %s" % (e, poo.name()))
                 continue
             for vol in poo.listAllVolumes():
                 volumes[vol.name()] = {'pool': poo, 'object': vol}
@@ -1169,9 +1169,8 @@ class Kvirt(object):
             usedmemory += memory
         print("Vms Running: %s" % totalvms)
         print("Total Memory Assigned: %sMB of %sMB" % (usedmemory, totalmemory))
-        for pool in conn.listStoragePools():
-            poolname = pool
-            pool = conn.storagePoolLookupByName(pool)
+        for pool in conn.listAllStoragePools(VIR_CONNECT_LIST_STORAGE_POOLS_ACTIVE):
+            poolname = pool.name()
             poolxml = pool.XMLDesc(0)
             root = ET.fromstring(poolxml)
             pooltype = list(root.iter('pool'))[0].get('type')
@@ -1540,8 +1539,8 @@ class Kvirt(object):
         default_images = [os.path.basename(t).replace('.bz2', '') for t in list(defaults.IMAGES.values())
                           if t is not None and 'product-software' not in t]
         conn = self.conn
-        for poolname in conn.listStoragePools():
-            pool = conn.storagePoolLookupByName(poolname)
+        for pool in conn.listAllStoragePools(VIR_CONNECT_LIST_STORAGE_POOLS_ACTIVE):
+            poolname = pool.name()
             try:
                 pool.refresh(0)
             except Exception as e:
@@ -1641,41 +1640,35 @@ class Kvirt(object):
             vm.undefineFlags(flags=VIR_DOMAIN_UNDEFINE_KEEP_NVRAM)
         else:
             vm.undefine()
-        founddisks = []
+        remainingdisks = []
+        pools = []
         thinpools = []
-        for poolname in conn.listStoragePools():
-            deleted = False
-            storage = conn.storagePoolLookupByName(poolname)
+        for disk in disks:
             try:
-                storage.refresh(0)
-            except Exception as e:
-                warning("Hit %s when refreshing pool %s" % (e, poolname))
+                volume = conn.storageVolLookupByPath(disk)
+                pool = volume.storagePoolLookupByVolume()
+                volume.delete(0)
+                if pool not in pools:
+                    pools.append(pool)
+            except:
+                remainingdisks.append(disk)
                 continue
-            poolxml = storage.XMLDesc(0)
-            storageroot = ET.fromstring(poolxml)
-            for element in list(storageroot.iter('path')):
-                poolpath = element.text
-                break
-            product = list(storageroot.iter('product'))
-            if product:
-                thinpools.append(poolpath)
-            for stor in storage.listVolumes():
-                for disk in disks:
-                    if stor == os.path.basename(disk):
-                        try:
-                            volume = storage.storageVolLookupByName(stor)
-                        except:
-                            continue
-                        volume.delete(0)
-                        deleted = True
-                        founddisks.append(disk)
-            if deleted:
-                storage.refresh(0)
-        remainingdisks = list(set(disks) - set(founddisks))
-        for p in thinpools:
+        if remainingdisks:
+            for storage in conn.listAllStoragePools(VIR_CONNECT_LIST_STORAGE_POOLS_ACTIVE):
+                poolxml = storage.XMLDesc(0)
+                storageroot = ET.fromstring(poolxml)
+                if list(storageroot.iter('product')):
+                    for element in list(storageroot.iter('path')):
+                        poolpath = element.text
+                        break
+                    thinpools.append(poolpath)
             for disk in remainingdisks:
-                if disk.startswith(p):
-                    self._deletelvm(disk)
+                for p in thinpools:
+                    if disk.startswith(p):
+                        self._deletelvm(disk)
+                        break
+        for pool in pools:
+            pool.refresh(0)
         for element in list(root.iter('interface')):
             mac = element.find('mac').get('address')
             networktype = element.get('type')
