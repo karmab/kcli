@@ -17,6 +17,7 @@ if [ -d /root/manifests ] ; then
  mv /root/manifests /var/lib/rancher/k3s/server
 fi
 {% if sdn == 'cilium' %}
-mount bpffs -t bpf /sys/fs/bpf
+echo bpffs /sys/fs/bpf bpf defaults 0 0 >> /etc/fstab
+mount /sys/fs/bpf
 kubectl create -f https://raw.githubusercontent.com/cilium/cilium/{{ 'cilium/cilium' | githubversion(cilium_version|default('latest')) }}/install/kubernetes/quick-install.yaml
 {% endif %}
