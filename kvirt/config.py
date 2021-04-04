@@ -1453,10 +1453,12 @@ $INFO
                     imageprofile = entries[image]
                     pool = imageprofile.get('pool', self.pool)
                     imageurl = imageprofile.get('url')
+                    imagesize = imageprofile.get('size')
                     if isinstance(imageurl, str) and imageurl == "None":
                         imageurl = None
                     cmd = imageprofile.get('cmd')
-                    self.handle_host(pool=pool, image=image, download=True, cmd=cmd, url=imageurl, update_profile=True)
+                    self.handle_host(pool=pool, image=image, download=True, cmd=cmd, url=imageurl, update_profile=True,
+                                     size=imagesize)
         if dnsentries and not onlyassets:
             pprint("Deploying Dns Entries...")
             dnsclients = {}
