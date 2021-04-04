@@ -780,7 +780,7 @@ class Kgcp(object):
         except:
             return {'result': 'failure', 'reason': 'Image %s not found' % image}
 
-    def add_image(self, url, pool, short=None, cmd=None, name=None):
+    def add_image(self, url, pool, short=None, cmd=None, name=None, size=None):
         conn = self.conn
         project = self.project
         shortimage = os.path.basename(url).split('?')[0].replace('.tar.gz', '').replace('.', '-').replace('-', '.')

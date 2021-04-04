@@ -710,7 +710,7 @@ class Kaws(object):
         except:
             return {'result': 'failure', 'reason': "Image %s not found" % image}
 
-    def add_image(self, url, pool, short=None, cmd=None, name=None):
+    def add_image(self, url, pool, short=None, cmd=None, name=None, size=None):
         print("not implemented")
         return {'result': 'success'}
 

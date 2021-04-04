@@ -1105,7 +1105,7 @@ class Ksphere:
     def vm_ports(self, name):
         return []
 
-    def add_image(self, url, pool, short=None, cmd=None, name=None):
+    def add_image(self, url, pool, short=None, cmd=None, name=None, size=None):
         si = self.si
         rootFolder = self.rootFolder
         shortimage = os.path.basename(url).split('?')[0]

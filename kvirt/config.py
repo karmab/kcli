@@ -1915,7 +1915,7 @@ $INFO
         return returndata
 
     def handle_host(self, pool=None, image=None, switch=None, download=False,
-                    url=None, cmd=None, sync=False, update_profile=False, commit=None):
+                    url=None, cmd=None, sync=False, update_profile=False, commit=None, size=None):
         """
 
         :param pool:
@@ -1963,7 +1963,7 @@ $INFO
                 pprint("Grabbing image %s..." % image)
                 shortname = os.path.basename(url).split('?')[0]
                 try:
-                    result = k.add_image(url, pool, cmd=cmd, name=image)
+                    result = k.add_image(url, pool, cmd=cmd, name=image, size=size)
                 except Exception as e:
                     error("Got %s" % e)
                     error("Please run kcli delete image --yes %s" % shortname)

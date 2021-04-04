@@ -661,7 +661,7 @@ class Kopenstack(object):
                 return {'result': 'success'}
         return {'result': 'failure', 'reason': "Image %s not found" % image}
 
-    def add_image(self, url, pool, short=None, cmd=None, name=None):
+    def add_image(self, url, pool, short=None, cmd=None, name=None, size=None):
         shortimage = os.path.basename(url).split('?')[0]
         if [i for i in self.glance.images.list() if i['name'] == shortimage]:
             return {'result': 'success'}
