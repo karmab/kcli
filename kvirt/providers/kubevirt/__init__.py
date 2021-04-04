@@ -293,8 +293,8 @@ class Kubevirt(Kubecommon):
                     containerdiskimage = "%s/%s" % (self.registry, image) if self.registry is not None else image
                     myvolume['containerDisk'] = {'image': containerdiskimage}
                 else:
-                    disksize = _base_image_size(image) + 1
                     if cdi and datavolumes:
+                        disksize = _base_image_size(image) + 1
                         myvolume['dataVolume'] = {'name': diskname}
                     else:
                         myvolume['persistentVolumeClaim'] = {'claimName': diskname}
@@ -404,7 +404,7 @@ class Kubevirt(Kubecommon):
                             return {'result': 'failure', 'reason': 'timeout waiting for cdi importer pod to complete'}
                         continue
                 else:
-                    copy = self.copy_image(diskpool, images[image], diskname)
+                    copy = self.copy_image(diskpool, images[image], diskname, size=int(pvcsize))
                     if copy['result'] == 'failure':
                         reason = copy['reason']
                         error(reason)
@@ -1114,30 +1114,21 @@ class Kubevirt(Kubecommon):
         return {'result': 'success'}
 
     def copy_image(self, pool, ori, dest, size=1):
-        sizes = {'debian': 2, 'centos': 8, 'fedora': 4, 'rhel': 10, 'trusty': 2.2, 'xenial': 2.2, 'yakkety': 2.2,
-                 'zesty': 2.2, 'artful': 2.2}
         core = self.core
         namespace = self.namespace
-        ori = ori.replace('_', '-').replace('.', '-').lower()
-        for key in sizes:
-            if key in ori and ori.endswith('qcow2'):
-                size = sizes[key]
-                break
-        size = 1024 * int(size) + 100
         now = datetime.datetime.now().strftime("%Y%M%d%H%M")
         podname = '%s-%s-copy' % (now, dest)
+        command = 'cp -u /storage1/disk.img /storage2 ; qemu-img resize /storage2/disk.img %sG' % size
         pvc = {'kind': 'PersistentVolumeClaim', 'spec': {'storageClassName': pool, 'accessModes': [self.volume_access],
                                                          'volumeMode': self.volume_mode,
                                                          'resources': {'requests': {'storage': '%sMi' % size}}},
                'apiVersion': 'v1', 'metadata': {'name': dest}}
         pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'Never',
-                                       'containers': [{'image': 'alpine', 'volumeMounts': [{'mountPath': '/storage1',
-                                                                                            'name': 'storage1'},
-                                                                                           {'mountPath': '/storage2',
-                                                                                            'name': 'storage2'}],
-                                                       'name': 'copy', 'command': ['cp'], 'args': ['-u',
-                                                                                                   '/storage1/disk.img',
-                                                                                                   '/storage2']}],
+                                       'containers': [{'image': 'kubevirtci/disk-importer',
+                                                       'volumeMounts': [{'mountPath': '/storage1', 'name': 'storage1'},
+                                                                        {'mountPath': '/storage2', 'name': 'storage2'}],
+                                                       'name': 'copy', 'command': ['/bin/sh', '-c'],
+                                                       'args': [command]}],
                                        'volumes': [{'name': 'storage1', 'persistentVolumeClaim': {'claimName': ori}},
                                                    {'name': 'storage2', 'persistentVolumeClaim': {'claimName': dest}}]},
                'apiVersion': 'v1', 'metadata': {'name': podname}}
