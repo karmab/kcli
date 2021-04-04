@@ -49,6 +49,7 @@ autostart: false
 keys: []
 apps: []
 postscripts: []
+kubevirt_disk_size:
 extra_disks: []
 extra_master_disks: []
 extra_worker_disks: []

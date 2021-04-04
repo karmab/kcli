@@ -8,6 +8,9 @@
 
 {{ image }}:
   type: image
+{% if kubevirt_disk_size != None and config_type == 'kubevirt' %}
+  size: {{ kubevirt_disk_size }}
+{% endif %}
 
 {% if masters > 1 and config_type in ['aws', 'gcp'] %}
 {{ cluster }}-master:

@@ -3518,7 +3518,7 @@ def cli():
     imagedownload_parser.add_argument('-c', '--cmd', help='Extra command to launch after downloading', metavar='CMD')
     imagedownload_parser.add_argument('-p', '--pool', help='Pool to use. Defaults to default', metavar='POOL')
     imagedownload_parser.add_argument('-u', '--url', help='Url to use', metavar='URL')
-    imagedownload_parser.add_argument('--size', help='Size to force for kubevirt', type=int, metavar='SIZE')
+    imagedownload_parser.add_argument('--size', help='Disk size (kubevirt specific)', type=int, metavar='SIZE')
     imagedownload_parser.add_argument('-s', '--skip-profile', help='Skip Profile update', action='store_true')
     imagedownload_parser.add_argument('image', help=imagedownload_help, metavar='IMAGE')
     imagedownload_parser.set_defaults(func=download_image)

@@ -1,5 +1,8 @@
 {{ image }}:
   type: image
+{% if kubevirt_disk_size != None and config_type == 'kubevirt' %}
+  size: {{ kubevirt_disk_size }}
+{% endif %}
 
 {% if extra_master_networks %}
  {% set extra_networks = extra_master_networks %}

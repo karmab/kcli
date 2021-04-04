@@ -35,6 +35,7 @@ numamode_worker:
 cpupinning:
 cpupinning_master:
 cpupinning_worker:
+kubevirt_disk_size:
 extra_disks: []
 extra_master_disks: []
 extra_worker_disks: []
