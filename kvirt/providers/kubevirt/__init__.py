@@ -659,10 +659,9 @@ class Kubevirt(Kubecommon):
             memory = spectemplate['spec']['domain']['resources']['requests']['memory'].replace('M', '').replace('G', '')
             memory = int(memory)
             yamlinfo['memory'] = memory
-        if image is not None:
+        if image != 'N/A':
             yamlinfo['image'] = image
-            if image != 'N/A':
-                yamlinfo['user'] = common.get_user(image)
+            yamlinfo['user'] = common.get_user(image)
         if ip is not None:
             yamlinfo['ip'] = ip
         if plan is not None:
@@ -699,6 +698,8 @@ class Kubevirt(Kubecommon):
                     size = int(size.replace('Mi', '')) / 1024
                 else:
                     size = int(size)
+                if image != 'N/A' and self.cdi:
+                    size -= 1
             elif 'cloudInitNoCloud' in volumeinfo:
                 continue
             elif 'containerDisk' in volumeinfo:
