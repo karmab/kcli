@@ -1084,15 +1084,18 @@ class Kubevirt(Kubecommon):
             pprint("Cloning in namespace %s" % namespace)
             pvc['metadata']['annotations'] = {'cdi.kubevirt.io/storage.import.endpoint': url}
         else:
+            container = {'image': 'kubevirtci/disk-importer', 'name': 'importer'}
+            if self.volume_mode == 'Filesystem':
+                container['volumeMounts'] = [{'mountPath': '/storage', 'name': 'storage1'}]
+                targetpath = '/storage/disk.img'
+            else:
+                container['volumeDevices'] = [{'devicePath': '/dev/block', 'name': 'storage1'}]
+                targetpath = '/dev/block'
+            container['env'] = [{'name': 'CURL_OPTS', 'value': '-L'},
+                                {'name': 'INSTALL_TO', 'value': targetpath},
+                                {'name': 'URL', 'value': url}]
             pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'Never',
-                                           'containers': [{'image': 'kubevirtci/disk-importer',
-                                                           'volumeMounts': [{'mountPath': '/storage',
-                                                                             'name': 'storage1'}],
-                                                           'name': 'importer',
-                                                           'env': [{'name': 'CURL_OPTS', 'value': '-L'},
-                                                                   {'name': 'INSTALL_TO',
-                                                                    'value': '/storage/disk.img'},
-                                                                   {'name': 'URL', 'value': url}]}],
+                                           'containers': [container],
                                            'volumes': [{'name': 'storage1',
                                                         'persistentVolumeClaim': {'claimName': volname}}]},
                    'apiVersion': 'v1', 'metadata': {'name': podname}}
@@ -1124,17 +1127,23 @@ class Kubevirt(Kubecommon):
         namespace = self.namespace
         now = datetime.datetime.now().strftime("%Y%M%d%H%M")
         podname = '%s-%s-copy' % (now, dest)
-        command = 'cp -u /storage1/disk.img /storage2 ; qemu-img resize /storage2/disk.img %sG' % size
+        container = {'image': 'kubevirtci/disk-importer', 'name': 'copy', 'command': ['/bin/sh', '-c']}
+        if self.volume_mode == 'Filesystem':
+            container['volumeMounts'] = [{'mountPath': '/storage1', 'name': 'storage1'},
+                                         {'mountPath': '/storage2', 'name': 'storage2'}]
+            command = 'cp -u /storage1/disk.img /storage2 ; qemu-img resize /storage2/disk.img %sG' % size
+        else:
+            container['volumeDevices'] = [{'devicePath': '/dev/ori', 'name': 'storage1'},
+                                          {'devicePath': '/dev/dest', 'name': 'storage2'}]
+            command = 'dd if=/dev/ori1 of=/dev/dest bs=4M status=progress'
+            command += '| dd if=/dev/ori of=/dev/dest bs=4M status=progress'
+            command += '; qemu-img resize /dev/dest %sG' % size
+        container['args'] = [command]
         pvc = {'kind': 'PersistentVolumeClaim', 'spec': {'storageClassName': pool, 'accessModes': [self.volume_access],
                                                          'volumeMode': self.volume_mode,
                                                          'resources': {'requests': {'storage': '%sMi' % size}}},
                'apiVersion': 'v1', 'metadata': {'name': dest}}
-        pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'Never',
-                                       'containers': [{'image': 'kubevirtci/disk-importer',
-                                                       'volumeMounts': [{'mountPath': '/storage1', 'name': 'storage1'},
-                                                                        {'mountPath': '/storage2', 'name': 'storage2'}],
-                                                       'name': 'copy', 'command': ['/bin/sh', '-c'],
-                                                       'args': [command]}],
+        pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'Never', 'containers': [container],
                                        'volumes': [{'name': 'storage1', 'persistentVolumeClaim': {'claimName': ori}},
                                                    {'name': 'storage2', 'persistentVolumeClaim': {'claimName': dest}}]},
                'apiVersion': 'v1', 'metadata': {'name': podname}}
