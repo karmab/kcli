@@ -1,12 +1,15 @@
 info: |
-    Deploys kubernetes using k3s an arbitrary number of masters and workers.
-    specific components can be disabled by using the array disabled_components
-    version defaults to stable, although latest or testing can also be selected
+    Deploys the k3s kubernetes distrobution using an arbitrary number of masters and workers.
+    Specific components can be disabled by using the array disabled_components.
+    install_k3s_channel defaults to stable, although latest or testing can also be selected.
+    With install_k3s_version you can specify a specific version relative to the install/release
+    k3s channel.
 masters: 1
 workers: 0
 sdn: flannel
 api_ip:
-version: stable
+install_k3s_channel: stable
+install_k3s_version: 
 pool: default
 image: ubuntu2004
 network: default
