@@ -355,6 +355,9 @@ def process_files(files=[], overrides={}):
                 except TemplateError as e:
                     error("Error rendering file %s. Got: %s" % (origin, e.message))
                     os._exit(1)
+                except UnicodeDecodeError as e:
+                    error("Error rendering file %s. Got: %s" % (origin, e))
+                    os._exit(1)
                 content = [line.rstrip() for line in fileentries.split('\n')]
                 # with open("/tmp/%s" % os.path.basename(path), 'w') as f:
                 #     for line in fileentries.split('\n'):
@@ -429,6 +432,9 @@ def process_ignition_files(files=[], overrides={}):
                     os._exit(1)
                 except TemplateError as e:
                     error("Error rendering file %s. Got: %s" % (origin, e.message))
+                    os._exit(1)
+                except UnicodeDecodeError as e:
+                    error("Error rendering file %s. Got: %s" % (origin, e))
                     os._exit(1)
                 # content = [line.rstrip() for line in fileentries.split('\n') if line.rstrip() != '']
                 content = [line for line in fileentries.split('\n')]
