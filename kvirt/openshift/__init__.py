@@ -221,17 +221,13 @@ def gather_dhcp(data, platform):
 
 
 def scale(config, plandir, cluster, overrides):
-    plan = cluster if cluster is not None else 'testk'
+    plan = cluster
     client = config.client
     platform = config.type
     k = config.k
     data = {}
     pprint("Scaling on client %s" % client)
-    cluster = overrides.get('cluster', 'testk')
     clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
-    if not os.path.exists(clusterdir):
-        error("Cluster directory %s not found..." % clusterdir)
-        sys.exit(1)
     if os.path.exists("%s/kcli_parameters.yml" % clusterdir):
         with open("%s/kcli_parameters.yml" % clusterdir, 'r') as install:
             installparam = yaml.safe_load(install)

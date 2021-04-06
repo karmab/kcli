@@ -1435,7 +1435,8 @@ def scale_generic_kube(args):
     """Scale generic kube"""
     workers = args.workers
     paramfile = args.paramfile
-    cluster = args.cluster if args.cluster is not None else 'testk'
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    cluster = overrides.get('cluster', args.cluster)
     clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
     if not os.path.exists(clusterdir):
         error("Cluster directory %s not found..." % clusterdir)
@@ -1450,7 +1451,6 @@ def scale_generic_kube(args):
         paramfile = "kcli_parameters.yml"
         pprint("Using default parameter file kcli_parameters.yml")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     if workers > 0:
         overrides['workers'] = workers
     config.scale_kube_generic(cluster, overrides=overrides)
@@ -1460,7 +1460,8 @@ def scale_k3s_kube(args):
     """Scale k3s kube"""
     workers = args.workers
     paramfile = args.paramfile
-    cluster = args.cluster if args.cluster is not None else 'testk'
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    cluster = overrides.get('cluster', args.cluster)
     clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
     if not os.path.exists(clusterdir):
         error("Cluster directory %s not found..." % clusterdir)
@@ -1485,7 +1486,8 @@ def scale_openshift_kube(args):
     """Scale openshift kube"""
     workers = args.workers
     paramfile = args.paramfile
-    cluster = args.cluster if args.cluster is not None else 'testk'
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    cluster = overrides.get('cluster', args.cluster)
     clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
     if not os.path.exists(clusterdir):
         error("Cluster directory %s not found..." % clusterdir)
@@ -1500,7 +1502,6 @@ def scale_openshift_kube(args):
         paramfile = "kcli_parameters.yml"
         pprint("Using default parameter file kcli_parameters.yml")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     if workers > 0:
         overrides['workers'] = workers
     config.scale_kube_openshift(cluster, overrides=overrides)
@@ -3142,7 +3143,7 @@ def cli():
                                          metavar='PARAM')
     kubegenericscale_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
     kubegenericscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int, default=0)
-    kubegenericscale_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
+    kubegenericscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
     kubegenericscale_parser.set_defaults(func=scale_generic_kube)
     kubescale_subparsers.add_parser('generic', parents=[kubegenericscale_parser], description=kubegenericscale_desc,
                                     help=kubegenericscale_desc)
@@ -3154,7 +3155,7 @@ def cli():
                                      metavar='PARAM')
     kubek3sscale_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
     kubek3sscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int, default=0)
-    kubek3sscale_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
+    kubek3sscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
     kubek3sscale_parser.set_defaults(func=scale_k3s_kube)
     kubescale_subparsers.add_parser('k3s', parents=[kubek3sscale_parser], description=kubek3sscale_desc,
                                     help=kubek3sscale_desc)
@@ -3165,7 +3166,7 @@ def cli():
     kubeopenshiftscale_parser.add_argument('-P', '--param', action='append', help=parameterhelp, metavar='PARAM')
     kubeopenshiftscale_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
     kubeopenshiftscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int, default=0)
-    kubeopenshiftscale_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
+    kubeopenshiftscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
     kubeopenshiftscale_parser.set_defaults(func=scale_openshift_kube)
     kubescale_subparsers.add_parser('openshift', parents=[kubeopenshiftscale_parser],
                                     description=kubeopenshiftscale_desc,
