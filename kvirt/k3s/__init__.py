@@ -75,9 +75,9 @@ def create(config, plandir, cluster, overrides):
             else:
                 error("You need to define api_ip in your parameters file")
                 os._exit(1)
-    version = data.get('version', 'stable')
-    if version not in ['stable', 'latest', 'testing']:
-        error("Invalid version %s" % version)
+    install_k3s_channel = data.get('install_k3s_channel', 'stable')
+    if install_k3s_channel not in ['stable', 'latest', 'testing']:
+        error("Invalid K3S install channel %s" % install_k3s_channel)
         os._exit(1)
     data['basedir'] = '/workdir' if os.path.exists("/i_am_a_container") else '.'
     cluster = data.get('cluster')
