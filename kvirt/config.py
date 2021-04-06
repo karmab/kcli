@@ -2227,6 +2227,7 @@ $INFO
                 iso_version = 'latest'
         api_ip = overrides.get('api_ip')
         domain = overrides.get('domain')
+        ignition_version = overrides.get('ignition_version', '3.2.0')
         role = overrides.get('role', 'worker')
         iso = overrides.get('iso', True)
         if '.' in cluster:
@@ -2269,7 +2270,8 @@ $INFO
                 templ = env.get_template(os.path.basename("ignition.j2"))
                 if hosts_content is not None:
                     hosts_content = base64.b64encode(hosts_content.encode()).decode("UTF-8")
-                finaldata = templ.render(api_ip=api_ip, role=role, hosts_content=hosts_content)
+                finaldata = templ.render(api_ip=api_ip, role=role, hosts_content=hosts_content,
+                                         ignition_version=ignition_version)
             _files = [{"path": "/root/config.ign", "content": finaldata}]
             if os.path.exists('iso.sh'):
                 pprint("Using local iso.sh script")
