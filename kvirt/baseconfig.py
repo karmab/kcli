@@ -1038,7 +1038,7 @@ class Kbaseconfig:
     def download_openshift_installer(self, overrides={}):
         pull_secret = overrides.get('pull_secret', 'openshift_pull.json')
         version = overrides.get('version', 'stable')
-        tag = overrides.get('tag', '4.5')
+        tag = overrides.get('tag', '4.7')
         upstream = overrides.get('upstream', False)
         macosx = True if os.path.exists('/Users') else False
         if version == 'ci':

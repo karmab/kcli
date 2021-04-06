@@ -13,6 +13,10 @@
  disks:
  - {{ disconnected_disk_size }}
  files:
+ - origin: disconnected/web.sh
+   path: /root/web.sh
+   mode: 700
+ - origin: disconnected/extras.sh
  - origin: disconnected/get_oc.sh
    path: /root/get_oc.sh
    mode: 700
@@ -38,3 +42,4 @@
 {% if disconnected_operators %}
  - bash /root/olm.sh
 {% endif %}
+ - bash /root/web.sh
