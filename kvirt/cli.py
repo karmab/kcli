@@ -1503,6 +1503,8 @@ def scale_openshift_kube(args):
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     if workers > 0:
         overrides['workers'] = workers
+    if args.cluster is not None:
+        overrides['cluster'] = cluster
     config.scale_kube_openshift(cluster, overrides=overrides)
 
 
