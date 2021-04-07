@@ -550,7 +550,7 @@ class Kconfig(Kbaseconfig):
                     files[index] = {'path': path, 'origin': origin}
                 elif isinstance(fil, dict):
                     path = fil.get('path')
-                    if not path.startswith('/'):
+                    if path is None or not path.startswith('/'):
                         error("Incorrect path %s.Leaving..." % path)
                         os._exit(1)
                     origin = fil.get('origin')
