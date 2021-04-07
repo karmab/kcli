@@ -1557,17 +1557,14 @@ def needs_ignition(image):
 
 
 def ignition_version(image):
-    if 'fedora-coreos' in image or 'fcos' in image:
-        version = '3.1.0'
-    else:
-        version = '2.2.0'
-        image = os.path.basename(image)
-        version_match = re.match('rhcos-*(..).*', image)
-        if version_match is not None:
-            if int(version_match.group(1)) >= 46:
-                version = '3.1.0'
-            if int(version_match.group(1)) >= 48:
-                version = '3.2.0'
+    version = '3.1.0'
+    ignition_versions = {"4%d" % i: '2.2.0' for i in range(6)}
+    ignition_versions.update({46: '3.1.0', 47: '3.1.0', 48: '3.2.0'})
+    image = os.path.basename(image)
+    version_match = re.match('rhcos-*(..).*', image)
+    if version_match is not None:
+        openshift_version = int(version_match.group(1))
+        version = ignition_versions[openshift_version]
     return version
 
 

@@ -2227,7 +2227,7 @@ $INFO
                 iso_version = 'latest'
         api_ip = overrides.get('api_ip')
         domain = overrides.get('domain')
-        ignition_version = overrides.get('ignition_version', '3.2.0')
+        ignition_version = overrides.get('ignition_version', common.ignition_version("rhcos-%s" % iso_version))
         role = overrides.get('role', 'worker')
         iso = overrides.get('iso', True)
         if '.' in cluster:
