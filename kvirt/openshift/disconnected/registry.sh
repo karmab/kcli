@@ -1,7 +1,5 @@
 export PATH=/root/bin:$PATH
-yum -y install podman httpd httpd-tools jq bind-utils
-#IP=$(hostname -I | cut -d' ' -f1)
-#REVERSE_NAME=$(dig -x $IP +short | sed 's/\.[^\.]*$//')
+yum -y install podman httpd httpd-tools jq bind-utils skopeo
 IP=$(hostname -I | awk -F' ' '{print $NF}')
 REVERSE_NAME=$(dig -x $IP +short | sed 's/\.[^\.]*$//')
 echo $IP | grep -q ':' && REVERSE_NAME=$(dig -6x $IP +short | sed 's/\.[^\.]*$//')

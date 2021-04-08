@@ -22,8 +22,8 @@
  - origin: disconnected/extras.sh
    path: /root/extras.sh
    mode: 700
- - origin: disconnected/pull_and_push.sh
-   path: /root/bin/pull_and_push.sh
+ - origin: disconnected/sync_image.sh
+   path: /root/bin/sync_image.sh
    mode: 700
  - content: |
      {{ pull_secret }}
