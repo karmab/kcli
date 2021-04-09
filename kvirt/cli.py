@@ -3042,6 +3042,8 @@ def cli():
     imagedelete_parser.set_defaults(func=delete_image)
     delete_subparsers.add_parser('image', parents=[imagedelete_parser], description=imagedelete_desc,
                                  help=imagedelete_desc)
+    delete_subparsers.add_parser('iso', parents=[imagedelete_parser], description=imagedelete_desc,
+                                 help=imagedelete_desc)
 
     kubecreate_desc = 'Create Kube'
     kubecreate_parser = create_subparsers.add_parser('kube', description=kubecreate_desc, help=kubecreate_desc,
