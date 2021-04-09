@@ -8,7 +8,7 @@
 {% set extra_networks = extra_master_networks %}
 {% endif %}
 {% if extra_master_disks %}
-% set extra_disks = extra_master_disks %}
+{% set extra_disks = extra_master_disks %}
 {% endif %}
 {% if numa_master != None %}
 {% set numa = numa_master %}
