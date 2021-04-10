@@ -2280,6 +2280,8 @@ def create_network(args):
     else:
         nat = True
     dhcp = not nodhcp
+    if args.dual is not None:
+        overrides['dual_cidr'] = args.dual
     result = k.create_network(name=name, cidr=cidr, dhcp=dhcp, nat=nat, domain=domain, overrides=overrides)
     common.handle_response(result, name, element='Network')
 
@@ -3252,6 +3254,7 @@ def cli():
                                                         help=networkcreate_desc)
     networkcreate_parser.add_argument('-i', '--isolated', action='store_true', help='Isolated Network')
     networkcreate_parser.add_argument('-c', '--cidr', help='Cidr of the net', metavar='CIDR')
+    networkcreate_parser.add_argument('-d', '--dual', help='Cidr of dual net', metavar='DUAL')
     networkcreate_parser.add_argument('--nodhcp', action='store_true', help='Disable dhcp on the net')
     networkcreate_parser.add_argument('--domain', help='DNS domain. Defaults to network name')
     networkcreate_parser.add_argument('-P', '--param', action='append',

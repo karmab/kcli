@@ -2753,13 +2753,24 @@ class Kvirt(object):
         else:
             domainxml = "<domain name='%s'/>" % name
         bridgexml = "<bridge name='%s' stp='on' delay='0'/>" % name if len(name) < 16 else ''
-        cidr = cidr.split('/')[1]
+        prefix = cidr.split('/')[1]
         metadata = """<metadata>
         <kvirt:info xmlns:kvirt="kvirt">
         <kvirt:plan>%s</kvirt:plan>
         </kvirt:info>
         </metadata>""" % plan
         mtuxml = '<mtu size="%s"/>' % overrides['mtu'] if 'mtu' in overrides else ''
+        dualxml = ''
+        if 'dual_cidr' in overrides:
+            dualcidr = overrides['dual_cidr']
+            dualfamily = 'ipv6' if ':' in dualcidr else 'ipv4'
+            try:
+                dualrange = IPNetwork(dualcidr)
+            except:
+                return {'result': 'failure', 'reason': "Invalid Dual Cidr %s" % dualcidr}
+            dualgateway = str(dualrange[1])
+            dualprefix = dualcidr.split('/')[1]
+            dualxml = "<ip address='%s' prefix='%s' family='%s'/>" % (dualgateway, dualprefix, dualfamily)
         networkxml = """<network><name>%s</name>
                     %s
                     %s
@@ -2769,8 +2780,9 @@ class Kvirt(object):
                     <ip address='%s' prefix='%s' family='%s'>
                     %s
                     </ip>
-                    </network>""" % (name, metadata, mtuxml, natxml, bridgexml, domainxml, gateway, cidr, family,
-                                     dhcpxml)
+                    %s
+                    </network>""" % (name, metadata, mtuxml, natxml, bridgexml, domainxml, gateway, prefix, family,
+                                     dhcpxml, dualxml)
         new_net = conn.networkDefineXML(networkxml)
         new_net.setAutostart(True)
         new_net.create()
