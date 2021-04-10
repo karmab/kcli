@@ -1890,8 +1890,12 @@ class Kvirt(object):
             if not IPAddress(ip) in netip:
                 continue
             pprint("Adding a reserved ip entry for ip %s and mac %s " % (ip, mac))
-            network.update(4, 4, 0, '<host mac="%s" name="%s" ip="%s" />' % (mac, name, ip), 1)
-            network.update(4, 4, 0, '<host mac="%s" name="%s" ip="%s" />' % (mac, name, ip), 2)
+            if ':' in ip:
+                entry = '<host id="00:03:00:01:%s" name="%s" ip="%s" />' % (mac, name, ip)
+            else:
+                entry = '<host mac="%s" name="%s" ip="%s" />' % (mac, name, ip)
+            network.update(4, 4, 0, entry, 1)
+            network.update(4, 4, 0, entry, 2)
 
     def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False):
         conn = self.conn
