@@ -1878,24 +1878,23 @@ class Kvirt(object):
                 network.update(2, 4, 0, oldentry, 2)
             except:
                 pass
-            ipentry = list(root.iter('ip'))
-            if ipentry:
-                attributes = ipentry[0].attrib
+            for ipentry in list(root.iter('ip')):
+                attributes = ipentry.attrib
                 firstip = attributes.get('address')
                 netmask = next(a for a in [attributes.get('netmask'), attributes.get('prefix')] if a is not None)
                 netip = IPNetwork('%s/%s' % (firstip, netmask))
-            dhcp = list(root.iter('dhcp'))
-            if not dhcp:
-                continue
-            if not IPAddress(ip) in netip:
-                continue
-            pprint("Adding a reserved ip entry for ip %s and mac %s " % (ip, mac))
-            if ':' in ip:
-                entry = '<host id="00:03:00:01:%s" name="%s" ip="%s" />' % (mac, name, ip)
-            else:
-                entry = '<host mac="%s" name="%s" ip="%s" />' % (mac, name, ip)
-            network.update(4, 4, 0, entry, 1)
-            network.update(4, 4, 0, entry, 2)
+                dhcp = list(root.iter('dhcp'))
+                if not dhcp:
+                    continue
+                if not IPAddress(ip) in netip:
+                    continue
+                pprint("Adding a reserved ip entry for ip %s and mac %s " % (ip, mac))
+                if ':' in ip:
+                    entry = '<host id="00:03:00:01:%s" name="%s" ip="%s" />' % (mac, name, ip)
+                else:
+                    entry = '<host mac="%s" name="%s" ip="%s" />' % (mac, name, ip)
+                network.update(4, 4, 0, entry, 1)
+                network.update(4, 4, 0, entry, 2)
 
     def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False):
         conn = self.conn
@@ -2732,7 +2731,7 @@ class Kvirt(object):
         family = 'ipv6' if ':' in gateway else 'ipv4'
         if dhcp:
             start = str(range[2])
-            end = str(range[-2]) if family == 'ipv4' else str(range[1000])
+            end = str(range[-2]) if family == 'ipv4' else str(range[65535])
             dhcpxml = """<dhcp>
                     <range start='%s' end='%s'/>""" % (start, end)
             if 'pxe' in overrides:
@@ -2769,8 +2768,14 @@ class Kvirt(object):
             except:
                 return {'result': 'failure', 'reason': "Invalid Dual Cidr %s" % dualcidr}
             dualgateway = str(dualrange[1])
+            dualstart, dualend = str(dualrange[2]), str(dualrange[-2])
             dualprefix = dualcidr.split('/')[1]
-            dualxml = "<ip address='%s' prefix='%s' family='%s'/>" % (dualgateway, dualprefix, dualfamily)
+            if dhcp:
+                dualdhcpxml = "<dhcp><range start='%s' end='%s' /></dhcp>" % (dualstart, dualend)
+            else:
+                dualdhcpxml = ""
+            dualxml = "<ip address='%s' prefix='%s' family='%s'>%s</ip>" % (dualgateway, dualprefix, dualfamily,
+                                                                            dualdhcpxml)
         networkxml = """<network><name>%s</name>
                     %s
                     %s
@@ -2783,6 +2788,8 @@ class Kvirt(object):
                     %s
                     </network>""" % (name, metadata, mtuxml, natxml, bridgexml, domainxml, gateway, prefix, family,
                                      dhcpxml, dualxml)
+        if self.debug:
+            print(networkxml)
         new_net = conn.networkDefineXML(networkxml)
         new_net.setAutostart(True)
         new_net.create()
