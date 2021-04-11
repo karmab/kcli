@@ -1930,7 +1930,7 @@ class Kvirt(object):
                         else:
                             break
             if ip is None:
-                error("Couldn't assign dns entry %s in net %s" % (name, net))
+                error("Couldn't assign dns entry %s in net %s" % (name, netname))
                 continue
             if bridged:
                 self._create_host_entry(name, ip, netname, domain, dnsmasq=True)
@@ -2731,7 +2731,7 @@ class Kvirt(object):
         family = 'ipv6' if ':' in gateway else 'ipv4'
         if dhcp:
             start = str(range[2])
-            end = str(range[-2]) if family == 'ipv4' else str(range[65535])
+            end = str(range[65535 if family == 'ipv6' else -2])
             dhcpxml = """<dhcp>
                     <range start='%s' end='%s'/>""" % (start, end)
             if 'pxe' in overrides:
@@ -2768,7 +2768,8 @@ class Kvirt(object):
             except:
                 return {'result': 'failure', 'reason': "Invalid Dual Cidr %s" % dualcidr}
             dualgateway = str(dualrange[1])
-            dualstart, dualend = str(dualrange[2]), str(dualrange[-2])
+            dualstart = str(dualrange[2])
+            dualend = str(dualrange[65535 if dualfamily == 'ipv6' else -2])
             dualprefix = dualcidr.split('/')[1]
             if dhcp:
                 dualdhcpxml = "<dhcp><range start='%s' end='%s' /></dhcp>" % (dualstart, dualend)
@@ -2825,17 +2826,15 @@ class Kvirt(object):
             netxml = network.XMLDesc(0)
             cidr = 'N/A'
             root = ET.fromstring(netxml)
-            ip = list(root.iter('ip'))
-            if ip:
-                attributes = ip[0].attrib
+            ip = None
+            for entry in list(root.iter('ip')):
+                attributes = entry.attrib
                 firstip = attributes.get('address')
                 netmask = attributes.get('netmask')
                 netmask = attributes.get('prefix') if netmask is None else netmask
                 ipnet = '%s/%s' % (firstip, netmask) if netmask is not None else firstip
                 ipnet = IPNetwork(ipnet)
                 cidr = ipnet.cidr
-            else:
-                ip = None
             dhcp = list(root.iter('dhcp'))
             if dhcp:
                 dhcp = True
@@ -2870,16 +2869,14 @@ class Kvirt(object):
             bridge = list(root.iter('bridge'))
             if not bridge:
                 continue
-            ip = list(root.iter('ip'))
-            if ip:
-                attributes = ip[0].attrib
+            ip = None
+            cidr = 'N/A'
+            for entry in list(root.iter('ip')):
+                attributes = entry.attrib
                 ip = attributes.get('address')
                 prefix = attributes.get('prefix')
                 ipnet = IPNetwork('%s/%s' % (ip, prefix))
                 cidr = ipnet.cidr
-            else:
-                ip = None
-                cidr = 'N/A'
             networks[interface] = {'cidr': cidr, 'dhcp': 'N/A', 'type': 'bridged', 'mode': 'N/A'}
             if ip is not None:
                 networks[interface]['ip'] = ip

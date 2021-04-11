@@ -198,10 +198,11 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                     if not bridge:
                         netdata += "  iface %s inet dhcp\n" % nicname
                 else:
-                    if enableipv6 or netname in ipv6:
-                        netdata[nicname] = {'dhcp6': True}
-                    else:
-                        netdata[nicname] = {'dhcp4': True}
+                    targetfamily = 'dhcp6' if enableipv6 or netname in ipv6 else 'dhcp4'
+                    netdata[nicname] = {targetfamily: True}
+                    if 'dualstack' in overrides and index == 0:
+                        dualfamily = 'dhcp6' if targetfamily == 'dhcp4' else 'dhcp4'
+                        netdata[nicname][dualfamily] = True
             if bridge and not legacy:
                 bridges[bridgename].update(netdata[nicname])
                 del netdata[nicname]
