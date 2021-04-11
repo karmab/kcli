@@ -1466,7 +1466,7 @@ $INFO
                 dnsprofile = entries[dnsentry]
                 dnsdomain = dnsprofile.get('domain')
                 dnsnet = dnsprofile.get('net')
-                dnsdomain = dnsprofile.get('domain', dnsnet)
+                dnsdomain = dnsprofile.get('domain')
                 dnsip = dnsprofile.get('ip')
                 dnsalias = dnsprofile.get('alias', [])
                 dnsclient = dnsprofile.get('client')
