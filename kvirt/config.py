@@ -275,6 +275,7 @@ class Kconfig(Kbaseconfig):
         default_data = {'config_%s' % k: self.default[k] for k in self.default}
         config_data = {'config_%s' % k: self.ini[self.client][k] for k in self.ini[self.client]}
         config_data['config_type'] = config_data.get('config_type', 'kvm')
+        config_data['config_host'] = config_data.get('config_host', '127.0.0.1')
         default_user = getuser() if config_data['config_type'] == 'kvm'\
             and self.host in ['localhost', '127.0.0.1'] else 'root'
         config_data['config_user'] = config_data.get('config_user', default_user)
