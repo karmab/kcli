@@ -657,6 +657,7 @@ class Kubevirt(Kubecommon):
             yamlinfo['cpus'] = numcpus
         if 'resources' in spectemplate['spec']['domain'] and 'requests' in spectemplate['spec']['domain']['resources']:
             memory = spectemplate['spec']['domain']['resources']['requests']['memory'].replace('M', '').replace('G', '')
+            memory = memory.replace('Mi', 'Mi').replace('Gi', '')
             memory = int(memory)
             yamlinfo['memory'] = memory
         if image != 'N/A':
