@@ -1125,7 +1125,7 @@ $INFO
                 success("%s prevented to autostart!" % name)
         return {'result': 'success'}
 
-    def delete_plan(self, plan, container=False, force=False):
+    def delete_plan(self, plan, container=False):
         k = self.k
         deletedvms = []
         deletedlbs = []
@@ -1134,8 +1134,6 @@ $INFO
         if plan == '':
             error("That would delete every vm...Not doing that")
             os._exit(1)
-        if not force:
-            common.confirm('Are you sure about deleting plan %s' % plan)
         found = False
         if not self.extraclients:
             deleteclients = {self.client: k}
