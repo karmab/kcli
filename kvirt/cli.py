@@ -1592,7 +1592,7 @@ def create_plan(args):
             error("Force requires specifying a plan name")
             return
         else:
-            config.plan(plan, delete=True)
+            config.delete_plan(plan)
     if plan is None:
         plan = nameutils.get_random_name()
         pprint("Using %s as name of the plan" % plan)
@@ -1643,10 +1643,10 @@ def update_plan(args):
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if autostart:
-        config.plan(plan, autostart=autostart)
+        config.autostart_plan(plan)
         return 0
     elif noautostart:
-        config.plan(plan, noautostart=noautostart)
+        config.noautostart_plan(plan)
         return 0
     config.plan(plan, url=url, path=path, container=container, inputfile=inputfile, overrides=overrides, update=True)
     return 0
@@ -1660,7 +1660,7 @@ def delete_plan(args):
     if not yes and not yes_top:
         common.confirm("Are you sure?")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.plan(plan, delete=True)
+    config.delete_plan(plan)
     return 0
 
 
@@ -1691,7 +1691,7 @@ def start_plan(args):
     """Start plan"""
     plan = args.plan
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.plan(plan, start=True)
+    config.start_plan(plan)
     return 0
 
 
@@ -1699,7 +1699,7 @@ def stop_plan(args):
     """Stop plan"""
     plan = args.plan
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.plan(plan, stop=True)
+    config.stop_plan(plan)
     return 0
 
 
@@ -1707,7 +1707,7 @@ def autostart_plan(args):
     """Autostart plan"""
     plan = args.plan
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.plan(plan, autostart=True)
+    config.autostart_plan(plan)
     return 0
 
 
@@ -1715,7 +1715,7 @@ def noautostart_plan(args):
     """Noautostart plan"""
     plan = args.plan
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.plan(plan, autostart=False)
+    config.noautostart_plan(plan)
     return 0
 
 
@@ -1723,7 +1723,8 @@ def restart_plan(args):
     """Restart plan"""
     plan = args.plan
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.plan(plan, restart=True)
+    config.stop_plan(plan)
+    config.start_plan(plan)
     return 0
 
 
@@ -2010,7 +2011,7 @@ def create_snapshot_plan(args):
     plan = args.plan
     snapshot = args.snapshot
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.plan(plan, snapshot=True, snapshotname=snapshot)
+    config.snapshot_plan(plan, snapshotname=snapshot)
     return 0
 
 
@@ -2033,7 +2034,7 @@ def revert_snapshot_plan(args):
     plan = args.plan
     snapshot = args.snapshot
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.plan(plan, revert=True, snapshotname=snapshot)
+    config.revert_plan(plan, snapshotname=snapshot)
     return 0
 
 

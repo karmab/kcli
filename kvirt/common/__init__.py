@@ -63,6 +63,7 @@ def fetch(url, path):
     shortname = os.path.basename(url)
     if not os.path.exists(path):
         os.mkdir(path)
+    print(url)
     urlretrieve(url, "%s/%s" % (path, shortname))
 
 

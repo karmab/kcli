@@ -1037,10 +1037,222 @@ $INFO
             pprint("Product can be deleted with: kcli delete plan --yes %s" % plan)
         return {'result': 'success', 'plan': plan}
 
-    def plan(self, plan, ansible=False, url=None, path=None, autostart=False, container=False, noautostart=False,
-             inputfile=None, inputstring=None, start=False, stop=False, delete=False, force=True, overrides={},
-             info=False, snapshot=False, snapshotname=None, revert=False, update=False, embedded=False, restart=False,
-             download=False, quiet=False, doc=False, onlyassets=False):
+    def start_plan(self, plan, container=False):
+        k = self.k
+        startfound = False
+        pprint("Starting vms from plan %s" % plan)
+        if not self.extraclients:
+            startclients = {self.client: k}
+        else:
+            startclients = self.extraclients
+            startclients.update({self.client: k})
+        for hypervisor in startclients:
+            c = startclients[hypervisor]
+            for vm in sorted(c.list(), key=lambda x: x['name']):
+                name = vm['name']
+                description = vm.get('plan')
+                if description == plan:
+                    startfound = True
+                    c.start(name)
+                    success("%s started on %s!" % (name, hypervisor))
+        if container:
+            cont = Kcontainerconfig(self, client=self.containerclient).cont
+            for conta in sorted(cont.list_containers(k)):
+                name = conta[0]
+                containerplan = conta[3]
+                if containerplan == plan:
+                    startfound = True
+                    cont.start_container(name)
+                    success("Container %s started!" % name)
+        if startfound:
+            success("Plan %s started!" % plan)
+        else:
+            warning("No matching objects found")
+        return {'result': 'success'}
+
+    def stop_plan(self, plan, container=False):
+        k = self.k
+        stopfound = True
+        pprint("Stopping vms from plan %s" % plan)
+        if not self.extraclients:
+            stopclients = {self.client: k}
+        else:
+            stopclients = self.extraclients
+            stopclients.update({self.client: k})
+        for hypervisor in stopclients:
+            c = stopclients[hypervisor]
+            for vm in sorted(c.list(), key=lambda x: x['name']):
+                name = vm['name']
+                description = vm.get('plan')
+                if description == plan:
+                    stopfound = True
+                    c.stop(name)
+                    success("%s stopped on %s!" % (name, hypervisor))
+        if container:
+            cont = Kcontainerconfig(self, client=self.containerclient).cont
+            for conta in sorted(cont.list_containers()):
+                name = conta[0]
+                containerplan = conta[3]
+                if containerplan == plan:
+                    stopfound = True
+                    cont.stop_container(name)
+                    success("Container %s stopped!" % name)
+        if stopfound:
+            success("Plan %s stopped!" % plan)
+        else:
+            warning("No matching objects found")
+        return {'result': 'success'}
+
+    def autostart_plan(self, plan):
+        k = self.k
+        pprint("Set vms from plan %s to autostart" % plan)
+        for vm in sorted(k.list(), key=lambda x: x['name']):
+            name = vm['name']
+            description = vm['plan']
+            if description == plan:
+                k.update_start(name, start=True)
+                success("%s set to autostart!" % name)
+        return {'result': 'success'}
+
+    def noautostart_plan(self, plan):
+        k = self.k
+        pprint("Preventing vms from plan %s to autostart" % plan)
+        for vm in sorted(k.list(), key=lambda x: x['name']):
+            name = vm['name']
+            description = vm['plan']
+            if description == plan:
+                k.update_start(name, start=False)
+                success("%s prevented to autostart!" % name)
+        return {'result': 'success'}
+
+    def delete_plan(self, plan, container=False, force=False):
+        k = self.k
+        deletedvms = []
+        deletedlbs = []
+        dnsclients = []
+        networks = []
+        if plan == '':
+            error("That would delete every vm...Not doing that")
+            os._exit(1)
+        if not force:
+            common.confirm('Are you sure about deleting plan %s' % plan)
+        found = False
+        if not self.extraclients:
+            deleteclients = {self.client: k}
+        else:
+            deleteclients = self.extraclients
+            deleteclients.update({self.client: k})
+        for hypervisor in deleteclients:
+            c = deleteclients[hypervisor]
+            for vm in sorted(c.list(), key=lambda x: x['name']):
+                name = vm['name']
+                description = vm.get('plan')
+                if description == plan:
+                    if 'loadbalancer' in vm:
+                        lbs = vm['loadbalancer'].split(',')
+                        for lb in lbs:
+                            if lb not in deletedlbs:
+                                deletedlbs.append(lb)
+                    vmnetworks = c.vm_ports(name)
+                    for network in vmnetworks:
+                        if network != 'default' and network not in networks:
+                            networks.append(network)
+                    dnsclient, domain = c.dnsinfo(name)
+                    c.delete(name, snapshots=True)
+                    if dnsclient is not None and domain is not None and dnsclient in self.clients:
+                        if dnsclient in dnsclients:
+                            z = dnsclients[dnsclient]
+                        elif dnsclient in self.clients:
+                            z = Kconfig(client=dnsclient).k
+                            dnsclients[dnsclient] = z
+                        z.delete_dns(dnsclient, domain)
+                    common.set_lastvm(name, self.client, delete=True)
+                    success("%s deleted on %s!" % (name, hypervisor))
+                    deletedvms.append(name)
+                    found = True
+        if container:
+            cont = Kcontainerconfig(self, client=self.containerclient).cont
+            for conta in sorted(cont.list_containers(k)):
+                name = conta[0]
+                container_plan = conta[3]
+                if container_plan == plan:
+                    cont.delete_container(name)
+                    success("Container %s deleted!" % name)
+                    found = True
+        if not self.keep_networks:
+            if self.type == 'kvm':
+                networks = k.list_networks()
+                for network in k.list_networks():
+                    if 'plan' in networks[network] and networks[network]['plan'] == plan:
+                        networkresult = k.delete_network(network)
+                        if networkresult['result'] == 'success':
+                            success("network %s deleted!" % network)
+                            found = True
+            elif networks:
+                found = True
+                for network in networks:
+                    networkresult = k.delete_network(network)
+                    if networkresult['result'] == 'success':
+                        success("Unused network %s deleted!" % network)
+        for keyfile in glob.glob("%s.key*" % plan):
+            success("file %s from %s deleted!" % (keyfile, plan))
+            os.remove(keyfile)
+        for ansiblefile in glob.glob("/tmp/%s*inv*" % plan):
+            success("file %s from %s deleted!" % (ansiblefile, plan))
+            os.remove(ansiblefile)
+        if deletedlbs and self.type in ['aws', 'gcp']:
+            for lb in deletedlbs:
+                self.k.delete_loadbalancer(lb)
+        if found:
+            success("Plan %s deleted!" % plan)
+        else:
+            pprint("Nothing to do for plan %s" % plan)
+            return {'result': 'success'}
+        return {'result': 'success', 'deletedvm': deletedvms}
+
+    def snapshot_plan(self, plan, snapshotname=None):
+        k = self.k
+        snapshotfound = False
+        pprint("Snapshotting vms from plan %s" % plan)
+        if snapshotname is None:
+            warning("Using %s as snapshot name as None was provided" % plan)
+            snapshotname = plan
+        for vm in sorted(k.list(), key=lambda x: x['name']):
+            name = vm['name']
+            description = vm['plan']
+            if description == plan:
+                snapshotfound = True
+                k.snapshot(snapshotname, name)
+                success("%s snapshotted!" % name)
+        if snapshotfound:
+            success("Plan %s snapshotted!" % plan)
+        else:
+            warning("No matching vms found")
+        return {'result': 'success'}
+
+    def revert_plan(self, plan, snapshotname=None):
+        k = self.k
+        revertfound = False
+        pprint("Reverting snapshots of vms from plan %s" % plan)
+        if snapshotname is None:
+            warning("Using %s as snapshot name as None was provided" % plan)
+            snapshotname = plan
+        for vm in sorted(k.list(), key=lambda x: x['name']):
+            name = vm['name']
+            description = vm['plan']
+            if description == plan:
+                revertfound = True
+                k.snapshot(snapshotname, name, revert=True)
+                success("snapshot of %s reverted!" % name)
+        if revertfound:
+            success("Plan %s reverted with snapshot %s!" % (plan, snapshotname))
+        else:
+            warning("No matching vms found")
+        return {'result': 'success'}
+
+    def plan(self, plan, ansible=False, url=None, path=None, container=False, inputfile=None, inputstring=None,
+             overrides={}, info=False, update=False, embedded=False, download=False, quiet=False, doc=False,
+             onlyassets=False):
         """Manage plan file"""
         k = self.k
         no_overrides = not overrides
@@ -1058,209 +1270,6 @@ $INFO
                              if 'type' in value and value['type'] == 'container'}
         if plan is None:
             plan = nameutils.get_random_name()
-        if delete:
-            deletedvms = []
-            deletedlbs = []
-            dnsclients = []
-            networks = []
-            if plan == '':
-                error("That would delete every vm...Not doing that")
-                os._exit(1)
-            if not force:
-                common.confirm('Are you sure about deleting plan %s' % plan)
-            found = False
-            if not self.extraclients:
-                deleteclients = {self.client: k}
-            else:
-                deleteclients = self.extraclients
-                deleteclients.update({self.client: k})
-            for hypervisor in deleteclients:
-                c = deleteclients[hypervisor]
-                for vm in sorted(c.list(), key=lambda x: x['name']):
-                    name = vm['name']
-                    description = vm.get('plan')
-                    if description == plan:
-                        if 'loadbalancer' in vm:
-                            lbs = vm['loadbalancer'].split(',')
-                            for lb in lbs:
-                                if lb not in deletedlbs:
-                                    deletedlbs.append(lb)
-                        vmnetworks = c.vm_ports(name)
-                        for network in vmnetworks:
-                            if network != 'default' and network not in networks:
-                                networks.append(network)
-                        dnsclient, domain = c.dnsinfo(name)
-                        c.delete(name, snapshots=True)
-                        if dnsclient is not None and domain is not None and dnsclient in self.clients:
-                            if dnsclient in dnsclients:
-                                z = dnsclients[dnsclient]
-                            elif dnsclient in self.clients:
-                                z = Kconfig(client=dnsclient).k
-                                dnsclients[dnsclient] = z
-                            z.delete_dns(dnsclient, domain)
-                        common.set_lastvm(name, self.client, delete=True)
-                        success("%s deleted on %s!" % (name, hypervisor))
-                        deletedvms.append(name)
-                        found = True
-            if container:
-                cont = Kcontainerconfig(self, client=self.containerclient).cont
-                for conta in sorted(cont.list_containers(k)):
-                    name = conta[0]
-                    container_plan = conta[3]
-                    if container_plan == plan:
-                        cont.delete_container(name)
-                        success("Container %s deleted!" % name)
-                        found = True
-            if not self.keep_networks:
-                if self.type == 'kvm':
-                    networks = k.list_networks()
-                    for network in k.list_networks():
-                        if 'plan' in networks[network] and networks[network]['plan'] == plan:
-                            networkresult = k.delete_network(network)
-                            if networkresult['result'] == 'success':
-                                success("network %s deleted!" % network)
-                                found = True
-                elif networks:
-                    found = True
-                    for network in networks:
-                        networkresult = k.delete_network(network)
-                        if networkresult['result'] == 'success':
-                            success("Unused network %s deleted!" % network)
-            for keyfile in glob.glob("%s.key*" % plan):
-                success("file %s from %s deleted!" % (keyfile, plan))
-                os.remove(keyfile)
-            for ansiblefile in glob.glob("/tmp/%s*inv*" % plan):
-                success("file %s from %s deleted!" % (ansiblefile, plan))
-                os.remove(ansiblefile)
-            if deletedlbs and self.type in ['aws', 'gcp']:
-                for lb in deletedlbs:
-                    self.k.delete_loadbalancer(lb)
-            if found:
-                success("Plan %s deleted!" % plan)
-            else:
-                pprint("Nothing to do for plan %s" % plan)
-                return {'result': 'success'}
-            return {'result': 'success', 'deletedvm': deletedvms}
-        if autostart:
-            pprint("Set vms from plan %s to autostart" % plan)
-            for vm in sorted(k.list(), key=lambda x: x['name']):
-                name = vm['name']
-                description = vm['plan']
-                if description == plan:
-                    k.update_start(name, start=True)
-                    success("%s set to autostart!" % name)
-            return {'result': 'success'}
-        if noautostart:
-            pprint("Preventing vms from plan %s to autostart" % plan)
-            for vm in sorted(k.list(), key=lambda x: x['name']):
-                name = vm['name']
-                description = vm['plan']
-                if description == plan:
-                    k.update_start(name, start=False)
-                    success("%s prevented to autostart!" % name)
-            return {'result': 'success'}
-        if stop or restart:
-            stopfound = True
-            pprint("Stopping vms from plan %s" % plan)
-            if not self.extraclients:
-                stopclients = {self.client: k}
-            else:
-                stopclients = self.extraclients
-                stopclients.update({self.client: k})
-            for hypervisor in stopclients:
-                c = stopclients[hypervisor]
-                for vm in sorted(c.list(), key=lambda x: x['name']):
-                    name = vm['name']
-                    description = vm.get('plan')
-                    if description == plan:
-                        stopfound = True
-                        c.stop(name)
-                        success("%s stopped on %s!" % (name, hypervisor))
-            if container:
-                cont = Kcontainerconfig(self, client=self.containerclient).cont
-                for conta in sorted(cont.list_containers()):
-                    name = conta[0]
-                    containerplan = conta[3]
-                    if containerplan == plan:
-                        stopfound = True
-                        cont.stop_container(name)
-                        success("Container %s stopped!" % name)
-            if stopfound:
-                success("Plan %s stopped!" % plan)
-            else:
-                warning("No matching objects found")
-            if not restart:
-                return {'result': 'success'}
-        if start or restart:
-            startfound = False
-            pprint("Starting vms from plan %s" % plan)
-            if not self.extraclients:
-                startclients = {self.client: k}
-            else:
-                startclients = self.extraclients
-                startclients.update({self.client: k})
-            for hypervisor in startclients:
-                c = startclients[hypervisor]
-                for vm in sorted(c.list(), key=lambda x: x['name']):
-                    name = vm['name']
-                    description = vm.get('plan')
-                    if description == plan:
-                        startfound = True
-                        c.start(name)
-                        success("%s started on %s!" % (name, hypervisor))
-            if container:
-                cont = Kcontainerconfig(self, client=self.containerclient).cont
-                for conta in sorted(cont.list_containers(k)):
-                    name = conta[0]
-                    containerplan = conta[3]
-                    if containerplan == plan:
-                        startfound = True
-                        cont.start_container(name)
-                        success("Container %s started!" % name)
-            if startfound:
-                success("Plan %s started!" % plan)
-            else:
-                warning("No matching objects found")
-            return {'result': 'success'}
-        if snapshot:
-            snapshotfound = False
-            if revert:
-                error("Can't revert and snapshot plan at the same time")
-                os._exit(1)
-            pprint("Snapshotting vms from plan %s" % plan)
-            if snapshotname is None:
-                warning("Using %s as snapshot name as None was provider" % plan)
-                snapshotname = plan
-            for vm in sorted(k.list(), key=lambda x: x['name']):
-                name = vm['name']
-                description = vm['plan']
-                if description == plan:
-                    snapshotfound = True
-                    k.snapshot(snapshotname, name)
-                    success("%s snapshotted!" % name)
-            if snapshotfound:
-                success("Plan %s snapshotted!" % plan)
-            else:
-                warning("No matching vms found")
-            return {'result': 'success'}
-        if revert:
-            revertfound = False
-            pprint("Reverting snapshots of vms from plan %s" % plan)
-            if snapshotname is None:
-                warning("Using %s as snapshot name as None was provider" % plan)
-                snapshotname = plan
-            for vm in sorted(k.list(), key=lambda x: x['name']):
-                name = vm['name']
-                description = vm['plan']
-                if description == plan:
-                    revertfound = True
-                    k.snapshot(snapshotname, name, revert=True)
-                    success("snapshot of %s reverted!" % name)
-            if revertfound:
-                success("Plan %s reverted with snapshot %s!" % (plan, snapshotname))
-            else:
-                warning("No matching vms found")
-            return {'result': 'success'}
         if url is not None:
             if url.startswith('/'):
                 url = "file://%s" % url
