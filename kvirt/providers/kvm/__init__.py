@@ -1878,20 +1878,23 @@ class Kvirt(object):
                 network.update(2, 4, 0, oldentry, 2)
             except:
                 pass
-            ipentry = list(root.iter('ip'))
-            if ipentry:
-                attributes = ipentry[0].attrib
+            for ipentry in list(root.iter('ip')):
+                attributes = ipentry.attrib
                 firstip = attributes.get('address')
                 netmask = next(a for a in [attributes.get('netmask'), attributes.get('prefix')] if a is not None)
                 netip = IPNetwork('%s/%s' % (firstip, netmask))
-            dhcp = list(root.iter('dhcp'))
-            if not dhcp:
-                continue
-            if not IPAddress(ip) in netip:
-                continue
-            pprint("Adding a reserved ip entry for ip %s and mac %s " % (ip, mac))
-            network.update(4, 4, 0, '<host mac="%s" name="%s" ip="%s" />' % (mac, name, ip), 1)
-            network.update(4, 4, 0, '<host mac="%s" name="%s" ip="%s" />' % (mac, name, ip), 2)
+                dhcp = list(root.iter('dhcp'))
+                if not dhcp:
+                    continue
+                if not IPAddress(ip) in netip:
+                    continue
+                pprint("Adding a reserved ip entry for ip %s and mac %s " % (ip, mac))
+                if ':' in ip:
+                    entry = '<host id="00:03:00:01:%s" name="%s" ip="%s" />' % (mac, name, ip)
+                else:
+                    entry = '<host mac="%s" name="%s" ip="%s" />' % (mac, name, ip)
+                network.update(4, 4, 0, entry, 1)
+                network.update(4, 4, 0, entry, 2)
 
     def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False):
         conn = self.conn
@@ -1927,7 +1930,7 @@ class Kvirt(object):
                         else:
                             break
             if ip is None:
-                error("Couldn't assign dns entry %s in net %s" % (name, net))
+                error("Couldn't assign dns entry %s in net %s" % (name, netname))
                 continue
             if bridged:
                 self._create_host_entry(name, ip, netname, domain, dnsmasq=True)
@@ -2728,7 +2731,7 @@ class Kvirt(object):
         family = 'ipv6' if ':' in gateway else 'ipv4'
         if dhcp:
             start = str(range[2])
-            end = str(range[-2]) if family == 'ipv4' else str(range[1000])
+            end = str(range[65535 if family == 'ipv6' else -2])
             dhcpxml = """<dhcp>
                     <range start='%s' end='%s'/>""" % (start, end)
             if 'pxe' in overrides:
@@ -2749,13 +2752,31 @@ class Kvirt(object):
         else:
             domainxml = "<domain name='%s'/>" % name
         bridgexml = "<bridge name='%s' stp='on' delay='0'/>" % name if len(name) < 16 else ''
-        cidr = cidr.split('/')[1]
+        prefix = cidr.split('/')[1]
         metadata = """<metadata>
         <kvirt:info xmlns:kvirt="kvirt">
         <kvirt:plan>%s</kvirt:plan>
         </kvirt:info>
         </metadata>""" % plan
         mtuxml = '<mtu size="%s"/>' % overrides['mtu'] if 'mtu' in overrides else ''
+        dualxml = ''
+        if 'dual_cidr' in overrides:
+            dualcidr = overrides['dual_cidr']
+            dualfamily = 'ipv6' if ':' in dualcidr else 'ipv4'
+            try:
+                dualrange = IPNetwork(dualcidr)
+            except:
+                return {'result': 'failure', 'reason': "Invalid Dual Cidr %s" % dualcidr}
+            dualgateway = str(dualrange[1])
+            dualstart = str(dualrange[2])
+            dualend = str(dualrange[65535 if dualfamily == 'ipv6' else -2])
+            dualprefix = dualcidr.split('/')[1]
+            if dhcp:
+                dualdhcpxml = "<dhcp><range start='%s' end='%s' /></dhcp>" % (dualstart, dualend)
+            else:
+                dualdhcpxml = ""
+            dualxml = "<ip address='%s' prefix='%s' family='%s'>%s</ip>" % (dualgateway, dualprefix, dualfamily,
+                                                                            dualdhcpxml)
         networkxml = """<network><name>%s</name>
                     %s
                     %s
@@ -2765,8 +2786,11 @@ class Kvirt(object):
                     <ip address='%s' prefix='%s' family='%s'>
                     %s
                     </ip>
-                    </network>""" % (name, metadata, mtuxml, natxml, bridgexml, domainxml, gateway, cidr, family,
-                                     dhcpxml)
+                    %s
+                    </network>""" % (name, metadata, mtuxml, natxml, bridgexml, domainxml, gateway, prefix, family,
+                                     dhcpxml, dualxml)
+        if self.debug:
+            print(networkxml)
         new_net = conn.networkDefineXML(networkxml)
         new_net.setAutostart(True)
         new_net.create()
@@ -2802,17 +2826,15 @@ class Kvirt(object):
             netxml = network.XMLDesc(0)
             cidr = 'N/A'
             root = ET.fromstring(netxml)
-            ip = list(root.iter('ip'))
-            if ip:
-                attributes = ip[0].attrib
+            ip = None
+            for entry in list(root.iter('ip')):
+                attributes = entry.attrib
                 firstip = attributes.get('address')
                 netmask = attributes.get('netmask')
                 netmask = attributes.get('prefix') if netmask is None else netmask
                 ipnet = '%s/%s' % (firstip, netmask) if netmask is not None else firstip
                 ipnet = IPNetwork(ipnet)
                 cidr = ipnet.cidr
-            else:
-                ip = None
             dhcp = list(root.iter('dhcp'))
             if dhcp:
                 dhcp = True
@@ -2847,16 +2869,14 @@ class Kvirt(object):
             bridge = list(root.iter('bridge'))
             if not bridge:
                 continue
-            ip = list(root.iter('ip'))
-            if ip:
-                attributes = ip[0].attrib
+            ip = None
+            cidr = 'N/A'
+            for entry in list(root.iter('ip')):
+                attributes = entry.attrib
                 ip = attributes.get('address')
                 prefix = attributes.get('prefix')
                 ipnet = IPNetwork('%s/%s' % (ip, prefix))
                 cidr = ipnet.cidr
-            else:
-                ip = None
-                cidr = 'N/A'
             networks[interface] = {'cidr': cidr, 'dhcp': 'N/A', 'type': 'bridged', 'mode': 'N/A'}
             if ip is not None:
                 networks[interface]['ip'] = ip

@@ -1,8 +1,13 @@
 {% for num in range(0, workers) %}
-{% if worker_macs and worker_macs|length >= workers %}
-{% set net0 = {"name": network, "mac": worker_macs[num]} %}
+{% if worker_network != None %}
+{% set default_network = worker_network %}
 {% else %}
-{% set net0 = network %}
+{% set default_network = network %}
+{% endif %}
+{% if worker_macs and worker_macs|length >= workers %}
+{% set net0 = {"name": default_network, "mac": worker_macs[num]} %}
+{% else %}
+{% set net0 = default_network %}
 {% endif %}
 {% if extra_worker_networks %}
 {% set extra_networks = extra_worker_networks %}

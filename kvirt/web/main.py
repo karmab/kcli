@@ -433,11 +433,11 @@ def planaction():
             response.status_code = 400
         else:
             if action == 'start':
-                result = config.plan(plan, start=True)
+                result = config.start_plan(plan)
             elif action == 'stop':
-                result = config.plan(plan, stop=True)
+                result = config.stop_plan(plan)
             elif action == 'delete':
-                result = config.plan(plan, delete=True)
+                result = config.delete_plan(plan)
             elif action == 'create':
                 print(request.form)
                 url = request.form['url']

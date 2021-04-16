@@ -17,6 +17,7 @@ pull_secret: openshift_pull.json
 image: rhcos47
 helper_image: CentOS-7-x86_64-GenericCloud.qcow2
 network: default
+worker_network:
 api_ip: 
 ingress_ip: 
 masters: 1
@@ -74,6 +75,7 @@ cpupinning_master:
 cpupinning_worker:
 disconnected_url:
 disconnected_deploy: False
+disconnected_haproxy: False
 disconnected_reuse: False
 disconnected_disk_size: 100
 disconnected_user:

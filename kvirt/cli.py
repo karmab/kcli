@@ -1435,7 +1435,8 @@ def scale_generic_kube(args):
     """Scale generic kube"""
     workers = args.workers
     paramfile = args.paramfile
-    cluster = args.cluster if args.cluster is not None else 'testk'
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    cluster = overrides.get('cluster', args.cluster)
     clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
     if not os.path.exists(clusterdir):
         error("Cluster directory %s not found..." % clusterdir)
@@ -1450,7 +1451,6 @@ def scale_generic_kube(args):
         paramfile = "kcli_parameters.yml"
         pprint("Using default parameter file kcli_parameters.yml")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     if workers > 0:
         overrides['workers'] = workers
     config.scale_kube_generic(cluster, overrides=overrides)
@@ -1460,7 +1460,8 @@ def scale_k3s_kube(args):
     """Scale k3s kube"""
     workers = args.workers
     paramfile = args.paramfile
-    cluster = args.cluster if args.cluster is not None else 'testk'
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    cluster = overrides.get('cluster', args.cluster)
     clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
     if not os.path.exists(clusterdir):
         error("Cluster directory %s not found..." % clusterdir)
@@ -1485,7 +1486,8 @@ def scale_openshift_kube(args):
     """Scale openshift kube"""
     workers = args.workers
     paramfile = args.paramfile
-    cluster = args.cluster if args.cluster is not None else 'testk'
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    cluster = overrides.get('cluster', args.cluster)
     clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
     if not os.path.exists(clusterdir):
         error("Cluster directory %s not found..." % clusterdir)
@@ -1500,7 +1502,6 @@ def scale_openshift_kube(args):
         paramfile = "kcli_parameters.yml"
         pprint("Using default parameter file kcli_parameters.yml")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     if workers > 0:
         overrides['workers'] = workers
     config.scale_kube_openshift(cluster, overrides=overrides)
@@ -1591,7 +1592,7 @@ def create_plan(args):
             error("Force requires specifying a plan name")
             return
         else:
-            config.plan(plan, delete=True)
+            config.delete_plan(plan)
     if plan is None:
         plan = nameutils.get_random_name()
         pprint("Using %s as name of the plan" % plan)
@@ -1642,10 +1643,10 @@ def update_plan(args):
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if autostart:
-        config.plan(plan, autostart=autostart)
+        config.autostart_plan(plan)
         return 0
     elif noautostart:
-        config.plan(plan, noautostart=noautostart)
+        config.noautostart_plan(plan)
         return 0
     config.plan(plan, url=url, path=path, container=container, inputfile=inputfile, overrides=overrides, update=True)
     return 0
@@ -1659,7 +1660,7 @@ def delete_plan(args):
     if not yes and not yes_top:
         common.confirm("Are you sure?")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.plan(plan, delete=True)
+    config.delete_plan(plan)
     return 0
 
 
@@ -1690,7 +1691,7 @@ def start_plan(args):
     """Start plan"""
     plan = args.plan
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.plan(plan, start=True)
+    config.start_plan(plan)
     return 0
 
 
@@ -1698,7 +1699,7 @@ def stop_plan(args):
     """Stop plan"""
     plan = args.plan
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.plan(plan, stop=True)
+    config.stop_plan(plan)
     return 0
 
 
@@ -1706,7 +1707,7 @@ def autostart_plan(args):
     """Autostart plan"""
     plan = args.plan
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.plan(plan, autostart=True)
+    config.autostart_plan(plan)
     return 0
 
 
@@ -1714,7 +1715,7 @@ def noautostart_plan(args):
     """Noautostart plan"""
     plan = args.plan
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.plan(plan, autostart=False)
+    config.noautostart_plan(plan)
     return 0
 
 
@@ -1722,7 +1723,8 @@ def restart_plan(args):
     """Restart plan"""
     plan = args.plan
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.plan(plan, restart=True)
+    config.stop_plan(plan)
+    config.start_plan(plan)
     return 0
 
 
@@ -2009,7 +2011,7 @@ def create_snapshot_plan(args):
     plan = args.plan
     snapshot = args.snapshot
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.plan(plan, snapshot=True, snapshotname=snapshot)
+    config.snapshot_plan(plan, snapshotname=snapshot)
     return 0
 
 
@@ -2032,7 +2034,7 @@ def revert_snapshot_plan(args):
     plan = args.plan
     snapshot = args.snapshot
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.plan(plan, revert=True, snapshotname=snapshot)
+    config.revert_plan(plan, snapshotname=snapshot)
     return 0
 
 
@@ -2279,6 +2281,8 @@ def create_network(args):
     else:
         nat = True
     dhcp = not nodhcp
+    if args.dual is not None:
+        overrides['dual_cidr'] = args.dual
     result = k.create_network(name=name, cidr=cidr, dhcp=dhcp, nat=nat, domain=domain, overrides=overrides)
     common.handle_response(result, name, element='Network')
 
@@ -3041,6 +3045,8 @@ def cli():
     imagedelete_parser.set_defaults(func=delete_image)
     delete_subparsers.add_parser('image', parents=[imagedelete_parser], description=imagedelete_desc,
                                  help=imagedelete_desc)
+    delete_subparsers.add_parser('iso', parents=[imagedelete_parser], description=imagedelete_desc,
+                                 help=imagedelete_desc)
 
     kubecreate_desc = 'Create Kube'
     kubecreate_parser = create_subparsers.add_parser('kube', description=kubecreate_desc, help=kubecreate_desc,
@@ -3142,7 +3148,7 @@ def cli():
                                          metavar='PARAM')
     kubegenericscale_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
     kubegenericscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int, default=0)
-    kubegenericscale_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
+    kubegenericscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
     kubegenericscale_parser.set_defaults(func=scale_generic_kube)
     kubescale_subparsers.add_parser('generic', parents=[kubegenericscale_parser], description=kubegenericscale_desc,
                                     help=kubegenericscale_desc)
@@ -3154,7 +3160,7 @@ def cli():
                                      metavar='PARAM')
     kubek3sscale_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
     kubek3sscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int, default=0)
-    kubek3sscale_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
+    kubek3sscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
     kubek3sscale_parser.set_defaults(func=scale_k3s_kube)
     kubescale_subparsers.add_parser('k3s', parents=[kubek3sscale_parser], description=kubek3sscale_desc,
                                     help=kubek3sscale_desc)
@@ -3165,7 +3171,7 @@ def cli():
     kubeopenshiftscale_parser.add_argument('-P', '--param', action='append', help=parameterhelp, metavar='PARAM')
     kubeopenshiftscale_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
     kubeopenshiftscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int, default=0)
-    kubeopenshiftscale_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
+    kubeopenshiftscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
     kubeopenshiftscale_parser.set_defaults(func=scale_openshift_kube)
     kubescale_subparsers.add_parser('openshift', parents=[kubeopenshiftscale_parser],
                                     description=kubeopenshiftscale_desc,
@@ -3249,6 +3255,7 @@ def cli():
                                                         help=networkcreate_desc)
     networkcreate_parser.add_argument('-i', '--isolated', action='store_true', help='Isolated Network')
     networkcreate_parser.add_argument('-c', '--cidr', help='Cidr of the net', metavar='CIDR')
+    networkcreate_parser.add_argument('-d', '--dual', help='Cidr of dual net', metavar='DUAL')
     networkcreate_parser.add_argument('--nodhcp', action='store_true', help='Disable dhcp on the net')
     networkcreate_parser.add_argument('--domain', help='DNS domain. Defaults to network name')
     networkcreate_parser.add_argument('-P', '--param', action='append',

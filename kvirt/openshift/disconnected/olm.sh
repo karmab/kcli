@@ -1,6 +1,7 @@
 #!/bin/bash
 # Variables to set, suit to your installation
 cd /root
+export PATH=/root/bin:$PATH
 export OCP_RELEASE="{{ tag }}"
 export OCP_PULLSECRET_AUTHFILE='/root/openshift_pull.json'
 IP=$(hostname -I | awk -F' ' '{print $NF}')

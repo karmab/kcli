@@ -55,7 +55,7 @@ def url_exists(url):
 def fetch(url, path):
     if 'raw.githubusercontent.com' not in url:
         url = url.replace('github.com', 'raw.githubusercontent.com').replace('blob/master', 'master')
-    if 'master' not in url:
+    elif 'master' not in url:
         if url.endswith('kcli_plan.yml'):
             url = url.replace('/kcli_plan.yml', '/master/kcli_plan.yml')
         if url.endswith('kcli_default.yml'):
@@ -198,10 +198,11 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                     if not bridge:
                         netdata += "  iface %s inet dhcp\n" % nicname
                 else:
-                    if enableipv6 or netname in ipv6:
-                        netdata[nicname] = {'dhcp6': True}
-                    else:
-                        netdata[nicname] = {'dhcp4': True}
+                    targetfamily = 'dhcp6' if enableipv6 or netname in ipv6 else 'dhcp4'
+                    netdata[nicname] = {targetfamily: True}
+                    if 'dualstack' in overrides and index == 0:
+                        dualfamily = 'dhcp6' if targetfamily == 'dhcp4' else 'dhcp4'
+                        netdata[nicname][dualfamily] = True
             if bridge and not legacy:
                 bridges[bridgename].update(netdata[nicname])
                 del netdata[nicname]
@@ -1557,17 +1558,14 @@ def needs_ignition(image):
 
 
 def ignition_version(image):
-    if 'fedora-coreos' in image or 'fcos' in image:
-        version = '3.1.0'
-    else:
-        version = '2.2.0'
-        image = os.path.basename(image)
-        version_match = re.match('rhcos-*(..).*', image)
-        if version_match is not None:
-            if int(version_match.group(1)) >= 46:
-                version = '3.1.0'
-            if int(version_match.group(1)) >= 48:
-                version = '3.2.0'
+    version = '3.1.0'
+    ignition_versions = {"4%d" % i: '2.2.0' for i in range(6)}
+    ignition_versions.update({46: '3.1.0', 47: '3.1.0', 48: '3.2.0'})
+    image = os.path.basename(image)
+    version_match = re.match('rhcos-*(..).*', image)
+    if version_match is not None:
+        openshift_version = int(version_match.group(1))
+        version = ignition_versions[openshift_version]
     return version
 
 

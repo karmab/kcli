@@ -18,9 +18,6 @@ def scale(config, plandir, cluster, overrides):
     data['basedir'] = '/workdir' if os.path.exists("/i_am_a_container") else '.'
     cluster = data.get('cluster')
     clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
-    if not os.path.exists(clusterdir):
-        error("Cluster directory %s not found..." % clusterdir)
-        sys.exit(1)
     if os.path.exists("%s/kcli_parameters.yml" % clusterdir):
         with open("%s/kcli_parameters.yml" % clusterdir, 'r') as install:
             installparam = yaml.safe_load(install)
