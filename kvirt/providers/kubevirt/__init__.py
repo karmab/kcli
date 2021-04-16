@@ -296,7 +296,7 @@ class Kubevirt(Kubecommon):
                     if cdi and datavolumes:
                         base_image_pvc = core.read_namespaced_persistent_volume_claim(images[image], namespace)
                         disksize = int(base_image_pvc.spec.resources.requests['storage'].replace('Gi', '')) + 1
-                        volume_mode = base_image_pvc.spec.volumeMode
+                        volume_mode = base_image_pvc.spec.volume_mode
                         myvolume['dataVolume'] = {'name': diskname}
                     else:
                         myvolume['persistentVolumeClaim'] = {'claimName': diskname}
@@ -380,6 +380,12 @@ class Kubevirt(Kubecommon):
             common.pretty_print(vm)
         for index, pvc in enumerate(pvcs):
             pvcname = pvc['metadata']['name']
+            try:
+                core.read_namespaced_persistent_volume_claim(pvcname, namespace)
+                pprint("Using existing pvc %s" % pvcname)
+                continue
+            except:
+                pass
             pvcsize = pvc['spec']['resources']['requests']['storage'].replace('Gi', '')
             pvc_volume_mode = pvc['spec']['volumeMode']
             pvc_access_mode = pvc['spec']['accessModes']
@@ -394,7 +400,6 @@ class Kubevirt(Kubecommon):
                                         'source': {'pvc': {'name': images[image], 'namespace': self.namespace}}},
                                'status': {}}
                         vm['spec']['dataVolumeTemplates'] = [dvt]
-                        continue
                     else:
                         core.create_namespaced_persistent_volume_claim(namespace, pvc)
                         bound = self.pvc_bound(pvcname, namespace)
@@ -404,23 +409,18 @@ class Kubevirt(Kubecommon):
                         if not completed:
                             error("Issue with cdi import")
                             return {'result': 'failure', 'reason': 'timeout waiting for cdi importer pod to complete'}
-                        continue
                 else:
                     copy = self.copy_image(diskpool, images[image], diskname, size=int(pvcsize))
                     if copy['result'] == 'failure':
                         reason = copy['reason']
                         error(reason)
                         return {'result': 'failure', 'reason': reason}
-                    continue
-            try:
-                core.read_namespaced_persistent_volume_claim(pvcname, namespace)
-                pprint("Using existing pvc %s" % pvcname)
-            except:
-                core.create_namespaced_persistent_volume_claim(namespace, pvc)
-                bound = self.pvc_bound(pvcname, namespace)
-                if not bound:
-                    error('timeout waiting for pvc %s to get bound' % pvcname)
-                    return {'result': 'failure', 'reason': 'timeout waiting for pvc %s to get bound' % pvcname}
+                continue
+            core.create_namespaced_persistent_volume_claim(namespace, pvc)
+            bound = self.pvc_bound(pvcname, namespace)
+            if not bound:
+                error('timeout waiting for pvc %s to get bound' % pvcname)
+                return {'result': 'failure', 'reason': 'timeout waiting for pvc %s to get bound' % pvcname}
         if 'affinity' in overrides and isinstance(overrides['affinity'], dict):
             vm['spec']['template']['spec']['affinity'] = overrides['affinity']
         crds.create_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', vm)
