@@ -634,7 +634,7 @@ def set_lastvm(name, client, delete=False):
     """
     if 'HOME' not in os.environ:
         return
-    configdir = "%s/.kcli/" % os.environ.get('HOME')
+    configdir = "%s/.kcli" % os.environ.get('HOME')
     vmfile = "%s/vm" % configdir
     if not os.path.exists(configdir):
         os.mkdir(configdir)
@@ -642,7 +642,9 @@ def set_lastvm(name, client, delete=False):
         if not os.path.exists(vmfile):
             return
         else:
-            os.system("sed -i '/%s %s/d' %s/vm" % (client, name, configdir))
+            deletecmd = "sed -i ''" if os.path.exists('/Users') else "sed -i"
+            deletecmd += " '/%s %s/d' %s/vm" % (client, name, configdir)
+            os.system(deletecmd)
         return
     if not os.path.exists(vmfile) or os.stat(vmfile).st_size == 0:
         with open(vmfile, 'w') as f:
