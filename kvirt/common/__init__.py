@@ -642,7 +642,7 @@ def set_lastvm(name, client, delete=False):
         if not os.path.exists(vmfile):
             return
         else:
-            deletecmd = "sed -i ''" if os.path.exists('/Users') else "sed -i"
+            deletecmd = "sed -i ''" if os.path.exists('/Users') and 'gnu' not in find_executable('sed') else "sed -i"
             deletecmd += " '/%s %s/d' %s/vm" % (client, name, configdir)
             os.system(deletecmd)
         return
