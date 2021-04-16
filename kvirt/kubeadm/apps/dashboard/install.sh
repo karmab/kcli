@@ -18,7 +18,7 @@ else
 fi
 
 {% if dashboard_admin %}
-kubectl apply -f admin.yml
+kubectl replace -f admin.yml
 {% endif %}
 
 TOKEN=$(kubectl -n kubernetes-dashboard describe secret $(kubectl -n kubernetes-dashboard get secret | grep admin-user | awk '{print $1}') |grep 'token:' | awk -F: '{print $2}' | xargs)
