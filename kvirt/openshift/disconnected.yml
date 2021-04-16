@@ -34,6 +34,9 @@
  - origin: disconnected/olm.sh
    path: /root/olm.sh
    mode: 700
+ - origin: disconnected/haproxy.cfg
+   path: /root/haproxy.cfg
+   mode: 700
  cmds:
  - bash /root/get_oc.sh
  - bash /root/registry.sh

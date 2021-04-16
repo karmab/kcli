@@ -75,6 +75,7 @@ cpupinning_master:
 cpupinning_worker:
 disconnected_url:
 disconnected_deploy: False
+disconnected_haproxy: False
 disconnected_reuse: False
 disconnected_disk_size: 100
 disconnected_user:
