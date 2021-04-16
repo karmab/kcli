@@ -1266,6 +1266,10 @@ def create_vmdisk(args):
 
 def delete_vmdisk(args):
     """Delete disk of vm"""
+    yes_top = args.yes_top
+    yes = args.yes
+    if not yes and not yes_top:
+        common.confirm("Are you sure?")
     name = args.vm
     diskname = args.diskname
     novm = args.novm
@@ -3671,6 +3675,7 @@ def cli():
     vmdiskdelete_parser.add_argument('-n', '--novm', action='store_true', help='Dont try to locate vm')
     vmdiskdelete_parser.add_argument('--vm', help='Name of the vm', metavar='VMNAME')
     vmdiskdelete_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
+    vmdiskdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     vmdiskdelete_parser.add_argument('diskname', metavar='DISKNAME')
     vmdiskdelete_parser.set_defaults(func=delete_vmdisk)
     delete_subparsers.add_parser('vm-disk', parents=[vmdiskdelete_parser], description=vmdiskdelete_desc,
