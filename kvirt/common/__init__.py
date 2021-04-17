@@ -1565,7 +1565,7 @@ def ignition_version(image):
     ignition_versions.update({46: '3.1.0', 47: '3.1.0', 48: '3.2.0'})
     image = os.path.basename(image)
     version_match = re.match('rhcos-*(..).*', image)
-    if version_match is not None:
+    if version_match is not None and isinstance(version_match.group(1), int):
         openshift_version = int(version_match.group(1))
         version = ignition_versions[openshift_version]
     return version
