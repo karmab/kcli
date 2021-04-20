@@ -1,7 +1,3 @@
-oc create -f install.yml
-{{ 'multiclusterhub'| waitcrd }}
-oc create -f cr.yml
-
 {% if acm_deploy_baremetal_console %}
 STATUS="Installing"
 while [ "$STATUS" != "Running" ] ; do

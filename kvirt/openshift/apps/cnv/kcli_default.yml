@@ -1,4 +1,0 @@
-cnv_channel: 'stable'
-cnv_version: '2.5.1'
-cnv_infra: master
-cnv_workloads: worker

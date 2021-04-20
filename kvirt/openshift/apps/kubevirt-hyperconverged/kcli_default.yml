@@ -1,0 +1,2 @@
+kubevirt_infra: master
+kubevirt_workloads: worker

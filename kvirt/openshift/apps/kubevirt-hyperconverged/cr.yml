@@ -2,22 +2,22 @@ apiVersion: hco.kubevirt.io/v1beta1
 kind: HyperConverged
 metadata:
   name: kubevirt-hyperconverged
-  namespace: openshift-cnv
+  namespace: {{ namespace }}
 spec:
   BareMetalPlatform: true
   infra:
     nodePlacement:
       nodeSelector:
-        node-role.kubernetes.io/{{ cnv_infra }}: ""
+        node-role.kubernetes.io/{{ kubevirt_infra }}: ""
       tolerations:
       - effect: NoSchedule
-        key: "node-role.kubernetes.io/{{ cnv_infra }}"
+        key: "node-role.kubernetes.io/{{ kubevirt_infra }}"
         operator: Exists
   workloads:
     nodePlacement:
       nodeSelector:
-        node-role.kubernetes.io/{{ cnv_workloads }}: ""
+        node-role.kubernetes.io/{{ kubevirt_workloads }}: ""
       tolerations:
       - effect: NoSchedule
-        key: "node-role.kubernetes.io/{{ cnv_workloads }}"
+        key: "node-role.kubernetes.io/{{ kubevirt_workloads }}"
         operator: Exists
