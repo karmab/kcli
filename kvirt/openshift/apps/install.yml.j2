@@ -1,0 +1,28 @@
+{% if namespace != 'openshift-operators' %}
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    openshift.io/cluster-monitoring: "true"
+  name: {{ namespace }}
+---
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: {{ name }}-operatorgroup
+  namespace: {{ namespace }}
+spec:
+  targetNamespaces:
+  - {{ namespace }}
+---
+{% endif %}
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: {{ name }}-subscription
+  namespace: {{ namespace }}
+spec:
+  channel: "{{ channel }}"
+  name: {{ name }}
+  source: {{ source | default('redhat-operators') }}
+  sourceNamespace: openshift-marketplace

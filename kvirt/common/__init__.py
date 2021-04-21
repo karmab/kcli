@@ -1667,6 +1667,110 @@ def kube_delete_app(config, appdir, overrides={}):
     return result
 
 
+def openshift_create_app(config, appdir, overrides={}, outputdir=None):
+    appname = overrides['name']
+    appdata = {'cluster': 'testk', 'domain': 'karmalabs.com', 'masters': 1, 'workers': 0}
+    cluster = appdata['cluster']
+    cwd = os.getcwd()
+    os.environ["PATH"] += ":%s" % cwd
+    overrides['cwd'] = cwd
+    default_parameter_file = "%s/%s/kcli_default.yml" % (appdir, appname)
+    if os.path.exists(default_parameter_file):
+        with open(default_parameter_file, 'r') as entries:
+            appdefault = yaml.safe_load(entries)
+            appdata.update(appdefault)
+    appdata.update(overrides)
+    with TemporaryDirectory() as tmpdir:
+        env = Environment(loader=FileSystemLoader(appdir), extensions=['jinja2.ext.do'], trim_blocks=True,
+                          lstrip_blocks=True)
+        for jinjafilter in jinjafilters.jinjafilters:
+            env.filters[jinjafilter] = jinjafilters.jinjafilters[jinjafilter]
+        try:
+            templ = env.get_template(os.path.basename("install.yml.j2"))
+        except TemplateSyntaxError as e:
+            error("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message))
+            os._exit(1)
+        except TemplateError as e:
+            error("Error rendering file %s. Got: %s" % (e.filename, e.message))
+            os._exit(1)
+        destfile = "%s/install.yml" % outputdir if outputdir is not None else "%s/install.yml" % tmpdir
+        with open(destfile, 'w') as f:
+            olmfile = templ.render(overrides)
+            f.write(olmfile)
+        destfile = "%s/install.sh" % outputdir if outputdir is not None else "%s/install.sh" % tmpdir
+        with open(destfile, 'w') as f:
+            f.write("oc create -f install.yml\n")
+            if os.path.exists("%s/%s/pre.sh" % (appdir, appname)):
+                rendered = config.process_inputfile(cluster, "%s/%s/pre.sh" % (appdir, appname),
+                                                    overrides=appdata)
+                f.write("%s\n" % rendered)
+            if os.path.exists("%s/%s/cr.yml" % (appdir, appname)):
+                rendered = config.process_inputfile(cluster, "%s/%s/cr.yml" % (appdir, appname), overrides=appdata)
+                destfile = "%s/cr.yml" % outputdir if outputdir is not None else "%s/cr.yml" % tmpdir
+                with open(destfile, 'w') as g:
+                    g.write(rendered)
+                crd = overrides.get('crd')
+                rendered = config.process_inputfile(cluster, "%s/cr.sh" % appdir, overrides={'crd': crd})
+                f.write(rendered)
+            if os.path.exists("%s/%s/post.sh" % (appdir, appname)):
+                rendered = config.process_inputfile(cluster, "%s/%s/post.sh" % (appdir, appname),
+                                                    overrides=appdata)
+                f.write(rendered)
+        if outputdir is None:
+            os.chdir(tmpdir)
+            result = call('bash %s/install.sh' % tmpdir, shell=True)
+        else:
+            pprint("Copied artifacts to %s" % outputdir)
+            result = 0
+    os.chdir(cwd)
+    return result
+
+
+def openshift_delete_app(config, appdir, overrides={}):
+    appname = overrides['name']
+    appdata = {'cluster': 'testk', 'domain': 'karmalabs.com', 'masters': 1, 'workers': 0}
+    cluster = appdata['cluster']
+    cwd = os.getcwd()
+    os.environ["PATH"] += ":%s" % cwd
+    overrides['cwd'] = cwd
+    default_parameter_file = "%s/%s/kcli_default.yml" % (appdir, appname)
+    if os.path.exists(default_parameter_file):
+        with open(default_parameter_file, 'r') as entries:
+            appdefault = yaml.safe_load(entries)
+            appdata.update(appdefault)
+    appdata.update(overrides)
+    with TemporaryDirectory() as tmpdir:
+        env = Environment(loader=FileSystemLoader(appdir), extensions=['jinja2.ext.do'], trim_blocks=True,
+                          lstrip_blocks=True)
+        for jinjafilter in jinjafilters.jinjafilters:
+            env.filters[jinjafilter] = jinjafilters.jinjafilters[jinjafilter]
+        try:
+            templ = env.get_template(os.path.basename("install.yml.j2"))
+        except TemplateSyntaxError as e:
+            error("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message))
+            os._exit(1)
+        except TemplateError as e:
+            error("Error rendering file %s. Got: %s" % (e.filename, e.message))
+            os._exit(1)
+        destfile = "%s/install.yml" % tmpdir
+        with open(destfile, 'w') as f:
+            olmfile = templ.render(overrides)
+            f.write(olmfile)
+        destfile = "%s/uninstall.sh" % tmpdir
+        with open(destfile, 'w') as f:
+            if os.path.exists("%s/%s/cr.yml" % (appdir, appname)):
+                rendered = config.process_inputfile(cluster, "%s/%s/cr.yml" % (appdir, appname), overrides=appdata)
+                destfile = "%s/cr.yml" % tmpdir
+                with open(destfile, 'w') as g:
+                    g.write(rendered)
+                f.write("oc delete -f cr.yml\n")
+            f.write("oc delete -f install.yml")
+        os.chdir(tmpdir)
+        result = call('bash %s/uninstall.sh' % tmpdir, shell=True)
+    os.chdir(cwd)
+    return result
+
+
 def make_iso(name, tmpdir, userdata, metadata, netdata):
     with open("%s/user-data" % tmpdir, 'w') as x:
         x.write(userdata)
@@ -1740,3 +1844,37 @@ def generate_rhcos_iso(k, cluster, pool, version='latest', force=False):
         os.system(scpcmd)
         isocmd = 'ssh %s -p %s %s@%s "%s"' % (k.identitycommand, k.port, k.user, k.host, isocmd)
         os.system(isocmd)
+
+
+def olm_app(package):
+    os.environ["PATH"] += ":%s" % os.getcwd()
+    name, source, defaultchannel, csv, description, installmodes, crd = None, None, None, None, None, None, None
+    target_namespace = None
+    manifestscmd = "oc get packagemanifest -n openshift-marketplace -o jsonpath='{.items[*].metadata.name}'"
+    for entry in os.popen(manifestscmd).read().split(' '):
+        if package in entry:
+            name = entry
+            data = yaml.safe_load(os.popen("oc get packagemanifest -n openshift-marketplace %s -o yaml" % name).read())
+            target_namespace = name.split('-operator')[0]
+            status = data['status']
+            source = status['catalogSource']
+            defaultchannel = status['defaultChannel']
+            for channel in status['channels']:
+                if channel['name'] == defaultchannel:
+                    csv = channel['currentCSV']
+                    description = channel['currentCSVDesc']['description']
+                    installmodes = channel['currentCSVDesc']['installModes']
+                    for mode in installmodes:
+                        if mode['type'] == 'OwnNamespace' and not mode['supported']:
+                            target_namespace = 'openshift-operators'
+                            break
+                    csvdesc = channel['currentCSVDesc']
+                    csvdescannotations = csvdesc['annotations']
+                    if 'operatorframework.io/suggested-namespace' in csvdescannotations:
+                        target_namespace = csvdescannotations['operatorframework.io/suggested-namespace']
+                    if 'customresourcedefinitions' in csvdesc and csvdesc['customresourcedefinitions']:
+                        crd = csvdesc['customresourcedefinitions']['owned'][0]['name']
+                    break
+            if name == package or data['metadata']['labels']['catalog'] != 'community-operators':
+                break
+    return name, source, defaultchannel, csv, description, target_namespace, crd

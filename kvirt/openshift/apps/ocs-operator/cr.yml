@@ -2,7 +2,7 @@ apiVersion: ocs.openshift.io/v1
 kind: StorageCluster
 metadata:
   name: ocs-storagecluster
-  namespace: openshift-storage
+  namespace: {{ namespace }}
 spec:
   manageNodes: false
   monDataDirHostPath: /var/lib/rook
@@ -20,5 +20,5 @@ spec:
     name: ocs-deviceset
     placement: {}
     portable: {{ ocs_portable }}
-    replica: {{ ocs_replicas|int }}
+    replica: {{ ocs_replicas|default(3) }}
     resources: {}

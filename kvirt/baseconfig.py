@@ -986,10 +986,18 @@ class Kbaseconfig:
         appdir = plandir + '/apps'
         return sorted([x for x in os.listdir(appdir) if os.path.isdir("%s/%s" % (appdir, x)) and x != '__pycache__'])
 
-    def list_apps_openshift(self, quiet=True):
-        plandir = os.path.dirname(openshift.create.__code__.co_filename)
-        appdir = plandir + '/apps'
-        return sorted([x for x in os.listdir(appdir) if os.path.isdir("%s/%s" % (appdir, x)) and x != '__pycache__'])
+    def list_apps_openshift(self, quiet=True, community=False):
+        # manifestscmd = "oc get packagemanifest -n openshift-marketplace -o jsonpath='{.items[*].metadata.name}'"
+        # return sorted(os.popen(manifestscmd).read().split(' '))
+        results = []
+        manifestscmd = "oc get packagemanifest -n openshift-marketplace -o yaml"
+        data = yaml.safe_load(os.popen(manifestscmd).read())
+        for entry in data['items']:
+            metadata = entry['metadata']
+            # if not community and metadata['labels']['catalog'] == 'community-operators':
+            #    continue
+            results.append(metadata['name'])
+        return sorted(results)
 
     def create_app_generic(self, app, overrides={}, outputdir=None):
         plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
@@ -1015,23 +1023,39 @@ class Kbaseconfig:
 
     def create_app_openshift(self, app, overrides={}, outputdir=None):
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
-        appdir = "%s/apps/%s" % (plandir, app)
-        common.kube_create_app(self, appdir, overrides=overrides, outputdir=outputdir)
+        if app in ['argocd', 'istio', 'katacontainer', 'users']:
+            appdir = "%s/apps/%s" % (plandir, app)
+            common.kube_create_app(self, appdir, overrides=overrides, outputdir=outputdir)
+        else:
+            appdir = "%s/apps" % plandir
+            common.openshift_create_app(self, appdir, overrides=overrides, outputdir=outputdir)
 
     def delete_app_openshift(self, app, overrides={}):
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
-        appdir = "%s/apps/%s" % (plandir, app)
-        common.kube_delete_app(self, appdir, overrides=overrides)
+        if app in ['argocd', 'istio', 'katacontainer', 'users']:
+            appdir = "%s/apps/%s" % (plandir, app)
+            common.kube_delete_app(self, appdir, overrides=overrides)
+        else:
+            appdir = "%s/apps" % plandir
+            common.openshift_delete_app(self, appdir, overrides=overrides)
 
     def info_app_openshift(self, app):
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
+        if app not in ['argocd', 'istio', 'katacontainer', 'users']:
+            name, source, defaultchannel, csv, description, target_namespace, crd = common.olm_app(app)
+            if name is None:
+                error("Couldn't find any app matching %s" % app)
+                return 1
+            pprint("Providing information for app %s" % name)
+            print("source: %s" % source)
+            print("channel: %s" % defaultchannel)
+            print("target namespace: %s" % target_namespace)
+            print("csv: %s" % csv)
+            print("description:\n%s" % description)
+            app = name
         appdir = "%s/apps/%s" % (plandir, app)
         default_parameter_file = "%s/kcli_default.yml" % appdir
-        if not os.path.exists(appdir):
-            warning("App %s not supported" % app)
-        elif not os.path.exists(default_parameter_file):
-            return
-        else:
+        if os.path.exists(default_parameter_file):
             with open(default_parameter_file, 'r') as f:
                 print(f.read().strip())
 
