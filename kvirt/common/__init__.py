@@ -1850,11 +1850,10 @@ def olm_app(package):
     os.environ["PATH"] += ":%s" % os.getcwd()
     name, source, defaultchannel, csv, description, installmodes, crd = None, None, None, None, None, None, None
     target_namespace = None
-    manifestscmd = "oc get packagemanifest -n openshift-marketplace -o jsonpath='{.items[*].metadata.name}'"
-    for entry in os.popen(manifestscmd).read().split(' '):
-        if package in entry:
-            name = entry
-            data = yaml.safe_load(os.popen("oc get packagemanifest -n openshift-marketplace %s -o yaml" % name).read())
+    manifestscmd = "oc get packagemanifest -n openshift-marketplace -o yaml"
+    for data in yaml.safe_load(os.popen(manifestscmd).read())['items']:
+        if package in data['metadata']['name']:
+            name = data['metadata']['name']
             target_namespace = name.split('-operator')[0]
             status = data['status']
             source = status['catalogSource']

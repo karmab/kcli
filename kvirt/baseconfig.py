@@ -986,18 +986,9 @@ class Kbaseconfig:
         appdir = plandir + '/apps'
         return sorted([x for x in os.listdir(appdir) if os.path.isdir("%s/%s" % (appdir, x)) and x != '__pycache__'])
 
-    def list_apps_openshift(self, quiet=True, community=False):
-        # manifestscmd = "oc get packagemanifest -n openshift-marketplace -o jsonpath='{.items[*].metadata.name}'"
-        # return sorted(os.popen(manifestscmd).read().split(' '))
-        results = []
+    def list_apps_openshift(self, quiet=True):
         manifestscmd = "oc get packagemanifest -n openshift-marketplace -o yaml"
-        data = yaml.safe_load(os.popen(manifestscmd).read())
-        for entry in data['items']:
-            metadata = entry['metadata']
-            # if not community and metadata['labels']['catalog'] == 'community-operators':
-            #    continue
-            results.append(metadata['name'])
-        return sorted(results)
+        return sorted(entry['metadata']['name'] for entry in yaml.safe_load(os.popen(manifestscmd).read())['items'])
 
     def create_app_generic(self, app, overrides={}, outputdir=None):
         plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
