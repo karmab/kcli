@@ -295,7 +295,7 @@ class Kubevirt(Kubecommon):
                 else:
                     if cdi and datavolumes:
                         base_image_pvc = core.read_namespaced_persistent_volume_claim(images[image], namespace)
-                        disksize = int(base_image_pvc.spec.resources.requests['storage'].replace('Gi', '')) + 1
+                        disksize = base_image_pvc.spec.resources.requests['storage']
                         volume_mode = base_image_pvc.spec.volume_mode
                         myvolume['dataVolume'] = {'name': diskname}
                     else:
