@@ -318,7 +318,7 @@ class Ksphere:
         self.conn = si
         self.si = si
         self.vcip = host
-        self.url = "https://%s:%s@%s/sdk" % (user, password, host)
+        self.url = "https://'%s':'%s'@%s/sdk" % (user, password, host)
         self.rootFolder = si.content.rootFolder
         self.dc = find(si, self.rootFolder, vim.Datacenter, datacenter)
         self.macaddr = []
@@ -1127,7 +1127,7 @@ class Ksphere:
         else:
             pprint("Using found /tmp/%s" % shortimage)
         govc = common.get_binary('govc', GOVC_LINUX, GOVC_MACOSX, compressed=True)
-        opts = "-name=%s -ds=%s -k=true -u='%s'" % (name, pool, self.url)
+        opts = "-name=%s -ds=%s -k=true -u=%s" % (name, pool, self.url)
         ovacmd = "%s import.ova %s /tmp/%s" % (govc, opts, shortimage)
         os.system(ovacmd)
         self.export(name)
