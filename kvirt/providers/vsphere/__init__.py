@@ -1127,7 +1127,7 @@ class Ksphere:
         else:
             pprint("Using found /tmp/%s" % shortimage)
         govc = common.get_binary('govc', GOVC_LINUX, GOVC_MACOSX, compressed=True)
-        opts = "-name=%s -ds=%s -k=true -u=%s" % (name, pool, self.url)
+        opts = "-name=%s -ds=%s -k=true -u='%s'" % (name, pool, self.url)
         ovacmd = "%s import.ova %s /tmp/%s" % (govc, opts, shortimage)
         os.system(ovacmd)
         self.export(name)

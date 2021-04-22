@@ -853,13 +853,15 @@ def create_app_openshift(args):
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     overrides['openshift_version'] = OPENSHIFT_VERSION
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
-    available_apps = baseconfig.list_apps_openshift(quiet=True)
     for app in apps:
-        if app not in available_apps:
-            error("app %s not available. Skipping..." % app)
+        name, source, channel, csv, description, namespace, crd = common.olm_app(app)
+        if name is None:
+            error("Couldn't find any app matching %s. Skipping..." % app)
             continue
-        pprint("Adding app %s" % app)
-        baseconfig.create_app_openshift(app, overrides, outputdir=outputdir)
+        pprint("Adding app %s" % name)
+        app_data = {'name': name, 'source': source, 'channel': channel, 'csv': csv, 'namespace': namespace, 'crd': crd}
+        overrides.update(app_data)
+        baseconfig.create_app_openshift(name, overrides, outputdir=outputdir)
 
 
 def delete_app_generic(args):
@@ -900,12 +902,14 @@ def delete_app_openshift(args):
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     overrides['openshift_version'] = OPENSHIFT_VERSION
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
-    available_apps = baseconfig.list_apps_openshift(quiet=True)
     for app in apps:
-        if app not in available_apps:
-            error("app %s not available. Skipping..." % app)
+        name, source, channel, csv, description, namespace, crd = common.olm_app(app)
+        if name is None:
+            error("Couldn't find any app matching %s. Skipping..." % app)
             continue
-        pprint("Deleting app %s" % app)
+        pprint("Deleting app %s" % name)
+        app_data = {'name': name, 'source': source, 'channel': channel, 'csv': csv, 'namespace': namespace, 'crd': crd}
+        overrides.update(app_data)
         baseconfig.delete_app_openshift(app, overrides)
 
 
@@ -920,6 +924,14 @@ def list_apps_generic(args):
 
 def list_apps_openshift(args):
     """List openshift kube apps"""
+    if find_executable('oc') is None:
+        error("You need oc to list apps")
+        os._exit(1)
+    if 'KUBECONFIG' not in os.environ:
+        error("KUBECONFIG env variable needs to be set")
+        os._exit(1)
+    elif not os.path.isabs(os.environ['KUBECONFIG']):
+        os.environ['KUBECONFIG'] = "%s/%s" % (os.getcwd(), os.environ['KUBECONFIG'])
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     apps = PrettyTable(["Name"])
     for app in baseconfig.list_apps_openshift(quiet=True):
@@ -1266,6 +1278,10 @@ def create_vmdisk(args):
 
 def delete_vmdisk(args):
     """Delete disk of vm"""
+    yes_top = args.yes_top
+    yes = args.yes
+    if not yes and not yes_top:
+        common.confirm("Are you sure?")
     name = args.vm
     diskname = args.diskname
     novm = args.novm
@@ -3671,6 +3687,7 @@ def cli():
     vmdiskdelete_parser.add_argument('-n', '--novm', action='store_true', help='Dont try to locate vm')
     vmdiskdelete_parser.add_argument('--vm', help='Name of the vm', metavar='VMNAME')
     vmdiskdelete_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
+    vmdiskdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     vmdiskdelete_parser.add_argument('diskname', metavar='DISKNAME')
     vmdiskdelete_parser.set_defaults(func=delete_vmdisk)
     delete_subparsers.add_parser('vm-disk', parents=[vmdiskdelete_parser], description=vmdiskdelete_desc,
