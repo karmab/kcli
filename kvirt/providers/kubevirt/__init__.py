@@ -1217,15 +1217,21 @@ class Kubevirt(Kubecommon):
                 config = yaml.safe_load(naf['spec']['config'])
                 name = naf['metadata']['name']
                 _type = config['type']
-                bridge = config['bridge']
+                bridge = config.get('bridge')
                 vlan = config.get('vlan', 'N/A')
+                domain = 'N/A'
                 dhcp = False
                 cidr = bridge
                 if 'ipam' in config:
-                    dhcp = True
-                    cidr = config['ipam'].get('subnet', bridge)
-                networks[name] = {'cidr': cidr, 'dhcp': dhcp, 'type': _type, 'mode': vlan}
-        except:
+                    domain = config['ipam']['type']
+                    if config['ipam']['type'] == 'dhcp':
+                        dhcp = True
+                        cidr = config['ipam'].get('subnet', bridge)
+                    elif config['ipam']['type'] == 'whereabouts':
+                        dhcp = True
+                        cidr = config['ipam'].get('range', bridge)
+                networks[name] = {'cidr': cidr, 'dhcp': dhcp, 'type': _type, 'mode': vlan, 'domain': domain}
+        except Exception:
             pass
         return networks
 
