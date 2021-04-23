@@ -6,7 +6,7 @@ from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from kvirt import common
-from kvirt.common import error, pprint, success
+from kvirt.common import error, pprint, warning, success
 from kvirt.defaults import METADATA_FIELDS
 from math import ceil
 from pyVmomi import vim, vmodl
@@ -1129,9 +1129,12 @@ class Ksphere:
         else:
             pprint("Using found /tmp/%s" % shortimage)
         govc = common.get_binary('govc', GOVC_LINUX, GOVC_MACOSX, compressed=True)
-        url = "'%s':'%s'@%s" % (self.user, self.password, self.vcip)
-        opts = "-name=%s -ds=%s -k=true -u=%s" % (name, pool, url)
-        ovacmd = "%s import.ova %s /tmp/%s" % (govc, opts, shortimage)
+        ovacmd = "export GOVC_URL='%s';" % self.vcip
+        ovacmd += "export GOVC_USERNAME='%s';" % self.user
+        ovacmd += "export GOVC_PASSWORD='%s';" % self.password
+        if 'GOVC_NETWORK' not in os.environ:
+            warning("You might need to set GOVC_NETWORK to a correct network")
+        ovacmd += "%s import.ova -name=%s -ds=%s -k=true /tmp/%s" % (govc, name, pool, shortimage)
         os.system(ovacmd)
         self.export(name)
         os.remove('/tmp/%s' % shortimage)
