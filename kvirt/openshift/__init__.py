@@ -12,10 +12,10 @@ from kvirt.common import get_commit_rhcos, get_latest_fcos, kube_create_app, pat
 from kvirt.common import get_installer_rhcos
 from kvirt.common import ssh, scp, _ssh_credentials
 from kvirt.openshift.calico import calicoassets
-from kvirt.openshift.contrail import contrail_manifests, contrail_openshifts
 import re
 from shutil import copy2, rmtree
 from subprocess import call
+from tempfile import TemporaryDirectory
 from time import sleep
 from urllib.request import urlopen
 import yaml
@@ -638,36 +638,15 @@ def create(config, plandir, cluster, overrides):
         for asset in calicoassets:
             fetch(asset, manifestsdir)
     if 'network_type' in data and data['network_type'] == 'Contrail':
-        pprint("Fetching contrail assets")
-        for asset in contrail_manifests:
-            fetch(asset, "%s/manifests" % clusterdir)
-        for asset in contrail_openshifts:
-            fetch(asset, "%s/openshift" % clusterdir)
-        for role in ['master', 'worker']:
-            ignition_version = '2.2.0' if OPENSHIFT_VERSION.isdigit() and int(OPENSHIFT_VERSION) < 45 else '3.1.0'
-            contrailmount = config.process_inputfile(cluster, "%s/99-contrail-mount.yaml" % plandir,
-                                                     overrides={'role': role, 'ignition_version': ignition_version})
-            with open("%s/openshift/99-contrail-mount-%s.yaml" % (clusterdir, role), 'w') as f:
-                f.write(contrailmount)
-        contrail_registry = data.get('contrail_registry', "hub.juniper.net")
-        contrail_user = data.get('contrail_user')
-        contrail_password = data.get('contrail_password')
-        if contrail_user is None:
-            error("Missing contrail_user")
+        if find_executable('git') is None:
+            error('git is needed for contrail')
             os._exit(1)
-        if contrail_password is None:
-            error("Missing contrail_password")
-            os._exit(1)
-        contrail_creds = "%s:%s" % (contrail_user, contrail_password)
-        contrail_auth = b64encode(contrail_creds.encode()).decode("UTF-8")
-        contrail_auth = {"auths": {contrail_registry: {"username": contrail_user, "password": contrail_password,
-                                                       "auth": contrail_auth}}}
-        contrail_auth = json.dumps(contrail_auth)
-        contrail_data = {'contrail_auth': b64encode(contrail_auth.encode()).decode("UTF-8")}
-        contrail_secret = config.process_inputfile(cluster, "%s/contrail_registry_secret.j2" % plandir,
-                                                   overrides=contrail_data)
-        with open("%s/manifests/00-contrail-02-registry-secret.yaml" % clusterdir, 'w') as f:
-            f.write(contrail_secret)
+        with TemporaryDirectory() as tmpdir:
+            contraildata = {'cluster': cluster, 'domain': domain, 'tmpdir': tmpdir}
+            contrailscript = config.process_inputfile(cluster, "%s/contrail.sh.j2" % plandir, overrides=contraildata)
+            with open("%s/contrail.sh" % tmpdir, 'w') as f:
+                f.write(contrailscript)
+            call('bash %s/contrail.sh' % tmpdir, shell=True)
     if dualstack:
         copy2("%s/dualstack.yml" % plandir, "%s/openshift" % clusterdir)
     if disconnected_operators:
