@@ -331,7 +331,7 @@ class Kconfig(Kbaseconfig):
                     if 'iso' in vmprofiles[clientprofile]:
                         vmprofiles[profile] = {'iso': vmprofiles[clientprofile]['iso']}
                 elif profile in IMAGES and IMAGES[profile] not in [os.path.basename(v) for v in self.k.volumes()]\
-                        and self.type not in ['aws', 'gcp', 'packet']:
+                        and self.type not in ['aws', 'gcp', 'packet', 'vsphere']:
                     pprint("Image %s not found. Downloading" % profile)
                     self.handle_host(pool=self.pool, image=profile, download=True, update_profile=True)
                     good_image = os.path.basename(IMAGES[profile])
