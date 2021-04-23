@@ -1776,9 +1776,10 @@ def make_iso(name, tmpdir, userdata, metadata, netdata):
         x.write(userdata)
     with open("%s/meta-data" % tmpdir, 'w') as y:
         y.write(metadata)
-    isocmd = 'mkisofs'
-    if find_executable('genisoimage') is not None:
-        isocmd = 'genisoimage'
+    if find_executable('mkisofs') is None and find_executable('genisoimage') is None:
+        error("mkisofs or genisoimage are required in order to create cloudinit iso")
+        os._exit(1)
+    isocmd = 'genisoimage' if find_executable('genisoimage') is not None else 'mkisofs'
     isocmd += " --quiet -o %s/%s.ISO --volid cidata" % (tmpdir, name)
     isocmd += " --joliet --rock %s/user-data %s/meta-data" % (tmpdir, tmpdir)
     if netdata is not None:
