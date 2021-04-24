@@ -55,11 +55,13 @@ def url_exists(url):
 def fetch(url, path):
     if 'raw.githubusercontent.com' not in url:
         url = url.replace('github.com', 'raw.githubusercontent.com').replace('blob/master', 'master')
-    elif 'master' not in url:
+        pprint("Using url %s" % url)
+    if 'raw.githubusercontent.com' in url and 'master' not in url:
         if url.endswith('kcli_plan.yml'):
             url = url.replace('/kcli_plan.yml', '/master/kcli_plan.yml')
         if url.endswith('kcli_default.yml'):
             url = url.replace('/kcli_default.yml', '/master/kcli_default.yml')
+        pprint("Using url %s" % url)
     shortname = os.path.basename(url)
     if not os.path.exists(path):
         os.mkdir(path)
