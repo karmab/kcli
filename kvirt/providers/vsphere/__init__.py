@@ -6,19 +6,25 @@ from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from kvirt import common
-from kvirt.common import error, pprint, warning, success
+from kvirt.common import error, pprint, success
 from kvirt.defaults import METADATA_FIELDS
 from math import ceil
 from pyVmomi import vim, vmodl
 from pyVim import connect
 import os
+from os import system
+import re
 import requests
 import random
 from ssl import _create_unverified_context, get_server_certificate
+import tarfile
 from tempfile import TemporaryDirectory
+from threading import Thread
 import time
 import pyVmomi
 import webbrowser
+from zipfile import ZipFile
+
 
 GOVC_LINUX = "https://github.com/vmware/govmomi/releases/download/v0.21.0/govc_linux_amd64.gz"
 GOVC_MACOSX = GOVC_LINUX.replace('linux', 'darwin')
@@ -308,6 +314,17 @@ def deletefolder(si, parentfolder, folder):
 def deletedirectory(si, dc, path):
     d = si.content.fileManager.DeleteFile(path, dc)
     waitForMe(d)
+
+
+def keep_lease_alive(lease):
+    while(True):
+        time.sleep(5)
+        try:
+            lease.HttpNfcLeaseProgress(50)
+            if (lease.state == vim.HttpNfcLease.State.done):
+                return
+        except:
+            return
 
 
 class Ksphere:
@@ -1110,11 +1127,15 @@ class Ksphere:
     def add_image(self, url, pool, short=None, cmd=None, name=None, size=None):
         si = self.si
         rootFolder = self.rootFolder
+        clu = find(si, rootFolder, vim.ComputeResource, self.clu)
+        resourcepool = clu.resourcePool
+        vmFolder = self.dc.vmFolder
+        manager = si.content.ovfManager
         shortimage = os.path.basename(url).split('?')[0]
         if name is None:
             name = name.replace('.ova', '').replace('.x86_64', '')
-        if not url.endswith('ova'):
-            return {'result': 'failure', 'reason': "Invalid image. Only ovas are supported"}
+        if not url.endswith('ova') and not url.endswith('ovf') and not url.endswith('zip'):
+            return {'result': 'failure', 'reason': "Invalid image. Only ovas/ovfs/zip are supported"}
         if shortimage in self.volumes():
             pprint("Template %s already there" % shortimage)
             return {'result': 'success'}
@@ -1128,14 +1149,52 @@ class Ksphere:
                 return {'result': 'failure', 'reason': "Unable to download indicated image"}
         else:
             pprint("Using found /tmp/%s" % shortimage)
-        govc = common.get_binary('govc', GOVC_LINUX, GOVC_MACOSX, compressed=True)
-        ovacmd = "export GOVC_URL='%s';" % self.vcip
-        ovacmd += "export GOVC_USERNAME='%s';" % self.user
-        ovacmd += "export GOVC_PASSWORD='%s';" % self.password
-        if 'GOVC_NETWORK' not in os.environ:
-            warning("You might need to set GOVC_NETWORK to a correct network")
-        ovacmd += "%s import.ova -name=%s -ds=%s -k=true /tmp/%s" % (govc, name, pool, shortimage)
-        os.system(ovacmd)
+        vmdk_path = None
+        ovf_path = None
+        if url.endswith('zip'):
+            with ZipFile("/tmp/%s" % shortimage) as zipf:
+                for _fil in zipf.namelist():
+                    if _fil.endswith('vmdk'):
+                        vmdk_path = '/tmp/%s' % _fil
+                    elif _fil.endswith('ovf'):
+                        ovf_path = '/tmp/%s' % _fil
+                if vmdk_path is None or ovf_path is None:
+                    return {'result': 'failure', 'reason': "Incorrect ova file"}
+                zipf.extractall('/tmp')
+        if url.endswith('ova'):
+            with tarfile.open("/tmp/%s" % shortimage) as tar:
+                for _fil in [x.name for x in tar.getmembers()]:
+                    if _fil.endswith('vmdk'):
+                        vmdk_path = '/tmp/%s' % _fil
+                    elif _fil.endswith('ovf'):
+                        ovf_path = '/tmp/%s' % _fil
+                if vmdk_path is None or ovf_path is None:
+                    return {'result': 'failure', 'reason': "Incorrect ova file"}
+                tar.extractall()
+        ovfd = open(ovf_path).read()
+        ovfd = re.sub('<Name>.*</Name>', '<Name>%s</Name>' % name, ovfd)
+        datastore = find(si, rootFolder, vim.Datastore, pool)
+        spec_params = vim.OvfManager.CreateImportSpecParams()
+        import_spec = manager.CreateImportSpec(ovfd, resourcepool, datastore, spec_params)
+        lease = resourcepool.ImportVApp(import_spec.importSpec, vmFolder)
+        while True:
+            if lease.state == vim.HttpNfcLease.State.ready:
+                host = self._getfirshost()
+                url = lease.info.deviceUrl[0].url.replace('*', host.name)
+                keepalive_thread = Thread(target=keep_lease_alive, args=(lease,))
+                keepalive_thread.start()
+                curl_cmd = (
+                    "curl -Ss -X POST --insecure -T %s -H 'Content-Type: \
+                    application/x-vnd.vmware-streamVmdk' %s" % (vmdk_path, url))
+                system(curl_cmd)
+                try:
+                    lease.HttpNfcLeaseComplete()
+                    keepalive_thread.join()
+                except:
+                    pass
+            elif lease.state == vim.HttpNfcLease.State.error:
+                print("Lease error: " + lease.state.error)
+                exit(1)
         self.export(name)
         os.remove('/tmp/%s' % shortimage)
         return {'result': 'success'}
