@@ -12,7 +12,6 @@ from math import ceil
 from pyVmomi import vim, vmodl
 from pyVim import connect
 import os
-from os import system
 import re
 import requests
 import random
@@ -1134,8 +1133,6 @@ class Ksphere:
         shortimage = os.path.basename(url).split('?')[0]
         if name is None:
             name = name.replace('.ova', '').replace('.x86_64', '')
-        if not url.endswith('ova') and not url.endswith('ovf') and not url.endswith('zip'):
-            return {'result': 'failure', 'reason': "Invalid image. Only ovas/ovfs/zip are supported"}
         if shortimage in self.volumes():
             pprint("Template %s already there" % shortimage)
             return {'result': 'success'}
@@ -1161,7 +1158,7 @@ class Ksphere:
                 if vmdk_path is None or ovf_path is None:
                     return {'result': 'failure', 'reason': "Incorrect ova file"}
                 zipf.extractall('/tmp')
-        if url.endswith('ova'):
+        elif url.endswith('ova'):
             with tarfile.open("/tmp/%s" % shortimage) as tar:
                 for _fil in [x.name for x in tar.getmembers()]:
                     if _fil.endswith('vmdk'):
@@ -1171,6 +1168,15 @@ class Ksphere:
                 if vmdk_path is None or ovf_path is None:
                     return {'result': 'failure', 'reason': "Incorrect ova file"}
                 tar.extractall()
+        else:
+            extension = os.path.splitext(shortimage)[1].replace('.', '')
+            vmdk_path = shortimage.replace(extension, 'vmdk')
+            os.popen("qemu-img convert -O vmdk -o subformat=streamOptimized /tmp/%s /tmp/%s" % (shortimage, vmdk_path))
+            ovf_path = shortimage.replace(extension, 'ovf')
+            commondir = os.path.dirname(common.pprint.__code__.co_filename)
+            ovfcontent = open("vm.ovf.j2" % commondir).read().format(name=shortimage)
+            with open(ovf_path, 'w') as f:
+                f.write(ovfcontent)
         ovfd = open(ovf_path).read()
         ovfd = re.sub('<Name>.*</Name>', '<Name>%s</Name>' % name, ovfd)
         datastore = find(si, rootFolder, vim.Datastore, pool)
@@ -1186,17 +1192,21 @@ class Ksphere:
                 curl_cmd = (
                     "curl -Ss -X POST --insecure -T %s -H 'Content-Type: \
                     application/x-vnd.vmware-streamVmdk' %s" % (vmdk_path, url))
-                system(curl_cmd)
+                os.system(curl_cmd)
                 try:
                     lease.HttpNfcLeaseComplete()
                     keepalive_thread.join()
-                except:
-                    pass
+                except Exception as e:
+                    error(e)
+                    os._exit(1)
+                break
             elif lease.state == vim.HttpNfcLease.State.error:
-                print("Lease error: " + lease.state.error)
-                exit(1)
+                print("Lease error: %s" % lease.state.error)
+                os._exit(1)
         self.export(name)
         os.remove('/tmp/%s' % shortimage)
+        os.remove(ovf_path)
+        os.remove(vmdk_path)
         return {'result': 'success'}
 
     def _getfirshost(self):
