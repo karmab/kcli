@@ -52,16 +52,24 @@ def url_exists(url):
         return False
 
 
+def github_raw(url):
+    decomposed_url = url.split('/')
+    user = decomposed_url[3]
+    repo = decomposed_url[4]
+    if decomposed_url[5] == 'blob':
+        branch = decomposed_url[6]
+        relativepath = decomposed_url[7:]
+    else:
+        branch = 'master'
+        relativepath = decomposed_url[5:]
+    relativepath = '/'.join(relativepath)
+    url = 'https://raw.githubusercontent.com/%s/%s/%s/%s' % (user, repo, branch, relativepath)
+    return url
+
+
 def fetch(url, path):
-    if 'raw.githubusercontent.com' not in url:
-        url = url.replace('github.com', 'raw.githubusercontent.com').replace('blob/master', 'master')
-        pprint("Using url %s" % url)
-    if 'raw.githubusercontent.com' in url and 'master' not in url:
-        if url.endswith('kcli_plan.yml'):
-            url = url.replace('/kcli_plan.yml', '/master/kcli_plan.yml')
-        if url.endswith('kcli_default.yml'):
-            url = url.replace('/kcli_default.yml', '/master/kcli_default.yml')
-        pprint("Using url %s" % url)
+    if url.startswith('https://github.com'):
+        url = github_raw(url)
     shortname = os.path.basename(url)
     if not os.path.exists(path):
         os.mkdir(path)
