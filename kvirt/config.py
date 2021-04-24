@@ -1324,7 +1324,7 @@ $INFO
                                 common.fetch("%s/%s" % (onfly, origin), destdir)
                             except:
                                 if common.url_exists("%s/%s/README.md" % (onfly, origin)):
-                                    os.makedirs("%s/%s" % (destdir, os.path.basename(onfly)), exist_ok=True)
+                                    os.makedirs(origin, exist_ok=True)
                                 else:
                                     pprint("file %s/%s skipped" % (onfly, origin))
                     for script in scriptfiles:

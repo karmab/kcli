@@ -46,6 +46,8 @@ spec:
 
 def url_exists(url):
     try:
+        if url.startswith('https://github.com'):
+            url = github_raw(url)
         urlopen(url)
         return True
     except:
