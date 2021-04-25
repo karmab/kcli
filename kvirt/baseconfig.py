@@ -987,8 +987,11 @@ class Kbaseconfig:
         return sorted([x for x in os.listdir(appdir) if os.path.isdir("%s/%s" % (appdir, x)) and x != '__pycache__'])
 
     def list_apps_openshift(self, quiet=True):
-        manifestscmd = "oc get packagemanifest -n openshift-marketplace -o yaml"
-        return sorted(entry['metadata']['name'] for entry in yaml.safe_load(os.popen(manifestscmd).read())['items'])
+        results = ['users']
+        manifestscmd = "oc get packagemanifest -n openshift-marketplace -o name"
+        manifestsdata = os.popen(manifestscmd).read().split('\n')
+        results.extend([entry.replace('packagemanifest.packages.operators.coreos.com/', '') for entry in manifestsdata])
+        return sorted(results)
 
     def create_app_generic(self, app, overrides={}, outputdir=None):
         plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
