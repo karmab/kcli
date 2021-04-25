@@ -5,20 +5,27 @@ from binascii import hexlify
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
+from distutils.spawn import find_executable
 from kvirt import common
-from kvirt.common import error, pprint, warning, success
-from kvirt.defaults import METADATA_FIELDS
+from kvirt.common import error, pprint, success
+from kvirt.defaults import UBUNTUS, METADATA_FIELDS
 from math import ceil
 from pyVmomi import vim, vmodl
 from pyVim import connect
+import json
 import os
+import re
 import requests
 import random
 from ssl import _create_unverified_context, get_server_certificate
+import tarfile
 from tempfile import TemporaryDirectory
+from threading import Thread
 import time
 import pyVmomi
 import webbrowser
+from zipfile import ZipFile
+
 
 GOVC_LINUX = "https://github.com/vmware/govmomi/releases/download/v0.21.0/govc_linux_amd64.gz"
 GOVC_MACOSX = GOVC_LINUX.replace('linux', 'darwin')
@@ -310,6 +317,17 @@ def deletedirectory(si, dc, path):
     waitForMe(d)
 
 
+def keep_lease_alive(lease):
+    while(True):
+        time.sleep(5)
+        try:
+            lease.HttpNfcLeaseProgress(50)
+            if (lease.state == vim.HttpNfcLease.State.done):
+                return
+        except:
+            return
+
+
 class Ksphere:
     def __init__(self, host, user, password, datacenter, cluster, debug=False, filtervms=False, filteruser=False,
                  filtertag=None):
@@ -415,6 +433,21 @@ class Ksphere:
                     encodingopt.value = 'base64'
                     extraconfig.extend([ignitionopt, encodingopt])
                 else:
+                    gcmds = []
+                    if image is not None and 'cos' not in image and 'fedora-coreos' not in image:
+                        lower = image.lower()
+                        if lower.startswith('fedora') or lower.startswith('rhel') or lower.startswith('centos'):
+                            gcmds.append('yum -y install open-vm-tools')
+                        elif lower.startswith('debian') or [x for x in UBUNTUS if x in lower] or 'ubuntu' in lower:
+                            gcmds.append('apt-get update')
+                            gcmds.append('apt-get -f install open-vm-tools')
+                        gcmds.append('systemctl enable --now vmtoolsd')
+                    index = 0
+                    if image is not None and image.startswith('rhel'):
+                        subindex = [i for i, value in enumerate(cmds) if value.startswith('subscription-manager')]
+                        if subindex:
+                            index = subindex.pop() + 1
+                    cmds = cmds[:index] + gcmds + cmds[index:]
                     # customspec = makecuspec(name, nets=nets, gateway=gateway, dns=dns, domain=domain)
                     # clonespec.customization = customspec
                     cloudinitiso = "[%s]/%s/%s.ISO" % (default_pool, name, name)
@@ -1110,11 +1143,17 @@ class Ksphere:
     def add_image(self, url, pool, short=None, cmd=None, name=None, size=None):
         si = self.si
         rootFolder = self.rootFolder
+        clu = find(si, rootFolder, vim.ComputeResource, self.clu)
+        resourcepool = clu.resourcePool
+        vmFolder = self.dc.vmFolder
+        manager = si.content.ovfManager
         shortimage = os.path.basename(url).split('?')[0]
+        if not shortimage.endswith('ova') and not shortimage.endswith('zip') and find_executable('qemu-img') is None:
+            msg = "qemu-img is required for conversion"
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
         if name is None:
             name = name.replace('.ova', '').replace('.x86_64', '')
-        if not url.endswith('ova'):
-            return {'result': 'failure', 'reason': "Invalid image. Only ovas are supported"}
         if shortimage in self.volumes():
             pprint("Template %s already there" % shortimage)
             return {'result': 'success'}
@@ -1128,17 +1167,72 @@ class Ksphere:
                 return {'result': 'failure', 'reason': "Unable to download indicated image"}
         else:
             pprint("Using found /tmp/%s" % shortimage)
-        govc = common.get_binary('govc', GOVC_LINUX, GOVC_MACOSX, compressed=True)
-        ovacmd = "export GOVC_URL='%s';" % self.vcip
-        ovacmd += "export GOVC_USERNAME='%s';" % self.user
-        ovacmd += "export GOVC_PASSWORD='%s';" % self.password
-        if 'GOVC_NETWORK' not in os.environ:
-            warning("You might need to set GOVC_NETWORK to a correct network")
-        ovacmd += "%s import.ova -name=%s -ds=%s -k=true /tmp/%s" % (govc, name, pool, shortimage)
-        os.system(ovacmd)
-        self.export(name)
-        os.remove('/tmp/%s' % shortimage)
-        return {'result': 'success'}
+        vmdk_path = None
+        ovf_path = None
+        if url.endswith('zip'):
+            with ZipFile("/tmp/%s" % shortimage) as zipf:
+                for _fil in zipf.namelist():
+                    if _fil.endswith('vmdk'):
+                        vmdk_path = '/tmp/%s' % _fil
+                    elif _fil.endswith('ovf'):
+                        ovf_path = '/tmp/%s' % _fil
+                if vmdk_path is None or ovf_path is None:
+                    return {'result': 'failure', 'reason': "Incorrect ova file"}
+                zipf.extractall('/tmp')
+        elif url.endswith('ova'):
+            with tarfile.open("/tmp/%s" % shortimage) as tar:
+                for _fil in [x.name for x in tar.getmembers()]:
+                    if _fil.endswith('vmdk'):
+                        vmdk_path = '/tmp/%s' % _fil
+                    elif _fil.endswith('ovf'):
+                        ovf_path = '/tmp/%s' % _fil
+                if vmdk_path is None or ovf_path is None:
+                    return {'result': 'failure', 'reason': "Incorrect ova file"}
+                tar.extractall()
+        else:
+            extension = os.path.splitext(shortimage)[1].replace('.', '')
+            vmdk_path = "/tmp/%s" % shortimage.replace(extension, 'vmdk')
+            if not os.path.exists(vmdk_path):
+                pprint("Converting qcow2 file to vmdk")
+                os.popen("qemu-img convert -O vmdk -o subformat=streamOptimized /tmp/%s %s" % (shortimage, vmdk_path))
+            ovf_path = "/tmp/%s" % shortimage.replace(extension, 'ovf')
+            commondir = os.path.dirname(common.pprint.__code__.co_filename)
+            time.sleep(5)
+            vmdk_info = json.loads(os.popen("qemu-img info %s --output json" % vmdk_path).read())
+            virtual_size = vmdk_info['virtual-size']
+            actual_size = vmdk_info['actual-size']
+            ovfcontent = open("%s/vm.ovf.j2" % commondir).read().format(name=shortimage, virtual_size=virtual_size,
+                                                                        actual_size=actual_size)
+            with open(ovf_path, 'w') as f:
+                f.write(ovfcontent)
+        ovfd = open(ovf_path).read()
+        ovfd = re.sub('<Name>.*</Name>', '<Name>%s</Name>' % name, ovfd)
+        pprint("Uploading vmdk")
+        datastore = find(si, rootFolder, vim.Datastore, pool)
+        spec_params = vim.OvfManager.CreateImportSpecParams(diskProvisioning="thin")
+        import_spec = manager.CreateImportSpec(ovfd, resourcepool, datastore, spec_params)
+        lease = resourcepool.ImportVApp(import_spec.importSpec, vmFolder)
+        while True:
+            if lease.state == vim.HttpNfcLease.State.ready:
+                pprint("Using obtained lease")
+                host = self._getfirshost()
+                url = lease.info.deviceUrl[0].url.replace('*', host.name)
+                keepalive_thread = Thread(target=keep_lease_alive, args=(lease,))
+                keepalive_thread.start()
+                curl_cmd = (
+                    "curl -Ss -X POST --insecure -T %s -H 'Content-Type: \
+                    application/x-vnd.vmware-streamVmdk' %s" % (vmdk_path, url))
+                os.system(curl_cmd)
+                lease.HttpNfcLeaseComplete()
+                keepalive_thread.join()
+                self.export(name)
+                os.remove('/tmp/%s' % shortimage)
+                os.remove(ovf_path)
+                os.remove(vmdk_path)
+                return {'result': 'success'}
+            elif lease.state == vim.HttpNfcLease.State.error:
+                error("Lease error: %s" % lease.state.error)
+                os._exit(1)
 
     def _getfirshost(self):
         si = self.si
