@@ -106,7 +106,7 @@ def local_ip(net):
     c = "ip a s %s 2>/dev/null | egrep 'inet6?[[:space:]][^fe]' | head -1 | awk '{print $2}' | cut -d '/' -f 1" % net
     result = os.popen(c).read().strip()
     if ':' in result:
-        c = '[%s]' % c
+        result = '[%s]' % result
     return result
 
 
