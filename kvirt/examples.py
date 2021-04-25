@@ -207,3 +207,7 @@ $ kcli create openshift-iso -P nic=ens3 -P ip=192.168.122.45 -P netmask=24 -P ga
 # Provide extra args for first boot of the node
 $ kcli create openshift-iso -P extra_args="super_string_of_args" testk.karmalabs.com
 """
+
+disconnectercreate = """# Generate an openshift disconnecter vm for 4.8
+$ kcli create openshift-disconnecter -P version=nightly -P tag=4.8
+"""

@@ -8,6 +8,7 @@ from kvirt.config import Kconfig
 from kvirt.examples import plandatacreate, vmdatacreate, hostcreate, _list, plancreate, planinfo, productinfo
 from kvirt.examples import repocreate, isocreate, kubegenericcreate, kubek3screate, kubeopenshiftcreate, start
 from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsole, vmexport, niccreate, nicdelete
+from kvirt.examples import disconnectercreate
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
 from kvirt import version
@@ -1064,6 +1065,16 @@ def create_openshift_iso(args):
     overrides = common.get_overrides(param=args.param)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     config.create_openshift_iso(cluster, overrides=overrides, ignitionfile=ignitionfile)
+
+
+def create_openshift_disconnecter(args):
+    plan = args.plan
+    if plan is None:
+        plan = nameutils.get_random_name()
+        pprint("Using %s as name of the plan" % plan)
+    overrides = common.get_overrides(param=args.param)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config.create_openshift_disconnecter(plan, overrides=overrides)
 
 
 def create_vm(args):
@@ -3287,6 +3298,18 @@ def cli():
     networkdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     networkdelete_parser.add_argument('names', metavar='NETWORKS', nargs='+')
     networkdelete_parser.set_defaults(func=delete_network)
+
+    disconnectercreate_desc = 'Create a disconnecter vm for openshift'
+    disconnectercreate_epilog = "examples:\n%s" % disconnectercreate
+    disconnectercreate_parser = argparse.ArgumentParser(add_help=False)
+    disconnectercreate_parser.add_argument('-P', '--param', action='append',
+                                           help='specify parameter or keyword for rendering (can specify multiple)',
+                                           metavar='PARAM')
+    disconnectercreate_parser.add_argument('plan', metavar='PLAN', help='Plan', nargs='?')
+    disconnectercreate_parser.set_defaults(func=create_openshift_disconnecter)
+    create_subparsers.add_parser('openshift-disconnecter', parents=[disconnectercreate_parser],
+                                 description=disconnectercreate_desc, help=disconnectercreate_desc,
+                                 epilog=disconnectercreate_epilog, formatter_class=rawhelp)
 
     isocreate_desc = 'Create an iso ignition for baremetal install'
     isocreate_epilog = "examples:\n%s" % isocreate
