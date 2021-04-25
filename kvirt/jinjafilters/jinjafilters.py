@@ -102,9 +102,12 @@ fi """ % (timeout, crd, crd, crd)
     return result
 
 
-def local_ip(network):
-    cmd = """ip a s %s 2>/dev/null | grep 'inet[[:space:]]' | tail -1 | awk '{print $2}' | cut -d "/" -f 1""" % network
-    return os.popen(cmd).read().strip()
+def local_ip(net):
+    c = "ip a s %s 2>/dev/null | egrep 'inet6?[[:space:]][^fe]' | head -1 | awk '{print $2}' | cut -d '/' -f 1" % net
+    result = os.popen(c).read().strip()
+    if ':' in c:
+        c = '[%s]' % c
+    return result
 
 
 def network_ip(network, num=0, version=False):
