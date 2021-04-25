@@ -5,12 +5,14 @@ from binascii import hexlify
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
+from distutils.spawn import find_executable
 from kvirt import common
 from kvirt.common import error, pprint, success
-from kvirt.defaults import METADATA_FIELDS
+from kvirt.defaults import UBUNTUS, METADATA_FIELDS
 from math import ceil
 from pyVmomi import vim, vmodl
 from pyVim import connect
+import json
 import os
 import re
 import requests
@@ -431,6 +433,21 @@ class Ksphere:
                     encodingopt.value = 'base64'
                     extraconfig.extend([ignitionopt, encodingopt])
                 else:
+                    gcmds = []
+                    if image is not None and 'cos' not in image and 'fedora-coreos' not in image:
+                        lower = image.lower()
+                        if lower.startswith('fedora') or lower.startswith('rhel') or lower.startswith('centos'):
+                            gcmds.append('yum -y install open-vm-tools')
+                        elif lower.startswith('debian') or [x for x in UBUNTUS if x in lower] or 'ubuntu' in lower:
+                            gcmds.append('apt-get update')
+                            gcmds.append('apt-get -f install open-vm-tools')
+                        gcmds.append('systemctl enable --now vmtoolsd')
+                    index = 0
+                    if image is not None and image.startswith('rhel'):
+                        subindex = [i for i, value in enumerate(cmds) if value.startswith('subscription-manager')]
+                        if subindex:
+                            index = subindex.pop() + 1
+                    cmds = cmds[:index] + gcmds + cmds[index:]
                     # customspec = makecuspec(name, nets=nets, gateway=gateway, dns=dns, domain=domain)
                     # clonespec.customization = customspec
                     cloudinitiso = "[%s]/%s/%s.ISO" % (default_pool, name, name)
@@ -1131,6 +1148,10 @@ class Ksphere:
         vmFolder = self.dc.vmFolder
         manager = si.content.ovfManager
         shortimage = os.path.basename(url).split('?')[0]
+        if not shortimage.endswith('ova') and not shortimage.endswith('zip') and find_executable('qemu-img') is None:
+            msg = "qemu-img is required for conversion"
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
         if name is None:
             name = name.replace('.ova', '').replace('.x86_64', '')
         if shortimage in self.volumes():
@@ -1170,21 +1191,30 @@ class Ksphere:
                 tar.extractall()
         else:
             extension = os.path.splitext(shortimage)[1].replace('.', '')
-            vmdk_path = shortimage.replace(extension, 'vmdk')
-            os.popen("qemu-img convert -O vmdk -o subformat=streamOptimized /tmp/%s /tmp/%s" % (shortimage, vmdk_path))
-            ovf_path = shortimage.replace(extension, 'ovf')
+            vmdk_path = "/tmp/%s" % shortimage.replace(extension, 'vmdk')
+            if not os.path.exists(vmdk_path):
+                pprint("Converting qcow2 file to vmdk")
+                os.popen("qemu-img convert -O vmdk -o subformat=streamOptimized /tmp/%s %s" % (shortimage, vmdk_path))
+            ovf_path = "/tmp/%s" % shortimage.replace(extension, 'ovf')
             commondir = os.path.dirname(common.pprint.__code__.co_filename)
-            ovfcontent = open("vm.ovf.j2" % commondir).read().format(name=shortimage)
+            time.sleep(5)
+            vmdk_info = json.loads(os.popen("qemu-img info %s --output json" % vmdk_path).read())
+            virtual_size = vmdk_info['virtual-size']
+            actual_size = vmdk_info['actual-size']
+            ovfcontent = open("%s/vm.ovf.j2" % commondir).read().format(name=shortimage, virtual_size=virtual_size,
+                                                                        actual_size=actual_size)
             with open(ovf_path, 'w') as f:
                 f.write(ovfcontent)
         ovfd = open(ovf_path).read()
         ovfd = re.sub('<Name>.*</Name>', '<Name>%s</Name>' % name, ovfd)
+        pprint("Uploading vmdk")
         datastore = find(si, rootFolder, vim.Datastore, pool)
-        spec_params = vim.OvfManager.CreateImportSpecParams()
+        spec_params = vim.OvfManager.CreateImportSpecParams(diskProvisioning="thin")
         import_spec = manager.CreateImportSpec(ovfd, resourcepool, datastore, spec_params)
         lease = resourcepool.ImportVApp(import_spec.importSpec, vmFolder)
         while True:
             if lease.state == vim.HttpNfcLease.State.ready:
+                pprint("Using obtained lease")
                 host = self._getfirshost()
                 url = lease.info.deviceUrl[0].url.replace('*', host.name)
                 keepalive_thread = Thread(target=keep_lease_alive, args=(lease,))
@@ -1193,21 +1223,16 @@ class Ksphere:
                     "curl -Ss -X POST --insecure -T %s -H 'Content-Type: \
                     application/x-vnd.vmware-streamVmdk' %s" % (vmdk_path, url))
                 os.system(curl_cmd)
-                try:
-                    lease.HttpNfcLeaseComplete()
-                    keepalive_thread.join()
-                except Exception as e:
-                    error(e)
-                    os._exit(1)
-                break
+                lease.HttpNfcLeaseComplete()
+                keepalive_thread.join()
+                self.export(name)
+                os.remove('/tmp/%s' % shortimage)
+                os.remove(ovf_path)
+                os.remove(vmdk_path)
+                return {'result': 'success'}
             elif lease.state == vim.HttpNfcLease.State.error:
-                print("Lease error: %s" % lease.state.error)
+                error("Lease error: %s" % lease.state.error)
                 os._exit(1)
-        self.export(name)
-        os.remove('/tmp/%s' % shortimage)
-        os.remove(ovf_path)
-        os.remove(vmdk_path)
-        return {'result': 'success'}
 
     def _getfirshost(self):
         si = self.si
