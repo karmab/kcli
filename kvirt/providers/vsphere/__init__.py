@@ -7,7 +7,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from distutils.spawn import find_executable
 from kvirt import common
-from kvirt.common import error, pprint, success
+from kvirt.common import error, pprint
 from kvirt.defaults import UBUNTUS, METADATA_FIELDS
 from math import ceil
 from pyVmomi import vim, vmodl
@@ -940,17 +940,13 @@ class Ksphere:
     def dnsinfo(self, name):
         return None, None
 
-    def _uploadimage(self, pool, origin, directory, verbose=False, temp=False):
-        if verbose:
-            pprint("Uploading %s to %s/%s" % (origin, pool, directory))
+    def _uploadimage(self, pool, origin, directory):
         si = self.si
         rootFolder = self.rootFolder
         datastore = find(si, rootFolder, vim.Datastore, pool)
         if not datastore:
             return {'result': 'failure', 'reason': "Pool %s not found" % pool}
         destination = os.path.basename(origin)
-        if temp:
-            destination = "temp-%s" % destination
         url = "https://%s:443/folder/%s/%s?dcPath=%s&dsName=%s" % (self.vcip, directory, destination, self.dc.name,
                                                                    pool)
         client_cookie = si._stub.cookie
@@ -968,11 +964,8 @@ class Ksphere:
                 except:
                     url = url.replace('/folder', '')
                     r = requests.put(url, data=f, headers=headers, cookies=cookie, verify=False)
-                if verbose:
-                    if r.status_code not in [200, 201]:
-                        error(r.status_code, r.text)
-                    else:
-                        success("Successfull upload of %s to %s" % (origin, pool))
+                if r.status_code not in [200, 201]:
+                    error("Got status %s with text: %s" % (r.status_code, r.text))
 
     def get_pool_path(self, pool):
         return pool
