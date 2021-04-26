@@ -955,7 +955,7 @@ class Ksphere:
         destination = os.path.basename(origin)
         if temp:
             destination = "temp-%s" % destination
-        url = "https://%s:443/folder/%s/%s?dcPath=%s&dsName=%s" % (self.vcip, directory, destination, self.dc.name,
+        url = "https://%s:443/%s/%s?dcPath=%s&dsName=%s" % (self.vcip, directory, destination, self.dc.name,
                                                                    pool)
         client_cookie = si._stub.cookie
         cookie_name = client_cookie.split("=", 1)[0]
