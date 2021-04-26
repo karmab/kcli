@@ -27,10 +27,6 @@ import webbrowser
 from zipfile import ZipFile
 
 
-GOVC_LINUX = "https://github.com/vmware/govmomi/releases/download/v0.21.0/govc_linux_amd64.gz"
-GOVC_MACOSX = GOVC_LINUX.replace('linux', 'darwin')
-
-
 def waitForMe(t):
     while t.info.state not in [vim.TaskInfo.State.success, vim.TaskInfo.State.error]:
         time.sleep(1)
