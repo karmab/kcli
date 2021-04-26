@@ -959,7 +959,8 @@ class Kvirt(object):
         secureboot = overrides.get('secureboot', False)
         secure = 'yes' if secureboot else 'no'
         if uefi or uefi_legacy or secureboot:
-            machine = 'q35'
+            if 'q35' not in machine:
+                machine = 'q35'
             if uefi_legacy:
                 ramxml = "<loader readonly='yes' type='pflash'>/usr/share/OVMF/OVMF_CODE.secboot.fd</loader>"
                 if secureboot:
