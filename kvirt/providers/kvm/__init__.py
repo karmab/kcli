@@ -955,14 +955,24 @@ class Kvirt(object):
         smmxml = ""
         osfirmware = ""
         uefi = overrides.get('uefi', False)
+        uefi_legacy = overrides.get('uefi_legacy', False)
         secureboot = overrides.get('secureboot', False)
         secure = 'yes' if secureboot else 'no'
-        if uefi or secureboot:
+        if uefi or uefi_legacy or secureboot:
             machine = 'q35'
-            osfirmware = "firmware='efi'"
-            if secureboot:
-                smmxml = "<smm state='on'/>"
-            ramxml = "<loader readonly='yes' secure='%s'/>" % secure
+            if uefi_legacy:
+                ramxml = "<loader readonly='yes' type='pflash'>/usr/share/OVMF/OVMF_CODE.secboot.fd</loader>"
+                if secureboot:
+                    smmxml = "<smm state='on'/>"
+                    sectemplate = '/usr/share/OVMF/OVMF_VARS.secboot.fd'
+                    ramxml += '<nvram template="%s">/var/lib/libvirt/qemu/nvram/%s.fd</nvram>' % (sectemplate, name)
+                else:
+                    ramxml += '<nvram>/var/lib/libvirt/qemu/nvram/%s.fd</nvram>' % name
+            else:
+                osfirmware = "firmware='efi'"
+                if secureboot:
+                    smmxml = "<smm state='on'/>"
+                ramxml = "<loader readonly='yes' secure='%s'/>" % secure
         vmxml = """<domain type='{virttype}' {namespace}>
 <name>{name}</name>
 {metadataxml}
