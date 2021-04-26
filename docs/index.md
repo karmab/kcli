@@ -503,7 +503,7 @@ Note that pool in Vsphere context refers to datastore.
 
 To use this provider with kcli rpm, you'll need to install *python3-pyvmomi* and *python3-requests*
 
-Also note that kcli download will only upload OVAS, either from specified urls or gathering them in the case of rhcos/fcos.If not present, govc binary is downloaded on the fly in */var/tmp* to provide this functionality.
+Also note that kcli download will only upload OVAS, either from specified urls or gathering them in the case of rhcos/fcos.
 
 ## Packet
 
