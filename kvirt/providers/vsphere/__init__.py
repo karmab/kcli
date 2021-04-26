@@ -967,7 +967,11 @@ class Ksphere:
         with open(origin, "rb") as f:
             if hasattr(requests.packages.urllib3, 'disable_warnings'):
                 requests.packages.urllib3.disable_warnings()
-                r = requests.put(url, data=f, headers=headers, cookies=cookie, verify=False)
+                try:
+                    r = requests.put(url, data=f, headers=headers, cookies=cookie, verify=False)
+                except:
+                    url = url.replace('/folder', '')
+                    r = requests.put(url, data=f, headers=headers, cookies=cookie, verify=False)
                 if verbose:
                     if r.status_code not in [200, 201]:
                         error(r.status_code, r.text)
