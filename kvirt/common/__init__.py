@@ -104,6 +104,8 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
     if image is not None and (is_ubuntu(image) or is_debian10(image)):
         if machine == 'pc':
             prefix = 'ens'
+        elif machine == 'vsphere':
+            prefix = 'ens19'
         else:
             prefix = 'enp1s'
     dns_hack = True if image is not None and is_debian10(image) else False
@@ -126,7 +128,9 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 prefix = 'ens'
             nicname = net.get('nic')
             if nicname is None:
-                if prefix.startswith('ens'):
+                if prefix.startswith('ens19'):
+                    nicname = "ens%d" % (192 + 32 * index)
+                elif prefix.startswith('ens'):
                     nicname = "%s%d" % (prefix, 3 + index)
                 else:
                     nicname = "%s%d" % (prefix, index)

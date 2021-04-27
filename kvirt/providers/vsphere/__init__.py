@@ -453,7 +453,8 @@ class Ksphere:
                                                                    gateway=gateway, dns=dns, domain=domain,
                                                                    reserveip=reserveip, files=files,
                                                                    enableroot=enableroot, overrides=overrides,
-                                                                   storemetadata=storemetadata)
+                                                                   storemetadata=storemetadata, machine='vsphere',
+                                                                   image=image)
             confspec.extraConfig = extraconfig
             t = imageobj.CloneVM_Task(folder=vmfolder, name=name, spec=clonespec)
             waitForMe(t)
