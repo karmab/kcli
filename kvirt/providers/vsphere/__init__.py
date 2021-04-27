@@ -325,8 +325,8 @@ def keep_lease_alive(lease):
 
 
 class Ksphere:
-    def __init__(self, host, user, password, datacenter, cluster, debug=False, filtervms=False, filteruser=False,
-                 filtertag=None):
+    def __init__(self, host, user, password, datacenter, cluster, debug=False, isofolder=None,
+                 filtervms=False, filteruser=False, filtertag=None):
         # 4-1-CONNECT
         si = connect.SmartConnect(host=host, port=443, user=user, pwd=password, sslContext=_create_unverified_context())
         self.conn = si
@@ -340,6 +340,7 @@ class Ksphere:
         self.macaddr = []
         self.clu = cluster
         self.distributed = False
+        self.isofolder = isofolder
         self.filtervms = filtervms
         self.filtervms = filtervms
         self.filteruser = filteruser
@@ -446,7 +447,8 @@ class Ksphere:
                     cmds = cmds[:index] + gcmds + cmds[index:]
                     # customspec = makecuspec(name, nets=nets, gateway=gateway, dns=dns, domain=domain)
                     # clonespec.customization = customspec
-                    cloudinitiso = "[%s]/%s/%s.ISO" % (default_pool, name, name)
+                    isofolder = self.isofolder if self.isofolder is not None else "[%s]/%s" (default_pool, name)
+                    cloudinitiso = "%s/%s.ISO" % (isofolder, name)
                     userdata, metadata, netdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets,
                                                                    gateway=gateway, dns=dns, domain=domain,
                                                                    reserveip=reserveip, files=files,
@@ -459,7 +461,14 @@ class Ksphere:
                 with TemporaryDirectory() as tmpdir:
                     common.make_iso(name, tmpdir, userdata, metadata, netdata)
                     cloudinitisofile = "%s/%s.ISO" % (tmpdir, name)
-                    self._uploadimage(default_pool, cloudinitisofile, name)
+                    if self.isofolder is not None:
+                        isofolder = self.isofolder.split('/')
+                        isopool = re.sub(r"[\[\]]", '', isofolder[0])
+                        isofolder = isofolder[1]
+                    else:
+                        isopool = default_pool
+                        isofolder = None
+                    self._uploadimage(isopool, cloudinitisofile, name, isofolder=isofolder)
                 vm = findvm(si, vmFolder, name)
                 c = changecd(self.si, vm, cloudinitiso)
                 waitForMe(c)
@@ -674,7 +683,8 @@ class Ksphere:
         waitForMe(t)
         if image is not None and 'coreos' not in image and 'rhcos' not in image and\
                 'fcos' not in image and vmpath.endswith(name):
-            deletedirectory(si, dc, vmpath)
+            isopath = "%s/%s.ISO" % (self.isofolder, name) if self.isofolder is not None else vmpath
+            deletedirectory(si, dc, isopath)
         if plan != 'kvirt':
             planfolder = find(si, vmFolder, vim.Folder, plan)
             if planfolder is not None and len(planfolder.childEntity) == 0:
@@ -940,13 +950,15 @@ class Ksphere:
     def dnsinfo(self, name):
         return None, None
 
-    def _uploadimage(self, pool, origin, directory):
+    def _uploadimage(self, pool, origin, directory, isofolder=None):
         si = self.si
         rootFolder = self.rootFolder
         datastore = find(si, rootFolder, vim.Datastore, pool)
         if not datastore:
             return {'result': 'failure', 'reason': "Pool %s not found" % pool}
         destination = os.path.basename(origin)
+        if isofolder is not None:
+            directory = isofolder
         url = "https://%s:443/folder/%s/%s?dcPath=%s&dsName=%s" % (self.vcip, directory, destination, self.dc.name,
                                                                    pool)
         client_cookie = si._stub.cookie

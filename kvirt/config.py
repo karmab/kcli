@@ -232,12 +232,21 @@ class Kconfig(Kbaseconfig):
                 datacenter = self.options.get('datacenter')
                 if datacenter is None:
                     error("Missing datacenter in the configuration. Leaving")
+                isofolder = self.options.get('isofolder')
+                if isofolder is not None:
+                    if '/' not in isofolder:
+                        isopool = self.pool
+                    elif '[' not in isofolder:
+                        isofolder = isofolder.split('/')
+                        isopool = isofolder[0]
+                        isofolder = isofolder[1:]
+                    isofolder = '[%s]/%s' % (isopool, isofolder)
                 filtervms = self.options.get('filtervms', False)
                 filteruser = self.options.get('filteruser', False)
                 filtertag = self.options.get('filtertag')
                 from kvirt.providers.vsphere import Ksphere
-                k = Ksphere(self.host, user, password, datacenter, cluster, debug=debug, filtervms=filtervms,
-                            filteruser=filteruser, filtertag=filtertag)
+                k = Ksphere(self.host, user, password, datacenter, cluster, isofolder=isofolder,
+                            debug=debug, filtervms=filtervms, filteruser=filteruser, filtertag=filtertag)
             elif self.type == 'packet':
                 auth_token = self.options.get('auth_token')
                 if auth_token is None:
