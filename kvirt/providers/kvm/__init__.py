@@ -435,6 +435,23 @@ class Kvirt(object):
 <target dev='%s' bus='%s'/>
 %s
 </disk>""" % (disksxml, dtype, diskformat, dsource, diskpath, backingxml, diskdev, diskbus, diskwwn)
+        expanderinfo = {}
+        for index, cell in enumerate(numa):
+            if not isinstance(cell, dict) or 'id' not in cell:
+                msg = "Can't process entry %s in numa block" % index
+                return {'result': 'failure', 'reason': msg}
+            else:
+                _id = cell['id']
+                matchingnics = [nic for nic in nets if isinstance(nic, dict) and 'numa' in nic and nic['numa'] == _id]
+                if 'machine' not in overrides and [nic for nic in matchingnics if 'vfio' in nic and nic['vfio']]:
+                    machine = 'q35'
+                    warning("Forcing machine type to %s" % machine)
+                newindex = 1
+                if expanderinfo:
+                    for key in expanderinfo:
+                        newindex += expanderinfo[key]['slots']
+                    newindex += len(expanderinfo)
+                expanderinfo[_id] = {'index': newindex, 'slots': len(matchingnics)}
         netxml = ''
         nicslots = {k: 0 for k in range(0, 20)}
         alias = []
@@ -470,8 +487,6 @@ class Kvirt(object):
                 if 'mtu' in nets[index]:
                     mtuxml = "<mtu size='%s'/>" % nets[index]['mtu']
                 if 'vfio' in nets[index] and nets[index]['vfio']:
-                    if 'machine' not in overrides:
-                        machine = 'q35'
                     iommuxml = "<iommu model='intel'/>"
                     ioapicxml = "<ioapic driver='qemu'/>"
             if ips and len(ips) > index and ips[index] is not None and\
@@ -508,8 +523,7 @@ class Kvirt(object):
                 slot = nicslots[nicnuma] + 1
                 nicslots[nicnuma] = slot
                 if 'q35' in machine:
-                    expandernumber = nicslots[nicnuma - 1] + 2 if nicnuma > 0 else 1
-                    bus = expandernumber + slot
+                    bus = expanderinfo[nicnuma]['index'] + slot
                     slot = 0
                 else:
                     bus = nicnuma + 1
@@ -695,37 +709,37 @@ class Kvirt(object):
                 numaxml = '<numa>'
                 count = 1
                 for index, cell in enumerate(numa):
-                    if not isinstance(cell, dict):
-                        msg = "Can't process entry %s in numa block" % index
+                    cellid = cell.get('id', index)
+                    cellcpus = cell.get('vcpus')
+                    cellmemory = cell.get('memory')
+                    if cellcpus is None or cellmemory is None:
+                        msg = "Can't properly use cell %s in numa block" % index
                         return {'result': 'failure', 'reason': msg}
+                    numaxml += "<cell id='%s' cpus='%s' memory='%s' unit='MiB'/>" % (cellid, cellcpus, cellmemory)
+                    numamemory += int(cellmemory)
+                    if "q35" in machine:
+                        busindex = expanderinfo[cellid]['index']
                     else:
-                        cellid = cell.get('id', index)
-                        cellcpus = cell.get('vcpus')
-                        cellmemory = cell.get('memory')
-                        if cellcpus is None or cellmemory is None:
-                            msg = "Can't properly use cell %s in numa block" % index
-                            return {'result': 'failure', 'reason': msg}
-                        numaxml += "<cell id='%s' cpus='%s' memory='%s' unit='MiB'/>" % (cellid, cellcpus, cellmemory)
-                        numamemory += int(cellmemory)
-                        busxml += """<controller type='pci' index='%s' model='%s'>
+                        busindex = count
+                    busxml += """<controller type='pci' index='%s' model='%s'>
 <model name='%s'/>
 <target busNr='%s'>
 <node>%s</node>
 </target>
 <alias name='pci.%s'/>
 <address type='pci' domain='0x0000' bus='0x00' function='0x0'/>
-</controller>\n""" % (count, expander, pxb, 20 * (index + 1), cellid, count)
-                        count += 1
-                        if "q35" in machine:
-                            buscount = count - 1
-                            for slot in range(0, nicslots[cellid]):
-                                count += slot
-                                busxml += """<controller type='pci' index='%s' model='pcie-root-port'>
+</controller>\n""" % (busindex, expander, pxb, 20 * (index + 1), cellid, busindex)
+                    count += 1
+                    if "q35" in machine:
+                        nicslots = expanderinfo[cellid]['slots']
+                        for slot in range(expanderinfo[cellid]['slots']):
+                            slotindex = busindex + slot + 1
+                            busxml += """<controller type='pci' index='%s' model='pcie-root-port'>
 <target chassis='%s' port='0x0'/>
 <alias name='pci.%s'/>
 <address type='pci' domain='0x0000' bus='0x0%s' slot='0x0%s' function='0x0'/>
-</controller>\n""" % (count, count, count, buscount, slot)
-                            count += 1
+</controller>\n""" % (slotindex, slotindex, slotindex, busindex, slotindex)
+                        count += 1
                 cpuxml += '%s</numa>' % numaxml
                 if numamemory > memory:
                     msg = "Can't use more memory for numa than assigned memory"
