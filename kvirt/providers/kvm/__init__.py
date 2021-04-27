@@ -3152,5 +3152,8 @@ class Kvirt(object):
             for host in list(netroot.iter('host')):
                 iphost = host.get('ip')
                 hostname = host.find('hostname')
-                results.append([hostname.text, 'A', '0', iphost])
+                if host.get('mac') is not None:
+                    continue
+                else:
+                    results.append([hostname.text, 'A', '0', iphost])
         return results
