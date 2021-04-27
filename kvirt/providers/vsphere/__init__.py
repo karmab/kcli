@@ -1202,7 +1202,11 @@ class Ksphere:
         ovfd = re.sub('<Name>.*</Name>', '<Name>%s</Name>' % name, ovfd)
         pprint("Uploading vmdk")
         datastore = find(si, rootFolder, vim.Datastore, pool)
-        spec_params = vim.OvfManager.CreateImportSpecParams(diskProvisioning="thin")
+        network = find(si, rootFolder, vim.Network, 'VM Network')
+        networkmapping = vim.OvfManager.NetworkMapping.Array()
+        nm = vim.OvfManager.NetworkMapping(name="VM Network", network=network)
+        networkmapping.append(nm)
+        spec_params = vim.OvfManager.CreateImportSpecParams(diskProvisioning="thin", networkMapping=networkmapping)
         import_spec = manager.CreateImportSpec(ovfd, resourcepool, datastore, spec_params)
         lease = resourcepool.ImportVApp(import_spec.importSpec, vmFolder)
         while True:
