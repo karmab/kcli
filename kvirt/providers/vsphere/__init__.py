@@ -1212,7 +1212,6 @@ class Ksphere:
                 f.write(ovfcontent)
         ovfd = open(ovf_path).read()
         ovfd = re.sub('<Name>.*</Name>', '<Name>%s</Name>' % name, ovfd)
-        pprint("Uploading vmdk")
         datastore = find(si, rootFolder, vim.Datastore, pool)
         network = find(si, rootFolder, vim.Network, 'VM Network')
         networkmapping = vim.OvfManager.NetworkMapping.Array()
@@ -1221,9 +1220,10 @@ class Ksphere:
         spec_params = vim.OvfManager.CreateImportSpecParams(diskProvisioning="thin", networkMapping=networkmapping)
         import_spec = manager.CreateImportSpec(ovfd, resourcepool, datastore, spec_params)
         lease = resourcepool.ImportVApp(import_spec.importSpec, vmFolder)
+        time.sleep(10)
         while True:
             if lease.state == vim.HttpNfcLease.State.ready:
-                pprint("Using obtained lease")
+                pprint("Uploading vmdk")
                 host = self._getfirshost()
                 url = lease.info.deviceUrl[0].url.replace('*', host.name)
                 keepalive_thread = Thread(target=keep_lease_alive, args=(lease,))
@@ -1240,7 +1240,7 @@ class Ksphere:
                 os.remove(vmdk_path)
                 return {'result': 'success'}
             elif lease.state == vim.HttpNfcLease.State.error:
-                error("Lease error: %s" % lease.state.error)
+                error("Lease error: %s" % lease.error)
                 os._exit(1)
 
     def _getfirshost(self):
@@ -1277,7 +1277,6 @@ class Ksphere:
     def delete_image(self, image, pool=None):
         si = self.si
         vmFolder = self.dc.vmFolder
-        pprint("Deleting image %s" % image)
         vm = findvm(si, vmFolder, image)
         if vm is None or not vm.config.template:
             return {'result': 'failure', 'reason': 'Image %s not found' % image}
