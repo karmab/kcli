@@ -56,6 +56,7 @@ IMAGES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-i
           'fedora31': FEDORA_ARCHIVE + '31/Cloud/x86_64/images/Fedora-Cloud-Base-31-1.9.x86_64.qcow2',
           'fedora32': FEDORA + '32/Cloud/x86_64/images/Fedora-Cloud-Base-32-1.6.x86_64.qcow2',
           'fedora33': FEDORA + '33/Cloud/x86_64/images/Fedora-Cloud-Base-33-1.2.x86_64.qcow2',
+          'fedora34': FEDORA + '34/Cloud/x86_64/images/Fedora-Cloud-Base-34-1.2.x86_64.qcow2',
           'freebsd114': BSD + "freebsd/11.4/freebsd-11.4.qcow2",
           'freebsd122': BSD + "freebsd/12.2/freebsd-12.2.qcow2",
           'netbsd82': BSD + "netbsd/8.2/netbsd-8.2.qcow2",
