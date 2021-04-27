@@ -965,7 +965,7 @@ class Ksphere:
                     url = url.replace('/folder', '')
                     r = requests.put(url, data=f, headers=headers, cookies=cookie, verify=False)
                 if r.status_code not in [200, 201]:
-                    error("Got status %s with text: %s" % (r.status_code, r.text))
+                    error("Got status %s with reason: %s" % (r.status_code, r.reason))
 
     def get_pool_path(self, pool):
         return pool
