@@ -2792,6 +2792,8 @@ class Kvirt(object):
         if 'dual_cidr' in overrides:
             dualcidr = overrides['dual_cidr']
             dualfamily = 'ipv6' if ':' in dualcidr else 'ipv4'
+            if dualfamily == family:
+                return {'result': 'failure', 'reason': "Dual Cidr %s needs to be of a different family"}
             try:
                 dualrange = IPNetwork(dualcidr)
             except:
