@@ -447,7 +447,7 @@ class Ksphere:
                     cmds = cmds[:index] + gcmds + cmds[index:]
                     # customspec = makecuspec(name, nets=nets, gateway=gateway, dns=dns, domain=domain)
                     # clonespec.customization = customspec
-                    isofolder = self.isofolder if self.isofolder is not None else "[%s]/%s" (default_pool, name)
+                    isofolder = self.isofolder if self.isofolder is not None else "[%s]/%s" % (default_pool, name)
                     cloudinitiso = "%s/%s.ISO" % (isofolder, name)
                     userdata, metadata, netdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets,
                                                                    gateway=gateway, dns=dns, domain=domain,
