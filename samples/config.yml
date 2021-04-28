@@ -52,34 +52,34 @@ default:
  # Handles all the ssh option details so you dont get any warnings about man in the middle
  insecure: false
  # For gcp, aws and openstack, You can specify an existing flavor so that cpu and memory is derived from it
- flavor: 
+ flavor:
  # Iso Name to present to the vm
  iso:
  # default gateway
  gateway:
  # Dns Servers
- dns: 
+ dns:
  # Dns search domain
  domain: default
- # 
+ #
  start: true
  # Graphical connection to use for libvirt.
  vnc: true
- # Array of ssh public keys to inject to th vm
+ # Array of ssh public keys to inject to the vm
  keys:
  # Array of commands to run through cloudinit
  cmds:
  # array of paths of custom script to inject with cloudinit. It will be merged with cmds parameter. You can either specify full paths or relative to where you're running kcli. Only checked in profile or plan file
  scripts:
  # name of one of your profiles. Only checked in plan file
- profile: 
+ profile:
  # Nested virtualization
  nested: true
  # Set it to true so that a private/public key gets shared between all the nodes of your plan. Additionally, root access will be allowed
  sharedkey: false
  # Set it to true so that your private key is passed to the nodes of your plan. If you need this, you know why :)
  privatekey: false
- # Array of files to inject to the vm. For ecach of the them , you can specify path, owner ( root by default) , permissions (600 by default ) and either origin or content to gather content data directly or from specified origin
+ # Array of files to inject to the vm. For each of the them , you can specify path, owner ( root by default) , permissions (600 by default ) and either origin or content to gather content data directly or from specified origin
  files:
  # Allows you to point to a parent profile so that values are taken from parent when not found in the current profile. Scripts and commands are rather concatenated between default, father and children ( so you have a happy family...)
  base:
@@ -95,7 +95,7 @@ default:
  planview: false
  # Cpu Model
  cpumodel: host-model
- # You can specify a list of strings with features to enable or use dict entries with name of the feature and enable either set to True or false. The value for vmx is ignored, as it s handled by the nested flag
+ # You can specify a list of strings with features to enable or use dict entries with name of the feature and enable either set to True or false. The value for vmx is ignored, as it is handled by the nested flag
  cpuflags:
  # guestrhel764
  guestid:  guestrhel764
@@ -110,7 +110,7 @@ localhost:
  type: kvm
  # how to connect to libvirt, can be ssh or tcp
  protocol: ssh
- # whether this client can be used or not. useful when wanting to list all vms of all 
+ # whether this client can be used or not. useful when wanting to list all vms of all
  # kcli switch $host will also refuse to change to a disabled client
  enabled: true
  # fadn/ip of the hypervisor for libvirt
