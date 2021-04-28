@@ -155,10 +155,17 @@ def makecuspec(name, nets=[], gateway=None, dns=None, domain=None):
     return customspec
 
 
-def createnicspec(nicname, netname):
+def createnicspec(nicname, netname, nictype=None):
     nicspec = vim.vm.device.VirtualDeviceSpec()
     nicspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
-    nic = vim.vm.device.VirtualVmxnet3()
+    if nictype == 'pcnet32':
+        nic = vim.vm.device.VirtualPCNet32()
+    elif nictype == 'e1000':
+        nic = vim.vm.device.VirtualE1000()
+    elif nictype == 'e1000e':
+        nic = vim.vm.device.VirtualE1000e()
+    else:
+        nic = vim.vm.device.VirtualVmxnet3()
     desc = vim.Description()
     desc.label = nicname
     nicbacking = vim.vm.device.VirtualEthernetCard.NetworkBackingInfo()
@@ -172,11 +179,17 @@ def createnicspec(nicname, netname):
     return nicspec
 
 
-def createdvsnicspec(nicname, netname, switchuuid, portgroupkey):
+def createdvsnicspec(nicname, netname, switchuuid, portgroupkey, nictype=None):
     nicspec = vim.vm.device.VirtualDeviceSpec()
     nicspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
-    # nic = vim.vm.device.VirtualVmxnet3()
-    nic = vim.vm.device.VirtualPCNet32()
+    if nictype == 'pcnet32':
+        nic = vim.vm.device.VirtualPCNet32()
+    elif nictype == 'e1000':
+        nic = vim.vm.device.VirtualE1000()
+    elif nictype == 'e1000e':
+        nic = vim.vm.device.VirtualE1000e()
+    else:
+        nic = vim.vm.device.VirtualVmxnet3()
     dnicbacking = vim.vm.device.VirtualEthernetCard.DistributedVirtualPortBackingInfo()
     dvconnection = vim.dvs.DistributedVirtualSwitchPortConnection()
     dvconnection.switchUuid = switchuuid
@@ -604,12 +617,13 @@ class Ksphere:
                         devconfspec.append(nicspec)
                 continue
             nicname = 'Network Adapter %d' % (index + 1)
+            nictype = net['type'] if isinstance(net, dict) and 'type' in net else None
             if netname in self.portgs:
                 switchuuid = self.portgs[netname][0]
                 portgroupkey = self.portgs[netname][1]
-                nicspec = createdvsnicspec(nicname, netname, switchuuid, portgroupkey)
+                nicspec = createdvsnicspec(nicname, netname, switchuuid, portgroupkey, nictype=nictype)
             else:
-                nicspec = createnicspec(nicname, netname)
+                nicspec = createnicspec(nicname, netname, nictype=nictype)
             devconfspec.append(nicspec)
         if iso:
             if '/' not in iso:
@@ -782,7 +796,8 @@ class Ksphere:
                         if self.portgs[dvsnet][0] == switchuuid and self.portgs[dvsnet][1] == portgroupkey:
                             network = dvsnet
                 device = dev.deviceInfo.label
-                networktype = 'N/A'
+                devicename = type(dev).__name__.replace('vim.vm.device.Virtual', '').lower()
+                networktype = devicename
                 mac = dev.macAddress
                 if mainmac is None:
                     mainmac = mac
