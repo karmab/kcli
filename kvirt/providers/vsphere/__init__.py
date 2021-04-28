@@ -179,8 +179,6 @@ def createdvsnicspec(nicname, netname, switchuuid, portgroupkey):
     nic = vim.vm.device.VirtualPCNet32()
     dnicbacking = vim.vm.device.VirtualEthernetCard.DistributedVirtualPortBackingInfo()
     dvconnection = vim.dvs.DistributedVirtualSwitchPortConnection()
-    # dvconnection.switchUuid = portgs[net][0]
-    # dvconnection.portgroupKey = portgs[net][1]
     dvconnection.switchUuid = switchuuid
     dvconnection.portgroupKey = portgroupkey
     dnicbacking.port = dvconnection
@@ -362,6 +360,15 @@ class Ksphere:
         self.filteruser = filteruser
         self.filtertag = filtertag
         self.debug = debug
+        portgs = {}
+        o = si.content.viewManager.CreateContainerView(self.rootFolder, [vim.DistributedVirtualSwitch], True)
+        dvnetworks = o.view
+        o.Destroy()
+        for dvnetw in dvnetworks:
+            uuid = dvnetw.uuid
+            for portg in dvnetw.portgroup:
+                portgs[portg.name] = [uuid, portg.key]
+        self.portgs = portgs
         return
 
     def close(self):
@@ -567,14 +574,6 @@ class Ksphere:
                 devconfspec.append(scsispec)
             diskspec = creatediskspec(index, disksize, datastore, diskmode, diskthin)
             devconfspec.append(diskspec)
-        portgs = {}
-        o = si.content.viewManager.CreateContainerView(rootFolder, [vim.DistributedVirtualSwitch], True)
-        dvnetworks = o.view
-        o.Destroy()
-        for dvnetw in dvnetworks:
-            uuid = dvnetw.uuid
-            for portg in dvnetw.portgroup:
-                portgs[portg.name] = [uuid, portg.key]
         # NICSPEC
         for index, net in enumerate(nets):
             netname = net['name'] if isinstance(net, dict) else net
@@ -587,13 +586,14 @@ class Ksphere:
                 except:
                     currentswitchuuid = currentnic.backing.port.switchUuid
                     currentportgroupkey = currentnic.backing.port.portgroupKey
-                    for dvsnet in portgs:
-                        if portgs[dvsnet][0] == currentswitchuuid and portgs[dvsnet][1] == currentportgroupkey:
+                    for dvsnet in self.portgs:
+                        if self.portgs[dvsnet][0] == currentswitchuuid and\
+                                self.portgs[dvsnet][1] == currentportgroupkey:
                             currentnetwork = dvsnet
                 if currentnetwork != netname:
-                    if netname in portgs:
-                        switchuuid = portgs[netname][0]
-                        portgroupkey = portgs[netname][1]
+                    if netname in self.portgs:
+                        switchuuid = self.portgs[netname][0]
+                        portgroupkey = self.portgs[netname][1]
                         currentnic.backing.port.switchUuid = switchuuid
                         currentnic.backing.port.portgroupKey = portgroupkey
                         nicspec = vim.vm.device.VirtualDeviceSpec(device=currentnic, operation="edit")
@@ -604,9 +604,9 @@ class Ksphere:
                         devconfspec.append(nicspec)
                 continue
             nicname = 'Network Adapter %d' % (index + 1)
-            if netname in portgs:
-                switchuuid = portgs[netname][0]
-                portgroupkey = portgs[netname][1]
+            if netname in self.portgs:
+                switchuuid = self.portgs[netname][0]
+                portgroupkey = self.portgs[netname][1]
                 nicspec = createdvsnicspec(nicname, netname, switchuuid, portgroupkey)
             else:
                 nicspec = createnicspec(nicname, netname)
@@ -773,7 +773,14 @@ class Ksphere:
         mainmac = None
         for number, dev in enumerate(devices):
             if "addressType" in dir(dev):
-                network = dev.backing.deviceName
+                try:
+                    network = dev.backing.deviceName
+                except:
+                    switchuuid = dev.backing.port.switchUuid
+                    portgroupkey = dev.backing.port.portgroupKey
+                    for dvsnet in self.portgs:
+                        if self.portgs[dvsnet][0] == switchuuid and self.portgs[dvsnet][1] == portgroupkey:
+                            network = dvsnet
                 device = dev.deviceInfo.label
                 networktype = 'N/A'
                 mac = dev.macAddress
