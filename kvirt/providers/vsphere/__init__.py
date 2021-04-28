@@ -577,8 +577,9 @@ class Ksphere:
                 portgs[portg.name] = [uuid, portg.key]
         # NICSPEC
         for index, net in enumerate(nets):
-            if net == 'default':
-                net = 'VM Network'
+            netname = net['name'] if isinstance(net, dict) else net
+            if netname == 'default':
+                netname = 'VM Network'
             if index < len(currentnics):
                 currentnic = currentnics[index]
                 try:
@@ -589,26 +590,26 @@ class Ksphere:
                     for dvsnet in portgs:
                         if portgs[dvsnet][0] == currentswitchuuid and portgs[dvsnet][1] == currentportgroupkey:
                             currentnetwork = dvsnet
-                if currentnetwork != net:
-                    if net in portgs:
-                        switchuuid = portgs[net][0]
-                        portgroupkey = portgs[net][1]
+                if currentnetwork != netname:
+                    if netname in portgs:
+                        switchuuid = portgs[netname][0]
+                        portgroupkey = portgs[netname][1]
                         currentnic.backing.port.switchUuid = switchuuid
                         currentnic.backing.port.portgroupKey = portgroupkey
                         nicspec = vim.vm.device.VirtualDeviceSpec(device=currentnic, operation="edit")
                         devconfspec.append(nicspec)
                     else:
-                        currentnic.backing.deviceName = net
+                        currentnic.backing.deviceName = netname
                         nicspec = vim.vm.device.VirtualDeviceSpec(device=currentnic, operation="edit")
                         devconfspec.append(nicspec)
                 continue
             nicname = 'Network Adapter %d' % (index + 1)
-            if net in portgs:
-                switchuuid = portgs[net][0]
-                portgroupkey = portgs[net][1]
-                nicspec = createdvsnicspec(nicname, net, switchuuid, portgroupkey)
+            if netname in portgs:
+                switchuuid = portgs[netname][0]
+                portgroupkey = portgs[netname][1]
+                nicspec = createdvsnicspec(nicname, netname, switchuuid, portgroupkey)
             else:
-                nicspec = createnicspec(nicname, net)
+                nicspec = createnicspec(nicname, netname)
             devconfspec.append(nicspec)
         if iso:
             if '/' not in iso:
