@@ -382,7 +382,6 @@ class Ksphere:
         memory = int(memory)
         numcpus = int(numcpus)
         si = self.si
-        dc = self.dc
         rootFolder = self.rootFolder
         if plan != 'kvirt':
             createfolder(si, dc.vmFolder, plan)
