@@ -590,7 +590,7 @@ class Ksphere:
                         if portgs[dvsnet][0] == currentswitchuuid and portgs[dvsnet][1] == currentportgroupkey:
                             currentnetwork = dvsnet
                 if currentnetwork != net:
-                    if net in portgs.keys():
+                    if net in portgs:
                         switchuuid = portgs[net][0]
                         portgroupkey = portgs[net][1]
                         currentnic.backing.port.switchUuid = switchuuid
@@ -603,7 +603,7 @@ class Ksphere:
                         devconfspec.append(nicspec)
                 continue
             nicname = 'Network Adapter %d' % (index + 1)
-            if net in portgs.keys():
+            if net in portgs:
                 switchuuid = portgs[net][0]
                 portgroupkey = portgs[net][1]
                 nicspec = createdvsnicspec(nicname, net, switchuuid, portgroupkey)
