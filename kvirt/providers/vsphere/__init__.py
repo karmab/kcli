@@ -555,11 +555,18 @@ class Ksphere:
             devconfspec.append(diskspec)
         # NICSPEC
         for index, net in enumerate(nets):
-            if index < len(currentnics):
-                continue
-            nicname = 'Network Adapter %d' % (index + 1)
             if net == 'default':
                 net = 'VM Network'
+            if index < len(currentnics):
+                currentnic = currentnics[index]
+                currentnetwork = currentnic.backing.deviceName
+                if currentnetwork != net:
+                    currentnic.backing.deviceName = net
+                    nicspec = vim.vm.ConfigSpec()
+                    nicspec = vim.vm.device.VirtualDeviceSpec(device=currentnic, operation="edit")
+                    devconfspec.append(nicspec)
+                continue
+            nicname = 'Network Adapter %d' % (index + 1)
             nicspec = createnicspec(nicname, net)
             devconfspec.append(nicspec)
         if iso:
