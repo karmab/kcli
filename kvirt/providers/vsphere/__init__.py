@@ -1092,7 +1092,7 @@ class Ksphere:
         for o in netlist:
             network = o['obj']
             cidr, dhcp, domainname = '', '', ''
-            mode = 'accesible' if network.summary.accessible else 'notaccessible'
+            mode = 'accessible' if network.summary.accessible else 'notaccessible'
             networks[network.name] = {'cidr': cidr, 'dhcp': dhcp, 'domain': domainname, 'type': 'routed', 'mode': mode}
         for o in dvslist:
             network = o['obj']
