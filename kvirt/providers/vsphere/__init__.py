@@ -325,7 +325,7 @@ def keep_lease_alive(lease):
 
 
 class Ksphere:
-    def __init__(self, host, user, password, datacenter, cluster, debug=False, isofolder=None,
+    def __init__(self, host, user, password, datacenter, cluster, distributed=False, debug=False, isofolder=None,
                  filtervms=False, filteruser=False, filtertag=None):
         # 4-1-CONNECT
         si = connect.SmartConnect(host=host, port=443, user=user, pwd=password, sslContext=_create_unverified_context())
@@ -339,7 +339,7 @@ class Ksphere:
         self.dc = find(si, self.rootFolder, vim.Datacenter, datacenter)
         self.macaddr = []
         self.clu = cluster
-        self.distributed = False
+        self.distributed = distributed
         self.isofolder = isofolder
         self.filtervms = filtervms
         self.filtervms = filtervms
