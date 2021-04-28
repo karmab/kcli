@@ -172,6 +172,23 @@ def createnicspec(nicname, netname):
     return nicspec
 
 
+def createdvsnicspec(nicname, netname, switchuuid, portgroupkey):
+    nicspec = vim.vm.device.VirtualDeviceSpec()
+    nicspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
+    # nic = vim.vm.device.VirtualVmxnet3()
+    nic = vim.vm.device.VirtualPCNet32()
+    dnicbacking = vim.vm.device.VirtualEthernetCard.DistributedVirtualPortBackingInfo()
+    dvconnection = vim.dvs.DistributedVirtualSwitchPortConnection()
+    # dvconnection.switchUuid = portgs[net][0]
+    # dvconnection.portgroupKey = portgs[net][1]
+    dvconnection.switchUuid = switchuuid
+    dvconnection.portgroupKey = portgroupkey
+    dnicbacking.port = dvconnection
+    nic.backing = dnicbacking
+    nicspec.device = nic
+    return nicspec
+
+
 def createscsispec():
     ckey = 1000
     # SCSISPEC
@@ -325,7 +342,7 @@ def keep_lease_alive(lease):
 
 
 class Ksphere:
-    def __init__(self, host, user, password, datacenter, cluster, distributed=False, debug=False, isofolder=None,
+    def __init__(self, host, user, password, datacenter, cluster, debug=False, isofolder=None,
                  filtervms=False, filteruser=False, filtertag=None):
         # 4-1-CONNECT
         si = connect.SmartConnect(host=host, port=443, user=user, pwd=password, sslContext=_create_unverified_context())
@@ -339,7 +356,6 @@ class Ksphere:
         self.dc = find(si, self.rootFolder, vim.Datacenter, datacenter)
         self.macaddr = []
         self.clu = cluster
-        self.distributed = distributed
         self.isofolder = isofolder
         self.filtervms = filtervms
         self.filtervms = filtervms
@@ -373,7 +389,6 @@ class Ksphere:
                securitygroups=[]):
         dc = self.dc
         vmFolder = dc.vmFolder
-        distributed = self.distributed
         diskmode = 'persistent'
         default_diskinterface = diskinterface
         default_diskthin = diskthin
@@ -552,21 +567,48 @@ class Ksphere:
                 devconfspec.append(scsispec)
             diskspec = creatediskspec(index, disksize, datastore, diskmode, diskthin)
             devconfspec.append(diskspec)
+        portgs = {}
+        o = si.content.viewManager.CreateContainerView(rootFolder, [vim.DistributedVirtualSwitch], True)
+        dvnetworks = o.view
+        o.Destroy()
+        for dvnetw in dvnetworks:
+            uuid = dvnetw.uuid
+            for portg in dvnetw.portgroup:
+                portgs[portg.name] = [uuid, portg.key]
         # NICSPEC
         for index, net in enumerate(nets):
             if net == 'default':
                 net = 'VM Network'
             if index < len(currentnics):
                 currentnic = currentnics[index]
-                currentnetwork = currentnic.backing.deviceName
+                try:
+                    currentnetwork = currentnic.backing.deviceName
+                except:
+                    currentswitchuuid = currentnic.backing.port.switchUuid
+                    currentportgroupkey = currentnic.backing.port.portgroupKey
+                    for dvsnet in portgs:
+                        if portgs[dvsnet][0] == currentswitchuuid and portgs[dvsnet][1] == currentportgroupkey:
+                            currentnetwork = dvsnet
                 if currentnetwork != net:
-                    currentnic.backing.deviceName = net
-                    nicspec = vim.vm.ConfigSpec()
-                    nicspec = vim.vm.device.VirtualDeviceSpec(device=currentnic, operation="edit")
-                    devconfspec.append(nicspec)
+                    if net in portgs.keys():
+                        switchuuid = portgs[net][0]
+                        portgroupkey = portgs[net][1]
+                        currentnic.backing.port.switchUuid = switchuuid
+                        currentnic.backing.port.portgroupKey = portgroupkey
+                        nicspec = vim.vm.device.VirtualDeviceSpec(device=currentnic, operation="edit")
+                        devconfspec.append(nicspec)
+                    else:
+                        currentnic.backing.deviceName = net
+                        nicspec = vim.vm.device.VirtualDeviceSpec(device=currentnic, operation="edit")
+                        devconfspec.append(nicspec)
                 continue
             nicname = 'Network Adapter %d' % (index + 1)
-            nicspec = createnicspec(nicname, net)
+            if net in portgs.keys():
+                switchuuid = portgs[net][0]
+                portgroupkey = portgs[net][1]
+                nicspec = createdvsnicspec(nicname, net, switchuuid, portgroupkey)
+            else:
+                nicspec = createnicspec(nicname, net)
             devconfspec.append(nicspec)
         if iso:
             if '/' not in iso:
@@ -582,57 +624,6 @@ class Ksphere:
         confspec.deviceChange = devconfspec
         t = vm.Reconfigure(confspec)
         waitForMe(t)
-        # HANDLE DVS
-        if distributed:
-            # 2-GETMAC
-            vm = findvm(si, vmfolder, name)
-            if vm is None:
-                return "%s not found" % (name)
-            devices = vm.config.hardware.device
-            macaddr = []
-            for dev in devices:
-                if "addressType" in dir(dev):
-                    macaddr.append(dev.macAddress)
-            portgs = {}
-            o = si.content.viewManager.CreateContainerView(rootFolder, [vim.DistributedVirtualSwitch], True)
-            dvnetworks = o.view
-            o.Destroy()
-            for dvnetw in dvnetworks:
-                uuid = dvnetw.uuid
-                for portg in dvnetw.portgroup:
-                    portgs[portg.name] = [uuid, portg.key]
-            for k in range(len(nets)):
-                net = nets[k]
-                mactochange = macaddr[k]
-                if net in portgs.keys():
-                    confspec = vim.vm.VirtualMachineSpec()
-                    nicspec = vim.vm.device.VirtualDeviceSpec()
-                    nicspec.operation = vim.ConfigSpecOperation.edit
-                    nic = vim.vm.device.VirtualPCNet32()
-                    dnicbacking = vim.vm.device.VirtualEthernetCard.DistributedVirtualPortBackingInfo()
-                    dvconnection = vim.dvs.DistributedVirtualSwitchPortConnection()
-                    dvconnection.switchUuid = portgs[net][0]
-                    dvconnection.portgroupKey = portgs[net][1]
-                    dnicbacking.port = dvconnection
-                    nic.backing = dnicbacking
-                    nicspec.device = nic
-                    # 2-GETMAC
-                    vm = findvm(si, vmfolder, name)
-                    if vm is None:
-                        return "%s not found" % (name)
-                    devices = vm.config.hardware.device
-                    for dev in devices:
-                        if "addressType" in dir(dev):
-                            mac = dev.macAddress
-                            if mac == mactochange:
-                                dev.backing = dnicbacking
-                                nicspec.device = dev
-                                devconfspec = [nicspec]
-                                confspec.deviceChange = devconfspec
-                                t = vm.reconfigVM_Task(confspec)
-                                waitForMe(t)
-                                t = vm.PowerOnVM_Task(None)
-                                waitForMe(t)
         if start:
             t = vm.PowerOnVM_Task(None)
             waitForMe(t)
@@ -1101,7 +1092,6 @@ class Ksphere:
         return networks
 
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
-        return {'result': 'failure', 'reason': "Not implemented yet..."}
         si = self.si
         cluster = self.clu
         networkFolder = self.dc.networkFolder
@@ -1109,7 +1099,14 @@ class Ksphere:
         net = find(si, rootFolder, vim.Network, name)
         if net is not None:
             return {'result': 'failure', 'reason': "Network %s already there" % name}
-        if self.distributed:
+        o = si.content.viewManager.CreateContainerView(rootFolder, [vim.DistributedVirtualSwitch], True)
+        dvnetworks = o.view
+        o.Destroy()
+        for dvnetw in dvnetworks:
+            for portg in dvnetw.portgroup:
+                if portg.name == name:
+                    return {'result': 'failure', 'reason': "Network %s already there" % name}
+        if overrides.get('distributed', False):
             pnic_specs = []
             dvs_host_configs = []
             uplink_port_names = []
@@ -1135,18 +1132,22 @@ class Ksphere:
                 dvs_create_spec.configSpec = dvs_config_spec
             dvs_create_spec.productInfo = vim.dvs.ProductSpec(version='5.1.0')
             networkFolder.CreateDistributedVirtualSwitch()
+        else:
+            return {'result': 'failure', 'reason': "Not implemented yet for non dvs networks"}
         return {'result': 'success'}
 
     def delete_network(self, name=None, cidr=None):
         si = self.si
         rootFolder = self.rootFolder
-        if self.distributed:
+        try:
             net = find(si, rootFolder, vim.dvs.DistributedVirtualPortgroup, name)
-        else:
-            net = find(si, rootFolder, vim.Network, name)
-        if net is None:
-            return {'result': 'failure', 'reason': "Network %s not found" % name}
-        net.Destroy()
+            net.Destroy()
+        except:
+            try:
+                net = find(si, rootFolder, vim.Network, name)
+                net.Destroy()
+            except:
+                return {'result': 'failure', 'reason': "Network %s not found" % name}
         return {'result': 'success'}
 
     def vm_ports(self, name):
