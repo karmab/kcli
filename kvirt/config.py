@@ -71,6 +71,15 @@ systemctl daemon-reload ;\
 fi'"""
 
 
+def process_rules(name, profile, rules):
+    for rule in rules:
+        rulename = list(rule.keys())[0]
+        if re.match(rulename, name):
+            ruledata = rule[rulename]
+            profile.update(ruledata)
+            break
+
+
 class Kconfig(Kbaseconfig):
     """
 
@@ -1397,6 +1406,24 @@ $INFO
                         os._exit(run)
             else:
                 warning("Skipping kcli_pre.sh as requested")
+        rules = overrides.get('rules') or overrides.get('vmrules') or self.rules
+        if isinstance(rules, dict):
+            newrules = []
+            for rule in rules:
+                newrules.append({rule: rules[rule]})
+        elif not isinstance(rules, list):
+            error("Rules need to either be a dict or a list")
+            os._exit(1)
+        for rule in rules:
+            if not isinstance(rule, dict):
+                error("Invalid rule %s should be a dict" % rule)
+                os._exit(1)
+            if len(rule) != 1:
+                error("Rule %s should contain a single key" % rule)
+                os._exit(1)
+            if not isinstance(rule[list(rule.keys())[0]], dict):
+                error("rule associated to %s should be a dict" % list(rule.keys())[0])
+                os._exit(1)
         vmentries = [entry for entry in entries if 'type' not in entries[entry] or entries[entry]['type'] == 'vm']
         diskentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'disk']
         networkentries = [entry for entry in entries
@@ -1420,6 +1447,7 @@ $INFO
             pprint("Deploying Plans...")
             for planentry in planentries:
                 details = entries[planentry]
+                process_rules(planentry, details, rules)
                 planurl = details.get('url')
                 planfile = details.get('file')
                 if planurl is None and planfile is None:
@@ -1446,6 +1474,7 @@ $INFO
             pprint("Deploying Networks...")
             for net in networkentries:
                 netprofile = entries[net]
+                process_rules(net, netprofile, rules)
                 if k.net_exists(net):
                     pprint("Network %s skipped!" % net)
                     continue
@@ -1468,6 +1497,7 @@ $INFO
                     continue
                 else:
                     poolprofile = entries[pool]
+                    process_rules(pool, poolprofile, rules)
                     poolpath = poolprofile.get('path')
                     if poolpath is None:
                         warning("Pool %s skipped as path is missing!" % pool)
@@ -1483,6 +1513,7 @@ $INFO
                     continue
                 else:
                     imageprofile = entries[image]
+                    process_rules(image, imageprofile, rules)
                     pool = imageprofile.get('pool', self.pool)
                     imageurl = imageprofile.get('url')
                     imagesize = imageprofile.get('size')
@@ -1496,6 +1527,7 @@ $INFO
             dnsclients = {}
             for dnsentry in dnsentries:
                 dnsprofile = entries[dnsentry]
+                process_rules(dnsentry, dnsprofile, rules)
                 dnsdomain = dnsprofile.get('domain')
                 dnsnet = dnsprofile.get('net')
                 dnsdomain = dnsprofile.get('domain')
@@ -1526,6 +1558,7 @@ $INFO
             for cluster in kubeentries:
                 pprint("Deploying Cluster %s..." % cluster)
                 kubeprofile = entries[cluster]
+                process_rules(cluster, kubeprofile, rules)
                 kubeclient = kubeprofile.get('client')
                 if kubeclient is None:
                     currentconfig = self
@@ -1584,14 +1617,7 @@ $INFO
                             profile[key] = baseprofile[key]
                         elif key in baseprofile and key in profile and key in appendkeys:
                             profile[key] = baseprofile[key] + profile[key]
-                for entry in overrides.get('vmrules', self.vmrules):
-                    if len(entry) != 1:
-                        error("Wrong vm rule %s" % entry)
-                        os._exit(1)
-                    rule = list(entry.keys())[0]
-                    if re.match(rule, name) and isinstance(entry[rule], dict):
-                        profile.update(entry[rule])
-                        break
+                process_rules(name, profile, rules)
                 vmclient = profile.get('client')
                 if vmclient is None:
                     z = k
