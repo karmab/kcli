@@ -8,11 +8,11 @@ NC='\033[0m'
 
 shell=$(basename $SHELL)
 packagefound=false
-if [ $(which dnf) != "" ] ; then 
+if [ "$(which dnf)" != "" ] ; then
   packagefound=true
   sudo dnf -y copr enable karmab/kcli
   sudo dnf -y install kcli
-elif [ $(which apt-get) != "" ] ; then
+elif [ "$(which apt-get)" != "" ] ; then
   packagefound=true
   curl -1sLf https://dl.cloudsmith.io/public/karmab/kcli/cfg/setup/bash.deb.sh | sudo -E bash
   sudo apt-get update 
