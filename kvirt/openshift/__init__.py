@@ -613,6 +613,14 @@ def create(config, plandir, cluster, overrides):
                                                  overrides={'role': role})
             with open("%s/openshift/99-blacklist-ipi-%s.yaml" % (clusterdir, role), 'w') as f:
                 f.write(blacklist)
+    ntp_server = data.get('ntp_server')
+    if ntp_server is not None:
+        ntp_data = config.process_inputfile(cluster, "%s/chrony.conf" % plandir, overrides={'ntp_server': ntp_server})
+        for role in ['master', 'worker']:
+            ntp = config.process_inputfile(cluster, "%s/99-chrony.yaml" % plandir,
+                                           overrides={'role': role, 'ntp_data': ntp_data})
+            with open("%s/manifests/99-chrony-%s.yaml" % (clusterdir, role), 'w') as f:
+                f.write(ntp)
     for f in glob("%s/customisation/*.yaml" % plandir):
         if '99-ingress-controller.yaml' in f:
             ingressrole = 'master' if workers == 0 else 'worker'
