@@ -846,7 +846,7 @@ def create(config, plandir, cluster, overrides):
             error("You can delete it with kcli delete cluster --yes %s" % cluster)
             os._exit(run)
         if 'network_type' in data and data['network_type'] == 'Contrail':
-            warning("Keeping bootstrap vm to do act as loadbalancer because of contrail issues with keepalived")
+            warning("Keeping bootstrap vm to do act as loadbalancer because of Contrail issues with keepalived")
             todelete = []
         else:
             todelete = ["%s-bootstrap" % cluster]
@@ -880,8 +880,8 @@ def create(config, plandir, cluster, overrides):
                 for node in allnodes:
                     k.add_nic(node, network)
     if 'network_type' in data and data['network_type'] == 'Contrail':
-        pprint("Waiting 7mn on install to be stable")
-        sleep(420)
+        pprint("Waiting 10mn on install to be stable")
+        sleep(600)
     call("oc adm taint nodes -l node-role.kubernetes.io/master node-role.kubernetes.io/master:NoSchedule-", shell=True)
     pprint("Deploying certs autoapprover cronjob")
     autoapprovercmd = 'oc create -f %s/autoapprovercron.yml' % clusterdir
