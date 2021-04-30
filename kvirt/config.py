@@ -1760,7 +1760,7 @@ $INFO
                             currentoverrides['image'] = profile['image']
                             break
                     imageprofile = profile['image']
-                    if imageprofile in IMAGES and self.type != 'packet' and\
+                    if imageprofile in IMAGES and self.type not in ['packet', 'vsphere'] and\
                             IMAGES[imageprofile] not in [os.path.basename(v) for v in self.k.volumes()]:
                         pprint("Image %s not found. Downloading" % imageprofile)
                         self.handle_host(pool=self.pool, image=imageprofile, download=True, update_profile=True)
