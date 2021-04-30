@@ -2779,8 +2779,7 @@ class Kvirt(object):
         if len(name) < 16:
             bridgexml = "<bridge name='%s' stp='on' delay='0'/>" % name
         else:
-            warning("not naming associated bridge %s since it's 16 characters or more" % name)
-            bridgexml = ''
+            return {'result': 'failure', 'reason': "network %s is more than 16 characters" % name}
         prefix = cidr.split('/')[1]
         metadata = """<metadata>
         <kvirt:info xmlns:kvirt="kvirt">
