@@ -329,7 +329,7 @@ class Kconfig(Kbaseconfig):
                     clientprofile = "%s_%s" % (self.client, customprofileimage)
                     if clientprofile in vmprofiles and 'image' in vmprofiles[clientprofile]:
                         vmprofiles[profile]['image'] = vmprofiles[clientprofile]['image']
-                    elif customprofileimage in IMAGES and self.type != 'packet' and\
+                    elif customprofileimage in IMAGES and self.type not in ['packet', 'vsphere'] and\
                             IMAGES[customprofileimage] not in [os.path.basename(v) for v in self.k.volumes()]:
                         pprint("Image %s not found. Downloading" % customprofileimage)
                         self.handle_host(pool=self.pool, image=customprofileimage, download=True, update_profile=True)
