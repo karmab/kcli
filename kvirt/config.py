@@ -32,6 +32,8 @@ import re
 import socket
 from shutil import rmtree
 import sys
+from subprocess import call
+from tempfile import TemporaryDirectory
 from time import sleep
 import webbrowser
 import yaml
@@ -1383,6 +1385,18 @@ $INFO
         if not dict_types:
             error("%s doesn't look like a valid plan.Leaving...." % inputfile)
             os._exit(1)
+        inputdir = os.path.dirname(inputfile) if os.path.dirname(inputfile) != '' else '.'
+        check_script = '%s/kcli_checks.sh' % inputdir
+        if os.path.exists(check_script):
+            pprint("Running kcli_checks.sh script")
+            with TemporaryDirectory() as tmpdir:
+                check_script = self.process_inputfile('xxx', check_script, overrides=overrides)
+                with open("%s/checks.sh" % tmpdir, 'w') as f:
+                    f.write(check_script)
+                run = call('bash %s/checks.sh' % tmpdir, shell=True)
+                if run != 0:
+                    error("Issues running kcli_checks.sh. Leaving")
+                    os._exit(run)
         vmentries = [entry for entry in entries if 'type' not in entries[entry] or entries[entry]['type'] == 'vm']
         diskentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'disk']
         networkentries = [entry for entry in entries
