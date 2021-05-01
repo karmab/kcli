@@ -1247,7 +1247,6 @@ class Ksphere:
         spec_params = vim.OvfManager.CreateImportSpecParams(diskProvisioning="thin", networkMapping=networkmapping)
         import_spec = manager.CreateImportSpec(ovfd, resourcepool, datastore, spec_params)
         lease = resourcepool.ImportVApp(import_spec.importSpec, vmFolder)
-        time.sleep(10)
         while True:
             if lease.state == vim.HttpNfcLease.State.ready:
                 pprint("Uploading vmdk")
@@ -1255,8 +1254,17 @@ class Ksphere:
                 url = lease.info.deviceUrl[0].url.replace('*', host.name)
                 keepalive_thread = Thread(target=keep_lease_alive, args=(lease,))
                 keepalive_thread.start()
+                # with open(vmdk_path, "rb") as f:
+                #     if hasattr(requests.packages.urllib3, 'disable_warnings'):
+                #         requests.packages.urllib3.disable_warnings()
+                #         headers = {'content-type': 'application/x-vnd.vmware-streamVmdk'}
+                #         headers = {'Content-Type': 'application/x-vnd.vmware-streamVmdk',
+                #                    'Content-Length': str(actual_size)}
+                #         r = requests.post(url, data=f, headers=headers, verify=False)
+                #         if r.status_code not in [200, 201]:
+                #             error("Got status %s with reason: %s" % (r.status_code, r.reason))
                 curl_cmd = (
-                    "curl -Ss -X POST --insecure -T %s -H 'Content-Type: \
+                    "curl -S -X POST --insecure -T %s -H 'Content-Type: \
                     application/x-vnd.vmware-streamVmdk' %s" % (vmdk_path, url))
                 os.system(curl_cmd)
                 lease.HttpNfcLeaseComplete()
