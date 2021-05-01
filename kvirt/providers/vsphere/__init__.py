@@ -436,16 +436,12 @@ class Ksphere:
             confspec.annotation = name
             confspec.memoryMB = memory
             confspec.numCPUs = numcpus
-            planopt = vim.option.OptionValue()
-            planopt.key = 'plan'
-            planopt.value = plan
-            profileopt = vim.option.OptionValue()
-            profileopt.key = 'profile'
-            profileopt.value = profile
-            imageopt = vim.option.OptionValue()
-            imageopt.key = 'image'
-            imageopt.value = image
-            extraconfig = [imageopt, planopt, profileopt]
+            extraconfig = []
+            for entry in [field for field in metadata if field in METADATA_FIELDS]:
+                opt = vim.option.OptionValue()
+                opt.key = entry
+                opt.value = metadata[entry]
+                extraconfig.append(opt)
             clonespec.config = confspec
             clonespec.powerOn = False
             cloudinitiso = None
