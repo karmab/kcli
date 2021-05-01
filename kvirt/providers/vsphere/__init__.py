@@ -483,18 +483,18 @@ class Ksphere:
                     # clonespec.customization = customspec
                     isofolder = self.isofolder if self.isofolder is not None else "[%s]/%s" % (default_pool, name)
                     cloudinitiso = "%s/%s.ISO" % (isofolder, name)
-                    userdata, metadata, netdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets,
-                                                                   gateway=gateway, dns=dns, domain=domain,
-                                                                   reserveip=reserveip, files=files,
-                                                                   enableroot=enableroot, overrides=overrides,
-                                                                   storemetadata=storemetadata, machine='vsphere',
-                                                                   image=image)
+                    userdata, meta, netdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets,
+                                                               gateway=gateway, dns=dns, domain=domain,
+                                                               reserveip=reserveip, files=files,
+                                                               enableroot=enableroot, overrides=overrides,
+                                                               storemetadata=storemetadata, machine='vsphere',
+                                                               image=image)
             confspec.extraConfig = extraconfig
             t = imageobj.CloneVM_Task(folder=vmfolder, name=name, spec=clonespec)
             waitForMe(t)
             if cloudinitiso is not None:
                 with TemporaryDirectory() as tmpdir:
-                    common.make_iso(name, tmpdir, userdata, metadata, netdata)
+                    common.make_iso(name, tmpdir, userdata, meta, netdata)
                     cloudinitisofile = "%s/%s.ISO" % (tmpdir, name)
                     if self.isofolder is not None:
                         isofolder = self.isofolder.split('/')
