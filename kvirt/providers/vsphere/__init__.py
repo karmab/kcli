@@ -18,6 +18,7 @@ import re
 import requests
 import random
 from ssl import _create_unverified_context, get_server_certificate
+from subprocess import call
 import tarfile
 from tempfile import TemporaryDirectory
 from threading import Thread
@@ -1263,11 +1264,24 @@ class Ksphere:
                 #         r = requests.post(url, data=f, headers=headers, verify=False)
                 #         if r.status_code not in [200, 201]:
                 #             error("Got status %s with reason: %s" % (r.status_code, r.reason))
-                curl_cmd = (
-                    "curl -S -X POST --insecure -T %s -H 'Content-Type: \
-                    application/x-vnd.vmware-streamVmdk' %s" % (vmdk_path, url))
-                os.system(curl_cmd)
-                lease.HttpNfcLeaseComplete()
+                #             os._exit(1)
+                # upload_cmd = (
+                #    "curl -v -S -X POST --insecure -T %s -H 'Content-Type: \
+                #    application/x-vnd.vmware-streamVmdk' %s" % (vmdk_path, url))
+                content_length = os.path.getsize(vmdk_path)
+                upload_cmd = (
+                    "curl -v -S -X POST --insecure -T %s -H 'Content-Type: application/x-vnd.vmware-streamVmdk' \
+                    -H 'Content-Length: %s' %s" % (vmdk_path, content_length, url))
+                os.system(upload_cmd)
+                run = call(upload_cmd, shell=True)
+                if run != 0:
+                    error("Issues uploading image. Deleting it")
+                    vm = findvm(si, vmFolder, name)
+                    t = vm.Destroy_Task()
+                    waitForMe(t)
+                    os._exit(run)
+                lease.Complete()
+                # lease.HttpNfcLeaseComplete()
                 keepalive_thread.join()
                 self.export(name)
                 os.remove('/tmp/%s' % shortimage)
