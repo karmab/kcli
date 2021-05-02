@@ -7,7 +7,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from distutils.spawn import find_executable
 from kvirt import common
-from kvirt.common import error, pprint
+from kvirt.common import error, pprint, warning
 from kvirt.defaults import UBUNTUS, METADATA_FIELDS
 from math import ceil
 from pyVmomi import vim, vmodl
@@ -18,7 +18,6 @@ import re
 import requests
 import random
 from ssl import _create_unverified_context, get_server_certificate
-from subprocess import call
 import tarfile
 from tempfile import TemporaryDirectory
 from threading import Thread
@@ -1251,42 +1250,22 @@ class Ksphere:
         while True:
             if lease.state == vim.HttpNfcLease.State.ready:
                 pprint("Uploading vmdk")
+                warning("If hitting any issues when uploading image, please upload manually")
                 host = self._getfirshost()
                 url = lease.info.deviceUrl[0].url.replace('*', host.name)
                 keepalive_thread = Thread(target=keep_lease_alive, args=(lease,))
                 keepalive_thread.start()
-                # with open(vmdk_path, "rb") as f:
-                #     if hasattr(requests.packages.urllib3, 'disable_warnings'):
-                #         requests.packages.urllib3.disable_warnings()
-                #         headers = {'content-type': 'application/x-vnd.vmware-streamVmdk'}
-                #         headers = {'Content-Type': 'application/x-vnd.vmware-streamVmdk',
-                #                    'Content-Length': str(actual_size)}
-                #         r = requests.post(url, data=f, headers=headers, verify=False)
-                #         if r.status_code not in [200, 201]:
-                #             error("Got status %s with reason: %s" % (r.status_code, r.reason))
-                #             os._exit(1)
-                # upload_cmd = (
-                #    "curl -v -S -X POST --insecure -T %s -H 'Content-Type: \
-                #    application/x-vnd.vmware-streamVmdk' %s" % (vmdk_path, url))
-                content_length = os.path.getsize(vmdk_path)
                 upload_cmd = (
-                    "curl -v -S -X POST --insecure -T %s -H 'Content-Type: application/x-vnd.vmware-streamVmdk' \
-                    -H 'Content-Length: %s' %s" % (vmdk_path, content_length, url))
+                    "curl -sS -X POST --insecure -T %s -H 'Content-Type: \
+                    application/x-vnd.vmware-streamVmdk' %s" % (vmdk_path, url))
                 os.system(upload_cmd)
-                run = call(upload_cmd, shell=True)
-                if run != 0:
-                    error("Issues uploading image. Deleting it")
-                    vm = findvm(si, vmFolder, name)
-                    t = vm.Destroy_Task()
-                    waitForMe(t)
-                    os._exit(run)
-                lease.Complete()
-                # lease.HttpNfcLeaseComplete()
+                # lease.Complete()
+                lease.HttpNfcLeaseComplete()
                 keepalive_thread.join()
-                self.export(name)
-                os.remove('/tmp/%s' % shortimage)
-                os.remove(ovf_path)
-                os.remove(vmdk_path)
+                # self.export(name)
+                # os.remove('/tmp/%s' % shortimage)
+                # os.remove(ovf_path)
+                # os.remove(vmdk_path)
                 return {'result': 'success'}
             elif lease.state == vim.HttpNfcLease.State.error:
                 error("Lease error: %s" % lease.error)
