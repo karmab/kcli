@@ -691,15 +691,15 @@ class Ksphere:
         vm = findvm(si, vmFolder, name)
         if vm is None:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        plan, image, cluster = 'kvirt', None, None
+        plan, image, kube = 'kvirt', None, None
         vmpath = vm.summary.config.vmPathName.replace('/%s.vmx' % name, '')
         for entry in vm.config.extraConfig:
             if entry.key == 'image':
                 image = entry.value
             if entry.key == 'plan':
                 plan = entry.value
-            if entry.key == 'cluster':
-                cluster = entry.value
+            if entry.key == 'kube':
+                kube = entry.value
         if vm.runtime.powerState == "poweredOn":
             t = vm.PowerOffVM_Task()
             waitForMe(t)
@@ -709,8 +709,8 @@ class Ksphere:
                 'fcos' not in image and vmpath.endswith(name):
             isopath = "%s/%s.ISO" % (self.isofolder, name) if self.isofolder is not None else vmpath
             deletedirectory(si, dc, isopath)
-        if cluster is not None:
-            clusterfolder = find(si, vmFolder, vim.Folder, cluster)
+        if kube is not None:
+            clusterfolder = find(si, vmFolder, vim.Folder, kube)
             if clusterfolder is not None and len(clusterfolder.childEntity) == 0:
                 clusterfolder.Destroy()
         elif plan != 'kvirt':
