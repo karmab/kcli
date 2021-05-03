@@ -373,6 +373,11 @@ class Ksphere:
         self.filteruser = filteruser
         self.filtertag = filtertag
         self.debug = debug
+        self.networks = []
+        view = si.content.viewManager.CreateContainerView(self.rootFolder, [vim.Network], True)
+        netlist = collectproperties(si, view=view, objtype=vim.Network, pathset=['name'], includemors=True)
+        for o in netlist:
+            self.networks.append(o['obj'].name)
         portgs = {}
         o = si.content.viewManager.CreateContainerView(self.rootFolder, [vim.DistributedVirtualSwitch], True)
         dvnetworks = o.view
@@ -607,10 +612,12 @@ class Ksphere:
                         currentnic.backing.port.portgroupKey = portgroupkey
                         nicspec = vim.vm.device.VirtualDeviceSpec(device=currentnic, operation="edit")
                         devconfspec.append(nicspec)
-                    else:
+                    elif netname in self.networks:
                         currentnic.backing.deviceName = netname
                         nicspec = vim.vm.device.VirtualDeviceSpec(device=currentnic, operation="edit")
                         devconfspec.append(nicspec)
+                    else:
+                        return {'result': 'failure', 'reason': "Invalid network %s" % netname}
                 continue
             nicname = 'Network Adapter %d' % (index + 1)
             nictype = net['type'] if isinstance(net, dict) and 'type' in net else None
@@ -618,8 +625,10 @@ class Ksphere:
                 switchuuid = self.portgs[netname][0]
                 portgroupkey = self.portgs[netname][1]
                 nicspec = createdvsnicspec(nicname, netname, switchuuid, portgroupkey, nictype=nictype)
-            else:
+            elif netname in self.networks:
                 nicspec = createnicspec(nicname, netname, nictype=nictype)
+            else:
+                return {'result': 'failure', 'reason': "Invalid network %s" % netname}
             devconfspec.append(nicspec)
         if iso:
             if '/' not in iso:
