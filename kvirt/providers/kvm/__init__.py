@@ -1360,7 +1360,8 @@ class Kvirt(object):
             listinfo = True
         xml = vm.XMLDesc(0)
         root = ET.fromstring(xml)
-        yamlinfo = {'name': name, 'nets': [], 'disks': []}
+        uuid = vm.UUIDString()
+        yamlinfo = {'name': name, 'nets': [], 'disks': [], 'id': uuid}
         plan, profile, image, ip, creationdate = '', None, None, None, None
         kube, kubetype = None, None
         for element in list(root.iter('{kvirt}info')):
