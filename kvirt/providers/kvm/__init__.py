@@ -2892,7 +2892,12 @@ class Kvirt(object):
                 if e is not None:
                     plan = e.text
             networks[networkname]['plan'] = plan
-        for interface in conn.listInterfaces():
+        try:
+            interfaces = conn.listInterfaces()
+        except:
+            warning("Issue parsing your interfaces. Check for weird characters in your ifcfg files")
+            return networks
+        for interface in interfaces:
             if interface == 'lo' or interface in networks:
                 continue
             netxml = conn.interfaceLookupByName(interface).XMLDesc(0)
