@@ -2910,6 +2910,8 @@ class Kvirt(object):
             for entry in list(root.iter('ip')):
                 attributes = entry.attrib
                 ip = attributes.get('address')
+                if ip.startswith('fe80'):
+                    continue
                 prefix = attributes.get('prefix')
                 ipnet = IPNetwork('%s/%s' % (ip, prefix))
                 cidr = ipnet.cidr
