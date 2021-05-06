@@ -966,6 +966,59 @@ class Kbaseconfig:
                                    _type=_type)
         return jenkinsfile
 
+    def create_github_pipeline(self, inputfile, overrides={}, kube=False):
+        # _type = 'plan'
+        # if kube:
+        #     _type = 'generic'
+        #     plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
+        #     if 'type' in overrides:
+        #         _type = overrides['type']
+        #         del overrides['type']
+        #         if _type == 'openshift':
+        #             plandir = os.path.dirname(openshift.create.__code__.co_filename)
+        #         elif _type != 'generic':
+        #             error("Incorrect kubernetes type %s. Choose between generic or openshift" % _type)
+        #             os._exit(1)
+        #         inputfile = "%s/masters.yml" % plandir
+        inputfile = os.path.expanduser(inputfile) if inputfile is not None else 'kcli_plan.yml'
+        basedir = os.path.dirname(inputfile)
+        if basedir == "":
+            basedir = '.'
+        plan = os.path.basename(inputfile).replace('.yml', '').replace('.yaml', '')
+        if not os.path.exists(inputfile):
+            error("No input file found nor default kcli_plan.yml. Leaving....")
+            os._exit(1)
+        if os.path.exists("%s/%s_default.yml" % (basedir, plan)):
+            parameterfile = "%s/%s_default.yml" % (basedir, plan)
+        elif os.path.exists("%s/kcli_default.yml" % basedir):
+            parameterfile = "%s/kcli_default.yml" % basedir
+        else:
+            parameterfile = inputfile
+        raw = True if parameterfile != inputfile else False
+        parameters = common.get_parameters(parameterfile, raw=raw)
+        if parameters is not None:
+            parameters = yaml.safe_load(parameters)['parameters'] if not raw else parameters
+        else:
+            parameters = {}
+        parameters.update(overrides)
+        workflowdir = os.path.dirname(common.__file__)
+        env = Environment(loader=FileSystemLoader(workflowdir), extensions=['jinja2.ext.do'], trim_blocks=True,
+                          lstrip_blocks=True)
+        for jinjafilter in jinjafilters.jinjafilters:
+            env.filters[jinjafilter] = jinjafilters.jinjafilters[jinjafilter]
+        try:
+            templ = env.get_template(os.path.basename("workflow.yml.j2"))
+        except TemplateSyntaxError as e:
+            error("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message))
+            os._exit(1)
+        except TemplateError as e:
+            error("Error rendering file %s. Got: %s" % (inputfile, e.message))
+            os._exit(1)
+        paramline = ["-P %s=${{github.event.inputs.%s}}" % (parameter, parameter.upper()) for parameter in parameters]
+        parameterline = " ".join(paramline)
+        workflowfile = templ.render(parameters=parameters, parameterline=parameterline)
+        return workflowfile
+
     def info_kube_generic(self, quiet, web=False):
         plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
         inputfile = '%s/masters.yml' % plandir

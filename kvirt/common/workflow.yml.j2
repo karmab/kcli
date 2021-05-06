@@ -1,0 +1,53 @@
+name: {{ plan }}
+on:
+  workflow_dispatch:
+    inputs:
+      RUNNER:
+        description: 'Github Action Runner Name'
+        required: true
+        default: 'ubuntu-latest'
+      PLAN:
+        description: 'Plan Name -> myCluster <-'
+        required: false
+        default: 'xxx'
+{% for parameter in parameters %}
+      {{ parameter|upper }}:
+        description: '{{ parameter }}: {{ parameters[parameter] }}'
+        required: false
+        default: {{ parameters[parameter] }}
+{% endfor %}
+
+# env:
+#  DEPLOY_OCP_DIR: lab-kcli-ipi-baremetal
+
+jobs:
+    requirements:
+    runs-on: {% raw %} ${{github.event.inputs.RUNNER}} {% endraw %}
+
+    steps:
+      - name: Install kcli
+        run: |
+          if [ "$(grep -i ubuntu /etc/os-release)" != "" ] ; then
+            curl -1sLf 'https://dl.cloudsmith.io/public/karmab/kcli/setup.deb.sh' | bash
+            apt-get -y install python3-kcli
+          else
+            dnf -y copr enable karmab/kcli
+            dnf -y install kcli
+          fi
+          # kcli create pool -p /var/lib/libvirt/images default
+          # sudo setfacl -m u:$(id -un):rwx /var/lib/libvirt/images
+
+      - uses: actions/checkout@v2
+      - run: git pull origin ${GITHUB_REF##*/}
+
+  deploy-plan:
+    needs: requirements
+    runs-on: {% raw %} ${{github.event.inputs.RUNNER}} {% endraw %}
+
+    # if: github.event.inputs.OC_DEPLOY_OCP == 'yes'
+    steps:
+      - name: Deploy kcli plan
+        run: |
+          # cd {% raw %} ${{env.DEPLOY_OCP_DIR}} {% endraw %}
+
+          kcli create plan --force -f {{ inputfile | default('kcli_plan.yml') }} {{ parameterline }} {% raw %} ${{github.event.inputs.PLAN}} {% endraw %}

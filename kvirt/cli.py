@@ -1902,6 +1902,7 @@ def create_pipeline(args):
     """Create Pipeline"""
     inputfile = args.inputfile
     kube = args.kube
+    github = args.github
     paramfile = args.paramfile
     if inputfile is None:
         inputfile = 'kcli_plan.yml'
@@ -1918,7 +1919,10 @@ def create_pipeline(args):
     if not kube and not os.path.exists(inputfile):
         error("File %s not found" % inputfile)
         return 0
-    renderfile = baseconfig.create_pipeline(inputfile, overrides=overrides, kube=kube)
+    if github:
+        renderfile = baseconfig.create_github_pipeline(inputfile, overrides=overrides)
+    else:
+        renderfile = baseconfig.create_pipeline(inputfile, overrides=overrides, kube=kube)
     print(renderfile)
     return 0
 
@@ -3328,6 +3332,7 @@ def cli():
     pipelinecreate_parser = create_subparsers.add_parser('pipeline', description=pipelinecreate_desc,
                                                          help=pipelinecreate_desc)
     pipelinecreate_parser.add_argument('-f', '--inputfile', help='Input Plan file')
+    pipelinecreate_parser.add_argument('-g', '--github', action='store_true', help='Create github actions pipeline')
     pipelinecreate_parser.add_argument('-k', '--kube', action='store_true', help='Create kube pipeline')
     pipelinecreate_parser.add_argument('-P', '--param', action='append',
                                        help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
