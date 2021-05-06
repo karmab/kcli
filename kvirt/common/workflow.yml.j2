@@ -17,9 +17,6 @@ on:
         default: {{ parameters[parameter] }}
 {% endfor %}
 
-# env:
-#  DEPLOY_OCP_DIR: lab-kcli-ipi-baremetal
-
 jobs:
     requirements:
     runs-on: {% raw %} ${{github.event.inputs.RUNNER}} {% endraw %}
@@ -43,11 +40,7 @@ jobs:
   deploy-plan:
     needs: requirements
     runs-on: {% raw %} ${{github.event.inputs.RUNNER}} {% endraw %}
-
-    # if: github.event.inputs.OC_DEPLOY_OCP == 'yes'
     steps:
       - name: Deploy kcli plan
         run: |
-          # cd {% raw %} ${{env.DEPLOY_OCP_DIR}} {% endraw %}
-
           kcli create plan --force -f {{ inputfile | default('kcli_plan.yml') }} {{ parameterline }} {% raw %} ${{github.event.inputs.PLAN}} {% endraw %}
