@@ -1439,8 +1439,7 @@ $INFO
                     pprint("Using parameters from master plan in child ones")
                     for override in overrides:
                         print("Using parameter %s: %s" % (override, overrides[override]))
-                self.plan(plan, ansible=False, url=planurl, path=path, autostart=False, container=False,
-                          noautostart=False, inputfile=inputfile, start=False, stop=False, delete=False,
+                self.plan(plan, ansible=False, url=planurl, path=path, container=False, inputfile=inputfile,
                           overrides=overrides, embedded=embedded, download=download)
             return {'result': 'success'}
         if networkentries and not onlyassets:
