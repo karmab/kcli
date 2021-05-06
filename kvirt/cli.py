@@ -228,6 +228,7 @@ def console_container(args):
 def delete_vm(args):
     """Delete vm"""
     snapshots = args.snapshots
+    count = args.count
     yes_top = args.yes_top
     yes = args.yes
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -241,6 +242,12 @@ def delete_vm(args):
     else:
         allclients = {config.client: config.k}
         names = [common.get_lastvm(config.client)] if not args.names else args.names
+    if count > 1:
+        if len(args.names) == 1:
+            names = ["%s-%d" % (args.names[0], number) for number in range(count)]
+        else:
+            error("Using count when deleting vms requires specifying an unique name")
+            os._exit(1)
     for cli in sorted(allclients):
         k = allclients[cli]
         if not yes and not yes_top:
@@ -3673,6 +3680,7 @@ def cli():
 
     vmdelete_desc = 'Delete Vm'
     vmdelete_parser = argparse.ArgumentParser(add_help=False)
+    vmdelete_parser.add_argument('-c', '--count', help='How many vms to delete', type=int, default=1, metavar='COUNT')
     vmdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     vmdelete_parser.add_argument('--snapshots', action='store_true', help='Remove snapshots if needed')
     vmdelete_parser.add_argument('names', metavar='VMNAMES', nargs='*')
