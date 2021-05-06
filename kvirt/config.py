@@ -879,12 +879,9 @@ $INFO
         if onlyassets:
             if image is not None and common.needs_ignition(image):
                 version = common.ignition_version(image)
-                nokeys = overrides.get('nokeys', False)
-                noname = overrides.get('noname', False)
                 data = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                        domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
-                                       overrides=overrides, version=version, plan=plan, image=image, nokeys=nokeys,
-                                       noname=noname)
+                                       overrides=overrides, version=version, plan=plan, image=image)
             else:
                 data = common.cloudinit(name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                         domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,

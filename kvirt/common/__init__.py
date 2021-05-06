@@ -99,6 +99,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
     """
     userdata, metadata, netdata = None, None, None
     default_gateway = gateway
+    noname = overrides.get('noname', False)
     legacy = True if image is not None and (is_7(image) or is_debian9(image)) else False
     prefix = 'eth'
     if image is not None and (is_ubuntu(image) or is_debian10(image)):
@@ -227,7 +228,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
         localhostname = "%s.%s" % (name, domain)
     else:
         localhostname = name
-    metadata = {"instance-id": localhostname, "local-hostname": localhostname}
+    metadata = {"instance-id": localhostname, "local-hostname": localhostname} if not noname else {}
     if legacy and netdata != '':
         metadata["network-interfaces"] = netdata
     metadata = json.dumps(metadata)
@@ -248,7 +249,9 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
         pprint("using cloudinit from existing %s for %s" % (existing, name))
         userdata = open(existing).read()
     else:
-        userdata = '#cloud-config\nhostname: %s\n' % name
+        userdata = '#cloud-config\n'
+        if not noname:
+            userdata += 'hostname: %s\n' % name
         userdata += 'final_message: kcli boot finished, up $UPTIME seconds\n'
         if fqdn:
             fqdn = "%s.%s" % (name, domain) if domain is not None else name
@@ -1008,7 +1011,7 @@ def get_cloudinitfile(image):
 
 def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[],
              enableroot=True, overrides={}, iso=True, fqdn=False, version='3.1.0', plan=None, compact=False,
-             removetls=False, ipv6=[], image=None, nokeys=False, noname=False):
+             removetls=False, ipv6=[], image=None):
     """
 
     :param name:
@@ -1026,6 +1029,8 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     :param fqdn:
     :return:
     """
+    noname = overrides.get('noname', False)
+    nokeys = overrides.get('nokeys', False)
     separators = (',', ':') if compact else (',', ': ')
     indent = 0 if compact else 4
     default_gateway = gateway
