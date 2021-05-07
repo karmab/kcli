@@ -16,7 +16,7 @@ elif [ "$(which apt-get)" != "" ] ; then
   packagefound=true
   curl -1sLf https://dl.cloudsmith.io/public/karmab/kcli/cfg/setup/bash.deb.sh | sudo -E bash
   sudo apt-get update 
-  sudo apt-get -y install kcli
+  sudo apt-get -y install python3-kcli
 fi
 
 if [ "$packagefound" == "true" ] ; then
