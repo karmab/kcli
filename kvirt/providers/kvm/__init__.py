@@ -1058,7 +1058,7 @@ class Kvirt(object):
             self._fixqcow2(fixqcow2path, fixqcow2backing)
         xml = vm.XMLDesc(0)
         vmxml = ET.fromstring(xml)
-        self._reserve_ip(name, vmxml, nets, primary=reserveip)
+        self._reserve_ip(name, vmxml, nets, primary=reserveip, networks=allnetworks)
         if start:
             try:
                 vm.create()
@@ -1878,7 +1878,7 @@ class Kvirt(object):
             vm.setAutostart(1)
             vm.create()
 
-    def _reserve_ip(self, name, vmxml, nets, force=True, primary=False):
+    def _reserve_ip(self, name, vmxml, nets, force=True, primary=False, networks={}):
         conn = self.conn
         macs = []
         for element in list(vmxml.iter('interface')):
@@ -1891,6 +1891,12 @@ class Kvirt(object):
             reserveip = True if index == 0 and primary else False
             reserveip = net.get('reserveip', reserveip)
             if not reserveip or ip is None or network is None:
+                continue
+            if network not in networks:
+                pprint("Skipping incorrect network %s" % network)
+                continue
+            elif networks[network]['type'] == 'bridged':
+                pprint("Skipping bridge %s" % network)
                 continue
             network = conn.networkLookupByName(network)
             oldnetxml = network.XMLDesc()
