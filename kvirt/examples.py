@@ -115,6 +115,10 @@ $ kcli create vm -i centos8 -P nets=['{"name": "default", "type": "e1000"}']
 # Or specify a custom mtu
 $ kcli create vm -i centos8 -P nets=['{"name": "default", "mtu": 1400}']
 
+# Create a vm with static ip
+$ img=centos8
+$ kcli create vm -i $img -P nets=['{"name":"default","ip":"192.168.122.250","netmask":"24","gateway":"192.168.122.1"}']
+
 # Use more advanced information for disks
 $ kcli create vm -i centos8 -P disks=['{"size": 10, "interface": "sata"}']
 
