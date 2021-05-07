@@ -166,7 +166,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                     netdata += "  address %s\n" % ip
                     netdata += "  netmask %s\n" % netmask
                 else:
-                    if isinstance(netmask,int):
+                    if isinstance(netmask, int):
                         cidr = netmask
                     else:
                         cidr = IPAddress(netmask).netmask_bits()
@@ -221,7 +221,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 else:
                     targetfamily = 'dhcp6' if enableipv6 or netname in ipv6 else 'dhcp4'
                     netdata[nicname] = {targetfamily: True}
-                    if 'dualstack' in overrides and index == 0:
+                    if 'dualstack' in overrides and overrides['dualstack'] and index == 0:
                         dualfamily = 'dhcp6' if targetfamily == 'dhcp4' else 'dhcp4'
                         netdata[nicname][dualfamily] = True
             if bridge and not legacy:
