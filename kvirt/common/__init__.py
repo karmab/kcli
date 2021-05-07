@@ -166,8 +166,12 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                     netdata += "  address %s\n" % ip
                     netdata += "  netmask %s\n" % netmask
                 else:
-                    cidr = IPAddress(netmask).netmask_bits()
-                    netdata[nicname] = {'dhcp4': False, 'addresses': ["%s/%s" % (ip, cidr)]}
+                    if isinstance(netmask,int):
+                        cidr = netmask
+                    else:
+                        cidr = IPAddress(netmask).netmask_bits()
+                    dhcp = 'dhcp6' if ':' in ip else 'dhcp4'
+                    netdata[nicname] = {dhcp: False, 'addresses': ["%s/%s" % (ip, cidr)]}
                 gateway = net.get('gateway')
                 if index == 0 and default_gateway is not None:
                     if legacy:
