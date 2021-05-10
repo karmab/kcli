@@ -159,7 +159,8 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 if legacy:
                     netdata += "  iface %s inet manual\n" % nicname
                 else:
-                    netdata[nicname] = {'dhcp4': False}
+                    targetfamily = 'dhcp6' if netname in ipv6 else 'dhcp4'
+                    netdata[nicname] = {targetfamily: False}
             elif ip is not None and netmask is not None and not reserveip:
                 if legacy:
                     netdata += "  iface %s inet static\n" % nicname
