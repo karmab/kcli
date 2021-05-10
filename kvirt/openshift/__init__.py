@@ -23,7 +23,7 @@ import yaml
 
 virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere', 'packet']
 cloudplatforms = ['aws', 'gcp']
-DEFAULT_TAG = '4.6'
+DEFAULT_TAG = '4.7'
 
 
 def update_etc_hosts(cluster, domain, host_ip, ingress_ip=None):
