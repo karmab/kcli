@@ -600,11 +600,14 @@ class Kubevirt(Kubecommon):
         namespace = self.namespace
         crds = self.crds
         if vm is None:
+            listinfo = False
             try:
                 vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
             except:
                 error("VM %s not found" % name)
                 return {}
+        else:
+            listinfo = True
         metadata = vm.get("metadata")
         spec = vm.get("spec")
         running = spec.get("running")
@@ -672,6 +675,8 @@ class Kubevirt(Kubecommon):
         if kube is not None and kubetype is not None:
             yamlinfo['kube'] = kube
             yamlinfo['kubetype'] = kubetype
+        if listinfo:
+            return yamlinfo
         plaindisks = spectemplate['spec']['domain']['devices']['disks']
         disks = []
         for d in plaindisks:
