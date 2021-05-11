@@ -1477,14 +1477,16 @@ $INFO
             pprint("Deploying Images...")
             images = [os.path.basename(t) for t in k.volumes()]
             for image in imageentries:
+                imageprofile = entries[image]
+                imageurl = imageprofile.get('url')
+                filename = os.path.basename(imageurl)
                 clientprofile = "%s_%s" % (self.client, image)
-                if image in images or image in self.profiles or clientprofile in self.profiles:
+                if image in images or image in self.profiles or \
+                    (clientprofile in self.profiles and filename == self.profiles[clientprofile]['image']):
                     pprint("Image %s skipped!" % image)
                     continue
                 else:
-                    imageprofile = entries[image]
                     pool = imageprofile.get('pool', self.pool)
-                    imageurl = imageprofile.get('url')
                     imagesize = imageprofile.get('size')
                     if isinstance(imageurl, str) and imageurl == "None":
                         imageurl = None
