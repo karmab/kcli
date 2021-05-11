@@ -2161,6 +2161,8 @@ def ssh_vm(args):
     tunnelhost = baseconfig.tunnelhost
     tunneluser = baseconfig.tunneluser
     tunnelport = baseconfig.tunnelport
+    sshcommand = None
+
     if tunnel and tunnelhost is None:
         error("Tunnel requested but no tunnelhost defined")
         os._exit(1)
@@ -2176,7 +2178,6 @@ def ssh_vm(args):
     if os.path.exists("/i_am_a_container") and not os.path.exists("/root/.kcli/config.yml")\
             and not os.path.exists("/root/.ssh/config"):
         insecure = True
-    sshcommand = None
     if baseconfig.cache:
         _list = cache_vms(baseconfig, args.region, args.zone, args.namespace)
         vms = [vm for vm in _list if vm['name'] == name]
@@ -2190,11 +2191,7 @@ def ssh_vm(args):
                     user = baseconfig.vmuser if baseconfig.vmuser is not None else vm.get('user')
                 if vmport is None:
                     vmport = baseconfig.vmport if baseconfig.vmport is not None else vm.get('vmport')
-                sshcommand = common.ssh(name, ip=ip, user=user, local=local, remote=remote, tunnel=tunnel,
-                                        tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser,
-                                        insecure=insecure, cmd=cmd, X=X, Y=Y, D=D, debug=args.debug, vmport=vmport,
-                                        identityfile=identityfile)
-    if sshcommand is None:
+    else:
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
         k = config.k
@@ -2208,10 +2205,10 @@ def ssh_vm(args):
         if config.type in ['kvm', 'packet'] and '.' not in ip and ':' not in ip:
             vmport = ip
             ip = config.host
-        sshcommand = common.ssh(name, ip=ip, user=user, local=local, remote=remote, tunnel=tunnel,
-                                tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser,
-                                insecure=insecure, cmd=cmd, X=X, Y=Y, D=D, debug=args.debug, vmport=vmport,
-                                identityfile=identityfile)
+    sshcommand = common.ssh(name, ip=ip, user=user, local=local, remote=remote, tunnel=tunnel,
+                            tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser,
+                            insecure=insecure, cmd=cmd, X=X, Y=Y, D=D, debug=args.debug, vmport=vmport,
+                            identityfile=identityfile)
     if sshcommand is not None:
         if find_executable('ssh') is not None:
             os.system(sshcommand)
