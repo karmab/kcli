@@ -53,7 +53,8 @@ master_doc = 'index'
 # extensions = ['autoapi.extension']
 # extensions = ['sphinx.ext.autodoc', 'autoapi.extension', 'sphinx_rtd_theme', 'sphinx.ext.napoleon']
 # extensions = ['autoapi.extension', 'sphinx_rtd_theme', 'sphinx.ext.napoleon']
-extensions = ['sphinx_rtd_theme', 'sphinx.ext.napoleon']
+# extensions = ['sphinx_rtd_theme', 'sphinx.ext.napoleon']
+extensions = ['sphinx_rtd_theme']
 
 
 # Add any paths that contain templates here, relative to this directory.
@@ -67,7 +68,6 @@ exclude_patterns = []
 
 # -- Options for HTML output -------------------------------------------------
 
-# The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
 html_theme = 'sphinx_rtd_theme'

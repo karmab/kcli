@@ -439,7 +439,10 @@ The following parameters are specific to ovirt:
 
 Note that pool in Ovirt context refers to storage domain.
 
-To use this provider with kcli rpm, you’ll need to install - http://resources.ovirt.org/pub/yum-repo/ovirt-release-master.rpm - python3-ovirt-engine-sdk4
+To use this provider with kcli rpm, you’ll need to install
+
+-  http://resources.ovirt.org/pub/yum-repo/ovirt-release-master.rpm
+-  python3-ovirt-engine-sdk4
 
 Deploying Ovirt dependencies with pip
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1971,7 +1974,7 @@ API documentation
    :target: https://pypi.python.org/pypi/kcli/
 .. |Copr| image:: https://copr.fedorainfracloud.org/coprs/karmab/kcli/package/kcli/status_image/last_build.png
    :target: https://copr.fedorainfracloud.org/coprs/karmab/kcli/package/kcli
-.. |Documentation Status| image:: https://readthedocs.org/projects/kcli/badge/?version=master
+.. |Documentation Status| image:: https://readthedocs.org/projects/kcli/badge/?version=latest
    :target: https://kcli.readthedocs.io/en/latest/?badge=latest
 .. |image4| image:: https://images.microbadger.com/badges/image/karmab/kcli.svg
    :target: https://microbadger.com/images/karmab/kcli
