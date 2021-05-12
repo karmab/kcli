@@ -3217,24 +3217,27 @@ def cli():
                                     help=kubeopenshiftscale_desc, aliases=['okd'])
 
     lbcreate_desc = 'Create Load Balancer'
-    lbcreate_parser = create_subparsers.add_parser('lb', description=lbcreate_desc, help=lbcreate_desc)
+    lbcreate_parser = create_subparsers.add_parser('lb', description=lbcreate_desc, help=lbcreate_desc,
+                                                   aliases=['loadbalancer'])
     lbcreate_parser.add_argument('--checkpath', default='/index.html', help="Path to check. Defaults to /index.html")
     lbcreate_parser.add_argument('--checkport', default=80, help="Port to check. Defaults to 80")
     lbcreate_parser.add_argument('--domain', help='Domain to create a dns entry associated to the load balancer')
     lbcreate_parser.add_argument('-i', '--internal', action='store_true')
     lbcreate_parser.add_argument('-p', '--ports', default='443', help='Load Balancer Ports. Defaults to 443')
-    lbcreate_parser.add_argument('-v', '--vms', help='Vms to add to the pool')
+    lbcreate_parser.add_argument('-v', '--vms', help='Vms to add to the pool. Can also be a list of ips')
     lbcreate_parser.add_argument('name', metavar='NAME', nargs='?')
     lbcreate_parser.set_defaults(func=create_lb)
 
     lbdelete_desc = 'Delete Load Balancer'
-    lbdelete_parser = delete_subparsers.add_parser('lb', description=lbdelete_desc, help=lbdelete_desc)
+    lbdelete_parser = delete_subparsers.add_parser('lb', description=lbdelete_desc, help=lbdelete_desc,
+                                                   aliases=['loadbalancer'])
     lbdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     lbdelete_parser.add_argument('name', metavar='NAME')
     lbdelete_parser.set_defaults(func=delete_lb)
 
     lblist_desc = 'List Load Balancers'
-    lblist_parser = list_subparsers.add_parser('lb', description=lblist_desc, help=lblist_desc, aliases=['lbs'])
+    lblist_parser = list_subparsers.add_parser('lb', description=lblist_desc, help=lblist_desc,
+                                               aliases=['loadbalancers', 'lbs'])
     lblist_parser.add_argument('--short', action='store_true')
     lblist_parser.set_defaults(func=list_lb)
 

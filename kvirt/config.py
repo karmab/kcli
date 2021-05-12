@@ -25,6 +25,7 @@ from kvirt.internalplans import haproxy as haproxyplan
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
 from distutils.spawn import find_executable
+from netaddr import valid_ipv4, valid_ipv6
 from getpass import getuser
 import glob
 import os
@@ -2095,6 +2096,10 @@ $INFO
             pprint("Deploying loadbalancer %s" % name)
             vminfo = []
             for vm in vms:
+                if valid_ipv4(vm) or valid_ipv6(vm):
+                    vmname = vm.replace(':', '-').replace('.', '-')
+                    vminfo.append({'name': vmname, 'ip': vm})
+                    continue
                 counter = 0
                 while counter != 100:
                     ip = k.ip(vm)

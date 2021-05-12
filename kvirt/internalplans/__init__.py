@@ -1,11 +1,13 @@
 haproxy = """
-#jinja2: lstrip_blocks: True
 parameters:
- image: CentOS-7-x86_64-GenericCloud.qcow2
+ image: centos8
  name: haproxy
  nets:
  - default
  vms: []
+
+{{ image }}:
+ type: image
 
 loadbalancer-{{ ports | join('+') }}:
  type: profile
@@ -36,7 +38,6 @@ loadbalancer-{{ ports | join('+') }}:
         # option      redispatch
         stats enable
         stats uri /stats
-        stats realm HAProxy\ Statistics
         stats auth admin:password
         timeout connect 10000
         timeout client 300000
@@ -44,7 +45,8 @@ loadbalancer-{{ ports | join('+') }}:
         maxconn     60000
         retries     3
       {% for port in ports %}
-      listen {{ name }}_{{ port }} *:{{ port }}
+      listen {{ name }}_{{ port }}
+        bind *:{{ port }}
       {% if port in [80, 443] %}
         mode http
         # option httpchk HEAD {{ checkpath }} HTTP/1.0
