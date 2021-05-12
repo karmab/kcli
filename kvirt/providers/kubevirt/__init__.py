@@ -1210,34 +1210,34 @@ class Kubevirt(Kubecommon):
         core = self.core
         cidr = 'N/A'
         for node in core.list_node().items:
-            # nodeip = node.status.addresses[0].address
             cidr = node.spec.pod_cidr
+            break
         networks = {'default': {'cidr': cidr, 'dhcp': True, 'type': 'bridge', 'mode': 'N/A'}}
         crds = self.crds
         namespace = self.namespace
         try:
             nafs = crds.list_namespaced_custom_object(MULTUSDOMAIN, MULTUSVERSION, namespace,
                                                       'network-attachment-definitions')["items"]
-            for naf in nafs:
-                config = yaml.safe_load(naf['spec']['config'])
-                name = naf['metadata']['name']
-                _type = config['type']
-                bridge = config.get('bridge')
-                vlan = config.get('vlan', 'N/A')
-                domain = 'N/A'
-                dhcp = False
-                cidr = bridge
-                if 'ipam' in config:
-                    domain = config['ipam']['type']
-                    if config['ipam']['type'] == 'dhcp':
-                        dhcp = True
-                        cidr = config['ipam'].get('subnet', bridge)
-                    elif config['ipam']['type'] == 'whereabouts':
-                        dhcp = True
-                        cidr = config['ipam'].get('range', bridge)
-                networks[name] = {'cidr': cidr, 'dhcp': dhcp, 'type': _type, 'mode': vlan, 'domain': domain}
-        except Exception:
-            pass
+        except:
+            nafs = []
+        for naf in nafs:
+            config = yaml.safe_load(naf['spec']['config'])
+            name = naf['metadata']['name']
+            _type = config['type']
+            bridge = config.get('bridge')
+            vlan = config.get('vlan', 'N/A')
+            ipam_type = 'N/A'
+            dhcp = False
+            cidr = bridge
+            if 'ipam' in config:
+                ipam_type = config['ipam'].get('type', 'N/A')
+                if ipam_type == 'dhcp':
+                    dhcp = True
+                    cidr = config['ipam'].get('subnet', bridge)
+                elif ipam_type == 'whereabouts':
+                    dhcp = True
+                    cidr = config['ipam'].get('range', bridge)
+            networks[name] = {'cidr': cidr, 'dhcp': dhcp, 'type': _type, 'mode': vlan, 'domain': ipam_type}
         return networks
 
     def list_subnets(self):
