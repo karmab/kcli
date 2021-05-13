@@ -1344,6 +1344,8 @@ class Kubevirt(Kubecommon):
         return []
 
     def get_image_name(self, name):
+        if name.endswith('.gz'):
+            name = name.replace('.gz', '')
         if '?' in name:
             return os.path.basename(name).split('?')[0]
         else:
