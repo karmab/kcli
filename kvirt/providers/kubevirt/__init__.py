@@ -250,9 +250,8 @@ class Kubevirt(Kubecommon):
                     allnetworks = self.list_networks()
                 if netname not in allnetworks:
                     return {'result': 'failure', 'reason': "network %s not found" % netname}
-                if index == 0:
-                    newnet['multus'] = {'networkName': netname}
-                    guestagent = True
+                newnet['multus'] = {'networkName': netname}
+                guestagent = True
             else:
                 newnet['pod'] = {}
             interfaces.append(newif)
