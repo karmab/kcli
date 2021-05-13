@@ -9,22 +9,25 @@ left = ["astonishing", "happy", "jolly", "dreamy", "sad", "angry", "pensive", "f
         "desperate", "hopeful", "compassionate", "silly", "lonely", "condescending", "naughty", "kickass", "drunk",
         "boring", "nostalgic", "ecstatic", "insane", "cranky", "mad", "jovial", "sick", "hungry", "thirsty",
         "elegant", "backstabbing", "clever", "trusting", "loving", "suspicious", "berserk", "high", "romantic",
-        "prickly", "evil", "magic"]
+        "prickly", "evil", "magic", "vaccinated"]
 
-right = ["albattani", "almeida", "amazigh", "archimedes", "ardinghelli", "babbage", "bardeen", "bartik", "bbanks",
-         "bell", "beyonder", "blackwell", "bohr", "brattain", "briana", "brown", "broza", "bumblefoot", "cantalpino",
-         "carson", "cell", "citellus", "clapton", "colden", "cuqui", "curie", "darwin", "davinci", "django",
-         "einstein", "elion", "engelbart", "euclid", "fermat", "fermi", "feynman", "fiambre", "franklin", "freezer",
-         "galactus", "galileo", "goiko", "gohan", "goku", "goldstine", "goodall", "govan", "hawking", "heisenberg",
-         "hoover", "hopper", "hypatia", "jhendrix", "jmayer", "jones", "kirch", "kendra", "kowalevski", "lalande",
-         "leakey", "lilou", "lomax", "lovelace", "lumiere", "lomax", "macenroe", "manchadinha", "mayer", "mccarthy",
-         "mcclintock", "mclean", "meitner", "mestorf", "mikel", "minwii", "morse", "mirzoyan", "newton", "nobel",
-         "norinradd", "pare", "pasteur", "pepenforce", "perlman", "picolo", "pike", "pinkman", "poincare", "ptolemy",
-         "ritchie", "rosalind", "sammet", "satriani", "selen", "shockley", "sinoussi", "silversurfer", "socarrat",
+right = ["albattani", "almeida", "alknopfler", "amazigh", "apfelb", "archimedes", "ardinghelli", "babbage", "bardeen",
+         "bartik", "bingchong", "bbanks", "bell", "beyonder", "blackwell", "bohr", "brattain", "briana", "brown",
+         "broza", "bumblefoot", "cantalpino", "carson", "cell", "chechik", "citellus", "clapton", "cobra", "colden",
+         "cr7", "cuqui", "curie", "darwin", "davinci", "django", "einstein", "elion", "engelbart", "euclid", "fermat",
+         "fermi", "feynman", "fiambre", "franklin", "freezer", "galactus", "galois", "galileo", "goiko", "gohan",
+         "goku", "goldstine", "goodall", "govan", "griezmann", "hawking", "heisenberg", "hoover", "hopper", "hypatia",
+         "jhendrix", "jmayer", "jonas", "jones", "kirch", "kendra", "kowalevski", "krilin", "lalande", "leakey",
+         "lendl", "lilou", "lomax", "lovelace", "lumiere", "lomax", "macenroe", "manchadinha", "mavasquez", "mayer",
+         "mbappe", "mccarthy", "mcclintock", "mclean", "meitner", "messi", "mestorf", "mikel", "minwii", "moana",
+         "morse", "mirzoyan", "newton", "nobel", "norinradd", "pare", "jparill", "pasteur", "pepenforce", "perlman",
+         "picolo", "pike", "pinkman", "poincare", "pparker", "productionready", "ptolemy", "ritchie", "rosalind",
+         "reinhardt", "sammet", "satriani", "selen", "shockley", "sinoussi", "silversurfer", "snowwhites", "socarrat",
          "spitzer", "stallman", "tesla", "timesburg", "thompson", "torvalds", "turing", "wilson", "wozniak", "wright",
          "yonath", "rulo", "tudela", "tdurdeen", "korsani", "karmab", "gotrunks", "xhamster", "minwii", "djokovic",
          "federer", "nadal", "sampras", "tgb", "valadas", "vai", "vegeta", "ivanisevic", "muster", "agassi",
-         "targaryen", "lannister", "stark", "jsnow", "superduper", "walterwhite", "chechik"]
+         "targaryen", "lannister", "safin", "stark", "jsnow", "superduper", "tripleo", "walterwhite", "yolandarock",
+         "yuval", "5guys"]
 
 
 def get_random_name(sep='-'):
