@@ -3,6 +3,10 @@ kind: HyperConverged
 metadata:
   name: kubevirt-hyperconverged
   namespace: {{ namespace }}
+{% if kubevirt_ovs %}
+  annotations:
+    deployOVS: "true"
+{% endif %}
 spec:
   BareMetalPlatform: true
   infra:

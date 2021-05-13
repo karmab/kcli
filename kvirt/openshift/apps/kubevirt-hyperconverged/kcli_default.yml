@@ -1,2 +1,3 @@
 kubevirt_infra: master
 kubevirt_workloads: worker
+kubevirt_ovs: false
