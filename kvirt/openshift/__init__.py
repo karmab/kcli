@@ -459,7 +459,9 @@ def create(config, plandir, cluster, overrides):
         if run != 0:
             error("Couldn't download openshift-install")
             os._exit(run)
-        pprint("Move downloaded openshift-install somewhere in your path if you want to reuse it")
+        pprint("Move downloaded openshift-install somewhere in your PATH if you want to reuse it")
+    else:
+        warning("Using existing openshift-install found in your PATH")
     os.environ["PATH"] += ":%s" % os.getcwd()
     if disconnected_url is not None:
         if '/' not in str(tag):
