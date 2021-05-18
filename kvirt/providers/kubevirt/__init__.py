@@ -945,7 +945,6 @@ class Kubevirt(Kubecommon):
         index = len(currentdisks)
         diskname = '%s-disk%d' % (name, index)
         diskpool = self.check_pool(pool)
-        bus = overrides.get('interface', 'virtio')
         myvolume = {'name': diskname, 'persistentVolumeClaim': {'claimName': diskname}}
         if self.disk_hotplug:
             pprint("Hotplugging disk %s" % diskname)
@@ -958,14 +957,16 @@ class Kubevirt(Kubecommon):
             crds.create_namespaced_custom_object(CDIDOMAIN, CDIVERSION, namespace, 'datavolumes', dv)
             subresource = "/apis/subresources.kubevirt.io/v1alpha3/namespaces/%s" % namespace
             subresource += "/virtualmachines/%s/addvolume" % name
-            bus = 'scsi'
-            body = {"name": diskname, "volumesource": myvolume, "disk": {"disk": {"bus": bus}}}
+            body = {"name": diskname, "volumesource": myvolume, "disk": {"disk": {"bus": "scsi"}}}
+            if 'serial' in overrides:
+                body['disk']['serial'] = str(overrides['serial'])
             self.core.api_client.call_api(subresource, 'PUT', body=body)
         else:
             self.create_disk(diskname, size=size, pool=diskpool, thin=thin, image=image, overrides=overrides)
             bound = self.pvc_bound(diskname, namespace)
             if not bound:
                 return {'result': 'failure', 'reason': 'timeout waiting for pvc %s to get bound' % diskname}
+            bus = overrides.get('interface', 'virtio')
             newdisk = {'disk': {'bus': bus}, 'name': diskname}
             vm['spec'][t]['spec']['domain']['devices']['disks'].append(newdisk)
             vm['spec'][t]['spec']['volumes'].append(myvolume)
@@ -991,6 +992,20 @@ class Kubevirt(Kubecommon):
                 error("Disk %s not found" % diskname)
                 return {'result': 'failure', 'reason': "disk %s not found in VM" % diskname}
             diskindex = diskindex[0]
+            if self.disk_hotplug:
+                pprint("Hotunplugging disk %s" % diskname)
+                myvolume = {'name': diskname, 'persistentVolumeClaim': {'claimName': diskname}}
+                subresource = "/apis/subresources.kubevirt.io/v1alpha3/namespaces/%s" % namespace
+                subresource += "/virtualmachines/%s/removevolume" % name
+                bus = 'scsi'
+                body = {"name": diskname, "volumesource": myvolume, "disk": {"disk": {"bus": bus}}}
+                self.core.api_client.call_api(subresource, 'PUT', body=body)
+                try:
+                    crds.delete_namespaced_custom_object(CDIDOMAIN, CDIVERSION, namespace, 'datavolumes', diskname)
+                except:
+                    error("Disk %s not found" % diskname)
+                    return 1
+                return
             volname = vm['spec'][t]['spec']['domain']['devices']['disks'][diskindex]['name']
             volindex = [i for i, vol in enumerate(vm['spec'][t]['spec']['volumes']) if vol['name'] == volname]
             if volindex:
