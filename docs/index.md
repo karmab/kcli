@@ -363,6 +363,7 @@ You can use additional parameters for the kubevirt section:
 - access_mode: Way to access vms other ssh. Defaults to NodePort,in which case a svc with a nodeport pointing to the ssh port of the vm will be created. Otherpossible values are LoadBalancer to create a svc of type loadbalancer to point to the vm or External to connect using the sdn ip of the vm. If tunnel options are set, they take precedence
 - volume_mode: Volume Mode. Defaults to Filesystem (Block can be specified instead).
 - volume_access: Volume access mode. Defaults to ReadWriteOnce.
+- disk_hotplug: Whether to allow to hotplug (and unplug) disks. Defaults to false. Note it also requires to enable The HotplugVolumes featureGate within Kubevirt
 
 You can use the following indications to gather context, create a suitable service account and retrieve its associated token:
 
