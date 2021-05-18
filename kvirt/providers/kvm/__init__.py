@@ -464,6 +464,7 @@ class Kvirt(object):
             macxml = ''
             ovsxml = ''
             mtuxml = ''
+            multiqueuexml = ''
             nettype = 'virtio'
             if isinstance(net, str):
                 netname = net
@@ -489,6 +490,16 @@ class Kvirt(object):
                 if 'vfio' in nets[index] and nets[index]['vfio']:
                     iommuxml = "<iommu model='intel'/>"
                     ioapicxml = "<ioapic driver='qemu'/>"
+                if 'multiqueues' in nets[index]:
+                    multiqueues = nets[index]['multiqueues']
+                    if not isinstance(multiqueues, int):
+                        return {'result': 'failure',
+                                'reason': "Invalid multiqueues value in nic %s. Must be an int" % index}
+                    elif not 0 < multiqueues < 257:
+                        return {'result': 'failure',
+                                'reason': "multiqueues value in nic %s not between 0 and 256 " % index}
+                    else:
+                        multiqueuexml = "<driver name='vhost' queues='%d'/>" % multiqueues
             if ips and len(ips) > index and ips[index] is not None and\
                     netmasks and len(netmasks) > index and netmasks[index] is not None and gateway is not None:
                 nets[index]['ip'] = ips[index]
@@ -539,7 +550,8 @@ class Kvirt(object):
 %s
 %s
 <model type='%s'/>
-</interface>""" % (netxml, iftype, mtuxml, macxml, sourcexml, ovsxml, nicnumaxml, nettype)
+%s
+</interface>""" % (netxml, iftype, mtuxml, macxml, sourcexml, ovsxml, nicnumaxml, nettype, multiqueuexml)
         metadataxml += "</kvirt:info></metadata>"
         if guestagent:
             gcmds = []
