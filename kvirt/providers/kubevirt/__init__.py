@@ -12,7 +12,6 @@ from netaddr import IPAddress
 from kvirt import common
 from kvirt.common import error, pprint, warning
 from kvirt.defaults import IMAGES, UBUNTUS, METADATA_FIELDS
-from requests import put
 import datetime
 import os
 import time
@@ -64,17 +63,6 @@ class Kubevirt(Kubecommon):
         self.volume_access = volume_access
         self.cdi = cdi
         self.disk_hotplug = disk_hotplug
-        if disk_hotplug:
-            if token is None:
-                error("Hotplug functionality requires to use a token")
-                os._exit(1)
-            elif host == '127.0.0.1':
-                error("Hotplug functionality requires to set specifically api host")
-                os._exit(1)
-            else:
-                self.host = host
-                self.disk_hotplug = True
-                self.token = token
         return
 
     def close(self):
@@ -963,14 +951,11 @@ class Kubevirt(Kubecommon):
         myvolume = {'name': diskname, 'persistentVolumeClaim': {'claimName': diskname}}
         bus = overrides.get('interface', 'virtio')
         if self.disk_hotplug:
-            url = "https://%s:6443/apis/subresources.kubevirt.io/v1alpha3/namespaces/%s" % (self.host, namespace)
-            url += "/virtualmachines/%s/addvolume" % name
+            subresource = "/apis/subresources.kubevirt.io/v1alpha3/namespaces/%s" % namespace
+            subresource += "/virtualmachines/%s/addvolume" % name
             bus = 'scsi'
-            data = {"name": diskname, "volumesource": myvolume, "disk": {"disk": {"bus": bus}}}
-            headers = {"Authorization": "Bearer %s" % self.token}
-            # x = put(url, json=data, headers=headers, verify=False)
-            # print(x.status_code, x.text)
-            put(url, json=data, headers=headers, verify=False)
+            body = {"name": diskname, "volumesource": myvolume, "disk": {"disk": {"bus": bus}}}
+            self.core.api_client.call_api(subresource, 'PUT', body=body)
         else:
             newdisk = {'disk': {'bus': bus}, 'name': diskname}
             vm['spec'][t]['spec']['domain']['devices']['disks'].append(newdisk)
