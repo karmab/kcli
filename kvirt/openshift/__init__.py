@@ -694,6 +694,7 @@ def create(config, plandir, cluster, overrides):
                 if ignore_hosts:
                     warning("Not updating /etc/hosts as per your request")
                 else:
+                    api_ip = None
                     while api_ip is None:
                         api_ip = k.info(sno_name).get('ip')
                         pprint("Waiting 5s to retrieve sno ip...")
