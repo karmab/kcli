@@ -21,6 +21,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 DOMAIN = "kubevirt.io"
 CDIDOMAIN = "cdi.kubevirt.io"
+CDIVERSION = "v1beta1"
 KUBEVIRTNAMESPACE = "kube-system"
 VERSION = 'v1alpha3'
 MULTUSDOMAIN = 'k8s.cni.cncf.io'
@@ -944,19 +945,27 @@ class Kubevirt(Kubecommon):
         index = len(currentdisks)
         diskname = '%s-disk%d' % (name, index)
         diskpool = self.check_pool(pool)
-        self.create_disk(diskname, size=size, pool=diskpool, thin=thin, image=image, overrides=overrides)
-        bound = self.pvc_bound(diskname, namespace)
-        if not bound:
-            return {'result': 'failure', 'reason': 'timeout waiting for pvc %s to get bound' % diskname}
-        myvolume = {'name': diskname, 'persistentVolumeClaim': {'claimName': diskname}}
         bus = overrides.get('interface', 'virtio')
+        myvolume = {'name': diskname, 'persistentVolumeClaim': {'claimName': diskname}}
         if self.disk_hotplug:
+            pprint("Hotplugging disk %s" % diskname)
+            dv = {'kind': 'DataVolume', 'apiVersion': "%s/%s" % (CDIDOMAIN, CDIVERSION),
+                  'metadata': {'name': diskname, 'annotations': {'sidecar.istio.io/inject': 'false'}},
+                  'spec': {'pvc': {'volumeMode': self.volume_mode,
+                                   'accessModes': [self.volume_access],
+                                   'resources': {'requests': {'storage': '%sGi' % size}}},
+                           'source': {'blank': {}}}, 'status': {}}
+            crds.create_namespaced_custom_object(CDIDOMAIN, CDIVERSION, namespace, 'datavolumes', dv)
             subresource = "/apis/subresources.kubevirt.io/v1alpha3/namespaces/%s" % namespace
             subresource += "/virtualmachines/%s/addvolume" % name
             bus = 'scsi'
             body = {"name": diskname, "volumesource": myvolume, "disk": {"disk": {"bus": bus}}}
             self.core.api_client.call_api(subresource, 'PUT', body=body)
         else:
+            self.create_disk(diskname, size=size, pool=diskpool, thin=thin, image=image, overrides=overrides)
+            bound = self.pvc_bound(diskname, namespace)
+            if not bound:
+                return {'result': 'failure', 'reason': 'timeout waiting for pvc %s to get bound' % diskname}
             newdisk = {'disk': {'bus': bus}, 'name': diskname}
             vm['spec'][t]['spec']['domain']['devices']['disks'].append(newdisk)
             vm['spec'][t]['spec']['volumes'].append(myvolume)
