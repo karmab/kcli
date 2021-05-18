@@ -9,6 +9,12 @@ metadata:
 {% endif %}
 spec:
   BareMetalPlatform: true
+{% if kubevirt_featuregates %}
+  featureGates:
+  {% for featuregate in kubevirt_featuregates %}
+    {{ featuregate }}: true 
+  {% endfor %}
+{% endif %}
   infra:
     nodePlacement:
       nodeSelector:
