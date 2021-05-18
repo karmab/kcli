@@ -12,6 +12,7 @@ from netaddr import IPAddress
 from kvirt import common
 from kvirt.common import error, pprint, warning
 from kvirt.defaults import IMAGES, UBUNTUS, METADATA_FIELDS
+from requests import put
 import datetime
 import os
 import time
@@ -48,8 +49,8 @@ class Kubevirt(Kubecommon):
     """
 
     """
-    def __init__(self, token=None, ca_file=None, context=None, host='127.0.0.1', port=443, user='root', debug=False,
-                 namespace=None, cdi=True, datavolumes=False, readwritemany=False, registry=None,
+    def __init__(self, token=None, ca_file=None, context=None, host='127.0.0.1', port=6443, user='root', debug=False,
+                 namespace=None, cdi=True, datavolumes=False, disk_hotplug=False, readwritemany=False, registry=None,
                  access_mode='NodePort', volume_mode='Filesystem', volume_access='ReadWriteOnce'):
         Kubecommon.__init__(self, token=token, ca_file=ca_file, context=context, host=host, port=port,
                             namespace=namespace, readwritemany=readwritemany)
@@ -62,6 +63,18 @@ class Kubevirt(Kubecommon):
         self.volume_mode = volume_mode
         self.volume_access = volume_access
         self.cdi = cdi
+        self.disk_hotplug = disk_hotplug
+        if disk_hotplug:
+            if token is None:
+                error("Hotplug functionality requires to use a token")
+                os._exit(1)
+            elif host == '127.0.0.1':
+                error("Hotplug functionality requires to set specifically api host")
+                os._exit(1)
+            else:
+                self.host = host
+                self.disk_hotplug = True
+                self.token = token
         return
 
     def close(self):
@@ -947,15 +960,22 @@ class Kubevirt(Kubecommon):
         bound = self.pvc_bound(diskname, namespace)
         if not bound:
             return {'result': 'failure', 'reason': 'timeout waiting for pvc %s to get bound' % diskname}
-        # prepare = self.prepare_pvc(diskname, size=size)
-        # if prepare['result'] == 'failure':
-        #    reason = prepare['reason']
-        #    return {'result': 'failure', 'reason': reason}
         myvolume = {'name': diskname, 'persistentVolumeClaim': {'claimName': diskname}}
-        newdisk = {'disk': {'bus': overrides.get('interface', 'virtio')}, 'name': diskname}
-        vm['spec'][t]['spec']['domain']['devices']['disks'].append(newdisk)
-        vm['spec'][t]['spec']['volumes'].append(myvolume)
-        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
+        bus = overrides.get('interface', 'virtio')
+        if self.disk_hotplug:
+            url = "https://%s:6443/apis/subresources.kubevirt.io/v1alpha3/namespaces/%s" % (self.host, namespace)
+            url += "/virtualmachines/%s/addvolume" % name
+            bus = 'scsi'
+            data = {"name": diskname, "volumesource": myvolume, "disk": {"disk": {"bus": bus}}}
+            headers = {"Authorization": "Bearer %s" % self.token}
+            # x = put(url, json=data, headers=headers, verify=False)
+            # print(x.status_code, x.text)
+            put(url, json=data, headers=headers, verify=False)
+        else:
+            newdisk = {'disk': {'bus': bus}, 'name': diskname}
+            vm['spec'][t]['spec']['domain']['devices']['disks'].append(newdisk)
+            vm['spec'][t]['spec']['volumes'].append(myvolume)
+            crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
         return
 
     def delete_disk(self, name=None, diskname=None, pool=None, novm=False):

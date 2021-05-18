@@ -94,6 +94,7 @@ class Kconfig(Kbaseconfig):
                     if not os.path.exists(ca_file):
                         error("Ca file %s doesn't exist. Leaving" % ca_file)
                         os._exit(1)
+                disk_hotplug = self.options.get('disk_hotplug', False)
                 token = self.options.get('token')
                 token_file = self.options.get('token_file')
                 if token_file is not None:
@@ -121,9 +122,10 @@ class Kconfig(Kbaseconfig):
                     os._exit(1)
                 from kvirt.providers.kubevirt import Kubevirt
                 k = Kubevirt(context=context, token=token, ca_file=ca_file, host=self.host,
-                             port=self.port, user=self.user, debug=debug, namespace=namespace, cdi=cdi,
-                             datavolumes=datavolumes, readwritemany=readwritemany, registry=registry,
-                             access_mode=access_mode, volume_mode=volume_mode, volume_access=volume_access)
+                             port=6443, user=self.user, debug=debug, namespace=namespace, cdi=cdi,
+                             datavolumes=datavolumes, disk_hotplug=disk_hotplug, readwritemany=readwritemany,
+                             registry=registry, access_mode=access_mode, volume_mode=volume_mode,
+                             volume_access=volume_access)
                 self.host = k.host
             elif self.type == 'gcp':
                 credentials = self.options.get('credentials')
