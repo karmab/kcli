@@ -26,6 +26,8 @@ KUBEVIRTNAMESPACE = "kube-system"
 VERSION = 'v1alpha3'
 MULTUSDOMAIN = 'k8s.cni.cncf.io'
 MULTUSVERSION = 'v1'
+HDOMAIN = "harvesterhci.io"
+HVERSION = "v1beta1"
 CONTAINERDISKS = ['quay.io/kubevirt/alpine-container-disk-demo', 'quay.io/kubevirt/cirros-container-disk-demo',
                   'quay.io/karmab/debian-container-disk-demo', 'quay.io/karmab/freebsd-container-disk-demo',
                   'quay.io/kubevirt/fedora-cloud-container-disk-demo',
@@ -51,7 +53,7 @@ class Kubevirt(Kubecommon):
     """
     def __init__(self, token=None, ca_file=None, context=None, host='127.0.0.1', port=6443, user='root', debug=False,
                  namespace=None, cdi=True, datavolumes=False, disk_hotplug=False, readwritemany=False, registry=None,
-                 access_mode='NodePort', volume_mode='Filesystem', volume_access='ReadWriteOnce'):
+                 access_mode='NodePort', volume_mode='Filesystem', volume_access='ReadWriteOnce', harvester=False):
         Kubecommon.__init__(self, token=token, ca_file=ca_file, context=context, host=host, port=port,
                             namespace=namespace, readwritemany=readwritemany)
         self.crds = client.CustomObjectsApi(api_client=self.api_client)
@@ -64,6 +66,7 @@ class Kubevirt(Kubecommon):
         self.volume_access = volume_access
         self.cdi = cdi
         self.disk_hotplug = disk_hotplug
+        self.harvester = harvester
         return
 
     def close(self):
@@ -123,8 +126,16 @@ class Kubevirt(Kubecommon):
         crds = self.crds
         core = self.core
         cdi = self.cdi
+        harvester = self.harvester
         datavolumes = self.datavolumes
         namespace = self.namespace
+        if harvester:
+            images = {}
+            virtualimages = crds.list_namespaced_custom_object(HDOMAIN, HVERSION, namespace,
+                                                               'virtualmachineimages')["items"]
+            for img in virtualimages:
+                imagename = img['metadata']['name']
+                images[common.filter_compression_extension(os.path.basename(img['spec']['url']))] = imagename
         if cdi:
             allpvc = core.list_namespaced_persistent_volume_claim(namespace)
             images = {}
@@ -294,6 +305,8 @@ class Kubevirt(Kubecommon):
                 if image in CONTAINERDISKS or '/' in image:
                     containerdiskimage = "%s/%s" % (self.registry, image) if self.registry is not None else image
                     myvolume['containerDisk'] = {'image': containerdiskimage}
+                elif harvester:
+                    myvolume['dataVolume'] = {'name': diskname}
                 else:
                     if cdi and datavolumes:
                         base_image_pvc = core.read_namespaced_persistent_volume_claim(images[image], namespace)
@@ -317,7 +330,7 @@ class Kubevirt(Kubecommon):
                                                              'accessModes': [volume_access],
                                                              'resources': {'requests': {'storage': '%sGi' % disksize}}},
                    'apiVersion': 'v1', 'metadata': {'name': diskname}}
-            if image is not None and index == 0 and image not in CONTAINERDISKS and cdi:
+            if image is not None and index == 0 and image not in CONTAINERDISKS and cdi and not harvester:
                 annotation = "%s/%s" % (namespace, images[image])
                 pvc['metadata']['annotations'] = {'k8s.io/CloneRequest': annotation}
                 pvc['metadata']['labels'] = {'app': 'Host-Assisted-Cloning'}
@@ -401,6 +414,14 @@ class Kubevirt(Kubecommon):
                                                 {'requests': {'storage': '%sGi' % pvcsize}}},
                                         'source': {'pvc': {'name': images[image], 'namespace': self.namespace}}},
                                'status': {}}
+                        if harvester:
+                            dvt['kind'] = 'DataVolume'
+                            dvt['apiVersion'] = "%s/%s" % (CDIDOMAIN, CDIVERSION)
+                            dvt['metadata']['annotations']['harvesterhci.io/imageId'] = "%s/%s" % (namespace,
+                                                                                                   images[image])
+                            dvt['spec']['pvc']['storageClassName'] = "longhorn-%s" % images[image]
+                            dvt['spec']['source'] = {'blank': {}}
+                            dvt['spec']['pvc']['volumeMode'] = 'Block'
                         vm['spec']['dataVolumeTemplates'] = [dvt]
                     else:
                         core.create_namespaced_persistent_volume_claim(namespace, pvc)
@@ -600,6 +621,7 @@ class Kubevirt(Kubecommon):
         core = self.core
         crds = self.crds
         namespace = self.namespace
+        harvester = self.harvester
         crds = self.crds
         if vm is None:
             listinfo = False
@@ -621,13 +643,18 @@ class Kubevirt(Kubecommon):
         profile, plan, image = 'N/A', 'N/A', 'N/A'
         kube, kubetype = None, None
         ip = None
+        image = 'N/A'
+        if harvester and 'dataVolumeTemplates' in spec and spec['dataVolumeTemplates'] and\
+                'harvesterhci.io/imageId' in spec['dataVolumeTemplates'][0]['metadata']['annotations']:
+            image = spec['dataVolumeTemplates'][0]['metadata']['annotations']['harvesterhci.io/imageId'].split('/')[1]
         if annotations is not None:
             profile = annotations['kcli/profile'] if 'kcli/profile' in annotations else 'N/A'
             plan = annotations['kcli/plan'] if 'kcli/plan' in annotations else 'N/A'
-            image = annotations['kcli/image'] if 'kcli/image' in annotations else 'N/A'
             ip = annotations['kcli/ip'] if 'kcli/ip' in annotations else None
             kube = annotations['kcli/kube'] if 'kcli/kube' in annotations else None
             kubetype = annotations['kcli/kubetype'] if 'kcli/kubetype' in annotations else None
+            if 'kcli/image' in annotations:
+                image = annotations['kcli/image']
         host = None
         state = 'down'
         foundmacs = {}
@@ -662,8 +689,10 @@ class Kubevirt(Kubecommon):
             yamlinfo['cpus'] = numcpus
         if 'resources' in spectemplate['spec']['domain'] and 'requests' in spectemplate['spec']['domain']['resources']:
             memory = spectemplate['spec']['domain']['resources']['requests']['memory'].replace('M', '').replace('G', '')
-            memory = memory.replace('Mi', 'Mi').replace('Gi', '')
+            memory = memory.replace('Mi', 'Mi').replace('Gi', '').replace('i', '')
             memory = int(memory)
+            if harvester:
+                memory = 1024 * memory
             yamlinfo['memory'] = memory
         if image != 'N/A':
             yamlinfo['image'] = image
@@ -774,9 +803,16 @@ class Kubevirt(Kubecommon):
         core = self.core
         namespace = self.namespace
         cdi = self.cdi
+        crds = self.crds
         isos = []
         allimages = []
-        if cdi:
+        allimages = []
+        harvester = self.harvester
+        if harvester:
+            virtualimages = crds.list_namespaced_custom_object(HDOMAIN, HVERSION, namespace,
+                                                               'virtualmachineimages')["items"]
+            allimages = [os.path.basename(image['spec']['url']) for image in virtualimages]
+        elif cdi:
             pvc = core.list_namespaced_persistent_volume_claim(namespace)
             allimages = [self.get_image_name(p.metadata.annotations['cdi.kubevirt.io/storage.import.endpoint'])
                          for p in pvc.items if p.metadata.annotations is not None and
@@ -800,10 +836,7 @@ class Kubevirt(Kubecommon):
             vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        try:
-            crds.delete_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
-        except:
-            crds.delete_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
+        crds.delete_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
         pvcvolumes = [v['persistentVolumeClaim']['claimName'] for v in vm['spec']['template']['spec']['volumes'] if
                       'persistentVolumeClaim' in v]
         pvcs = [pvc for pvc in core.list_namespaced_persistent_volume_claim(namespace).items
@@ -1074,9 +1107,19 @@ class Kubevirt(Kubecommon):
         return
 
     def delete_image(self, image, pool=None):
-        pprint("Deleting image %s" % image)
         core = self.core
-        if self.cdi:
+        crds = self.crds
+        harvester = self.harvester
+        if harvester:
+            virtualimages = crds.list_namespaced_custom_object(HDOMAIN, HVERSION, self.namespace,
+                                                               'virtualmachineimages')["items"]
+            images = [img['metadata']['name'] for img in virtualimages if
+                      os.path.basename(img['spec']['url']) == image]
+            if images:
+                crds.delete_namespaced_custom_object(HDOMAIN, HVERSION, self.namespace, 'virtualmachineimages',
+                                                     images[0])
+                return {'result': 'success'}
+        elif self.cdi:
             pvc = core.list_namespaced_persistent_volume_claim(self.namespace)
             images = [p.metadata.name for p in pvc.items if p.metadata.annotations is not None and
                       'cdi.kubevirt.io/storage.import.endpoint' in p.metadata.annotations and
@@ -1101,15 +1144,23 @@ class Kubevirt(Kubecommon):
             if self.cdi:
                 warning("Setting size of image to %sG. This will be the size of primary disks using this" % size)
         core = self.core
+        crds = self.crds
         pool = self.check_pool(pool)
         namespace = self.namespace
         cdi = self.cdi
+        harvester = self.harvester
         shortimage = os.path.basename(url).split('?')[0]
         uncompressed = shortimage.replace('.gz', '').replace('.xz', '').replace('.bz2', '')
         if name is None:
             volname = [k for k in IMAGES if IMAGES[k] == url][0]
         else:
             volname = name.replace('_', '-').replace('.', '-').lower()
+        if harvester:
+            virtualmachineimage = {'kind': 'VirtualMachineImage', 'spec': {'url': url, "displayName": uncompressed},
+                                   'apiVersion': '%s/%s' % (HDOMAIN, HVERSION), 'metadata': {'name': volname}}
+            crds.create_namespaced_custom_object(HDOMAIN, HVERSION, self.namespace, 'virtualmachineimages',
+                                                 virtualmachineimage)
+            return {'result': 'success'}
         now = datetime.datetime.now().strftime("%Y%M%d%H%M")
         podname = '%s-%s-importer' % (now, volname)
         pvc = {'kind': 'PersistentVolumeClaim', 'spec': {'storageClassName': pool,

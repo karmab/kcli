@@ -120,12 +120,13 @@ class Kconfig(Kbaseconfig):
                     msg = "Incorrect volume_access %s. Should be ReadWriteOnce or ReadWriteOnce" % volume_access
                     error(msg)
                     os._exit(1)
+                harvester = self.options.get('harvester', False)
                 from kvirt.providers.kubevirt import Kubevirt
                 k = Kubevirt(context=context, token=token, ca_file=ca_file, host=self.host,
                              port=6443, user=self.user, debug=debug, namespace=namespace, cdi=cdi,
                              datavolumes=datavolumes, disk_hotplug=disk_hotplug, readwritemany=readwritemany,
                              registry=registry, access_mode=access_mode, volume_mode=volume_mode,
-                             volume_access=volume_access)
+                             volume_access=volume_access, harvester=harvester)
                 self.host = k.host
             elif self.type == 'gcp':
                 credentials = self.options.get('credentials')
