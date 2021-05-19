@@ -136,7 +136,7 @@ class Kubevirt(Kubecommon):
             for img in virtualimages:
                 imagename = img['metadata']['name']
                 images[common.filter_compression_extension(os.path.basename(img['spec']['url']))] = imagename
-        if cdi:
+        elif cdi:
             allpvc = core.list_namespaced_persistent_volume_claim(namespace)
             images = {}
             for p in core.list_namespaced_persistent_volume_claim(namespace).items:
