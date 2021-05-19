@@ -604,7 +604,7 @@ class Kbaseconfig:
                 print("|Parameter%s|Default Value%s|" % (" " * (maxkey - len("Parameter")),
                                                          " " * (maxvalue - len("Default Value"))))
                 print("|%s|%s|" % ("-" * maxkey, "-" * maxvalue))
-            for parameter in parameters:
+            for parameter in sorted(parameters):
                 if doc:
                     print("|%s%s|%s%s|" % (parameter, " " * (maxkey - len(parameter)),
                                            parameters[parameter], " " * (maxvalue - len(str(parameters[parameter])))))
