@@ -7,7 +7,7 @@ apt-get -y install curl
 curl -sfL https://get.k3s.io | {{ "INSTALL_K3S_EXEC='--flannel-backend=none'" if sdn != "flannel" else '' }} INSTALL_K3S_CHANNEL={{ install_k3s_channel }} INSTALL_K3S_VERSION={{ install_k3s_version if install_k3s_version != "latest" else '' }} K3S_TOKEN={{ token }} sh -s - server --cluster-init {{ extra_args|join(" ") }}
 export IP={{ api_ip }}
 {% else %}
-curl -sfL https://get.k3s.io | {{ "INSTALL_K3S_EXEC='--flannel-backend=none'" if sdn != "flannel" else '' }} INSTALL_K3S_CHANNEL={{ install_k3s_channel }} INSTALL_K3S_VERSION={{ install_k3s_version if install_k3s_version != "latest" else '' }} sh -s - server {{ extra_args|join(" ") }}
+curl -sfL https://get.k3s.io | {{ "INSTALL_K3S_EXEC='--flannel-backend=none'" if sdn != "flannel" else '' }} INSTALL_K3S_CHANNEL={{ install_k3s_channel }} INSTALL_K3S_VERSION={{ install_k3s_version if install_k3s_version != "latest" else '' }} K3S_TOKEN={{ token }} sh -s - server {{ extra_args|join(" ") }}
 export IP=$(hostname -I | cut -f1 -d" ")
 {% endif %}
 export K3S_TOKEN=$(cat /var/lib/rancher/k3s/server/node-token)
