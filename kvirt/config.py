@@ -297,7 +297,8 @@ class Kconfig(Kbaseconfig):
         self.overrides.update(config_data)
 
     def create_vm(self, name, profile, overrides={}, customprofile={}, k=None,
-                  plan='kvirt', basedir='.', client=None, onfly=None, wait=False, onlyassets=False):
+                  plan='kvirt', basedir='.', client=None, onfly=None, wait=False,
+                  onlyassets=False, cluster=None):
         """
 
         :param k:
@@ -652,13 +653,23 @@ class Kconfig(Kbaseconfig):
                         os.makedirs(destdir, exist_ok=True)
                     common.fetch("%s/%s" % (onfly, script), destdir)
                 script = os.path.expanduser(script)
-                if basedir != '.':
+                if basedir != '.' and not script.endswith('join.sh'):
                     script = '%s/%s' % (basedir, script)
+                else:
+                    # To support defining cmds in VM rules, in KCLI plan files, when deploying K3s.
+                    # When deploying K3s the join.sh script is generated on the fly
+                    # & contains K3s cluster join info.
+                    # This in comparison to using the `scripts` claus in the workers.yml file
+                    #if script.endswith('join.sh'):
+                    script = os.path.expanduser("~/.kcli/clusters/%s/%s" % (cluster, scriptname))
+                
+                # Final conditionals before templating the lines of the script into cloud-init runcmd 
                 if script.endswith('register.sh') and skip_rhnregister_script:
                     continue
                 elif not os.path.exists(script):
                     return {'result': 'failure', 'reason': "Script %s not found" % script}
                 else:
+                    # Templating the scriptlines into cloud-init runcmd values
                     scriptbasedir = os.path.dirname(script) if os.path.dirname(script) != '' else '.'
                     env = Environment(loader=FileSystemLoader(scriptbasedir), undefined=undefined,
                                       extensions=['jinja2.ext.do'], trim_blocks=True, lstrip_blocks=True)
@@ -1261,7 +1272,7 @@ $INFO
 
     def plan(self, plan, ansible=False, url=None, path=None, container=False, inputfile=None, inputstring=None,
              overrides={}, info=False, update=False, embedded=False, download=False, quiet=False, doc=False,
-             onlyassets=False, pre=True):
+             onlyassets=False, pre=True, cluster=None):
         """Manage plan file"""
         k = self.k
         no_overrides = not overrides
@@ -1553,7 +1564,7 @@ $INFO
                     continue
         if vmentries:
             if not onlyassets:
-                pprint("Deploying Vms...")
+                pprint("Deploying VM's...")
             vmcounter = 0
             hosts = {}
             vms_to_host = {}
@@ -1765,7 +1776,7 @@ $INFO
                         currentoverrides['image'] = profile['image']
                 result = self.create_vm(name, profilename, overrides=currentoverrides, customprofile=profile, k=z,
                                         plan=plan, basedir=currentplandir, client=vmclient, onfly=onfly,
-                                        onlyassets=onlyassets)
+                                        onlyassets=onlyassets, cluster=cluster)
                 if not onlyassets:
                     common.handle_response(result, name, client=vmclient)
                 if result['result'] == 'success':
