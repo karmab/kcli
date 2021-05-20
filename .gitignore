@@ -1,18 +1,22 @@
+# Folder to ignore
 build/
-*.egg
-*.eggs
-*.egg-info
-*.pyc
-dist
 build
-eggs
-*pyc
-*.key
-*.key.pub
-*retry
-*wiki
-prout.yml
-.DS_Store
 .cache/
+dist
+.DS_Store
+eggs
 kvirt/static/reports/*
 venv*
+
+# Files to ignore
+*.egg
+*.egg-info
+*.eggs
+*pyc
+*.pyc
+*.key
+*.key.pub
+kubectl
+prout.yml
+*retry
+*wiki

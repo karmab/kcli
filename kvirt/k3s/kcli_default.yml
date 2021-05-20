@@ -1,48 +1,51 @@
 info: |
-    Deploys the k3s kubernetes distrobution using an arbitrary number of masters and workers.
+    Deploys the K3s kubernetes distrobution using an arbitrary number of masters and workers.
     Specific components can be disabled by using the array disabled_components.
     install_k3s_channel defaults to stable, although latest or testing can also be selected.
     With install_k3s_version you can specify a specific version relative to the install/release
     k3s channel. Defaults to latest.
-masters: 1
-workers: 0
-sdn: flannel
+    With k3s_extra_args_all & k3s_extra_args_workers you can define all the options available for customizing
+    the install of K3s. E.g. --disable, --tls-san and so forth.
 api_ip:
-install_k3s_channel: stable
-install_k3s_version: latest
-pool: default
-image: ubuntu2004
-network: default
 cluster: testk
-domain: karmalabs.com
-token: supersecret
-numcpus: 2
-worker_numcpus:
-master_numcpus:
-memory: 1024
-master_memory:
-worker_memory:
-master_tpm: false
-master_rng: false
-disk_size: 10
-worker_tpm: false
-worker_rng: false
-notifycmd: "kubectl get pod -A"
-notify: false
-numa:
-numa_master:
-numa_worker:
-numamode:
-numamode_master:
-numamode_worker:
 cpupinning:
 cpupinning_master:
 cpupinning_worker:
-kubevirt_disk_size:
+disk_size: 10
 extra_disks: []
 extra_master_disks: []
 extra_worker_disks: []
 extra_networks: []
 extra_master_networks: []
 extra_worker_networks: []
-disabled_components: []
+domain: karmalabs.com
+image: ubuntu2004
+install_k3s_channel: stable
+install_k3s_version: latest
+k3s_extra_args_all: []
+k3s_extra_args_masters: []
+k3s_extra_args_workers: []
+kubevirt_disk_size:
+master_memory:
+master_numcpus:
+master_rng: false
+master_tpm: false
+masters: 1
+memory: 1024
+network: default
+notify: false
+notifycmd: "kubectl get pod -A"
+numa:
+numa_master:
+numa_worker:
+numamode:
+numamode_master:
+numamode_worker:
+numcpus: 2
+pool: default
+token: supersecret
+worker_memory:
+worker_numcpus:
+worker_rng: false
+worker_tpm: false
+workers: 0

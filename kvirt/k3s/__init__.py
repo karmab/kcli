@@ -51,6 +51,7 @@ def create(config, plandir, cluster, overrides):
     network = data.get('network', 'default')
     token = data.get('token', 'supersecret')
     api_ip = data.get('api_ip')
+    k3s_extra_args_workers = data.get('k3s_extra_args_workers')
     if masters > 1:
         if platform in cloudplatforms:
             domain = data.get('domain', 'karmalabs.com')
@@ -74,8 +75,14 @@ def create(config, plandir, cluster, overrides):
                 os._exit(1)
     install_k3s_channel = data.get('install_k3s_channel', 'stable')
     if install_k3s_channel not in ['stable', 'latest', 'testing']:
-        error("Invalid K3S install channel %s" % install_k3s_channel)
+        error("Invalid K3s install channel %s" % install_k3s_channel)
         os._exit(1)
+    install_k3s_version = data.get('install_k3s_version', 'latest')
+    if install_k3s_version == 'latest':
+        # As the install_k3s_version & install_k3s_channel env. vars offset each other
+        # install_k3s_version needs to be an empty string == you'll get the latest version
+        # of k3s on the channel specified in install_k3s_channel
+        install_k3s_version = ''
     data['basedir'] = '/workdir' if os.path.exists("/i_am_a_container") else '.'
     cluster = data.get('cluster')
     clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
@@ -105,25 +112,39 @@ def create(config, plandir, cluster, overrides):
             del data['name']
         config.plan(plan, inputfile='%s/masters.yml' % plandir, overrides=data)
     firstmasterip, firstmastervmport = _ssh_credentials(k, firstmaster)[1:]
-    with open("%s/join.sh" % clusterdir, 'w') as f:
-        if api_ip is None:
-            api_ip = k.info(firstmaster)['ip']
-        joincmd = "curl -sfL https://get.k3s.io | K3S_URL=https://%s:6443 K3S_TOKEN=%s" % (api_ip, token)
-        if data['sdn'] != "flannel":
-            joincmd += " INSTALL_K3S_EXEC='--no-flannel'"
-        f.write("%s sh -\n" % joincmd)
+    ################
+    # WORKER SETUP #
+    ################
+    workers = data.get('workers', 0)
+    if workers > 0:
+        # Create the bash script used for the worker joining process
+        with open("%s/join.sh" % clusterdir, 'w') as f:
+            if api_ip is None:
+                api_ip = k.info(firstmaster)['ip']
+            extra_args = []
+            for component in k3s_extra_args_workers:
+                extra_args.append(component)
+            joined_k3s_extra_args_workers = " ".join(extra_args)
+            joincmd = "curl -sfL https://get.k3s.io | INSTALL_K3S_CHANNEL=%s INSTALL_K3S_VERSION=%s K3S_URL=https://%s:6443 K3S_TOKEN=%s sh -s - agent %s" % (install_k3s_channel, install_k3s_version, api_ip, token, joined_k3s_extra_args_workers)
+            f.write("apt-get -y install curl \n")
+            f.write("%s \n" % joincmd)
+            f.write("apt-get -y remove curl \n")
+        
+        # Deploy the workers
+        pprint("Deploying workers")
+        if 'name' in data:
+            del data['name']
+        os.chdir(os.path.expanduser("~/.kcli"))
+        config.plan(plan, inputfile='%s/workers.yml' % plandir, overrides=data, cluster=cluster)
+
+    #########
+    # Final #
+    #########
     source, destination = "/root/kubeconfig", "%s/auth/kubeconfig" % clusterdir
     scpcmd = scp(firstmaster, ip=firstmasterip, user='root', source=source, destination=destination,
                  tunnel=config.tunnel, tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
                  tunneluser=config.tunneluser, download=True, insecure=True, vmport=firstmastervmport)
     os.system(scpcmd)
-    workers = data.get('workers', 0)
-    if workers > 0:
-        pprint("Deploying workers")
-        if 'name' in data:
-            del data['name']
-        os.chdir(os.path.expanduser("~/.kcli"))
-        config.plan(plan, inputfile='%s/workers.yml' % plandir, overrides=data)
     success("K3s cluster %s deployed!!!" % cluster)
     info2("export KUBECONFIG=$HOME/.kcli/clusters/%s/auth/kubeconfig" % cluster)
     info2("export PATH=$PWD:$PATH")
