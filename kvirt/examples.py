@@ -124,6 +124,9 @@ $ kcli create vm -i centos8 -P disks=['{"size": 10, "interface": "sata"}']
 
 # Create a vm from a custom profile
 $ kcli create vm -p myprofile myvm
+
+# Boot an empty vm from a given iso
+$ kcli create vm -P iso=xxx.iso myvm
 """
 
 vmconsole = """# Open a graphical console for vm ( only shows the command if using container)
@@ -134,7 +137,7 @@ $ kcli console -s myvm
 """
 
 vmexport = """# Export vm myvm with a specific name for the generated image
-$ kcli export -i myimage vmyvm
+$ kcli export -i myimage myvm
 """
 
 kubegenericcreate = """# Create a kube instance named mykube with default values
