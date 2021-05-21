@@ -251,11 +251,9 @@ class Kvirt(object):
         for n in allnetworks:
             if allnetworks[n]['type'] == 'bridged':
                 bridges.append(n)
-            elif isinstance(allnetworks[n]['cidr'], str):
-                networks.append(n)
-            elif ':' not in str(allnetworks[n]['cidr'].cidr):
-                networks.append(n)
             else:
+                networks.append(n)
+            if ':' in str(allnetworks[n]['cidr'].cidr):
                 ipv6networks.append(n)
         ipv6 = []
         machine = 'pc'
@@ -517,12 +515,10 @@ class Kvirt(object):
                     dnscmdhost = dns if dns is not None else self.host
                     dnscmd = "sed -i 's/nameserver .*/nameserver %s/' /etc/resolv.conf" % dnscmdhost
                     cmds = cmds[:index] + [dnscmd] + cmds[index:]
-            elif netname in ipv6networks:
-                iftype = 'network'
-                sourcexml = "<source network='%s'/>" % netname
-                ipv6.append(netname)
             else:
                 return {'result': 'failure', 'reason': "Invalid network %s" % netname}
+            if netname in ipv6networks:
+                ipv6.append(netname)
             if ovs:
                 ovsxml = "<virtualport type='openvswitch'/>{}"
                 if "port_name" in nets[index] and nets[index]["port_name"]:
