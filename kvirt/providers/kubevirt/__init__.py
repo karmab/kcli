@@ -733,7 +733,7 @@ class Kubevirt(Kubecommon):
                     error("pvc %s not found. That can't be good" % pvcname)
                     pvc = 'N/A'
                     size = "0"
-                if 'Mi' in size:
+                if 'Mi' in str(size):
                     size = int(size.replace('Mi', '')) / 1024
                 else:
                     size = int(size)
