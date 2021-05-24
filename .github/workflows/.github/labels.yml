@@ -1,0 +1,16 @@
+# Add 'repo' label to any root file changes
+kcli:
+  - ./*
+
+documentation:
+  - docs/**/*
+
+actions:
+  - .github/**/*
+
+extras:
+  - extras/**/*
+
+
+kcli:
+  - kvirt/**/*

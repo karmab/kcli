@@ -1,0 +1,17 @@
+name: Update Semver
+on:
+  push:
+    tags:
+      - '*.*.*'
+  release:
+     types:
+       - published
+
+jobs:
+  update-semver:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.3.4
+      - uses: haya14busa/action-update-semver@v1.2.1
+        with:
+          major_version_tag_only: false  # (optional, default is "false")
