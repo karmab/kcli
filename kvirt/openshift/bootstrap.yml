@@ -25,9 +25,11 @@
  disks:
   - size: {{ disk_size }}
  files:
+{% if not metal3 %}
   - path: /etc/NetworkManager/dispatcher.d/99-forcedns
     origin: 99-forcedns
     mode: 755
+{% endif %}
   - path: /etc/kubernetes/manifests/coredns.yml
     origin: staticpods/coredns.yml
   - path: /etc/kubernetes/Corefile

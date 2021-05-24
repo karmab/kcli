@@ -3,7 +3,7 @@
 {% set cluster_network_ipv4 = {"cidr": "10.132.0.0/14", "hostPrefix": 23} %}
 {% set service_network_ipv6 = ["fd02::/112"] %}
 {% set service_network_ipv4 = ["172.30.0.0/16"] %}
-{% set machine_cidr_ipv4 = [{{ baremetal_cidr if metal3 else "10.0.0.0/16" }}] %}
+{% set machine_cidr_ipv4 = [baremetal_cidr if metal3 else "10.0.0.0/16"] %}
 {% set machine_cidr_ipv6 = ["fc00::/48"] %}
 {% if dualstack|default(False) %}
 {% set machine_cidrs = machine_cidr_ipv4 + machine_cidr_ipv6 %}
@@ -71,9 +71,8 @@ platform:
     defaultDatastore: {{ config_pool }}
 {%- elif metal3 %}
   baremetal:
-    apiVIP: 10.0.0.254
-    dnsVIP: 10.0.0.254
-    ingressVIP: 10.0.0.254
+    apiVIP: {{ api_ip }}
+    ingressVIP: {{ api_ip }}
     provisioningNetwork: "Disabled"
     hosts:
 {% for num in range(0, masters) %}

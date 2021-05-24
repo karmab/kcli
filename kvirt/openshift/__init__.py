@@ -6,6 +6,7 @@ from glob import glob
 import json
 import os
 import sys
+from ipaddress import ip_address, ip_network
 from kvirt.common import error, pprint, success, warning, info2
 from kvirt.common import gen_mac, get_oc, get_values, pwd_path, fetch
 from kvirt.common import get_commit_rhcos, get_latest_fcos, kube_create_app, patch_bootstrap, generate_rhcos_iso
@@ -372,9 +373,6 @@ def create(config, plandir, cluster, overrides):
     helper_image = data.get('helper_image')
     image = data.get('image')
     api_ip = data.get('api_ip')
-    if metal3 and 'baremetal_cidr' not in data:
-        error("You need to define baremetal_cidr in your parameters file for metal3")
-        os._exit(1)
     if platform in virtplatforms and not sno and api_ip is None:
         if network == 'default' and platform == 'kvm':
             warning("Using 192.168.122.253 as api_ip")
@@ -382,6 +380,13 @@ def create(config, plandir, cluster, overrides):
             api_ip = "192.168.122.253"
         else:
             error("You need to define api_ip in your parameters file")
+            os._exit(1)
+    if metal3:
+        if 'baremetal_cidr' not in data:
+            error("You need to define baremetal_cidr in your parameters file for metal3")
+            os._exit(1)
+        elif not ip_address(api_ip) in ip_network(data['baremetal_cidr']):
+            error("api_ip doesn't belong to your baremetal_cidr")
             os._exit(1)
     if not sno and ':' in api_ip:
         ipv6 = True
