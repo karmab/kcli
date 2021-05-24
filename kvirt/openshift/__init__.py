@@ -357,6 +357,7 @@ def create(config, plandir, cluster, overrides):
     disconnected_prefix = data.get('disconnected_prefix', 'ocp4')
     dualstack = data.get('dualstack')
     upstream = data.get('upstream')
+    metal3 = data.get('metal3')
     version = data.get('version')
     tag = data.get('tag')
     if os.path.exists('openshift-install'):
@@ -611,10 +612,10 @@ def create(config, plandir, cluster, overrides):
             f.write(cvo_override)
     if ipv6:
         for role in ['master', 'worker']:
-            blacklist = config.process_inputfile(cluster, "%s/99-blacklist-ipi.yaml" % plandir,
-                                                 overrides={'role': role})
-            with open("%s/openshift/99-blacklist-ipi-%s.yaml" % (clusterdir, role), 'w') as f:
-                f.write(blacklist)
+            nodeip = config.process_inputfile(cluster, "%s/99-blacklist-nodeip.yaml" % plandir,
+                                              overrides={'role': role})
+            with open("%s/openshift/99-blacklist-nodeip-%s.yaml" % (clusterdir, role), 'w') as f:
+                f.write(nodeip)
     ntp_server = data.get('ntp_server')
     if ntp_server is not None:
         ntp_data = config.process_inputfile(cluster, "%s/chrony.conf" % plandir, overrides={'ntp_server': ntp_server})
@@ -632,6 +633,11 @@ def create(config, plandir, cluster, overrides):
                 f.write(ingressconfig)
         else:
             copy2(f, "%s/openshift" % clusterdir)
+    if metal3:
+        for f in glob("%s/openshift/99_openshift-cluster-api_master-machines-*.yaml" % clusterdir):
+            os.remove(f)
+        for f in glob("%s/openshift/99_openshift-cluster-api_worker-machineset-*.yaml" % clusterdir):
+            os.remove(f)
     manifestsdir = pwd_path("manifests")
     if os.path.exists(manifestsdir) and os.path.isdir(manifestsdir):
         for f in glob("%s/*.yaml" % manifestsdir):

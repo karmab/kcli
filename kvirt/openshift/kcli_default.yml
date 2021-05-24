@@ -101,3 +101,4 @@ sno: false
 sno_virtual: false
 sno_disk:
 sno_dns: true
+metal3: False

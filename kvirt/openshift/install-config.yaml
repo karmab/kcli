@@ -69,6 +69,20 @@ platform:
     password: {{ config_password }}
     datacenter: {{ config_datacenter }}
     defaultDatastore: {{ config_pool }}
+{%- elif metal3 %}
+  baremetal:
+    apiVIP: {{ api_ip }}
+    dnsVIP: {{ api_ip }}
+    ingressVIP: {{ api_ip }}
+    provisioningNetwork: "Disabled"
+    hosts:
+    - name: fake-0
+      role: master
+      bmc:
+        address: ipmi://192.168.125.254:6230
+        username: xxx
+        password: xxx
+      bootMACAddress: aa:bb:cc:dd:aa:01
 {% else %} 
   none: {}
 {% endif %}
