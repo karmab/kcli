@@ -253,7 +253,7 @@ class Kvirt(object):
                 bridges.append(n)
             else:
                 networks.append(n)
-            if ':' in str(allnetworks[n]['cidr'].cidr):
+            if not isinstance(allnetworks[n]['cidr'], str) and ':' in str(allnetworks[n]['cidr'].cidr):
                 ipv6networks.append(n)
         ipv6 = []
         machine = 'pc'
