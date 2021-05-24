@@ -3,7 +3,7 @@
 {% set cluster_network_ipv4 = {"cidr": "10.132.0.0/14", "hostPrefix": 23} %}
 {% set service_network_ipv6 = ["fd02::/112"] %}
 {% set service_network_ipv4 = ["172.30.0.0/16"] %}
-{% set machine_cidr_ipv4 = ["10.0.0.0/16"] %}
+{% set machine_cidr_ipv4 = [{{ baremetal_cidr if metal3 else "10.0.0.0/16" }}] %}
 {% set machine_cidr_ipv6 = ["fc00::/48"] %}
 {% if dualstack|default(False) %}
 {% set machine_cidrs = machine_cidr_ipv4 + machine_cidr_ipv6 %}
@@ -46,7 +46,7 @@ metadata:
   name: {{ cluster }}
 networking:
   networkType: {{ network_type }}
-{% if network_type == 'OVNKubernetes' %}
+{% if network_type == 'OVNKubernetes' or metal3 %}
   machineNetwork:
 {% for cidr in machine_cidrs %}
   - cidr: {{ cidr }}

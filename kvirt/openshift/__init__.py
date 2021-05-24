@@ -372,6 +372,9 @@ def create(config, plandir, cluster, overrides):
     helper_image = data.get('helper_image')
     image = data.get('image')
     api_ip = data.get('api_ip')
+    if metal3 and 'baremetal_cidr' not in data:
+        error("You need to define baremetal_cidr in your parameters file for metal3")
+        os._exit(1)
     if platform in virtplatforms and not sno and api_ip is None:
         if network == 'default' and platform == 'kvm':
             warning("Using 192.168.122.253 as api_ip")
