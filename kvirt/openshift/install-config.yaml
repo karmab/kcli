@@ -71,18 +71,29 @@ platform:
     defaultDatastore: {{ config_pool }}
 {%- elif metal3 %}
   baremetal:
-    apiVIP: {{ api_ip }}
-    dnsVIP: {{ api_ip }}
-    ingressVIP: {{ api_ip }}
+    apiVIP: 10.0.0.254
+    dnsVIP: 10.0.0.254
+    ingressVIP: 10.0.0.254
     provisioningNetwork: "Disabled"
     hosts:
-    - name: fake-0
+{% for num in range(0, masters) %}
+    - name: fake-master-{{ num }}
       role: master
       bmc:
-        address: ipmi://192.168.125.254:6230
+        address: ipmi://192.168.125.{{ 254 - num }}:6230
         username: xxx
         password: xxx
-      bootMACAddress: aa:bb:cc:dd:aa:01
+      bootMACAddress: aa:bb:cc:dd:aa:{{ "%02.d"|format(num + 1) }}
+{% endfor %}
+{% for num in range(0, workers) %}
+    - name: fake-worker-{{ num }}
+      role: worker
+      bmc:
+        address: ipmi://192.168.115.{{ 254 - num }}:6230
+        username: xxx
+        password: xxx
+      bootMACAddress: aa:bb:cc:dd:bb:{{ "%02.d"|format(num + 1) }}
+{% endfor %}
 {% else %} 
   none: {}
 {% endif %}
