@@ -4,7 +4,7 @@
 {% set service_network_ipv6 = ["fd02::/112"] %}
 {% set service_network_ipv4 = ["172.30.0.0/16"] %}
 {% set machine_cidr_ipv4 = [baremetal_cidr if metal3 else "10.0.0.0/16"] %}
-{% set machine_cidr_ipv6 = ["fc00::/48"] %}
+{% set machine_cidr_ipv6 = [baremetal_cidr if metal3 else "fc00::/48"] %}
 {% if dualstack|default(False) %}
 {% set machine_cidrs = machine_cidr_ipv4 + machine_cidr_ipv6 %}
 {% set cluster_networks = [cluster_network_ipv4] + [cluster_network_ipv6] %}
