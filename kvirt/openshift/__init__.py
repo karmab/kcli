@@ -457,12 +457,12 @@ def create(config, plandir, cluster, overrides):
         os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = tag
         pprint("Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to %s" % tag)
     if find_executable('openshift-install') is None:
-        if version == 'ci':
+        if upstream:
+            run = get_upstream_installer(tag=tag)
+        elif version == 'ci':
             run = get_ci_installer(pull_secret, tag=tag, upstream=upstream)
         elif version == 'nightly':
             run = get_downstream_installer(nightly=True, tag=tag)
-        elif upstream:
-            run = get_upstream_installer(tag=tag)
         else:
             run = get_downstream_installer(tag=tag)
         if run != 0:
