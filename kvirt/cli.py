@@ -12,7 +12,7 @@ from kvirt.examples import disconnectercreate
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
 from kvirt import version
-from kvirt.defaults import IMAGES, VERSION
+from kvirt.defaults import IMAGES, VERSION, LOCAL_OPENSHIFT_APPS
 from prettytable import PrettyTable
 import argcomplete
 import argparse
@@ -862,12 +862,16 @@ def create_app_openshift(args):
     overrides['openshift_version'] = OPENSHIFT_VERSION
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     for app in apps:
-        name, source, channel, csv, description, namespace, crd = common.olm_app(app)
-        if name is None:
-            error("Couldn't find any app matching %s. Skipping..." % app)
-            continue
+        if app in LOCAL_OPENSHIFT_APPS:
+            name = app
+        else:
+            name, source, channel, csv, description, namespace, crd = common.olm_app(app)
+            if name is None:
+                error("Couldn't find any app matching %s. Skipping..." % app)
+                continue
+            app_data = {'name': name, 'source': source, 'channel': channel, 'csv': csv, 'namespace': namespace,
+                        'crd': crd}
         pprint("Adding app %s" % name)
-        app_data = {'name': name, 'source': source, 'channel': channel, 'csv': csv, 'namespace': namespace, 'crd': crd}
         overrides.update(app_data)
         baseconfig.create_app_openshift(name, overrides, outputdir=outputdir)
 
@@ -911,12 +915,16 @@ def delete_app_openshift(args):
     overrides['openshift_version'] = OPENSHIFT_VERSION
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     for app in apps:
-        name, source, channel, csv, description, namespace, crd = common.olm_app(app)
-        if name is None:
-            error("Couldn't find any app matching %s. Skipping..." % app)
-            continue
+        if app in LOCAL_OPENSHIFT_APPS:
+            name = app
+        else:
+            name, source, channel, csv, description, namespace, crd = common.olm_app(app)
+            if name is None:
+                error("Couldn't find any app matching %s. Skipping..." % app)
+                continue
+            app_data = {'name': name, 'source': source, 'channel': channel, 'csv': csv, 'namespace': namespace,
+                        'crd': crd}
         pprint("Deleting app %s" % name)
-        app_data = {'name': name, 'source': source, 'channel': channel, 'csv': csv, 'namespace': namespace, 'crd': crd}
         overrides.update(app_data)
         baseconfig.delete_app_openshift(app, overrides)
 

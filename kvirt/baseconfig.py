@@ -17,7 +17,8 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             NOTIFYSCRIPT, SLACKTOKEN, NOTIFYCMD, NOTIFYMETHODS, SLACKCHANNEL, SHAREDFOLDERS, KERNEL,
                             INITRD, CMDLINE, PLACEMENT, YAMLINVENTORY, CPUHOTPLUG, MEMORYHOTPLUG, CPUFLAGS, CPUPINNING,
                             NUMAMODE, NUMA, PCIDEVICES, VIRTTYPE, MAILSERVER, MAILFROM, MAILTO, TPM, JENKINSMODE, RNG,
-                            ZEROTIER_NETS, ZEROTIER_KUBELET, VMPORT, VMUSER, VMRULES, CACHE, SECURITYGROUPS)
+                            ZEROTIER_NETS, ZEROTIER_KUBELET, VMPORT, VMUSER, VMRULES, CACHE, SECURITYGROUPS,
+                            LOCAL_OPENSHIFT_APPS)
 from kvirt import common
 from kvirt.common import error, pprint, warning
 from kvirt.jinjafilters import jinjafilters
@@ -1070,7 +1071,7 @@ class Kbaseconfig:
 
     def create_app_openshift(self, app, overrides={}, outputdir=None):
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
-        if app in ['argocd', 'istio', 'katacontainer', 'users']:
+        if app in LOCAL_OPENSHIFT_APPS:
             appdir = "%s/apps/%s" % (plandir, app)
             common.kube_create_app(self, appdir, overrides=overrides, outputdir=outputdir)
         else:
@@ -1079,7 +1080,7 @@ class Kbaseconfig:
 
     def delete_app_openshift(self, app, overrides={}):
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
-        if app in ['argocd', 'istio', 'katacontainer', 'users']:
+        if app in LOCAL_OPENSHIFT_APPS:
             appdir = "%s/apps/%s" % (plandir, app)
             common.kube_delete_app(self, appdir, overrides=overrides)
         else:
@@ -1088,7 +1089,7 @@ class Kbaseconfig:
 
     def info_app_openshift(self, app):
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
-        if app not in ['argocd', 'istio', 'katacontainer', 'users']:
+        if app not in LOCAL_OPENSHIFT_APPS:
             name, source, defaultchannel, csv, description, target_namespace, crd = common.olm_app(app)
             if name is None:
                 error("Couldn't find any app matching %s" % app)

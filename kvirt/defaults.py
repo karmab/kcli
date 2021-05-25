@@ -195,3 +195,4 @@ METADATA_FIELDS = ['dnsclient', 'domain', 'image', 'kube', 'kubetype', 'loadbala
 VMRULES = []
 CACHE = False
 SECURITYGROUPS = []
+LOCAL_OPENSHIFT_APPS = ['argocd', 'istio', 'katacontainer', 'users']
