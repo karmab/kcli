@@ -8,7 +8,8 @@
  keys: {{ keys }}
  memory: {{ memory }}
  nets:
- - {{ network }}
+ - name: {{ network }}
+   ipv6: {{ disconnected_ipv6_network }}
  - default
  disks:
  - {{ disconnected_disk_size }}
