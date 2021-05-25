@@ -47,12 +47,11 @@
  zerotier_nets: {{ zerotier_nets }}
  zerotier_kubelet: {{ zerotier_kubelet }}
  disks: {{ [disk_size] + extra_disks }}
- files:
 {% if not metal3 %}
+ files:
   - path: /etc/NetworkManager/dispatcher.d/99-forcedns
     origin: 99-forcedns
     mode: 755
-{% endif %}
   - path: /etc/kubernetes/manifests/coredns.yml
     origin: staticpods/coredns.yml
   - path: /etc/kubernetes/Corefile
@@ -62,6 +61,7 @@
     origin: staticpods/mdns.yml
   - path: /etc/kubernetes/config.hcl.templ
     origin: config.hcl.templ
+{% endif %}
 {% endif %}
 {% if numa != None %}
  numa: {{ numa }}

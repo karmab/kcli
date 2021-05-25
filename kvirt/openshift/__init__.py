@@ -650,11 +650,11 @@ def create(config, plandir, cluster, overrides):
             os.remove(f)
         for f in glob("%s/openshift/99_openshift-cluster-api_host-bmc-secrets-*.yaml" % clusterdir):
             os.remove(f)
-        for role in ['master', 'worker']:
-            blacklist = config.process_inputfile(cluster, "%s/99-blacklist-ipi.yaml" % plandir,
-                                                 overrides={'role': role})
-            with open("%s/openshift/99-blacklist-ipi-%s.yaml" % (clusterdir, role), 'w') as f:
-                f.write(blacklist)
+        # for role in ['master', 'worker']:
+        #    blacklist = config.process_inputfile(cluster, "%s/99-blacklist-ipi.yaml" % plandir,
+        #                                         overrides={'role': role})
+        #    with open("%s/openshift/99-blacklist-ipi-%s.yaml" % (clusterdir, role), 'w') as f:
+        #        f.write(blacklist)
     manifestsdir = pwd_path("manifests")
     if os.path.exists(manifestsdir) and os.path.isdir(manifestsdir):
         for f in glob("%s/*.yaml" % manifestsdir):

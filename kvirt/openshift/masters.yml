@@ -47,7 +47,6 @@
   - path: /etc/NetworkManager/dispatcher.d/99-forcedns
     origin: 99-forcedns
     mode: 755
-{% endif %}
   - path: /etc/kubernetes/manifests/coredns.yml
     origin: staticpods/coredns.yml
   - path: /etc/kubernetes/Corefile
@@ -76,6 +75,7 @@
     origin: staticpods/keepalived.yml
   - path: /etc/kubernetes/keepalived.conf
     origin: keepalived.conf
+{% endif %}
 {% endif %}
 {% if numa != None %}
  numa: {{ numa }}
