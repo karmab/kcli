@@ -388,6 +388,16 @@ def create(config, plandir, cluster, overrides):
         elif not ip_address(api_ip) in ip_network(data['baremetal_cidr']):
             error("api_ip doesn't belong to your baremetal_cidr")
             os._exit(1)
+        ingress_ip = data.get('ingress_ip')
+        if ingress_ip is None:
+            error("You need to define ingress_ip for metal3")
+            os._exit(1)
+        if ingress_ip == api_ip:
+            error("You need to set a different value for ingress_ip than api_ip for metal3")
+            os._exit(1)
+        if not ip_address(ingress_ip) in ip_network(data['baremetal_cidr']):
+            error("ingress_ip doesn't belong to your baremetal_cidr")
+            os._exit(1)
     if not sno and ':' in api_ip:
         ipv6 = True
     if ipv6:

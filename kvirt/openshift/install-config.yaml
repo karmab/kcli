@@ -72,7 +72,7 @@ platform:
 {%- elif metal3 %}
   baremetal:
     apiVIP: {{ api_ip }}
-    ingressVIP: {{ api_ip }}
+    ingressVIP: {{ ingress_ip }}
     provisioningNetwork: "Disabled"
     hosts:
 {% for num in range(0, masters) %}
