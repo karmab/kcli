@@ -205,7 +205,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                     if legacy:
                         netdata += "  dns-search %s\n" % domain
                     else:
-                        netdata[nicname]['addresses']['search'] = [domain]
+                        netdata[nicname]['nameservers']['search'] = [domain]
                 if not legacy and not netdata[nicname]['nameservers']:
                     del netdata[nicname]['nameservers']
                 if isinstance(vips, list) and vips:
