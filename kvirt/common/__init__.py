@@ -200,12 +200,12 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                         else:
                             files = [dnsdata]
                         cmds.append('systemctl restart resolvconf')
-                domain = net.get('domain')
-                if domain is not None:
+                netdomain = net.get('domain')
+                if netdomain is not None:
                     if legacy:
-                        netdata += "  dns-search %s\n" % domain
+                        netdata += "  dns-search %s\n" % netdomain
                     else:
-                        netdata[nicname]['nameservers']['search'] = [domain]
+                        netdata[nicname]['nameservers']['search'] = [netdomain]
                 if not legacy and not netdata[nicname]['nameservers']:
                     del netdata[nicname]['nameservers']
                 if isinstance(vips, list) and vips:
