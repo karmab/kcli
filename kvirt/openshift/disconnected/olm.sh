@@ -4,9 +4,9 @@ cd /root
 export PATH=/root/bin:$PATH
 export OCP_RELEASE="{{ tag }}"
 export OCP_PULLSECRET_AUTHFILE='/root/openshift_pull.json'
-IP=$(hostname -I | awk -F' ' '{print $NF}')
+IP=$(hostname -I | awk -F' ' '{print $2}')
 REVERSE_NAME=$(dig -x $IP +short | sed 's/\.[^\.]*$//')
-echo $IP | grep -q ':' && REVERSE_NAME=$(dig -6x $IP +short | sed 's/\.[^\.]*$//')
+echo $IP | grep -q ':' && SERVER6=$(grep : /etc/resolv.conf | grep -v fe80 | cut -d" " -f2) && REVERSE_NAME=$(dig -6x $IP +short @$SERVER6 | sed 's/\.[^\.]*$//')
 REGISTRY_NAME=${REVERSE_NAME:-$(hostname -f)}
 export LOCAL_REGISTRY=$REGISTRY_NAME:5000
 export LOCAL_REGISTRY_INDEX_TAG=olm-index/redhat-operator-index:v$OCP_RELEASE
