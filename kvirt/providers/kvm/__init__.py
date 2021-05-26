@@ -2929,6 +2929,8 @@ class Kvirt(object):
                 prefix = attributes.get('prefix')
                 ipnet = IPNetwork('%s/%s' % (ip, prefix))
                 cidr = ipnet.cidr
+                if ':' not in ip:
+                    break
             networks[interface] = {'cidr': cidr, 'dhcp': 'N/A', 'type': 'bridged', 'mode': 'N/A'}
             if ip is not None:
                 networks[interface]['ip'] = ip
