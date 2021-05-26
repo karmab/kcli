@@ -667,7 +667,7 @@ def create(config, plandir, cluster, overrides):
         #        f.write(blacklist)
     manifestsdir = pwd_path("manifests")
     if os.path.exists(manifestsdir) and os.path.isdir(manifestsdir):
-        for f in glob("%s/*.yaml" % manifestsdir):
+        for f in glob("%s/*.y*ml" % manifestsdir):
             copy2(f, "%s/openshift" % clusterdir)
     if 'network_type' in data and data['network_type'] == 'Calico':
         for asset in calicoassets:
