@@ -1183,10 +1183,14 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     # remove duplicate files to please ignition v3
     paths = []
     storagefinal = []
+    damned_paths = ['/etc/NetworkManager/dispatcher.d/30-local-dns-prepender']
     for fileentry in data['storage']['files']:
-        if fileentry['path'] not in paths:
+        path = fileentry['path']
+        if 'metal3' in overrides and overrides['metal3'] and path in damned_paths:
+            continue
+        if path not in paths:
             storagefinal.append(fileentry)
-            paths.append(fileentry['path'])
+            paths.append(path)
     data['storage']['files'] = storagefinal
     try:
         result = json.dumps(data, sort_keys=True, indent=indent, separators=separators)

@@ -24,7 +24,6 @@
 {% endif %}
  disks:
   - size: {{ disk_size }}
-{% if not metal3 %}
  files:
   - path: /etc/NetworkManager/dispatcher.d/99-forcedns
     origin: 99-forcedns
@@ -53,5 +52,4 @@
   - path: /etc/kubernetes/packet-hack.sh
     origin: packet-hack.sh
     mode: 700
-{% endif %}
 {% endif %}

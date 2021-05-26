@@ -43,7 +43,6 @@
  zerotier_kubelet: {{ zerotier_kubelet }}
  disks: {{ [disk_size] + extra_disks }}
  files:
-{% if not metal3 %}
   - path: /etc/NetworkManager/dispatcher.d/99-forcedns
     origin: 99-forcedns
     mode: 755
@@ -75,7 +74,6 @@
     origin: staticpods/keepalived.yml
   - path: /etc/kubernetes/keepalived.conf
     origin: keepalived.conf
-{% endif %}
 {% endif %}
 {% if numa != None %}
  numa: {{ numa }}
