@@ -1819,18 +1819,19 @@ def make_iso(name, tmpdir, userdata, metadata, netdata):
     os.system(isocmd)
 
 
-def patch_bootstrap(path, patch, service):
+def patch_bootstrap(path, script_content, service_content, service_name):
     separators = (',', ':')
     indent = 0
-    warning("Patching bootkube in bootstrap ignition to handle less than 3 masters")
+    warning("Patching bootkube in bootstrap ignition to include %s" % service_name)
     with open(path, 'r') as ignition:
         data = json.load(ignition)
-    patch_base64 = base64.b64encode(patch.encode()).decode("UTF-8")
-    patch_source = "data:text/plain;charset=utf-8;base64,%s" % patch_base64
-    patch_entry = {"filesystem": "root", "path": "/usr/local/bin/kcli-patch.sh",
-                   "contents": {"source": patch_source, "verification": {}}, "mode": 448}
-    data['storage']['files'].append(patch_entry)
-    data['systemd']['units'].append({"contents": service, "name": 'kcli-patch.service', "enabled": True})
+    script_base64 = base64.b64encode(script_content.encode()).decode("UTF-8")
+    script_source = "data:text/plain;charset=utf-8;base64,%s" % script_base64
+    script_entry = {"filesystem": "root", "path": "/usr/local/bin/%s.sh" % service_name,
+                    "contents": {"source": script_source, "verification": {}}, "mode": 448}
+    data['storage']['files'].append(script_entry)
+    data['systemd']['units'].append({"contents": service_content, "name": '%s.service' % service_name,
+                                     "enabled": True})
     try:
         result = json.dumps(data, sort_keys=True, indent=indent, separators=separators)
     except:

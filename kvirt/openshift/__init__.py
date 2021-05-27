@@ -752,9 +752,15 @@ def create(config, plandir, cluster, overrides):
         version_match = re.match("4.([0-9]*).*", INSTALLER_VERSION)
         COS_VERSION = "4%s" % version_match.group(1) if version_match is not None else '45'
         if not upstream and int(COS_VERSION) > 43:
-            bootstrap_patch = open('%s/bootstrap_patch.sh' % plandir).read()
-            bootstrap_service = open('%s/bootstrap_patch.service' % plandir).read()
-            patch_bootstrap("%s/bootstrap.ign" % clusterdir, bootstrap_patch, bootstrap_service)
+            script_content = open('%s/bootstrap_singlenode.sh' % plandir).read()
+            service_content = open('%s/bootstrap_singlenode.service' % plandir).read()
+            service_name = 'kcli-singlenode-patch'
+            patch_bootstrap("%s/bootstrap.ign" % clusterdir, script_content, service_content, service_name)
+    if metal3:
+        script_content = open('%s/bootstrap_metal3.sh' % plandir).read()
+        service_content = open('%s/bootstrap_metal3.service' % plandir).read()
+        service_name = 'kcli-metal3-patch'
+        patch_bootstrap("%s/bootstrap.ign" % clusterdir, script_content, service_content, service_name)
     staticdata = gather_dhcp(data, platform)
     if staticdata:
         pprint("Deploying helper dhcp node" % image)

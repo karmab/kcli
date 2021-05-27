@@ -23,7 +23,10 @@ spec:
     - "-c"
     - |
       #/bin/sh
-      NAMESERVER=$(grep -v 'fe80::' /etc/resolv.conf | tail -1 | sed 's/nameserver //')
+      NAMESERVER=$(grep nameserver /etc/resolv.conf | grep -v 'fe80::' /etc/resolv.conf | tail -1 | sed 's/nameserver //')
+      if [ "$NAMESERVER" == "" ] ; then
+        exit 1
+      fi
       grep -q "NAMESERVER" /etc/coredns/Corefile
       if [ "$?" != "0" ] ; then
         exit 0

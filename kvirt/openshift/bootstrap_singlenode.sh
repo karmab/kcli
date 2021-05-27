@@ -23,4 +23,4 @@ while ! patchfunc; do
     echo "Waiting 10s to retry..."
     sleep 10
 done
-touch kcli-patch.done
+touch kcli-singlenode-patch.done

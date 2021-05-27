@@ -25,7 +25,7 @@ spec:
       #/bin/sh
       {% if ipv6 %}
       NIC=$(ip -6 r | grep -v lo | head -1 | sed 's/.*dev \(.*\) \(proto\|metric\).*/\1/' | awk '{print $1}')
-      IP=$(ip -6 -o addr show $NIC | awk '{print $4}' | cut -d "/" -f 1 | head -1)
+      IP=$(ip -6 -o addr show $NIC | grep -v 'fe80::' | awk '{print $4}' | cut -d "/" -f 1 | head -1)
       {% else %}
       NIC=$(ip r | grep default | tail -1 | sed 's/.*dev \(.*\) \(proto\|metric\).*/\1/')
       IP=$(ip -4 -o addr show $NIC | awk '{print $4}' | cut -d "/" -f 1 | head -1)
