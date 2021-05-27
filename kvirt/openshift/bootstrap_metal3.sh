@@ -1,5 +1,6 @@
 #!/bin/bash -x
 
+systemctl disable --now ironic
 while [ ! -e "/opt/openshift/.bootkube.done" ] ; do
     echo "Waiting 10s to retry..."
     sleep 10

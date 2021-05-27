@@ -647,10 +647,16 @@ def create(config, plandir, cluster, overrides):
             ingressrole = 'master' if workers == 0 else 'worker'
             replicas = masters if workers == 0 else workers
             ingressconfig = config.process_inputfile(cluster, f, overrides={'replicas': replicas, 'role': ingressrole})
-            with open("%s/openshift/99-ingress-controller.yaml" % clusterdir, 'w') as f:
-                f.write(ingressconfig)
-        else:
-            copy2(f, "%s/openshift" % clusterdir)
+            with open("%s/openshift/99-ingress-controller.yaml" % clusterdir, 'w') as _f:
+                _f.write(ingressconfig)
+            continue
+        if '99-autoapprovercron-cronjob.yaml' in f:
+            registry = disconnected_url if disconnected_url is not None else 'quay.io'
+            cronfile = config.process_inputfile(cluster, f, overrides={'registry': registry})
+            with open("%s/openshift/99-autoapprovercron-cronjob.yaml" % clusterdir, 'w') as _f:
+                _f.write(cronfile)
+            continue
+        copy2(f, "%s/openshift" % clusterdir)
     if metal3:
         for f in glob("%s/openshift/99_openshift-cluster-api_master-machines-*.yaml" % clusterdir):
             os.remove(f)
@@ -925,9 +931,9 @@ def create(config, plandir, cluster, overrides):
         pprint("Waiting 10mn on install to be stable")
         sleep(600)
     call("oc adm taint nodes -l node-role.kubernetes.io/master node-role.kubernetes.io/master:NoSchedule-", shell=True)
-    pprint("Deploying certs autoapprover cronjob")
-    autoapprovercmd = 'oc create -f %s/autoapprovercron.yml' % clusterdir
-    call(autoapprovercmd, shell=True)
+    # pprint("Deploying certs autoapprover cronjob")
+    # autoapprovercmd = 'oc create -f %s/autoapprovercron.yml' % clusterdir
+    # call(autoapprovercmd, shell=True)
     if not minimal:
         installcommand = 'openshift-install --dir=%s wait-for install-complete' % clusterdir
         installcommand += " || %s" % installcommand
