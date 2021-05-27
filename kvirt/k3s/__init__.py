@@ -49,6 +49,7 @@ def create(config, plandir, cluster, overrides):
     data['kube'] = data['cluster']
     masters = data.get('masters', 1)
     network = data.get('network', 'default')
+    sdn = data.get('sdn')
     token = data.get('token', 'supersecret')
     api_ip = data.get('api_ip')
     if masters > 1:
@@ -72,11 +73,11 @@ def create(config, plandir, cluster, overrides):
             else:
                 error("You need to define api_ip in your parameters file")
                 os._exit(1)
-    install_k3s_channel = data.get('install_k3s_channel', 'stable')
-    if install_k3s_channel not in ['stable', 'latest', 'testing']:
-        error("Invalid K3S install channel %s" % install_k3s_channel)
-        os._exit(1)
     data['basedir'] = '/workdir' if os.path.exists("/i_am_a_container") else '.'
+    install_k3s_args = []
+    for arg in data:
+        if arg.startswith('install_k3s'):
+            install_k3s_args.append("%s=%s" % (arg.upper(), data[arg]))
     cluster = data.get('cluster')
     clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
     firstmaster = "%s-master-0" % cluster
@@ -96,22 +97,38 @@ def create(config, plandir, cluster, overrides):
     if os.path.exists("manifests") and os.path.isdir("manifests"):
         data['files'] = [{"path": "/root/manifests", "currentdir": True, "origin": "manifests"}]
     k = config.k
-    result = config.plan(plan, inputfile='%s/bootstrap.yml' % plandir, overrides=data)
+    bootstrap_overrides = data.copy()
+    bootstrap_install_k3s_args = install_k3s_args.copy()
+    if sdn is None or sdn != 'flannel':
+        bootstrap_install_k3s_args.append("INSTALL_K3S_EXEC='--flannel-backend=none'")
+    bootstrap_install_k3s_args = ' '.join(bootstrap_install_k3s_args)
+    bootstrap_overrides['install_k3s_args'] = bootstrap_install_k3s_args
+    result = config.plan(plan, inputfile='%s/bootstrap.yml' % plandir, overrides=bootstrap_overrides)
     if result['result'] != "success":
         os._exit(1)
+    nodes_overrides = data.copy()
+    nodes_install_k3s_args = install_k3s_args.copy()
+    if sdn is None or sdn != 'flannel':
+        nodes_install_k3s_args.append("INSTALL_K3S_EXEC='--disable-network-policy --no-flannel'")
+    nodes_install_k3s_args = ' '.join(nodes_install_k3s_args)
+    nodes_overrides['install_k3s_args'] = nodes_install_k3s_args
     if masters > 1:
         pprint("Deploying extra masters")
-        if 'name' in data:
-            del data['name']
-        config.plan(plan, inputfile='%s/masters.yml' % plandir, overrides=data)
+        config.plan(plan, inputfile='%s/masters.yml' % plandir, overrides=nodes_overrides)
     firstmasterip, firstmastervmport = _ssh_credentials(k, firstmaster)[1:]
     with open("%s/join.sh" % clusterdir, 'w') as f:
         if api_ip is None:
             api_ip = k.info(firstmaster)['ip']
-        joincmd = "curl -sfL https://get.k3s.io | K3S_URL=https://%s:6443 K3S_TOKEN=%s" % (api_ip, token)
-        if data['sdn'] != "flannel":
-            joincmd += " INSTALL_K3S_EXEC='--no-flannel'"
-        f.write("%s sh -\n" % joincmd)
+        joincmd = "curl -sfL https://get.k3s.io | %s K3S_URL=https://%s:6443 K3S_TOKEN=%s" % (nodes_install_k3s_args,
+                                                                                              api_ip, token)
+        if 'extra_worker_args' in data:
+            extra_args = data['extra_worker_args']
+        elif 'extra_args' in data:
+            extra_args = data['extra_args']
+        else:
+            extra_args = []
+        extra_args = ' '.join(extra_args)
+        f.write("%s sh - %s \n" % (joincmd, extra_args))
     source, destination = "/root/kubeconfig", "%s/auth/kubeconfig" % clusterdir
     scpcmd = scp(firstmaster, ip=firstmasterip, user='root', source=source, destination=destination,
                  tunnel=config.tunnel, tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
