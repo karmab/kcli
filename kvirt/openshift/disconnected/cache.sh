@@ -10,10 +10,7 @@ systemctl enable --now libvirtd
 systemctl enable --now httpd
 cd /var/www/html
 RHCOS_OPENSTACK_URI_FULL={{ openstack_uri }}
-RHCOS_QEMU_URI_FULL={{ qemu_uri }}
-RHCOS_QEMU_URI=$(basename $RHCOS_QEMU_URI_FULL)
 RHCOS_OPENSTACK_URI=$(basename $RHCOS_OPENSTACK_URI_FULL)
-curl -L $RHCOS_QEMU_URI_FULL > $RHCOS_QEMU_URI
 curl -L $RHCOS_OPENSTACK_URI_FULL > $RHCOS_OPENSTACK_URI
 RHCOS_QEMU_SHA_UNCOMPRESSED=$(sha256sum $RHCOS_QEMU_URI | cut -d " " -f1)
 
@@ -31,5 +28,4 @@ chown apache.apache  /var/www/html/*
 
 export BAREMETAL_IP=$(ip -o addr show eth0 | head -1 | awk '{print $4}' | cut -d'/' -f1)
 echo $BAREMETAL_IP | grep -q ':' && BAREMETAL_IP=[$BAREMETAL_IP]
-echo "http://${BAREMETAL_IP}:8080/${RHCOS_QEMU_URI}?sha256=${RHCOS_QEMU_SHA_UNCOMPRESSED}" > /root/bootstrapOSImage.txt
 echo "http://${BAREMETAL_IP}:8080/${RHCOS_OPENSTACK_URI}?sha256=${RHCOS_OPENSTACK_SHA_COMPRESSED}" > /root/clusterOSImage.txt

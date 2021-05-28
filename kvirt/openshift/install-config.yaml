@@ -74,9 +74,6 @@ platform:
     apiVIP: {{ api_ip }}
     ingressVIP: {{ ingress_ip }}
     provisioningNetwork: "Disabled"
-{% if bootstraposimage is defined %}
-    bootstrapOSImage: {{ bootstraposimage }}
-{% endif %}
 {% if clusterosimage is defined %}
     clusterOSImage: {{ clusterosimage }}
 {% endif %}

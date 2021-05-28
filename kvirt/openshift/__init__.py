@@ -560,11 +560,9 @@ def create(config, plandir, cluster, overrides):
         disconnected_overrides = data.copy()
         if metal3:
             try:
-                qemu_uri = get_installer_rhcos()
+                openstack_uri = get_installer_rhcos('openstack')
             except:
-                qemu_uri = get_commit_rhcos(COMMIT_ID)
-            openstack_uri = qemu_uri.replace('qemu', 'openstack')
-            disconnected_overrides['qemu_uri'] = qemu_uri
+                openstack_uri = get_commit_rhcos(COMMIT_ID, 'openstack')
             disconnected_overrides['openstack_uri'] = openstack_uri
         result = config.plan(disconnected_plan, inputfile='%s/disconnected.yml' % plandir,
                              overrides=disconnected_overrides)
@@ -610,12 +608,6 @@ def create(config, plandir, cluster, overrides):
                          vmport=disconnected_vmport)
             os.system(scpcmd)
         if metal3:
-            bootstraposimagecmd = "cat /root/bootstrapOSImage.txt"
-            bootstraposimagecmd = ssh(disconnected_vm, ip=disconnected_ip, user='root', tunnel=config.tunnel,
-                                      tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
-                                      tunneluser=config.tunneluser,
-                                      insecure=True, cmd=bootstraposimagecmd, vmport=disconnected_vmport)
-            data['bootstraposimage'] = os.popen(bootstraposimagecmd).read().strip()
             clusterosimagecmd = "cat /root/clusterOSImage.txt"
             clusterosimagecmd = ssh(disconnected_vm, ip=disconnected_ip, user='root', tunnel=config.tunnel,
                                     tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
