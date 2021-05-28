@@ -2,7 +2,7 @@
 # Variables to set, suit to your installation
 cd /root
 export PATH=/root/bin:$PATH
-export OCP_RELEASE="{{ tag }}"
+export OCP_RELEASE="{{ disconnected_operators_version|default(openshift_version|default(4.7)) }}"
 export OCP_PULLSECRET_AUTHFILE='/root/openshift_pull.json'
 IP=$(hostname -I | awk -F' ' '{print $2}')
 REVERSE_NAME=$(dig -x $IP +short | sed 's/\.[^\.]*$//')

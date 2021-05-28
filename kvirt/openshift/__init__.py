@@ -555,9 +555,9 @@ def create(config, plandir, cluster, overrides):
             reg = 'registry.build01.ci.openshift.org' if str(tag).startswith('ci-') else 'registry.ci.openshift.org'
             warning("Forcing disconnected_origin to %s" % reg)
             data['disconnected_origin'] = reg
-        if version == 'stable' and str(tag).count('.') == 1:
-            data['openshift_version'] = INSTALLER_VERSION
         disconnected_overrides = data.copy()
+        if version == 'stable' and str(tag).count('.') == 1:
+            disconnected_overrides['openshift_version'] = INSTALLER_VERSION
         if metal3:
             try:
                 openstack_uri = get_installer_rhcos('openstack')
@@ -595,13 +595,13 @@ def create(config, plandir, cluster, overrides):
                          insecure=True, cmd=versioncmd, vmport=disconnected_vmport)
         disconnected_version = os.popen(versioncmd).read().strip()
         if disconnected_operators:
-            source, destination = "/root/imageContentSourcePolicy.yaml", clusterdir
+            source, destination = "/root/imageContentSourcePolicy.yaml", "%s/imageContentSourcePolicy.yaml" % clusterdir
             scpcmd = scp(disconnected_vm, ip=disconnected_ip, user='root', source=source,
                          destination=destination, tunnel=config.tunnel, tunnelhost=config.tunnelhost,
                          tunnelport=config.tunnelport, tunneluser=config.tunneluser, download=True, insecure=True,
                          vmport=disconnected_vmport)
             os.system(scpcmd)
-            source, destination = "/root/catalogSource.yaml", clusterdir
+            source, destination = "/root/catalogSource.yaml", "%s/catalogSource.yaml" % clusterdir
             scpcmd = scp(disconnected_vm, ip=disconnected_ip, user='root', source=source,
                          destination=destination, tunnel=config.tunnel, tunnelhost=config.tunnelhost,
                          tunnelport=config.tunnelport, tunneluser=config.tunneluser, download=True, insecure=True,
@@ -689,6 +689,10 @@ def create(config, plandir, cluster, overrides):
     if os.path.exists(manifestsdir) and os.path.isdir(manifestsdir):
         for f in glob("%s/*.y*ml" % manifestsdir):
             copy2(f, "%s/openshift" % clusterdir)
+    if os.path.exists("%s/imageContentSourcePolicy.yaml" % clusterdir):
+        copy2("%s/imageContentSourcePolicy.yaml" % clusterdir, "%s/openshift" % clusterdir)
+    if os.path.exists("%s/catalogSource.yaml" % clusterdir):
+        copy2("%s/catalogSource.yaml" % clusterdir, "%s/openshift" % clusterdir)
     if 'network_type' in data and data['network_type'] == 'Calico':
         for asset in calicoassets:
             fetch(asset, manifestsdir)
