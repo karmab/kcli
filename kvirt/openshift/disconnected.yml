@@ -45,12 +45,12 @@
 {% endif %}
  cmds:
  - bash /root/get_oc.sh
+{% if metal3 %}
+ - bash /root/cache.sh
+{% endif %}
  - bash /root/registry.sh
  - bash /root/extras.sh
 {% if disconnected_operators %}
  - bash /root/olm.sh
 {% endif %}
  - bash /root/web.sh
-{% if metal3 %}
- - bash /root/cache.sh
-{% endif %}

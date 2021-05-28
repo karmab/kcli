@@ -566,7 +566,7 @@ def create(config, plandir, cluster, overrides):
                     tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
                     insecure=True, cmd=cacmd, vmport=disconnected_vmport)
         disconnected_ca = os.popen(cacmd).read().strip()
-        if data['ca'] is not None:
+        if data.get('ca') is not None:
             data['ca'] += disconnected_ca
         else:
             data['ca'] = disconnected_ca
