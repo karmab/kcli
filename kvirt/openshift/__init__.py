@@ -557,7 +557,17 @@ def create(config, plandir, cluster, overrides):
             data['disconnected_origin'] = reg
         if version == 'stable' and str(tag).count('.') == 1:
             data['openshift_version'] = INSTALLER_VERSION
-        result = config.plan(disconnected_plan, inputfile='%s/disconnected.yml' % plandir, overrides=data)
+        disconnected_overrides = data.copy()
+        if metal3:
+            try:
+                qemu_uri = get_installer_rhcos()
+            except:
+                qemu_uri = get_commit_rhcos(COMMIT_ID)
+            openstack_uri = qemu_uri.replace('qemu', 'openstack')
+            disconnected_overrides['qemu_uri'] = qemu_uri
+            disconnected_overrides['openstack_uri'] = openstack_uri
+        result = config.plan(disconnected_plan, inputfile='%s/disconnected.yml' % plandir,
+                             overrides=disconnected_overrides)
         if result['result'] != 'success':
             os._exit(1)
         disconnected_ip, disconnected_vmport = _ssh_credentials(k, disconnected_vm)[1:]
@@ -599,7 +609,19 @@ def create(config, plandir, cluster, overrides):
                          tunnelport=config.tunnelport, tunneluser=config.tunneluser, download=True, insecure=True,
                          vmport=disconnected_vmport)
             os.system(scpcmd)
-
+        if metal3:
+            bootstraposimagecmd = "cat /root/bootstrapOSImage.txt"
+            bootstraposimagecmd = ssh(disconnected_vm, ip=disconnected_ip, user='root', tunnel=config.tunnel,
+                                      tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
+                                      tunneluser=config.tunneluser,
+                                      insecure=True, cmd=bootstraposimagecmd, vmport=disconnected_vmport)
+            data['bootstraposimage'] = os.popen(bootstraposimagecmd).read().strip()
+            clusterosimagecmd = "cat /root/clusterOSImage.txt"
+            clusterosimagecmd = ssh(disconnected_vm, ip=disconnected_ip, user='root', tunnel=config.tunnel,
+                                    tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
+                                    tunneluser=config.tunneluser,
+                                    insecure=True, cmd=clusterosimagecmd, vmport=disconnected_vmport)
+            data['clusterosimage'] = os.popen(clusterosimagecmd).read().strip()
         os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = disconnected_version
         pprint("Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to %s" % disconnected_version)
     if disconnected_url is not None and disconnected_user is not None and disconnected_password is not None:

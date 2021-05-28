@@ -38,6 +38,11 @@
  - origin: disconnected/haproxy.cfg
    path: /root/haproxy.cfg
    mode: 700
+{% if metal3 %}
+ - origin: disconnected/cache.sh
+   path: /root/cache.sh
+   mode: 700
+{% endif %}
  cmds:
  - bash /root/get_oc.sh
  - bash /root/registry.sh
@@ -46,3 +51,6 @@
  - bash /root/olm.sh
 {% endif %}
  - bash /root/web.sh
+{% if metal3 %}
+ - bash /root/cache.sh
+{% endif %}
