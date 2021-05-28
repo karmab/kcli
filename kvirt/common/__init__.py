@@ -941,6 +941,8 @@ def scp(name, ip='', user=None, source=None, destination=None, recursive=None, t
     if ip == '':
         print("No ip found. Cannot scp...")
     else:
+        if ':' in ip:
+            ip = '[%s]' % ip
         arguments = ''
         if tunnelhost is not None and tunnelhost not in ['localhost', '127.0.0.1'] and\
                 tunnel and tunneluser is not None:
