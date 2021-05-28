@@ -713,6 +713,7 @@ def create(config, plandir, cluster, overrides):
             copy2('%s/imageContentSourcePolicy.yaml' % clusterdir, "%s/openshift" % clusterdir)
         if os.path.exists('%s/catalogsource.yaml' % clusterdir):
             copy2('%s/catalogsource.yaml' % clusterdir, "%s/openshift" % clusterdir)
+        copy2('%s/99-operatorhub.yaml' % plandir, "%s/openshift" % clusterdir)
     if sno:
         sno_name = "%s-sno" % cluster
         sno_dns = data.get('sno_dns', True)
