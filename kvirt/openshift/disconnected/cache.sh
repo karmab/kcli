@@ -27,8 +27,9 @@ virt-edit -a $EXTRACTED_FILE -m $BOOT_DISK /boot/loader/entries/ostree-1-rhcos.c
 {% endif %}
 gzip -c $EXTRACTED_FILE > $RHCOS_OPENSTACK_URI
 RHCOS_OPENSTACK_SHA_COMPRESSED=$(sha256sum $RHCOS_OPENSTACK_URI | cut -d " " -f1)
+chown apache.apache  /var/www/html/*
 
 export BAREMETAL_IP=$(ip -o addr show eth0 | head -1 | awk '{print $4}' | cut -d'/' -f1)
 echo $BAREMETAL_IP | grep -q ':' && BAREMETAL_IP=[$BAREMETAL_IP]
-echo "http://${BAREMETAL_IP}/${RHCOS_QEMU_URI}?sha256=${RHCOS_QEMU_SHA_UNCOMPRESSED}" > /root/bootstrapOSImage.txt
-echo "http://${BAREMETAL_IP}/${RHCOS_OPENSTACK_URI}?sha256=${RHCOS_OPENSTACK_SHA_COMPRESSED}" > /root/clusterOSImage.txt
+echo "http://${BAREMETAL_IP}:8080/${RHCOS_QEMU_URI}?sha256=${RHCOS_QEMU_SHA_UNCOMPRESSED}" > /root/bootstrapOSImage.txt
+echo "http://${BAREMETAL_IP}:8080/${RHCOS_OPENSTACK_URI}?sha256=${RHCOS_OPENSTACK_SHA_COMPRESSED}" > /root/clusterOSImage.txt
