@@ -1612,7 +1612,8 @@ def create_plan(args):
     container = args.container
     inputfile = args.inputfile
     force = args.force
-    pre = not args.skip
+    pre = not args.skippre
+    post = not args.skippost
     paramfile = args.paramfile
     if inputfile is None:
         inputfile = 'kcli_plan.yml'
@@ -1640,7 +1641,7 @@ def create_plan(args):
         plan = nameutils.get_random_name()
         pprint("Using %s as name of the plan" % plan)
     config.plan(plan, ansible=ansible, url=url, path=path, container=container, inputfile=inputfile,
-                overrides=overrides, pre=pre)
+                overrides=overrides, pre=pre, post=post)
     return 0
 
 
@@ -3368,8 +3369,9 @@ def cli():
                                    metavar='PATH')
     plancreate_parser.add_argument('-c', '--container', action='store_true', help='Handle container')
     plancreate_parser.add_argument('--force', action='store_true', help='Delete existing vms first')
-    plancreate_parser.add_argument('-k', '--skip', action='store_true', help='Skip pre script, if any')
     plancreate_parser.add_argument('-f', '--inputfile', help='Input Plan file')
+    plancreate_parser.add_argument('-k', '--skippre', action='store_true', help='Skip pre script')
+    plancreate_parser.add_argument('-z', '--skippost', action='store_true', help='Skip post script')
     plancreate_parser.add_argument('-P', '--param', action='append',
                                    help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
     plancreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')

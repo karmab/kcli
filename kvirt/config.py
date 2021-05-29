@@ -1264,7 +1264,7 @@ $INFO
 
     def plan(self, plan, ansible=False, url=None, path=None, container=False, inputfile=None, inputstring=None,
              overrides={}, info=False, update=False, embedded=False, download=False, quiet=False, doc=False,
-             onlyassets=False, pre=True):
+             onlyassets=False, pre=True, post=True):
         """Manage plan file"""
         k = self.k
         no_overrides = not overrides
@@ -1950,6 +1950,19 @@ $INFO
             self.wait(name)
             if finishfiles:
                 self.handle_finishfiles(self, name, finishfiles)
+        post_script = '%s/kcli_post.sh' % inputdir
+        if os.path.exists(post_script):
+            if post:
+                pprint("Running kcli_post.sh")
+                with TemporaryDirectory() as tmpdir:
+                    post_script = self.process_inputfile('xxx', post_script, overrides=overrides)
+                    with open("%s/post.sh" % tmpdir, 'w') as f:
+                        f.write(post_script)
+                    run = call('bash %s/post.sh' % tmpdir, shell=True)
+                    if run != 0:
+                        error("Issues running kcli_post.sh. Leaving")
+            else:
+                warning("Skipping kcli_post.sh as requested")
         return returndata
 
     def handle_host(self, pool=None, image=None, switch=None, download=False,
