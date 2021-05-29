@@ -1702,6 +1702,7 @@ def kube_delete_app(config, appdir, overrides={}):
 def openshift_create_app(config, appdir, overrides={}, outputdir=None):
     appname = overrides['name']
     appdata = {'cluster': 'testk', 'domain': 'karmalabs.com', 'masters': 1, 'workers': 0}
+    install_cr = overrides.get('install_cr', False)
     cluster = appdata['cluster']
     cwd = os.getcwd()
     os.environ["PATH"] += ":%s" % cwd
@@ -1736,7 +1737,7 @@ def openshift_create_app(config, appdir, overrides={}, outputdir=None):
                 rendered = config.process_inputfile(cluster, "%s/%s/pre.sh" % (appdir, appname),
                                                     overrides=appdata)
                 f.write("%s\n" % rendered)
-            if os.path.exists("%s/%s/cr.yml" % (appdir, appname)):
+            if install_cr and os.path.exists("%s/%s/cr.yml" % (appdir, appname)):
                 rendered = config.process_inputfile(cluster, "%s/%s/cr.yml" % (appdir, appname), overrides=appdata)
                 destfile = "%s/cr.yml" % outputdir if outputdir is not None else "%s/cr.yml" % tmpdir
                 with open(destfile, 'w') as g:

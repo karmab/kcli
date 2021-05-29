@@ -8,7 +8,7 @@ from kvirt.config import Kconfig
 from kvirt.examples import plandatacreate, vmdatacreate, hostcreate, _list, plancreate, planinfo, productinfo
 from kvirt.examples import repocreate, isocreate, kubegenericcreate, kubek3screate, kubeopenshiftcreate, start
 from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsole, vmexport, niccreate, nicdelete
-from kvirt.examples import disconnectercreate
+from kvirt.examples import disconnectercreate, appopenshiftcreate
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
 from kvirt import version
@@ -2780,7 +2780,7 @@ def cli():
     appgenericcreate_parser.set_defaults(func=create_app_generic)
 
     appopenshiftcreate_desc = 'Create Kube App Openshift'
-    appopenshiftcreate_epilog = None
+    appopenshiftcreate_epilog = "examples:\n%s" % appopenshiftcreate
     appopenshiftcreate_parser = createapp_subparsers.add_parser('openshift', description=appopenshiftcreate_desc,
                                                                 help=appopenshiftcreate_desc,
                                                                 epilog=appopenshiftcreate_epilog,

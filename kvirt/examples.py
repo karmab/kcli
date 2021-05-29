@@ -218,3 +218,13 @@ $ kcli create openshift-iso -P extra_args="super_string_of_args" testk.karmalabs
 disconnectercreate = """# Generate an openshift disconnecter vm for 4.8
 $ kcli create openshift-disconnecter -P version=nightly -P tag=4.8
 """
+
+appopenshiftcreate = """# Deploy sriov operator
+$ kcli create app openshift sriov-operator
+
+# Deploy local storage using parameters from your openshift install and creating a localvolume for each node
+$ kcli create app openshift local-storage --paramfile your_paramfile.yml
+
+# Deploy local storage without the cr
+$ kcli create app openshift local-storage -P install_cr=false
+"""
