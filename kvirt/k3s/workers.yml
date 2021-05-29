@@ -20,6 +20,8 @@
  pool: {{ pool }}
  numcpus: {{ worker_numcpus | default(numcpus, numcpus) }}
  memory: {{ worker_memory | default(memory, memory) }}
+ nets: {{ [network] + extra_networks }}
+ disks: {{ [disk_size] + extra_disks }}
  files:
   - path: /root/join.sh
     origin: {{ basedir }}/clusters/{{ cluster }}/join.sh
