@@ -216,7 +216,13 @@ $ kcli create openshift-iso -P extra_args="super_string_of_args" testk.karmalabs
 """
 
 disconnectercreate = """# Generate an openshift disconnecter vm for 4.8
-$ kcli create openshift-disconnecter -P version=nightly -P tag=4.8
+$ kcli create openshift-disconnecter -P version=stable -P tag=4.7
+
+# Do the same over an ipv4 network
+$ kcli create openshift-disconnecter -P version=nightly -P tag=4.8 -P disconnected_ipv6_network=false
+
+# Use specific version and add extra operators (from 4.7)
+$ kcli create openshift-disconnecter -P version=nightly -P tag=4.8.0-fc.5 -P disconnected_operators=[sriov-operator]
 """
 
 appopenshiftcreate = """# Deploy sriov operator

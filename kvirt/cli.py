@@ -1777,6 +1777,11 @@ def info_generic_app(args):
     baseconfig.info_app_generic(args.app)
 
 
+def info_openshift_disconnecter(args):
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    baseconfig.info_openshift_disconnecter()
+
+
 def info_openshift_app(args):
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     baseconfig.info_app_openshift(args.app)
@@ -2839,6 +2844,13 @@ def cli():
                                                             help=appopenshiftinfo_desc)
     appopenshiftinfo_parser.add_argument('app', metavar='APP')
     appopenshiftinfo_parser.set_defaults(func=info_openshift_app)
+
+    openshiftdisconnecterinfo_desc = 'Info Openshift Disonnecter'
+    openshiftdisconnecterinfo_parser = info_subparsers.add_parser('disconnecter',
+                                                                  description=openshiftdisconnecterinfo_desc,
+                                                                  help=openshiftdisconnecterinfo_desc,
+                                                                  aliases=['openshift-disconnecter'])
+    openshiftdisconnecterinfo_parser.set_defaults(func=info_openshift_disconnecter)
 
     listapp_desc = 'List Available Kube Apps'
     listapp_parser = list_subparsers.add_parser('app', description=listapp_desc,

@@ -623,6 +623,11 @@ class Kbaseconfig:
             warning("No parameters found. Leaving...")
         # return {'result': 'success'}
 
+    def info_openshift_disconnecter(self):
+        plandir = os.path.dirname(openshift.create.__code__.co_filename)
+        inputfile = '%s/disconnected.yml' % plandir
+        return self.info_plan(inputfile)
+
     def info_product(self, name, repo=None, group=None, web=False):
         """Info product"""
         if repo is not None and group is not None:
