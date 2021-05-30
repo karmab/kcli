@@ -121,12 +121,10 @@ def create(config, plandir, cluster, overrides):
             api_ip = k.info(firstmaster)['ip']
         joincmd = "curl -sfL https://get.k3s.io | %s K3S_URL=https://%s:6443 K3S_TOKEN=%s" % (nodes_install_k3s_args,
                                                                                               api_ip, token)
-        if 'extra_worker_args' in data:
+        if data['extra_worker_args']:
             extra_args = data['extra_worker_args']
-        elif 'extra_args' in data:
-            extra_args = data['extra_args']
         else:
-            extra_args = []
+            extra_args = data['extra_args']
         extra_args = ' '.join(extra_args)
         f.write("%s sh - %s \n" % (joincmd, extra_args))
     source, destination = "/root/kubeconfig", "%s/auth/kubeconfig" % clusterdir
