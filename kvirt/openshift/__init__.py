@@ -9,9 +9,10 @@ import sys
 from ipaddress import ip_address, ip_network
 from kvirt.common import error, pprint, success, warning, info2
 from kvirt.common import gen_mac, get_oc, get_values, pwd_path, fetch
-from kvirt.common import get_commit_rhcos, get_latest_fcos, kube_create_app, patch_bootstrap, generate_rhcos_iso
+from kvirt.common import get_commit_rhcos, get_latest_fcos, patch_bootstrap, generate_rhcos_iso, olm_app
 from kvirt.common import get_installer_rhcos
 from kvirt.common import ssh, scp, _ssh_credentials
+from kvirt.defaults import LOCAL_OPENSHIFT_APPS
 from kvirt.openshift.calico import calicoassets
 import re
 from shutil import copy2, rmtree
@@ -972,12 +973,19 @@ def create(config, plandir, cluster, overrides):
     if apps:
         overrides['openshift_version'] = INSTALLER_VERSION[0:3]
         for app in apps:
-            appdir = "%s/apps/%s" % (plandir, app)
-            if not os.path.exists(appdir):
-                warning("Skipping unsupported app %s" % app)
+            if app in LOCAL_OPENSHIFT_APPS:
+                name = app
             else:
-                pprint("Adding app %s" % app)
-                kube_create_app(config, appdir, overrides=overrides)
+                name, source, channel, csv, description, namespace, crd = olm_app(app)
+                if name is None:
+                    error("Couldn't find any app matching %s. Skipping..." % app)
+                    continue
+                current_app_data = {'name': name, 'source': source, 'channel': channel, 'csv': csv,
+                                    'namespace': namespace, 'crd': crd}
+            pprint("Adding app %s" % name)
+            app_data = overrides.copy()
+            app_data.update(current_app_data)
+            config.create_app_openshift(name, app_data)
     if data.get('postscripts', []):
         currentdir = pwd_path(".")
         for script in data['postscripts']:
