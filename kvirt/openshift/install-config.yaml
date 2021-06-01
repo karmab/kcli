@@ -73,7 +73,12 @@ platform:
   baremetal:
     apiVIP: {{ api_ip }}
     ingressVIP: {{ ingress_ip }}
+{% if not metal3_provisioning_enable %}
     provisioningNetwork: "Disabled"
+{% else %}
+    provisioningBridge: {{ metal3_provisioning_net }}
+    provisioningNetworkInterface: {{ metal3_provisioning_interface }}
+{% endif %}
 {% if clusterosimage is defined %}
     clusterOSImage: {{ clusterosimage }}
 {% endif %}

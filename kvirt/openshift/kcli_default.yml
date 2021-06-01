@@ -103,3 +103,6 @@ sno_virtual: false
 sno_disk:
 sno_dns: true
 metal3: False
+metal3_provisioning_enable: false
+metal3_provisioning_net: provisioning
+metal3_provisioning_interface: ens3
