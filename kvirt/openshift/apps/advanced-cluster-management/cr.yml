@@ -5,3 +5,4 @@ metadata:
   namespace: {{ namespace }}
 spec:
   imagePullSecret: ""
+  disableHubSelfManagement: {{ acm_disable_hub }}

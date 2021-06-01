@@ -857,9 +857,7 @@ def create_app_openshift(args):
         os._exit(1)
     elif not os.path.isabs(os.environ['KUBECONFIG']):
         os.environ['KUBECONFIG'] = "%s/%s" % (os.getcwd(), os.environ['KUBECONFIG'])
-    OPENSHIFT_VERSION = os.popen('oc version').readlines()[1].split(" ")[2].strip().replace('v', '')[:3]
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
-    overrides['openshift_version'] = OPENSHIFT_VERSION
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     for app in apps:
         if app in LOCAL_OPENSHIFT_APPS:
@@ -910,9 +908,7 @@ def delete_app_openshift(args):
         os._exit(1)
     elif not os.path.isabs(os.environ['KUBECONFIG']):
         os.environ['KUBECONFIG'] = "%s/%s" % (os.getcwd(), os.environ['KUBECONFIG'])
-    OPENSHIFT_VERSION = os.popen('oc version').readlines()[1].split(" ")[2].strip().replace('v', '')[:3]
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
-    overrides['openshift_version'] = OPENSHIFT_VERSION
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     for app in apps:
         if app in LOCAL_OPENSHIFT_APPS:
