@@ -1239,7 +1239,7 @@ class Ksphere:
                         ovf_path = '/tmp/%s' % _fil
                 if vmdk_path is None or ovf_path is None:
                     return {'result': 'failure', 'reason': "Incorrect ova file"}
-                tar.extractall()
+                tar.extractall('/tmp')
         else:
             extension = os.path.splitext(shortimage)[1].replace('.', '')
             vmdk_path = "/tmp/%s" % shortimage.replace(extension, 'vmdk')
