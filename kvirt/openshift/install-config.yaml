@@ -69,7 +69,7 @@ platform:
     password: {{ config_password }}
     datacenter: {{ config_datacenter }}
     defaultDatastore: {{ config_pool }}
-{%- elif metal3 %}
+{% elif metal3 %}
   baremetal:
     apiVIP: {{ api_ip }}
     ingressVIP: {{ ingress_ip }}
