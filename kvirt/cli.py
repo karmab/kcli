@@ -869,8 +869,8 @@ def create_app_openshift(args):
                 continue
             app_data = {'name': name, 'source': source, 'channel': channel, 'csv': csv, 'namespace': namespace,
                         'crd': crd}
+            overrides.update(app_data)
         pprint("Adding app %s" % name)
-        overrides.update(app_data)
         baseconfig.create_app_openshift(name, overrides, outputdir=outputdir)
 
 
@@ -920,8 +920,8 @@ def delete_app_openshift(args):
                 continue
             app_data = {'name': name, 'source': source, 'channel': channel, 'csv': csv, 'namespace': namespace,
                         'crd': crd}
+            overrides.update(app_data)
         pprint("Deleting app %s" % name)
-        overrides.update(app_data)
         baseconfig.delete_app_openshift(app, overrides)
 
 
