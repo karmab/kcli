@@ -189,7 +189,7 @@ def gather_dhcp(data, platform):
     dhcp_dns = data.get('dhcp_dns')
     if bootstrap_ip is None or dhcp_ip is None or dhcp_netmask is None or dhcp_gateway is None or dhcp_dns is None:
         return {}
-    if platform in ['openstack', 'vsphere']:
+    if platform == 'openstack':
         bootstrap_helper_name = "%s-bootstrap-helper" % cluster
         bootstrap_helper_mac = data.get('bootstrap_helper_mac', gen_mac())
         bootstrap_helper_ip = data.get('bootstrap_helper_ip')
@@ -211,7 +211,7 @@ def gather_dhcp(data, platform):
         node_names.insert(0, bootstrap_name)
         node_macs.insert(0, bootstrap_mac)
         node_ips.insert(0, bootstrap_ip)
-        if platform in ['openstack', 'vsphere']:
+        if platform == 'openstack':
             nodes += 1
             node_names.insert(0, bootstrap_helper_name)
             node_macs.insert(0, bootstrap_helper_mac)
@@ -805,7 +805,7 @@ def create(config, plandir, cluster, overrides):
             warning("Ignoring /etc/hosts")
         else:
             update_etc_hosts(cluster, domain, host_ip, ingress_ip)
-        if platform in ['openstack', 'vsphere'] or (platform == 'packet' and config.k.tunnelhost is None):
+        if platform == 'openstack' or (platform == 'packet' and config.k.tunnelhost is None):
             # bootstrap ignition is too big in those platforms so we deploy a temporary web server to serve it
             helper_overrides = {}
             if helper_image is None:
@@ -920,7 +920,7 @@ def create(config, plandir, cluster, overrides):
             todelete = []
         else:
             todelete = ["%s-bootstrap" % cluster]
-        if platform in ['openstack', 'vsphere', 'packet']:
+        if platform in ['openstack', 'packet']:
             todelete.append("%s-bootstrap-helper" % cluster)
     else:
         pprint("Deploying bootstrap")
