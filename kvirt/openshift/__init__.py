@@ -838,7 +838,7 @@ def create(config, plandir, cluster, overrides):
             helper_overrides['memory'] = 1024
             helper_overrides['numcpus'] = 4
             config.create_vm("%s-bootstrap-helper" % cluster, helper_image, overrides=helper_overrides, wait=True)
-            bootstrap_helper_ip, bootstrap_helper_vmport = _ssh_credentials(bootstrap_helper_name)[1:]
+            bootstrap_helper_ip, bootstrap_helper_vmport = _ssh_credentials(k, bootstrap_helper_name)[1:]
             source, destination = "%s/bootstrap.ign" % clusterdir, "/var/www/html/bootstrap"
             scpcmd = scp(bootstrap_helper_name, ip=bootstrap_helper_ip, user='root', source=source,
                          destination=destination, tunnel=config.tunnel, tunnelhost=config.tunnelhost,

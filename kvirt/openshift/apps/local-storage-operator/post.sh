@@ -1,4 +1,4 @@
-{% if install_cr %}
+{% if install_cr|default(True) %}
 while true; do
   oc get sc/{{ localstorage_storageclass }} 2>/dev/null && break;
   echo "Waiting for the storageclass to be created"
