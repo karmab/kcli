@@ -835,6 +835,8 @@ def create(config, plandir, cluster, overrides):
                 cmds.append("sed -i 's/apache/root/' /etc/httpd/conf/httpd.conf")
             cmds.append("systemctl enable --now httpd")
             helper_overrides['cmds'] = cmds
+            helper_overrides['memory'] = 1024
+            helper_overrides['numcpus'] = 4
             config.create_vm("%s-bootstrap-helper" % cluster, helper_image, overrides=helper_overrides, wait=True)
             bootstrap_helper_ip, bootstrap_helper_vmport = _ssh_credentials(bootstrap_helper_name)[1:]
             source, destination = "%s/bootstrap.ign" % clusterdir, "/var/www/html/bootstrap"
