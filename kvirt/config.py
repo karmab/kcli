@@ -844,6 +844,10 @@ $INFO
                             warning("Adding public key to authorized_keys_file for %s" % name)
                             with open(authorized_keys_file, 'a') as f:
                                 f.write(publickey)
+                    else:
+                        warning("Creating authorized_keys_file")
+                        with open(authorized_keys_file, 'w') as f:
+                            f.write(publickey)
         if cmds and 'reboot' in cmds:
             while 'reboot' in cmds:
                 cmds.remove('reboot')
