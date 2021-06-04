@@ -3204,7 +3204,7 @@ def cli():
     kubegenericscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
     kubegenericscale_parser.set_defaults(func=scale_generic_kube)
     kubescale_subparsers.add_parser('generic', parents=[kubegenericscale_parser], description=kubegenericscale_desc,
-                                    help=kubegenericscale_desc)
+                                    help=kubegenericscale_desc, aliases=['kubeadm'])
 
     kubek3sscale_desc = 'Scale K3s Kube'
     kubek3sscale_parser = argparse.ArgumentParser(add_help=False)
