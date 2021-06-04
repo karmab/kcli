@@ -123,7 +123,7 @@ def create(config, plandir, cluster, overrides):
                                                                                               api_ip, token)
         extra_args = data['extra_worker_args'] if data.get('extra_worker_args', []) else data.get('extra_args', [])
         extra_args = ' '.join(extra_args)
-        f.write("%s sh - %s \n" % (joincmd, extra_args))
+        f.write("%s sh -s - agent %s \n" % (joincmd, extra_args))
     source, destination = "/root/kubeconfig", "%s/auth/kubeconfig" % clusterdir
     scpcmd = scp(firstmaster, ip=firstmasterip, user='root', source=source, destination=destination,
                  tunnel=config.tunnel, tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
