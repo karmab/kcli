@@ -67,3 +67,5 @@ registry: false
 registry_pvc: false
 registry_user: dummy
 registry_password: dummy
+eksd: false
+eksd_version: 1-20-eks-1

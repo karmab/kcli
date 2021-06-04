@@ -83,6 +83,9 @@
 {% else %}
   - pre_el.sh
 {% endif %}
+{% if eksd %}
+  - eksd.sh
+{% endif %}
 {% if config_type not in ['aws', 'gcp'] %}
   - apache.sh
 {% endif %}

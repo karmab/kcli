@@ -44,6 +44,9 @@
 {% else %}
   - pre_el.sh
 {% endif %}
+{% if eksd %}
+  - eksd.sh
+{% endif %}
   - workers.sh
 {% if numa != None %}
  numa: {{ numa }}

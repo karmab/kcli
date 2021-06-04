@@ -1,5 +1,5 @@
 CIDR="10.244.0.0/16"
-kubeadm init --control-plane-endpoint "{{ api_ip }}:6443" --pod-network-cidr $CIDR --upload-certs
+kubeadm init --control-plane-endpoint "{{ api_ip }}:6443" --pod-network-cidr $CIDR --upload-certs {{ '--image-repository public.ecr.aws/eks-distro/kubernetes --kubernetes-version $EKSD_API_VERSION' if eksd else '' }}
 cp /etc/kubernetes/admin.conf /root/
 chown root:root /root/admin.conf
 export KUBECONFIG=/root/admin.conf
