@@ -953,8 +953,8 @@ def scp(name, ip='', user=None, source=None, destination=None, recursive=None, t
         if identityfile is None:
             if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
                 identityfile = os.path.expanduser("~/.kcli/id_rsa")
-            elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
-                identityfile = os.path.expanduser("~/.kcli/id_rsa")
+            elif os.path.exists(os.path.expanduser("~/.kcli/id_dsa")):
+                identityfile = os.path.expanduser("~/.kcli/id_dsa")
         if identityfile is not None:
             scpcommand = "%s -i %s" % (scpcommand, identityfile)
         if recursive:
