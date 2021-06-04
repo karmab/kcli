@@ -93,6 +93,9 @@ def create(config, plandir, cluster, overrides):
     if version is not None and not str(version).startswith('1.'):
         error("Invalid version %s" % version)
         os._exit(1)
+    if data.get('eksd', False) and data.get('engine', 'containerd') != 'docker':
+        warning("Forcing engine to docker for eksd")
+        data['engine'] = 'docker'
     data['basedir'] = '/workdir' if os.path.exists("/i_am_a_container") else '.'
     cluster = data.get('cluster')
     image = data.get('image', 'centos7')
