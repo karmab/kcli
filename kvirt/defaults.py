@@ -41,14 +41,14 @@ IMAGES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-i
           'centos6': 'https://cloud.centos.org/centos/6/images/CentOS-6-x86_64-GenericCloud.qcow2',
           'centos7': 'https://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2',
           'centos8': 'https://cloud.centos.org/centos/8/x86_64/images/'
-          'CentOS-8-GenericCloud-8.3.2011-20201204.2.x86_64.qcow2',
+          'CentOS-8-GenericCloud-8.4.2105-20210603.0.x86_64.qcow2',
           'centos8stream': 'https://cloud.centos.org/centos/8-stream/x86_64/'
-          'images/CentOS-Stream-GenericCloud-8-20201019.1.x86_64.qcow2',
-          'cirros': 'http://download.cirros-cloud.net/0.4.0/cirros-0.4.0-x86_64-disk.img',
+          'images/CentOS-Stream-GenericCloud-8-20210603.0.x86_64.qcow2',
+          'cirros': 'http://download.cirros-cloud.net/0.5.2/cirros-0.5.2-x86_64-disk.img',
           'coreos': 'https://stable.release.core-os.net/amd64-usr/current/coreos_production_qemu_image.img.bz2',
           'debian8': DEBIAN + 'openstack/archive/8.11.0/debian-8.11.0-openstack-amd64.qcow2',
           'debian9': DEBIAN + 'openstack/current-9/debian-9-openstack-amd64.qcow2',
-          'debian10': DEBIAN + 'cloud/buster/daily/20210209-543/debian-10-generic-amd64-daily-20210209-543.qcow2',
+          'debian10': DEBIAN + 'openstack/current-10/debian-10-openstack-arm64.qcow2',
           'fcos': 'https://builds.coreos.fedoraproject.org/streams/stable.json',
           'fedora28': FEDORA_ARCHIVE + '28/Cloud/x86_64/images/Fedora-Cloud-Base-28-1.1.x86_64.qcow2',
           'fedora29': FEDORA_ARCHIVE + '29/Cloud/x86_64/images/Fedora-Cloud-Base-29-1.2.x86_64.qcow2',
@@ -59,16 +59,20 @@ IMAGES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-i
           'fedora34': FEDORA + '34/Cloud/x86_64/images/Fedora-Cloud-Base-34-1.2.x86_64.qcow2',
           'freebsd114': BSD + "freebsd/11.4/freebsd-11.4.qcow2",
           'freebsd122': BSD + "freebsd/12.2/freebsd-12.2.qcow2",
+          'freebsd130': BSD + "freebsd/13.0/freebsd-13.0.qcow2",
           'netbsd82': BSD + "netbsd/8.2/netbsd-8.2.qcow2",
-          'netbsd91': BSD + "netbsd/9.1/netbsd-9.1.qcow2",
-          'openbsd67': BSD + "openbsd/6.7/openbsd-6.7.qcow2",
+          'netbsd91': BSD + "netbsd/9.1/netbsd-9.1.qcow2"
+          'netbsd92': BSD + "netbsd/9.2/netbsd-9.2.qcow2",
+          'openbsd67': BSD + "openbsd/6.8/openbsd-6.7.qcow2",
           'openbsd68': BSD + "openbsd/6.8/openbsd-6.8.qcow2",
+          'openbsd69': BSD + "openbsd/6.9/openbsd-6.9.qcow2",
           'dragonflybsd563': BSD + "dragonflybsd/5.6.3/dragonflybsd-5.6.3.qcow2",
           'dragonflybsd583': BSD + "dragonflybsd/5.8.3/dragonflybsd-5.8.3.qcow2",
-          'gentoo': 'https://gentoo.osuosl.org/experimental/amd64/openstack/gentoo-openstack-amd64-default-20180621.'
+          'dragonflybsd600': BSD + "dragonflybsd/6.0.0/dragonflybsd-6.0.0.qcow2",
+          'gentoo': 'https://gentoo.osuosl.org/experimental/amd64/openstack/gentoo-openstack-amd64-default-latest.'
           'qcow2',
-          'opensuse': 'https://download.opensuse.org/repositories/Cloud:/Images:/Leap_15.2/images/'
-          'openSUSE-Leap-15.2-OpenStack.x86_64.qcow2',
+          'opensuse': 'https://download.opensuse.org/distribution/leap/15.3/appliances/'
+          'openSUSE-Leap-15.3-JeOS.x86_64-OpenStack-Cloud.qcow2',
           'rhcos41': RHCOS + 'rhcos-4.1',
           'rhcos42': RHCOS + 'rhcos-4.2',
           'rhcos43': RHCOS + 'rhcos-4.3',
