@@ -52,8 +52,9 @@ def certificate(value):
         return "-----BEGIN CERTIFICATE-----\n%s\n-----END CERTIFICATE-----" % value
 
 
-def stable_release(release):
-    tag = release['tag_name']
+def stable_release(release, tag_mode=False):
+    name = 'name' if tag_mode else 'tag_name'
+    tag = release[name]
     if 'rc' in tag or 'alpha' in tag or 'beta' in tag:
         return False
     if 'prerelease' in release and release['prerelease']:
@@ -61,16 +62,18 @@ def stable_release(release):
     return True
 
 
-def githubversion(repo, version=None):
+def github_version(repo, version=None, tag_mode=False):
     if version is None or version == 'latest':
-        data = requests.get("https://api.github.com/repos/%s/releases" % repo).json()
+        obj = 'tags' if tag_mode else 'releases'
+        tag_name = 'name' if tag_mode else 'tag_name'
+        data = requests.get("https://api.github.com/repos/%s/%s" % (repo, obj)).json()
         if 'message' in data and data['message'] == 'Not Found':
             return ''
-        tags = sorted([x['tag_name'] for x in data if stable_release(x)], key=LooseVersion, reverse=True)
+        tags = sorted([x[tag_name] for x in data if stable_release(x, tag_mode)], key=LooseVersion, reverse=True)
         if tags:
             tag = tags[0]
         else:
-            tag = data[0]['tag_name']
+            tag = data[0][tag_name]
         print('\033[0;36mUsing version %s %s\033[0;0m' % (os.path.basename(repo), tag))
         return tag
 
@@ -123,7 +126,7 @@ def network_ip(network, num=0, version=False):
 
 
 jinjafilters = {'basename': basename, 'dirname': dirname, 'ocpnodes': ocpnodes, 'none': none, 'type': _type,
-                'certificate': certificate, 'base64': base64, 'githubversion': githubversion,
+                'certificate': certificate, 'base64': base64, 'github_version': github_version,
                 'defaultnodes': defaultnodes, 'waitcrd': waitcrd, 'local_ip': local_ip, 'network_ip': network_ip}
 
 

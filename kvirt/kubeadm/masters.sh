@@ -17,7 +17,7 @@ kubectl apply -f https://docs.projectcalico.org/v3.1/getting-started/kubernetes/
 {% elif sdn == 'romana' %}
 kubectl apply -f https://raw.githubusercontent.com/romana/romana/master/containerize/specs/romana-kubeadm.yml
 {% elif sdn == 'cilium' %}
-kubectl create -f https://raw.githubusercontent.com/cilium/cilium/{{ 'cilium/cilium' | githubversion(cilium_version|default('latest')) }}/install/kubernetes/quick-install.yaml
+kubectl create -f https://raw.githubusercontent.com/cilium/cilium/{{ 'cilium/cilium' | github_version(cilium_version|default('latest')) }}/install/kubernetes/quick-install.yaml
 {% endif %} 
 mkdir -p /root/.kube
 cp -i /etc/kubernetes/admin.conf /root/.kube/config

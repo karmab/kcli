@@ -1637,7 +1637,7 @@ def get_oc(version='latest', macosx=False):
 def get_helm(version='latest'):
     SYSTEM = 'darwin' if os.path.exists('/Users') else 'linux'
     if version == 'latest':
-        version = jinjafilters.githubversion('helm/helm')
+        version = jinjafilters.github_version('helm/helm')
     elif not version.startswith('v'):
         version = "v%s" % version
     helmcmd = "curl -s https://get.helm.sh/helm-%s-%s-amd64.tar.gz |" % (version, SYSTEM)

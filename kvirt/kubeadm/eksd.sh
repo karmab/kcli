@@ -1,3 +1,4 @@
+{% set eksd_version = 'aws/eks-distro'|github_version(eksd_version, tag_mode=True)|replace('v', '') %}
 {% set split = eksd_version.split('-') %}
 {% set kubernetes_version = split[0] + '-' + split[1] %}
 curl https://distro.eks.amazonaws.com/kubernetes-{{ kubernetes_version }}/kubernetes-{{ eksd_version }}.yaml > /root/eksd.yaml

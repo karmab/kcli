@@ -1,5 +1,5 @@
 set -euo pipefail
-export ARGOCD_VERSION={{ 'argoproj/argo-cd' | githubversion(argocd_version) }}
+export ARGOCD_VERSION={{ 'argoproj/argo-cd' | github_version(argocd_version) }}
 {% if argocd_ingress %}
 kubectl delete -f ingress.yml
 {% endif %}

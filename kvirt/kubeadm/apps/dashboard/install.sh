@@ -1,4 +1,4 @@
-export DASHBOARD_VERSION={{ 'kubernetes/dashboard' | githubversion(dashboard_version) }}
+export DASHBOARD_VERSION={{ 'kubernetes/dashboard' | github_version(dashboard_version) }}
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/$DASHBOARD_VERSION/aio/deploy/recommended.yaml
 
 if kubectl get ns metallb-system >/dev/null 2>&1 ; then

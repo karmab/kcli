@@ -1,5 +1,5 @@
 set -euo pipefail
-export ARGOCD_VERSION={{ 'argoproj/argo-cd' | githubversion(argocd_version) }}
+export ARGOCD_VERSION={{ 'argoproj/argo-cd' | github_version(argocd_version) }}
 kubectl create namespace argocd
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/$ARGOCD_VERSION/manifests/install.yaml
 {% if argocd_ingress %}
