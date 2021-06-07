@@ -1245,15 +1245,20 @@ def get_latest_rhcos(url, _type='kvm'):
                         return "%s/%s/%s" % (url, build, data['images'][key]['path'])
 
 
-def get_commit_rhcos(commitid, _type='kvm'):
+def get_commit_rhcos(commitid, _type='kvm', region=None):
     keys = {'ovirt': 'openstack', 'kubevirt': 'openstack', 'kvm': 'qemu', 'vsphere': 'vmware'}
     key = keys.get(_type, _type)
     buildurl = "https://raw.githubusercontent.com/openshift/installer/%s/data/data/rhcos.json" % commitid
     with urlopen(buildurl) as b:
         data = json.loads(b.read().decode())
-        baseuri = data['baseURI']
-        path = "%s%s" % (baseuri, data['images'][key]['path'])
-        return path
+        if _type == 'aws':
+            return data['amis'][region]['hvm']
+        elif _type == 'gcp':
+            return data['gcp']['image']
+        else:
+            baseuri = data['baseURI']
+            path = "%s%s" % (baseuri, data['images'][key]['path'])
+            return path
 
 
 def get_installer_rhcos(_type='kvm', region=None):
