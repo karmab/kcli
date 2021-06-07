@@ -868,31 +868,13 @@ def create(config, plandir, cluster, overrides):
         sedcmd += ' %s/master.ign %s/worker.ign' % (clusterdir, clusterdir)
         call(sedcmd, shell=True)
     if platform in cloudplatforms:
-        bootstrap_helper_name = "%s-bootstrap-helper" % cluster
-        helper_overrides = {'reservedns': True, 'domain': '%s.%s' % (cluster, domain), 'tags': [tag], 'plan': cluster,
-                            'nets': [network], 'enableroot': True}
-        config.create_vm("%s-bootstrap-helper" % cluster, helper_image, overrides=helper_overrides)
-        status = ""
-        while status != "running":
-            status = k.info(bootstrap_helper_name).get('status')
-            pprint("Waiting 5s for bootstrap helper node to be running...")
-            sleep(5)
-        sleep(5)
-        bootstrap_helper_ip, bootstrap_helper_vmport = _ssh_credentials(k, bootstrap_helper_name)[1:]
-        cmd = "iptables -F ; yum -y install httpd ; systemctl start httpd"
-        sshcmd = ssh(bootstrap_helper_name, ip=bootstrap_helper_ip, user='root', tunnel=config.tunnel,
-                     tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
-                     insecure=True, cmd=cmd, vmport=bootstrap_helper_vmport)
-        os.system(sshcmd)
-        source, destination = "%s/bootstrap.ign" % clusterdir, "/var/www/html/bootstrap"
-        scpcmd = scp(bootstrap_helper_name, ip=bootstrap_helper_ip, user='root', source=source, destination=destination,
-                     tunnel=config.tunnel, tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
-                     tunneluser=config.tunneluser, download=False, insecure=True, vmport=bootstrap_helper_vmport)
-        os.system(scpcmd)
-        sedcmd = 'sed "s@https://api-int.%s.%s:22623/config/master@' % (cluster, domain)
-        sedcmd += 'http://%s-bootstrap-helper.%s.%s/bootstrap@ "' % (cluster, cluster, domain)
-        sedcmd += '%s/master.ign' % clusterdir
-        sedcmd += ' > %s/bootstrap.ign' % clusterdir
+        bucket = "%s-%s" % (cluster, domain.replace('.', '-'))
+        if bucket not in config.k.list_buckets():
+            config.k.create_bucket(bucket)
+        config.k.upload_to_bucket(bucket, "%s/bootstrap.ign" % clusterdir, public=True)
+        bucket_url = config.k.public_bucketfile_url(bucket, "bootstrap.ign")
+        sedcmd = 'sed "s@https://api-int.%s.%s:22623/config/master@%s@" ' % (cluster, domain, bucket_url)
+        sedcmd += '%s/master.ign > %s/bootstrap.ign' % (clusterdir, clusterdir)
         call(sedcmd, shell=True)
     if platform in virtplatforms:
         pprint("Deploying bootstrap")
@@ -930,6 +912,10 @@ def create(config, plandir, cluster, overrides):
         result = config.plan(plan, inputfile='%s/cloud_bootstrap.yml' % plandir, overrides=overrides)
         if result['result'] != 'success':
             os._exit(1)
+        sedcmd = 'sed -i "s@https://api-int.%s.%s:22623/config@http://api-int.%s.%s:22624/config@"' % (cluster, domain,
+                                                                                                       cluster, domain)
+        sedcmd += ' %s/master.ign %s/worker.ign' % (clusterdir, clusterdir)
+        call(sedcmd, shell=True)
         pprint("Deploying masters")
         result = config.plan(plan, inputfile='%s/cloud_masters.yml' % plandir, overrides=overrides)
         if result['result'] != 'success':
@@ -974,6 +960,9 @@ def create(config, plandir, cluster, overrides):
     for vm in todelete:
         pprint("Deleting %s" % vm)
         k.delete(vm)
+    if platform in cloudplatforms:
+        bucket = "%s-%s" % (cluster, domain.replace('.', '-'))
+        config.k.delete_bucket(bucket)
     os.environ['KUBECONFIG'] = "%s/auth/kubeconfig" % clusterdir
     if apps:
         overrides['openshift_version'] = INSTALLER_VERSION[0:3]
