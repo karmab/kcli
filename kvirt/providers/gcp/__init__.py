@@ -1350,7 +1350,7 @@ class Kgcp(object):
         with open(path, 'w') as f:
             f.write(blob.download_as_string())
 
-    def upload_to_bucket(self, bucket, path, overrides={}):
+    def upload_to_bucket(self, bucket, path, overrides={}, temp_url=False):
         client = storage.Client(self.project)
         if not os.path.exists(path):
             error("Invalid path %s" % path)

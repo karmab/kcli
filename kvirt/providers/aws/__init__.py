@@ -1049,7 +1049,7 @@ class Kaws(object):
         s3 = self.s3
         s3.download_file(bucket, path, path)
 
-    def upload_to_bucket(self, bucket, path, overrides={}):
+    def upload_to_bucket(self, bucket, path, overrides={}, temp_url=False):
         if not os.path.exists(path):
             error("Invalid path %s" % path)
             return
@@ -1058,6 +1058,9 @@ class Kaws(object):
         s3 = self.s3
         with open(path, "rb") as f:
             s3.upload_fileobj(f, bucket, dest, ExtraArgs=ExtraArgs)
+        if temp_url:
+            expiration = 600
+            return s3.generate_presigned_url('get_object', Params={'Bucket': bucket, 'Key': dest}, ExpiresIn=expiration)
 
     def list_buckets(self):
         s3 = self.s3
