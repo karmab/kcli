@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 import os
 INSTALL = ['argcomplete', 'netaddr', 'PyYAML', 'prettytable', 'jinja2', 'flask', 'libvirt-python>=2.0.0', 'requests']
 AWS = ['boto3']
-GCP = ['google-api-python-client', 'google-auth-httplib2', 'google-cloud-dns']
+GCP = ['google-api-python-client', 'google-auth-httplib2', 'google-cloud-dns', 'google-cloud-storage']
 KUBEVIRT = ['kubernetes']
 OPENSTACK = ['python-cinderclient', 'python-neutronclient', 'python-glanceclient', 'python-keystoneclient',
              'python-novaclient']

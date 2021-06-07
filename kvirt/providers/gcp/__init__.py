@@ -13,7 +13,7 @@ from kvirt.defaults import UBUNTUS, METADATA_FIELDS
 from dateutil import parser as dateparser
 from getpass import getuser
 import googleapiclient.discovery
-from google.cloud import dns
+from google.cloud import dns, storage
 from netaddr import IPNetwork
 import os
 from time import sleep
@@ -473,7 +473,7 @@ class Kgcp(object):
         if 'custom' in machinetype:
             yamlinfo['cpus'], yamlinfo['memory'] = machinetype.split('-')[1:]
         yamlinfo['autostart'] = vm['scheduling']['automaticRestart']
-        if 'accessConfigs' in vm['networkInterfaces'][0] and 'natIP'in vm['networkInterfaces'][0]['accessConfigs'][0]:
+        if 'accessConfigs' in vm['networkInterfaces'][0] and 'natIP' in vm['networkInterfaces'][0]['accessConfigs'][0]:
             yamlinfo['ip'] = vm['networkInterfaces'][0]['accessConfigs'][0]['natIP']
         source = os.path.basename(vm['disks'][0]['source'])
         source = conn.disks().get(zone=zone, project=self.project, disk=source).execute()
@@ -1328,3 +1328,39 @@ class Kgcp(object):
                 target = os.path.basename(target)
                 results.append([name, ip, protocol, port, target])
         return results
+
+    def create_bucket(self, bucket):
+        client = storage.Client(self.project)
+        if bucket in self.list_buckets():
+            error("Bucket %s already there" % bucket)
+            return
+        client.create_bucket(bucket)
+
+    def delete_bucket(self, bucket):
+        client = storage.Client(self.project)
+        if bucket not in self.list_buckets():
+            error("Inexistent bucket %s" % bucket)
+            return
+        client.delete_bucket(bucket)
+
+    def download_from_bucket(self, bucket, path):
+        client = storage.Client(self.project)
+        bucket = client.get_bucket(bucket)
+        blob = bucket.get_blob(path)
+        with open(path, 'w') as f:
+            f.write(blob.download_as_string())
+
+    def upload_to_bucket(self, bucket, path, overrides={}):
+        client = storage.Client(self.project)
+        if not os.path.exists(path):
+            error("Invalid path %s" % path)
+            return
+        dest = os.path.basename(path)
+        with open(path, "rb") as f:
+            client.upload_fileobj(f, bucket, dest)
+
+    def list_buckets(self):
+        client = storage.Client(self.project)
+        buckets = client.list_buckets()
+        for bucket in buckets:
+            print(bucket)

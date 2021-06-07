@@ -39,6 +39,8 @@ class Kaws(object):
                                 region_name=region, aws_session_token=session_token)
         self.elb = boto3.client('elb', aws_access_key_id=access_key_id, aws_secret_access_key=access_key_secret,
                                 region_name=region, aws_session_token=session_token)
+        self.s3 = boto3.client('s3', aws_access_key_id=access_key_id, aws_secret_access_key=access_key_secret,
+                               region_name=region, aws_session_token=session_token)
         self.region = region
         self.keypair = keypair
         return
@@ -1027,3 +1029,37 @@ class Kaws(object):
             target = ''
             results.append([name, ip, protocol, ports, target])
         return results
+
+    def create_bucket(self, bucket):
+        s3 = self.s3
+        if bucket in self.list_buckets():
+            error("Bucket %s already there" % bucket)
+            return
+        location = {'LocationConstraint': self.region}
+        s3.create_bucket(Bucket=bucket, CreateBucketConfiguration=location)
+
+    def delete_bucket(self, bucket):
+        s3 = self.s3
+        if bucket not in self.list_buckets():
+            error("Inexistent bucket %s" % bucket)
+            return
+        s3.delete_bucket(Bucket=bucket)
+
+    def download_from_bucket(self, bucket, path):
+        s3 = self.s3
+        s3.download_file(bucket, path, path)
+
+    def upload_to_bucket(self, bucket, path, overrides={}):
+        if not os.path.exists(path):
+            error("Invalid path %s" % path)
+            return
+        ExtraArgs = {'Metadata': overrides} if overrides else {}
+        dest = os.path.basename(path)
+        s3 = self.s3
+        with open(path, "rb") as f:
+            s3.upload_fileobj(f, bucket, dest, ExtraArgs=ExtraArgs)
+
+    def list_buckets(self):
+        s3 = self.s3
+        response = s3.list_buckets()
+        return [bucket["Name"] for bucket in response['Buckets']]
