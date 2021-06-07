@@ -505,30 +505,32 @@ def create(config, plandir, cluster, overrides):
     if sno:
         pass
     elif image is None:
+        region = config.k.region if config.type == 'aws' else None
         if upstream:
             fcos_base = 'stable' if version == 'stable' else 'testing'
             fcos_url = "https://builds.coreos.fedoraproject.org/streams/%s.json" % fcos_base
-            image_url = get_latest_fcos(fcos_url, _type=config.type)
+            image_url = get_latest_fcos(fcos_url, _type=config.type, region=region)
         else:
             try:
-                region = config.k.region if config.type == 'aws' else None
                 image_url = get_installer_rhcos(_type=config.type, region=region)
             except:
                 try:
-                    image_url = get_commit_rhcos(COMMIT_ID, _type=config.type)
+                    image_url = get_commit_rhcos(COMMIT_ID, _type=config.type, region=region)
                 except:
                     error("Couldn't gather the %s image associated to commit %s" % (config.type, COMMIT_ID))
                     error("Force an image in your parameter file")
                     os._exit(1)
-        image = os.path.basename(os.path.splitext(image_url)[0])
-        images = [v for v in k.volumes() if image in v]
-        if not images:
-            result = config.handle_host(pool=config.pool, image=image, download=True, update_profile=False,
-                                        url=image_url, size=data.get('kubevirt_disk_size'))
-            if result['result'] != 'success':
-                os._exit(1)
+        if config.type in cloudplatforms:
+            image = image_url
         else:
-            pprint("Using image %s" % image)
+            image = os.path.basename(os.path.splitext(image_url)[0])
+            images = [v for v in k.volumes() if image in v]
+            if not images:
+                result = config.handle_host(pool=config.pool, image=image, download=True, update_profile=False,
+                                            url=image_url, size=data.get('kubevirt_disk_size'))
+                if result['result'] != 'success':
+                    os._exit(1)
+        pprint("Using image %s" % image)
     elif platform != 'packet':
         pprint("Checking if image %s is available" % image)
         images = [v for v in k.volumes() if image in v]
