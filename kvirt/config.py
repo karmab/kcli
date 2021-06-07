@@ -2329,7 +2329,8 @@ $INFO
                 templ = env.get_template(os.path.basename("ignition.j2"))
                 if hosts_content is not None:
                     hosts_content = base64.b64encode(hosts_content.encode()).decode("UTF-8")
-                finaldata = templ.render(api_ip=api_ip, role=role, hosts_content=hosts_content,
+                ignition_url = "http://%s:22624/config/%s" % (api_ip, role)
+                finaldata = templ.render(ignition_url=ignition_url, hosts_content=hosts_content,
                                          ignition_version=ignition_version)
             _files = [{"path": "/root/config.ign", "content": finaldata}]
             if os.path.exists('iso.sh'):
