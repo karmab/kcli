@@ -1256,12 +1256,18 @@ def get_commit_rhcos(commitid, _type='kvm'):
         return path
 
 
-def get_installer_rhcos(_type='kvm'):
+def get_installer_rhcos(_type='kvm', region=None):
     keys = {'ovirt': 'openstack', 'kubevirt': 'openstack', 'kvm': 'qemu', 'vsphere': 'vmware'}
     key = keys.get(_type, _type)
     INSTALLER_COREOS = os.popen('openshift-install coreos print-stream-json 2>/dev/null').read()
     data = json.loads(INSTALLER_COREOS)
-    return data['architectures']['x86_64']['artifacts'][key]['formats']['qcow2.gz']['disk']['location']
+    if _type == 'aws':
+        return data['architectures']['x86_64']['images']['aws']['regions'][region]['image']
+    elif _type == 'gcp':
+        return data['architectures']['x86_64']['images']['gcp']['name']
+    else:
+        _format = 'ova' if _type == 'vsphere' else 'qcow2.gz'
+        return data['architectures']['x86_64']['artifacts'][key]['formats'][_format]['disk']['location']
 
 
 def get_commit_rhcos_metal(commitid):
