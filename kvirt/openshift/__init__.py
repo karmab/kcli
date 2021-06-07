@@ -511,7 +511,8 @@ def create(config, plandir, cluster, overrides):
             image_url = get_latest_fcos(fcos_url, _type=config.type)
         else:
             try:
-                image_url = get_installer_rhcos(_type=config.type)
+                region = config.k.region if config.type == 'aws' else None
+                image_url = get_installer_rhcos(_type=config.type, region=region)
             except:
                 try:
                     image_url = get_commit_rhcos(COMMIT_ID, _type=config.type)
