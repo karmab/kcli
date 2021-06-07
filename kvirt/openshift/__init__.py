@@ -399,7 +399,7 @@ def create(config, plandir, cluster, overrides):
         if not ip_address(ingress_ip) in ip_network(data['baremetal_cidr']):
             error("ingress_ip doesn't belong to your baremetal_cidr")
             os._exit(1)
-    if not sno and ':' in api_ip:
+    if platform in virtplatforms and not sno and ':' in api_ip:
         ipv6 = True
     if ipv6:
         if data.get('network_type', 'OpenShiftSDN') == 'OpenShiftSDN':
