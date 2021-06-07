@@ -335,6 +335,7 @@ The following parameters are specific to aws:
 - access_key_secret
 - region
 - keypair 
+- session_token
 
 To use this provider with kcli rpm, you'll need to install *python3-boto3* rpm
 

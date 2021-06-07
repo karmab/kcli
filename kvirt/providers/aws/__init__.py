@@ -28,17 +28,17 @@ class Kaws(object):
 
     """
     def __init__(self, access_key_id=None, access_key_secret=None, debug=False,
-                 region='eu-west-3', keypair=None):
+                 region='eu-west-3', keypair=None, session_token=None):
         self.ami_date = 20195
         self.debug = debug
         self.conn = boto3.client('ec2', aws_access_key_id=access_key_id, aws_secret_access_key=access_key_secret,
-                                 region_name=region)
+                                 region_name=region, aws_session_token=session_token)
         self.resource = boto3.resource('ec2', aws_access_key_id=access_key_id, aws_secret_access_key=access_key_secret,
-                                       region_name=region)
+                                       region_name=region, aws_session_token=session_token)
         self.dns = boto3.client('route53', aws_access_key_id=access_key_id, aws_secret_access_key=access_key_secret,
-                                region_name=region)
+                                region_name=region, aws_session_token=session_token)
         self.elb = boto3.client('elb', aws_access_key_id=access_key_id, aws_secret_access_key=access_key_secret,
-                                region_name=region)
+                                region_name=region, aws_session_token=session_token)
         self.region = region
         self.keypair = keypair
         return
