@@ -1201,13 +1201,18 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     return result
 
 
-def get_latest_fcos(url, _type='kvm'):
+def get_latest_fcos(url, _type='kvm', region=None):
     keys = {'ovirt': 'openstack', 'kubevirt': 'openstack', 'kvm': 'qemu', 'vsphere': 'vmware'}
     key = keys.get(_type, _type)
     _format = 'ova' if _type == 'vsphere' else 'qcow2.xz'
     with urlopen(url) as u:
         data = json.loads(u.read().decode())
-        return data['architectures']['x86_64']['artifacts'][key]["formats"][_format]['disk']['location']
+        if _type == 'aws':
+            return data['architectures']['x86_64']['images']['aws']['regions'][region]['image']
+        elif _type == 'gcp':
+            return data['architectures']['x86_64']['images']['gcp']['name']
+        else:
+            return data['architectures']['x86_64']['artifacts'][key]["formats"][_format]['disk']['location']
 
 
 def get_latest_fcos_metal(url):
