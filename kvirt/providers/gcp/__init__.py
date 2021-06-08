@@ -477,7 +477,7 @@ class Kgcp(object):
             yamlinfo['ip'] = vm['networkInterfaces'][0]['accessConfigs'][0]['natIP']
         source = os.path.basename(vm['disks'][0]['source'])
         source = conn.disks().get(zone=zone, project=self.project, disk=source).execute()
-        if self.project in source['sourceImage']:
+        if 'sourceImage' in source:
             yamlinfo['image'] = os.path.basename(source['sourceImage'])
         elif 'licenses' in vm['disks'][0]:
             yamlinfo['image'] = os.path.basename(vm['disks'][0]['licenses'][-1])
@@ -490,6 +490,8 @@ class Kgcp(object):
             device = interface['name']
             private_ip = interface['networkIP'] if 'networkIP' in interface else 'N/A'
             yamlinfo['private_ip'] = private_ip
+            if 'ip' not in yamlinfo and private_ip != 'N/A':
+                yamlinfo['ip'] = private_ip
             network_type = ''
             nets.append({'device': device, 'mac': private_ip, 'net': network, 'type': network_type})
         if nets:
