@@ -563,7 +563,7 @@ class Kvirt(object):
                     gcmds.append('apt-get -f install qemu-guest-agent')
                     gcmds.append('/etc/init.d/qemu-guest-agent start')
                     gcmds.append('update-rc.d  qemu-guest-agent defaults')
-            index = 0
+            index = 1 if cmds and 'sleep' in cmds[0] else 0
             if image is not None and image.startswith('rhel'):
                 subindex = [i for i, value in enumerate(cmds) if value.startswith('subscription-manager')]
                 if subindex:
