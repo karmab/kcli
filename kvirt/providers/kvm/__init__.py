@@ -3158,13 +3158,12 @@ class Kvirt(object):
         netroot = ET.fromstring(netxml)
         for host in list(netroot.iter('host')):
             iphost = host.get('ip')
-            for host in list(netroot.iter('host')):
-                iphost = host.get('ip')
-                hostname = host.find('hostname')
-                if hostname is not None and hostname.text == name:
+            for hostname in list(host.iter('hostname')):
+                if hostname.text == name:
                     hostentry = '<host ip="%s"><hostname>%s</hostname></host>' % (iphost, name)
                     network.update(2, 10, 0, hostentry, 1)
-                return {'result': 'success'}
+                    pprint("Entry %s with ip %s deleted" % (name, iphost))
+                    return {'result': 'success'}
 
     def list_dns(self, domain):
         results = []
@@ -3177,11 +3176,6 @@ class Kvirt(object):
         netroot = ET.fromstring(netxml)
         for host in list(netroot.iter('host')):
             iphost = host.get('ip')
-            for host in list(netroot.iter('host')):
-                iphost = host.get('ip')
-                hostname = host.find('hostname')
-                if host.get('mac') is not None:
-                    continue
-                else:
-                    results.append([hostname.text, 'A', '0', iphost])
+            for hostname in list(host.iter('hostname')):
+                results.append([hostname.text, 'A', '0', iphost])
         return results
