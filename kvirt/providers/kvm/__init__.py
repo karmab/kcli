@@ -95,7 +95,7 @@ class Kvirt(object):
 
     """
     def __init__(self, host='127.0.0.1', port=None, user='root', protocol='ssh', url=None, debug=False, insecure=False,
-                 session=False):
+                 session=False, remotednsmasq=False):
         if url is None:
             socketf = '/var/run/libvirt/libvirt-sock' if not session else '/home/%s/.cache/libvirt/libvirt-sock' % user
             conntype = 'system' if not session else 'session'
@@ -143,6 +143,7 @@ class Kvirt(object):
             self.identitycommand = "-i %s" % identityfile
         else:
             self.identitycommand = ""
+        self.remotednsmasq = remotednsmasq
 
     def close(self):
         conn = self.conn
@@ -1623,6 +1624,7 @@ class Kvirt(object):
         bridged = False
         ignition = False
         conn = self.conn
+        remotednsmasq = self.remotednsmasq
         try:
             vm = conn.lookupByName(name)
         except:
@@ -1744,7 +1746,7 @@ class Kvirt(object):
                         call("sudo /usr/bin/systemctl restart dnsmasq", shell=True)
                     except:
                         pass
-            if bridged and self.protocol == 'ssh' and self.host not in ['localhost', '127.0.0.1']:
+            if remotednsmasq and bridged and self.protocol == 'ssh' and self.host not in ['localhost', '127.0.0.1']:
                 deletecmd = "sed -i '/%s/d' /etc/hosts" % hostentry
                 if self.user != 'root':
                     deletecmd = "sudo %s" % deletecmd
@@ -1973,7 +1975,7 @@ class Kvirt(object):
                 error("Couldn't assign dns entry %s in net %s" % (name, netname))
                 continue
             if bridged:
-                self._create_host_entry(name, ip, netname, domain, dnsmasq=True)
+                self._create_host_entry(name, ip, netname, domain)
             else:
                 oldnetxml = network.XMLDesc()
                 root = ET.fromstring(oldnetxml)
@@ -3115,7 +3117,7 @@ class Kvirt(object):
             break
         return {'result': 'success'}
 
-    def _create_host_entry(self, name, ip, netname, domain, dnsmasq=False):
+    def _create_host_entry(self, name, ip, netname, domain):
         hostsfile = '/etcdir/hosts' if os.path.exists("/i_am_a_container") else '/etc/hosts'
         hosts = "%s %s %s.%s" % (ip, name, name, netname)
         if domain is not None and domain != netname:
@@ -3126,17 +3128,18 @@ class Kvirt(object):
             if re.findall(oldentry, line):
                 warning("Old entry found.Leaving...")
                 return
-        if not dnsmasq:
-            hostscmd = "sh -c 'echo %s >>%s'" % (hosts, hostsfile)
-        else:
-            hostscmd = "sh -c 'echo %s >>%s'" % (hosts.replace('"', '\\"'), hostsfile)
         pprint("Creating hosts entry. Password for sudo might be asked")
-        if not dnsmasq or self.user != 'root':
-            hostscmd = "sudo %s" % hostscmd
-        elif self.protocol == 'ssh' and self.host not in ['localhost', '127.0.0.1']:
+        if not self.remotednsmasq:
+            hostscmd = "sh -c 'echo %s >>%s'" % (hosts, hostsfile)
+            if self.user != 'root':
+                hostscmd = "sudo %s" % hostscmd
+            call(hostscmd, shell=True)
+        elif self.protocol != 'ssh' or self.host in ['localhost', '127.0.0.1']:
+            return
+        else:
+            hostscmd = "sudo sh -c 'echo %s >>%s'" % (hosts.replace('"', '\\"'), hostsfile)
             hostscmd = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host, hostscmd)
-        call(hostscmd, shell=True)
-        if dnsmasq:
+            call(hostscmd, shell=True)
             dnsmasqcmd = "/usr/bin/systemctl restart dnsmasq"
             if self.user != 'root':
                 dnsmasqcmd = "sudo %s" % dnsmasqcmd

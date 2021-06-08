@@ -273,9 +273,10 @@ class Kconfig(Kbaseconfig):
                     error("Problem parsing your configuration file")
                     os._exit(1)
                 session = self.options.get('session', False)
+                remotednsmasq = self.options.get('remotednsmasq', False)
                 from kvirt.providers.kvm import Kvirt
                 k = Kvirt(host=self.host, port=self.port, user=self.user, protocol=self.protocol, url=self.url,
-                          debug=debug, insecure=self.insecure, session=session)
+                          debug=debug, insecure=self.insecure, session=session, remotednsmasq=remotednsmasq)
             if k.conn is None:
                 error("Couldn't connect to client %s. Leaving..." % self.client)
                 os._exit(1)
