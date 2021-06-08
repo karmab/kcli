@@ -48,7 +48,7 @@ IMAGES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-i
           'coreos': 'https://stable.release.core-os.net/amd64-usr/current/coreos_production_qemu_image.img.bz2',
           'debian8': DEBIAN + 'openstack/archive/8.11.0/debian-8.11.0-openstack-amd64.qcow2',
           'debian9': DEBIAN + 'openstack/current-9/debian-9-openstack-amd64.qcow2',
-          'debian10': DEBIAN + 'openstack/current-10/debian-10-openstack-arm64.qcow2',
+          'debian10': DEBIAN + 'openstack/current-10/debian-10-openstack-amd64.qcow2',
           'fcos': 'https://builds.coreos.fedoraproject.org/streams/stable.json',
           'fedora28': FEDORA_ARCHIVE + '28/Cloud/x86_64/images/Fedora-Cloud-Base-28-1.1.x86_64.qcow2',
           'fedora29': FEDORA_ARCHIVE + '29/Cloud/x86_64/images/Fedora-Cloud-Base-29-1.2.x86_64.qcow2',
@@ -61,7 +61,7 @@ IMAGES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-i
           'freebsd122': BSD + "freebsd/12.2/freebsd-12.2.qcow2",
           'freebsd130': BSD + "freebsd/13.0/freebsd-13.0.qcow2",
           'netbsd82': BSD + "netbsd/8.2/netbsd-8.2.qcow2",
-          'netbsd91': BSD + "netbsd/9.1/netbsd-9.1.qcow2"
+          'netbsd91': BSD + "netbsd/9.1/netbsd-9.1.qcow2",
           'netbsd92': BSD + "netbsd/9.2/netbsd-9.2.qcow2",
           'openbsd67': BSD + "openbsd/6.8/openbsd-6.7.qcow2",
           'openbsd68': BSD + "openbsd/6.8/openbsd-6.8.qcow2",
