@@ -1349,20 +1349,42 @@ class Kgcp(object):
 
     def download_from_bucket(self, bucket, path):
         client = storage.Client(self.project)
-        bucket = client.get_bucket(bucket)
+        try:
+            bucket = client.get_bucket(bucket)
+        except:
+            error("Inexistent bucket %s" % bucket)
+            return
         blob = bucket.get_blob(path)
-        with open(path, 'w') as f:
-            f.write(blob.download_as_string())
+        with open(path, 'wb') as f:
+            client.download_blob_to_file(blob, f)
 
     def upload_to_bucket(self, bucket, path, overrides={}, temp_url=False):
         client = storage.Client(self.project)
         if not os.path.exists(path):
             error("Invalid path %s" % path)
             return
+        try:
+            bucket = client.get_bucket(bucket)
+        except:
+            error("Inexistent bucket %s" % bucket)
+            return
         dest = os.path.basename(path)
-        with open(path, "rb") as f:
-            client.upload_fileobj(f, bucket, dest)
+        blob = storage.Blob(dest, bucket)
+        try:
+            with open(path, "rb") as f:
+                blob.upload_from_file(f)
+        except Exception as e:
+            error("Got %s" % e)
 
     def list_buckets(self):
         client = storage.Client(self.project)
         return [bucket.name for bucket in client.list_buckets()]
+
+    def list_bucketfiles(self, bucket):
+        client = storage.Client(self.project)
+        try:
+            bucket = client.get_bucket(bucket)
+        except:
+            error("Inexistent bucket %s" % bucket)
+            return
+        return [obj.name for obj in bucket.list_blobs()]

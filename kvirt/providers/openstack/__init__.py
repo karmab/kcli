@@ -969,3 +969,12 @@ class Kopenstack(object):
     def list_buckets(self):
         swift = self.swift
         return [container['name'] for container in swift.get_account()[1]]
+
+    def list_bucketfiles(self, bucket):
+        swift = self.swift
+        try:
+            containerinfo = swift.get_container(bucket)
+        except:
+            error("Inexistent bucket %s" % bucket)
+            return []
+        return [obj['name'] for obj in containerinfo[1]]

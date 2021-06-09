@@ -1029,3 +1029,7 @@ boot || reboot""" % (kernel, ipxeparameters, metal, ignition_url, initrd)
     def list_buckets(self):
         print("not implemented")
         return []
+
+    def list_bucketfiles(self, bucket):
+        print("not implemented")
+        return []

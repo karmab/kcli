@@ -1068,3 +1068,10 @@ class Kaws(object):
         s3 = self.s3
         response = s3.list_buckets()
         return [bucket["Name"] for bucket in response['Buckets']]
+
+    def list_bucketfiles(self, bucket):
+        s3 = self.s3
+        if bucket not in self.list_buckets():
+            error("Inexistent bucket %s" % bucket)
+            return []
+        return [obj['Key'] for obj in s3.list_objects(Bucket=bucket)['Contents']]

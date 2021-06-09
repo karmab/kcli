@@ -2592,6 +2592,20 @@ def list_bucket(args):
     print(bucketstable)
 
 
+def list_bucketfiles(args):
+    """List bucket files"""
+    bucket = args.bucket
+    pprint("Listing bucket files of bucket %s..." % bucket)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    k = config.k
+    bucketfiles = k.list_bucketfiles(bucket)
+    bucketfilestable = PrettyTable(["BucketFiles"])
+    for bucketfile in sorted(bucketfiles):
+        bucketfilestable.add_row([bucketfile])
+    bucketfilestable.align["BucketFiles"] = "l"
+    print(bucketfilestable)
+
+
 def create_bucketfile(args):
     bucket = args.bucket
     path = args.path
@@ -2948,6 +2962,12 @@ def cli():
     bucketlist_parser = list_subparsers.add_parser('bucket', description=bucketlist_desc, help=bucketlist_desc,
                                                    aliases=['buckets'])
     bucketlist_parser.set_defaults(func=list_bucket)
+
+    bucketfileslist_desc = 'List Bucket files'
+    bucketfileslist_parser = list_subparsers.add_parser('bucket-file', description=bucketfileslist_desc,
+                                                        help=bucketfileslist_desc, aliases=['bucket-files'])
+    bucketfileslist_parser.add_argument('bucket', metavar='BUCKET')
+    bucketfileslist_parser.set_defaults(func=list_bucketfiles)
 
     cachedelete_desc = 'Delete Cache'
     cachedelete_parser = delete_subparsers.add_parser('cache', description=cachedelete_desc, help=cachedelete_desc)

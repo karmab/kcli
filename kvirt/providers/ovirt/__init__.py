@@ -1224,3 +1224,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
     def list_buckets(self):
         print("not implemented")
         return []
+
+    def list_bucketfiles(self, bucket):
+        print("not implemented")
+        return []

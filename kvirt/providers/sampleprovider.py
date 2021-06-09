@@ -592,3 +592,7 @@ class Kbase(object):
     def list_buckets(self):
         print("not implemented")
         return []
+
+    def list_bucketfiles(self, bucket):
+        print("not implemented")
+        return []
