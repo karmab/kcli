@@ -1,8 +1,14 @@
+{% if flavor_bootstrap != None %}
+{% set flavor = flavor_bootstrap %}
+{% endif %}
+
 {{ cluster }}-bootstrap:
  image: {{ image }}
  pool: {{ pool }}
+{% if flavor != None %}
  flavor: {{ flavor }}
- enableroot: {{ enableroot }}
+{% endif %}
+ enableroot: false
  numcpus: {{ bootstrap_numcpus | default(numcpus, numcpus) }}
  memory: {{ bootstrap_memory | default(memory, memory) }}
  nets:

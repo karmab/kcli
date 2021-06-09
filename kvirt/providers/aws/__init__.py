@@ -82,18 +82,20 @@ class Kaws(object):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
         image = self.__evaluate_image(image)
         keypair = self.keypair
-        if image is not None:
-            Filters = [{'Name': 'name', 'Values': [image]}]
+        if image is None:
+            return {'result': 'failure', 'reason': 'An image (or amid) is required'}
+        else:
+            _filter = 'image-id' if image.startswith('ami-') else 'name'
+            Filters = [{'Name': _filter, 'Values': [image]}]
             images = conn.describe_images(Filters=Filters)
-            if not image.startswith('ami-') and 'Images' in images and images['Images']:
+            if 'Images' in images and images['Images']:
                 imageinfo = images['Images'][0]
                 imageid = imageinfo['ImageId']
-                pprint("Using ami %s" % imageid)
+                if _filter == 'name':
+                    pprint("Using ami %s" % imageid)
                 image = imageinfo['Name']
             else:
                 return {'result': 'failure', 'reason': 'Invalid image %s' % image}
-        else:
-            return {'result': 'failure', 'reason': 'An image (or amid) is required'}
         defaultsubnetid = None
         if flavor is None:
             matching = [f for f in staticf if staticf[f]['cpus'] >= numcpus and staticf[f]['memory'] >= memory]
@@ -190,7 +192,7 @@ class Kaws(object):
                     privateip = {'Primary': True, 'PrivateIpAddress': ip}
                 else:
                     privateip = {'Primary': False, 'PrivateIpAddress': ip}
-                privateips = privateips.append(privateip)
+                privateips.append(privateip)
             networkinterface['SubnetId'] = netname
             if index == 0:
                 SecurityGroupIds = []

@@ -814,8 +814,8 @@ $INFO
                             cmds.extend(mailcmd)
                 else:
                     error("Invalid method %s" % notifymethod)
-        ips = [overrides[key] for key in overrides if key.startswith('ip')]
-        netmasks = [overrides[key] for key in overrides if key.startswith('netmask')]
+        ips = [overrides[key] for key in overrides if re.match('ip[0-9]+', key)]
+        netmasks = [overrides[key] for key in overrides if re.match('netmask[0-9]+', key)]
         if privatekey and self.type == 'kvm':
             privatekeyfile, publickeyfile = None, None
             for path in ["~/.kcli/id_rsa", "~/.kcli/id_dsa", "~/.ssh/id_rsa", "~/.ssh/id_dsa"]:

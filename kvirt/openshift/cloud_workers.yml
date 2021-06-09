@@ -6,10 +6,12 @@
 
 {{ cluster }}-worker-{{ num }}:
  domain: {{ domain }} 
- enableroot: {{ enableroot }}
+ enableroot: false
  image: {{ image }}
  pool: {{ pool }}
+{% if flavor != None %}
  flavor: {{ flavor }}
+{% endif %}
  numcpus: {{ worker_numcpus | default(numcpus, numcpus) }}
  memory: {{ worker_memory | default(memory, memory) }}
  nets:
