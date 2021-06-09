@@ -1424,6 +1424,7 @@ $INFO
         dnsentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'dns']
         kubeentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'kube']
         lbs = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'loadbalancer']
+        bucketentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'bucket']
         for p in profileentries:
             vmprofiles[p] = entries[p]
         if planentries:
@@ -1530,6 +1531,14 @@ $INFO
                     return
                 z.reserve_dns(name=dnsentry, nets=[dnsnet], domain=dnsdomain, ip=dnsip, alias=dnsalias, force=True,
                               primary=True)
+        if bucketentries and not onlyassets and self.type in ['aws', 'gcp', 'openstack']:
+            pprint("Deploying Bucket Entries...")
+            for bucketentry in bucketentries:
+                bucketprofile = entries[bucketentry]
+                _files = bucketprofile.get('files', [])
+                self.k.create_bucket(bucketentry)
+                for _fil in _files:
+                    self.k.upload_to_bucket(bucketentry, _fil)
         if kubeentries and not onlyassets:
             pprint("Deploying Kube Entries...")
             dnsclients = {}

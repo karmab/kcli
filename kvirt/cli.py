@@ -2571,6 +2571,10 @@ def create_bucket(args):
 
 def delete_bucket(args):
     """Delete bucket"""
+    yes_top = args.yes_top
+    yes = args.yes
+    if not yes and not yes_top:
+        common.confirm("Are you sure?")
     buckets = args.buckets
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
