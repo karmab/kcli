@@ -2612,11 +2612,14 @@ def list_bucketfiles(args):
 
 def create_bucketfile(args):
     bucket = args.bucket
+    temp_url = args.url
     path = args.path
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     pprint("Uploading file %s to bucket %s..." % (path, bucket))
-    k.upload_to_bucket(bucket, path)
+    result = k.upload_to_bucket(bucket, path, temp_url=temp_url)
+    if result is not None:
+        pprint("bucketfile available at the following url:\n\n%s" % result)
 
 
 def delete_bucketfile(args):
@@ -2951,6 +2954,7 @@ def cli():
 
     bucketfilecreate_desc = 'Create Bucket file'
     bucketfilecreate_parser = argparse.ArgumentParser(add_help=False)
+    bucketfilecreate_parser.add_argument('-u', '--url', action='store_true', help='Get temp url')
     bucketfilecreate_parser.add_argument('bucket', metavar='BUCKET')
     bucketfilecreate_parser.add_argument('path', metavar='PATH')
     bucketfilecreate_parser.set_defaults(func=create_bucketfile)
