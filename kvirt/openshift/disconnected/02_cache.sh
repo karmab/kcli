@@ -6,7 +6,6 @@ export PATH=/root/bin:$PATH
 dnf -y install httpd
 dnf -y install libguestfs-tools
 dnf -y update libgcrypt
-systemctl enable --now libvirtd
 systemctl enable --now httpd
 cd /var/www/html
 RHCOS_OPENSTACK_URI_FULL={{ openstack_uri }}
@@ -15,6 +14,7 @@ curl -L $RHCOS_OPENSTACK_URI_FULL > $RHCOS_OPENSTACK_URI
 
 EXTRACTED_FILE=openstack.qcow2
 gunzip -c $RHCOS_OPENSTACK_URI > $EXTRACTED_FILE
+export LIBGUESTFS_BACKEND=direct
 BOOT_DISK=$(virt-filesystems -a $EXTRACTED_FILE -l | grep boot | cut -f1 -d" ")
 {% if ':' in api_ip and not dualstack %}
 virt-edit -a $EXTRACTED_FILE -m $BOOT_DISK /boot/loader/entries/ostree-1-rhcos.conf -e "s/^options/options ip=dhcp6/"
