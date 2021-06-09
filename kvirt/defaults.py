@@ -63,7 +63,7 @@ IMAGES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-i
           'netbsd82': BSD + "netbsd/8.2/netbsd-8.2.qcow2",
           'netbsd91': BSD + "netbsd/9.1/netbsd-9.1.qcow2",
           'netbsd92': BSD + "netbsd/9.2/netbsd-9.2.qcow2",
-          'openbsd67': BSD + "openbsd/6.8/openbsd-6.7.qcow2",
+          'openbsd67': BSD + "openbsd/6.7/openbsd-6.7.qcow2",
           'openbsd68': BSD + "openbsd/6.8/openbsd-6.8.qcow2",
           'openbsd69': BSD + "openbsd/6.9/openbsd-6.9.qcow2",
           'dragonflybsd563': BSD + "dragonflybsd/5.6.3/dragonflybsd-5.6.3.qcow2",
