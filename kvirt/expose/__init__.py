@@ -80,7 +80,7 @@ class Kexposer():
                     currentconfig = self.config
                 else:
                     currentconfig = self.extraconfigs[self.plans[plan]]
-                result = currentconfig.plan(plan, delete=True)
+                result = currentconfig.delete_plan(plan)
                 response = jsonify(result)
                 response.status_code = 200
                 return response
@@ -129,7 +129,7 @@ class Kexposer():
                             currentconfig.mailto = newmails
                     if 'owner' in overrides and overrides['owner'] == '':
                         del overrides['owner']
-                    currentconfig.plan(plan, delete=True)
+                    currentconfig.delete_plan(plan)
                     result = currentconfig.plan(plan, inputfile=inputfile, overrides=overrides)
                 except Exception as e:
                     error = 'Hit issue when running plan: %s' % str(e)
