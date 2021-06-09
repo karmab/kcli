@@ -947,6 +947,21 @@ class Kopenstack(object):
             swift.delete_object(bucket, obj_name)
         swift.delete_container(bucket)
 
+    def delete_from_bucket(self, bucket, path):
+        swift = self.swift
+        try:
+            containerinfo = swift.get_container(bucket)
+        except:
+            error("Inexistent bucket %s" % bucket)
+            return
+        for obj in containerinfo[1]:
+            obj_name = obj['name']
+            if path == obj_name:
+                pprint("Deleting object %s in bucket %s" % (obj_name, bucket))
+                swift.delete_object(bucket, obj_name)
+                break
+        return
+
     def download_from_bucket(self, bucket, path):
         swift = self.swift
         try:

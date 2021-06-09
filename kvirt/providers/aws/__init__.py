@@ -1047,6 +1047,13 @@ class Kaws(object):
             return
         s3.delete_bucket(Bucket=bucket)
 
+    def delete_from_bucket(self, bucket, path):
+        s3 = self.s3
+        if bucket not in self.list_buckets():
+            error("Inexistent bucket %s" % bucket)
+            return
+        s3.delete_object(Bucket=bucket, Key=path)
+
     def download_from_bucket(self, bucket, path):
         s3 = self.s3
         s3.download_file(bucket, path, path)
@@ -1054,6 +1061,9 @@ class Kaws(object):
     def upload_to_bucket(self, bucket, path, overrides={}, temp_url=False):
         if not os.path.exists(path):
             error("Invalid path %s" % path)
+            return
+        if bucket not in self.list_buckets():
+            error("Bucket %s doesn't exist" % bucket)
             return
         ExtraArgs = {'Metadata': overrides} if overrides else {}
         dest = os.path.basename(path)

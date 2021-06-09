@@ -1018,6 +1018,10 @@ boot || reboot""" % (kernel, ipxeparameters, metal, ignition_url, initrd)
         print("not implemented")
         return
 
+    def delete_from_bucket(self, bucket, path):
+        print("not implemented")
+        return
+
     def download_from_bucket(self, bucket, path):
         print("not implemented")
         return

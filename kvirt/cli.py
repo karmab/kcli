@@ -2615,6 +2615,15 @@ def create_bucketfile(args):
     k.upload_to_bucket(bucket, path)
 
 
+def delete_bucketfile(args):
+    bucket = args.bucket
+    path = args.path
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    k = config.k
+    pprint("Deleting file %s to bucket %s..." % (path, bucket))
+    k.delete_from_bucket(bucket, path)
+
+
 def download_bucketfile(args):
     bucket = args.bucket
     path = args.path
@@ -2943,6 +2952,14 @@ def cli():
     bucketfilecreate_parser.set_defaults(func=create_bucketfile)
     create_subparsers.add_parser('bucket-file', parents=[bucketfilecreate_parser],
                                  description=bucketfilecreate_desc, help=bucketfilecreate_desc)
+
+    bucketfiledelete_desc = 'Delete Bucket file'
+    bucketfiledelete_parser = argparse.ArgumentParser(add_help=False)
+    bucketfiledelete_parser.add_argument('bucket', metavar='BUCKET')
+    bucketfiledelete_parser.add_argument('path', metavar='PATH')
+    bucketfiledelete_parser.set_defaults(func=delete_bucketfile)
+    delete_subparsers.add_parser('bucket-file', parents=[bucketfiledelete_parser],
+                                 description=bucketfiledelete_desc, help=bucketfiledelete_desc)
 
     bucketfiledownload_desc = 'Download Bucket file'
     bucketfiledownload_parser = argparse.ArgumentParser(add_help=False)

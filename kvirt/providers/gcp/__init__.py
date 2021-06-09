@@ -1347,6 +1347,21 @@ class Kgcp(object):
             return
         bucket.delete()
 
+    def delete_from_bucket(self, bucket, path):
+        client = storage.Client(self.project)
+        try:
+            bucketname = bucket
+            bucket = client.get_bucket(bucket)
+        except:
+            error("Inexistent bucket %s" % bucket)
+            return
+        try:
+            blob = bucket.get_blob(path)
+        except:
+            error("Inexistent path %s in bucket %s" % (path, bucketname))
+            return
+        blob.delete()
+
     def download_from_bucket(self, bucket, path):
         client = storage.Client(self.project)
         try:
