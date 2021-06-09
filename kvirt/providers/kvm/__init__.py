@@ -3179,3 +3179,23 @@ class Kvirt(object):
             for hostname in list(host.iter('hostname')):
                 results.append([hostname.text, 'A', '0', iphost])
         return results
+
+    def create_bucket(self, bucket):
+        print("not implemented")
+        return
+
+    def delete_bucket(self, bucket):
+        print("not implemented")
+        return
+
+    def download_from_bucket(self, bucket, path):
+        print("not implemented")
+        return
+
+    def upload_to_bucket(self, bucket, path, overrides={}, temp_url=False):
+        print("not implemented")
+        return
+
+    def list_buckets(self):
+        print("not implemented")
+        return []

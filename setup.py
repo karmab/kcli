@@ -7,7 +7,7 @@ AWS = ['boto3']
 GCP = ['google-api-python-client', 'google-auth-httplib2', 'google-cloud-dns', 'google-cloud-storage']
 KUBEVIRT = ['kubernetes']
 OPENSTACK = ['python-cinderclient', 'python-neutronclient', 'python-glanceclient', 'python-keystoneclient',
-             'python-novaclient']
+             'python-novaclient', 'python-swiftclient']
 OVIRT = ['ovirt-engine-sdk-python']
 PACKET = ['packet-python']
 VSPHERE = ['requests', 'pyvmomi']

@@ -493,7 +493,6 @@ class Kbase(object):
         print("not implemented")
         return {'result': 'success'}
 
-
 # should return a dict of pool strings
     def list_pools(self):
         """
@@ -573,3 +572,23 @@ class Kbase(object):
         :return:
         """
         return
+
+    def create_bucket(self, bucket):
+        print("not implemented")
+        return
+
+    def delete_bucket(self, bucket):
+        print("not implemented")
+        return
+
+    def download_from_bucket(self, bucket, path):
+        print("not implemented")
+        return
+
+    def upload_to_bucket(self, bucket, path, overrides={}, temp_url=False):
+        print("not implemented")
+        return
+
+    def list_buckets(self):
+        print("not implemented")
+        return []

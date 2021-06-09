@@ -1204,3 +1204,23 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
 
     def list_dns(self, domain):
         return []
+
+    def create_bucket(self, bucket):
+        print("not implemented")
+        return
+
+    def delete_bucket(self, bucket):
+        print("not implemented")
+        return
+
+    def download_from_bucket(self, bucket, path):
+        print("not implemented")
+        return
+
+    def upload_to_bucket(self, bucket, path, overrides={}, temp_url=False):
+        print("not implemented")
+        return
+
+    def list_buckets(self):
+        print("not implemented")
+        return []

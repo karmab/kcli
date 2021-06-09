@@ -15,6 +15,7 @@ from glanceclient import Client as glanceclient
 from cinderclient import client as cinderclient
 from novaclient import client as novaclient
 from neutronclient.v2_0.client import Client as neutronclient
+import swiftclient.client as swiftclient
 import os
 from time import sleep
 import webbrowser
@@ -25,7 +26,7 @@ class Kopenstack(object):
     """
 
     """
-    def __init__(self, host='127.0.0.1', version='2', port=None, user='root', password=None, debug=False, project=None,
+    def __init__(self, host='127.0.0.1', version='3', port=None, user='root', password=None, debug=False, project=None,
                  domain='Default', auth_url=None, ca_file=None, external_network=None):
         self.debug = debug
         self.host = host
@@ -40,6 +41,9 @@ class Kopenstack(object):
         self.glance = glanceclient(version, session=sess)
         self.cinder = cinderclient.Client(version, session=sess)
         self.neutron = neutronclient(session=sess)
+        os_options = {'user_domain_name': domain, 'project_domain_name': domain, 'project_name': project}
+        self.swift = swiftclient.Connection(authurl=auth_url, user=user, key=password, os_options=os_options,
+                                            auth_version='3')
         self.conn = self.nova
         self.project = project
         self.external_network = external_network
@@ -922,3 +926,46 @@ class Kopenstack(object):
             error(msg)
             return {'result': 'failure', 'reason': msg}
         self.neutron.delete_port(matchingports[0]['id'])
+
+    def create_bucket(self, bucket):
+        swift = self.swift
+        if bucket in self.list_buckets():
+            error("Bucket %s already exists" % bucket)
+            return
+        swift.put_container(bucket)
+
+    def delete_bucket(self, bucket):
+        swift = self.swift
+        try:
+            containerinfo = swift.get_container(bucket)
+        except:
+            error("Inexistent bucket %s" % bucket)
+            return
+        for obj in containerinfo[1]:
+            obj_name = obj['name']
+            pprint("Deleting object %s in bucket %s" % (obj_name, bucket))
+            swift.delete_object(bucket, obj_name)
+        swift.delete_container(bucket)
+
+    def download_from_bucket(self, bucket, path):
+        swift = self.swift
+        try:
+            resp_headers, obj_contents = swift.get_object(bucket, path)
+        except Exception as e:
+            error("Got %s" % e)
+            return
+        with open(path, 'wb') as f:
+            f.write(obj_contents)
+
+    def upload_to_bucket(self, bucket, path, overrides={}, temp_url=False):
+        swift = self.swift
+        if not os.path.exists(path):
+            error("Invalid path %s" % path)
+            return
+        dest = os.path.basename(path)
+        with open(path, 'rb') as f:
+            swift.put_object(bucket, dest, contents=f, content_type='text/plain')
+
+    def list_buckets(self):
+        swift = self.swift
+        return [container['name'] for container in swift.get_account()[1]]

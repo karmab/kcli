@@ -175,7 +175,7 @@ class Kpacket(object):
                     vlan = True
                     networkid = networks[0].id
             else:
-                    networkid = None
+                networkid = None
             networkids.append(networkid)
         if image is not None and not common.needs_ignition(image):
             if '_' not in image and image in ['rhel8', 'rhel7', 'centos7', 'centos8']:
@@ -258,7 +258,7 @@ class Kpacket(object):
         validfacilities = [os.path.basename(e['href']) for e in validfacilities]
         validfacilities = [f.code for f in self.conn.list_facilities() if f.id in validfacilities]
         if not validfacilities:
-                return {'result': 'failure', 'reason': 'no valid facility found for flavor %s' % flavor}
+            return {'result': 'failure', 'reason': 'no valid facility found for flavor %s' % flavor}
         facility = overrides.get('facility')
         if facility is not None:
             matchingfacilities = [f for f in self.conn.list_facilities() if f.slug == facility]
@@ -1009,3 +1009,23 @@ class Kpacket(object):
 kernel %s %s coreos.inst.image_url=%s coreos.inst.ignition_url=%s
 initrd %s
 boot || reboot""" % (kernel, ipxeparameters, metal, ignition_url, initrd)
+
+    def create_bucket(self, bucket):
+        print("not implemented")
+        return
+
+    def delete_bucket(self, bucket):
+        print("not implemented")
+        return
+
+    def download_from_bucket(self, bucket, path):
+        print("not implemented")
+        return
+
+    def upload_to_bucket(self, bucket, path, overrides={}, temp_url=False):
+        print("not implemented")
+        return
+
+    def list_buckets(self):
+        print("not implemented")
+        return []

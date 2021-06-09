@@ -1523,3 +1523,23 @@ class Kubevirt(Kubecommon):
             self.core.delete_namespaced_secret(name, namespace)
         except Exception as e:
             error("Couldn't delete service %s. Hit %s" % (name, e))
+
+    def create_bucket(self, bucket):
+        print("not implemented")
+        return
+
+    def delete_bucket(self, bucket):
+        print("not implemented")
+        return
+
+    def download_from_bucket(self, bucket, path):
+        print("not implemented")
+        return
+
+    def upload_to_bucket(self, bucket, path, overrides={}, temp_url=False):
+        print("not implemented")
+        return
+
+    def list_buckets(self):
+        print("not implemented")
+        return []

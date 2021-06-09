@@ -2560,6 +2560,56 @@ def snapshotlist_vm(args):
     return
 
 
+def create_bucket(args):
+    """Create bucket"""
+    bucket = args.bucket
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    k = config.k
+    pprint("Creating bucket %s..." % bucket)
+    k.create_bucket(bucket)
+
+
+def delete_bucket(args):
+    """Delete bucket"""
+    buckets = args.buckets
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    k = config.k
+    for bucket in buckets:
+        pprint("Deleting bucket %s..." % bucket)
+        k.delete_bucket(bucket)
+
+
+def list_bucket(args):
+    """List buckets"""
+    pprint("Listing buckets...")
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    k = config.k
+    buckets = k.list_buckets()
+    bucketstable = PrettyTable(["Bucket"])
+    for bucket in sorted(buckets):
+        bucketstable.add_row([bucket])
+    bucketstable.align["Bucket"] = "l"
+    print(bucketstable)
+
+
+def create_bucketfile(args):
+    bucket = args.bucket
+    path = args.path
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    k = config.k
+    pprint("Uploading file %s to bucket %s..." % (path, bucket))
+    k.upload_to_bucket(bucket, path)
+
+
+def download_bucketfile(args):
+    bucket = args.bucket
+    path = args.path
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    k = config.k
+    pprint("Downloading file %s from bucket %s..." % (path, bucket))
+    k.download_from_bucket(bucket, path)
+
+
 def report_host(args):
     """Report info about host"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -2859,6 +2909,45 @@ def cli():
     appopenshiftlist_parser = listapp_subparsers.add_parser('openshift', description=appopenshiftlist_desc,
                                                             help=appopenshiftlist_desc)
     appopenshiftlist_parser.set_defaults(func=list_apps_openshift)
+
+    bucketcreate_desc = 'Create Bucket'
+    bucketcreate_epilog = None
+    bucketcreate_parser = create_subparsers.add_parser('bucket', description=bucketcreate_desc,
+                                                       help=bucketcreate_desc, epilog=bucketcreate_epilog,
+                                                       formatter_class=rawhelp)
+    bucketcreate_parser.add_argument('-P', '--param', action='append',
+                                     help='specify parameter or keyword for rendering (multiple can be specified)',
+                                     metavar='PARAM')
+    bucketcreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    bucketcreate_parser.add_argument('bucket', metavar='BUCKET', nargs='?')
+    bucketcreate_parser.set_defaults(func=create_bucket)
+
+    bucketfilecreate_desc = 'Create Bucket file'
+    bucketfilecreate_parser = argparse.ArgumentParser(add_help=False)
+    bucketfilecreate_parser.add_argument('bucket', metavar='BUCKET')
+    bucketfilecreate_parser.add_argument('path', metavar='PATH')
+    bucketfilecreate_parser.set_defaults(func=create_bucketfile)
+    create_subparsers.add_parser('bucket-file', parents=[bucketfilecreate_parser],
+                                 description=bucketfilecreate_desc, help=bucketfilecreate_desc)
+
+    bucketfiledownload_desc = 'Download Bucket file'
+    bucketfiledownload_parser = argparse.ArgumentParser(add_help=False)
+    bucketfiledownload_parser.add_argument('bucket', metavar='BUCKET')
+    bucketfiledownload_parser.add_argument('path', metavar='PATH')
+    bucketfiledownload_parser.set_defaults(func=download_bucketfile)
+    download_subparsers.add_parser('bucket-file', parents=[bucketfiledownload_parser],
+                                   description=bucketfiledownload_desc, help=bucketfiledownload_desc)
+
+    bucketdelete_desc = 'Delete Bucket'
+    bucketdelete_parser = delete_subparsers.add_parser('bucket', description=bucketdelete_desc, help=bucketdelete_desc)
+    bucketdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    bucketdelete_parser.add_argument('buckets', metavar='BUCKETS', nargs='+')
+    bucketdelete_parser.set_defaults(func=delete_bucket)
+
+    bucketlist_desc = 'List Buckets'
+    bucketlist_parser = list_subparsers.add_parser('bucket', description=bucketlist_desc, help=bucketlist_desc,
+                                                   aliases=['buckets'])
+    bucketlist_parser.set_defaults(func=list_bucket)
 
     cachedelete_desc = 'Delete Cache'
     cachedelete_parser = delete_subparsers.add_parser('cache', description=cachedelete_desc, help=cachedelete_desc)

@@ -1340,10 +1340,12 @@ class Kgcp(object):
 
     def delete_bucket(self, bucket):
         client = storage.Client(self.project)
-        if bucket not in self.list_buckets():
+        try:
+            bucket = client.get_bucket(bucket)
+        except:
             error("Inexistent bucket %s" % bucket)
             return
-        client.delete_bucket(bucket)
+        bucket.delete()
 
     def download_from_bucket(self, bucket, path):
         client = storage.Client(self.project)
@@ -1363,6 +1365,4 @@ class Kgcp(object):
 
     def list_buckets(self):
         client = storage.Client(self.project)
-        buckets = client.list_buckets()
-        for bucket in buckets:
-            print(bucket)
+        return [bucket.name for bucket in client.list_buckets()]
