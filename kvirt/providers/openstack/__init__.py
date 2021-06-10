@@ -958,7 +958,6 @@ class Kopenstack(object):
         for obj in containerinfo[1]:
             obj_name = obj['name']
             if path == obj_name:
-                pprint("Deleting object %s in bucket %s" % (obj_name, bucket))
                 swift.delete_object(bucket, obj_name)
                 break
         return
@@ -981,6 +980,9 @@ class Kopenstack(object):
         dest = os.path.basename(path)
         with open(path, 'rb') as f:
             swift.put_object(bucket, dest, contents=f, content_type='text/plain')
+        if public:
+            headers = {"X-Container-Read": ".r:*"}
+            swift.post_container(bucket, headers=headers)
 
     def list_buckets(self):
         swift = self.swift
