@@ -996,3 +996,7 @@ class Kopenstack(object):
             error("Inexistent bucket %s" % bucket)
             return []
         return [obj['name'] for obj in containerinfo[1]]
+
+    def public_bucketfile_url(self, bucket, path):
+        swift_url = self.swift.http_connection()[0].geturl()
+        return "http://%s/%s/%s" % (swift_url, bucket, path)

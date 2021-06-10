@@ -1415,3 +1415,6 @@ class Kgcp(object):
             error("Inexistent bucket %s" % bucket)
             return []
         return [obj.name for obj in bucket.list_blobs()]
+
+    def public_bucketfile_url(self, bucket, path):
+        return "https://storage.googleapis.com/%s/%s" % (bucket, path)

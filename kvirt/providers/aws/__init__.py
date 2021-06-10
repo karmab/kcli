@@ -1095,3 +1095,6 @@ class Kaws(object):
             error("Inexistent bucket %s" % bucket)
             return []
         return [obj['Key'] for obj in s3.list_objects(Bucket=bucket)['Contents']]
+
+    def public_bucketfile_url(self, bucket, path):
+        return "https://%s.s3.%s.amazonaws.com/%s" % (bucket, self.region, path)
