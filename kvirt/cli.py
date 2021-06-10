@@ -2563,10 +2563,11 @@ def snapshotlist_vm(args):
 def create_bucket(args):
     """Create bucket"""
     bucket = args.bucket
+    public = args.public
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     pprint("Creating bucket %s..." % bucket)
-    k.create_bucket(bucket)
+    k.create_bucket(bucket, public=public)
 
 
 def delete_bucket(args):
@@ -2612,12 +2613,13 @@ def list_bucketfiles(args):
 
 def create_bucketfile(args):
     bucket = args.bucket
-    temp_url = args.url
+    temp_url = args.temp
+    public = args.public
     path = args.path
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     pprint("Uploading file %s to bucket %s..." % (path, bucket))
-    result = k.upload_to_bucket(bucket, path, temp_url=temp_url)
+    result = k.upload_to_bucket(bucket, path, temp_url=temp_url, public=public)
     if result is not None:
         pprint("bucketfile available at the following url:\n\n%s" % result)
 
@@ -2945,6 +2947,7 @@ def cli():
     bucketcreate_parser = create_subparsers.add_parser('bucket', description=bucketcreate_desc,
                                                        help=bucketcreate_desc, epilog=bucketcreate_epilog,
                                                        formatter_class=rawhelp)
+    bucketcreate_parser.add_argument('-p', '--public', action='store_true', help='Make the bucket public')
     bucketcreate_parser.add_argument('-P', '--param', action='append',
                                      help='specify parameter or keyword for rendering (multiple can be specified)',
                                      metavar='PARAM')
@@ -2954,7 +2957,8 @@ def cli():
 
     bucketfilecreate_desc = 'Create Bucket file'
     bucketfilecreate_parser = argparse.ArgumentParser(add_help=False)
-    bucketfilecreate_parser.add_argument('-u', '--url', action='store_true', help='Get temp url')
+    bucketfilecreate_parser.add_argument('-p', '--public', action='store_true', help='Make the file public')
+    bucketfilecreate_parser.add_argument('-t', '--temp', action='store_true', help='Get temp url')
     bucketfilecreate_parser.add_argument('bucket', metavar='BUCKET')
     bucketfilecreate_parser.add_argument('path', metavar='PATH')
     bucketfilecreate_parser.set_defaults(func=create_bucketfile)

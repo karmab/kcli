@@ -1010,7 +1010,7 @@ kernel %s %s coreos.inst.image_url=%s coreos.inst.ignition_url=%s
 initrd %s
 boot || reboot""" % (kernel, ipxeparameters, metal, ignition_url, initrd)
 
-    def create_bucket(self, bucket):
+    def create_bucket(self, bucket, public=False):
         print("not implemented")
         return
 
@@ -1026,7 +1026,7 @@ boot || reboot""" % (kernel, ipxeparameters, metal, ignition_url, initrd)
         print("not implemented")
         return
 
-    def upload_to_bucket(self, bucket, path, overrides={}, temp_url=False):
+    def upload_to_bucket(self, bucket, path, overrides={}, temp_url=False, public=False):
         print("not implemented")
         return
 

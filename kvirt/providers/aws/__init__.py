@@ -1032,19 +1032,27 @@ class Kaws(object):
             results.append([name, ip, protocol, ports, target])
         return results
 
-    def create_bucket(self, bucket):
+    def create_bucket(self, bucket, public=False):
         s3 = self.s3
         if bucket in self.list_buckets():
             error("Bucket %s already there" % bucket)
             return
         location = {'LocationConstraint': self.region}
-        s3.create_bucket(Bucket=bucket, CreateBucketConfiguration=location)
+        # s3.create_bucket(Bucket=bucket, CreateBucketConfiguration=location)
+        args = {'Bucket': bucket, "CreateBucketConfiguration": location}
+        if public:
+            args['ACL'] = 'public-read'
+        s3.create_bucket(**args)
 
     def delete_bucket(self, bucket):
         s3 = self.s3
         if bucket not in self.list_buckets():
             error("Inexistent bucket %s" % bucket)
             return
+        for obj in s3.list_objects(Bucket=bucket)['Contents']:
+            key = obj['Key']
+            pprint("Deleting object %s from bucket %s" % (key, bucket))
+            s3.delete_object(Bucket=bucket, Key=key)
         s3.delete_bucket(Bucket=bucket)
 
     def delete_from_bucket(self, bucket, path):
@@ -1058,7 +1066,7 @@ class Kaws(object):
         s3 = self.s3
         s3.download_file(bucket, path, path)
 
-    def upload_to_bucket(self, bucket, path, overrides={}, temp_url=False):
+    def upload_to_bucket(self, bucket, path, overrides={}, temp_url=False, public=False):
         if not os.path.exists(path):
             error("Invalid path %s" % path)
             return
@@ -1066,6 +1074,8 @@ class Kaws(object):
             error("Bucket %s doesn't exist" % bucket)
             return
         ExtraArgs = {'Metadata': overrides} if overrides else {}
+        if public:
+            ExtraArgs['ACL'] = 'public-read'
         dest = os.path.basename(path)
         s3 = self.s3
         with open(path, "rb") as f:

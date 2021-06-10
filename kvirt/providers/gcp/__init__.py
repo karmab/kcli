@@ -1331,12 +1331,17 @@ class Kgcp(object):
                 results.append([name, ip, protocol, port, target])
         return results
 
-    def create_bucket(self, bucket):
+    def create_bucket(self, bucket, public=False):
         client = storage.Client(self.project)
         if bucket in self.list_buckets():
             error("Bucket %s already there" % bucket)
             return
         client.create_bucket(bucket)
+        if public:
+            bucket = client.get_bucket(bucket)
+            acl = bucket.acl
+            acl.all().grant_read()
+            acl.save()
 
     def delete_bucket(self, bucket):
         client = storage.Client(self.project)
@@ -1345,6 +1350,9 @@ class Kgcp(object):
         except:
             error("Inexistent bucket %s" % bucket)
             return
+        for obj in bucket.list_blobs():
+            pprint("Deleting object %s from bucket %s" % (obj.name, bucket.name))
+            obj.delete()
         bucket.delete()
 
     def delete_from_bucket(self, bucket, path):
@@ -1373,7 +1381,7 @@ class Kgcp(object):
         with open(path, 'wb') as f:
             client.download_blob_to_file(blob, f)
 
-    def upload_to_bucket(self, bucket, path, overrides={}, temp_url=False):
+    def upload_to_bucket(self, bucket, path, overrides={}, temp_url=False, public=False):
         client = storage.Client(self.project)
         if not os.path.exists(path):
             error("Invalid path %s" % path)
@@ -1390,6 +1398,10 @@ class Kgcp(object):
                 blob.upload_from_file(f)
         except Exception as e:
             error("Got %s" % e)
+        if public:
+            acl = storage.acl.ObjectACL(blob)
+            acl.all().grant_read()
+            acl.save()
 
     def list_buckets(self):
         client = storage.Client(self.project)
@@ -1401,5 +1413,5 @@ class Kgcp(object):
             bucket = client.get_bucket(bucket)
         except:
             error("Inexistent bucket %s" % bucket)
-            return
+            return []
         return [obj.name for obj in bucket.list_blobs()]

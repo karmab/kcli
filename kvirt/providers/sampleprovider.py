@@ -573,7 +573,7 @@ class Kbase(object):
         """
         return
 
-    def create_bucket(self, bucket):
+    def create_bucket(self, bucket, public=False):
         print("not implemented")
         return
 
@@ -589,7 +589,7 @@ class Kbase(object):
         print("not implemented")
         return
 
-    def upload_to_bucket(self, bucket, path, overrides={}, temp_url=False):
+    def upload_to_bucket(self, bucket, path, overrides={}, temp_url=False, public=False):
         print("not implemented")
         return
 

@@ -927,12 +927,13 @@ class Kopenstack(object):
             return {'result': 'failure', 'reason': msg}
         self.neutron.delete_port(matchingports[0]['id'])
 
-    def create_bucket(self, bucket):
+    def create_bucket(self, bucket, public=False):
         swift = self.swift
         if bucket in self.list_buckets():
             error("Bucket %s already exists" % bucket)
             return
-        swift.put_container(bucket)
+        headers = {"X-Container-Read": ".r:*"} if public else {}
+        swift.put_container(bucket, headers=headers)
 
     def delete_bucket(self, bucket):
         swift = self.swift
@@ -972,7 +973,7 @@ class Kopenstack(object):
         with open(path, 'wb') as f:
             f.write(obj_contents)
 
-    def upload_to_bucket(self, bucket, path, overrides={}, temp_url=False):
+    def upload_to_bucket(self, bucket, path, overrides={}, temp_url=False, public=False):
         swift = self.swift
         if not os.path.exists(path):
             error("Invalid path %s" % path)
