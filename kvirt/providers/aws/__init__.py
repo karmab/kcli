@@ -4,13 +4,13 @@
 Aws Provider Class
 """
 
-from datetime import datetime
 from kvirt import common
-from kvirt.common import pprint, error
+from kvirt.common import pprint, error, warning
 from kvirt.defaults import METADATA_FIELDS
 import boto3
 from netaddr import IPNetwork
 import os
+from socket import gethostbyname
 from string import ascii_lowercase
 from time import sleep
 import webbrowser
@@ -481,51 +481,25 @@ class Kaws(object):
     def volumes(self, iso=False):
         conn = self.conn
         images = []
-        oses = ['CentOS Linux 7 x86_64*', 'CentOS Linux 8 x86_64*', 'RHEL-7.*GA*',
-                'ubuntu-xenial-*', 'kcli*', 'RHEL-8.0.0_HVM-*', 'rhcos-4*', 'fedora-coreos*', 'Debian*', 'Ubuntu*']
+        oses = ['CentOS Linux 7*', 'CentOS Stream*', 'CentOS Linux 8*', 'RHEL-7*', 'RHEL-8.*', 'rhcos-4*',
+                'fedora-coreos*', 'Debian*', 'Ubuntu*']
         Filters = [{'Name': 'name', 'Values': oses}]
-        centos = []
-        fedoracoreos = []
         rhcos = {}
-        rhels7 = []
-        rhels8 = []
-        ubuntus = []
-        allimages = conn.describe_images(Filters=Filters)
         allimages = conn.describe_images(Filters=Filters)
         for image in allimages['Images']:
             name = image['Name']
-            date = datetime.strptime(image['CreationDate'], '%Y-%m-%dT%H:%M:%S.000Z')
-            if int("%s%s" % (date.year, date.month)) < self.ami_date:
-                continue
             if name.startswith('rhcos') and 'devel' in name:
                 continue
-            if name.startswith('rhcos-4'):
+            elif 'beta' in name.lower():
+                continue
+            elif name.startswith('rhcos-4'):
                 number = name[6:8]
                 rhcos[number] = [name]
                 continue
-            if name.lower().startswith('centos'):
-                centos.append(name)
-                continue
-            if name.startswith('fedora-coreos'):
-                fedoracoreos.append(name)
-                continue
-            if name.lower().startswith('rhel-7'):
-                rhels7.append(name)
-                continue
-            if name.lower().startswith('rhel-8'):
-                rhels8.append(name)
-                continue
-            if name.lower().startswith('ubuntu'):
-                ubuntus.append(name)
-                continue
-            images.append(name)
+            else:
+                images.append(name)
         for value in rhcos.values():
             images.append(value[0])
-        images.append(centos[-1])
-        images.append(fedoracoreos[-1])
-        images.append(rhels7[-1])
-        images.append(rhels8[-1])
-        images.append(ubuntus[-1])
         return sorted(images, key=str.lower)
 
     def delete(self, name, snapshots=False):
@@ -804,7 +778,6 @@ class Kaws(object):
         internalip = None
         pprint("Using domain %s..." % domain)
         dns = self.dns
-        net = nets[0]
         cluster = None
         fqdn = "%s.%s" % (name, domain)
         if fqdn.split('-')[0] == fqdn.split('.')[1]:
@@ -830,6 +803,7 @@ class Kaws(object):
                 else:
                     break
         if ip is None:
+            net = nets[0]
             if isinstance(net, dict):
                 ip = net.get('ip')
             if ip is None:
@@ -861,16 +835,6 @@ class Kaws(object):
                     new = '%s.%s.' % (a, domain) if '.' not in a else '%s.' % a
                     changes.append({'Action': 'CREATE', 'ResourceRecordSet':
                                     {'Name': new, 'Type': 'CNAME', 'TTL': 300, 'ResourceRecords': [{'Value': entry}]}})
-        if cluster is not None and 'master' in name and internalip is not None:
-            etcd1 = "_etcd-server-ssl._tcp.%s.%s." % (cluster, domain)
-            etcd2 = "etcd-%s.%s.%s." % (name[-1], cluster, domain)
-            srventry = "0 10 2380 %s" % (etcd2)
-            changes.append({'Action': 'CREATE', 'ResourceRecordSet':
-                            {'Name': etcd2, 'Type': 'A', 'TTL': 300,
-                             'ResourceRecords': [{'Value': internalip}]}})
-            changes.append({'Action': 'CREATE', 'ResourceRecordSet':
-                            {'Name': etcd1, 'Type': 'SRV', 'TTL': 300,
-                             'ResourceRecords': [{'Value': srventry}]}})
         dns.change_resource_record_sets(HostedZoneId=zoneid, ChangeBatch={'Changes': changes})
         return {'result': 'success'}
 
@@ -971,7 +935,10 @@ class Kaws(object):
                         'InstancePort': port}
             Listeners.append(Listener)
         AvailabilityZones = ["%s%s" % (self.region, i) for i in ['a', 'b', 'c']]
-        lb = elb.create_load_balancer(LoadBalancerName=name, Listeners=Listeners, AvailabilityZones=AvailabilityZones)
+        clean_name = name.replace('.', '-')
+        lbtags = [{"Key": "domain", "Value": domain}] if domain is not None else []
+        lb = elb.create_load_balancer(LoadBalancerName=clean_name, Listeners=Listeners,
+                                      AvailabilityZones=AvailabilityZones, Tags=lbtags)
         sg = resource.create_security_group(GroupName=name, Description=name)
         sgid = sg.id
         sgtags = [{"Key": "Name", "Value": name}]
@@ -985,12 +952,14 @@ class Kaws(object):
             HealthTarget = '%s:%s' % (protocol, port)
         HealthCheck = {'Interval': 20, 'Target': HealthTarget, 'Timeout': 3, 'UnhealthyThreshold': 10,
                        'HealthyThreshold': 2}
-        elb.configure_health_check(LoadBalancerName=name, HealthCheck=HealthCheck)
+        elb.configure_health_check(LoadBalancerName=clean_name, HealthCheck=HealthCheck)
         pprint("Reserved dns name %s" % lb['DNSName'])
         if vms:
             Instances = []
             for vm in vms:
                 update = self.update_metadata(vm, 'loadbalancer', name, append=True)
+                if domain is not None:
+                    self.update_metadata(vm, 'domain', domain)
                 instanceid = self.get_id(vm)
                 if update == 0 and instanceid is not None:
                     Instances.append({"InstanceId": instanceid})
@@ -1001,14 +970,37 @@ class Kaws(object):
                     sgids.append(sgid)
                     conn.modify_instance_attribute(InstanceId=instanceid, Groups=sgids)
             if Instances:
-                elb.register_instances_with_load_balancer(LoadBalancerName=name, Instances=Instances)
+                elb.register_instances_with_load_balancer(LoadBalancerName=clean_name, Instances=Instances)
+        if domain is not None:
+            lb_dns_name = lb['DNSName']
+            while True:
+                try:
+                    ip = gethostbyname(lb_dns_name)
+                    break
+                except:
+                    pprint("Waiting 10s for %s to get an ip resolution" % lb_dns_name)
+                    sleep(10)
+            self.reserve_dns(name, ip=ip, domain=domain, alias=alias)
         return
 
     def delete_loadbalancer(self, name):
+        domain = None
         elb = self.elb
         conn = self.conn
-        elb.delete_load_balancer(LoadBalancerName=name)
-        vms = [v['name'] for v in self.list() if 'loadbalancer' in v and v['loadbalancer'] == name]
+        clean_name = name.replace('.', '-')
+        try:
+            tags = elb.describe_tags(LoadBalancerNames=[clean_name])
+            if tags:
+                lbtags = tags['TagDescriptions'][0]['Tags']
+                for tag in lbtags:
+                    if tag['Key'] == 'domain':
+                        domain = tag['Value']
+                        pprint("Using found domain %s" % domain)
+                        break
+        except:
+            error("Loadbalancer %s not found" % clean_name)
+            return
+        vms = [v['name'] for v in self.list() if 'loadbalancer' and name in v['loadbalancer']]
         for vm in vms:
             instanceid = self.get_id(vm)
             sgs = self.get_security_groups(vm)
@@ -1017,8 +1009,15 @@ class Kaws(object):
                 if sg['GroupName'] != name:
                     sgids.append(sg['GroupId'])
             if sgids:
+                pprint("Removing %s from security group %s" % (vm, name))
                 conn.modify_instance_attribute(InstanceId=instanceid, Groups=sgids)
-        conn.delete_security_group(GroupName=name)
+        try:
+            conn.delete_security_group(GroupName=name)
+        except:
+            warning("Couldn't remove security group %s" % name)
+        elb.delete_load_balancer(LoadBalancerName=clean_name)
+        if domain is not None:
+            self.delete_dns(name, domain, name)
 
     def list_loadbalancers(self):
         results = []
