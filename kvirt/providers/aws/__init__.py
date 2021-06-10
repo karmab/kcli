@@ -326,13 +326,17 @@ class Kaws(object):
             Filters = {'Name': "tag:Name", 'Values': [name]}
             vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
         except:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error("VM %s not found" % name)
+            return
         instanceid = vm['InstanceId']
         response = conn.get_console_output(InstanceId=instanceid, DryRun=False, Latest=False)
+        if 'Output' not in response:
+            error("VM %s not ready yet" % name)
+            return
         if web:
             return response['Output']
-        print(response['Output'])
-        return
+        else:
+            print(response['Output'])
 
     def dnsinfo(self, name):
         conn = self.conn
