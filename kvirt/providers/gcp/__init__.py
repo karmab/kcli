@@ -994,24 +994,6 @@ class Kgcp(object):
                     new = '%s.%s.' % (a, domain) if '.' not in a else '%s.' % a
                     alias_record_set = dnszone.resource_record_set(new, 'CNAME', 300, [entry])
                 changes.add_record_set(alias_record_set)
-        if cluster is not None and 'master' in name and internalip is not None:
-            etcd1 = "_etcd-server-ssl._tcp.%s.%s." % (cluster, domain)
-            etcd2 = "etcd-%s.%s.%s." % (name[-1], cluster, domain)
-            srventries = ["0 10 2380 %s" % (etcd2)]
-            srvexist = False
-            for entry in dnszone.list_resource_record_sets():
-                if entry.name == etcd1:
-                    srvexist = True
-                    oldentry = entry
-                    srventries = oldentry.rrdatas + srventries
-            record_set = dnszone.resource_record_set(etcd2, 'A', 300, [internalip])
-            changes.add_record_set(record_set)
-            if srvexist:
-                old_record_set = dnszone.resource_record_set(oldentry.name, oldentry.record_type, oldentry.ttl,
-                                                             oldentry.rrdatas)
-                changes.delete_record_set(old_record_set)
-            record_set = dnszone.resource_record_set(etcd1, 'SRV', 300, srventries)
-            changes.add_record_set(record_set)
         changes.create()
         return {'result': 'success'}
 
