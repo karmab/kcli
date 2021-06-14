@@ -617,9 +617,12 @@ def confirm(message):
     :return:
     """
     message = "%s [y/N]: " % message
-    _input = input(message)
-    if _input.lower() not in ['y', 'yes']:
-        error("Leaving...")
+    try:
+        _input = input(message)
+        if _input.lower() not in ['y', 'yes']:
+            error("Leaving...")
+            os._exit(1)
+    except:
         os._exit(1)
     return
 
@@ -1479,7 +1482,7 @@ def mergeignition(name, ignitionextrapath, data):
         try:
             ignitionextra = json.load(extra)
         except Exception as e:
-            error("Couldn't process %s. Ignoring" % (ignitionextrapath))
+            error("Couldn't process %s. Ignoring" % ignitionextrapath)
             error(e)
             os._exit(1)
         children = {'storage': 'files', 'passwd': 'users', 'systemd': 'units'}
