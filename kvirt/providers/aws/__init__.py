@@ -201,6 +201,34 @@ class Kaws(object):
                     sgid = self.get_security_group_id(sg, vpcid)
                     if sgid is not None:
                         SecurityGroupIds.append(sgid)
+                if 'kubetype' in metadata and metadata['kubetype'] == "openshift":
+                    kube = metadata['kube']
+                    pprint("Adding vm to security group %s" % kube)
+                    kubesgid = self.get_security_group_id(kube, vpcid)
+                    if kubesgid is None:
+                        sg = self.resource.create_security_group(GroupName=kube, Description=kube)
+                        sgtags = [{"Key": "Name", "Value": kube}]
+                        sg.create_tags(Tags=sgtags)
+                        kubesgid = sg.id
+                        sg.authorize_ingress(GroupName=kube, FromPort=22, ToPort=22, IpProtocol='tcp',
+                                             CidrIp="0.0.0.0/0")
+                        sg.authorize_ingress(GroupName=kube, FromPort=80, ToPort=80, IpProtocol='tcp',
+                                             CidrIp="0.0.0.0/0")
+                        sg.authorize_ingress(GroupName=kube, FromPort=443, ToPort=443, IpProtocol='tcp',
+                                             CidrIp="0.0.0.0/0")
+                        sg.authorize_ingress(GroupName=kube, FromPort=6443, ToPort=6443, IpProtocol='tcp',
+                                             CidrIp="0.0.0.0/0")
+                        sg.authorize_ingress(GroupName=kube, FromPort=22624, ToPort=22624, IpProtocol='tcp',
+                                             CidrIp="0.0.0.0/0")
+                        sg.authorize_ingress(GroupName=kube, FromPort=2379, ToPort=2380, IpProtocol='tcp',
+                                             CidrIp="0.0.0.0/0")
+                        sg.authorize_ingress(GroupName=kube, FromPort=30000, ToPort=32767, IpProtocol='tcp',
+                                             CidrIp="0.0.0.0/0")
+                        sg.authorize_ingress(GroupName=kube, FromPort=10250, ToPort=10259, IpProtocol='tcp',
+                                             CidrIp="0.0.0.0/0")
+                        sg.authorize_ingress(GroupName=kube, FromPort=9000, ToPort=9999, IpProtocol='tcp',
+                                             CidrIp="0.0.0.0/0")
+                    SecurityGroupIds.append(kubesgid)
                 networkinterface['Groups'] = SecurityGroupIds
             networkinterfaces.append(networkinterface)
         if len(privateips) > 1:
@@ -947,9 +975,6 @@ class Kaws(object):
         sg.create_tags(Tags=sgtags)
         for port in ports:
             sg.authorize_ingress(GroupName=name, FromPort=port, ToPort=port, IpProtocol='tcp', CidrIp="0.0.0.0/0")
-        if 6443 in ports:
-            pprint("Adding etcd ports to security group for load balancer %s" % name)
-            sg.authorize_ingress(GroupName=name, FromPort=2379, ToPort=2380, IpProtocol='tcp', CidrIp="0.0.0.0/0")
         lb = elb.create_load_balancer(LoadBalancerName=clean_name, Listeners=Listeners,
                                       AvailabilityZones=AvailabilityZones, Tags=lbtags, SecurityGroups=[sgid])
         # if 80 in ports:
