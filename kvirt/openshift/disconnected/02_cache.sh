@@ -6,6 +6,7 @@ export PATH=/root/bin:$PATH
 dnf -y install httpd
 dnf -y install libguestfs-tools
 dnf -y update libgcrypt
+sed -i "s/Listen 80/Listen 8080/" /etc/httpd/conf/httpd.conf
 systemctl enable --now httpd
 cd /var/www/html
 RHCOS_OPENSTACK_URI_FULL={{ openstack_uri }}
