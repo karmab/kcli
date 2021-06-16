@@ -41,6 +41,7 @@ class Kaws(object):
                                 region_name=region, aws_session_token=session_token)
         self.s3 = boto3.client('s3', aws_access_key_id=access_key_id, aws_secret_access_key=access_key_secret,
                                region_name=region, aws_session_token=session_token)
+        self.access_key_id = access_key_id
         self.region = region
         self.keypair = keypair
         return
@@ -1004,8 +1005,8 @@ class Kaws(object):
                         pprint("Using found domain %s" % domain)
                         break
         except:
-            error("Loadbalancer %s not found" % clean_name)
-            return
+            warning("Loadbalancer %s not found" % clean_name)
+            pass
         vms = [v['name'] for v in self.list() if 'loadbalancer' in v and name in v['loadbalancer']]
         for vm in vms:
             instanceid = self.get_id(vm)
