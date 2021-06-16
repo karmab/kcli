@@ -922,7 +922,6 @@ def create(config, plandir, cluster, overrides):
             os._exit(1)
         call('openshift-install --dir=%s wait-for bootstrap-complete || exit 1' % clusterdir, shell=True)
         todelete = [] if 'network_type' in data and data['network_type'] == 'Contrail' else ["%s-bootstrap" % cluster]
-        todelete.append("%s-bootstrap-helper" % cluster)
     if platform in virtplatforms:
         if workers > 0:
             pprint("Deploying workers")
