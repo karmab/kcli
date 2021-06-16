@@ -8,7 +8,7 @@ api.{{ cluster }}:
 {% endif %}
  ports:
  - 6443
- - 22623
+ - 22624
  vms:
  - {{ cluster }}-bootstrap
 {% for num in range(0, masters) %}
@@ -23,7 +23,7 @@ api-int.{{ cluster }}:
  checkport: 6080
  ports:
  - 6443
- - 22623
+ - 22624
  vms:
  - {{ cluster }}-bootstrap
 {% for num in range(0, masters) %}

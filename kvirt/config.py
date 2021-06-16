@@ -2237,6 +2237,7 @@ $INFO
         openshift.create(self, plandir, cluster, overrides)
 
     def delete_kube(self, cluster, overrides={}):
+        domain = overrides.get('domain', 'karmalabs.com')
         k = self.k
         cluster = overrides.get('cluster', cluster)
         if cluster is None:
@@ -2247,6 +2248,8 @@ $INFO
             rmtree(clusterdir)
         for vm in sorted(k.list(), key=lambda x: x['name']):
             name = vm['name']
+            if 'domain' in vm:
+                domain = vm['domain'].replace('.', '-')
             currentcluster = vm.get('kube')
             if currentcluster is not None and currentcluster == cluster:
                 k.delete(name, snapshots=True)
@@ -2257,6 +2260,13 @@ $INFO
                 k.delete_service("%s-api-svc" % cluster, k.namespace)
             except:
                 pass
+        if self.type in ['aws', 'gcp']:
+            for lb in ['api', 'apps']:
+                k.delete_loadbalancer("%s.%s" % (lb, cluster))
+            bucket = "%s-%s" % (cluster, domain)
+            if bucket in self.k.list_buckets():
+                pprint("Deleting bucket %s" % bucket)
+                k.delete_bucket(bucket)
 
     def scale_kube_generic(self, cluster, overrides={}):
         plandir = os.path.dirname(kubeadm.create.__code__.co_filename)

@@ -435,7 +435,7 @@ class Kaws(object):
             mac = interface['MacAddress']
             private_ip = interface['PrivateIpAddresses'][0]['PrivateIpAddress']
             nets.append({'device': device, 'mac': mac, 'net': network, 'type': private_ip})
-            yamlinfo['privateip'] = private_ip
+            yamlinfo['private_ip'] = private_ip
 
         if nets:
             yamlinfo['nets'] = nets
@@ -456,14 +456,13 @@ class Kaws(object):
         return yamlinfo
 
     def ip(self, name):
-        ip = None
         conn = self.conn
         try:
             Filters = {'Name': "tag:Name", 'Values': [name]}
             vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        ip = vm['PublicIpAddress'] if 'PublicIpAddress' in vm else ''
+        ip = vm['PublicIpAddress'] if 'PublicIpAddress' in vm else None
         return ip
 
     def internalip(self, name):
@@ -476,6 +475,8 @@ class Kaws(object):
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         if vm['NetworkInterfaces'] and 'PrivateIpAddresses' in vm['NetworkInterfaces'][0]:
             ip = vm['NetworkInterfaces'][0]['PrivateIpAddresses'][0]['PrivateIpAddress']
+        if ip == '':
+            ip = None
         return ip
 
     def volumes(self, iso=False):
@@ -812,7 +813,7 @@ class Kaws(object):
                     ip = self.ip(instanceid)
                     if ip is None:
                         sleep(5)
-                        print("Waiting 5 seconds to grab ip and create DNS record...")
+                        pprint("Waiting 5 seconds to grab ip and create DNS record...")
                         counter += 10
                     else:
                         break
@@ -927,7 +928,9 @@ class Kaws(object):
         resource = self.resource
         conn = self.conn
         elb = self.elb
-        protocols = {80: 'HTTP', 8080: 'HTTP', 443: 'HTTPS'}
+        # protocols = {80: 'HTTP', 8080: 'HTTP', 443: 'HTTPS'}
+        # protocols = {80: 'HTTP', 8080: 'HTTP'}
+        protocols = {}
         Listeners = []
         for port in ports:
             protocol = protocols[port] if port in protocols else 'TCP'
@@ -937,19 +940,22 @@ class Kaws(object):
         AvailabilityZones = ["%s%s" % (self.region, i) for i in ['a', 'b', 'c']]
         clean_name = name.replace('.', '-')
         lbtags = [{"Key": "domain", "Value": domain}] if domain is not None else []
-        lb = elb.create_load_balancer(LoadBalancerName=clean_name, Listeners=Listeners,
-                                      AvailabilityZones=AvailabilityZones, Tags=lbtags)
         sg = resource.create_security_group(GroupName=name, Description=name)
         sgid = sg.id
         sgtags = [{"Key": "Name", "Value": name}]
         sg.create_tags(Tags=sgtags)
         for port in ports:
-            sg.authorize_ingress(GroupName=name, FromPort=port, ToPort=port, IpProtocol='tcp',
-                                 CidrIp="0.0.0.0/0")
-        if 80 in ports:
-            HealthTarget = 'HTTP:80%s' % checkpath
-        else:
-            HealthTarget = '%s:%s' % (protocol, port)
+            sg.authorize_ingress(GroupName=name, FromPort=port, ToPort=port, IpProtocol='tcp', CidrIp="0.0.0.0/0")
+        if 6443 in ports:
+            pprint("Adding etcd ports to security group for load balancer %s" % name)
+            sg.authorize_ingress(GroupName=name, FromPort=2379, ToPort=2380, IpProtocol='tcp', CidrIp="0.0.0.0/0")
+        lb = elb.create_load_balancer(LoadBalancerName=clean_name, Listeners=Listeners,
+                                      AvailabilityZones=AvailabilityZones, Tags=lbtags, SecurityGroups=[sgid])
+        # if 80 in ports:
+        #    HealthTarget = 'HTTP:80%s' % checkpath
+        # else:
+        #   HealthTarget = '%s:%s' % (protocol, port)
+        HealthTarget = '%s:%s' % (protocol, port)
         HealthCheck = {'Interval': 20, 'Target': HealthTarget, 'Timeout': 3, 'UnhealthyThreshold': 10,
                        'HealthyThreshold': 2}
         elb.configure_health_check(LoadBalancerName=clean_name, HealthCheck=HealthCheck)
@@ -1000,7 +1006,7 @@ class Kaws(object):
         except:
             error("Loadbalancer %s not found" % clean_name)
             return
-        vms = [v['name'] for v in self.list() if 'loadbalancer' and name in v['loadbalancer']]
+        vms = [v['name'] for v in self.list() if 'loadbalancer' in v and name in v['loadbalancer']]
         for vm in vms:
             instanceid = self.get_id(vm)
             sgs = self.get_security_groups(vm)
@@ -1013,10 +1019,11 @@ class Kaws(object):
                 conn.modify_instance_attribute(InstanceId=instanceid, Groups=sgids)
         try:
             conn.delete_security_group(GroupName=name)
-        except:
-            warning("Couldn't remove security group %s" % name)
+        except Exception as e:
+            warning("Couldn't remove security group %s. Got %s" % (name, e))
         elb.delete_load_balancer(LoadBalancerName=clean_name)
         if domain is not None:
+            warning("Deleting DNS %s.%s" % (name, domain))
             self.delete_dns(name, domain, name)
 
     def list_loadbalancers(self):
