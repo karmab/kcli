@@ -218,6 +218,8 @@ class Kaws(object):
                                              CidrIp="0.0.0.0/0")
                         sg.authorize_ingress(GroupName=kube, FromPort=8080, ToPort=8080, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
+                        sg.authorize_ingress(GroupName=kube, FromPort=8443, ToPort=8443, IpProtocol='tcp',
+                                             CidrIp="0.0.0.0/0")
                         sg.authorize_ingress(GroupName=kube, FromPort=443, ToPort=443, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
                         sg.authorize_ingress(GroupName=kube, FromPort=6443, ToPort=6443, IpProtocol='tcp',
@@ -422,6 +424,12 @@ class Kaws(object):
                 return sg['GroupId']
         return None
 
+    def get_default_security_group_id(self, vpcid):
+        conn = self.conn
+        for sg in conn.describe_security_groups()['SecurityGroups']:
+            if sg['VpcId'] == vpcid and (sg['GroupName'] == 'default'):
+                return sg['GroupId']
+
     def info(self, name, vm=None, debug=False):
         yamlinfo = {}
         conn = self.conn
@@ -548,6 +556,7 @@ class Kaws(object):
             vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
+        instanceid = vm['InstanceId']
         kubetype, kube = None, None
         if 'Tags' in vm:
             for tag in vm['Tags']:
@@ -557,7 +566,10 @@ class Kaws(object):
                     kubetype = tag['Value']
                 if tag['Key'] == 'kube':
                     kube = tag['Value']
-        instanceid = vm['InstanceId']
+            if kubetype is not None and kubetype == 'openshift':
+                vpcid = vm['NetworkInterfaces'][0]['VpcId']
+                defaultsgid = self.get_default_security_group_id(vpcid)
+                conn.modify_instance_attribute(InstanceId=instanceid, Groups=[defaultsgid])
         vm = conn.terminate_instances(InstanceIds=[instanceid])
         if domain is not None:
             # conn.release_address(AllocationId='ALLOCATION_ID')
@@ -986,15 +998,17 @@ class Kaws(object):
             Listeners.append(Listener)
         AvailabilityZones = ["%s%s" % (self.region, i) for i in ['a', 'b', 'c']]
         clean_name = name.replace('.', '-')
-        lbtags = [{"Key": "domain", "Value": domain}] if domain is not None else []
         sg = resource.create_security_group(GroupName=name, Description=name)
         sgid = sg.id
         sgtags = [{"Key": "Name", "Value": name}]
         sg.create_tags(Tags=sgtags)
         for port in ports:
             sg.authorize_ingress(GroupName=name, FromPort=port, ToPort=port, IpProtocol='tcp', CidrIp="0.0.0.0/0")
-        lb = elb.create_load_balancer(LoadBalancerName=clean_name, Listeners=Listeners,
-                                      AvailabilityZones=AvailabilityZones, Tags=lbtags, SecurityGroups=[sgid])
+        lbinfo = {"LoadBalancerName": clean_name, "Listeners": Listeners, "AvailabilityZones": AvailabilityZones,
+                  "SecurityGroups": [sgid]}
+        if domain is not None:
+            lbinfo['Tags'] = [{"Key": "domain", "Value": domain}]
+        lb = elb.create_load_balancer(**lbinfo)
         # if 80 in ports:
         #    HealthTarget = 'HTTP:80%s' % checkpath
         # else:
@@ -1061,11 +1075,12 @@ class Kaws(object):
             if sgids:
                 pprint("Removing %s from security group %s" % (vm, name))
                 conn.modify_instance_attribute(InstanceId=instanceid, Groups=sgids)
+        elb.delete_load_balancer(LoadBalancerName=clean_name)
         try:
+            sleep(15)
             conn.delete_security_group(GroupName=name)
         except Exception as e:
             warning("Couldn't remove security group %s. Got %s" % (name, e))
-        elb.delete_load_balancer(LoadBalancerName=clean_name)
         if domain is not None:
             warning("Deleting DNS %s.%s" % (name, domain))
             self.delete_dns(name, domain, name)

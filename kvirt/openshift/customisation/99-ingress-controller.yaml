@@ -4,6 +4,7 @@ metadata:
   name: default
   namespace: openshift-ingress-operator
 spec:
+  domain: apps.{{ cluster }}.{{ domain }}
   replicas: {{ replicas }}
   endpointPublishingStrategy:
     type: HostNetwork

@@ -664,7 +664,8 @@ def create(config, plandir, cluster, overrides):
         if '99-ingress-controller.yaml' in f:
             ingressrole = 'master' if workers == 0 else 'worker'
             replicas = masters if workers == 0 else workers
-            ingressconfig = config.process_inputfile(cluster, f, overrides={'replicas': replicas, 'role': ingressrole})
+            ingressconfig = config.process_inputfile(cluster, f, overrides={'replicas': replicas, 'role': ingressrole,
+                                                                            'cluster': cluster, 'domain': domain})
             with open("%s/openshift/99-ingress-controller.yaml" % clusterdir, 'w') as _f:
                 _f.write(ingressconfig)
             continue
