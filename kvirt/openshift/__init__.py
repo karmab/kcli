@@ -728,17 +728,41 @@ def create(config, plandir, cluster, overrides):
             os._exit(run)
         os.rename("%s/bootstrap-in-place-for-live-iso.ign" % clusterdir, "./%s.ign" % sno_name)
         with open("iso.ign", 'w') as f:
-            if sno_dns:
+            iso_overrides = {}
+            extra_args = overrides.get('extra_args')
+            if sno_dns or sno_disk is None or extra_args is not None:
                 _files = [{"path": "/root/sno-finish.service",
                            "origin": "%s/sno-finish.service" % plandir},
                           {"path": "/usr/local/bin/sno-finish.sh", "origin": "%s/sno-finish.sh" % plandir,
-                          "mode": 700},
-                          {"path": "/root/coredns.yml", "origin": "%s/staticpods/coredns.yml" % plandir},
-                          {"path": "/root/Corefile", "origin": "%s/Corefile" % plandir},
-                          {"path": "/root/99-forcedns", "origin": "%s/99-forcedns" % plandir}]
-                iso_overrides = {'files': _files}
-            else:
-                iso_overrides = {}
+                          "mode": 700}]
+                if sno_dns:
+                    _dns_files = [{"path": "/root/coredns.yml", "origin": "%s/staticpods/coredns.yml" % plandir},
+                                  {"path": "/root/Corefile", "origin": "%s/Corefile" % plandir},
+                                  {"path": "/root/99-forcedns", "origin": "%s/99-forcedns" % plandir}]
+                    _files.extend(_dns_files)
+                if extra_args is not None and 'ip=' in extra_args:
+                    ip, netmask, gateway, device, nameserver = None, None, None, None, None
+                    nameservermatch = re.match(".*nameserver=(.*).*", extra_args)
+                    if nameservermatch is not None:
+                        nameserver = nameservermatch.group(1)
+                    ipmatch = re.match(".*ip=(.*)::(.*):(.*):.*:(.*):.*", extra_args)
+                    if ipmatch is not None:
+                        ip = ipmatch.group(1)
+                        gateway = ipmatch.group(2)
+                        netmask = ipmatch.group(3)
+                        device = ipmatch.group(4)
+                    if ip is not None and netmask is not None and gateway is not None and device is not None\
+                            and nameserver is not None:
+                        # _cmds = ["ip addr add %s/%s dev %s" % (ip, netmask, device),
+                        #         "ifconfig %s up" % device,
+                        #         "ip route add default via %s" % gateway,
+                        #         "echo nameserver %s > /etc/resolv.conf" % nameserver]
+                        # iso_overrides['cmds'] = _cmds
+                        ifcfg = "DEVICE=%s\nONBOOT=yes\nNM_CONTROLLED=yes\nBOOTPROTO=static\nIPADDR=%s\n" % (device, ip)
+                        ifcfg += "PREFIX=%s\nGATEWAY=%s\nDNS1=%s" % (netmask, gateway, nameserver)
+                        _ifcfg_file = [{"path": "/etc/sysconfig/network-scripts/ifcfg-%s" % device, "content": ifcfg}]
+                        _files.extend(_ifcfg_file)
+                iso_overrides['files'] = _files
             iso_overrides.update(data)
             result = config.create_vm(sno_name, 'rhcos46', overrides=iso_overrides, onlyassets=True)
             pprint("Writing iso.ign to current dir")

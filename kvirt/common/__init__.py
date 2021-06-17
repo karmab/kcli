@@ -1882,7 +1882,7 @@ def generate_rhcos_iso(k, cluster, pool, version='latest', force=False):
         k.delete_image('%s.iso' % cluster)
     pprint("Creating iso %s.iso" % cluster)
     poolpath = k.get_pool_path(pool)
-    coreosinstaller = "podman run --privileged --rm -w /data -v %s:/data -v /dev:/dev" % poolpath
+    coreosinstaller = "podman run --rm -w /data -v %s:/data -v /dev:/dev" % poolpath
     if not os.path.exists('/Users'):
         coreosinstaller += " -v /run/udev:/run/udev"
     coreosinstaller += " quay.io/coreos/coreos-installer:release"
