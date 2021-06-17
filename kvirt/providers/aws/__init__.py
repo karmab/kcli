@@ -218,6 +218,8 @@ class Kaws(object):
                                              CidrIp="0.0.0.0/0")
                         sg.authorize_ingress(GroupName=kube, FromPort=8080, ToPort=8080, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
+                        sg.authorize_ingress(GroupName=kube, FromPort=5443, ToPort=5443, IpProtocol='tcp',
+                                             CidrIp="0.0.0.0/0")
                         sg.authorize_ingress(GroupName=kube, FromPort=8443, ToPort=8443, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
                         sg.authorize_ingress(GroupName=kube, FromPort=443, ToPort=443, IpProtocol='tcp',
@@ -1076,14 +1078,14 @@ class Kaws(object):
                 pprint("Removing %s from security group %s" % (vm, name))
                 conn.modify_instance_attribute(InstanceId=instanceid, Groups=sgids)
         elb.delete_load_balancer(LoadBalancerName=clean_name)
-        try:
-            sleep(15)
-            conn.delete_security_group(GroupName=name)
-        except Exception as e:
-            warning("Couldn't remove security group %s. Got %s" % (name, e))
         if domain is not None:
             warning("Deleting DNS %s.%s" % (name, domain))
             self.delete_dns(name, domain, name)
+        try:
+            sleep(20)
+            conn.delete_security_group(GroupName=name)
+        except Exception as e:
+            warning("Couldn't remove security group %s. Got %s" % (name, e))
 
     def list_loadbalancers(self):
         results = []
