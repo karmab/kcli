@@ -210,9 +210,13 @@ class Kaws(object):
                         sgtags = [{"Key": "Name", "Value": kube}]
                         sg.create_tags(Tags=sgtags)
                         kubesgid = sg.id
+                        sg.authorize_ingress(GroupName=kube, FromPort=-1, ToPort=-1, IpProtocol='icmp',
+                                             CidrIp="0.0.0.0/0")
                         sg.authorize_ingress(GroupName=kube, FromPort=22, ToPort=22, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
                         sg.authorize_ingress(GroupName=kube, FromPort=80, ToPort=80, IpProtocol='tcp',
+                                             CidrIp="0.0.0.0/0")
+                        sg.authorize_ingress(GroupName=kube, FromPort=8080, ToPort=8080, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
                         sg.authorize_ingress(GroupName=kube, FromPort=443, ToPort=443, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
@@ -227,6 +231,10 @@ class Kaws(object):
                         sg.authorize_ingress(GroupName=kube, FromPort=10250, ToPort=10259, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
                         sg.authorize_ingress(GroupName=kube, FromPort=9000, ToPort=9999, IpProtocol='tcp',
+                                             CidrIp="0.0.0.0/0")
+                        sg.authorize_ingress(GroupName=kube, FromPort=4789, ToPort=4789, IpProtocol='tcp',
+                                             CidrIp="0.0.0.0/0")
+                        sg.authorize_ingress(GroupName=kube, FromPort=6081, ToPort=6081, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
                     SecurityGroupIds.append(kubesgid)
                 networkinterface['Groups'] = SecurityGroupIds
@@ -540,15 +548,25 @@ class Kaws(object):
             vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
+        kubetype, kube = None, None
         if 'Tags' in vm:
             for tag in vm['Tags']:
                 if tag['Key'] == 'domain':
                     domain = tag['Value']
+                if tag['Key'] == 'kubetype':
+                    kubetype = tag['Value']
+                if tag['Key'] == 'kube':
+                    kube = tag['Value']
         instanceid = vm['InstanceId']
         vm = conn.terminate_instances(InstanceIds=[instanceid])
         if domain is not None:
             # conn.release_address(AllocationId='ALLOCATION_ID')
             self.delete_dns(name, domain, name)
+        if kubetype is not None and kubetype == 'openshift':
+            try:
+                conn.delete_security_group(GroupName=kube)
+            except:
+                pass
         return {'result': 'success'}
 
     def clone(self, old, new, full=False, start=False):
