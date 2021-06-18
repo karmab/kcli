@@ -762,24 +762,61 @@ class Kaws(object):
         conn = self.conn
         if cidr is not None:
             try:
-                IPNetwork(cidr)
+                network = IPNetwork(cidr)
             except:
                 return {'result': 'failure', 'reason': "Invalid Cidr %s" % cidr}
-        vpc = conn.create_vpc(CidrBlock=cidr)
+            if str(network.version) == "6":
+                msg = 'Primary cidr needs to be ipv4 in aws. Use dual to inject ipv6 or set aws_ipv6 parameter'
+                return {'result': 'failure', 'reason': msg}
+        Tags = [{"Key": "Name", "Value": name}, {"Key": "Plan", "Value": plan}]
+        vpcargs = {"CidrBlock": cidr}
+        if 'dual_cidr' in overrides:
+            vpcargs["Ipv6CidrBlock"] = overrides['dual_cidr']
+            vpcargs["Ipv6Pool"] = overrides['dual_cidr']
+        if 'aws_ipv6' in overrides and overrides['aws_ipv6']:
+            vpcargs["AmazonProvidedIpv6CidrBlock"] = True
+        vpc = conn.create_vpc(**vpcargs)
         vpcid = vpc['Vpc']['VpcId']
-        conn.create_subnet(CidrBlock=cidr, VpcId=vpcid)
+        conn.create_tags(Resources=[vpcid], Tags=Tags)
+        vpcargs['VpcId'] = vpcid
+        subnet = conn.create_subnet(**vpcargs)
+        subnetid = subnet['Subnet']['SubnetId']
+        conn.create_tags(Resources=[subnetid], Tags=Tags)
         if nat:
-            conn.create_internet_gateway()
+            gateway = conn.create_internet_gateway()
+            gatewayid = gateway['InternetGateway']['InternetGatewayId']
+            gateway = self.resource.InternetGateway(gatewayid)
+            gateway.attach_to_vpc(VpcId=vpcid)
         return {'result': 'success'}
 
     def delete_network(self, name=None, cidr=None):
         conn = self.conn
+        vpcid = None
         Filters = [{'Name': 'vpc-id', 'Values': [name]}]
+        vpcs = conn.describe_vpcs(Filters=Filters)['Vpcs']
+        if vpcs:
+            vpcid = vpcs[0]['VpcId']
+        else:
+            Filters = [{'Name': "tag:Name", 'Values': [name]}]
+            vpcs = conn.describe_vpcs(Filters=Filters)['Vpcs']
+            if vpcs:
+                vpcid = vpcs[0]['VpcId']
+        if vpcid is None:
+            return {'result': 'failure', 'reason': "Network %s not found" % name}
+        Filters = [{'Name': 'vpc-id', 'Values': [vpcid]}]
         subnets = conn.describe_subnets(Filters=Filters)
         for subnet in subnets['Subnets']:
             subnetid = subnet['SubnetId']
             conn.delete_subnet(SubnetId=subnetid)
-        conn.delete_vpc(VpcId=name)
+        for gateway in conn.describe_internet_gateways()['InternetGateways']:
+            attachments = gateway['Attachments']
+            for attachment in attachments:
+                if attachment['VpcId'] == vpcid:
+                    gatewayid = gateway['InternetGatewayId']
+                    gateway = self.resource.InternetGateway(gatewayid)
+                    gateway.detach_from_vpc(VpcId=vpcid)
+                    gateway.delete()
+        conn.delete_vpc(VpcId=vpcid)
         return {'result': 'success'}
 
     def list_pools(self):
@@ -791,12 +828,21 @@ class Kaws(object):
         networks = {}
         vpcs = conn.describe_vpcs()
         for vpc in vpcs['Vpcs']:
+            plan = None
             networkname = vpc['VpcId']
             cidr = vpc['CidrBlock']
-            domainname = 'default' if vpc['IsDefault'] else 'N/A'
+            domain = ''
+            if 'Tags' in vpc:
+                for tag in vpc['Tags']:
+                    if tag['Key'] == 'Name':
+                        domain = tag['Value']
+                    if tag['Key'] == 'Plan':
+                        plan = tag['Value']
+            mode = 'default' if vpc['IsDefault'] else 'N/A'
             dhcp = vpc['DhcpOptionsId']
-            mode = ''
-            networks[networkname] = {'cidr': cidr, 'dhcp': dhcp, 'domain': domainname, 'type': 'routed', 'mode': mode}
+            networks[networkname] = {'cidr': cidr, 'dhcp': dhcp, 'domain': domain, 'type': 'routed', 'mode': mode}
+            if plan is not None:
+                networks[networkname]['plan'] = plan
         return networks
 
     def list_subnets(self):
