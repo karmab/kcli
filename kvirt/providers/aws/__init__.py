@@ -230,13 +230,21 @@ class Kaws(object):
                                              CidrIp="0.0.0.0/0")
                         sg.authorize_ingress(GroupName=kube, FromPort=30000, ToPort=32767, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
+                        sg.authorize_ingress(GroupName=kube, FromPort=30000, ToPort=32767, IpProtocol='udp',
+                                             CidrIp="0.0.0.0/0")
                         sg.authorize_ingress(GroupName=kube, FromPort=10250, ToPort=10259, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
                         sg.authorize_ingress(GroupName=kube, FromPort=9000, ToPort=9999, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
+                        sg.authorize_ingress(GroupName=kube, FromPort=9000, ToPort=9999, IpProtocol='udp',
+                                             CidrIp="0.0.0.0/0")
                         sg.authorize_ingress(GroupName=kube, FromPort=4789, ToPort=4789, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
+                        sg.authorize_ingress(GroupName=kube, FromPort=4789, ToPort=4789, IpProtocol='udp',
+                                             CidrIp="0.0.0.0/0")
                         sg.authorize_ingress(GroupName=kube, FromPort=6081, ToPort=6081, IpProtocol='tcp',
+                                             CidrIp="0.0.0.0/0")
+                        sg.authorize_ingress(GroupName=kube, FromPort=6081, ToPort=6081, IpProtocol='udp',
                                              CidrIp="0.0.0.0/0")
                     SecurityGroupIds.append(kubesgid)
                 networkinterface['Groups'] = SecurityGroupIds
@@ -1136,7 +1144,7 @@ class Kaws(object):
             warning("Deleting DNS %s.%s" % (name, domain))
             self.delete_dns(name, domain, name)
         try:
-            sleep(20)
+            sleep(30)
             conn.delete_security_group(GroupName=name)
         except Exception as e:
             warning("Couldn't remove security group %s. Got %s" % (name, e))
