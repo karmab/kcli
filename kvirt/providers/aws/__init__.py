@@ -174,10 +174,8 @@ class Kaws(object):
                     defaultsubnetid = netname
                     pprint("Using subnet %s as default" % defaultsubnetid)
             else:
-                vpcids = [vpc['VpcId'] for vpc in vpcs['Vpcs'] if vpc['VpcId'] == netname]
-                if vpcids:
-                    vpcid = vpcids[0]
-                else:
+                vpcid = self.get_vpc_id(vpcs, netname) if not netname.startswith('vpc-') else netname
+                if vpcid is None:
                     error("Couldn't find vpc %s" % netname)
                     os._exit(1)
                 subnetids = [subnet['SubnetId'] for subnet in subnets['Subnets'] if subnet['VpcId'] == vpcid]
@@ -431,6 +429,16 @@ class Kaws(object):
         for sg in conn.describe_security_groups()['SecurityGroups']:
             if sg['VpcId'] == vpcid and (sg['GroupName'] == 'default'):
                 return sg['GroupId']
+
+    def get_vpc_id(self, vpcs, name):
+        vpcid = None
+        for vpc in vpcs['Vpcs']:
+            if 'Tags' in vpc:
+                for tag in vpc['Tags']:
+                    if tag['Key'] == 'Name' and tag['Value'] == name:
+                        vpcid = vpc['VpcId']
+                        break
+        return vpcid
 
     def info(self, name, vm=None, debug=False):
         yamlinfo = {}
