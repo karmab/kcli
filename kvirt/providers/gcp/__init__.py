@@ -934,11 +934,9 @@ class Kgcp(object):
             cluster = fqdn.split('-')[0]
             name = '.'.join(fqdn.split('.')[:1])
             domain = fqdn.replace("%s." % name, '').replace("%s." % cluster, '')
-        domain_name = domain.replace('.', '-')
-        pprint("Assuming Domain name is %s..." % domain_name)
-        dnszones = [z for z in client.list_zones() if z.name == domain_name]
+        dnszones = [z for z in client.list_zones() if z.dns_name == "%s." % domain or z.name == domain]
         if not dnszones:
-            error("Domain %s not found" % domain_name)
+            error("Domain %s not found" % domain)
             return {'result': 'failure', 'reason': "Domain not found"}
         else:
             dnszone = dnszones[0]
@@ -1007,8 +1005,7 @@ class Kgcp(object):
             cluster = fqdn.split('-')[0]
             name = '.'.join(fqdn.split('.')[:1])
             domain = fqdn.replace("%s." % name, '').replace("%s." % cluster, '')
-        domain_name = domain.replace('.', '-')
-        dnszones = [z for z in client.list_zones() if z.name == domain_name]
+        dnszones = [z for z in client.list_zones() if z.dns_name == "%s." % domain or z.name == domain]
         if not dnszones:
             return
         else:
@@ -1042,13 +1039,10 @@ class Kgcp(object):
         results = []
         project = self.project
         client = dns.Client(project)
-        domain_name = domain.replace('.', '-')
-        dnszones = [z for z in client.list_zones() if z.name == domain_name]
+        dnszones = [z for z in client.list_zones() if z.dns_name == "%s." % domain or z.name == domain]
         if dnszones:
             dnszone = dnszones[0]
             for record in dnszone.list_resource_record_sets():
-                if record.record_type in ['SOA', 'NS']:
-                    continue
                 results.append([record.name, record.record_type, record.ttl, ','.join(record.rrdatas)])
         return results
 
