@@ -292,6 +292,20 @@ class Kgcp(object):
             keys = '\n'.join(finalkeys)
             newval = {'key': 'ssh-keys', 'value': keys}
             body['metadata']['items'].append(newval)
+        if 'kubetype' in metadata and metadata['kubetype'] == "openshift":
+            kube = metadata['kube']
+            if not [r for r in conn.firewalls().list(project=project).execute()['items'] if r['name'] == kube]:
+                pprint("Adding vm to security group %s" % kube)
+                tcp_ports = [22, 80, 8080, 443, 5443, 8443, 6443, 2379, 2389, 22624, 4789, 6081, '30000-32767',
+                             '10250-10259', '9000-9999']
+                udp_ports = ['4789', '6081', '30000-32767', '9000-9999']
+                firewall_body = {"name": kube, "direction": "INGRESS", "targetTags": [kube],
+                                 "allowed": [{"IPProtocol": "tcp", "ports": tcp_ports},
+                                             {"IPProtocol": "udp", "ports": udp_ports}]}
+                pprint("Creating firewall rule %s" % kube)
+                operation = conn.firewalls().insert(project=project, body=firewall_body).execute()
+                self._wait_for_operation(operation)
+            tags.extend([kube])
         if tags:
             body['tags'] = {'items': tags}
         if image is not None and common.needs_ignition(image):
@@ -577,20 +591,22 @@ class Kgcp(object):
             vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        domain = None
+        domain, kube = None, None
         if 'items' in vm['metadata']:
             for data in vm['metadata']['items']:
                 if data['key'] == 'domain':
                     domain = data['value']
+                if data['key'] == 'kube':
+                    kube = data['value']
         if domain is not None:
             self.delete_dns(name, domain)
         conn.instances().delete(zone=zone, project=project, instance=name).execute()
-        # try:
-        #     firewall_name = "ssh-%s" % name
-        #     operation = conn.firewalls().delete(project=project, firewall=firewall_name).execute()
-        #     self._wait_for_operation(operation)
-        # except Exception as e:
-        #     pass
+        if kube is not None:
+            try:
+                operation = conn.firewalls().delete(project=project, firewall=kube).execute()
+                self._wait_for_operation(operation)
+            except Exception:
+                pass
         return {'result': 'success'}
 
     def clone(self, old, new, full=False, start=False):
