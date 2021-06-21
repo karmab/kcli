@@ -18,16 +18,16 @@ right = ["albattani", "almeida", "alknopfler", "amazigh", "apfelb", "archimedes"
          "fermi", "feynman", "fiambre", "franklin", "freezer", "galactus", "galois", "galileo", "goiko", "gohan",
          "goku", "goldstine", "goodall", "govan", "griezmann", "hawking", "heisenberg", "hoover", "hopper", "hypatia",
          "jhendrix", "jmayer", "jonas", "jones", "kirch", "kendra", "kowalevski", "krilin", "lalande", "leakey",
-         "lendl", "lilou", "lomax", "lovelace", "lumiere", "lomax", "macenroe", "manchadinha", "mayer",
-         "mbappe", "mccarthy", "mcclintock", "mclean", "meitner", "messi", "mestorf", "mikel", "minwii", "moana",
-         "morse", "mirzoyan", "newton", "nobel", "norinradd", "pare", "jparrill", "pasteur", "pepenforce", "perlman",
-         "picolo", "pike", "pinkman", "poincare", "pparker", "productionready", "ptolemy", "ritchie", "rosalind",
-         "reinhardt", "sammet", "satriani", "selen", "shockley", "sinoussi", "silversurfer", "snowwhites", "socarrat",
-         "spitzer", "stallman", "tesla", "timesburg", "thompson", "torvalds", "turing", "wilson", "wozniak", "wright",
-         "yonath", "rulo", "tudela", "tdurdeen", "korsani", "karmab", "gotrunks", "xhamster", "minwii", "djokovic",
-         "federer", "nadal", "sampras", "tgb", "valadas", "vai", "vegeta", "ivanisevic", "muster", "agassi",
-         "targaryen", "lannister", "safin", "stark", "jsnow", "superduper", "tripleo", "vario", "walterwhite",
-         "yolandarock", "yuval", "5guys"]
+         "lendl", "lilou", "lomax", "lovelace", "lumiere", "lomax", "macenroe", "manchadinha", "marquez", "matoub",
+         "mayer", "mbappe", "mccarthy", "mcclintock", "mclean", "meitner", "messi", "mestorf", "mikel", "minwii",
+         "moana", "morse", "mirzoyan", "newton", "nobel", "norinradd", "obama", "pare", "jparrill", "pasteur",
+         "pepenforce", "perlman", "picolo", "pike", "pinkman", "poincare", "pparker", "productionready", "ptolemy",
+         "ritchie", "rosalind", "reinhardt", "rossi", "sammet", "sandler", "satriani", "selen", "shockley", "sinoussi",
+         "silversurfer", "snowwhites", "socarrat", "spitzer", "stallman", "tesla", "timesburg", "thompson", "torvalds",
+         "turing", "wilson", "wozniak", "wright", "yonath", "rulo", "tudela", "tdurdeen", "korsani", "karmab",
+         "gotrunks", "xhamster", "minwii", "djokovic", "federer", "nadal", "sampras", "tgb", "valadas", "vai", "vegeta",
+         "ivanisevic", "muster", "agassi", "targaryen", "lannister", "safin", "stark", "jsnow", "superduper", "tripleo",
+         "thor", "vario", "walterwhite", "yolandarock", "yuval", "5g", "5guys"]
 
 
 def get_random_name(sep='-'):
