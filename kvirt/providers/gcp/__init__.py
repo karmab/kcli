@@ -521,13 +521,14 @@ class Kgcp(object):
             drivertype = disk['type']
             path = os.path.basename(disk['source'])
             diskinfo = conn.disks().get(zone=zone, project=project, disk=diskname).execute()
-            disksize = diskinfo['sizeGb']
+            disksize = int(diskinfo['sizeGb'])
             disks.append({'device': devname, 'size': disksize, 'format': diskformat, 'type': drivertype, 'path': path})
         if disks:
             yamlinfo['disks'] = disks
         if 'items' in vm['metadata']:
             for data in vm['metadata']['items']:
-                yamlinfo[data['key']] = data['value']
+                if data['key'] in METADATA_FIELDS:
+                    yamlinfo[data['key']] = data['value']
         if 'tags' in vm and 'items' in vm['tags']:
             yamlinfo['tags'] = ','.join(vm['tags']['items'])
         if debug:
@@ -1202,6 +1203,7 @@ class Kgcp(object):
         return {'result': 'success'}
 
     def delete_loadbalancer(self, name):
+        domain = None
         name = name.replace('.', '-')
         conn = self.conn
         project = self.project
@@ -1300,7 +1302,7 @@ class Kgcp(object):
                     self._wait_for_operation(operation)
         if domain is not None:
             warning("Deleting DNS %s.%s" % (name, domain))
-            self.delete_dns(name, domain, name)
+            self.delete_dns(name, domain)
         return {'result': 'success'}
 
     def list_loadbalancers(self):
