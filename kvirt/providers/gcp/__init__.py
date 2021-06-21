@@ -1298,6 +1298,9 @@ class Kgcp(object):
                     pprint("Deleting instance group %s" % name)
                     operation = conn.instanceGroups().delete(project=project, zone=zone, instanceGroup=name).execute()
                     self._wait_for_operation(operation)
+        if domain is not None:
+            warning("Deleting DNS %s.%s" % (name, domain))
+            self.delete_dns(name, domain, name)
         return {'result': 'success'}
 
     def list_loadbalancers(self):
