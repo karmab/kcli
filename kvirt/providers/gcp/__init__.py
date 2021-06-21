@@ -153,16 +153,19 @@ class Kgcp(object):
                 disksize = disk.get('size', '10')
             newdisk = {'boot': False, 'autoDelete': True}
             if index == 0 and image is not None:
-                image = self.__evaluate_image(image)
-                imageproject = self.__get_image_project(image)
-                if imageproject is not None:
-                    image_response = conn.images().getFromFamily(project=imageproject, family=image).execute()
+                if image.startswith('rhcos'):
+                    src = "https://www.googleapis.com/compute/v1/projects/rhcos-cloud/global/images/%s" % image
                 else:
-                    try:
-                        image_response = conn.images().get(project=self.project, image=image).execute()
-                    except:
-                        return {'result': 'failure', 'reason': 'Issue with image %s' % image}
-                src = image_response['selfLink']
+                    image = self.__evaluate_image(image)
+                    imageproject = self.__get_image_project(image)
+                    if imageproject is not None:
+                        image_response = conn.images().getFromFamily(project=imageproject, family=image).execute()
+                    else:
+                        try:
+                            image_response = conn.images().get(project=self.project, image=image).execute()
+                        except:
+                            return {'result': 'failure', 'reason': 'Issue with image %s' % image}
+                    src = image_response['selfLink']
                 newdisk['initializeParams'] = {'sourceImage': src, 'diskSizeGb': disksize}
                 newdisk['boot'] = True
             else:
@@ -550,8 +553,8 @@ class Kgcp(object):
         return ip
 
     def volumes(self, iso=False):
-        projects = ['centos-cloud', 'coreos-cloud', 'cos-cloud', 'debian-cloud', 'rhel-cloud', 'suse-cloud',
-                    'ubuntu-os-cloud', self.project]
+        projects = ['centos-cloud', 'coreos-cloud', 'cos-cloud', 'debian-cloud', 'fedora-coreos-cloud', 'rhel-cloud',
+                    'suse-cloud', 'ubuntu-os-cloud', self.project]
         conn = self.conn
         images = []
         for project in projects:
