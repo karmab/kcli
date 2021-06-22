@@ -335,10 +335,18 @@ def create(config, plandir, cluster, overrides):
     ignore_hosts = data.get('ignore_hosts', False)
     if sno:
         sno_virtual = data.get('sno_virtual', False)
+        if sno_virtual:
+            sno_memory = data.get('master_memory', data.get('memory', 8192))
+            if sno_memory < 20480:
+                error("Sno won't deploy with less than 20gb of RAM")
+                os._exit(1)
+            sno_cpus = data.get('master_numcpus', data.get('numcpus', 4))
+            if sno_cpus < 8:
+                error("Sno won't deploy with less than 8 cpus")
+                os._exit(1)
         sno_disk = data.get('sno_disk')
         if sno_disk is None:
             warning("sno_disk will be discovered")
-        # tag = 'registry.svc.ci.openshift.org/sno-dev/openshift-bip:0.5.0'
         masters = 1
         workers = 0
         data['mdns'] = False
