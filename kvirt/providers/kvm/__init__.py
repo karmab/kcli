@@ -207,6 +207,7 @@ class Kvirt(object):
         default_disksize = disksize
         default_pool = pool
         conn = self.conn
+        capabilities = self.conn.getCapabilities()
         try:
             default_storagepool = conn.storagePoolLookupByName(default_pool)
         except:
@@ -666,34 +667,46 @@ class Kvirt(object):
                     common.make_iso(name, tmpdir, userdata, metadata, netdata)
                     self._uploadimage(name, pool=default_storagepool, origin=tmpdir)
         listen = '0.0.0.0' if self.host not in ['localhost', '127.0.0.1'] else '127.0.0.1'
-        displayxml = """<input type='tablet' bus='usb'/>
-<input type='mouse' bus='ps2'/>
-<graphics type='%s' port='-1' autoport='yes' listen='%s'>
+        if 'aarch64' in capabilities:
+            displayxml = ''
+            display = 'vnc'
+        else:
+            displayxml = """<input type='tablet' bus='usb'/>
+<input type='mouse' bus='ps2'/>"""
+        displayxml += """<graphics type='%s' port='-1' autoport='yes' listen='%s'>
 <listen type='address' address='%s'/>
 </graphics>
 <memballoon model='virtio'/>""" % (display, listen, listen)
-        if cpumodel == 'host-model':
+        if 'aarch64' in capabilities:
+            displayxml += """<video><model type='virtio' vram='16384' heads='1' primary='yes'/></video>"""
+        if cpumodel == 'host-model' and 'aarch64' not in capabilities:
             cpuxml = """<cpu mode='host-model'>
 <model fallback='allow'/>"""
-        elif cpumodel == 'host-passthrough':
+        elif cpumodel == 'host-passthrough' or 'aarch64' in capabilities:
             cpuxml = """<cpu mode='host-passthrough'>
 <model fallback='allow'/>"""
         else:
             cpuxml = """<cpu mode='custom' match='exact'>
 <model fallback='allow'>%s</model>""" % cpumodel
-        capabilities = self.conn.getCapabilities()
-        nestedfeature = 'vmx' if 'vmx' in capabilities else 'svm'
-        nestedflag = 'require' if nested else 'disable'
         if virttype is None:
             if "<domain type='kvm'" not in capabilities:
                 virttype = 'qemu'
-                nestedflag = 'disable'
+                nested = False
             else:
                 virttype = 'kvm'
         elif virttype not in ['qemu', 'kvm', 'xen', 'lxc']:
             msg = "Incorrect virttype %s" % virttype
             return {'result': 'failure', 'reason': msg}
-        cpuxml += "<feature policy='%s' name='%s'/>" % (nestedflag, nestedfeature)
+        if nested:
+            nestedfeature = None
+            if 'vmx' in capabilities:
+                nestedfeature = 'vmx'
+            elif 'svm' in capabilities:
+                nestedfeature = 'svm'
+            if nestedfeature is not None:
+                cpuxml += "<feature policy='require' name='%s'/>" % nestedfeature
+            else:
+                warning("Hypervisor not compatible with nesting. Skipping")
         if cpuflags:
             for flag in cpuflags:
                 if isinstance(flag, str):
@@ -981,8 +994,8 @@ class Kvirt(object):
         uefi_legacy = overrides.get('uefi_legacy', False)
         secureboot = overrides.get('secureboot', False)
         secure = 'yes' if secureboot else 'no'
-        if uefi or uefi_legacy or secureboot:
-            if 'q35' not in machine:
+        if uefi or uefi_legacy or secureboot or 'aarch64' in capabilities:
+            if machine == 'pc':
                 machine = 'q35'
             if uefi_legacy:
                 ramxml = "<loader readonly='yes' type='pflash'>/usr/share/OVMF/OVMF_CODE.secboot.fd</loader>"
@@ -997,6 +1010,9 @@ class Kvirt(object):
                 if secureboot:
                     smmxml = "<smm state='on'/>"
                 ramxml = "<loader readonly='yes' secure='%s'/>" % secure
+        arch = 'aarch64' if 'aarch64' in capabilities else 'x86_64'
+        acpixml = "<gic version='3'/>" if 'aarch64' in capabilities else '<acpi/>\n<apic/>'
+        machine = "" if 'aarch64' in capabilities else "machine='%s'" % machine
         vmxml = """<domain type='{virttype}' {namespace}>
 <name>{name}</name>
 {metadataxml}
@@ -1006,7 +1022,7 @@ class Kvirt(object):
 <memory unit='MiB'>{memory}</memory>
 {vcpuxml}
 <os {osfirmware}>
-<type arch='x86_64' machine='{machine}'>hvm</type>
+<type arch='{arch}' {machine}>hvm</type>
 {ramxml}
 {firmwarexml}
 {bootdev}
@@ -1016,8 +1032,7 @@ class Kvirt(object):
 <features>
 {smmxml}
 {ioapicxml}
-<acpi/>
-<apic/>
+{acpixml}
 <pae/>
 </features>
 <clock offset='utc'/>
@@ -1043,11 +1058,12 @@ class Kvirt(object):
 {qemuextraxml}
 </domain>""".format(virttype=virttype, namespace=namespace, name=name, metadataxml=metadataxml,
                     memoryhotplugxml=memoryhotplugxml, cpupinningxml=cpupinningxml, numatunexml=numatunexml,
-                    memory=memory, vcpuxml=vcpuxml, osfirmware=osfirmware, machine=machine, ramxml=ramxml,
+                    memory=memory, vcpuxml=vcpuxml, osfirmware=osfirmware, arch=arch, machine=machine, ramxml=ramxml,
                     firmwarexml=firmwarexml, bootdev=bootdev, kernelxml=kernelxml, smmxml=smmxml, disksxml=disksxml,
                     busxml=busxml, netxml=netxml, isoxml=isoxml, displayxml=displayxml, serialxml=serialxml,
                     sharedxml=sharedxml, guestxml=guestxml, videoxml=videoxml, hostdevxml=hostdevxml, rngxml=rngxml,
-                    tpmxml=tpmxml, cpuxml=cpuxml, qemuextraxml=qemuextraxml, ioapicxml=ioapicxml, iommuxml=iommuxml)
+                    tpmxml=tpmxml, cpuxml=cpuxml, qemuextraxml=qemuextraxml, ioapicxml=ioapicxml, acpixml=acpixml,
+                    iommuxml=iommuxml)
         if self.debug:
             print(vmxml.replace('\n\n', ''))
         conn.defineXML(vmxml)
