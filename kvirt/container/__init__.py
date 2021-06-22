@@ -306,7 +306,8 @@ class Kcontainer():
                 for label in labels:
                     if ':' not in label:
                         break
-                    key, value = label.split(':')
+                    label_split = label.split(':')
+                    key, value = label_split[0], ':'.join(label_split[1:])
                     if key == 'plan':
                         plan = value
                         break

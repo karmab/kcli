@@ -2490,7 +2490,6 @@ def create_container(args):
             pprint("Using %s as a profile" % image)
         else:
             containerprofiles[image] = {'image': image}
-    # cont.create_container(name, profile, overrides=overrides)
     pprint("Deploying container %s from profile %s..." % (name, profile))
     profile = containerprofiles[profile]
     image = next((e for e in [profile.get('image'), profile.get('image')] if e is not None), None)
@@ -2502,8 +2501,11 @@ def create_container(args):
     environment = profile.get('environment')
     volumes = next((e for e in [profile.get('volumes'), profile.get('disks')] if e is not None), None)
     profile.update(overrides)
-    cont.create_container(name, image, nets=None, cmd=cmd, ports=ports, volumes=volumes, environment=environment,
-                          overrides=overrides)
+    params = {'name': name, 'image': image, 'ports': ports, 'volumes': volumes, 'environment': environment,
+              'overrides': overrides}
+    if cmd is not None:
+        params['cmds'] = [cmd]
+    cont.create_container(**params)
     success("container %s created" % name)
     return
 

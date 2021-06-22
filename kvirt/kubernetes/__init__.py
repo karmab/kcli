@@ -27,7 +27,7 @@ class Kubernetes():
         self.debug = debug
         self.insecure = insecure
 
-    def create_container(self, name, image, nets=None, cmd=[], ports=[], volumes=[], environment=[], label=None,
+    def create_container(self, name, image, nets=None, cmds=[], ports=[], volumes=[], environment=[], label=None,
                          overrides={}):
         """
         :param self:
@@ -56,8 +56,8 @@ class Kubernetes():
             labels = {}
         labels['kcli/plan'] = overrides.get('plan', 'kvirt')
         containers = [{'image': image, 'name': name, 'imagePullPolicy': 'IfNotPresent', 'ports': ports}]
-        if cmd is not None:
-            containers[0]['command'] = cmd.split(' ')
+        if cmds:
+            containers[0]['command'] = cmds
         if volumes:
             vols = []
             containers[0]['volumeMounts'] = []
