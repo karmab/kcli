@@ -605,12 +605,13 @@ class Kvirt(object):
                 else:
                     isovolume = volumes[iso]['object']
                     iso = isovolume.path()
+            isobus = 'scsi' if 'aarch64' in capabilities else 'sata'
             isoxml = """<disk type='file' device='cdrom'>
 <driver name='qemu' type='raw'/>
 <source file='%s'/>
-<target dev='hdc' bus='sata'/>
+<target dev='hdc' bus='%s'/>
 <readonly/>
-</disk>""" % iso
+</disk>""" % (iso, isobus)
         if cloudinit:
             if image is not None and common.needs_ignition(image):
                 localhosts = ['localhost', '127.0.0.1']
@@ -652,17 +653,19 @@ class Kvirt(object):
                 cloudinitiso = "%s/%s.ISO" % (default_poolpath, name)
                 dtype = 'block' if '/dev' in diskpath else 'file'
                 dsource = 'dev' if '/dev' in diskpath else 'file'
+                isobus = 'scsi' if 'aarch64' in capabilities else 'sata'
                 isoxml = """%s<disk type='%s' device='cdrom'>
 <driver name='qemu' type='raw'/>
 <source %s='%s'/>
-<target dev='hdd' bus='sata'/>
+<target dev='hdd' bus='%s'/>
 <readonly/>
-</disk>""" % (isoxml, dtype, dsource, cloudinitiso)
+</disk>""" % (isoxml, dtype, dsource, cloudinitiso, isobus)
+                dest_machine = 'q99' if 'aarch64' in capabilities else machine
                 userdata, metadata, netdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets,
                                                                gateway=gateway, dns=dns, domain=domain,
                                                                reserveip=reserveip, files=files, enableroot=enableroot,
                                                                overrides=overrides, storemetadata=storemetadata,
-                                                               image=image, ipv6=ipv6, machine=machine)
+                                                               image=image, ipv6=ipv6, machine=dest_machine)
                 with TemporaryDirectory() as tmpdir:
                     common.make_iso(name, tmpdir, userdata, metadata, netdata)
                     self._uploadimage(name, pool=default_storagepool, origin=tmpdir)
