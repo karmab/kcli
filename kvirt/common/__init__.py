@@ -111,8 +111,8 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             prefix = 'enp1s'
     dns_hack = True if image is not None and is_debian10(image) else False
     netdata = {} if not legacy else ''
+    bridges = {}
     if nets:
-        bridges = {}
         for index, netinfo in enumerate(nets):
             if isinstance(netinfo, str):
                 net = {'name': netinfo}
