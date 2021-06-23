@@ -17,7 +17,7 @@ spec:
   - name: mdns-render-config
     securityContext:
       privileged: true
-    image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/karmab/curl
+    image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/karmab/curl:{{ arch_tag }}
     command:
     - "/bin/sh"
     - "-c"
@@ -45,7 +45,7 @@ spec:
     imagePullPolicy: IfNotPresent
   containers:
   - name: mdns-publish
-    image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/openshift-metal3/mdns-publisher:latest
+    image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/karmab/mdns-publisher:{{ arch_tag }}
     args:
     - "--debug"
     resources:

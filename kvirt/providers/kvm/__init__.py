@@ -7,7 +7,7 @@ Kvm Provider class
 from distutils.spawn import find_executable
 # from urllib.request import urlopen, urlretrieve
 from urllib.request import urlopen
-from kvirt import defaults
+from kvirt.defaults import IMAGES
 from kvirt.defaults import UBUNTUS, METADATA_FIELDS
 from kvirt import common
 from kvirt.common import error, pprint, warning
@@ -373,7 +373,7 @@ class Kvirt(object):
 <source file='%s'/>
 </backingStore>""" % backing
                     else:
-                        shortname = [t for t in defaults.IMAGES if defaults.IMAGES[t] == diskimage]
+                        shortname = [t for t in IMAGES if IMAGES[t] == diskimage]
                         if shortname:
                             msg = "you don't have image %s. Use kcli download %s" % (diskimage, shortname[0])
                         else:
@@ -1590,9 +1590,11 @@ class Kvirt(object):
     def volumes(self, iso=False):
         isos = []
         images = []
-        default_images = [os.path.basename(t).replace('.bz2', '') for t in list(defaults.IMAGES.values())
-                          if t is not None and 'product-software' not in t]
         conn = self.conn
+        if 'aarch64' in conn.getCapabilities():
+            IMAGES.update({i: IMAGES[i].replace('x86_64', 'aarch64').replace('amd64', 'arm64') for i in IMAGES})
+        default_images = [os.path.basename(t).replace('.bz2', '') for t in list(IMAGES.values())
+                          if t is not None and 'product-software' not in t]
         for pool in conn.listAllStoragePools(VIR_CONNECT_LIST_STORAGE_POOLS_ACTIVE):
             poolname = pool.name()
             try:

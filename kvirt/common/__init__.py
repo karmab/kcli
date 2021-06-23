@@ -1228,7 +1228,7 @@ def get_latest_fcos_metal(url):
         return kernel, initrd, metal
 
 
-def get_latest_rhcos(url, _type='kvm'):
+def get_latest_rhcos(url, _type='kvm', arch='x86_64'):
     keys = {'ovirt': 'openstack', 'kubevirt': 'openstack', 'kvm': 'qemu', 'vsphere': 'vmware'}
     key = keys.get(_type, _type)
     buildurl = '%s/builds.json' % url
@@ -1238,13 +1238,13 @@ def get_latest_rhcos(url, _type='kvm'):
             if isinstance(build, dict):
                 build = build['id']
                 if _type in ['openstack', 'ovirt', 'kubevirt']:
-                    return "%s/%s/x86_64/rhcos-%s-openstack.x86_64.qcow2.gz" % (url, build, build)
+                    return "%s/%s/%s/rhcos-%s-openstack.%s.qcow2.gz" % (url, build, arch, build, arch)
                 elif _type == 'vsphere':
-                    return "%s/%s/x86_64/rhcos-%s-vmware.x86_64.ova" % (url, build, build)
+                    return "%s/%s/%s/rhcos-%s-vmware.%s.ova" % (url, build, arch, build, arch)
                 elif _type == 'gcp':
                     return "https://storage.googleapis.com/rhcos/rhcos/%s.tar.gz" % build
                 else:
-                    return "%s/%s/x86_64/rhcos-%s-qemu.x86_64.qcow2.gz" % (url, build, build)
+                    return "%s/%s/%s/rhcos-%s-qemu.%s.qcow2.gz" % (url, build, arch, build, arch)
             else:
                 metaurl = '%s/%s/meta.json' % (url, build)
                 with urlopen(metaurl) as m:
@@ -1635,10 +1635,15 @@ def get_kubectl(version='latest'):
 
 def get_oc(version='latest', macosx=False):
     SYSTEM = 'mac' if os.path.exists('/Users') else 'linux'
+    arch = 'arm64' if os.uname().machine == 'aarch64' else 'x86_64'
     pprint("Downloading oc in current directory")
     occmd = "curl -s "
-    occmd += "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/%s/openshift-client-%s.tar.gz" % (version,
-                                                                                                          SYSTEM)
+    if arch == 'arm64':
+        occmd += "https://mirror.openshift.com/pub/openshift-v4/%s/clients/ocp-dev-preview/" % arch
+        occmd += "%s/openshift-client-%s.tar.gz" % (version, SYSTEM)
+    else:
+        occmd += "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/%s/openshift-client-%s.tar.gz" % (version,
+                                                                                                              SYSTEM)
     occmd += "| tar zxf - oc"
     occmd += "; chmod 700 oc"
     call(occmd, shell=True)

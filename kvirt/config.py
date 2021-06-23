@@ -2002,6 +2002,11 @@ $INFO
                 pprint("Using pool %s" % pool)
             if image is not None:
                 if url is None:
+                    arch = 'x86_64'
+                    if self.type == 'kvm' and 'aarch64' in k.conn.getCapabilities():
+                        IMAGES.update({i: IMAGES[i].replace('x86_64', 'aarch64').replace('amd64', 'arm64')
+                                       for i in IMAGES})
+                        arch = 'aarch64'
                     if image not in IMAGES:
                         error("Image %s has no associated url" % image)
                         return {'result': 'failure', 'reason': "Incorrect image"}
@@ -2010,7 +2015,9 @@ $INFO
                         if commit is not None:
                             url = common.get_commit_rhcos(commit, _type=self.type)
                         else:
-                            url = common.get_latest_rhcos(url, _type=self.type)
+                            if arch != 'x86_64':
+                                url += '-%s' % arch
+                            url = common.get_latest_rhcos(url, _type=self.type, arch=arch)
                     if 'fcos' in image:
                         url = common.get_latest_fcos(url, _type=self.type)
                     image = os.path.basename(image)

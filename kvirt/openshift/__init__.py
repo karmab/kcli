@@ -104,6 +104,7 @@ def get_minimal_rhcos():
 
 
 def get_downstream_installer(nightly=False, macosx=False, tag=None, debug=False):
+    arch = 'arm64' if os.uname().machine == 'aarch64' else None
     repo = 'ocp-dev-preview' if nightly else 'ocp'
     if tag is None:
         repo += '/latest'
@@ -123,7 +124,11 @@ def get_downstream_installer(nightly=False, macosx=False, tag=None, debug=False)
     if version is None:
         error("Coudldn't find version")
         return 1
-    cmd = "curl -s https://mirror.openshift.com/pub/openshift-v4/clients/%s/" % repo
+    if arch == 'arm64':
+        repo = 'ocp-dev-preview'
+        cmd = "curl -s https://mirror.openshift.com/pub/openshift-v4/%s/clients/%s/" % (arch, repo)
+    else:
+        cmd = "curl -s https://mirror.openshift.com/pub/openshift-v4/clients/%s/" % repo
     cmd += "openshift-install-%s-%s.tar.gz " % (INSTALLSYSTEM, version)
     cmd += "| tar zxf - openshift-install"
     cmd += "; chmod 700 openshift-install"
@@ -133,6 +138,7 @@ def get_downstream_installer(nightly=False, macosx=False, tag=None, debug=False)
 
 
 def get_ci_installer(pull_secret, tag=None, macosx=False, upstream=False, debug=False):
+    arch = 'arm64' if os.uname().machine == 'aarch64' else None
     base = 'openshift' if not upstream else 'origin'
     if tag is None:
         tags = []
@@ -145,8 +151,11 @@ def get_ci_installer(pull_secret, tag=None, macosx=False, upstream=False, debug=
     elif str(tag).startswith('ci-ln'):
         tag = 'registry.build01.ci.openshift.org/%s' % tag
     elif '/' not in str(tag):
-        basetag = 'ocp' if not upstream else 'origin'
-        tag = 'registry.ci.openshift.org/%s/release:%s' % (basetag, tag)
+        if arch == 'arm64':
+            tag = 'registry.ci.openshift.org/ocp-arm64/release-arm64:%s' % tag
+        else:
+            basetag = 'ocp' if not upstream else 'origin'
+            tag = 'registry.ci.openshift.org/%s/release:%s' % (basetag, tag)
     os.environ['OPENSHIFT_RELEASE_IMAGE'] = tag
     msg = 'Downloading openshift-install %s in current directory' % tag
     pprint(msg)
@@ -294,8 +303,11 @@ def create(config, plandir, cluster, overrides):
     bootstrap_helper_ip = None
     client = config.client
     platform = config.type
+    arch = 'arm64' if 'platform' == 'kvm' and 'aarch64' in k.conn.getCapabilities() else 'x86_64'
+    arch_tag = 'arm64' if arch == 'arm64' else 'latest'
     pprint("Deploying on client %s" % client)
-    data = {'helper_image': 'CentOS-7-x86_64-GenericCloud.qcow2',
+    data = {'arch_tag': arch_tag,
+            'helper_image': 'CentOS-7-x86_64-GenericCloud.qcow2',
             'domain': 'karmalabs.com',
             'network': 'default',
             'masters': 1,
@@ -471,8 +483,11 @@ def create(config, plandir, cluster, overrides):
         get_oc(macosx=macosx)
     if version == 'ci':
         if '/' not in str(tag):
-            basetag = 'ocp' if not upstream else 'origin'
-            tag = 'registry.ci.openshift.org/%s/release:%s' % (basetag, tag)
+            if arch == 'arm64':
+                tag = 'registry.ci.openshift.org/ocp-arm64/release-arm64:%s' % tag
+            else:
+                basetag = 'ocp' if not upstream else 'origin'
+                tag = 'registry.ci.openshift.org/%s/release:%s' % (basetag, tag)
         os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = tag
         pprint("Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to %s" % tag)
     if find_executable('openshift-install') is None:
@@ -520,7 +535,7 @@ def create(config, plandir, cluster, overrides):
             image_url = get_latest_fcos(fcos_url, _type=config.type, region=region)
         else:
             try:
-                image_url = get_installer_rhcos(_type=config.type, region=region, arch='x86_64')
+                image_url = get_installer_rhcos(_type=config.type, region=region, arch=arch)
             except:
                 try:
                     image_url = get_commit_rhcos(COMMIT_ID, _type=config.type, region=region)
