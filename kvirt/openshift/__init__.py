@@ -305,9 +305,9 @@ def create(config, plandir, cluster, overrides):
     platform = config.type
     arch = 'arm64' if 'platform' == 'kvm' and 'aarch64' in k.conn.getCapabilities() else 'x86_64'
     arch_tag = 'arm64' if arch == 'arm64' else 'latest'
+    overrides['arch_tag'] = arch_tag
     pprint("Deploying on client %s" % client)
-    data = {'arch_tag': arch_tag,
-            'helper_image': 'CentOS-7-x86_64-GenericCloud.qcow2',
+    data = {'helper_image': 'CentOS-7-x86_64-GenericCloud.qcow2',
             'domain': 'karmalabs.com',
             'network': 'default',
             'masters': 1,

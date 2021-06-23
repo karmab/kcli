@@ -9,7 +9,7 @@ echo $REGISTRY_NAME:5000 > /root/url.txt
 REGISTRY_USER={{ disconnected_user if disconnected_user != None else 'dummy' }}
 REGISTRY_PASSWORD={{ disconnected_password if disconnected_password != None else 'dummy' }}
 mkdir -p /opt/registry/{auth,certs,data,conf}
-cat <<EOF | sudo tee /opt/registry/conf/config.yml
+cat <<EOF > /opt/registry/conf/config.yml
 version: 0.1
 log:
   fields:
