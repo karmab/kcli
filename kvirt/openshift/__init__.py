@@ -968,23 +968,34 @@ def create(config, plandir, cluster, overrides):
         result = config.plan(plan, inputfile='%s/cloud_masters.yml' % plandir, overrides=overrides)
         if result['result'] != 'success':
             os._exit(1)
-        call('openshift-install --dir=%s wait-for bootstrap-complete || exit 1' % clusterdir, shell=True)
-        todelete = [] if 'network_type' in data and data['network_type'] == 'Contrail' else ["%s-bootstrap" % cluster]
-    if platform in virtplatforms:
-        if workers > 0:
-            pprint("Deploying workers")
-            if 'name' in overrides:
-                del overrides['name']
-            if platform in virtplatforms:
-                result = config.plan(plan, inputfile='%s/workers.yml' % plandir, overrides=overrides)
-            elif platform in cloudplatforms:
-                result = config.plan(plan, inputfile='%s/cloud_workers.yml' % plandir, overrides=overrides)
+        lb_overrides = {'cluster': cluster, 'domain': domain, 'members': masters, 'role': 'master'}
+        if workers == 0:
+            result = config.plan(plan, inputfile='%s/cloud_lb_apps.yml' % plandir, overrides=lb_overrides)
             if result['result'] != 'success':
                 os._exit(1)
-            if platform == 'packet':
-                allnodes = ["%s-worker-%s" % (cluster, num) for num in range(workers)]
-                for node in allnodes:
-                    k.add_nic(node, network)
+        call('openshift-install --dir=%s wait-for bootstrap-complete || exit 1' % clusterdir, shell=True)
+        todelete = [] if 'network_type' in data and data['network_type'] == 'Contrail' else ["%s-bootstrap" % cluster]
+    if workers > 0:
+        pprint("Deploying workers")
+        if 'name' in overrides:
+            del overrides['name']
+        if platform in virtplatforms:
+            result = config.plan(plan, inputfile='%s/workers.yml' % plandir, overrides=overrides)
+            if result['result'] != 'success':
+                os._exit(1)
+        elif platform in cloudplatforms:
+            result = config.plan(plan, inputfile='%s/cloud_workers.yml' % plandir, overrides=overrides)
+            if result['result'] != 'success':
+                os._exit(1)
+            lb_overrides['role'] = 'worker'
+            lb_overrides['members'] = workers
+            result = config.plan(plan, inputfile='%s/cloud_lb_apps.yml' % plandir, overrides=lb_overrides)
+            if result['result'] != 'success':
+                os._exit(1)
+        if platform == 'packet':
+            allnodes = ["%s-worker-%s" % (cluster, num) for num in range(workers)]
+            for node in allnodes:
+                k.add_nic(node, network)
     if 'network_type' in data and data['network_type'] == 'Contrail':
         pprint("Waiting 10mn on install to be stable")
         sleep(600)

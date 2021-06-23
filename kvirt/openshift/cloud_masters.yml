@@ -31,25 +31,6 @@ api-int.{{ cluster }}:
 {% endfor %}
 {% endif %}
 
-apps.{{ cluster }}:
- type: loadbalancer
- domain: {{ domain }}
- checkport: 80
- alias: ['*']
- ports:
- - 80
- - 443
- vms:
-{% if workers > 0 %}
-{% for num in range(0, workers) %}
- - {{ cluster }}-worker-{{ num }}
-{% endfor %}
-{% else %}
-{% for num in range(0, masters) %}
- - {{ cluster }}-master-{{ num }}
-{% endfor %}
-{% endif %}
-
 {% if flavor_master != None %}
 {% set flavor = flavor_master %}
 {% endif %}
