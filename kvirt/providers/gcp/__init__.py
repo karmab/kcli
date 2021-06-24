@@ -296,7 +296,7 @@ class Kgcp(object):
             kube = metadata['kube']
             if not [r for r in conn.firewalls().list(project=project).execute()['items'] if r['name'] == kube]:
                 pprint("Adding vm to security group %s" % kube)
-                tcp_ports = [22, 80, 8080, 443, 5443, 8443, 6443, 2379, 2389, 22624, 4789, 6081, '30000-32767',
+                tcp_ports = [22, 80, 8080, 443, 5443, 8443, 6443, 2379, 2380, 22624, 4789, 6080, 6081, '30000-32767',
                              '10250-10259', '9000-9999']
                 udp_ports = ['4789', '6081', '30000-32767', '9000-9999']
                 firewall_body = {"name": kube, "direction": "INGRESS", "targetTags": [kube],
@@ -1195,6 +1195,9 @@ class Kgcp(object):
         if not internal:
             firewall_body = {"name": sane_name, "direction": "INGRESS",
                              "allowed": [{"IPProtocol": "tcp", "ports": ports}]}
+            if sane_name.startswith('api-') or sane_name.startswith('apps-'):
+                kube = '-'.join(sane_name.split('-')[1:])
+                firewall_body["targetTags"] = [kube]
             pprint("Creating firewall rule %s" % sane_name)
             operation = conn.firewalls().insert(project=project, body=firewall_body).execute()
             self._wait_for_operation(operation)
