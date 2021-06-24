@@ -568,6 +568,7 @@ def create(config, plandir, cluster, overrides):
     if not os.path.exists(clusterdir):
         os.makedirs(clusterdir)
         with open("%s/kcli_parameters.yml" % clusterdir, 'w') as p:
+            installparam['cluster'] = cluster
             installparam['plan'] = plan
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     data['pub_key'] = open(pub_key).read().strip()
