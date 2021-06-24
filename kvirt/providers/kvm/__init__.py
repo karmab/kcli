@@ -623,7 +623,7 @@ class Kvirt(object):
                     self.add_image(floppy, pool=default_pool)
                     conn.storagePoolLookupByName(default_pool).refresh()
                     floppy = "%s/%s" % (default_poolpath, os.path.basename(floppy))
-                else:
+                elif not floppy.startswith('/'):
                     return {'result': 'failure', 'reason': "Floppy %s not found" % floppy}
             else:
                 floppyvolume = volumes[floppy]['object']
