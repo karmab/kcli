@@ -91,7 +91,8 @@ IMAGES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-i
           'ubuntu1910': 'https://cloud-images.ubuntu.com/releases/eoan/release/ubuntu-19.10-server-cloudimg-amd64.img',
           'ubuntu2004': 'https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64.img',
           'ubuntu2010': 'https://cloud-images.ubuntu.com/groovy/current/groovy-server-cloudimg-amd64.img',
-          'ubuntu2104': 'https://cloud-images.ubuntu.com/hirsute/current/hirsute-server-cloudimg-amd64.img'}
+          'ubuntu2104': 'https://cloud-images.ubuntu.com/hirsute/current/hirsute-server-cloudimg-amd64.img',
+          'rockylinux84': 'https://dl.rockylinux.org/pub/rocky/8.4/images/Rocky-8-GenericCloud-8.4-20210620.0.x86_64.qcow2'}
 
 IMAGESCOMMANDS = {'debian8': 'echo datasource_list: [NoCloud, ConfigDrive, Openstack, Ec2] > /etc/cloud/cloud.cfg.d/'
                   '90_dpkg.cfg'}
