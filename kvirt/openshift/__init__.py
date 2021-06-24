@@ -1025,6 +1025,7 @@ def create(config, plandir, cluster, overrides):
     if apps:
         overrides['openshift_version'] = INSTALLER_VERSION[0:3]
         for app in apps:
+            app_data = overrides.copy()
             if app in LOCAL_OPENSHIFT_APPS:
                 name = app
             else:
@@ -1034,9 +1035,8 @@ def create(config, plandir, cluster, overrides):
                     continue
                 current_app_data = {'name': name, 'source': source, 'channel': channel, 'csv': csv,
                                     'namespace': namespace, 'crd': crd}
+                app_data.update(current_app_data)
             pprint("Adding app %s" % name)
-            app_data = overrides.copy()
-            app_data.update(current_app_data)
             config.create_app_openshift(name, app_data)
     if data.get('postscripts', []):
         currentdir = pwd_path(".")
