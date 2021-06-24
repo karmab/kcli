@@ -612,6 +612,26 @@ class Kvirt(object):
 <target dev='hdc' bus='%s'/>
 <readonly/>
 </disk>""" % (iso, isobus)
+        floppyxml = ''
+        floppy = overrides.get('floppy')
+        if floppy is not None:
+            if floppy not in volumes:
+                if 'http' in floppy:
+                    if os.path.basename(floppy) in volumes:
+                        self.delete_image(os.path.basename(floppy))
+                    pprint("Trying to gather %s" % floppy)
+                    self.add_image(floppy, pool=default_pool)
+                    conn.storagePoolLookupByName(default_pool).refresh()
+                    floppy = "%s/%s" % (default_poolpath, os.path.basename(floppy))
+                else:
+                    return {'result': 'failure', 'reason': "Floppy %s not found" % floppy}
+            else:
+                floppyvolume = volumes[floppy]['object']
+                floppy = floppyvolume.path()
+            floppyxml = """  <disk type='file' device='floppy'>
+<source file='%s'/>
+<target dev='fda' bus='fdc'/>
+</disk>""" % floppy
         if cloudinit:
             if image is not None and common.needs_ignition(image):
                 localhosts = ['localhost', '127.0.0.1']
@@ -1047,6 +1067,7 @@ class Kvirt(object):
 {busxml}
 {netxml}
 {isoxml}
+{floppyxml}
 {displayxml}
 {serialxml}
 {sharedxml}
@@ -1063,10 +1084,10 @@ class Kvirt(object):
                     memoryhotplugxml=memoryhotplugxml, cpupinningxml=cpupinningxml, numatunexml=numatunexml,
                     memory=memory, vcpuxml=vcpuxml, osfirmware=osfirmware, arch=arch, machine=machine, ramxml=ramxml,
                     firmwarexml=firmwarexml, bootdev=bootdev, kernelxml=kernelxml, smmxml=smmxml, disksxml=disksxml,
-                    busxml=busxml, netxml=netxml, isoxml=isoxml, displayxml=displayxml, serialxml=serialxml,
-                    sharedxml=sharedxml, guestxml=guestxml, videoxml=videoxml, hostdevxml=hostdevxml, rngxml=rngxml,
-                    tpmxml=tpmxml, cpuxml=cpuxml, qemuextraxml=qemuextraxml, ioapicxml=ioapicxml, acpixml=acpixml,
-                    iommuxml=iommuxml)
+                    busxml=busxml, netxml=netxml, isoxml=isoxml, floppyxml=floppyxml, displayxml=displayxml,
+                    serialxml=serialxml, sharedxml=sharedxml, guestxml=guestxml, videoxml=videoxml,
+                    hostdevxml=hostdevxml, rngxml=rngxml, tpmxml=tpmxml, cpuxml=cpuxml, qemuextraxml=qemuextraxml,
+                    ioapicxml=ioapicxml, acpixml=acpixml, iommuxml=iommuxml)
         if self.debug:
             print(vmxml.replace('\n\n', ''))
         conn.defineXML(vmxml)
@@ -1614,7 +1635,7 @@ class Kvirt(object):
                     if volume.endswith('qcow2') or volume.endswith('qc2') or volume in default_images:
                         images.extend("%s/%s" % (poolpath, volume))
             for volume in pool.listVolumes():
-                if volume.endswith('iso'):
+                if volume.endswith('iso') or volume.endswith('fd'):
                     isos.append("%s/%s" % (poolpath, volume))
                 elif volume.endswith('qcow2') or volume.endswith('qc2') or volume in default_images:
                     images.append("%s/%s" % (poolpath, volume))
