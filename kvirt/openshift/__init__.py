@@ -969,6 +969,9 @@ def create(config, plandir, cluster, overrides):
         result = config.plan(plan, inputfile='%s/cloud_masters.yml' % plandir, overrides=overrides)
         if result['result'] != 'success':
             os._exit(1)
+        result = config.plan(plan, inputfile='%s/cloud_lb_api.yml' % plandir, overrides=overrides)
+        if result['result'] != 'success':
+            os._exit(1)
         lb_overrides = {'cluster': cluster, 'domain': domain, 'members': masters, 'role': 'master'}
         if workers == 0:
             result = config.plan(plan, inputfile='%s/cloud_lb_apps.yml' % plandir, overrides=lb_overrides)

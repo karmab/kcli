@@ -1,0 +1,32 @@
+api.{{ cluster }}:
+ type: loadbalancer
+ domain: {{ domain }}
+ checkport: 6080
+ checkpath: /readyz
+{% if not cloud_api_internal %}
+ alias: ['api-int.{{ cluster }}.{{ domain }}']
+{% endif %}
+ ports:
+ - 6443
+ - 22624
+ vms:
+ - {{ cluster }}-bootstrap
+{% for num in range(0, masters) %}
+ - {{ cluster }}-master-{{ num }}
+{% endfor %}
+
+{% if cloud_api_internal %}
+api-int.{{ cluster }}:
+ type: loadbalancer
+ internal: true
+ domain: {{ domain }}
+ checkport: 6080
+ ports:
+ - 6443
+ - 22624
+ vms:
+ - {{ cluster }}-bootstrap
+{% for num in range(0, masters) %}
+ - {{ cluster }}-master-{{ num }}
+{% endfor %}
+{% endif %}
