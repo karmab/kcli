@@ -1,7 +1,7 @@
 export TMP_DIR={{ tmpdir }}
 export INSTALL_DIR=$HOME/.kcli/clusters/{{ cluster }}
-export CONTAINER_REGISTRY="hub.juniper.net/contrail-nightly"
-export CONTRAIL_CONTAINER_TAG="R2011.L1.277"
+export CONTAINER_REGISTRY="hub.juniper.net/contrail"
+export CONTRAIL_CONTAINER_TAG="{{ contrail_tag | default('R2011.L1.297') }}"
 export KUBECONFIG=$INSTALL_DIR/auth/kubeconfig
 export DEPLOYER="openshift"
 export KUBERNETES_CLUSTER_NAME="{{ cluster }}"
