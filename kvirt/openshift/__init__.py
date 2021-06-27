@@ -1048,3 +1048,12 @@ def create(config, plandir, cluster, overrides):
             script_path = os.path.expanduser(script) if script.startswith('/') else '%s/%s' % (currentdir, script)
             pprint("Running script %s" % os.path.basename(script))
             call(script_path, shell=True)
+    if platform in cloudplatforms and masters == 1 and workers == 0 and data.get('sno_cloud_remove_lb', True):
+        pprint("Removing loadbalancers as there is a single master")
+        k.delete_loadbalancer("api.%s" % cluster)
+        k.delete_loadbalancer("apps.%s" % cluster)
+        api_ip = k.info("%s-master-0" % cluster).get('ip')
+        k.delete_dns('api.%s' % cluster, domain=domain)
+        k.reserve_dns('api.%s' % cluster, domain=domain, ip=api_ip)
+        k.delete_dns('apps.%s' % cluster, domain=domain)
+        k.reserve_dns('apps.%s' % cluster, domain=domain, ip=api_ip, alias=['*'])
