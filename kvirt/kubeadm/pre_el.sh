@@ -57,3 +57,8 @@ dnf -y install -y kubelet-$VERSION kubectl-$VERSION kubeadm-$VERSION git
 echo KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime-endpoint=unix:///var/run/crio/crio.sock > /etc/sysconfig/kubelet
 {% endif %}
 systemctl enable --now kubelet
+
+{% if sdn == 'cilium' %}
+echo bpffs /sys/fs/bpf bpf defaults 0 0 >> /etc/fstab
+mount /sys/fs/bpf
+{% endif %}

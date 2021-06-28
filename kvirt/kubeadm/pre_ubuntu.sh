@@ -52,3 +52,8 @@ apt-get -y install kubelet=$VERSION kubectl=$VERSION kubeadm=$VERSION
 echo KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime-endpoint=unix:///var/run/crio/crio.sock > /etc/default/kubelet
 {% endif %}
 systemctl enable --now kubelet
+
+{% if sdn == 'cilium' %}
+echo bpffs /sys/fs/bpf bpf defaults 0 0 >> /etc/fstab
+mount /sys/fs/bpf
+{% endif %}
