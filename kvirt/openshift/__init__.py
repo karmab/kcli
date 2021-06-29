@@ -584,6 +584,7 @@ def create(config, plandir, cluster, overrides):
             warning("Forcing disconnected_origin to %s" % reg)
             data['disconnected_origin'] = reg
         disconnected_overrides = data.copy()
+        disconnected_overrides['tag'] = arch_tag
         if version == 'stable' and str(tag).count('.') == 1:
             disconnected_overrides['openshift_version'] = INSTALLER_VERSION
         if metal3:
