@@ -3089,7 +3089,7 @@ def cli():
     dnslist_desc = 'List Dns Entries'
     dnslist_parser = argparse.ArgumentParser(add_help=False)
     dnslist_parser.add_argument('--short', action='store_true')
-    dnslist_parser.add_argument('domain', metavar='DOMAIN')
+    dnslist_parser.add_argument('domain', metavar='DOMAIN', help='Domain where to list entry (network for libvirt)')
     dnslist_parser.set_defaults(func=list_dns)
     list_subparsers.add_parser('dns', parents=[dnslist_parser], description=dnslist_desc, help=dnslist_desc)
 
