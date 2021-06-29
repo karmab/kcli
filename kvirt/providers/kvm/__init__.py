@@ -3213,7 +3213,8 @@ class Kvirt(object):
         try:
             network = conn.networkLookupByName(domain)
         except:
-            return {'result': 'failure', 'reason': "Network %s not found" % domain}
+            error("Network %s not found" % domain)
+            return results
         netxml = network.XMLDesc()
         netroot = ET.fromstring(netxml)
         for host in list(netroot.iter('host')):
