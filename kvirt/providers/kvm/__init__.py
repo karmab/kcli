@@ -895,6 +895,7 @@ class Kvirt(object):
                 accessmode = "mapped"
                 sharedxml += "<filesystem type='mount' accessmode='%s'>" % accessmode
                 sharedxml += "<source dir='%s'/><target dir='%s'/>" % (folder, os.path.basename(folder))
+                sharedxml += "<address type='pci' domain='0x0000' bus='0x00' slot='0x09' function='0x0'/>"
                 sharedxml += "</filesystem>"
                 foldercmd = "sudo mkdir %s ; sudo chmod 777 %s" % (folder, folder)
                 if self.host == 'localhost' or self.host == '127.0.0.1' and not os.path.exists(folder):
