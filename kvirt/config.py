@@ -1981,7 +1981,7 @@ $INFO
         return returndata
 
     def handle_host(self, pool=None, image=None, switch=None, download=False,
-                    url=None, cmd=None, sync=False, update_profile=False, commit=None, size=None):
+                    url=None, cmd=None, sync=False, update_profile=False, commit=None, size=None, arch='x86_64'):
         """
 
         :param pool:
@@ -2002,11 +2002,9 @@ $INFO
                 pprint("Using pool %s" % pool)
             if image is not None:
                 if url is None:
-                    arch = 'x86_64'
-                    if self.type == 'kvm' and 'aarch64' in k.conn.getCapabilities():
-                        IMAGES.update({i: IMAGES[i].replace('x86_64', 'aarch64').replace('amd64', 'arm64')
+                    if arch != 'x86_64':
+                        IMAGES.update({i: IMAGES[i].replace('x86_64', arch).replace('amd64', arch)
                                        for i in IMAGES})
-                        arch = 'aarch64'
                     if image not in IMAGES:
                         error("Image %s has no associated url" % image)
                         return {'result': 'failure', 'reason': "Incorrect image"}

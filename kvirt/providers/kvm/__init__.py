@@ -236,6 +236,8 @@ class Kvirt(object):
         default_disksize = disksize
         default_pool = pool
         conn = self.conn
+        if 'arch' not in overrides and image is not None and ('aarch64' in image or 'arm64' in image):
+            overrides['arch'] = 'aarch64'
         capabilities = self.get_capabilities(overrides.get('arch'))
         if 'emulator' not in capabilities:
             return {'result': 'failure', 'reason': "No valid emulator found for target arch"}
@@ -246,9 +248,16 @@ class Kvirt(object):
             return {'result': 'failure', 'reason': "Incorrect machine. Choose between %s" % machines}
         aarch64 = True if 'aarch64' in emulator else False
         aarch64_full = True if aarch64 and capabilities['kvm'] else False
-        if aarch64 and not aarch64_full and 'cpumodel' not in overrides:
-            cpumodel = 'cortex-a57'
-            warning("Forcing cpumodel to cortex-a57")
+        if aarch64 and not aarch64_full:
+            if 'machine' not in overrides:
+                virtmachines = [m for m in sorted(capabilities['machines']) if m.startswith('virt-')]
+                if not virtmachines:
+                    return {'result': 'failure', 'reason': "Couldn't find a valid machine"}
+                else:
+                    overrides['machine'] = virtmachines[-1]
+            if 'cpumodel' not in overrides:
+                cpumodel = 'cortex-a57'
+                warning("Forcing cpumodel to cortex-a57")
         try:
             default_storagepool = conn.storagePoolLookupByName(default_pool)
         except:
@@ -754,6 +763,7 @@ class Kvirt(object):
 <model fallback='allow'>%s</model>""" % cpumodel
         if virttype is None:
             if not capabilities['kvm']:
+                warning("No acceleration available with this hypervisor")
                 virttype = 'qemu'
                 nested = False
             else:
@@ -1659,7 +1669,7 @@ class Kvirt(object):
         isos = []
         images = []
         conn = self.conn
-        if 'aarch64' in conn.getCapabilities():
+        if 'aarch64' in self.get_capabilities()['emulator']:
             IMAGES.update({i: IMAGES[i].replace('x86_64', 'aarch64').replace('amd64', 'arm64') for i in IMAGES})
         default_images = [os.path.basename(t).replace('.bz2', '') for t in list(IMAGES.values())
                           if t is not None and 'product-software' not in t]

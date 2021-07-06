@@ -302,10 +302,11 @@ def download_image(args):
     cmd = args.cmd
     url = args.url
     size = args.size
+    arch = args.arch
     update_profile = not args.skip_profile
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     result = config.handle_host(pool=pool, image=image, download=True, cmd=cmd, url=url, update_profile=update_profile,
-                                size=size)
+                                size=size, arch=arch)
     if result['result'] == 'success':
         os._exit(0)
     else:
@@ -3733,6 +3734,8 @@ def cli():
     imagedownload_desc = 'Download Cloud Image'
     imagedownload_help = "Image to download. Choose between \n%s" % '\n'.join(IMAGES.keys())
     imagedownload_parser = argparse.ArgumentParser(add_help=False)
+    imagedownload_parser.add_argument('-a', '--arch', help='Target arch', choices=['x86_64', 'aarch64'],
+                                      default='x86_64')
     imagedownload_parser.add_argument('-c', '--cmd', help='Extra command to launch after downloading', metavar='CMD')
     imagedownload_parser.add_argument('-p', '--pool', help='Pool to use. Defaults to default', metavar='POOL')
     imagedownload_parser.add_argument('-u', '--url', help='Url to use', metavar='URL')
