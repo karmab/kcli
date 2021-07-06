@@ -177,6 +177,35 @@ class Kvirt(object):
         except:
             return False
 
+    def get_capabilities(self, arch=None):
+        results = {'kvm': False, 'nestedfeature': None, 'machines': []}
+        capabilitiesxml = self.conn.getCapabilities()
+        root = ET.fromstring(capabilitiesxml)
+        if arch is None:
+            host = root.find('host')
+            cpu = host.find('cpu')
+            arch = cpu.find('arch').text
+        for guest in list(root.iter('guest')):
+            currentarch = guest.find('arch')
+            if currentarch.get('name') != arch:
+                continue
+            results['emulator'] = currentarch.find('emulator').text
+            for domain in list(guest.iter('domain')):
+                if domain.get('type') == 'kvm':
+                    results['kvm'] = True
+                    break
+            for machine in list(guest.iter('machine')):
+                results['machines'].append(machine.text)
+        if results['kvm']:
+            for feature in list(root.iter('feature')):
+                if feature.get('name') == 'vmx':
+                    results['nestedfeature'] = 'vmx'
+                    break
+                if feature.get('name') == 'svm':
+                    results['nestedfeature'] = 'svm'
+                    break
+        return results
+
     def create(self, name, virttype=None, profile='kvirt', flavor=None, plan='kvirt', cpumodel='host-model',
                cpuflags=[], cpupinning=[], numcpus=2, memory=512, guestid='guestrhel764', pool='default', image=None,
                disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None,
@@ -207,7 +236,19 @@ class Kvirt(object):
         default_disksize = disksize
         default_pool = pool
         conn = self.conn
-        capabilities = self.conn.getCapabilities()
+        capabilities = self.get_capabilities(overrides.get('arch'))
+        if 'emulator' not in capabilities:
+            return {'result': 'failure', 'reason': "No valid emulator found for target arch"}
+        else:
+            emulator = capabilities['emulator']
+        if 'machine' in overrides and overrides['machine'] not in capabilities['machines']:
+            machines = ','.join(sorted(capabilities['machines']))
+            return {'result': 'failure', 'reason': "Incorrect machine. Choose between %s" % machines}
+        aarch64 = True if 'aarch64' in emulator else False
+        aarch64_full = True if aarch64 and capabilities['kvm'] else False
+        if aarch64 and not aarch64_full and 'cpumodel' not in overrides:
+            cpumodel = 'cortex-a57'
+            warning("Forcing cpumodel to cortex-a57")
         try:
             default_storagepool = conn.storagePoolLookupByName(default_pool)
         except:
@@ -605,7 +646,7 @@ class Kvirt(object):
                 else:
                     isovolume = volumes[iso]['object']
                     iso = isovolume.path()
-            isobus = 'scsi' if 'aarch64' in capabilities else 'sata'
+            isobus = 'scsi' if aarch64_full else 'sata'
             isoxml = """<disk type='file' device='cdrom'>
 <driver name='qemu' type='raw'/>
 <source file='%s'/>
@@ -673,14 +714,14 @@ class Kvirt(object):
                 cloudinitiso = "%s/%s.ISO" % (default_poolpath, name)
                 dtype = 'block' if '/dev' in diskpath else 'file'
                 dsource = 'dev' if '/dev' in diskpath else 'file'
-                isobus = 'scsi' if 'aarch64' in capabilities else 'sata'
+                isobus = 'scsi' if aarch64_full else 'sata'
                 isoxml = """%s<disk type='%s' device='cdrom'>
 <driver name='qemu' type='raw'/>
 <source %s='%s'/>
 <target dev='hdd' bus='%s'/>
 <readonly/>
 </disk>""" % (isoxml, dtype, dsource, cloudinitiso, isobus)
-                dest_machine = 'q99' if 'aarch64' in capabilities else machine
+                dest_machine = 'q99' if aarch64_full else machine
                 userdata, metadata, netdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets,
                                                                gateway=gateway, dns=dns, domain=domain,
                                                                reserveip=reserveip, files=files, enableroot=enableroot,
@@ -690,7 +731,7 @@ class Kvirt(object):
                     common.make_iso(name, tmpdir, userdata, metadata, netdata)
                     self._uploadimage(name, pool=default_storagepool, origin=tmpdir)
         listen = '0.0.0.0' if self.host not in ['localhost', '127.0.0.1'] else '127.0.0.1'
-        if 'aarch64' in capabilities:
+        if aarch64:
             displayxml = ''
             display = 'vnc'
         else:
@@ -700,19 +741,19 @@ class Kvirt(object):
 <listen type='address' address='%s'/>
 </graphics>
 <memballoon model='virtio'/>""" % (display, listen, listen)
-        if 'aarch64' in capabilities:
+        if aarch64_full:
             displayxml += """<video><model type='virtio' vram='16384' heads='1' primary='yes'/></video>"""
-        if cpumodel == 'host-model' and 'aarch64' not in capabilities:
+        if cpumodel == 'host-model' and not aarch64:
             cpuxml = """<cpu mode='host-model'>
 <model fallback='allow'/>"""
-        elif cpumodel == 'host-passthrough' or 'aarch64' in capabilities:
+        elif cpumodel == 'host-passthrough' or aarch64_full:
             cpuxml = """<cpu mode='host-passthrough'>
 <model fallback='allow'/>"""
         else:
             cpuxml = """<cpu mode='custom' match='exact'>
 <model fallback='allow'>%s</model>""" % cpumodel
         if virttype is None:
-            if "<domain type='kvm'" not in capabilities:
+            if not capabilities['kvm']:
                 virttype = 'qemu'
                 nested = False
             else:
@@ -721,11 +762,7 @@ class Kvirt(object):
             msg = "Incorrect virttype %s" % virttype
             return {'result': 'failure', 'reason': msg}
         if nested:
-            nestedfeature = None
-            if 'vmx' in capabilities:
-                nestedfeature = 'vmx'
-            elif 'svm' in capabilities:
-                nestedfeature = 'svm'
+            nestedfeature = capabilities['nestedfeature']
             if nestedfeature is not None:
                 cpuxml += "<feature policy='require' name='%s'/>" % nestedfeature
             else:
@@ -836,6 +873,8 @@ class Kvirt(object):
 <console type='pty'>
 <target type='serial' port='0'/>
 </console>"""
+        elif aarch64 and not aarch64_full:
+            serialxml = ''
         else:
             serialxml = """ <serial type="tcp">
 <source mode="bind" host="127.0.0.1" service="%s"/>
@@ -1034,9 +1073,15 @@ class Kvirt(object):
                 if secureboot:
                     smmxml = "<smm state='on'/>"
                 ramxml = "<loader readonly='yes' secure='%s'/>" % secure
-        arch = 'aarch64' if 'aarch64' in capabilities else 'x86_64'
-        acpixml = "<gic version='3'/>" if 'aarch64' in capabilities else '<acpi/>\n<apic/>'
-        machine = "" if 'aarch64' in capabilities else "machine='%s'" % machine
+        arch = 'aarch64' if aarch64 else 'x86_64'
+        if not aarch64:
+            acpixml = '<acpi/>\n<apic/>'
+        elif aarch64_full:
+            acpixml = "<gic version='3'/>"
+        else:
+            acpixml = ''
+        machine = "" if aarch64_full else "machine='%s'" % machine
+        emulatorxml = "<emulator>%s</emulator>" % emulator
         vmxml = """<domain type='{virttype}' {namespace}>
 <name>{name}</name>
 {metadataxml}
@@ -1064,6 +1109,7 @@ class Kvirt(object):
 <on_reboot>restart</on_reboot>
 <on_crash>restart</on_crash>
 <devices>
+{emulatorxml}
 {disksxml}
 {busxml}
 {netxml}
@@ -1084,11 +1130,11 @@ class Kvirt(object):
 </domain>""".format(virttype=virttype, namespace=namespace, name=name, metadataxml=metadataxml,
                     memoryhotplugxml=memoryhotplugxml, cpupinningxml=cpupinningxml, numatunexml=numatunexml,
                     memory=memory, vcpuxml=vcpuxml, osfirmware=osfirmware, arch=arch, machine=machine, ramxml=ramxml,
-                    firmwarexml=firmwarexml, bootdev=bootdev, kernelxml=kernelxml, smmxml=smmxml, disksxml=disksxml,
-                    busxml=busxml, netxml=netxml, isoxml=isoxml, floppyxml=floppyxml, displayxml=displayxml,
-                    serialxml=serialxml, sharedxml=sharedxml, guestxml=guestxml, videoxml=videoxml,
-                    hostdevxml=hostdevxml, rngxml=rngxml, tpmxml=tpmxml, cpuxml=cpuxml, qemuextraxml=qemuextraxml,
-                    ioapicxml=ioapicxml, acpixml=acpixml, iommuxml=iommuxml)
+                    firmwarexml=firmwarexml, bootdev=bootdev, kernelxml=kernelxml, smmxml=smmxml,
+                    emulatorxml=emulatorxml, disksxml=disksxml, busxml=busxml, netxml=netxml, isoxml=isoxml,
+                    floppyxml=floppyxml, displayxml=displayxml, serialxml=serialxml, sharedxml=sharedxml,
+                    guestxml=guestxml, videoxml=videoxml, hostdevxml=hostdevxml, rngxml=rngxml, tpmxml=tpmxml,
+                    cpuxml=cpuxml, qemuextraxml=qemuextraxml, ioapicxml=ioapicxml, acpixml=acpixml, iommuxml=iommuxml)
         if self.debug:
             print(vmxml.replace('\n\n', ''))
         conn.defineXML(vmxml)
