@@ -15,7 +15,7 @@ from kvirt.common import ssh, scp, _ssh_credentials
 from kvirt.defaults import LOCAL_OPENSHIFT_APPS
 from kvirt.openshift.calico import calicoassets
 import re
-from shutil import copy2, rmtree
+from shutil import copy2, move, rmtree
 from subprocess import call
 from tempfile import TemporaryDirectory
 from time import sleep
@@ -751,7 +751,7 @@ def create(config, plandir, cluster, overrides):
         if run != 0:
             error("Hit issue.Leaving")
             os._exit(run)
-        os.rename("%s/bootstrap-in-place-for-live-iso.ign" % clusterdir, "./%s.ign" % sno_name)
+        move("%s/bootstrap-in-place-for-live-iso.ign" % clusterdir, "./%s.ign" % sno_name)
         with open("iso.ign", 'w') as f:
             iso_overrides = {}
             extra_args = overrides.get('extra_args')
