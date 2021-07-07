@@ -178,13 +178,14 @@ class Kvirt(object):
             return False
 
     def get_capabilities(self, arch=None):
-        results = {'kvm': False, 'nestedfeature': None, 'machines': []}
+        results = {'kvm': False, 'nestedfeature': None, 'machines': [], 'arch': arch}
         capabilitiesxml = self.conn.getCapabilities()
         root = ET.fromstring(capabilitiesxml)
         if arch is None:
             host = root.find('host')
             cpu = host.find('cpu')
             arch = cpu.find('arch').text
+            results['arch'] = arch
         for guest in list(root.iter('guest')):
             currentarch = guest.find('arch')
             if currentarch.get('name') != arch:
@@ -246,7 +247,7 @@ class Kvirt(object):
         if 'machine' in overrides and overrides['machine'] not in capabilities['machines']:
             machines = ','.join(sorted(capabilities['machines']))
             return {'result': 'failure', 'reason': "Incorrect machine. Choose between %s" % machines}
-        aarch64 = True if 'aarch64' in emulator else False
+        aarch64 = True if capabilities['arch'] == 'aarch64' else False
         aarch64_full = True if aarch64 and capabilities['kvm'] else False
         if aarch64 and not aarch64_full:
             if 'machine' not in overrides:
