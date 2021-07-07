@@ -26,6 +26,7 @@ fips: false
 cluster: testk
 domain: karmalabs.com
 network_type: OpenShiftSDN
+network_mtu:
 ntp_server:
 minimal: false
 pool: default

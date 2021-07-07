@@ -57,6 +57,9 @@ networking:
   - cidr: {{ network['cidr'] }}
     hostPrefix: {{ network['hostPrefix'] }}
 {% endfor %}
+{% if network_mtu != None %}
+  clusterNetworkMTU: {{ network_mtu }}
+{% endif %}
   serviceNetwork:
 {% for network in service_networks %}
   - {{ network }}
