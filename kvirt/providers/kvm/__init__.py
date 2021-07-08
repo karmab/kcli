@@ -2924,18 +2924,26 @@ class Kvirt(object):
                 dualdhcpxml = ""
             dualxml = "<ip address='%s' prefix='%s' family='%s'>%s</ip>" % (dualgateway, dualprefix, dualfamily,
                                                                             dualdhcpxml)
-        networkxml = """<network><name>%s</name>
-                    %s
-                    %s
-                    %s
-                    %s
-                    %s
-                    <ip address='%s' prefix='%s' family='%s'>
-                    %s
+        dnsxml = ''
+        if 'forwarders' in overrides:
+            forwarders = overrides['forwarders']
+            forwarderxml = '\n'.join("<forwarder domain='%s' addr='%s'/>" % (entry['domain'],
+                                                                             entry['address']) for entry in forwarders)
+            dnsxml = "<dns>%s</dns>" % forwarderxml
+        networkxml = """<network><name>{name}</name>
+                    {metadata}
+                    {mtuxml}
+                    {natxml}
+                    {bridgexml}
+                    {domainxml}
+                    {dnsxml}
+                    <ip address='{gateway}' prefix='{prefix}' family='{family}'>
+                    {dhcpxml}
                     </ip>
-                    %s
-                    </network>""" % (name, metadata, mtuxml, natxml, bridgexml, domainxml, gateway, prefix, family,
-                                     dhcpxml, dualxml)
+                    {dualxml}
+                    </network>""".format(name=name, metadata=metadata, mtuxml=mtuxml, natxml=natxml,
+                                         bridgexml=bridgexml, domainxml=domainxml, dnsxml=dnsxml, gateway=gateway,
+                                         prefix=prefix, family=family, dhcpxml=dhcpxml, dualxml=dualxml)
         if self.debug:
             print(networkxml)
         new_net = conn.networkDefineXML(networkxml)
