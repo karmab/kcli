@@ -1932,14 +1932,15 @@ def create_pipeline(args):
             paramfile = "/workdir/kcli_parameters.yml"
     elif paramfile is None and os.path.exists("kcli_parameters.yml"):
         paramfile = "kcli_parameters.yml"
-    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     if not kube and not os.path.exists(inputfile):
         error("File %s not found" % inputfile)
         return 0
     if github:
-        renderfile = baseconfig.create_github_pipeline(inputfile, overrides=overrides)
+        overrides = common.get_overrides(param=args.param)
+        renderfile = baseconfig.create_github_pipeline(inputfile, paramfile=paramfile, overrides=overrides)
     else:
+        overrides = common.get_overrides(paramfile=paramfile, param=args.param)
         renderfile = baseconfig.create_pipeline(inputfile, overrides=overrides, kube=kube)
     print(renderfile)
     return 0

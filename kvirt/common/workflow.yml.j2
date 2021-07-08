@@ -1,4 +1,4 @@
-name: {{ plan }}
+name: {{ plan }} 
 on:
   workflow_dispatch:
     inputs:
@@ -12,7 +12,7 @@ on:
         default: 'xxx'
 {% for parameter in parameters %}
       {{ parameter|upper }}:
-        description: '{{ parameter }}: {{ parameters[parameter] }}'
+        description: '{{ parameter }}'
         required: false
         default: {{ parameters[parameter] }}
 {% endfor %}
@@ -24,13 +24,7 @@ jobs:
     steps:
       - name: Install kcli
         run: |
-          if [ "$(grep -i ubuntu /etc/os-release)" != "" ] ; then
-            curl -1sLf 'https://dl.cloudsmith.io/public/karmab/kcli/setup.deb.sh' | bash
-            apt-get -y install python3-kcli
-          else
-            dnf -y copr enable karmab/kcli
-            dnf -y install kcli
-          fi
+          curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | bash
           # kcli create pool -p /var/lib/libvirt/images default
           # sudo setfacl -m u:$(id -un):rwx /var/lib/libvirt/images
 
@@ -40,7 +34,8 @@ jobs:
   deploy-plan:
     needs: requirements
     runs-on: {% raw %} ${{github.event.inputs.RUNNER}} {% endraw %}
+
     steps:
       - name: Deploy kcli plan
         run: |
-          kcli create plan --force -f {{ inputfile | default('kcli_plan.yml') }} {{ parameterline }} {% raw %} ${{github.event.inputs.PLAN}} {% endraw %}
+          kcli create plan --force -f {{ inputfile | default('kcli_plan.yml') }} {{ paramfileline }} {{ parameterline }} {% raw %} ${{github.event.inputs.PLAN}} {% endraw %}
