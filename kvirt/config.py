@@ -1609,7 +1609,13 @@ $INFO
                         os._exit(1)
                     rule = list(entry.keys())[0]
                     if re.match(rule, name) and isinstance(entry[rule], dict):
-                        profile.update(entry[rule])
+                        listkeys = ['cmds', 'files', 'scripts']
+                        for rule in entry:
+                            current = entry[rule]
+                            for key in current:
+                                if key in listkeys and isinstance(current[key], list) and key in profile:
+                                    current[key] = profile[key] + current[key]
+                            profile.update(entry[rule])
                         break
                 vmclient = profile.get('client')
                 if vmclient is None:
