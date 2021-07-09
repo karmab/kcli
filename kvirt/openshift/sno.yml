@@ -22,6 +22,7 @@
  iso: {{ cluster }}.iso
  pool: {{ pool }}
  enableroot: false 
+ reservedns: true
  flavor: {{ flavor }}
  keys: {{ keys }}
  numcpus: {{ master_numcpus | default(numcpus, numcpus) }}
