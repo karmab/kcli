@@ -7,9 +7,15 @@ on:
         required: true
         default: 'ubuntu-latest'
       PLAN:
-        description: 'Plan Name -> myCluster <-'
+        description: 'Plan Name'
+        required: true
+        default: {{ plan }}
+{% if paramfile != None %}
+      PARAMFILE:
+        description: 'paramfile'
         required: false
-        default: 'xxx'
+        default: {{ paramfile }}
+{% endif %}
 {% for parameter in parameters %}
       {{ parameter|upper }}:
         description: '{{ parameter }}'

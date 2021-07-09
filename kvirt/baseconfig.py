@@ -996,9 +996,10 @@ class Kbaseconfig:
             os._exit(1)
         paramline = ["-P %s=${{github.event.inputs.%s}}" % (parameter, parameter.upper()) for parameter in overrides]
         parameterline = " ".join(paramline)
-        paramfileline = "--paramfile %s" % paramfile if paramfile is not None else ""
+        # paramfileline = "--paramfile %s" % paramfile if paramfile is not None else ""
+        paramfileline = "--paramfile ${{github.event.inputs.PARAMFILE}}" if paramfile is not None else ""
         workflowfile = templ.render(plan=plan, parameters=overrides, parameterline=parameterline,
-                                    paramfileline=paramfileline)
+                                    paramfileline=paramfileline, paramfile=paramfile)
         return workflowfile
 
     def info_kube_generic(self, quiet, web=False):
