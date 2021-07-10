@@ -3278,15 +3278,24 @@ class Kvirt(object):
         conn = self.conn
         try:
             network = conn.networkLookupByName(domain)
+            netxml = network.XMLDesc()
+            netroot = ET.fromstring(netxml)
+            for host in list(netroot.iter('host')):
+                iphost = host.get('ip')
+                for hostname in list(host.iter('hostname')):
+                    results.append([hostname.text, 'A', '0', iphost])
         except:
-            error("Network %s not found" % domain)
-            return results
-        netxml = network.XMLDesc()
-        netroot = ET.fromstring(netxml)
-        for host in list(netroot.iter('host')):
-            iphost = host.get('ip')
-            for hostname in list(host.iter('hostname')):
-                results.append([hostname.text, 'A', '0', iphost])
+            warning("Network %s not found. Parsing over all networks" % domain)
+            for network in conn.listAllNetworks():
+                netname = network.name()
+                netxml = network.XMLDesc(0)
+                netxml = network.XMLDesc()
+                netroot = ET.fromstring(netxml)
+                for host in list(netroot.iter('host')):
+                    iphost = host.get('ip')
+                    for hostname in list(host.iter('hostname')):
+                        if hostname.text.endswith(domain):
+                            results.append([hostname.text, 'A', '0', "%s (%s)" % (iphost, netname)])
         return results
 
     def create_bucket(self, bucket, public=False):
