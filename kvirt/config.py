@@ -2248,6 +2248,7 @@ $INFO
         openshift.create(self, plandir, cluster, overrides)
 
     def delete_kube(self, cluster, overrides={}):
+        ipi = False
         domain = overrides.get('domain', 'karmalabs.com')
         k = self.k
         cluster = overrides.get('cluster', cluster)
@@ -2255,8 +2256,17 @@ $INFO
             cluster = 'testk'
         clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
         if os.path.exists(clusterdir):
+            with open("%s/kcli_parameters.yml" % clusterdir) as f:
+                clusterdata = yaml.load(f)
+                if clusterdata['kubetype'] == 'openshift' and 'ipi' in clusterdata and clusterdata['ipi']:
+                    ipi = True
+            if ipi:
+                os.environ["PATH"] += ":%s" % os.getcwd()
+                call('openshift-install --dir=%s destroy cluster' % clusterdir, shell=True)
             pprint("Deleting directory %s" % clusterdir)
             rmtree(clusterdir)
+            if ipi:
+                return
         for vm in sorted(k.list(), key=lambda x: x['name']):
             name = vm['name']
             if 'domain' in vm:

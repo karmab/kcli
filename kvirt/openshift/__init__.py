@@ -11,7 +11,7 @@ from kvirt.common import error, pprint, success, warning, info2
 from kvirt.common import gen_mac, get_oc, get_values, pwd_path, fetch
 from kvirt.common import get_commit_rhcos, get_latest_fcos, patch_bootstrap, generate_rhcos_iso, olm_app
 from kvirt.common import get_installer_rhcos
-from kvirt.common import ssh, scp, _ssh_credentials
+from kvirt.common import ssh, scp, _ssh_credentials, copy_cloud_credentials
 from kvirt.defaults import LOCAL_OPENSHIFT_APPS
 from kvirt.openshift.calico import calicoassets
 import re
@@ -451,6 +451,7 @@ def create(config, plandir, cluster, overrides):
                 os._exit(1)
     masters = data.get('masters')
     workers = data.get('workers')
+    ipi = data.get('ipi', False)
     tag = data.get('tag')
     pub_key = data.get('pub_key')
     pull_secret = pwd_path(data.get('pull_secret')) if not upstream else "%s/fake_pull.json" % plandir
@@ -525,7 +526,7 @@ def create(config, plandir, cluster, overrides):
     elif OPENSHIFT_VERSION.isdigit() and int(OPENSHIFT_VERSION) < 46:
         curl_header = "User-Agent: Ignition/0.35.0"
     overrides['curl_header'] = curl_header
-    if sno:
+    if sno or ipi:
         pass
     elif image is None:
         region = config.k.region if config.type == 'aws' else None
@@ -657,6 +658,12 @@ def create(config, plandir, cluster, overrides):
         f.write(installconfig)
     with open("%s/install-config.yaml.bck" % clusterdir, 'w') as f:
         f.write(installconfig)
+    if ipi:
+        copy_cloud_credentials(platform, k)
+        run = call('openshift-install --dir=%s create cluster' % clusterdir, shell=True)
+        if run != 0:
+            error("Leaving environment for debugging purposes")
+        os._exit(run)
     autoapprover = config.process_inputfile(cluster, "%s/autoapprovercron.yml" % plandir, overrides=data)
     with open("%s/autoapprovercron.yml" % clusterdir, 'w') as f:
         f.write(autoapprover)
