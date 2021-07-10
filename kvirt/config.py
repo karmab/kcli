@@ -146,20 +146,55 @@ class Kconfig(Kbaseconfig):
                 k = Kgcp(region=region, zone=zone, project=project, debug=debug)
                 self.overrides.update({'project': project})
             elif self.type == 'aws':
-                region = self.options.get('region') if region is None else region
+                if len(self.options) == 1:
+                    home = os.environ['HOME']
+                    access_key_id, access_key_secret, keypair, region, session_token = None, None, None, None, None
+                    import configparser
+                    if os.path.exists("%s/.aws/credentials" % home):
+                        try:
+                            credconfig = configparser.ConfigParser()
+                            credconfig.read("%s/.aws/credentials" % home)
+                            if 'default' not in credconfig:
+                                error("Missing default section in ~/.aws/credentials file. Leaving")
+                                os._exit(1)
+                            if 'aws_access_key_id' in credconfig['default']:
+                                access_key_id = credconfig['default']['aws_access_key_id']
+                            if 'aws_secret_access_key' in credconfig['default']:
+                                access_key_secret = credconfig['default']['aws_secret_access_key']
+                        except:
+                            error("Coudln't parse ~/.aws/credentials file. Leaving")
+                            os._exit(1)
+                    if os.path.exists("%s/.aws/config" % home):
+                        try:
+                            confconfig = configparser.ConfigParser()
+                            confconfig.read("%s/.aws/config" % home)
+                            if 'default' not in confconfig:
+                                error("Missing default section in ~/.aws/config file. Leaving")
+                                os._exit(1)
+                            if 'aws_access_key_id' in confconfig['default']:
+                                access_key_id = confconfig['default']['aws_access_key_id']
+                            if 'aws_secret_access_key' in confconfig['default']:
+                                access_key_secret = confconfig['default']['aws_secret_access_key']
+                            if 'region' in confconfig['default']:
+                                region = confconfig['default']['region']
+                        except:
+                            error("Coudln't parse ~/.aws/config file. Leaving")
+                            os._exit(1)
+                else:
+                    access_key_id = self.options.get('access_key_id')
+                    access_key_secret = self.options.get('access_key_secret')
+                    keypair = self.options.get('keypair')
+                    session_token = self.options.get('session_token')
+                    region = self.options.get('region') if region is None else region
                 if region is None:
                     error("Missing region in the configuration. Leaving")
                     os._exit(1)
-                access_key_id = self.options.get('access_key_id')
                 if access_key_id is None:
                     error("Missing access_key_id in the configuration. Leaving")
                     os._exit(1)
-                access_key_secret = self.options.get('access_key_secret')
                 if access_key_secret is None:
                     error("Missing access_key_secret in the configuration. Leaving")
                     os._exit(1)
-                keypair = self.options.get('keypair')
-                session_token = self.options.get('session_token')
                 from kvirt.providers.aws import Kaws
                 k = Kaws(access_key_id=access_key_id, access_key_secret=access_key_secret, region=region,
                          debug=debug, keypair=keypair, session_token=session_token)
