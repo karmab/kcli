@@ -62,7 +62,17 @@ networking:
   - {{ network }}
 {% endfor %}
 platform:
-{% if config_type == 'vsphere' %}
+{% if ipi %}
+  {{ ipi_platform|default(config_type) }}:
+{% if config_type == 'aws' %}
+    region: {{ config_region }}
+    userTags:
+      plan: {{ plan }}
+{% elif config_type == 'gcp' %}
+    region: {{ config_region|default(config_zone[:-2]) }}
+    projectID: {{ config_project }}
+{% endif %}
+{% elif config_type == 'vsphere' %}
   vsphere:
     vcenter: {{ config_host }}
     username: {{ config_user }}

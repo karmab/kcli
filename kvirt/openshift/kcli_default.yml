@@ -11,6 +11,7 @@ info: |
     You can deploy extra apps with the apps array and for each of the supported app, indicate with the variable
     ${app}_version with version to target (instead of latest)
     You can also define a list of scripts to launch at the end with the postscripts array.
+ipi: false
 version: nightly
 tag: '4.7'
 pull_secret: openshift_pull.json

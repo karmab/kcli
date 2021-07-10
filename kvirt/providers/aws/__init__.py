@@ -42,6 +42,7 @@ class Kaws(object):
         self.s3 = boto3.client('s3', aws_access_key_id=access_key_id, aws_secret_access_key=access_key_secret,
                                region_name=region, aws_session_token=session_token)
         self.access_key_id = access_key_id
+        self.access_key_secret = access_key_secret
         self.region = region
         self.keypair = keypair
         return
@@ -990,9 +991,10 @@ class Kaws(object):
             if entry in record['Name'] or ('master-0' in name and record['Name'].endswith("%s." % clusterdomain)):
                 recs.append(record)
             else:
-                for rrdata in record['ResourceRecords']:
-                    if name in rrdata['Value']:
-                        recs.append(record)
+                if 'ResourceRecords' in record:
+                    for rrdata in record['ResourceRecords']:
+                        if name in rrdata['Value']:
+                            recs.append(record)
         changes = [{'Action': 'DELETE', 'ResourceRecordSet': record} for record in recs]
         try:
             dns.change_resource_record_sets(HostedZoneId=zoneid, ChangeBatch={'Changes': changes})

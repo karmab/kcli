@@ -1936,3 +1936,17 @@ def olm_app(package):
             if name == package or data['metadata']['labels']['catalog'] != 'community-operators':
                 break
     return name, source, defaultchannel, csv, description, target_namespace, crd
+
+
+def copy_cloud_credentials(platform, k):
+    home = os.environ['HOME']
+    if platform == 'aws':
+        if not os.path.exists("%s/.aws" % home):
+            os.mkdir("%s/.aws" % home)
+        if not os.path.exists("%s/.aws/credentials" % home):
+            with open("%s/.aws/credentials" % home, "w") as f:
+                f.write("[default]\naws_access_key_id=%s\naws_secret_access_key=%s" % (k.access_key_id,
+                                                                                       k.access_key_secret))
+        if not os.path.exists("%s/.aws/config" % home):
+            with open("%s/.aws/credentials" % home, "w") as f:
+                f.write("[default]\region=%s" % k.region)
