@@ -786,10 +786,13 @@ class Ksphere:
         dc = self.dc
         vmFolder = dc.vmFolder
         if vm is None:
+            listinfo = False
             vm = findvm(si, vmFolder, name)
             if vm is None:
                 error("VM %s not found" % name)
                 return {}
+        else:
+            listinfo = True
         summary = vm.summary
         yamlinfo['name'] = name
         yamlinfo['id'] = summary.config.instanceUuid
@@ -798,8 +801,21 @@ class Ksphere:
         yamlinfo['status'] = translation[vm.runtime.powerState]
         yamlinfo['nets'] = []
         yamlinfo['disks'] = []
+        if vm.runtime.powerState == "poweredOn":
+            yamlinfo['host'] = vm.runtime.host.name
+            for nic in vm.guest.net:
+                if 'ip' not in yamlinfo and nic.ipAddress:
+                    yamlinfo['ip'] = nic.ipAddress[0]
+        for entry in vm.config.extraConfig:
+            if entry.key in METADATA_FIELDS:
+                yamlinfo[entry.key] = entry.value
+            if entry.key == 'image':
+                yamlinfo['user'] = common.get_user(entry.value)
+        if listinfo:
+            return yamlinfo
+        if debug:
+            yamlinfo['debug'] = vm.config.extraConfig
         devices = vm.config.hardware.device
-        mainmac = None
         for number, dev in enumerate(devices):
             if "addressType" in dir(dev):
                 try:
@@ -814,8 +830,6 @@ class Ksphere:
                 devicename = type(dev).__name__.replace('vim.vm.device.Virtual', '').lower()
                 networktype = devicename
                 mac = dev.macAddress
-                if mainmac is None:
-                    mainmac = mac
                 net = {'device': device, 'mac': mac, 'net': network, 'type': networktype}
                 yamlinfo['nets'].append(net)
             if type(dev).__name__ == 'vim.vm.device.VirtualDisk':
@@ -824,22 +838,9 @@ class Ksphere:
                 diskformat = dev.backing.diskMode
                 drivertype = 'thin' if dev.backing.thinProvisioned else 'thick'
                 path = dev.backing.datastore.name
-                disk = {'device': device, 'size': int(disksize), 'format': diskformat, 'type': drivertype, 'path': path}
+                disk = {'device': device, 'size': int(disksize), 'format': diskformat, 'type': drivertype,
+                        'path': path}
                 yamlinfo['disks'].append(disk)
-        if vm.runtime.powerState == "poweredOn":
-            yamlinfo['host'] = vm.runtime.host.name
-            for nic in vm.guest.net:
-                currentmac = nic.macAddress
-                currentips = nic.ipAddress
-                if currentmac == mainmac and currentips:
-                    yamlinfo['ip'] = currentips[0]
-        for entry in vm.config.extraConfig:
-            if entry.key in METADATA_FIELDS:
-                yamlinfo[entry.key] = entry.value
-            if entry.key == 'image':
-                yamlinfo['user'] = common.get_user(entry.value)
-        if debug:
-            yamlinfo['debug'] = vm.config.extraConfig
         return yamlinfo
 
     def list(self):
