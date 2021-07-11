@@ -691,7 +691,23 @@ def create(config, plandir, cluster, overrides):
                 os._exit(1)
         if ipi_platform in ['libvirt', 'kvm']:
             data['ipi_platform'] = 'libvirt'
+        if ipi_platform in ['baremetal' 'libvirt', 'kvm']:
             data['libvirt_url'] = k.url
+        if ipi_platform == 'baremetal':
+            baremetal_masters = data.get('baremetal_masters', [])
+            baremetal_workers = data.get('baremetal_workers', [])
+            if data.get('ingress_ip') is None:
+                error("You need to define ingress_ip in your parameters file")
+                os._exit(1)
+            if not baremetal_masters:
+                error("You need to define baremetal_masters in your parameters file")
+                os._exit(1)
+            if len(baremetal_masters) != masters:
+                error("baremetal_masters length must match the number of masters required")
+                os._exit(1)
+            if len(baremetal_workers) != workers:
+                error("baremetal_workers length must match the number of workers required")
+                os._exit(1)
         copy_ipi_credentials(platform, k)
     installconfig = config.process_inputfile(cluster, "%s/install-config.yaml" % plandir, overrides=data)
     with open("%s/install-config.yaml" % clusterdir, 'w') as f:
