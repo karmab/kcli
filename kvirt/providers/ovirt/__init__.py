@@ -1232,3 +1232,8 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
     def list_bucketfiles(self, bucket):
         print("not implemented")
         return []
+
+#    def openshift_installer_data(self):
+#        # api = self.conn.system_service().get()
+#        clusters_service = self.conn.system_service().clusters_service(search='name=%s' % self.cluster)
+#        print(clusters_service)

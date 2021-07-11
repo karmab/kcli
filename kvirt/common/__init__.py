@@ -1938,7 +1938,7 @@ def olm_app(package):
     return name, source, defaultchannel, csv, description, target_namespace, crd
 
 
-def copy_cloud_credentials(platform, k):
+def copy_ipi_credentials(platform, k):
     home = os.environ['HOME']
     if platform == 'aws':
         if not os.path.exists("%s/.aws" % home):
@@ -1950,3 +1950,12 @@ def copy_cloud_credentials(platform, k):
         if not os.path.exists("%s/.aws/config" % home):
             with open("%s/.aws/credentials" % home, "w") as f:
                 f.write("[default]\region=%s" % k.region)
+    elif platform == 'ovirt':
+        if not os.path.exists("%s/.ovirt" % home):
+            os.mkdir("%s/.ovirt" % home)
+        if not os.path.exists("%s/.ovirt/ovirt-config.yaml" % home):
+            with open("%s/.ovirt/ovirt-config.yaml" % home, "w") as f:
+                ovirturl = "https://%s/ovirt-engine/api" % k.host
+                ovirtconf = "ovirt_url: %s\novirt_fqdn: %s\n" % (ovirturl, k.host)
+                ovirtconf += "ovirt_username: %s\novirt_password: %s\novirt_insecure: true" % (k.user, k.password)
+                f.write(ovirtconf)

@@ -64,13 +64,24 @@ networking:
 platform:
 {% if ipi %}
   {{ ipi_platform|default(config_type) }}:
-{% if config_type == 'aws' %}
+{% if ipi_platform|default(config_type) == 'aws' %}
     region: {{ config_region }}
     userTags:
       plan: {{ plan }}
-{% elif config_type == 'gcp' %}
+{% elif ipi_platform|default(config_type) == 'gcp' %}
     region: {{ config_region|default(config_zone[:-2]) }}
     projectID: {{ config_project }}
+{% elif ipi_platform|default(config_type) == 'ovirt' %}
+    api_vip: {{ api_ip }}
+    ingress_vip: {{ ingress_ip }}
+    ovirt_cluster_id: {{ ovirt_cluster_id }}
+    ovirt_storage_domain_id: {{ ovirt_storage_domain_id }}
+    ovirt_network_name: {{ network }}
+    vnicProfileID: {{ ovirt_vnic_profile_id }}
+{% elif ipi_platform|default(config_type) == 'libvirt' %}
+    URI: {{ config_url }}
+    network:
+     if: {{ network }}
 {% endif %}
 {% elif config_type == 'vsphere' %}
   vsphere:
