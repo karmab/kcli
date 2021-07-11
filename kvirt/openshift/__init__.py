@@ -408,8 +408,9 @@ def create(config, plandir, cluster, overrides):
     cluster = data.get('cluster')
     helper_image = data.get('helper_image')
     image = data.get('image')
+    ipi = data.get('ipi', False)
     api_ip = data.get('api_ip')
-    if platform in virtplatforms and not sno and api_ip is None:
+    if platform in virtplatforms and not sno and not ipi and api_ip is None:
         if network == 'default' and platform == 'kvm':
             warning("Using 192.168.122.253 as api_ip")
             overrides['api_ip'] = "192.168.122.253"
@@ -466,7 +467,6 @@ def create(config, plandir, cluster, overrides):
                 os._exit(1)
     masters = data.get('masters')
     workers = data.get('workers')
-    ipi = data.get('ipi', False)
     tag = data.get('tag')
     pub_key = data.get('pub_key')
     pull_secret = pwd_path(data.get('pull_secret')) if not upstream else "%s/fake_pull.json" % plandir
@@ -674,9 +674,13 @@ def create(config, plandir, cluster, overrides):
         data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
     if ipi:
         ipi_platform = data.get('ipi_platform', platform)
-        if ipi_platform in ['ovirt', 'baremetal', 'vsphere'] and data.get('ingress_ip') is None:
-            error("You need to define ingress_ip in your parameters file")
-            os._exit(1)
+        if ipi_platform in ['ovirt', 'baremetal', 'vsphere']:
+            if data.get('api_ip') is None:
+                error("You need to define api_ip in your parameters file")
+                os._exit(1)
+            if data.get('ingress_ip') is None:
+                error("You need to define ingress_ip in your parameters file")
+                os._exit(1)
         if ipi_platform not in cloudplatforms + virtplatforms:
             warning("Target platform not supported in kcli, you will need to provide credentials on your own")
         if ipi_platform == 'ovirt':
@@ -705,6 +709,11 @@ def create(config, plandir, cluster, overrides):
     with open("%s/install-config.yaml.bck" % clusterdir, 'w') as f:
         f.write(installconfig)
     if ipi:
+        if ipi_platform in ['baremetal', 'vsphere', 'ovirt']:
+            if ignore_hosts:
+                warning("Ignoring /etc/hosts")
+            else:
+                update_etc_hosts(cluster, domain, data['api_ip'], data['ingress_ip'])
         run = call('openshift-install --dir=%s create cluster' % clusterdir, shell=True)
         if run != 0:
             error("Leaving environment for debugging purposes")
