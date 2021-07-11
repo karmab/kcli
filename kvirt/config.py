@@ -2292,7 +2292,7 @@ $INFO
         clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
         if os.path.exists(clusterdir):
             with open("%s/kcli_parameters.yml" % clusterdir) as f:
-                clusterdata = yaml.load(f)
+                clusterdata = yaml.safe_load(f)
                 if clusterdata['kubetype'] == 'openshift' and 'ipi' in clusterdata and clusterdata['ipi']:
                     ipi = True
             if ipi:
