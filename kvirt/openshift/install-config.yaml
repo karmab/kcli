@@ -80,9 +80,7 @@ platform:
     ovirt_network_name: {{ network }}
     vnicProfileID: {{ ovirt_vnic_profile_id }}
 {% elif ipi_platform == 'libvirt' %}
-    URI: {{ libvirt_url|default(config_url) }}
-    network:
-     if: {{ network }}
+    URI: {{ libvirt_url }}
 {% endif %}
 {% elif config_type == 'vsphere' %}
   vsphere:

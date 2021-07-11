@@ -131,12 +131,12 @@ def get_downstream_installer(nightly=False, macosx=False, tag=None, debug=False,
         r = urlopen(url).readlines()
         for line in r:
             if 'Pull From:' in str(line):
-                openshift_image = line.decode().replace('Pull From: ', '')
+                openshift_image = line.decode().replace('Pull From: ', '').strip()
                 break
         target = 'openshift-baremetal-install'
         cmd = "oc adm release extract --registry-config %s --command=%s --to . %s" % (pull_secret, target,
                                                                                       openshift_image)
-        cmd += "; chmod 700 openshift-install"
+        cmd += "; mv %s openshift-install ; chmod 700 openshift-install" % target
         return call(cmd, shell=True)
     if arch == 'arm64':
         repo = 'ocp-dev-preview'
@@ -507,18 +507,18 @@ def create(config, plandir, cluster, overrides):
         os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = tag
         pprint("Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to %s" % tag)
     if find_executable('openshift-install') is None:
+        if data.get('ipi', False) and data.get('ipi_platform', platform) in ['kvm', 'libvirt', 'baremetal']:
+            baremetal = True
+        else:
+            baremetal = False
         if upstream:
             run = get_upstream_installer(tag=tag)
         elif version == 'ci':
-            if data.get('ipi', False) and data.get('ipi_platform', platform) in ['kvm', 'libvirt', 'baremetal']:
-                baremetal = True
-            else:
-                baremetal = False
             run = get_ci_installer(pull_secret, tag=tag, upstream=upstream, baremetal=baremetal)
         elif version == 'nightly':
-            run = get_downstream_installer(nightly=True, tag=tag)
+            run = get_downstream_installer(nightly=True, tag=tag, baremetal=baremetal)
         else:
-            run = get_downstream_installer(tag=tag)
+            run = get_downstream_installer(tag=tag, baremetal=baremetal)
         if run != 0:
             error("Couldn't download openshift-install")
             os._exit(run)
@@ -672,14 +672,9 @@ def create(config, plandir, cluster, overrides):
         data['pull_secret'] = json.dumps(auths)
     else:
         data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
-    installconfig = config.process_inputfile(cluster, "%s/install-config.yaml" % plandir, overrides=data)
-    with open("%s/install-config.yaml" % clusterdir, 'w') as f:
-        f.write(installconfig)
-    with open("%s/install-config.yaml.bck" % clusterdir, 'w') as f:
-        f.write(installconfig)
     if ipi:
         ipi_platform = data.get('ipi_platform', platform)
-        if ipi_platform not in ['aws', 'gcp', 'openstack', 'ovirt', 'vsphere']:
+        if ipi_platform not in cloudplatforms + virtplatforms:
             warning("Target platform not supported in kcli, you will need to provide credentials on your own")
         if ipi_platform == 'ovirt':
             if data.get('ingress_ip') is None:
@@ -694,10 +689,16 @@ def create(config, plandir, cluster, overrides):
             if data.get('ovirt_vnic_profile_id') is None:
                 error("You need to define ovirt_vnic_profile_id in your parameters file")
                 os._exit(1)
-        if ipi_platform == 'kvm':
+        if ipi_platform in ['libvirt', 'kvm']:
             data['ipi_platform'] = 'libvirt'
             data['libvirt_url'] = k.url
         copy_ipi_credentials(platform, k)
+    installconfig = config.process_inputfile(cluster, "%s/install-config.yaml" % plandir, overrides=data)
+    with open("%s/install-config.yaml" % clusterdir, 'w') as f:
+        f.write(installconfig)
+    with open("%s/install-config.yaml.bck" % clusterdir, 'w') as f:
+        f.write(installconfig)
+    if ipi:
         run = call('openshift-install --dir=%s create cluster' % clusterdir, shell=True)
         if run != 0:
             error("Leaving environment for debugging purposes")
