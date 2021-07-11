@@ -715,6 +715,10 @@ def create(config, plandir, cluster, overrides):
             else:
                 update_etc_hosts(cluster, domain, data['api_ip'], data['ingress_ip'])
         if ipi_platform in ['kvm', 'libvirt']:
+            if 'ssh' in data['libvirt_url']:
+                warning("You will need to update machineset providerSpec uri to provision workers")
+                warning("Something like %s?no_verify=1&keyfile=/tmp/id_rsa" % data['libvirt_url'])
+                warning("Put the corresponding private key in /tmp in the machine-api-controllers pod")
             run = call('openshift-install --dir=%s create manifests' % clusterdir, shell=True)
             if run != 0:
                 error("Leaving environment for debugging purposes")
