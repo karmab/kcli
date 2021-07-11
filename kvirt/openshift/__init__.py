@@ -674,21 +674,16 @@ def create(config, plandir, cluster, overrides):
         data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
     if ipi:
         ipi_platform = data.get('ipi_platform', platform)
+        if ipi_platform in ['ovirt', 'baremetal', 'vsphere'] and data.get('ingress_ip') is None:
+            error("You need to define ingress_ip in your parameters file")
+            os._exit(1)
         if ipi_platform not in cloudplatforms + virtplatforms:
             warning("Target platform not supported in kcli, you will need to provide credentials on your own")
         if ipi_platform == 'ovirt':
-            if data.get('ingress_ip') is None:
-                error("You need to define ingress_ip in your parameters file")
-                os._exit(1)
-            if data.get('ovirt_cluster_id') is None:
-                error("You need to define ovirt_cluster_id in your parameters file")
-                os._exit(1)
-            if data.get('ovirt_storage_domain_id') is None:
-                error("You need to define ovirt_storage_domain_id in your parameters file")
-                os._exit(1)
-            if data.get('ovirt_vnic_profile_id') is None:
-                error("You need to define ovirt_vnic_profile_id in your parameters file")
-                os._exit(1)
+            cluster_id, storage_id, vnic_id = k.openshift_installer_data(data['pool'])
+            data['ovirt_cluster_id'] = cluster_id
+            data['ovirt_storage_domain_id'] = storage_id
+            data['ovirt_vnic_profile_id'] = vnic_id
         if ipi_platform in ['libvirt', 'kvm']:
             data['ipi_platform'] = 'libvirt'
         if ipi_platform in ['baremetal' 'libvirt', 'kvm']:
@@ -696,9 +691,6 @@ def create(config, plandir, cluster, overrides):
         if ipi_platform == 'baremetal':
             baremetal_masters = data.get('baremetal_masters', [])
             baremetal_workers = data.get('baremetal_workers', [])
-            if data.get('ingress_ip') is None:
-                error("You need to define ingress_ip in your parameters file")
-                os._exit(1)
             if not baremetal_masters:
                 error("You need to define baremetal_masters in your parameters file")
                 os._exit(1)

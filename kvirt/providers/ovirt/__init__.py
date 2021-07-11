@@ -1233,7 +1233,18 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         print("not implemented")
         return []
 
-#    def openshift_installer_data(self):
-#        # api = self.conn.system_service().get()
-#        clusters_service = self.conn.system_service().clusters_service(search='name=%s' % self.cluster)
-#        print(clusters_service)
+    def openshift_installer_data(self, pool):
+        clusters = self.conn.system_service().clusters_service().list(search='name=%s' % self.cluster)
+        if clusters:
+            clusterid = clusters[0].id
+        pools = self.conn.system_service().storage_domains_service().list(search='name=%s' % pool)
+        if pools:
+            poolid = pools[0].id
+        profiles_service = self.conn.system_service().vnic_profiles_service()
+        for prof in profiles_service.list():
+            networkinfo = self.conn.follow_link(prof.network)
+            netdatacenter = self.conn.follow_link(networkinfo.data_center)
+            if netdatacenter.name == self.datacenter:
+                vnicid = prof.id
+                break
+        return clusterid, poolid, vnicid
