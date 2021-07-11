@@ -72,6 +72,16 @@ platform:
 {% elif ipi_platform == 'gcp' %}
     region: {{ config_region|default(config_zone[:-2]) }}
     projectID: {{ config_project }}
+{% elif ipi_platform == 'vsphere' %}
+    apiVIP: {{ api_ip }}
+    ingressVIP: {{ ingress_ip }}
+    vcenter: {{ config_host }}
+    username: {{ config_user }}
+    password: {{ config_password }}
+    datacenter: {{ config_datacenter }}
+    defaultDatastore: {{ config_pool }}
+    cluster: {{ config_cluster }}
+    network: {{ network }}
 {% elif ipi_platform == 'ovirt' %}
     api_vip: {{ api_ip }}
     ingress_vip: {{ ingress_ip }}
