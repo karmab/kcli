@@ -435,7 +435,7 @@ def create(config, plandir, cluster, overrides):
         if not ip_address(ingress_ip) in ip_network(data['baremetal_cidr']):
             error("ingress_ip doesn't belong to your baremetal_cidr")
             os._exit(1)
-    if platform in virtplatforms and not sno and ':' in api_ip:
+    if platform in virtplatforms and not sno and not ipi and ':' in api_ip:
         ipv6 = True
     if ipv6:
         if data.get('network_type', 'OpenShiftSDN') == 'OpenShiftSDN':
@@ -721,12 +721,12 @@ def create(config, plandir, cluster, overrides):
                 os._exit(run)
             mastermanifest = "%s/openshift/99_openshift-cluster-api_master-machines-0.yaml" % clusterdir
             workermanifest = "%s/openshift/99_openshift-cluster-api_worker-machineset-0.yaml" % clusterdir
-            master_memory = data.get('master_memory', data['memory'])
-            worker_memory = data.get('worker_memory', data['memory'])
+            master_memory = data.get('master_memory') if data.get('master_memory') is not None else data['memory']
+            worker_memory = data.get('worker_memory') if data.get('worker_memory') is not None else data['memory']
             call('sed -i "s/domainMemory: .*/domainMemory: %s/" %s' % (master_memory, mastermanifest), shell=True)
             call('sed -i "s/domainMemory: .*/domainMemory: %s/" %s' % (worker_memory, workermanifest), shell=True)
-            master_numcpus = data.get('master_numcpus', data['numcpus'])
-            worker_numcpus = data.get('worker_numcpus', data['numcpus'])
+            master_numcpus = data.get('master_numcpus') if data.get('master_numcpus') is not None else data['numcpus']
+            worker_numcpus = data.get('worker_numcpus') if data.get('worker_numcpus') is not None else data['numcpus']
             call('sed -i "s/domainVcpu: .*/domainVcpu: %s/" %s' % (master_numcpus, mastermanifest), shell=True)
             call('sed -i "s/domainVcpu: .*/domainVcpu: %s/" %s' % (worker_numcpus, workermanifest), shell=True)
             dnsmasqfile = "/etc/NetworkManager/dnsmasq.d/%s.%s.conf" % (cluster, domain)
