@@ -23,6 +23,9 @@
 {% set cluster_networks = [cluster_network_ipv4] %}
 {% set service_networks = service_network_ipv4 %}
 {% endif %}
+{% if ipi %}
+{% set ipi_platform = ipi_platform|default(config_type) %}
+{% endif %}
 apiVersion: v1
 {% if fips %}
 fips: True
@@ -39,9 +42,63 @@ proxy:
 compute:
 - name: worker
   replicas: {{ workers }}
+{% if ipi %}
+{% if ipi_platform == 'aws' %}
+  platform:
+   aws:
+    type: {{ flavor if flavor != None else 'm5.xlarge' }}
+{% elif ipi_platform == 'gcp' %}
+  platform:
+   gcp:
+    type: {{ flavor if flavor != None else 'n2-standard-4' }}
+{% elif ipi_platform == 'ovirt' %}
+  platform:
+    ovirt:
+      cpu:
+        cores: {{ worker_numcpus | default(numcpus, numcpus) }}
+        sockets: 1
+      memoryMB: {{ worker_memory | default(memory, memory) }}
+      osDisk:
+        sizeGB: {{ disk_size }}
+      vmType: server
+{% elif ipi_platform == 'vsphere' %}
+  platform:
+    vsphere:
+      cpu:
+        cpus: {{ worker_numcpus | default(numcpus, numcpus) }}
+        coresPerSocket: 1
+        sockets: 1
+      memoryMB: {{ worker_memory | default(memory, memory) }}
+      osDisk:
+        diskSizeGB: {{ disk_size }}
+{% endif %}
+{% endif %}
 controlPlane:
   name: master
   replicas: {{ masters }}
+{% if ipi %}
+{% if ipi_platform == 'ovirt' %}
+  platform:
+    ovirt:
+      cpu:
+        cores: {{ master_numcpus | default(numcpus, numcpus) }}
+        sockets: 1
+      memoryMB: {{ master_memory | default(memory, memory) }}
+      osDisk:
+        sizeGB: {{ disk_size }}
+      vmType: server
+{% elif ipi_platform == 'vsphere' %}
+  platform:
+    vsphere:
+      cpu:
+        cpus: {{ master_numcpus | default(numcpus, numcpus) }}
+        coresPerSocket: 1
+        sockets: 1
+      memoryMB: {{ master_memory | default(memory, memory) }}
+      osDisk:
+        diskSizeGB: {{ disk_size }}
+{% endif %}
+{% endif %}
 metadata:
   name: {{ cluster }}
 networking:
@@ -63,16 +120,17 @@ networking:
 {% endfor %}
 platform:
 {% if ipi %}
-{% set ipi_platform = ipi_platform|default(config_type) %}
-  {{ ipi_platform }}:
 {% if ipi_platform == 'aws' %}
+  aws:
     region: {{ config_region }}
     userTags:
       plan: {{ plan }}
 {% elif ipi_platform == 'gcp' %}
+  gcp:
     region: {{ config_region|default(config_zone[:-2]) }}
     projectID: {{ config_project }}
 {% elif ipi_platform == 'vsphere' %}
+  vsphere:
     apiVIP: {{ api_ip }}
     ingressVIP: {{ ingress_ip }}
     vcenter: {{ config_host }}
@@ -83,15 +141,18 @@ platform:
     cluster: {{ config_cluster }}
     network: {{ network }}
 {% elif ipi_platform == 'ovirt' %}
+  ovirt:
     api_vip: {{ api_ip }}
     ingress_vip: {{ ingress_ip }}
     ovirt_cluster_id: {{ ovirt_cluster_id }}
     ovirt_storage_domain_id: {{ ovirt_storage_domain_id }}
     ovirt_network_name: {{ network }}
     vnicProfileID: {{ ovirt_vnic_profile_id }}
-{% elif ipi_platform == 'libvirt' %}
+{% elif ipi_platform in ['libvirt', 'kvm'] %}
+  libvirt:
     URI: {{ libvirt_url }}
 {% elif ipi_platform == 'baremetal' %}
+  baremetal:
     apiVIP: {{ api_ip }}
     ingressVIP: {{ ingress_ip }}
     provisioningNetwork: "Disabled"

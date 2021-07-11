@@ -684,8 +684,6 @@ def create(config, plandir, cluster, overrides):
             data['ovirt_cluster_id'] = cluster_id
             data['ovirt_storage_domain_id'] = storage_id
             data['ovirt_vnic_profile_id'] = vnic_id
-        if ipi_platform in ['libvirt', 'kvm']:
-            data['ipi_platform'] = 'libvirt'
         if ipi_platform in ['baremetal' 'libvirt', 'kvm']:
             data['libvirt_url'] = k.url
         if ipi_platform == 'baremetal':
