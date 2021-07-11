@@ -696,6 +696,7 @@ def create(config, plandir, cluster, overrides):
                 os._exit(1)
         if ipi_platform == 'kvm':
             data['ipi_platform'] = 'libvirt'
+            data['libvirt_url'] = k.url
         copy_ipi_credentials(platform, k)
         run = call('openshift-install --dir=%s create cluster' % clusterdir, shell=True)
         if run != 0:
