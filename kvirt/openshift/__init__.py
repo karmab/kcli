@@ -714,6 +714,30 @@ def create(config, plandir, cluster, overrides):
                 warning("Ignoring /etc/hosts")
             else:
                 update_etc_hosts(cluster, domain, data['api_ip'], data['ingress_ip'])
+        if ipi_platform in ['kvm', 'libvirt']:
+            run = call('openshift-install --dir=%s create manifests' % clusterdir, shell=True)
+            if run != 0:
+                error("Leaving environment for debugging purposes")
+                os._exit(run)
+            mastermanifest = "%s/openshift/99_openshift-cluster-api_master-machines-0.yaml" % clusterdir
+            workermanifest = "%s/openshift/99_openshift-cluster-api_worker-machineset-0.yaml" % clusterdir
+            master_memory = data.get('master_memory', data['memory'])
+            worker_memory = data.get('worker_memory', data['memory'])
+            call('sed -i "s/domainMemory: .*/domainMemory: %s/" %s' % (master_memory, mastermanifest), shell=True)
+            call('sed -i "s/domainMemory: .*/domainMemory: %s/" %s' % (worker_memory, workermanifest), shell=True)
+            master_numcpus = data.get('master_numcpus', data['numcpus'])
+            worker_numcpus = data.get('worker_numcpus', data['numcpus'])
+            call('sed -i "s/domainVcpu: .*/domainVcpu: %s/" %s' % (master_numcpus, mastermanifest), shell=True)
+            call('sed -i "s/domainVcpu: .*/domainVcpu: %s/" %s' % (worker_numcpus, workermanifest), shell=True)
+            dnsmasqfile = "/etc/NetworkManager/dnsmasq.d/%s.%s.conf" % (cluster, domain)
+            dnscmd = 'echo -e "[main]\ndns=dnsmasq" > /etc/NetworkManager/conf.d/dnsmasq.conf'
+            dnscmd += "; echo server=/%s.%s/192.168.126.1 > %s" % (cluster, domain, dnsmasqfile)
+            dnscmd += "; systemctl restart NetworkManager"
+            if k.host in ['localhost', '127.0.0.1'] and k.user == 'root':
+                call(dnscmd, shell=True)
+            else:
+                warning("Run the following commands on %s as root" % k.host)
+                pprint(dnscmd)
         run = call('openshift-install --dir=%s create cluster' % clusterdir, shell=True)
         if run != 0:
             error("Leaving environment for debugging purposes")
