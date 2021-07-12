@@ -108,3 +108,5 @@ metal3: False
 metal3_provisioning_enable: false
 metal3_provisioning_net: provisioning
 metal3_provisioning_interface: ens3
+baremetal_user: root
+baremetal_password: calvin

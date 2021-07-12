@@ -3,8 +3,8 @@
 {% set cluster_network_ipv4 = {"cidr": "10.132.0.0/14", "hostPrefix": 23} %}
 {% set service_network_ipv6 = ["fd02::/112"] %}
 {% set service_network_ipv4 = ["172.30.0.0/16"] %}
-{% set machine_cidr_ipv4 = [baremetal_cidr if metal3 else "10.0.0.0/16"] %}
-{% set machine_cidr_ipv6 = [baremetal_cidr if metal3 else "fc00::/48"] %}
+{% set machine_cidr_ipv4 = [baremetal_cidr if metal3 or ipi and ipi_platform else "10.0.0.0/16"] %}
+{% set machine_cidr_ipv6 = [baremetal_cidr if metal3 or ipi and ipi_platform else "fc00::/48"] %}
 {% if dualstack|default(False) %}
 {% set machine_cidrs = machine_cidr_ipv4 + machine_cidr_ipv6 %}
 {% set cluster_networks = [cluster_network_ipv4] + [cluster_network_ipv6] %}
@@ -174,6 +174,8 @@ platform:
         address: idrac-virtualmedia://{{ master['redfish_address'] }}/redfish/v1/Systems/System.Embedded.1
         {% endif %}
         {% endif %}
+        username: {{ master['user']|default(baremetal_user) }}
+        password: {{ master['password']|default(baremetal_password) }}
 {% if 'boot_mode' in master %}
       bootMode: {{ master['boot_mode'] }}
 {% endif %}
@@ -198,6 +200,8 @@ platform:
         address: idrac-virtualmedia://{{ worker['redfish_address'] }}/redfish/v1/Systems/System.Embedded.1
         {% endif %}
         {% endif %}
+        username: {{ worker['user']|default(baremetal_user) }}
+        password: {{ worker['password']|default(baremetal_password) }}
 {% if 'boot_mode' in worker %}
       bootMode: {{ worker['boot_mode'] }}
 {% endif %}
