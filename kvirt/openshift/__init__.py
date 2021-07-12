@@ -682,14 +682,14 @@ def create(config, plandir, cluster, overrides):
             if data.get('ingress_ip') is None:
                 error("You need to define ingress_ip in your parameters file")
                 os._exit(1)
-        if ipi_platform not in cloudplatforms + virtplatforms:
+        if ipi_platform not in cloudplatforms + virtplatforms + ['baremetal']:
             warning("Target platform not supported in kcli, you will need to provide credentials on your own")
         if ipi_platform == 'ovirt':
             cluster_id, storage_id, vnic_id = k.openshift_installer_data(data['pool'])
             data['ovirt_cluster_id'] = cluster_id
             data['ovirt_storage_domain_id'] = storage_id
             data['ovirt_vnic_profile_id'] = vnic_id
-        if ipi_platform in ['baremetal' 'libvirt', 'kvm']:
+        if ipi_platform in ['baremetal', 'libvirt', 'kvm']:
             data['libvirt_url'] = k.url
         if ipi_platform == 'baremetal':
             baremetal_masters = data.get('baremetal_masters', [])
@@ -698,11 +698,13 @@ def create(config, plandir, cluster, overrides):
                 error("You need to define baremetal_masters in your parameters file")
                 os._exit(1)
             if len(baremetal_masters) != masters:
-                error("baremetal_masters length must match the number of masters required")
-                os._exit(1)
+                warning("Forcing masters number to match baremetal_masters length")
+                masters = len(baremetal_masters)
+                data['masters'] = masters
             if len(baremetal_workers) != workers:
-                error("baremetal_workers length must match the number of workers required")
-                os._exit(1)
+                warning("Forcing worker number to match baremetal_workers length")
+                workers = len(baremetal_workers)
+                data['workers'] = workers
         copy_ipi_credentials(platform, k)
     installconfig = config.process_inputfile(cluster, "%s/install-config.yaml" % plandir, overrides=data)
     with open("%s/install-config.yaml" % clusterdir, 'w') as f:
