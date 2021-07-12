@@ -21,6 +21,7 @@ from subprocess import call
 from tempfile import TemporaryDirectory
 from time import sleep
 from urllib.request import urlopen
+from requests import post
 import yaml
 
 
@@ -245,6 +246,21 @@ def gather_dhcp(data, platform):
         node_macs = ','.join(node_macs)
         node_ips = ','.join(node_ips)
         return {'node_names': node_names, 'node_macs': node_macs, 'node_ips': node_ips, 'nodes': nodes}
+
+
+def baremetal_stop(cluster):
+    installfile = "%s/install-config.yaml" % os.path.expanduser("~/.kcli/clusters/%s" % cluster)
+    with open(installfile) as f:
+        data = yaml.safe_load(f)
+        hosts = data['platform']['baremetal']['hosts']
+        for host in hosts:
+            address = host['bmc']['address']
+            user, password = host['bmc'].get('username'), host['bmc'].get('password')
+            match = re.match(".*(http.*|idrac-virtualmedia.*|redfish-virtualmedia.*)", address)
+            address = match.group(1).replace('idrac-virtualmedia', 'https').replace('redfish-virtualmedia', 'https')
+            actionaddress = "%s/Actions/ComputerSystem.Reset/" % address
+            headers = {'Content-type': 'application/json'}
+            post(actionaddress, json={"ResetType": 'ForceOff'}, headers=headers, auth=(user, password), verify=False)
 
 
 def scale(config, plandir, cluster, overrides):
@@ -766,6 +782,9 @@ def create(config, plandir, cluster, overrides):
             else:
                 warning("Run the following commands on %s as root" % k.host)
                 pprint(dnscmd)
+        if ipi_platform == 'baremetal':
+            pprint("Stopping nodes through redfish")
+            baremetal_stop(cluster)
         run = call('openshift-install --dir=%s --log-level=%s create cluster' % (clusterdir, log_level), shell=True)
         if run != 0:
             error("Leaving environment for debugging purposes")
