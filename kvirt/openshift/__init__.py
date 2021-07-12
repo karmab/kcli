@@ -715,10 +715,6 @@ def create(config, plandir, cluster, overrides):
             else:
                 update_etc_hosts(cluster, domain, data['api_ip'], data['ingress_ip'])
         if ipi_platform in ['kvm', 'libvirt']:
-            if 'ssh' in data['libvirt_url']:
-                warning("You will need to update machineset providerSpec uri to provision workers")
-                warning("Something like %s?no_verify=1&keyfile=/tmp/id_rsa" % data['libvirt_url'])
-                warning("Put the corresponding private key in /tmp in the machine-api-controllers pod")
             run = call('openshift-install --dir=%s create manifests' % clusterdir, shell=True)
             if run != 0:
                 error("Leaving environment for debugging purposes")
@@ -733,6 +729,25 @@ def create(config, plandir, cluster, overrides):
             worker_numcpus = data.get('worker_numcpus') if data.get('worker_numcpus') is not None else data['numcpus']
             call('sed -i "s/domainVcpu: .*/domainVcpu: %s/" %s' % (master_numcpus, mastermanifest), shell=True)
             call('sed -i "s/domainVcpu: .*/domainVcpu: %s/" %s' % (worker_numcpus, workermanifest), shell=True)
+            if 'ssh' in data['libvirt_url']:
+                warning("Patching machineset providerSpec uri to allow provisioning workers")
+                warning("Put a valid private key in /tmp/id_rsa in the machine-api-controllers pod")
+                old_libvirt_url = data['libvirt_url']
+                new_libvirt_url = old_libvirt_url
+                if 'no_verify' not in new_libvirt_url:
+                    if '?' in new_libvirt_url:
+                        new_libvirt_url += '&no_verify=1'
+                    else:
+                        new_libvirt_url += '?no_verify=1'
+                if 'keyfile' in new_libvirt_url:
+                    match = re.match('.*keyfile=(.*)', new_libvirt_url)
+                    old_keyfile = match.group(1)
+                    new_libvirt_url = new_libvirt_url.replace(old_keyfile, '/tmp/id_rsa')
+                elif '?' in new_libvirt_url:
+                    new_libvirt_url += '&keyfile=/tmp/id_rsa'
+                else:
+                    new_libvirt_url += '?keyfile=/tmp/id_rsa'
+                call('sed -i "s/uri: %s/uri: %s/" %s' % (old_libvirt_url, new_libvirt_url, workermanifest), shell=True)
             dnsmasqfile = "/etc/NetworkManager/dnsmasq.d/%s.%s.conf" % (cluster, domain)
             dnscmd = 'echo -e "[main]\ndns=dnsmasq" > /etc/NetworkManager/conf.d/dnsmasq.conf'
             dnscmd += "; echo server=/%s.%s/192.168.126.1 > %s" % (cluster, domain, dnsmasqfile)
