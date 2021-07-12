@@ -2,6 +2,7 @@
 
 from base64 import b64encode
 from distutils.spawn import find_executable
+from getpass import getuser
 from glob import glob
 import json
 import os
@@ -12,6 +13,7 @@ from kvirt.common import gen_mac, get_oc, get_values, pwd_path, fetch
 from kvirt.common import get_commit_rhcos, get_latest_fcos, patch_bootstrap, generate_rhcos_iso, olm_app
 from kvirt.common import get_installer_rhcos
 from kvirt.common import ssh, scp, _ssh_credentials, copy_ipi_credentials
+from kvirt.jinjafilters.jinjafilters import local_ip
 from kvirt.defaults import LOCAL_OPENSHIFT_APPS
 from kvirt.openshift.calico import calicoassets
 import re
@@ -733,21 +735,25 @@ def create(config, plandir, cluster, overrides):
             if 'ssh' in old_libvirt_url or old_libvirt_url == 'qemu:///system':
                 warning("Patching machineset providerSpec uri to allow provisioning workers")
                 warning("Put a valid private key in /tmp/id_rsa in the machine-api-controllers pod")
-                old_libvirt_url = data['libvirt_url']
                 new_libvirt_url = old_libvirt_url
-                if 'no_verify' not in new_libvirt_url:
+                if new_libvirt_url == 'qemu:///system':
+                    hypervisor_user = getuser()
+                    hypervisor_ip = local_ip(network)
+                    new_libvirt_url = 'qemu+ssh://%s@%s/system&no_verify=1&keyfile=/tmp/id_rsa' % (hypervisor_user,
+                                                                                                   hypervisor_ip)
+                elif 'no_verify' not in new_libvirt_url:
                     if '?' in new_libvirt_url:
                         new_libvirt_url += '&no_verify=1'
                     else:
                         new_libvirt_url += '?no_verify=1'
-                if 'keyfile' in new_libvirt_url:
+                elif 'keyfile' in new_libvirt_url:
                     match = re.match('.*keyfile=(.*)', new_libvirt_url)
                     old_keyfile = match.group(1)
                     new_libvirt_url = new_libvirt_url.replace(old_keyfile, '/tmp/id_rsa')
-                elif '?' in new_libvirt_url:
-                    new_libvirt_url += '&keyfile=/tmp/id_rsa'
-                else:
-                    new_libvirt_url += '?keyfile=/tmp/id_rsa'
+                    if '?' in new_libvirt_url:
+                        new_libvirt_url += '&keyfile=/tmp/id_rsa'
+                    else:
+                        new_libvirt_url += '?keyfile=/tmp/id_rsa'
                 call('sed -i "s@uri: %s@uri: %s@" %s' % (old_libvirt_url, new_libvirt_url, workermanifest), shell=True)
             dnsmasqfile = "/etc/NetworkManager/dnsmasq.d/%s.%s.conf" % (cluster, domain)
             dnscmd = 'echo -e "[main]\ndns=dnsmasq" > /etc/NetworkManager/conf.d/dnsmasq.conf'
