@@ -699,6 +699,10 @@ def create(config, plandir, cluster, overrides):
             if data.get('ingress_ip') is None:
                 error("You need to define ingress_ip in your parameters file")
                 os._exit(1)
+            if ipi_platform == 'baremetal' and data['network_type'] == 'OVNKubernetes'\
+                    and data.get('baremetal_cidr') is None:
+                error("You need to define baremetal_cidr in your parameters file")
+                os._exit(1)
         if ipi_platform not in cloudplatforms + virtplatforms + ['baremetal']:
             warning("Target platform not supported in kcli, you will need to provide credentials on your own")
         if ipi_platform == 'ovirt':
