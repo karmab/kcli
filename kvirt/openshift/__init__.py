@@ -316,6 +316,7 @@ def scale(config, plandir, cluster, overrides):
 
 def create(config, plandir, cluster, overrides):
     k = config.k
+    log_level = 'debug' if config.debug else 'info'
     bootstrap_helper_ip = None
     client = config.client
     platform = config.type
@@ -718,7 +719,8 @@ def create(config, plandir, cluster, overrides):
             else:
                 update_etc_hosts(cluster, domain, data['api_ip'], data['ingress_ip'])
         if ipi_platform in ['kvm', 'libvirt']:
-            run = call('openshift-install --dir=%s create manifests' % clusterdir, shell=True)
+            run = call('openshift-install --dir=%s --log-level=%s create manifests' % (clusterdir, log_level),
+                       shell=True)
             if run != 0:
                 error("Leaving environment for debugging purposes")
                 os._exit(run)
@@ -764,14 +766,14 @@ def create(config, plandir, cluster, overrides):
             else:
                 warning("Run the following commands on %s as root" % k.host)
                 pprint(dnscmd)
-        run = call('openshift-install --dir=%s create cluster' % clusterdir, shell=True)
+        run = call('openshift-install --dir=%s --log-level=%s create cluster' % (clusterdir, log_level), shell=True)
         if run != 0:
             error("Leaving environment for debugging purposes")
         os._exit(run)
     autoapprover = config.process_inputfile(cluster, "%s/autoapprovercron.yml" % plandir, overrides=data)
     with open("%s/autoapprovercron.yml" % clusterdir, 'w') as f:
         f.write(autoapprover)
-    run = call('openshift-install --dir=%s create manifests' % clusterdir, shell=True)
+    run = call('openshift-install --dir=%s --log-level=%s create manifests' % (clusterdir, log_level), shell=True)
     if run != 0:
         error("Leaving environment for debugging purposes")
         error("You can delete it with kcli delete kube --yes %s" % cluster)
@@ -858,7 +860,9 @@ def create(config, plandir, cluster, overrides):
     if sno:
         sno_name = "%s-sno" % cluster
         sno_dns = data.get('sno_dns', True)
-        run = call('openshift-install --dir=%s create single-node-ignition-config' % clusterdir, shell=True)
+        run = call('openshift-install --dir=%s --log-level=%s create single-node-ignition-config' % (clusterdir,
+                                                                                                     log_level),
+                   shell=True)
         if run != 0:
             error("Hit issue.Leaving")
             os._exit(run)
@@ -923,7 +927,8 @@ def create(config, plandir, cluster, overrides):
                         pprint("Waiting 5s to retrieve sno ip...")
                         sleep(5)
                     update_etc_hosts(cluster, domain, api_ip)
-                installcommand = 'openshift-install --dir=%s --log-level=debug wait-for install-complete' % clusterdir
+                installcommand = 'openshift-install --dir=%s --log-level=%s wait-for install-complete' % (clusterdir,
+                                                                                                          log_level)
                 installcommand += " || %s" % installcommand
                 pprint("Launching install-complete step. It will be retried one extra time in case of timeouts")
                 call(installcommand, shell=True)
@@ -934,7 +939,7 @@ def create(config, plandir, cluster, overrides):
                 dnsentry = ' '.join(["%s.%s.%s" % (entry, cluster, domain) for entry in dnsentries])
                 warning("$your_node_ip %s" % dnsentry)
         os._exit(0)
-    call('openshift-install --dir=%s create ignition-configs' % clusterdir, shell=True)
+    call('openshift-install --dir=%s --log-level=%s create ignition-configs' % (clusterdir, log_level), shell=True)
     for role in ['master', 'worker']:
         ori = "%s/%s.ign" % (clusterdir, role)
         copy2(ori, "%s.ori" % ori)
@@ -1054,7 +1059,8 @@ def create(config, plandir, cluster, overrides):
                 except Exception as e:
                     error("Hit %s. Continuing still" % str(e))
                     continue
-        bootstrapcommand = 'openshift-install --dir=%s wait-for bootstrap-complete' % clusterdir
+        bootstrapcommand = 'openshift-install --dir=%s --log-level=%s wait-for bootstrap-complete' % (clusterdir,
+                                                                                                      log_level)
         bootstrapcommand += ' || %s' % bootstrapcommand
         run = call(bootstrapcommand, shell=True)
         if run != 0:
@@ -1089,7 +1095,9 @@ def create(config, plandir, cluster, overrides):
             result = config.plan(plan, inputfile='%s/cloud_lb_apps.yml' % plandir, overrides=lb_overrides)
             if result['result'] != 'success':
                 os._exit(1)
-        call('openshift-install --dir=%s wait-for bootstrap-complete || exit 1' % clusterdir, shell=True)
+        call('openshift-install --dir=%s --log-level=%s wait-for bootstrap-complete || exit 1' % (clusterdir,
+                                                                                                  log_level),
+             shell=True)
         todelete = [] if 'network_type' in data and data['network_type'] == 'Contrail' else ["%s-bootstrap" % cluster]
     if workers > 0:
         pprint("Deploying workers")
@@ -1119,7 +1127,7 @@ def create(config, plandir, cluster, overrides):
         call("oc adm taint nodes -l node-role.kubernetes.io/master node-role.kubernetes.io/master:NoSchedule-",
              shell=True)
     if not minimal:
-        installcommand = 'openshift-install --dir=%s wait-for install-complete' % clusterdir
+        installcommand = 'openshift-install --dir=%s --log-level=%s wait-for install-complete' % (clusterdir, log_level)
         installcommand += " || %s" % installcommand
         pprint("Launching install-complete step. It will be retried one extra time in case of timeouts")
         call(installcommand, shell=True)
