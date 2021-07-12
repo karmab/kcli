@@ -108,6 +108,9 @@ fi """ % (timeout, crd, crd, crd)
 def local_ip(net, wrap=False):
     c = "ip a s %s 2>/dev/null | egrep 'inet6?[[:space:]][^fe]' | head -1 | awk '{print $2}' | cut -d '/' -f 1" % net
     result = os.popen(c).read().strip()
+    if result == '' and net == 'default':
+        c = "ip a s virbr0 2>/dev/null | egrep 'inet6?[[:space:]][^fe]' | head -1 | awk '{print $2}' | cut -d '/' -f 1"
+        result = os.popen(c).read().strip()
     if wrap and ':' in result:
         result = '[%s]' % result
     return result
