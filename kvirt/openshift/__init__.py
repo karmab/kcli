@@ -729,7 +729,8 @@ def create(config, plandir, cluster, overrides):
             worker_numcpus = data.get('worker_numcpus') if data.get('worker_numcpus') is not None else data['numcpus']
             call('sed -i "s/domainVcpu: .*/domainVcpu: %s/" %s' % (master_numcpus, mastermanifest), shell=True)
             call('sed -i "s/domainVcpu: .*/domainVcpu: %s/" %s' % (worker_numcpus, workermanifest), shell=True)
-            if 'ssh' in data['libvirt_url']:
+            old_libvirt_url = data['libvirt_url']
+            if 'ssh' in old_libvirt_url or old_libvirt_url == 'qemu:///system':
                 warning("Patching machineset providerSpec uri to allow provisioning workers")
                 warning("Put a valid private key in /tmp/id_rsa in the machine-api-controllers pod")
                 old_libvirt_url = data['libvirt_url']
@@ -747,7 +748,7 @@ def create(config, plandir, cluster, overrides):
                     new_libvirt_url += '&keyfile=/tmp/id_rsa'
                 else:
                     new_libvirt_url += '?keyfile=/tmp/id_rsa'
-                call('sed -i "s/uri: %s/uri: %s/" %s' % (old_libvirt_url, new_libvirt_url, workermanifest), shell=True)
+                call('sed -i "s@uri: %s@uri: %s@" %s' % (old_libvirt_url, new_libvirt_url, workermanifest), shell=True)
             dnsmasqfile = "/etc/NetworkManager/dnsmasq.d/%s.%s.conf" % (cluster, domain)
             dnscmd = 'echo -e "[main]\ndns=dnsmasq" > /etc/NetworkManager/conf.d/dnsmasq.conf'
             dnscmd += "; echo server=/%s.%s/192.168.126.1 > %s" % (cluster, domain, dnsmasqfile)
