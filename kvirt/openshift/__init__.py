@@ -736,7 +736,8 @@ def create(config, plandir, cluster, overrides):
                 warning("Put a valid private key in /tmp/id_rsa in the machine-api-controllers pod")
                 new_libvirt_url = old_libvirt_url
                 if new_libvirt_url == 'qemu:///system':
-                    new_libvirt_url = 'qemu+ssh://%s@192.168.122.1/system&no_verify=1&keyfile=/tmp/id_rsa' % getuser()
+                    new_libvirt_url = 'qemu+ssh://%s@192.168.122.1/system?no_verify=1&keyfile=/tmp/id_rsa' % getuser()
+                    new_libvirt_url += "&known_hosts_verify=1"
                 elif 'no_verify' not in new_libvirt_url:
                     if '?' in new_libvirt_url:
                         new_libvirt_url += '&no_verify=1'
@@ -750,7 +751,8 @@ def create(config, plandir, cluster, overrides):
                         new_libvirt_url += '&keyfile=/tmp/id_rsa'
                     else:
                         new_libvirt_url += '?keyfile=/tmp/id_rsa'
-                call('sed -i "s#uri: %s#uri: %s#" %s' % (old_libvirt_url, new_libvirt_url, workermanifest), shell=True)
+                new_libvirt_url = new_libvirt_url.replace('&', '\\&')
+                call('sed -i "s#uri:.*#uri: %s#" %s' % (new_libvirt_url, workermanifest), shell=True)
             dnsmasqfile = "/etc/NetworkManager/dnsmasq.d/%s.%s.conf" % (cluster, domain)
             dnscmd = 'echo -e "[main]\ndns=dnsmasq" > /etc/NetworkManager/conf.d/dnsmasq.conf'
             dnscmd += "; echo server=/%s.%s/192.168.126.1 > %s" % (cluster, domain, dnsmasqfile)
