@@ -156,7 +156,7 @@ platform:
     apiVIP: {{ api_ip }}
     ingressVIP: {{ ingress_ip }}
     provisioningNetwork: "Disabled"
-    externalBridge: {{ baremetal_net|default('baremetal') }}
+    externalBridge: {{ network }}
     libvirtURI: {{ libvirt_url }}
     hosts:
 {% for master in baremetal_masters %}
