@@ -1,10 +1,19 @@
+# set global variable
 CIDR="10.244.0.0/16"
+
+# initialize cluster
 kubeadm init --control-plane-endpoint "{{ api_ip }}:6443" --pod-network-cidr $CIDR --upload-certs {{ '--image-repository public.ecr.aws/eks-distro/kubernetes --kubernetes-version $EKSD_API_VERSION' if eksd else '' }}
+
+# config cluster credentials
 cp /etc/kubernetes/admin.conf /root/
 chown root:root /root/admin.conf
 export KUBECONFIG=/root/admin.conf
-echo "export KUBECONFIG=/root/admin.conf" >>/root/.bashrc
+echo "export KUBECONFIG=/root/admin.conf" >> /root/.bashrc
+
+# taint master node(s)
 kubectl taint nodes --all node-role.kubernetes.io/master-
+
+# install Container Network Interface (CNI)
 {% if sdn == 'flannel' %}
 kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
 {% elif sdn == 'weavenet' %}
@@ -18,10 +27,14 @@ kubectl apply -f https://docs.projectcalico.org/v3.1/getting-started/kubernetes/
 kubectl apply -f https://raw.githubusercontent.com/romana/romana/master/containerize/specs/romana-kubeadm.yml
 {% elif sdn == 'cilium' %}
 kubectl create -f https://raw.githubusercontent.com/cilium/cilium/{{ 'cilium/cilium' | github_version(cilium_version|default('latest')) }}/install/kubernetes/quick-install.yaml
-{% endif %} 
+{% endif %}
+
+# config cluster credentials
 mkdir -p /root/.kube
 cp -i /etc/kubernetes/admin.conf /root/.kube/config
 chown root:root /root/.kube/config
+
+# join worker(s) to cluster
 #IP=`hostname -I | cut -f1 -d" "`
 IP={{ api_ip }}
 TOKEN=`kubeadm token create --ttl 0`
@@ -39,16 +52,19 @@ chmod o+r /var/www/html/*
 
 echo ${CMD} > /root/join.sh
 
+# (addon) install Metal Load Balancer (LB)
 {% if metallb %}
 bash /root/metal_lb.sh
 {% endif %}
 
+# (addon) install Ingress Controller
 {% if ingress %}
 {% if ingress_method == 'nginx' %}
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/{{ 'cloud' if metallb else 'baremetal' }}/deploy.yaml
 {% endif %}
 {% endif %}
 
+# (addon) install Policy-as-Code (PaC) Controller
 {% if policy_as_code %}
 {% if policy_as_code_method == 'gatekeeper' %}
 kubectl apply -f https://raw.githubusercontent.com/open-policy-agent/gatekeeper/master/deploy/gatekeeper.yaml
@@ -57,10 +73,12 @@ kubectl apply -f https://raw.githubusercontent.com/kyverno/kyverno/main/definiti
 {% endif %}
 {% endif %}
 
+# (addon) install Autolabeler
 {% if autolabel %}
 kubectl apply -f https://raw.githubusercontent.com/karmab/autolabeller/master/autorules.yml
 {% endif %}
 
+# (addon) install Registry
 {% if registry %}
 mkdir -p /opt/registry/{auth,certs,data,conf}
 REGISTRY_NAME="api.{{ cluster }}.{{ domain }}"
