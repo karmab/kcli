@@ -2291,13 +2291,16 @@ $INFO
             cluster = 'testk'
         clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
         if os.path.exists(clusterdir):
-            with open("%s/kcli_parameters.yml" % clusterdir) as f:
-                clusterdata = yaml.safe_load(f)
-                if clusterdata['kubetype'] == 'openshift' and 'ipi' in clusterdata and clusterdata['ipi']:
-                    ipi = True
-            if ipi:
-                os.environ["PATH"] += ":%s" % os.getcwd()
-                call('openshift-install --dir=%s destroy cluster' % clusterdir, shell=True)
+            ipi = False
+            parametersfile = "%s/kcli_parameters.yml" % clusterdir
+            if os.path.exists(parametersfile):
+                with open(parametersfile) as f:
+                    clusterdata = yaml.safe_load(f)
+                    if clusterdata['kubetype'] == 'openshift' and 'ipi' in clusterdata and clusterdata['ipi']:
+                        ipi = True
+                if ipi:
+                    os.environ["PATH"] += ":%s" % os.getcwd()
+                    call('openshift-install --dir=%s destroy cluster' % clusterdir, shell=True)
             pprint("Deleting directory %s" % clusterdir)
             rmtree(clusterdir)
             if ipi:
