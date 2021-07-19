@@ -9,7 +9,7 @@ import os
 import sys
 from ipaddress import ip_address, ip_network
 from kvirt.common import error, pprint, success, warning, info2
-from kvirt.common import gen_mac, get_oc, get_values, pwd_path, fetch
+from kvirt.common import get_oc, pwd_path, fetch
 from kvirt.common import get_commit_rhcos, get_latest_fcos, patch_bootstrap, generate_rhcos_iso, olm_app
 from kvirt.common import get_installer_rhcos
 from kvirt.common import ssh, scp, _ssh_credentials, copy_ipi_credentials
@@ -200,52 +200,6 @@ def get_upstream_installer(macosx=False, tag=None, debug=False):
     if debug:
         pprint(cmd)
     return call(cmd, shell=True)
-
-
-def gather_dhcp(data, platform):
-    cluster = data.get('cluster', 'testk')
-    masters = data.get('masters', 1)
-    workers = data.get('workers', 0)
-    bootstrap_name = "%s-bootstrap" % cluster
-    bootstrap_mac = data.get('bootstrap_mac', gen_mac())
-    bootstrap_ip = data.get('bootstrap_ip')
-    dhcp_ip = data.get('dhcp_ip')
-    dhcp_netmask = data.get('dhcp_netmask')
-    dhcp_gateway = data.get('dhcp_gateway')
-    dhcp_dns = data.get('dhcp_dns')
-    if bootstrap_ip is None or dhcp_ip is None or dhcp_netmask is None or dhcp_gateway is None or dhcp_dns is None:
-        return {}
-    if platform == 'openstack':
-        bootstrap_helper_name = "%s-bootstrap-helper" % cluster
-        bootstrap_helper_mac = data.get('bootstrap_helper_mac', gen_mac())
-        bootstrap_helper_ip = data.get('bootstrap_helper_ip')
-        if bootstrap_helper_ip is None:
-            return {}
-    master_names = ['%s-master-%s' % (cluster, num) for num in range(masters)]
-    worker_names = ['%s-worker-%s' % (cluster, num) for num in range(workers)]
-    node_names = master_names + worker_names
-    master_macs = get_values(data, 'master', 'macs')
-    worker_macs = get_values(data, 'worker', 'macs')
-    node_macs = master_macs + worker_macs
-    master_ips = get_values(data, 'master', 'ips')
-    worker_ips = get_values(data, 'worker', 'ips')
-    node_ips = master_ips + worker_ips
-    if not node_macs:
-        node_macs = [gen_mac() for x in node_names]
-    if node_ips and len(node_macs) == len(node_ips) and len(node_names) == len(node_macs):
-        nodes = len(node_macs) + 1
-        node_names.insert(0, bootstrap_name)
-        node_macs.insert(0, bootstrap_mac)
-        node_ips.insert(0, bootstrap_ip)
-        if platform == 'openstack':
-            nodes += 1
-            node_names.insert(0, bootstrap_helper_name)
-            node_macs.insert(0, bootstrap_helper_mac)
-            node_ips.insert(0, bootstrap_helper_ip)
-        node_names = ','.join(node_names)
-        node_macs = ','.join(node_macs)
-        node_ips = ','.join(node_ips)
-        return {'node_names': node_names, 'node_macs': node_macs, 'node_ips': node_ips, 'nodes': nodes}
 
 
 def baremetal_stop(cluster):
@@ -970,14 +924,6 @@ def create(config, plandir, cluster, overrides):
         service_content = open('%s/bootstrap_metal3.service' % plandir).read()
         service_name = 'kcli-metal3-patch'
         patch_bootstrap("%s/bootstrap.ign" % clusterdir, script_content, service_content, service_name)
-    staticdata = gather_dhcp(data, platform)
-    if staticdata:
-        pprint("Deploying helper dhcp node" % image)
-        staticdata.update({'network': network, 'dhcp_image': helper_image, 'prefix': cluster,
-                          domain: '%s.%s' % (cluster, domain)})
-        result = config.plan(plan, inputfile='%s/dhcp.yml' % plandir, overrides=staticdata)
-        if result['result'] != 'success':
-            os._exit(1)
     if platform in virtplatforms:
         if data.get('virtual_router_id') is None:
             overrides['virtual_router_id'] = hash(cluster) % 254 + 1
