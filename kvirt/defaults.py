@@ -37,6 +37,7 @@ DEBIAN = "https://cdimage.debian.org/cdimage/"
 RHCOS = "https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/"
 FEDORA = "http://mirror.uv.es/mirror/fedora/linux/releases/"
 FEDORA_ARCHIVE = "https://archives.fedoraproject.org/pub/archive/fedora/linux/releases/"
+ROCKY = 'https://dl.rockylinux.org/pub/rocky/8.4/images/'
 IMAGES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-image-bootstrap.qcow2',
           'centos6': 'https://cloud.centos.org/centos/6/images/CentOS-6-x86_64-GenericCloud.qcow2',
           'centos7': 'https://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2',
@@ -92,7 +93,7 @@ IMAGES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-i
           'ubuntu2004': 'https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64.img',
           'ubuntu2010': 'https://cloud-images.ubuntu.com/groovy/current/groovy-server-cloudimg-amd64.img',
           'ubuntu2104': 'https://cloud-images.ubuntu.com/hirsute/current/hirsute-server-cloudimg-amd64.img',
-          'rockylinux84': 'https://dl.rockylinux.org/pub/rocky/8.4/images/Rocky-8-GenericCloud-8.4-20210620.0.x86_64.qcow2'}
+          'rockylinux84': ROCKY + 'Rocky-8-GenericCloud-8.4-20210620.0.x86_64.qcow2'}
 
 IMAGESCOMMANDS = {'debian8': 'echo datasource_list: [NoCloud, ConfigDrive, Openstack, Ec2] > /etc/cloud/cloud.cfg.d/'
                   '90_dpkg.cfg'}
@@ -200,4 +201,4 @@ METADATA_FIELDS = ['dnsclient', 'domain', 'image', 'kube', 'kubetype', 'loadbala
 VMRULES = []
 CACHE = False
 SECURITYGROUPS = []
-LOCAL_OPENSHIFT_APPS = ['argocd', 'istio', 'katacontainer', 'users']
+LOCAL_OPENSHIFT_APPS = ['argocd', 'istio', 'users']

@@ -217,6 +217,37 @@ def baremetal_stop(cluster):
             post(actionaddress, json={"ResetType": 'ForceOff'}, headers=headers, auth=(user, password), verify=False)
 
 
+def process_apps(config, clusterdir, apps, overrides):
+    if not apps:
+        return
+    os.environ['KUBECONFIG'] = "%s/auth/kubeconfig" % clusterdir
+    for app in apps:
+        app_data = overrides.copy()
+        if app in LOCAL_OPENSHIFT_APPS:
+            name = app
+        else:
+            name, source, channel, csv, description, namespace, crd = olm_app(app)
+            if name is None:
+                error("Couldn't find any app matching %s. Skipping..." % app)
+                continue
+            current_app_data = {'name': name, 'source': source, 'channel': channel, 'csv': csv,
+                                'namespace': namespace, 'crd': crd}
+            app_data.update(current_app_data)
+        pprint("Adding app %s" % name)
+        config.create_app_openshift(name, app_data)
+
+
+def process_postscripts(clusterdir, postscripts):
+    if not postscripts:
+        return
+    os.environ['KUBECONFIG'] = "%s/auth/kubeconfig" % clusterdir
+    currentdir = pwd_path(".")
+    for script in postscripts:
+        script_path = os.path.expanduser(script) if script.startswith('/') else '%s/%s' % (currentdir, script)
+        pprint("Running script %s" % os.path.basename(script))
+        call(script_path, shell=True)
+
+
 def scale(config, plandir, cluster, overrides):
     plan = cluster
     client = config.client
@@ -321,6 +352,7 @@ def create(config, plandir, cluster, overrides):
         clustervalue = 'testk'
     data['cluster'] = clustervalue
     domain = data.get('domain')
+    postscripts = data.get('postscripts', [])
     pprint("Deploying cluster %s" % clustervalue)
     plan = cluster if cluster is not None else clustervalue
     overrides['kubetype'] = 'openshift'
@@ -734,13 +766,6 @@ def create(config, plandir, cluster, overrides):
         if ipi_platform == 'baremetal':
             pprint("Stopping nodes through redfish")
             baremetal_stop(cluster)
-        run = call('openshift-install --dir=%s --log-level=%s create cluster' % (clusterdir, log_level), shell=True)
-        if run != 0:
-            error("Leaving environment for debugging purposes")
-        os._exit(run)
-    autoapprover = config.process_inputfile(cluster, "%s/autoapprovercron.yml" % plandir, overrides=data)
-    with open("%s/autoapprovercron.yml" % clusterdir, 'w') as f:
-        f.write(autoapprover)
     run = call('openshift-install --dir=%s --log-level=%s create manifests' % (clusterdir, log_level), shell=True)
     if run != 0:
         error("Leaving environment for debugging purposes")
@@ -752,12 +777,6 @@ def create(config, plandir, cluster, overrides):
             cvo_override = f.read()
         with open("%s/manifests/cvo-overrides.yaml" % clusterdir, "a") as f:
             f.write(cvo_override)
-    if ipv6:
-        for role in ['master', 'worker']:
-            nodeip = config.process_inputfile(cluster, "%s/99-blacklist-nodeip.yaml" % plandir,
-                                              overrides={'role': role})
-            with open("%s/openshift/99-blacklist-nodeip-%s.yaml" % (clusterdir, role), 'w') as f:
-                f.write(nodeip)
     ntp_server = data.get('ntp_server')
     if ntp_server is not None:
         ntp_data = config.process_inputfile(cluster, "%s/chrony.conf" % plandir, overrides={'ntp_server': ntp_server})
@@ -766,6 +785,51 @@ def create(config, plandir, cluster, overrides):
                                            overrides={'role': role, 'ntp_data': ntp_data})
             with open("%s/manifests/99-chrony-%s.yaml" % (clusterdir, role), 'w') as f:
                 f.write(ntp)
+    manifestsdir = pwd_path("manifests")
+    if os.path.exists(manifestsdir) and os.path.isdir(manifestsdir):
+        for f in glob("%s/*.y*ml" % manifestsdir):
+            copy2(f, "%s/openshift" % clusterdir)
+    if os.path.exists("%s/imageContentSourcePolicy.yaml" % clusterdir):
+        copy2("%s/imageContentSourcePolicy.yaml" % clusterdir, "%s/openshift" % clusterdir)
+    if os.path.exists("%s/catalogSource.yaml" % clusterdir):
+        copy2("%s/catalogSource.yaml" % clusterdir, "%s/openshift" % clusterdir)
+    if 'network_type' in data and data['network_type'] == 'Calico':
+        for asset in calicoassets:
+            fetch(asset, manifestsdir)
+    if 'network_type' in data and data['network_type'] == 'Contrail':
+        if find_executable('git') is None:
+            error('git is needed for contrail')
+            os._exit(1)
+        with TemporaryDirectory() as tmpdir:
+            contraildata = {'cluster': cluster, 'domain': domain, 'tmpdir': tmpdir}
+            contrailscript = config.process_inputfile(cluster, "%s/contrail.sh.j2" % plandir, overrides=contraildata)
+            with open("%s/contrail.sh" % tmpdir, 'w') as f:
+                f.write(contrailscript)
+            call('bash %s/contrail.sh' % tmpdir, shell=True)
+    if dualstack:
+        copy2("%s/dualstack.yml" % plandir, "%s/openshift" % clusterdir)
+    if disconnected_operators:
+        if os.path.exists('%s/imageContentSourcePolicy.yaml' % clusterdir):
+            copy2('%s/imageContentSourcePolicy.yaml' % clusterdir, "%s/openshift" % clusterdir)
+        if os.path.exists('%s/catalogsource.yaml' % clusterdir):
+            copy2('%s/catalogsource.yaml' % clusterdir, "%s/openshift" % clusterdir)
+        copy2('%s/99-operatorhub.yaml' % plandir, "%s/openshift" % clusterdir)
+    if ipi:
+        run = call('openshift-install --dir=%s --log-level=%s create cluster' % (clusterdir, log_level), shell=True)
+        if run != 0:
+            error("Leaving environment for debugging purposes")
+        process_apps(config, clusterdir, apps, overrides)
+        process_postscripts(clusterdir, postscripts)
+        os._exit(run)
+    autoapprover = config.process_inputfile(cluster, "%s/autoapprovercron.yml" % plandir, overrides=data)
+    with open("%s/autoapprovercron.yml" % clusterdir, 'w') as f:
+        f.write(autoapprover)
+    if ipv6:
+        for role in ['master', 'worker']:
+            nodeip = config.process_inputfile(cluster, "%s/99-blacklist-nodeip.yaml" % plandir,
+                                              overrides={'role': role})
+            with open("%s/openshift/99-blacklist-nodeip-%s.yaml" % (clusterdir, role), 'w') as f:
+                f.write(nodeip)
     for f in glob("%s/customisation/*.yaml" % plandir):
         if '99-ingress-controller.yaml' in f:
             ingressrole = 'master' if workers == 0 else 'worker'
@@ -796,35 +860,6 @@ def create(config, plandir, cluster, overrides):
                                                  overrides={'role': role})
             with open("%s/openshift/99-blacklist-ipi-%s.yaml" % (clusterdir, role), 'w') as f:
                 f.write(blacklist)
-    manifestsdir = pwd_path("manifests")
-    if os.path.exists(manifestsdir) and os.path.isdir(manifestsdir):
-        for f in glob("%s/*.y*ml" % manifestsdir):
-            copy2(f, "%s/openshift" % clusterdir)
-    if os.path.exists("%s/imageContentSourcePolicy.yaml" % clusterdir):
-        copy2("%s/imageContentSourcePolicy.yaml" % clusterdir, "%s/openshift" % clusterdir)
-    if os.path.exists("%s/catalogSource.yaml" % clusterdir):
-        copy2("%s/catalogSource.yaml" % clusterdir, "%s/openshift" % clusterdir)
-    if 'network_type' in data and data['network_type'] == 'Calico':
-        for asset in calicoassets:
-            fetch(asset, manifestsdir)
-    if 'network_type' in data and data['network_type'] == 'Contrail':
-        if find_executable('git') is None:
-            error('git is needed for contrail')
-            os._exit(1)
-        with TemporaryDirectory() as tmpdir:
-            contraildata = {'cluster': cluster, 'domain': domain, 'tmpdir': tmpdir}
-            contrailscript = config.process_inputfile(cluster, "%s/contrail.sh.j2" % plandir, overrides=contraildata)
-            with open("%s/contrail.sh" % tmpdir, 'w') as f:
-                f.write(contrailscript)
-            call('bash %s/contrail.sh' % tmpdir, shell=True)
-    if dualstack:
-        copy2("%s/dualstack.yml" % plandir, "%s/openshift" % clusterdir)
-    if disconnected_operators:
-        if os.path.exists('%s/imageContentSourcePolicy.yaml' % clusterdir):
-            copy2('%s/imageContentSourcePolicy.yaml' % clusterdir, "%s/openshift" % clusterdir)
-        if os.path.exists('%s/catalogsource.yaml' % clusterdir):
-            copy2('%s/catalogsource.yaml' % clusterdir, "%s/openshift" % clusterdir)
-        copy2('%s/99-operatorhub.yaml' % plandir, "%s/openshift" % clusterdir)
     if sno:
         sno_name = "%s-sno" % cluster
         sno_dns = data.get('sno_dns', True)
@@ -1106,28 +1141,8 @@ def create(config, plandir, cluster, overrides):
         bucket = "%s-%s" % (cluster, domain.replace('.', '-'))
         config.k.delete_bucket(bucket)
     os.environ['KUBECONFIG'] = "%s/auth/kubeconfig" % clusterdir
-    if apps:
-        overrides['openshift_version'] = INSTALLER_VERSION[0:3]
-        for app in apps:
-            app_data = overrides.copy()
-            if app in LOCAL_OPENSHIFT_APPS:
-                name = app
-            else:
-                name, source, channel, csv, description, namespace, crd = olm_app(app)
-                if name is None:
-                    error("Couldn't find any app matching %s. Skipping..." % app)
-                    continue
-                current_app_data = {'name': name, 'source': source, 'channel': channel, 'csv': csv,
-                                    'namespace': namespace, 'crd': crd}
-                app_data.update(current_app_data)
-            pprint("Adding app %s" % name)
-            config.create_app_openshift(name, app_data)
-    if data.get('postscripts', []):
-        currentdir = pwd_path(".")
-        for script in data['postscripts']:
-            script_path = os.path.expanduser(script) if script.startswith('/') else '%s/%s' % (currentdir, script)
-            pprint("Running script %s" % os.path.basename(script))
-            call(script_path, shell=True)
+    process_apps(config, clusterdir, apps, overrides)
+    process_postscripts(clusterdir, postscripts)
     if platform in cloudplatforms and masters == 1 and workers == 0 and data.get('sno_cloud_remove_lb', True):
         pprint("Removing loadbalancers as there is a single master")
         k.delete_loadbalancer("api.%s" % cluster)
