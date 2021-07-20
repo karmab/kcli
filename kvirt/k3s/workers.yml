@@ -17,7 +17,7 @@
 
 {{cluster }}-worker-{{ number }}:
  image: {{ image }}
- pool: {{ pool }}
+ pool: {{ pool or config_pool }}
  numcpus: {{ worker_numcpus | default(numcpus, numcpus) }}
  memory: {{ worker_memory | default(memory, memory) }}
  nets: {{ [network] + extra_networks }}

@@ -24,7 +24,7 @@
  image: {{ image }}
  wait: true
  enableroot: true
- pool: {{ pool }}
+ pool: {{ pool or config_pool }}
  numcpus: {{ master_numcpus | default(numcpus, numcpus) }}
  memory: {{ master_memory | default(memory, memory) }}
  nets: {{ [network] + extra_networks }}

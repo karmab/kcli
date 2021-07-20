@@ -8,7 +8,7 @@ masters: 1
 workers: 0
 sdn: flannel
 api_ip:
-pool: default
+pool:
 image: ubuntu2004
 network: default
 cluster: testk
