@@ -15,7 +15,7 @@ api_ip:
 masters: 1
 workers: 0
 version:
-pool: default
+pool: 
 cluster: testk
 domain: karmalabs.com
 engine: containerd
