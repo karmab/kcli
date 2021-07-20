@@ -8,7 +8,7 @@
  domain: {{ domain }} 
  enableroot: false
  image: {{ image }}
- pool: {{ pool }}
+ pool: {{ pool or config_pool }}
 {% if flavor != None %}
  flavor: {{ flavor }}
 {% endif %}

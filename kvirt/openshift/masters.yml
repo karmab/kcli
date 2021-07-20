@@ -29,7 +29,7 @@
 {{ cluster }}-master-{{ num }}:
  domain: {{ domain }} 
  image: {{ image }}
- pool: {{ pool }}
+ pool: {{ pool or config_pool }}
  enableroot: false 
  flavor: {{ flavor }}
  keys: {{ keys }}

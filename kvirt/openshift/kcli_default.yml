@@ -29,7 +29,7 @@ domain: karmalabs.com
 network_type: OpenShiftSDN
 ntp_server:
 minimal: false
-pool: default
+pool:
 flavor:
 flavor_bootstrap:
 flavor_master:

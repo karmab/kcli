@@ -11,7 +11,7 @@
 {{ cluster }}-master-{{ num }}:
  domain: {{ domain }} 
  image: {{ image }}
- pool: {{ pool }}
+ pool: {{ pool or config_pool }}
 {% if flavor != None %}
  flavor: {{ flavor }}
 {% endif %}

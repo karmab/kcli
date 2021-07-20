@@ -20,7 +20,7 @@
 {{ cluster }}-sno:
  domain: {{ domain }} 
  iso: {{ cluster }}.iso
- pool: {{ pool }}
+ pool: {{ pool or config_pool }}
  enableroot: false 
  reservedns: true
  flavor: {{ flavor }}

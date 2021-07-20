@@ -1,6 +1,6 @@
 {{ cluster }}-disconnecter:
  image: centos8
- pool: {{ pool }}
+ pool: {{ pool or config_pool }}
  wait: true
  enableroot: true
  reservedns: {{ disconnected_dns|default(False) }}

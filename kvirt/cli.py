@@ -1962,12 +1962,15 @@ def render_file(args):
         paramfile = "kcli_parameters.yml"
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-    config_data = {'config_%s' % k: baseconfig.ini[baseconfig.client][k] for k in baseconfig.ini[baseconfig.client]}
-    config_data['config_type'] = config_data.get('config_type', 'kvm')
-    config_data['config_host'] = config_data.get('config_host', '127.0.0.1')
-    default_user = getuser() if config_data['config_type'] == 'kvm'\
-        and config_data['config_host'] in ['localhost', '127.0.0.1'] else 'root'
-    config_data['config_user'] = config_data.get('config_user', default_user)
+    default_data = {'config_%s' % k: baseconfig.default[k] for k in baseconfig.default}
+    client_data = {'config_%s' % k: baseconfig.ini[baseconfig.client][k] for k in baseconfig.ini[baseconfig.client]}
+    client_data['config_type'] = client_data.get('config_type', 'kvm')
+    client_data['config_host'] = client_data.get('config_host', '127.0.0.1')
+    default_user = getuser() if client_data['config_type'] == 'kvm'\
+        and client_data['config_host'] in ['localhost', '127.0.0.1'] else 'root'
+    client_data['config_user'] = client_data.get('config_user', default_user)
+    config_data = default_data.copy()
+    config_data.update(client_data)
     overrides.update(config_data)
     if not os.path.exists(inputfile):
         error("File %s not found" % inputfile)
