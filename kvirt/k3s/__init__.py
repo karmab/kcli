@@ -93,6 +93,7 @@ def create(config, plandir, cluster, overrides):
             installparam = overrides.copy()
             installparam['api_ip'] = api_ip
             installparam['plan'] = plan
+            installparam['kubetype'] = 'k3s'
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     if os.path.exists("manifests") and os.path.isdir("manifests"):
         data['files'] = [{"path": "/root/manifests", "currentdir": True, "origin": "manifests"}]

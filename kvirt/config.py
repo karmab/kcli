@@ -2296,7 +2296,8 @@ $INFO
             if os.path.exists(parametersfile):
                 with open(parametersfile) as f:
                     clusterdata = yaml.safe_load(f)
-                    if clusterdata['kubetype'] == 'openshift' and 'ipi' in clusterdata and clusterdata['ipi']:
+                    kubetype = clusterdata.get('kubetype', 'generic')
+                    if kubetype == 'openshift' and 'ipi' in clusterdata and clusterdata['ipi']:
                         ipi = True
                 if ipi:
                     os.environ["PATH"] += ":%s" % os.getcwd()

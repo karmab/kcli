@@ -115,6 +115,7 @@ def create(config, plandir, cluster, overrides):
             installparam['api_ip'] = api_ip
             installparam['virtual_router_id'] = data['virtual_router_id']
             installparam['plan'] = plan
+            installparam['kubetype'] = 'generic'
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     result = config.plan(plan, inputfile='%s/masters.yml' % plandir, overrides=data)
     if result['result'] != "success":
