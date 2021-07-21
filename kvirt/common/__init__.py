@@ -1604,7 +1604,8 @@ def is_7(image):
 
 
 def needs_ignition(image):
-    if 'coreos' in image or 'rhcos' in image or 'fcos' in image or 'fedora-coreos' in image:
+    if 'coreos' in image or 'rhcos' in image or 'fcos' in image or 'fedora-coreos' in image or\
+            ('openSUSE-MicroOS' in image and 'OpenStack' not in image):
         return True
     else:
         return False
