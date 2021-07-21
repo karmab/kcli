@@ -321,7 +321,7 @@ def create(config, plandir, cluster, overrides):
     bootstrap_helper_ip = None
     client = config.client
     platform = config.type
-    arch = 'arm64' if platform == 'kvm' and 'aarch64' in k.get_capabilities()['emulator'] else 'x86_64'
+    arch = 'arm64' if platform == 'kvm' and k.get_capabilities()['arch'] == 'aarch64' else 'x86_64'
     arch_tag = 'arm64' if arch == 'arm64' else 'latest'
     overrides['arch_tag'] = arch_tag
     pprint("Deploying on client %s" % client)
