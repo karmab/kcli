@@ -1670,7 +1670,7 @@ class Kvirt(object):
         isos = []
         images = []
         conn = self.conn
-        if 'aarch64' in self.get_capabilities()['emulator']:
+        if self.get_capabilities()['arch'] == 'aarch64':
             IMAGES.update({i: IMAGES[i].replace('x86_64', 'aarch64').replace('amd64', 'arm64') for i in IMAGES})
         default_images = [os.path.basename(t).replace('.bz2', '') for t in list(IMAGES.values())
                           if t is not None and 'product-software' not in t]
