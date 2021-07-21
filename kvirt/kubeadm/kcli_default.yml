@@ -35,7 +35,7 @@ nfs_pv_size: 30
 sdn: flannel
 ingress: true
 ingress_method: nginx
-policy_as_code: true
+policy_as_code: false
 policy_as_code_method: gatekeeper
 metallb: false
 metallb_version: v0.9.3
