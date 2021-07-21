@@ -1254,7 +1254,7 @@ def get_latest_rhcos(url, _type='kvm', arch='x86_64'):
 
 
 def get_commit_rhcos(commitid, _type='kvm', region=None):
-    keys = {'ovirt': 'openstack', 'kubevirt': 'openstack', 'kvm': 'qemu', 'vsphere': 'vmware'}
+    keys = {'ovirt': 'openstack', 'kubevirt': 'openstack', 'kvm': 'qemu', 'vsphere': 'vmware', 'ibm': 'ibmcloud'}
     key = keys.get(_type, _type)
     buildurl = "https://raw.githubusercontent.com/openshift/installer/%s/data/data/rhcos.json" % commitid
     with urlopen(buildurl) as b:

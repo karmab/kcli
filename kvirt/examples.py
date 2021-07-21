@@ -42,6 +42,9 @@ $ kcli create host openstack --auth-url http://10.19.114.91:5000/v3 -u admin -p 
 
 # Add a kubevirt host using existing k8s credentials
 $ kcli create host kubevirt mykubevirt
+
+# Add an ibm host
+$ kcli create host ibm --iam_api_key xyz --vpc myvpc --zone eu-de -r eu-de-2 myibm
 """
 
 _list = """# Get list of vms

@@ -11,12 +11,13 @@ OPENSTACK = ['python-cinderclient', 'python-neutronclient', 'python-glanceclient
 OVIRT = ['ovirt-engine-sdk-python']
 PACKET = ['packet-python']
 VSPHERE = ['requests', 'pyvmomi']
+IBMCLOUD = ['ibm_vpc', 'ibm_cloud_sdk_core']
 GRPC = ['grpcio', 'grpcio-reflection']
 EXTRAS = ['pyghmi']
 ALL = ['docker>=2.0'] + ['podman'] + ['websockify'] + GRPC + EXTRAS + AWS + GCP + KUBEVIRT + OPENSTACK + OVIRT\
-    + PACKET + VSPHERE
+    + PACKET + VSPHERE + IBMCLOUD
 
-description = 'Provisioner/Manager for Libvirt/Ovirt/Gcp/Aws/Openstack/Kubevirt and containers'
+description = 'Provisioner/Manager for Libvirt/Ovirt/Gcp/Aws/Openstack/Kubevirt/IBM Cloud and containers'
 long_description = description
 if os.path.exists('README.rst'):
     long_description = open('README.rst').read()
@@ -42,6 +43,7 @@ setup(
         'openstack': OPENSTACK,
         'ovirt': OVIRT,
         'vsphere': VSPHERE,
+        'ibm': IBMCLOUD,
         'grpc': GRPC,
     },
     entry_points='''
