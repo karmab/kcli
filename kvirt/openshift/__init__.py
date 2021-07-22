@@ -321,8 +321,8 @@ def create(config, plandir, cluster, overrides):
     bootstrap_helper_ip = None
     client = config.client
     platform = config.type
-    arch = 'arm64' if platform == 'kvm' and k.get_capabilities()['arch'] == 'aarch64' else 'x86_64'
-    arch_tag = 'arm64' if arch == 'arm64' else 'latest'
+    arch = k.get_capabilities()['arch'] if platform == 'kvm' else 'x86_64'
+    arch_tag = 'arm64' if arch in ['aarch64', 'arm64'] else 'latest'
     overrides['arch_tag'] = arch_tag
     pprint("Deploying on client %s" % client)
     data = {'helper_image': 'CentOS-7-x86_64-GenericCloud.qcow2',
@@ -503,7 +503,7 @@ def create(config, plandir, cluster, overrides):
         get_oc(macosx=macosx)
     if version == 'ci':
         if '/' not in str(tag):
-            if arch == 'arm64':
+            if arch in ['aarch64', 'arm64']:
                 tag = 'registry.ci.openshift.org/ocp-arm64/release-arm64:%s' % tag
             else:
                 basetag = 'ocp' if not upstream else 'origin'
