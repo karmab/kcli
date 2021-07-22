@@ -205,14 +205,18 @@ class Kconfig(Kbaseconfig):
                     import configparser
                     if os.path.exists("%s/.ibm/credentials" % home):
                          try:
-                             credconfig = configparser.ConfigParser()
-                             credconfig.read("%s/.ibm/credentials" % home)
-                             if 'default' not in credconfig:
-                                 error(
-                                     "Missing default section in ~/.ibm/credentials file. Leaving")
-                                 os._exit(1)
-                             if 'iam_api_key' in credconfig['default']:
-                                 iam_api_key = credconfig['default']['iam_api_key']
+                            credconfig = configparser.ConfigParser()
+                            credconfig.read("%s/.ibm/credentials" % home)
+                            if 'default' not in credconfig:
+                                error(
+                                    "Missing default section in ~/.ibm/credentials file. Leaving")
+                                os._exit(1)
+                            if 'iam_api_key' in credconfig['default']:
+                                iam_api_key = credconfig['default']['iam_api_key']
+                            if 'access_key_id' in credconfig['default']:
+                                access_key_id = credconfig['default']['access_key_id']
+                            if 'secret_access_key' in credconfig['default']:
+                                secret_access_key = credconfig['default']['secret_access_key']
                          except:
                              error("Coudln't parse ~/.ibm/credentials file. Leaving")
                              os._exit(1)
@@ -226,6 +230,10 @@ class Kconfig(Kbaseconfig):
                                 os._exit(1)
                             if 'iam_api_key' in confconfig['default']:
                                 iam_api_key = confconfig['default']['iam_api_key']
+                            if 'access_key_id' in confconfig['default']:
+                                access_key_id = confconfig['default']['access_key_id']
+                            if 'secret_access_key' in confconfig['default']:
+                                secret_access_key = confconfig['default']['secret_access_key']
                             if 'region' in confconfig['default']:
                                 region = confconfig['default']['region']
                             if 'zone' in confconfig['default']:
@@ -237,11 +245,19 @@ class Kconfig(Kbaseconfig):
                             os._exit(1)
                 else:
                     iam_api_key = self.options.get('iam_api_key')
+                    access_key_id = self.options.get('access_key_id')
+                    secret_access_key = self.options.get('secret_access_key')
                     region = self.options.get('region')
                     zone = self.options.get('zone')
                     vpc = self.options.get('vpc')
                 if iam_api_key is None:
                     error("Missing iam_api_key in the configuration. Leaving")
+                    os._exit(1)
+                if access_key_id is None:
+                    error("Missing access_key_id in the configuration. Leaving")
+                    os._exit(1)
+                if secret_access_key is None:
+                    error("Missing secret_access_key in the configuration. Leaving")
                     os._exit(1)
                 if region is None:
                     error("Missing region in the configuration. Leaving")
@@ -253,7 +269,8 @@ class Kconfig(Kbaseconfig):
                     error("Missing vpc in the configuration. Leaving")
                     os._exit(1)
                 from kvirt.providers.ibm import Kibm
-                k = Kibm(iam_api_key=iam_api_key, region=region, zone=zone, vpc=vpc,
+                k = Kibm(iam_api_key=iam_api_key, access_key_id=access_key_id,
+                         secret_access_key=secret_access_key, region=region, zone=zone, vpc=vpc,
                          debug=debug)
             elif self.type == 'ovirt':
                 datacenter = self.options.get('datacenter', 'Default')

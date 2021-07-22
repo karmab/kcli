@@ -2427,6 +2427,8 @@ def create_host_ibm(args):
     data['region'] = args.region
     data['vpc'] = args.vpc
     data['zone'] = args.zone
+    data['access_key_id'] = args.access_key_id
+    data['secret_access_key'] = args.secret_access_key
     common.create_host(data)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
     if len(baseconfig.clients) == 1:
@@ -3137,6 +3139,9 @@ def cli():
     ibmhostcreate_parser.add_argument('--zone', help='Zone within the region', metavar='ZONE', required=True)
     ibmhostcreate_parser.add_argument(
         '-r', '--region', help='Region', metavar='REGION', required=True)
+    ibmhostcreate_parser.add_argument('--access_key_id', help='Access Key Id', metavar='ACCESS_KEY_ID', required=True)
+    ibmhostcreate_parser.add_argument('--secret_access_key', help='Secret Access Key', metavar='SECRET_ACCESS_KEY',
+                                      required=True)
     ibmhostcreate_parser.add_argument('name', metavar='NAME')
     ibmhostcreate_parser.set_defaults(func=create_host_ibm)
 

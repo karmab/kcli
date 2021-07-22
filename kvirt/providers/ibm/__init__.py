@@ -9,6 +9,7 @@ import ibm_vpc
 from netaddr import IPNetwork
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 import os
+import ibm_boto3
 import webbrowser
 
 ENDPOINTS = {
@@ -29,16 +30,27 @@ def get_zone_href(region, zone):
         zone
     )
 
+def get_s3_endpoint(region):
+    return 'https://s3.{}.cloud-object-storage.appdomain.cloud'.format(region)
+
 class Kibm(object):
     """
 
     """
-    def __init__(self, iam_api_key, region, zone, vpc, debug=False):
+    def __init__(self, iam_api_key, access_key_id, secret_access_key, region, zone, vpc, debug=False):
         self.debug = debug
         self.authenticator = IAMAuthenticator(iam_api_key)
         self.conn = ibm_vpc.VpcV1(authenticator=self.authenticator)
         self.conn.set_service_url(ENDPOINTS.get(region))
+        self.s3 = ibm_boto3.client(
+            's3',
+            endpoint_url=get_s3_endpoint(region),
+            aws_access_key_id=access_key_id,
+            aws_secret_access_key=secret_access_key
+        )
         self.iam_api_key = iam_api_key
+        self.access_key_id = access_key_id
+        self.secret_access_key = secret_access_key
         self.region = region
         self.zone = zone
         self.vpc = vpc
@@ -245,6 +257,8 @@ class Kibm(object):
 
     def report(self):
         print("IAM key:", self.iam_api_key)
+        print("Access key id:", self.access_key_id)
+        print("Secret access key:", self.secret_access_key)
         print("Region:", self.region)
         print("Zone:", self.zone)
         print("VPC:", self.vpc)
@@ -678,32 +692,63 @@ class Kibm(object):
         return
 
     def create_bucket(self, bucket, public=False):
-        print("not implemented")
-        return
+        if bucket in self.list_buckets():
+            error("Bucket %s already there" % bucket)
+            return
+        location = {'LocationConstraint': self.region}
+        args = {'Bucket': bucket}#, "CreateBucketConfiguration": location} #TODO: fix this.
+        if public:
+            args['ACL'] = 'public-read'
+        self.s3.create_bucket(**args)
 
     def delete_bucket(self, bucket):
-        print("not implemented")
-        return
+        if bucket not in self.list_buckets():
+            error("Inexistent bucket %s" % bucket)
+            return
+        for obj in self.s3.list_objects(Bucket=bucket).get('Contents', []):
+            key = obj['Key']
+            pprint("Deleting object %s from bucket %s" % (key, bucket))
+            self.s3.delete_object(Bucket=bucket, Key=key)
+        self.s3.delete_bucket(Bucket=bucket)
 
     def delete_from_bucket(self, bucket, path):
-        print("not implemented")
-        return
+        if bucket not in self.list_buckets():
+            error("Inexistent bucket %s" % bucket)
+            return
+        self.s3.delete_object(Bucket=bucket, Key=path)
 
     def download_from_bucket(self, bucket, path):
-        print("not implemented")
-        return
+        self.s3.download_file(bucket, path, path)
 
     def upload_to_bucket(self, bucket, path, overrides={}, temp_url=False, public=False):
-        print("not implemented")
-        return
+        if not os.path.exists(path):
+            error("Invalid path %s" % path)
+            return
+        if bucket not in self.list_buckets():
+            error("Bucket %s doesn't exist" % bucket)
+            return
+        ExtraArgs = {'Metadata': overrides} if overrides else {}
+        if public:
+            ExtraArgs['ACL'] = 'public-read'
+        dest = os.path.basename(path)
+        with open(path, "rb") as f:
+            self.s3.upload_fileobj(f, bucket, dest, ExtraArgs=ExtraArgs)
+        if temp_url:
+            expiration = 600
+            return self.s3.generate_presigned_url('get_object', Params={'Bucket': bucket, 'Key': dest}, ExpiresIn=expiration)
 
     def list_buckets(self):
-        print("not implemented")
-        return []
+        response = self.s3.list_buckets()
+        return [bucket["Name"] for bucket in response['Buckets']]
 
     def list_bucketfiles(self, bucket):
-        print("not implemented")
-        return []
+        if bucket not in self.list_buckets():
+            error("Inexistent bucket %s" % bucket)
+            return []
+        return [obj['Key'] for obj in self.s3.list_objects(Bucket=bucket).get('Contents', [])]
+
+    def public_bucketfile_url(self, bucket, path):
+        return 'https://{}.s3.{}.cloud-object-storage.appdomain.cloud/{}'.format(bucket, self.region, path)
 
     def _get_vm(self, name):
         result = self.conn.list_instances(name=name).result
