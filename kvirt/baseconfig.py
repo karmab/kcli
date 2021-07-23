@@ -980,7 +980,15 @@ class Kbaseconfig:
         if not os.path.exists(inputfile):
             error("No input file found nor default kcli_plan.yml. Leaving....")
             os._exit(1)
-        plan = overrides.get('plan', os.path.basename(inputfile).replace('.yml', '').replace('.yaml', ''))
+        plan = overrides.get('plan')
+        if plan is None:
+            plan = os.path.basename(inputfile).replace('.yml', '').replace('.yaml', '')
+        else:
+            del overrides['plan']
+        runner = 'ubuntu-latest'
+        if 'runner' in overrides:
+            runner = overrides['runner']
+            del overrides['runner']
         workflowdir = os.path.dirname(common.__file__)
         env = Environment(loader=FileSystemLoader(workflowdir), extensions=['jinja2.ext.do'], trim_blocks=True,
                           lstrip_blocks=True)
@@ -994,11 +1002,17 @@ class Kbaseconfig:
         except TemplateError as e:
             error("Error rendering file %s. Got: %s" % (inputfile, e.message))
             os._exit(1)
-        paramline = ["-P %s=${{github.event.inputs.%s}}" % (parameter, parameter.upper()) for parameter in overrides]
+        # paramline = ["-P %s=${{github.event.inputs.%s}}" % (parameter, parameter.upper()) for parameter in overrides]
+        paramline = []
+        for parameter in overrides:
+            newparam = "${{github.event.inputs.%s}}" % parameter.upper()
+            value = overrides[parameter]
+            if isinstance(value, str):
+                newparam = "'%s'" % newparam
+            paramline.append("-P %s=%s" % (parameter, newparam))
         parameterline = " ".join(paramline)
         paramfileline = "--paramfile ${{github.event.inputs.PARAMFILE}}" if paramfile is not None else ""
         gitbase = os.popen('git rev-parse --show-prefix 2>/dev/null').read().strip()
-        runner = overrides.get('runner', 'ubuntu-latest')
         workflowfile = templ.render(plan=plan, inputfile=inputfile, parameters=overrides, parameterline=parameterline,
                                     paramfileline=paramfileline, paramfile=paramfile, gitbase=gitbase, runner=runner)
         return workflowfile
