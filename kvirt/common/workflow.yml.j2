@@ -23,6 +23,9 @@ on:
         default: {{ parameters[parameter] }}
 {% endfor %}
 
+env:
+ HOME: {{ parameters['home']|default('/root') }}
+
 jobs:
     requirements:
       runs-on: {% raw %} ${{github.event.inputs.RUNNER}} {% endraw %}
