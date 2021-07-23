@@ -9,12 +9,11 @@ import os
 import sys
 from ipaddress import ip_address, ip_network
 from kvirt.common import error, pprint, success, warning, info2
-from kvirt.common import get_oc, pwd_path, fetch
+from kvirt.common import get_oc, pwd_path
 from kvirt.common import get_commit_rhcos, get_latest_fcos, patch_bootstrap, generate_rhcos_iso, olm_app
 from kvirt.common import get_installer_rhcos
 from kvirt.common import ssh, scp, _ssh_credentials, copy_ipi_credentials
 from kvirt.defaults import LOCAL_OPENSHIFT_APPS
-from kvirt.openshift.calico import calicoassets
 import re
 from shutil import copy2, move, rmtree
 from subprocess import call
@@ -794,8 +793,12 @@ def create(config, plandir, cluster, overrides):
     if os.path.exists("%s/catalogSource.yaml" % clusterdir):
         copy2("%s/catalogSource.yaml" % clusterdir, "%s/openshift" % clusterdir)
     if 'network_type' in data and data['network_type'] == 'Calico':
-        for asset in calicoassets:
-            fetch(asset, manifestsdir)
+        with TemporaryDirectory() as tmpdir:
+            calicodata = {'clusterdir': clusterdir}
+            calicoscript = config.process_inputfile(cluster, "%s/calico.sh.j2" % plandir, overrides=calicodata)
+            with open("%s/calico.sh" % tmpdir, 'w') as f:
+                f.write(calicoscript)
+            call('bash %s/calico.sh' % tmpdir, shell=True)
     if 'network_type' in data and data['network_type'] == 'Contrail':
         if find_executable('git') is None:
             error('git is needed for contrail')
