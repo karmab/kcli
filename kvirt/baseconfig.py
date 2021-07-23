@@ -980,7 +980,7 @@ class Kbaseconfig:
         if not os.path.exists(inputfile):
             error("No input file found nor default kcli_plan.yml. Leaving....")
             os._exit(1)
-        plan = os.path.basename(inputfile).replace('.yml', '').replace('.yaml', '')
+        plan = overrides.get('plan', os.path.basename(inputfile).replace('.yml', '').replace('.yaml', ''))
         workflowdir = os.path.dirname(common.__file__)
         env = Environment(loader=FileSystemLoader(workflowdir), extensions=['jinja2.ext.do'], trim_blocks=True,
                           lstrip_blocks=True)
@@ -996,10 +996,11 @@ class Kbaseconfig:
             os._exit(1)
         paramline = ["-P %s=${{github.event.inputs.%s}}" % (parameter, parameter.upper()) for parameter in overrides]
         parameterline = " ".join(paramline)
-        # paramfileline = "--paramfile %s" % paramfile if paramfile is not None else ""
         paramfileline = "--paramfile ${{github.event.inputs.PARAMFILE}}" if paramfile is not None else ""
-        workflowfile = templ.render(plan=plan, parameters=overrides, parameterline=parameterline,
-                                    paramfileline=paramfileline, paramfile=paramfile)
+        gitbase = os.popen('git rev-parse --show-prefix 2>/dev/null').read().strip()
+        runner = overrides.get('runner', 'ubuntu-latest')
+        workflowfile = templ.render(plan=plan, inputfile=inputfile, parameters=overrides, parameterline=parameterline,
+                                    paramfileline=paramfileline, paramfile=paramfile, gitbase=gitbase, runner=runner)
         return workflowfile
 
     def info_kube_generic(self, quiet, web=False):

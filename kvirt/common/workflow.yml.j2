@@ -5,7 +5,7 @@ on:
       RUNNER:
         description: 'Github Action Runner Name'
         required: true
-        default: 'ubuntu-latest'
+        default: '{{ runner }}'
       PLAN:
         description: 'Plan Name'
         required: true
@@ -14,7 +14,7 @@ on:
       PARAMFILE:
         description: 'paramfile'
         required: false
-        default: {{ paramfile }}
+        default: {{ gitbase + paramfile }}
 {% endif %}
 {% for parameter in parameters %}
       {{ parameter|upper }}:
@@ -25,23 +25,23 @@ on:
 
 jobs:
     requirements:
-    runs-on: {% raw %} ${{github.event.inputs.RUNNER}} {% endraw %}
+      runs-on: {% raw %} ${{github.event.inputs.RUNNER}} {% endraw %}
 
-    steps:
-      - name: Install kcli
-        run: |
-          curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | bash
-          # kcli create pool -p /var/lib/libvirt/images default
-          # sudo setfacl -m u:$(id -un):rwx /var/lib/libvirt/images
+      steps:
+       - name: Install kcli
+         run: |
+           curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | bash
+           # kcli create pool -p /var/lib/libvirt/images default
+           # sudo setfacl -m u:$(id -un):rwx /var/lib/libvirt/images
 
-      - uses: actions/checkout@v2
-      - run: git pull origin ${GITHUB_REF##*/}
+       - uses: actions/checkout@v2
+       - run: git pull origin ${GITHUB_REF##*/}
 
-  deploy-plan:
-    needs: requirements
-    runs-on: {% raw %} ${{github.event.inputs.RUNNER}} {% endraw %}
-
-    steps:
-      - name: Deploy kcli plan
-        run: |
-          kcli create plan --force -f {{ inputfile | default('kcli_plan.yml') }} {{ paramfileline }} {{ parameterline }} {% raw %} ${{github.event.inputs.PLAN}} {% endraw %}
+    deploy-plan:
+      needs: requirements
+      runs-on: {% raw %} ${{github.event.inputs.RUNNER}} {% endraw %}
+  
+      steps:
+        - name: Deploy kcli plan
+          run: |
+            kcli create plan --force -f {{ gitbase + inputfile }} {{ paramfileline }} {{ parameterline }} {% raw %} ${{github.event.inputs.PLAN}} {% endraw %}
