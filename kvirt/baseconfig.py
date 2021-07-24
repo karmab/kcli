@@ -989,6 +989,10 @@ class Kbaseconfig:
         if 'runner' in overrides:
             runner = overrides['runner']
             del overrides['runner']
+        client = 'local'
+        if 'client' in overrides:
+            client = overrides['client']
+            del overrides['client']
         workflowdir = os.path.dirname(common.__file__)
         env = Environment(loader=FileSystemLoader(workflowdir), extensions=['jinja2.ext.do'], trim_blocks=True,
                           lstrip_blocks=True)
@@ -1014,7 +1018,8 @@ class Kbaseconfig:
         paramfileline = "--paramfile ${{github.event.inputs.PARAMFILE}}" if paramfile is not None else ""
         gitbase = os.popen('git rev-parse --show-prefix 2>/dev/null').read().strip()
         workflowfile = templ.render(plan=plan, inputfile=inputfile, parameters=overrides, parameterline=parameterline,
-                                    paramfileline=paramfileline, paramfile=paramfile, gitbase=gitbase, runner=runner)
+                                    paramfileline=paramfileline, paramfile=paramfile, gitbase=gitbase, runner=runner,
+                                    client=client)
         return workflowfile
 
     def info_kube_generic(self, quiet, web=False):

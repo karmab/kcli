@@ -6,6 +6,10 @@ on:
         description: 'Runner Name'
         required: true
         default: '{{ runner }}'
+      CLIENT:
+        description: 'Client name'
+        required: true
+        default: '{{ client }}'
       PLAN:
         description: 'Plan Name'
         required: true
@@ -28,7 +32,7 @@ env:
 
 jobs:
     requirements:
-      runs-on: {% raw %} ${{github.event.inputs.RUNNER}} {% endraw %}
+      runs-on: {% raw %}${{github.event.inputs.RUNNER}}{% endraw %}
 
       steps:
        - uses: actions/checkout@v2
@@ -41,8 +45,8 @@ jobs:
 
     deploy-plan:
       needs: requirements
-      runs-on: {% raw %} ${{github.event.inputs.RUNNER}} {% endraw %}
+      runs-on: {% raw %}${{github.event.inputs.RUNNER}}{% endraw %}
   
       steps:
         - name: Deploy kcli plan
-          run: kcli create plan --force -f {{ gitbase + inputfile }} {{ paramfileline }} {{ parameterline }} {% raw %} ${{github.event.inputs.PLAN}} {% endraw %}
+          run: kcli -C {% raw %}${{github.event.inputs.CLIENT}}{% endraw %} create plan --force -f {{ gitbase + inputfile }} {{ paramfileline }} {{ parameterline }} {% raw %}${{github.event.inputs.PLAN}}{% endraw %}
