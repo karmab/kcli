@@ -48,5 +48,10 @@ jobs:
       runs-on: {% raw %}${{github.event.inputs.RUNNER}}{% endraw %}
   
       steps:
+{% if kube %}
+        - name: Deploy kcli cluster
+          run: kcli -C {% raw %}${{github.event.inputs.CLIENT}}{% endraw %} create cluster {{ kubetype }} --force {{ paramfileline }} {{ parameterline }} {% raw %}${{github.event.inputs.PLAN}}{% endraw %}
+{% else %}
         - name: Deploy kcli plan
           run: kcli -C {% raw %}${{github.event.inputs.CLIENT}}{% endraw %} create plan --force -f {{ gitbase + inputfile }} {{ paramfileline }} {{ parameterline }} {% raw %}${{github.event.inputs.PLAN}}{% endraw %}
+{% endif %}

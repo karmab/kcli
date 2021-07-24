@@ -1919,6 +1919,7 @@ def download_okd_installer(args):
 def create_pipeline_github(args):
     """Create Github Pipeline"""
     inputfile = args.inputfile
+    kube = args.kube
     paramfile = args.paramfile
     if inputfile is None:
         inputfile = 'kcli_plan.yml'
@@ -1932,7 +1933,7 @@ def create_pipeline_github(args):
         paramfile = "kcli_parameters.yml"
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     overrides = common.get_overrides(param=args.param)
-    renderfile = baseconfig.create_github_pipeline(inputfile, paramfile=paramfile, overrides=overrides)
+    renderfile = baseconfig.create_github_pipeline(inputfile, paramfile=paramfile, overrides=overrides, kube=kube)
     print(renderfile)
     return 0
 
@@ -3522,6 +3523,7 @@ def cli():
     githubpipelinecreate_parser = pipelinecreate_subparsers.add_parser('github', description=githubpipelinecreate_desc,
                                                                        help=githubpipelinecreate_desc, aliases=['gha'])
     githubpipelinecreate_parser.add_argument('-f', '--inputfile', help='Input Plan file')
+    githubpipelinecreate_parser.add_argument('-k', '--kube', action='store_true', help='Create kube pipeline')
     githubpipelinecreate_parser.add_argument('-P', '--param', action='append',
                                              help='Define parameter for rendering (can specify multiple)',
                                              metavar='PARAM')

@@ -972,18 +972,23 @@ class Kbaseconfig:
                                    _type=_type)
         return jenkinsfile
 
-    def create_github_pipeline(self, inputfile, paramfile=None, overrides={}):
-        inputfile = os.path.expanduser(inputfile) if inputfile is not None else 'kcli_plan.yml'
-        basedir = os.path.dirname(inputfile)
-        if basedir == "":
-            basedir = '.'
-        if not os.path.exists(inputfile):
-            error("No input file found nor default kcli_plan.yml. Leaving....")
-            os._exit(1)
+    def create_github_pipeline(self, inputfile, paramfile=None, overrides={}, kube=False):
         plan = overrides.get('plan')
-        if plan is None:
-            plan = os.path.basename(inputfile).replace('.yml', '').replace('.yaml', '')
+        if not kube:
+            inputfile = os.path.expanduser(inputfile) if inputfile is not None else 'kcli_plan.yml'
+            basedir = os.path.dirname(inputfile)
+            if basedir == "":
+                basedir = '.'
+            if not os.path.exists(inputfile):
+                error("No input file found nor default kcli_plan.yml. Leaving....")
+                os._exit(1)
+            if plan is None:
+                plan = os.path.basename(inputfile).replace('.yml', '').replace('.yaml', '')
         else:
+            inputfile = None
+            if plan is None:
+                plan = 'testk'
+        if 'plan' in overrides:
             del overrides['plan']
         runner = 'ubuntu-latest'
         if 'runner' in overrides:
@@ -993,6 +998,11 @@ class Kbaseconfig:
         if 'client' in overrides:
             client = overrides['client']
             del overrides['client']
+        kubetype = 'generic'
+        if kube:
+            if 'kubetype' in overrides:
+                kubetype = overrides['kubetype']
+                del overrides['kubetype']
         workflowdir = os.path.dirname(common.__file__)
         env = Environment(loader=FileSystemLoader(workflowdir), extensions=['jinja2.ext.do'], trim_blocks=True,
                           lstrip_blocks=True)
@@ -1019,7 +1029,7 @@ class Kbaseconfig:
         gitbase = os.popen('git rev-parse --show-prefix 2>/dev/null').read().strip()
         workflowfile = templ.render(plan=plan, inputfile=inputfile, parameters=overrides, parameterline=parameterline,
                                     paramfileline=paramfileline, paramfile=paramfile, gitbase=gitbase, runner=runner,
-                                    client=client)
+                                    client=client, kube=kube, kubetype=kubetype)
         return workflowfile
 
     def info_kube_generic(self, quiet, web=False):
