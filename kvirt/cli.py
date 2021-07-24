@@ -1916,11 +1916,31 @@ def download_okd_installer(args):
     return baseconfig.download_openshift_installer(overrides)
 
 
-def create_pipeline(args):
-    """Create Pipeline"""
+def create_pipeline_github(args):
+    """Create Github Pipeline"""
+    inputfile = args.inputfile
+    paramfile = args.paramfile
+    if inputfile is None:
+        inputfile = 'kcli_plan.yml'
+    if os.path.exists("/i_am_a_container"):
+        inputfile = "/workdir/%s" % inputfile
+        if paramfile is not None:
+            paramfile = "/workdir/%s" % paramfile
+        elif os.path.exists("/workdir/kcli_parameters.yml"):
+            paramfile = "/workdir/kcli_parameters.yml"
+    elif paramfile is None and os.path.exists("kcli_parameters.yml"):
+        paramfile = "kcli_parameters.yml"
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    overrides = common.get_overrides(param=args.param)
+    renderfile = baseconfig.create_github_pipeline(inputfile, paramfile=paramfile, overrides=overrides)
+    print(renderfile)
+    return 0
+
+
+def create_pipeline_jenkins(args):
+    """Create Jenkins Pipeline"""
     inputfile = args.inputfile
     kube = args.kube
-    github = args.github
     paramfile = args.paramfile
     if inputfile is None:
         inputfile = 'kcli_plan.yml'
@@ -1936,12 +1956,8 @@ def create_pipeline(args):
     if not kube and not os.path.exists(inputfile):
         error("File %s not found" % inputfile)
         return 0
-    if github:
-        overrides = common.get_overrides(param=args.param)
-        renderfile = baseconfig.create_github_pipeline(inputfile, paramfile=paramfile, overrides=overrides)
-    else:
-        overrides = common.get_overrides(paramfile=paramfile, param=args.param)
-        renderfile = baseconfig.create_pipeline(inputfile, overrides=overrides, kube=kube)
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    renderfile = baseconfig.create_jenkins_pipeline(inputfile, overrides=overrides, kube=kube)
     print(renderfile)
     return 0
 
@@ -3500,13 +3516,29 @@ def cli():
     pipelinecreate_desc = 'Create Pipeline'
     pipelinecreate_parser = create_subparsers.add_parser('pipeline', description=pipelinecreate_desc,
                                                          help=pipelinecreate_desc)
-    pipelinecreate_parser.add_argument('-f', '--inputfile', help='Input Plan file')
-    pipelinecreate_parser.add_argument('-g', '--github', action='store_true', help='Create github actions pipeline')
-    pipelinecreate_parser.add_argument('-k', '--kube', action='store_true', help='Create kube pipeline')
-    pipelinecreate_parser.add_argument('-P', '--param', action='append',
-                                       help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    pipelinecreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
-    pipelinecreate_parser.set_defaults(func=create_pipeline)
+    pipelinecreate_subparsers = pipelinecreate_parser.add_subparsers(metavar='', dest='subcommand_create_pipeline')
+
+    githubpipelinecreate_desc = 'Create Github Pipeline'
+    githubpipelinecreate_parser = pipelinecreate_subparsers.add_parser('github', description=githubpipelinecreate_desc,
+                                                                       help=githubpipelinecreate_desc, aliases=['gha'])
+    githubpipelinecreate_parser.add_argument('-f', '--inputfile', help='Input Plan file')
+    githubpipelinecreate_parser.add_argument('-P', '--param', action='append',
+                                             help='Define parameter for rendering (can specify multiple)',
+                                             metavar='PARAM')
+    githubpipelinecreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    githubpipelinecreate_parser.set_defaults(func=create_pipeline_github)
+
+    jenkinspipelinecreate_desc = 'Create Jenkins Pipeline'
+    jenkinspipelinecreate_parser = pipelinecreate_subparsers.add_parser('jenkins',
+                                                                        description=jenkinspipelinecreate_desc,
+                                                                        help=jenkinspipelinecreate_desc)
+    jenkinspipelinecreate_parser.add_argument('-f', '--inputfile', help='Input Plan file')
+    jenkinspipelinecreate_parser.add_argument('-k', '--kube', action='store_true', help='Create kube pipeline')
+    jenkinspipelinecreate_parser.add_argument('-P', '--param', action='append',
+                                              help='Define parameter for rendering (can specify multiple)',
+                                              metavar='PARAM')
+    jenkinspipelinecreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    jenkinspipelinecreate_parser.set_defaults(func=create_pipeline_jenkins)
 
     plancreate_desc = 'Create Plan'
     plancreate_epilog = "examples:\n%s" % plancreate

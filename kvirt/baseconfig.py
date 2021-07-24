@@ -911,7 +911,7 @@ class Kbaseconfig:
                                allow_unicode=True)
         return {'result': 'success'}
 
-    def create_pipeline(self, inputfile, overrides={}, kube=False):
+    def create_jenkins_pipeline(self, inputfile, overrides={}, kube=False):
         _type = 'plan'
         if kube:
             _type = 'generic'
