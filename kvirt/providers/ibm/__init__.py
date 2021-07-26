@@ -4,7 +4,8 @@
 IBM Cloud provider class
 """
 
-from kvirt.common import pprint, error, warning
+from kvirt import common
+from kvirt.common import pprint, error
 import ibm_vpc
 from netaddr import IPNetwork
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
@@ -117,18 +118,34 @@ class Kibm(object):
                 key_list.append(ssh_keys[key]['id'])
         except Exception as e:
             return {'result': 'failure', 'reason': 'Unable to check keys. %s' % e}
-
+        if cloudinit:
+            if image is not None and common.needs_ignition(image):
+                version = common.ignition_version(image)
+                userdata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
+                                           domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
+                                           overrides=overrides, version=version, plan=plan, image=image)
+            else:
+                userdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
+                                            domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
+                                            overrides=overrides, fqdn=True, storemetadata=storemetadata)[0]
+        else:
+            userdata = ''
         if len(nets) == 0:
             return {'result': 'failure', 'reason': 'Network not found in configuration'}
         net_list = []
+        subnets = {x['name']: x for x in self._get_subnets()}
         try:
             subnets = {x['name']: x for x in self._get_subnets()}
             for index, net in enumerate(nets):
-                if net['name'] not in subnets:
-                    return {'result': 'failure', 'reason': 'Network %s not found' % net['name']}
-                subnet = subnets[net['name']]
+                if isinstance(net, str):
+                    netname = net
+                elif isinstance(net, dict) and 'name' in net:
+                    netname = net['name']
+                if netname not in subnets:
+                    return {'result': 'failure', 'reason': 'Network %s not found' % netname}
+                subnet = subnets[netname]
                 if subnet['zone']['name'] != self.zone:
-                    return {'result': 'failure', 'reason': 'Network %s is not in zone %s' % (net['name'], self.zone)}
+                    return {'result': 'failure', 'reason': 'Network %s is not in zone %s' % (netname, self.zone)}
                 net_list.append(
                     ibm_vpc.vpc_v1.NetworkInterfacePrototype(
                         subnet=ibm_vpc.vpc_v1.SubnetIdentityById(id=subnet['id']),
@@ -185,6 +202,7 @@ class Kibm(object):
                     resource_group=ibm_vpc.vpc_v1.ResourceGroupIdentityById(id=resource_group_id),
                     volume_attachments=volume_attachments,
                     vpc=ibm_vpc.vpc_v1.VPCIdentityById(id=vpc_id),
+                    user_data=userdata
                 )
             ).result
         except Exception as e:
@@ -259,9 +277,6 @@ class Kibm(object):
         return {'result': 'success'}
 
     def report(self):
-        print("IAM key:", self.iam_api_key)
-        print("Access key id:", self.access_key_id)
-        print("Secret access key:", self.secret_access_key)
         print("Region:", self.region)
         print("Zone:", self.zone)
         print("VPC:", self.vpc)
@@ -655,15 +670,36 @@ class Kibm(object):
         return
 
     def list_networks(self):
-        warning("Use subnets option")
-        return {}
+        networks = {}
+        subnets = {}
+        for subnet in self.conn.list_subnets().result['subnets']:
+            newsubnet = {'name': subnet['name'], 'cidr': subnet['ipv4_cidr_block']}
+            vpcid = subnet['vpc']['id']
+            if vpcid in subnets:
+                subnets[vpcid].append(newsubnet)
+            else:
+                subnets[vpcid] = [newsubnet]
+        for net in self.conn.list_vpcs().result['vpcs']:
+            networkname = net['name']
+            vpcid = net['id']
+            dhcp = net['default_network_acl']['name']
+            mode = net['default_routing_table']['name']
+            cidr = ''
+            if vpcid in subnets:
+                for subnet in subnets[vpcid]:
+                    cidr = subnet['cidr']
+                    if subnet['name'] == networkname:
+                        break
+            networks[networkname] = {'cidr': cidr, 'dhcp': dhcp, 'domain': vpcid, 'type': 'routed', 'mode': mode}
+        return networks
 
     def list_subnets(self):
+        subnets = {}
         try:
             provisioned_subnets = self._get_subnets()
         except Exception as e:
             error('Unable to retrieve subnets. %s' % e)
-        subnets = {}
+            return subnets
         for subnet in provisioned_subnets:
             subnets[subnet['name']] = {
                 'az': subnet['zone']['name'],
@@ -689,8 +725,7 @@ class Kibm(object):
     def flavors(self):
         flavor_list = []
         try:
-            provisioned_profiles = [x['name'] for x in self.conn.list_instance_profiles().result['profiles']]
-            for profile in provisioned_profiles:
+            for profile in self.conn.list_instance_profiles().result['profiles']:
                 flavor_list.append([profile['name'], profile['vcpu_count']['value'], profile['memory']['value']])
         except Exception as e:
             error("Unable to retrieve available flavors. %s" % e)
