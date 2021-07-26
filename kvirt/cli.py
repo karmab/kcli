@@ -2436,6 +2436,21 @@ def create_host_aws(args):
         baseconfig.set_defaults()
 
 
+def create_host_ibm(args):
+    """"Create IBM Cloud host"""
+    data = {}
+    data['name'] = args.name
+    data['_type'] = 'ibm'
+    data['iam_api_key'] = args.iam_api_key
+    data['region'] = args.region
+    data['vpc'] = args.vpc
+    data['zone'] = args.zone
+    common.create_host(data)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
+    if len(baseconfig.clients) == 1:
+        baseconfig.set_defaults()
+
+
 def create_host_openstack(args):
     """Create Openstack Host"""
     data = {}
@@ -2702,13 +2717,13 @@ def cli():
 
     """
     PARAMETERS_HELP = 'specify parameter or keyword for rendering (multiple can be specified)'
-    parser = argparse.ArgumentParser(description='Libvirt/Ovirt/Vsphere/Gcp/Aws/Openstack/Kubevirt Wrapper')
+    parser = argparse.ArgumentParser(description='Libvirt/Ovirt/Vsphere/Gcp/Aws/Openstack/Kubevirt Wrapper/Ibm Cloud')
     parser.add_argument('-C', '--client')
     parser.add_argument('--containerclient', help='Containerclient to use')
     parser.add_argument('--dnsclient', help='Dnsclient to use')
     parser.add_argument('-d', '--debug', action='store_true')
     parser.add_argument('-n', '--namespace', help='Namespace to use. specific to kubevirt', default='default')
-    parser.add_argument('-r', '--region', help='Region to use. specific to aws/gcp')
+    parser.add_argument('-r', '--region', help='Region to use. specific to aws/gcp/ibm')
     parser.add_argument('-z', '--zone', help='Zone to use. specific to gcp')
 
     subparsers = parser.add_subparsers(metavar='', title='Available Commands')
@@ -3132,6 +3147,16 @@ def cli():
     awshostcreate_parser.add_argument('-r', '--region', help='Region', metavar='REGION', required=True)
     awshostcreate_parser.add_argument('name', metavar='NAME')
     awshostcreate_parser.set_defaults(func=create_host_aws)
+
+    ibmhostcreate_desc = 'Create IBM Cloud Host'
+    ibmhostcreate_parser = hostcreate_subparsers.add_parser('ibm', help=ibmhostcreate_desc,
+                                                            description=ibmhostcreate_desc)
+    ibmhostcreate_parser.add_argument('--iam_api_key', help='IAM API Key', metavar='IAM_API_KEY', required=True)
+    ibmhostcreate_parser.add_argument('--vpc', help='VPC name', metavar='VPC')
+    ibmhostcreate_parser.add_argument('--zone', help='Zone within the region', metavar='ZONE')
+    ibmhostcreate_parser.add_argument('-r', '--region', help='Region', metavar='REGION')
+    ibmhostcreate_parser.add_argument('name', metavar='NAME')
+    ibmhostcreate_parser.set_defaults(func=create_host_ibm)
 
     gcphostcreate_desc = 'Create Gcp Host'
     gcphostcreate_parser = hostcreate_subparsers.add_parser('gcp', help=gcphostcreate_desc,
