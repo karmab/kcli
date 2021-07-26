@@ -23,6 +23,7 @@ ENDPOINTS = {
     'au-syd': 'https://au-syd.iaas.cloud.ibm.com/v1'
 }
 
+
 def get_zone_href(region, zone):
     return "{}/regions/{}/zones/{}".format(
         ENDPOINTS.get(region),
@@ -30,8 +31,10 @@ def get_zone_href(region, zone):
         zone
     )
 
+
 def get_s3_endpoint(region):
     return 'https://s3.{}.cloud-object-storage.appdomain.cloud'.format(region)
+
 
 class Kibm(object):
     """
@@ -61,14 +64,14 @@ class Kibm(object):
 
     def exists(self, name):
         try:
-            return self._get_vm(name) != None
+            return self._get_vm(name) is not None
         except Exception as e:
             error("Unable to retrieve VM. %s" % e)
             return False
 
     def net_exists(self, name):
         try:
-            return self._get_subnet(name) != None
+            return self._get_subnet(name) is not None
         except Exception as e:
             error("Unable to retrieve available subnets. %s" % (e))
             return False
@@ -131,7 +134,7 @@ class Kibm(object):
                         subnet=ibm_vpc.vpc_v1.SubnetIdentityById(id=subnet['id']),
                         allow_ip_spoofing=False,
                         name="eth{}".format(index)
-                        #TODO: security groups, ip address
+                        # TODO: security groups, ip address
                     )
                 )
         except Exception as e:
@@ -142,9 +145,9 @@ class Kibm(object):
         try:
             provisioned_profiles = self._get_profiles()
         except Exception as e:
-            return {'result':'failure', 'reason': 'Unable to check flavors. %s' % e}
+            return {'result': 'failure', 'reason': 'Unable to check flavors. %s' % e}
         if flavor not in provisioned_profiles:
-                return {'result': 'failure', 'reason': 'Flavor %s not found' % flavor}
+            return {'result': 'failure', 'reason': 'Flavor %s not found' % flavor}
 
         try:
             image = self._get_image(image)
@@ -181,7 +184,7 @@ class Kibm(object):
                         name=flavor),
                     resource_group=ibm_vpc.vpc_v1.ResourceGroupIdentityById(id=resource_group_id),
                     volume_attachments=volume_attachments,
-                    vpc= ibm_vpc.vpc_v1.VPCIdentityById(id=vpc_id),
+                    vpc=ibm_vpc.vpc_v1.VPCIdentityById(id=vpc_id),
                 )
             ).result
         except Exception as e:
@@ -274,16 +277,18 @@ class Kibm(object):
             return {'result': 'failure', 'reason': 'Unable to retrieve VM %s. %s' % (name, e)}
 
     def list(self):
+        vms = []
         try:
             provisioned_vms = self._get_vms()
         except Exception as e:
-            return {'result': 'failure', 'reason': 'Unable to retrieve VMs. %s' % e}
+            error('Unable to retrieve VMs. %s' % e)
+            return vms
         try:
             floating_ips = {x['target']['id']: x for x in self.conn.list_floating_ips(
             ).result['floating_ips'] if x['status'] == 'available'}
         except Exception as e:
-            return {'result': 'failure', 'reason': 'Unable to retrieve floating ips. %s' % e}
-        vms = []
+            error('Unable to retrieve floating ips. %s' % e)
+            return vms
         for vm in provisioned_vms:
             vms.append(self.info(vm['name'], vm=vm, ignore_volumes=True, floating_ips=floating_ips))
         return sorted(vms, key=lambda x: x['name'])
@@ -316,7 +321,8 @@ class Kibm(object):
         print("not implemented")
         return
 
-    def info(self, name, output='plain', fields=[], values=False, vm=None, ignore_volumes=False, floating_ips=None, debug=False):
+    def info(self, name, output='plain', fields=[], values=False, vm=None, ignore_volumes=False, floating_ips=None,
+             debug=False):
         yamlinfo = {}
         if vm is None:
             try:
@@ -330,7 +336,8 @@ class Kibm(object):
         state = vm['status']
         if floating_ips is None:
             try:
-                floating_ips = {x['target']['id']: x for x in self.conn.list_floating_ips().result['floating_ips'] if x['status'] == 'available'}
+                floating_ips = {x['target']['id']: x for x in
+                                self.conn.list_floating_ips().result['floating_ips'] if x['status'] == 'available'}
             except Exception as e:
                 error('Unable to retrieve floating ips. %s' % e)
                 return yamlinfo
@@ -388,8 +395,8 @@ class Kibm(object):
                     drivertype = volume['profile']['name']
                     diskformat = 'N/A'
                     path = 'N/A'
-                    disks.append({'device': devname, 'size': disksize,
-                                'format': diskformat, 'type': drivertype, 'path': path})
+                    disks.append({'device': devname, 'size': disksize, 'format': diskformat, 'type': drivertype,
+                                  'path': path})
         if disks:
             yamlinfo['disks'] = disks
 
@@ -418,7 +425,7 @@ class Kibm(object):
             images = self.conn.list_images().result['images']
             for image in images:
                 if image['status'] not in ['available', 'deprecated'] or \
-                    image['operating_system']['name'].startswith('windows'):
+                        image['operating_system']['name'].startswith('windows'):
                     continue
                 image_list.append(image['name'])
         except Exception as e:
@@ -427,6 +434,7 @@ class Kibm(object):
         return sorted(image_list, key=str.lower)
 
     def delete(self, name, snapshots=False):
+        conn = self.conn
         try:
             vm = self._get_vm(name)
             if vm is None:
@@ -436,16 +444,18 @@ class Kibm(object):
 
         try:
             for network in vm['network_interfaces']:
-                response = self.conn.list_instance_network_interface_floating_ips(instance_id=vm['id'], network_interface_id=network['id']).result
+                response = conn.list_instance_network_interface_floating_ips(instance_id=vm['id'],
+                                                                             network_interface_id=network['id']).result
                 if len(response['floating_ips']) == 0:
                     continue
                 for floating_ip in response['floating_ips']:
-                    self.conn.remove_instance_network_interface_floating_ip(id=floating_ip['id'], instance_id=vm['id'], network_interface_id=network['id'])
-                    self.conn.delete_floating_ip(id=floating_ip['id'])
+                    conn.remove_instance_network_interface_floating_ip(id=floating_ip['id'], instance_id=vm['id'],
+                                                                       network_interface_id=network['id'])
+                    conn.delete_floating_ip(id=floating_ip['id'])
         except Exception as e:
             return {'result': 'failure', 'reason': 'Unable to remove floating IPs for VM %s. %s' % (name, e)}
         try:
-            self.conn.delete_instance(id=vm['id'])
+            conn.delete_instance(id=vm['id'])
         except Exception as e:
             return {'result': 'failure', 'reason': 'Unable to delete VM. %s' % e}
         return {'result': 'success'}
@@ -541,7 +551,7 @@ class Kibm(object):
             error('Unable to retrieve network information. %s' % e)
             return
         try:
-            #TODO: better name. Follow ethX scheme.
+            # TODO: better name. Follow ethX scheme.
             self.conn.create_instance_network_interface(
                 instance_id=vm['id'],
                 subnet=ibm_vpc.vpc_v1.SubnetIdentityById(id=subnet['id']),
@@ -695,8 +705,8 @@ class Kibm(object):
         if bucket in self.list_buckets():
             error("Bucket %s already there" % bucket)
             return
-        location = {'LocationConstraint': self.region}
-        args = {'Bucket': bucket}#, "CreateBucketConfiguration": location} #TODO: fix this.
+        # location = {'LocationConstraint': self.region}
+        args = {'Bucket': bucket}  # , "CreateBucketConfiguration": location} #TODO: fix this.
         if public:
             args['ACL'] = 'public-read'
         self.s3.create_bucket(**args)
@@ -735,7 +745,8 @@ class Kibm(object):
             self.s3.upload_fileobj(f, bucket, dest, ExtraArgs=ExtraArgs)
         if temp_url:
             expiration = 600
-            return self.s3.generate_presigned_url('get_object', Params={'Bucket': bucket, 'Key': dest}, ExpiresIn=expiration)
+            return self.s3.generate_presigned_url('get_object', Params={'Bucket': bucket, 'Key': dest},
+                                                  ExpiresIn=expiration)
 
     def list_buckets(self):
         response = self.s3.list_buckets()
