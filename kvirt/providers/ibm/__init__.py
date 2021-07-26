@@ -175,14 +175,17 @@ class Kibm(object):
             return {'result': 'failure', 'reason': 'Unable to check provisioned images. %s' % e}
 
         volume_attachments = []
-        for disk in disks:
+        for index, disk in enumerate(disks[1:]):
+            disksize = int(disk.get('size')) if isinstance(disk, list) and 'size' in disk else int(disk)
+            diskname = "%s-disk%s" % (name, index + 1)
             volume_attachments.append(
                 ibm_vpc.vpc_v1.VolumeAttachmentPrototypeInstanceContext(
                     volume=ibm_vpc.vpc_v1.VolumeAttachmentVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeByCapacity(
                         profile=ibm_vpc.vpc_v1.VolumeProfileIdentityByName(
                             name='general-purpose'
                         ),
-                        capacity=disk.get('size', '100'),
+                        capacity=disksize,
+                        name=diskname
                     ),
                     delete_volume_on_instance_delete=True,
                 )
