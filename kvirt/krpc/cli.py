@@ -1839,6 +1839,7 @@ def create_host_ibm(args):
     if len(baseconfig.clients) == 1:
         baseconfig.set_defaults()
 
+
 def create_host_openstack(args):
     """Create Openstack Host"""
     data = {}
@@ -2287,7 +2288,7 @@ def cli():
     awshostcreate_parser.add_argument('name', metavar='NAME', nargs='?')
     awshostcreate_parser.set_defaults(func=create_host_aws)
 
-        ibmhostcreate_desc = 'Create IBM Cloud Host'
+    ibmhostcreate_desc = 'Create IBM Cloud Host'
     ibmhostcreate_parser = hostcreate_subparsers.add_parser('ibm', help=ibmhostcreate_desc,
                                                             description=ibmhostcreate_desc)
     ibmhostcreate_parser.add_argument('--iam_api_key', help='IAM API Key', metavar='IAM_API_KEY', required=True)

@@ -363,27 +363,27 @@ class Kibm(object):
             ips.append(floating_ips[network['id']]['address'])
         ip = ','.join(ips)
 
-        zone = vm['zone']['name']
+        # zone = vm['zone']['name']
         image = vm['image']['name']
         yamlinfo['profile'] = vm['profile']['name']
         yamlinfo['name'] = name
         yamlinfo['status'] = state
-        yamlinfo['region'] = self.region
-        yamlinfo['zone'] = zone
+        # yamlinfo['region'] = self.region
+        # yamlinfo['zone'] = zone
         yamlinfo['ip'] = ip
-        yamlinfo['public_ip'] = ip
-        yamlinfo['bandwidth'] = vm['bandwidth']
-        yamlinfo['profile'] = vm['profile']['name']
+        # yamlinfo['bandwidth'] = vm['bandwidth']
+        yamlinfo['flavor'] = vm['profile']['name']
         yamlinfo['cpus'] = vm['vcpu']['count']
         yamlinfo['memory'] = vm['memory']
         yamlinfo['image'] = image
-        yamlinfo['creation_date'] = vm['created_at']
+        yamlinfo['creationdate'] = vm['created_at']
         yamlinfo['id'] = vm['id']
-        yamlinfo['resource_group'] = vm['resource_group']['name']
-        yamlinfo['resource_type'] = vm['resource_type']
-        yamlinfo['startable'] = vm['startable']
-        yamlinfo['vpc'] = vm['vpc']['name']
-
+        # yamlinfo['resource_group'] = vm['resource_group']['name']
+        # yamlinfo['resource_type'] = vm['resource_type']
+        # yamlinfo['startable'] = vm['startable']
+        # yamlinfo['vpc'] = vm['vpc']['name']
+        yamlinfo['profile'] = ''
+        yamlinfo['plan'] = ''
         nets = []
         for interface in vm['network_interfaces']:
             network = interface['subnet']['name']
@@ -393,7 +393,7 @@ class Kibm(object):
             yamlinfo['private_ip'] = private_ip
         if nets:
             yamlinfo['nets'] = nets
-            yamlinfo['primary_network_interface'] = vm['primary_network_interface']['name']
+            # yamlinfo['primary_network_interface'] = vm['primary_network_interface']['name']
 
         disks = []
         if ignore_volumes is False:
