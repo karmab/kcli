@@ -85,7 +85,7 @@ The script can also be used for installation, which will make a guess on which m
 
 
 ```Shell
-curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | sh
+curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | bash
 ```
 
 ## Package install method
