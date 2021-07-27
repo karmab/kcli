@@ -1,13 +1,22 @@
 name: ci
 on: push
 
+env:
+ QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
+ QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
+ PYPI_USERNAME: ${{ secrets.PYPI_USERNAME }}
+ PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+ DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+ DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+ CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
+
 jobs:
 
-  ci-workflow:
-    name: CI workflow
+  prepare-environment:
+    name: Preparation
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout Repo
         uses: actions/checkout@v2
       - uses: actions/setup-python@v2
       - name: Install Dependencies
@@ -16,19 +25,16 @@ jobs:
       - name: Setup Hypervisor
         run: sudo .github/setup_hypervisor.sh
         shell: bash
-      - name: Lint
+      - name: Lint Code
         run: .github/linting.sh
         shell: bash
-      - name: Build
+      - name: Build Container
+        run: .github/build.sh
+        shell: bash
+      - name: Test code
         run: .github/build.sh
         shell: bash
       - name: Release
-        if: false
-        # if: success() && github.event_name != 'pull_request'
         run: .github/release.sh
         shell: bash
-        env:
-         QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
-         QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
-         PYPI_USERNAME: ${{ secrets.PYPI_USERNAME }}
-         PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        # if: success() && github.event_name != 'pull_request'
