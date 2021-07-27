@@ -23,7 +23,7 @@ jobs:
         run: sudo .github/prep.sh
         shell: bash
       - name: Setup Hypervisor
-        run: sudo .github/setup_hypervisor.sh
+        run: .github/hypervisor.sh
         shell: bash
       - name: Lint Code
         run: .github/linting.sh
