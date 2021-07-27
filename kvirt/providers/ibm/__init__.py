@@ -6,6 +6,7 @@ IBM Cloud provider class
 
 from kvirt import common
 from kvirt.common import pprint, error
+from kvirt.defaults import METADATA_FIELDS
 import ibm_vpc
 from netaddr import IPNetwork
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
@@ -214,9 +215,11 @@ class Kibm(object):
         except Exception as e:
             return {'result': 'failure', 'reason': 'Unable to create VM %s. %s' % (name, e)}
         resource_model = {'resource_id': result_create['crn']}
+        tag_names = []
+        for entry in [field for field in metadata if field in METADATA_FIELDS]:
+            tag_names.append('%s:%s' % (entry, metadata[entry]))
         self.global_tagging_service.attach_tag(resources=[resource_model],
-                                               tag_names=['plan:%s' % plan, 'profile:%s' % profile],
-                                               tag_type='user').get_result()
+                                               tag_names=tag_names, tag_type='user').get_result()
         try:
             result_ip = self.conn.create_floating_ip(ibm_vpc.vpc_v1.FloatingIPPrototypeFloatingIPByTarget(
                 target=ibm_vpc.vpc_v1.FloatingIPByTargetNetworkInterfaceIdentityNetworkInterfaceIdentityById(
@@ -400,10 +403,10 @@ class Kibm(object):
             tags = entry[1]
             for tag in tags:
                 tagname = tag['name']
-                if tagname.startswith('plan:'):
-                    yamlinfo['plan'] = tagname.split(':')[1]
-                if tagname.startswith('profile:'):
-                    yamlinfo['profile'] = tagname.split(':')[1]
+                if tagname.count(':') == 1:
+                    key, value = tagname.split(':')
+                    if key in METADATA_FIELDS:
+                        yamlinfo[key] = value
             break
         nets = []
         for interface in vm['network_interfaces']:
