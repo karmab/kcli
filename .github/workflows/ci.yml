@@ -1,0 +1,36 @@
+name: ci
+on: push
+
+jobs:
+
+  prep:
+    name: Prepare environment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - name: Lint
+        run: .github/setup_hypervisor.sh
+        shell: bash
+
+  ci-workflow:
+    name: CI workflow
+    runs-on: ubuntu-latest
+    steps:
+      - name: Lint
+        run: .github/linting.sh
+        shell: bash
+      - name: Build
+        run: .github/build.sh
+        shell: bash
+      - name: Release
+        if: false
+        # if: success() && github.event_name != 'pull_request'
+        run: .github/release.sh
+        shell: bash
+        env:
+         QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
+         QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
+         PYPI_USERNAME: ${{ secrets.PYPI_USERNAME }}
+         PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
