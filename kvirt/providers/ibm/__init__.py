@@ -9,6 +9,7 @@ from kvirt.common import pprint, error
 import ibm_vpc
 from netaddr import IPNetwork
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
+from ibm_platform_services import GlobalTaggingV1
 import os
 import ibm_boto3
 import webbrowser
@@ -52,6 +53,8 @@ class Kibm(object):
             aws_access_key_id=access_key_id,
             aws_secret_access_key=secret_access_key
         )
+        self.global_tagging_service = GlobalTaggingV1(authenticator=self.authenticator)
+        self.global_tagging_service.set_service_url('https://tags.global-search-tagging.cloud.ibm.com')
         self.iam_api_key = iam_api_key
         self.access_key_id = access_key_id
         self.secret_access_key = secret_access_key
@@ -210,7 +213,10 @@ class Kibm(object):
             ).result
         except Exception as e:
             return {'result': 'failure', 'reason': 'Unable to create VM %s. %s' % (name, e)}
-
+        resource_model = {'resource_id': result_create['crn']}
+        self.global_tagging_service.attach_tag(resources=[resource_model],
+                                               tag_names=['plan:%s' % plan, 'profile:%s' % profile],
+                                               tag_type='user').get_result()
         try:
             result_ip = self.conn.create_floating_ip(ibm_vpc.vpc_v1.FloatingIPPrototypeFloatingIPByTarget(
                 target=ibm_vpc.vpc_v1.FloatingIPByTargetNetworkInterfaceIdentityNetworkInterfaceIdentityById(
@@ -387,6 +393,18 @@ class Kibm(object):
         # yamlinfo['vpc'] = vm['vpc']['name']
         yamlinfo['profile'] = ''
         yamlinfo['plan'] = ''
+        tag_list = self.global_tagging_service.list_tags(attached_to=vm['crn']).get_result().items()
+        for entry in tag_list:
+            if entry[0] != 'items':
+                continue
+            tags = entry[1]
+            for tag in tags:
+                tagname = tag['name']
+                if tagname.startswith('plan:'):
+                    yamlinfo['plan'] = tagname.split(':')[1]
+                if tagname.startswith('profile:'):
+                    yamlinfo['profile'] = tagname.split(':')[1]
+            break
         nets = []
         for interface in vm['network_interfaces']:
             network = interface['subnet']['name']
