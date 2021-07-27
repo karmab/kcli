@@ -32,9 +32,8 @@ jobs:
         run: .github/build.sh
         shell: bash
       - name: Test code
-        run: .github/build.sh
+        run: .github/testing.sh
         shell: bash
       - name: Release
         run: .github/release.sh
         shell: bash
-        # if: success() && github.event_name != 'pull_request'
