@@ -12,8 +12,8 @@ env:
 
 jobs:
 
-  prepare-environment:
-    name: Preparation
+  run-workflow:
+    name: CI Workflow
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
