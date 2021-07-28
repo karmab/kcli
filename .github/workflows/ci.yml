@@ -2,7 +2,7 @@ name: ci
 on: push
 
 env:
- RELEASE : ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+ RELEASE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
  QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
  QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
  PYPI_USERNAME: ${{ secrets.PYPI_USERNAME }}
