@@ -45,23 +45,23 @@ if [ "$ALIAS" != "0" ]; then
   fi
   [ -d $HOME/.kcli ] || mkdir -p $HOME/.kcli
   [ -d $HOME/.ssh  ] || ssh-keygen -t rsa -N '' -f $HOME/.ssh/id_rsa
-  echo -e '#/bin/bash\n'$engine run -p 9000:9000 --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir -v /var/tmp:/ignitiondir --entrypoint=/usr/bin/klist.py karmab/kcli' > $HOME/klist.py
+  echo -e '#/bin/bash\n'$engine run -p 9000:9000 --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir --entrypoint=/usr/bin/klist.py karmab/kcli' > $HOME/klist.py
 case $shell in
 bash|zsh)
   shellfile="$HOME/.bashrc"
   [ "$shell" == zsh ] && shellfile="$HOME/.zshrc" 
-  grep -q kcli= $shellfile || echo alias kcli=\'$engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir -v /var/tmp:/ignitiondir karmab/kcli'\' >> $shellfile
-  grep -q kclishell= $shellfile || echo alias kclishell=\'$engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir -v /var/tmp:/ignitiondir --entrypoint=/bin/sh karmab/kcli'\' >> $shellfile
-  grep -q kcliweb= $shellfile || echo alias kweb=\'$engine run -p 9000:9000 --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir -v /var/tmp:/ignitiondir --entrypoint=/usr/bin/kweb karmab/kcli'\' >> $shellfile
-  alias kcli="$engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES -v $PWD:/workdir -v /var/tmp:/ignitiondir karmab/kcli"
+  grep -q kcli= $shellfile || echo alias kcli=\'$engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir karmab/kcli'\' >> $shellfile
+  grep -q kclishell= $shellfile || echo alias kclishell=\'$engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir --entrypoint=/bin/sh karmab/kcli'\' >> $shellfile
+  grep -q kcliweb= $shellfile || echo alias kweb=\'$engine run -p 9000:9000 --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir --entrypoint=/usr/bin/kweb karmab/kcli'\' >> $shellfile
+  alias kcli="$engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES -v $PWD:/workdir karmab/kcli"
   ;;
 fish)
   shellfile="$HOME/.config/fish/config.fish"
   [ ! -d ~/.config/fish ] && mkdir -p ~/.config/fish
-  grep -q 'kcli ' $shellfile || echo alias kcli $engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir -v /var/tmp:/ignitiondir karmab/kcli' >> $shellfile
-  grep -q kclishell $shellfile || echo alias kclishell $engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir -v /var/tmp:/ignitiondir --entrypoint=/bin/sh karmab/kcli' >> $shellfile
-  grep -q kcliweb $shellfile || echo alias kweb $engine run -p 9000:9000 --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir -v /var/tmp:/ignitiondir --entrypoint=/usr/bin/kweb karmab/kcli' >> $shellfile
-  alias kcli $engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES -v $PWD:/workdir -v /var/tmp:/ignitiondir karmab/kcli
+  grep -q 'kcli ' $shellfile || echo alias kcli $engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir karmab/kcli' >> $shellfile
+  grep -q kclishell $shellfile || echo alias kclishell $engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir --entrypoint=/bin/sh karmab/kcli' >> $shellfile
+  grep -q kcliweb $shellfile || echo alias kweb $engine run -p 9000:9000 --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir --entrypoint=/usr/bin/kweb karmab/kcli' >> $shellfile
+  alias kcli $engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES -v $PWD:/workdir karmab/kcli
   ;;
 *)
   echo -e "${RED}Installing aliases for $shell is not supported :(${NC}"
