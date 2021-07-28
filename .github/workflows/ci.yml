@@ -13,7 +13,7 @@ env:
 jobs:
 
   run-workflow:
-    name: CI Workflow
+    name: Workflow
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
@@ -36,3 +36,4 @@ jobs:
       - name: Release
         run: .github/release.sh
         shell: bash
+        if: github.event_name != 'pull_request'
