@@ -25,12 +25,6 @@ from tempfile import TemporaryDirectory
 import yaml
 
 binary_types = ['bz2', 'deb', 'jpg', 'gz', 'jpeg', 'iso', 'png', 'rpm', 'tgz', 'zip', 'ks']
-static_nic = """#!/usr/bin/env bash
-if [ ! -f /etc/sysconfig/network-scripts/ifcfg-{nicname} ] ; then
-echo -e \"\"\"{data}\"\"\" > /etc/sysconfig/network-scripts/ifcfg-{nicname}
-systemctl restart NetworkManager
-fi"""
-static_nic_fcos = "{data}"
 
 ceo_yaml = """apiVersion: operator.openshift.io/v1
 kind: Etcd
@@ -1081,7 +1075,6 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     if nets:
         enpindex = 255
         for index, net in enumerate(nets):
-            static_nic_file = static_nic
             static_nic_file_mode = '755'
             netdata = ''
             if isinstance(net, str):
@@ -1111,7 +1104,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
                 netmask = next((e for e in [net.get('mask'), net.get('netmask')] if e is not None), None)
                 noconf = net.get('noconf')
                 vips = net.get('vips')
-            nicpath = "/etc/NetworkManager/dispatcher.d/static_%s" % nicname
+            nicpath = "/etc/sysconfig/network-scripts/ifcfg-%s" % nicname
             if noconf is not None:
                 netdata = "DEVICE=%s\nNAME=%s\nONBOOT=no" % (nicname, nicname)
             elif ip is not None and netmask is not None and not reserveip and gateway is not None:
@@ -1130,10 +1123,9 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
                     netdata += "match-device=interface-name:%s\n\n" % nicname
                     netdata += "[ipv4]\nmethod=manual\naddresses=%s/%s\ngateway=%s\n" % (ip, netmask, gateway)
                     nicpath = "/etc/NetworkManager/system-connections/%s.nmconnection" % nicname
-                    static_nic_file = static_nic_fcos
                     static_nic_file_mode = '0600'
             if netdata != '':
-                static = quote(static_nic_file.format(nicname=nicname, data=netdata))
+                static = quote(netdata)
                 storage["files"].append({"filesystem": "root",
                                          "path": nicpath,
                                          "contents": {"source": "data:,%s" % static, "verification": {}},
