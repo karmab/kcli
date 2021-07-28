@@ -2,6 +2,7 @@ name: ci
 on: push
 
 env:
+ RELEASE : ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
  QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
  QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
  PYPI_USERNAME: ${{ secrets.PYPI_USERNAME }}
@@ -33,7 +34,7 @@ jobs:
       - name: Test code
         run: .github/testing.sh
         shell: bash
-      - name: Release
+      - if: ${{ env.RELEASE }}
+        name: Release
         run: .github/release.sh
         shell: bash
-        if: github.event_name != 'pull_request'
