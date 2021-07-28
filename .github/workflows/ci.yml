@@ -1,8 +1,11 @@
 name: ci
-on: push
+on:
+ push:
+   branches:
+    - master
+
 
 env:
- RELEASE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
  QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
  QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
  PYPI_USERNAME: ${{ secrets.PYPI_USERNAME }}
@@ -34,7 +37,6 @@ jobs:
       - name: Test code
         run: .github/testing.sh
         shell: bash
-      - if: ${{ env.RELEASE }}
-        name: Release
+      - name: Release
         run: .github/release.sh
         shell: bash
