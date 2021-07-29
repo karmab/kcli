@@ -21,19 +21,17 @@ jobs:
       - name: Install Dependencies
         run: sudo .github/prep.sh
         shell: bash
-      - name: Setup Hypervisor
-        run: .github/hypervisor.sh
-        shell: bash
       - name: Lint Code
         run: .github/linting.sh
-        shell: bash
-      - name: Build Container
-        run: .github/build.sh
         shell: bash
       - name: Test code
         run: .github/testing.sh
         shell: bash
       - if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-        name: Release
+        name: Release Artifacts
         run: .github/release.sh
+        shell: bash
+      - if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        name: Build And Push Container
+        run: .github/container.sh
         shell: bash
