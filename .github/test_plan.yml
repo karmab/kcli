@@ -1,0 +1,27 @@
+parameters:
+ pool: default
+ image: fedora33
+
+{{ image }}:
+ type: image
+ pool: {{ pool }}
+
+mynetwork:
+ type: network
+ cidr: 10.0.5.0/24
+ dhcp: true 
+ nat: false
+
+myfedora:
+  type: profile
+  image: {{ image }}
+  memory: 2048
+  numcpus: 2
+  disks:
+   - size: 10
+  nets:
+   - mynetwork
+
+test_instance:
+  profile: myfedora 
+  pool: {{ pool }}
