@@ -1,9 +1,5 @@
-name: ci
-on:
- push:
-   branches:
-    - master
-
+name: CI
+on: [push, pull_request]
 
 env:
  QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
@@ -37,6 +33,7 @@ jobs:
       - name: Test code
         run: .github/testing.sh
         shell: bash
-      - name: Release
+      - if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        name: Release
         run: .github/release.sh
         shell: bash
