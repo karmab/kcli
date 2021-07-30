@@ -614,6 +614,7 @@ class Ksphere:
                         portgroupkey = self.portgs[netname][1]
                         currentnic.backing.port.switchUuid = switchuuid
                         currentnic.backing.port.portgroupKey = portgroupkey
+                        currentnic.backing.port.portKey = None
                         nicspec = vim.vm.device.VirtualDeviceSpec(device=currentnic, operation="edit")
                         devconfspec.append(nicspec)
                     elif netname in self.networks:
