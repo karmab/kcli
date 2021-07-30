@@ -11,7 +11,9 @@ from ibm_vpc import VpcV1, vpc_v1
 from netaddr import IPNetwork
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 from ibm_cloud_sdk_core.api_exception import ApiException
-from ibm_platform_services import GlobalTaggingV1
+from ibm_platform_services import GlobalTaggingV1, ResourceControllerV2
+from ibm_cloud_networking_services import DnsSvcsV1
+from time import sleep
 import os
 import ibm_boto3
 import webbrowser
@@ -27,6 +29,7 @@ ENDPOINTS = {
     'au-syd': 'https://au-syd.iaas.cloud.ibm.com/v1'
 }
 
+DNS_RESOURCE_ID = 'b4ed8a30-936f-11e9-b289-1d079699cbe5'
 
 def get_zone_href(region, zone):
     return "{}/regions/{}/zones/{}".format(
@@ -58,6 +61,13 @@ class Kibm(object):
         )
         self.global_tagging_service = GlobalTaggingV1(authenticator=self.authenticator)
         self.global_tagging_service.set_service_url('https://tags.global-search-tagging.cloud.ibm.com')
+
+        self.dns = DnsSvcsV1(authenticator=self.authenticator)
+        self.dns.set_service_url('https://api.dns-svcs.cloud.ibm.com/v1')
+
+        self.resources = ResourceControllerV2(authenticator=self.authenticator)
+        self.resources.set_service_url('https://resource-controller.cloud.ibm.com')
+
         self.iam_api_key = iam_api_key
         self.access_key_id = access_key_id
         self.secret_access_key = secret_access_key
@@ -215,12 +225,17 @@ class Kibm(object):
             ).result
         except ApiException as exc:
             return {'result': 'failure', 'reason': 'Unable to create VM %s. %s' % (name, exc)}
-        resource_model = {'resource_id': result_create['crn']}
+
         tag_names = []
         for entry in [field for field in metadata if field in METADATA_FIELDS]:
             tag_names.append('%s:%s' % (entry, metadata[entry]))
-        self.global_tagging_service.attach_tag(resources=[resource_model],
-                                               tag_names=tag_names, tag_type='user').get_result()
+        resource_model = {'resource_id': result_create['crn']}
+        try:
+            self.global_tagging_service.attach_tag(resources=[resource_model],
+                                                   tag_names=tag_names, tag_type='user').get_result()
+        except ApiException as exc:
+            return {'result': 'failure', 'reason': 'Unable to attach tags. %s' % exc}
+
         try:
             result_ip = self.conn.create_floating_ip(vpc_v1.FloatingIPPrototypeFloatingIPByTarget(
                 target= vpc_v1.FloatingIPByTargetNetworkInterfaceIdentityNetworkInterfaceIdentityById(
@@ -240,6 +255,9 @@ class Kibm(object):
             )
         except ApiException as exc:
             return {'result': 'failure', 'reason': 'Unable to add floating ip. %s' % exc}
+
+        if reservedns and domain is not None:
+            self.reserve_dns(name, nets=nets, domain=domain, alias=alias, instanceid=name)
         return {'result': 'success'}
 
     def start(self, name):
@@ -458,6 +476,15 @@ class Kibm(object):
             error("Unable to retrieve IP for %s. %s" % (name, exc))
         return ','.join(ips)
 
+    def internalip(self, name):
+        try:
+            vm = self._get_vm(name)
+        except ApiException as exc:
+            return None
+        if 'primary_network_interface' not in vm:
+            return None
+        return vm['primary_network_interface']['primary_ipv4_address']
+
     def volumes(self, iso=False):
         image_list = []
         try:
@@ -482,6 +509,18 @@ class Kibm(object):
             return {'result': 'failure', 'reason': 'Unable to retrieve VM %s. %s' % (name, exc)}
 
         try:
+            tags = self.global_tagging_service.list_tags(attached_to=vm['crn']).result['items']
+        except ApiException as exc:
+            error('Unable to retrieve tags. %s' % exc)
+            return None, None
+        for tag in tags:
+            tagname = tag['name']
+            if tagname.count(':') == 1:
+                key, value = tagname.split(':')
+                if key == 'domain':
+                    domain = value
+
+        try:
             for network in vm['network_interfaces']:
                 response = conn.list_instance_network_interface_floating_ips(instance_id=vm['id'],
                                                                              network_interface_id=network['id']).result
@@ -499,10 +538,34 @@ class Kibm(object):
             conn.delete_instance(id=vm['id'])
         except ApiException as exc:
             return {'result': 'failure', 'reason': 'Unable to delete VM. %s' % exc}
+        if domain is not None:
+            self.delete_dns(name, domain, name)
         return {'result': 'success'}
 
     def dnsinfo(self, name):
-        return None, None
+        dnsclient, domain = None, None
+        try:
+            vm = self._get_vm(name)
+            if vm is None:
+                error('VM %s not found' % name)
+                return dnsclient, domain
+        except ApiException as exc:
+            error('Unable to retrieve VM. %s' % exc)
+            return dnsclient, domain
+        try:
+            tags = self.global_tagging_service.list_tags(attached_to=vm['crn']).result['items']
+        except ApiException as exc:
+            error('Unable to retrieve tags. %s' % exc)
+            return None, None
+        for tag in tags:
+            tagname = tag['name']
+            if tagname.count(':') == 1:
+                key, value = tagname.split(':')
+                if key == 'dnsclient':
+                    dnsclient = value
+                if key == 'domain':
+                    domain = value
+        return dnsclient, domain
 
     def clone(self, old, new, full=False, start=False):
         print("not implemented")
@@ -811,6 +874,135 @@ class Kibm(object):
     def public_bucketfile_url(self, bucket, path):
         return 'https://{}.s3.{}.cloud-object-storage.appdomain.cloud/{}'.format(bucket, self.region, path)
 
+    def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False, instanceid=None):
+        if domain is None:
+            domain = nets[0]
+        pprint("Using domain %s..." % domain)
+        cluster = None
+        fqdn = "%s.%s" % (name, domain)
+        if fqdn.split('-')[0] == fqdn.split('.')[1]:
+            cluster = fqdn.split('-')[0]
+            name = '.'.join(fqdn.split('.')[:1])
+            domain = fqdn.replace("%s." % name, '').replace("%s." % cluster, '')
+        try:
+            dnslist = self._get_dns()
+        except ApiException as exc:
+            error('Unable to retrieve DNS service. %s' % exc)
+
+        for dns in dnslist:
+            try:
+                dnszone = self._get_dns_zone(dns['guid'], domain)
+            except ApiException as exc:
+                error('Unable to retrieve DNS zones. %s' % exc)
+                return
+            if dnszone is not None:
+                break
+        else:
+            error('Domain %s not found' % domain)
+            return
+
+        dnsentry = name if cluster is None else "%s.%s" % (name, cluster)
+        entry = "%s.%s" % (dnsentry, domain)
+        if ip is None:
+            counter = 0
+            while counter != 100:
+                ip = self.internalip(name)
+                if ip is None:
+                    sleep(5)
+                    pprint(
+                        "Waiting 5 seconds to grab internal ip and create DNS record for %s..." % name)
+                    counter += 10
+                else:
+                    break
+        if ip is None:
+            error('Unable to find an IP for %s' % name)
+            return
+        #TODO: alias.
+        try:
+            response = self.dns.create_resource_record(
+                instance_id=dns['guid'],
+                dnszone_id=dnszone['id'],
+                type='A',
+                ttl=60,
+                name=entry,
+                rdata={'ip': ip},
+            )
+            print(response)
+        except ApiException as exc:
+            error('Unable to create DNS entry. %s' % exc)
+
+    def create_dns(self):
+        print("not implemented")
+
+    def delete_dns(self, name, domain, instanceid=None):
+        cluster = None
+        fqdn = "%s.%s" % (name, domain)
+        if fqdn.split('-')[0] == fqdn.split('.')[1]:
+            cluster = fqdn.split('-')[0]
+            name = '.'.join(fqdn.split('.')[:1])
+            domain = fqdn.replace("%s." % name, '').replace("%s." % cluster, '')
+
+        try:
+            dnslist = self._get_dns()
+        except ApiException as exc:
+            return {'result': 'failure',
+                    'reason': 'Unable to check DNS zones. %s' % exc}
+        for dnsresource in dnslist:
+            dnsid = dnsresource['guid']
+            try:
+                dnszone = self._get_dns_zone(dnsid, domain)
+            except ApiException as exc:
+                return {'result': 'failure',
+                        'reason': 'Unable to check DNS zones. %s' % exc}
+            if dnszone is None:
+                continue
+            try:
+                records = self._get_dns_records(dnsid, dnszone['id'])
+            except ApiException as exc:
+                return {'result': 'failure',
+                        'reason': 'Unable to check DNS records. %s' % exc}
+            break
+        else:
+            return {'result': 'failure',
+                    'reason': 'Domain %s not found' % domain}
+
+        dnsentry = name if cluster is None else "%s.%s" % (name, cluster)
+        entry = "%s.%s" % (dnsentry, domain)
+        clusterdomain = "%s.%s" % (cluster, domain)
+        for record in records:
+            if entry in record['name'] or ('master-0' in name and record['name'].endswith(clusterdomain)):
+                try:
+                    self.dns.delete_resource_record(instance_id=dnsid, dnszone_id=dnszone['id'], record_id=record['id'])
+                except ApiException as exc:
+                    error('Unable to delete record %s. %s' % (record['name'], exc))
+        return {'result': 'success'}
+
+    def list_dns(self, domain):
+        results = []
+        try:
+            dnslist = self._get_dns()
+        except ApiException as exc:
+            error('Unable to check DNS resources. %s' % exc)
+            return results
+        for dnsresource in dnslist:
+            dnsid = dnsresource['guid']
+            try:
+                dnszone = self._get_dns_zone(dnsid, domain)
+            except ApiException as exc:
+                error('Unable to check DNS zones for DNS %s. %s' % (dnsresource['name'], exc))
+                return results
+            if dnszone is None:
+                error('Domain %s not found' % domain)
+                return results
+            try:
+                records = self._get_dns_records(dnsid, dnszone['id'])
+            except ApiException as exc:
+                error('Unable to check DNS %s records. %s' % (dnszone['name'], exc))
+                return results
+            for record in records:
+                results.append([record['name'], record['type'], record['ttl'], record['rdata']['ip']])
+        return results
+
     def _get_vm(self, name):
         result = self.conn.list_instances(name=name).result
         if result['total_count'] == 0:
@@ -844,3 +1036,15 @@ class Kibm(object):
 
     def _get_volumes(self):
         return {x['name']: x for x in self.conn.list_volumes().result['volumes']}
+
+    def _get_dns(self):
+        return self.resources.list_resource_instances(resource_id=DNS_RESOURCE_ID).result['resources']
+
+    def _get_dns_zone(self, dns_id, domain):
+        for zone in self.dns.list_dnszones(instance_id=dns_id).result['dnszones']:
+            if zone['name'] == domain and zone['state'] == 'ACTIVE':
+                return zone
+        return None
+
+    def _get_dns_records(self, dns_id, zone_id):
+        return self.dns.list_resource_records(instance_id=dns_id, dnszone_id=zone_id).result['resource_records']
