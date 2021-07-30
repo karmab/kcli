@@ -2993,7 +2993,7 @@ def cli():
                                      help='specify parameter or keyword for rendering (multiple can be specified)',
                                      metavar='PARAM')
     bucketcreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
-    bucketcreate_parser.add_argument('bucket', metavar='BUCKET', nargs='?')
+    bucketcreate_parser.add_argument('bucket', metavar='BUCKET', nargs='+')
     bucketcreate_parser.set_defaults(func=create_bucket)
 
     bucketfilecreate_desc = 'Create Bucket file'
