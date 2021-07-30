@@ -256,12 +256,6 @@ class Kconfig(Kbaseconfig):
                 if region is None:
                     error("Missing region in the configuration. Leaving")
                     os._exit(1)
-                # if zone is None:
-                #     error("Missing zone in the configuration. Leaving")
-                #     os._exit(1)
-                # if vpc is None:
-                #     error("Missing vpc in the configuration. Leaving")
-                #     os._exit(1)
                 from kvirt.providers.ibm import Kibm
                 k = Kibm(iam_api_key=iam_api_key, access_key_id=access_key_id, secret_access_key=secret_access_key,
                          region=region, zone=zone, vpc=vpc, debug=debug)

@@ -11,7 +11,7 @@ OPENSTACK = ['python-cinderclient', 'python-neutronclient', 'python-glanceclient
 OVIRT = ['ovirt-engine-sdk-python']
 PACKET = ['packet-python']
 VSPHERE = ['requests', 'pyvmomi']
-IBMCLOUD = ['ibm_vpc', 'ibm-cos-sdk', 'ibm-platform-services']
+IBMCLOUD = ['ibm_vpc', 'ibm-cos-sdk', 'ibm-platform-services', 'ibm-cloud-networking-services']
 GRPC = ['grpcio', 'grpcio-reflection']
 EXTRAS = ['pyghmi']
 ALL = ['docker>=2.0'] + ['podman'] + ['websockify'] + GRPC + EXTRAS + AWS + GCP + KUBEVIRT + OPENSTACK + OVIRT\
