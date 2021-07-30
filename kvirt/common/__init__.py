@@ -973,7 +973,9 @@ def get_user(image):
     :param image:
     :return:
     """
-    if 'centos' in image.lower():
+    if 'centos9stream' in image.lower():
+        user = 'cloud-user'
+    elif 'centos' in image.lower():
         user = 'centos'
     elif 'coreos' in image.lower() or 'rhcos' in image.lower() or 'fcos' in image.lower():
         user = 'core'
