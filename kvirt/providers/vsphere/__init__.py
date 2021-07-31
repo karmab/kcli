@@ -18,6 +18,7 @@ import re
 import requests
 import random
 from ssl import _create_unverified_context, get_server_certificate
+import sys
 import tarfile
 from tempfile import TemporaryDirectory
 from threading import Thread
@@ -33,7 +34,7 @@ def waitForMe(t):
     if t.info.state == vim.TaskInfo.State.error:
         error(t.info.description)
         error(t.info.error)
-        os._exit(1)
+        sys.exit(1)
 
 
 def collectproperties(si, view, objtype, pathset=None, includemors=False):
@@ -1290,7 +1291,7 @@ class Ksphere:
                 return {'result': 'success'}
             elif lease.state == vim.HttpNfcLease.State.error:
                 error("Lease error: %s" % lease.error)
-                os._exit(1)
+                sys.exit(1)
 
     def _getfirshost(self):
         si = self.si

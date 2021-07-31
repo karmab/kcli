@@ -14,6 +14,7 @@ from kvirt.common import error, pprint, warning
 from kvirt.defaults import IMAGES, UBUNTUS, METADATA_FIELDS
 import datetime
 import os
+import sys
 import time
 import yaml
 import urllib3
@@ -796,7 +797,7 @@ class Kubevirt(Kubecommon):
                         break
         except Exception:
             error("VM %s not found" % name)
-            os._exit(1)
+            sys.exit(1)
         return ip
 
     def volumes(self, iso=False):

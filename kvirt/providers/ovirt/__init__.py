@@ -14,6 +14,7 @@ import ovirtsdk4 as sdk
 from ovirtsdk4 import Error as oerror
 import ovirtsdk4.types as types
 import os
+import sys
 from subprocess import call, check_output
 import json
 from time import sleep, time
@@ -494,7 +495,7 @@ toggle-fullscreen=shift+f11
 release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.value, name=name)
         if connectiondetails is None:
             error("Couldn't retrieve connection details for %s" % name)
-            os._exit(1)
+            sys.exit(1)
         if web:
             return "%s://%s:%s+%s" % (c.protocol, address, sport if str(c.protocol) == 'spice' else port, ticket.value)
         with open("/tmp/console.vv", "w") as f:
@@ -998,7 +999,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                     executable = extensions[extension]
                     if find_executable(executable) is None:
                         pprint("%s not found. Can't uncompress image" % executable)
-                        os._exit(1)
+                        sys.exit(1)
                     else:
                         uncompresscmd = "%s %s" % (executable, image_path)
                         os.system(uncompresscmd)

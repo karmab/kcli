@@ -8,6 +8,7 @@ from urllib.request import urlretrieve, urlopen
 import os
 from subprocess import call
 from shutil import move
+import sys
 import yaml
 
 binary_types = ['bz2', 'deb', 'jpg', 'gz', 'jpeg', 'iso', 'png', 'rpm', 'tgz', 'zip', 'ks']
@@ -115,7 +116,7 @@ def confirm(message):
     _input = input(message)
     if _input.lower() not in ['y', 'yes']:
         error("Leaving...")
-        os._exit(1)
+        sys.exit(1)
     return
 
 
@@ -133,7 +134,7 @@ def get_overrides(paramfile=None, param=[]):
                 overrides = yaml.safe_load(f)
             except:
                 error("Couldn't parse your parameters file %s. Not using it" % paramfile)
-                os._exit(1)
+                sys.exit(1)
     if param is not None:
         for x in param:
             if len(x.split('=')) < 2:

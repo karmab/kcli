@@ -33,6 +33,7 @@ from jinja2 import StrictUndefined as strictundefined
 from jinja2.runtime import Undefined as defaultundefined
 from jinja2.exceptions import TemplateSyntaxError, TemplateError
 import re
+import sys
 
 
 class Kbaseconfig:
@@ -56,13 +57,13 @@ class Kbaseconfig:
                     secrets = yaml.safe_load(entries)
                 except yaml.scanner.ScannerError as err:
                     error("Couldn't parse yaml in .kcli/secrets.yml. Got %s" % err)
-                    os._exit(1)
+                    sys.exit(1)
         if not os.path.exists(inifile):
             defaultclient = 'local'
             _type = 'kvm'
             if not os.path.exists('/var/run/libvirt/libvirt-sock') and not offline:
                 error("No configuration found nor local hypervisor")
-                os._exit(1)
+                sys.exit(1)
             self.ini = {'default': {'client': defaultclient}, defaultclient:
                         {'pool': 'default', 'type': _type}}
         else:
@@ -71,13 +72,13 @@ class Kbaseconfig:
                     self.ini = yaml.safe_load(entries)
                 except yaml.scanner.ScannerError as err:
                     error("Couldn't parse yaml in .kcli/config.yml. Got %s" % err)
-                    os._exit(1)
+                    sys.exit(1)
                 except:
                     self.host = None
                     return
             if self.ini is None:
                 error("Couldn't parse empty .kcli/config.yml")
-                os._exit(1)
+                sys.exit(1)
             for key1 in self.ini:
                 for key2 in self.ini[key1]:
                     if isinstance(self.ini[key1][key2], str) and self.ini[key1][key2] == '?secret':
@@ -85,7 +86,7 @@ class Kbaseconfig:
                             self.ini[key1][key2] = secrets[key1][key2]
                         else:
                             error("Missing secret for %s/%s" % (key1, key2))
-                            os._exit(1)
+                            sys.exit(1)
             if 'default' not in self.ini:
                 if len(self.ini) == 1:
                     client = list(self.ini.keys())[0]
@@ -209,7 +210,7 @@ class Kbaseconfig:
                 except yaml.scanner.ScannerError as err:
                     error("Couldn't parse yaml in .kcli/flavors.yml. Leaving...")
                     error(err)
-                    os._exit(1)
+                    sys.exit(1)
         self.extraclients = {}
         self._extraclients = []
         if client == 'all':
@@ -236,7 +237,7 @@ class Kbaseconfig:
         self.enabled = options.get('enabled', True)
         if not self.enabled:
             error("Disabled hypervisor %s.Leaving..." % client)
-            os._exit(1)
+            sys.exit(1)
         self.host = options.get('host', '127.0.0.1')
         if ':' in self.host and '[' not in self.host:
             self.host = '[%s]' % self.host
@@ -516,7 +517,7 @@ class Kbaseconfig:
             os.symlink(url, repodir)
         elif find_executable('git') is None:
             error('repo operations require git')
-            os._exit(1)
+            sys.exit(1)
         else:
             os.system("git clone %s %s" % (url, repodir))
         if not os.path.exists("%s/KMETA" % repodir):
@@ -527,7 +528,7 @@ class Kbaseconfig:
                         src = "%s/KMETA" % root.replace("%s/" % repodir, '')
                         os.symlink(src, dst)
                         break
-        os._exit(1)
+        sys.exit(1)
 
     def update_repo(self, name, url=None):
         """
@@ -574,7 +575,7 @@ class Kbaseconfig:
             pprint("Providing information on parameters of plan %s..." % inputfile)
         if not os.path.exists(inputfile):
             error("No input file found nor default kcli_plan.yml. Leaving....")
-            os._exit(1)
+            sys.exit(1)
         if os.path.exists("%s/%s_default.yml" % (basedir, plan)):
             parameterfile = "%s/%s_default.yml" % (basedir, plan)
             if not quiet:
@@ -643,10 +644,10 @@ class Kbaseconfig:
             products = [product for product in self.list_products() if product['name'] == name]
         if len(products) == 0:
             error("Product not found. Leaving...")
-            os._exit(1)
+            sys.exit(1)
         elif len(products) > 1:
             error("Product found in several places. Specify repo or group")
-            os._exit(1)
+            sys.exit(1)
         else:
             product = products[0]
             repo = product['repo']
@@ -680,10 +681,10 @@ class Kbaseconfig:
             templ = env.get_template(os.path.basename(inputfile))
         except TemplateSyntaxError as e:
             error("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message))
-            os._exit(1)
+            sys.exit(1)
         except TemplateError as e:
             error("Error rendering file %s. Got: %s" % (inputfile, e.message))
-            os._exit(1)
+            sys.exit(1)
         if os.path.exists("%s/%s_default.yml" % (basedir, plan)):
             parameterfile = "%s/%s_default.yml" % (basedir, plan)
         elif os.path.exists("%s/kcli_default.yml" % basedir):
@@ -696,7 +697,7 @@ class Kbaseconfig:
             parameters = yaml.safe_load(parameters)['parameters'] if not raw else parameters
             if not isinstance(parameters, dict):
                 error("Error rendering parameters section of file %s" % inputfile)
-                os._exit(1)
+                sys.exit(1)
             for parameter in parameters:
                 if parameter == 'baseplan':
                     basefile = parameters['baseplan']
@@ -720,7 +721,7 @@ class Kbaseconfig:
                 entries = templ.render(overrides)
             except TemplateError as e:
                 error("Error rendering inputfile %s. Got: %s" % (inputfile, e.message))
-                os._exit(1)
+                sys.exit(1)
             if not full:
                 entrieslist = entries.split('\n')
                 if entrieslist[0].startswith('parameters:'):
@@ -734,7 +735,7 @@ class Kbaseconfig:
         if wrong_overrides:
             for wrong_override in wrong_overrides:
                 error("Incorrect parameter %s. Hyphens are not allowed" % wrong_override)
-            os._exit(1)
+            sys.exit(1)
         return entries, overrides, basefile, basedir
 
     def list_profiles(self):
@@ -923,7 +924,7 @@ class Kbaseconfig:
                     plandir = os.path.dirname(openshift.create.__code__.co_filename)
                 elif _type != 'generic':
                     error("Incorrect kubernetes type %s. Choose between generic or openshift" % _type)
-                    os._exit(1)
+                    sys.exit(1)
                 inputfile = "%s/masters.yml" % plandir
         if 'jenkinsmode' in overrides:
             jenkinsmode = overrides['jenkinsmode']
@@ -932,7 +933,7 @@ class Kbaseconfig:
             jenkinsmode = self.jenkinsmode
         if jenkinsmode not in ['docker', 'podman', 'kubernetes']:
             error("Incorrect jenkins mode %s. Choose between docker, podman or kubernetes" % self.jenkinsmode)
-            os._exit(1)
+            sys.exit(1)
         inputfile = os.path.expanduser(inputfile) if inputfile is not None else 'kcli_plan.yml'
         basedir = os.path.dirname(inputfile)
         if basedir == "":
@@ -940,7 +941,7 @@ class Kbaseconfig:
         plan = os.path.basename(inputfile).replace('.yml', '').replace('.yaml', '')
         if not os.path.exists(inputfile):
             error("No input file found nor default kcli_plan.yml. Leaving....")
-            os._exit(1)
+            sys.exit(1)
         if os.path.exists("%s/%s_default.yml" % (basedir, plan)):
             parameterfile = "%s/%s_default.yml" % (basedir, plan)
         elif os.path.exists("%s/kcli_default.yml" % basedir):
@@ -963,10 +964,10 @@ class Kbaseconfig:
             templ = env.get_template(os.path.basename("Jenkinsfile.j2"))
         except TemplateSyntaxError as e:
             error("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message))
-            os._exit(1)
+            sys.exit(1)
         except TemplateError as e:
             error("Error rendering file %s. Got: %s" % (inputfile, e.message))
-            os._exit(1)
+            sys.exit(1)
         parameterline = " ".join(["-P %s=${params.%s}" % (parameter, parameter) for parameter in parameters])
         jenkinsfile = templ.render(parameters=parameters, parameterline=parameterline, jenkinsmode=jenkinsmode,
                                    _type=_type)
@@ -981,7 +982,7 @@ class Kbaseconfig:
                 basedir = '.'
             if not os.path.exists(inputfile):
                 error("No input file found nor default kcli_plan.yml. Leaving....")
-                os._exit(1)
+                sys.exit(1)
             if plan is None:
                 plan = os.path.basename(inputfile).replace('.yml', '').replace('.yaml', '')
         else:
@@ -1012,10 +1013,10 @@ class Kbaseconfig:
             templ = env.get_template(os.path.basename("workflow.yml.j2"))
         except TemplateSyntaxError as e:
             error("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message))
-            os._exit(1)
+            sys.exit(1)
         except TemplateError as e:
             error("Error rendering file %s. Got: %s" % (inputfile, e.message))
-            os._exit(1)
+            sys.exit(1)
         # paramline = ["-P %s=${{github.event.inputs.%s}}" % (parameter, parameter.upper()) for parameter in overrides]
         paramline = []
         for parameter in overrides:
@@ -1176,10 +1177,10 @@ class Kbaseconfig:
             templ = env.get_template(os.path.basename("playbook.j2"))
         except TemplateSyntaxError as e:
             error("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message))
-            os._exit(1)
+            sys.exit(1)
         except TemplateError as e:
             error("Error rendering playbook. Got: %s" % e.message)
-            os._exit(1)
+            sys.exit(1)
         hostname = overrides.get('hostname', name)
         profile['hostname'] = hostname
         if 'info' in overrides:
@@ -1213,7 +1214,7 @@ class Kbaseconfig:
             os.symlink(jinjadir, 'filter_plugins')
         if not os.path.exists(inputfile):
             error("No input file found nor default kcli_plan.yml. Leaving....")
-            os._exit(1)
+            sys.exit(1)
         plan = 'xxx'
         entries, overrides, basefile, basedir = self.process_inputfile(plan, inputfile, overrides=overrides, full=True)
         config_data = {}
@@ -1228,7 +1229,7 @@ class Kbaseconfig:
             data = yaml.safe_load(renderfile)
         except:
             error("Couldnt' parse plan. Leaving....")
-            os._exit(1)
+            sys.exit(1)
         for key in data:
             if 'type' in data[key] and data[key]['type'] != 'kvm':
                 continue
