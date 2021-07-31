@@ -4,7 +4,7 @@
 from kvirt.config import Kconfig
 from kvirt.common import get_user
 import json
-import os
+import sys
 import argparse
 
 
@@ -31,7 +31,7 @@ class KcliInventory(object):
         self.k = config.k
         self.type = config.type
         if self.k.conn is None:
-            os._exit(1)
+            sys.exit(1)
 
         # Called with `--list`.
         if self.args.list:

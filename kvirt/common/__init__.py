@@ -19,6 +19,7 @@ from urllib.parse import quote
 from urllib.request import urlretrieve, urlopen, Request
 import json
 import os
+import sys
 from subprocess import call
 from shutil import copy2, move
 from tempfile import TemporaryDirectory
@@ -114,10 +115,10 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 net = netinfo.copy()
             else:
                 error("Wrong net entry %s" % index)
-                os._exit(1)
+                sys.exit(1)
             if 'name' not in net:
                 error("Missing name in net %s" % index)
-                os._exit(1)
+                sys.exit(1)
             netname = net['name']
             if index == 0 and 'type' in net and net.get('type') != 'virtio':
                 prefix = 'ens'
@@ -370,13 +371,13 @@ def process_files(files=[], overrides={}):
                     fileentries = templ.render(overrides)
                 except TemplateSyntaxError as e:
                     error("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message))
-                    os._exit(1)
+                    sys.exit(1)
                 except TemplateError as e:
                     error("Error rendering file %s. Got: %s" % (origin, e.message))
-                    os._exit(1)
+                    sys.exit(1)
                 except UnicodeDecodeError as e:
                     error("Error rendering file %s. Got: %s" % (origin, e))
-                    os._exit(1)
+                    sys.exit(1)
                 content = [line.rstrip() for line in fileentries.split('\n')]
                 # with open("/tmp/%s" % os.path.basename(path), 'w') as f:
                 #     for line in fileentries.split('\n'):
@@ -448,13 +449,13 @@ def process_ignition_files(files=[], overrides={}):
                     fileentries = templ.render(overrides)
                 except TemplateSyntaxError as e:
                     error("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message))
-                    os._exit(1)
+                    sys.exit(1)
                 except TemplateError as e:
                     error("Error rendering file %s. Got: %s" % (origin, e.message))
-                    os._exit(1)
+                    sys.exit(1)
                 except UnicodeDecodeError as e:
                     error("Error rendering file %s. Got: %s" % (origin, e))
-                    os._exit(1)
+                    sys.exit(1)
                 # content = [line.rstrip() for line in fileentries.split('\n') if line.rstrip() != '']
                 content = [line for line in fileentries.split('\n')]
             else:
@@ -490,7 +491,7 @@ def process_cmds(cmds, overrides):
                 data += "- %s\n" % newcmd.replace(": ", "':' ")
             except TemplateError as e:
                 error("Error rendering cmd %s. Got: %s" % (cmd, e.message))
-                os._exit(1)
+                sys.exit(1)
     return data
 
 
@@ -510,7 +511,7 @@ def process_ignition_cmds(cmds, overrides):
             content += "%s\n" % newcmd
         except TemplateError as e:
             error("Error rendering cmd %s. Got: %s" % (cmd, e.message))
-            os._exit(1)
+            sys.exit(1)
     if content == '':
         return content
     else:
@@ -615,9 +616,9 @@ def confirm(message):
         _input = input(message)
         if _input.lower() not in ['y', 'yes']:
             error("Leaving...")
-            os._exit(1)
+            sys.exit(1)
     except:
-        os._exit(1)
+        sys.exit(1)
     return
 
 
@@ -629,7 +630,7 @@ def get_lastvm(client):
     """
     if 'HOME' not in os.environ:
         error("HOME variable not set")
-        os._exit(1)
+        sys.exit(1)
     lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
     if os.path.exists(lastvm) and os.stat(lastvm).st_size > 0:
         for line in open(lastvm).readlines():
@@ -642,7 +643,7 @@ def get_lastvm(client):
                 pprint("Using %s from %s as vm" % (vm, cli))
                 return vm
     error("Missing Vm's name")
-    os._exit(1)
+    sys.exit(1)
 
 
 def set_lastvm(name, client, delete=False):
@@ -705,13 +706,13 @@ def get_overrides(paramfile=None, param=[]):
                     overrides = yaml.safe_load(f)
                 except:
                     error("Couldn't parse your parameters file %s. Leaving" % paramfile)
-                    os._exit(1)
+                    sys.exit(1)
         else:
             error("Parameter file %s not found. Leaving" % paramfile)
-            os._exit(1)
+            sys.exit(1)
     if not isinstance(overrides, dict):
         error("Couldn't parse your parameters file %s. Leaving" % paramfile)
-        os._exit(1)
+        sys.exit(1)
     if param is not None:
         for x in param:
             if len(x.split('=')) < 2:
@@ -1383,7 +1384,7 @@ def create_host(data):
                 oldini = yaml.safe_load(entries)
             except yaml.scanner.ScannerError as err:
                 error("Couldn't parse yaml in .kcli/config.yml. Got %s" % err)
-                os._exit(1)
+                sys.exit(1)
         if name in oldini:
             pprint("Skipping existing Host %s" % name)
             return
@@ -1414,7 +1415,7 @@ def delete_host(name):
                 ini = yaml.safe_load(entries)
             except yaml.scanner.ScannerError as err:
                 error("Couldn't parse yaml in .kcli/config.yml. Got %s" % err)
-                os._exit(1)
+                sys.exit(1)
         if name not in ini:
             pprint("Skipping non existing Host %s" % name)
             return
@@ -1478,7 +1479,7 @@ def mergeignition(name, ignitionextrapath, data):
         except Exception as e:
             error("Couldn't process %s. Ignoring" % ignitionextrapath)
             error(e)
-            os._exit(1)
+            sys.exit(1)
         children = {'storage': 'files', 'passwd': 'users', 'systemd': 'units'}
         for key in children:
             childrenkey2 = 'path' if key == 'storage' else 'name'
@@ -1741,10 +1742,10 @@ def openshift_create_app(config, appdir, overrides={}, outputdir=None):
             templ = env.get_template(os.path.basename("install.yml.j2"))
         except TemplateSyntaxError as e:
             error("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message))
-            os._exit(1)
+            sys.exit(1)
         except TemplateError as e:
             error("Error rendering file %s. Got: %s" % (e.filename, e.message))
-            os._exit(1)
+            sys.exit(1)
         destfile = "%s/install.yml" % outputdir if outputdir is not None else "%s/install.yml" % tmpdir
         with open(destfile, 'w') as f:
             olmfile = templ.render(overrides)
@@ -1800,10 +1801,10 @@ def openshift_delete_app(config, appdir, overrides={}):
             templ = env.get_template(os.path.basename("install.yml.j2"))
         except TemplateSyntaxError as e:
             error("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message))
-            os._exit(1)
+            sys.exit(1)
         except TemplateError as e:
             error("Error rendering file %s. Got: %s" % (e.filename, e.message))
-            os._exit(1)
+            sys.exit(1)
         destfile = "%s/install.yml" % tmpdir
         with open(destfile, 'w') as f:
             olmfile = templ.render(overrides)
@@ -1830,7 +1831,7 @@ def make_iso(name, tmpdir, userdata, metadata, netdata):
         y.write(metadata)
     if find_executable('mkisofs') is None and find_executable('genisoimage') is None:
         error("mkisofs or genisoimage are required in order to create cloudinit iso")
-        os._exit(1)
+        sys.exit(1)
     isocmd = 'genisoimage' if find_executable('genisoimage') is not None else 'mkisofs'
     isocmd += " --quiet -o %s/%s.ISO --volid cidata" % (tmpdir, name)
     isocmd += " --joliet --rock %s/user-data %s/meta-data" % (tmpdir, tmpdir)
@@ -1890,7 +1891,7 @@ def generate_rhcos_iso(k, cluster, pool, version='latest', force=False):
     if k.host in ['localhost', '127.0.0.1']:
         if find_executable('podman') is None:
             error("podman is required in order to embed iso ignition")
-            os._exit(1)
+            sys.exit(1)
         copy2('iso.ign', poolpath)
         os.system(isocmd)
     elif k.protocol == 'ssh':

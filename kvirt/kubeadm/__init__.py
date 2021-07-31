@@ -53,14 +53,14 @@ def create(config, plandir, cluster, overrides):
             and not os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub"))\
             and not os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub")):
         error("No usable public key found, which is required for the deployment")
-        os._exit(1)
+        sys.exit(1)
     data['cluster'] = overrides.get('cluster', cluster if cluster is not None else 'testk')
     plan = cluster if cluster is not None else data['cluster']
     data['kube'] = data['cluster']
     masters = data.get('masters', 1)
     if masters == 0:
         error("Invalid number of masters")
-        os._exit(1)
+        sys.exit(1)
     network = data.get('network', 'default')
     xip = data['xip']
     api_ip = data.get('api_ip')
@@ -77,13 +77,13 @@ def create(config, plandir, cluster, overrides):
             api_ip = config.k.create_service("%s-api" % cluster, config.k.namespace, selector,
                                              _type="LoadBalancer", ports=[6443])
             if api_ip is None:
-                os._exit(1)
+                sys.exit(1)
             else:
                 pprint("Using api_ip %s" % api_ip)
                 data['api_ip'] = api_ip
         else:
             error("You need to define api_ip in your parameters file")
-            os._exit(1)
+            sys.exit(1)
     if xip and platform not in cloudplatforms:
         data['domain'] = "%s.xip.io" % api_ip
     if data.get('virtual_router_id') is None:
@@ -92,7 +92,7 @@ def create(config, plandir, cluster, overrides):
     version = data.get('version')
     if version is not None and not str(version).startswith('1.'):
         error("Invalid version %s" % version)
-        os._exit(1)
+        sys.exit(1)
     if data.get('eksd', False) and data.get('engine', 'containerd') != 'docker':
         warning("Forcing engine to docker for eksd")
         data['engine'] = 'docker'
@@ -119,7 +119,7 @@ def create(config, plandir, cluster, overrides):
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     result = config.plan(plan, inputfile='%s/masters.yml' % plandir, overrides=data)
     if result['result'] != "success":
-        os._exit(1)
+        sys.exit(1)
     source, destination = "/root/join.sh", "%s/join.sh" % clusterdir
     firstmasterip, firstmastervmport = _ssh_credentials(k, firstmaster)[1:]
     scpcmd = scp(firstmaster, ip=firstmasterip, user='root', source=source, destination=destination,

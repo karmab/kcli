@@ -129,7 +129,7 @@ def start_vm(args):
         result = k.start(name)
         code = common.handle_response(result, name, element='', action='started')
         codes.append(code)
-    os._exit(1 if 1 in codes else 0)
+    sys.exit(1 if 1 in codes else 0)
 
 
 def start_container(args):
@@ -159,7 +159,7 @@ def stop_vm(args):
             result = k.stop(name)
             code = common.handle_response(result, name, element='', action='stopped')
             codes.append(code)
-    os._exit(1 if 1 in codes else 0)
+    sys.exit(1 if 1 in codes else 0)
 
 
 def stop_container(args):
@@ -189,7 +189,7 @@ def restart_vm(args):
         result = k.restart(name)
         code = common.handle_response(result, name, element='', action='restarted')
         codes.append(code)
-    os._exit(1 if 1 in codes else 0)
+    sys.exit(1 if 1 in codes else 0)
 
 
 def restart_container(args):
@@ -238,7 +238,7 @@ def delete_vm(args):
         names = args.names
         if not names:
             error("Can't delete vms on multiple hosts without specifying their names")
-            os._exit(1)
+            sys.exit(1)
     else:
         allclients = {config.client: config.k}
         names = [common.get_lastvm(config.client)] if not args.names else args.names
@@ -247,7 +247,7 @@ def delete_vm(args):
             names = ["%s-%d" % (args.names[0], number) for number in range(count)]
         else:
             error("Using count when deleting vms requires specifying an unique name")
-            os._exit(1)
+            sys.exit(1)
     for cli in sorted(allclients):
         k = allclients[cli]
         if not yes and not yes_top:
@@ -269,7 +269,7 @@ def delete_vm(args):
             if dnsclient is not None and domain is not None:
                 z = Kconfig(client=dnsclient).k
                 z.delete_dns(name, domain)
-    os._exit(1 if 1 in codes else 0)
+    sys.exit(1 if 1 in codes else 0)
 
 
 def delete_container(args):
@@ -292,7 +292,7 @@ def delete_container(args):
         for name in names:
             pprint("Deleting container %s on %s" % (name, cli))
             cont.delete_container(name)
-    os._exit(1 if 1 in codes else 0)
+    sys.exit(1 if 1 in codes else 0)
 
 
 def download_image(args):
@@ -308,9 +308,9 @@ def download_image(args):
     result = config.handle_host(pool=pool, image=image, download=True, cmd=cmd, url=url, update_profile=update_profile,
                                 size=size, arch=arch)
     if result['result'] == 'success':
-        os._exit(0)
+        sys.exit(0)
     else:
-        os._exit(1)
+        sys.exit(1)
 
 
 def download_iso(args):
@@ -321,9 +321,9 @@ def download_iso(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     result = config.handle_host(pool=pool, image=iso, download=True, url=url, update_profile=False)
     if result['result'] == 'success':
-        os._exit(0)
+        sys.exit(0)
     else:
-        os._exit(1)
+        sys.exit(1)
 
 
 def delete_image(args):
@@ -365,7 +365,7 @@ def delete_image(args):
                 reason = result['reason']
                 error("Could not delete image %s because %s" % (image, reason))
                 codes.append(1)
-    os._exit(1 if 1 in codes else 0)
+    sys.exit(1 if 1 in codes else 0)
 
 
 def create_profile(args):
@@ -388,7 +388,7 @@ def delete_profile(args):
     result = baseconfig.delete_profile(profile)
     code = common.handle_response(result, profile, element='Profile', action='deleted', client=baseconfig.client)
     return code
-    # os._exit(0) if result['result'] == 'success' else os._exit(1)
+    # sys.exit(0) if result['result'] == 'success' else sys.exit(1)
 
 
 def update_profile(args):
@@ -431,9 +431,9 @@ def enable_host(args):
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     result = baseconfig.enable_host(host)
     if result['result'] == 'success':
-        os._exit(0)
+        sys.exit(0)
     else:
-        os._exit(1)
+        sys.exit(1)
 
 
 def disable_host(args):
@@ -442,9 +442,9 @@ def disable_host(args):
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     result = baseconfig.disable_host(host)
     if result['result'] == 'success':
-        os._exit(0)
+        sys.exit(0)
     else:
-        os._exit(1)
+        sys.exit(1)
 
 
 def delete_host(args):
@@ -458,9 +458,9 @@ def sync_host(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     result = config.handle_host(sync=hosts)
     if result['result'] == 'success':
-        os._exit(0)
+        sys.exit(0)
     else:
-        os._exit(1)
+        sys.exit(1)
 
 
 def list_vm(args):
@@ -561,7 +561,7 @@ def list_containerimage(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.type != 'kvm':
         error("Operation not supported on this kind of client.Leaving...")
-        os._exit(1)
+        sys.exit(1)
     cont = Kcontainerconfig(config, client=args.containerclient).cont
     common.pprint("Listing images...")
     images = PrettyTable(["Name"])
@@ -623,10 +623,10 @@ def info_profile(args):
             print("nested: %s" % nested)
             print("reservedns: %s" % reservedns)
             print("reservehost: %s" % reservehost)
-            os._exit(0)
+            sys.exit(0)
             break
     error("Profile %s doesn't exist" % profile)
-    os._exit(1)
+    sys.exit(1)
 
 
 def list_profile(args):
@@ -814,16 +814,16 @@ def create_app_generic(args):
             outputdir = "/workdir/%s" % outputdir
         if os.path.exists(outputdir) and os.path.isfile(outputdir):
             error("Invalid outputdir %s" % outputdir)
-            os._exit(1)
+            sys.exit(1)
         elif not os.path.exists(outputdir):
             os.mkdir(outputdir)
     paramfile = choose_parameter_file(args.paramfile)
     if find_executable('kubectl') is None:
         error("You need kubectl to install apps")
-        os._exit(1)
+        sys.exit(1)
     if 'KUBECONFIG' not in os.environ:
         error("KUBECONFIG env variable needs to be set")
-        os._exit(1)
+        sys.exit(1)
     elif not os.path.isabs(os.environ['KUBECONFIG']):
         os.environ['KUBECONFIG'] = "%s/%s" % (os.getcwd(), os.environ['KUBECONFIG'])
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
@@ -846,16 +846,16 @@ def create_app_openshift(args):
             outputdir = "/workdir/%s" % outputdir
         if os.path.exists(outputdir) and os.path.isfile(outputdir):
             error("Invalid outputdir %s" % outputdir)
-            os._exit(1)
+            sys.exit(1)
         elif not os.path.exists(outputdir):
             os.mkdir(outputdir)
     paramfile = choose_parameter_file(args.paramfile)
     if find_executable('oc') is None:
         error("You need oc to install apps")
-        os._exit(1)
+        sys.exit(1)
     if 'KUBECONFIG' not in os.environ:
         error("KUBECONFIG env variable needs to be set")
-        os._exit(1)
+        sys.exit(1)
     elif not os.path.isabs(os.environ['KUBECONFIG']):
         os.environ['KUBECONFIG'] = "%s/%s" % (os.getcwd(), os.environ['KUBECONFIG'])
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
@@ -880,10 +880,10 @@ def delete_app_generic(args):
     paramfile = args.paramfile
     if find_executable('kubectl') is None:
         error("You need kubectl to install apps")
-        os._exit(1)
+        sys.exit(1)
     if 'KUBECONFIG' not in os.environ:
         error("KUBECONFIG env variable needs to be set")
-        os._exit(1)
+        sys.exit(1)
     elif not os.path.isabs(os.environ['KUBECONFIG']):
         os.environ['KUBECONFIG'] = "%s/%s" % (os.getcwd(), os.environ['KUBECONFIG'])
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
@@ -903,10 +903,10 @@ def delete_app_openshift(args):
     paramfile = choose_parameter_file(args.paramfile)
     if find_executable('oc') is None:
         error("You need oc to install apps")
-        os._exit(1)
+        sys.exit(1)
     if 'KUBECONFIG' not in os.environ:
         error("KUBECONFIG env variable needs to be set")
-        os._exit(1)
+        sys.exit(1)
     elif not os.path.isabs(os.environ['KUBECONFIG']):
         os.environ['KUBECONFIG'] = "%s/%s" % (os.getcwd(), os.environ['KUBECONFIG'])
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
@@ -939,10 +939,10 @@ def list_apps_openshift(args):
     """List openshift kube apps"""
     if find_executable('oc') is None:
         error("You need oc to list apps")
-        os._exit(1)
+        sys.exit(1)
     if 'KUBECONFIG' not in os.environ:
         error("KUBECONFIG env variable needs to be set")
-        os._exit(1)
+        sys.exit(1)
     elif not os.path.isabs(os.environ['KUBECONFIG']):
         os.environ['KUBECONFIG'] = "%s/%s" % (os.getcwd(), os.environ['KUBECONFIG'])
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
@@ -1108,14 +1108,14 @@ def create_vm(args):
             and not os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub"))\
             and not os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub")):
         error("No usable public key found, which is mandatory when using wait")
-        os._exit(1)
+        sys.exit(1)
     customprofile = {}
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     for key in overrides:
         if key in vars(config) and vars(config)[key] is not None and type(overrides[key]) != type(vars(config)[key]):
             key_type = str(type(vars(config)[key]))
             error("The provided parameter %s has a wrong type, it should be %s" % (key, key_type))
-            os._exit(1)
+            sys.exit(1)
     if 'name' in overrides:
         name = overrides['name']
     if name is None:
@@ -1134,7 +1134,7 @@ def create_vm(args):
             profile = None
             if not os.path.exists(profilefile):
                 error("Missing profile file %s" % profilefile)
-                os._exit(1)
+                sys.exit(1)
             else:
                 with open(profilefile, 'r') as entries:
                     entries = yaml.safe_load(entries)
@@ -1145,13 +1145,13 @@ def create_vm(args):
                         pprint("Using data from %s as profile" % profilefile)
                     else:
                         error("Cant' parse %s as profile file" % profilefile)
-                        os._exit(1)
+                        sys.exit(1)
     elif overrides or onlyassets:
         profile = 'kvirt'
         config.profiles[profile] = {}
     else:
         error("You need to either provide a profile, an image or some parameters")
-        os._exit(1)
+        sys.exit(1)
     if count == 1:
         result = config.create_vm(name, profile, overrides=overrides, customprofile=customprofile, wait=wait,
                                   onlyassets=onlyassets)
@@ -1282,16 +1282,16 @@ def create_vmdisk(args):
     interface = args.interface
     if interface not in ['virtio', 'ide', 'scsi']:
         error("Incorrect disk interface. Choose between virtio, scsi or ide...")
-        os._exit(1)
+        sys.exit(1)
     pool = args.pool
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     if size is None:
         error("Missing size. Leaving...")
-        os._exit(1)
+        sys.exit(1)
     if pool is None:
         error("Missing pool. Leaving...")
-        os._exit(1)
+        sys.exit(1)
     if novm:
         pprint("Creating disk %s..." % name)
     else:
@@ -1363,7 +1363,7 @@ def export_vm(args):
             reason = result['reason']
             error("Could not export vm %s because %s" % (name, reason))
             codes.append(1)
-    os._exit(1 if 1 in codes else 0)
+    sys.exit(1 if 1 in codes else 0)
 
 
 def create_lb(args):
@@ -1554,7 +1554,7 @@ def create_vmnic(args):
     k = config.k
     if network is None:
         error("Missing network. Leaving...")
-        os._exit(1)
+        sys.exit(1)
     pprint("Adding nic to vm %s..." % name)
     k.add_nic(name=name, network=network)
 
@@ -1580,7 +1580,7 @@ def create_pool(args):
     k = config.k
     if path is None:
         error("Missing path. Leaving...")
-        os._exit(1)
+        sys.exit(1)
     pprint("Creating pool %s..." % pool)
     k.create_pool(name=pool, poolpath=path, pooltype=pooltype, thinpool=thinpool)
 
@@ -2116,10 +2116,10 @@ def create_repo(args):
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     if repo is None:
         error("Missing repo. Leaving...")
-        os._exit(1)
+        sys.exit(1)
     if url is None:
         error("Missing url. Leaving...")
-        os._exit(1)
+        sys.exit(1)
     pprint("Adding repo %s..." % repo)
     baseconfig.create_repo(repo, url)
     return 0
@@ -2131,7 +2131,7 @@ def delete_repo(args):
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     if repo is None:
         error("Missing repo. Leaving...")
-        os._exit(1)
+        sys.exit(1)
     pprint("Deleting repo %s..." % repo)
     baseconfig.delete_repo(repo)
     return
@@ -2195,7 +2195,7 @@ def ssh_vm(args):
     tunnelport = baseconfig.tunnelport
     if tunnel and tunnelhost is None:
         error("Tunnel requested but no tunnelhost defined")
-        os._exit(1)
+        sys.exit(1)
     insecure = baseconfig.insecure
     if len(name) > 1:
         cmd = ' '.join(name[1:])
@@ -2269,7 +2269,7 @@ def scp_vm(args):
     tunnelport = baseconfig.tunnelport
     if tunnel and tunnelhost is None:
         error("Tunnel requested but no tunnelhost defined")
-        os._exit(1)
+        sys.exit(1)
     insecure = baseconfig.insecure
     if len(source.split(':')) == 2:
         name, source = source.split(':')
@@ -2343,7 +2343,7 @@ def create_network(args):
     k = config.k
     if name is None:
         error("Missing Network")
-        os._exit(1)
+        sys.exit(1)
     if isolated:
         nat = False
     else:
@@ -2534,7 +2534,7 @@ def create_container(args):
     image = next((e for e in [profile.get('image'), profile.get('image')] if e is not None), None)
     if image is None:
         error("Missing image in profile %s. Leaving..." % profile)
-        os._exit(1)
+        sys.exit(1)
     cmd = profile.get('cmd')
     ports = profile.get('ports')
     environment = profile.get('environment')
@@ -2696,9 +2696,9 @@ def switch_host(args):
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     result = baseconfig.switch_host(host)
     if result['result'] == 'success':
-        os._exit(0)
+        sys.exit(0)
     else:
-        os._exit(1)
+        sys.exit(1)
 
 
 def list_keyword(args):
@@ -4071,7 +4071,7 @@ def cli():
     argcomplete.autocomplete(parser)
     if len(sys.argv) == 1 or (len(sys.argv) == 3 and sys.argv[1] == '-C'):
         parser.print_help()
-        os._exit(0)
+        sys.exit(0)
     args = parser.parse_args()
     if not hasattr(args, 'func'):
         for attr in dir(args):
@@ -4085,8 +4085,8 @@ def cli():
                     subsubcommand = split[2]
                     subparser = get_subparser(parser, subcommand)
                     get_subparser_print_help(subparser, subsubcommand)
-                os._exit(0)
-        os._exit(0)
+                sys.exit(0)
+        sys.exit(0)
     elif args.func.__name__ == 'vmcreate' and args.client is not None and ',' in args.client:
         args.client = random.choice(args.client.split(','))
         pprint("Selecting %s for creation" % args.client)

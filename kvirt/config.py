@@ -93,7 +93,7 @@ class Kconfig(Kbaseconfig):
                     ca_file = os.path.expanduser(ca_file)
                     if not os.path.exists(ca_file):
                         error("Ca file %s doesn't exist. Leaving" % ca_file)
-                        os._exit(1)
+                        sys.exit(1)
                 disk_hotplug = self.options.get('disk_hotplug', False)
                 token = self.options.get('token')
                 token_file = self.options.get('token_file')
@@ -101,7 +101,7 @@ class Kconfig(Kbaseconfig):
                     token_file = os.path.expanduser(token_file)
                     if not os.path.exists(token_file):
                         error("Token file path doesn't exist. Leaving")
-                        os._exit(1)
+                        sys.exit(1)
                     else:
                         token = open(token_file).read()
                 registry = self.options.get('registry')
@@ -109,17 +109,17 @@ class Kconfig(Kbaseconfig):
                 if access_mode not in ['External', 'LoadBalancer', 'NodePort']:
                     msg = "Incorrect access_mode %s. Should be External, NodePort or LoadBalancer" % access_mode
                     error(msg)
-                    os._exit(1)
+                    sys.exit(1)
                 volume_mode = self.options.get('volume_mode', 'Filesystem')
                 if volume_mode not in ['Filesystem', 'Block']:
                     msg = "Incorrect volume_mode %s. Should be Filesystem or Block" % volume_mode
                     error(msg)
-                    os._exit(1)
+                    sys.exit(1)
                 volume_access = self.options.get('volume_access', 'ReadWriteOnce')
                 if volume_access not in ['ReadWriteMany', 'ReadWriteOnce']:
                     msg = "Incorrect volume_access %s. Should be ReadWriteOnce or ReadWriteOnce" % volume_access
                     error(msg)
-                    os._exit(1)
+                    sys.exit(1)
                 harvester = self.options.get('harvester', False)
                 from kvirt.providers.kubevirt import Kubevirt
                 k = Kubevirt(context=context, token=token, ca_file=ca_file, host=self.host,
@@ -134,11 +134,11 @@ class Kconfig(Kbaseconfig):
                     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = os.path.expanduser(credentials)
                 elif 'GOOGLE_APPLICATION_CREDENTIALS' not in os.environ:
                     error("set GOOGLE_APPLICATION_CREDENTIALS variable.Leaving...")
-                    os._exit(1)
+                    sys.exit(1)
                 project = self.options.get('project')
                 if project is None:
                     error("Missing project in the configuration. Leaving")
-                    os._exit(1)
+                    sys.exit(1)
                 zone = self.options.get('zone', 'europe-west1-b') if zone is None else zone
                 region = self.options.get('region') if region is None else region
                 region = zone[:-2] if region is None else region
@@ -156,21 +156,21 @@ class Kconfig(Kbaseconfig):
                             credconfig.read("%s/.aws/credentials" % home)
                             if 'default' not in credconfig:
                                 error("Missing default section in ~/.aws/credentials file. Leaving")
-                                os._exit(1)
+                                sys.exit(1)
                             if 'aws_access_key_id' in credconfig['default']:
                                 access_key_id = credconfig['default']['aws_access_key_id']
                             if 'aws_secret_access_key' in credconfig['default']:
                                 access_key_secret = credconfig['default']['aws_secret_access_key']
                         except:
                             error("Coudln't parse ~/.aws/credentials file. Leaving")
-                            os._exit(1)
+                            sys.exit(1)
                     if os.path.exists("%s/.aws/config" % home):
                         try:
                             confconfig = configparser.ConfigParser()
                             confconfig.read("%s/.aws/config" % home)
                             if 'default' not in confconfig:
                                 error("Missing default section in ~/.aws/config file. Leaving")
-                                os._exit(1)
+                                sys.exit(1)
                             if 'aws_access_key_id' in confconfig['default']:
                                 access_key_id = confconfig['default']['aws_access_key_id']
                             if 'aws_secret_access_key' in confconfig['default']:
@@ -179,7 +179,7 @@ class Kconfig(Kbaseconfig):
                                 region = confconfig['default']['region']
                         except:
                             error("Coudln't parse ~/.aws/config file. Leaving")
-                            os._exit(1)
+                            sys.exit(1)
                 else:
                     access_key_id = self.options.get('access_key_id')
                     access_key_secret = self.options.get('access_key_secret')
@@ -188,13 +188,13 @@ class Kconfig(Kbaseconfig):
                     region = self.options.get('region') if region is None else region
                 if region is None:
                     error("Missing region in the configuration. Leaving")
-                    os._exit(1)
+                    sys.exit(1)
                 if access_key_id is None:
                     error("Missing access_key_id in the configuration. Leaving")
-                    os._exit(1)
+                    sys.exit(1)
                 if access_key_secret is None:
                     error("Missing access_key_secret in the configuration. Leaving")
-                    os._exit(1)
+                    sys.exit(1)
                 from kvirt.providers.aws import Kaws
                 k = Kaws(access_key_id=access_key_id, access_key_secret=access_key_secret, region=region,
                          debug=debug, keypair=keypair, session_token=session_token)
@@ -210,7 +210,7 @@ class Kconfig(Kbaseconfig):
                             if 'default' not in credconfig:
                                 error(
                                     "Missing default section in ~/.ibm/credentials file. Leaving")
-                                os._exit(1)
+                                sys.exit(1)
                             if 'iam_api_key' in credconfig['default']:
                                 iam_api_key = credconfig['default']['iam_api_key']
                             if 'access_key_id' in credconfig['default']:
@@ -219,7 +219,7 @@ class Kconfig(Kbaseconfig):
                                 secret_access_key = credconfig['default']['secret_access_key']
                         except:
                             error("Coudln't parse ~/.ibm/credentials file. Leaving")
-                            os._exit(1)
+                            sys.exit(1)
                     if os.path.exists("%s/.ibm/config" % home):
                         try:
                             confconfig = configparser.ConfigParser()
@@ -227,7 +227,7 @@ class Kconfig(Kbaseconfig):
                             if 'default' not in confconfig:
                                 error(
                                     "Missing default section in ~/.ibm/config file. Leaving")
-                                os._exit(1)
+                                sys.exit(1)
                             if 'iam_api_key' in confconfig['default']:
                                 iam_api_key = confconfig['default']['iam_api_key']
                             if 'access_key_id' in confconfig['default']:
@@ -242,7 +242,7 @@ class Kconfig(Kbaseconfig):
                                 zone = confconfig['default']['vpc']
                         except:
                             error("Coudln't parse ~/.ibm/config file. Leaving")
-                            os._exit(1)
+                            sys.exit(1)
                 else:
                     iam_api_key = self.options.get('iam_api_key')
                     access_key_id = self.options.get('access_key_id')
@@ -252,10 +252,10 @@ class Kconfig(Kbaseconfig):
                     vpc = self.options.get('vpc')
                 if iam_api_key is None:
                     error("Missing iam_api_key in the configuration. Leaving")
-                    os._exit(1)
+                    sys.exit(1)
                 if region is None:
                     error("Missing region in the configuration. Leaving")
-                    os._exit(1)
+                    sys.exit(1)
                 from kvirt.providers.ibm import Kibm
                 k = Kibm(iam_api_key=iam_api_key, access_key_id=access_key_id, secret_access_key=secret_access_key,
                          region=region, zone=zone, vpc=vpc, debug=debug)
@@ -266,19 +266,19 @@ class Kconfig(Kbaseconfig):
                 password = self.options.get('password')
                 if password is None:
                     error("Missing password in the configuration. Leaving")
-                    os._exit(1)
+                    sys.exit(1)
                 org = self.options.get('org')
                 if org is None:
                     error("Missing org in the configuration. Leaving")
-                    os._exit(1)
+                    sys.exit(1)
                 ca_file = self.options.get('ca_file')
                 if ca_file is None:
                     error("Missing ca_file in the configuration. Leaving")
-                    os._exit(1)
+                    sys.exit(1)
                 ca_file = os.path.expanduser(ca_file)
                 if not os.path.exists(ca_file):
                     error("Ca file path doesn't exist. Leaving")
-                    os._exit(1)
+                    sys.exit(1)
                 imagerepository = self.options.get('imagerepository', 'ovirt-image-repository')
                 filtervms = self.options.get('filtervms', False)
                 filteruser = self.options.get('filteruser', False)
@@ -298,7 +298,7 @@ class Kconfig(Kbaseconfig):
                                 None)
                 if auth_url is None:
                     error("Missing auth_url in the configuration. Leaving")
-                    os._exit(1)
+                    sys.exit(1)
                 user = next((e for e in [self.options.get('user'),
                                          os.environ.get("OS_USERNAME")] if e is not None), 'admin')
                 project = next((e for e in [self.options.get('project'),
@@ -310,12 +310,12 @@ class Kconfig(Kbaseconfig):
                 external_network = self.options.get('external_network')
                 if password is None:
                     error("Missing password in the configuration. Leaving")
-                    os._exit(1)
+                    sys.exit(1)
                 if auth_url.endswith('v2.0'):
                     domain = None
                 if ca_file is not None and not os.path.exists(os.path.expanduser(ca_file)):
                     error("Indicated ca_file %s not found. Leaving" % ca_file)
-                    os._exit(1)
+                    sys.exit(1)
                 from kvirt.providers.openstack import Kopenstack
                 k = Kopenstack(host=self.host, port=self.port, user=user, password=password, version=version,
                                debug=debug, project=project, domain=domain, auth_url=auth_url, ca_file=ca_file,
@@ -324,11 +324,11 @@ class Kconfig(Kbaseconfig):
                 user = self.options.get('user')
                 if user is None:
                     error("Missing user in the configuration. Leaving")
-                    os._exit(1)
+                    sys.exit(1)
                 password = self.options.get('password')
                 if password is None:
                     error("Missing password in the configuration. Leaving")
-                    os._exit(1)
+                    sys.exit(1)
                 cluster = self.options.get('cluster')
                 if cluster is None:
                     error("Missing cluster in the configuration. Leaving")
@@ -354,11 +354,11 @@ class Kconfig(Kbaseconfig):
                 auth_token = self.options.get('auth_token')
                 if auth_token is None:
                     error("Missing auth_token in the configuration. Leaving")
-                    os._exit(1)
+                    sys.exit(1)
                 project = self.options.get('project')
                 if project is None:
                     error("Missing project in the configuration. Leaving")
-                    os._exit(1)
+                    sys.exit(1)
                 facility = self.options.get('facility')
                 from kvirt.providers.packet import Kpacket
                 k = Kpacket(auth_token, project, facility=facility, debug=debug,
@@ -367,7 +367,7 @@ class Kconfig(Kbaseconfig):
             else:
                 if self.host is None:
                     error("Problem parsing your configuration file")
-                    os._exit(1)
+                    sys.exit(1)
                 session = self.options.get('session', False)
                 remotednsmasq = self.options.get('remotednsmasq', False)
                 from kvirt.providers.kvm import Kvirt
@@ -375,7 +375,7 @@ class Kconfig(Kbaseconfig):
                           debug=debug, insecure=self.insecure, session=session, remotednsmasq=remotednsmasq)
             if k.conn is None:
                 error("Couldn't connect to client %s. Leaving..." % self.client)
-                os._exit(1)
+                sys.exit(1)
             for extraclient in self._extraclients:
                 if extraclient not in self.ini:
                     warning("Missing section for client %s in config file. Trying to connect..." % extraclient)
@@ -385,7 +385,7 @@ class Kconfig(Kbaseconfig):
                 self.extraclients[extraclient] = e
                 if e.conn is None:
                     error("Couldn't connect to specify hypervisor %s. Leaving..." % extraclient)
-                    os._exit(1)
+                    sys.exit(1)
         self.k = k
         default_data = {'config_%s' % k: self.default[k] for k in self.default}
         config_data = {'config_%s' % k: self.ini[self.client][k] for k in self.ini[self.client]}
@@ -414,7 +414,7 @@ class Kconfig(Kbaseconfig):
         if wrong_overrides:
             for wrong_override in wrong_overrides:
                 error("Incorrect parameter %s. Hyphens are not allowed" % wrong_override)
-            os._exit(1)
+            sys.exit(1)
         overrides['name'] = name
         kube = overrides.get('kube')
         kubetype = overrides.get('kubetype')
@@ -668,7 +668,7 @@ class Kconfig(Kbaseconfig):
                     path = fil.get('path')
                     if path is None or not path.startswith('/'):
                         error("Incorrect path %s.Leaving..." % path)
-                        os._exit(1)
+                        sys.exit(1)
                     origin = fil.get('origin')
                     content = fil.get('content')
                 else:
@@ -1112,14 +1112,14 @@ $INFO
             products = [product for product in self.list_products() if product['name'] == name]
         if len(products) == 0:
             error("Product not found. Leaving...")
-            os._exit(1)
+            sys.exit(1)
         elif len(products) > 1:
             error("Product found in several repos or groups. Specify one...")
             for product in products:
                 group = product['group']
                 repo = product['repo']
                 print("repo:%s\tgroup:%s" % (repo, group))
-            os._exit(1)
+            sys.exit(1)
         else:
             product = products[0]
             plan = nameutils.get_random_name() if plan is None else plan
@@ -1249,7 +1249,7 @@ $INFO
         networks = []
         if plan == '':
             error("That would delete every vm...Not doing that")
-            os._exit(1)
+            sys.exit(1)
         found = False
         if not self.extraclients:
             deleteclients = {self.client: k}
@@ -1466,7 +1466,7 @@ $INFO
         inputfile = os.path.expanduser(inputfile)
         if not os.path.exists(inputfile):
             error("Input file %s not found.Leaving...." % inputfile)
-            os._exit(1)
+            sys.exit(1)
         if info:
             self.info_plan(inputfile, onfly=onfly, quiet=quiet, doc=doc)
             if toclean:
@@ -1487,7 +1487,7 @@ $INFO
         dict_types = [entry for entry in entries if isinstance(entries[entry], dict)]
         if not dict_types:
             error("%s doesn't look like a valid plan.Leaving...." % inputfile)
-            os._exit(1)
+            sys.exit(1)
         inputdir = os.path.dirname(inputfile) if os.path.dirname(inputfile) != '' else '.'
         pre_script = '%s/kcli_pre.sh' % inputdir
         if os.path.exists(pre_script):
@@ -1500,7 +1500,7 @@ $INFO
                     run = call('bash %s/pre.sh' % tmpdir, shell=True)
                     if run != 0:
                         error("Issues running kcli_pre.sh. Leaving")
-                        os._exit(run)
+                        sys.exit(run)
             else:
                 warning("Skipping kcli_pre.sh as requested")
         vmentries = [entry for entry in entries if 'type' not in entries[entry] or entries[entry]['type'] == 'vm']
@@ -1702,7 +1702,7 @@ $INFO
                 for entry in overrides.get('vmrules', self.vmrules):
                     if len(entry) != 1:
                         error("Wrong vm rule %s" % entry)
-                        os._exit(1)
+                        sys.exit(1)
                     rule = list(entry.keys())[0]
                     if re.match(rule, name) and isinstance(entry[rule], dict):
                         listkeys = ['cmds', 'files', 'scripts']
@@ -1979,7 +1979,7 @@ $INFO
                 _ansible = entries[entry]
                 if 'playbook' not in _ansible:
                     error("Missing Playbook for ansible.Ignoring...")
-                    os._exit(1)
+                    sys.exit(1)
                 playbook = _ansible['playbook']
                 verbose = _ansible['verbose'] if 'verbose' in _ansible else False
                 groups = _ansible.get('groups', {})
@@ -2405,7 +2405,7 @@ $INFO
         inputfile = os.path.expanduser(inputfile)
         if not os.path.exists(inputfile):
             error("No input file found nor default kcli_plan.yml.Leaving....")
-            os._exit(1)
+            sys.exit(1)
         pprint("Handling expose of plan with name %s and inputfile %s" % (plan, inputfile))
         kexposer = Kexposer(self, plan, inputfile, overrides=overrides, port=port, extraconfigs=extraconfigs,
                             installermode=installermode)
@@ -2416,7 +2416,7 @@ $INFO
         iso_version = overrides.get('version', 'latest')
         if iso_version not in ['latest', 'pre-release'] and not iso_version.startswith('4.'):
             error("Incorrect live iso version. Choose between latest, pre-release or 4.X")
-            os._exit(1)
+            sys.exit(1)
         elif iso_version.startswith('4.'):
             minor_version = iso_version.split('.')[1]
             if minor_version.isdigit() and int(minor_version) < 6:
@@ -2439,7 +2439,7 @@ $INFO
         if ignitionfile is not None:
             if not os.path.exists(ignitionfile):
                 error("%s not found" % ignitionfile)
-                os._exit(1)
+                sys.exit(1)
             finaldata = open(ignitionfile).read()
         else:
             ignitionfile = "%s.ign" % role
@@ -2524,7 +2524,7 @@ $INFO
             data['disconnected_origin'] = reg
         result = self.plan(disconnected_plan, inputfile='%s/disconnected.yml' % plandir, overrides=data)
         if result['result'] != 'success':
-            os._exit(1)
+            sys.exit(1)
         return
         disconnected_ip, disconnected_vmport = _ssh_credentials(self.k, disconnected_vm)[1:]
         cacmd = "cat /opt/registry/certs/domain.crt"

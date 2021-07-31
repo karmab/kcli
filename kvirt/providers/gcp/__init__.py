@@ -16,6 +16,7 @@ import googleapiclient.discovery
 from google.cloud import dns, storage
 from netaddr import IPNetwork
 import os
+import sys
 from time import sleep
 import webbrowser
 import yaml
@@ -232,10 +233,10 @@ class Kgcp(object):
                         newfile = templ.render(overrides)
                     except TemplateSyntaxError as e:
                         error("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message))
-                        os._exit(1)
+                        sys.exit(1)
                     except TemplateError as e:
                         error("Error rendering file %s. Got: %s" % (origin, e.message))
-                        os._exit(1)
+                        sys.exit(1)
                     startup_script += "cat <<'EOF' >%s\n%s\nEOF\nchmod %s %s\n" % (path, newfile, permissions, path)
                 else:
                     newfile = open(origin, 'r').read()
@@ -258,7 +259,7 @@ class Kgcp(object):
                         newcmd = Environment(undefined=undefined).from_string(cmd).render(overrides)
                     except TemplateError as e:
                         error("Error rendering cmd %s. Got: %s" % (cmd, e.message))
-                        os._exit(1)
+                        sys.exit(1)
                 startup_script += '%s\n' % newcmd
         if startup_script != '':
             beginningcmd = 'test -f /root/.kcli_startup && exit 0\n'

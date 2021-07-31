@@ -273,13 +273,13 @@ def scale(config, plandir, cluster, overrides):
                 api_ip = config.k.create_service("%s-api" % cluster, config.k.namespace, selector,
                                                  _type="LoadBalancer", ports=[6443, 22623, 22624])
                 if api_ip is None:
-                    os._exit(1)
+                    sys.exit(1)
                 else:
                     pprint("Using api_ip %s" % api_ip)
                     data['api_ip'] = api_ip
             else:
                 error("You need to define api_ip in your parameters file")
-                os._exit(1)
+                sys.exit(1)
         if data.get('virtual_router_id') is None:
             data['virtual_router_id'] = hash(cluster) % 254 + 1
         pprint("Using keepalived virtual_router_id %s" % data['virtual_router_id'])
@@ -287,7 +287,7 @@ def scale(config, plandir, cluster, overrides):
         network = data.get('network')
         if network is None:
             error("You need to indicate a specific vlan network")
-            os._exit(1)
+            sys.exit(1)
     image = overrides.get('image')
     if image is None:
         cluster_image = k.info("%s-master-0" % cluster).get('image')
@@ -308,7 +308,7 @@ def scale(config, plandir, cluster, overrides):
         elif platform in cloudplatforms:
             result = config.plan(plan, inputfile='%s/cloud_%s.yml' % (plandir, role), overrides=overrides)
         if result['result'] != 'success':
-            os._exit(1)
+            sys.exit(1)
         elif platform == 'packet' and 'newvms' in result and result['newvms']:
             for node in result['newvms']:
                 k.add_nic(node, network)
@@ -369,11 +369,11 @@ def create(config, plandir, cluster, overrides):
             sno_memory = data.get('master_memory', data.get('memory', 8192))
             if sno_memory < 20480:
                 error("Sno won't deploy with less than 20gb of RAM")
-                os._exit(1)
+                sys.exit(1)
             sno_cpus = data.get('master_numcpus', data.get('numcpus', 4))
             if sno_cpus < 8:
                 error("Sno won't deploy with less than 8 cpus")
-                os._exit(1)
+                sys.exit(1)
         sno_disk = data.get('sno_disk')
         if sno_disk is None:
             warning("sno_disk will be discovered")
@@ -385,7 +385,7 @@ def create(config, plandir, cluster, overrides):
     masters = data.get('masters', 1)
     if masters == 0:
         error("Invalid number of masters")
-        os._exit(1)
+        sys.exit(1)
     network = data.get('network')
     ipv6 = data['ipv6']
     disconnected_deploy = data.get('disconnected_deploy', False)
@@ -420,24 +420,24 @@ def create(config, plandir, cluster, overrides):
             api_ip = "192.168.122.253"
         else:
             error("You need to define api_ip in your parameters file")
-            os._exit(1)
+            sys.exit(1)
     if metal3:
         if 'baremetal_cidr' not in data:
             error("You need to define baremetal_cidr in your parameters file for metal3")
-            os._exit(1)
+            sys.exit(1)
         elif not ip_address(api_ip) in ip_network(data['baremetal_cidr']):
             error("api_ip doesn't belong to your baremetal_cidr")
-            os._exit(1)
+            sys.exit(1)
         ingress_ip = data.get('ingress_ip')
         if ingress_ip is None:
             error("You need to define ingress_ip for metal3")
-            os._exit(1)
+            sys.exit(1)
         if ingress_ip == api_ip:
             error("You need to set a different value for ingress_ip than api_ip for metal3")
-            os._exit(1)
+            sys.exit(1)
         if not ip_address(ingress_ip) in ip_network(data['baremetal_cidr']):
             error("ingress_ip doesn't belong to your baremetal_cidr")
-            os._exit(1)
+            sys.exit(1)
     if platform in virtplatforms and not sno and not ipi and ':' in api_ip:
         ipv6 = True
     if ipv6:
@@ -459,15 +459,15 @@ def create(config, plandir, cluster, overrides):
     if platform == 'packet':
         if network == 'default':
             error("You need to indicate a specific vlan network")
-            os._exit(1)
+            sys.exit(1)
         else:
             facilities = [n['domain'] for n in k.list_networks().values() if str(n['cidr']) == network]
             if not facilities:
                 error("Vlan network %s not found in any facility" % network)
-                os._exit(1)
+                sys.exit(1)
             elif k.facility not in facilities:
                 error("Vlan network %s not found in facility %s" % (network, k.facility))
-                os._exit(1)
+                sys.exit(1)
     masters = data.get('masters')
     workers = data.get('workers')
     tag = data.get('tag')
@@ -479,7 +479,7 @@ def create(config, plandir, cluster, overrides):
         macosx = False
     if platform == 'openstack' and (api_ip is None or public_api_ip is None):
         error("You need to define both api_ip and public_api_ip in your parameters file")
-        os._exit(1)
+        sys.exit(1)
     if not os.path.exists(pull_secret):
         error("Missing pull secret file %s" % pull_secret)
         sys.exit(1)
@@ -524,7 +524,7 @@ def create(config, plandir, cluster, overrides):
             run = get_downstream_installer(tag=tag, baremetal=baremetal)
         if run != 0:
             error("Couldn't download openshift-install")
-            os._exit(run)
+            sys.exit(run)
         pprint("Move downloaded openshift-install somewhere in your PATH if you want to reuse it")
     else:
         warning("Using existing openshift-install found in your PATH")
@@ -556,7 +556,7 @@ def create(config, plandir, cluster, overrides):
                 except:
                     error("Couldn't gather the %s image associated to commit %s" % (config.type, COMMIT_ID))
                     error("Force an image in your parameter file")
-                    os._exit(1)
+                    sys.exit(1)
         if config.type in cloudplatforms:
             image = image_url
         else:
@@ -566,17 +566,17 @@ def create(config, plandir, cluster, overrides):
                 result = config.handle_host(pool=config.pool, image=image, download=True, update_profile=False,
                                             url=image_url, size=data.get('kubevirt_disk_size'))
                 if result['result'] != 'success':
-                    os._exit(1)
+                    sys.exit(1)
         pprint("Using image %s" % image)
     elif platform != 'packet':
         pprint("Checking if image %s is available" % image)
         images = [v for v in k.volumes() if image in v]
         if not images:
             error("Missing %s. Indicate correct image in your parameters file..." % image)
-            os._exit(1)
+            sys.exit(1)
     else:
         error("Missing image in your parameters file. This is required for packet")
-        os._exit(1)
+        sys.exit(1)
     overrides['image'] = image
     overrides['cluster'] = cluster
     if not os.path.exists(clusterdir):
@@ -610,7 +610,7 @@ def create(config, plandir, cluster, overrides):
         result = config.plan(disconnected_plan, inputfile='%s/disconnected.yml' % plandir,
                              overrides=disconnected_overrides)
         if result['result'] != 'success':
-            os._exit(1)
+            sys.exit(1)
         disconnected_ip, disconnected_vmport = _ssh_credentials(k, disconnected_vm)[1:]
         cacmd = "cat /opt/registry/certs/domain.crt"
         cacmd = ssh(disconnected_vm, ip=disconnected_ip, user='root', tunnel=config.tunnel,
@@ -671,14 +671,14 @@ def create(config, plandir, cluster, overrides):
         if ipi_platform in ['ovirt', 'baremetal', 'vsphere']:
             if data.get('api_ip') is None:
                 error("You need to define api_ip in your parameters file")
-                os._exit(1)
+                sys.exit(1)
             if data.get('ingress_ip') is None:
                 error("You need to define ingress_ip in your parameters file")
-                os._exit(1)
+                sys.exit(1)
             if ipi_platform == 'baremetal' and data['network_type'] == 'OVNKubernetes'\
                     and data.get('baremetal_cidr') is None:
                 error("You need to define baremetal_cidr in your parameters file")
-                os._exit(1)
+                sys.exit(1)
         if ipi_platform not in cloudplatforms + virtplatforms + ['baremetal']:
             warning("Target platform not supported in kcli, you will need to provide credentials on your own")
         if ipi_platform == 'ovirt':
@@ -693,7 +693,7 @@ def create(config, plandir, cluster, overrides):
             baremetal_workers = data.get('baremetal_workers', [])
             if not baremetal_masters:
                 error("You need to define baremetal_masters in your parameters file")
-                os._exit(1)
+                sys.exit(1)
             if len(baremetal_masters) != masters:
                 warning("Forcing masters number to match baremetal_masters length")
                 masters = len(baremetal_masters)
@@ -719,7 +719,7 @@ def create(config, plandir, cluster, overrides):
                        shell=True)
             if run != 0:
                 error("Leaving environment for debugging purposes")
-                os._exit(run)
+                sys.exit(run)
             mastermanifest = "%s/openshift/99_openshift-cluster-api_master-machines-0.yaml" % clusterdir
             workermanifest = "%s/openshift/99_openshift-cluster-api_worker-machineset-0.yaml" % clusterdir
             master_memory = data.get('master_memory') if data.get('master_memory') is not None else data['memory']
@@ -769,7 +769,7 @@ def create(config, plandir, cluster, overrides):
     if run != 0:
         error("Leaving environment for debugging purposes")
         error("You can delete it with kcli delete kube --yes %s" % cluster)
-        os._exit(run)
+        sys.exit(run)
     if minimal:
         warning("Deploying cvo overrides to provide a minimal install")
         with open("%s/cvo-overrides.yaml" % plandir) as f:
@@ -802,7 +802,7 @@ def create(config, plandir, cluster, overrides):
     if 'network_type' in data and data['network_type'] == 'Contrail':
         if find_executable('git') is None:
             error('git is needed for contrail')
-            os._exit(1)
+            sys.exit(1)
         with TemporaryDirectory() as tmpdir:
             contraildata = {'cluster': cluster, 'domain': domain, 'tmpdir': tmpdir}
             contrailscript = config.process_inputfile(cluster, "%s/contrail.sh.j2" % plandir, overrides=contraildata)
@@ -823,7 +823,7 @@ def create(config, plandir, cluster, overrides):
             error("Leaving environment for debugging purposes")
         process_apps(config, clusterdir, apps, overrides)
         process_postscripts(clusterdir, postscripts)
-        os._exit(run)
+        sys.exit(run)
     autoapprover = config.process_inputfile(cluster, "%s/autoapprovercron.yml" % plandir, overrides=data)
     with open("%s/autoapprovercron.yml" % clusterdir, 'w') as f:
         f.write(autoapprover)
@@ -871,7 +871,7 @@ def create(config, plandir, cluster, overrides):
                    shell=True)
         if run != 0:
             error("Hit issue.Leaving")
-            os._exit(run)
+            sys.exit(run)
         move("%s/bootstrap-in-place-for-live-iso.ign" % clusterdir, "./%s.ign" % sno_name)
         with open("iso.ign", 'w') as f:
             iso_overrides = {}
@@ -916,14 +916,14 @@ def create(config, plandir, cluster, overrides):
         if config.type != 'kvm':
             pprint("Additional workflow not available on %s" % config.type)
             pprint("Embed iso.ign in rhcos live iso")
-            os._exit(0)
+            sys.exit(0)
         else:
             generate_rhcos_iso(k, cluster, data['pool'], force=True)
             if sno_virtual:
                 pprint("Deploying sno vm")
                 result = config.plan(plan, inputfile='%s/sno.yml' % plandir, overrides=data)
                 if result['result'] != 'success':
-                    os._exit(1)
+                    sys.exit(1)
                 if ignore_hosts:
                     warning("Not updating /etc/hosts as per your request")
                 else:
@@ -944,7 +944,7 @@ def create(config, plandir, cluster, overrides):
                               'prometheus-k8s-openshift-monitoring.apps']
                 dnsentry = ' '.join(["%s.%s.%s" % (entry, cluster, domain) for entry in dnsentries])
                 warning("$your_node_ip %s" % dnsentry)
-        os._exit(0)
+        sys.exit(0)
     call('openshift-install --dir=%s --log-level=%s create ignition-configs' % (clusterdir, log_level), shell=True)
     for role in ['master', 'worker']:
         ori = "%s/%s.ign" % (clusterdir, role)
@@ -989,7 +989,7 @@ def create(config, plandir, cluster, overrides):
                 images = [v for v in k.volumes() if helper_image in v]
                 if not images:
                     error("Missing image %s. Indicate correct helper image in your parameters file" % helper_image)
-                    os._exit(1)
+                    sys.exit(1)
             if platform == 'openstack':
                 helper_overrides['flavor'] = "m1.medium"
             helper_overrides['nets'] = [network]
@@ -1044,11 +1044,11 @@ def create(config, plandir, cluster, overrides):
         pprint("Deploying bootstrap")
         result = config.plan(plan, inputfile='%s/bootstrap.yml' % plandir, overrides=overrides)
         if result['result'] != 'success':
-            os._exit(1)
+            sys.exit(1)
         pprint("Deploying masters")
         result = config.plan(plan, inputfile='%s/masters.yml' % plandir, overrides=overrides)
         if result['result'] != 'success':
-            os._exit(1)
+            sys.exit(1)
         if platform == 'packet':
             allnodes = ["%s-bootstrap" % cluster] + ["%s-master-%s" % (cluster, num) for num in range(masters)]
             for node in allnodes:
@@ -1064,7 +1064,7 @@ def create(config, plandir, cluster, overrides):
         if run != 0:
             error("Leaving environment for debugging purposes")
             error("You can delete it with kcli delete cluster --yes %s" % cluster)
-            os._exit(run)
+            sys.exit(run)
         if 'network_type' in data and data['network_type'] == 'Contrail':
             warning("Keeping bootstrap vm to do act as loadbalancer because of Contrail issues with keepalived")
             todelete = []
@@ -1076,7 +1076,7 @@ def create(config, plandir, cluster, overrides):
         pprint("Deploying bootstrap")
         result = config.plan(plan, inputfile='%s/cloud_bootstrap.yml' % plandir, overrides=overrides)
         if result['result'] != 'success':
-            os._exit(1)
+            sys.exit(1)
         sedcmd = 'sed -i "s@https://api-int.%s.%s:22623/config@http://api-int.%s.%s:22624/config@"' % (cluster, domain,
                                                                                                        cluster, domain)
         sedcmd += ' %s/master.ign %s/worker.ign' % (clusterdir, clusterdir)
@@ -1084,15 +1084,15 @@ def create(config, plandir, cluster, overrides):
         pprint("Deploying masters")
         result = config.plan(plan, inputfile='%s/cloud_masters.yml' % plandir, overrides=overrides)
         if result['result'] != 'success':
-            os._exit(1)
+            sys.exit(1)
         result = config.plan(plan, inputfile='%s/cloud_lb_api.yml' % plandir, overrides=overrides)
         if result['result'] != 'success':
-            os._exit(1)
+            sys.exit(1)
         lb_overrides = {'cluster': cluster, 'domain': domain, 'members': masters, 'role': 'master'}
         if workers == 0:
             result = config.plan(plan, inputfile='%s/cloud_lb_apps.yml' % plandir, overrides=lb_overrides)
             if result['result'] != 'success':
-                os._exit(1)
+                sys.exit(1)
         call('openshift-install --dir=%s --log-level=%s wait-for bootstrap-complete || exit 1' % (clusterdir,
                                                                                                   log_level),
              shell=True)
@@ -1104,16 +1104,16 @@ def create(config, plandir, cluster, overrides):
         if platform in virtplatforms:
             result = config.plan(plan, inputfile='%s/workers.yml' % plandir, overrides=overrides)
             if result['result'] != 'success':
-                os._exit(1)
+                sys.exit(1)
         elif platform in cloudplatforms:
             result = config.plan(plan, inputfile='%s/cloud_workers.yml' % plandir, overrides=overrides)
             if result['result'] != 'success':
-                os._exit(1)
+                sys.exit(1)
             lb_overrides['role'] = 'worker'
             lb_overrides['members'] = workers
             result = config.plan(plan, inputfile='%s/cloud_lb_apps.yml' % plandir, overrides=lb_overrides)
             if result['result'] != 'success':
-                os._exit(1)
+                sys.exit(1)
         if platform == 'packet':
             allnodes = ["%s-worker-%s" % (cluster, num) for num in range(workers)]
             for node in allnodes:

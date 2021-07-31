@@ -11,6 +11,7 @@ from kvirt.common import pprint, error
 from kvirt import version
 from kvirt.defaults import VERSION
 import os
+import sys
 import yaml
 
 
@@ -124,7 +125,7 @@ class KcliServicer(kcli_pb2_grpc.KcliServicer):
         tunneluser = config.tunneluser
         if tunnel and tunnelhost is None:
             error("Tunnel requested but invalid tunnelhost")
-            os._exit(1)
+            sys.exit(1)
         insecure = config.insecure
         u, ip, vmport = common._ssh_credentials(k, name)
         if ip is None:
@@ -155,7 +156,7 @@ class KcliServicer(kcli_pb2_grpc.KcliServicer):
         tunnelhost = config.tunnelhost
         if tunnel and tunnelhost is None:
             error("Tunnel requested but invalid tunnelhost")
-            os._exit(1)
+            sys.exit(1)
         tunnelport = config.tunnelport
         tunneluser = config.tunneluser
         insecure = config.insecure

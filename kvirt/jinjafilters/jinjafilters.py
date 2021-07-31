@@ -3,6 +3,7 @@ import os
 from distutils.version import LooseVersion
 from netaddr import IPNetwork
 import requests
+import sys
 
 
 def basename(path):
@@ -125,7 +126,7 @@ def network_ip(network, num=0, version=False):
             return ip
     except Exception as e:
         print("Error processing filter network_ip with %s and %s. Got %s" % (network, num, e))
-        os._exit(1)
+        sys.exit(1)
 
 
 jinjafilters = {'basename': basename, 'dirname': dirname, 'ocpnodes': ocpnodes, 'none': none, 'type': _type,

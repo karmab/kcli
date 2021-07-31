@@ -10,6 +10,7 @@ from kvirt.defaults import METADATA_FIELDS
 import boto3
 from netaddr import IPNetwork
 import os
+import sys
 from socket import gethostbyname
 from string import ascii_lowercase
 from time import sleep
@@ -178,13 +179,13 @@ class Kaws(object):
                 vpcid = self.get_vpc_id(vpcs, netname) if not netname.startswith('vpc-') else netname
                 if vpcid is None:
                     error("Couldn't find vpc %s" % netname)
-                    os._exit(1)
+                    sys.exit(1)
                 subnetids = [subnet['SubnetId'] for subnet in subnets['Subnets'] if subnet['VpcId'] == vpcid]
                 if subnetids:
                     netname = subnetids[0]
                 else:
                     error("Couldn't find valid subnet for vpc %s" % netname)
-                    os._exit(1)
+                    sys.exit(1)
             if ips and len(ips) > index and ips[index] is not None:
                 ip = ips[index]
                 if index == 0:

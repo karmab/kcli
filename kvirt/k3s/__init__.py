@@ -66,13 +66,13 @@ def create(config, plandir, cluster, overrides):
                 api_ip = config.k.create_service("%s-api" % cluster, config.k.namespace, selector,
                                                  _type="LoadBalancer", ports=[6443])
                 if api_ip is None:
-                    os._exit(1)
+                    sys.exit(1)
                 else:
                     pprint("Using api_ip %s" % api_ip)
                     data['api_ip'] = api_ip
             else:
                 error("You need to define api_ip in your parameters file")
-                os._exit(1)
+                sys.exit(1)
     data['basedir'] = '/workdir' if os.path.exists("/i_am_a_container") else '.'
     install_k3s_args = []
     for arg in data:
@@ -106,7 +106,7 @@ def create(config, plandir, cluster, overrides):
     bootstrap_overrides['install_k3s_args'] = bootstrap_install_k3s_args
     result = config.plan(plan, inputfile='%s/bootstrap.yml' % plandir, overrides=bootstrap_overrides)
     if result['result'] != "success":
-        os._exit(1)
+        sys.exit(1)
     nodes_overrides = data.copy()
     nodes_install_k3s_args = install_k3s_args.copy()
     if sdn is None or sdn != 'flannel':
