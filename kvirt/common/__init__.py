@@ -1177,7 +1177,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     if os.path.exists(namepath):
         ignitionextrapath = namepath
         data = mergeignition(name, ignitionextrapath, data)
-    if removetls and 'append' in data['ignition']['config'] and\
+    if removetls and 'config' in data['ignition'] and 'append' in data['ignition']['config'] and\
             data['ignition']['config']['append'][0]['source'].startswith("http://"):
         del data['ignition']['security']['tls']['certificateAuthorities']
     # remove duplicate files to please ignition v3

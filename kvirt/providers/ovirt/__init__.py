@@ -107,6 +107,7 @@ class KOvirt(object):
         memory = memory * 1024 * 1024
         clone = not diskthin
         custom_properties = []
+        ignition = False
         if image is not None:
             templates_service = self.templates_service
             templateslist = templates_service.list()
@@ -121,6 +122,8 @@ class KOvirt(object):
             if not found:
                 return {'result': 'failure', 'reason': "image %s not found" % image}
             if image is not None and common.needs_ignition(image):
+                ignition = True
+                cloudinit = False
                 ignitiondata = ''
                 version = common.ignition_version(image)
                 ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
@@ -131,7 +134,8 @@ class KOvirt(object):
                 initialization = types.Initialization(custom_script=ignitiondata)
         else:
             _template = types.Template(name='Blank')
-        _os = types.OperatingSystem(boot=types.Boot(devices=[types.BootDevice.HD, types.BootDevice.CDROM]))
+        ostype = 'rhcos_x64' if ignition else None
+        _os = types.OperatingSystem(boot=types.Boot(devices=[types.BootDevice.HD, types.BootDevice.CDROM]), type=ostype)
         console = types.Console(enabled=True)
         description = ["filter=%s" % self.filtertag] if self.filtertag is not None else []
         for entry in [field for field in metadata if field in METADATA_FIELDS]:
@@ -328,7 +332,8 @@ class KOvirt(object):
                                                   nic_configurations=nic_configurations, dns_servers=dns,
                                                   dns_search=domain, custom_script=custom_script)
         if start:
-            vm_service.start(use_cloud_init=cloudinit, vm=types.Vm(initialization=initialization, host=vmhost))
+            vm_service.start(use_cloud_init=cloudinit, use_ignition=ignition,
+                             vm=types.Vm(initialization=initialization, host=vmhost))
         if ip is not None:
             self.update_metadata(name, 'ip', ip)
         return {'result': 'success'}
