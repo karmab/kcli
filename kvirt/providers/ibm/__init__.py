@@ -12,7 +12,7 @@ from netaddr import IPNetwork
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 from ibm_cloud_sdk_core.api_exception import ApiException
 from ibm_platform_services import GlobalTaggingV1, ResourceControllerV2
-from ibm_cloud_networking_services import DnsSvcsV1
+from ibm_cloud_networking_services import DnsSvcsV1, dns_svcs_v1
 from time import sleep
 import os
 import ibm_boto3
@@ -513,6 +513,7 @@ class Kibm(object):
         except ApiException as exc:
             error('Unable to retrieve tags. %s' % exc)
             return None, None
+        domain = None
         for tag in tags:
             tagname = tag['name']
             if tagname.count(':') == 1:
@@ -917,19 +918,50 @@ class Kibm(object):
         if ip is None:
             error('Unable to find an IP for %s' % name)
             return
-        #TODO: alias.
+
         try:
-            response = self.dns.create_resource_record(
+            self.dns.create_resource_record(
                 instance_id=dns['guid'],
                 dnszone_id=dnszone['id'],
                 type='A',
                 ttl=60,
                 name=entry,
-                rdata={'ip': ip},
+                rdata=dns_svcs_v1.ResourceRecordInputRdataRdataARecord(ip=ip),
             )
-            print(response)
         except ApiException as exc:
             error('Unable to create DNS entry. %s' % exc)
+            return
+
+
+        if alias:
+            for a in alias:
+                dnsname = ''
+                type = ''
+                rdata = None
+                if a == '*':
+                    type = 'A'
+                    rdata = dns_svcs_v1.ResourceRecordInputRdataRdataARecord(ip=ip)
+                    if cluster is not None and ('master' in name or 'worker' in name):
+                        dnsname = '*.apps.%s.%s' % (cluster, domain)
+                    else:
+                        dnsname = '*.%s.%s' % (name, domain)
+                else:
+                    type = 'CNAME'
+                    dnsname = '%s.%s' % (a, domain) if '.' not in a else a
+                    rdata = dns_svcs_v1.ResourceRecordInputRdataRdataCnameRecord(cname=entry)
+                try:
+                    print("Creating", dnsname, type, entry, ip)
+                    self.dns.create_resource_record(
+                        instance_id=dns['guid'],
+                        dnszone_id=dnszone['id'],
+                        type=type,
+                        ttl=60,
+                        name=dnsname,
+                        rdata=rdata
+                    )
+                except ApiException as exc:
+                    error('Unable to create DNS entry. %s' % exc)
+                    return
 
     def create_dns(self):
         print("not implemented")
@@ -1000,7 +1032,8 @@ class Kibm(object):
                 error('Unable to check DNS %s records. %s' % (dnszone['name'], exc))
                 return results
             for record in records:
-                results.append([record['name'], record['type'], record['ttl'], record['rdata']['ip']])
+                ip = record['rdata']['ip'] if 'ip' in record['rdata'] else record['rdata']['cname']
+                results.append([record['name'], record['type'], record['ttl'], ip])
         return results
 
     def _get_vm(self, name):
