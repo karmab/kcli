@@ -479,6 +479,9 @@ def create(config, plandir, cluster, overrides):
     if macosx and not os.path.exists('/i_am_a_container'):
         macosx = False
     if platform == 'openstack':
+        if data.get('flavor') is None:
+            error("Missing flavor in parameter file")
+            sys.exit(1)
         if api_ip is None:
             cidr = config.k.list_networks()[network]['cidr']
             api_ip = IPNetwork(cidr)[-2]
