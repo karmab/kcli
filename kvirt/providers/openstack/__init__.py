@@ -898,6 +898,7 @@ class Kopenstack(object):
                     port['fixed_ips'] = [{'ip_address': ip, 'subnet_id': subnet_id}]
         result = neutron.create_port({'port': port})
         port_id = result['port']['id']
+        result = {'result': 'success'}
         if floating:
             tenant_id = network['tenant_id']
             if self.external_network is not None:
@@ -916,9 +917,10 @@ class Kopenstack(object):
             floating_ip = neutron.create_floatingip(body={'floatingip': args})
             floatingip_ip = floating_ip['floatingip']['floating_ip_address']
             pprint('Assigning new floating ip %s for this port' % floatingip_ip)
-        return {'result': 'success'}
+            result['floating'] = floatingip_ip
+        return result
 
-    def delete_network_port(self, name, network=None, floating=False):
+    def delete_network_port(self, name):
         neutron = self.neutron
         matchingports = [i for i in neutron.list_ports()['ports'] if i['name'] == name]
         if not matchingports:
@@ -999,4 +1001,4 @@ class Kopenstack(object):
 
     def public_bucketfile_url(self, bucket, path):
         swift_url = self.swift.http_connection()[0].geturl()
-        return "http://%s/%s/%s" % (swift_url, bucket, path)
+        return "%s/%s/%s" % (swift_url, bucket, path)

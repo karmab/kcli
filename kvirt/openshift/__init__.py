@@ -972,7 +972,7 @@ def create(config, plandir, cluster, overrides):
             warning("Ignoring /etc/hosts")
         else:
             update_etc_hosts(cluster, domain, host_ip, ingress_ip)
-        if platform == 'openstack' or (platform == 'packet' and config.k.tunnelhost is None):
+        if platform == 'packet' and config.k.tunnelhost is None:
             # bootstrap ignition is too big in those platforms so we deploy a temporary web server to serve it
             helper_overrides = {}
             if helper_image is None:
@@ -990,8 +990,6 @@ def create(config, plandir, cluster, overrides):
                 if not images:
                     error("Missing image %s. Indicate correct helper image in your parameters file" % helper_image)
                     sys.exit(1)
-            if platform == 'openstack':
-                helper_overrides['flavor'] = "m1.medium"
             helper_overrides['nets'] = [network]
             helper_overrides['enableroot'] = True
             helper_overrides['plan'] = cluster
@@ -1031,13 +1029,17 @@ def create(config, plandir, cluster, overrides):
         sedcmd = 'sed -i "s@https://api-int.%s.%s:22623/config@http://%s:22624/config@"' % (cluster, domain, new_api_ip)
         sedcmd += ' %s/master.ign %s/worker.ign' % (clusterdir, clusterdir)
         call(sedcmd, shell=True)
-    if platform in cloudplatforms:
+    if platform in cloudplatforms + ['openstack']:
         bucket = "%s-%s" % (cluster, domain.replace('.', '-'))
         if bucket not in config.k.list_buckets():
             config.k.create_bucket(bucket)
         config.k.upload_to_bucket(bucket, "%s/bootstrap.ign" % clusterdir, public=True)
         bucket_url = config.k.public_bucketfile_url(bucket, "bootstrap.ign")
-        sedcmd = 'sed "s@https://api-int.%s.%s:22623/config/master@%s@" ' % (cluster, domain, bucket_url)
+        if platform == 'openstack':
+            ori_url = "http://%s:22624" % api_ip
+        else:
+            ori_url = "https://api-int.%s.%s:22623" % (cluster, domain)
+        sedcmd = 'sed "s@%s/config/master@%s@" ' % (ori_url, bucket_url)
         sedcmd += '%s/master.ign > %s/bootstrap.ign' % (clusterdir, clusterdir)
         call(sedcmd, shell=True)
     if platform in virtplatforms:
@@ -1070,7 +1072,7 @@ def create(config, plandir, cluster, overrides):
             todelete = []
         else:
             todelete = ["%s-bootstrap" % cluster]
-        if platform in ['openstack', 'packet']:
+        if platform == 'packet':
             todelete.append("%s-bootstrap-helper" % cluster)
     else:
         pprint("Deploying bootstrap")
