@@ -221,6 +221,9 @@ class Kopenstack(object):
                               if i['fixed_ips'] and i['fixed_ips'][0]['ip_address'] == fixed_ip]
                 port_id = fixedports[0]
                 neutron.update_floatingip(floatingip_id, {'floatingip': {'port_id': port_id}})
+                if 'api_ip' in overrides:
+                    api_ip = overrides['api_ip']
+                    neutron.update_port(port_id, {'port': {'allowed_address_pairs': [{'ip_address': api_ip}]}})
             if not securitygroups:
                 default_securitygroups = [s for s in neutron.list_security_groups()['security_groups']
                                           if s['name'] == 'default' and s['tenant_id'] == tenant_id]

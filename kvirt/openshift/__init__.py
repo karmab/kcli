@@ -8,6 +8,7 @@ import json
 import os
 import sys
 from ipaddress import ip_address, ip_network
+from netaddr import IPNetwork
 from kvirt.common import error, pprint, success, warning, info2
 from kvirt.common import get_oc, pwd_path
 from kvirt.common import get_commit_rhcos, get_latest_fcos, patch_bootstrap, generate_rhcos_iso, olm_app
@@ -477,9 +478,15 @@ def create(config, plandir, cluster, overrides):
     macosx = data.get('macosx')
     if macosx and not os.path.exists('/i_am_a_container'):
         macosx = False
-    if platform == 'openstack' and (api_ip is None or public_api_ip is None):
-        error("You need to define both api_ip and public_api_ip in your parameters file")
-        sys.exit(1)
+    if platform == 'openstack':
+        if api_ip is None:
+            cidr = config.k.list_networks()[network]['cidr']
+            api_ip = IPNetwork(cidr)[-2]
+            data['api_ip'] = api_ip
+            warning("Using %s as api_ip" % api_ip)
+        if public_api_ip is None:
+            public_api_ip = config.k.create_network_port("%s-vip" % cluster, network, ip=api_ip,
+                                                         floating=True)['floating']
     if not os.path.exists(pull_secret):
         error("Missing pull secret file %s" % pull_secret)
         sys.exit(1)

@@ -1348,11 +1348,10 @@ The main benefits of deploying Openshift with kcli are:
 - An available ip in your vm's network to use as *api_ip*. Make sure it is excluded from your dhcp server.
 - Direct access to the deployed vms. Use something like this otherwise `sshuttle -r your_hypervisor 192.168.122.0/24 -v`).
 - Target platform needs:
-  - centos helper image ( *kcli download centos7* ). This is only needed on ovirt/vsphere/openstack
   - Ignition support 
-     - (for Ovirt/Rhv, this means >= 4.3.4).
+     - (for Ovirt/Rhv, this means >= 4.4).
      - For Libvirt, support for fw_cfg in qemu (install qemu-kvm-ev on centos for instance).
-  - On Openstack, you will need to create a network with port security disabled (as we need a vip to be reachable on the masters) and to create a port on this network and map it to a floating ip. Put the corresponding api_ip and public_api_ip in your parameter file. You can use The script [openstack.py](https://github.com/karmab/kcli/blob/master/extras/openstack.py) to do so with kcli. You also need to open relevant ports (80, 443, 6443 and 22623) in your security groups.
+  - On Openstack, a port on target network mapped to a floating ip is needed. If not specified with api_ip and public_api_ip parameters, the second-to-last ip from the network will be used.
 - For ipv6, you run the following sysctl `net.ipv6.conf.all.accept_ra=2`
 
 ### How to Use
