@@ -23,7 +23,7 @@ spec:
     - "-c"
     - |
       #/bin/sh
-      NAMESERVER=$(grep nameserver /etc/resolv.conf | grep -v 'fe80::' /etc/resolv.conf | tail -1 | sed 's/nameserver //')
+      NAMESERVER=$(grep nameserver /etc/resolv.conf | grep -v 'fe80::' | tail -1 | sed 's/nameserver //')
       if [ "$NAMESERVER" == "" ] ; then
         exit 1
       fi
