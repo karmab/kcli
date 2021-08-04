@@ -1497,6 +1497,9 @@ class Kvirt(object):
             e = element.find('{kvirt}owner')
             if e is not None:
                 yamlinfo['owner'] = e.text
+            e = element.find('{kvirt}domain')
+            if e is not None:
+                yamlinfo['domain'] = e.text
         if image is not None:
             yamlinfo['image'] = image
         yamlinfo['plan'] = plan
@@ -1742,12 +1745,17 @@ class Kvirt(object):
         vmxml = vm.XMLDesc(0)
         root = ET.fromstring(vmxml)
         disks = []
+        domain, image = None, None
         for element in list(root.iter('{kvirt}info')):
+            e = element.find('{kvirt}domain')
+            if e is not None:
+                domain = e.text
             e = element.find('{kvirt}image')
             if e is not None:
                 image = e.text
                 if image is not None and ('coreos' in image or 'rhcos' in image):
                     ignition = True
+            if domain is not None and image is not None:
                 break
         for index, element in enumerate(list(root.iter('disk'))):
             source = element.find('source')
@@ -1823,8 +1831,9 @@ class Kvirt(object):
                         hostentry = "<host mac='%s' name='%s' ip='%s'/>" % (mac, hostname, iphost)
                         network.update(2, 4, 0, hostentry, 1)
                     hostname = host.find('hostname')
-                    if hostname is not None and hostname.text == name:
-                        hostentry = '<host ip="%s"><hostname>%s</hostname></host>' % (iphost, name)
+                    matchinghostname = "%s.%s" % (name, domain) if domain is not None else name
+                    if hostname is not None and (hostname.text == matchinghostname):
+                        hostentry = '<host ip="%s"><hostname>%s</hostname></host>' % (iphost, matchinghostname)
                         network.update(2, 10, 0, hostentry, 1)
             except:
                 if networktype == 'bridge':
@@ -2097,18 +2106,21 @@ class Kvirt(object):
                         dnsentry += "%s<hostname>%s</hostname>" % (entry, entry)
                 dnsentry += "</host>"
                 if force:
+                    matchingname = "%s.%s" % (name, domain) if domain is not None else name
                     for host in list(root.iter('host')):
                         iphost = host.get('ip')
                         machost = host.get('mac')
-                        if iphost == ip and machost is None:
+                        if machost is None:
                             existing = []
                             for hostname in list(host.iter('hostname')):
                                 existing.append(hostname.text)
-                            if name in existing:
-                                pprint("Skipping existing dns entry for %s" % name)
-                            oldentry = '<host ip="%s"></host>' % iphost
-                            pprint("Removing old dns entry for ip %s" % ip)
-                            network.update(2, 10, 0, oldentry, 1)
+                            if matchingname in existing:
+                                if iphost == ip:
+                                    pprint("Skipping existing dns entry for %s" % matchingname)
+                                else:
+                                    oldentry = '<host ip="%s"></host>' % iphost
+                                    pprint("Removing old dns entry for ip %s" % iphost)
+                                    network.update(2, 10, 0, oldentry, 1)
                 try:
                     network.update(4, 10, 0, dnsentry, 1)
                 except Exception as e:
