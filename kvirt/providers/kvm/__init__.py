@@ -684,9 +684,15 @@ class Kvirt(object):
 <target dev='fda' bus='fdc'/>
 </disk>""" % floppy
         if cloudinit:
+            openstack = False
+            ignitiondata = None
             if image is not None and common.needs_ignition(image):
                 localhosts = ['localhost', '127.0.0.1']
-                ignition = True
+                if 'openstack' in image:
+                    ignition = False
+                    openstack = True
+                else:
+                    ignition = True
                 ignitiondir = '/var/tmp'
                 k8sdir = '/var/run/secrets/kubernetes.io'
                 if os.path.exists("/i_am_a_container") and not os.path.exists(k8sdir):
@@ -720,7 +726,7 @@ class Kvirt(object):
                     if code != 0:
                         return {'result': 'failure', 'reason': "Unable to create ignition data file in /var/tmp"}
                     ignitiontmpdir.cleanup()
-            elif image is not None and not ignition and diskpath is not None:
+            if image is not None and not ignition and diskpath is not None:
                 cloudinitiso = "%s/%s.ISO" % (default_poolpath, name)
                 dtype = 'block' if '/dev' in diskpath else 'file'
                 dsource = 'dev' if '/dev' in diskpath else 'file'
@@ -732,13 +738,17 @@ class Kvirt(object):
 <readonly/>
 </disk>""" % (isoxml, dtype, dsource, cloudinitiso, isobus)
                 dest_machine = 'q99' if aarch64_full else machine
-                userdata, metadata, netdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets,
-                                                               gateway=gateway, dns=dns, domain=domain,
-                                                               reserveip=reserveip, files=files, enableroot=enableroot,
-                                                               overrides=overrides, storemetadata=storemetadata,
-                                                               image=image, ipv6=ipv6, machine=dest_machine)
+                if ignitiondata is not None:
+                    userdata, metadata, netdata = ignitiondata, '', None
+                else:
+                    userdata, metadata, netdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets,
+                                                                   gateway=gateway, dns=dns, domain=domain,
+                                                                   reserveip=reserveip, files=files,
+                                                                   enableroot=enableroot, overrides=overrides,
+                                                                   storemetadata=storemetadata, image=image, ipv6=ipv6,
+                                                                   machine=dest_machine)
                 with TemporaryDirectory() as tmpdir:
-                    common.make_iso(name, tmpdir, userdata, metadata, netdata)
+                    common.make_iso(name, tmpdir, userdata, metadata, netdata, openstack=openstack)
                     self._uploadimage(name, pool=default_storagepool, origin=tmpdir)
         listen = '0.0.0.0' if self.host not in ['localhost', '127.0.0.1'] else '127.0.0.1'
         if aarch64:
