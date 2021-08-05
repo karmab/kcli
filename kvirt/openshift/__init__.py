@@ -552,17 +552,18 @@ def create(config, plandir, cluster, overrides):
     if sno or ipi:
         pass
     elif image is None:
+        image_type = 'openstack' if data.get('kvm_openstack', False) and config.type == 'kvm' else config.type
         region = config.k.region if config.type == 'aws' else None
         if upstream:
             fcos_base = 'stable' if version == 'stable' else 'testing'
             fcos_url = "https://builds.coreos.fedoraproject.org/streams/%s.json" % fcos_base
-            image_url = get_latest_fcos(fcos_url, _type=config.type, region=region)
+            image_url = get_latest_fcos(fcos_url, _type=image_type, region=region)
         else:
             try:
-                image_url = get_installer_rhcos(_type=config.type, region=region, arch=arch)
+                image_url = get_installer_rhcos(_type=image_type, region=region, arch=arch)
             except:
                 try:
-                    image_url = get_commit_rhcos(COMMIT_ID, _type=config.type, region=region)
+                    image_url = get_commit_rhcos(COMMIT_ID, _type=image_type, region=region)
                 except:
                     error("Couldn't gather the %s image associated to commit %s" % (config.type, COMMIT_ID))
                     error("Force an image in your parameter file")

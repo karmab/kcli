@@ -2083,7 +2083,8 @@ $INFO
         return returndata
 
     def handle_host(self, pool=None, image=None, switch=None, download=False,
-                    url=None, cmd=None, sync=False, update_profile=False, commit=None, size=None, arch='x86_64'):
+                    url=None, cmd=None, sync=False, update_profile=False, commit=None, size=None, arch='x86_64',
+                    kvm_openstack=False):
         """
 
         :param pool:
@@ -2111,15 +2112,16 @@ $INFO
                         error("Image %s has no associated url" % image)
                         return {'result': 'failure', 'reason': "Incorrect image"}
                     url = IMAGES[image]
+                    image_type = 'openstack' if kvm_openstack and self.type == 'kvm' else self.type
                     if 'rhcos' in image:
                         if commit is not None:
-                            url = common.get_commit_rhcos(commit, _type=self.type)
+                            url = common.get_commit_rhcos(commit, _type=image_type)
                         else:
                             if arch != 'x86_64':
                                 url += '-%s' % arch
-                            url = common.get_latest_rhcos(url, _type=self.type, arch=arch)
+                            url = common.get_latest_rhcos(url, _type=image_type, arch=arch)
                     if 'fcos' in image:
-                        url = common.get_latest_fcos(url, _type=self.type)
+                        url = common.get_latest_fcos(url, _type=image_type)
                     image = os.path.basename(image)
                     if image.startswith('rhel'):
                         if 'web' in sys.argv[0]:

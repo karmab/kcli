@@ -1824,7 +1824,7 @@ def openshift_delete_app(config, appdir, overrides={}):
     return result
 
 
-def make_iso(name, tmpdir, userdata, metadata, netdata):
+def make_iso(name, tmpdir, userdata, metadata, netdata, openstack=False):
     with open("%s/user-data" % tmpdir, 'w') as x:
         x.write(userdata)
     with open("%s/meta-data" % tmpdir, 'w') as y:
@@ -1834,11 +1834,20 @@ def make_iso(name, tmpdir, userdata, metadata, netdata):
         sys.exit(1)
     isocmd = 'genisoimage' if find_executable('genisoimage') is not None else 'mkisofs'
     isocmd += " --quiet -o %s/%s.ISO --volid cidata" % (tmpdir, name)
-    isocmd += " --joliet --rock %s/user-data %s/meta-data" % (tmpdir, tmpdir)
+    if openstack:
+        os.makedirs("%s/root/openstack/latest" % tmpdir)
+        move("%s/user-data" % tmpdir, "%s/root/openstack/latest/user_data" % tmpdir)
+        move("%s/meta-data" % tmpdir, "%s/root/openstack/latest/meta_data.json" % tmpdir)
+        isocmd += " -V config-2 --joliet --rock %s/root" % tmpdir
+    else:
+        isocmd += " --joliet --rock %s/user-data %s/meta-data" % (tmpdir, tmpdir)
     if netdata is not None:
         with open("%s/network-config" % tmpdir, 'w') as z:
             z.write(netdata)
-        isocmd += " %s/network-config" % tmpdir
+        if openstack:
+            move("%s/network-config" % tmpdir, "%s/root/openstack/latest/network_config.json" % tmpdir)
+        else:
+            isocmd += " %s/network-config" % tmpdir
     os.system(isocmd)
 
 
