@@ -32,11 +32,10 @@ def scale(config, plandir, cluster, overrides):
         pprint("Using image %s" % image)
     data['image'] = image
     os.chdir(os.path.expanduser("~/.kcli"))
-    # config.plan(plan, inputfile='%s/workers.yml' % plandir, overrides=data)
     for role in ['masters', 'workers']:
         overrides = data.copy()
-        # if overrides.get(role, 0) == 0:
-        #    continue
+        if role == 'masters' and overrides.get('masters', 1) == 1:
+            continue
         config.plan(plan, inputfile='%s/%s.yml' % (plandir, role), overrides=overrides)
 
 
