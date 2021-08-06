@@ -1770,17 +1770,10 @@ $INFO
                         currentmemory = currentvm['memory']
                         currentimage = currentvm.get('template')
                         currentimage = currentvm.get('image', currentimage)
-                        currentcpus = int(currentvm['numcpus'])
+                        currentcpus = int(currentvm['cpus'])
                         currentnets = currentvm['nets']
                         currentdisks = currentvm['disks']
                         currentflavor = currentvm.get('flavor')
-                        if 'image' in currentvm:
-                            if 'image' in profile and currentimage != profile['image']:
-                                pprint("Existing %s has a different image. skipped!" % name)
-                                continue
-                        elif 'image' in profile:
-                            pprint("Existing %s has a different image. skipped!" % name)
-                            continue
                         if 'autostart' in profile and currentstart != profile['autostart']:
                             updated = True
                             pprint("Updating autostart of %s to %s" % (name, profile['autostart']))
@@ -1829,16 +1822,17 @@ $INFO
                                 for net in profile['nets'][len(currentnets):]:
                                     if isinstance(net, str):
                                         network = net
-                                    elif isinstance(net, dict):
-                                        network = net.get('name', self.network)
+                                    elif isinstance(net, dict) and 'name' in net:
+                                        network = net['name']
                                     else:
+                                        error("Skpping wrong nic spec for %s" % name)
                                         continue
                                     z.add_nic(name, network)
                             if len(currentnets) > len(profile['nets']):
                                 updated = True
                                 pprint("Removing Nics of %s" % name)
-                                for net in range(len(currentnets) - len(profile['nets']), len(currentnets)):
-                                    interface = "eth%s" % net
+                                for net in range(len(currentnets), len(profile['nets']), -1):
+                                    interface = "eth%s" % (net - 1)
                                     z.delete_nic(name, interface)
                         if not updated:
                             pprint("%s skipped on %s!" % (name, vmclient))
