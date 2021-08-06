@@ -546,6 +546,32 @@ The following parameters are specific to packet:
 
 To use this provider with kcli rpm, you’ll need to install packet-python from pip.
 
+IBM Cloud
+---------
+
+::
+
+    myibm:
+      type: ibm
+      iam_api_key: xxxx
+      region: eu-gb
+      zone: eu-gb-2
+      vpc: pruebak
+
+The following parameters are specific to packet:
+
+-  iam_api_key.
+-  region
+-  zone
+-  vpc
+
+To use this provider with kcli rpm, you’ll need to install the following packets from pip:
+
+-  ibm_vpc
+-  ibm-cos-sdk
+-  ibm-platform-services
+-  ibm-cloud-networking-services
+
 Usage
 =====
 
