@@ -313,6 +313,11 @@ class Kvirt(object):
         if 'machine' in overrides:
             machine = overrides['machine']
             warning("Forcing machine type to %s" % machine)
+        uefi = overrides.get('uefi', False)
+        uefi_legacy = overrides.get('uefi_legacy', False)
+        secureboot = overrides.get('secureboot', False)
+        if machine == 'pc' and (uefi or uefi_legacy or secureboot or aarch64):
+            machine = 'q35'
         # sysinfo = "<smbios mode='sysinfo'/>"
         disksxml = ''
         fixqcow2path, fixqcow2backing = None, None
@@ -1074,13 +1079,7 @@ class Kvirt(object):
         ramxml = ""
         smmxml = ""
         osfirmware = ""
-        uefi = overrides.get('uefi', False)
-        uefi_legacy = overrides.get('uefi_legacy', False)
-        secureboot = overrides.get('secureboot', False)
-        secure = 'yes' if secureboot else 'no'
         if uefi or uefi_legacy or secureboot or aarch64:
-            if machine == 'pc':
-                machine = 'q35'
             if uefi_legacy:
                 ramxml = "<loader readonly='yes' type='pflash'>/usr/share/OVMF/OVMF_CODE.secboot.fd</loader>"
                 if secureboot:
@@ -1091,8 +1090,10 @@ class Kvirt(object):
                     ramxml += '<nvram>/var/lib/libvirt/qemu/nvram/%s.fd</nvram>' % name
             else:
                 osfirmware = "firmware='efi'"
+                secure = 'no'
                 if secureboot:
                     smmxml = "<smm state='on'/>"
+                    secure = 'yes'
                 ramxml = "<loader readonly='yes' secure='%s'/>" % secure
         arch = 'aarch64' if aarch64 else 'x86_64'
         if not aarch64:
