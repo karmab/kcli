@@ -190,8 +190,8 @@ class Kibm(object):
             return {'result': 'failure', 'reason': 'Unable to check provisioned images. %s' % exc}
 
         volume_attachments = []
-        for index, disk in enumerate(disks[1:]):
-            disksize = int(disk.get('size')) if isinstance(disk, list) and 'size' in disk else int(disk)
+        for index, disk in enumerate(disks):
+            disksize = int(disk.get('size')) if isinstance(disk, dict) and 'size' in disk else int(disk)
             diskname = "%s-disk%s" % (name, index + 1)
             volume_attachments.append(
                 vpc_v1.VolumeAttachmentPrototypeInstanceContext(
