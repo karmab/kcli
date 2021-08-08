@@ -1564,7 +1564,8 @@ def update_k3s_kube(args):
 
 def update_kube(args):
     """Update kube"""
-    data = {}
+    cluster = args.cluster
+    data = {'cluster': cluster}
     plan = None
     _type = args.type
     paramfile = args.paramfile
@@ -1579,11 +1580,10 @@ def update_kube(args):
         pprint("Using default parameter file kcli_parameters.yml")
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     if not overrides:
-        warning("No parameters provided, using solely the one stored at install time")
+        warning("No parameters provided, using solely the ones stored at install time")
     if 'ipi' in overrides and overrides['ipi']:
         error("Update cluster workflow not available when using ipi")
         sys.exit(1)
-    cluster = overrides.get('cluster', args.cluster)
     clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
     if not os.path.exists(clusterdir):
         error("Cluster directory %s not found..." % clusterdir)

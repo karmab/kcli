@@ -2398,6 +2398,7 @@ $INFO
         openshift.scale(self, plandir, cluster, overrides)
 
     def update_kube(self, cluster, _type, overrides={}, plan=None):
+        planvms = []
         if plan is None:
             plan = cluster
         if _type == 'generic':
@@ -2418,7 +2419,14 @@ $INFO
         os.chdir(os.path.expanduser("~/.kcli"))
         for role in roles:
             pprint("Updating vms with %s role" % role)
-            self.plan(plan, inputfile='%s/%s.yml' % (plandir, role), overrides=overrides, update=True)
+            plandata = self.plan(plan, inputfile='%s/%s.yml' % (plandir, role), overrides=overrides, update=True)
+            planvms.extend(plandata['newvms'] + plandata['existingvms'])
+        for vm in self.k.list():
+            vmname = vm['name']
+            vmplan = vm.get('plan', 'kvirt')
+            if vmplan == plan and vmname not in planvms:
+                pprint("Deleting vm %s" % vmname)
+                self.k.delete(vmname)
 
     def expose_plan(self, plan, inputfile=None, overrides={}, port=9000, extraconfigs={}, installermode=False):
         inputfile = os.path.expanduser(inputfile)
