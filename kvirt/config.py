@@ -2397,6 +2397,29 @@ $INFO
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
         openshift.scale(self, plandir, cluster, overrides)
 
+    def update_kube(self, cluster, _type, overrides={}, plan=None):
+        if plan is None:
+            plan = cluster
+        if _type == 'generic':
+            roles = ['masters', 'workers']
+            plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
+        elif _type == 'k3s':
+            plandir = os.path.dirname(k3s.create.__code__.co_filename)
+            roles = ['bootstrap', 'workers'] if overrides.get('masters', 1) == 1 else ['bootstrap', 'masters',
+                                                                                       'workers']
+        else:
+            plandir = os.path.dirname(openshift.create.__code__.co_filename)
+            if self.type in ['aws', 'gcp']:
+                roles = ['cloud_masters', 'cloud_workers']
+            else:
+                roles = ['masters', 'workers']
+        if overrides.get('workers', 0) == 0:
+            del roles[-1]
+        os.chdir(os.path.expanduser("~/.kcli"))
+        for role in roles:
+            pprint("Updating vms with %s role" % role)
+            self.plan(plan, inputfile='%s/%s.yml' % (plandir, role), overrides=overrides, update=True)
+
     def expose_plan(self, plan, inputfile=None, overrides={}, port=9000, extraconfigs={}, installermode=False):
         inputfile = os.path.expanduser(inputfile)
         if not os.path.exists(inputfile):

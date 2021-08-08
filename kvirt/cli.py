@@ -1547,6 +1547,60 @@ def scale_openshift_kube(args):
     config.scale_kube_openshift(cluster, overrides=overrides)
 
 
+def update_generic_kube(args):
+    args.type = 'generic'
+    update_kube(args)
+
+
+def update_openshift_kube(args):
+    args.type = 'openshift'
+    update_kube(args)
+
+
+def update_k3s_kube(args):
+    args.type = 'k3s'
+    update_kube(args)
+
+
+def update_kube(args):
+    """Update kube"""
+    data = {}
+    plan = None
+    _type = args.type
+    paramfile = args.paramfile
+    if os.path.exists("/i_am_a_container"):
+        if paramfile is not None:
+            paramfile = "/workdir/%s" % paramfile
+        elif os.path.exists("/workdir/kcli_parameters.yml"):
+            paramfile = "/workdir/kcli_parameters.yml"
+            pprint("Using default parameter file kcli_parameters.yml")
+    elif paramfile is None and os.path.exists("kcli_parameters.yml"):
+        paramfile = "kcli_parameters.yml"
+        pprint("Using default parameter file kcli_parameters.yml")
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    if not overrides:
+        warning("No parameters provided, using solely the one stored at install time")
+    if 'ipi' in overrides and overrides['ipi']:
+        error("Update cluster workflow not available when using ipi")
+        sys.exit(1)
+    cluster = overrides.get('cluster', args.cluster)
+    clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
+    if not os.path.exists(clusterdir):
+        error("Cluster directory %s not found..." % clusterdir)
+        sys.exit(1)
+    if os.path.exists("%s/kcli_parameters.yml" % clusterdir):
+        with open("%s/kcli_parameters.yml" % clusterdir, 'r') as install:
+            installparam = yaml.safe_load(install)
+            data.update(installparam)
+            plan = installparam.get('plan', plan)
+    data.update(overrides)
+    data['basedir'] = '/workdir' if os.path.exists("/i_am_a_container") else '.'
+    if plan is None:
+        plan = cluster
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config.update_kube(plan, _type, overrides=data)
+
+
 def create_vmnic(args):
     """Add nic to vm"""
     name = args.name
@@ -3421,6 +3475,44 @@ def cli():
     kubescale_subparsers.add_parser('openshift', parents=[kubeopenshiftscale_parser],
                                     description=kubeopenshiftscale_desc,
                                     help=kubeopenshiftscale_desc, aliases=['okd'])
+
+    kubeupdate_desc = 'Update Kube'
+    kubeupdate_parser = update_subparsers.add_parser('kube', description=kubeupdate_desc, help=kubeupdate_desc,
+                                                     aliases=['cluster'])
+    kubeupdate_subparsers = kubeupdate_parser.add_subparsers(metavar='', dest='subcommand_update_kube')
+
+    kubegenericupdate_desc = 'Update Generic Kube'
+    kubegenericupdate_parser = argparse.ArgumentParser(add_help=False)
+    kubegenericupdate_parser.add_argument('-P', '--param', action='append',
+                                          help='specify parameter or keyword for rendering (multiple can be specified)',
+                                          metavar='PARAM')
+    kubegenericupdate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    kubegenericupdate_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
+    kubegenericupdate_parser.set_defaults(func=update_generic_kube)
+    kubeupdate_subparsers.add_parser('generic', parents=[kubegenericupdate_parser], description=kubegenericupdate_desc,
+                                     help=kubegenericupdate_desc, aliases=['kubeadm'])
+
+    kubek3supdate_desc = 'Update K3s Kube'
+    kubek3supdate_parser = argparse.ArgumentParser(add_help=False)
+    kubek3supdate_parser.add_argument('-P', '--param', action='append',
+                                      help='specify parameter or keyword for rendering (multiple can be specified)',
+                                      metavar='PARAM')
+    kubek3supdate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    kubek3supdate_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
+    kubek3supdate_parser.set_defaults(func=update_k3s_kube)
+    kubeupdate_subparsers.add_parser('k3s', parents=[kubek3supdate_parser], description=kubek3supdate_desc,
+                                     help=kubek3supdate_desc)
+
+    parameterhelp = "specify parameter or keyword for rendering (multiple can be specified)"
+    kubeopenshiftupdate_desc = 'Update Openshift Kube'
+    kubeopenshiftupdate_parser = argparse.ArgumentParser(add_help=False)
+    kubeopenshiftupdate_parser.add_argument('-P', '--param', action='append', help=parameterhelp, metavar='PARAM')
+    kubeopenshiftupdate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    kubeopenshiftupdate_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
+    kubeopenshiftupdate_parser.set_defaults(func=update_openshift_kube)
+    kubeupdate_subparsers.add_parser('openshift', parents=[kubeopenshiftupdate_parser],
+                                     description=kubeopenshiftupdate_desc,
+                                     help=kubeopenshiftupdate_desc, aliases=['okd'])
 
     lbcreate_desc = 'Create Load Balancer'
     lbcreate_parser = create_subparsers.add_parser('lb', description=lbcreate_desc, help=lbcreate_desc,
