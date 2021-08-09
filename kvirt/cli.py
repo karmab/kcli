@@ -1208,7 +1208,7 @@ def update_vm(args):
     domain = args.domain
     cloudinit = args.cloudinit
     image = args.image
-    net = args.network
+    # networks = args.networks
     information = args.information
     iso = args.iso
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -1217,10 +1217,7 @@ def update_vm(args):
     for name in names:
         if dns:
             pprint("Creating Dns entry for %s..." % name)
-            if net is not None:
-                nets = [net]
-            else:
-                nets = k.vm_ports(name)
+            nets = k.vm_ports(name)
             if nets and domain is None:
                 domain = nets[0]
             if not nets:
@@ -4147,7 +4144,7 @@ def cli():
     vmupdate_parser = update_subparsers.add_parser('vm', description=vmupdate_desc, help=vmupdate_desc)
     vmupdate_parser.add_argument('-1', '--ip1', help='Ip to set', metavar='IP1')
     vmupdate_parser.add_argument('--information', '--info', help='Information to set', metavar='INFORMATION')
-    vmupdate_parser.add_argument('--network', '--net', help='Network to update', metavar='NETWORK')
+    vmupdate_parser.add_argument('--networks', '--nets', help='Networks to set', metavar='NETWORKS')
     vmupdate_parser.add_argument('-f', '--flavor', help='Flavor to set', metavar='Flavor')
     vmupdate_parser.add_argument('-m', '--memory', help='Memory to set', metavar='MEMORY')
     vmupdate_parser.add_argument('-c', '--numcpus', type=int, help='Number of cpus to set', metavar='NUMCPUS')
