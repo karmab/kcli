@@ -1196,78 +1196,122 @@ def clone_vm(args):
 
 def update_vm(args):
     """Update ip, memory or numcpus"""
-    ip1 = args.ip1
-    flavor = args.flavor
-    numcpus = args.numcpus
-    memory = args.memory
-    plan = args.plan
-    autostart = args.autostart
-    noautostart = args.noautostart
-    dns = args.dns
-    host = args.host
-    domain = args.domain
-    cloudinit = args.cloudinit
-    image = args.image
-    # networks = args.networks
-    information = args.information
-    iso = args.iso
+    overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
+    ip1 = overrides.get('ip1')
+    flavor = overrides.get('flavor')
+    numcpus = overrides.get('numcpus')
+    memory = overrides.get('memory')
+    plan = overrides.get('plan')
+    autostart = overrides.get('autostart')
+    noautostart = overrides.get('noautostart')
+    dns = overrides.get('dns')
+    host = overrides.get('host')
+    domain = overrides.get('domain')
+    cloudinit = overrides.get('cloudinit')
+    image = overrides.get('image')
+    nets = overrides.get('nets')
+    disks = overrides.get('disks')
+    information = overrides.get('information')
+    iso = overrides.get('iso')
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     names = [common.get_lastvm(config.client)] if not args.names else args.names
     for name in names:
         if dns:
             pprint("Creating Dns entry for %s..." % name)
-            nets = k.vm_ports(name)
-            if nets and domain is None:
-                domain = nets[0]
+            networks = k.vm_ports(name)
+            if networks and domain is None:
+                domain = networks[0]
             if not nets:
                 return
             else:
-                k.reserve_dns(name=name, nets=nets, domain=domain, ip=ip1)
-        elif ip1 is not None:
+                k.reserve_dns(name=name, nets=networks, domain=domain, ip=ip1)
+        if ip1 is not None:
             pprint("Updating ip of vm %s to %s..." % (name, ip1))
             k.update_metadata(name, 'ip', ip1)
-        elif cloudinit:
+        if cloudinit:
             pprint("Removing cloudinit information of vm %s" % name)
             k.remove_cloudinit(name)
-            return
-        elif plan is not None:
+        if plan is not None:
             pprint("Updating plan of vm %s to %s..." % (name, plan))
             k.update_metadata(name, 'plan', plan)
-        elif image is not None:
+        if image is not None:
             pprint("Updating image of vm %s to %s..." % (name, image))
             k.update_metadata(name, 'image', image)
-        elif memory is not None:
+        if memory is not None:
             pprint("Updating memory of vm %s to %s..." % (name, memory))
             k.update_memory(name, memory)
-        elif numcpus is not None:
+        if numcpus is not None:
             pprint("Updating numcpus of vm %s to %s..." % (name, numcpus))
             k.update_cpus(name, numcpus)
-        elif autostart:
+        if autostart:
             pprint("Setting autostart for vm %s..." % name)
             k.update_start(name, start=True)
-        elif noautostart:
+        if noautostart:
             pprint("Removing autostart for vm %s..." % name)
             k.update_start(name, start=False)
-        elif information:
+        if information:
             pprint("Setting information for vm %s..." % name)
             k.update_information(name, information)
-        elif iso is not None:
+        if iso is not None:
             pprint("Switching iso for vm %s to %s..." % (name, iso))
             if iso == 'None':
                 iso = None
             k.update_iso(name, iso)
-        elif flavor is not None:
+        if flavor is not None:
             pprint("Updating flavor of vm %s to %s..." % (name, flavor))
             k.update_flavor(name, flavor)
-        elif host:
+        if host:
             pprint("Creating Host entry for vm %s..." % name)
-            nets = k.vm_ports(name)
-            if not nets:
-                return
-            if domain is None:
-                domain = nets[0]
-            k.reserve_host(name, nets, domain)
+            networks = k.vm_ports(name)
+            if networks:
+                if domain is None:
+                    domain = networks[0]
+                k.reserve_host(name, networks, domain)
+        currentvm = k.info(name)
+        currentnets = currentvm.get('nets', [])
+        currentdisks = currentvm.get('disks', [])
+        if disks:
+            pprint("Updating disks of vm %s" % name)
+            if len(currentdisks) < len(disks):
+                pprint("Adding Disks to %s" % name)
+                for disk in disks[len(currentdisks):]:
+                    if isinstance(disk, int):
+                        size = disk
+                        pool = config.pool
+                    elif isinstance(disk, str) and disk.isdigit():
+                        size = int(disk)
+                        pool = config.pool
+                    elif isinstance(disk, dict):
+                        size = disk.get('size', config.disksize)
+                        pool = disk.get('pool', config.pool)
+                    else:
+                        continue
+                    k.add_disk(name=name, size=size, pool=pool)
+            if len(currentdisks) > len(disks):
+                pprint("Removing Disks of %s" % name)
+                for disk in currentdisks[len(currentdisks) - len(disks):]:
+                    diskname = os.path.basename(disk['path'])
+                    diskpool = os.path.dirname(disk['path'])
+                    k.delete_disk(name=name, diskname=diskname, pool=diskpool)
+        if nets:
+            pprint("Updating nets of vm %s" % name)
+            if len(currentnets) < len(nets):
+                pprint("Adding Nics to %s" % name)
+                for net in nets[len(currentnets):]:
+                    if isinstance(net, str):
+                        network = net
+                    elif isinstance(net, dict) and 'name' in net:
+                        network = net['name']
+                    else:
+                        error("Skpping wrong nic spec for %s" % name)
+                        continue
+                    k.add_nic(name, network)
+            if len(currentnets) > len(nets):
+                pprint("Removing Nics of %s" % name)
+                for net in range(len(currentnets), len(nets), -1):
+                    interface = "eth%s" % (net - 1)
+                    k.delete_nic(name, interface)
 
 
 def create_vmdisk(args):
@@ -4142,21 +4186,9 @@ def cli():
 
     vmupdate_desc = 'Update Vm\'s Ip, Memory Or Numcpus'
     vmupdate_parser = update_subparsers.add_parser('vm', description=vmupdate_desc, help=vmupdate_desc)
-    vmupdate_parser.add_argument('-1', '--ip1', help='Ip to set', metavar='IP1')
-    vmupdate_parser.add_argument('--information', '--info', help='Information to set', metavar='INFORMATION')
-    vmupdate_parser.add_argument('--networks', '--nets', help='Networks to set', metavar='NETWORKS')
-    vmupdate_parser.add_argument('-f', '--flavor', help='Flavor to set', metavar='Flavor')
-    vmupdate_parser.add_argument('-m', '--memory', help='Memory to set', metavar='MEMORY')
-    vmupdate_parser.add_argument('-c', '--numcpus', type=int, help='Number of cpus to set', metavar='NUMCPUS')
-    vmupdate_parser.add_argument('-p', '--plan', help='Plan Name to set', metavar='PLAN')
-    vmupdate_parser.add_argument('-a', '--autostart', action='store_true', help='Set VM to autostart')
-    vmupdate_parser.add_argument('-n', '--noautostart', action='store_true', help='Prevent VM from autostart')
-    vmupdate_parser.add_argument('--dns', action='store_true', help='Update Dns entry for the vm')
-    vmupdate_parser.add_argument('--host', action='store_true', help='Update Host entry for the vm')
-    vmupdate_parser.add_argument('-d', '--domain', help='Domain', metavar='DOMAIN')
-    vmupdate_parser.add_argument('-i', '--image', help='Image to set', metavar='IMAGE')
-    vmupdate_parser.add_argument('--iso', help='Iso to set', metavar='ISO')
-    vmupdate_parser.add_argument('--cloudinit', action='store_true', help='Remove Cloudinit Information from vm')
+    vmupdate_parser.add_argument('-P', '--param', action='append',
+                                 help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    vmupdate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
     vmupdate_parser.add_argument('names', help='VMNAMES', nargs='*')
     vmupdate_parser.set_defaults(func=update_vm)
 
