@@ -2703,8 +2703,9 @@ def create_bucket(args):
     public = args.public
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
-    pprint("Creating bucket %s..." % bucket)
-    k.create_bucket(bucket, public=public)
+    for b in bucket:
+        pprint("Creating bucket %s..." % b)
+        k.create_bucket(b, public=public)
 
 
 def delete_bucket(args):
