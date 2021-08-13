@@ -2699,13 +2699,14 @@ def snapshotlist_vm(args):
 
 def create_bucket(args):
     """Create bucket"""
-    bucket = args.bucket
+    buckets = args.buckets
+    print(buckets)
     public = args.public
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
-    for b in bucket:
-        pprint("Creating bucket %s..." % b)
-        k.create_bucket(b, public=public)
+    for bucket in buckets:
+        pprint("Creating bucket %s..." % bucket)
+        k.create_bucket(bucket, public=public)
 
 
 def delete_bucket(args):
@@ -3090,7 +3091,7 @@ def cli():
                                      help='specify parameter or keyword for rendering (multiple can be specified)',
                                      metavar='PARAM')
     bucketcreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
-    bucketcreate_parser.add_argument('bucket', metavar='BUCKET', nargs='+')
+    bucketcreate_parser.add_argument('buckets', metavar='BUCKETS', nargs='+')
     bucketcreate_parser.set_defaults(func=create_bucket)
 
     bucketfilecreate_desc = 'Create Bucket file'
