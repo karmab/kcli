@@ -31,6 +31,7 @@ ENDPOINTS = {
 
 DNS_RESOURCE_ID = 'b4ed8a30-936f-11e9-b289-1d079699cbe5'
 
+
 def get_zone_href(region, zone):
     return "{}/regions/{}/zones/{}".format(
         ENDPOINTS.get(region),
@@ -142,7 +143,7 @@ class Kibm(object):
             else:
                 userdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                             domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
-                                            overrides=overrides,fqdn=True, storemetadata=storemetadata)[0]
+                                            overrides=overrides, fqdn=True, storemetadata=storemetadata)[0]
         else:
             userdata = ''
         if len(nets) == 0:
@@ -191,7 +192,7 @@ class Kibm(object):
 
         volume_attachments = []
         for index, disk in enumerate(disks[1:]):
-            disksize = int(disk.get('size')) if isinstance(disk, list) and 'size' in disk else int(disk)
+            disksize = int(disk.get('size')) if isinstance(disk, dict) and 'size' in disk else int(disk)
             diskname = "%s-disk%s" % (name, index + 1)
             volume_attachments.append(
                 vpc_v1.VolumeAttachmentPrototypeInstanceContext(
@@ -238,7 +239,7 @@ class Kibm(object):
 
         try:
             result_ip = self.conn.create_floating_ip(vpc_v1.FloatingIPPrototypeFloatingIPByTarget(
-                target= vpc_v1.FloatingIPByTargetNetworkInterfaceIdentityNetworkInterfaceIdentityById(
+                target=vpc_v1.FloatingIPByTargetNetworkInterfaceIdentityNetworkInterfaceIdentityById(
                     id=result_create['network_interfaces'][0]['id']
                 ),
                 name=name,
@@ -479,7 +480,7 @@ class Kibm(object):
     def internalip(self, name):
         try:
             vm = self._get_vm(name)
-        except ApiException as exc:
+        except ApiException:
             return None
         if 'primary_network_interface' not in vm:
             return None
@@ -609,9 +610,7 @@ class Kibm(object):
 
         try:
             self.conn.update_instance(id=vm['id'], instance_patch=vpc_v1.InstancePatch(
-                    profile=vpc_v1.InstancePatchProfileInstanceProfileIdentityByName(name=flavor)
-                )
-            )
+                profile=vpc_v1.InstancePatchProfileInstanceProfileIdentityByName(name=flavor)))
         except ApiException as exc:
             return {'result': 'failure', 'reason': 'Unable to update instance. %s' % exc}
         return {'result': 'success'}
@@ -931,7 +930,6 @@ class Kibm(object):
         except ApiException as exc:
             error('Unable to create DNS entry. %s' % exc)
             return
-
 
         if alias:
             for a in alias:
