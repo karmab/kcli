@@ -650,6 +650,49 @@ class Ksphere:
         confspec.deviceChange = devconfspec
         t = vm.Reconfigure(confspec)
         waitForMe(t)
+        if 'vmgroup' in overrides:
+            vmgroup = overrides['vmgroup']
+            vmgroups = {}
+            hostgroups = {}
+            for group in clu.configurationEx.group:
+                if hasattr(group, 'vm'):
+                    vmgroups[group.name] = group
+                else:
+                    hostgroups[group.name] = group
+            if vmgroup in vmgroups:
+                vmgroup = vmgroups[vmgroup]
+                vmgroup.vm.append(vm)
+                vmgroupspec = vim.cluster.GroupSpec(info=vmgroup, operation='edit')
+                groups_spec = vim.cluster.ConfigSpecEx(groupSpec=[vmgroupspec])
+                t = clu.ReconfigureEx(groups_spec, modify=True)
+                waitForMe(t)
+            else:
+                vmgroup = vim.cluster.VmGroup(name=vmgroup, vm=[vm])
+                vmgroupspec = vim.cluster.GroupSpec(info=vmgroup, operation='add')
+                groups_spec = vim.cluster.ConfigSpecEx(groupSpec=[vmgroupspec])
+                t = clu.ReconfigureEx(groups_spec, modify=True)
+                waitForMe(t)
+            if 'hostgroup' in overrides and 'hostrule' in overrides:
+                hostgroup = overrides['hostgroup']
+                hostrule = overrides['hostrule']
+                if hostgroup not in hostgroups:
+                    msg = "Hostgroup %s not found. It needs to exist prior to vm's creation" % hostgroup
+                    return {'result': 'failure', 'reason': msg}
+                else:
+                    hostgroup = hostgroups[hostgroup]
+                    vmhostrulefound = False
+                    for vmhostrule in clu.configurationEx.rule:
+                        if vmhostrule.name == hostrule:
+                            vmhostrulefound = True
+                            break
+                    if not vmhostrulefound:
+                        pprint("Creating vmhost rule %s" % hostrule)
+                        rule_obj = vim.cluster.VmHostRuleInfo(vmGroupName=hostrule, affineHostGroupName=hostgroup.name,
+                                                              name=vmgroup.name, enabled=True, mandatory=True)
+                        rulespec = vim.cluster.RuleSpec(info=rule_obj, operation='add')
+                        groups_spec = vim.cluster.ConfigSpecEx(rulesSpec=[rulespec])
+                        t = clu.ReconfigureEx(groups_spec, modify=True)
+                        waitForMe(t)
         if start:
             t = vm.PowerOnVM_Task(None)
             waitForMe(t)
