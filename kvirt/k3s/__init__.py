@@ -111,7 +111,7 @@ def create(config, plandir, cluster, overrides):
     nodes_overrides = data.copy()
     nodes_install_k3s_args = install_k3s_args.copy()
     if sdn is None or sdn != 'flannel':
-        nodes_install_k3s_args.append("INSTALL_K3S_EXEC='--disable-network-policy --no-flannel'")
+        nodes_install_k3s_args.append("INSTALL_K3S_EXEC='--disable-network-policy --flannel-backend=none'")
     nodes_install_k3s_args = ' '.join(nodes_install_k3s_args)
     nodes_overrides['install_k3s_args'] = nodes_install_k3s_args
     if masters > 1:
