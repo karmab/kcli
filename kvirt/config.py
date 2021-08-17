@@ -1766,7 +1766,7 @@ $INFO
                     else:
                         updated = False
                         currentvm = z.info(name)
-                        currentstart = currentvm['autostart']
+                        currentstart = currentvm.get('autostart', False)
                         currentmemory = currentvm['memory']
                         currentimage = currentvm.get('template')
                         currentimage = currentvm.get('image', currentimage)
