@@ -813,6 +813,184 @@ class Kibm(object):
     def export(self, name, image=None):
         print("not implemented")
 
+    def create_loadbalancer(self, name, ports=[], checkpath='/index.html', vms=[], domain=None, checkport=80, alias=[],
+                            internal=False):
+        def _wait_active(id):
+            while True:
+                result = self.conn.get_load_balancer(id=id).result
+                if result['provisioning_status'] == 'active':
+                    break
+                sleep(10)
+
+        ports = [int(port) for port in ports]
+        internal = False if internal is None else internal
+
+        try:
+            provisioned_sgs = {y['id']: x['id'] for x in self.conn.list_security_groups().result['security_groups'] \
+                               for y in x['targets']}
+        except ApiException as exc:
+            return {'result': 'failure', 'reason': 'Unable to retrieve security groups. %s' % exc}
+
+        clean_name = name.replace('.', '-')
+        subnets = set()
+        security_groups = set()
+        member_list = []
+        resource_group_id = None
+
+        if vms is not None:
+            for vm in vms:
+                try:
+                    virtual_machine = self._get_vm(vm)
+                except ApiException as exc:
+                    return {'result': 'failure', 'reason': 'Unable to retrieve VM %s. %s' % (vm, exc)}
+
+                member_list.append(virtual_machine['primary_network_interface']['primary_ipv4_address'])
+
+                if 'primary_network_interface' in virtual_machine:
+                    subnets.add(virtual_machine['primary_network_interface']['subnet']['id'])
+
+                security_groups.add(provisioned_sgs[virtual_machine['primary_network_interface']['id']])
+
+                if resource_group_id is None:
+                    resource_group_id = virtual_machine['resource_group']['id']
+
+        pprint("Creating load balancer pool...")
+        try:
+            lb = self.conn.create_load_balancer(
+                is_public=not internal,
+                name=clean_name,
+                pools=[vpc_v1.LoadBalancerPoolPrototype(
+                    algorithm='round_robin',
+                    health_monitor=vpc_v1.LoadBalancerPoolHealthMonitorPrototype(
+                        delay=20,
+                        max_retries=2,
+                        timeout=3,
+                        type='http',
+                        url_path=checkpath,
+                        port=checkport,
+                    ),
+                    protocol='tcp',
+                    members=[vpc_v1.LoadBalancerPoolMemberPrototype(
+                        port=p,
+                        target=vpc_v1.LoadBalancerPoolMemberTargetPrototypeIP(address=m)
+                    ) for p in ports for m in member_list],
+                    name=clean_name,
+                )],
+                subnets=[vpc_v1.SubnetIdentityById(id=x) for x in subnets],
+                resource_group_id=vpc_v1.ResourceGroupIdentityById(id=resource_group_id),
+                security_groups=[vpc_v1.SecurityGroupIdentityById(id=x) for x in security_groups],
+            ).result
+            _wait_active(id=lb['id'])
+        except ApiException as exc:
+            error('Unable to create load balancer. %s' % exc)
+            return {'result': 'failure', 'reason': 'Unable to create load balancer. %s' % exc}
+
+        pprint("Creating listeners...")
+        for port in ports:
+            try:
+                self.conn.create_load_balancer_listener(
+                    load_balancer_id=lb['id'],
+                    port=port,
+                    protocol='tcp',
+                    default_pool=vpc_v1.LoadBalancerPoolIdentityById(id=lb['pools'][0]['id'])
+                )
+                try:
+                    _wait_active(id=lb['id'])
+                except ApiException as exc:
+                    error('Unable to create load balancer. %s' % exc)
+                    return {'result': 'failure', 'reason': 'Unable to create load balancer. %s' % exc}
+            except ApiException as exc:
+                error('Unable to create load balancer listener. %s' % exc)
+                return {'result': 'failure', 'reason': 'Unable to create load balancer listener. %s' % exc}
+
+        pprint("Load balancer DNS name %s" % lb['hostname'])
+
+        resource_model = {'resource_id': lb['crn']}
+        try:
+            self.global_tagging_service.attach_tag(resources=[resource_model],
+                                                   tag_names=['domain:%s' % domain],
+                                                   tag_type='user')
+        except ApiException as exc:
+            error('Unable to attach tags. %s' % exc)
+            return {'result': 'failure', 'reason': 'Unable to attach tags. %s' % exc}
+
+        if domain is not None:
+            while True:
+                try:
+                    result = self.conn.get_load_balancer(id=lb['id']).result
+                except ApiException as exc:
+                    pprint('Unable to check load balancer ip. %s' % exc)
+                    return {'result': 'failure', 'reason': 'Unable to check load balancer ip. %s' % exc}
+                if len(result['private_ips']) == 0:
+                    pprint("Waiting 10s to get private ips assigned")
+                    sleep(10)
+                    continue
+                break
+            self.reserve_dns(name, ip=result['public_ips'][0]['address'], domain=domain, alias=alias)
+        return {'result': 'success'}
+
+    def delete_loadbalancer(self, name):
+        domain = None
+        clean_name = name.replace('.', '-')
+        try:
+            lbs = {x['name']: x for x in self.conn.list_load_balancers().result['load_balancers']}
+            if clean_name not in lbs:
+                error('Load balancer %s not found' % name)
+                return
+            lb = lbs[clean_name]
+        except ApiException as exc:
+            error('Unable to retrieve load balancers. %s' % exc)
+            return
+
+        try:
+            tags = self.global_tagging_service.list_tags(attached_to=lb['crn']).result['items']
+        except ApiException as exc:
+            error('Unable to retrieve tags. %s' % exc)
+            return
+        domain = None
+        for tag in tags:
+            tagname = tag['name']
+            if tagname.count(':') == 1:
+                key, value = tagname.split(':')
+                if key == 'domain':
+                    domain = value
+
+        try:
+            self.conn.delete_load_balancer(id=lb['id'])
+        except ApiException as exc:
+            error('Unable to delete load balancer. %s' % exc)
+            return
+
+        if domain is not None:
+            pprint("Deleting DNS %s.%s" % (name, domain))
+            self.delete_dns(name, domain, name)
+
+
+    def list_loadbalancers(self):
+        results = []
+        try:
+            lbs = self.conn.list_load_balancers().result['load_balancers']
+        except ApiException as exc:
+            error('Unable to retrieve LoadBalancers. %s' % exc)
+            return results
+        for lb in lbs:
+            protocols = set()
+            ports = []
+            name = lb['name']
+            ip = lb['hostname']
+            try:
+                listeners = self.conn.list_load_balancer_listeners(load_balancer_id=lb['id']).result['listeners']
+            except ApiException as exc:
+                error('Unable to retrieve listeners for load balancer %s. %s' % (name, exc))
+                continue
+            for listener in listeners:
+                protocols.add(listener['protocol'])
+                ports.append(str(listener['port']))
+                #TODO: targets
+            target = ''
+            results.append([name, ip, ','.join(protocols), '+'.join(ports), target])
+        return results
+
     def create_bucket(self, bucket, public=False):
         if bucket in self.list_buckets():
             error("Bucket %s already there" % bucket)
