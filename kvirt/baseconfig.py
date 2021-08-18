@@ -1237,3 +1237,39 @@ class Kbaseconfig:
                 continue
             else:
                 self.create_vm_playbook(key, data[key], overrides=overrides, store=store, env=env)
+
+    def create_plan_template(self, directory, overrides):
+        pprint("Creating plan template in %s..." % directory)
+        if os.path.exists("/i_am_a_container"):
+            directory = "/workdir/%s" % directory
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+            os.makedirs("%s/scripts" % directory)
+            os.makedirs("%s/files" % directory)
+        else:
+            warning("Directory %s already exists" % directory)
+        data = {'cluster': 'testk', 'image': 'centos8', 'vms_number': 3, 'memory': 8192, 'numcpus': 4,
+                'nets': ['default', 'default'], 'disks': [10, 20], 'bestguitarist': 'jimihendrix',
+                'bestmovie': 'interstellar'}
+        data.update(overrides)
+        with open("%s/kcli_default.yml" % directory, "w") as f:
+            f.write("# Default parameter values for your plan\n# This is a YAML-formatted file\n")
+            yaml.safe_dump(data, f, default_flow_style=False, encoding='utf-8', allow_unicode=True,
+                           sort_keys=False)
+        with open("%s/kcli_parameters.yml.sample" % directory, "w") as f:
+            f.write("# Optional runtime parameter values for your plan\n# This is a YAML-formatted file\n")
+            yaml.safe_dump(data, f, default_flow_style=False, encoding='utf-8', allow_unicode=True,
+                           sort_keys=False)
+        templatedir = os.path.dirname(common.__file__)
+        plantemplatedata = open("%s/kcli_plan.yml.j2" % templatedir).read()
+        with open("%s/kcli_plan.yml" % directory, "w") as f:
+            f.write(plantemplatedata)
+        script01data = '#!/bin/bash\necho best guitarist is {{ bestguitarist }}\n'
+        with open("%s/scripts/script01.sh" % directory, "w") as f:
+            f.write(script01data)
+        script02data = '#!/bin/bash\necho i am vm {{ name }} >/tmp/plan.txt'
+        with open("%s/scripts/script02.sh" % directory, "w") as f:
+            f.write(script02data)
+        myfile01data = 'a good movie to see is {{ bestmovie }}'
+        with open("%s/files/myfile01" % directory, "w") as f:
+            f.write(myfile01data)

@@ -193,6 +193,10 @@ plandatacreate = """# Generate all the ignition/cloudinit userdatas from a plan 
 $ kcli create plandata -f my_plan.yml
 """
 
+plantemplatecreate = """# Create a sample plan template and store it in mydir
+$ kcli create plantemplate mydir
+"""
+
 isocreate = """# Generate an openshift iso
 $ kcli create openshift-iso testk.karmalabs.com
 

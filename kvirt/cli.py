@@ -8,7 +8,7 @@ from kvirt.config import Kconfig
 from kvirt.examples import plandatacreate, vmdatacreate, hostcreate, _list, plancreate, planinfo, productinfo
 from kvirt.examples import repocreate, isocreate, kubegenericcreate, kubek3screate, kubeopenshiftcreate, start
 from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsole, vmexport, niccreate, nicdelete
-from kvirt.examples import disconnectercreate, appopenshiftcreate
+from kvirt.examples import disconnectercreate, appopenshiftcreate, plantemplatecreate
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
 from kvirt import version
@@ -2173,6 +2173,15 @@ def create_plandata(args):
     return 0
 
 
+def create_plantemplate(args):
+    """Create plan template"""
+    directory = args.directory
+    paramfile = args.paramfile
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    baseconfig.create_plan_template(directory, overrides=overrides)
+
+
 def create_snapshot_plan(args):
     """Snapshot plan"""
     plan = args.plan
@@ -3787,6 +3796,18 @@ def cli():
     plandatacreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
     plandatacreate_parser.add_argument('name', metavar='VMNAME', nargs='?', type=valid_fqdn)
     plandatacreate_parser.set_defaults(func=create_plandata)
+
+    plantemplatecreate_desc = 'Create plan template'
+    plantemplatecreate_epilog = "examples:\n%s" % plantemplatecreate
+    plantemplatecreate_parser = create_subparsers.add_parser('plan-template', description=plantemplatecreate_desc,
+                                                             help=plantemplatecreate_desc,
+                                                             epilog=plantemplatecreate_epilog, formatter_class=rawhelp)
+    plantemplatecreate_parser.add_argument('-P', '--param', action='append',
+                                           help='Define parameter for rendering (can specify multiple)',
+                                           metavar='PARAM')
+    plantemplatecreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    plantemplatecreate_parser.add_argument('directory', metavar='DIR')
+    plantemplatecreate_parser.set_defaults(func=create_plantemplate)
 
     planrevert_desc = 'Revert Snapshot Of Plan'
     planrevert_parser = revert_subparsers.add_parser('plan-snapshot', description=planrevert_desc, help=planrevert_desc,
