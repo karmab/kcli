@@ -2871,12 +2871,10 @@ class Kvirt(object):
             pprint("Network %s already exists" % name)
             return {'result': 'exist'}
         if 'macvtap' in overrides and overrides['macvtap']:
-            del overrides['macvtap']
             if 'nic' not in overrides:
                 return {'result': 'failure', 'reason': "Missing nic parameter"}
             else:
                 nic = overrides['nic']
-                del overrides['nic']
                 networkxml = """<network>
                                 <name>%s</name>
                                 <forward mode="bridge">
@@ -2931,15 +2929,10 @@ class Kvirt(object):
         <kvirt:plan>%s</kvirt:plan>
         </kvirt:info>
         </metadata>""" % plan
-        if 'mtu' in overrides:
-            mtuxml = '<mtu size="%s"/>' % overrides['mtu']
-            del overrides['mtu']
-        else:
-            mtuxml = ''
+        mtuxml = '<mtu size="%s"/>' % overrides['mtu'] if 'mtu' in overrides else ''
         dualxml = ''
         if 'dual_cidr' in overrides:
             dualcidr = overrides['dual_cidr']
-            del overrides['dualcidr']
             dualfamily = 'ipv6' if ':' in dualcidr else 'ipv4'
             if dualfamily == family:
                 return {'result': 'failure', 'reason': "Dual Cidr %s needs to be of a different family"}
@@ -2960,22 +2953,22 @@ class Kvirt(object):
         dnsxml = ''
         if 'forwarders' in overrides:
             forwarders = overrides['forwarders']
-            del overrides['forwarders']
             forwarderxml = '\n'.join("<forwarder domain='%s' addr='%s'/>" % (entry['domain'],
                                                                              entry['address']) for entry in forwarders)
             dnsxml = "<dns>%s</dns>" % forwarderxml
         namespace = ''
         dnsmasqxml = ''
-        if overrides:
-            pprint("Handling parameters as dhcp options")
+        dhcpoptions = {k: overrides[k] for k in overrides if k not in
+                       ['type', 'cidr', 'dhcp', 'forwarders', 'macvtap', 'nic', 'dual_cidr', 'mtu', 'domain', 'nat']}
+        if dhcpoptions:
             namespace = "xmlns:dnsmasq='http://libvirt.org/schemas/network/dnsmasq/1.0'"
             dnsmasqxml = "<dnsmasq:options>"
-            for key in overrides:
+            for key in dhcpoptions:
                 option = 'option'
                 if family == 'ipv6':
                     option += '6'
                 option = key if key.isdigit() else "%s:%s" % (option, key)
-                dnsmasqxml += '<dnsmasq:option value="dhcp-option=%s,%s"/>' % (option, overrides[key])
+                dnsmasqxml += '<dnsmasq:option value="dhcp-option=%s,%s"/>' % (option, dhcpoptions[key])
             dnsmasqxml += "</dnsmasq:options>"
         networkxml = """<network {namespace}><name>{name}</name>
                     {dnsmasqxml}
