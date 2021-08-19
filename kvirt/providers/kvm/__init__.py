@@ -1176,7 +1176,7 @@ class Kvirt(object):
             self._fixqcow2(fixqcow2path, fixqcow2backing)
         xml = vm.XMLDesc(0)
         vmxml = ET.fromstring(xml)
-        self._reserve_ip(name, vmxml, nets, primary=reserveip, networks=allnetworks)
+        self._reserve_ip(name, domain, vmxml, nets, primary=reserveip, networks=allnetworks)
         if start:
             try:
                 vm.create()
@@ -2008,9 +2008,11 @@ class Kvirt(object):
             vm.setAutostart(1)
             vm.create()
 
-    def _reserve_ip(self, name, vmxml, nets, force=True, primary=False, networks={}):
+    def _reserve_ip(self, name, domain, vmxml, nets, force=True, primary=False, networks={}):
         conn = self.conn
         macs = []
+        if domain is not None:
+            name += ".%s" % domain
         for element in list(vmxml.iter('interface')):
             mac = element.find('mac').get('address')
             macs.append(mac)
