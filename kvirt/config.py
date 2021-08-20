@@ -681,11 +681,12 @@ class Kconfig(Kbaseconfig):
                             os.makedirs(destdir, exist_ok=True)
                         common.fetch("%s/%s" % (onfly, origin), destdir)
                     origin = os.path.expanduser(origin)
-                    if isinstance(fil, dict) and fil.get('currentdir', False):
-                        files[index]['origin'] = "%s/%s" % (os.getcwd(), os.path.basename(origin))
-                    elif basedir != '.' and not origin.startswith('./') and not origin.startswith('/workdir/'):
-                        origin = "%s/%s" % (basedir, origin)
-                        files[index]['origin'] = origin
+                    if not os.path.isabs(origin):
+                        if isinstance(fil, dict) and fil.get('currentdir', False):
+                            files[index]['origin'] = "%s/%s" % (os.getcwd(), os.path.basename(origin))
+                        elif basedir != '.' and not origin.startswith('./') and not origin.startswith('/workdir/'):
+                            origin = "%s/%s" % (basedir, origin)
+                            files[index]['origin'] = origin
                     if not os.path.exists(origin):
                         return {'result': 'failure', 'reason': "File %s not found in %s" % (origin, name)}
                 elif content is None:
