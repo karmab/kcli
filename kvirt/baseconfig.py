@@ -1255,13 +1255,32 @@ class Kbaseconfig:
         with open("%s/kcli_default.yml" % directory, "w") as f:
             f.write("# Default parameter values for your plan\n# This is a YAML-formatted file\n")
             yaml.safe_dump(data, f, default_flow_style=False, encoding='utf-8', allow_unicode=True,
-                           sort_keys=False)
+                           sort_keys=True)
         with open("%s/kcli_parameters.yml.sample" % directory, "w") as f:
             f.write("# Optional runtime parameter values for your plan\n# This is a YAML-formatted file\n")
             yaml.safe_dump(data, f, default_flow_style=False, encoding='utf-8', allow_unicode=True,
-                           sort_keys=False)
-        templatedir = os.path.dirname(common.__file__)
-        plantemplatedata = open("%s/kcli_plan.yml.j2" % templatedir).read()
+                           sort_keys=True)
+        plankeys = "\n".join([" %s: {{ %s }}" % (key, key) for key in sorted(overrides)])
+        plantemplatedata = """{%% for num in range(0, vms_number) %%}
+
+{{ cluster }}-{{ num }}:
+ image: {{ image }}
+ memory: {{ memory }}
+ numcpus: {{ numcpus }}
+ disks: {{ disks }}
+ nets: {{ nets }}
+ files:
+ - path: /etc/motd
+   content: Welcome to box of cluster {{ cluster }}
+ - path: /etc/myfile01
+   origin: files/myfile01
+ scripts:
+ - scripts/script01.sh
+{%% if num == 0 %%}
+ - scripts/script02.sh
+{%% endif %%}
+%s
+{%% endfor %%}""" % plankeys
         with open("%s/kcli_plan.yml" % directory, "w") as f:
             f.write(plantemplatedata)
         script01data = '#!/bin/bash\necho best guitarist is {{ bestguitarist }}\n'
