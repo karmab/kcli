@@ -1249,7 +1249,8 @@ class Kbaseconfig:
         else:
             warning("Directory %s already exists" % directory)
         data = {'cluster': 'testk', 'image': 'centos8', 'vms_number': 3, 'memory': 8192, 'numcpus': 4,
-                'nets': ['default', 'default'], 'disks': [10, 20], 'bestguitarist': 'jimihendrix',
+                'nets': ['default', {'name': 'default', 'type': 'e1000'}],
+                'disks': [10, {'size': 20, 'interface': 'scsi'}], 'bestguitarist': 'jimihendrix',
                 'bestmovie': 'interstellar'}
         data.update(overrides)
         with open("%s/kcli_default.yml" % directory, "w") as f:
