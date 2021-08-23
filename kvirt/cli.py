@@ -2175,11 +2175,13 @@ def create_plandata(args):
 
 def create_plantemplate(args):
     """Create plan template"""
+    skipfiles = args.skipfiles
+    skipscripts = args.skipscripts
     directory = args.directory
     paramfile = args.paramfile
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-    baseconfig.create_plan_template(directory, overrides=overrides)
+    baseconfig.create_plan_template(directory, overrides=overrides, skipfiles=skipfiles, skipscripts=skipscripts)
 
 
 def create_snapshot_plan(args):
@@ -3806,6 +3808,8 @@ def cli():
                                            help='Define parameter for rendering (can specify multiple)',
                                            metavar='PARAM')
     plantemplatecreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    plantemplatecreate_parser.add_argument('-x', '--skipfiles', action='store_true', help='Skip files in assets')
+    plantemplatecreate_parser.add_argument('-y', '--skipscripts', action='store_true', help='Skip scripts in assets')
     plantemplatecreate_parser.add_argument('directory', metavar='DIR')
     plantemplatecreate_parser.set_defaults(func=create_plantemplate)
 

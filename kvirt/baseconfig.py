@@ -1238,7 +1238,7 @@ class Kbaseconfig:
             else:
                 self.create_vm_playbook(key, data[key], overrides=overrides, store=store, env=env)
 
-    def create_plan_template(self, directory, overrides):
+    def create_plan_template(self, directory, overrides, skipfiles=False, skipscripts=False):
         pprint("Creating plan template in %s..." % directory)
         if os.path.exists("/i_am_a_container"):
             directory = "/workdir/%s" % directory
@@ -1260,6 +1260,16 @@ class Kbaseconfig:
             f.write("# Optional runtime parameter values for your plan\n# This is a YAML-formatted file\n")
             yaml.safe_dump(data, f, default_flow_style=False, encoding='utf-8', allow_unicode=True,
                            sort_keys=True)
+        filessection = """ files:
+ - path: /etc/motd
+   content: Welcome to cluster {{ cluster }}
+ - path: /etc/myfile01
+   origin: files/myfile01\n""" if not skipfiles else ''
+        scriptssection = """ scripts:
+ - scripts/script01.sh
+{%% if num == 0 %%}
+ - scripts/script02.sh
+{%% endif %%}\n""" if not skipscripts else ''
         plankeys = "\n".join([" %s: {{ %s }}" % (key, key) for key in sorted(overrides)])
         plantemplatedata = """{%% for num in range(0, vms_number) %%}
 
@@ -1269,26 +1279,19 @@ class Kbaseconfig:
  numcpus: {{ numcpus }}
  disks: {{ disks }}
  nets: {{ nets }}
- files:
- - path: /etc/motd
-   content: Welcome to box of cluster {{ cluster }}
- - path: /etc/myfile01
-   origin: files/myfile01
- scripts:
- - scripts/script01.sh
-{%% if num == 0 %%}
- - scripts/script02.sh
-{%% endif %%}
-%s
-{%% endfor %%}""" % plankeys
+%s%s%s
+
+{%% endfor %%}""" % (filessection, scriptssection, plankeys)
         with open("%s/kcli_plan.yml" % directory, "w") as f:
             f.write(plantemplatedata)
-        script01data = '#!/bin/bash\necho best guitarist is {{ bestguitarist }}\n'
-        with open("%s/scripts/script01.sh" % directory, "w") as f:
-            f.write(script01data)
-        script02data = '#!/bin/bash\necho i am vm {{ name }} >/tmp/plan.txt'
-        with open("%s/scripts/script02.sh" % directory, "w") as f:
-            f.write(script02data)
-        myfile01data = 'a good movie to see is {{ bestmovie }}'
-        with open("%s/files/myfile01" % directory, "w") as f:
-            f.write(myfile01data)
+        if not skipscripts:
+            script01data = '#!/bin/bash\necho best guitarist is {{ bestguitarist }}\n'
+            with open("%s/scripts/script01.sh" % directory, "w") as f:
+                f.write(script01data)
+            script02data = '#!/bin/bash\necho i am vm {{ name }} >/tmp/plan.txt'
+            with open("%s/scripts/script02.sh" % directory, "w") as f:
+                f.write(script02data)
+        if not skipfiles:
+            myfile01data = 'a good movie to see is {{ bestmovie }}'
+            with open("%s/files/myfile01" % directory, "w") as f:
+                f.write(myfile01data)
