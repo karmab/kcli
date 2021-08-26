@@ -1248,10 +1248,11 @@ class Kbaseconfig:
             os.makedirs("%s/files" % directory)
         else:
             warning("Directory %s already exists" % directory)
-        data = {'cluster': 'testk', 'image': 'centos8', 'vms_number': 3, 'memory': 8192, 'numcpus': 4,
-                'nets': ['default', {'name': 'default', 'type': 'e1000'}],
-                'disks': [10, {'size': 20, 'interface': 'scsi'}], 'bestguitarist': 'jimihendrix',
-                'bestmovie': 'interstellar'}
+        ori_data = {'cluster': 'testk', 'image': 'centos8', 'vms_number': 3, 'memory': 8192, 'numcpus': 4,
+                    'nets': ['default', {'name': 'default', 'type': 'e1000'}],
+                    'disks': [10, {'size': 20, 'interface': 'scsi'}], 'bestguitarist': 'jimihendrix',
+                    'bestmovie': 'interstellar'}
+        data = ori_data.copy()
         data.update(overrides)
         with open("%s/kcli_default.yml" % directory, "w") as f:
             f.write("# Default parameter values for your plan\n# This is a YAML-formatted file\n")
@@ -1271,7 +1272,7 @@ class Kbaseconfig:
 {%% if num == 0 %%}
  - scripts/script02.sh
 {%% endif %%}\n""" if not skipscripts else ''
-        plankeys = "\n".join([" %s: {{ %s }}" % (key, key) for key in sorted(overrides)])
+        plankeys = "\n".join([" %s: {{ %s }}" % (key, key) for key in sorted(overrides) if key not in ori_data])
         plantemplatedata = """{%% for num in range(0, vms_number) %%}
 
 {{ cluster }}-{{ num }}:

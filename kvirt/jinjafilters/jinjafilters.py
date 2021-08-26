@@ -129,9 +129,16 @@ def network_ip(network, num=0, version=False):
         sys.exit(1)
 
 
+def kcli_info(name, key):
+    c = "kcli info vm -vf %s %s" % (key, name)
+    result = os.popen(c).read().strip()
+    return result
+
+
 jinjafilters = {'basename': basename, 'dirname': dirname, 'ocpnodes': ocpnodes, 'none': none, 'type': _type,
                 'certificate': certificate, 'base64': base64, 'github_version': github_version,
-                'defaultnodes': defaultnodes, 'waitcrd': waitcrd, 'local_ip': local_ip, 'network_ip': network_ip}
+                'defaultnodes': defaultnodes, 'waitcrd': waitcrd, 'local_ip': local_ip, 'network_ip': network_ip,
+                'kcli_info': kcli_info}
 
 
 class FilterModule(object):
