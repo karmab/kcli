@@ -4,6 +4,7 @@ from distutils.version import LooseVersion
 from netaddr import IPNetwork
 import requests
 import sys
+import yaml
 
 
 def basename(path):
@@ -129,9 +130,13 @@ def network_ip(network, num=0, version=False):
         sys.exit(1)
 
 
-def kcli_info(name, key):
-    c = "kcli info vm -vf %s %s" % (key, name)
-    result = os.popen(c).read().strip()
+def kcli_info(name, key=None):
+    if key is not None:
+        c = "kcli info vm -vf %s %s" % (key, name)
+        result = os.popen(c).read().strip()
+    else:
+        c = "kcli info vm -o yaml %s" % name
+        result = yaml.load(os.popen(c).read())
     return result
 
 
