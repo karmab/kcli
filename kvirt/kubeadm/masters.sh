@@ -14,6 +14,7 @@ echo "export KUBECONFIG=/root/admin.conf" >> /root/.bashrc
 kubectl taint nodes --all node-role.kubernetes.io/master-
 
 # install Container Network Interface (CNI)
+{% if sdn != None %}
 {% if sdn == 'flannel' %}
 kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
 {% elif sdn == 'weavenet' %}
@@ -27,6 +28,7 @@ kubectl apply -f https://docs.projectcalico.org/v3.1/getting-started/kubernetes/
 kubectl apply -f https://raw.githubusercontent.com/romana/romana/master/containerize/specs/romana-kubeadm.yml
 {% elif sdn == 'cilium' %}
 kubectl create -f https://raw.githubusercontent.com/cilium/cilium/{{ 'cilium/cilium' | github_version(cilium_version|default('latest')) }}/install/kubernetes/quick-install.yaml
+{% endif %}
 {% endif %}
 
 # config cluster credentials
