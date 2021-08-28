@@ -27,8 +27,7 @@ kubectl apply -f https://docs.projectcalico.org/v3.1/getting-started/kubernetes/
 {% elif sdn == 'romana' %}
 kubectl apply -f https://raw.githubusercontent.com/romana/romana/master/containerize/specs/romana-kubeadm.yml
 {% elif sdn == 'cilium' %}
-# kubectl create -f https://raw.githubusercontent.com/cilium/cilium/{{ 'cilium/cilium' | github_version(cilium_version|default('latest')) }}/install/kubernetes/quick-install.yaml
-curl -L --remote-name-all https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz
+curl -LO https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz
 tar xzvfC cilium-linux-amd64.tar.gz /usr/local/bin
 rm -f cilium-linux-amd64.tar.gz
 cilium install

@@ -14,6 +14,9 @@ fi
 {% if sdn != None and sdn == 'cilium' %}
 echo bpffs /sys/fs/bpf bpf defaults 0 0 >> /etc/fstab
 mount /sys/fs/bpf
-kubectl create -f https://raw.githubusercontent.com/cilium/cilium/{{ 'cilium/cilium' | github_version(cilium_version|default('latest')) }}/install/kubernetes/quick-install.yaml
+curl -LO https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz
+tar xzvfC cilium-linux-amd64.tar.gz /usr/local/bin
+rm -f cilium-linux-amd64.tar.gz
+cilium install
 {% endif %}
 apt-get -y remove curl
