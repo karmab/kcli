@@ -1,0 +1,10 @@
+export PATH=/root:$PATH
+pre.sh
+{% if config_type not in ['aws', 'gcp'] %}
+apache.sh
+{% endif %}
+{% if eksd %}
+eksd.sh
+{% endif %}
+keepalived.sh
+masters.sh

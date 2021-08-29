@@ -38,16 +38,16 @@
     origin: {{ basedir }}/clusters/{{ cluster }}/join.sh
   - path: /root/admin.conf
     origin: {{ basedir }}/clusters/{{ cluster }}/auth/kubeconfig
- scripts: 
-{% if ubuntu %}
-  - pre_ubuntu.sh
-{% else %}
-  - pre_el.sh
-{% endif %}
 {% if eksd %}
   - eksd.sh
 {% endif %}
+  - path: /root/pre.sh
+    origin: pre_{{ 'ubuntu' if ubuntu|default(False) else 'el' }}.sh
   - workers.sh
+  - path: /root/deploy.sh
+    origin: deploy.sh_workers
+ cmds:
+  - bash /root/deploy.sh
 {% if numa != None %}
  numa: {{ numa }}
 {% endif %}
