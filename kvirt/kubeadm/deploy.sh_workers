@@ -1,0 +1,6 @@
+export PATH=/root:$PATH
+pre.sh
+{% if eksd %}
+eksd.sh
+{% endif %}
+workers.sh

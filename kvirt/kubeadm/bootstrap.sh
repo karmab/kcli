@@ -13,8 +13,8 @@ echo "export KUBECONFIG=/root/admin.conf" >> /root/.bashrc
 # taint master node(s)
 kubectl taint nodes --all node-role.kubernetes.io/master-
 
-# install Container Network Interface (CNI)
 {% if sdn != None %}
+# install Container Network Interface (CNI)
 {% if sdn == 'flannel' %}
 kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
 {% elif sdn == 'weavenet' %}
@@ -57,20 +57,20 @@ chmod o+r /var/www/html/*
 
 echo ${CMD} > /root/join.sh
 
-# (addon) install Metal Load Balancer (LB)
 {% if metallb %}
+# (addon) install Metal Load Balancer (LB)
 bash /root/metal_lb.sh
 {% endif %}
 
-# (addon) install Ingress Controller
 {% if ingress %}
+# (addon) install Ingress Controller
 {% if ingress_method == 'nginx' %}
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/{{ 'cloud' if metallb else 'baremetal' }}/deploy.yaml
 {% endif %}
 {% endif %}
 
-# (addon) install Policy-as-Code (PaC) Controller
 {% if policy_as_code %}
+# (addon) install Policy-as-Code (PaC) Controller
 {% if policy_as_code_method == 'gatekeeper' %}
 kubectl apply -f https://raw.githubusercontent.com/open-policy-agent/gatekeeper/master/deploy/gatekeeper.yaml
 {% elif policy_as_code_method == 'kyverno' %}
@@ -78,13 +78,13 @@ kubectl apply -f https://raw.githubusercontent.com/kyverno/kyverno/main/definiti
 {% endif %}
 {% endif %}
 
-# (addon) install Autolabeler
 {% if autolabel %}
+# (addon) install Autolabeler
 kubectl apply -f https://raw.githubusercontent.com/karmab/autolabeller/master/autorules.yml
 {% endif %}
 
-# (addon) install Registry
 {% if registry %}
+# (addon) install Registry
 mkdir -p /opt/registry/{auth,certs,data,conf}
 REGISTRY_NAME="api.{{ cluster }}.{{ domain }}"
 REGISTRY_USER={{ registry_user }}
@@ -96,4 +96,11 @@ htpasswd -bBc /opt/registry/auth/htpasswd $REGISTRY_USER $REGISTRY_PASSWORD
 kubectl apply -f /root/registry.yml
 cp /opt/registry/certs/domain.{key,crt} /var/www/html
 cp /opt/registry/auth/htpasswd /var/www/html
+{% endif %}
+
+{% if multus %}
+multus.sh
+{% endif %}
+{% if nfs %}
+nfs.sh
 {% endif %}

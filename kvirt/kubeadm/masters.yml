@@ -29,7 +29,6 @@
 {% endfor %}
 {% endif %}
 
-
 {% for number in range(0, masters) %}
 {% if extra_master_networks %}
  {% set extra_networks = extra_master_networks %}
@@ -66,6 +65,7 @@
  disks: {{ [disk_size] + extra_disks }}
  files:
   - keepalived.conf
+  - keepalived.sh
   - registry.yml
 {% if number == 0 %}
 {% if metallb %}
@@ -77,31 +77,20 @@
   - nfs.sh
 {% endif %}
 {% endif %}
- scripts: 
-{% if ubuntu|default(False) %}
-  - pre_ubuntu.sh
-{% else %}
-  - pre_el.sh
+{% if config_type not in ['aws', 'gcp'] %}
+  - apache.sh
 {% endif %}
 {% if eksd %}
   - eksd.sh
 {% endif %}
-{% if config_type not in ['aws', 'gcp'] %}
-  - apache.sh
-{% endif %}
-{% if number == 0 %}
-  - keepalived.sh
-  - masters.sh
-{% if multus %}
-  - multus.sh
-{% endif %}
-{% if nfs %}
-  - nfs.sh
-{% endif %}
-{% else %}
-  - masters_extra.sh
-  - keepalived.sh
-{% endif %}
+  - path: /root/pre.sh
+    origin: pre_{{ 'ubuntu' if ubuntu|default(False) else 'el' }}.sh
+  - path: /root/masters.sh
+    origin: {{ 'bootstrap.sh' if number == 0 else 'masters_extra.sh' }}
+  - path: /root/deploy.sh
+    origin: deploy.sh_masters
+ cmds:
+  - bash /root/deploy.sh
 {% if numa != None %}
  numa: {{ numa }}
 {% endif %}
