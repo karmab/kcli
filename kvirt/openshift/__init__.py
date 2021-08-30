@@ -343,6 +343,7 @@ def create(config, plandir, cluster, overrides):
             'apps': [],
             'minimal': False,
             'dualstack': False,
+            'ipsec': False,
             'sno': False,
             'sno_virtual': False}
     data.update(overrides)
@@ -399,6 +400,7 @@ def create(config, plandir, cluster, overrides):
     disconnected_password = data.get('disconnected_password')
     disconnected_prefix = data.get('disconnected_prefix', 'ocp4')
     dualstack = data.get('dualstack')
+    ipsec = data.get('ipsec')
     upstream = data.get('upstream')
     metal3 = data.get('metal3')
     version = data.get('version')
@@ -824,6 +826,8 @@ def create(config, plandir, cluster, overrides):
             call('bash %s/contrail.sh' % tmpdir, shell=True)
     if dualstack:
         copy2("%s/dualstack.yml" % plandir, "%s/openshift" % clusterdir)
+    if ipsec:
+        copy2("%s/ipsec.yml" % plandir, "%s/openshift" % clusterdir)
     if disconnected_operators:
         if os.path.exists('%s/imageContentSourcePolicy.yaml' % clusterdir):
             copy2('%s/imageContentSourcePolicy.yaml' % clusterdir, "%s/openshift" % clusterdir)

@@ -1,0 +1,10 @@
+apiVersion: operator.openshift.io/v1
+kind: Network
+metadata:
+  name: cluster
+spec:
+  defaultNetwork:
+    type: OVNKubernetes
+    ovnKubernetesConfig:
+      ipsecConfig: {}
+      mtu: 1400
