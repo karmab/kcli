@@ -692,20 +692,14 @@ class Kvirt(object):
             openstack = False
             ignitiondata = None
             if image is not None and common.needs_ignition(image):
-                localhosts = ['localhost', '127.0.0.1']
                 if 'openstack' in image:
                     ignition = False
                     openstack = True
                 else:
                     ignition = True
-                ignitiondir = '/var/tmp'
-                k8sdir = '/var/run/secrets/kubernetes.io'
-                if os.path.exists("/i_am_a_container") and not os.path.exists(k8sdir):
-                    ignitiondir = '/ignitiondir'
-                    if not os.path.exists(ignitiondir):
-                        msg = "You need to add -v /var/tmp:/ignitiondir to container alias"
-                        return {'result': 'failure', 'reason': msg}
-                elif self.protocol == 'ssh' and self.host not in localhosts:
+                localhosts = ['localhost', '127.0.0.1']
+                ignitiondir = '/var/lib/libvirt/images'
+                if self.protocol == 'ssh' and self.host not in localhosts:
                     ignitiontmpdir = TemporaryDirectory()
                     ignitiondir = ignitiontmpdir.name
                 version = common.ignition_version(image)
@@ -716,20 +710,23 @@ class Kvirt(object):
                 with open('%s/%s.ign' % (ignitiondir, name), 'w') as ignitionfile:
                     ignitionfile.write(ignitiondata)
                     identityfile = None
-                if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
-                    identityfile = os.path.expanduser("~/.kcli/id_rsa")
-                elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
-                    identityfile = os.path.expanduser("~/.kcli/id_rsa")
-                if identityfile is not None:
-                    identitycommand = "-i %s" % identityfile
-                else:
-                    identitycommand = ""
                 if self.protocol == 'ssh' and self.host not in localhosts:
-                    ignitioncmd1 = 'scp %s -qP %s %s/%s.ign %s@%s:/var/tmp' % (identitycommand, self.port, ignitiondir,
-                                                                               name, self.user, self.host)
+                    if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
+                        identityfile = os.path.expanduser("~/.kcli/id_rsa")
+                    elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
+                        identityfile = os.path.expanduser("~/.kcli/id_rsa")
+                    if identityfile is not None:
+                        identitycommand = "-i %s" % identityfile
+                    else:
+                        identitycommand = ""
+                    ignitioncmd1 = 'scp %s -qP %s %s/%s.ign %s@%s:/var/lib/libvirt/images' % (identitycommand,
+                                                                                              self.port, ignitiondir,
+                                                                                              name, self.user,
+                                                                                              self.host)
                     code = os.system(ignitioncmd1)
                     if code != 0:
-                        return {'result': 'failure', 'reason': "Unable to create ignition data file in /var/tmp"}
+                        msg = "Unable to create ignition data file in /var/lib/libvirt/images"
+                        return {'result': 'failure', 'reason': msg}
                     ignitiontmpdir.cleanup()
             if image is not None and not ignition and diskpath is not None:
                 cloudinitiso = "%s/%s.ISO" % (default_poolpath, name)
@@ -921,7 +918,7 @@ class Kvirt(object):
             ignitionxml = ""
             if ignition:
                 ignitionxml = """<qemu:arg value='-fw_cfg' />
-<qemu:arg value='name=opt/com.coreos/config,file=/var/tmp/%s.ign' />""" % name
+<qemu:arg value='name=opt/com.coreos/config,file=/var/lib/libvirt/images/%s.ign' />""" % name
             usermodexml = ""
             if usermode:
                 netmodel = 'virtio-net-pci' if not macosx else 'e1000-82545em'
@@ -1764,7 +1761,7 @@ class Kvirt(object):
             e = element.find('{kvirt}image')
             if e is not None:
                 image = e.text
-                if image is not None and ('coreos' in image or 'rhcos' in image):
+                if image is not None and ('coreos' in image or 'rhcos' in image or 'fcos' in image):
                     ignition = True
             if domain is not None and image is not None:
                 break
@@ -1885,14 +1882,14 @@ class Kvirt(object):
                 except:
                     pass
         if ignition:
-            ignitiondir = '/var/tmp' if os.path.exists("/i_am_a_container") else '/var/tmp'
+            ignitionpath = '/var/lib/libvirt/images/%s' % name
             if self.protocol == 'ssh' and self.host not in ['localhost', '127.0.0.1']:
-                ignitiondeletecmd = "ls /var/tmp/%s.ign >/dev/null 2>&1 && rm -f  /var/tmp/%s.ign" % (name, name)
+                ignitiondeletecmd = "ls %s.ign >/dev/null 2>&1 && rm -f %s.ign" % (ignitionpath, ignitionpath)
                 ignitiondeletecmd = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user,
                                                                    self.host, ignitiondeletecmd)
                 call(ignitiondeletecmd, shell=True)
-            elif os.path.exists('%s/%s.ign' % (ignitiondir, name)):
-                os.remove('%s/%s.ign' % (ignitiondir, name))
+            elif os.path.exists(ignitionpath):
+                os.remove(ignitionpath)
         return {'result': 'success'}
 
     def _xmldisk(self, diskpath, diskdev, diskbus='virtio', diskformat='qcow2', shareable=False):

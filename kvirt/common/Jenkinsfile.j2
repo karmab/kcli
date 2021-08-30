@@ -44,7 +44,7 @@ spec:
      KCLI_SSH_ID_RSA_PUB = credentials("${params.kcli_id_rsa_pub}")
      KCLI_PARAMETERS = "{{ parameterline }}"
      {% if jenkinsmode != 'kubernetes' %}
-     CONTAINER_OPTIONS = "--net host --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli -v $PWD:/workdir -v /var/tmp:/ignitiondir"
+     CONTAINER_OPTIONS = "--net host --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli -v $PWD:/workdir"
      KCLI_CMD = "{{ jenkinsmode + ' run ${CONTAINER_OPTIONS} karmab/kcli' }}"
      {% else %}
      KCLI_CMD = kcli
