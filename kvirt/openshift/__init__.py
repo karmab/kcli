@@ -248,6 +248,39 @@ def process_postscripts(clusterdir, postscripts):
         call(script_path, shell=True)
 
 
+def contrail_allow_vips(ip, api_ip, ingress_ip=None):
+    import requests
+    from requests.packages.urllib3.exceptions import InsecureRequestWarning
+    requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+    vips = [api_ip]
+    if ingress_ip is not None:
+        vips.append(ingress_ip)
+    url = "https://%s:8082" % ip
+    data = requests.get("%s/virtual-machine-interfaces" % url, verify=False).json()['virtual-machine-interfaces']
+    for entry in data:
+        if 'vhost0' in entry['fq_name']:
+            host = entry['fq_name'][1]
+            href = entry['href']
+            nodedata = requests.get(href, verify=False).json()['virtual-machine-interface']
+            found_vips = []
+            pairs = []
+            if 'virtual_machine_interface_allowed_address_pairs' in nodedata:
+                pairs = nodedata['virtual_machine_interface_allowed_address_pairs']['allowed_address_pair']
+                for ip in pairs:
+                    for vip in vips:
+                        if ip['ip']['ip_prefix'] == vip:
+                            found_vips.append(vip)
+            missing_vips = [ip for ip in vips if ip not in found_vips]
+            for vip in missing_vips:
+                pprint("Adding vip %s in %s" % (vip, host))
+                newentry = {'ip': {'ip_prefix': vip, 'ip_prefix_len': 32}, 'address_mode': 'active-standby'}
+                pairs.append(newentry)
+                new = {'virtual_machine_interface_allowed_address_pairs':
+                       {'allowed_address_pair': pairs}}
+                body = {'virtual-machine-interface': new}
+                requests.put(href, verify=False, json=body)
+
+
 def scale(config, plandir, cluster, overrides):
     plan = cluster
     client = config.client
@@ -1084,13 +1117,15 @@ def create(config, plandir, cluster, overrides):
             error("Leaving environment for debugging purposes")
             error("You can delete it with kcli delete cluster --yes %s" % cluster)
             sys.exit(run)
-        if 'network_type' in data and data['network_type'] == 'Contrail':
-            warning("Keeping bootstrap vm to do act as loadbalancer because of Contrail issues with keepalived")
-            todelete = []
-        else:
-            todelete = ["%s-bootstrap" % cluster]
+        todelete = ["%s-bootstrap" % cluster]
         if platform == 'packet':
             todelete.append("%s-bootstrap-helper" % cluster)
+        if 'network_type' in data and data['network_type'] == 'Contrail':
+            pprint("Allowing vips in Contrail api")
+            # firstmastercmd = "oc get node -o wide --no-headers | awk '{print $6}' | head -1"
+            firstmastercmd = "dig +short %s-master-0.%s.%s @api.%s.%s" % (cluster, cluster, domain, cluster, domain)
+            firstmaster = os.popen(firstmastercmd).read().strip()
+            contrail_allow_vips(firstmaster, api_ip, ingress_ip=ingress_ip)
     else:
         pprint("Deploying bootstrap")
         result = config.plan(plan, inputfile='%s/cloud_bootstrap.yml' % plandir, overrides=overrides)
@@ -1115,7 +1150,7 @@ def create(config, plandir, cluster, overrides):
         call('openshift-install --dir=%s --log-level=%s wait-for bootstrap-complete || exit 1' % (clusterdir,
                                                                                                   log_level),
              shell=True)
-        todelete = [] if 'network_type' in data and data['network_type'] == 'Contrail' else ["%s-bootstrap" % cluster]
+        todelete = ["%s-bootstrap" % cluster]
     if workers > 0:
         pprint("Deploying workers")
         if 'name' in overrides:
@@ -1137,9 +1172,6 @@ def create(config, plandir, cluster, overrides):
             allnodes = ["%s-worker-%s" % (cluster, num) for num in range(workers)]
             for node in allnodes:
                 k.add_nic(node, network)
-    if 'network_type' in data and data['network_type'] == 'Contrail':
-        pprint("Waiting 10mn on install to be stable")
-        sleep(600)
     if workers == 0:
         call("oc adm taint nodes -l node-role.kubernetes.io/master node-role.kubernetes.io/master:NoSchedule-",
              shell=True)

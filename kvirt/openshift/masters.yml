@@ -61,7 +61,6 @@
     origin: packet-hack.sh
     mode: 700
 {% endif %}
-{% if network_type != 'Contrail' %}
 {% if workers > 0 %}
   - path: /etc/kubernetes/manifests/haproxy.yml
     origin: staticpods/haproxy.yml
@@ -74,7 +73,6 @@
     origin: staticpods/keepalived.yml
   - path: /etc/kubernetes/keepalived.conf
     origin: keepalived.conf
-{% endif %}
 {% if numa != None %}
  numa: {{ numa }}
 {% endif %}

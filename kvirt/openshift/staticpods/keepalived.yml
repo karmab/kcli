@@ -34,6 +34,9 @@ spec:
         {% if name != cluster + '-bootstrap' %}
         NIC=br-ex
         {% endif %}
+        {% elif network_type == 'Contrail' and name != cluster + '-bootstrap' %}
+        NIC=vhost0
+        NETMASK=32
         {% elif config_type == 'packet' %}
         NIC={{ 'eth1' if 'fcos' in image else 'ens3f1' }}
         NETMASK=32
