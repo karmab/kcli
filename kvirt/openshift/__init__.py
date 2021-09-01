@@ -248,39 +248,6 @@ def process_postscripts(clusterdir, postscripts):
         call(script_path, shell=True)
 
 
-def contrail_allow_vips(ip, api_ip, ingress_ip=None):
-    import requests
-    from requests.packages.urllib3.exceptions import InsecureRequestWarning
-    requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-    vips = [api_ip]
-    if ingress_ip is not None:
-        vips.append(ingress_ip)
-    url = "https://%s:8082" % ip
-    data = requests.get("%s/virtual-machine-interfaces" % url, verify=False).json()['virtual-machine-interfaces']
-    for entry in data:
-        if 'vhost0' in entry['fq_name']:
-            host = entry['fq_name'][1]
-            href = entry['href']
-            nodedata = requests.get(href, verify=False).json()['virtual-machine-interface']
-            found_vips = []
-            pairs = []
-            if 'virtual_machine_interface_allowed_address_pairs' in nodedata:
-                pairs = nodedata['virtual_machine_interface_allowed_address_pairs']['allowed_address_pair']
-                for ip in pairs:
-                    for vip in vips:
-                        if ip['ip']['ip_prefix'] == vip:
-                            found_vips.append(vip)
-            missing_vips = [ip for ip in vips if ip not in found_vips]
-            for vip in missing_vips:
-                pprint("Adding vip %s in %s" % (vip, host))
-                newentry = {'ip': {'ip_prefix': vip, 'ip_prefix_len': 32}, 'address_mode': 'active-standby'}
-                pairs.append(newentry)
-                new = {'virtual_machine_interface_allowed_address_pairs':
-                       {'allowed_address_pair': pairs}}
-                body = {'virtual-machine-interface': new}
-                requests.put(href, verify=False, json=body)
-
-
 def scale(config, plandir, cluster, overrides):
     plan = cluster
     client = config.client
@@ -1013,6 +980,14 @@ def create(config, plandir, cluster, overrides):
         service_name = 'kcli-metal3-patch'
         patch_bootstrap("%s/bootstrap.ign" % clusterdir, script_content, service_content, service_name)
     if platform in virtplatforms:
+        if 'network_type' in data and data['network_type'] == 'Contrail':
+            script_data = {"api_env": "-e API_IP=%s" % api_ip}
+            script_data["ingress_env"] = "-e INGRESS_IP=%s" % ingress_ip if ingress_ip is not None else ''
+            script_content = config.process_inputfile(cluster, "%s/bootstrap_contrail.sh" % plandir,
+                                                      overrides=script_data)
+            service_content = open('%s/bootstrap_contrail.service' % plandir).read()
+            service_name = 'kcli-contrail-patch'
+            patch_bootstrap("%s/bootstrap.ign" % clusterdir, script_content, service_content, service_name)
         if data.get('virtual_router_id') is None:
             overrides['virtual_router_id'] = hash(cluster) % 254 + 1
         pprint("Using keepalived virtual_router_id %s" % overrides['virtual_router_id'])
@@ -1120,12 +1095,6 @@ def create(config, plandir, cluster, overrides):
         todelete = ["%s-bootstrap" % cluster]
         if platform == 'packet':
             todelete.append("%s-bootstrap-helper" % cluster)
-        if 'network_type' in data and data['network_type'] == 'Contrail':
-            pprint("Allowing vips in Contrail api")
-            # firstmastercmd = "oc get node -o wide --no-headers | awk '{print $6}' | head -1"
-            firstmastercmd = "dig +short %s-master-0.%s.%s @api.%s.%s" % (cluster, cluster, domain, cluster, domain)
-            firstmaster = os.popen(firstmastercmd).read().strip()
-            contrail_allow_vips(firstmaster, api_ip, ingress_ip=ingress_ip)
     else:
         pprint("Deploying bootstrap")
         result = config.plan(plan, inputfile='%s/cloud_bootstrap.yml' % plandir, overrides=overrides)
