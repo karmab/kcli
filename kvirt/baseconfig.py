@@ -576,20 +576,40 @@ class Kbaseconfig:
         if not os.path.exists(inputfile):
             error("No input file found nor default kcli_plan.yml. Leaving....")
             sys.exit(1)
+        parameters = {}
         if os.path.exists("%s/%s_default.yml" % (basedir, plan)):
             parameterfile = "%s/%s_default.yml" % (basedir, plan)
             if not quiet:
-                pprint("Using %s_default.yml for default parameters" % plan)
-        elif os.path.exists("%s/kcli_default.yml" % basedir):
+                pprint("Parsing %s_default.yml for default parameters" % plan)
+            newparameters = common.get_parameters(parameterfile, raw=True)
+            if newparameters is not None:
+                if not isinstance(newparameters, dict):
+                    error("Error rendering parameters from file %s" % parameterfile)
+                    sys.exit(1)
+                parameters.update(newparameters)
+        if os.path.exists("%s/kcli_default.yml" % basedir):
             parameterfile = "%s/kcli_default.yml" % basedir
             if not quiet:
-                pprint("Using kcli_default.yml for default parameters")
-        else:
-            parameterfile = inputfile
-        raw = True if parameterfile != inputfile else False
-        parameters = common.get_parameters(parameterfile, raw=raw)
-        if parameters is not None:
-            parameters = yaml.safe_load(parameters)['parameters'] if not raw else parameters
+                pprint("Parsing kcli_default.yml for default parameters")
+            newparameters = common.get_parameters(parameterfile, raw=True)
+            if newparameters is not None:
+                if not isinstance(newparameters, dict):
+                    error("Error rendering parameters from file %s" % parameterfile)
+                    sys.exit(1)
+                parameters.update(newparameters)
+        inputfile_default = "%s_default%s" % os.path.splitext(inputfile)
+        if os.path.exists("%s/%s" % (basedir, inputfile_default)):
+            parameterfile = "%s/%s" % (basedir, inputfile_default)
+            newparameters = common.get_parameters(parameterfile, raw=True)
+            if newparameters is not None:
+                if not isinstance(newparameters, dict):
+                    error("Error rendering parameters from file %s" % parameterfile)
+                    sys.exit(1)
+        inputparameters = common.get_parameters(inputfile, raw=False)
+        if inputparameters is not None:
+            pprint("Parsing plan file for default parameters")
+            parameters.update(yaml.safe_load(inputparameters)['parameters'])
+        if parameters:
             description = parameters.get('description')
             if description is not None:
                 print("description: %s" % description.strip())
@@ -685,19 +705,37 @@ class Kbaseconfig:
         except TemplateError as e:
             error("Error rendering file %s. Got: %s" % (inputfile, e.message))
             sys.exit(1)
+        parameters = {}
         if os.path.exists("%s/%s_default.yml" % (basedir, plan)):
             parameterfile = "%s/%s_default.yml" % (basedir, plan)
-        elif os.path.exists("%s/kcli_default.yml" % basedir):
+            newparameters = common.get_parameters(parameterfile, raw=True)
+            if newparameters is not None:
+                if not isinstance(newparameters, dict):
+                    error("Error rendering parameters from file %s" % parameterfile)
+                    sys.exit(1)
+                parameters.update(newparameters)
+        if os.path.exists("%s/kcli_default.yml" % basedir):
             parameterfile = "%s/kcli_default.yml" % basedir
-        else:
-            parameterfile = inputfile
-        raw = True if parameterfile != inputfile else False
-        parameters = common.get_parameters(parameterfile, raw=raw)
-        if parameters is not None:
-            parameters = yaml.safe_load(parameters)['parameters'] if not raw else parameters
-            if not isinstance(parameters, dict):
-                error("Error rendering parameters section of file %s" % inputfile)
-                sys.exit(1)
+            newparameters = common.get_parameters(parameterfile, raw=True)
+            if newparameters is not None:
+                if not isinstance(newparameters, dict):
+                    error("Error rendering parameters from file %s" % parameterfile)
+                    sys.exit(1)
+                parameters.update(newparameters)
+        inputfile_default = "%s_default%s" % os.path.splitext(inputfile)
+        if os.path.exists("%s/%s" % (basedir, inputfile_default)):
+            parameterfile = "%s/%s" % (basedir, inputfile_default)
+            newparameters = common.get_parameters(parameterfile, raw=True)
+            if newparameters is not None:
+                if not isinstance(newparameters, dict):
+                    error("Error rendering parameters from file %s" % parameterfile)
+                    sys.exit(1)
+                parameters.update(newparameters)
+        inputparameters = common.get_parameters(inputfile, raw=False)
+        if inputparameters is not None:
+            pprint("Parsing plan file for default parameters")
+            parameters.update(yaml.safe_load(inputparameters)['parameters'])
+        if parameters:
             for parameter in parameters:
                 if parameter == 'baseplan':
                     basefile = parameters['baseplan']
