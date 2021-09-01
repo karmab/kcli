@@ -1367,7 +1367,7 @@ $INFO
 
     def plan(self, plan, ansible=False, url=None, path=None, container=False, inputfile=None, inputstring=None,
              overrides={}, info=False, update=False, embedded=False, download=False, quiet=False, doc=False,
-             onlyassets=False, pre=True, post=True):
+             onlyassets=False, pre=True, post=True, excludevms=[]):
         """Manage plan file"""
         k = self.k
         no_overrides = not overrides
@@ -1672,7 +1672,11 @@ $INFO
             vmcounter = 0
             hosts = {}
             vms_to_host = {}
+            baseplans = []
+            vmnames = [name for name in vmentries]
             for name in vmentries:
+                if name in excludevms:
+                    continue
                 currentplandir = basedir
                 if len(vmentries) == 1 and 'name' in overrides:
                     newname = overrides['name']
@@ -1686,7 +1690,11 @@ $INFO
                     baseprofile = {}
                     appendkeys = ['disks', 'nets', 'files', 'scripts', 'cmds']
                     if 'baseplan' in profile:
+                        baseplan = profile['baseplan']
                         basevm = profile['basevm'] if 'basevm' in profile else name
+                        if baseplan not in baseplans:
+                            self.plan(plan, inputfile=baseplan, overrides=overrides, excludevms=vmnames)
+                            baseplans.append(baseplan)
                         baseinfo = self.process_inputfile(plan, profile['baseplan'], overrides=overrides, full=True)
                         baseprofile = baseinfo[0][basevm]
                         currentplandir = baseinfo[3]
