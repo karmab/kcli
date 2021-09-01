@@ -1696,7 +1696,7 @@ $INFO
                             self.plan(plan, inputfile=baseplan, overrides=overrides, excludevms=vmnames)
                             baseplans.append(baseplan)
                         baseinfo = self.process_inputfile(plan, profile['baseplan'], overrides=overrides, full=True)
-                        baseprofile = baseinfo[0][basevm]
+                        baseprofile = baseinfo[0][basevm] if basevm in baseinfo[0] else {}
                         currentplandir = baseinfo[3]
                     elif 'basevm' in profile and profile['basevm'] in baseentries:
                         baseprofile = baseentries[profile['basevm']]
