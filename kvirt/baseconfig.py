@@ -973,7 +973,7 @@ class Kbaseconfig:
                                    _type=_type)
         return jenkinsfile
 
-    def create_github_pipeline(self, inputfile, paramfile=None, overrides={}, kube=False):
+    def create_github_pipeline(self, inputfile, paramfile=None, overrides={}, kube=False, script=False):
         plan = overrides.get('plan')
         if not kube:
             inputfile = os.path.expanduser(inputfile) if inputfile is not None else 'kcli_plan.yml'
@@ -1004,20 +1004,25 @@ class Kbaseconfig:
             if 'kubetype' in overrides:
                 kubetype = overrides['kubetype']
                 del overrides['kubetype']
+        runscript = 'true'
+        if script:
+            if 'runscript' in overrides:
+                runscript = str(overrides['runscript']).lower()
+                del overrides['runscript']
         workflowdir = os.path.dirname(common.__file__)
         env = Environment(loader=FileSystemLoader(workflowdir), extensions=['jinja2.ext.do'], trim_blocks=True,
                           lstrip_blocks=True)
         for jinjafilter in jinjafilters.jinjafilters:
             env.filters[jinjafilter] = jinjafilters.jinjafilters[jinjafilter]
         try:
-            templ = env.get_template(os.path.basename("workflow.yml.j2"))
+            workflowfile = "workflow_script.yml.j2" if script else "workflow.yml.j2"
+            templ = env.get_template(os.path.basename(workflowfile))
         except TemplateSyntaxError as e:
             error("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message))
             sys.exit(1)
         except TemplateError as e:
             error("Error rendering file %s. Got: %s" % (inputfile, e.message))
             sys.exit(1)
-        # paramline = ["-P %s=${{github.event.inputs.%s}}" % (parameter, parameter.upper()) for parameter in overrides]
         paramline = []
         for parameter in overrides:
             newparam = "${{github.event.inputs.%s}}" % parameter.upper()
@@ -1030,7 +1035,7 @@ class Kbaseconfig:
         gitbase = os.popen('git rev-parse --show-prefix 2>/dev/null').read().strip()
         workflowfile = templ.render(plan=plan, inputfile=inputfile, parameters=overrides, parameterline=parameterline,
                                     paramfileline=paramfileline, paramfile=paramfile, gitbase=gitbase, runner=runner,
-                                    client=client, kube=kube, kubetype=kubetype)
+                                    client=client, kube=kube, kubetype=kubetype, runscript=runscript)
         return workflowfile
 
     def info_kube_generic(self, quiet, web=False):

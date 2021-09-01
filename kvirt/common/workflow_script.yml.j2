@@ -10,10 +10,14 @@ on:
         description: 'Client name'
         required: true
         default: '{{ client }}'
-      PLAN:
-        description: 'Plan Name'
+      SCRIPT:
+        description: 'Run script'
         required: true
-        default: {{ plan }}
+        default: '{{ gitbase + inputfile }}'
+      RUN_SCRIPT:
+        description: 'Run script'
+        required: true
+        default: '{{ runscript }}'
 {% if paramfile != None %}
       PARAMFILE:
         description: 'paramfile'
@@ -43,15 +47,17 @@ jobs:
            # kcli create pool -p /var/lib/libvirt/images default
            # sudo setfacl -m u:$(id -un):rwx /var/lib/libvirt/images
 
-    deploy-plan:
+    render-run-script:
       needs: requirements
       runs-on: {% raw %}${{github.event.inputs.RUNNER}}{% endraw %}
   
       steps:
-{% if kube %}
-       - name: Deploy kcli cluster
-         run: kcli -C {% raw %}${{github.event.inputs.CLIENT}}{% endraw %} create cluster {{ kubetype }} --force {{ paramfileline }} {{ parameterline }} {% raw %}${{github.event.inputs.PLAN}}{% endraw %}
-{% else %}
-       - name: Deploy kcli plan
-         run: kcli -C {% raw %}${{github.event.inputs.CLIENT}}{% endraw %} create plan --force -f {{ gitbase + inputfile }} {{ paramfileline }} {{ parameterline }} {% raw %}${{github.event.inputs.PLAN}}{% endraw %}
-{% endif %}
+       - name: Render script
+         run: kcli -C {% raw %}${{github.event.inputs.CLIENT}}{% endraw %} render -f {% raw %}${{github.event.inputs.SCRIPT}}{% endraw %} {{ paramfileline }} {{ parameterline }} > run.sh
+
+       - name: Display script
+         run: cat run.sh
+
+       - name: Run script
+         run: bash run.sh
+         if: {% raw %}${{github.event_inputs.RUN_SCRIPT}}{% endraw %} == 'true' 
