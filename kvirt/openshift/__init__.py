@@ -863,7 +863,9 @@ def create(config, plandir, cluster, overrides):
     if dualstack:
         copy2("%s/dualstack.yml" % plandir, "%s/openshift" % clusterdir)
     if ipsec:
-        copy2("%s/ipsec.yml" % plandir, "%s/openshift" % clusterdir)
+        copy2("%s/99-ipsec.yaml" % plandir, "%s/openshift" % clusterdir)
+    if workers == 0:
+        copy2('%s/99-scheduler.yaml' % plandir, "%s/openshift" % clusterdir)
     if disconnected_operators:
         if os.path.exists('%s/imageContentSourcePolicy.yaml' % clusterdir):
             copy2('%s/imageContentSourcePolicy.yaml' % clusterdir, "%s/openshift" % clusterdir)
@@ -1169,12 +1171,9 @@ def create(config, plandir, cluster, overrides):
             allnodes = ["%s-worker-%s" % (cluster, num) for num in range(workers)]
             for node in allnodes:
                 k.add_nic(node, network)
-    if 'network_type' in data and data['network_type'] == 'Contrail':
-        pprint("Waiting 10mn on install to be stable")
-        sleep(600)
-    if workers == 0:
-        call("oc adm taint nodes -l node-role.kubernetes.io/master node-role.kubernetes.io/master:NoSchedule-",
-             shell=True)
+    # if 'network_type' in data and data['network_type'] == 'Contrail':
+    #    pprint("Waiting 5mn on install to be stable")
+    #    sleep(300)
     if not minimal:
         installcommand = 'openshift-install --dir=%s --log-level=%s wait-for install-complete' % (clusterdir, log_level)
         installcommand += " || %s" % installcommand

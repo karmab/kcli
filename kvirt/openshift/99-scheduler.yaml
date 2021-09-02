@@ -1,0 +1,9 @@
+apiVersion: config.openshift.io/v1
+kind: Scheduler
+metadata:
+  creationTimestamp: null
+  name: cluster
+spec:
+  mastersSchedulable: true
+  policy:
+    name: ""
