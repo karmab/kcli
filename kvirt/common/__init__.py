@@ -68,9 +68,17 @@ def fetch(url, path):
     if url.startswith('https://github.com'):
         url = github_raw(url)
     shortname = os.path.basename(url)
+    pathcreated = False
     if not os.path.exists(path):
         os.mkdir(path)
-    urlretrieve(url, "%s/%s" % (path, shortname))
+        pathcreated = True
+    try:
+        urlretrieve(url, "%s/%s" % (path, shortname))
+    except:
+        error("Hit issue with url %s" % url)
+        if pathcreated:
+            os.rmdir(path)
+        sys.exit(1)
 
 
 def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False,

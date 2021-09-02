@@ -1400,7 +1400,6 @@ $INFO
                 path = "/workdir/%s" % path
             if not os.path.exists(path):
                 toclean = True if info else False
-                os.mkdir(path)
                 common.fetch(url, path)
                 try:
                     common.fetch(os.path.dirname(url) + '/kcli_default.yml', path)
