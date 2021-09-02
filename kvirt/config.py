@@ -1673,6 +1673,9 @@ $INFO
             vms_to_host = {}
             baseplans = []
             vmnames = [name for name in vmentries]
+            if basefile is not None:
+                self.plan(plan, inputfile=basefile, overrides=overrides, excludevms=vmnames)
+                baseplans.append(basefile)
             for name in vmentries:
                 if name in excludevms:
                     continue
