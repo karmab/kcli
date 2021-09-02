@@ -1169,6 +1169,9 @@ def create(config, plandir, cluster, overrides):
             allnodes = ["%s-worker-%s" % (cluster, num) for num in range(workers)]
             for node in allnodes:
                 k.add_nic(node, network)
+    if 'network_type' in data and data['network_type'] == 'Contrail':
+        pprint("Waiting 10mn on install to be stable")
+        sleep(600)
     if workers == 0:
         call("oc adm taint nodes -l node-role.kubernetes.io/master node-role.kubernetes.io/master:NoSchedule-",
              shell=True)
