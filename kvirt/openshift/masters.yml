@@ -69,7 +69,7 @@
   - path: /etc/sysctl.d/nonlocalbind.conf
     origin: nonlocalbind.conf
 {% endif %}
-  - path: /etc/kubernetes/manifests/keepalived.yml
+  - path: {{ '/etc/kubernetes/manifests/keepalived.yml' if network_type != 'Contrail' else '/root/keepalived.yml' }}
     origin: staticpods/keepalived.yml
   - path: /etc/kubernetes/keepalived.conf
     origin: keepalived.conf
