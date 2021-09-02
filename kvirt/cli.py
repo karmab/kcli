@@ -24,6 +24,7 @@ import os
 import random
 import requests
 import sys
+from urllib.parse import urlparse
 import yaml
 
 
@@ -53,6 +54,15 @@ def valid_fqdn(name):
         msg = "Vm name can't include /"
         raise argparse.ArgumentTypeError(msg)
     return name
+
+
+def valid_url(url):
+    if url is not None:
+        parsed_url = urlparse(url)
+        if parsed_url.scheme == '' or parsed_url.netloc == '':
+            msg = "Malformed url"
+            raise argparse.ArgumentTypeError(msg)
+    return url
 
 
 def valid_cluster(name):
@@ -3727,7 +3737,7 @@ def cli():
                                                      epilog=plancreate_epilog,
                                                      formatter_class=rawhelp)
     plancreate_parser.add_argument('-A', '--ansible', help='Generate ansible inventory', action='store_true')
-    plancreate_parser.add_argument('-u', '--url', help='Url for plan', metavar='URL')
+    plancreate_parser.add_argument('-u', '--url', help='Url for plan', metavar='URL', type=valid_url)
     plancreate_parser.add_argument('-p', '--path', help='Path where to download plans. Defaults to plan',
                                    metavar='PATH')
     plancreate_parser.add_argument('-c', '--container', action='store_true', help='Handle container')
@@ -3776,7 +3786,7 @@ def cli():
     planinfo_parser.add_argument('-f', '--inputfile', help='Input Plan file')
     planinfo_parser.add_argument('-p', '--path', help='Path where to download plans. Defaults to plan', metavar='PATH')
     planinfo_parser.add_argument('-q', '--quiet', action='store_true', help='Provide parameter file output')
-    planinfo_parser.add_argument('-u', '--url', help='Url for plan', metavar='URL')
+    planinfo_parser.add_argument('-u', '--url', help='Url for plan', metavar='URL', type=valid_url)
     planinfo_parser.set_defaults(func=info_plan)
 
     planlist_desc = 'List Plans'
@@ -3845,7 +3855,7 @@ def cli():
     planupdate_parser = update_subparsers.add_parser('plan', description=planupdate_desc, help=planupdate_desc)
     planupdate_parser.add_argument('--autostart', action='store_true', help='Set autostart for vms of the plan')
     planupdate_parser.add_argument('--noautostart', action='store_true', help='Remove autostart for vms of the plan')
-    planupdate_parser.add_argument('-u', '--url', help='Url for plan', metavar='URL')
+    planupdate_parser.add_argument('-u', '--url', help='Url for plan', metavar='URL', type=valid_url)
     planupdate_parser.add_argument('-p', '--path', help='Path where to download plans. Defaults to plan',
                                    metavar='PATH')
     planupdate_parser.add_argument('-c', '--container', action='store_true', help='Handle container')
@@ -3943,7 +3953,7 @@ def cli():
     repocreate_parser = create_subparsers.add_parser('repo', description=repocreate_desc, help=repocreate_desc,
                                                      epilog=repocreate_epilog,
                                                      formatter_class=rawhelp)
-    repocreate_parser.add_argument('-u', '--url', help='URL of the repo', metavar='URL')
+    repocreate_parser.add_argument('-u', '--url', help='URL of the repo', metavar='URL', type=valid_url)
     repocreate_parser.add_argument('repo')
     repocreate_parser.set_defaults(func=create_repo)
 
@@ -3971,7 +3981,7 @@ def cli():
     imagedownload_parser.add_argument('-o', '--openstack', help='Use openstack variant (kvm specific)',
                                       action='store_true')
     imagedownload_parser.add_argument('-p', '--pool', help='Pool to use. Defaults to default', metavar='POOL')
-    imagedownload_parser.add_argument('-u', '--url', help='Url to use', metavar='URL')
+    imagedownload_parser.add_argument('-u', '--url', help='Url to use', metavar='URL', type=valid_url)
     imagedownload_parser.add_argument('--size', help='Disk size (kubevirt specific)', type=int, metavar='SIZE')
     imagedownload_parser.add_argument('-s', '--skip-profile', help='Skip Profile update', action='store_true')
     imagedownload_parser.add_argument('image', help=imagedownload_help, metavar='IMAGE')
@@ -3983,7 +3993,7 @@ def cli():
     isodownload_help = "Iso name"
     isodownload_parser = argparse.ArgumentParser(add_help=False)
     isodownload_parser.add_argument('-p', '--pool', help='Pool to use. Defaults to default', metavar='POOL')
-    isodownload_parser.add_argument('-u', '--url', help='Url to use', metavar='URL', required=True)
+    isodownload_parser.add_argument('-u', '--url', help='Url to use', metavar='URL', required=True, type=valid_url)
     isodownload_parser.add_argument('iso', help=isodownload_help, metavar='ISO', nargs='?')
     isodownload_parser.set_defaults(func=download_iso)
     download_subparsers.add_parser('iso', parents=[isodownload_parser], description=isodownload_desc,
@@ -4041,7 +4051,7 @@ def cli():
 
     plandownload_desc = 'Download Plan'
     plandownload_parser = argparse.ArgumentParser(add_help=False)
-    plandownload_parser.add_argument('-u', '--url', help='Url to use', metavar='URL', required=True)
+    plandownload_parser.add_argument('-u', '--url', help='Url to use', metavar='URL', required=True, type=valid_url)
     plandownload_parser.add_argument('plan', metavar='PLAN', nargs='?')
     plandownload_parser.set_defaults(func=download_plan)
     download_subparsers.add_parser('plan', parents=[plandownload_parser], description=plandownload_desc,
