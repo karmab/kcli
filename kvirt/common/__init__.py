@@ -754,33 +754,44 @@ def get_overrides(paramfile=None, param=[]):
     return overrides
 
 
-def get_parameters(inputfile, raw=False):
+def get_parameters(inputfile, planfile=False):
     """
 
     :param inputfile:
-    :param raw:
     :return:
     """
-    if raw:
-        with open(inputfile, 'r') as entries:
-            try:
-                return yaml.safe_load(entries)
-            except:
-                return None
-    else:
-        parameters = ""
-        found = False
-        for line in open(inputfile).readlines():
-            if found and not line.startswith(' '):
-                break
-            elif found:
-                parameters += line
-            elif line != 'parameters:\n' and not found:
-                continue
-            else:
-                parameters += line
-                found = True
-        results = parameters if parameters != '' else None
+    results = {}
+    with open(inputfile, 'r') as entries:
+        try:
+            data = yaml.safe_load(entries)
+            if not planfile:
+                results = data
+            elif 'parameters' in results:
+                results = results['parameters']
+        except Exception as e:
+            if not planfile:
+                error("Error rendering parameters from file %s. Got %s" % (inputfile, e))
+                sys.exit(1)
+            parameters = ""
+            found = False
+            for line in open(inputfile).readlines():
+                if found and not line.startswith(' '):
+                    break
+                elif found:
+                    parameters += line
+                elif line != 'parameters:\n' and not found:
+                    continue
+                else:
+                    parameters += line
+                    found = True
+            if parameters != '':
+                try:
+                    results = yaml.safe_load(parameters)['parameters']
+                except:
+                    pass
+        if not isinstance(results, dict):
+            error("Error rendering parameters from file %s" % inputfile)
+            sys.exit(1)
         return results
 
 
