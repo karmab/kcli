@@ -736,22 +736,27 @@ class Kbaseconfig:
             pprint("Parsing plan file for default parameters")
             parameters.update(yaml.safe_load(inputparameters)['parameters'])
         if parameters:
+            if 'baseplan' in parameters:
+                basefile = parameters['baseplan']
+                if onfly is not None:
+                    common.fetch("%s/%s" % (onfly, basefile), '.')
+                baseparameters = self.process_inputfile(plan, basefile, overrides=overrides, onfly=onfly,
+                                                        full=True)[1]
+                if baseparameters:
+                    parameters.update({key: baseparameters[key] for key in baseparameters if key not in parameters})
+                baseparameters = common.get_parameters(basefile, raw=True)
+                if baseparameters is not None:
+                    baseparameters = yaml.safe_load(baseparameters)['parameters']
+                    for baseparameter in baseparameters:
+                        if baseparameter not in overrides and baseparameter not in parameters:
+                            overrides[baseparameter] = baseparameters[baseparameter]
             for parameter in parameters:
-                if parameter == 'baseplan':
-                    basefile = parameters['baseplan']
-                    if onfly is not None:
-                        common.fetch("%s/%s" % (onfly, basefile), '.')
-                    baseparameters = common.get_parameters(basefile)
-                    if baseparameters is not None:
-                        baseparameters = yaml.safe_load(baseparameters)['parameters']
-                        for baseparameter in baseparameters:
-                            if baseparameter not in overrides and baseparameter not in parameters:
-                                overrides[baseparameter] = baseparameters[baseparameter]
-                elif parameter not in overrides:
-                    currentparameter = parameters[parameter]
-                    if isinstance(currentparameter, bool) and download_mode:
-                        currentparameter = True
-                    overrides[parameter] = currentparameter
+                if parameter not in overrides:
+                    continue
+                currentparameter = parameters[parameter]
+                if isinstance(currentparameter, bool) and download_mode:
+                    currentparameter = True
+                overrides[parameter] = currentparameter
         with open(inputfile, 'r') as entries:
             overrides.update(self.overrides)
             overrides.update({'plan': plan})
