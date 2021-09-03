@@ -75,9 +75,10 @@ def fetch(url, path):
     try:
         urlretrieve(url, "%s/%s" % (path, shortname))
     except:
-        error("Hit issue with url %s" % url)
-        if pathcreated:
-            os.rmdir(path)
+        if not url.endswith('_default.yml'):
+            error("Hit issue with url %s" % url)
+            if pathcreated:
+                os.rmdir(path)
         sys.exit(1)
 
 

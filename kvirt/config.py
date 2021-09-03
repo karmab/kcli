@@ -1401,10 +1401,12 @@ $INFO
             if not os.path.exists(path):
                 toclean = True if info else False
                 common.fetch(url, path)
-                try:
-                    common.fetch(os.path.dirname(url) + '/kcli_default.yml', path)
-                except:
-                    pass
+                for default_parameter_file in ['/kcli_default.yml', '/%s_default.yml' % plan,
+                                               "/%s_default%s" % os.path.splitext(os.path.basename(url))]:
+                    try:
+                        common.fetch(os.path.dirname(url) + default_parameter_file, path)
+                    except:
+                        pass
             elif download:
                 msg = "target directory %s already there" % (path)
                 error(msg)
