@@ -751,7 +751,7 @@ class Kbaseconfig:
                         if baseparameter not in overrides and baseparameter not in parameters:
                             overrides[baseparameter] = baseparameters[baseparameter]
             for parameter in parameters:
-                if parameter not in overrides:
+                if parameter in overrides:
                     continue
                 currentparameter = parameters[parameter]
                 if isinstance(currentparameter, bool) and download_mode:
