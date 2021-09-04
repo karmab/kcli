@@ -381,7 +381,8 @@ def create(config, plandir, cluster, overrides):
             'dualstack': False,
             'ipsec': False,
             'sno': False,
-            'sno_virtual': False}
+            'sno_virtual': False,
+            'async': False}
     data.update(overrides)
     if 'cluster' in overrides:
         clustervalue = overrides.get('cluster')
@@ -391,6 +392,7 @@ def create(config, plandir, cluster, overrides):
         clustervalue = 'testk'
     data['cluster'] = clustervalue
     domain = data.get('domain')
+    async_install = data.get('async')
     postscripts = data.get('postscripts', [])
     pprint("Deploying cluster %s" % clustervalue)
     plan = cluster if cluster is not None else clustervalue
@@ -904,6 +906,48 @@ def create(config, plandir, cluster, overrides):
                 _f.write(cronfile)
             continue
         copy2(f, "%s/openshift" % clusterdir)
+    if async_install:
+        registry = disconnected_url if disconnected_url is not None else 'quay.io'
+        deletionfile = "%s/99-bootstrap-deletion.yaml" % plandir
+        deletionfile = config.process_inputfile(cluster, deletionfile, overrides={'cluster': cluster,
+                                                                                  'registry': registry,
+                                                                                  'arch_tag': arch_tag})
+        with open("%s/openshift/99-bootstrap-deletion.yaml" % clusterdir, 'w') as _f:
+            _f.write(deletionfile)
+        oriconf = os.path.expanduser('~/.kcli')
+        orissh = os.path.expanduser('~/.ssh')
+        with TemporaryDirectory() as tmpdir:
+            if config.type == 'kvm' and config.k.host in ['localhost', '127.0.0.1']:
+                oriconf = "%s/.kcli" % tmpdir
+                orissh = "%s/.ssh" % tmpdir
+                os.mkdir(oriconf)
+                os.mkdir(orissh)
+                kcliconf = config.process_inputfile(cluster, "%s/local_kcli_conf.j2" % plandir,
+                                                    overrides={'network': network, 'user': getuser()})
+                with open("%s/config.yml" % oriconf, 'w') as _f:
+                    _f.write(kcliconf)
+                sshcmd = "ssh-keygen -t rsa -N '' -f %s/id_rsa > /dev/null" % orissh
+                call(sshcmd, shell=True)
+                authorized_keys_file = os.path.expanduser('~/.ssh/authorized_keys')
+                file_mode = 'a' if os.path.exists(authorized_keys_file) else 'w'
+                with open(authorized_keys_file, file_mode) as f:
+                    publickey = open("%s/id_rsa.pub" % orissh).read().strip()
+                    f.write(publickey)
+            ns = "openshift-infra"
+            dest = "%s/openshift/99-kcli-conf-cm.yaml" % clusterdir
+            cmcmd = 'KUBECONFIG=%s/fake_kubeconfig.json ' % plandir
+            cmcmd += "oc create cm -n %s kcli-conf --from-file=%s --dry-run=client -o yaml > %s" % (ns, oriconf,
+                                                                                                    dest)
+            call(cmcmd, shell=True)
+            dest = "%s/openshift/99-kcli-ssh-cm.yaml" % clusterdir
+            cmcmd = 'KUBECONFIG=%s/fake_kubeconfig.json  ' % plandir
+            cmcmd += "oc create cm -n %s kcli-ssh --from-file=%s --dry-run=client -o yaml > %s" % (ns, orissh, dest)
+            call(cmcmd, shell=True)
+        deletionfile2 = "%s/99-bootstrap-deletion-2.yaml" % plandir
+        deletionfile2 = config.process_inputfile(cluster, deletionfile2, overrides={'registry': registry,
+                                                                                    'arch_tag': arch_tag})
+        with open("%s/openshift/99-bootstrap-deletion-2.yaml" % clusterdir, 'w') as _f:
+            _f.write(deletionfile2)
     if metal3:
         for f in glob("%s/openshift/99_openshift-cluster-api_master-machines-*.yaml" % clusterdir):
             os.remove(f)
@@ -1114,14 +1158,6 @@ def create(config, plandir, cluster, overrides):
                 except Exception as e:
                     error("Hit %s. Continuing still" % str(e))
                     continue
-        bootstrapcommand = 'openshift-install --dir=%s --log-level=%s wait-for bootstrap-complete' % (clusterdir,
-                                                                                                      log_level)
-        bootstrapcommand += ' || %s' % bootstrapcommand
-        run = call(bootstrapcommand, shell=True)
-        if run != 0:
-            error("Leaving environment for debugging purposes")
-            error("You can delete it with kcli delete cluster --yes %s" % cluster)
-            sys.exit(run)
         todelete = ["%s-bootstrap" % cluster]
         if platform == 'packet':
             todelete.append("%s-bootstrap-helper" % cluster)
@@ -1146,10 +1182,16 @@ def create(config, plandir, cluster, overrides):
             result = config.plan(plan, inputfile='%s/cloud_lb_apps.yml' % plandir, overrides=lb_overrides)
             if result['result'] != 'success':
                 sys.exit(1)
-        call('openshift-install --dir=%s --log-level=%s wait-for bootstrap-complete || exit 1' % (clusterdir,
-                                                                                                  log_level),
-             shell=True)
         todelete = ["%s-bootstrap" % cluster]
+    if not async_install:
+        bootstrapcommand = 'openshift-install --dir=%s --log-level=%s wait-for bootstrap-complete' % (clusterdir,
+                                                                                                      log_level)
+        bootstrapcommand += ' || %s' % bootstrapcommand
+        run = call(bootstrapcommand, shell=True)
+        if run != 0:
+            error("Leaving environment for debugging purposes")
+            error("You can delete it with kcli delete cluster --yes %s" % cluster)
+            sys.exit(run)
     if workers > 0:
         pprint("Deploying workers")
         if 'name' in overrides:
@@ -1174,19 +1216,25 @@ def create(config, plandir, cluster, overrides):
     # if 'network_type' in data and data['network_type'] == 'Contrail':
     #    pprint("Waiting 5mn on install to be stable")
     #    sleep(300)
-    if not minimal:
+    if minimal or async_install:
+        kubeconf = os.environ['KUBECONFIG']
+        kubepassword = open("%s/auth/kubeadmin-password" % clusterdir).read()
+        if minimal:
+            success("Minimal Cluster ready to be used")
+            success("INFO Install Complete")
+        if async_install:
+            success("Async Cluster created")
+            info2("You will need to wait before it is fully available")
+        info2("To access the cluster as the system:admin user when running 'oc', run export KUBECONFIG=%s" % kubeconf)
+        info2("Access the Openshift web-console here: https://console-openshift-console.apps.%s.%s" % (cluster, domain))
+        info2("Login to the console with user: kubeadmin, password: %s" % kubepassword)
+        if async_install:
+            sys.exit(0)
+    else:
         installcommand = 'openshift-install --dir=%s --log-level=%s wait-for install-complete' % (clusterdir, log_level)
         installcommand += " || %s" % installcommand
         pprint("Launching install-complete step. It will be retried one extra time in case of timeouts")
         call(installcommand, shell=True)
-    else:
-        kubeconf = os.environ['KUBECONFIG']
-        kubepassword = open("%s/auth/auth/kubeadmin-password" % clusterdir).read()
-        success("Minimal Cluster ready to be used")
-        success("INFO Install Complete")
-        info2("To access the cluster as the system:admin user when running 'oc', run export KUBECONFIG=%s" % kubeconf)
-        info2("Access the Openshift web-console here: https://console-openshift-console.apps.%s.%s" % (cluster, domain))
-        info2("Login to the console with user: kubeadmin, password: %s" % kubepassword)
     if platform in virtplatforms and 'network_type' in data and data['network_type'] == 'Contrail':
         pprint("Allowing vips in Contrail api")
         masteripscmd = "oc get node -o wide --no-headers | awk '{print $6}'"

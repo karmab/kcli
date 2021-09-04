@@ -112,3 +112,4 @@ baremetal_user: root
 baremetal_password: calvin
 kvm_openstack: False
 ipsec: false
+async: false

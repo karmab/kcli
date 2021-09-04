@@ -1,0 +1,5 @@
+default:
+ client: mycli
+mycli:
+ host: {{ network|local_ip(true) }}
+ user: {{ user }}
