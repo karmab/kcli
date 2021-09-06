@@ -840,77 +840,18 @@ class Kconfig(Kbaseconfig):
                 else:
                     files.append({'path': '/root/.notify.sh', 'origin': notifyscript})
                     notifycmd = "bash /root/.notify.sh"
-            for notifymethod in notifymethods:
-                if notifymethod == 'pushbullet':
-                    if pushbullettoken is None:
-                        warning("Notification required for %s but missing pushbullettoken" % name)
-                    elif notifyscript is None and notifycmd is None:
-                        continue
-                    else:
-                        title = "Vm %s on %s report" % (name, self.client)
-                        token = pushbullettoken
-                        pbcmd = 'curl -su "%s:" -d type="note" -d body="`%s 2>&1`" -d title="%s" ' % (token,
-                                                                                                      notifycmd,
-                                                                                                      title)
-                        pbcmd += 'https://api.pushbullet.com/v2/pushes'
-                        if not cmds:
-                            cmds = [pbcmd]
-                        else:
-                            cmds.append(pbcmd)
-                elif notifymethod == 'slack':
-                    if slackchannel is None:
-                        warning("Notification required for %s but missing slack channel" % name)
-                    elif slacktoken is None:
-                        warning("Notification required for %s but missing slacktoken" % name)
-                    else:
-                        title = "Vm %s on %s report" % (name, self.client)
-                        slackcmd = "info=`%s 2>&1 | sed 's/\\x2/ /g'`;" % notifycmd
-                        slackcmd += """curl -X POST -H 'Authorization: Bearer %s'
- -H 'Content-type: application/json; charset=utf-8'
- --data '{"channel":"%s","text":"%s","attachments": [{"text":"'"$info"'","fallback":"nothing",
-"color":"#3AA3E3","attachment_type":"default"}]}' https://slack.com/api/chat.postMessage""" % (slacktoken,
-                                                                                               slackchannel, title)
-                        slackcmd = slackcmd.replace('\n', '')
-                        if not cmds:
-                            cmds = [slackcmd]
-                        else:
-                            cmds.append(slackcmd)
-                elif notifymethod == 'mail':
-                    if mailserver is None:
-                        warning("Notification required for %s but missing mailserver" % name)
-                    elif mailfrom is None:
-                        warning("Notification required for %s but missing mailfrom" % name)
-                    elif not mailto:
-                        warning("Notification required for %s but missing mailto" % name)
-                    else:
-                        title = "Vm %s on %s report" % (name, self.client)
-                        now = datetime.now()
-                        now = now. strftime("%a,%d %b %Y %H:%M:%S")
-                        rcpt = '\n'.join(["RCPT TO:<%s>" % to for to in mailto])
-                        tos = ','.join(["<%s>" % to for to in mailto])
-                        mailcontent = """HELO %s
-MAIL FROM:<%s>
-%s
-DATA
-From: %s <%s>
-To: %s
-Date: %s
-Subject: %s
-
-$INFO
-
-.
-""" % (mailserver, mailfrom, rcpt, mailfrom, mailfrom, tos, now, title)
-                        files.append({'path': '/tmp/.mail.txt', 'content': mailcontent})
-                        mailcmd = ['pkg=yum ; which apt-get /dev/null 2>&1 && pkg=apt-get ; $pkg -y install nc']
-                        mailcmd.append('export INFO=`%s 2>&1` ; envsubst < /tmp/.mail.txt > /tmp/mail.txt' % notifycmd)
-                        mailcmd.append("nc %s 25 < /tmp/mail.txt" % mailserver)
-                        if not cmds:
-                            cmds = mailcmd
-                        else:
-                            cmds.extend(mailcmd)
+            notifycmds, mailcontent = self.handle_notifications(name, notifymethods=notifymethods,
+                                                                pushbullettoken=pushbullettoken,
+                                                                notifyscript=notifyscript, notifycmd=notifycmd,
+                                                                slackchannel=slackchannel, slacktoken=slacktoken,
+                                                                mailserver=mailserver, mailfrom=mailfrom, mailto=mailto)
+            if mailcontent is not None:
+                files.append({'path': '/tmp/mail.txt', 'content': mailcontent})
+            if notifycmds:
+                if not cmds:
+                    cmds = notifycmds
                 else:
-                    error("Invalid method %s" % notifymethod)
+                    cmds.extend(notifycmds)
         ips = [overrides[key] for key in overrides if re.match('ip[0-9]+', key)]
         netmasks = [overrides[key] for key in overrides if re.match('netmask[0-9]+', key)]
         if privatekey and self.type == 'kvm':
@@ -2628,3 +2569,64 @@ $INFO
                                 tunnel=self.tunnel, tunnelhost=self.tunnelhost, tunnelport=self.tunnelport,
                                 tunneluser=self.tunneluser, download=True, insecure=True)
             os.system(scpcmd)
+
+    def handle_notifications(self, name, notifymethods=[], pushbullettoken=None, notifyscript=None, notifycmd=None,
+                             slackchannel=None, slacktoken=None, mailserver=None, mailfrom=None, mailto=None,
+                             cluster=False):
+        _type = 'Cluster' if cluster else 'Vm'
+        title = "%s %s on %s report" % (_type, name, self.client)
+        cmds, mailcontent = [], None
+        for notifymethod in sorted(notifymethods, revert=True):
+            if notifymethod == 'pushbullet':
+                if pushbullettoken is None:
+                    warning("Notification required for %s but missing pushbullettoken" % name)
+                elif notifyscript is None and notifycmd is None:
+                    continue
+                else:
+                    token = pushbullettoken
+                    pbcmd = 'curl -su "%s:" -d type="note" -d body="`%s 2>&1`" -d title="%s" ' % (token,
+                                                                                                  notifycmd,
+                                                                                                  title)
+                    pbcmd += 'https://api.pushbullet.com/v2/pushes'
+                    cmds.append(pbcmd)
+            elif notifymethod == 'slack':
+                if slackchannel is None:
+                    warning("Notification required for %s but missing slack channel" % name)
+                elif slacktoken is None:
+                    warning("Notification required for %s but missing slacktoken" % name)
+                else:
+                    slackcmd = "info=`%s 2>&1 | sed 's/\\x2/ /g'`;" % notifycmd
+                    slackcmd += """curl -X POST -H 'Authorization: Bearer %s'
+ -H 'Content-type: application/json; charset=utf-8'
+ --data '{"channel":"%s","text":"%s","attachments": [{"text":"'"$info"'","fallback":"nothing",
+"color":"#3AA3E3","attachment_type":"default"}]}' https://slack.com/api/chat.postMessage""" % (slacktoken,
+                                                                                               slackchannel, title)
+                    slackcmd = slackcmd.replace('\n', '')
+                    cmds.append(slackcmd)
+            elif notifymethod == 'mail':
+                if mailserver is None:
+                    warning("Notification required for %s but missing mailserver" % name)
+                elif mailfrom is None:
+                    warning("Notification required for %s but missing mailfrom" % name)
+                elif not mailto:
+                    warning("Notification required for %s but missing mailto" % name)
+                else:
+                    now = datetime.now()
+                    now = now. strftime("%a,%d %b %Y %H:%M:%S")
+                    tos = ','.join(["<%s>" % to for to in mailto])
+                    mailcontent = "From: %s <%s>\nTo: %s\nDate: %s\nSubject: %s" % (mailfrom, mailfrom, tos, now,
+                                                                                    title)
+                    mailcmd = []
+                    if not cluster:
+                        mailcmd.append('test -f /etc/debian_version && apt-get -y install curl')
+                        mailcmd.append('echo "" >> /tmp/mail.txt')
+                    mailcmd.append('%s 2>&1 >> /tmp/mail.txt' % notifycmd)
+                    curlcmd = "curl --silent --url smtp://%s:25 --mail-from %s" % (mailserver, mailfrom)
+                    for address in mailto:
+                        curlcmd += " --mail-rcpt %s " % address
+                    curlcmd += " --upload-file /tmp/mail.txt"
+                    mailcmd.append(curlcmd)
+                    cmds.extend(mailcmd)
+            else:
+                error("Invalid method %s" % notifymethod)
+        return cmds, mailcontent
