@@ -19,6 +19,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             NUMAMODE, NUMA, PCIDEVICES, VIRTTYPE, MAILSERVER, MAILFROM, MAILTO, TPM, JENKINSMODE, RNG,
                             ZEROTIER_NETS, ZEROTIER_KUBELET, VMPORT, VMUSER, VMRULES, CACHE, SECURITYGROUPS,
                             LOCAL_OPENSHIFT_APPS)
+from random import choice
 from kvirt import common
 from kvirt.common import error, pprint, warning
 from kvirt.jinjafilters import jinjafilters
@@ -233,6 +234,28 @@ class Kbaseconfig:
                 u, h = 'root', self.client
             self.ini[self.client] = {'host': h, 'user': u}
         self.options = self.ini[self.client]
+        if self.options.get('type', 'kvm') == 'group':
+            enabled = self.options.get('enabled', True)
+            if not enabled:
+                error("Disabled group %s.Leaving..." % client)
+                sys.exit(1)
+            members = self.options.get('members', [])
+            if not members:
+                error("Empty group %s.Leaving..." % client)
+                sys.exit(1)
+            algorithm = self.options.get('algorithm', 'random')
+            if algorithm == 'random':
+                self.client = choice(members)
+                if self.client not in self.ini:
+                    error("Missing section for client %s in config file. Leaving..." % self.client)
+                    sys.exit(1)
+            elif algorithm == 'free':
+                self.client = members[0]
+                self._extraclients = members[1:] if len(members) > 1 else []
+            else:
+                error("Invalid algorithm %s.Choose between random and free..." % algorithm)
+                sys.exit(1)
+            self.options = self.ini[self.client]
         options = self.options
         self.enabled = options.get('enabled', True)
         if not self.enabled:

@@ -45,6 +45,9 @@ $ kcli create host kubevirt mykubevirt
 
 # Add an ibm host
 $ kcli create host ibm --iam_api_key xyz --vpc myvpc --zone eu-de -r eu-de-2 myibm
+
+# Add a host group
+$ kcli create host group --members [hypervisor1,hypervisor2] --algorithm random mygroup
 """
 
 _list = """# Get list of vms

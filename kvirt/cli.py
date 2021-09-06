@@ -65,6 +65,14 @@ def valid_url(url):
     return url
 
 
+def valid_members(members):
+    try:
+        return members[1:-1].split(',')
+    except:
+        msg = "Incorrect members list"
+        raise argparse.ArgumentTypeError(msg)
+
+
 def valid_cluster(name):
     if name is not None:
         if '/' in name:
@@ -2488,6 +2496,20 @@ def delete_network(args):
         common.handle_response(result, name, element='Network', action='deleted')
 
 
+def create_host_group(args):
+    """Generate Host group"""
+    data = {}
+    data['_type'] = 'group'
+    data['name'] = args.name
+    data['algorithm'] = args.algorithm
+    data['members'] = args.members
+    print(data)
+    common.create_host(data)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
+    if len(baseconfig.clients) == 1:
+        baseconfig.set_defaults()
+
+
 def create_host_kvm(args):
     """Generate Kvm Host"""
     data = {}
@@ -3291,6 +3313,15 @@ def cli():
     gcphostcreate_parser.add_argument('--zone', help='Zone', metavar='zone', required=True)
     gcphostcreate_parser.add_argument('name', metavar='NAME')
     gcphostcreate_parser.set_defaults(func=create_host_gcp)
+
+    grouphostcreate_desc = 'Create Group Host'
+    grouphostcreate_parser = hostcreate_subparsers.add_parser('group', help=grouphostcreate_desc,
+                                                              description=grouphostcreate_desc)
+    grouphostcreate_parser.add_argument('-a', '--algorithm', help='Algorithm. Defaults to random',
+                                        metavar='ALGORITHM', default='random')
+    grouphostcreate_parser.add_argument('-m', '--members', help='Members', metavar='MEMBERS', type=valid_members)
+    grouphostcreate_parser.add_argument('name', metavar='NAME')
+    grouphostcreate_parser.set_defaults(func=create_host_group)
 
     kvmhostcreate_desc = 'Create Kvm Host'
     kvmhostcreate_parser = hostcreate_subparsers.add_parser('kvm', help=kvmhostcreate_desc,
