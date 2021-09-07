@@ -2576,7 +2576,7 @@ class Kconfig(Kbaseconfig):
         _type = 'Cluster' if cluster else 'Vm'
         title = "%s %s on %s report" % (_type, name, self.client)
         cmds, mailcontent = [], None
-        for notifymethod in sorted(notifymethods, revert=True):
+        for notifymethod in sorted(notifymethods, reverse=True):
             if notifymethod == 'pushbullet':
                 if pushbullettoken is None:
                     warning("Notification required for %s but missing pushbullettoken" % name)
