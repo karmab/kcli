@@ -2083,17 +2083,19 @@ def render_file(args):
     """Render file"""
     plan = None
     inputfile = args.inputfile
-    paramfile = args.paramfile
+    paramfiles = args.paramfile if args.paramfile is not None else []
     ignore = args.ignore
     if os.path.exists("/i_am_a_container"):
         inputfile = "/workdir/%s" % inputfile if inputfile is not None else "/workdir/kcli_plan.yml"
-        if paramfile is not None:
-            paramfile = "/workdir/%s" % paramfile
+        if paramfiles:
+            paramfiles = ["/workdir/%s" % paramfile for paramfile in paramfiles]
         elif os.path.exists("/workdir/kcli_parameters.yml"):
-            paramfile = "/workdir/kcli_parameters.yml"
-    elif paramfile is None and os.path.exists("kcli_parameters.yml"):
-        paramfile = "kcli_parameters.yml"
-    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+            paramfiles = ["/workdir/kcli_parameters.yml"]
+    elif not paramfiles and os.path.exists("kcli_parameters.yml"):
+        paramfiles = ["kcli_parameters.yml"]
+    overrides = {}
+    for paramfile in paramfiles:
+        overrides.update(common.get_overrides(paramfile=paramfile, param=args.param))
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     default_data = {'config_%s' % k: baseconfig.default[k] for k in baseconfig.default}
     client_data = {'config_%s' % k: baseconfig.ini[baseconfig.client][k] for k in baseconfig.ini[baseconfig.client]}
@@ -2952,7 +2954,7 @@ def cli():
     render_parser.add_argument('-i', '--ignore', action='store_true', help='Ignore missing variables')
     render_parser.add_argument('-P', '--param', action='append',
                                help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    render_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    render_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE', action='append')
     render_parser.set_defaults(func=render_file)
 
     restart_desc = 'Restart Vm/Plan/Container'
