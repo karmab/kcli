@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: bootstrap-delete-2
+  name: kcli-bootstrap-delete-2
   namespace: openshift-infra
   labels:
     app: kcli

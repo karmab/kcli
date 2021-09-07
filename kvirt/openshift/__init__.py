@@ -382,6 +382,7 @@ def create(config, plandir, cluster, overrides):
             'ipsec': False,
             'sno': False,
             'sno_virtual': False,
+            'notify': False,
             'async': False}
     data.update(overrides)
     if 'cluster' in overrides:
@@ -393,6 +394,7 @@ def create(config, plandir, cluster, overrides):
     data['cluster'] = clustervalue
     domain = data.get('domain')
     async_install = data.get('async')
+    notify = data.get('notify')
     postscripts = data.get('postscripts', [])
     pprint("Deploying cluster %s" % clustervalue)
     plan = cluster if cluster is not None else clustervalue
@@ -948,6 +950,21 @@ def create(config, plandir, cluster, overrides):
                                                                                     'arch_tag': arch_tag})
         with open("%s/openshift/99-bootstrap-deletion-2.yaml" % clusterdir, 'w') as _f:
             _f.write(deletionfile2)
+        if notify:
+            notifycmd = "echo Cluster %s installed on %s" % (cluster, config.client)
+            notifycmds, mailcontent = config.handle_notifications(cluster, notifymethods=config.notifymethods,
+                                                                  pushbullettoken=config.pushbullettoken,
+                                                                  notifycmd=notifycmd, slackchannel=config.slackchannel,
+                                                                  slacktoken=config.slacktoken,
+                                                                  mailserver=config.mailserver,
+                                                                  mailfrom=config.mailfrom, mailto=config.mailto)
+            notifyfile = "%s/99-notifications.yaml" % plandir
+            notifyfile = config.process_inputfile(cluster, notifyfile, overrides={'registry': registry,
+                                                                                  'arch_tag': arch_tag,
+                                                                                  'cmds': notifycmds,
+                                                                                  'mailcontent': mailcontent})
+            with open("%s/openshift/99-notifications.yaml" % clusterdir, 'w') as _f:
+                _f.write(notifyfile)
     if metal3:
         for f in glob("%s/openshift/99_openshift-cluster-api_master-machines-*.yaml" % clusterdir):
             os.remove(f)
