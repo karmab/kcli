@@ -573,9 +573,9 @@ def create(config, plandir, cluster, overrides):
         elif version == 'ci':
             run = get_ci_installer(pull_secret, tag=tag, upstream=upstream, baremetal=baremetal)
         elif version == 'nightly':
-            run = get_downstream_installer(nightly=True, tag=tag, baremetal=baremetal)
+            run = get_downstream_installer(nightly=True, tag=tag, baremetal=baremetal, pull_secret=pull_secret)
         else:
-            run = get_downstream_installer(tag=tag, baremetal=baremetal)
+            run = get_downstream_installer(tag=tag, baremetal=baremetal, pull_secret=pull_secret)
         if run != 0:
             error("Couldn't download openshift-install")
             sys.exit(run)
