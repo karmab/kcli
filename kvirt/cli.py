@@ -2095,7 +2095,8 @@ def render_file(args):
         paramfiles = ["kcli_parameters.yml"]
     overrides = {}
     for paramfile in paramfiles:
-        overrides.update(common.get_overrides(paramfile=paramfile, param=args.param))
+        overrides.update(common.get_overrides(paramfile=paramfile))
+    overrides.update(common.get_overrides(param=args.param))
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     default_data = {'config_%s' % k: baseconfig.default[k] for k in baseconfig.default}
     client_data = {'config_%s' % k: baseconfig.ini[baseconfig.client][k] for k in baseconfig.ini[baseconfig.client]}
