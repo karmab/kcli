@@ -1256,7 +1256,9 @@ def create(config, plandir, cluster, overrides):
         pprint("Allowing vips in Contrail api")
         masteripscmd = "oc get node -o wide --no-headers | awk '{print $6}'"
         masterips = [x.strip() for x in os.popen(masteripscmd).readlines()]
-        contrail_allow_vips(masterips[0], api_ip, ingress_ip=ingress_ip)
+        virtual_router_id_hex = format(data.get('virtual_router_id') or overrides['virtual_router_id'], 'x')
+        mac = "00:00:5e:00:01:%s" % virtual_router_id_hex
+        contrail_allow_vips(masterips[0], api_ip, ingress_ip=ingress_ip, mac=mac)
         pprint("Enabling keepalived in the masters")
         for masterip in masterips:
             mvcmd = "sudo mv /root/keepalived.yml /etc/kubernetes/manifests"
