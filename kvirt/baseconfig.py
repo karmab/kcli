@@ -48,18 +48,26 @@ class Kbaseconfig:
         kclidir = "%s/.kcli" % homedir
         if os.path.isdir(cmdir) and not os.path.isdir(kclidir):
             copytree(cmdir, kclidir)
-        inifile = "%s/.kcli/config.yml" % homedir
-        secretsfile = "%s/.kcli/secrets.yml" % homedir
-        if not os.path.exists(secretsfile):
+        inifile = None
+        if os.path.exists("%s/config.yml" % kclidir):
+            inifile = "%s/config.yml" % kclidir
+        elif os.path.exists("%s/config.yaml" % kclidir):
+            inifile = "%s/config.yaml" % kclidir
+        secretsfile = None
+        if os.path.exists("%s/secrets.yml" % kclidir):
+            secretsfile = "%s/secrets.yml" % kclidir
+        elif os.path.exists("%s/secrets.yaml" % kclidir):
+            secretsfile = "%s/secrets.yaml" % kclidir
+        if secretsfile is None:
             secrets = {}
         else:
             with open(secretsfile, 'r') as entries:
                 try:
                     secrets = yaml.safe_load(entries)
                 except yaml.scanner.ScannerError as err:
-                    error("Couldn't parse yaml in .kcli/secrets.yml. Got %s" % err)
+                    error("Couldn't parse yaml in %s. Got %s" % (secretsfile, err))
                     sys.exit(1)
-        if not os.path.exists(inifile):
+        if inifile is None:
             defaultclient = 'local'
             _type = 'kvm'
             if not os.path.exists('/var/run/libvirt/libvirt-sock') and not offline:
@@ -72,13 +80,13 @@ class Kbaseconfig:
                 try:
                     self.ini = yaml.safe_load(entries)
                 except yaml.scanner.ScannerError as err:
-                    error("Couldn't parse yaml in .kcli/config.yml. Got %s" % err)
+                    error("Couldn't parse yaml in %s. Got %s" % (inifile, err))
                     sys.exit(1)
                 except:
                     self.host = None
                     return
             if self.ini is None:
-                error("Couldn't parse empty .kcli/config.yml")
+                error("Couldn't parse empty %s" % inifile)
                 sys.exit(1)
             for key1 in self.ini:
                 for key2 in self.ini[key1]:
