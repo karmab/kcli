@@ -68,6 +68,9 @@
   - keepalived.sh
   - registry.yml
 {% if number == 0 %}
+{% if multus %}
+  - multus.sh
+{% endif %}
 {% if metallb %}
   - metal_lb.sh
   - metal_lb_cm.yml
