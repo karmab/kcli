@@ -14,6 +14,7 @@ git clone -b R2011 https://github.com/tungstenfabric/tf-openshift.git
 ./tf-openshift/scripts/apply_install_manifests.sh $INSTALL_DIR
 
 git clone -b R2011 https://github.com/tungstenfabric/tf-operator.git
+[ -d /Users ] && sed -i 's/readlink/greadlink/' ./tf-operator/contrib/render_manifests.sh
 ./tf-operator/contrib/render_manifests.sh
 
 for i in $(ls ./tf-operator/deploy/crds/) ; do
