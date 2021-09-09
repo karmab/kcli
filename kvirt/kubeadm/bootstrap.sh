@@ -26,6 +26,13 @@ kubectl apply -f https://docs.projectcalico.org/v3.1/getting-started/kubernetes/
 kubectl apply -f https://docs.projectcalico.org/v3.1/getting-started/kubernetes/installation/hosted/canal/canal.yaml
 {% elif sdn == 'romana' %}
 kubectl apply -f https://raw.githubusercontent.com/romana/romana/master/containerize/specs/romana-kubeadm.yml
+{% elif sdn == 'opencontrail' %}
+K8S_MASTER_IP={{ api_ip }}
+CONTRAIL_REPO="docker.io\/opencontrailnightly"
+CONTRAIL_RELEASE="latest"
+mkdir -pm 777 /var/lib/contrail/kafka-logs
+TARGET_OS={{ 'ubuntu' if ubuntu else 'centos' }}
+curl https://raw.githubusercontent.com/Juniper/contrail-kubernetes-docs/master/install/kubernetes/templates/contrail-single-step-cni-install-$TARGET_OS.yaml | sed "s/{% raw %}{{ K8S_MASTER_IP }}{% endraw %}/$K8S_MASTER_IP/g; s/{% raw %}{{ CONTRAIL_REPO }}{% endraw %}/$CONTRAIL_REPO/g; s/{% raw %}{{ CONTRAIL_RELEASE }}{% endraw %}/$CONTRAIL_RELEASE/g" | kubectl apply -f -
 {% elif sdn == 'cilium' %}
 curl -LO https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz
 tar xzvfC cilium-linux-amd64.tar.gz /usr/local/bin
