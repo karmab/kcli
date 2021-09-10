@@ -3518,7 +3518,7 @@ def cli():
 
     kubegenericinfo_desc = 'Info Generic Kube'
     kubegenericinfo_parser = kubeinfo_subparsers.add_parser('generic', description=kubegenericinfo_desc,
-                                                            help=kubegenericinfo_desc)
+                                                            help=kubegenericinfo_desc, aliases=['kubeadm'])
     kubegenericinfo_parser.set_defaults(func=info_generic_kube)
 
     kubek3sinfo_desc = 'Info K3s Kube'
