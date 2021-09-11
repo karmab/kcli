@@ -247,22 +247,28 @@ class Kbaseconfig:
             if not enabled:
                 error("Disabled group %s.Leaving..." % client)
                 sys.exit(1)
+            self.group = self.client
+            algorithm = self.options.get('algorithm', 'random')
             members = self.options.get('members', [])
             if not members:
                 error("Empty group %s.Leaving..." % client)
                 sys.exit(1)
-            algorithm = self.options.get('algorithm', 'random')
-            if algorithm == 'random':
-                self.client = choice(members)
-                if self.client not in self.ini:
-                    error("Missing section for client %s in config file. Leaving..." % self.client)
-                    sys.exit(1)
-            elif algorithm == 'free':
+            elif len(members) == 1:
                 self.client = members[0]
-                self._extraclients = members[1:] if len(members) > 1 else []
+                self.algorithm = algorithm
             else:
-                error("Invalid algorithm %s.Choose between random and free..." % algorithm)
-                sys.exit(1)
+                if algorithm == 'random':
+                    self.client = choice(members)
+                    if self.client not in self.ini:
+                        error("Missing section for client %s in config file. Leaving..." % self.client)
+                        sys.exit(1)
+                elif algorithm == 'free':
+                    self.client = members[0]
+                    self._extraclients = members[1:] if len(members) > 1 else []
+                else:
+                    error("Invalid algorithm %s.Choose between random and free..." % algorithm)
+                    sys.exit(1)
+                self.algorithm = algorithm
             self.options = self.ini[self.client]
         options = self.options
         self.enabled = options.get('enabled', True)

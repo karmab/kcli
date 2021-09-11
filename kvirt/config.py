@@ -386,6 +386,23 @@ class Kconfig(Kbaseconfig):
                 if e.conn is None:
                     error("Couldn't connect to specify hypervisor %s. Leaving..." % extraclient)
                     sys.exit(1)
+            if hasattr(self, 'algorithm'):
+                if self.algorithm == 'free':
+                    upstatus = ['active', 'up', 'running']
+                    allclis = {self.client: k}
+                    allclis.update(self.extraclients)
+                    mincli, minvms = None, None
+                    for cli in allclis:
+                        clivms = len([vm for vm in allclis[cli].list() if vm['status'].lower() in upstatus])
+                        if minvms is None or clivms < minvms:
+                            mincli = cli
+                            minvms = clivms
+                    if mincli != self.client:
+                        self.extraclients[self.client] = k
+                        k = self.extraclients[mincli]
+                        del self.extraclients[mincli]
+                        self.client = mincli
+                pprint("Selecting client %s from group %s" % (self.client, self.group))
         self.k = k
         default_data = {'config_%s' % k: self.default[k] for k in self.default}
         config_data = {'config_%s' % k: self.ini[self.client][k] for k in self.ini[self.client]}
