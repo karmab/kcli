@@ -39,7 +39,7 @@ class Kopenstack(object):
             sess = session.Session(auth=auth)
         self.nova = novaclient.Client(version, session=sess)
         self.glance = glanceclient(version, session=sess)
-        self.cinder = cinderclient.Client(version, session=sess)
+        self.cinder = cinderclient.Client('3', session=sess)
         self.neutron = neutronclient(session=sess)
         os_options = {'user_domain_name': domain, 'project_domain_name': domain, 'project_name': project}
         self.swift = swiftclient.Connection(authurl=auth_url, user=user, key=password, os_options=os_options,
