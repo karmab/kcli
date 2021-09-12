@@ -50,7 +50,7 @@ case $shell in
 bash|zsh)
   shellfile="$HOME/.bashrc"
   [ "$shell" == zsh ] && shellfile="$HOME/.zshrc" 
-  grep -q kcli= $shellfile || echo alias kcli=\'$engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir karmab/kcli'\' >> $shellfile
+  grep -q kcli= $shellfile || echo alias kcli=\'$engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir quay.io/karmab/kcli'\' >> $shellfile
   grep -q kclishell= $shellfile || echo alias kclishell=\'$engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir --entrypoint=/bin/sh quay.io/karmab/kcli'\' >> $shellfile
   grep -q kcliweb= $shellfile || echo alias kweb=\'$engine run -p 9000:9000 --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir --entrypoint=/usr/bin/kweb quay.io/karmab/kcli'\' >> $shellfile
   alias kcli="$engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES -v $PWD:/workdir quay.io/karmab/kcli"
