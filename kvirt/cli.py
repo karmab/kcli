@@ -2506,7 +2506,6 @@ def create_host_group(args):
     data['name'] = args.name
     data['algorithm'] = args.algorithm
     data['members'] = args.members
-    print(data)
     common.create_host(data)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
     if len(baseconfig.clients) == 1:

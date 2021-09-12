@@ -402,6 +402,25 @@ class Kconfig(Kbaseconfig):
                         k = self.extraclients[mincli]
                         del self.extraclients[mincli]
                         self.client = mincli
+                if self.algorithm == 'balance':
+                    members = [self.client] + list(self.extraclients.keys())
+                    lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
+                    if os.path.exists(lastvm) and os.stat(lastvm).st_size > 0:
+                        for line in open(lastvm).readlines():
+                            line = line.split(' ')
+                            if len(line) != 2:
+                                continue
+                            cli = line[0].strip()
+                            if cli in members and members.index(cli) < len(members):
+                                cliindex = members.index(cli)
+                                newcli = members[(cliindex + 1) % len(members)]
+                                if newcli != self.client:
+                                    self.extraclients[self.client] = k
+                                    k = self.extraclients[newcli]
+                                    del self.extraclients[newcli]
+                                    self.client = newcli
+                                break
+
                 pprint("Selecting client %s from group %s" % (self.client, self.group))
         self.k = k
         default_data = {'config_%s' % k: self.default[k] for k in self.default}

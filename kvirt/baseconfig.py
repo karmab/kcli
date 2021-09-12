@@ -262,11 +262,11 @@ class Kbaseconfig:
                     if self.client not in self.ini:
                         error("Missing section for client %s in config file. Leaving..." % self.client)
                         sys.exit(1)
-                elif algorithm == 'free':
+                elif algorithm in ['free', 'balance']:
                     self.client = members[0]
                     self._extraclients = members[1:] if len(members) > 1 else []
                 else:
-                    error("Invalid algorithm %s.Choose between random and free..." % algorithm)
+                    error("Invalid algorithm %s.Choose between random, balance and free..." % algorithm)
                     sys.exit(1)
                 self.algorithm = algorithm
             self.options = self.ini[self.client]
