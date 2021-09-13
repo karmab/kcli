@@ -2332,10 +2332,12 @@ class Kvirt(object):
         except:
             error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
+        cdromfound = False
         for element in list(root.iter('disk')):
             disktype = element.get('device')
             if disktype != 'cdrom':
                 continue
+            cdromfound = True
             if source is None:
                 source = element.find('source')
             if iso is None:
@@ -2343,9 +2345,14 @@ class Kvirt(object):
             else:
                 source.set('file', iso)
             break
-        newxml = ET.tostring(root)
-        conn.defineXML(newxml.decode("utf-8"))
-        return {'result': 'success'}
+        if cdromfound:
+            newxml = ET.tostring(root)
+            conn.defineXML(newxml.decode("utf-8"))
+            return {'result': 'success'}
+        else:
+            msg = "Cdrom device not found in %s" % name
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
 
     def update_flavor(self, name, flavor):
         pprint("Not implemented")
