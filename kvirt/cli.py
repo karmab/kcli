@@ -2111,7 +2111,7 @@ def render_file(args):
     if not os.path.exists(inputfile):
         error("File %s not found" % inputfile)
         return 0
-    renderfile = baseconfig.process_inputfile(plan, inputfile, overrides=overrides, onfly=False, ignore=ignore)
+    renderfile = baseconfig.process_inputfile(plan, inputfile, overrides=overrides, ignore=ignore)
     print(renderfile)
     return 0
 
@@ -2190,7 +2190,7 @@ def create_plandata(args):
                         with open("%s/%s" % (hostnamedir, path), 'w') as f:
                             f.write(content)
         if outputdir is not None:
-            renderplan = config.process_inputfile(plan, inputfile, overrides=overrides, onfly=False)
+            renderplan = config.process_inputfile(plan, inputfile, overrides=overrides)
             with open("%s/kcli_plan.yml" % outputdir, 'w') as f:
                 f.write(renderplan)
     return 0
