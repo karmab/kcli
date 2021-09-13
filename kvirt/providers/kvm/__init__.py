@@ -345,6 +345,7 @@ class Kvirt(object):
                 diskpoolpath = default_poolpath
                 diskthinpool = default_thinpool
                 diskwwn = None
+                diskserial = None
                 diskimage = None
                 diskname = None
                 diskmacosx = False
@@ -357,6 +358,7 @@ class Kvirt(object):
                 diskpoolpath = default_poolpath
                 diskthinpool = default_thinpool
                 diskwwn = None
+                diskserial = None
                 diskimage = None
                 diskname = None
                 diskmacosx = False
@@ -366,6 +368,7 @@ class Kvirt(object):
                 diskinterface = disk.get('interface', default_diskinterface)
                 diskpool = disk.get('pool', default_pool)
                 diskwwn = disk.get('wwn')
+                diskserial = disk.get('serial')
                 diskimage = disk.get('image')
                 diskname = disk.get('name')
                 diskmacosx = disk.get('macosx', False)
@@ -480,6 +483,7 @@ class Kvirt(object):
                 diskwwn = "<wwn>%s</wwn>" % diskwwn
             else:
                 diskwwn = ''
+            diskserial = '<serial>%s</serial>' % diskserial if diskserial is not None else ''
             dtype = 'block' if diskpath.startswith('/dev') else 'file'
             dsource = 'dev' if diskpath.startswith('/dev') else 'file'
             if diskpooltype in ['logical', 'zfs'] and (backing is None or backing.startswith('/dev')):
@@ -490,7 +494,8 @@ class Kvirt(object):
 %s
 <target dev='%s' bus='%s'/>
 %s
-</disk>""" % (disksxml, dtype, diskformat, dsource, diskpath, backingxml, diskdev, diskbus, diskwwn)
+%s
+</disk>""" % (disksxml, dtype, diskformat, dsource, diskpath, backingxml, diskdev, diskbus, diskwwn, diskserial)
         expanderinfo = {}
         for index, cell in enumerate(numa):
             if not isinstance(cell, dict) or 'id' not in cell:
