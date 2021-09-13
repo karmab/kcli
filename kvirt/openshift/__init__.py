@@ -470,7 +470,10 @@ def create(config, plandir, cluster, overrides):
         if 'baremetal_cidr' not in data:
             error("You need to define baremetal_cidr in your parameters file for metal3")
             sys.exit(1)
-        elif not ip_address(api_ip) in ip_network(data['baremetal_cidr']):
+        if api_ip is None:
+            error("You need to define api_ip for metal3")
+            sys.exit(1)
+        if not ip_address(api_ip) in ip_network(data['baremetal_cidr']):
             error("api_ip doesn't belong to your baremetal_cidr")
             sys.exit(1)
         ingress_ip = data.get('ingress_ip')
