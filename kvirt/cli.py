@@ -2093,8 +2093,17 @@ def render_file(args):
             paramfiles = ["/workdir/kcli_parameters.yml"]
     elif not paramfiles and os.path.exists("kcli_parameters.yml"):
         paramfiles = ["kcli_parameters.yml"]
+    allparamfiles = []
+    if os.path.exists("kcli_default.yml"):
+        allparamfiles.append("kcli_default.yml")
+    if os.path.exists("kcli_plan_default.yml"):
+        allparamfiles.append("kcli_plan_default.yml")
+    inputfile_default = "%s_default%s" % os.path.splitext(inputfile)
+    if os.path.exists(inputfile_default):
+        allparamfiles.append(inputfile_default)
+    allparamfiles.extend(paramfiles)
     overrides = {}
-    for paramfile in paramfiles:
+    for paramfile in allparamfiles:
         overrides.update(common.get_overrides(paramfile=paramfile))
     overrides.update(common.get_overrides(param=args.param))
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
