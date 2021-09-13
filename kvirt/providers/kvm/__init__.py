@@ -2345,14 +2345,18 @@ class Kvirt(object):
             else:
                 source.set('file', iso)
             break
-        if cdromfound:
-            newxml = ET.tostring(root)
-            conn.defineXML(newxml.decode("utf-8"))
-            return {'result': 'success'}
-        else:
-            msg = "Cdrom device not found in %s" % name
-            error(msg)
-            return {'result': 'failure', 'reason': msg}
+        if not cdromfound:
+            isoxml = """<disk type='file' device='cdrom'>
+<driver name='qemu' type='raw'/>
+<source file='%s'/>
+<target dev='hdc' bus='sata'/>
+<readonly/>
+</disk>""" % iso
+            base = list(root.iter('devices'))[-1]
+            base.append((ET.fromstring(isoxml)))
+        newxml = ET.tostring(root)
+        conn.defineXML(newxml.decode("utf-8"))
+        return {'result': 'success'}
 
     def update_flavor(self, name, flavor):
         pprint("Not implemented")
