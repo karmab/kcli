@@ -2307,19 +2307,23 @@ class Kvirt(object):
     def update_iso(self, name, iso):
         warning("Note it will only be effective upon next start")
         if iso is not None:
-            isos = self.volumes(iso=True)
-            isofound = False
-            for i in isos:
-                if i == iso:
-                    isofound = True
-                    break
-                elif i.endswith(iso):
-                    iso = i
-                    isofound = True
-                    break
-            if not isofound:
-                error("Iso %s not found.Leaving..." % iso)
-                return {'result': 'failure', 'reason': "Iso %s not found" % iso}
+            if self.host in ['localhost', '127.0.0.1'] and os.path.exists(iso):
+                source = os.path.abspath(iso)
+            else:
+                source = None
+                isos = self.volumes(iso=True)
+                isofound = False
+                for i in isos:
+                    if i == iso:
+                        isofound = True
+                        break
+                    elif i.endswith(iso):
+                        iso = i
+                        isofound = True
+                        break
+                if not isofound:
+                    error("Iso %s not found.Leaving..." % iso)
+                    return {'result': 'failure', 'reason': "Iso %s not found" % iso}
         conn = self.conn
         try:
             vm = conn.lookupByName(name)
@@ -2332,7 +2336,8 @@ class Kvirt(object):
             disktype = element.get('device')
             if disktype != 'cdrom':
                 continue
-            source = element.find('source')
+            if source is None:
+                source = element.find('source')
             if iso is None:
                 element.remove(source)
             else:
