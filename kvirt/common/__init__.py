@@ -568,7 +568,7 @@ def pprint(text):
 
 def error(text):
     color = '31'
-    print('\033[%sm%s\033[0m' % (color, text))
+    print('\033[%sm%s\033[0m' % (color, text), file=sys.stderr)
 
 
 def success(text):
