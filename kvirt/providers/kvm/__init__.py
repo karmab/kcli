@@ -2958,7 +2958,8 @@ class Kvirt(object):
         else:
             domainxml = "<domain name='%s'/>" % name
         if len(name) < 16:
-            bridgexml = "<bridge name='%s' stp='on' delay='0'/>" % name
+            bridgename = name if name != 'default' else 'virbr0'
+            bridgexml = "<bridge name='%s' stp='on' delay='0'/>" % bridgename
         else:
             return {'result': 'failure', 'reason': "network %s is more than 16 characters" % name}
         prefix = cidr.split('/')[1]
