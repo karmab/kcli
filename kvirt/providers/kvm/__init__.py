@@ -2119,23 +2119,24 @@ class Kvirt(object):
                 for entry in alias:
                     aliasfqdn = "%s.%s" % (entry, domain) if domain is not None else entry
                     aliasxml.append("<hostname>%s</hostname>" % aliasfqdn)
-                for hostentry in list(dns[0].iter('host')):
-                    currentip = hostentry.get('ip')
-                    if currentip == ip:
-                        currenthostnames = []
-                        for hostnameentry in list(hostentry.iter('hostname')):
-                            currenthostnames.append(hostnameentry.text)
-                        if fqdn not in currenthostnames or [a for a in alias if a not in currenthostnames]:
-                            hostentry.append((ET.fromstring(hostnamexml)))
-                            for entry in aliasxml:
-                                hostentry.append((ET.fromstring(entry)))
-                            newhostxml = ET.tostring(hostentry).decode("utf-8")
-                            network.update(2, 10, 0, newhostxml, 0)
-                            network.update(4, 10, 0, newhostxml, 0)
-                        else:
-                            pprint("Skipping existing entry for ip %s and name %s" % (ip, fqdn))
-                        return
-                for entry in alias:
+                if dns:
+                    for hostentry in list(dns[0].iter('host')):
+                        currentip = hostentry.get('ip')
+                        if currentip == ip:
+                            currenthostnames = []
+                            for hostnameentry in list(hostentry.iter('hostname')):
+                                currenthostnames.append(hostnameentry.text)
+                            if fqdn not in currenthostnames or [a for a in alias if a not in currenthostnames]:
+                                hostentry.append((ET.fromstring(hostnamexml)))
+                                for entry in aliasxml:
+                                    hostentry.append((ET.fromstring(entry)))
+                                newhostxml = ET.tostring(hostentry).decode("utf-8")
+                                network.update(2, 10, 0, newhostxml, 0)
+                                network.update(4, 10, 0, newhostxml, 0)
+                            else:
+                                pprint("Skipping existing entry for ip %s and name %s" % (ip, fqdn))
+                            return
+                for entry in aliasxml:
                     hostnamexml += entry
                 dnsentry = '<host ip="%s">%s</host>' % (ip, hostnamexml)
                 if force:
