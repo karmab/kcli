@@ -2035,15 +2035,19 @@ class Kvirt(object):
             network = conn.networkLookupByName(network)
             oldnetxml = network.XMLDesc()
             root = ET.fromstring(oldnetxml)
-            oldentry = "<host name='%s'/>" % name
-            try:
-                network.update(2, 4, 0, oldentry, 1)
-            except:
-                pass
-            try:
-                network.update(2, 4, 0, oldentry, 2)
-            except:
-                pass
+            dhcp = list(root.iter('dhcp'))[0]
+            for hostentry in list(dhcp.iter('host')):
+                currentip = hostentry.get('ip')
+                currentname = hostentry.get('name')
+                currentmac = hostentry.get('mac')
+                if currentip == ip:
+                    if currentname == name and currentmac is not None and currentmac == mac:
+                        pprint("Skipping reserved ip existing entry for ip %s and mac %s " % (ip, mac))
+                        return
+                    else:
+                        warning("Removing old ip entry for ip %s and name %s" % (ip, currentname))
+                        hostentryxml = "<host name='%s' ip='%s'/>" % (currentname, ip)
+                        network.update(2, 4, 0, hostentryxml, 0)
             for ipentry in list(root.iter('ip')):
                 attributes = ipentry.attrib
                 firstip = attributes.get('address')
@@ -2059,8 +2063,7 @@ class Kvirt(object):
                     entry = '<host id="00:03:00:01:%s" name="%s" ip="%s" />' % (mac, name, ip)
                 else:
                     entry = '<host mac="%s" name="%s" ip="%s" />' % (mac, name, ip)
-                network.update(4, 4, 0, entry, 1)
-                network.update(4, 4, 0, entry, 2)
+                network.update(4, 4, 0, entry, 0)
 
     def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False):
         conn = self.conn
