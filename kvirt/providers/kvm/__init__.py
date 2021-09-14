@@ -2115,10 +2115,8 @@ class Kvirt(object):
                     conn.networkDefineXML(newxml.decode("utf-8"))
                 fqdn = "%s.%s" % (name, domain) if domain is not None else name
                 hostnamexml = '<hostname>%s</hostname>' % fqdn
-                aliasxml = []
-                for entry in alias:
-                    aliasfqdn = "%s.%s" % (entry, domain) if domain is not None else entry
-                    aliasxml.append("<hostname>%s</hostname>" % aliasfqdn)
+                alias = ["%s.%s" % (entry, domain) if domain is not None else entry for entry in alias]
+                aliasxml = ["<hostname>%s</hostname>" % entry for entry in alias]
                 if dns:
                     for hostentry in list(dns[0].iter('host')):
                         currentip = hostentry.get('ip')
@@ -2126,10 +2124,14 @@ class Kvirt(object):
                             currenthostnames = []
                             for hostnameentry in list(hostentry.iter('hostname')):
                                 currenthostnames.append(hostnameentry.text)
-                            if fqdn not in currenthostnames or [a for a in alias if a not in currenthostnames]:
-                                hostentry.append((ET.fromstring(hostnamexml)))
-                                for entry in aliasxml:
-                                    hostentry.append((ET.fromstring(entry)))
+                            newalias = [a for a in alias if a not in currenthostnames]
+                            if fqdn not in currenthostnames or newalias:
+                                if fqdn not in currenthostnames:
+                                    hostentry.append((ET.fromstring(hostnamexml)))
+                                if newalias:
+                                    newaliasxml = ["<hostname>%s</hostname>" % entry for entry in newalias]
+                                    for entry in newaliasxml:
+                                        hostentry.append((ET.fromstring(entry)))
                                 newhostxml = ET.tostring(hostentry).decode("utf-8")
                                 network.update(2, 10, 0, newhostxml, 0)
                                 network.update(4, 10, 0, newhostxml, 0)
