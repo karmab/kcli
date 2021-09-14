@@ -1399,12 +1399,13 @@ def delete_dns(args):
     """Delete dns entries"""
     names = args.names
     net = args.net
+    allentries = args.all
     domain = args.domain if args.domain is not None else net
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     for name in names:
         pprint("Deleting Dns entry for %s..." % name)
-        k.delete_dns(name, domain)
+        k.delete_dns(name, domain, allentries=allentries)
 
 
 def export_vm(args):
@@ -3273,6 +3274,8 @@ def cli():
 
     dnsdelete_desc = 'Delete Dns Entries'
     dnsdelete_parser = delete_subparsers.add_parser('dns', description=dnsdelete_desc, help=dnsdelete_desc)
+    dnsdelete_parser.add_argument('-a', '--all', action='store_true',
+                                  help='Whether to delete the entire host block. Libvirt specific')
     dnsdelete_parser.add_argument('-d', '--domain', help='Domain of the entry', metavar='DOMAIN')
     dnsdelete_parser.add_argument('-n', '--net', help='Network where to delete entry. Defaults to default',
                                   default='default', metavar='NET')

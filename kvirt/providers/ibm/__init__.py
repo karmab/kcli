@@ -1142,7 +1142,7 @@ class Kibm(object):
     def create_dns(self):
         print("not implemented")
 
-    def delete_dns(self, name, domain, instanceid=None):
+    def delete_dns(self, name, domain, instanceid=None, allentries=False):
         cluster = None
         fqdn = "%s.%s" % (name, domain)
         if fqdn.split('-')[0] == fqdn.split('.')[1]:

@@ -966,7 +966,7 @@ class Kaws(object):
         dns.change_resource_record_sets(HostedZoneId=zoneid, ChangeBatch={'Changes': changes})
         return {'result': 'success'}
 
-    def delete_dns(self, name, domain, instanceid=None):
+    def delete_dns(self, name, domain, instanceid=None, allentries=False):
         dns = self.dns
         cluster = None
         fqdn = "%s.%s" % (name, domain)

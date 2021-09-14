@@ -3333,7 +3333,7 @@ class Kvirt(object):
                                                         dnsmasqcmd)
             call(dnsmasqcmd, shell=True)
 
-    def delete_dns(self, name, domain):
+    def delete_dns(self, name, domain, allentries=False):
         conn = self.conn
         try:
             network = conn.networkLookupByName(domain)
@@ -3342,14 +3342,29 @@ class Kvirt(object):
             return
         netxml = network.XMLDesc()
         netroot = ET.fromstring(netxml)
-        for host in list(netroot.iter('host')):
+        dns = list(netroot.iter('dns'))
+        if not dns:
+            warning("No dns information found in network %s" % domain)
+            return
+        dnsinfo = {}
+        ip = None
+        for host in list(dns[0].iter('host')):
             iphost = host.get('ip')
+            dnsinfo[iphost] = []
             for hostname in list(host.iter('hostname')):
                 if hostname.text == name:
-                    hostentry = '<host ip="%s"><hostname>%s</hostname></host>' % (iphost, name)
-                    network.update(2, 10, 0, hostentry, 1)
-                    pprint("Entry %s with ip %s deleted" % (name, iphost))
-                    return {'result': 'success'}
+                    ip = iphost
+                dnsinfo[iphost].append(hostname.text)
+        if ip is not None:
+            currentries = dnsinfo[ip]
+            hostentry = '<host ip="%s"><hostname>%s</hostname></host>' % (ip, name)
+            network.update(2, 10, 0, hostentry, 1)
+            if not allentries and len(currentries) != 1:
+                otherentries = ["<hostname>%s</hostname>" % hostname for hostname in currentries if hostname != name]
+                newhostentry = '<host ip="%s">%s</host>' % (ip, ''.join(otherentries))
+                network.update(4, 10, 0, newhostentry, 0)
+            pprint("Entry %s with ip %s deleted" % (name, iphost))
+            return {'result': 'success'}
 
     def list_dns(self, domain):
         results = []

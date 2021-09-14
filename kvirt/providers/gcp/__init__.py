@@ -1016,7 +1016,7 @@ class Kgcp(object):
         changes.create()
         return {'result': 'success'}
 
-    def delete_dns(self, name, domain):
+    def delete_dns(self, name, domain, allentries=False):
         project = self.project
         region = self.region
         client = dns.Client(project)
