@@ -1,0 +1,67 @@
+---
+kind: Pod
+apiVersion: v1
+metadata:
+  name: contrail-hack
+  namespace: openshift-infra
+  creationTimestamp:
+  deletionGracePeriodSeconds: 65
+  labels:
+    app: contrail-hack
+spec:
+  volumes:
+  - name: conf-dir
+    hostPath:
+      path: "/etc/kubernetes"
+  initContainers:
+  - name: wait-for-boostrap-cm
+    image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/karmab/kubectl:{{ arch_tag }}
+    command:
+    - "/bin/sh"
+    - "-c"
+    - |
+      #/bin/sh
+      if [ -f /etc/kubernetes/contrail.done ] ; then
+        exit 0
+      fi
+      export KUBECONFIG=/etc/kubernetes/static-pod-resources/kube-apiserver-certs/secrets/node-kubeconfigs/localhost.kubeconfig
+      kubectl get cm -n kube-system bootstrap
+    volumeMounts:
+    - name: conf-dir
+      mountPath: "/etc/kubernetes"
+  containers:
+  - name: contrail-hack
+    image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/karmab/contrail-allow-vips:{{ arch_tag }}
+    command:
+    - "/bin/sh"
+    - "-c"
+    - |
+      #/bin/sh
+      if [ -f /etc/kubernetes/contrail.done ] ; then
+        exit 0
+      else
+        export IP={{ api_ip }}
+        export HOST_IP=$(ip -o addr show vhost0 | awk '{print $4}' | cut -d "/" -f 1 | head -1)
+        python3 -u /contrail-allow-vips.py
+        {% if ingress_ip != None %}
+        export IP={{ ingress_ip }}
+        python3 -u /contrail-allow-vips.py
+        {% endif %}
+        if [ "$?" == "0" ] ; then
+          touch /etc/kubernetes/contrail.done
+        fi
+      fi
+    resources:
+      requests:
+        cpu: 150m
+        memory: 1Gi
+    volumeMounts:
+    - name: conf-dir
+      mountPath: "/etc/kubernetes"
+    terminationMessagePolicy: FallbackToLogsOnError
+    imagePullPolicy: IfNotPresent
+  hostNetwork: true
+  tolerations:
+  - operator: Exists
+  priorityClassName: system-node-critical
+status: {}
