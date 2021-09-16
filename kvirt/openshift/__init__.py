@@ -1037,7 +1037,7 @@ def create(config, plandir, cluster, overrides):
             pprint("Embed iso.ign in rhcos live iso")
             sys.exit(0)
         else:
-            generate_rhcos_iso(k, cluster, data['pool'], force=True)
+            generate_rhcos_iso(k, cluster, data['pool'] or config.pool, force=True)
             if sno_virtual:
                 pprint("Deploying sno vm")
                 result = config.plan(plan, inputfile='%s/sno.yml' % plandir, overrides=data)
