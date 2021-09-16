@@ -2783,12 +2783,14 @@ class Kvirt(object):
             reason = "Invalid pool type %s.Leaving..." % pooltype
             error(reason)
             return {'result': 'failure', 'reason': reason}
-        pool = conn.storagePoolDefineXML(poolxml, 0)
-        pool.setAutostart(True)
-        # if pooltype == 'lvm':
-        #    pool.build()
-        pool.create()
-        return {'result': 'success'}
+        try:
+            pool = conn.storagePoolDefineXML(poolxml, 0)
+            pool.setAutostart(True)
+            pool.create()
+            return {'result': 'success'}
+        except Exception as e:
+            error(e)
+            return {'result': 'failure', 'reason': e}
 
     def delete_image(self, image, pool=None):
         conn = self.conn
