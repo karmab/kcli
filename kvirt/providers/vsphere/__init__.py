@@ -1288,7 +1288,8 @@ class Ksphere:
                 tar.extractall('/tmp')
         else:
             extension = os.path.splitext(shortimage)[1].replace('.', '')
-            vmdk_path = "/tmp/%s" % shortimage.replace(extension, 'vmdk')
+            vmdk_file = shortimage.replace(extension, 'vmdk')
+            vmdk_path = "/tmp/%s" % vmdk_file
             if not os.path.exists(vmdk_path):
                 pprint("Converting qcow2 file to vmdk")
                 os.popen("qemu-img convert -O vmdk -o subformat=streamOptimized /tmp/%s %s" % (shortimage, vmdk_path))
@@ -1299,7 +1300,7 @@ class Ksphere:
             virtual_size = vmdk_info['virtual-size']
             actual_size = vmdk_info['actual-size']
             ovfcontent = open("%s/vm.ovf.j2" % commondir).read().format(name=shortimage, virtual_size=virtual_size,
-                                                                        actual_size=actual_size)
+                                                                        actual_size=actual_size, vmdk_file=vmdk_file)
             with open(ovf_path, 'w') as f:
                 f.write(ovfcontent)
         ovfd = open(ovf_path).read()
