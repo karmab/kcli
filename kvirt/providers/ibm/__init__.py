@@ -151,13 +151,21 @@ class Kibm(object):
         net_list = []
         subnets = {x['name']: x for x in self._get_subnets()}
         try:
-            subnets = {x['name']: x for x in self._get_subnets()}
+            default_subnet = None
+            subnets = {}
+            for x in self._get_subnets():
+                subnet_name = x['name']
+                subnets[subnet_name] = x
+                if x['vpc']['name'] == self.vpc and x['zone']['name'] == self.zone:
+                    default_subnet = subnet_name
             for index, net in enumerate(nets):
                 if isinstance(net, str):
                     netname = net
                 elif isinstance(net, dict) and 'name' in net:
                     netname = net['name']
-                if netname not in subnets:
+                if netname == 'default' or netname == self.vpc:
+                    netname = default_subnet
+                elif netname not in subnets:
                     return {'result': 'failure', 'reason': 'Network %s not found' % netname}
                 subnet = subnets[netname]
                 if subnet['zone']['name'] != self.zone:
