@@ -597,7 +597,10 @@ class Ksphere:
         for index, net in enumerate(nets):
             netname = net['name'] if isinstance(net, dict) else net
             if netname == 'default':
-                netname = 'VM Network'
+                if image is not None:
+                    continue
+                else:
+                    netname = 'VM Network'
             if index < len(currentnics):
                 currentnic = currentnics[index]
                 try:
