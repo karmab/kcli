@@ -768,18 +768,22 @@ class Kconfig(Kbaseconfig):
         overrides.update(profile)
         scriptcmds = []
         skip_rhnregister_script = False
-        if rhnregister and image is not None and 'rhel' in image.lower():
-            if rhnuser is not None and rhnpassword is not None:
-                skip_rhnregister_script = True
-                overrides['rhnuser'] = rhnuser
-                overrides['rhnpassword'] = rhnpassword
-            elif rhnak is not None and rhnorg is not None:
-                skip_rhnregister_script = True
-                overrides['rhnak'] = rhnak
-                overrides['rhnorg'] = rhnorg
+        if image is not None and 'rhel' in image.lower():
+            if rhnregister:
+                if rhnuser is not None and rhnpassword is not None:
+                    skip_rhnregister_script = True
+                    overrides['rhnuser'] = rhnuser
+                    overrides['rhnpassword'] = rhnpassword
+                elif rhnak is not None and rhnorg is not None:
+                    skip_rhnregister_script = True
+                    overrides['rhnak'] = rhnak
+                    overrides['rhnorg'] = rhnorg
+                else:
+                    msg = "Rhn registration required but missing credentials."
+                    msg += "Define rhnuser/rhnpassword or rhnak/rhnorg"
+                    return {'result': 'failure', 'reason': msg}
             else:
-                msg = "Rhn registration required but missing credentials. Define rhnuser/rhnpassword or rhnak/rhnorg"
-                return {'result': 'failure', 'reason': msg}
+                warning("%s will require manual subscription to Red Hat Network" % name)
         if scripts:
             for script in scripts:
                 scriptname = os.path.basename(script)
