@@ -826,7 +826,7 @@ class Kibm(object):
         internal = False if internal is None else internal
 
         try:
-            provisioned_sgs = {y['id']: x['id'] for x in self.conn.list_security_groups().result['security_groups'] \
+            provisioned_sgs = {y['id']: x['id'] for x in self.conn.list_security_groups().result['security_groups']
                                for y in x['targets']}
         except ApiException as exc:
             return {'result': 'failure', 'reason': 'Unable to retrieve security groups. %s' % exc}
@@ -965,7 +965,6 @@ class Kibm(object):
             pprint("Deleting DNS %s.%s" % (name, domain))
             self.delete_dns(name, domain, name)
 
-
     def list_loadbalancers(self):
         results = []
         try:
@@ -986,7 +985,7 @@ class Kibm(object):
             for listener in listeners:
                 protocols.add(listener['protocol'])
                 ports.append(str(listener['port']))
-                #TODO: targets
+                # TODO: targets
             target = ''
             results.append([name, ip, ','.join(protocols), '+'.join(ports), target])
         return results
