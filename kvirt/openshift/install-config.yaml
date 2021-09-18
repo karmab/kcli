@@ -229,6 +229,12 @@ platform:
     provisioningBridge: {{ metal3_provisioning_net }}
     provisioningNetworkInterface: {{ metal3_provisioning_interface }}
 {% endif %}
+{% if metal3_noprovisioning_ip != None %}
+    provisioningHostIP: {{ metal3_noprovisioning_ip }}
+{% endif %}
+{% if metal3_noprovisioning_bootstrap_ip != None %}
+    bootstrapProvisioningIP: {{ metal3_noprovisioning_bootstrap_ip }}
+{% endif %}
 {% if clusterosimage is defined %}
     clusterOSImage: {{ clusterosimage }}
 {% endif %}
