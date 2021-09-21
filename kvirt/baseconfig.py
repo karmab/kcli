@@ -207,6 +207,11 @@ class Kbaseconfig:
                 self.profiles = yaml.safe_load(entries)
                 if self.profiles is None:
                     self.profiles = {}
+                wrongprofiles = [key for key in self.profiles if 'type' in self.profiles[key] and
+                                 self.profiles[key]['type'] not in ['vm', 'container']]
+                if wrongprofiles:
+                    error("Incorrect type in profiles %s in .kcli/profiles.yml" % ','.join(wrongprofiles))
+                    sys.exit(1)
         flavorsfile = default.get('flavors', "%s/.kcli/flavors.yml" %
                                   os.environ.get('HOME'))
         flavorsfile = os.path.expanduser(flavorsfile)
@@ -925,6 +930,8 @@ class Kbaseconfig:
             return {'result': 'success'}
         if not overrides:
             return {'result': 'failure', 'reason': "You need to specify at least one parameter"}
+        if 'type' in overrides and 'type' not in ['vm', 'container']:
+            return {'result': 'failure', 'reason': "Invalid type %s for profile %s" % (overrides['type'], profile)}
         path = os.path.expanduser('~/.kcli/profiles.yml')
         rootdir = os.path.expanduser('~/.kcli')
         self.profiles[profile] = overrides
