@@ -1638,6 +1638,22 @@ def ignition_version(image):
     return version
 
 
+def get_coreos_installer(version='latest', arch=None):
+    if arch is None and os.path.exists('/Users'):
+        error("coreos-installer isn't available on Mac")
+        sys.exit(1)
+    if version != 'latest' and not version.startswith('v'):
+        version = "v%s" % version
+    coreoscmd = "curl -LO https://mirror.openshift.com/pub/openshift-v4/clients/coreos-installer/%s/" % version
+    arch = arch or os.uname().machine
+    if arch == 'aarch64':
+        coreoscmd += 'coreos-installer_arm64 ; mv coreos-installer_arm64 coreos-installer'
+    else:
+        coreoscmd += 'coreos-installer'
+    coreoscmd += "; chmod 700 coreos-installer"
+    call(coreoscmd, shell=True)
+
+
 def get_kubectl(version='latest'):
     SYSTEM = 'darwin' if os.path.exists('/Users') else 'linux'
     if version == 'latest':

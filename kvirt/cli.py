@@ -1948,6 +1948,22 @@ def download_plan(args):
     return 0
 
 
+def download_coreos_installer(args):
+    """Download Coreos Installer"""
+    paramfile = args.paramfile
+    if os.path.exists("/i_am_a_container"):
+        if paramfile is not None:
+            paramfile = "/workdir/%s" % paramfile
+        elif os.path.exists("/workdir/kcli_parameters.yml"):
+            paramfile = "/workdir/kcli_parameters.yml"
+            pprint("Using default parameter file kcli_parameters.yml")
+    elif paramfile is None and os.path.exists("kcli_parameters.yml"):
+        paramfile = "kcli_parameters.yml"
+        pprint("Using default parameter file kcli_parameters.yml")
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    common.get_coreos_installer(version=overrides.get('version', 'latest'), arch=overrides.get('arch'))
+
+
 def download_kubectl(args):
     """Download Kubectl"""
     paramfile = args.paramfile
@@ -4016,6 +4032,17 @@ def cli():
     repoupdate_parser = update_subparsers.add_parser('repo', description=repoupdate_desc, help=repoupdate_desc)
     repoupdate_parser.add_argument('repo')
     repoupdate_parser.set_defaults(func=update_repo)
+
+    coreosinstallerdownload_desc = 'Download Coreos Installer'
+    coreosinstallerdownload_parser = argparse.ArgumentParser(add_help=False)
+    coreosinstallerdownload_parser.add_argument('-P', '--param', action='append',
+                                                help='Define parameter for rendering (can specify multiple)',
+                                                metavar='PARAM')
+    coreosinstallerdownload_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    coreosinstallerdownload_parser.set_defaults(func=download_coreos_installer)
+    download_subparsers.add_parser('coreos-installer', parents=[coreosinstallerdownload_parser],
+                                   description=coreosinstallerdownload_desc,
+                                   help=coreosinstallerdownload_desc)
 
     imagedownload_desc = 'Download Cloud Image'
     imagedownload_help = "Image to download. Choose between \n%s" % '\n'.join(IMAGES.keys())
