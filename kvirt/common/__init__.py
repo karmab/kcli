@@ -1928,19 +1928,21 @@ def generate_rhcos_iso(k, cluster, pool, version='latest', force=False):
         k.delete_image('%s.iso' % cluster)
     pprint("Creating iso %s.iso" % cluster)
     poolpath = k.get_pool_path(pool)
-    coreosinstaller = "podman run --privileged --rm -w /data -v %s:/data -v /dev:/dev" % poolpath
-    if not os.path.exists('/Users'):
-        coreosinstaller += " -v /run/udev:/run/udev"
-    coreosinstaller += " quay.io/coreos/coreos-installer:release"
-    isocmd = "%s iso ignition embed -fi iso.ign -o %s.iso %s" % (coreosinstaller, cluster, baseiso)
+    isocmd = "coreos-installer iso ignition embed -fi %s/iso.ign -o %s/%s.iso %s/%s" % (poolpath, poolpath, cluster,
+                                                                                        poolpath, baseiso)
+    if not os.path.exists('coreos-installer'):
+        arch = os.uname().machine if not os.path.exists('/Users') else 'x86_64'
+        get_coreos_installer(arch=arch)
+    os.environ["PATH"] += ":%s" % os.getcwd()
     if k.host in ['localhost', '127.0.0.1']:
-        if find_executable('podman') is None:
-            error("podman is required in order to embed iso ignition")
-            sys.exit(1)
         copy2('iso.ign', poolpath)
         os.system(isocmd)
     elif k.protocol == 'ssh':
-        scpcmd = 'scp %s -P %s iso.ign %s@%s:%s' % (k.identitycommand, k.port, k.user, k.host, poolpath)
+        createbindircmd = 'ssh %s -p %s %s@%s "mkdir bin >/dev/null 2>&1"' % (k.identitycommand, k.port, k.user, k.host)
+        os.system(createbindircmd)
+        scpbincmd = 'scp %s -qP %s coreos-installer %s@%s:bin' % (k.identitycommand, k.port, k.user, k.host)
+        os.system(scpbincmd)
+        scpcmd = 'scp %s -qP %s iso.ign %s@%s:%s' % (k.identitycommand, k.port, k.user, k.host, poolpath)
         os.system(scpcmd)
         isocmd = 'ssh %s -p %s %s@%s "%s"' % (k.identitycommand, k.port, k.user, k.host, isocmd)
         os.system(isocmd)
