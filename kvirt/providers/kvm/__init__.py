@@ -1191,19 +1191,22 @@ class Kvirt(object):
 
     def start(self, name):
         conn = self.conn
-        status = {0: 'down', 1: 'up'}
         try:
             vm = conn.lookupByName(name)
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        if status[vm.isActive()] == "up":
-            return {'result': 'success'}
-        else:
+        status = vm.state()[0]
+        if status == 3:
+            try:
+                vm.resume()
+            except Exception as e:
+                return {'result': 'failure', 'reason': e}
+        elif status != 1:
             try:
                 vm.create()
             except Exception as e:
                 return {'result': 'failure', 'reason': e}
-            return {'result': 'success'}
+        return {'result': 'success'}
 
     def stop(self, name):
         conn = self.conn
