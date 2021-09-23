@@ -17,6 +17,7 @@ from prettytable import PrettyTable
 import argcomplete
 import argparse
 from argparse import RawDescriptionHelpFormatter as rawhelp
+from glob import glob
 from kvirt import common
 from kvirt.common import error, pprint, success, warning
 from kvirt import nameutils
@@ -2110,24 +2111,11 @@ def render_file(args):
             paramfiles = ["/workdir/kcli_parameters.yml"]
     elif not paramfiles and os.path.exists("kcli_parameters.yml"):
         paramfiles = ["kcli_parameters.yml"]
-    allparamfiles = []
-    if os.path.exists("kcli_default.yml"):
-        allparamfiles.append("kcli_default.yml")
-    if os.path.exists("kcli_plan_default.yml"):
-        allparamfiles.append("kcli_plan_default.yml")
-    inputfile_default = "%s_default%s" % os.path.splitext(inputfile)
-    if os.path.exists(inputfile_default):
-        allparamfiles.append(inputfile_default)
-    allparamfiles.extend(paramfiles)
     overrides = {}
-    baseplan_default = None
+    allparamfiles = [paramfile for paramfile in glob("*_default.y*ml")]
+    allparamfiles.extend(paramfiles)
     for paramfile in allparamfiles:
-        currentoverrides = common.get_overrides(paramfile=paramfile)
-        overrides.update(currentoverrides)
-        if 'baseplan' in currentoverrides:
-            baseplan_default = "%s_default%s" % os.path.splitext(currentoverrides['baseplan'])
-            if os.path.exists(baseplan_default):
-                overrides.update(common.get_overrides(paramfile=baseplan_default))
+        overrides.update(common.get_overrides(paramfile=paramfile))
     overrides.update(common.get_overrides(param=args.param))
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     default_data = {'config_%s' % k: baseconfig.default[k] for k in baseconfig.default}
