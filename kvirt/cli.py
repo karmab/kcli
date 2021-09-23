@@ -2120,8 +2120,14 @@ def render_file(args):
         allparamfiles.append(inputfile_default)
     allparamfiles.extend(paramfiles)
     overrides = {}
+    baseplan_default = None
     for paramfile in allparamfiles:
-        overrides.update(common.get_overrides(paramfile=paramfile))
+        currentoverrides = common.get_overrides(paramfile=paramfile)
+        overrides.update(currentoverrides)
+        if 'baseplan' in currentoverrides:
+            baseplan_default = "%s_default%s" % os.path.splitext(currentoverrides['baseplan'])
+            if os.path.exists(baseplan_default):
+                overrides.update(common.get_overrides(paramfile=baseplan_default))
     overrides.update(common.get_overrides(param=args.param))
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     default_data = {'config_%s' % k: baseconfig.default[k] for k in baseconfig.default}
