@@ -1,6 +1,7 @@
 export PATH=/root/bin:$PATH
-yum -y install podman httpd httpd-tools jq bind-utils skopeo
-IP=$(hostname -I | awk -F' ' '{print $2}')
+export PULL_SECRET=/root/openshift_pull.json
+dnf  -y install podman httpd httpd-tools jq bind-utils skopeo
+IP=$(ip -o addr show eth0 |head -1 | awk '{print $4}' | cut -d'/' -f1)
 REVERSE_NAME=$(dig -x $IP +short | sed 's/\.[^\.]*$//')
 echo $IP | grep -q ':' && SERVER6=$(grep : /etc/resolv.conf | grep -v fe80 | cut -d" " -f2) && REVERSE_NAME=$(dig -6x $IP +short @$SERVER6 | sed 's/\.[^\.]*$//')
 REGISTRY_NAME=${REVERSE_NAME:-$(hostname -f)}
@@ -38,24 +39,35 @@ update-ca-trust extract
 htpasswd -bBc /opt/registry/auth/htpasswd $REGISTRY_USER $REGISTRY_PASSWORD
 podman create --name registry --net host --security-opt label=disable -v /opt/registry/data:/var/lib/registry:z -v /opt/registry/auth:/auth:z -v /opt/registry/conf/config.yml:/etc/docker/registry/config.yml -e "REGISTRY_AUTH=htpasswd" -e "REGISTRY_AUTH_HTPASSWD_REALM=Registry" -e "REGISTRY_HTTP_SECRET=ALongRandomSecretForRegistry" -e REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd -v /opt/registry/certs:/certs:z -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/domain.crt -e REGISTRY_HTTP_TLS_KEY=/certs/domain.key quay.io/saledort/registry:2
 podman start registry
-export UPSTREAM_REGISTRY={{ disconnected_origin }}
-{% if ':' in tag|string %}
-{% set release_name, ocp_release = (tag|string).split(':') %}
-export RELEASE_NAME={{ release_name }}
-export OCP_RELEASE={{ ocp_release }}
-{% elif disconnected_origin != 'quay.io' %}
-export RELEASE_NAME=ocp/release
-export OCP_RELEASE={{ tag }}
+{% if openshift_release_image is defined and openshift_version is defined %}
+export OPENSHIFT_RELEASE_IMAGE={{ openshift_release_image }}
+export OCP_RELEASE={{ openshift_version }}-x86_64
+{% elif version == 'ci' %}
+export OPENSHIFT_RELEASE_IMAGE={{ 'registry.build01.ci.openshift.org' if 'ci' in tag|string else 'registry.ci.openshift.org' }}/ocp/release:{{ tag }}
+export OCP_RELEASE={{ tag }}-x86_64
+{% elif version in ['nightly', 'stable'] %}
+{% set tag = tag|string %}
+{% if tag.split('.')|length > 2 %}
+TAG={{ tag }}
+{% elif version == 'nightly' %}
+TAG={{"latest-" + tag }}
 {% else %}
-export RELEASE_NAME=openshift-release-dev/ocp-release
-export OCP_RELEASE={{ openshift_version|default(tag) }}-x86_64
+TAG={{"stable-" + tag }}
 {% endif %}
-export LOCAL_REGISTRY=$REGISTRY_NAME:5000
-export PULL_SECRET=/root/openshift_pull.json
+OCP_REPO={{ 'ocp-dev-preview' if version == 'nightly' else 'ocp' }}
+curl -s https://mirror.openshift.com/pub/openshift-v4/clients/$OCP_REPO/$TAG/release.txt > /tmp/release.txt
+export OPENSHIFT_RELEASE_IMAGE=$(grep 'Pull From: quay.io' /tmp/release.txt | awk -F ' ' '{print $3}')
+export OCP_RELEASE=$(grep 'Name:' /tmp/release.txt | awk -F ' ' '{print $2}')-x86_64
+{% else %}
+curl -s https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ version }}-{{ tag }}/release.txt > /tmp/release.txt
+export OPENSHIFT_RELEASE_IMAGE=$(grep 'Pull From: quay.io' /tmp/release.txt | awk -F ' ' '{print $3}')
+export OCP_RELEASE=$(grep 'Name:' /tmp/release.txt | awk -F ' ' '{print $2}')-x86_64
+{% endif %}
+
+export LOCAL_REG="$REGISTRY_NAME:5000"
 KEY=$( echo -n $REGISTRY_USER:$REGISTRY_PASSWORD | base64)
 jq ".auths += {\"$REGISTRY_NAME:5000\": {\"auth\": \"$KEY\",\"email\": \"jhendrix@karmalabs.com\"}}" < $PULL_SECRET > /root/temp.json
 cat /root/temp.json | tr -d [:space:] > $PULL_SECRET
-oc adm release mirror -a $PULL_SECRET --from=${UPSTREAM_REGISTRY}/${RELEASE_NAME}:${OCP_RELEASE} --to-release-image=${LOCAL_REGISTRY}/{{ disconnected_prefix }}/release:${OCP_RELEASE} --to=${LOCAL_REGISTRY}/{{ disconnected_prefix }}
+oc adm release mirror -a $PULL_SECRET --from=$OPENSHIFT_RELEASE_IMAGE  --to-release-image=${LOCAL_REG}/ocp4:${OCP_RELEASE} --to=${LOCAL_REG}/ocp4
 echo "{\"auths\": {\"$REGISTRY_NAME:5000\": {\"auth\": \"$KEY\", \"email\": \"jhendrix@karmalabs.com\"}}}" > /root/temp.json
-#OPENSHIFT_VERSION=$( grep cluster-openshift-apiserver-operator /var/log/cloud-init-output.log  | head -1 | awk '{print $NF}' | sed 's/-cluster-openshift-apiserver-operator//')
-echo $REGISTRY_NAME:5000/{{ disconnected_prefix }}/release:$OCP_RELEASE > /root/version.txt
+echo $REGISTRY_NAME:5000/ocp4:$OCP_RELEASE > /root/version.txt

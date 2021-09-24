@@ -82,8 +82,6 @@ disconnected_reuse: False
 disconnected_disk_size: 100
 disconnected_user:
 disconnected_password:
-disconnected_origin: quay.io
-disconnected_prefix: ocp4
 disconnected_operators: []
 disconnected_ipv6_network: true
 imagecontentsources: []
