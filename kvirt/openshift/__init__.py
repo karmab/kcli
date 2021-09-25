@@ -85,6 +85,11 @@ def get_installer_version():
     return INSTALLER_VERSION
 
 
+def get_release_image():
+    RELEASE_IMAGE = os.popen('openshift-install version').readlines()[2].split(" ")[2].strip()
+    return RELEASE_IMAGE
+
+
 def get_rhcos_openstack_url():
     for line in os.popen('openshift-install version').readlines():
         if 'built from commit' in line:
@@ -651,14 +656,11 @@ def create(config, plandir, cluster, overrides):
         pprint("Deploying disconnected vm %s" % disconnected_vm)
         data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
         disconnected_plan = "%s-reuse" % plan if disconnected_reuse else plan
-        if version == 'ci' and 'disconnected_origin' not in overrides:
-            reg = 'registry.build01.ci.openshift.org' if str(tag).startswith('ci-') else 'registry.ci.openshift.org'
-            warning("Forcing disconnected_origin to %s" % reg)
-            data['disconnected_origin'] = reg
         disconnected_overrides = data.copy()
         disconnected_overrides['arch_tag'] = arch_tag
-        if version == 'stable' and str(tag).count('.') == 1:
-            disconnected_overrides['openshift_version'] = INSTALLER_VERSION
+        disconnected_overrides['openshift_version'] = INSTALLER_VERSION
+        disconnected_overrides['openshift_release_image'] = get_release_image()
+        data['openshift_release_image'] = disconnected_overrides['openshift_release_image']
         if metal3:
             try:
                 openstack_uri = get_installer_rhcos('openstack')

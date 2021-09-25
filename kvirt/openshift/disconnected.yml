@@ -4,6 +4,7 @@
  wait: true
  enableroot: true
  reservedns: {{ disconnected_dns|default(False) }}
+ domain: {{ domain }}
  numcpus: {{ numcpus }}
  keys: {{ keys }}
  memory: {{ memory }}

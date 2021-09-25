@@ -274,18 +274,18 @@ sshKey: |
 {% if disconnected_url != None %}
 imageContentSources:
 - mirrors:
-  - {{ disconnected_url }}/{{ disconnected_prefix }}
+  - {{ disconnected_url }}/ocp4
   source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
 - mirrors:
-  - {{ disconnected_url }}/{{ disconnected_prefix }}
-{% if disconnected_origin == 'registry.build01.ci.openshift.org' %}
-  source: {{ disconnected_origin }}/{{ (tag|string).split('/')[0] }}/stable
+  - {{ disconnected_url }}/ocp4
+{% if 'registry.build01.ci' in openshift_release_image %}
+  source: registry.build01.ci.openshift.org/{{ (tag|string).split('/')[0] }}/stable
 {% elif ':' in tag|string %}
-  source: {{ disconnected_origin }}/{{ (tag|string).split(':')[0] }}
-{% elif disconnected_origin != 'quay.io' %}
-  source: {{ disconnected_origin }}/ocp/release
+  source: {{ openshift_release_image.split('/')[0] }}/{{ (tag|string).split(':')[0] }}
+{% elif 'registry.ci' in openshift_release_image %}
+  source: registry.ci.openshift.org/ocp/release
 {% else %}
-  source: {{ disconnected_origin }}/ocp-release
+  source: quay.io/ocp-release
 {% endif %}
 {% elif imagecontentsources %}
 imageContentSources:
