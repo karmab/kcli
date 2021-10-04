@@ -214,9 +214,9 @@ class Kconfig(Kbaseconfig):
                             if 'iam_api_key' in credconfig['default']:
                                 iam_api_key = credconfig['default']['iam_api_key']
                             if 'access_key_id' in credconfig['default']:
-                                access_key_id = credconfig['default']['access_key_id']
+                                cos_api_key = credconfig['default']['access_key_id']
                             if 'secret_access_key' in credconfig['default']:
-                                secret_access_key = credconfig['default']['secret_access_key']
+                                cos_resource_instance_id = credconfig['default']['secret_access_key']
                         except:
                             error("Coudln't parse ~/.ibm/credentials file. Leaving")
                             sys.exit(1)
@@ -231,9 +231,9 @@ class Kconfig(Kbaseconfig):
                             if 'iam_api_key' in confconfig['default']:
                                 iam_api_key = confconfig['default']['iam_api_key']
                             if 'access_key_id' in confconfig['default']:
-                                access_key_id = confconfig['default']['access_key_id']
+                                cos_api_key = confconfig['default']['access_key_id']
                             if 'secret_access_key' in confconfig['default']:
-                                secret_access_key = confconfig['default']['secret_access_key']
+                                cos_resource_instance_id = confconfig['default']['secret_access_key']
                             if 'region' in confconfig['default']:
                                 region = confconfig['default']['region']
                             if 'zone' in confconfig['default']:
@@ -245,8 +245,8 @@ class Kconfig(Kbaseconfig):
                             sys.exit(1)
                 else:
                     iam_api_key = self.options.get('iam_api_key')
-                    access_key_id = self.options.get('access_key_id')
-                    secret_access_key = self.options.get('secret_access_key')
+                    cos_api_key = self.options.get('cos_api_key')
+                    cos_resource_instance_id = self.options.get('cos_resource_instance_id')
                     region = self.options.get('region')
                     zone = self.options.get('zone')
                     vpc = self.options.get('vpc')
@@ -257,7 +257,8 @@ class Kconfig(Kbaseconfig):
                     error("Missing region in the configuration. Leaving")
                     sys.exit(1)
                 from kvirt.providers.ibm import Kibm
-                k = Kibm(iam_api_key=iam_api_key, access_key_id=access_key_id, secret_access_key=secret_access_key,
+                k = Kibm(iam_api_key=iam_api_key, cos_api_key=cos_api_key,
+                         cos_resource_instance_id=cos_resource_instance_id,
                          region=region, zone=zone, vpc=vpc, debug=debug)
             elif self.type == 'ovirt':
                 datacenter = self.options.get('datacenter', 'Default')

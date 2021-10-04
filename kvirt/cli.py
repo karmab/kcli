@@ -2767,7 +2767,6 @@ def snapshotlist_vm(args):
 def create_bucket(args):
     """Create bucket"""
     buckets = args.buckets
-    print(buckets)
     public = args.public
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k

@@ -16,6 +16,7 @@ from ibm_cloud_networking_services import DnsSvcsV1, dns_svcs_v1
 from time import sleep
 import os
 import ibm_boto3
+from ibm_botocore.client import Config
 import webbrowser
 
 ENDPOINTS = {
@@ -48,17 +49,18 @@ class Kibm(object):
     """
 
     """
-    def __init__(self, iam_api_key, access_key_id, secret_access_key,
-                 region, zone, vpc, debug=False):
+    def __init__(self, iam_api_key, cos_api_key, cos_resource_instance_id, region, zone, vpc, debug=False):
         self.debug = debug
         self.authenticator = IAMAuthenticator(iam_api_key)
         self.conn = VpcV1(authenticator=self.authenticator)
         self.conn.set_service_url(ENDPOINTS.get(region))
         self.s3 = ibm_boto3.client(
             's3',
-            endpoint_url=get_s3_endpoint(region),
-            aws_access_key_id=access_key_id,
-            aws_secret_access_key=secret_access_key
+            ibm_api_key_id=cos_api_key,
+            ibm_service_instance_id=cos_resource_instance_id,
+            ibm_auth_endpoint="https://iam.bluemix.net/oidc/token",
+            config=Config(signature_version="oauth"),
+            endpoint_url=get_s3_endpoint(region)
         )
         self.global_tagging_service = GlobalTaggingV1(authenticator=self.authenticator)
         self.global_tagging_service.set_service_url('https://tags.global-search-tagging.cloud.ibm.com')
@@ -70,8 +72,6 @@ class Kibm(object):
         self.resources.set_service_url('https://resource-controller.cloud.ibm.com')
 
         self.iam_api_key = iam_api_key
-        self.access_key_id = access_key_id
-        self.secret_access_key = secret_access_key
         self.region = region
         self.zone = zone
         self.vpc = vpc

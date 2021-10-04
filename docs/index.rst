@@ -13,6 +13,7 @@ This tool is meant to ease interaction with virtualization providers:
 -  gcp
 -  aws
 -  packet
+-  ibmcloud
 
 You can:
 
@@ -557,12 +558,14 @@ IBM Cloud
       zone: eu-gb-2
       vpc: pruebak
 
-The following parameters are specific to packet:
+The following parameters are specific to ibm cloud:
 
 -  iam_api_key.
 -  region
 -  zone
--  vpc
+-  vpc. Default vpc
+-  cos_api_key. Optional Cloud object storage apikey
+-  cos_resource_instance_id. Optional Cloud object storage resource_instance_id (something like “crn:v1:bluemix:public:cloud-object-storage:global:a/yyy:xxxx::”. Make sure to quote it)
 
 To use this provider with kcli rpm, you’ll need to install the following packets from pip:
 
