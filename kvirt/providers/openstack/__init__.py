@@ -423,7 +423,16 @@ class Kopenstack(object):
         except:
             error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        floating_ips = {f['floating_ip_address']: f['id'] for f in self.neutron.list_floatingips()['floatingips']}
+        floating_ips = {}
+        try:
+            fips = self.neutron.list_floatingips()
+            floating_ips.update({f['floating_ip_address']: f['id']
+                                            for f in fips['floatingips']})
+        except:
+            # OVH does not provide floating ip networks, so the next error will occur
+            # if some tries to get floating ip list:
+            # neutronclient.common.exceptions.NotFound: The resource could not be found
+            pass
         vm_floating_ips = []
         for key in list(vm.addresses):
             entry1 = vm.addresses[key]
