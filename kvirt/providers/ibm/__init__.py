@@ -4,19 +4,24 @@
 IBM Cloud provider class
 """
 
+from distutils.spawn import find_executable
 from kvirt import common
 from kvirt.common import pprint, error
 from kvirt.defaults import METADATA_FIELDS
 from ibm_vpc import VpcV1, vpc_v1
-from netaddr import IPNetwork
-from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
-from ibm_cloud_sdk_core.api_exception import ApiException
-from ibm_platform_services import GlobalTaggingV1, ResourceControllerV2
-from ibm_cloud_networking_services import DnsSvcsV1, dns_svcs_v1
-from time import sleep
-import os
 import ibm_boto3
 from ibm_botocore.client import Config
+from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
+from ibm_cloud_sdk_core.api_exception import ApiException
+from ibm_platform_services import GlobalTaggingV1, ResourceControllerV2, IamPolicyManagementV1, IamIdentityV1
+from ibm_platform_services.iam_policy_management_v1 import PolicySubject, SubjectAttribute, PolicyResource, PolicyRole
+from ibm_platform_services.iam_policy_management_v1 import ResourceAttribute
+from ibm_cloud_networking_services import DnsSvcsV1, dns_svcs_v1
+from ibm_s3transfer.aspera.manager import AsperaConfig, AsperaTransferManager
+from netaddr import IPNetwork
+import os
+# from subprocess import call
+from time import sleep
 import webbrowser
 
 ENDPOINTS = {
@@ -52,6 +57,7 @@ class Kibm(object):
     def __init__(self, iam_api_key, cos_api_key, cos_resource_instance_id, region, zone, vpc, debug=False):
         self.debug = debug
         self.authenticator = IAMAuthenticator(iam_api_key)
+        self.iam_api_key = iam_api_key
         self.conn = VpcV1(authenticator=self.authenticator)
         self.conn.set_service_url(ENDPOINTS.get(region))
         self.s3 = ibm_boto3.client(
@@ -62,6 +68,7 @@ class Kibm(object):
             config=Config(signature_version="oauth"),
             endpoint_url=get_s3_endpoint(region)
         )
+        self.cos_resource_instance_id = cos_resource_instance_id
         self.global_tagging_service = GlobalTaggingV1(authenticator=self.authenticator)
         self.global_tagging_service.set_service_url('https://tags.global-search-tagging.cloud.ibm.com')
 
@@ -685,7 +692,7 @@ class Kibm(object):
     def create_pool(self, name, poolpath, pooltype='dir', user='qemu', thinpool=None):
         print("not implemented")
 
-    def delete_image(self, image):
+    def delete_image(self, image, pool=None):
         try:
             image = self._get_image(image)
             if image is None:
@@ -701,7 +708,74 @@ class Kibm(object):
         return {'result': 'success'}
 
     def add_image(self, url, pool, short=None, cmd=None, name=None, size=None):
-        print("not implemented")
+        cos_id = self.cos_resource_instance_id.split(':')[7]
+        identity_client = IamIdentityV1(authenticator=self.authenticator)
+        api_key_detail = identity_client.get_api_keys_details(iam_api_key=self.iam_api_key).get_result()
+        account_id = api_key_detail['account_id']
+        iam_policy_management_service = IamPolicyManagementV1(authenticator=self.authenticator)
+        image_policy_found = False
+        for policy in iam_policy_management_service.list_policies(account_id).result['policies']:
+            policy_type = policy['type']
+            if policy_type != 'authorization':
+                continue
+            cos_found = [x for x in policy['resources'][0]['attributes'] if x['name'] == 'serviceInstance' and
+                         x['value'] == cos_id]
+            if cos_found:
+                image_policy_found = True
+                break
+        if not image_policy_found:
+            pprint("Adding authorization between image service and cloud storage instance")
+            subject = PolicySubject(attributes=[SubjectAttribute(name='serviceName', value='is'),
+                                                SubjectAttribute(name='accountId', value=account_id),
+                                                SubjectAttribute(name='resourceType', value='image')])
+            resources = PolicyResource(attributes=[ResourceAttribute(name='accountId', value=account_id),
+                                                   ResourceAttribute(name='serviceName', value='cloud-object-storage'),
+                                                   ResourceAttribute(name='serviceInstance', value=cos_id)])
+            roles = [PolicyRole(role_id='crn:v1:bluemix:public:iam::::serviceRole:Writer')]
+            iam_policy_management_service.create_policy(type='authorization', subjects=[subject],
+                                                        roles=roles, resources=[resources]).get_result()
+        if pool not in self.list_buckets():
+            return {'result': 'failure', 'reason': "Bucket %s doesn't exist" % pool}
+        shortimage = os.path.basename(url).split('?')[0]
+        shortimage_unzipped = shortimage.replace('.gz', '')
+        if shortimage_unzipped in self.volumes():
+            return {'result': 'success'}
+        delete_cos_image = False
+        if shortimage_unzipped not in self.list_bucketfiles(pool):
+            if not os.path.exists('/tmp/%s' % shortimage):
+                downloadcmd = "curl -Lko /tmp/%s -f '%s'" % (shortimage, url)
+                code = os.system(downloadcmd)
+                if code != 0:
+                    return {'result': 'failure', 'reason': "Unable to download indicated image"}
+            if shortimage.endswith('gz'):
+                if find_executable('gunzip') is not None:
+                    uncompresscmd = "gunzip /tmp/%s" % (shortimage)
+                    os.system(uncompresscmd)
+                else:
+                    error("gunzip not found. Can't uncompress image")
+                    return {'result': 'failure', 'reason': "gunzip not found. Can't uncompress image"}
+                shortimage = shortimage_unzipped
+            pprint("Uploading image to bucket")
+            self.fast_upload_to_bucket(pool, '/tmp/%s' % shortimage)
+            os.remove('/tmp/%s' % shortimage)
+            delete_cos_image = True
+        pprint("Importing image as template")
+        image_file_prototype_model = {}
+        image_file_prototype_model['href'] = "cos://%s/%s/%s" % (self.region, pool, shortimage_unzipped)
+        operating_system_identity_model = {}
+        operating_system_identity_model['name'] = 'centos-8-amd64'
+        image_prototype_model = {}
+        image_prototype_model['name'] = shortimage_unzipped.replace('.', '-').replace('_', '-')
+        image_prototype_model['file'] = image_file_prototype_model
+        image_prototype_model['operating_system'] = operating_system_identity_model
+        image_prototype = image_prototype_model
+        result_create = self.conn.create_image(image_prototype).get_result()
+        tag_names = ["image:%s" % shortimage_unzipped]
+        resource_model = {'resource_id': result_create['crn']}
+        self.global_tagging_service.attach_tag(resources=[resource_model],
+                                               tag_names=tag_names, tag_type='user').get_result()
+        if delete_cos_image:
+            self.delete_from_bucket(pool, shortimage_unzipped)
         return {'result': 'success'}
 
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
@@ -1038,13 +1112,21 @@ class Kibm(object):
         if public:
             extra_args['ACL'] = 'public-read'
         dest = os.path.basename(path)
-        with open(path, "rb") as file:
-            self.s3.upload_fileobj(file, bucket, dest, ExtraArgs=extra_args)
+        with open(path, "rb") as f:
+            self.s3.upload_fileobj(f, bucket, dest, ExtraArgs=extra_args)
         if temp_url:
             expiration = 600
             return self.s3.generate_presigned_url('get_object', Params={'Bucket': bucket, 'Key': dest},
                                                   ExpiresIn=expiration)
         return None
+
+    def fast_upload_to_bucket(self, bucket, path):
+        transfer_manager = AsperaTransferManager(self.s3)
+        ms_transfer_config = AsperaConfig(multi_session=2, multi_session_threshold_mb=100)
+        transfer_manager = AsperaTransferManager(client=self.s3, transfer_config=ms_transfer_config)
+        with AsperaTransferManager(self.s3) as transfer_manager:
+            future = transfer_manager.upload(path, bucket, os.path.basename(path))
+            future.result()
 
     def list_buckets(self):
         response = self.s3.list_buckets()

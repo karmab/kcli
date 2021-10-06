@@ -1244,7 +1244,7 @@ def get_latest_fcos_metal(url):
 
 
 def get_latest_rhcos(url, _type='kvm', arch='x86_64'):
-    keys = {'ovirt': 'openstack', 'kubevirt': 'openstack', 'kvm': 'qemu', 'vsphere': 'vmware'}
+    keys = {'ovirt': 'openstack', 'kubevirt': 'openstack', 'kvm': 'qemu', 'vsphere': 'vmware', 'ibm': 'ibmcloud'}
     key = keys.get(_type, _type)
     buildurl = '%s/builds.json' % url
     with urlopen(buildurl) as b:
@@ -1258,6 +1258,8 @@ def get_latest_rhcos(url, _type='kvm', arch='x86_64'):
                     return "%s/%s/%s/rhcos-%s-vmware.%s.ova" % (url, build, arch, build, arch)
                 elif _type == 'gcp':
                     return "https://storage.googleapis.com/rhcos/rhcos/%s.tar.gz" % build
+                elif _type == 'ibm':
+                    return "%s/%s/%s/rhcos-%s-ibmcloud.%s.qcow2.gz" % (url, build, arch, build, arch)
                 else:
                     return "%s/%s/%s/rhcos-%s-qemu.%s.qcow2.gz" % (url, build, arch, build, arch)
             else:
@@ -1285,7 +1287,7 @@ def get_commit_rhcos(commitid, _type='kvm', region=None):
 
 
 def get_installer_rhcos(_type='kvm', region=None, arch='x86_64'):
-    keys = {'ovirt': 'openstack', 'kubevirt': 'openstack', 'kvm': 'qemu', 'vsphere': 'vmware'}
+    keys = {'ovirt': 'openstack', 'kubevirt': 'openstack', 'kvm': 'qemu', 'vsphere': 'vmware', 'ibm': 'ibmcloud'}
     key = keys.get(_type, _type)
     INSTALLER_COREOS = os.popen('openshift-install coreos print-stream-json 2>/dev/null').read()
     data = json.loads(INSTALLER_COREOS)
