@@ -422,6 +422,7 @@ class Kibm(object):
         yamlinfo['cpus'] = vm['vcpu']['count']
         yamlinfo['memory'] = vm['memory']
         yamlinfo['image'] = image
+        yamlinfo['user'] = common.get_user(image)
         yamlinfo['creationdate'] = vm['created_at']
         yamlinfo['id'] = vm['id']
         # yamlinfo['resource_group'] = vm['resource_group']['name']
@@ -472,10 +473,8 @@ class Kibm(object):
                                   'path': path})
         if disks:
             yamlinfo['disks'] = disks
-
         if debug:
             yamlinfo['debug'] = vm
-
         return yamlinfo
 
     def ip(self, name):
