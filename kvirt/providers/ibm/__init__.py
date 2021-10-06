@@ -17,7 +17,6 @@ from ibm_platform_services import GlobalTaggingV1, ResourceControllerV2, IamPoli
 from ibm_platform_services.iam_policy_management_v1 import PolicySubject, SubjectAttribute, PolicyResource, PolicyRole
 from ibm_platform_services.iam_policy_management_v1 import ResourceAttribute
 from ibm_cloud_networking_services import DnsSvcsV1, dns_svcs_v1
-from ibm_s3transfer.aspera.manager import AsperaConfig, AsperaTransferManager
 from netaddr import IPNetwork
 import os
 # from subprocess import call
@@ -760,7 +759,7 @@ class Kibm(object):
                     return {'result': 'failure', 'reason': "gunzip not found. Can't uncompress image"}
                 shortimage = shortimage_unzipped
             pprint("Uploading image to bucket")
-            self.fast_upload_to_bucket(pool, '/tmp/%s' % shortimage)
+            self.upload_to_bucket(pool, '/tmp/%s' % shortimage)
             os.remove('/tmp/%s' % shortimage)
             delete_cos_image = True
         pprint("Importing image as template")
@@ -1125,6 +1124,7 @@ class Kibm(object):
         return None
 
     def fast_upload_to_bucket(self, bucket, path):
+        from ibm_s3transfer.aspera.manager import AsperaConfig, AsperaTransferManager
         transfer_manager = AsperaTransferManager(self.s3)
         ms_transfer_config = AsperaConfig(multi_session=2, multi_session_threshold_mb=100)
         transfer_manager = AsperaTransferManager(client=self.s3, transfer_config=ms_transfer_config)
