@@ -202,6 +202,7 @@ class Kconfig(Kbaseconfig):
                 if len(self.options) == 1:
                     home = os.environ['HOME']
                     iam_api_key, region, zone, vpc = None, None, None, None
+                    cos_api_key, cos_resource_instance_id, cis_resource_instance_id = None, None, None
                     import configparser
                     if os.path.exists("%s/.ibm/credentials" % home):
                         try:
@@ -247,6 +248,7 @@ class Kconfig(Kbaseconfig):
                     iam_api_key = self.options.get('iam_api_key')
                     cos_api_key = self.options.get('cos_api_key')
                     cos_resource_instance_id = self.options.get('cos_resource_instance_id')
+                    cis_resource_instance_id = self.options.get('cis_resource_instance_id')
                     region = self.options.get('region')
                     zone = self.options.get('zone')
                     vpc = self.options.get('vpc')
@@ -257,9 +259,9 @@ class Kconfig(Kbaseconfig):
                     error("Missing region in the configuration. Leaving")
                     sys.exit(1)
                 from kvirt.providers.ibm import Kibm
-                k = Kibm(iam_api_key=iam_api_key, cos_api_key=cos_api_key,
-                         cos_resource_instance_id=cos_resource_instance_id,
-                         region=region, zone=zone, vpc=vpc, debug=debug)
+                k = Kibm(iam_api_key=iam_api_key, region=region, zone=zone, vpc=vpc, debug=debug,
+                         cos_api_key=cos_api_key, cos_resource_instance_id=cos_resource_instance_id,
+                         cis_resource_instance_id=cis_resource_instance_id)
             elif self.type == 'ovirt':
                 datacenter = self.options.get('datacenter', 'Default')
                 cluster = self.options.get('cluster', 'Default')
