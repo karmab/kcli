@@ -189,7 +189,12 @@ class Kibm(object):
             return {'result': 'failure', 'reason': 'Unable to check networks. %s' % exc}
 
         if flavor is None:
-            return {'result': 'failure', 'reason': 'Flavor not found in configuration'}
+            flavors = [f for f in self.flavors() if f[1] >= numcpus and f[2] * 1024 >= memory]
+            if flavors:
+                flavor = min(flavors, key=lambda f: f[2])[0]
+                pprint("Using flavor %s" % flavor)
+            else:
+                return {'result': 'failure', 'reason': "Couldn't find a flavor matching cpu/memory requirements"}
         try:
             provisioned_profiles = self._get_profiles()
         except ApiException as exc:
