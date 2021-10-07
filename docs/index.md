@@ -549,7 +549,8 @@ The following parameters are specific to ibm cloud:
 - zone
 - vpc. Default vpc
 - cos_api_key. Optional Cloud object storage apikey
-- cos_resource_instance_id. Optional Cloud object storage resource_instance_id (something like "crn:v1:bluemix:public:cloud-object-storage:global:a/yyy:xxxx::". Make sure to quote it)
+- cos_resource_instance_id. Optional Cloud object storage resource_instance_id (something like "crn:v1:bluemix:public:cloud-object-storage:global:a/yyy:xxxx::"). Alternatively you can provide the resource name
+- cos_resource_instance_id. Optional Cis resource_instance_id used for DNS. Alternatively, you can provide the resource name
 
 To use this provider with kcli rpm, you'll need to install the following packets from pip:
 
@@ -557,7 +558,7 @@ To use this provider with kcli rpm, you'll need to install the following packets
 - ibm-cos-sdk
 - ibm-platform-services
 - ibm-cloud-networking-services
-
+- cos-aspera (optional)
 
 # Usage
 

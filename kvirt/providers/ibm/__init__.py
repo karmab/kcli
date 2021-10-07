@@ -20,6 +20,8 @@ from ibm_cloud_networking_services import DnsRecordsV1, ZonesV1
 from netaddr import IPNetwork
 import os
 from time import sleep
+from requests import get, post
+
 import webbrowser
 
 ENDPOINTS = {
@@ -48,6 +50,24 @@ def get_s3_endpoint(region):
     return 'https://s3.{}.cloud-object-storage.appdomain.cloud'.format(region)
 
 
+def get_service_instance_id(iam_api_key, name):
+    if 'crn' in name:
+        return name
+    service_id = None
+    headers = {'content-type': 'application/x-www-form-urlencoded', 'accept': 'application/json'}
+    data = 'grant_type=urn%%3Aibm%%3Aparams%%3Aoauth%%3Agrant-type%%3Aapikey&apikey=%s' % iam_api_key
+    req = post("https://iam.cloud.ibm.com/identity/token", data=data, headers=headers)
+    token = req.json()['access_token']
+    req = get("https://resource-controller.cloud.ibm.com/v2/resource_instances", headers=headers)
+    headers = {'Authorization': 'Bearer %s' % token}
+    req = get("https://resource-controller.cloud.ibm.com/v2/resource_instances", headers=headers)
+    for entry in req.json()['resources']:
+        if entry['name'] == name:
+            service_id = entry['id']
+            break
+    return service_id
+
+
 class Kibm(object):
     """
 
@@ -60,6 +80,7 @@ class Kibm(object):
         self.conn = VpcV1(authenticator=self.authenticator)
         self.conn.set_service_url(ENDPOINTS.get(region))
         if cos_api_key is not None and cos_resource_instance_id is not None:
+            cos_resource_instance_id = get_service_instance_id(iam_api_key, cos_resource_instance_id)
             self.s3 = ibm_boto3.client(
                 's3',
                 ibm_api_key_id=cos_api_key,
@@ -73,6 +94,7 @@ class Kibm(object):
         self.global_tagging_service.set_service_url('https://tags.global-search-tagging.cloud.ibm.com')
 
         if cis_resource_instance_id is not None:
+            cis_resource_instance_id = get_service_instance_id(iam_api_key, cis_resource_instance_id)
             self.dns = ZonesV1(authenticator=self.authenticator, crn=cis_resource_instance_id)
             self.dns.set_service_url('https://api.cis.cloud.ibm.com')
             self.cis_resource_instance_id = cis_resource_instance_id
