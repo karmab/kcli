@@ -16,10 +16,9 @@ from ibm_cloud_sdk_core.api_exception import ApiException
 from ibm_platform_services import GlobalTaggingV1, ResourceControllerV2, IamPolicyManagementV1, IamIdentityV1
 from ibm_platform_services.iam_policy_management_v1 import PolicySubject, SubjectAttribute, PolicyResource, PolicyRole
 from ibm_platform_services.iam_policy_management_v1 import ResourceAttribute
-from ibm_cloud_networking_services import DnsSvcsV1, dns_svcs_v1
+from ibm_cloud_networking_services import DnsRecordsV1, ZonesV1
 from netaddr import IPNetwork
 import os
-# from subprocess import call
 from time import sleep
 import webbrowser
 
@@ -53,26 +52,30 @@ class Kibm(object):
     """
 
     """
-    def __init__(self, iam_api_key, cos_api_key, cos_resource_instance_id, region, zone, vpc, debug=False):
+    def __init__(self, iam_api_key, region, zone, vpc, debug=False, cos_api_key=None, cos_resource_instance_id=None,
+                 cis_resource_instance_id=None):
         self.debug = debug
         self.authenticator = IAMAuthenticator(iam_api_key)
         self.iam_api_key = iam_api_key
         self.conn = VpcV1(authenticator=self.authenticator)
         self.conn.set_service_url(ENDPOINTS.get(region))
-        self.s3 = ibm_boto3.client(
-            's3',
-            ibm_api_key_id=cos_api_key,
-            ibm_service_instance_id=cos_resource_instance_id,
-            ibm_auth_endpoint="https://iam.bluemix.net/oidc/token",
-            config=Config(signature_version="oauth"),
-            endpoint_url=get_s3_endpoint(region)
-        )
-        self.cos_resource_instance_id = cos_resource_instance_id
+        if cos_api_key is not None and cos_resource_instance_id is not None:
+            self.s3 = ibm_boto3.client(
+                's3',
+                ibm_api_key_id=cos_api_key,
+                ibm_service_instance_id=cos_resource_instance_id,
+                ibm_auth_endpoint="https://iam.bluemix.net/oidc/token",
+                config=Config(signature_version="oauth"),
+                endpoint_url=get_s3_endpoint(region)
+            )
+            self.cos_resource_instance_id = cos_resource_instance_id
         self.global_tagging_service = GlobalTaggingV1(authenticator=self.authenticator)
         self.global_tagging_service.set_service_url('https://tags.global-search-tagging.cloud.ibm.com')
 
-        self.dns = DnsSvcsV1(authenticator=self.authenticator)
-        self.dns.set_service_url('https://api.dns-svcs.cloud.ibm.com/v1')
+        if cis_resource_instance_id is not None:
+            self.dns = ZonesV1(authenticator=self.authenticator, crn=cis_resource_instance_id)
+            self.dns.set_service_url('https://api.cis.cloud.ibm.com')
+            self.cis_resource_instance_id = cis_resource_instance_id
 
         self.resources = ResourceControllerV2(authenticator=self.authenticator)
         self.resources.set_service_url('https://resource-controller.cloud.ibm.com')
@@ -1155,25 +1158,9 @@ class Kibm(object):
             cluster = fqdn.split('-')[0]
             name = '.'.join(fqdn.split('.')[:1])
             domain = fqdn.replace("%s." % name, '').replace("%s." % cluster, '')
-        try:
-            dnslist = self._get_dns()
-        except ApiException as exc:
-            error('Unable to retrieve DNS service. %s' % exc)
-
-        for dns in dnslist:
-            try:
-                dnszone = self._get_dns_zone(dns['guid'], domain)
-            except ApiException as exc:
-                error('Unable to retrieve DNS zones. %s' % exc)
-                return
-            if dnszone is not None:
-                break
-        else:
-            error('Domain %s not found' % domain)
+        dnszone = self._get_dns_zone(domain)
+        if dnszone is None:
             return
-
-        dnsentry = name if cluster is None else "%s.%s" % (name, cluster)
-        entry = "%s.%s" % (dnsentry, domain)
         if ip is None:
             counter = 0
             while counter != 100:
@@ -1188,46 +1175,26 @@ class Kibm(object):
         if ip is None:
             error('Unable to find an IP for %s' % name)
             return
-
         try:
-            self.dns.create_resource_record(
-                instance_id=dns['guid'],
-                dnszone_id=dnszone['id'],
-                type='A',
-                ttl=60,
-                name=entry,
-                rdata=dns_svcs_v1.ResourceRecordInputRdataRdataARecord(ip=ip),
-            )
+            dnszone.create_dns_record(name=name, type='A', ttl=60, content=ip)
         except ApiException as exc:
             error('Unable to create DNS entry. %s' % exc)
             return
-
         if alias:
             for a in alias:
-                dnsname = ''
-                type = ''
-                rdata = None
                 if a == '*':
-                    type = 'A'
-                    rdata = dns_svcs_v1.ResourceRecordInputRdataRdataARecord(ip=ip)
+                    record_type = 'A'
                     if cluster is not None and ('master' in name or 'worker' in name):
                         dnsname = '*.apps.%s.%s' % (cluster, domain)
                     else:
                         dnsname = '*.%s.%s' % (name, domain)
+                    content = ip
                 else:
-                    type = 'CNAME'
+                    record_type = 'CNAME'
                     dnsname = '%s.%s' % (a, domain) if '.' not in a else a
-                    rdata = dns_svcs_v1.ResourceRecordInputRdataRdataCnameRecord(cname=entry)
+                    content = "%s.%s" % (name, domain)
                 try:
-                    print("Creating", dnsname, type, entry, ip)
-                    self.dns.create_resource_record(
-                        instance_id=dns['guid'],
-                        dnszone_id=dnszone['id'],
-                        type=type,
-                        ttl=60,
-                        name=dnsname,
-                        rdata=rdata
-                    )
+                    dnszone.create_dns_record(name=dnsname, type=record_type, ttl=60, content=content)
                 except ApiException as exc:
                     error('Unable to create DNS entry. %s' % exc)
                     return
@@ -1236,73 +1203,49 @@ class Kibm(object):
         print("not implemented")
 
     def delete_dns(self, name, domain, instanceid=None, allentries=False):
+        dnszone = self._get_dns_zone(domain)
+        if dnszone is None:
+            return
         cluster = None
         fqdn = "%s.%s" % (name, domain)
         if fqdn.split('-')[0] == fqdn.split('.')[1]:
             cluster = fqdn.split('-')[0]
             name = '.'.join(fqdn.split('.')[:1])
             domain = fqdn.replace("%s." % name, '').replace("%s." % cluster, '')
-
-        try:
-            dnslist = self._get_dns()
-        except ApiException as exc:
-            return {'result': 'failure',
-                    'reason': 'Unable to check DNS zones. %s' % exc}
-        for dnsresource in dnslist:
-            dnsid = dnsresource['guid']
-            try:
-                dnszone = self._get_dns_zone(dnsid, domain)
-            except ApiException as exc:
-                return {'result': 'failure',
-                        'reason': 'Unable to check DNS zones. %s' % exc}
-            if dnszone is None:
-                continue
-            try:
-                records = self._get_dns_records(dnsid, dnszone['id'])
-            except ApiException as exc:
-                return {'result': 'failure',
-                        'reason': 'Unable to check DNS records. %s' % exc}
-            break
-        else:
-            return {'result': 'failure',
-                    'reason': 'Domain %s not found' % domain}
-
         dnsentry = name if cluster is None else "%s.%s" % (name, cluster)
         entry = "%s.%s" % (dnsentry, domain)
         clusterdomain = "%s.%s" % (cluster, domain)
+        try:
+            records = dnszone.list_all_dns_records().get_result()['result']
+        except ApiException as exc:
+            error('Unable to check DNS %s records. %s' % (dnszone['name'], exc))
+            return
+        recordsfound = False
         for record in records:
             if entry in record['name'] or ('master-0' in name and record['name'].endswith(clusterdomain)):
+                record_identifier = record['id']
                 try:
-                    self.dns.delete_resource_record(instance_id=dnsid, dnszone_id=dnszone['id'], record_id=record['id'])
+                    dnszone.delete_dns_record(dnsrecord_identifier=record_identifier)
+                    recordsfound = True
                 except ApiException as exc:
                     error('Unable to delete record %s. %s' % (record['name'], exc))
+        if not recordsfound:
+            error("No records found for %s" % entry)
         return {'result': 'success'}
 
     def list_dns(self, domain):
         results = []
+        dnszone = self._get_dns_zone(domain)
+        if dnszone is None:
+            return []
         try:
-            dnslist = self._get_dns()
+            records = dnszone.list_all_dns_records().get_result()['result']
         except ApiException as exc:
-            error('Unable to check DNS resources. %s' % exc)
+            error('Unable to check DNS %s records. %s' % (dnszone['name'], exc))
             return results
-        for dnsresource in dnslist:
-            dnsid = dnsresource['guid']
-            try:
-                dnszone = self._get_dns_zone(dnsid, domain)
-            except ApiException as exc:
-                error('Unable to check DNS zones for DNS %s. %s' % (dnsresource['name'], exc))
-                return results
-            if dnszone is None:
-                error('Domain %s not found' % domain)
-                return results
-            try:
-                records = self._get_dns_records(dnsid, dnszone['id'])
-            except ApiException as exc:
-                error('Unable to check DNS %s records. %s' % (dnszone['name'], exc))
-                return results
-            for record in records:
-                ip = record['rdata']['ip'] if 'ip' in record['rdata'] else record['rdata']['cname']
-                results.append([record['name'], record['type'], record['ttl'], ip])
+        for record in records:
+            ip = record['content']
+            results.append([record['name'], record['type'], record['ttl'], ip])
         return results
 
     def _get_vm(self, name):
@@ -1339,14 +1282,26 @@ class Kibm(object):
     def _get_volumes(self):
         return {x['name']: x for x in self.conn.list_volumes().result['volumes']}
 
-    def _get_dns(self):
-        return self.resources.list_resource_instances(resource_id=DNS_RESOURCE_ID).result['resources']
-
-    def _get_dns_zone(self, dns_id, domain):
-        for zone in self.dns.list_dnszones(instance_id=dns_id).result['dnszones']:
-            if zone['name'] == domain and zone['state'] == 'ACTIVE':
-                return zone
-        return None
-
-    def _get_dns_records(self, dns_id, zone_id):
-        return self.dns.list_resource_records(instance_id=dns_id, dnszone_id=zone_id).result['resource_records']
+    def _get_dns_zone(self, domain):
+        try:
+            dnslist = self.dns.list_zones().get_result()['result']
+        except ApiException as exc:
+            error('Unable to check DNS resources. %s' % exc)
+            return None
+        dnsfound = False
+        for dnsresource in dnslist:
+            dnsid = dnsresource['id']
+            dnsname = dnsresource['name']
+            if dnsname == domain:
+                dnsfound = True
+                break
+        if not dnsfound:
+            error('Domain %s not found' % domain)
+            return None
+        try:
+            dnszone = DnsRecordsV1(authenticator=self.authenticator, crn=self.cis_resource_instance_id,
+                                   zone_identifier=dnsid)
+        except ApiException as exc:
+            error('Unable to check DNS zones for DNS %s. %s' % (domain, exc))
+            return None
+        return dnszone
