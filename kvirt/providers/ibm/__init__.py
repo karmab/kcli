@@ -92,16 +92,13 @@ class Kibm(object):
             self.cos_resource_instance_id = cos_resource_instance_id
         self.global_tagging_service = GlobalTaggingV1(authenticator=self.authenticator)
         self.global_tagging_service.set_service_url('https://tags.global-search-tagging.cloud.ibm.com')
-
         if cis_resource_instance_id is not None:
             cis_resource_instance_id = get_service_instance_id(iam_api_key, cis_resource_instance_id)
             self.dns = ZonesV1(authenticator=self.authenticator, crn=cis_resource_instance_id)
             self.dns.set_service_url('https://api.cis.cloud.ibm.com')
             self.cis_resource_instance_id = cis_resource_instance_id
-
         self.resources = ResourceControllerV2(authenticator=self.authenticator)
         self.resources.set_service_url('https://resource-controller.cloud.ibm.com')
-
         self.iam_api_key = iam_api_key
         self.region = region
         self.zone = zone
@@ -150,10 +147,8 @@ class Kibm(object):
                 return {'result': 'failure', 'reason': 'VPC %s does not exist' % self.vpc}
         except ApiException as exc:
             return {'result': 'failure', 'reason': 'Unable to retrieve vpc information. %s' % exc}
-
         if self.exists(name):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
-
         if keys is None:
             return {'result': 'failure', 'reason': 'SSH Keys not found in configuration'}
         key_list = []
@@ -211,7 +206,6 @@ class Kibm(object):
                 )
         except ApiException as exc:
             return {'result': 'failure', 'reason': 'Unable to check networks. %s' % exc}
-
         if flavor is None:
             flavors = [f for f in self.flavors() if f[1] >= numcpus and f[2] * 1024 >= memory]
             if flavors:
@@ -225,7 +219,6 @@ class Kibm(object):
             return {'result': 'failure', 'reason': 'Unable to check flavors. %s' % exc}
         if flavor not in provisioned_profiles:
             return {'result': 'failure', 'reason': 'Flavor %s not found' % flavor}
-
         try:
             image = self._get_image(image)
             if image is None:
@@ -233,7 +226,6 @@ class Kibm(object):
             image_id = image['id']
         except ApiException as exc:
             return {'result': 'failure', 'reason': 'Unable to check provisioned images. %s' % exc}
-
         volume_attachments = []
         for index, disk in enumerate(disks[1:]):
             disksize = int(disk.get('size')) if isinstance(disk, dict) and 'size' in disk else int(disk)
@@ -250,7 +242,6 @@ class Kibm(object):
                     delete_volume_on_instance_delete=True,
                 )
             )
-
         try:
             result_create = self.conn.create_instance(
                 vpc_v1.InstancePrototypeInstanceByImage(
@@ -280,7 +271,6 @@ class Kibm(object):
                                                    tag_names=tag_names, tag_type='user').get_result()
         except ApiException as exc:
             return {'result': 'failure', 'reason': 'Unable to attach tags. %s' % exc}
-
         try:
             result_ip = self.conn.create_floating_ip(vpc_v1.FloatingIPPrototypeFloatingIPByTarget(
                 target=vpc_v1.FloatingIPByTargetNetworkInterfaceIdentityNetworkInterfaceIdentityById(
@@ -437,7 +427,6 @@ class Kibm(object):
                 continue
             ips.append(floating_ips[network['id']]['address'])
         ip = ','.join(ips)
-
         # zone = vm['zone']['name']
         image = vm['image']['name']
         yamlinfo['profile'] = vm['profile']['name']
@@ -482,7 +471,6 @@ class Kibm(object):
         if nets:
             yamlinfo['nets'] = nets
             # yamlinfo['primary_network_interface'] = vm['primary_network_interface']['name']
-
         disks = []
         if ignore_volumes is False:
             try:
@@ -564,7 +552,6 @@ class Kibm(object):
                 key, value = tagname.split(':')
                 if key == 'domain':
                     domain = value
-
         try:
             for network in vm['network_interfaces']:
                 response = conn.list_instance_network_interface_floating_ips(instance_id=vm['id'],
@@ -640,17 +627,14 @@ class Kibm(object):
                 return {'result': 'failure', 'reason': 'VM %s not found' % name}
         except ApiException as exc:
             return {'result': 'failure', 'reason': 'Unable to retrieve VM %s. %s' % (name, exc)}
-
         if vm['status'] != 'stopped':
             return {'result': 'failure', 'reason': 'VM %s must be stopped' % name}
-
         try:
             provisioned_profiles = self._get_profiles()
         except ApiException as exc:
             return {'result': 'failure', 'reason': 'Unable to retrieve flavors. %s' % exc}
         if flavor not in provisioned_profiles:
             return {'result': 'failure', 'reason': 'Flavor %s not found' % flavor}
-
         try:
             self.conn.update_instance(id=vm['id'], instance_patch=vpc_v1.InstancePatch(
                 profile=vpc_v1.InstancePatchProfileInstanceProfileIdentityByName(name=flavor)))
@@ -931,39 +915,30 @@ class Kibm(object):
                 if result['provisioning_status'] == 'active':
                     break
                 sleep(10)
-
         ports = [int(port) for port in ports]
         internal = False if internal is None else internal
-
         try:
             provisioned_sgs = {y['id']: x['id'] for x in self.conn.list_security_groups().result['security_groups']
                                for y in x['targets']}
         except ApiException as exc:
             return {'result': 'failure', 'reason': 'Unable to retrieve security groups. %s' % exc}
-
         clean_name = name.replace('.', '-')
         subnets = set()
         security_groups = set()
         member_list = []
         resource_group_id = None
-
-        if vms is not None:
+        if vms:
             for vm in vms:
                 try:
                     virtual_machine = self._get_vm(vm)
                 except ApiException as exc:
                     return {'result': 'failure', 'reason': 'Unable to retrieve VM %s. %s' % (vm, exc)}
-
                 member_list.append(virtual_machine['primary_network_interface']['primary_ipv4_address'])
-
                 if 'primary_network_interface' in virtual_machine:
                     subnets.add(virtual_machine['primary_network_interface']['subnet']['id'])
-
                 security_groups.add(provisioned_sgs[virtual_machine['primary_network_interface']['id']])
-
                 if resource_group_id is None:
                     resource_group_id = virtual_machine['resource_group']['id']
-
         pprint("Creating load balancer pool...")
         try:
             lb = self.conn.create_load_balancer(
@@ -994,7 +969,6 @@ class Kibm(object):
         except ApiException as exc:
             error('Unable to create load balancer. %s' % exc)
             return {'result': 'failure', 'reason': 'Unable to create load balancer. %s' % exc}
-
         pprint("Creating listeners...")
         for port in ports:
             try:
@@ -1012,9 +986,7 @@ class Kibm(object):
             except ApiException as exc:
                 error('Unable to create load balancer listener. %s' % exc)
                 return {'result': 'failure', 'reason': 'Unable to create load balancer listener. %s' % exc}
-
         pprint("Load balancer DNS name %s" % lb['hostname'])
-
         resource_model = {'resource_id': lb['crn']}
         try:
             self.global_tagging_service.attach_tag(resources=[resource_model],
@@ -1023,7 +995,6 @@ class Kibm(object):
         except ApiException as exc:
             error('Unable to attach tags. %s' % exc)
             return {'result': 'failure', 'reason': 'Unable to attach tags. %s' % exc}
-
         if domain is not None:
             while True:
                 try:
@@ -1051,7 +1022,6 @@ class Kibm(object):
         except ApiException as exc:
             error('Unable to retrieve load balancers. %s' % exc)
             return
-
         try:
             tags = self.global_tagging_service.list_tags(attached_to=lb['crn']).result['items']
         except ApiException as exc:
@@ -1064,13 +1034,11 @@ class Kibm(object):
                 key, value = tagname.split(':')
                 if key == 'domain':
                     domain = value
-
         try:
             self.conn.delete_load_balancer(id=lb['id'])
         except ApiException as exc:
             error('Unable to delete load balancer. %s' % exc)
             return
-
         if domain is not None:
             pprint("Deleting DNS %s.%s" % (name, domain))
             self.delete_dns(name, domain, name)
@@ -1082,21 +1050,33 @@ class Kibm(object):
         except ApiException as exc:
             error('Unable to retrieve LoadBalancers. %s' % exc)
             return results
+        if lbs:
+            vms_by_addresses = {}
+            for vm in self.conn.list_instances().get_result()['instances']:
+                vms_by_addresses[vm['network_interfaces'][0]['primary_ipv4_address']] = vm['name']
         for lb in lbs:
             protocols = set()
             ports = []
+            lb_id = lb['id']
             name = lb['name']
             ip = lb['hostname']
             try:
-                listeners = self.conn.list_load_balancer_listeners(load_balancer_id=lb['id']).result['listeners']
+                listeners = self.conn.list_load_balancer_listeners(load_balancer_id=lb_id).result['listeners']
             except ApiException as exc:
                 error('Unable to retrieve listeners for load balancer %s. %s' % (name, exc))
                 continue
             for listener in listeners:
                 protocols.add(listener['protocol'])
                 ports.append(str(listener['port']))
-                # TODO: targets
-            target = ''
+            target = []
+            if 'pools' in lb:
+                pool_id = lb['pools'][0]['id']
+                pool = self.conn.get_load_balancer_pool(id=pool_id, load_balancer_id=lb_id).get_result()
+                for member in pool['members']:
+                    member_data = self.conn.get_load_balancer_pool_member(lb_id, pool_id, member['id']).get_result()
+                    member_name = vms_by_addresses[member_data['target']['address']]
+                    target.append(member_name)
+            target = ','.join(target)
             results.append([name, ip, ','.join(protocols), '+'.join(ports), target])
         return results
 

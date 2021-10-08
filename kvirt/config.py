@@ -2210,7 +2210,7 @@ class Kconfig(Kbaseconfig):
                             plan=None, checkport=80, alias=[], internal=False):
         name = nameutils.get_random_name().replace('_', '-') if name is None else name
         k = self.k
-        if self.type in ['aws', 'gcp']:
+        if self.type in ['aws', 'gcp', 'ibm']:
             if delete:
                 pprint("Deleting loadbalancer %s" % name)
                 k.delete_loadbalancer(name)
@@ -2246,7 +2246,7 @@ class Kconfig(Kbaseconfig):
 
     def list_loadbalancers(self):
         k = self.k
-        if self.type not in ['aws', 'gcp']:
+        if self.type not in ['aws', 'gcp', 'ibm']:
             results = []
             for vm in k.list():
                 if vm['profile'].startswith('loadbalancer') and len(vm['profile'].split('-')) == 2:
