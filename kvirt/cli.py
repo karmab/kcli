@@ -229,10 +229,11 @@ def console_vm(args):
     name = common.get_lastvm(config.client) if not args.name else args.name
     k = config.k
     tunnel = config.tunnel
+    consolecmd = config.consolecmd
     if serial:
         k.serialconsole(name)
     else:
-        k.console(name=name, tunnel=tunnel)
+        k.console(name=name, tunnel=tunnel, consolecmd=consolecmd)
 
 
 def console_container(args):
@@ -1177,7 +1178,7 @@ def create_vm(args):
                                   onlyassets=onlyassets)
         if not onlyassets:
             if console:
-                config.k.console(name=name, tunnel=config.tunnel)
+                config.k.console(name=name, tunnel=config.tunnel, consolecmd=config.consolecmd)
             elif serial:
                 config.k.serialconsole(name)
             else:

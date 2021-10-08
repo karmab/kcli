@@ -210,7 +210,7 @@ def console_vm(args):
         os.system(cmd)
     else:
         cmd = k.console(kcli_pb2.vm(name=name)).cmd
-        os.popen("remote-viewer %s &" % cmd)
+        os.popen("%s %s &" % (config.consolecmd, cmd)
 
 
 def console_container(args):

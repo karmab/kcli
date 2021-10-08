@@ -425,7 +425,7 @@ class KOvirt(object):
             vms.append(self.info(vm.name, vm=vm))
         return sorted(vms, key=lambda x: x['name'])
 
-    def console(self, name, tunnel=False, web=False):
+    def console(self, name, tunnel=False, web=False, consolecmd='remote-viewer'):
         connectiondetails = None
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if not vmsearch:
@@ -506,10 +506,10 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         with open("/tmp/console.vv", "w") as f:
             f.write(connectiondetails)
         if self.debug or os.path.exists("/i_am_a_container"):
-            msg = "Use remote-viewer with this:\n%s" % connectiondetails if not self.debug else connectiondetails
+            msg = "Use %s with this:\n%s" % (consolecmd, connectiondetails if not self.debug else connectiondetails)
             pprint(msg)
         else:
-            os.popen("remote-viewer /tmp/console.vv &")
+            os.popen("%s /tmp/console.vv &" % consolecmd)
         return
 
     def serialconsole(self, name, web=False):

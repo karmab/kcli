@@ -205,3 +205,4 @@ VMRULES = []
 CACHE = False
 SECURITYGROUPS = []
 LOCAL_OPENSHIFT_APPS = ['argocd', 'istio', 'users']
+CONSOLECMD = "remote-viewer"

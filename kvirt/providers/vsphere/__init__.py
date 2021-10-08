@@ -767,7 +767,7 @@ class Ksphere:
                 planfolder.Destroy()
         return {'result': 'success'}
 
-    def console(self, name, tunnel=False, web=False):
+    def console(self, name, tunnel=False, web=False, consolecmd='remote-viewer'):
         si = self.si
         dc = self.dc
         vcip = self.vcip
@@ -792,7 +792,7 @@ class Ksphere:
         if vncfound:
             host = vm.runtime.host.name
             url = "vnc://%s:%s" % (host, vncport)
-            consolecommand = "remote-viewer %s &" % (url)
+            consolecommand = "%s %s &" % (consolecmd, url)
             if web:
                 return url
             if self.debug or os.path.exists("/i_am_a_container"):

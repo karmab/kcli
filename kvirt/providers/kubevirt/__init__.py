@@ -530,7 +530,7 @@ class Kubevirt(Kubecommon):
             vms.append(self.info(name, vm=vm))
         return sorted(vms, key=lambda x: x['name'])
 
-    def console(self, name, tunnel=False, web=False):
+    def console(self, name, tunnel=False, web=False, consolecmd='remote-viewer'):
         if os.path.exists("/i_am_a_container"):
             error("This functionality is not supported in container mode")
             return
@@ -559,7 +559,7 @@ class Kubevirt(Kubecommon):
         time.sleep(5)
         if web:
             return "vnc://127.0.0.1:%s" % localport
-        consolecommand = "remote-viewer vnc://127.0.0.1:%s &" % localport
+        consolecommand = "%s vnc://127.0.0.1:%s &" % (consolecmd, localport)
         if self.debug:
             msg = "Run the following command:\n%s" % consolecommand if not self.debug else consolecommand
             pprint(msg)

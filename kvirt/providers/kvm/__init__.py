@@ -1378,7 +1378,7 @@ class Kvirt(object):
             vms.append(self.info(vm.name(), vm=vm))
         return sorted(vms, key=lambda x: x['name'])
 
-    def console(self, name, tunnel=False, web=False):
+    def console(self, name, tunnel=False, web=False, consolecmd='remote-viewer'):
         conn = self.conn
         try:
             vm = conn.lookupByName(name)
@@ -1414,10 +1414,7 @@ class Kvirt(object):
                     if tunnel:
                         os.popen(consolecommand)
                     return url
-                if os.path.exists('/Applications') and os.path.exists('/Applications/RemoteViewer'):
-                    consolecommand += "open -a RemoteViewer —args %s &" % url
-                else:
-                    consolecommand += "remote-viewer %s &" % url
+                consolecommand += "%s %s &" % (consolecmd, url)
                 if self.debug or os.path.exists("/i_am_a_container"):
                     msg = "Run the following command:\n%s" % consolecommand if not self.debug else consolecommand
                     pprint(msg)
