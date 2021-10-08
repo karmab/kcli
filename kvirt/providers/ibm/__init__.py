@@ -1050,21 +1050,33 @@ class Kibm(object):
         except ApiException as exc:
             error('Unable to retrieve LoadBalancers. %s' % exc)
             return results
+        if lbs:
+            vms_by_addresses = {}
+            for vm in self.conn.list_instances().get_result()['instances']:
+                vms_by_addresses[vm['network_interfaces'][0]['primary_ipv4_address']] = vm['name']
         for lb in lbs:
             protocols = set()
             ports = []
+            lb_id = lb['id']
             name = lb['name']
             ip = lb['hostname']
             try:
-                listeners = self.conn.list_load_balancer_listeners(load_balancer_id=lb['id']).result['listeners']
+                listeners = self.conn.list_load_balancer_listeners(load_balancer_id=lb_id).result['listeners']
             except ApiException as exc:
                 error('Unable to retrieve listeners for load balancer %s. %s' % (name, exc))
                 continue
             for listener in listeners:
                 protocols.add(listener['protocol'])
                 ports.append(str(listener['port']))
-                # TODO: targets
-            target = ''
+            target = []
+            if 'pools' in lb:
+                pool_id = lb['pools'][0]['id']
+                pool = self.conn.get_load_balancer_pool(id=pool_id, load_balancer_id=lb_id).get_result()
+                for member in pool['members']:
+                    member_data = self.conn.get_load_balancer_pool_member(lb_id, pool_id, member['id']).get_result()
+                    member_name = vms_by_addresses[member_data['target']['address']]
+                    target.append(member_name)
+            target = ','.join(target)
             results.append([name, ip, ','.join(protocols), '+'.join(ports), target])
         return results
 

@@ -2246,7 +2246,7 @@ class Kconfig(Kbaseconfig):
 
     def list_loadbalancers(self):
         k = self.k
-        if self.type not in ['aws', 'gcp']:
+        if self.type not in ['aws', 'gcp', 'ibm']:
             results = []
             for vm in k.list():
                 if vm['profile'].startswith('loadbalancer') and len(vm['profile'].split('-')) == 2:
