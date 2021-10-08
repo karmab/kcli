@@ -1020,13 +1020,9 @@ def create(config, plandir, cluster, overrides):
                         device = ipmatch.group(4)
                     if ip is not None and netmask is not None and gateway is not None and device is not None\
                             and nameserver is not None:
-                        # _cmds = ["ip addr add %s/%s dev %s" % (ip, netmask, device),
-                        #         "ifconfig %s up" % device,
-                        #         "ip route add default via %s" % gateway,
-                        #         "echo nameserver %s > /etc/resolv.conf" % nameserver]
-                        # iso_overrides['cmds'] = _cmds
                         ifcfg = "DEVICE=%s\nONBOOT=yes\nNM_CONTROLLED=yes\nBOOTPROTO=static\nIPADDR=%s\n" % (device, ip)
-                        ifcfg += "PREFIX=%s\nGATEWAY=%s\nDNS1=%s" % (netmask, gateway, nameserver)
+                        netmask_info = 'NETMASK=%s' if '.' in netmask else 'PREFIX=%s' % netmask
+                        ifcfg += "%s\nGATEWAY=%s\nDNS1=%s" % (netmask_info, gateway, nameserver)
                         _ifcfg_file = [{"path": "/etc/sysconfig/network-scripts/ifcfg-%s" % device, "content": ifcfg}]
                         _files.extend(_ifcfg_file)
                 iso_overrides['files'] = _files
