@@ -1783,6 +1783,7 @@ Alternatively, you can leverage bootstrap in place (bip) and rhcos live iso with
 -  sno_dns: Defaults to true. A static pod leveraging coredns and pointing the relevant dns records to the ip of the node is injected after master ignition is generated, removing the need for external dns. Use this if you can’t provide the DNS requirements for the single node
 -  sno_virtual: Defaults to false. If you set it to true, a vm leveraging the generated iso will be created and install will be monitored up until the end. This is mostly available for dog fooding the bip approach.
 -  extra_args: You can use this variable to specify as a string any extra args to add to the generated iso. A common use case for this is to set static networking for the node, for instanc with something like ``ip=192.168.1.200::192.168.1.1:255.255.255.0:mysupersno.dev.local:enp1s0:none nameserver=192.168.1.1``
+-  api_ip: This is normally not needed but if you already have some DNS records in place pointing to a given api vip or you don’t know your baremetal ip, you can specify the vip so that an extra keepalived static pod is injected.
 
 Note that in the baremetal context, you are responsible for attaching the generated iso to your target node.
 
