@@ -1028,6 +1028,8 @@ def create(config, plandir, cluster, overrides):
                 if api_ip is not None:
                     if data.get('virtual_router_id') is None:
                         iso_overrides['virtual_router_id'] = hash(cluster) % 254 + 1
+                        vips = [api_ip, ingress_ip] if ingress_ip is not None else [api_ip]
+                        pprint("Injecting keepalived static pod with %s" % ','.join(vips))
                         pprint("Using keepalived virtual_router_id %s" % iso_overrides['virtual_router_id'])
                     _vip_files = [{"path": "/root/keepalived.yml", "origin": "%s/staticpods/keepalived.yml" % plandir},
                                   {"path": "/root/keepalived.conf", "origin": "%s/keepalived.conf" % plandir}]
