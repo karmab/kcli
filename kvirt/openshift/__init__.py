@@ -997,7 +997,7 @@ def create(config, plandir, cluster, overrides):
         with open("iso.ign", 'w') as f:
             iso_overrides = {}
             extra_args = overrides.get('extra_args')
-            if sno_dns or sno_disk is None or extra_args is not None:
+            if sno_dns or sno_disk is None or extra_args is not None or api_ip is not None:
                 _files = [{"path": "/root/sno-finish.service",
                            "origin": "%s/sno-finish.service" % plandir},
                           {"path": "/usr/local/bin/sno-finish.sh", "origin": "%s/sno-finish.sh" % plandir,
