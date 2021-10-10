@@ -15,7 +15,7 @@ VCS:            {{{ git_dir_vcs }}}
 Source:         kcli-{{{ git_custom_version }}}.tar.gz
 AutoReq:        no
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
-BuildRequires:  python3-devel rubygem-ronn gzip
+BuildRequires:  python3-devel rubygem-ronn gzip python3-setuptools
 Requires:       python3 libvirt-python3 genisoimage nmap-ncat python3-prettytable python3-PyYAML python3-flask python3-netaddr python3-argcomplete python3-requests
 
 %description
