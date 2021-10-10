@@ -17,6 +17,13 @@ cat /opt/openshift/master.ign | jq ".storage.files |= . + [{\"filesystem\": \"ro
 cp /opt/openshift/master.ign /root
 {% endif %}
 
+{% if api_ip != None %}
+KEEPALIVEDYML="$(cat /root/keepalived.yml | base64 -w0)"
+KEEPALIVEDCONF="$(cat /root/keepalived.conf | base64 -w0)"
+cp /root/master.ign /root/master.ign.ori
+cat /root/master.ign.ori | jq ".storage.files |= . + [{\"filesystem\": \"root\", \"mode\": 448, \"path\": \"/etc/kubernetes/manifests/keepalived.yml\", \"contents\": {\"source\": \"data:text/plain;charset=utf-8;base64,$KEEPALIVEDYML\", \"verification\": {}}},{\"filesystem\": \"root\", \"mode\": 448, \"path\": \"/etc/kubernetes/keepalived.conf\", \"contents\": {\"source\":\"data:text/plain;charset=utf-8;base64,$KEEPALIVEDCONF\",\"verification\": {}}}]" > /root/master.ign
+{% endif %}
+
 for vg in $(vgs -o name --noheadings) ; do vgremove -y $vg ; done
 for pv in $(pvs -o name --noheadings) ; do pvremove -y $pv ; done
 {% if sno_disk != None %}

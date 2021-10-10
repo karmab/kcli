@@ -1025,6 +1025,13 @@ def create(config, plandir, cluster, overrides):
                         ifcfg += "%s\nGATEWAY=%s\nDNS1=%s" % (netmask_info, gateway, nameserver)
                         _ifcfg_file = [{"path": "/etc/sysconfig/network-scripts/ifcfg-%s" % device, "content": ifcfg}]
                         _files.extend(_ifcfg_file)
+                if api_ip is not None:
+                    if data.get('virtual_router_id') is None:
+                        iso_overrides['virtual_router_id'] = hash(cluster) % 254 + 1
+                        pprint("Using keepalived virtual_router_id %s" % iso_overrides['virtual_router_id'])
+                    _vip_files = [{"path": "/root/keepalived.yml", "origin": "%s/staticpods/keepalived.yml" % plandir},
+                                  {"path": "/root/keepalived.conf", "origin": "%s/keepalived.conf" % plandir}]
+                    _files.extend(_vip_files)
                 iso_overrides['files'] = _files
             iso_overrides.update(data)
             result = config.create_vm(sno_name, 'rhcos46', overrides=iso_overrides, onlyassets=True)
