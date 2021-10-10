@@ -1355,25 +1355,27 @@ kcli create kube generic -P masters=X -P workers=Y $cluster
 
 ## Deploying openshift/okd clusters
 
-*DISCLAIMER*: This is not supported in anyway by Red Hat.
+*DISCLAIMER*: This is not supported in anyway by Red Hat (although the end result cluster would be).
 
 for Openshift, the official installer is leveraged with kcli creating the vms instead of Terraform, and injecting some extra pods to provide a vip and self contained dns.
 
 The main benefits of deploying Openshift with kcli are:
 
+- Auto download openshift-install binary specified version.
 - Easy vms tuning.
 - Single workflow regardless of the target platform
 - Self contained dns. (For cloud platforms, cloud public dns is leveraged instead)
 - For libvirt, no need to compile installer or tweak libvirtd.
 - Vms can be connected to a physical bridge.
 - Multiple clusters can live on the same l2 network.
+- Support for disconnected registry and ipv6 networks
 
 ### Requirements
 
 - Valid pull secret (for downstream)
 - Ssh public key.
 - Write access to /etc/hosts file to allow editing of this file.
-- An available ip in your vm's network to use as *api_ip*. Make sure it is excluded from your dhcp server.
+- An available ip in your vm's network to use as *api_ip*. Make sure it is excluded from your dhcp server. An optional *ingress_ip* can be specified, otherwise api_ip will be used.
 - Direct access to the deployed vms. Use something like this otherwise `sshuttle -r your_hypervisor 192.168.122.0/24 -v`).
 - Target platform needs:
   - Ignition support 
@@ -1383,19 +1385,35 @@ The main benefits of deploying Openshift with kcli are:
      - swift available on the install.
      - a flavor. You can create a dedicated one with `openstack flavor create --id 6 --ram 32768 --vcpus 16 --disk 30 m1.openshift`
      - a port on target network mapped to a floating ip. If not specified with api_ip and public_api_ip parameters, the second-to-last ip from the network will be used.
-- For ipv6, you run the following sysctl `net.ipv6.conf.all.accept_ra=2`
+- For ipv6, you need to run the following sysctl `net.ipv6.conf.all.accept_ra=2`
 
 ### How to Use
 
 #### Create a parameters.yml
 
-Prepare a parameter file with the folloving variables:
+Prepare a parameter file with valid variables:
 
+A minimal one could be the following one
+
+```
+cluster: mycluster
+domain: karmalabs.com
+version: stable
+tag: '4.8'
+masters: 3 
+workers:2
+memory: 16384
+numcpus: 16
+```
+
+Here's the list of all variables that can be used (you can list them with `kcli info cluster openshift`)
 
 |Parameter                 |Default Value                                |Comments|
 |--------------------------|---------------------------------------------|--------|
 |*version*|nightly|You can choose between nightly, ci or stable. ci requires specific data in your secret|
 |tag                   |4.5                               ||
+|async                 |false                             |Exit once vms are created and let job in cluster delete bootstrap|
+|notify                |false                             |Whether to send notifications once cluster is deployed. Mean to be used in async mode|
 |pull_secret           |openshift_pull.json               ||
 |image                 |rhcos45                           |rhcos image to use (should be qemu for libvirt/kubevirt and openstack one for ovirt/openstack)|
 |helper_image          |CentOS-7-x86_64-GenericCloud.qcow2|which image to use when deploying temporary helper vms|
@@ -1485,12 +1503,32 @@ If a `manifests` directory exists in the current directory, the *yaml assets fou
 
 Check [This documentation](https://github.com/karmab/kcli/blob/master/docs/openshift_architecture.md)
 
+### SNO (single node openshift ) support
+
+You can deploy a single node setting masters to 1 and workers to 0 in your parameter file. On Cloud platforms, you can use an extra parameter, `sno_cloud_remove_lb`, to remove loadbalancer and point dns directly to the public ip of your node, making the resulting cluster only rely on the corresponding instance.
+
+Alternatively, you can leverage bootstrap in place (bip) and rhcos live iso with the flag `sno`, which allows you to provision a baremetal sno by creating a custom iso stored in your specified libvirt pool.
+The following extra parameters are available with this workflow:
+
+- sno_disk: You can indicate which disk to use for installing Rhcos operating system in your node. If none is specified, the disk will be autodiscovered
+- sno_dns: Defaults to true. A static pod leveraging coredns and pointing the relevant dns records to the ip of the node is injected after master ignition is generated, removing the need for external dns. Use this if you can't provide the DNS requirements for the single node
+- sno_virtual: Defaults to false. If you set it to true, a vm leveraging the generated iso will be created and install will be monitored up until the end. This is mostly available for dog fooding the bip approach.
+- extra_args: You can use this variable to specify as a string any extra args to add to the generated iso. A common use case for this is to set static networking for the node, for instanc with something like `ip=192.168.1.200::192.168.1.1:255.255.255.0:mysupersno.dev.local:enp1s0:none nameserver=192.168.1.1`
+
+Note that in the baremetal context, you are responsible for attaching the generated iso to your target node.
+
 ### Adding more workers
 
 The procedure is the same independently of the type of cluster used.
 
 ```
 kcli scale kube <generic|openshift|okd|k3s> -w num_of_workers --paramfile parameters.yml $cluster
+```
+
+In openshift case, for baremetal workers you can use the following command:
+
+```
+kcli create openshift-iso --paramfile parameters.yml $cluster
 ```
 
 ### Interacting with your clusters
