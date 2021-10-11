@@ -450,6 +450,9 @@ def create(config, plandir, cluster, overrides):
     metal3 = data.get('metal3')
     version = data.get('version')
     tag = data.get('tag')
+    if str(tag) == '4.1':
+        tag = '4.10'
+        data['tag'] = tag
     if os.path.exists('openshift-install'):
         pprint("Removing old openshift-install")
         os.remove('openshift-install')
