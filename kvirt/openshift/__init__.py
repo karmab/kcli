@@ -1032,9 +1032,9 @@ def create(config, plandir, cluster, overrides):
                         pprint("Injecting keepalived static pod with %s" % ','.join(vips))
                         pprint("Using keepalived virtual_router_id %s" % data['virtual_router_id'])
                     _vip_files = [{"path": "/root/keepalived.yml", "origin": "%s/staticpods/keepalived.yml" % plandir,
-                                   "mode": 644},
+                                   "mode": 420},
                                   {"path": "/root/keepalived.conf", "origin": "%s/keepalived.conf" % plandir,
-                                   "mode": 644}]
+                                   "mode": 420}]
                     _files.extend(_vip_files)
                 iso_overrides['files'] = _files
             iso_overrides.update(data)

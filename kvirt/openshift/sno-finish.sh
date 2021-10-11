@@ -12,7 +12,7 @@ sed -i "s/None/$IP/" /root/Corefile
 COREDNS="$(cat /root/coredns.yml | base64 -w0)"
 COREFILE="$(cat /root/Corefile | base64 -w0)"
 FORCEDNS="$(cat /root/99-forcedns | base64 -w0)"
-cat /opt/openshift/master.ign | jq ".storage.files |= . + [{\"filesystem\": \"root\", \"mode\": 448, \"path\": \"/etc/kubernetes/manifests/coredns.yml\", \"contents\": {\"source\": \"data:text/plain;charset=utf-8;base64,$COREDNS\", \"verification\": {}}},{\"filesystem\": \"root\", \"mode\": 448, \"path\": \"/etc/kubernetes/Corefile\", \"contents\": {\"source\":\"data:text/plain;charset=utf-8;base64,$COREFILE\",\"verification\": {}}},{\"filesystem\": \"root\", \"mode\": 448, \"path\": \"/etc/NetworkManager/dispatcher.d/99-forcedns\", \"contents\": {\"source\":\"data:text/plain;charset=utf-8;base64,$FORCEDNS\",\"verification\": {}}}]" > /root/master.ign
+cat /opt/openshift/master.ign | jq ".storage.files |= . + [{\"filesystem\": \"root\", \"mode\": 420, \"path\": \"/etc/kubernetes/manifests/coredns.yml\", \"contents\": {\"source\": \"data:text/plain;charset=utf-8;base64,$COREDNS\", \"verification\": {}}},{\"filesystem\": \"root\", \"mode\": 420, \"path\": \"/etc/kubernetes/Corefile\", \"contents\": {\"source\":\"data:text/plain;charset=utf-8;base64,$COREFILE\",\"verification\": {}}},{\"filesystem\": \"root\", \"mode\": 448, \"path\": \"/etc/NetworkManager/dispatcher.d/99-forcedns\", \"contents\": {\"source\":\"data:text/plain;charset=utf-8;base64,$FORCEDNS\",\"verification\": {}}}]" > /root/master.ign
 {% else %}
 cp /opt/openshift/master.ign /root
 {% endif %}
@@ -21,7 +21,7 @@ cp /opt/openshift/master.ign /root
 KEEPALIVEDYML="$(cat /root/keepalived.yml | base64 -w0)"
 KEEPALIVEDCONF="$(cat /root/keepalived.conf | base64 -w0)"
 cp /root/master.ign /root/master.ign.ori
-cat /root/master.ign.ori | jq ".storage.files |= . + [{\"filesystem\": \"root\", \"mode\": 448, \"path\": \"/etc/kubernetes/manifests/keepalived.yml\", \"contents\": {\"source\": \"data:text/plain;charset=utf-8;base64,$KEEPALIVEDYML\", \"verification\": {}}},{\"filesystem\": \"root\", \"mode\": 448, \"path\": \"/etc/kubernetes/keepalived.conf\", \"contents\": {\"source\":\"data:text/plain;charset=utf-8;base64,$KEEPALIVEDCONF\",\"verification\": {}}}]" > /root/master.ign
+cat /root/master.ign.ori | jq ".storage.files |= . + [{\"filesystem\": \"root\", \"mode\": 420, \"path\": \"/etc/kubernetes/manifests/keepalived.yml\", \"contents\": {\"source\": \"data:text/plain;charset=utf-8;base64,$KEEPALIVEDYML\", \"verification\": {}}},{\"filesystem\": \"root\", \"mode\": 420, \"path\": \"/etc/kubernetes/keepalived.conf\", \"contents\": {\"source\":\"data:text/plain;charset=utf-8;base64,$KEEPALIVEDCONF\",\"verification\": {}}}]" > /root/master.ign
 {% endif %}
 
 for vg in $(vgs -o name --noheadings) ; do vgremove -y $vg ; done
