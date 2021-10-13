@@ -907,24 +907,31 @@ class Kibm(object):
     def export(self, name, image=None):
         print("not implemented")
 
+    def _wait_lb_active(self, id):
+        while True:
+            result = self.conn.get_load_balancer(id=id).result
+            if result['provisioning_status'] == 'active':
+                break
+            pprint("Waiting 10s for lb to go active...")
+            sleep(10)
+
+    def _wait_lb_dead(self, id):
+        while True:
+            try:
+                self.conn.get_load_balancer(id=id).result
+                pprint("Waiting 10s for lb to disappear...")
+                sleep(10)
+            except:
+                break
+
     def create_loadbalancer(self, name, ports=[], checkpath='/index.html', vms=[], domain=None, checkport=80, alias=[],
                             internal=False):
-        def _wait_active(id):
-            while True:
-                result = self.conn.get_load_balancer(id=id).result
-                if result['provisioning_status'] == 'active':
-                    break
-                sleep(10)
+
         ports = [int(port) for port in ports]
         internal = False if internal is None else internal
-        try:
-            provisioned_sgs = {y['id']: x['id'] for x in self.conn.list_security_groups().result['security_groups']
-                               for y in x['targets']}
-        except ApiException as exc:
-            return {'result': 'failure', 'reason': 'Unable to retrieve security groups. %s' % exc}
         clean_name = name.replace('.', '-')
+        security_group_id = self.create_security_group(clean_name, ports)
         subnets = set()
-        security_groups = set()
         member_list = []
         resource_group_id = None
         if vms:
@@ -936,7 +943,8 @@ class Kibm(object):
                 member_list.append(virtual_machine['primary_network_interface']['primary_ipv4_address'])
                 if 'primary_network_interface' in virtual_machine:
                     subnets.add(virtual_machine['primary_network_interface']['subnet']['id'])
-                security_groups.add(provisioned_sgs[virtual_machine['primary_network_interface']['id']])
+                nic_id = virtual_machine['primary_network_interface']['id']
+                self.conn.add_security_group_network_interface(security_group_id, nic_id)
                 if resource_group_id is None:
                     resource_group_id = virtual_machine['resource_group']['id']
         pprint("Creating load balancer pool...")
@@ -963,9 +971,9 @@ class Kibm(object):
                 )],
                 subnets=[vpc_v1.SubnetIdentityById(id=x) for x in subnets],
                 resource_group_id=vpc_v1.ResourceGroupIdentityById(id=resource_group_id),
-                security_groups=[vpc_v1.SecurityGroupIdentityById(id=x) for x in security_groups],
+                security_groups=[vpc_v1.SecurityGroupIdentityById(id=security_group_id)],
             ).result
-            _wait_active(id=lb['id'])
+            self._wait_lb_active(id=lb['id'])
         except ApiException as exc:
             error('Unable to create load balancer. %s' % exc)
             return {'result': 'failure', 'reason': 'Unable to create load balancer. %s' % exc}
@@ -979,7 +987,7 @@ class Kibm(object):
                     default_pool=vpc_v1.LoadBalancerPoolIdentityById(id=lb['pools'][0]['id'])
                 )
                 try:
-                    _wait_active(id=lb['id'])
+                    self._wait_lb_active(id=lb['id'])
                 except ApiException as exc:
                     error('Unable to create load balancer. %s' % exc)
                     return {'result': 'failure', 'reason': 'Unable to create load balancer. %s' % exc}
@@ -990,7 +998,7 @@ class Kibm(object):
         resource_model = {'resource_id': lb['crn']}
         try:
             self.global_tagging_service.attach_tag(resources=[resource_model],
-                                                   tag_names=['domain:%s' % domain],
+                                                   tag_names=['domain:%s' % domain, 'realname:%s' % name],
                                                    tag_type='user')
         except ApiException as exc:
             error('Unable to attach tags. %s' % exc)
@@ -1028,20 +1036,28 @@ class Kibm(object):
             error('Unable to retrieve tags. %s' % exc)
             return
         domain = None
+        realname = name
         for tag in tags:
             tagname = tag['name']
             if tagname.count(':') == 1:
                 key, value = tagname.split(':')
                 if key == 'domain':
                     domain = value
+                if key == 'realname':
+                    realname = value
         try:
             self.conn.delete_load_balancer(id=lb['id'])
         except ApiException as exc:
             error('Unable to delete load balancer. %s' % exc)
             return
         if domain is not None:
-            pprint("Deleting DNS %s.%s" % (name, domain))
-            self.delete_dns(name, domain, name)
+            pprint("Deleting DNS %s.%s" % (realname, domain))
+            self.delete_dns(realname, domain, name)
+        self._wait_lb_dead(id=lb['id'])
+        try:
+            self.delete_security_group(name)
+        except Exception as exc:
+            error('Unable to delete security group. %s' % exc)
 
     def list_loadbalancers(self):
         results = []
@@ -1308,3 +1324,35 @@ class Kibm(object):
             error('Unable to check DNS zones for DNS %s. %s' % (domain, exc))
             return None
         return dnszone
+
+    def create_security_group(self, name, ports):
+        vpc_id = [net['id'] for net in self.conn.list_vpcs().result['vpcs'] if net['name'] == self.vpc][0]
+        vpc_identity_model = {'id': vpc_id}
+        rules = []
+        security_group_rule_prototype_model = {}
+        security_group_rule_prototype_model['direction'] = 'outbound'
+        security_group_rule_prototype_model['ip_version'] = 'ipv4'
+        security_group_rule_prototype_model['protocol'] = 'all'
+        security_group_rule_prototype_model['remote'] = {'cidr_block': '0.0.0.0/0'}
+        rules.append(security_group_rule_prototype_model)
+        for port in ports:
+            security_group_rule_prototype_model = {}
+            security_group_rule_prototype_model['direction'] = 'inbound'
+            security_group_rule_prototype_model['ip_version'] = 'ipv4'
+            security_group_rule_prototype_model['protocol'] = 'tcp'
+            security_group_rule_prototype_model['port_min'] = port
+            security_group_rule_prototype_model['port_max'] = port
+            security_group_rule_prototype_model['remote'] = {'cidr_block': '0.0.0.0/0'}
+            rules.append(security_group_rule_prototype_model)
+        response = self.conn.create_security_group(vpc_identity_model, name=name, rules=rules).result
+        return response['id']
+
+    def delete_security_group(self, name):
+        security_groups = self.conn.list_security_groups().result['security_groups']
+        matching_sgs = [x for x in security_groups if x['name'] == name]
+        if matching_sgs:
+            security_group = matching_sgs[0]
+            security_group_id = security_group['id']
+            for n in security_group['network_interfaces']:
+                self.conn.remove_security_group_network_interface(security_group_id, n['id'])
+            self.conn.delete_security_group(security_group_id)
