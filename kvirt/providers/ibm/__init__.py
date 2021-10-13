@@ -1074,8 +1074,9 @@ class Kibm(object):
                 pool = self.conn.get_load_balancer_pool(id=pool_id, load_balancer_id=lb_id).get_result()
                 for member in pool['members']:
                     member_data = self.conn.get_load_balancer_pool_member(lb_id, pool_id, member['id']).get_result()
-                    member_name = vms_by_addresses[member_data['target']['address']]
-                    target.append(member_name)
+                    if member_data['target']['address'] in vms_by_addresses:
+                        member_name = vms_by_addresses[member_data['target']['address']]
+                        target.append(member_name)
             target = ','.join(target)
             results.append([name, ip, ','.join(protocols), '+'.join(ports), target])
         return results
