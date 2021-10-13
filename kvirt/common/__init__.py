@@ -278,12 +278,12 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             agent_keys = os.popen('ssh-add -L 2>/dev/null | head -1').readlines()
             if agent_keys:
                 keys = agent_keys
-        if keys:
-            for key in list(set(keys)):
-                userdata += "- %s\n" % key
         else:
             warning("neither id_rsa or id_dsa public keys found in your .ssh or .kcli directory, you might have "
                     "trouble accessing the vm")
+        if keys:
+            for key in list(set(keys)):
+                userdata += "- %s\n" % key
         for path in ["~/.kcli/id_rsa.pub", "~/.kcli/id_dsa.pub", "~/.ssh/id_rsa.pub", "~/.ssh/id_dsa.pub"]:
             expanded_path = os.path.expanduser(path)
             if os.path.exists(expanded_path) and os.path.exists(expanded_path.replace('.pub', '')):
