@@ -29,7 +29,7 @@ import yaml
 
 
 virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere', 'packet']
-cloudplatforms = ['aws', 'gcp']
+cloudplatforms = ['aws', 'gcp', 'ibm']
 DEFAULT_TAG = '4.8'
 
 

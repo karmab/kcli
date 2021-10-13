@@ -1148,7 +1148,7 @@ class Kibm(object):
         return [obj['Key'] for obj in self.s3.list_objects(Bucket=bucket).get('Contents', [])]
 
     def public_bucketfile_url(self, bucket, path):
-        return 'https://{}.s3.{}.cloud-object-storage.appdomain.cloud/{}'.format(bucket, self.region, path)
+        return "https://s3.direct.%s.cloud-object-storage.appdomain.cloud/%s/%s" % (self.region, bucket, path)
 
     def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False, instanceid=None):
         if domain is None:
