@@ -383,8 +383,9 @@ class Kibm(object):
             error("Unable to retrieve VM %s. %s" % (name, exc))
             return None
         try:
-            url = self.conn.create_instance_console_access_token(
-                instance_id=vm['id'], console_type='serial').result['href']
+            # url = self.conn.create_instance_console_access_token(
+            #    instance_id=vm['id'], console_type='serial').result['href']
+            url = "https://cloud.ibm.com/vpc-ext/compute/vs/%s~%s/vnc" % (self.region, vm['id'])
         except ApiException as exc:
             error("Unable to retrieve console access. %s" % exc)
             return None
@@ -399,7 +400,28 @@ class Kibm(object):
         return None
 
     def serialconsole(self, name, web=False):
-        print("not implemented")
+        try:
+            vm = self._get_vm(name)
+            if vm is None:
+                error("VM %s not found" % name)
+                return None
+        except ApiException as exc:
+            error("Unable to retrieve VM %s. %s" % (name, exc))
+            return None
+        try:
+            url = "https://cloud.ibm.com/vpc-ext/compute/vs/%s~%s/serial" % (self.region, vm['id'])
+        except ApiException as exc:
+            error("Unable to retrieve console access. %s" % exc)
+            return None
+        if web:
+            return url
+        if self.debug or os.path.exists("/i_am_a_container"):
+            msg = "Open the following url:\n%s" % url if os.path.exists("/i_am_a_container") else url
+            pprint(msg)
+        else:
+            pprint("Opening url: %s" % url)
+            webbrowser.open(url, new=2, autoraise=True)
+        return None
 
     def info(self, name, output='plain', fields=[], values=False, vm=None, ignore_volumes=False, floating_ips=None,
              debug=False):
