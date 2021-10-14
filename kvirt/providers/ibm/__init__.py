@@ -962,7 +962,7 @@ class Kibm(object):
     def create_loadbalancer(self, name, ports=[], checkpath='/index.html', vms=[], domain=None, checkport=80, alias=[],
                             internal=False):
 
-        ports = [int(port) for port in ports]
+        ports = [int(port) for port in ports] + [checkport]
         internal = False if internal is None else internal
         clean_name = name.replace('.', '-')
         security_group_id = self.create_security_group(clean_name, ports)
