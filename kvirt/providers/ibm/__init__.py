@@ -290,7 +290,6 @@ class Kibm(object):
             )
         except ApiException as exc:
             return {'result': 'failure', 'reason': 'Unable to add floating ip. %s' % exc}
-
         if reservedns and domain is not None:
             self.reserve_dns(name, nets=nets, domain=domain, alias=alias, instanceid=name)
         return {'result': 'success'}
@@ -625,7 +624,21 @@ class Kibm(object):
         print("not implemented")
 
     def update_metadata(self, name, metatype, metavalue, append=False):
-        print("not implemented")
+        try:
+            vm = self._get_vm(name)
+            if vm is None:
+                error('VM %s not found' % name)
+                return
+        except ApiException as exc:
+            error('Unable to retrieve VM %s. %s' % (name, exc))
+            return
+        resource_model = {'resource_id': vm['crn']}
+        tag_names = ["%s:%s" % (metatype, metavalue)]
+        try:
+            self.global_tagging_service.attach_tag(resources=[resource_model],
+                                                   tag_names=tag_names, tag_type='user').get_result()
+        except ApiException as exc:
+            return {'result': 'failure', 'reason': 'Unable to attach tags. %s' % exc}
 
     def update_memory(self, name, memory):
         print("not implemented")
@@ -969,6 +982,7 @@ class Kibm(object):
                 self.conn.add_security_group_network_interface(security_group_id, nic_id)
                 if resource_group_id is None:
                     resource_group_id = virtual_machine['resource_group']['id']
+                self.update_metadata(vm, 'loadbalancer', clean_name, append=True)
         pprint("Creating load balancer pool...")
         try:
             lb = self.conn.create_load_balancer(

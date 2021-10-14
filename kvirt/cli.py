@@ -1233,6 +1233,7 @@ def update_vm(args):
     information = overrides.get('information')
     iso = overrides.get('iso')
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    extra_metadata = {k: overrides[k] for k in overrides if k not in config.list_keywords()}
     k = config.k
     names = [common.get_lastvm(config.client)] if not args.names else args.names
     for name in names:
@@ -1331,6 +1332,9 @@ def update_vm(args):
                 for net in range(len(currentnets), len(nets), -1):
                     interface = "eth%s" % (net - 1)
                     k.delete_nic(name, interface)
+        if extra_metadata:
+            for key in extra_metadata:
+                k.update_metadata(name, key, extra_metadata[key])
 
 
 def create_vmdisk(args):
