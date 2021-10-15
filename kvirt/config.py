@@ -2374,7 +2374,7 @@ class Kconfig(Kbaseconfig):
                 k.delete_service("%s-api-svc" % cluster, k.namespace)
             except:
                 pass
-        if self.type in ['aws', 'gcp']:
+        if self.type in ['aws', 'gcp', 'ibm']:
             for lb in ['api', 'apps']:
                 k.delete_loadbalancer("%s.%s" % (lb, cluster))
             bucket = "%s-%s" % (cluster, domain)
