@@ -1439,7 +1439,11 @@ def create_lb(args):
     ports = args.ports
     domain = args.domain
     internal = args.internal
-    vms = args.vms.split(',') if args.vms is not None else []
+    if args.vms is None:
+        vms = []
+    else:
+        good_vms = args.vms[1:-1] if args.vms.startswith('[') and args.vms.endswith(']') else args.vms
+        vms = [v.strip() for v in good_vms.split(',')]
     ports = args.ports.split(',') if args.ports is not None else []
     name = nameutils.get_random_name().replace('_', '-') if args.name is None else args.name
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
