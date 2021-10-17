@@ -43,6 +43,12 @@
  zerotier_kubelet: {{ zerotier_kubelet }}
  disks: {{ [disk_size] + extra_disks }}
  files:
+{% if disable_ipv6 and not ':' in api_ip %}
+  - content: |
+      net.ipv6.conf.all.disable_ipv6 = 1
+      net.ipv6.conf.default.disable_ipv6 = 1
+    path: /etc/sysctl.d/disableipv6.conf
+{% endif %}
   - path: /etc/NetworkManager/dispatcher.d/99-forcedns
     origin: 99-forcedns
     mode: 755

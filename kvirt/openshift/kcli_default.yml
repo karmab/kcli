@@ -21,6 +21,7 @@ network: default
 worker_network:
 api_ip: 
 ingress_ip: 
+disable_ipv6: false
 masters: 1
 workers: 0
 fips: false
