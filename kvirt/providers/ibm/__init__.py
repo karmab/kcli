@@ -996,7 +996,8 @@ class Kibm(object):
                         delay=20,
                         max_retries=2,
                         timeout=3,
-                        type='http',
+                        # type='http',
+                        type='tcp',
                         url_path=checkpath,
                         port=checkport,
                     ),
@@ -1241,15 +1242,15 @@ class Kibm(object):
             for a in alias:
                 if a == '*':
                     record_type = 'A'
+                    content = ip
                     if cluster is not None and ('master' in name or 'worker' in name):
                         dnsname = '*.apps.%s.%s' % (cluster, domain)
                     else:
                         dnsname = '*.%s.%s' % (name, domain)
-                    content = ip
                 else:
                     record_type = 'CNAME'
-                    dnsname = '%s.%s' % (a, domain) if '.' not in a else a
                     content = "%s.%s" % (name, domain)
+                    dnsname = '%s.%s' % (a, domain) if '.' not in a else a
                 try:
                     dnszone.create_dns_record(name=dnsname, type=record_type, ttl=60, content=content)
                 except ApiException as exc:
@@ -1279,7 +1280,8 @@ class Kibm(object):
             return
         recordsfound = False
         for record in records:
-            if entry in record['name'] or ('master-0' in name and record['name'].endswith(clusterdomain)):
+            if entry in record['name'] or ('master-0' in name and record['name'].endswith(clusterdomain))\
+                    or (record['type'] == 'CNAME' and record['content'] == entry):
                 record_identifier = record['id']
                 try:
                     dnszone.delete_dns_record(dnsrecord_identifier=record_identifier)
