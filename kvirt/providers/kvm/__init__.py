@@ -1414,8 +1414,8 @@ class Kvirt(object):
                     if tunnel:
                         os.popen(consolecommand)
                     return url
-                if os.path.exists('/Applications') and os.path.exists('/Applications/RemoteViewer'):
-                    consolecommand += "open -a RemoteViewer —args %s &" % url
+                if os.path.exists('/Applications') and os.path.exists('/Applications/RemoteViewer.app'):
+                    consolecommand += "open -a RemoteViewer --args %s &" % url
                 else:
                     consolecommand += "remote-viewer %s &" % url
                 if self.debug or os.path.exists("/i_am_a_container"):
