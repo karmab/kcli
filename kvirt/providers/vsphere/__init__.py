@@ -499,7 +499,8 @@ class Ksphere:
                 if key.startswith('guestinfo.'):
                     guestopt = vim.option.OptionValue()
                     guestopt.key = key
-                    guestopt.value = base64.b64encode(overrides[key].encode()).decode()
+                    # guestopt.value = base64.b64encode(overrides[key].encode()).decode()
+                    guestopt.value = overrides[key]
                     extraconfig.append(guestopt)
             confspec.extraConfig = extraconfig
             t = imageobj.CloneVM_Task(folder=vmfolder, name=name, spec=clonespec)
