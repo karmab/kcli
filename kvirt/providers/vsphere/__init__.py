@@ -495,6 +495,12 @@ class Ksphere:
                                                                enableroot=enableroot, overrides=overrides,
                                                                storemetadata=storemetadata, machine='vsphere',
                                                                image=image)
+            for key in overrides:
+                if key.startswith('guestinfo.'):
+                    guestopt = vim.option.OptionValue()
+                    guestopt.key = key
+                    guestopt.value = base64.b64encode(overrides[key].encode()).decode()
+                    extraconfig.append(guestopt)
             confspec.extraConfig = extraconfig
             t = imageobj.CloneVM_Task(folder=vmfolder, name=name, spec=clonespec)
             waitForMe(t)
