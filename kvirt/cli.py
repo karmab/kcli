@@ -110,8 +110,13 @@ def get_subparser(parser, subcommand):
 def get_version(args):
     full_version = "version: %s" % VERSION
     versiondir = os.path.dirname(version.__file__)
-    git_version = open('%s/git' % versiondir).read().rstrip() if os.path.exists('%s/git' % versiondir) else 'N/A'
-    full_version += " commit: %s" % git_version
+    git_file = '%s/git' % versiondir
+    git_version = 'N/A'
+    git_date = ''
+    if os.path.exists(git_file) and os.stat(git_file).st_size > 0:
+        git_version, git_date = open(git_file).read().rstrip().split(' ')
+        git_date = '(%s)' % git_date
+    full_version += " commit: %s %s" % (git_version, git_date)
     update = 'N/A'
     if git_version != 'N/A':
         try:
