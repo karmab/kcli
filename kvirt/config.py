@@ -1976,23 +1976,18 @@ class Kconfig(Kbaseconfig):
                 groups = _ansible.get('groups', {})
                 user = _ansible.get('user')
                 variables = _ansible.get('variables', {})
-                vms = []
-                if 'vms' in _ansible:
-                    vms = _ansible['vms']
-                    for vm in vms:
-                        if vm not in newvms:
-                            vms.remove(vm)
-                else:
-                    vms = newvms
-                if not vms:
+                targetvms = [vm for vm in _ansible['vms'] if vm in newvms] if 'vms' in _ansible else newvms
+                if not targetvms:
                     warning("Ansible skipped as no new vm within playbook provisioned")
                     return
                 ansiblecommand = "ansible-playbook"
                 if verbose:
                     ansiblecommand += " -vvv"
                 inventoryfile = "/tmp/%s.inv.yaml" % plan if self.yamlinventory else "/tmp/%s.inv" % plan
-                ansibleutils.make_plan_inventory(vms_to_host, plan, newvms, groups=groups, user=user,
-                                                 yamlinventory=self.yamlinventory, insecure=self.insecure)
+                ansibleutils.make_plan_inventory(vms_to_host, plan, targetvms, groups=groups, user=user,
+                                                 yamlinventory=self.yamlinventory, tunnel=self.tunnel,
+                                                 tunnelhost=self.tunnelhost, tunneluser=self.tunneluser,
+                                                 tunnelport=self.tunnelport, insecure=self.insecure)
                 if not os.path.exists('~/.ansible.cfg'):
                     ansibleconfig = os.path.expanduser('~/.ansible.cfg')
                     with open(ansibleconfig, "w") as f:
@@ -2002,7 +1997,7 @@ class Kconfig(Kbaseconfig):
                     with open(varsfile, 'w') as f:
                         yaml.dump(variables, f, default_flow_style=False)
                     ansiblecommand += " --extra-vars @%s" % (varsfile)
-                ansiblecommand += " -i  %s %s" % (inventoryfile, playbook)
+                ansiblecommand += " -i %s %s" % (inventoryfile, playbook)
                 pprint("Running: %s" % ansiblecommand)
                 os.system(ansiblecommand)
         if ansible and not onlyassets:
