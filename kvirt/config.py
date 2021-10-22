@@ -311,7 +311,7 @@ class Kconfig(Kbaseconfig):
                 ca_file = next((e for e in [self.options.get('ca_file'),
                                             os.environ.get("OS_CACERT")] if e is not None), None)
                 region_name = next((e for e in [self.options.get('region_name'),
-                                             os.environ.get("OS_REGION_NAME")] if e is not None), None)
+                                    os.environ.get("OS_REGION_NAME")] if e is not None), None)
                 external_network = self.options.get('external_network')
                 if password is None:
                     error("Missing password in the configuration. Leaving")

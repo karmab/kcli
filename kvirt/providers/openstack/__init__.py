@@ -426,8 +426,7 @@ class Kopenstack(object):
         floating_ips = {}
         try:
             fips = self.neutron.list_floatingips()
-            floating_ips.update({f['floating_ip_address']: f['id']
-                                            for f in fips['floatingips']})
+            floating_ips.update({f['floating_ip_address']: f['id'] for f in fips['floatingips']})
         except:
             # OVH does not provide floating ip networks, so the next error will occur
             # if some tries to get floating ip list:
