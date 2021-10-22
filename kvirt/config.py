@@ -1269,6 +1269,11 @@ class Kconfig(Kbaseconfig):
                     success("%s deleted on %s!" % (name, hypervisor))
                     deletedvms.append(name)
                     found = True
+                    cluster = vm.get('kube')
+                    if cluster:
+                        clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
+                        pprint("Deleting directory %s" % clusterdir)
+                        rmtree(clusterdir, ignore_errors=True)
         if container:
             cont = Kcontainerconfig(self, client=self.containerclient).cont
             for conta in sorted(cont.list_containers(k)):
