@@ -1270,10 +1270,11 @@ class Kconfig(Kbaseconfig):
                     deletedvms.append(name)
                     found = True
                     cluster = vm.get('kube')
-                    if cluster:
+                    if cluster is not None:
                         clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
-                        pprint("Deleting directory %s" % clusterdir)
-                        rmtree(clusterdir, ignore_errors=True)
+                        if os.path.exists(clusterdir):
+                            pprint("Deleting directory %s" % clusterdir)
+                            rmtree(clusterdir, ignore_errors=True)
         if container:
             cont = Kcontainerconfig(self, client=self.containerclient).cont
             for conta in sorted(cont.list_containers(k)):
