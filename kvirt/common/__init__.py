@@ -1000,7 +1000,7 @@ def get_user(image):
     """
     if 'centos9stream' in image.lower():
         user = 'cloud-user'
-    elif 'centos' in image.lower():
+    elif 'centos' in image.lower() and not image.startswith('ibm'):
         user = 'centos'
     elif 'coreos' in image.lower() or 'rhcos' in image.lower() or 'fcos' in image.lower():
         user = 'core'
