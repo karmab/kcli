@@ -1203,6 +1203,14 @@ def create(config, plandir, cluster, overrides):
                                                                                                        cluster, domain)
         sedcmd += ' %s/master.ign %s/worker.ign' % (clusterdir, clusterdir)
         call(sedcmd, shell=True)
+        if platform == 'ibm':
+            while api_ip is None:
+                api_ip = k.info("%s-bootstrap" % cluster).get('private_ip')
+                pprint("Gathering bootstrap private ip")
+                sleep(10)
+            sedcmd = 'sed -i "s@api-int.%s.%s@%s@"' % (cluster, domain, api_ip)
+            sedcmd += ' %s/master.ign %s/worker.ign' % (clusterdir, clusterdir)
+            call(sedcmd, shell=True)
         pprint("Deploying masters")
         result = config.plan(plan, inputfile='%s/cloud_masters.yml' % plandir, overrides=overrides)
         if result['result'] != 'success':

@@ -963,8 +963,8 @@ class Kibm(object):
                             internal=False):
 
         ports = [int(port) for port in ports]
-        if checkport not in ports:
-            ports.append(checkport)
+        # if checkport not in ports:
+        #     ports.append(checkport)
         internal = False if internal is None else internal
         clean_name = name.replace('.', '-')
         security_group_id = self.create_security_group(clean_name, ports)
@@ -1003,11 +1003,11 @@ class Kibm(object):
                     ),
                     protocol='tcp',
                     members=[vpc_v1.LoadBalancerPoolMemberPrototype(
-                        port=p,
+                        port=port,
                         target=vpc_v1.LoadBalancerPoolMemberTargetPrototypeIP(address=m)
-                    ) for p in ports for m in member_list],
-                    name=clean_name,
-                )],
+                    ) for m in member_list],
+                    name="%s-%s" % (clean_name, port),
+                ) for port in ports],
                 subnets=[vpc_v1.SubnetIdentityById(id=x) for x in subnets],
                 resource_group_id=vpc_v1.ResourceGroupIdentityById(id=resource_group_id),
                 security_groups=[vpc_v1.SecurityGroupIdentityById(id=security_group_id)],
@@ -1017,13 +1017,13 @@ class Kibm(object):
             error('Unable to create load balancer. %s' % exc)
             return {'result': 'failure', 'reason': 'Unable to create load balancer. %s' % exc}
         pprint("Creating listeners...")
-        for port in ports:
+        for index, port in enumerate(ports):
             try:
                 self.conn.create_load_balancer_listener(
                     load_balancer_id=lb['id'],
                     port=port,
                     protocol='tcp',
-                    default_pool=vpc_v1.LoadBalancerPoolIdentityById(id=lb['pools'][0]['id'])
+                    default_pool=vpc_v1.LoadBalancerPoolIdentityById(id=lb['pools'][index]['id'])
                 )
                 try:
                     self._wait_lb_active(id=lb['id'])
@@ -1036,8 +1036,11 @@ class Kibm(object):
         pprint("Load balancer DNS name %s" % lb['hostname'])
         resource_model = {'resource_id': lb['crn']}
         try:
+            tag_names = ['realname:%s' % name]
+            if domain is not None:
+                tag_names.append('domain:%s' % domain)
             self.global_tagging_service.attach_tag(resources=[resource_model],
-                                                   tag_names=['domain:%s' % domain, 'realname:%s' % name],
+                                                   tag_names=tag_names,
                                                    tag_type='user')
         except ApiException as exc:
             error('Unable to attach tags. %s' % exc)
@@ -1074,7 +1077,6 @@ class Kibm(object):
         except ApiException as exc:
             error('Unable to retrieve tags. %s' % exc)
             return
-        domain = None
         realname = name
         for tag in tags:
             tagname = tag['name']
