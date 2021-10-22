@@ -310,6 +310,8 @@ class Kconfig(Kbaseconfig):
                                              os.environ.get("OS_PASSWORD")] if e is not None), None)
                 ca_file = next((e for e in [self.options.get('ca_file'),
                                             os.environ.get("OS_CACERT")] if e is not None), None)
+                region_name = next((e for e in [self.options.get('region_name'),
+                                             os.environ.get("OS_REGION_NAME")] if e is not None), None)
                 external_network = self.options.get('external_network')
                 if password is None:
                     error("Missing password in the configuration. Leaving")
@@ -322,7 +324,7 @@ class Kconfig(Kbaseconfig):
                 from kvirt.providers.openstack import Kopenstack
                 k = Kopenstack(host=self.host, port=self.port, user=user, password=password, version=version,
                                debug=debug, project=project, domain=domain, auth_url=auth_url, ca_file=ca_file,
-                               external_network=external_network)
+                               external_network=external_network, region_name=region_name)
             elif self.type == 'vsphere':
                 user = self.options.get('user')
                 if user is None:

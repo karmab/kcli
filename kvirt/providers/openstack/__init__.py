@@ -27,7 +27,7 @@ class Kopenstack(object):
 
     """
     def __init__(self, host='127.0.0.1', version='3', port=None, user='root', password=None, debug=False, project=None,
-                 domain='Default', auth_url=None, ca_file=None, external_network=None):
+                 domain='Default', auth_url=None, ca_file=None, external_network=None, region_name=None):
         self.debug = debug
         self.host = host
         loader = loading.get_plugin_loader('password')
@@ -37,16 +37,17 @@ class Kopenstack(object):
             sess = session.Session(auth=auth, verify=os.path.expanduser(ca_file))
         else:
             sess = session.Session(auth=auth)
-        self.nova = novaclient.Client(version, session=sess)
-        self.glance = glanceclient(version, session=sess)
-        self.cinder = cinderclient.Client('3', session=sess)
-        self.neutron = neutronclient(session=sess)
+        self.nova = novaclient.Client(version, session=sess, region_name=region_name)
+        self.glance = glanceclient(version, session=sess, region_name=region_name)
+        self.cinder = cinderclient.Client('3', session=sess, region_name=region_name)
+        self.neutron = neutronclient(session=sess, region_name=region_name)
         os_options = {'user_domain_name': domain, 'project_domain_name': domain, 'project_name': project}
         self.swift = swiftclient.Connection(authurl=auth_url, user=user, key=password, os_options=os_options,
                                             auth_version='3')
         self.conn = self.nova
         self.project = project
         self.external_network = external_network
+        self.region_name = region_name
         return
 
 # should cleanly close your connection, if needed
@@ -422,7 +423,16 @@ class Kopenstack(object):
         except:
             error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        floating_ips = {f['floating_ip_address']: f['id'] for f in self.neutron.list_floatingips()['floatingips']}
+        floating_ips = {}
+        try:
+            fips = self.neutron.list_floatingips()
+            floating_ips.update({f['floating_ip_address']: f['id']
+                                            for f in fips['floatingips']})
+        except:
+            # OVH does not provide floating ip networks, so the next error will occur
+            # if some tries to get floating ip list:
+            # neutronclient.common.exceptions.NotFound: The resource could not be found
+            pass
         vm_floating_ips = []
         for key in list(vm.addresses):
             entry1 = vm.addresses[key]
