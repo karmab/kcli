@@ -34,6 +34,10 @@
  - path: /etc/systemd/system-preset/00-gcp-hack.preset
    origin: gcp-hack.preset
    mode: 644
+{% elif config_type == 'ibm' %}
+  - path: /etc/NetworkManager/dispatcher.d/99-forcedns
+    origin: 99-forcedns
+    mode: 755
 {% endif %}
 {% if cloud_tag != None %}
  tags: [{{ cloud_tag }}]

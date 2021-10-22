@@ -963,10 +963,9 @@ class Kibm(object):
                             internal=False):
 
         ports = [int(port) for port in ports]
-        # if checkport not in ports:
-        #     ports.append(checkport)
         internal = False if internal is None else internal
         clean_name = name.replace('.', '-')
+        pprint("Creating Security Group %s" % clean_name)
         security_group_id = self.create_security_group(clean_name, ports)
         subnets = set()
         member_list = []
@@ -1096,7 +1095,8 @@ class Kibm(object):
             self.delete_dns(realname, domain, name)
         self._wait_lb_dead(id=lb['id'])
         try:
-            self.delete_security_group(name)
+            pprint("Deleting Security Group %s" % clean_name)
+            self.delete_security_group(clean_name)
         except Exception as exc:
             error('Unable to delete security group. %s' % exc)
 
