@@ -1,4 +1,4 @@
-|Build Status| |Pypi| |Copr| |Documentation Status| |image4|
+|Build Status| |Pypi| |Copr| |Documentation Status| |image1|
 
 About
 =====
@@ -52,24 +52,24 @@ If you don’t have libvirt installed on the target hypervisor, you can use the 
 
 .. code:: bash
 
-    sudo yum -y install libvirt libvirt-daemon-driver-qemu qemu-kvm 
-    sudo usermod -aG qemu,libvirt $(id -un)
-    newgrp libvirt
-    systemctl enable --now libvirtd
+   sudo yum -y install libvirt libvirt-daemon-driver-qemu qemu-kvm 
+   sudo usermod -aG qemu,libvirt $(id -un)
+   newgrp libvirt
+   systemctl enable --now libvirtd
 
 (Optional) For interaction with your local docker daemon, you also need the following:
 
 .. code:: bash
 
-    sudo groupadd docker
-    sudo usermod -aG docker YOUR_USER
-    sudo systemctl restart docker
+   sudo groupadd docker
+   sudo usermod -aG docker YOUR_USER
+   sudo systemctl restart docker
 
 If not running as root, you’ll have to add your user to those groups
 
 .. code:: bash
 
-    sudo usermod -aG qemu,libvirt YOUR_USER
+   sudo usermod -aG qemu,libvirt YOUR_USER
 
 Supported installation methods
 ------------------------------
@@ -88,7 +88,7 @@ The script can also be used for installation, which will make a guess on which m
 
 .. code:: shell
 
-    curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | bash
+   curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | bash
 
 Package install method
 ----------------------
@@ -97,15 +97,15 @@ If using *fedora* or *rhel/centos8*, you can run this as root:
 
 .. code:: bash
 
-    dnf -y copr enable karmab/kcli ; dnf -y install kcli
+   dnf -y copr enable karmab/kcli ; dnf -y install kcli
 
 If using a debian based distribution, you can use this :
 
 .. code:: bash
 
-    curl -1sLf https://dl.cloudsmith.io/public/karmab/kcli/cfg/setup/bash.deb.sh | sudo -E bash
-    sudo apt-get update
-    sudo apt-get -y install python3-kcli
+   curl -1sLf https://dl.cloudsmith.io/public/karmab/kcli/cfg/setup/bash.deb.sh | sudo -E bash
+   sudo apt-get update
+   sudo apt-get -y install python3-kcli
 
 The package version doesn’t bundle the dependencies for anything else than libvirt, so you have to install the extra packages for each additional cloud platforms, which are listed in the *Provider specifics* section.
 
@@ -127,13 +127,13 @@ Pull the latest image:
 
 .. code:: shell
 
-    docker pull quay.io/karmab/kcli
+   docker pull quay.io/karmab/kcli
 
 To run it
 
 .. code:: shell
 
-    docker run --rm karmab/kcli
+   docker run --rm karmab/kcli
 
 There are several recommended flags:
 
@@ -153,9 +153,9 @@ As a bonus, you can use the following aliases:
 
 .. code:: shell
 
-    alias kcli='docker run --net host -it --rm --security-opt label=disable -v $HOME/.ssh:/root/.ssh -v $HOME/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir quay.io/karmab/kcli'
-    alias kclishell='docker run --net host -it --rm --security-opt label=disable -v $HOME/.ssh:/root/.ssh -v $HOME/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir --entrypoint=/bin/sh quay.io/karmab/kcli'
-    alias kweb='docker run -p 9000:9000 --net host -it --rm --security-opt label=disable -v $HOME/.ssh:/root/.ssh -v $HOME/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir --entrypoint=/usr/bin/kweb quay.io/karmab/kcli'
+   alias kcli='docker run --net host -it --rm --security-opt label=disable -v $HOME/.ssh:/root/.ssh -v $HOME/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir quay.io/karmab/kcli'
+   alias kclishell='docker run --net host -it --rm --security-opt label=disable -v $HOME/.ssh:/root/.ssh -v $HOME/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir --entrypoint=/bin/sh quay.io/karmab/kcli'
+   alias kweb='docker run -p 9000:9000 --net host -it --rm --security-opt label=disable -v $HOME/.ssh:/root/.ssh -v $HOME/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir --entrypoint=/usr/bin/kweb quay.io/karmab/kcli'
 
 Dev installation
 ----------------
@@ -165,13 +165,13 @@ Generic platform
 
 .. code:: shell
 
-    pip install kcli
+   pip install kcli
 
 Or for a full install:
 
 ::
 
-    pip install -e git+https://github.com/karmab/kcli.git#egg=kcli[all]
+   pip install -e git+https://github.com/karmab/kcli.git#egg=kcli[all]
 
 Configuration
 =============
@@ -188,13 +188,13 @@ You can generate a default config file (with all parameters commented) pointing 
 
 .. code:: shell
 
-    kcli create host kvm -H 127.0.0.1 local
+   kcli create host kvm -H 127.0.0.1 local
 
 Or indicate a different target host
 
 .. code:: shell
 
-    kcli create host -H 192.168.0.6 host1
+   kcli create host -H 192.168.0.6 host1
 
 On most distributions, default network and storage pool for libvirt are already defined.
 
@@ -202,14 +202,14 @@ If needed, you can create this default storage pool with this:
 
 .. code:: shell
 
-    kcli create pool -p /var/lib/libvirt/images default
-    sudo setfacl -m u:$(id -un):rwx /var/lib/libvirt/images
+   kcli create pool -p /var/lib/libvirt/images default
+   sudo setfacl -m u:$(id -un):rwx /var/lib/libvirt/images
 
 And default network:
 
 .. code:: shell
 
-    kcli create network  -c 192.168.122.0/24 default
+   kcli create network  -c 192.168.122.0/24 default
 
 For using several hypervisors, you can use the command *kcli create host* or simply edit your configuration file.
 
@@ -217,24 +217,24 @@ For instance, here’s a sample ``~/.kcli/config.yml`` with two hypervisors:
 
 .. code:: yaml
 
-    default:
-     client: mycli
-     pool: default
-     numcpus: 2
-     memory: 1024
-     disks:
-      - size: 10
-     protocol: ssh
-     nets:
-      - default
+   default:
+    client: mycli
+    pool: default
+    numcpus: 2
+    memory: 1024
+    disks:
+     - size: 10
+    protocol: ssh
+    nets:
+     - default
 
-    mycli:
-     host: 192.168.0.6
-     pool: default
+   mycli:
+    host: 192.168.0.6
+    pool: default
 
-    bumblefoot:
-     host: 192.168.0.4
-     pool: whatever
+   bumblefoot:
+    host: 192.168.0.4
+    pool: whatever
 
 Replace with your own client in default section and indicate the relevant parameters in the corresponding client section, depending on your client/host type.
 
@@ -249,15 +249,15 @@ For instance, if you have the following in your config file:
 
 ::
 
-    xxx:
-     password: ?secret
+   xxx:
+    password: ?secret
 
 You would then put the real password in your secrets file this way:
 
 ::
 
-    xxx:
-     password: mypassword
+   xxx:
+    password: mypassword
 
 Provider specifics
 ==================
@@ -267,9 +267,9 @@ Libvirt
 
 ::
 
-    twix:
-     type: kvm
-     host: 192.168.1.6
+   twix:
+    type: kvm
+    host: 192.168.1.6
 
 Without configuration, libvirt provider tries to connect locally using qemu:///system.
 
@@ -292,11 +292,11 @@ Gcp
 
 ::
 
-    gcp1:
-     type: gcp
-     credentials: ~/myproject.json
-     project: myproject
-     zone: europe-west1-b
+   gcp1:
+    type: gcp
+    credentials: ~/myproject.json
+    project: myproject
+    zone: europe-west1-b
 
 The following parameters are specific to gcp:
 
@@ -333,12 +333,12 @@ Aws
 
 ::
 
-    aws:
-     type: aws
-     access_key_id: AKAAAAAAAAAAAAA
-     access_key_secret: xxxxxxxxxxyyyyyyyy
-     region: eu-west-3
-     keypair: mykey
+   aws:
+    type: aws
+    access_key_id: AKAAAAAAAAAAAAA
+    access_key_secret: xxxxxxxxxxyyyyyyyy
+    region: eu-west-3
+    keypair: mykey
 
 The following parameters are specific to aws:
 
@@ -359,8 +359,8 @@ Authentication is either handled by your local ~/.kubeconfig (kcli will try to c
 
 ::
 
-    kubevirt:
-     type: kubevirt
+   kubevirt:
+    type: kubevirt
 
 You can use additional parameters for the kubevirt section:
 
@@ -384,29 +384,29 @@ To list the context at your disposal
 
 ::
 
-    kubectl config view -o jsonpath='{.contexts[*].name}'
+   kubectl config view -o jsonpath='{.contexts[*].name}'
 
 To create a service account and give it privileges to handle vms,
 
 ::
 
-    SERVICEACCOUNT=xxx
-    kubectl create serviceaccount $SERVICEACCOUNT -n default
-    kubectl create clusterrolebinding $SERVICEACCOUNT --clusterrole=cluster-admin --user=system:serviceaccount:default:$SERVICEACCOUNT
+   SERVICEACCOUNT=xxx
+   kubectl create serviceaccount $SERVICEACCOUNT -n default
+   kubectl create clusterrolebinding $SERVICEACCOUNT --clusterrole=cluster-admin --user=system:serviceaccount:default:$SERVICEACCOUNT
 
 To gather a token (in /tmp/token):
 
 ::
 
-    SERVICEACCOUNT=xxx
-    SECRET=`kubectl get sa $SERVICEACCOUNT -o jsonpath={.secrets[0].name}`
-    kubectl get secret $SECRET -o jsonpath={.data.token} | base64 -d
+   SERVICEACCOUNT=xxx
+   SECRET=`kubectl get sa $SERVICEACCOUNT -o jsonpath={.secrets[0].name}`
+   kubectl get secret $SECRET -o jsonpath={.data.token} | base64 -d
 
 on openshift, you can simply use
 
 ::
 
-    oc whoami -t
+   oc whoami -t
 
 *kubectl* is currently a hard requirement for consoles
 
@@ -417,17 +417,17 @@ Ovirt
 
 ::
 
-    myovirt:
-     type: ovirt
-     host: ovirt.default
-     user: admin@internal
-     password: prout
-     datacenter: Default
-     cluster: Default
-     pool: Default
-     org: YourOrg
-     ca_file: ~/ovirt.pem
-     imagerepository: ovirt-image-repository
+   myovirt:
+    type: ovirt
+    host: ovirt.default
+    user: admin@internal
+    password: prout
+    datacenter: Default
+    cluster: Default
+    pool: Default
+    org: YourOrg
+    ca_file: ~/ovirt.pem
+    imagerepository: ovirt-image-repository
 
 The following parameters are specific to ovirt:
 
@@ -454,10 +454,10 @@ You will need to get *ovirt-engine-sdk-python* . On fedora, for instance, you wo
 
 ::
 
-    dnf -y copr enable karmab/kcli
-    yum -y install kcli gcc redhat-rpm-config python3-devel openssl-devel libxml2-devel libcurl-devel
-    export PYCURL_SSL_LIBRARY=openssl
-    pip3 install ovirt-engine-sdk-python
+   dnf -y copr enable karmab/kcli
+   yum -y install kcli gcc redhat-rpm-config python3-devel openssl-devel libxml2-devel libcurl-devel
+   export PYCURL_SSL_LIBRARY=openssl
+   pip3 install ovirt-engine-sdk-python
 
 On rhel, set PYCURL_SSL_LIBRARY to nss instead
 
@@ -465,28 +465,30 @@ If you install manually from pip, you might need to install pycurl manually with
 
 ::
 
-    pip install --no-cache-dir --global-option=build_ext --global-option="-L/usr/local/opt/openssl/lib" --global-option="-I/usr/local/opt/openssl/include"  pycurl
+   pip install --no-cache-dir --global-option=build_ext --global-option="-L/usr/local/opt/openssl/lib" --global-option="-I/usr/local/opt/openssl/include"  pycurl
 
 Openstack
 ---------
 
 ::
 
-    myopenstack:
-     type: openstack
-     user: testk
-     password: testk
-     project: testk
-     domain: Default
-     auth_url: http://openstack:5000/v3
-     ca_file: ~/ca-trust.crt
+   myopenstack:
+    type: openstack
+    user: testk
+    password: testk
+    project: testk
+    domain: Default
+    auth_url: http://openstack:5000/v3
+    ca_file: ~/ca-trust.crt
 
 The following parameters are specific to openstack:
 
 -  auth_url
 -  project
--  domain
--  ca_file
+-  domain. Defaults to *Default*
+-  ca_file (Optional)
+-  external_network (Optional). Indicates which network use for floating ips (useful when you have several ones)
+-  region_name (Optional). Used in OVH Openstack
 
 To use this provider with kcli rpm, you’ll need to install the following rpms
 
@@ -502,15 +504,15 @@ Vsphere
 
 ::
 
-    myvsphere:
-     type: vsphere
-     host: xxx-vcsa67.vcenter.e2e.karmalabs.com
-     user: administrator@karmalabs.com
-     password: mypassword
-     datacenter: Madrid
-     cluster: xxx
-     filtervms: true
-     pool: mysuperdatastore
+   myvsphere:
+    type: vsphere
+    host: xxx-vcsa67.vcenter.e2e.karmalabs.com
+    user: administrator@karmalabs.com
+    password: mypassword
+    datacenter: Madrid
+    cluster: xxx
+    filtervms: true
+    pool: mysuperdatastore
 
 The following parameters are specific to vsphere:
 
@@ -529,12 +531,12 @@ Packet
 
 ::
 
-    myvpacket:
-      type: packet
-      auth_token: xxxx
-      project: kcli
-      facility: ams1
-      tunnelhost: wilibonka.mooo.com
+   myvpacket:
+     type: packet
+     auth_token: xxxx
+     project: kcli
+     facility: ams1
+     tunnelhost: wilibonka.mooo.com
 
 The following parameters are specific to packet:
 
@@ -551,12 +553,12 @@ IBM Cloud
 
 ::
 
-    myibm:
-      type: ibm
-      iam_api_key: xxxx
-      region: eu-gb
-      zone: eu-gb-2
-      vpc: pruebak
+   myibm:
+     type: ibm
+     iam_api_key: xxxx
+     region: eu-gb
+     zone: eu-gb-2
+     vpc: pruebak
 
 The following parameters are specific to ibm cloud:
 
@@ -586,13 +588,13 @@ Cloud Images from common distros aim to be the primary source for your vms *kcli
 
 .. code:: shell
 
-    kcli download image centos7
+   kcli download image centos7
 
 at this point, you can deploy vms directly from the template, using default settings for the vm:
 
 .. code:: shell
 
-    kcli create vm -i centos7 vm1
+   kcli create vm -i centos7 vm1
 
 By default, your public key will be injected (using cloudinit) to the vm.
 
@@ -604,19 +606,19 @@ Using parameters, you can tweak the vm creation. All keywords can be used. For i
 
 .. code:: shell
 
-    kcli create vm -i centos7 -P memory=2048 -P numcpus=2 vm1
+   kcli create vm -i centos7 -P memory=2048 -P numcpus=2 vm1
 
 You can also pass disks, networks, cmds (or any keyword, really):
 
 .. code:: shell
 
-    kcli create vm -i centos7 -P disks=[10,20] -P nets=[default,default] -P cmds=[yum -y install nc] vm1
+   kcli create vm -i centos7 -P disks=[10,20] -P nets=[default,default] -P cmds=[yum -y install nc] vm1
 
 You can use the following to get a list of available keywords, and their default value
 
 .. code:: shell
 
-    kcli get keyword
+   kcli get keyword
 
 Profiles configuration
 ----------------------
@@ -629,22 +631,22 @@ You use the file *~/.kcli/profiles.yml* to declare your profiles. Here’s a sni
 
 ::
 
-    mycentos:
-     image: CentOS-7-x86_64-GenericCloud.qcow2
-     numcpus: 2
-     disks:
-      - size: 10
-     reservedns: true
-     nets:
-      - name: default
-     cmds:
-      - echo unix1234 | passwd --stdin root
+   mycentos:
+    image: CentOS-7-x86_64-GenericCloud.qcow2
+    numcpus: 2
+    disks:
+     - size: 10
+    reservedns: true
+    nets:
+     - name: default
+    cmds:
+     - echo unix1234 | passwd --stdin root
 
 With this section, you can use the following to create a vm
 
 .. code:: shell
 
-    kcli create vm -p mycentos myvm
+   kcli create vm -p mycentos myvm
 
 You can use the `profile file sample <https://github.com/karmab/kcli-plans/tree/master/samples/profiles.yml>`__ to get you started
 
@@ -784,7 +786,7 @@ Launch the following command and access your machine at port 9000:
 
 .. code:: shell
 
-    kweb
+   kweb
 
 Multiple clients
 ----------------
@@ -824,9 +826,9 @@ network
 
 .. code:: yaml
 
-    mynet:
-     type: network
-     cidr: 192.168.95.0/24
+   mynet:
+    type: network
+    cidr: 192.168.95.0/24
 
 You can also use the boolean keyword *dhcp* (mostly to disable it) and isolated . When not specified, dhcp and nat will be enabled
 
@@ -835,9 +837,9 @@ image
 
 .. code:: yaml
 
-    CentOS-7-x86_64-GenericCloud.qcow2:
-     type: image
-     url: http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2
+   CentOS-7-x86_64-GenericCloud.qcow2:
+    type: image
+    url: http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2
 
 If you point to an url not ending in qcow2/qc2 (or img), your browser will be opened for you to proceed. Also note that you can specify a command with the *cmd* key, so that virt-customize is used on the template once it’s downloaded.
 
@@ -846,13 +848,13 @@ disk
 
 .. code:: yaml
 
-    share1.img:
-     type: disk
-     size: 5
-     pool: vms
-     vms:
-      - centos1
-      - centos2
+   share1.img:
+    type: disk
+    size: 5
+    pool: vms
+    vms:
+     - centos1
+     - centos2
 
 Here the disk is shared between two vms (that typically would be defined within the same plan):
 
@@ -861,44 +863,44 @@ pool
 
 .. code:: yaml
 
-    mypool:
-      type: pool
-      path: /home/mypool
+   mypool:
+     type: pool
+     path: /home/mypool
 
 profile
 ~~~~~~~
 
 .. code:: yaml
 
-    myprofile:
-      type: profile
-      template: CentOS-7-x86_64-GenericCloud.qcow2
-      memory: 3072
-      numcpus: 1
-      disks:
-       - size: 15
-       - size: 12
-      nets:
-       - default
-      pool: default
+   myprofile:
+     type: profile
+     template: CentOS-7-x86_64-GenericCloud.qcow2
+     memory: 3072
+     numcpus: 1
+     disks:
+      - size: 15
+      - size: 12
+     nets:
+      - default
+     pool: default
 
 ansible
 ~~~~~~~
 
 .. code:: yaml
 
-    myplay:
-     type: ansible
-     verbose: false
-     playbook: prout.yml
-     groups:
-       nodes:
-       - node1
-       - node2
-       masters:
-       - master1
-       - master2
-       - master3
+   myplay:
+    type: ansible
+    verbose: false
+    playbook: prout.yml
+    groups:
+      nodes:
+      - node1
+      - node2
+      masters:
+      - master1
+      - master2
+      - master3
 
 An inventory will be created for you in /tmp and that *group_vars* and *host_vars* directory are taken into account. You can optionally define your own groups, as in this example. The playbooks are launched in alphabetical order
 
@@ -907,14 +909,14 @@ container
 
 .. code:: yaml
 
-    centos:
-     type: container
-      image: centos
-      cmd: /bin/bash
-      ports:
-       - 5500
-      volumes:
-       - /root/coco
+   centos:
+    type: container
+     image: centos
+     cmd: /bin/bash
+     ports:
+      - 5500
+     volumes:
+      - /root/coco
 
 Look at the container section for details on the parameters
 
@@ -923,10 +925,10 @@ plan’s plan ( Also known as inception style)
 
 .. code:: yaml
 
-    ovirt:
-      type: plan
-      url: github.com/karmab/kcli-plans/ovirt/upstream.yml
-      run: true
+   ovirt:
+     type: plan
+     url: github.com/karmab/kcli-plans/ovirt/upstream.yml
+     run: true
 
 You can alternatively provide a file attribute instead of url pointing to a local plan file:
 
@@ -935,10 +937,10 @@ dns
 
 .. code:: yaml
 
-    yyy:
-     type: dns
-     net: default
-     ip: 192.168.1.35
+   yyy:
+    type: dns
+    net: default
+    ip: 192.168.1.35
 
 vms
 ~~~
@@ -947,19 +949,19 @@ You can point at an existing profile in your plans, define all parameters for th
 
 .. code:: yaml
 
-    big:
-      type: profile
-      template: CentOS-7-x86_64-GenericCloud.qcow2
-      memory: 6144
-      numcpus: 1
-      disks:
-       - size: 45
-      nets:
-       - default
-      pool: default
+   big:
+     type: profile
+     template: CentOS-7-x86_64-GenericCloud.qcow2
+     memory: 6144
+     numcpus: 1
+     disks:
+      - size: 45
+     nets:
+      - default
+     pool: default
 
-    myvm:
-      profile: big
+   myvm:
+     profile: big
 
 Specific scripts and IPS arrays can be used directly in the plan file (or in profiles one).
 
@@ -978,7 +980,7 @@ You can use the following command to execute a plan from a remote url:
 
 .. code:: yaml
 
-    kcli create plan --url https://raw.githubusercontent.com/karmab/kcli-plans/master/ovirt/upstream.yml
+   kcli create plan --url https://raw.githubusercontent.com/karmab/kcli-plans/master/ovirt/upstream.yml
 
 Disk parameters
 ---------------
@@ -987,12 +989,12 @@ You can add disk this way in your profile or plan files:
 
 .. code:: yaml
 
-    disks:
-     - size: 20
-       pool: vms
-     - size: 10
-       thin: False
-       interface: ide
+   disks:
+    - size: 20
+      pool: vms
+    - size: 10
+      thin: False
+      interface: ide
 
 Within a disk section, you can use the word size, thin and format as keys.
 
@@ -1006,13 +1008,13 @@ You can mix simple strings pointing to the name of your network and more complex
 
 .. code:: yaml
 
-    nets:
-     - default
-     - name: private
-       nic: eth1
-       ip: 192.168.0.220
-       mask: 255.255.255.0
-       gateway: 192.168.0.1
+   nets:
+    - default
+    - name: private
+      nic: eth1
+      ip: 192.168.0.220
+      mask: 255.255.255.0
+      gateway: 192.168.0.1
 
 Within a net section, you can use name, nic, IP, mac, mask, gateway and alias as keys. type defaults to virtio but you can specify anyone (e1000,….).
 
@@ -1035,8 +1037,8 @@ If you dont want to be asked for your sudo password each time, here are the comm
 
 .. code:: shell
 
-     - echo .... # KVIRT >> /etc/hosts
-     - sed -i '/.... # KVIRT/d' /etc/hosts
+    - echo .... # KVIRT >> /etc/hosts
+    - sed -i '/.... # KVIRT/d' /etc/hosts
 
 Docker/Podman support in plans
 ------------------------------
@@ -1045,14 +1047,14 @@ Docker/Podman support is mainly enabled as a commodity to launch some containers
 
 .. code:: yaml
 
-    centos:
-     type: container
-      image: centos
-      cmd: /bin/bash
-      ports:
-       - 5500
-      volumes:
-       - /root/coco
+   centos:
+    type: container
+     image: centos
+     cmd: /bin/bash
+     ports:
+      - 5500
+     volumes:
+      - /root/coco
 
 The following keywords can be used:
 
@@ -1065,8 +1067,8 @@ Within a volumes section, you can use path, origin, destination and mode as keys
 
 .. code:: yaml
 
-    volumes:
-     - /home/cocorico:/root/cocorico
+   volumes:
+    - /home/cocorico:/root/cocorico
 
 Additionally, basic commands ( start, stop, console, plan, list) accept a *–container* flag.
 
@@ -1090,7 +1092,7 @@ To expose your plan (with an optional list of parameters):
 
 ::
 
-    kcli expose plan -f your_plan.yml -P param1=value1 -P param2=value plan_name
+   kcli expose plan -f your_plan.yml -P param1=value1 -P param2=value plan_name
 
 The indicated parameters are the ones from the plan that you want to expose to the user upon provisioning, with their corresponding default value.
 
@@ -1119,39 +1121,39 @@ For instance, you could create the following kcli.conf in apache
 
 ::
 
-    <VirtualHost *>
-        WSGIScriptAlias / /var/www/kcli.wsgi
-        <Directory /var/www/kcli>
-            Order deny,allow
-            Allow from all
-        </Directory>
-    #    <Location />
-    #   AuthType Basic
-    #   AuthName "Authentication Required"
-    #   AuthUserFile "/var/www/kcli.htpasswd"
-    #   Require valid-user
-    #    </Location>
-    </VirtualHost>
+   <VirtualHost *>
+       WSGIScriptAlias / /var/www/kcli.wsgi
+       <Directory /var/www/kcli>
+           Order deny,allow
+           Allow from all
+       </Directory>
+   #    <Location />
+   #   AuthType Basic
+   #   AuthName "Authentication Required"
+   #   AuthUserFile "/var/www/kcli.htpasswd"
+   #   Require valid-user
+   #    </Location>
+   </VirtualHost>
 
 ::
 
-    import logging
-    import os
-    import sys
-    from kvirt.config import Kconfig
-    from kvirt.expose import Kexposer
-    logging.basicConfig(stream=sys.stdout)
+   import logging
+   import os
+   import sys
+   from kvirt.config import Kconfig
+   from kvirt.expose import Kexposer
+   logging.basicConfig(stream=sys.stdout)
 
-    os.environ['HOME'] = '/usr/share/httpd'
-    inputfile = '/var/www/myplans/plan1.yml'
-    overrides = {'param1': 'jimi_hendrix', 'param2': False}
-    config = Kconfig()
-    extraconfigs = {}
-    for extraclient in config.extraclients:
-        extraconfigs[extraclient] = Kconfig(client=extraclient)
-    kexposer = Kexposer(config, 'myplan', inputfile, overrides=overrides, extraconfigs=extraconfigs)
-    application = kexposer.app
-    application.secret_key = ‘XXX’
+   os.environ['HOME'] = '/usr/share/httpd'
+   inputfile = '/var/www/myplans/plan1.yml'
+   overrides = {'param1': 'jimi_hendrix', 'param2': False}
+   config = Kconfig()
+   extraconfigs = {}
+   for extraclient in config.extraclients:
+       extraconfigs[extraclient] = Kconfig(client=extraclient)
+   kexposer = Kexposer(config, 'myplan', inputfile, overrides=overrides, extraconfigs=extraconfigs)
+   application = kexposer.app
+   application.secret_key = ‘XXX’
 
 Note that further configuration will tipically be needed for apache user so that kcli can be used with it
 
@@ -1179,47 +1181,47 @@ The indicated objects are then rendered using jinja.
 
 ::
 
-    centos:
-     template: CentOS-7-x86_64-GenericCloud.qcow2
-     cmds:
-      - echo x={{ x }} y={{ y }} >> /tmp/cocorico.txt
-      - echo {{ password | default('unix1234') }} | passwd --stdin root
+   centos:
+    template: CentOS-7-x86_64-GenericCloud.qcow2
+    cmds:
+     - echo x={{ x }} y={{ y }} >> /tmp/cocorico.txt
+     - echo {{ password | default('unix1234') }} | passwd --stdin root
 
 You can make the previous example cleaner by using the special key parameters in your plans and define there variables:
 
 ::
 
-    parameters:
-     password: unix1234
-     x: coucou
-     y: toi
-    centos:
-     template: CentOS-7-x86_64-GenericCloud.qcow2
-     cmds:
-      - echo x={{ x }} y={{ y }} >> /tmp/cocorico.txt
-      - echo {{ password  }} | passwd --stdin root
+   parameters:
+    password: unix1234
+    x: coucou
+    y: toi
+   centos:
+    template: CentOS-7-x86_64-GenericCloud.qcow2
+    cmds:
+     - echo x={{ x }} y={{ y }} >> /tmp/cocorico.txt
+     - echo {{ password  }} | passwd --stdin root
 
 Finally note that you can also use advanced jinja constructs like conditionals and so on. For instance:
 
 ::
 
-    parameters:
-      net1: default
-    vm4:
-      template: CentOS-7-x86_64-GenericCloud.qcow2
-      nets:
-        - {{ net1 }}
-    {% if net2 is defined %}
-        - {{ net2 }}
-    {% endif %}
+   parameters:
+     net1: default
+   vm4:
+     template: CentOS-7-x86_64-GenericCloud.qcow2
+     nets:
+       - {{ net1 }}
+   {% if net2 is defined %}
+       - {{ net2 }}
+   {% endif %}
 
 Also, you can reference a *baseplan* file in the *parameters* section, so that parameters are concatenated between the base plan file and the current one:
 
 ::
 
-    parameters:
-       baseplan: upstream.yml
-       xx_version: v0.7.0
+   parameters:
+      baseplan: upstream.yml
+      xx_version: v0.7.0
 
 Keyword Parameters
 ==================
@@ -1227,176 +1229,98 @@ Keyword Parameters
 Specific parameters for a client
 --------------------------------
 
-+-----------------+---------------+------------------------------------------------------+
-| Parameter       | Default Value | Comments                                             |
-+=================+===============+======================================================+
-| *host*          | 127.0.0.1     |                                                      |
-+-----------------+---------------+------------------------------------------------------+
-| *port*          |               | Defaults to 22 if ssh protocol is used               |
-+-----------------+---------------+------------------------------------------------------+
-| *user*          | root          |                                                      |
-+-----------------+---------------+------------------------------------------------------+
-| *protocol*      | ssh           |                                                      |
-+-----------------+---------------+------------------------------------------------------+
-| *url*           |               | can be used to specify an exotic qemu url            |
-+-----------------+---------------+------------------------------------------------------+
-| *tunnel*        | False         | make kcli use tunnels for console and for ssh access |
-+-----------------+---------------+------------------------------------------------------+
-| *keep_networks* | False         | make kcli keeps networks when deleting plan          |
-+-----------------+---------------+------------------------------------------------------+
+=============== ============= ====================================================
+Parameter       Default Value Comments
+=============== ============= ====================================================
+*host*          127.0.0.1     
+*port*                        Defaults to 22 if ssh protocol is used
+*user*          root          
+*protocol*      ssh           
+*url*                         can be used to specify an exotic qemu url
+*tunnel*        False         make kcli use tunnels for console and for ssh access
+*keep_networks* False         make kcli keeps networks when deleting plan
+=============== ============= ====================================================
 
 Available parameters for client/profile/plan files
 --------------------------------------------------
 
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Parameter          | Default Value                        | Comments                                                                                                                                                                                                                                                                                                              |
-+====================+======================================+=======================================================================================================================================================================================================================================================================================================================+
-| *client*           | None                                 | Allows to target a different client/host for the corresponding entry                                                                                                                                                                                                                                                  |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *virttype*         | None                                 | Only used for libvirt where it evaluates to kvm if acceleration shows in capabilities, or qemu emulation otherwise. If a value is provided, it must be either kvm, qemu, xen or lxc                                                                                                                                   |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *cpumodel*         | host-model                           |                                                                                                                                                                                                                                                                                                                       |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *cpuflags*         | []                                   | You can specify a list of strings with features to enable or use dict entries with *name* of the feature and *policy* either set to require,disable, optional or force. The value for vmx is ignored, as it’s handled by the nested flag                                                                              |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *numcpus*          | 2                                    |                                                                                                                                                                                                                                                                                                                       |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *cpuhotplug*       | False                                |                                                                                                                                                                                                                                                                                                                       |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *numamode*         | None                                 | numamode to apply to the workers only.                                                                                                                                                                                                                                                                                |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *cpupinning*       | []                                   | cpupinning conf to apply                                                                                                                                                                                                                                                                                              |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *memory*           | 512M                                 |                                                                                                                                                                                                                                                                                                                       |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *memoryhotplug*    | False                                |                                                                                                                                                                                                                                                                                                                       |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *flavor*           |                                      | Specific to gcp, aws, openstack and packet                                                                                                                                                                                                                                                                            |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *guestid*          | guestrhel764                         |                                                                                                                                                                                                                                                                                                                       |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *pool*             | default                              |                                                                                                                                                                                                                                                                                                                       |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *image*            | None                                 | Should point to your base cloud image(optional). You can either specify short name or complete path. If you omit the full path and your image lives in several pools, the one from last (alphabetical) pool will be used\\                                                                                            |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *diskinterface*    | virtio                               | You can set it to ide if using legacy operating systems                                                                                                                                                                                                                                                               |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *diskthin*         | True                                 |                                                                                                                                                                                                                                                                                                                       |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *disks*            | []                                   | Array of disks to define. For each of them, you can specify pool, size, thin (as boolean), interface (either ide or virtio) and a wwn.If you omit parameters, default values will be used from config or profile file (You can actually let the entire entry blank or just indicate a size number directly)           |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *iso*              | None                                 |                                                                                                                                                                                                                                                                                                                       |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *nets*             | []                                   | Array of networks to define. For each of them, you can specify just a string for the name, or a dict containing name, public and alias and ip, mask and gateway, and bridge. Any visible network is valid, in particular bridge networks can be used on libvirt, beyond regular nat networks                          |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *gateway*          | None                                 |                                                                                                                                                                                                                                                                                                                       |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *dns*              | None                                 | Dns server                                                                                                                                                                                                                                                                                                            |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *domain*           | None                                 | Dns search domain                                                                                                                                                                                                                                                                                                     |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *start*            | true                                 |                                                                                                                                                                                                                                                                                                                       |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *vnc*              | false                                | if set to true, vnc is used for console instead of spice                                                                                                                                                                                                                                                              |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *cloudinit*        | true                                 |                                                                                                                                                                                                                                                                                                                       |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *reserveip*        | false                                |                                                                                                                                                                                                                                                                                                                       |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *reservedns*       | false                                |                                                                                                                                                                                                                                                                                                                       |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *reservehost*      | false                                |                                                                                                                                                                                                                                                                                                                       |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *keys*             | []                                   | Array of ssh public keys to inject to th vm                                                                                                                                                                                                                                                                           |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *cmds*             | []                                   | Array of commands to run                                                                                                                                                                                                                                                                                              |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *profile*          | None                                 | name of one of your profile                                                                                                                                                                                                                                                                                           |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *scripts*          | []                                   | array of paths of custom script to inject with cloudinit. It will be merged with cmds parameter. You can either specify full paths or relative to where you’re running kcli. Only checked in profile or plan file                                                                                                     |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *nested*           | True                                 |                                                                                                                                                                                                                                                                                                                       |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *sharedkey*        | False                                | Share a private/public key between all the nodes of your plan. Additionally, root access will be allowed                                                                                                                                                                                                              |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *privatekey*       | False                                | Inject your private key to the nodes of your plan                                                                                                                                                                                                                                                                     |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *files*            | []                                   | Array of files to inject to the vm. For each of them, you can specify path, owner ( root by default) , permissions (600 by default ) and either origin or content to gather content data directly or from specified origin. When specifying a directory as origin, all the files it contains will be parsed and added |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *insecure*         | True                                 | Handles all the ssh option details so you don’t get any warnings about man in the middle                                                                                                                                                                                                                              |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *client*           | None                                 | Allows you to create the vm on a specific client. This field is not used for other types like network                                                                                                                                                                                                                 |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *base*             | None                                 | Allows you to point to a parent profile so that values are taken from parent when not found in the current profile. Scripts and commands are rather concatenated between default, father and children                                                                                                                 |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *tags*             | []                                   | Array of tags to apply to gcp instances (usefull when matched in a firewall rule). In the case of kubevirt, it s rather a dict of key=value used as node selector (allowing to force vms to be scheduled on a matching node)                                                                                          |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *networkwait*      | 0                                    | Delay in seconds before attempting to run further commands, to be used in environments where networking takes more time to come up                                                                                                                                                                                    |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *rhnregister*      | None                                 | Auto registers vms whose template starts with rhel Defaults to false. Requires to either rhnuser and rhnpassword, or rhnactivationkey and rhnorg, and an optional rhnpool                                                                                                                                             |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *rhnserver*        | https://subscription.rhsm.redhat.com | Red Hat Network server (for registering to a Satellite server)                                                                                                                                                                                                                                                        |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *rhnuser*          | None                                 | Red Hat Network user                                                                                                                                                                                                                                                                                                  |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *rhnpassword*      | None                                 | Red Hat Network password                                                                                                                                                                                                                                                                                              |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *rhnactivationkey* | None                                 | Red Hat Network activation key                                                                                                                                                                                                                                                                                        |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *rhnorg*           | None                                 | Red Hat Network organization                                                                                                                                                                                                                                                                                          |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *rhnpool*          | None                                 | Red Hat Network pool                                                                                                                                                                                                                                                                                                  |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *enableroot*       | true                                 | Allows ssh access as root user                                                                                                                                                                                                                                                                                        |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *storemetadata*    | false                                | Creates a /root/.metadata yaml file whith all the overrides applied. On gcp, those overrides are also stored as extra metadata                                                                                                                                                                                        |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *sharedfolders*    | []                                   | List of paths to share between a kvm hypervisor and vm. You will also make sure that the path is accessible as qemu user (typically with id 107) and use an hypervisor and a guest with 9p support (centos/rhel lack it)                                                                                              |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *yamlinventory*    | false                                | Ansible generated inventory for single vms or for plans containing ansible entries will be yaml based.                                                                                                                                                                                                                |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *autostart*        | false                                | Autostarts vm (libvirt specific)                                                                                                                                                                                                                                                                                      |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *kernel*           | None                                 | Kernel location to pass to the vm. Needs to be local to the hypervisor                                                                                                                                                                                                                                                |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *initrd*           | None                                 | Initrd location to pass to the vm. Needs to be local to the hypervisor                                                                                                                                                                                                                                                |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *cmdline*          | None                                 | Cmdline to pass to the vm                                                                                                                                                                                                                                                                                             |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *pcidevices*       | []                                   | array of pcidevices to passthrough to the first worker only. Check `here <https://github.com/karmab/kcli-plans/blob/master/samples/pcipassthrough/pci.yml>`__ for an example                                                                                                                                          |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *tpm*              | false                                | Enables a TPM device in the vm, using emulator mode. Requires swtpm in the host                                                                                                                                                                                                                                       |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *rng*              | false                                | Enables a RNG device in the vm                                                                                                                                                                                                                                                                                        |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *notify*           | false                                | Sends result of a command or a script run from the vm to one of the supported notify engines                                                                                                                                                                                                                          |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *notifymethod*     | [pushbullet]                         | Array of notify engines. Other options are slack and mail                                                                                                                                                                                                                                                             |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *notifycmd*        | None                                 | Which command to run for notification. If none is provided and no notifyscript either, defaults to sending last 100 lines of the cloudinit file of the machine, or ignition for coreos based vms                                                                                                                      |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *notifyscript*     | None                                 | Script to execute on the vm and whose output will be sent to notification engines                                                                                                                                                                                                                                     |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *pushbullettoken*  | None                                 | Token to use when notifying through pushbullet                                                                                                                                                                                                                                                                        |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *slacktoken*       | None                                 | Token to use when notifying through slack. Should be the token of an app generated in your workspace                                                                                                                                                                                                                  |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *slackchannel*     | None                                 | Slack Channel where to send the notification                                                                                                                                                                                                                                                                          |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *mailserver*       | None                                 | Mail server where to send the notification (on port 25)                                                                                                                                                                                                                                                               |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *mailfrom*         | None                                 | Mail address to send mail from                                                                                                                                                                                                                                                                                        |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *mailto*           | []                                   | List of mail addresses to send mail to                                                                                                                                                                                                                                                                                |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *zerotier_net*     | []                                   | List of zerotier public networks where to join. Will trigger installation of zerotier on the node                                                                                                                                                                                                                     |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *zerotier_kubelet* | False                                | Whether to configure kubelet to use the first zerotier address as node ip                                                                                                                                                                                                                                             |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *playbook*         | False                                | Generates a playbook for the vm of the plan instead of creating it. Useful to run parts of a plan on baremetal                                                                                                                                                                                                        |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| *vmrules*          | []                                   | List of rules with an associated dict to apply for the corresponding entry, if a regex on the entry name is matched. The profile of the matching vm will be updated with the content of the rule                                                                                                                      |
-+--------------------+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+================== ==================================== =====================================================================================================================================================================================================================================================================================================================
+Parameter          Default Value                        Comments
+================== ==================================== =====================================================================================================================================================================================================================================================================================================================
+*client*           None                                 Allows to target a different client/host for the corresponding entry
+*virttype*         None                                 Only used for libvirt where it evaluates to kvm if acceleration shows in capabilities, or qemu emulation otherwise. If a value is provided, it must be either kvm, qemu, xen or lxc
+*cpumodel*         host-model                           
+*cpuflags*         []                                   You can specify a list of strings with features to enable or use dict entries with *name* of the feature and *policy* either set to require,disable, optional or force. The value for vmx is ignored, as it’s handled by the nested flag
+*numcpus*          2                                    
+*cpuhotplug*       False                                
+*numamode*         None                                 numamode to apply to the workers only.
+*cpupinning*       []                                   cpupinning conf to apply
+*memory*           512M                                 
+*memoryhotplug*    False                                
+*flavor*                                                Specific to gcp, aws, openstack and packet
+*guestid*          guestrhel764                         
+*pool*             default                              
+*image*            None                                 Should point to your base cloud image(optional). You can either specify short name or complete path. If you omit the full path and your image lives in several pools, the one from last (alphabetical) pool will be used\\
+*diskinterface*    virtio                               You can set it to ide if using legacy operating systems
+*diskthin*         True                                 
+*disks*            []                                   Array of disks to define. For each of them, you can specify pool, size, thin (as boolean), interface (either ide or virtio) and a wwn.If you omit parameters, default values will be used from config or profile file (You can actually let the entire entry blank or just indicate a size number directly)
+*iso*              None                                 
+*nets*             []                                   Array of networks to define. For each of them, you can specify just a string for the name, or a dict containing name, public and alias and ip, mask and gateway, and bridge. Any visible network is valid, in particular bridge networks can be used on libvirt, beyond regular nat networks
+*gateway*          None                                 
+*dns*              None                                 Dns server
+*domain*           None                                 Dns search domain
+*start*            true                                 
+*vnc*              false                                if set to true, vnc is used for console instead of spice
+*cloudinit*        true                                 
+*reserveip*        false                                
+*reservedns*       false                                
+*reservehost*      false                                
+*keys*             []                                   Array of ssh public keys to inject to th vm
+*cmds*             []                                   Array of commands to run
+*profile*          None                                 name of one of your profile
+*scripts*          []                                   array of paths of custom script to inject with cloudinit. It will be merged with cmds parameter. You can either specify full paths or relative to where you’re running kcli. Only checked in profile or plan file
+*nested*           True                                 
+*sharedkey*        False                                Share a private/public key between all the nodes of your plan. Additionally, root access will be allowed
+*privatekey*       False                                Inject your private key to the nodes of your plan
+*files*            []                                   Array of files to inject to the vm. For each of them, you can specify path, owner ( root by default) , permissions (600 by default ) and either origin or content to gather content data directly or from specified origin. When specifying a directory as origin, all the files it contains will be parsed and added
+*insecure*         True                                 Handles all the ssh option details so you don’t get any warnings about man in the middle
+*client*           None                                 Allows you to create the vm on a specific client. This field is not used for other types like network
+*base*             None                                 Allows you to point to a parent profile so that values are taken from parent when not found in the current profile. Scripts and commands are rather concatenated between default, father and children
+*tags*             []                                   Array of tags to apply to gcp instances (usefull when matched in a firewall rule). In the case of kubevirt, it s rather a dict of key=value used as node selector (allowing to force vms to be scheduled on a matching node)
+*networkwait*      0                                    Delay in seconds before attempting to run further commands, to be used in environments where networking takes more time to come up
+*rhnregister*      None                                 Auto registers vms whose template starts with rhel Defaults to false. Requires to either rhnuser and rhnpassword, or rhnactivationkey and rhnorg, and an optional rhnpool
+*rhnserver*        https://subscription.rhsm.redhat.com Red Hat Network server (for registering to a Satellite server)
+*rhnuser*          None                                 Red Hat Network user
+*rhnpassword*      None                                 Red Hat Network password
+*rhnactivationkey* None                                 Red Hat Network activation key
+*rhnorg*           None                                 Red Hat Network organization
+*rhnpool*          None                                 Red Hat Network pool
+*enableroot*       true                                 Allows ssh access as root user
+*storemetadata*    false                                Creates a /root/.metadata yaml file whith all the overrides applied. On gcp, those overrides are also stored as extra metadata
+*sharedfolders*    []                                   List of paths to share between a kvm hypervisor and vm. You will also make sure that the path is accessible as qemu user (typically with id 107) and use an hypervisor and a guest with 9p support (centos/rhel lack it)
+*yamlinventory*    false                                Ansible generated inventory for single vms or for plans containing ansible entries will be yaml based.
+*autostart*        false                                Autostarts vm (libvirt specific)
+*kernel*           None                                 Kernel location to pass to the vm. Needs to be local to the hypervisor
+*initrd*           None                                 Initrd location to pass to the vm. Needs to be local to the hypervisor
+*cmdline*          None                                 Cmdline to pass to the vm
+*pcidevices*       []                                   array of pcidevices to passthrough to the first worker only. Check `here <https://github.com/karmab/kcli-plans/blob/master/samples/pcipassthrough/pci.yml>`__ for an example
+*tpm*              false                                Enables a TPM device in the vm, using emulator mode. Requires swtpm in the host
+*rng*              false                                Enables a RNG device in the vm
+*notify*           false                                Sends result of a command or a script run from the vm to one of the supported notify engines
+*notifymethod*     [pushbullet]                         Array of notify engines. Other options are slack and mail
+*notifycmd*        None                                 Which command to run for notification. If none is provided and no notifyscript either, defaults to sending last 100 lines of the cloudinit file of the machine, or ignition for coreos based vms
+*notifyscript*     None                                 Script to execute on the vm and whose output will be sent to notification engines
+*pushbullettoken*  None                                 Token to use when notifying through pushbullet
+*slacktoken*       None                                 Token to use when notifying through slack. Should be the token of an app generated in your workspace
+*slackchannel*     None                                 Slack Channel where to send the notification
+*mailserver*       None                                 Mail server where to send the notification (on port 25)
+*mailfrom*         None                                 Mail address to send mail from
+*mailto*           []                                   List of mail addresses to send mail to
+*zerotier_net*     []                                   List of zerotier public networks where to join. Will trigger installation of zerotier on the node
+*zerotier_kubelet* False                                Whether to configure kubelet to use the first zerotier address as node ip
+*playbook*         False                                Generates a playbook for the vm of the plan instead of creating it. Useful to run parts of a plan on baremetal
+*vmrules*          []                                   List of rules with an associated dict to apply for the corresponding entry, if a regex on the entry name is matched. The profile of the matching vm will be updated with the content of the rule
+================== ==================================== =====================================================================================================================================================================================================================================================================================================================
 
 Ansible support
 ===============
@@ -1411,16 +1335,16 @@ Try it with:
 
 .. code:: shell
 
-    klist.py --list
-    KLIST=$(which klist.py)
-    ansible all -i $KLIST -m ping
+   klist.py --list
+   KLIST=$(which klist.py)
+   ansible all -i $KLIST -m ping
 
 If you’re using kcli as a container, you will have to create a script such as the following to properly call the inventory.
 
 ::
 
-    #!/bin/bash
-    docker run -it --security-opt label:disable -v ~/.kcli:/root/.kcli -v /var/run/libvirt:/var/run/libvirt --entrypoint=/usr/bin/klist.py karmab/kcli $@
+   #!/bin/bash
+   docker run -it --security-opt label:disable -v ~/.kcli:/root/.kcli -v /var/run/libvirt:/var/run/libvirt --entrypoint=/usr/bin/klist.py karmab/kcli $@
 
 Additionally, there are ansible kcli modules in `ansible-kcli-modules <https://github.com/karmab/ansible-kcli-modules>`__ repository, with sample playbooks:
 
@@ -1435,24 +1359,24 @@ Both kvirt_vm, kvirt_plan and kvirt_product support overriding parameters:
 
 ::
 
-    - name: Deploy fission with additional parameters
-      kvirt_product:
-        name: fission
-        product: fission
-        parameters:
-         fission_type: all
-         docker_disk_size: 10
+   - name: Deploy fission with additional parameters
+     kvirt_product:
+       name: fission
+       product: fission
+       parameters:
+        fission_type: all
+        docker_disk_size: 10
 
 Finally, you can use the key ansible within a profile:
 
 .. code:: yaml
 
-    ansible:
-     - playbook: frout.yml
-       verbose: true
-       variables:
-        - x: 8
-        - z: 12
+   ansible:
+    - playbook: frout.yml
+      verbose: true
+      variables:
+       - x: 8
+       - z: 12
 
 In a plan file, you can also define additional sections with the ansible type and point to your playbook, optionally enabling verbose and using the key hosts to specify a list of vms to run the given playbook instead.
 
@@ -1460,10 +1384,10 @@ You wont define variables in this case, as you can leverage host_vars and groups
 
 .. code:: yaml
 
-    myplay:
-     type: ansible
-     verbose: false
-     playbook: prout.yml
+   myplay:
+    type: ansible
+    verbose: false
+    playbook: prout.yml
 
 When leveraging ansible this way, an inventory file will be generated on the fly for you and let in */tmp/$PLAN.inv*.
 
@@ -1481,19 +1405,19 @@ First, add a repo containing a KMETA file with yaml info about products you want
 
 ::
 
-    kcli create repo -u https://github.com/karmab/kcli-plans karmab
+   kcli create repo -u https://github.com/karmab/kcli-plans karmab
 
 You can also update later a given repo, to refresh its KMETA file ( or all the repos, if not specifying any)
 
 ::
 
-    kcli update repo REPO_NAME
+   kcli update repo REPO_NAME
 
 You can delete a given repo with
 
 ::
 
-    kcli delete repo REPO_NAME
+   kcli delete repo REPO_NAME
 
 Product
 -------
@@ -1502,19 +1426,19 @@ Once you have added some repos, you can list available products, and get their d
 
 ::
 
-    kcli list products 
+   kcli list products 
 
 You can also get direct information on the product (memory and cpu used, number of vms deployed and all parameters that can be overriden)
 
 ::
 
-    kcli info product YOUR_PRODUCT 
+   kcli info product YOUR_PRODUCT 
 
 And deploy any product. Deletion is handled by deleting the corresponding plan.
 
 ::
 
-    kcli create product YOUR_PRODUCT
+   kcli create product YOUR_PRODUCT
 
 Deploying kubernetes/openshift clusters (and applications on top!)
 ==================================================================
@@ -1533,7 +1457,7 @@ Deploying generic kubernetes clusters
 
 ::
 
-    kcli create kube generic -P masters=X -P workers=Y $cluster
+   kcli create kube generic -P masters=X -P workers=Y $cluster
 
 Deploying openshift/okd clusters
 --------------------------------
@@ -1588,175 +1512,102 @@ A minimal one could be the following one
 
 ::
 
-    cluster: mycluster
-    domain: karmalabs.com
-    version: stable
-    tag: '4.8'
-    masters: 3 
-    workers:2
-    memory: 16384
-    numcpus: 16
+   cluster: mycluster
+   domain: karmalabs.com
+   version: stable
+   tag: '4.8'
+   masters: 3 
+   workers:2
+   memory: 16384
+   numcpus: 16
 
 Here’s the list of all variables that can be used (you can list them with ``kcli info cluster openshift``)
 
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Parameter              | Default Value                      | Comments                                                                                                                                                                     |
-+========================+====================================+==============================================================================================================================================================================+
-| *version*              | nightly                            | You can choose between nightly, ci or stable. ci requires specific data in your secret                                                                                       |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| tag                    | 4.5                                |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| async                  | false                              | Exit once vms are created and let job in cluster delete bootstrap                                                                                                            |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| notify                 | false                              | Whether to send notifications once cluster is deployed. Mean to be used in async mode                                                                                        |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| pull_secret            | openshift_pull.json                |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| image                  | rhcos45                            | rhcos image to use (should be qemu for libvirt/kubevirt and openstack one for ovirt/openstack)                                                                               |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| helper_image           | CentOS-7-x86_64-GenericCloud.qcow2 | which image to use when deploying temporary helper vms                                                                                                                       |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| network                | default                            | Any existing network can be used                                                                                                                                             |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| api_ip                 | None                               |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| ingress_ip             | None                               |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| masters                | 1                                  | number of masters                                                                                                                                                            |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| workers                | 0                                  | number of workers                                                                                                                                                            |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| fips                   | False                              |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| cluster                | testk                              |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| domain                 | karmalabs.com                      | For cloud platforms, it should point to a domain name you have access to                                                                                                     |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| network_type           | OpenShiftSDN                       |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| minimal                | False                              |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| pool                   | default                            |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| flavor                 | None                               |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| flavor_bootstrap       | None                               |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| flavor_master          | None                               |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| flavor_worker          | None                               |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| numcpus                | 4                                  |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| bootstrap_numcpus      | None                               |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| master_numcpus         | None                               |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| worker_numcpus         | None                               |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| memory                 | 8192                               |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| bootstrap_memory       | None                               |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| master_memory          | None                               |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| worker_memory          | None                               |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| master_tpm             | False                              |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| master_rng             | False                              |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| worker_tpm             | False                              |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| worker_rng             | False                              |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| disk_size              | 30                                 | disk size in Gb for final nodes                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| autostart              | False                              |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| keys                   | []                                 |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| apps                   | []                                 |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| extra_disks            | []                                 |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| extra_master_disks     | []                                 |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| extra_worker_disks     | []                                 |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| extra_networks         | []                                 |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| extra_master_networks  | []                                 |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| extra_worker_networks  | []                                 |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| master_macs            | []                                 |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| master_ips             | []                                 |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| bootstrap_mac          | None                               |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| bootstrap_ip           | None                               |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| worker_macs            | []                                 |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| worker_ips             | []                                 |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| pcidevices             | None                               | array of pcidevices to passthrough to the first worker only. Check `here <https://github.com/karmab/kcli-plans/blob/master/samples/pcipassthrough/pci.yml>`__ for an example |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| numa                   | None                               | numa conf dictionary to apply to the workers only. Check `here <https://github.com/karmab/kcli-plans/blob/master/samples/cputuning/numa.yml>`__ for an example               |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| numa_master            | None                               |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| numa_worker            | None                               |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| numamode               | None                               |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| numamode_master        | None                               |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| numamode_worker        | None                               |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| cpupinning             | None                               |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| cpupinning_master      | None                               |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| cpupinning_worker      | None                               |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| disconnected_url       | None                               |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| disconnected_user      | None                               |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| disconnected_password  | None                               |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| imagecontentsources    | []                                 |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| ca                     | None                               | optional string of certificates to trust                                                                                                                                     |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| ipv6                   | False                              |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| baremetal              | False                              | Whether to also deploy the metal3 operator, for provisioning physical workers                                                                                                |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| baremetal_machine_cidr | None                               |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| provisioning_net       | provisioning                       |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| provisioning_nic       | ens4                               |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| cloud_tag              | None                               |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| cloud_scale            | False                              |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| cloud_api_internal     | False                              |                                                                                                                                                                              |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| apps                   | []                                 | Extra applications to deploy on the cluster, available ones are visible with ``kcli list app openshift``                                                                     |
-+------------------------+------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+====================== ================================== ============================================================================================================================================================================
+Parameter              Default Value                      Comments
+====================== ================================== ============================================================================================================================================================================
+*version*              nightly                            You can choose between nightly, ci or stable. ci requires specific data in your secret
+tag                    4.5                                
+async                  false                              Exit once vms are created and let job in cluster delete bootstrap
+notify                 false                              Whether to send notifications once cluster is deployed. Mean to be used in async mode
+pull_secret            openshift_pull.json                
+image                  rhcos45                            rhcos image to use (should be qemu for libvirt/kubevirt and openstack one for ovirt/openstack)
+helper_image           CentOS-7-x86_64-GenericCloud.qcow2 which image to use when deploying temporary helper vms
+network                default                            Any existing network can be used
+api_ip                 None                               
+ingress_ip             None                               
+masters                1                                  number of masters
+workers                0                                  number of workers
+fips                   False                              
+cluster                testk                              
+domain                 karmalabs.com                      For cloud platforms, it should point to a domain name you have access to
+network_type           OpenShiftSDN                       
+minimal                False                              
+pool                   default                            
+flavor                 None                               
+flavor_bootstrap       None                               
+flavor_master          None                               
+flavor_worker          None                               
+numcpus                4                                  
+bootstrap_numcpus      None                               
+master_numcpus         None                               
+worker_numcpus         None                               
+memory                 8192                               
+bootstrap_memory       None                               
+master_memory          None                               
+worker_memory          None                               
+master_tpm             False                              
+master_rng             False                              
+worker_tpm             False                              
+worker_rng             False                              
+disk_size              30                                 disk size in Gb for final nodes
+autostart              False                              
+keys                   []                                 
+apps                   []                                 
+extra_disks            []                                 
+extra_master_disks     []                                 
+extra_worker_disks     []                                 
+extra_networks         []                                 
+extra_master_networks  []                                 
+extra_worker_networks  []                                 
+master_macs            []                                 
+master_ips             []                                 
+bootstrap_mac          None                               
+bootstrap_ip           None                               
+worker_macs            []                                 
+worker_ips             []                                 
+pcidevices             None                               array of pcidevices to passthrough to the first worker only. Check `here <https://github.com/karmab/kcli-plans/blob/master/samples/pcipassthrough/pci.yml>`__ for an example
+numa                   None                               numa conf dictionary to apply to the workers only. Check `here <https://github.com/karmab/kcli-plans/blob/master/samples/cputuning/numa.yml>`__ for an example
+numa_master            None                               
+numa_worker            None                               
+numamode               None                               
+numamode_master        None                               
+numamode_worker        None                               
+cpupinning             None                               
+cpupinning_master      None                               
+cpupinning_worker      None                               
+disconnected_url       None                               
+disconnected_user      None                               
+disconnected_password  None                               
+imagecontentsources    []                                 
+ca                     None                               optional string of certificates to trust
+ipv6                   False                              
+baremetal              False                              Whether to also deploy the metal3 operator, for provisioning physical workers
+baremetal_machine_cidr None                               
+provisioning_net       provisioning                       
+provisioning_nic       ens4                               
+cloud_tag              None                               
+cloud_scale            False                              
+cloud_api_internal     False                              
+apps                   []                                 Extra applications to deploy on the cluster, available ones are visible with ``kcli list app openshift``
+====================== ================================== ============================================================================================================================================================================
 
 Deploying
 ^^^^^^^^^
 
 ::
 
-    kcli create kube openshift --paramfile parameters.yml $cluster
+   kcli create kube openshift --paramfile parameters.yml $cluster
 
 -  You will be asked for your sudo password in order to create a /etc/hosts entry for the api vip.
 
@@ -1794,13 +1645,13 @@ The procedure is the same independently of the type of cluster used.
 
 ::
 
-    kcli scale kube <generic|openshift|okd|k3s> -w num_of_workers --paramfile parameters.yml $cluster
+   kcli scale kube <generic|openshift|okd|k3s> -w num_of_workers --paramfile parameters.yml $cluster
 
 In openshift case, for baremetal workers you can use the following command:
 
 ::
 
-    kcli create openshift-iso --paramfile parameters.yml $cluster
+   kcli create openshift-iso --paramfile parameters.yml $cluster
 
 Interacting with your clusters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1816,7 +1667,7 @@ The procedure is the same independently of the type of cluster used.
 
 ::
 
-    kcli delete kube $cluster
+   kcli delete kube $cluster
 
 Deploying applications on top of kubernetes/openshift
 =====================================================
@@ -1836,31 +1687,31 @@ To list applications available on generic kubernetes, run:
 
 ::
 
-    kcli list kube generic
+   kcli list kube generic
 
 To list applications available on generic openshift, run:
 
 ::
 
-    kcli list kube openshift
+   kcli list kube openshift
 
 For any of the supported applications, you can get information on the supported parameters with:
 
 ::
 
-    kcli info app generic|openshift $app_name
+   kcli info app generic|openshift $app_name
 
 To deploy an app, use the following, with additional parameters passed in the command line or in a parameter file:
 
 ::
 
-    kcli create app generic|openshift $app_name
+   kcli create app generic|openshift $app_name
 
 Applications can be deleted the same way:
 
 ::
 
-    kcli delete app generic|openshift $app_name
+   kcli delete app generic|openshift $app_name
 
 Running on kubernetes/openshift
 ===============================
@@ -1871,17 +1722,17 @@ On openshift, you’ll need to run first those extra commands:
 
 ::
 
-    oc new-project kcli
-    oc adm policy add-scc-to-user anyuid system:serviceaccount:kcli:default
-    oc expose svc kcli
+   oc new-project kcli
+   oc adm policy add-scc-to-user anyuid system:serviceaccount:kcli:default
+   oc expose svc kcli
 
 Then:
 
 ::
 
-    kubectl create configmap kcli-config --from-file=~/.kcli
-    kubectl create configmap ssh-config --from-file=~/.ssh
-    kubectl create -f https://raw.githubusercontent.com/karmab/kcli/master/extras/k8sdeploy.yml
+   kubectl create configmap kcli-config --from-file=~/.kcli
+   kubectl create configmap ssh-config --from-file=~/.ssh
+   kubectl create -f https://raw.githubusercontent.com/karmab/kcli/master/extras/k8sdeploy.yml
 
 Alternatively, look at https://github.com/karmab/kcli-controller for a controller/operator handling vms and plans as crds and creating the corresponding assets with kcli/kvirt library.
 
@@ -1919,7 +1770,7 @@ For instance, for Kubernetes:
 
 ::
 
-    jenkinsmode: kubernetes
+   jenkinsmode: kubernetes
 
 Create Jenkins file
 -------------------
@@ -1928,7 +1779,7 @@ Now you can create a Jenkinsfile from your specific, or from default *kcli_plan.
 
 ::
 
-    kcli create pipeline
+   kcli create pipeline
 
 You can see an example of the generated Jenkinsfile for both targets from the sample plan provided in this directory.
 
@@ -1943,24 +1794,24 @@ You can create credentials as secrets and tag them so they get synced to Jenkins
 
 ::
 
-    oc create secret generic kcli-config-yml --from-file=filename=config.yml
-    oc annotate secret/kcli-config-yml jenkins.openshift.io/secret.name=kcli-config-yml
-    oc label secret/kcli-config-yml credential.sync.jenkins.openshift.io=true
+   oc create secret generic kcli-config-yml --from-file=filename=config.yml
+   oc annotate secret/kcli-config-yml jenkins.openshift.io/secret.name=kcli-config-yml
+   oc label secret/kcli-config-yml credential.sync.jenkins.openshift.io=true
 
-    oc create secret generic kcli-id-rsa --from-file=filename=~/.ssh/id_rsa
-    oc annotate secret/kcli-id-rsa jenkins.openshift.io/secret.name=kcli-id-rsa
-    oc label secret/kcli-id-rsa credential.sync.jenkins.openshift.io=true
+   oc create secret generic kcli-id-rsa --from-file=filename=~/.ssh/id_rsa
+   oc annotate secret/kcli-id-rsa jenkins.openshift.io/secret.name=kcli-id-rsa
+   oc label secret/kcli-id-rsa credential.sync.jenkins.openshift.io=true
 
-    oc create secret generic kcli-id-rsa-pub --from-file=filename=$HOME/.ssh/id_rsa.pub
-    oc annotate secret/kcli-id-rsa-pub jenkins.openshift.io/secret.name=kcli-id-rsa-pub
-    oc label secret/kcli-id-rsa-pub credential.sync.jenkins.openshift.io=true
+   oc create secret generic kcli-id-rsa-pub --from-file=filename=$HOME/.ssh/id_rsa.pub
+   oc annotate secret/kcli-id-rsa-pub jenkins.openshift.io/secret.name=kcli-id-rsa-pub
+   oc label secret/kcli-id-rsa-pub credential.sync.jenkins.openshift.io=true
 
 You will also need to allow *anyuid* scc for kcli pod, which can be done with the following command (adjust to your project):
 
 ::
 
-    PROJECT=kcli
-    oc adm policy add-scc-to-user anyuid system:serviceaccount:$PROJECT:default
+   PROJECT=kcli
+   oc adm policy add-scc-to-user anyuid system:serviceaccount:$PROJECT:default
 
 Auto Completion
 ===============
@@ -1974,7 +1825,7 @@ Add the following line in one of your shell files (.bashrc, .zshrc, …)
 
 ::
 
-    eval "$(register-python-argcomplete kcli)"
+   eval "$(register-python-argcomplete kcli)"
 
 Fish
 ----
@@ -1983,21 +1834,21 @@ Add the following snippet in *.config/fish/config.fish*
 
 ::
 
-    function __fish_kcli_complete
-        set -x _ARGCOMPLETE 1
-        set -x _ARGCOMPLETE_IFS \n
-        set -x _ARGCOMPLETE_SUPPRESS_SPACE 1
-        set -x _ARGCOMPLETE_SHELL fish
-        set -x COMP_LINE (commandline -p)
-        set -x COMP_POINT (string length (commandline -cp))
-        set -x COMP_TYPE
-        if set -q _ARC_DEBUG
-            kcli 8>&1 9>&2 1>/dev/null 2>&1
-        else
-            kcli 8>&1 9>&2 1>&9 2>&1
-        end
-    end
-    complete -c kcli -f -a '(__fish_kcli_complete)'
+   function __fish_kcli_complete
+       set -x _ARGCOMPLETE 1
+       set -x _ARGCOMPLETE_IFS \n
+       set -x _ARGCOMPLETE_SUPPRESS_SPACE 1
+       set -x _ARGCOMPLETE_SHELL fish
+       set -x COMP_LINE (commandline -p)
+       set -x COMP_POINT (string length (commandline -cp))
+       set -x COMP_TYPE
+       if set -q _ARC_DEBUG
+           kcli 8>&1 9>&2 1>/dev/null 2>&1
+       else
+           kcli 8>&1 9>&2 1>&9 2>&1
+       end
+   end
+   complete -c kcli -f -a '(__fish_kcli_complete)'
 
 Api Usage
 =========
@@ -2011,9 +1862,9 @@ Here’s a sample:
 
 ::
 
-    from kvirt.config import Kconfig
-    config = Kconfig()
-    k = config.k
+   from kvirt.config import Kconfig
+   config = Kconfig()
+   k = config.k
 
 You can then either use config for high level actions or the more low level *k* object.
 
@@ -2054,5 +1905,5 @@ API documentation
    :target: https://copr.fedorainfracloud.org/coprs/karmab/kcli/package/kcli
 .. |Documentation Status| image:: https://readthedocs.org/projects/kcli/badge/?version=latest
    :target: https://kcli.readthedocs.io/en/latest/?badge=latest
-.. |image4| image:: https://images.microbadger.com/badges/image/karmab/kcli.svg
+.. |image1| image:: https://images.microbadger.com/badges/image/karmab/kcli.svg
    :target: https://microbadger.com/images/karmab/kcli

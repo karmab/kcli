@@ -471,8 +471,10 @@ The following parameters are specific to openstack:
 
 - auth_url
 - project
-- domain
-- ca_file
+- domain. Defaults to *Default*
+- ca_file (Optional)
+- external_network (Optional). Indicates which network use for floating ips (useful when you have several ones)
+- region_name (Optional). Used in OVH Openstack
 
 To use this provider with kcli rpm, you'll need to install the following rpms 
 
