@@ -17,6 +17,12 @@
  nets:
  - name: {{ network }}
  reservedns: true
+{% elif config_type == 'ibm' %}
+ files:
+ - path: /etc/NetworkManager/dispatcher.d/99-forcedns
+   origin: 99-forcedns-ibm
+   mode: 755
+{% endif %
  disks: {{ [disk_size] + extra_disks }}
 {% if cloud_tag != None %}
  tags: [{{ cloud_tag }}]

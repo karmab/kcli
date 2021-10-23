@@ -1233,6 +1233,9 @@ def create(config, plandir, cluster, overrides):
             error("Leaving environment for debugging purposes")
             error("You can delete it with kcli delete cluster --yes %s" % cluster)
             sys.exit(run)
+    if platform == 'ibm:':
+        pprint("Waiting for loadbalancer to move to masters")
+        sleep(30)
     if workers > 0:
         pprint("Deploying workers")
         if 'name' in overrides:

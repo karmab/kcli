@@ -11,8 +11,8 @@ if [ "$2" = "dhcp4-change" ] || [ "$2" = "dhcp6-change" ] || [ "$2" = "up" ] || 
   if [ "$IP" != "" ] ; then
     grep -q $IP /etc/resolv.conf
     if [ "$?" != "0" ] ; then
-      sed -i "/nameserver.* # coredns/d" /etc/resolv.conf
-      sed -i "0,/nameserver/s/nameserver/nameserver $IP #coredns\n&/" /etc/resolv.conf
+      sed -i "/nameserver.* # kclihack/d" /etc/resolv.conf
+      sed -i "0,/nameserver/s/nameserver/nameserver $IP #kclihack\n&/" /etc/resolv.conf
     fi
   fi
 fi

@@ -36,7 +36,7 @@
    mode: 644
 {% elif config_type == 'ibm' %}
   - path: /etc/NetworkManager/dispatcher.d/99-forcedns
-    origin: 99-forcedns
+    origin: 99-forcedns-ibm
     mode: 755
 {% endif %}
 {% if cloud_tag != None %}
