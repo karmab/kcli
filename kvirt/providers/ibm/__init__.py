@@ -965,7 +965,8 @@ class Kibm(object):
         internal = False if internal is None else internal
         clean_name = name.replace('.', '-')
         pprint("Creating Security Group %s" % clean_name)
-        security_group_id = self.create_security_group(clean_name, ports)
+        security_group_ports = ports + [int(checkport)] if int(checkport) not in ports else ports
+        security_group_id = self.create_security_group(clean_name, security_group_ports)
         subnets = set()
         member_list = []
         resource_group_id = None
