@@ -1210,6 +1210,11 @@ def create(config, plandir, cluster, overrides):
                 sleep(10)
             sedcmd = 'sed -i "s@api-int.%s.%s@%s@" %s/master.ign' % (cluster, domain, api_ip, clusterdir)
             call(sedcmd, shell=True)
+        pprint("Deploying masters")
+        result = config.plan(plan, inputfile='%s/cloud_masters.yml' % plandir, overrides=overrides)
+        if result['result'] != 'success':
+            sys.exit(1)
+        if platform == 'ibm':
             first_master_ip = None
             while first_master_ip is None:
                 first_master_ip = k.info("%s-master-0" % cluster).get('private_ip')
@@ -1217,10 +1222,6 @@ def create(config, plandir, cluster, overrides):
                 sleep(10)
             sedcmd = 'sed -i "s@api-int.%s.%s@%s@" %s/worker.ign' % (cluster, domain, first_master_ip, clusterdir)
             call(sedcmd, shell=True)
-        pprint("Deploying masters")
-        result = config.plan(plan, inputfile='%s/cloud_masters.yml' % plandir, overrides=overrides)
-        if result['result'] != 'success':
-            sys.exit(1)
         result = config.plan(plan, inputfile='%s/cloud_lb_api.yml' % plandir, overrides=overrides)
         if result['result'] != 'success':
             sys.exit(1)
@@ -1239,9 +1240,9 @@ def create(config, plandir, cluster, overrides):
             error("Leaving environment for debugging purposes")
             error("You can delete it with kcli delete cluster --yes %s" % cluster)
             sys.exit(run)
-    if platform == 'ibm:':
+    if platform == 'ibm':
         pprint("Waiting for loadbalancer to move to masters")
-        sleep(30)
+        sleep(15)
     if workers > 0:
         pprint("Deploying workers")
         if 'name' in overrides:
