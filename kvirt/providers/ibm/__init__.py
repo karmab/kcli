@@ -560,12 +560,11 @@ class Kibm(object):
                 return {'result': 'failure', 'reason': 'VM %s not found' % name}
         except ApiException as exc:
             return {'result': 'failure', 'reason': 'Unable to retrieve VM %s. %s' % (name, exc)}
-
+        tags = []
         try:
             tags = self.global_tagging_service.list_tags(attached_to=vm['crn']).result['items']
-        except ApiException as exc:
+        except Exception as exc:
             error('Unable to retrieve tags. %s' % exc)
-            return None, None
         domain = None
         for tag in tags:
             tagname = tag['name']
