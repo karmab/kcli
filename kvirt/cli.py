@@ -24,6 +24,7 @@ from kvirt import nameutils
 import os
 import random
 import requests
+from subprocess import call
 import sys
 from urllib.parse import urlparse
 import yaml
@@ -293,6 +294,22 @@ def delete_vm(args):
             if dnsclient is not None and domain is not None:
                 z = Kconfig(client=dnsclient).k
                 z.delete_dns(name, domain)
+            cluster = name.split('-')[0] if '-master-' in name or '-worker-' in name else None
+            clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
+            if cluster is not None and os.path.exists(clusterdir):
+                os.environ['KUBECONFIG'] = "%s/auth/kubeconfig" % clusterdir
+                if os.path.exists("%s/kcli_parameters.yml" % clusterdir):
+                    with open("%s/kcli_parameters.yml" % clusterdir, 'r') as install:
+                        installparam = yaml.safe_load(install)
+                        kubetype = installparam.get('kubetype', 'kubectl')
+                        binary = 'oc' if kubetype == 'openshift' else 'kubectl'
+                        domain = installparam.get('domain')
+                        if domain is not None:
+                            try:
+                                pprint("Deleting node %s.%s from your cluster" % (name, domain))
+                                call('%s delete node %s.%s' % (binary, name, domain), shell=True)
+                            except:
+                                continue
     sys.exit(1 if 1 in codes else 0)
 
 
