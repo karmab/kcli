@@ -230,18 +230,9 @@ class Kibm(object):
         for index, disk in enumerate(disks[1:]):
             disksize = int(disk.get('size')) if isinstance(disk, dict) and 'size' in disk else int(disk)
             diskname = "%s-disk%s" % (name, index + 1)
-            volume_attachments.append(
-                vpc_v1.VolumeAttachmentPrototypeInstanceContext(
-                    volume=vpc_v1.VolumeAttachmentVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeByCapacity(
-                        profile=vpc_v1.VolumeProfileIdentityByName(
-                            name='general-purpose'
-                        ),
-                        capacity=disksize,
-                        name=diskname
-                    ),
-                    delete_volume_on_instance_delete=True,
-                )
-            )
+            volume_by_capacity = {'capacity': disksize, 'name': diskname, 'profile': {'name': 'general-purpose'}}
+            volume_attachment = {'delete_volume_on_instance_delete': True, 'volume': volume_by_capacity}
+            volume_attachments.append(vpc_v1.VolumeAttachmentPrototypeInstanceContext.from_dict(volume_attachment))
         try:
             result_create = self.conn.create_instance(
                 vpc_v1.InstancePrototypeInstanceByImage(
