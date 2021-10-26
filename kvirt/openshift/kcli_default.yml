@@ -13,7 +13,7 @@ info: |
     You can also define a list of scripts to launch at the end with the postscripts array.
 ipi: false
 version: stable
-tag: '4.8'
+tag: '4.9'
 pull_secret: openshift_pull.json
 image: rhcos48
 helper_image: CentOS-7-x86_64-GenericCloud.qcow2

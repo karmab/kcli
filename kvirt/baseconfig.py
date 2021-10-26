@@ -18,7 +18,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             INITRD, CMDLINE, PLACEMENT, YAMLINVENTORY, CPUHOTPLUG, MEMORYHOTPLUG, CPUFLAGS, CPUPINNING,
                             NUMAMODE, NUMA, PCIDEVICES, VIRTTYPE, MAILSERVER, MAILFROM, MAILTO, TPM, JENKINSMODE, RNG,
                             ZEROTIER_NETS, ZEROTIER_KUBELET, VMPORT, VMUSER, VMRULES, CACHE, SECURITYGROUPS,
-                            LOCAL_OPENSHIFT_APPS)
+                            LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG)
 from random import choice
 from kvirt import common
 from kvirt.common import error, pprint, warning
@@ -1180,7 +1180,7 @@ class Kbaseconfig:
     def download_openshift_installer(self, overrides={}):
         pull_secret = overrides.get('pull_secret', 'openshift_pull.json')
         version = overrides.get('version', 'stable')
-        tag = overrides.get('tag', '4.7')
+        tag = overrides.get('tag', OPENSHIFT_TAG)
         upstream = overrides.get('upstream', False)
         baremetal = overrides.get('baremetal', False)
         macosx = True if os.path.exists('/Users') else False

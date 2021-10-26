@@ -14,7 +14,7 @@ from kvirt.common import get_oc, pwd_path
 from kvirt.common import get_commit_rhcos, get_latest_fcos, patch_bootstrap, generate_rhcos_iso, olm_app
 from kvirt.common import get_installer_rhcos
 from kvirt.common import ssh, scp, _ssh_credentials, copy_ipi_credentials
-from kvirt.defaults import LOCAL_OPENSHIFT_APPS
+from kvirt.defaults import LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG
 import re
 from shutil import copy2, move, rmtree
 from subprocess import call
@@ -30,7 +30,6 @@ import yaml
 
 virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere', 'packet']
 cloudplatforms = ['aws', 'gcp', 'ibm']
-DEFAULT_TAG = '4.9'
 
 
 def update_etc_hosts(cluster, domain, host_ip, ingress_ip=None):
@@ -373,7 +372,7 @@ def create(config, plandir, cluster, overrides):
             'network': 'default',
             'masters': 1,
             'workers': 0,
-            'tag': DEFAULT_TAG,
+            'tag': OPENSHIFT_TAG,
             'ipv6': False,
             'pub_key': os.path.expanduser('~/.ssh/id_rsa.pub'),
             'pull_secret': 'openshift_pull.json',

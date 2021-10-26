@@ -10,7 +10,7 @@ import json
 from jinja2 import Environment, FileSystemLoader
 from jinja2 import StrictUndefined as undefined
 from jinja2.exceptions import TemplateSyntaxError, TemplateError
-from kvirt.defaults import IMAGES, IMAGESCOMMANDS
+from kvirt.defaults import IMAGES, IMAGESCOMMANDS, OPENSHIFT_TAG
 from kvirt import ansibleutils
 from kvirt.jinjafilters import jinjafilters
 from kvirt import nameutils
@@ -2527,7 +2527,7 @@ class Kconfig(Kbaseconfig):
         cluster = data.get('cluster', 'testk')
         upstream = data.get('upstream', False)
         version = data.get('version', 'nightly')
-        tag = data.get('tag', '4.8')
+        tag = data.get('tag', OPENSHIFT_TAG)
         disconnected_vm = "%s-disconnecter" % cluster
         disconnected_reuse = data.get('disconnected_reuse', False)
         disconnected_operators = data.get('disconnected_operators', False)
