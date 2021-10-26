@@ -13,7 +13,7 @@ class Kexposer():
         clients = {}
         plans = {}
         for parameterfile in glob("%s/parameters_*.y*ml" % self.basedir):
-            search = re.match('.*parameters_(.*)\.(ya?ml)', parameterfile)
+            search = re.match('.*parameters_(.*)\\.(ya?ml)', parameterfile)
             plan_name = search.group(1)
             ext = search.group(2)
             plans[plan_name] = config.client
@@ -22,9 +22,11 @@ class Kexposer():
             else:
                 clients[config.client] = {plan_name: "%s/parameters_%s.%s" % (self.basedir, plan_name, ext)}
         for client in [config.client] + list(config.extraclients.keys()):
+            if not config.ini[client].get('enabled', True):
+                continue
             self.parametersfiles = glob("%s/%s/parameters_*.y*ml" % (self.basedir, client))
             for parameterfile in self.parametersfiles:
-                search = re.match('.*parameters_(.*)\.(ya?ml)', parameterfile)
+                search = re.match('.*parameters_(.*)\\.(ya?ml)', parameterfile)
                 plan_name = search.group(1)
                 ext = search.group(2)
                 plans[plan_name] = client

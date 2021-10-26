@@ -278,7 +278,7 @@ class Kbaseconfig:
         options = self.options
         self.enabled = options.get('enabled', True)
         if not self.enabled:
-            error("Disabled hypervisor %s.Leaving..." % client)
+            error("Disabled client %s.Leaving..." % self.client)
             sys.exit(1)
         self.host = options.get('host', '127.0.0.1')
         if ':' in self.host and '[' not in self.host:
