@@ -1228,7 +1228,7 @@ class Kconfig(Kbaseconfig):
                 success("%s prevented to autostart!" % name)
         return {'result': 'success'}
 
-    def delete_plan(self, plan, container=False):
+    def delete_plan(self, plan, container=False, unregister=False):
         k = self.k
         deletedvms = []
         deletedlbs = []
@@ -1259,6 +1259,16 @@ class Kconfig(Kbaseconfig):
                         if network != 'default' and network not in networks:
                             networks.append(network)
                     dnsclient, domain = c.dnsinfo(name)
+                    if unregister:
+                        image = k.info(name).get('image')
+                        if 'rhel' in image:
+                            pprint("Removing rhel subscription for %s" % name)
+                            ip, vmport = _ssh_credentials(k, name)[1:]
+                            cmd = "subscription-manager remove --all"
+                            sshcmd = ssh(name, ip=ip, user='root', tunnel=self.tunnel,
+                                         tunnelhost=self.tunnelhost, tunnelport=self.tunnelport,
+                                         tunneluser=self.tunneluser, insecure=True, cmd=cmd, vmport=vmport)
+                            os.system(sshcmd)
                     c.delete(name, snapshots=True)
                     if dnsclient is not None and domain is not None and dnsclient in self.clients:
                         if dnsclient in dnsclients:

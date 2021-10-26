@@ -19,7 +19,7 @@ import argparse
 from argparse import RawDescriptionHelpFormatter as rawhelp
 from glob import glob
 from kvirt import common
-from kvirt.common import error, pprint, success, warning
+from kvirt.common import error, pprint, success, warning, ssh, _ssh_credentials
 from kvirt import nameutils
 import os
 import random
@@ -281,6 +281,18 @@ def delete_vm(args):
         for name in names:
             pprint("Deleting vm %s on %s" % (name, cli))
             dnsclient, domain = k.dnsinfo(name)
+            if config.rhnunregister:
+                image = k.info(name).get('image')
+                if 'rhel' in image:
+                    pprint("Removing rhel subscription for %s" % name)
+                    ip, vmport = _ssh_credentials(k, name)[1:]
+                    cmd = "subscription-manager remove --all"
+                    sshcmd = ssh(name, ip=ip, user='root', tunnel=config.tunnel,
+                                 tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
+                                 tunneluser=config.tunneluser, insecure=True, cmd=cmd, vmport=vmport)
+                    os.system(sshcmd)
+                else:
+                    warning("vm %s doesnt appear as a rhel box. Skipping unregistration" % name)
             result = k.delete(name, snapshots=snapshots)
             if result['result'] == 'success':
                 success("%s deleted" % name)
@@ -1781,7 +1793,7 @@ def create_plan(args):
             error("Force requires specifying a plan name")
             return
         else:
-            config.delete_plan(plan)
+            config.delete_plan(plan, unregister=config.rhnunregister)
     if plan is None:
         plan = nameutils.get_random_name()
         pprint("Using %s as name of the plan" % plan)
@@ -1849,7 +1861,7 @@ def delete_plan(args):
     if not yes and not yes_top:
         common.confirm("Are you sure?")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.delete_plan(plan)
+    config.delete_plan(plan, unregister=config.rhnunregister)
     return 0
 
 
@@ -4183,7 +4195,7 @@ def cli():
     vmdelete_parser = argparse.ArgumentParser(add_help=False)
     vmdelete_parser.add_argument('-c', '--count', help='How many vms to delete', type=int, default=1, metavar='COUNT')
     vmdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    vmdelete_parser.add_argument('--snapshots', action='store_true', help='Remove snapshots if needed')
+    vmdelete_parser.add_argument('-s', '--snapshots', action='store_true', help='Remove snapshots if needed')
     vmdelete_parser.add_argument('names', metavar='VMNAMES', nargs='*')
     vmdelete_parser.set_defaults(func=delete_vm)
     delete_subparsers.add_parser('vm', parents=[vmdelete_parser], description=vmdelete_desc, help=vmdelete_desc)
