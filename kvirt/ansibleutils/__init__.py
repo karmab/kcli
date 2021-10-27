@@ -73,8 +73,7 @@ def play(k, name, playbook, variables=[], verbose=False, user=None, tunnel=False
             dump(inventory, f, default_flow_style=False)
         else:
             f.write("%s\n" % inventory)
-    pprint("Ansible Command run:")
-    pprint("%s -T 20 -i %s %s" % (ansiblecommand, inventoryfile, playbook))
+    pprint("Running: %s -T 20 -i %s %s" % (ansiblecommand, inventoryfile, playbook))
     os.system("%s -T 20 -i %s %s" % (ansiblecommand, inventoryfile, playbook))
 
 
