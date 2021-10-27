@@ -1264,7 +1264,7 @@ class Kconfig(Kbaseconfig):
                         if 'rhel' in image:
                             pprint("Removing rhel subscription for %s" % name)
                             ip, vmport = _ssh_credentials(k, name)[1:]
-                            cmd = "subscription-manager remove --all"
+                            cmd = "subscription-manager unregister"
                             sshcmd = ssh(name, ip=ip, user='root', tunnel=self.tunnel,
                                          tunnelhost=self.tunnelhost, tunnelport=self.tunnelport,
                                          tunneluser=self.tunneluser, insecure=True, cmd=cmd, vmport=vmport)

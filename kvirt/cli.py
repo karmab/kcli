@@ -286,7 +286,7 @@ def delete_vm(args):
                 if 'rhel' in image:
                     pprint("Removing rhel subscription for %s" % name)
                     ip, vmport = _ssh_credentials(k, name)[1:]
-                    cmd = "subscription-manager remove --all"
+                    cmd = "subscription-manager unregister"
                     sshcmd = ssh(name, ip=ip, user='root', tunnel=config.tunnel,
                                  tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
                                  tunneluser=config.tunneluser, insecure=True, cmd=cmd, vmport=vmport)
