@@ -1940,7 +1940,7 @@ def info_openshift_disconnecter(args):
 
 
 def info_openshift_app(args):
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     baseconfig.info_app_openshift(args.app)
 
 
