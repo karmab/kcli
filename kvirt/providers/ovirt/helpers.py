@@ -33,15 +33,23 @@ def get_home_ssh_key():
         publickeyfile = os.path.expanduser("~/.ssh/id_dsa.pub")
         with open(publickeyfile, 'r') as ssh:
             key = ssh.read().rstrip()
+    elif os.path.exists(os.path.expanduser("~/.ssh/id_ed25519.pub")):
+        publickeyfile = os.path.expanduser("~/.ssh/id_ed25519.pub")
+        with open(publickeyfile, 'r') as ssh:
+            key = ssh.read().rstrip()
     elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub")):
         publickeyfile = os.path.expanduser("~/.kcli/id_rsa.pub")
         with open(publickeyfile, 'r') as ssh:
             key = ssh.read().rstrip()
     elif os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub")):
-        publickeyfile = os.path.expanduser("~/.kcli/id_rda.pub")
+        publickeyfile = os.path.expanduser("~/.kcli/id_dsa.pub")
+        with open(publickeyfile, 'r') as ssh:
+            key = ssh.read().rstrip()
+    elif os.path.exists(os.path.expanduser("~/.kcli/id_ed25519.pub")):
+        publickeyfile = os.path.expanduser("~/.kcli/id_ed25519.pub")
         with open(publickeyfile, 'r') as ssh:
             key = ssh.read().rstrip()
     else:
-        warning("neither id_rsa or id_dsa public keys found in your .ssh or .kcli directory, you might have trouble "
-                "accessing the vm")
+        warning("neither id_rsa, id_dsa nor id_ed25519 public keys found in your .ssh or .kcli directories, "
+                "you might have trouble accessing the vm")
     return key

@@ -901,7 +901,8 @@ class Kconfig(Kbaseconfig):
         netmasks = [overrides[key] for key in overrides if re.match('netmask[0-9]+', key)]
         if privatekey and self.type == 'kvm':
             privatekeyfile, publickeyfile = None, None
-            for path in ["~/.kcli/id_rsa", "~/.kcli/id_dsa", "~/.ssh/id_rsa", "~/.ssh/id_dsa"]:
+            for path in ["~/.kcli/id_rsa", "~/.kcli/id_dsa", "~/.kcli/id_ed25519",
+                         "~/.ssh/id_rsa", "~/.ssh/id_dsa", "~/.ssh/id_ed25519"]:
                 expanded_path = os.path.expanduser(path)
                 if os.path.exists(expanded_path) and os.path.exists(expanded_path + ".pub"):
                     privatekeyfile = expanded_path

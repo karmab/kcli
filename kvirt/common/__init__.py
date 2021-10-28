@@ -271,20 +271,23 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             userdata += "fqdn: %s.%s\n" % (name, domain)
         if keys or os.path.exists(os.path.expanduser("~/.ssh/id_rsa.pub"))\
                 or os.path.exists(os.path.expanduser("~/.ssh/id_dsa.pub"))\
+                or os.path.exists(os.path.expanduser("~/.ssh/id_ed25519.pub"))\
                 or os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub"))\
-                or os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub")):
+                or os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub"))\
+                or os.path.exists(os.path.expanduser("~/.kcli/id_ed25519.pub")):
             userdata += "ssh_authorized_keys:\n"
         elif find_executable('ssh-add') is not None:
             agent_keys = os.popen('ssh-add -L 2>/dev/null | head -1').readlines()
             if agent_keys:
                 keys = agent_keys
         else:
-            warning("neither id_rsa or id_dsa public keys found in your .ssh or .kcli directory, you might have "
-                    "trouble accessing the vm")
+            warning("neither id_rsa, id_dsa nor id_ed25519 public keys found in your .ssh or .kcli directories, "
+                    "you might have trouble accessing the vm")
         if keys:
             for key in list(set(keys)):
                 userdata += "- %s\n" % key
-        for path in ["~/.kcli/id_rsa.pub", "~/.kcli/id_dsa.pub", "~/.ssh/id_rsa.pub", "~/.ssh/id_dsa.pub"]:
+        for path in ["~/.kcli/id_rsa.pub", "~/.kcli/id_dsa.pub", "~/.kcli/id_ed25519.pub",
+                     "~/.ssh/id_rsa.pub", "~/.ssh/id_dsa.pub", "~/.ssh/id_ed25519.pub"]:
             expanded_path = os.path.expanduser(path)
             if os.path.exists(expanded_path) and os.path.exists(expanded_path.replace('.pub', '')):
                 publickeyfile = expanded_path
@@ -903,6 +906,8 @@ def ssh(name, ip='', user=None, local=None, remote=None, tunnel=False, tunnelhos
                 identityfile = os.path.expanduser("~/.kcli/id_rsa")
             elif os.path.exists(os.path.expanduser("~/.kcli/id_dsa")):
                 identityfile = os.path.expanduser("~/.kcli/id_dsa")
+            elif os.path.exists(os.path.expanduser("~/.kcli/id_ed25519")):
+                identityfile = os.path.expanduser("~/.kcli/id_ed25519")
         if identityfile is not None:
             sshcommand = "-i %s %s" % (identityfile, sshcommand)
         if D:
@@ -977,6 +982,8 @@ def scp(name, ip='', user=None, source=None, destination=None, recursive=None, t
                 identityfile = os.path.expanduser("~/.kcli/id_rsa")
             elif os.path.exists(os.path.expanduser("~/.kcli/id_dsa")):
                 identityfile = os.path.expanduser("~/.kcli/id_dsa")
+            elif os.path.exists(os.path.expanduser("~/.kcli/id_ed25519")):
+                identityfile = os.path.expanduser("~/.kcli/id_ed25519")
         if identityfile is not None:
             scpcommand = "%s -i %s" % (scpcommand, identityfile)
         if recursive:
@@ -1073,7 +1080,8 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     else:
         localhostname = name
     if not nokeys:
-        for path in ["~/.kcli/id_rsa.pub", "~/.kcli/id_dsa.pub", "~/.ssh/id_rsa.pub", "~/.ssh/id_dsa.pub"]:
+        for path in ["~/.kcli/id_rsa.pub", "~/.kcli/id_dsa.pub", "~/.kcli/id_ed25519.pub",
+                     "~/.ssh/id_rsa.pub", "~/.ssh/id_dsa.pub", "~/.ssh/id_ed25519.pub"]:
             expanded_path = os.path.expanduser(path)
             if os.path.exists(expanded_path) and os.path.exists(expanded_path.replace('.pub', '')):
                 publickeyfile = expanded_path
@@ -1088,8 +1096,8 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
             if agent_keys:
                 publickeys = agent_keys
         if not publickeys:
-            error("neither id_rsa or id_dsa public keys found in your .ssh or .kcli directory, you might have trouble "
-                  "accessing the vm")
+            error("neither id_rsa, id_dsa nor id_ed25519 public keys found in your .ssh or .kcli directories, "
+                  "you might have trouble accessing the vm")
     if not noname:
         hostnameline = quote("%s\n" % localhostname)
         storage["files"].append({"filesystem": "root", "path": "/etc/hostname", "overwrite": True,

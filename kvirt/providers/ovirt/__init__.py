@@ -536,7 +536,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         keys_service = user_service.ssh_public_keys_service()
         key = get_home_ssh_key()
         if key is None:
-            error("neither id_rsa.pub or id_dsa public keys found in your .ssh directory. This is required")
+            error("neither id_rsa, id_dsa nor id_ed25519 public keys found in your .ssh directory. This is required")
             return
         try:
             keys_service.add(key=types.SshPublicKey(content=key))
