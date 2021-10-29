@@ -622,10 +622,12 @@ def create(config, plandir, cluster, overrides):
                     error("Couldn't gather the %s image associated to commit %s" % (config.type, COMMIT_ID))
                     error("Force an image in your parameter file")
                     sys.exit(1)
-        if config.type in cloudplatforms:
+        if platform in ['aws', 'gcp']:
             image = image_url
         else:
             image = os.path.basename(os.path.splitext(image_url)[0])
+            if platform == 'ibm':
+                image = image.replace('.', '-').replace('_', '-').lower()
             images = [v for v in k.volumes() if image in v]
             if not images:
                 result = config.handle_host(pool=config.pool, image=image, download=True, update_profile=False,
