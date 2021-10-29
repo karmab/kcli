@@ -1014,6 +1014,9 @@ class Kconfig(Kbaseconfig):
                     z.reserve_dns(name=name, nets=[domain], domain=domain, ip=ip, force=True)
             else:
                 warning("Client %s not found. Skipping" % dnsclient)
+        if os.access(os.path.expanduser('~/.kcli'), os.W_OK):
+            client = client if client is not None else self.client
+            common.set_lastvm(name, client)
         ansibleprofile = profile.get('ansible')
         if ansibleprofile is not None:
             if find_executable('ansible-playbook') is None:
@@ -1029,9 +1032,6 @@ class Kconfig(Kbaseconfig):
                     ansibleutils.play(k, name, playbook=playbook, variables=variables, verbose=verbose, user=user,
                                       tunnel=self.tunnel, tunnelhost=self.host, tunnelport=self.port,
                                       tunneluser=self.user, yamlinventory=yamlinventory, insecure=self.insecure)
-        if os.access(os.path.expanduser('~/.kcli'), os.W_OK):
-            client = client if client is not None else self.client
-            common.set_lastvm(name, client)
         if wait:
             if not cloudinit or not start or image is None:
                 pprint("Skipping wait on %s" % name)
