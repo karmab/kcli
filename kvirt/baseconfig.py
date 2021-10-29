@@ -782,7 +782,11 @@ class Kbaseconfig:
                             entries = '\n'.join(entrieslist[index + 1:])
                             break
                 return entries
-            entries = yaml.safe_load(entries)
+            try:
+                entries = yaml.safe_load(entries)
+            except Exception as e:
+                error("Couldn't load file. Hit %s" % e)
+                sys.exit(1)
         wrong_overrides = [y for y in overrides if '-' in y]
         if wrong_overrides:
             for wrong_override in wrong_overrides:
