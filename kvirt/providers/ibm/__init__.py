@@ -802,11 +802,19 @@ class Kibm(object):
         operating_system_identity_model = {}
         operating_system_identity_model['name'] = 'centos-8-amd64'
         image_prototype_model = {}
-        image_prototype_model['name'] = shortimage_unzipped.replace('.', '-').replace('_', '-').lower()
+        clean_image_name = shortimage_unzipped.replace('.', '-').replace('_', '-').lower()
+        image_prototype_model['name'] = clean_image_name
         image_prototype_model['file'] = image_file_prototype_model
         image_prototype_model['operating_system'] = operating_system_identity_model
         image_prototype = image_prototype_model
         result_create = self.conn.create_image(image_prototype).get_result()
+        while True:
+            image = self._get_image(clean_image_name)
+            if image['status'] == 'available':
+                break
+            else:
+                pprint("Waiting for image %s to be available" % clean_image_name)
+                sleep(10)
         tag_names = ["image:%s" % shortimage_unzipped]
         resource_model = {'resource_id': result_create['crn']}
         self.global_tagging_service.attach_tag(resources=[resource_model],
