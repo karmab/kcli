@@ -21,26 +21,12 @@ from netaddr import IPNetwork
 import os
 from time import sleep
 from requests import get, post
-
 import webbrowser
-
-ENDPOINTS = {
-    'us-south': 'https://us-south.iaas.cloud.ibm.com/v1',
-    'us-east': 'https://us-east.iaas.cloud.ibm.com/v1',
-    'ca-tor': 'https://ca-tor.iaas.cloud.ibm.com/v1',
-    'eu-gb': 'https://eu-gb.iaas.cloud.ibm.com/v1',
-    'eu-de': 'https://eu-de.iaas.cloud.ibm.com/v1',
-    'jp-tok': 'https://jp-tok.iaas.cloud.ibm.com/v1',
-    'jp-osa': 'https://jp-osa.iaas.cloud.ibm.com/v1',
-    'au-syd': 'https://au-syd.iaas.cloud.ibm.com/v1'
-}
-
-DNS_RESOURCE_ID = 'b4ed8a30-936f-11e9-b289-1d079699cbe5'
 
 
 def get_zone_href(region, zone):
     return "{}/regions/{}/zones/{}".format(
-        ENDPOINTS.get(region),
+        "https://%s.iaas.cloud.ibm.com/v1" % region,
         region,
         zone
     )
@@ -78,7 +64,7 @@ class Kibm(object):
         self.authenticator = IAMAuthenticator(iam_api_key)
         self.iam_api_key = iam_api_key
         self.conn = VpcV1(authenticator=self.authenticator)
-        self.conn.set_service_url(ENDPOINTS.get(region))
+        self.conn.set_service_url("https://%s.iaas.cloud.ibm.com/v1" % region)
         if cos_api_key is not None and cos_resource_instance_id is not None:
             cos_resource_instance_id = get_service_instance_id(iam_api_key, cos_resource_instance_id)
             self.s3 = ibm_boto3.client(
@@ -101,7 +87,7 @@ class Kibm(object):
         self.resources.set_service_url('https://resource-controller.cloud.ibm.com')
         self.iam_api_key = iam_api_key
         self.region = region
-        self.zone = zone
+        self.zone = zone if region in zone else "%s-2" % region
         self.vpc = vpc
 
     def close(self):

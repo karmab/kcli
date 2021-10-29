@@ -2934,7 +2934,7 @@ def cli():
     parser.add_argument('-d', '--debug', action='store_true')
     parser.add_argument('-n', '--namespace', help='Namespace to use. specific to kubevirt', default='default')
     parser.add_argument('-r', '--region', help='Region to use. specific to aws/gcp/ibm')
-    parser.add_argument('-z', '--zone', help='Zone to use. specific to gcp')
+    parser.add_argument('-z', '--zone', help='Zone to use. specific to gcp/ibm')
 
     subparsers = parser.add_subparsers(metavar='', title='Available Commands')
 
