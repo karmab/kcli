@@ -1397,3 +1397,9 @@ class Kibm(object):
             for n in security_group['network_interfaces']:
                 self.conn.remove_security_group_network_interface(security_group_id, n['id'])
             self.conn.delete_security_group(security_group_id)
+
+    def _add_sno_security_group(self, cluster):
+        security_group_id = self.create_security_group("%s-sno" % cluster, [80, 443, 6443])
+        vm = self._get_vm("%s-master-0" % cluster)
+        nic_id = vm['primary_network_interface']['id']
+        self.conn.add_security_group_network_interface(security_group_id, nic_id)

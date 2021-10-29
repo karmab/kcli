@@ -1312,3 +1312,5 @@ def create(config, plandir, cluster, overrides):
         k.reserve_dns('api.%s' % cluster, domain=domain, ip=api_ip)
         k.delete_dns('apps.%s' % cluster, domain=domain)
         k.reserve_dns('apps.%s' % cluster, domain=domain, ip=api_ip, alias=['*'])
+        if platform == 'ibm':
+            k._add_sno_security_group(cluster)
