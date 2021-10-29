@@ -86,6 +86,7 @@ IMAGES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-i
           'rhcos47': RHCOS + 'rhcos-4.7',
           'rhcos48': RHCOS + 'rhcos-4.8',
           'rhcos49': RHCOS + 'rhcos-4.9',
+          'rhcos410': RHCOS + 'rhcos-4.10',
           'rhcoslatest': RHCOS + 'rhcos-4.10',
           'rhel7': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7',
           'rhel8': 'https://access.redhat.com/downloads/content/479/ver=/rhel---8',
