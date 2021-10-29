@@ -19,3 +19,9 @@
 {% if cloud_tag != None %}
  tags: [{{ cloud_tag }}]
 {% endif %}
+{% if config_type == 'ibm' %}
+ files:
+ - path: /etc/NetworkManager/dispatcher.d/99-forcedns
+   origin: 99-forcedns-ibm
+   mode: 755
+{% endif %}
