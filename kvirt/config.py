@@ -2153,6 +2153,8 @@ class Kconfig(Kbaseconfig):
                         shortname = os.path.splitext(shortname)[0]
                     if self.type == 'vsphere':
                         shortname = image
+                    if self.type == 'ibm':
+                        shortname = shortname.replace('.', '-').replace('_', '-').lower()
                     clientprofile = "%s_%s" % (self.client, imagename)
                     profileinfo = {'iso': shortname} if shortname.endswith('.iso') else {'image': shortname}
                     if clientprofile not in self.profiles:
