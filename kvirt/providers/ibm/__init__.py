@@ -802,7 +802,7 @@ class Kibm(object):
         operating_system_identity_model = {}
         operating_system_identity_model['name'] = 'centos-8-amd64'
         image_prototype_model = {}
-        image_prototype_model['name'] = shortimage_unzipped.replace('.', '-').replace('_', '-')
+        image_prototype_model['name'] = shortimage_unzipped.replace('.', '-').replace('_', '-').lower()
         image_prototype_model['file'] = image_file_prototype_model
         image_prototype_model['operating_system'] = operating_system_identity_model
         image_prototype = image_prototype_model
