@@ -976,6 +976,7 @@ class Kconfig(Kbaseconfig):
             metadata['image'] = image
         if dnsclient is not None:
             metadata['dnsclient'] = dnsclient
+            reservedns = False
         if 'owner' in overrides:
             metadata['owner'] = overrides['owner']
         if kube is not None and kubetype is not None:
@@ -1331,7 +1332,7 @@ class Kconfig(Kbaseconfig):
             os.remove(ansiblefile)
         if deletedlbs and self.type in ['aws', 'gcp']:
             for lb in deletedlbs:
-                self.k.delete_loadbalancer(lb)
+                self.delete_loadbalancer(lb)
         if found:
             success("Plan %s deleted!" % plan)
         else:
@@ -2047,6 +2048,7 @@ class Kconfig(Kbaseconfig):
                                                  insecure=self.insecure)
                 return
         if lbs and not onlyassets:
+            dnsclients = {}
             pprint("Deploying Loadbalancers...")
             for index, lbentry in enumerate(lbs):
                 details = entries[lbentry]
@@ -2058,12 +2060,13 @@ class Kconfig(Kbaseconfig):
                 checkport = details.get('checkport', 80)
                 alias = details.get('alias', [])
                 domain = details.get('domain')
+                dnsclient = details.get('dnsclient', overrides.get('dnsclient'))
                 lbvms = details.get('vms', [])
                 lbnets = details.get('nets', ['default'])
                 internal = details.get('internal')
-                self.handle_loadbalancer(lbentry, nets=lbnets, ports=ports, checkpath=checkpath, vms=lbvms,
+                self.create_loadbalancer(lbentry, nets=lbnets, ports=ports, checkpath=checkpath, vms=lbvms,
                                          domain=domain, plan=plan, checkport=checkport, alias=alias,
-                                         internal=internal)
+                                         internal=internal, dnsclient=dnsclient)
         returndata = {'result': 'success', 'plan': plan}
         returndata['newvms'] = newvms if newvms else []
         returndata['existingvms'] = existingvms if existingvms else []
@@ -2233,25 +2236,36 @@ class Kconfig(Kbaseconfig):
                 dest.add_image(url, pool, cmd=cmd)
         return {'result': 'success'}
 
-    def handle_loadbalancer(self, name, nets=['default'], ports=[], checkpath='/', vms=[], delete=False, domain=None,
-                            plan=None, checkport=80, alias=[], internal=False):
+    def delete_loadbalancer(self, name, domain=None):
+        k = self.k
+        pprint("Deleting loadbalancer %s" % name)
+        if self.type in ['aws', 'gcp', 'ibm']:
+            dnsclient = k.delete_loadbalancer(name)
+            if domain is not None and dnsclient is not None and isinstance(dnsclient, str):
+                if dnsclient in self.clients:
+                    z = Kconfig(client=dnsclient).k
+                else:
+                    warning("Client %s not found. Skipping" % dnsclient)
+                z.delete_dns(name.replace('_', '-'), domain)
+        elif self.type == 'kvm':
+            k.delete(name)
+
+    def create_loadbalancer(self, name, nets=['default'], ports=[], checkpath='/', vms=[], domain=None,
+                            plan=None, checkport=80, alias=[], internal=False, dnsclient=None):
         name = nameutils.get_random_name().replace('_', '-') if name is None else name
+        pprint("Deploying loadbalancer %s" % name)
         k = self.k
         if self.type in ['aws', 'gcp', 'ibm']:
-            if delete:
-                pprint("Deleting loadbalancer %s" % name)
-                k.delete_loadbalancer(name)
-                return
-            else:
-                pprint("Deploying loadbalancer %s" % name)
-                k.create_loadbalancer(name, ports=ports, checkpath=checkpath, vms=vms, domain=domain,
-                                      checkport=checkport, alias=alias, internal=internal)
-        elif delete:
-            if self.type == 'kvm':
-                k.delete(name)
-            return
+            lb_ip = k.create_loadbalancer(name, ports=ports, checkpath=checkpath, vms=vms, domain=domain,
+                                          checkport=checkport, alias=alias, internal=internal,
+                                          dnsclient=dnsclient)
+            if dnsclient is not None:
+                if dnsclient in self.clients:
+                    z = Kconfig(client=dnsclient).k
+                else:
+                    warning("Client %s not found. Skipping" % dnsclient)
+                z.reserve_dns(name.replace('_', '-'), ip=lb_ip, domain=domain, alias=alias)
         else:
-            pprint("Deploying loadbalancer %s" % name)
             vminfo = []
             for vm in vms:
                 if valid_ipv4(vm) or valid_ipv6(vm):
@@ -2361,7 +2375,9 @@ class Kconfig(Kbaseconfig):
         else:
             os.environ['PATH'] += ':%s' % os.getcwd()
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
-        openshift.create(self, plandir, cluster, overrides)
+        dnsclient = overrides.get('dnsclient')
+        dnsconfig = Kconfig(client=dnsclient) if dnsclient is not None else None
+        openshift.create(self, plandir, cluster, overrides, dnsconfig=dnsconfig)
 
     def delete_kube(self, cluster, overrides={}):
         ipi = False
@@ -2389,11 +2405,14 @@ class Kconfig(Kbaseconfig):
                 return
         for vm in sorted(k.list(), key=lambda x: x['name']):
             name = vm['name']
-            if 'domain' in vm:
-                domain = vm['domain'].replace('.', '-')
+            dnsclient = vm.get('dnsclient')
+            domain = vm.get('domain')
             currentcluster = vm.get('kube')
             if currentcluster is not None and currentcluster == cluster:
                 k.delete(name, snapshots=True)
+                if dnsclient is not None and domain is not None and dnsclient in self.clients:
+                    z = Kconfig(client=dnsclient).k
+                    z.delete_dns(name, domain)
                 common.set_lastvm(name, self.client, delete=True)
                 success("%s deleted on %s!" % (name, self.client))
         if self.type == 'kubevirt' and self.k.access_mode == 'LoadBalancer':
@@ -2403,7 +2422,7 @@ class Kconfig(Kbaseconfig):
                 pass
         if self.type in ['aws', 'gcp', 'ibm']:
             for lb in ['api', 'apps']:
-                k.delete_loadbalancer("%s.%s" % (lb, cluster))
+                self.delete_loadbalancer("%s.%s" % (lb, cluster), domain=domain)
             bucket = "%s-%s" % (cluster, domain)
             if bucket in self.k.list_buckets():
                 pprint("Deleting bucket %s" % bucket)

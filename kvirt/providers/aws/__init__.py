@@ -570,7 +570,7 @@ class Kaws(object):
 
     def delete(self, name, snapshots=False):
         conn = self.conn
-        domain = None
+        dnsclient, domain = None, None
         try:
             Filters = {'Name': "tag:Name", 'Values': [name]}
             vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
@@ -584,6 +584,8 @@ class Kaws(object):
             for tag in vm['Tags']:
                 if tag['Key'] == 'domain':
                     domain = tag['Value']
+                if tag['Key'] == 'dnsclient':
+                    dnsclient = tag['Value']
                 if tag['Key'] == 'kubetype':
                     kubetype = tag['Value']
                 if tag['Key'] == 'kube':
@@ -593,8 +595,7 @@ class Kaws(object):
                 defaultsgid = self.get_default_security_group_id(vpcid)
                 conn.modify_instance_attribute(InstanceId=instanceid, Groups=[defaultsgid])
         vm = conn.terminate_instances(InstanceIds=[instanceid])
-        if domain is not None:
-            # conn.release_address(AllocationId='ALLOCATION_ID')
+        if domain is not None and dnsclient is None:
             self.delete_dns(name, domain, name)
         if kubetype is not None and kubetype == 'openshift':
             try:
@@ -916,7 +917,7 @@ class Kaws(object):
                 if z['Name'] == '%s.' % domain]
         if not zone:
             error("Domain %s not found" % domain)
-            return {'result': 'failure', 'reason': "Domain not found"}
+            return {'result': 'failure', 'reason': "Domain %s not found" % domain}
         zoneid = zone[0]
         dnsentry = name if cluster is None else "%s.%s" % (name, cluster)
         entry = "%s.%s." % (dnsentry, domain)
@@ -977,7 +978,7 @@ class Kaws(object):
         zone = [z['Id'].split('/')[2] for z in dns.list_hosted_zones_by_name()['HostedZones']
                 if z['Name'] == '%s.' % domain]
         if not zone:
-            error("Domain not found")
+            error("Domain %s not found" % domain)
             return {'result': 'failure', 'reason': "Domain not found"}
         zoneid = zone[0]
         dnsentry = name if cluster is None else "%s.%s" % (name, cluster)
@@ -1051,7 +1052,7 @@ class Kaws(object):
         return {'result': 'success'}
 
     def create_loadbalancer(self, name, ports=[], checkpath='/index.html', vms=[], domain=None, checkport=80, alias=[],
-                            internal=False):
+                            internal=False, dnsclient=None):
         ports = [int(port) for port in ports]
         resource = self.resource
         conn = self.conn
@@ -1077,6 +1078,8 @@ class Kaws(object):
                   "SecurityGroups": [sgid]}
         if domain is not None:
             lbinfo['Tags'] = [{"Key": "domain", "Value": domain}]
+            if dnsclient is not None:
+                lbinfo['Tags'].append({"Key": "dnsclient", "Value": dnsclient})
         lb = elb.create_load_balancer(**lbinfo)
         # if 80 in ports:
         #    HealthTarget = 'HTTP:80%s' % checkpath
@@ -1113,11 +1116,14 @@ class Kaws(object):
                 except:
                     pprint("Waiting 10s for %s to get an ip resolution" % lb_dns_name)
                     sleep(10)
+            if dnsclient is not None:
+                return ip
             self.reserve_dns(name, ip=ip, domain=domain, alias=alias)
         return
 
     def delete_loadbalancer(self, name):
         domain = None
+        dnsclient = None
         elb = self.elb
         conn = self.conn
         clean_name = name.replace('.', '-')
@@ -1126,10 +1132,11 @@ class Kaws(object):
             if tags:
                 lbtags = tags['TagDescriptions'][0]['Tags']
                 for tag in lbtags:
+                    if tag['Key'] == 'dnsclient':
+                        dnsclient = tag['Value']
                     if tag['Key'] == 'domain':
                         domain = tag['Value']
                         pprint("Using found domain %s" % domain)
-                        break
         except:
             warning("Loadbalancer %s not found" % clean_name)
             pass
@@ -1145,7 +1152,7 @@ class Kaws(object):
                 pprint("Removing %s from security group %s" % (vm, name))
                 conn.modify_instance_attribute(InstanceId=instanceid, Groups=sgids)
         elb.delete_load_balancer(LoadBalancerName=clean_name)
-        if domain is not None:
+        if domain is not None and dnsclient is None:
             warning("Deleting DNS %s.%s" % (name, domain))
             self.delete_dns(name, domain, name)
         try:
@@ -1153,6 +1160,8 @@ class Kaws(object):
             conn.delete_security_group(GroupName=name)
         except Exception as e:
             warning("Couldn't remove security group %s. Got %s" % (name, e))
+        if dnsclient is not None:
+            return dnsclient
 
     def list_loadbalancers(self):
         results = []

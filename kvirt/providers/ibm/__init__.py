@@ -542,13 +542,15 @@ class Kibm(object):
             tags = self.global_tagging_service.list_tags(attached_to=vm['crn']).result['items']
         except Exception as exc:
             error('Unable to retrieve tags. %s' % exc)
-        domain = None
+        dnsclient, domain = None, None
         for tag in tags:
             tagname = tag['name']
             if tagname.count(':') == 1:
                 key, value = tagname.split(':')
                 if key == 'domain':
                     domain = value
+                if key == 'dnsclient':
+                    dnsclient = value
         try:
             for network in vm['network_interfaces']:
                 response = conn.list_instance_network_interface_floating_ips(instance_id=vm['id'],
@@ -567,7 +569,7 @@ class Kibm(object):
             conn.delete_instance(id=vm['id'])
         except ApiException as exc:
             return {'result': 'failure', 'reason': 'Unable to delete VM. %s' % exc}
-        if domain is not None:
+        if domain is not None and dnsclient is None:
             self.delete_dns(name, domain, name)
         return {'result': 'success'}
 
@@ -944,7 +946,7 @@ class Kibm(object):
                 break
 
     def create_loadbalancer(self, name, ports=[], checkpath='/index.html', vms=[], domain=None, checkport=80, alias=[],
-                            internal=False):
+                            internal=False, dnsclient=None):
 
         ports = [int(port) for port in ports]
         internal = False if internal is None else internal
@@ -1023,6 +1025,8 @@ class Kibm(object):
             tag_names = ['realname:%s' % name]
             if domain is not None:
                 tag_names.append('domain:%s' % domain)
+            if dnsclient is not None:
+                tag_names.append('dnsclient:%s' % dnsclient)
             self.global_tagging_service.attach_tag(resources=[resource_model],
                                                    tag_names=tag_names,
                                                    tag_type='user')
@@ -1041,11 +1045,15 @@ class Kibm(object):
                     sleep(10)
                     continue
                 break
-            self.reserve_dns(name, ip=result['public_ips'][0]['address'], domain=domain, alias=alias)
+            ip = result['public_ips'][0]['address']
+            if dnsclient is not None:
+                return ip
+            self.reserve_dns(name, ip=ip, domain=domain, alias=alias)
         return {'result': 'success'}
 
     def delete_loadbalancer(self, name):
         domain = None
+        dnsclient = None
         clean_name = name.replace('.', '-')
         try:
             lbs = {x['name']: x for x in self.conn.list_load_balancers().result['load_balancers']}
@@ -1068,6 +1076,8 @@ class Kibm(object):
                 key, value = tagname.split(':')
                 if key == 'domain':
                     domain = value
+                if key == 'dnsclient':
+                    dnsclient = value
                 if key == 'realname':
                     realname = value
         try:
@@ -1075,7 +1085,7 @@ class Kibm(object):
         except ApiException as exc:
             error('Unable to delete load balancer. %s' % exc)
             return
-        if domain is not None:
+        if domain is not None and dnsclient is None:
             pprint("Deleting DNS %s.%s" % (realname, domain))
             self.delete_dns(realname, domain, name)
         self._wait_lb_dead(id=lb['id'])
@@ -1084,6 +1094,8 @@ class Kibm(object):
             self.delete_security_group(clean_name)
         except Exception as exc:
             error('Unable to delete security group. %s' % exc)
+        if dnsclient is not None:
+            return dnsclient
 
     def list_loadbalancers(self):
         results = []
