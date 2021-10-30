@@ -304,6 +304,7 @@ def delete_vm(args):
                 error("Could not delete %s because %s" % (name, reason))
                 common.set_lastvm(name, cli, delete=True)
             if dnsclient is not None and domain is not None:
+                pprint("Deleting Dns entry for %s in %s" % (name, domain))
                 z = Kconfig(client=dnsclient).k
                 z.delete_dns(name, domain)
             cluster = name.split('-')[0] if '-master-' in name or '-worker-' in name else None

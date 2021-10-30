@@ -705,7 +705,8 @@ class Kconfig(Kbaseconfig):
         netmasks = profile.get('netmasks', default_netmasks)
         gateway = profile.get('gateway', default_gateway)
         dns = profile.get('dns', default_dns)
-        domain = profile.get('domain', default_domain)
+        domain = profile.get('domain', overrides.get('domain', default_domain))
+        dnsclient = profile.get('dnsclient', overrides.get('dnsclient', default_dnsclient))
         scripts = common.remove_duplicates(default_scripts + profile.get('scripts', []))
         files = profile.get('files', default_files)
         if files:
@@ -761,7 +762,6 @@ class Kconfig(Kbaseconfig):
         rhnorg = profile.get('rhnorg', default_rhnorg)
         rhnpool = profile.get('rhnpool', default_rhnpool)
         flavor = profile.get('flavor', default_flavor)
-        dnsclient = profile.get('dnsclient', default_dnsclient)
         storemetadata = profile.get('storemetadata', default_storemetadata)
         notify = profile.get('notify', default_notify)
         pushbullettoken = profile.get('pushbullettoken', default_pushbullettoken)
@@ -970,7 +970,7 @@ class Kconfig(Kbaseconfig):
                 pprint("Adjusting memory to 1024Mb")
                 memory = 1024
         metadata = {'plan': plan, 'profile': profilename}
-        if reservedns and domain is not None:
+        if domain is not None and (reservedns or dnsclient is not None):
             metadata['domain'] = domain
         if image is not None:
             metadata['image'] = image
@@ -1006,6 +1006,7 @@ class Kconfig(Kbaseconfig):
                           pcidevices=pcidevices, tpm=tpm, rng=rng, metadata=metadata, securitygroups=securitygroups)
         if result['result'] != 'success':
             return result
+        print(dnsclient, domain)
         if dnsclient is not None and domain is not None:
             if dnsclient in self.clients:
                 z = Kconfig(client=dnsclient).k
