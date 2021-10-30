@@ -1006,7 +1006,6 @@ class Kconfig(Kbaseconfig):
                           pcidevices=pcidevices, tpm=tpm, rng=rng, metadata=metadata, securitygroups=securitygroups)
         if result['result'] != 'success':
             return result
-        print(dnsclient, domain)
         if dnsclient is not None and domain is not None:
             if dnsclient in self.clients:
                 z = Kconfig(client=dnsclient).k
