@@ -167,6 +167,9 @@ class Kgcp(object):
                         except:
                             return {'result': 'failure', 'reason': 'Issue with image %s' % image}
                     src = image_response['selfLink']
+                if image.startswith('centos-') and image.endswith('8') and disksize == 10:
+                    disksize = 20
+                    pprint("Rounding primary disk to to 20Gb")
                 newdisk['initializeParams'] = {'sourceImage': src, 'diskSizeGb': disksize}
                 newdisk['boot'] = True
             else:
@@ -574,7 +577,7 @@ class Kgcp(object):
         conn = self.conn
         images = []
         for project in projects:
-            results = conn.images().list(project=project).execute()
+            results = conn.images().list(project=project, orderBy="creationTimestamp desc").execute()
             if 'items' in results:
                 for image in results['items']:
                     if project == self.project:
