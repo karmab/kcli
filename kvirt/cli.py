@@ -273,6 +273,7 @@ def delete_vm(args):
         else:
             error("Using count when deleting vms requires specifying an unique name")
             sys.exit(1)
+    dnsclients = allclients.copy()
     for cli in sorted(allclients):
         k = allclients[cli]
         if not yes and not yes_top:
@@ -305,7 +306,11 @@ def delete_vm(args):
                 common.set_lastvm(name, cli, delete=True)
             if dnsclient is not None and domain is not None:
                 pprint("Deleting Dns entry for %s in %s" % (name, domain))
-                z = Kconfig(client=dnsclient).k
+                if dnsclient in dnsclients:
+                    z = dnsclients[dnsclient]
+                else:
+                    z = Kconfig(client=dnsclient).k
+                    dnsclients[dnsclient] = z
                 z.delete_dns(name, domain)
             cluster = name.split('-')[0] if '-master-' in name or '-worker-' in name else None
             clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
@@ -1484,7 +1489,7 @@ def create_lb(args):
     ports = [p.strip() for p in good_ports.split(',')]
     name = nameutils.get_random_name().replace('_', '-') if args.name is None else args.name
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.handle_loadbalancer(name, ports=ports, checkpath=checkpath, vms=vms, domain=domain, checkport=checkport,
+    config.create_loadbalancer(name, ports=ports, checkpath=checkpath, vms=vms, domain=domain, checkport=checkport,
                                internal=internal)
     return 0
 
@@ -1496,7 +1501,7 @@ def delete_lb(args):
     if not yes and not yes_top:
         common.confirm("Are you sure?")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.handle_loadbalancer(args.name, delete=True)
+    config.delete_loadbalancer(args.name)
     return 0
 
 

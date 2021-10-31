@@ -357,7 +357,7 @@ def scale(config, plandir, cluster, overrides):
                 k.add_nic(node, network)
 
 
-def create(config, plandir, cluster, overrides):
+def create(config, plandir, cluster, overrides, dnsconfig=None):
     k = config.k
     log_level = 'debug' if config.debug else 'info'
     bootstrap_helper_ip = None
@@ -1227,6 +1227,8 @@ def create(config, plandir, cluster, overrides):
         if result['result'] != 'success':
             sys.exit(1)
         lb_overrides = {'cluster': cluster, 'domain': domain, 'members': masters, 'role': 'master'}
+        if 'dnsclient' in overrides:
+            lb_overrides['dnsclient'] = overrides['dnsclient']
         if workers == 0:
             result = config.plan(plan, inputfile='%s/cloud_lb_apps.yml' % plandir, overrides=lb_overrides)
             if result['result'] != 'success':
@@ -1297,6 +1299,10 @@ def create(config, plandir, cluster, overrides):
     for vm in todelete:
         pprint("Deleting %s" % vm)
         k.delete(vm)
+        if dnsconfig is not None:
+            pprint("Deleting Dns entry for %s in %s" % (vm, domain))
+            z = dnsconfig.k
+            z.delete_dns(vm, domain)
     if platform in cloudplatforms:
         bucket = "%s-%s" % (cluster, domain.replace('.', '-'))
         config.k.delete_bucket(bucket)

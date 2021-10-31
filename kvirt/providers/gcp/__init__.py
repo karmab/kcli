@@ -593,14 +593,16 @@ class Kgcp(object):
             vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        domain, kube = None, None
+        domain, dnsclient, kube = None, None, None
         if 'items' in vm['metadata']:
             for data in vm['metadata']['items']:
                 if data['key'] == 'domain':
                     domain = data['value']
+                if data['key'] == 'dnsclient':
+                    dnsclient = data['value']
                 if data['key'] == 'kube':
                     kube = data['value']
-        if domain is not None:
+        if domain is not None and dnsclient is None:
             self.delete_dns(name, domain)
         conn.instances().delete(zone=zone, project=project, instance=name).execute()
         if kube is not None:
@@ -958,7 +960,7 @@ class Kgcp(object):
         dnszones = [z for z in client.list_zones() if z.dns_name == "%s." % domain or z.name == domain]
         if not dnszones:
             error("Domain %s not found" % domain)
-            return {'result': 'failure', 'reason': "Domain not found"}
+            return {'result': 'failure', 'reason': "Domain %s not found " % domain}
         else:
             dnszone = dnszones[0]
         dnsentry = name if cluster is None else "%s.%s" % (name, cluster)
@@ -1101,7 +1103,7 @@ class Kgcp(object):
         return {'result': 'success'}
 
     def create_loadbalancer(self, name, ports=[], checkpath='/index.html', vms=[], domain=None, checkport=80, alias=[],
-                            internal=False):
+                            internal=False, dnsclient=None):
         sane_name = name.replace('.', '-')
         ports = [int(port) for port in ports]
         conn = self.conn
@@ -1203,11 +1205,14 @@ class Kgcp(object):
             operation = conn.firewalls().insert(project=project, body=firewall_body).execute()
             self._wait_for_operation(operation)
         if domain is not None:
+            if dnsclient is not None:
+                return ip
             self.reserve_dns(name, ip=ip, domain=domain, alias=alias)
         return {'result': 'success'}
 
     def delete_loadbalancer(self, name):
         domain = None
+        dnsclient = None
         name = name.replace('.', '-')
         conn = self.conn
         project = self.project
@@ -1304,9 +1309,11 @@ class Kgcp(object):
                     pprint("Deleting instance group %s" % name)
                     operation = conn.instanceGroups().delete(project=project, zone=zone, instanceGroup=name).execute()
                     self._wait_for_operation(operation)
-        if domain is not None:
+        if domain is not None and dnsclient is None:
             warning("Deleting DNS %s.%s" % (name, domain))
             self.delete_dns(name, domain)
+        if dnsclient is not None:
+            return dnsclient
         return {'result': 'success'}
 
     def list_loadbalancers(self):
