@@ -31,6 +31,7 @@ class Kgcp(object):
     def __init__(self, debug=False, project="kubevirt-button", zone="europe-west1-b",
                  region='europe-west1'):
         self.conn = googleapiclient.discovery.build('compute', 'v1')
+        self.conn_beta = googleapiclient.discovery.build('compute', 'beta')
         self.project = project
         self.zone = zone
         self.region = region
@@ -193,9 +194,11 @@ class Kgcp(object):
         body['serviceAccounts'] = [{'email': 'default',
                                     'scopes': ['https://www.googleapis.com/auth/devstorage.read_write',
                                                'https://www.googleapis.com/auth/logging.write']}]
+        body['labels'] = {}
         body['metadata'] = {'items': []}
         for entry in [field for field in metadata if field in METADATA_FIELDS]:
-            body['metadata']['items'].append({'key': entry, 'value': metadata[entry]})
+            value = metadata[entry].replace('.', '-')
+            body['labels'][entry] = value
         startup_script = ''
         sshdircreated = False
         if storemetadata and overrides:
@@ -468,12 +471,12 @@ class Kgcp(object):
         except:
             return None, None
         dnsclient, domain = None, None
-        if 'items' in vm['metadata']:
-            for data in vm['metadata']['items']:
-                if data['key'] == 'dnsclient':
-                    dnsclient = data['value']
-                if data['key'] == 'domain':
-                    domain = data['value']
+        if 'labels' in vm:
+            for key in vm['labels']:
+                if key == 'dnsclient':
+                    dnsclient = vm['labels'][key]
+                if key == 'domain':
+                    domain = vm['labels'][key].replace('-', '.')
         return dnsclient, domain
 
     def info(self, name, vm=None, debug=False):
@@ -529,10 +532,10 @@ class Kgcp(object):
             disks.append({'device': devname, 'size': disksize, 'format': diskformat, 'type': drivertype, 'path': path})
         if disks:
             yamlinfo['disks'] = disks
-        if 'items' in vm['metadata']:
-            for data in vm['metadata']['items']:
-                if data['key'] in METADATA_FIELDS:
-                    yamlinfo[data['key']] = data['value']
+        if 'labels' in vm:
+            for key in vm['labels']:
+                if key in METADATA_FIELDS:
+                    yamlinfo[key] = vm['labels'][key]
         if 'tags' in vm and 'items' in vm['tags']:
             yamlinfo['tags'] = ','.join(vm['tags']['items'])
         if debug:
@@ -597,14 +600,14 @@ class Kgcp(object):
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         domain, dnsclient, kube = None, None, None
-        if 'items' in vm['metadata']:
-            for data in vm['metadata']['items']:
-                if data['key'] == 'domain':
-                    domain = data['value']
-                if data['key'] == 'dnsclient':
-                    dnsclient = data['value']
-                if data['key'] == 'kube':
-                    kube = data['value']
+        if 'labels' in vm:
+            for key in vm['labels']:
+                if key == 'domain':
+                    domain = vm['labels'][key].replace('-', '.')
+                if key == 'dnsclient':
+                    dnsclient = vm['labels'][key]
+                if key == 'kube':
+                    kube = vm['labels'][key]
         if domain is not None and dnsclient is None:
             self.delete_dns(name, domain)
         conn.instances().delete(zone=zone, project=project, instance=name).execute()
@@ -629,20 +632,13 @@ class Kgcp(object):
         except Exception:
             error("VM %s not found" % name)
             return 1
-        metadata = vm['metadata']['items'] if 'items' in vm['metadata'] else []
-        found = False
-        for entry in metadata:
-            if entry['key'] == metatype:
-                if append:
-                    entry['value'] += ",%s" % metavalue
-                else:
-                    entry['value'] = metavalue
-                found = True
-                break
-        if not found:
-            metadata.append({"key": metatype, "value": metavalue})
-        metadata_body = {"fingerprint": vm['metadata']['fingerprint'], "items": metadata}
-        conn.instances().setMetadata(project=project, zone=zone, instance=name, body=metadata_body).execute()
+        labels = vm.get('labels')
+        if labels is None:
+            labels = {}
+        if metatype not in labels or labels[metatype] != metavalue:
+            labels[metatype] = metavalue
+            label_body = {"labelFingerprint": vm['labelFingerprint'], "labels": [labels]}
+            conn.instances().setLabels(project=project, zone=zone, instance=name, body=label_body).execute()
         return 0
 
     def update_flavor(self, name, flavor):
@@ -1110,6 +1106,7 @@ class Kgcp(object):
         sane_name = name.replace('.', '-')
         ports = [int(port) for port in ports]
         conn = self.conn
+        conn_beta = self.conn_beta
         project = self.project
         zone = self.zone
         region = self.region
@@ -1166,15 +1163,25 @@ class Kgcp(object):
                                                            body=instances_body).execute()
                 self._wait_for_operation(operation)
         address_body = {"name": sane_name}
-        if domain is not None:
-            address_body["description"] = domain
         if internal:
             address_body["addressType"] = 'INTERNAL'
         pprint("Creating address %s" % sane_name)
-        operation = conn.addresses().insert(project=project, region=region, body=address_body).execute()
+        # if domain is not None:
+        #    address_body["labels"] = {"domain": domain.replace('.', '-')}
+        #    if dnsclient is not None:
+        #        address_body["labels"]["dnsclient"] = dnsclient
+        operation = conn_beta.addresses().insert(project=project, region=region, body=address_body).execute()
         ipurl = operation['targetLink']
         self._wait_for_operation(operation)
-        ip = conn.addresses().get(project=project, region=region, address=sane_name).execute()['address']
+        address = conn_beta.addresses().get(project=project, region=region, address=sane_name).execute()
+        ip = address['address']
+        if domain is not None:
+            labels = {"domain": domain.replace('.', '-')}
+            if dnsclient is not None:
+                labels["dnsclient"] = dnsclient
+            label_body = {"labelFingerprint": address['labelFingerprint'], "labels": labels}
+            conn_beta.addresses().setLabels(project=project, region=region,
+                                            resource=sane_name, body=label_body).execute()
         pprint("Using load balancer ip %s" % ip)
         self._wait_for_operation(operation)
         if internal:
@@ -1218,6 +1225,7 @@ class Kgcp(object):
         dnsclient = None
         name = name.replace('.', '-')
         conn = self.conn
+        conn_beta = self.conn_beta
         project = self.project
         zone = self.zone
         region = self.region
@@ -1238,21 +1246,11 @@ class Kgcp(object):
                     operation = conn.forwardingRules().delete(project=project, region=region,
                                                               forwardingRule=forwarding_rule_name).execute()
                     self._wait_for_operation(operation)
-        # addresses = conn.addresses().list(project=project, region=region).execute()
-        # if 'items' in addresses:
-        #     for address in addresses['items']:
-        #         address_name = address['name']
-        #         if address_name == name:
-        #             pprint("Deleting address %s" % name)
-        #             if '.' in address["description"]:
-        #                 domain = address["description"]
-        #                 self.delete_dns(name, domain=domain)
-        #             operation = conn.addresses().delete(project=project, region=region, address=name).execute()
-        #             self._wait_for_operation(operation)
         try:
-            address = conn.addresses().get(project=project, region=region, address=name).execute()
-            if '.' in address["description"]:
-                domain = address["description"]
+            address = conn_beta.addresses().get(project=project, region=region, address=name).execute()
+            if 'labels' in address and 'domain' in address['labels'] and 'dnsclient' not in address['labels']:
+                domain = address["labels"]["domain"].replace('-', '.')
+                pprint("Deleting DNS %s.%s" % (name, domain))
                 self.delete_dns(name, domain=domain)
             pprint("Deleting address %s" % name)
             operation = conn.addresses().delete(project=project, region=region, address=name).execute()
@@ -1312,9 +1310,6 @@ class Kgcp(object):
                     pprint("Deleting instance group %s" % name)
                     operation = conn.instanceGroups().delete(project=project, zone=zone, instanceGroup=name).execute()
                     self._wait_for_operation(operation)
-        if domain is not None and dnsclient is None:
-            warning("Deleting DNS %s.%s" % (name, domain))
-            self.delete_dns(name, domain)
         if dnsclient is not None:
             return dnsclient
         return {'result': 'success'}
