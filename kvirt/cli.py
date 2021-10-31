@@ -1484,8 +1484,7 @@ def create_lb(args):
     else:
         good_vms = args.vms[1:-1] if args.vms.startswith('[') and args.vms.endswith(']') else args.vms
         vms = [v.strip() for v in good_vms.split(',')]
-    # ports = args.ports.split(',') if args.ports is not None else []
-    good_ports = args.ports[1:-1] if args.ports.startswith('[') and args.ports.endswith(']') else args.vms
+    good_ports = args.ports[1:-1] if args.ports.startswith('[') and args.ports.endswith(']') else args.ports
     ports = [p.strip() for p in good_ports.split(',')]
     name = nameutils.get_random_name().replace('_', '-') if args.name is None else args.name
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
