@@ -1621,8 +1621,7 @@ class Kconfig(Kbaseconfig):
             for dnsentry in dnsentries:
                 dnsprofile = entries[dnsentry]
                 dnsdomain = dnsprofile.get('domain')
-                dnsnet = dnsprofile.get('net')
-                dnsdomain = dnsprofile.get('domain')
+                dnsnet = dnsprofile.get('net', 'default')
                 dnsip = dnsprofile.get('ip')
                 dnsalias = dnsprofile.get('alias', [])
                 dnsclient = dnsprofile.get('client')
