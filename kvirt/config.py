@@ -2381,6 +2381,7 @@ class Kconfig(Kbaseconfig):
     def delete_kube(self, cluster, overrides={}):
         ipi = False
         domain = overrides.get('domain', 'karmalabs.com')
+        dnsclient = None
         k = self.k
         cluster = overrides.get('cluster', cluster)
         if cluster is None:
@@ -2395,6 +2396,8 @@ class Kconfig(Kbaseconfig):
                     kubetype = clusterdata.get('kubetype', 'generic')
                     if kubetype == 'openshift' and 'ipi' in clusterdata and clusterdata['ipi']:
                         ipi = True
+                    domain = clusterdata.get('domain', domain)
+                    dnsclient = clusterdata.get('dnsclient')
                 if ipi:
                     os.environ["PATH"] += ":%s" % os.getcwd()
                     call('openshift-install --dir=%s destroy cluster' % clusterdir, shell=True)
@@ -2405,13 +2408,9 @@ class Kconfig(Kbaseconfig):
         for vm in sorted(k.list(), key=lambda x: x['name']):
             name = vm['name']
             dnsclient = vm.get('dnsclient')
-            domain = vm.get('domain')
             currentcluster = vm.get('kube')
             if currentcluster is not None and currentcluster == cluster:
                 k.delete(name, snapshots=True)
-                if dnsclient is not None and domain is not None and dnsclient in self.clients:
-                    z = Kconfig(client=dnsclient).k
-                    z.delete_dns(name, domain)
                 common.set_lastvm(name, self.client, delete=True)
                 success("%s deleted on %s!" % (name, self.client))
         if self.type == 'kubevirt' and self.k.access_mode == 'LoadBalancer':
@@ -2426,6 +2425,10 @@ class Kconfig(Kbaseconfig):
             if bucket in self.k.list_buckets():
                 pprint("Deleting bucket %s" % bucket)
                 k.delete_bucket(bucket)
+        elif dnsclient is not None:
+            z = Kconfig(client=dnsclient).k
+            z.delete_dns("api.%s" % cluster, domain)
+            z.delete_dns("apps.%s" % cluster, domain)
 
     def scale_kube_generic(self, cluster, overrides={}):
         plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
