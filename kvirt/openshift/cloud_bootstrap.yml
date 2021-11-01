@@ -13,7 +13,6 @@
  memory: {{ bootstrap_memory | default(memory, memory) }}
  nets:
  - name: {{ network }}
- reservedns: true
  disks:
  - size: {{ disk_size }}
 {% if cloud_tag != None %}

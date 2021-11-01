@@ -970,13 +970,13 @@ class Kconfig(Kbaseconfig):
                 pprint("Adjusting memory to 1024Mb")
                 memory = 1024
         metadata = {'plan': plan, 'profile': profilename}
-        if domain is not None and (reservedns or dnsclient is not None):
+        if domain is not None and reservedns:
             metadata['domain'] = domain
+            if dnsclient is not None:
+                metadata['dnsclient'] = dnsclient
+                reservedns = False
         if image is not None:
             metadata['image'] = image
-        if dnsclient is not None:
-            metadata['dnsclient'] = dnsclient
-            reservedns = False
         if 'owner' in overrides:
             metadata['owner'] = overrides['owner']
         if kube is not None and kubetype is not None:
@@ -1007,7 +1007,7 @@ class Kconfig(Kbaseconfig):
                           pcidevices=pcidevices, tpm=tpm, rng=rng, metadata=metadata, securitygroups=securitygroups)
         if result['result'] != 'success':
             return result
-        if dnsclient is not None and domain is not None:
+        if reservedns and dnsclient is not None and domain is not None:
             if dnsclient in self.clients:
                 z = Kconfig(client=dnsclient).k
                 ip = None

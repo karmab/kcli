@@ -16,7 +16,6 @@
  memory: {{ worker_memory | default(memory, memory) }}
  nets:
  - name: {{ network }}
- reservedns: true
 {% if config_type == 'ibm' %}
  files:
  - path: /etc/NetworkManager/dispatcher.d/99-forcedns
