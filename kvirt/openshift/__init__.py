@@ -1195,6 +1195,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         todelete = ["%s-bootstrap" % cluster]
         if platform == 'packet':
             todelete.append("%s-bootstrap-helper" % cluster)
+        if dnsconfig is not None:
+            dns_overrides = {'api_ip': api_ip, 'ingress_ip': ingress_ip, 'cluster': cluster, 'domain': domain}
+            result = dnsconfig.plan(plan, inputfile='%s/cloud_dns.yml' % plandir, overrides=dns_overrides)
+            if result['result'] != 'success':
+                sys.exit(1)
     else:
         pprint("Deploying bootstrap")
         result = config.plan(plan, inputfile='%s/cloud_bootstrap.yml' % plandir, overrides=overrides)
