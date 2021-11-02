@@ -383,6 +383,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'apps': [],
             'minimal': False,
             'dualstack': False,
+            'forcestack': False,
             'ipsec': False,
             'sno': False,
             'sno_virtual': False,
@@ -444,6 +445,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     disconnected_password = data.get('disconnected_password')
     disconnected_prefix = data.get('disconnected_prefix', 'ocp4')
     dualstack = data.get('dualstack')
+    forcestack = data.get('forcestack')
     ipsec = data.get('ipsec')
     upstream = data.get('upstream')
     metal3 = data.get('metal3')
@@ -873,6 +875,20 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             with open("%s/contrail.sh" % tmpdir, 'w') as f:
                 f.write(contrailscript)
             call('bash %s/contrail.sh' % tmpdir, shell=True)
+    if platform == 'kvm' and k.host in ['localhost', '127.0.0.1'] and forcestack:
+        warning("Forcing stack in %s" % image)
+        if find_executable('virt-edit') is None:
+            error('virt-edit from libguestfs-tools is needed to force stack')
+            sys.exit(1)
+        with TemporaryDirectory() as tmpdir:
+            image_path = "%s/%s" % (k.get_pool_path(config.pool), image)
+            stack = 'dhcp6' if ':' in api_ip else 'dhcp'
+            patch_data = {'image_path': image_path, 'stack': stack}
+            patchscript = config.process_inputfile(cluster, "%s/patch_rhcos_image.sh.j2" % plandir,
+                                                   overrides=patch_data)
+            with open("%s/patch_rhcos_image.sh" % tmpdir, 'w') as f:
+                f.write(patchscript)
+            call('bash %s/patch_rhcos_image.sh' % tmpdir, shell=True)
     if dualstack:
         copy2("%s/dualstack.yml" % plandir, "%s/openshift" % clusterdir)
     if ipsec:

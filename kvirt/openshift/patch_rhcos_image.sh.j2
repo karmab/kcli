@@ -1,0 +1,4 @@
+RHCOS_IMAGE={{ image_path }}
+STACK={{ stack }}
+BOOT_DISK=$(virt-filesystems -a $RHCOS_IMAGE -l | grep boot | cut -f1 -d" ")
+virt-edit -a $RHCOS_IMAGE -m $BOOT_DISK /boot/loader/entries/ostree-1-rhcos.conf -e "s/^options/options ip=$STACK/"

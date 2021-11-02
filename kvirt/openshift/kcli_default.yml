@@ -88,6 +88,7 @@ imagecontentsources: []
 ca:
 ipv6: false
 dualstack: false
+forcestack: false
 cloud_tag:
 cloud_scale: false
 cloud_api_internal: false
