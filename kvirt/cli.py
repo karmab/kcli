@@ -1547,7 +1547,7 @@ def create_k3s_kube(args):
 
 
 def create_openshift_kube(args):
-    """Create Generic kube"""
+    """Create Openshift kube"""
     paramfile = args.paramfile
     force = args.force
     cluster = args.cluster
@@ -1935,12 +1935,12 @@ def restart_plan(args):
 
 
 def info_generic_app(args):
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     baseconfig.info_app_generic(args.app)
 
 
 def info_openshift_disconnecter(args):
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     baseconfig.info_openshift_disconnecter()
 
 
@@ -1971,19 +1971,19 @@ def info_plan(args):
 def info_generic_kube(args):
     """Info Generic kube"""
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-    baseconfig.info_kube_generic(quiet=True)
+    baseconfig.info_kube_generic(quiet=True, offline=True)
 
 
 def info_k3s_kube(args):
     """Info K3s kube"""
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-    baseconfig.info_kube_k3s(quiet=True)
+    baseconfig.info_kube_k3s(quiet=True, offline=True)
 
 
 def info_openshift_kube(args):
     """Info Openshift kube"""
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-    baseconfig.info_kube_openshift(quiet=True)
+    baseconfig.info_kube_openshift(quiet=True, offline=True)
 
 
 def download_plan(args):
