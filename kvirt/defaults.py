@@ -78,6 +78,14 @@ IMAGES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-i
           'qcow2',
           'opensuse': 'https://download.opensuse.org/distribution/leap/15.3/appliances/'
           'openSUSE-Leap-15.3-JeOS.x86_64-OpenStack-Cloud.qcow2',
+          'leap15': 'https://download.opensuse.org/distribution/leap/15.3/appliances/'
+          'openSUSE-Leap-15.3-JeOS.x86_64-OpenStack-Cloud.qcow2',
+          'leap152': 'https://download.opensuse.org/distribution/leap/15.2/appliances/'
+          'openSUSE-Leap-15.2-JeOS.x86_64-OpenStack-Cloud.qcow2',
+          'leap153': 'https://download.opensuse.org/distribution/leap/15.3/appliances/'
+          'openSUSE-Leap-15.3-JeOS.x86_64-OpenStack-Cloud.qcow2',
+          'tumbleweed': 'https://download.opensuse.org/tumbleweed/appliances/'
+          'openSUSE-Tumbleweed-JeOS.x86_64-OpenStack-Cloud.qcow2',
           'rhcos41': RHCOS + 'rhcos-4.1',
           'rhcos42': RHCOS + 'rhcos-4.2',
           'rhcos43': RHCOS + 'rhcos-4.3',
