@@ -12,6 +12,7 @@ from kvirt.defaults import UBUNTUS, METADATA_FIELDS
 from kvirt import common
 from kvirt.common import error, pprint, warning
 from netaddr import IPAddress, IPNetwork
+import libvirt
 from libvirt import open as libvirtopen, registerErrorHandler, libvirtError
 from libvirt import VIR_DOMAIN_AFFECT_LIVE, VIR_DOMAIN_AFFECT_CONFIG
 from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_AGENT as vir_src_agent
@@ -2852,6 +2853,34 @@ class Kvirt(object):
         if shortimage_uncompressed in volumes:
             pprint("Image %s already there.Leaving..." % shortimage_uncompressed)
             return {'result': 'success'}
+        if shortimage.endswith('.qcow2'):
+            r = urlopen(url)
+            pprint(f'{r.headers}')
+            image_size = r.getheader("Content-Length")
+            print(f'Downloading {image_size} bytes', end='', flush=True)
+            volume_xml = (
+                f'<volume><name>{shortimage}</name>'
+                f'<capacity>{image_size}</capacity>'
+                f'<allocation>0</allocation>'
+                f'<target><format type="qcow2"/></target>'
+                '</volume>'
+            )
+            volume = pool.createXML(volume_xml, flags=0)
+            libvirt.virStorageVol.streamBufSize = 2 * 1024 * 1024
+            stream = volume.connect().newStream(flags=0)
+            volume.upload(stream=stream, offset=0, length=0, flags=0)
+
+            def data_handler(stream, nbytes, _):
+                print('.', end='', flush=True)
+                data = r.read(nbytes)
+                return data
+
+            stream.sendAll(data_handler, None)
+            stream.finish()
+            pprint('Done')
+            pool.refresh(flags=0)
+            return {'result': 'success'}
+
         if name == 'rhcos42':
             shortimage += '.gz'
         if self.host == 'localhost' or self.host == '127.0.0.1':
