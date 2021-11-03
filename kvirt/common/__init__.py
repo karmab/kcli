@@ -1944,7 +1944,9 @@ def generate_rhcos_iso(k, cluster, pool, version='latest', force=False):
         arch = os.uname().machine if not os.path.exists('/Users') else 'x86_64'
         get_coreos_installer(arch=arch)
     os.environ["PATH"] += ":%s" % os.getcwd()
-    if k.host in ['localhost', '127.0.0.1']:
+    if k.conn == 'fake':
+        os.system(isocmd)
+    elif k.host in ['localhost', '127.0.0.1']:
         copy2('iso.ign', poolpath)
         os.system(isocmd)
     elif k.protocol == 'ssh':
