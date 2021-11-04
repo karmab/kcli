@@ -1061,7 +1061,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             result = config.create_vm(sno_name, 'rhcos46', overrides=iso_overrides, onlyassets=True)
             pprint("Writing iso.ign to current dir")
             f.write(result['data'])
-        if config.type != 'kvm':
+        if config.type == 'fake':
+            pprint("Storing iso in current dir")
+            generate_rhcos_iso(k, cluster, 'default', force=True)
+        elif config.type != 'kvm':
             pprint("Additional workflow not available on %s" % config.type)
             pprint("Embed iso.ign in rhcos live iso")
             sys.exit(0)

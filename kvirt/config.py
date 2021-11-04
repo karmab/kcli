@@ -77,7 +77,8 @@ class Kconfig(Kbaseconfig):
 
     """
     def __init__(self, client=None, debug=False, quiet=False, region=None, zone=None, namespace=None):
-        Kbaseconfig.__init__(self, client=client, debug=debug, quiet=quiet)
+        offline = True if client is not None and client == 'fake' else False
+        Kbaseconfig.__init__(self, client=client, debug=debug, quiet=quiet, offline=offline)
         if not self.enabled:
             k = None
         else:
@@ -369,6 +370,10 @@ class Kconfig(Kbaseconfig):
                 k = Kpacket(auth_token, project, facility=facility, debug=debug,
                             tunnelhost=self.tunnelhost, tunneluser=self.tunneluser, tunnelport=self.tunnelport,
                             tunneldir=self.tunneldir)
+            elif offline:
+                from kvirt.providers.fake import Kfake
+                k = Kfake()
+                self.type = 'fake'
             else:
                 if self.host is None:
                     error("Problem parsing your configuration file")
@@ -2560,7 +2565,7 @@ class Kconfig(Kbaseconfig):
             else:
                 f.write(result['data'])
         if iso:
-            if self.type != 'kvm':
+            if self.type not in ['kvm', 'fake']:
                 warning("Iso only get generated for kvm type")
             else:
                 generate_rhcos_iso(self.k, cluster, overrides.get('pool', 'default'), version=iso_version)
