@@ -2531,7 +2531,6 @@ class Kconfig(Kbaseconfig):
                     hosts_content = "127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4\n"
                     hosts_content += "::1         localhost localhost.localdomain localhost6 localhost6.localdomain6\n"
                     hosts_content += "%s api-int.%s.%s api.%s.%s" % (api_ip, cluster, domain, cluster, domain)
-        config = Kconfig()
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
         with open("iso.ign", 'w') as f:
             pprint("Writing file iso.ign for %s in %s.%s" % (role, cluster, domain if domain is not None else ''))
@@ -2555,13 +2554,13 @@ class Kconfig(Kbaseconfig):
             if metal_url is not None:
                 iso_overrides['need_network'] = True
             iso_overrides.update(overrides)
-            result = config.create_vm('autoinstaller', 'rhcos46', overrides=iso_overrides, onlyassets=True)
+            result = self.create_vm('autoinstaller', 'rhcos46', overrides=iso_overrides, onlyassets=True)
             if 'reason' in result:
                 error(result['reason'])
             else:
                 f.write(result['data'])
         if iso:
-            if config.type != 'kvm':
+            if self.type != 'kvm':
                 warning("Iso only get generated for kvm type")
             else:
                 generate_rhcos_iso(self.k, cluster, overrides.get('pool', 'default'), version=iso_version)
