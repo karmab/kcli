@@ -2596,7 +2596,7 @@ class Kvirt(object):
                 missing_disks.append(diskxml)
                 found = True
                 continue
-            if volume.name() == diskname or volume.path() == diskname or diskdev == diskname:
+            if volume.name() == diskname or volume.path() == diskname or diskdev == os.path.basename(diskname):
                 diskxml = self._xmldisk(diskpath=diskpath, diskdev=diskdev, diskbus=diskbus, diskformat=diskformat)
                 if vm.isActive() == 1:
                     vm.detachDeviceFlags(diskxml, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
