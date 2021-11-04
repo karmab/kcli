@@ -3006,7 +3006,7 @@ def cli():
     hostlist_desc = 'List Hosts'
 
     info_desc = 'Info Host/Kube/Plan/Vm'
-    info_parser = subparsers.add_parser('info', description=info_desc, help=info_desc)
+    info_parser = subparsers.add_parser('info', description=info_desc, help=info_desc, aliases=['show'])
     info_subparsers = info_parser.add_subparsers(metavar='', dest='subcommand_info')
 
     list_desc = 'List Object'
