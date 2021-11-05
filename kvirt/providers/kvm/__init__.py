@@ -2163,7 +2163,7 @@ class Kvirt(object):
                                     pprint("Removing old dns entry for ip %s" % iphost)
                                     network.update(2, 10, 0, oldentry, 1)
                 try:
-                    network.update(4, 10, 0, dnsentry, 1)
+                    network.update(4, 10, 0, dnsentry, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
                 except Exception as e:
                     error(e)
 
