@@ -19,7 +19,7 @@ spec:
   storageClassDevices:
     - storageClassName: {{ localstorage_storageclass }}
       volumeMode: {{ localstorage_volumemode | capitalize }}
-      fsType: xfs
+      fsType: {{ localstorage_fstype }}
       devicePaths:
 {% for disk in localstorage_disks %}
       - /dev/{{ disk | replace('/dev/', '') }}
