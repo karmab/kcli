@@ -1135,7 +1135,8 @@ def create_openshift_iso(args):
     cluster = args.cluster
     ignitionfile = args.ignitionfile
     overrides = common.get_overrides(param=args.param)
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    client = 'fake' if common.need_fake() else args.client
+    config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     config.create_openshift_iso(cluster, overrides=overrides, ignitionfile=ignitionfile)
 
 
@@ -1560,7 +1561,8 @@ def create_openshift_kube(args):
     elif paramfile is None and os.path.exists("kcli_parameters.yml"):
         paramfile = "kcli_parameters.yml"
         pprint("Using default parameter file kcli_parameters.yml")
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    client = 'fake' if common.need_fake() else args.client
+    config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     if args.subcommand_create_kube == 'okd':
         overrides['upstream'] = True

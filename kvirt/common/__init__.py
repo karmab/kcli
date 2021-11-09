@@ -2,6 +2,7 @@
 # coding=utf-8
 
 from ast import literal_eval
+import glob
 from kvirt.jinjafilters import jinjafilters
 from kvirt.defaults import UBUNTUS
 from random import randint
@@ -2014,3 +2015,11 @@ def copy_ipi_credentials(platform, k):
                 ovirtconf = "ovirt_url: %s\novirt_fqdn: %s\n" % (ovirturl, k.host)
                 ovirtconf += "ovirt_username: %s\novirt_password: %s\novirt_insecure: true" % (k.user, k.password)
                 f.write(ovirtconf)
+
+
+def need_fake():
+    kclidir = os.path.expanduser("~/.kcli")
+    if not glob.glob("%s/config.y*ml" % kclidir) and not os.path.exists("/var/run/libvirt/libvirt-sock"):
+        return True
+    else:
+        return False
