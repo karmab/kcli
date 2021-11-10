@@ -215,13 +215,14 @@ def createscsispec():
     return scsispec
 
 
-def creatediskspec(number, disksize, ds, diskmode, thin=False):
+def creatediskspec(number, disksize, ds, diskmode, thin=False, index=0):
     ckey = 1000
     diskspec = vim.vm.device.VirtualDeviceSpec()
     diskspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
     diskspec.fileOperation = vim.vm.device.VirtualDeviceSpec.FileOperation.create
     vd = vim.vm.device.VirtualDisk()
     vd.capacityInKB = disksize
+    vd.key = index
     diskspec.device = vd
     vd.unitNumber = number
     vd.controllerKey = ckey
@@ -598,7 +599,7 @@ class Ksphere:
             if index == 0:
                 scsispec = createscsispec()
                 devconfspec.append(scsispec)
-            diskspec = creatediskspec(index, disksize, datastore, diskmode, diskthin)
+            diskspec = creatediskspec(index, disksize, datastore, diskmode, diskthin, index)
             devconfspec.append(diskspec)
         # NICSPEC
         for index, net in enumerate(nets):
