@@ -1371,11 +1371,12 @@ class Kvirt(object):
             return None
         return status[vm.isActive()]
 
-    def list(self):
+    def list(self, short=False):
         vms = []
         conn = self.conn
         for vm in conn.listAllDomains(0):
-            vms.append(self.info(vm.name(), vm=vm))
+            vminfo = self.info(vm.name(), vm=vm) if not short else {'name': vm.name()}
+            vms.append(vminfo)
         return sorted(vms, key=lambda x: x['name'])
 
     def console(self, name, tunnel=False, web=False):

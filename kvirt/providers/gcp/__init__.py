@@ -412,7 +412,7 @@ class Kgcp(object):
             error("Vm %s not found" % name)
         return status
 
-    def list(self):
+    def list(self, short=False):
         conn = self.conn
         project = self.project
         zone = self.zone

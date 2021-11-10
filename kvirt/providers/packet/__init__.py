@@ -397,7 +397,7 @@ class Kpacket(object):
             return None
 
 # should return a sorted list of name, state, ip, source, plan, profile, report
-    def list(self):
+    def list(self, short=False):
         """
 
         :return:

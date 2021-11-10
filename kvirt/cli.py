@@ -526,6 +526,7 @@ def sync_host(args):
 def list_vm(args):
     """List vms"""
     filters = args.filters
+    short = args.short
     if args.client is not None and args.client == 'all':
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
         args.client = ','.join(baseconfig.clients)
@@ -561,7 +562,7 @@ def list_vm(args):
         else:
             config = Kconfig(client=args.client, debug=args.debug, region=args.region,
                              zone=args.zone, namespace=args.namespace)
-            _list = config.k.list()
+            _list = config.k.list(short=short)
         for vm in _list:
             name = vm.get('name')
             status = vm.get('status')
@@ -4270,7 +4271,8 @@ def cli():
 
     vmlist_desc = 'List Vms'
     vmlist_parser = argparse.ArgumentParser(add_help=False)
-    vmlist_parser.add_argument('--filters', choices=('up', 'down'))
+    vmlist_parser.add_argument('-f', '--filters', choices=('up', 'down'))
+    vmlist_parser.add_argument('-s', '--short', action='store_true', help='Only report minimal information')
     vmlist_parser.set_defaults(func=list_vm)
     list_subparsers.add_parser('vm', parents=[vmlist_parser], description=vmlist_desc, help=vmlist_desc,
                                aliases=['vms'])

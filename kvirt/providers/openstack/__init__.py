@@ -288,7 +288,7 @@ class Kopenstack(object):
         return
 
 # should return a sorted list of name, state, ip, source, plan, profile, report
-    def list(self):
+    def list(self, short=False):
         vms = []
         nova = self.nova
         vmslist = nova.servers.list()

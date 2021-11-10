@@ -332,7 +332,7 @@ class Kibm(object):
         except ApiException as exc:
             return {'result': 'failure', 'reason': 'Unable to retrieve VM %s. %s' % (name, exc)}
 
-    def list(self):
+    def list(self, short=False):
         vms = []
         try:
             provisioned_vms = self._get_vms()

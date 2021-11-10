@@ -332,7 +332,7 @@ class Kaws(object):
         status = vm['State']['Name']
         return status
 
-    def list(self):
+    def list(self, short=False):
         conn = self.conn
         vms = []
         results = conn.describe_instances()

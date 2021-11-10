@@ -899,7 +899,7 @@ class Ksphere:
                 yamlinfo['disks'].append(disk)
         return yamlinfo
 
-    def list(self):
+    def list(self, short=False):
         rootFolder = self.rootFolder
         si = self.si
         vms = []

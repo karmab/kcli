@@ -407,7 +407,7 @@ class KOvirt(object):
         print("not implemented")
         return
 
-    def list(self):
+    def list(self, short=False):
         vms = []
         system_service = self.conn.system_service()
         if self.filtertag is not None:

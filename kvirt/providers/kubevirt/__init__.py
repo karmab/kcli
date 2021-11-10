@@ -520,7 +520,7 @@ class Kubevirt(Kubecommon):
             return 'up'
         return 'down'
 
-    def list(self):
+    def list(self, short=False):
         crds = self.crds
         namespace = self.namespace
         vms = []

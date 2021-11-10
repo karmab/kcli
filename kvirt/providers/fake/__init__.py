@@ -18,5 +18,5 @@ class Kfake():
     def get_pool_path(self, pool):
         return '.'
 
-    def list(self):
+    def list(self, short=False):
         return [{}]
