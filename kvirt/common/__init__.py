@@ -1142,8 +1142,12 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
             elif ip is not None and netmask is not None and not reserveip and gateway is not None:
                 if index == 0 and default_gateway is not None:
                     gateway = default_gateway
+                if isinstance(netmask, int):
+                    cidr = netmask
+                else:
+                    cidr = IPAddress(netmask).netmask_bits()
                 netdata = "DEVICE=%s\nNAME=%s\nONBOOT=yes\nNM_CONTROLLED=yes\n" % (nicname, nicname)
-                netdata += "BOOTPROTO=static\nIPADDR=%s\nNETMASK=%s\nGATEWAY=%s" % (ip, netmask, gateway)
+                netdata += "BOOTPROTO=static\nIPADDR=%s\nPREFIX=%s\nGATEWAY=%s" % (ip, cidr, gateway)
                 dns = net.get('dns')
                 if dns is not None:
                     netdata += "\nDNS1=%s\n" % dns
