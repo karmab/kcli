@@ -1341,7 +1341,7 @@ class Kconfig(Kbaseconfig):
         if found:
             success("Plan %s deleted!" % plan)
         else:
-            pprint("Nothing to do for plan %s" % plan)
+            pprint("No objects found during deletion of plan %s" % plan)
             return {'result': 'success'}
         return {'result': 'success', 'deletedvm': deletedvms}
 
