@@ -772,7 +772,10 @@ class Ksphere:
         elif plan != 'kvirt':
             planfolder = find(si, vmFolder, vim.Folder, plan)
             if planfolder is not None and len(planfolder.childEntity) == 0:
-                planfolder.Destroy()
+                try:
+                    planfolder.Destroy()
+                except Exception as e:
+                    error("Couldn't delete plan folder %s. Hit %s" % (plan, e))
         return {'result': 'success'}
 
     def console(self, name, tunnel=False, web=False):
