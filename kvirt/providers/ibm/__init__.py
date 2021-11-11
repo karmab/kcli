@@ -286,7 +286,7 @@ class Kibm(object):
             return {'result': 'failure', 'reason': 'Unable to start VM %s. %s' % (name, exc)}
         return {'result': 'success'}
 
-    def stop(self, name):
+    def stop(self, name, soft=False):
         try:
             vm = self._get_vm(name)
             if vm is None:

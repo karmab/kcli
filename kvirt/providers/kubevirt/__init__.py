@@ -477,7 +477,7 @@ class Kubevirt(Kubecommon):
         crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
         return {'result': 'success'}
 
-    def stop(self, name):
+    def stop(self, name, soft=False):
         crds = self.crds
         namespace = self.namespace
         try:

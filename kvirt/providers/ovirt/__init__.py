@@ -349,7 +349,7 @@ class KOvirt(object):
             vm.start()
         return {'result': 'success'}
 
-    def stop(self, name):
+    def stop(self, name, soft=False):
         vmsearch = self.vms_service.list(search='name=%s' % name)
         if not vmsearch:
             error("VM %s not found" % name)

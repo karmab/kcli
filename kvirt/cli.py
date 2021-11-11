@@ -169,6 +169,7 @@ def start_container(args):
 
 def stop_vm(args):
     """Stop vms"""
+    soft = args.soft
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     names = [common.get_lastvm(config.client)] if not args.names else args.names
     if config.extraclients:
@@ -181,7 +182,7 @@ def stop_vm(args):
         k = ks[cli]
         for name in names:
             pprint("Stopping vm %s in %s..." % (name, cli))
-            result = k.stop(name)
+            result = k.stop(name, soft=soft)
             code = common.handle_response(result, name, element='', action='stopped')
             codes.append(code)
     sys.exit(1 if 1 in codes else 0)
@@ -1906,8 +1907,9 @@ def start_plan(args):
 def stop_plan(args):
     """Stop plan"""
     plan = args.plan
+    soft = args.soft
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.stop_plan(plan)
+    config.stop_plan(plan, soft=soft)
     return 0
 
 
@@ -1929,9 +1931,10 @@ def noautostart_plan(args):
 
 def restart_plan(args):
     """Restart plan"""
+    soft = args.soft
     plan = args.plan
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.stop_plan(plan)
+    config.stop_plan(plan, soft=soft)
     config.start_plan(plan)
     return 0
 
@@ -3901,6 +3904,7 @@ def cli():
 
     planrestart_desc = 'Restart Plan'
     planrestart_parser = restart_subparsers.add_parser('plan', description=planrestart_desc, help=planrestart_desc)
+    planrestart_parser.add_argument('-s', '--soft', action='store_true', help='Do a soft stop')
     planrestart_parser.add_argument('plan', metavar='PLAN')
     planrestart_parser.set_defaults(func=restart_plan)
 
@@ -3953,6 +3957,7 @@ def cli():
 
     planstop_desc = 'Stop Plan'
     planstop_parser = stop_subparsers.add_parser('plan', description=planstop_desc, help=planstop_desc)
+    planstop_parser.add_argument('-s', '--soft', action='store_true', help='Do a soft stop')
     planstop_parser.add_argument('plan', metavar='PLAN')
     planstop_parser.set_defaults(func=stop_plan)
 
@@ -4336,6 +4341,7 @@ def cli():
 
     vmstop_desc = 'Stop Vms'
     vmstop_parser = argparse.ArgumentParser(add_help=False)
+    vmstop_parser.add_argument('-s', '--soft', action='store_true', help='Do a soft stop')
     vmstop_parser.add_argument('names', metavar='VMNAMES', nargs='*')
     vmstop_parser.set_defaults(func=stop_vm)
     stop_subparsers.add_parser('vm', parents=[vmstop_parser], description=vmstop_desc, help=vmstop_desc)

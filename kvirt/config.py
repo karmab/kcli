@@ -1191,7 +1191,7 @@ class Kconfig(Kbaseconfig):
             warning("No matching objects found")
         return {'result': 'success'}
 
-    def stop_plan(self, plan, container=False):
+    def stop_plan(self, plan, soft=False, container=False):
         k = self.k
         stopfound = True
         pprint("Stopping vms from plan %s" % plan)
@@ -1207,7 +1207,7 @@ class Kconfig(Kbaseconfig):
                 description = vm.get('plan')
                 if description == plan:
                     stopfound = True
-                    c.stop(name)
+                    c.stop(name, soft=soft)
                     success("%s stopped on %s!" % (name, hypervisor))
         if container:
             cont = Kcontainerconfig(self, client=self.containerclient).cont

@@ -1208,18 +1208,19 @@ class Kvirt(object):
                 return {'result': 'failure', 'reason': e}
         return {'result': 'success'}
 
-    def stop(self, name):
+    def stop(self, name, soft=False):
         conn = self.conn
         status = {0: 'down', 1: 'up'}
         try:
             vm = conn.lookupByName(name)
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        if status[vm.isActive()] == "down":
-            return {'result': 'success'}
-        else:
-            vm.destroy()
-            return {'result': 'success'}
+        if status[vm.isActive()] != "down":
+            if soft:
+                vm.shutdown()
+            else:
+                vm.destroy()
+        return {'result': 'success'}
 
     def snapshot(self, name, base, revert=False, delete=False, listing=False):
         conn = self.conn

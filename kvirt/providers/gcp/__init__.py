@@ -350,7 +350,7 @@ class Kgcp(object):
         else:
             return {'result': 'success'}
 
-    def stop(self, name):
+    def stop(self, name, soft=False):
         conn = self.conn
         project = self.project
         zone = self.zone

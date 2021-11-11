@@ -721,7 +721,7 @@ class Ksphere:
             waitForMe(t)
         return {'result': 'success'}
 
-    def stop(self, name):
+    def stop(self, name, soft=False):
         si = self.si
         dc = self.dc
         vmFolder = dc.vmFolder

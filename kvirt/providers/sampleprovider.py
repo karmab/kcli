@@ -131,7 +131,7 @@ class Kbase(object):
         print("not implemented")
         return {'result': 'success'}
 
-    def stop(self, name):
+    def stop(self, name, soft=False):
         """
 
         :param name:

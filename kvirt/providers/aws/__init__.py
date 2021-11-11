@@ -292,7 +292,7 @@ class Kaws(object):
         conn.start_instances(InstanceIds=[instanceid])
         return {'result': 'success'}
 
-    def stop(self, name):
+    def stop(self, name, soft=False):
         conn = self.conn
         try:
             Filters = {'Name': "tag:Name", 'Values': [name]}

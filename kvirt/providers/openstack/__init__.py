@@ -255,7 +255,7 @@ class Kopenstack(object):
         vm.start()
         return {'result': 'success'}
 
-    def stop(self, name):
+    def stop(self, name, soft=False):
         nova = self.nova
         try:
             vm = nova.servers.find(name=name)

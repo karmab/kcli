@@ -324,7 +324,7 @@ class Kpacket(object):
         else:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
 
-    def stop(self, name):
+    def stop(self, name, soft=False):
         """
 
         :param name:
