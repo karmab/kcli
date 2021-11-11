@@ -1990,7 +1990,7 @@ def olm_app(package):
                     csvdescannotations = csvdesc['annotations']
                     if 'operatorframework.io/suggested-namespace' in csvdescannotations:
                         target_namespace = csvdescannotations['operatorframework.io/suggested-namespace']
-                    if 'customresourcedefinitions' in csvdesc and csvdesc['customresourcedefinitions']:
+                    if 'customresourcedefinitions' in csvdesc and 'owned' in csvdesc['customresourcedefinitions']:
                         crd = csvdesc['customresourcedefinitions']['owned'][0]['name']
                     break
             if name == package or data['metadata']['labels']['catalog'] != 'community-operators':
