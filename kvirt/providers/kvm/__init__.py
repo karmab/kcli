@@ -1854,7 +1854,7 @@ class Kvirt(object):
                     matchinghostname = "%s.%s" % (name, domain) if domain is not None else name
                     if hostname is not None and (hostname.text == matchinghostname):
                         hostentry = '<host ip="%s"><hostname>%s</hostname></host>' % (iphost, matchinghostname)
-                        network.update(2, 10, 0, hostentry, 1)
+                        network.update(2, 10, 0, hostentry, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
             except:
                 if networktype == 'bridge':
                     bridged = True
@@ -2162,7 +2162,8 @@ class Kvirt(object):
                                 else:
                                     oldentry = '<host ip="%s"></host>' % iphost
                                     pprint("Removing old dns entry for ip %s" % iphost)
-                                    network.update(2, 10, 0, oldentry, 1)
+                                    network.update(2, 10, 0, oldentry,
+                                                   VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
                 try:
                     network.update(4, 10, 0, dnsentry, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
                 except Exception as e:
