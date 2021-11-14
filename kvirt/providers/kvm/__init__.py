@@ -2054,7 +2054,7 @@ class Kvirt(object):
                     else:
                         warning("Removing old ip entry for ip %s and name %s" % (ip, currentname))
                         hostentryxml = "<host name='%s' ip='%s'/>" % (currentname, ip)
-                        network.update(2, 4, 0, hostentryxml, 0)
+                        network.update(2, 4, 0, hostentryxml, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
             for ipentry in list(root.iter('ip')):
                 attributes = ipentry.attrib
                 firstip = attributes.get('address')
