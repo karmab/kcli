@@ -17,7 +17,7 @@ import os
 import re
 import requests
 import random
-from ssl import _create_unverified_context, get_server_certificate
+from ssl import get_server_certificate
 import sys
 import tarfile
 from tempfile import TemporaryDirectory
@@ -357,8 +357,7 @@ def keep_lease_alive(lease):
 class Ksphere:
     def __init__(self, host, user, password, datacenter, cluster, debug=False, isofolder=None,
                  filtervms=False, filteruser=False, filtertag=None):
-        # 4-1-CONNECT
-        si = connect.SmartConnect(host=host, port=443, user=user, pwd=password, sslContext=_create_unverified_context())
+        si = connect.SmartConnectNoSSL(host=host, port=443, user=user, pwd=password)
         self.conn = si
         self.si = si
         self.vcip = host
