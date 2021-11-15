@@ -187,7 +187,7 @@ myovirt:
  # Only list vms created by kcli. Useful for environments when you are superadmin and have a ton of vms
  filtervms: True
  # Only list vms created by own user
- filtervms : false
+ filteruser : false
  # Only list vms created by kcli with the corresponding filter=filtertag in their description. Useful for ovirt environments when you share the same user
  filtertags: None
 
