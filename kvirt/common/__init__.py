@@ -772,7 +772,7 @@ def get_parameters(inputfile, planfile=False):
             data = yaml.safe_load(entries)
             if not planfile:
                 results = data
-            elif 'parameters' in results:
+            elif 'parameters' in data:
                 results = results['parameters']
         except Exception as e:
             if not planfile:
