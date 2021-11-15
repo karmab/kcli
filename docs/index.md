@@ -633,8 +633,6 @@ With this section, you can use the following to create a vm
 kcli create vm -p mycentos myvm
 ```
 
-You can use the [profile file sample](https://github.com/karmab/kcli-plans/tree/master/samples/profiles.yml) to get you started
-
 Note that when you download a given cloud image, a minimal associated profile is created for you.
 
 ## Cloudinit/Ignition support
@@ -746,7 +744,7 @@ The following types can be used within a plan:
 
 ## plan types
 
-Here are some examples of each type (additional ones can be found in this [samples directory ](https://github.com/karmab/kcli-plans/tree/master/samples)):
+Here are some examples of each type (more examples can be found in this [samples repo ](https://github.com/karmab/kcli-plan-samples)):
 
 ### network
 
@@ -882,7 +880,7 @@ myvm:
 
 Specific scripts and IPS arrays can be used directly in the plan file (or in profiles one).
 
-The [kcli-plans repo](https://github.com/karmab/kcli-plans) contains samples to get you started, along with plans for projects I often use (openshift, kubevirt,openstack, ovirt, ...).
+The [kcli-plan-samples repo](https://github.com/karmab/kcli-plan-samples) contains samples to get you started. You will also find under karmab user dedicated plan repos to deploy ovirt, openstack, ...
 
 When launching a plan, the plan name is optional. If none is provided, a random one will be used.
 
@@ -1206,7 +1204,7 @@ parameters:
 |*kernel*|None|Kernel location to pass to the vm. Needs to be local to the hypervisor|
 |*initrd*|None|Initrd location to pass to the vm. Needs to be local to the hypervisor|
 |*cmdline*|None|Cmdline to pass to the vm|
-|*pcidevices*|[]|array of pcidevices to passthrough to the first worker only. Check [here](https://github.com/karmab/kcli-plans/blob/master/samples/pcipassthrough/pci.yml) for an example|
+|*pcidevices*|[]|array of pcidevices to passthrough to the first worker only. Check [here](https://github.com/karmab/kcli-plan-samples/blob/master/pcipassthrough/pci.yml) for an example|
 |*tpm*|false|Enables a TPM device in the vm, using emulator mode. Requires swtpm in the host|
 |*rng*|false|Enables a RNG device in the vm|
 |*notify*|false|Sends result of a command or a script run from the vm to one of the supported notify engines|
@@ -1462,8 +1460,8 @@ Here's the list of all variables that can be used (you can list them with `kcli 
 |bootstrap_ip          |None                              ||
 |worker_macs           |[]                                ||
 |worker_ips            |[]                                ||
-|pcidevices            |None                              |array of pcidevices to passthrough to the first worker only. Check [here](https://github.com/karmab/kcli-plans/blob/master/samples/pcipassthrough/pci.yml) for an example|
-|numa                  |None                              |numa conf dictionary to apply to the workers only. Check [here](https://github.com/karmab/kcli-plans/blob/master/samples/cputuning/numa.yml) for an example|
+|pcidevices            |None                              |array of pcidevices to passthrough to the first worker only. Check [here](https://github.com/karmab/kcli-plan-samples/blob/master/pcipassthrough/pci.yml) for an example|
+|numa                  |None                              |numa conf dictionary to apply to the workers only. Check [here](https://github.com/karmab/kcli-plan-samples/blob/master/cputuning/numa.yml) for an example|
 |numa_master           |None                              ||
 |numa_worker           |None                              ||
 |numamode              |None                              ||
