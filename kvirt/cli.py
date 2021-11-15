@@ -925,10 +925,17 @@ def create_app_openshift(args):
         if app in LOCAL_OPENSHIFT_APPS:
             name = app
         else:
-            name, source, channel, csv, description, namespace, crd = common.olm_app(app)
+            name, source, channel, csv, description, namespace, channels, crd = common.olm_app(app)
             if name is None:
                 error("Couldn't find any app matching %s. Skipping..." % app)
                 continue
+            if 'channel' in overrides:
+                overrides_channel = overrides['channel']
+                if overrides_channel not in channels:
+                    error("Target channel %s not found in %s. Skipping..." % (channel, channels))
+                    continue
+                else:
+                    channel = overrides_channel
             app_data = {'name': name, 'source': source, 'channel': channel, 'csv': csv, 'namespace': namespace,
                         'crd': crd}
             overrides.update(app_data)
@@ -976,7 +983,7 @@ def delete_app_openshift(args):
         if app in LOCAL_OPENSHIFT_APPS:
             name = app
         else:
-            name, source, channel, csv, description, namespace, crd = common.olm_app(app)
+            name, source, channel, csv, description, namespace, channels, crd = common.olm_app(app)
             if name is None:
                 error("Couldn't find any app matching %s. Skipping..." % app)
                 continue

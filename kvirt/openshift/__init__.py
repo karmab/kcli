@@ -233,7 +233,7 @@ def process_apps(config, clusterdir, apps, overrides):
         if app in LOCAL_OPENSHIFT_APPS:
             name = app
         else:
-            name, source, channel, csv, description, namespace, crd = olm_app(app)
+            name, source, channel, csv, description, namespace, channels, crd = olm_app(app)
             if name is None:
                 error("Couldn't find any app matching %s. Skipping..." % app)
                 continue

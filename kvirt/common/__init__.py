@@ -1969,33 +1969,32 @@ def olm_app(package):
     os.environ["PATH"] += ":%s" % os.getcwd()
     name, source, defaultchannel, csv, description, installmodes, crd = None, None, None, None, None, None, None
     target_namespace = None
-    manifestscmd = "oc get packagemanifest -n openshift-marketplace -o yaml"
-    for data in yaml.safe_load(os.popen(manifestscmd).read())['items']:
-        if package in data['metadata']['name']:
-            name = data['metadata']['name']
-            target_namespace = name.split('-operator')[0]
-            status = data['status']
-            source = status['catalogSource']
-            defaultchannel = status['defaultChannel']
-            for channel in status['channels']:
-                if channel['name'] == defaultchannel:
-                    csv = channel['currentCSV']
-                    description = channel['currentCSVDesc']['description']
-                    installmodes = channel['currentCSVDesc']['installModes']
-                    for mode in installmodes:
-                        if mode['type'] == 'OwnNamespace' and not mode['supported']:
-                            target_namespace = 'openshift-operators'
-                            break
-                    csvdesc = channel['currentCSVDesc']
-                    csvdescannotations = csvdesc['annotations']
-                    if 'operatorframework.io/suggested-namespace' in csvdescannotations:
-                        target_namespace = csvdescannotations['operatorframework.io/suggested-namespace']
-                    if 'customresourcedefinitions' in csvdesc and 'owned' in csvdesc['customresourcedefinitions']:
-                        crd = csvdesc['customresourcedefinitions']['owned'][0]['name']
-                    break
-            if name == package or data['metadata']['labels']['catalog'] != 'community-operators':
-                break
-    return name, source, defaultchannel, csv, description, target_namespace, crd
+    channels = []
+    manifestscmd = "oc get packagemanifest -n openshift-marketplace %s -o yaml 2>/dev/null" % package
+    data = yaml.safe_load(os.popen(manifestscmd).read())
+    if data is not None:
+        name = data['metadata']['name']
+        target_namespace = name.split('-operator')[0]
+        status = data['status']
+        source = status['catalogSource']
+        defaultchannel = status['defaultChannel']
+        for channel in status['channels']:
+            channels.append(channel['name'])
+            if channel['name'] == defaultchannel:
+                csv = channel['currentCSV']
+                description = channel['currentCSVDesc']['description']
+                installmodes = channel['currentCSVDesc']['installModes']
+                for mode in installmodes:
+                    if mode['type'] == 'OwnNamespace' and not mode['supported']:
+                        target_namespace = 'openshift-operators'
+                        break
+                csvdesc = channel['currentCSVDesc']
+                csvdescannotations = csvdesc['annotations']
+                if 'operatorframework.io/suggested-namespace' in csvdescannotations:
+                    target_namespace = csvdescannotations['operatorframework.io/suggested-namespace']
+                if 'customresourcedefinitions' in csvdesc and 'owned' in csvdesc['customresourcedefinitions']:
+                    crd = csvdesc['customresourcedefinitions']['owned'][0]['name']
+    return name, source, defaultchannel, csv, description, target_namespace, channels, crd
 
 
 def copy_ipi_credentials(platform, k):
