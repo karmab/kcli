@@ -2670,7 +2670,7 @@ def create_host_ibm(args):
     data['vpc'] = args.vpc
     data['zone'] = args.zone
     data['access_key_id'] = args.access_key_id
-    data['secret_access_key'] = args.secret_access_key
+    data['secret_access_key'] = args.access_key_secret
     common.create_host(data)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
     if len(baseconfig.clients) == 1:
