@@ -1982,20 +1982,20 @@ def info_plan(args):
 
 def info_generic_kube(args):
     """Info Generic kube"""
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-    baseconfig.info_kube_generic(quiet=True, offline=True)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
+    baseconfig.info_kube_generic(quiet=True)
 
 
 def info_k3s_kube(args):
     """Info K3s kube"""
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-    baseconfig.info_kube_k3s(quiet=True, offline=True)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
+    baseconfig.info_kube_k3s(quiet=True)
 
 
 def info_openshift_kube(args):
     """Info Openshift kube"""
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-    baseconfig.info_kube_openshift(quiet=True, offline=True)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
+    baseconfig.info_kube_openshift(quiet=True)
 
 
 def download_plan(args):
