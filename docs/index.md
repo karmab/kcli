@@ -1493,7 +1493,7 @@ kcli create kube openshift --paramfile parameters.yml $cluster
 
 - You will be asked for your sudo password in order to create a /etc/hosts entry for the api vip.
 
-- Once that finishes, set the following environment variable in order to use oc commands `export KUBECONFIG=clusters/$cluster/auth/kubeconfig`
+- Once that finishes, set the following environment variable in order to use oc commands `export KUBECONFIG=$HOME/.kcli/clusters/$cluster/auth/kubeconfig`
 
 ### Providing custom machine configs
 
