@@ -1437,3 +1437,18 @@ class Ksphere:
     def list_bucketfiles(self, bucket):
         print("not implemented")
         return []
+
+    def get_guestid(image):
+        if 'centos' in image.lower():
+            guestid = 'centos8_64Guest'
+        elif 'rhel' in image.lower() or 'rhcos' in image.lower():
+            guestid = 'rhel8_64Guest'
+        elif 'fedora' in image.lower() or 'fos' in image.lower():
+            guestid = 'fedora64Guest'
+        elif 'ubuntu' in image.lower():
+            guestid = 'ubuntu64Guest'
+        elif 'debian' in image.lower():
+            guestid = 'debian10_64Guest'
+        else:
+            guestid = 'rhel7_64Guest'
+        return guestid
