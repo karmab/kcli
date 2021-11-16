@@ -872,7 +872,7 @@ class Ksphere:
         if listinfo:
             return yamlinfo
         if debug:
-            yamlinfo['debug'] = vm.config.extraConfig
+            yamlinfo['debug'] = vm.config
         devices = vm.config.hardware.device
         for number, dev in enumerate(devices):
             if "addressType" in dir(dev):
