@@ -146,14 +146,17 @@ class Kopenstack(object):
         if key_name not in keypairs:
             homekey = None
             if not os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME'])\
-                    and not os.path.exists("%s/.ssh/id_dsa.pub" % os.environ['HOME']):
-                print("neither id_rsa.pub or id_dsa public keys found in your .ssh directory, you might have trouble "
-                      "accessing the vm")
+                    and not os.path.exists("%s/.ssh/id_dsa.pub" % os.environ['HOME'])\
+                    and not os.path.exists("%s/.ssh/id_ed25519.pub" % os.environ['HOME']):
+                print("neither id_rsa, id_dsa nor id_ed25519 public keys found in your .ssh directory, you "
+                      "might have trouble accessing the vm")
             else:
                 if os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME']):
                     homekey = open("%s/.ssh/id_rsa.pub" % os.environ['HOME']).read()
-                else:
+                elif os.path.exists("%s/.ssh/id_dsa.pub" % os.environ['HOME']):
                     homekey = open("%s/.ssh/id_dsa.pub" % os.environ['HOME']).read()
+                else:
+                    homekey = open("%s/.ssh/id_ed25519.pub" % os.environ['HOME']).read()
                 nova.keypairs.create(key_name, homekey)
         elif keypairs:
             key_name = keypairs[0]

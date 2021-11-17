@@ -119,6 +119,14 @@ class Kvirt(object):
                     url = "%s&no_verify=1&keyfile=%s" % (url, os.path.expanduser("~/.kcli/id_rsa"))
                 elif os.path.exists(os.path.expanduser("~/.kcli/id_dsa")):
                     url = "%s&no_verify=1&keyfile=%s" % (url, os.path.expanduser("~/.kcli/id_dsa"))
+                elif os.path.exists(os.path.expanduser("~/.kcli/id_ed25519")):
+                    url = "%s&no_verify=1&keyfile=%s" % (url, os.path.expanduser("~/.kcli/id_ed25519"))
+                elif os.path.exists(os.path.expanduser("~/.ssh/id_rsa")):
+                    url = "%s&no_verify=1&keyfile=%s" % (url, os.path.expanduser("~/.ssh/id_rsa"))
+                elif os.path.exists(os.path.expanduser("~/.ssh/id_dsa")):
+                    url = "%s&no_verify=1&keyfile=%s" % (url, os.path.expanduser("~/.ssh/id_dsa"))
+                elif os.path.exists(os.path.expanduser("~/.ssh/id_ed25519")):
+                    url = "%s&no_verify=1&keyfile=%s" % (url, os.path.expanduser("~/.ssh/id_ed25519"))
                 elif insecure:
                     url = "%s&no_verify=1" % url
         try:
@@ -137,8 +145,16 @@ class Kvirt(object):
         identityfile = None
         if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
             identityfile = os.path.expanduser("~/.kcli/id_rsa")
-        elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
-            identityfile = os.path.expanduser("~/.kcli/id_rsa")
+        elif os.path.exists(os.path.expanduser("~/.kcli/id_dsa")):
+            identityfile = os.path.expanduser("~/.kcli/id_dsa")
+        elif os.path.exists(os.path.expanduser("~/.kcli/id_ed25519")):
+            identityfile = os.path.expanduser("~/.kcli/id_ed25519")
+        elif os.path.exists(os.path.expanduser("~/.ssh/id_rsa")):
+            identityfile = os.path.expanduser("~/.ssh/id_rsa")
+        elif os.path.exists(os.path.expanduser("~/.ssh/id_dsa")):
+            identityfile = os.path.expanduser("~/.ssh/id_dsa")
+        elif os.path.exists(os.path.expanduser("~/.ssh/id_ed25519")):
+            identityfile = os.path.expanduser("~/.ssh/id_ed25519")
         if identityfile is not None:
             self.identitycommand = "-i %s" % identityfile
         else:
@@ -718,8 +734,16 @@ class Kvirt(object):
                 if self.protocol == 'ssh' and self.host not in localhosts:
                     if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
                         identityfile = os.path.expanduser("~/.kcli/id_rsa")
-                    elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
-                        identityfile = os.path.expanduser("~/.kcli/id_rsa")
+                    elif os.path.exists(os.path.expanduser("~/.kcli/id_dsa")):
+                        identityfile = os.path.expanduser("~/.kcli/id_dsa")
+                    elif os.path.exists(os.path.expanduser("~/.kcli/id_ed25519")):
+                        identityfile = os.path.expanduser("~/.kcli/id_ed25519")
+                    elif os.path.exists(os.path.expanduser("~/.ssh/id_rsa")):
+                        identityfile = os.path.expanduser("~/.ssh/id_rsa")
+                    elif os.path.exists(os.path.expanduser("~/.ssh/id_dsa")):
+                        identityfile = os.path.expanduser("~/.ssh/id_dsa")
+                    elif os.path.exists(os.path.expanduser("~/.ssh/id_ed25519")):
+                        identityfile = os.path.expanduser("~/.ssh/id_ed25519")
                     if identityfile is not None:
                         identitycommand = "-i %s" % identityfile
                     else:

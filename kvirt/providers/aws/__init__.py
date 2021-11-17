@@ -118,18 +118,24 @@ class Kaws(object):
             pprint("Importing your public key as %s" % keypair)
             if not os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME'])\
                     and not os.path.exists("%s/.ssh/id_dsa.pub" % os.environ['HOME'])\
+                    and not os.path.exists("%s/.ssh/id_ed25519.pub" % os.environ['HOME'])\
                     and not os.path.exists("%s/.kcli/id_rsa.pub" % os.environ['HOME'])\
-                    and not os.path.exists("%s/.kcli/id_dsa.pub" % os.environ['HOME']):
+                    and not os.path.exists("%s/.kcli/id_dsa.pub" % os.environ['HOME'])\
+                    and not os.path.exists("%s/.kcli/id_ed25519.pub" % os.environ['HOME']):
                 error("No public key found. Leaving")
                 return {'result': 'failure', 'reason': 'No public key found'}
             elif os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME']):
                 homekey = open("%s/.ssh/id_rsa.pub" % os.environ['HOME']).read()
             elif os.path.exists("%s/.ssh/id_dsa.pub" % os.environ['HOME']):
                 homekey = open("%s/.ssh/id_dsa.pub" % os.environ['HOME']).read()
+            elif os.path.exists("%s/.ssh/id_ed25519.pub" % os.environ['HOME']):
+                homekey = open("%s/.ssh/id_ed25519.pub" % os.environ['HOME']).read()
             elif os.path.exists("%s/.kcli/id_rsa.pub" % os.environ['HOME']):
                 homekey = open("%s/.kcli/id_rsa.pub" % os.environ['HOME']).read()
-            else:
+            elif os.path.exists("%s/.kcli/id_dsa.pub" % os.environ['HOME']):
                 homekey = open("%s/.kcli/id_dsa.pub" % os.environ['HOME']).read()
+            else:
+                homekey = open("%s/.kcli/id_ed25519.pub" % os.environ['HOME']).read()
             conn.import_key_pair(KeyName=keypair, PublicKeyMaterial=homekey)
         if cloudinit:
             if image is not None and common.needs_ignition(image):

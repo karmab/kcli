@@ -274,19 +274,25 @@ class Kgcp(object):
             body['metadata']['items'].append(newval)
         if not os.path.exists(os.path.expanduser("~/.ssh/id_rsa.pub"))\
                 and not os.path.exists(os.path.expanduser("~/.ssh/id_dsa.pub"))\
+                and not os.path.exists(os.path.expanduser("~/.ssh/id_ed25519.pub"))\
                 and not os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub"))\
-                and not os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub")):
-            print("neither id_rsa.pub or id_dsa public keys found in your .ssh or .kcli directory, you might have "
-                  "trouble accessing the vm")
+                and not os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub"))\
+                and not os.path.exists(os.path.expanduser("~/.kcli/id_ed25519.pub")):
+            print("neither id_rsa, id_dsa nor id_ed25519 public keys found in your .ssh or .kcli directories, "
+                  "you might have trouble accessing the vm")
             homekey = None
         elif os.path.exists(os.path.expanduser("~/.ssh/id_rsa.pub")):
             homekey = open(os.path.expanduser("~/.ssh/id_rsa.pub")).read()
         elif os.path.exists(os.path.expanduser("~/.ssh/id_dsa.pub")):
             homekey = open(os.path.expanduser("~/.ssh/id_dsa.pub")).read()
+        elif os.path.exists(os.path.expanduser("~/.ssh/id_ed25519.pub")):
+            homekey = open(os.path.expanduser("~/.ssh/id_ed25519.pub")).read()
         elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub")):
             homekey = open(os.path.expanduser("~/.kcli/id_rsa.pub")).read()
-        else:
+        elif os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub")):
             homekey = open(os.path.expanduser("~/.kcli/id_dsa.pub")).read()
+        else:
+            homekey = open(os.path.expanduser("~/.kcli/id_ed25519.pub")).read()
         if homekey is not None:
             keys = [homekey] + keys if keys is not None else [homekey]
         if keys is not None:

@@ -1172,10 +1172,13 @@ def create_vm(args):
     serial = args.serial
     if 'wait' in overrides and isinstance(overrides['wait'], bool) and overrides['wait']:
         wait = True
-    if wait and 'keys' not in overrides and not os.path.exists(os.path.expanduser("~/.ssh/id_rsa.pub"))\
+    if wait and 'keys' not in overrides\
+            and not os.path.exists(os.path.expanduser("~/.ssh/id_rsa.pub"))\
             and not os.path.exists(os.path.expanduser("~/.ssh/id_dsa.pub"))\
+            and not os.path.exists(os.path.expanduser("~/.ssh/id_ed25519.pub"))\
             and not os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub"))\
-            and not os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub")):
+            and not os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub"))\
+            and not os.path.exists(os.path.expanduser("~/.kcli/id_ed25519.pub")):
         error("No usable public key found, which is mandatory when using wait")
         sys.exit(1)
     customprofile = {}
@@ -2269,8 +2272,10 @@ def create_plandata(args):
                 for _file in write_files:
                     content = _file['content']
                     path = _file['path'].replace('/root/', '')
-                    if path.endswith('id_rsa') or path.endswith('id_dsa') or path.endswith('id_rsa.pub')\
-                            or path.endswith('id_dsa.pub') or 'openshift_pull.json' in path:
+                    if 'openshift_pull.json' in path\
+                            or path.endswith('id_rsa') or path.endswith('id_rsa.pub')\
+                            or path.endswith('id_dsa') or path.endswith('id_dsa.pub')\
+                            or path.endswith('id_ed25519') or path.endswith('id_ed25519.pub'):
                         warning("Skipping %s" % path)
                         continue
                     if '/' in path and not os.path.exists("%s/%s" % (hostnamedir, os.path.dirname(path))):
