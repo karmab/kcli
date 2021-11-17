@@ -176,7 +176,7 @@ kcli configuration is done in ~/.kcli directory, that you need to manually creat
 
 - config.yml generic configuration where you declare clients.
 - profiles.yml stores your profiles where you combine things like memory, numcpus and all supported parameters into named profiles to create vms from.
-- id\_rsa/id\_rsa.pub/id\_dsa/id\_dsa.pub You can store your default public and private keys in *.kcli* directory which will be the first place to look at them when connecting to a remote kvm hpervisor, virtual machine or when injecting your public key.
+- id\_rsa/id\_rsa.pub/id\_dsa/id\_dsa.pub/id\_25519/id\_25519.pub You can store your default public and private keys in *.kcli* directory which will be the first place to look for them when connecting to a remote kvm hypervisor, virtual machine or when injecting your public key.
 
 You can generate a default config file (with all parameters commented) pointing to your local host with:
     

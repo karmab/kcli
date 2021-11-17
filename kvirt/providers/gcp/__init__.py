@@ -8,7 +8,7 @@ from jinja2 import Environment, FileSystemLoader
 from jinja2 import StrictUndefined as undefined
 from jinja2.exceptions import TemplateSyntaxError, TemplateError
 from kvirt import common
-from kvirt.common import pprint, error, warning
+from kvirt.common import pprint, error, warning, get_ssh_pub_key
 from kvirt.defaults import UBUNTUS, METADATA_FIELDS
 from dateutil import parser as dateparser
 from getpass import getuser
@@ -272,29 +272,13 @@ class Kgcp(object):
             endcmd = 'touch /root/.kcli_startup\n'
             newval = {'key': 'startup-script', 'value': beginningcmd + startup_script + endcmd}
             body['metadata']['items'].append(newval)
-        if not os.path.exists(os.path.expanduser("~/.ssh/id_rsa.pub"))\
-                and not os.path.exists(os.path.expanduser("~/.ssh/id_dsa.pub"))\
-                and not os.path.exists(os.path.expanduser("~/.ssh/id_ed25519.pub"))\
-                and not os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub"))\
-                and not os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub"))\
-                and not os.path.exists(os.path.expanduser("~/.kcli/id_ed25519.pub")):
-            print("neither id_rsa, id_dsa nor id_ed25519 public keys found in your .ssh or .kcli directories, "
-                  "you might have trouble accessing the vm")
-            homekey = None
-        elif os.path.exists(os.path.expanduser("~/.ssh/id_rsa.pub")):
-            homekey = open(os.path.expanduser("~/.ssh/id_rsa.pub")).read()
-        elif os.path.exists(os.path.expanduser("~/.ssh/id_dsa.pub")):
-            homekey = open(os.path.expanduser("~/.ssh/id_dsa.pub")).read()
-        elif os.path.exists(os.path.expanduser("~/.ssh/id_ed25519.pub")):
-            homekey = open(os.path.expanduser("~/.ssh/id_ed25519.pub")).read()
-        elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub")):
-            homekey = open(os.path.expanduser("~/.kcli/id_rsa.pub")).read()
-        elif os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub")):
-            homekey = open(os.path.expanduser("~/.kcli/id_dsa.pub")).read()
+        publickeyfile = get_ssh_pub_key()
+        if publickeyfile is None:
+            warning("neither id_rsa, id_dsa nor id_ed25519 public keys found in your .ssh or .kcli directories, "
+                    "you might have trouble accessing the vm")
         else:
-            homekey = open(os.path.expanduser("~/.kcli/id_ed25519.pub")).read()
-        if homekey is not None:
-            keys = [homekey] + keys if keys is not None else [homekey]
+            publickeyfile = open(publickeyfile).read()
+            keys = [publickeyfile] + keys if keys is not None else [publickeyfile]
         if keys is not None:
             user = common.get_user(image)
             if user == 'root':

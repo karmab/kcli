@@ -1,6 +1,4 @@
 # coding=utf-8
-from kvirt.common import warning
-import os
 
 IMAGES = {'CentOS-6-x86_64-GenericCloud.qcow2': 'CentOS 6 Generic Cloud Image',
           'CentOS-Atomic-Host-7-GenericCloud.qcow2': 'CentOS 7 Atomic Host Image',
@@ -17,39 +15,3 @@ IMAGES = {'CentOS-6-x86_64-GenericCloud.qcow2': 'CentOS 6 Generic Cloud Image',
           'Ubuntu Server 16.04 LTS (Xenial Xerus) Cloud Image v20170111 for x86_64',
           'yakkety-server-cloudimg-amd64-disk1.img':
           'Ubuntu Server 16.10 (Yakkety Yak) Cloud Image v20170106 for x86_64'}
-
-
-def get_home_ssh_key():
-    """
-
-    :return:
-    """
-    key = None
-    if os.path.exists(os.path.expanduser("~/.ssh/id_rsa.pub")):
-        publickeyfile = os.path.expanduser("~/.ssh/id_rsa.pub")
-        with open(publickeyfile, 'r') as ssh:
-            key = ssh.read().rstrip()
-    elif os.path.exists(os.path.expanduser("~/.ssh/id_dsa.pub")):
-        publickeyfile = os.path.expanduser("~/.ssh/id_dsa.pub")
-        with open(publickeyfile, 'r') as ssh:
-            key = ssh.read().rstrip()
-    elif os.path.exists(os.path.expanduser("~/.ssh/id_ed25519.pub")):
-        publickeyfile = os.path.expanduser("~/.ssh/id_ed25519.pub")
-        with open(publickeyfile, 'r') as ssh:
-            key = ssh.read().rstrip()
-    elif os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub")):
-        publickeyfile = os.path.expanduser("~/.kcli/id_rsa.pub")
-        with open(publickeyfile, 'r') as ssh:
-            key = ssh.read().rstrip()
-    elif os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub")):
-        publickeyfile = os.path.expanduser("~/.kcli/id_dsa.pub")
-        with open(publickeyfile, 'r') as ssh:
-            key = ssh.read().rstrip()
-    elif os.path.exists(os.path.expanduser("~/.kcli/id_ed25519.pub")):
-        publickeyfile = os.path.expanduser("~/.kcli/id_ed25519.pub")
-        with open(publickeyfile, 'r') as ssh:
-            key = ssh.read().rstrip()
-    else:
-        warning("neither id_rsa, id_dsa nor id_ed25519 public keys found in your .ssh or .kcli directories, "
-                "you might have trouble accessing the vm")
-    return key

@@ -10,7 +10,7 @@ from urllib.request import urlopen
 from kvirt.defaults import IMAGES
 from kvirt.defaults import UBUNTUS, METADATA_FIELDS
 from kvirt import common
-from kvirt.common import error, pprint, warning
+from kvirt.common import error, pprint, warning, get_ssh_pub_key
 from netaddr import IPAddress, IPNetwork
 from libvirt import open as libvirtopen, registerErrorHandler, libvirtError
 from libvirt import VIR_DOMAIN_AFFECT_LIVE, VIR_DOMAIN_AFFECT_CONFIG
@@ -115,18 +115,10 @@ class Kvirt(object):
             else:
                 url = "qemu:///%s" % conntype
             if url.startswith('qemu+ssh'):
-                if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
-                    url = "%s&no_verify=1&keyfile=%s" % (url, os.path.expanduser("~/.kcli/id_rsa"))
-                elif os.path.exists(os.path.expanduser("~/.kcli/id_dsa")):
-                    url = "%s&no_verify=1&keyfile=%s" % (url, os.path.expanduser("~/.kcli/id_dsa"))
-                elif os.path.exists(os.path.expanduser("~/.kcli/id_ed25519")):
-                    url = "%s&no_verify=1&keyfile=%s" % (url, os.path.expanduser("~/.kcli/id_ed25519"))
-                elif os.path.exists(os.path.expanduser("~/.ssh/id_rsa")):
-                    url = "%s&no_verify=1&keyfile=%s" % (url, os.path.expanduser("~/.ssh/id_rsa"))
-                elif os.path.exists(os.path.expanduser("~/.ssh/id_dsa")):
-                    url = "%s&no_verify=1&keyfile=%s" % (url, os.path.expanduser("~/.ssh/id_dsa"))
-                elif os.path.exists(os.path.expanduser("~/.ssh/id_ed25519")):
-                    url = "%s&no_verify=1&keyfile=%s" % (url, os.path.expanduser("~/.ssh/id_ed25519"))
+                publickeyfile = get_ssh_pub_key()
+                if publickeyfile is not None:
+                    privkeyfile = publickeyfile.replace('.pub', '')
+                    url = "%s&no_verify=1&keyfile=%s" % (url, privkeyfile)
                 elif insecure:
                     url = "%s&no_verify=1" % url
         try:
@@ -732,19 +724,9 @@ class Kvirt(object):
                     ignitionfile.write(ignitiondata)
                     identityfile = None
                 if self.protocol == 'ssh' and self.host not in localhosts:
-                    if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
-                        identityfile = os.path.expanduser("~/.kcli/id_rsa")
-                    elif os.path.exists(os.path.expanduser("~/.kcli/id_dsa")):
-                        identityfile = os.path.expanduser("~/.kcli/id_dsa")
-                    elif os.path.exists(os.path.expanduser("~/.kcli/id_ed25519")):
-                        identityfile = os.path.expanduser("~/.kcli/id_ed25519")
-                    elif os.path.exists(os.path.expanduser("~/.ssh/id_rsa")):
-                        identityfile = os.path.expanduser("~/.ssh/id_rsa")
-                    elif os.path.exists(os.path.expanduser("~/.ssh/id_dsa")):
-                        identityfile = os.path.expanduser("~/.ssh/id_dsa")
-                    elif os.path.exists(os.path.expanduser("~/.ssh/id_ed25519")):
-                        identityfile = os.path.expanduser("~/.ssh/id_ed25519")
-                    if identityfile is not None:
+                    publickeyfile = get_ssh_pub_key()
+                    if publickeyfile is not None:
+                        identityfile = publickeyfile.replace('.pub', '')
                         identitycommand = "-i %s" % identityfile
                     else:
                         identitycommand = ""

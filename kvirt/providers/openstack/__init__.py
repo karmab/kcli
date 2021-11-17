@@ -7,7 +7,7 @@ Openstack Provider Class
 from distutils.spawn import find_executable
 from netaddr import IPNetwork
 from kvirt import common
-from kvirt.common import pprint, error, warning
+from kvirt.common import pprint, error, warning, get_ssh_pub_key
 from kvirt.defaults import METADATA_FIELDS
 from keystoneauth1 import loading
 from keystoneauth1 import session
@@ -144,20 +144,13 @@ class Kopenstack(object):
         key_name = 'kvirt'
         keypairs = [k.name for k in nova.keypairs.list()]
         if key_name not in keypairs:
-            homekey = None
-            if not os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME'])\
-                    and not os.path.exists("%s/.ssh/id_dsa.pub" % os.environ['HOME'])\
-                    and not os.path.exists("%s/.ssh/id_ed25519.pub" % os.environ['HOME']):
-                print("neither id_rsa, id_dsa nor id_ed25519 public keys found in your .ssh directory, you "
-                      "might have trouble accessing the vm")
+            publickeyfile = get_ssh_pub_key()
+            if publickeyfile is None:
+                warning("neither id_rsa, id_dsa nor id_ed25519 public keys found in your .ssh directory, you "
+                        "might have trouble accessing the vm")
             else:
-                if os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME']):
-                    homekey = open("%s/.ssh/id_rsa.pub" % os.environ['HOME']).read()
-                elif os.path.exists("%s/.ssh/id_dsa.pub" % os.environ['HOME']):
-                    homekey = open("%s/.ssh/id_dsa.pub" % os.environ['HOME']).read()
-                else:
-                    homekey = open("%s/.ssh/id_ed25519.pub" % os.environ['HOME']).read()
-                nova.keypairs.create(key_name, homekey)
+                publickeyfile = open(publickeyfile).read()
+                nova.keypairs.create(key_name, publickeyfile)
         elif keypairs:
             key_name = keypairs[0]
             if key_name != 'kvirt':

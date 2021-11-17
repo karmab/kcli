@@ -5,7 +5,7 @@ Aws Provider Class
 """
 
 from kvirt import common
-from kvirt.common import pprint, error, warning
+from kvirt.common import pprint, error, warning, get_ssh_pub_key
 from kvirt.defaults import METADATA_FIELDS
 import boto3
 from netaddr import IPNetwork
@@ -116,27 +116,12 @@ class Kaws(object):
         keypairs = [k for k in conn.describe_key_pairs()['KeyPairs'] if k['KeyName'] == keypair]
         if not keypairs:
             pprint("Importing your public key as %s" % keypair)
-            if not os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME'])\
-                    and not os.path.exists("%s/.ssh/id_dsa.pub" % os.environ['HOME'])\
-                    and not os.path.exists("%s/.ssh/id_ed25519.pub" % os.environ['HOME'])\
-                    and not os.path.exists("%s/.kcli/id_rsa.pub" % os.environ['HOME'])\
-                    and not os.path.exists("%s/.kcli/id_dsa.pub" % os.environ['HOME'])\
-                    and not os.path.exists("%s/.kcli/id_ed25519.pub" % os.environ['HOME']):
+            publickeyfile = get_ssh_pub_key()
+            if publickeyfile is None:
                 error("No public key found. Leaving")
                 return {'result': 'failure', 'reason': 'No public key found'}
-            elif os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME']):
-                homekey = open("%s/.ssh/id_rsa.pub" % os.environ['HOME']).read()
-            elif os.path.exists("%s/.ssh/id_dsa.pub" % os.environ['HOME']):
-                homekey = open("%s/.ssh/id_dsa.pub" % os.environ['HOME']).read()
-            elif os.path.exists("%s/.ssh/id_ed25519.pub" % os.environ['HOME']):
-                homekey = open("%s/.ssh/id_ed25519.pub" % os.environ['HOME']).read()
-            elif os.path.exists("%s/.kcli/id_rsa.pub" % os.environ['HOME']):
-                homekey = open("%s/.kcli/id_rsa.pub" % os.environ['HOME']).read()
-            elif os.path.exists("%s/.kcli/id_dsa.pub" % os.environ['HOME']):
-                homekey = open("%s/.kcli/id_dsa.pub" % os.environ['HOME']).read()
-            else:
-                homekey = open("%s/.kcli/id_ed25519.pub" % os.environ['HOME']).read()
-            conn.import_key_pair(KeyName=keypair, PublicKeyMaterial=homekey)
+            publickeyfile = open(publickeyfile).read()
+            conn.import_key_pair(KeyName=keypair, PublicKeyMaterial=publickeyfile)
         if cloudinit:
             if image is not None and common.needs_ignition(image):
                 version = common.ignition_version(image)

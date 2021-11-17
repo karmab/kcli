@@ -12,7 +12,7 @@ from kvirt.examples import disconnectercreate, appopenshiftcreate, plantemplatec
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
 from kvirt import version
-from kvirt.defaults import IMAGES, VERSION, LOCAL_OPENSHIFT_APPS
+from kvirt.defaults import IMAGES, VERSION, LOCAL_OPENSHIFT_APPS, SSH_PUB_LOCATIONS
 from prettytable import PrettyTable
 import argcomplete
 import argparse
@@ -1172,13 +1172,7 @@ def create_vm(args):
     serial = args.serial
     if 'wait' in overrides and isinstance(overrides['wait'], bool) and overrides['wait']:
         wait = True
-    if wait and 'keys' not in overrides\
-            and not os.path.exists(os.path.expanduser("~/.ssh/id_rsa.pub"))\
-            and not os.path.exists(os.path.expanduser("~/.ssh/id_dsa.pub"))\
-            and not os.path.exists(os.path.expanduser("~/.ssh/id_ed25519.pub"))\
-            and not os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub"))\
-            and not os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub"))\
-            and not os.path.exists(os.path.expanduser("~/.kcli/id_ed25519.pub")):
+    if wait and 'keys' not in overrides and common.get_ssh_pub_key() is None:
         error("No usable public key found, which is mandatory when using wait")
         sys.exit(1)
     customprofile = {}
@@ -2272,10 +2266,8 @@ def create_plandata(args):
                 for _file in write_files:
                     content = _file['content']
                     path = _file['path'].replace('/root/', '')
-                    if 'openshift_pull.json' in path\
-                            or path.endswith('id_rsa') or path.endswith('id_rsa.pub')\
-                            or path.endswith('id_dsa') or path.endswith('id_dsa.pub')\
-                            or path.endswith('id_ed25519') or path.endswith('id_ed25519.pub'):
+                    SSH_PRIV_LOCATIONS = [location.replace('.pub', '') for location in SSH_PUB_LOCATIONS]
+                    if 'openshift_pull.json' in path or path in SSH_PRIV_LOCATIONS or path in SSH_PUB_LOCATIONS:
                         warning("Skipping %s" % path)
                         continue
                     if '/' in path and not os.path.exists("%s/%s" % (hostnamedir, os.path.dirname(path))):

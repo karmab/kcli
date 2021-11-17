@@ -4,7 +4,7 @@
 from ast import literal_eval
 import glob
 from kvirt.jinjafilters import jinjafilters
-from kvirt.defaults import UBUNTUS
+from kvirt.defaults import UBUNTUS, SSH_PUB_LOCATIONS
 from random import randint
 import base64
 from jinja2 import Environment, FileSystemLoader
@@ -259,6 +259,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
         pprint("using cloudinit from existing %s for %s" % (existing, name))
         userdata = open(existing).read()
     else:
+        publickeyfile = get_ssh_pub_key()
         userdata = '#cloud-config\n'
         if not noname:
             userdata += 'hostname: %s\n' % name
@@ -270,12 +271,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             userdata += "ssh_pwauth: True\ndisable_root: false\n"
         if domain is not None:
             userdata += "fqdn: %s.%s\n" % (name, domain)
-        if keys or os.path.exists(os.path.expanduser("~/.ssh/id_rsa.pub"))\
-                or os.path.exists(os.path.expanduser("~/.ssh/id_dsa.pub"))\
-                or os.path.exists(os.path.expanduser("~/.ssh/id_ed25519.pub"))\
-                or os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub"))\
-                or os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub"))\
-                or os.path.exists(os.path.expanduser("~/.kcli/id_ed25519.pub")):
+        if keys or publickeyfile is not None:
             userdata += "ssh_authorized_keys:\n"
         elif find_executable('ssh-add') is not None:
             agent_keys = os.popen('ssh-add -L 2>/dev/null | head -1').readlines()
@@ -287,15 +283,10 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
         if keys:
             for key in list(set(keys)):
                 userdata += "- %s\n" % key
-        for path in ["~/.kcli/id_rsa.pub", "~/.kcli/id_dsa.pub", "~/.kcli/id_ed25519.pub",
-                     "~/.ssh/id_rsa.pub", "~/.ssh/id_dsa.pub", "~/.ssh/id_ed25519.pub"]:
-            expanded_path = os.path.expanduser(path)
-            if os.path.exists(expanded_path) and os.path.exists(expanded_path.replace('.pub', '')):
-                publickeyfile = expanded_path
-                with open(publickeyfile, 'r') as ssh:
-                    key = ssh.read().rstrip()
-                    userdata += "- %s\n" % key
-                break
+        if publickeyfile is not None:
+            with open(publickeyfile, 'r') as ssh:
+                key = ssh.read().rstrip()
+                userdata += "- %s\n" % key
         if cmds:
             data = process_cmds(cmds, overrides)
             if data != '':
@@ -902,13 +893,9 @@ def ssh(name, ip='', user=None, local=None, remote=None, tunnel=False, tunnelhos
         return None
     else:
         sshcommand = "%s@%s" % (user, ip)
-        if identityfile is None:
-            if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
-                identityfile = os.path.expanduser("~/.kcli/id_rsa")
-            elif os.path.exists(os.path.expanduser("~/.kcli/id_dsa")):
-                identityfile = os.path.expanduser("~/.kcli/id_dsa")
-            elif os.path.exists(os.path.expanduser("~/.kcli/id_ed25519")):
-                identityfile = os.path.expanduser("~/.kcli/id_ed25519")
+        publickeyfile = get_ssh_pub_key()
+        if publickeyfile is not None:
+            identityfile = publickeyfile.replace('.pub', '')
         if identityfile is not None:
             sshcommand = "-i %s %s" % (identityfile, sshcommand)
         if D:
@@ -1081,14 +1068,10 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     else:
         localhostname = name
     if not nokeys:
-        for path in ["~/.kcli/id_rsa.pub", "~/.kcli/id_dsa.pub", "~/.kcli/id_ed25519.pub",
-                     "~/.ssh/id_rsa.pub", "~/.ssh/id_dsa.pub", "~/.ssh/id_ed25519.pub"]:
-            expanded_path = os.path.expanduser(path)
-            if os.path.exists(expanded_path) and os.path.exists(expanded_path.replace('.pub', '')):
-                publickeyfile = expanded_path
-                with open(publickeyfile, 'r') as ssh:
-                    publickeys.append(ssh.read().strip())
-                break
+        publickeyfile = get_ssh_pub_key()
+        if publickeyfile is not None:
+            with open(publickeyfile, 'r') as ssh:
+                publickeys.append(ssh.read().strip())
         if keys:
             for key in list(set(keys)):
                 publickeys.append(key)
@@ -2044,3 +2027,15 @@ def info_network(k, name):
         error("Network %s not found" % name)
         return {}
     return networkinfo
+
+
+def get_ssh_pub_key():
+    for path in SSH_PUB_LOCATIONS:
+        sshpath = os.path.expanduser("~/.ssh/%s" % path)
+        sshprivpath = sshpath.replace('.pub', '')
+        kclipath = os.path.expanduser("~/.kcli/%s" % path)
+        kcliprivpath = kclipath.replace('.pub', '')
+        if os.path.exists(kclipath) and os.path.exists(kcliprivpath):
+            return kclipath
+        elif os.path.exists(sshpath) and os.path.exists(sshprivpath):
+            return sshpath

@@ -2,7 +2,7 @@
 
 from distutils.spawn import find_executable
 from kvirt.common import success, error, pprint, warning, info2
-from kvirt.common import get_kubectl, kube_create_app, scp, _ssh_credentials
+from kvirt.common import get_kubectl, kube_create_app, scp, _ssh_credentials, get_ssh_pub_key
 from kvirt.defaults import UBUNTUS
 import os
 import sys
@@ -50,13 +50,7 @@ def create(config, plandir, cluster, overrides):
     k = config.k
     data = {'kubetype': 'generic', 'xip': False, 'domain': 'karmalabs.com'}
     data.update(overrides)
-    if 'keys' not in overrides\
-            and not os.path.exists(os.path.expanduser("~/.ssh/id_rsa.pub"))\
-            and not os.path.exists(os.path.expanduser("~/.ssh/id_dsa.pub"))\
-            and not os.path.exists(os.path.expanduser("~/.ssh/id_ed25519.pub"))\
-            and not os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub"))\
-            and not os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub"))\
-            and not os.path.exists(os.path.expanduser("~/.kcli/id_ed25519.pub")):
+    if 'keys' not in overrides and get_ssh_pub_key() is None:
         error("No usable public key found, which is required for the deployment")
         sys.exit(1)
     data['cluster'] = overrides.get('cluster', cluster if cluster is not None else 'testk')

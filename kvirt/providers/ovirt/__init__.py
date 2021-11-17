@@ -6,10 +6,9 @@ Ovirt Provider Class
 
 from distutils.spawn import find_executable
 from kvirt import common
-from kvirt.common import error, pprint, warning
+from kvirt.common import error, pprint, warning, get_ssh_pub_key
 from kvirt.defaults import UBUNTUS, METADATA_FIELDS
 from kvirt.providers.ovirt.helpers import IMAGES as oimages
-from kvirt.providers.ovirt.helpers import get_home_ssh_key
 import ovirtsdk4 as sdk
 from ovirtsdk4 import Error as oerror
 import ovirtsdk4.types as types
@@ -320,12 +319,14 @@ class KOvirt(object):
             root_password = None
             # dns_servers = '8.8.8.8 1.1.1.1'
             # dns_servers = dns if dns is not None else '8.8.8.8 1.1.1.1'
-            userkey = get_home_ssh_key()
-            if keys is None:
-                keys = userkey
-            else:
-                keys.append(userkey)
-                keys = '\n'.join(keys)
+            publickeyfile = get_ssh_pub_key()
+            if publickeyfile is not None:
+                publickeyfile = open(publickeyfile).read().rstrip()
+                if keys is None:
+                    keys = [publickeyfile]
+                else:
+                    keys.append(publickeyfile)
+            keys = '\n'.join(keys)
             host_name = "%s.%s" % (name, domain) if domain is not None else name
             initialization = types.Initialization(user_name=user_name, root_password=root_password,
                                                   authorized_ssh_keys=keys, host_name=host_name,
@@ -534,12 +535,13 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         permissions_service = self.vms_service.vm_service(vm.id).permissions_service()
         permissions_service.add(types.Permission(user=types.User(id=user.id), role=types.Role(name='UserVmManager')))
         keys_service = user_service.ssh_public_keys_service()
-        key = get_home_ssh_key()
-        if key is None:
+        publickeyfile = get_ssh_pub_key()
+        if publickeyfile is None:
             error("neither id_rsa, id_dsa nor id_ed25519 public keys found in your .ssh directory. This is required")
             return
+        publickeyfile = open(publickeyfile).read().rstrip()
         try:
-            keys_service.add(key=types.SshPublicKey(content=key))
+            keys_service.add(key=types.SshPublicKey(content=publickeyfile))
         except:
             pass
         command = "ssh -t -p 2222 ovirt-vmconsole@%s connect --vm-name %s" % (self.host, name)
