@@ -532,8 +532,6 @@ class Ksphere:
             opt.key = entry
             opt.value = metadata[entry]
             confspec.extraConfig.append(opt)
-        if nested:
-            confspec.nestedHVEnabled = True
         confspec.guestId = 'centos7_64Guest'
         vmfi = vim.vm.FileInfo()
         filename = "[" + default_pool + "]"
@@ -658,6 +656,8 @@ class Ksphere:
             # bootoptions = vim.option.OptionValue(key='bios.bootDeviceClasses',value='allow:hd,cd,fd,net')
             # confspec.bootOptions = vim.vm.BootOptions(bootOrder=[vim.vm.BootOptions.BootableCdromDevice()])
         confspec.deviceChange = devconfspec
+        if nested:
+            confspec.nestedHVEnabled = True
         t = vm.Reconfigure(confspec)
         waitForMe(t)
         if 'vmgroup' in overrides:
