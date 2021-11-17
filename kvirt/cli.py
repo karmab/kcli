@@ -1998,6 +1998,16 @@ def info_openshift_kube(args):
     baseconfig.info_kube_openshift(quiet=True)
 
 
+def info_network(args):
+    """Info network """
+    name = args.name
+    pprint("Providing information about network %s..." % name)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    networkinfo = config.k.info_network(name)
+    if networkinfo:
+        common.pretty_print(networkinfo)
+
+
 def download_plan(args):
     """Download plan"""
     plan = args.plan
@@ -3763,6 +3773,11 @@ def cli():
     keywordlist_parser = list_subparsers.add_parser('keyword', description=keywordlist_desc, help=keywordlist_desc,
                                                     aliases=['keywords'])
     keywordlist_parser.set_defaults(func=list_keyword)
+
+    networkinfo_desc = 'Info Network'
+    networkinfo_parser = info_subparsers.add_parser('network', description=networkinfo_desc, help=networkinfo_desc)
+    networkinfo_parser.add_argument('name', metavar='NETWORK')
+    networkinfo_parser.set_defaults(func=info_network)
 
     networklist_desc = 'List Networks'
     networklist_parser = list_subparsers.add_parser('network', description=networklist_desc, help=networklist_desc,

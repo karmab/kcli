@@ -866,6 +866,10 @@ class Kaws(object):
                 networks[networkname]['plan'] = plan
         return networks
 
+    def info_network(self, name):
+        networkinfo = common.info_network(self, name)
+        return networkinfo
+
     def list_subnets(self):
         conn = self.conn
         results = {}

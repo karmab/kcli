@@ -510,6 +510,11 @@ class Kbase(object):
         print("not implemented")
         return {}
 
+    def info_network(self, name):
+        # networkinfo = common.info_network(self, name)
+        # return networkinfo
+        return {}
+
     def list_subnets(self):
         """
 

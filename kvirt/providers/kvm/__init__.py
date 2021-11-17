@@ -3080,7 +3080,7 @@ class Kvirt(object):
                 netmask = attributes.get('prefix') if netmask is None else netmask
                 ipnet = '%s/%s' % (firstip, netmask) if netmask is not None else firstip
                 ipnet = IPNetwork(ipnet)
-                cidr = ipnet.cidr
+                cidr = str(ipnet.cidr)
             dhcp = list(root.iter('dhcp'))
             if dhcp:
                 dhcp = True
@@ -3099,8 +3099,6 @@ class Kvirt(object):
             else:
                 mode = 'isolated'
             networks[networkname] = {'cidr': cidr, 'dhcp': dhcp, 'domain': domainname, 'type': 'routed', 'mode': mode}
-            # if ip is not None:
-            #    networks[networkname]['ip'] = ip
             plan = 'N/A'
             for element in list(root.iter('{kvirt}info')):
                 e = element.find('{kvirt}plan')
@@ -3129,7 +3127,7 @@ class Kvirt(object):
                     continue
                 prefix = attributes.get('prefix')
                 ipnet = IPNetwork('%s/%s' % (ip, prefix))
-                cidr = ipnet.cidr
+                cidr = str(ipnet.cidr)
                 if ':' not in ip:
                     break
             networks[interface] = {'cidr': cidr, 'dhcp': 'N/A', 'type': 'bridged', 'mode': 'N/A'}
@@ -3142,6 +3140,18 @@ class Kvirt(object):
                     plan = e.text
             networks[interface]['plan'] = plan
         return networks
+
+    def info_network(self, name):
+        networkinfo = common.info_network(self, name)
+        if self.debug and networkinfo:
+            conn = self.conn
+            if networkinfo['type'] == 'routed':
+                network = conn.networkLookupByName(name)
+            else:
+                network = conn.interfaceLookupByName(name)
+            netxml = network.XMLDesc(0)
+            print(netxml)
+        return networkinfo
 
     def list_subnets(self):
         pprint("not implemented")

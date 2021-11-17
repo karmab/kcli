@@ -888,6 +888,10 @@ class Kibm(object):
             networks[networkname] = {'cidr': cidr, 'dhcp': dhcp, 'domain': vpcid, 'type': 'routed', 'mode': mode}
         return networks
 
+    def info_network(self, name):
+        networkinfo = common.info_network(self, name)
+        return networkinfo
+
     def list_subnets(self):
         subnets = {}
         try:

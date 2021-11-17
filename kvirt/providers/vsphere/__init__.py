@@ -1188,6 +1188,10 @@ class Ksphere:
             networks[network.name] = {'cidr': cidr, 'dhcp': dhcp, 'domain': domainname, 'type': 'routed', 'mode': mode}
         return networks
 
+    def info_network(self, name):
+        networkinfo = common.info_network(self, name)
+        return networkinfo
+
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
         si = self.si
         cluster = self.clu

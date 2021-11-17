@@ -1144,6 +1144,10 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             networks[networkname] = {'cidr': cidr, 'dhcp': dhcp, 'domain': domainname, 'type': 'routed', 'mode': mode}
         return networks
 
+    def info_network(self, name):
+        networkinfo = common.info_network(self, name)
+        return networkinfo
+
     def list_subnets(self):
         print("not implemented")
         return {}

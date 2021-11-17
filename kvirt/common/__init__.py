@@ -2026,3 +2026,13 @@ def need_fake():
         return True
     else:
         return False
+
+
+def info_network(k, name):
+    networks = k.list_networks()
+    if name in networks:
+        networkinfo = networks[name]
+    else:
+        error("Network %s not found" % name)
+        return {}
+    return networkinfo

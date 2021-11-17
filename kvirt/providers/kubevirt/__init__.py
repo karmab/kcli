@@ -1323,6 +1323,10 @@ class Kubevirt(Kubecommon):
             networks[name] = {'cidr': cidr, 'dhcp': dhcp, 'type': _type, 'mode': vlan, 'domain': ipam_type}
         return networks
 
+    def info_network(self, name):
+        networkinfo = common.info_network(self, name)
+        return networkinfo
+
     def list_subnets(self):
         print("not implemented")
         return {}

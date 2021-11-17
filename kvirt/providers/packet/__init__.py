@@ -935,6 +935,10 @@ class Kpacket(object):
                                  'mode': vlan.vxlan}
         return networks
 
+    def info_network(self, name):
+        networkinfo = common.info_network(self, name)
+        return networkinfo
+
     def list_subnets(self):
         """
 
