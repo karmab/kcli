@@ -747,6 +747,8 @@ class Kbaseconfig:
         if parameters:
             if 'baseplan' in parameters:
                 basefile = parameters['baseplan']
+                if os.path.exists("/i_am_a_container") and os.path.isabs(basefile):
+                    basefile = "/workdir/%s" % basefile
                 if onfly is not None:
                     common.fetch("%s/%s" % (onfly, basefile), '.')
                 baseparameters = self.process_inputfile(plan, basefile, overrides=overrides, onfly=onfly,

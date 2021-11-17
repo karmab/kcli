@@ -1711,11 +1711,13 @@ class Kconfig(Kbaseconfig):
                     appendkeys = ['disks', 'nets', 'files', 'scripts', 'cmds']
                     if 'baseplan' in profile:
                         baseplan = profile['baseplan']
+                        if os.path.exists("/i_am_a_container") and os.path.isabs(baseplan):
+                            baseplan = "/workdir/%s" % baseplan
                         basevm = profile['basevm'] if 'basevm' in profile else name
                         if baseplan not in baseplans:
                             self.plan(plan, inputfile=baseplan, overrides=overrides, excludevms=vmnames, pre=False)
                             baseplans.append(baseplan)
-                        baseinfo = self.process_inputfile(plan, profile['baseplan'], overrides=overrides, full=True)
+                        baseinfo = self.process_inputfile(plan, baseplan, overrides=overrides, full=True)
                         baseprofile = baseinfo[0][basevm] if basevm in baseinfo[0] else {}
                         currentplandir = baseinfo[3]
                     elif 'basevm' in profile and profile['basevm'] in baseentries:
