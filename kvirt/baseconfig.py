@@ -739,7 +739,7 @@ class Kbaseconfig:
         if os.path.exists("%s/kcli_default.yml" % basedir):
             parameterfile = "%s/kcli_default.yml" % basedir
             parameters.update(common.get_parameters(parameterfile))
-        inputfile_default = "%s_default%s" % os.path.splitext(inputfile)
+        inputfile_default = os.path.basename("%s_default%s" % os.path.splitext(inputfile))
         if os.path.exists("%s/%s" % (basedir, inputfile_default)):
             parameterfile = "%s/%s" % (basedir, inputfile_default)
             parameters.update(common.get_parameters(parameterfile))
