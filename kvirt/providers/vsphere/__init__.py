@@ -748,13 +748,14 @@ class Ksphere:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         plan, image, kube = 'kvirt', None, None
         vmpath = vm.summary.config.vmPathName.replace('/%s.vmx' % name, '')
-        for entry in vm.config.extraConfig:
-            if entry.key == 'image':
-                image = entry.value
-            if entry.key == 'plan':
-                plan = entry.value
-            if entry.key == 'kube':
-                kube = entry.value
+        if vm.config is not None:
+            for entry in vm.config.extraConfig:
+                if entry.key == 'image':
+                    image = entry.value
+                if entry.key == 'plan':
+                    plan = entry.value
+                if entry.key == 'kube':
+                    kube = entry.value
         if vm.runtime.powerState == "poweredOn":
             t = vm.PowerOffVM_Task()
             waitForMe(t)
