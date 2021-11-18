@@ -32,7 +32,7 @@ import yaml
 from jinja2 import Environment, FileSystemLoader
 from jinja2 import StrictUndefined as strictundefined
 from jinja2.runtime import Undefined as defaultundefined
-from jinja2.exceptions import TemplateSyntaxError, TemplateError
+from jinja2.exceptions import TemplateSyntaxError, TemplateError, TemplateNotFound
 import re
 import sys
 
@@ -726,6 +726,9 @@ class Kbaseconfig:
             env.filters[jinjafilter] = jinjafilters.jinjafilters[jinjafilter]
         try:
             templ = env.get_template(os.path.basename(inputfile))
+        except TemplateNotFound:
+            error("File %s not found" % os.path.basename(inputfile))
+            sys.exit(1)
         except TemplateSyntaxError as e:
             error("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message))
             sys.exit(1)

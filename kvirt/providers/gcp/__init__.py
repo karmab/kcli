@@ -6,7 +6,7 @@ Gcp Provider Class
 
 from jinja2 import Environment, FileSystemLoader
 from jinja2 import StrictUndefined as undefined
-from jinja2.exceptions import TemplateSyntaxError, TemplateError
+from jinja2.exceptions import TemplateSyntaxError, TemplateError, TemplateNotFound
 from kvirt import common
 from kvirt.common import pprint, error, warning, get_ssh_pub_key
 from kvirt.defaults import UBUNTUS, METADATA_FIELDS
@@ -237,6 +237,9 @@ class Kgcp(object):
                     try:
                         templ = env.get_template(os.path.basename(origin))
                         newfile = templ.render(overrides)
+                    except TemplateNotFound:
+                        error("File %s not found" % os.path.basename(origin))
+                        sys.exit(1)
                     except TemplateSyntaxError as e:
                         error("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message))
                         sys.exit(1)

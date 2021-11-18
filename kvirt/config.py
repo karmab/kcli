@@ -9,7 +9,7 @@ from datetime import datetime
 import json
 from jinja2 import Environment, FileSystemLoader
 from jinja2 import StrictUndefined as undefined
-from jinja2.exceptions import TemplateSyntaxError, TemplateError
+from jinja2.exceptions import TemplateSyntaxError, TemplateError, TemplateNotFound
 from kvirt.defaults import IMAGES, IMAGESCOMMANDS, OPENSHIFT_TAG
 from kvirt import ansibleutils
 from kvirt.jinjafilters import jinjafilters
@@ -831,6 +831,9 @@ class Kconfig(Kbaseconfig):
                     try:
                         templ = env.get_template(os.path.basename(script))
                         scriptentries = templ.render(overrides)
+                    except TemplateNotFound:
+                        error("File %s not found" % os.path.basename(script))
+                        sys.exit(1)
                     except TemplateSyntaxError as e:
                         msg = "Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message)
                         return {'result': 'failure', 'reason': msg}

@@ -9,7 +9,7 @@ from random import randint
 import base64
 from jinja2 import Environment, FileSystemLoader
 from jinja2 import StrictUndefined as undefined
-from jinja2.exceptions import TemplateSyntaxError, TemplateError
+from jinja2.exceptions import TemplateSyntaxError, TemplateError, TemplateNotFound
 from distutils.spawn import find_executable
 from netaddr import IPAddress
 import random
@@ -377,6 +377,9 @@ def process_files(files=[], overrides={}):
                 try:
                     templ = env.get_template(os.path.basename(origin))
                     fileentries = templ.render(overrides)
+                except TemplateNotFound:
+                    error("File %s not found" % os.path.basename(origin))
+                    sys.exit(1)
                 except TemplateSyntaxError as e:
                     error("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message))
                     sys.exit(1)
@@ -455,6 +458,9 @@ def process_ignition_files(files=[], overrides={}):
                 try:
                     templ = env.get_template(os.path.basename(origin))
                     fileentries = templ.render(overrides)
+                except TemplateNotFound:
+                    error("File %s not found" % os.path.basename(origin))
+                    sys.exit(1)
                 except TemplateSyntaxError as e:
                     error("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message))
                     sys.exit(1)
