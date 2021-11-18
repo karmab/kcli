@@ -1855,7 +1855,7 @@ class Kvirt(object):
                     hostname = host.get('name')
                     if hostmac == mac:
                         hostentry = "<host mac='%s' name='%s' ip='%s'/>" % (mac, hostname, iphost)
-                        network.update(2, 4, 0, hostentry, 1)
+                        network.update(2, 4, 0, hostentry, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
                     hostname = host.find('hostname')
                     matchinghostname = "%s.%s" % (name, domain) if domain is not None else name
                     if hostname is not None and (hostname.text == matchinghostname):
