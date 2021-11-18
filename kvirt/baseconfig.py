@@ -717,7 +717,8 @@ class Kbaseconfig:
 
     def process_inputfile(self, plan, inputfile, overrides={}, onfly=None, full=False, ignore=False,
                           download_mode=False):
-        basedir = os.path.dirname(inputfile) if os.path.dirname(inputfile) != '' else '.'
+        default_dir = '/workdir' if os.path.exists("/i_am_a_container") else '.'
+        basedir = os.path.dirname(inputfile) if os.path.dirname(inputfile) != '' else default_dir
         basefile = None
         undefined = strictundefined if not ignore else defaultundefined
         env = Environment(loader=FileSystemLoader(basedir), undefined=undefined, extensions=['jinja2.ext.do'],
@@ -750,7 +751,7 @@ class Kbaseconfig:
         if parameters:
             if 'baseplan' in parameters:
                 basefile = parameters['baseplan']
-                if os.path.exists("/i_am_a_container") and os.path.isabs(basefile):
+                if os.path.exists("/i_am_a_container") and not os.path.isabs(basefile):
                     basefile = "/workdir/%s" % basefile
                 if onfly is not None:
                     common.fetch("%s/%s" % (onfly, basefile), '.')

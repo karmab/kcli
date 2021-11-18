@@ -1714,7 +1714,7 @@ class Kconfig(Kbaseconfig):
                     appendkeys = ['disks', 'nets', 'files', 'scripts', 'cmds']
                     if 'baseplan' in profile:
                         baseplan = profile['baseplan']
-                        if os.path.exists("/i_am_a_container") and os.path.isabs(baseplan):
+                        if os.path.exists("/i_am_a_container") and not os.path.isabs(baseplan):
                             baseplan = "/workdir/%s" % baseplan
                         basevm = profile['basevm'] if 'basevm' in profile else name
                         if baseplan not in baseplans:
