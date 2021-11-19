@@ -2076,7 +2076,10 @@ class Kvirt(object):
                     entry = '<host id="00:03:00:01:%s" name="%s" ip="%s" />' % (mac, name, ip)
                 else:
                     entry = '<host mac="%s" name="%s" ip="%s" />' % (mac, name, ip)
-                network.update(4, 4, 0, entry, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
+                try:
+                    network.update(4, 4, 0, entry, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
+                except Exception as e:
+                    warning(e)
 
     def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False):
         conn = self.conn
