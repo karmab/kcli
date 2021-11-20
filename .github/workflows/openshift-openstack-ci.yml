@@ -1,0 +1,34 @@
+name: OPENSHIFT-CI-OPENSTACK
+on:
+  workflow_dispatch:
+    inputs:
+      PLAN:
+        description: 'Plan Name'
+        required: true
+        default: ci
+      PULLSECRET:
+        description: 'Pull Secret'
+        required: false
+        default: /root/openshift_pull.json
+      VERSION:
+        description: 'version'
+        required: false
+        default: stable
+      TAG:
+        description: 'tag'
+        required: false
+        default: 4.9
+
+env:
+ HOME: /root
+
+jobs:
+    deploy-openshift:
+      runs-on: openstack
+      steps:
+       - uses: actions/checkout@v2
+       - run: git pull origin ${GITHUB_REF##*/}
+       - name: Install kcli
+         run: curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | bash
+       - name: Deploy Openshift on Libvirt
+         run: kcli create cluster openshift --paramfile openshift-ci-paramfiles/openstack.yml -P pull_secret='${{github.event.inputs.PULLSECRET}}' -P version='${{github.event.inputs.VERSION}}' -P tag='${{github.event.inputs.TAG}}' ${{github.event.inputs.PLAN}} --force
