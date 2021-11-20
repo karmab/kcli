@@ -1,0 +1,13 @@
+cluster: ci
+numcpus: 16
+network: ovirtmgmt
+master_memory: 28672
+worker_memory: 16384
+bootstrap_memory: 8192
+disk_size: 30
+domain: karmalabs.com
+masters: 3
+workers: 0
+api_ip: 10.19.135.229
+async: true
+notify: true

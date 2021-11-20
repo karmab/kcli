@@ -1,0 +1,17 @@
+version: stable
+cluster: ci
+tag: 4.9
+numcpus: 16
+network: baremetal
+master_memory: 28672
+worker_memory: 28672
+bootstrap_memory: 8192
+disk_size: 50
+domain: karmalabs.com
+masters: 3
+workers: 0
+api_ip: 10.19.135.112
+kvm_openstack: true
+forcestack: true
+async: true
+notify: true

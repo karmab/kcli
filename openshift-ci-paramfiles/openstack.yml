@@ -1,0 +1,15 @@
+cluster: ci
+numcpus: 16
+network: private
+api_ip: 11.0.0.253
+public_api_ip: 10.19.135.243
+flavor: m1.openshift
+master_memory: 28672
+worker_memory: 16384
+bootstrap_memory: 8192
+disk_size: 30
+domain: karmalabs.com
+masters: 3
+workers: 0
+async: true
+notify: true
