@@ -174,7 +174,7 @@ class KOvirt(object):
             graphical_consoles = graphics_console_service
             for gc in graphical_consoles.list():
                 graphics_console_service.console_service(gc.id).remove()
-                graphics_console_service.add(vnc_console)
+            graphics_console_service.add(vnc_console)
         cdroms_service = vm_service.cdroms_service()
         cdrom = cdroms_service.list()[0]
         cdrom_service = cdroms_service.cdrom_service(cdrom.id)
