@@ -30,5 +30,5 @@ jobs:
        - run: git pull origin ${GITHUB_REF##*/}
        - name: Install kcli
          run: curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | bash
-       - name: Deploy Openshift on Libvirt
+       - name: Deploy Openshift on Openstack
          run: kcli create cluster openshift --paramfile openshift-ci-paramfiles/openstack.yml -P pull_secret='${{github.event.inputs.PULLSECRET}}' -P version='${{github.event.inputs.VERSION}}' -P tag='${{github.event.inputs.TAG}}' ${{github.event.inputs.PLAN}} --force
