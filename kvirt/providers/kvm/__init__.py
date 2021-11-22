@@ -2040,22 +2040,26 @@ class Kvirt(object):
             if not reserveip or ip is None or network is None:
                 continue
             if network not in networks:
-                pprint("Skipping incorrect network %s" % network)
+                warning("Skipping incorrect network %s" % network)
                 continue
             elif networks[network]['type'] == 'bridged':
-                pprint("Skipping bridge %s" % network)
+                warning("Skipping bridge %s" % network)
                 continue
             network = conn.networkLookupByName(network)
             oldnetxml = network.XMLDesc()
             root = ET.fromstring(oldnetxml)
-            dhcp = list(root.iter('dhcp'))[0]
+            dhcplist = list(root.iter('dhcp'))
+            if not dhcplist:
+                warning("Skipping network %s as it doesnt have dhcp" % network)
+                continue
+            dhcp = dhcplist[0]
             for hostentry in list(dhcp.iter('host')):
                 currentip = hostentry.get('ip')
                 currentname = hostentry.get('name')
                 currentmac = hostentry.get('mac')
                 if currentip == ip:
                     if currentname == name and currentmac is not None and currentmac == mac:
-                        pprint("Skipping reserved ip existing entry for ip %s and mac %s " % (ip, mac))
+                        warning("Skipping reserved ip existing entry for ip %s and mac %s " % (ip, mac))
                         return
                     else:
                         warning("Removing old ip entry for ip %s and name %s" % (ip, currentname))
