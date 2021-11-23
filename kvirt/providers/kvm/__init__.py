@@ -2033,24 +2033,24 @@ class Kvirt(object):
             macs.append(mac)
         for index, net in enumerate(nets):
             ip = net.get('ip')
-            network = net.get('name')
+            netname = net.get('name')
             mac = macs[index]
             reserveip = True if index == 0 and primary else False
             reserveip = net.get('reserveip', reserveip)
-            if not reserveip or ip is None or network is None:
+            if not reserveip or ip is None or netname is None:
                 continue
-            if network not in networks:
-                warning("Skipping incorrect network %s" % network)
+            if netname not in networks:
+                warning("Skipping incorrect network %s" % netname)
                 continue
-            elif networks[network]['type'] == 'bridged':
-                warning("Skipping bridge %s" % network)
+            elif networks[netname]['type'] == 'bridged':
+                warning("Skipping bridge %s" % netname)
                 continue
-            network = conn.networkLookupByName(network)
+            network = conn.networkLookupByName(netname)
             oldnetxml = network.XMLDesc()
             root = ET.fromstring(oldnetxml)
             dhcplist = list(root.iter('dhcp'))
             if not dhcplist:
-                warning("Skipping network %s as it doesnt have dhcp" % network)
+                warning("Skipping network %s as it doesnt have dhcp" % netname)
                 continue
             dhcp = dhcplist[0]
             for hostentry in list(dhcp.iter('host')):
