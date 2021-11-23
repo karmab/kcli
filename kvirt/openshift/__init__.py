@@ -982,7 +982,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                                                                   notifycmd=notifycmd, slackchannel=config.slackchannel,
                                                                   slacktoken=config.slacktoken,
                                                                   mailserver=config.mailserver,
-                                                                  mailfrom=config.mailfrom, mailto=config.mailto)
+                                                                  mailfrom=config.mailfrom, mailto=config.mailto,
+                                                                  cluster=True)
             notifyfile = "%s/99-notifications.yaml" % plandir
             notifyfile = config.process_inputfile(cluster, notifyfile, overrides={'registry': registry,
                                                                                   'arch_tag': arch_tag,
