@@ -5,7 +5,7 @@ on:
       PLAN:
         description: 'Plan Name'
         required: true
-        default: ci
+        default: ci-openstack
       PULLSECRET:
         description: 'Pull Secret'
         required: false
