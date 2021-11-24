@@ -1,0 +1,51 @@
+name: OPENSHIFT-NIGHTLY-CI
+on:
+on:
+  schedule:
+    - cron:  '15 0 * * *'
+
+env:
+ HOME: /root
+ PLAN: ci
+ PULLSECRET: /root/openshift_pull.json
+ VERSION: stable
+ TAG: 4.9
+
+
+jobs:
+    deploy-openshift-on-libvirt:
+      runs-on: libvirt
+      steps:
+       - uses: actions/checkout@v2
+       - run: git pull origin ${GITHUB_REF##*/}
+       - name: Install kcli
+         run: curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | bash
+       - name: Deploy Openshift on Libvirt
+         run: kcli create cluster openshift --paramfile openshift-ci-paramfiles/libvirt.yml -P pull_secret='${{env.PULLSECRET}}' -P version='${{env.VERSION}}' -P tag='${{env.TAG}}' ${{env.PLAN}}-libvirt --force
+    deploy-openshift-on-kubevirt:
+      runs-on: kubevirt
+      steps:
+       - uses: actions/checkout@v2
+       - run: git pull origin ${GITHUB_REF##*/}
+       - name: Install kcli
+         run: curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | bash
+       - name: Deploy Openshift on Kubevirt
+         run: kcli create cluster openshift --paramfile openshift-ci-paramfiles/kubevirt.yml -P pull_secret='${{env.PULLSECRET}}' -P version='${{env.VERSION}}' -P tag='${{env.TAG}}' ${{env.PLAN}}-kubevirt --force
+    deploy-openshift-on-openstack:
+      runs-on: openstack
+      steps:
+       - uses: actions/checkout@v2
+       - run: git pull origin ${GITHUB_REF##*/}
+       - name: Install kcli
+         run: curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | bash
+       - name: Deploy Openshift on Openstack
+         run: kcli create cluster openshift --paramfile openshift-ci-paramfiles/openstack.yml -P pull_secret='${{env.PULLSECRET}}' -P version='${{env.VERSION}}' -P tag='${{env.TAG}}' ${{env.PLAN}}-openstack --force
+    deploy-openshift-on-ovirt:
+      runs-on: ovirt
+      steps:
+       - uses: actions/checkout@v2
+       - run: git pull origin ${GITHUB_REF##*/}
+       - name: Install kcli
+         run: curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | bash
+       - name: Deploy Openshift on Ovirt
+         run: kcli create cluster openshift --paramfile openshift-ci-paramfiles/ovirt.yml -P pull_secret='${{env.PULLSECRET}}' -P version='${{env.VERSION}}' -P tag='${{env.TAG}}' ${{env.PLAN}}-ovirt --force

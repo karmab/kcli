@@ -1,4 +1,4 @@
-name: CI
+name: KCLI-CI
 on: [push, pull_request]
 
 env:
