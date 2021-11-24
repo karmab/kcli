@@ -12,6 +12,5 @@ worker_memory: 28672
 bootstrap_memory: 8192
 disk_size: 50
 kvm_openstack: true
-forcestack: true
 async: true
 notify: true
