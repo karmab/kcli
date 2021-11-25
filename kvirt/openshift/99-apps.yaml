@@ -19,8 +19,6 @@ spec:
       - "-c"
       - |
         #!/bin/sh
-        echo $KUBECONFIG
-        printenv
         CLUSTER_VERSION=$(kubectl get clusterversion  version -o jsonpath='{.status.history[0].state}')
         [ "$CLUSTER_VERSION" == "Completed" ] && exit 0
     containers:
