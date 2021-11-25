@@ -1,6 +1,5 @@
 name: OPENSHIFT-NIGHTLY-CI
 on:
-on:
   schedule:
     - cron:  '15 0 * * *'
 
