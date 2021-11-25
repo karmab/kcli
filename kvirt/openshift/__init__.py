@@ -991,6 +991,13 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                                                                                   'mailcontent': mailcontent})
             with open("%s/openshift/99-notifications.yaml" % clusterdir, 'w') as _f:
                 _f.write(notifyfile)
+    if apps and (async_install or sno):
+        appsfile = "%s/99-apps.yaml" % plandir
+        appsfile = config.process_inputfile(cluster, appsfile, overrides={'registry': registry,
+                                                                          'arch_tag': arch_tag,
+                                                                          'apps': apps})
+        with open("%s/openshift/99-apps.yaml" % clusterdir, 'w') as _f:
+            _f.write(appsfile)
     if metal3:
         for f in glob("%s/openshift/99_openshift-cluster-api_master-machines-*.yaml" % clusterdir):
             os.remove(f)
