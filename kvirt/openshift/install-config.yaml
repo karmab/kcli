@@ -41,7 +41,7 @@ proxy:
 {% endif %}
 compute:
 - name: worker
-  replicas: {{ workers }}
+  replicas: {{ 0 if sno else workers }}
 {% if ipi %}
 {% if ipi_platform == 'aws' %}
   platform:
@@ -75,7 +75,7 @@ compute:
 {% endif %}
 controlPlane:
   name: master
-  replicas: {{ masters }}
+  replicas: {{ 1 if sno else masters }}
 {% if ipi %}
 {% if ipi_platform == 'ovirt' %}
   platform:
