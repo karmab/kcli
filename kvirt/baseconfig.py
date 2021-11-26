@@ -282,6 +282,9 @@ class Kbaseconfig:
             error("Disabled client %s.Leaving..." % self.client)
             sys.exit(1)
         self.host = options.get('host', '127.0.0.1')
+        if self.host.startswith('http'):
+            error("Host field shouldn't be an uri. Leaving")
+            sys.exit(1)
         if ':' in self.host and '[' not in self.host:
             self.host = '[%s]' % self.host
         self.port = options.get('port', 22)
