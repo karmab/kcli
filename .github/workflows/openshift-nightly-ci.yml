@@ -1,7 +1,7 @@
 name: OPENSHIFT-NIGHTLY-CI
 on:
   schedule:
-    - cron:  '15 0 * * *'
+    - cron: '15 23 * * *'
 
 env:
  HOME: /root
@@ -9,7 +9,6 @@ env:
  PULLSECRET: /root/openshift_pull.json
  VERSION: stable
  TAG: 4.9
-
 
 jobs:
     deploy-openshift-on-libvirt:
