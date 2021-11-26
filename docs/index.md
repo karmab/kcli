@@ -1197,6 +1197,7 @@ parameters:
 |*rhnorg*|None|Red Hat Network organization|
 |*rhnpool*|None|Red Hat Network pool|
 |*enableroot*|true|Allows ssh access as root user|
+|*rootpassword*|None|Root password to inject (when beeing to lazy to use a cmd to set it)|
 |*storemetadata*|false|Creates a /root/.metadata yaml file whith all the overrides applied. On gcp, those overrides are also stored as extra metadata|
 |*sharedfolders*|[]|List of paths to share between a kvm hypervisor and vm. You will also make sure that the path is accessible as qemu user (typically with id 107) and use an hypervisor and a guest with 9p support (centos/rhel lack it)|
 |*yamlinventory*|false|Ansible generated inventory for single vms or for plans containing ansible entries will be yaml based.|

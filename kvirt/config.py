@@ -596,6 +596,7 @@ class Kconfig(Kbaseconfig):
             default_zerotier_kubelet = father.get('zerotier_kubelet', self.zerotier_kubelet)
             default_virttype = father.get('virttype', self.virttype)
             default_securitygroups = father.get('securitygroups', self.securitygroups)
+            default_rootpassword = father.get('rootpassword', self.rootpassword)
         else:
             default_numcpus = self.numcpus
             default_memory = self.memory
@@ -668,6 +669,7 @@ class Kconfig(Kbaseconfig):
             default_memoryhotplug = self.memoryhotplug
             default_virttype = self.virttype
             default_securitygroups = self.securitygroups
+            default_rootpassword = self.rootpassword
         plan = profile.get('plan', plan)
         template = profile.get('template', default_image)
         image = profile.get('image', template)
@@ -786,6 +788,7 @@ class Kconfig(Kbaseconfig):
         yamlinventory = profile.get('yamlinventory', default_yamlinventory)
         cpuhotplug = profile.get('cpuhotplug', default_cpuhotplug)
         memoryhotplug = profile.get('memoryhotplug', default_memoryhotplug)
+        rootpassword = profile.get('rootpassword', default_rootpassword)
         virttype = profile.get('virttype', default_virttype)
         overrides.update(profile)
         scriptcmds = []
@@ -886,7 +889,8 @@ class Kconfig(Kbaseconfig):
                 for entry in zerotier_nets:
                     zerotiercmds.append("zerotier-cli join %s" % entry)
         networkwaitcommand = ['sleep %s' % networkwait] if networkwait > 0 else []
-        cmds = networkwaitcommand + rhncommands + sharedfoldercmds + zerotiercmds + cmds + scriptcmds
+        rootcommand = ['echo root:%s | chpasswd' % rootpassword] if rootpassword is not None else []
+        cmds = rootcommand + networkwaitcommand + rhncommands + sharedfoldercmds + zerotiercmds + cmds + scriptcmds
         if notify:
             if notifycmd is None and notifyscript is None:
                 if 'cos' in image:
