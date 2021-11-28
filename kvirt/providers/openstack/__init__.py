@@ -362,6 +362,7 @@ class Kopenstack(object):
             except:
                 pass
         yamlinfo['image'] = source
+        yamlinfo['creationdate'] = vm.created
         yamlinfo['user'] = common.get_user(source)
         flavor = nova.flavors.get(vm.flavor['id'])
         yamlinfo['flavor'] = flavor.name
