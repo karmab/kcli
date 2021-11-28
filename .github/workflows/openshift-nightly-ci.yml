@@ -18,8 +18,10 @@ jobs:
        - run: git pull origin ${GITHUB_REF##*/}
        - name: Install kcli
          run: curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | bash
+       - name: Delete old install
+         run: kcli delete cluster --yes ${{github.event.inputs.PLAN}}
        - name: Deploy Openshift on Libvirt
-         run: kcli create cluster openshift --paramfile openshift-ci-paramfiles/libvirt.yml -P pull_secret='${{env.PULLSECRET}}' -P version='${{env.VERSION}}' -P tag='${{env.TAG}}' ${{env.PLAN}}-libvirt --force
+         run: kcli create cluster openshift --paramfile openshift-ci-paramfiles/libvirt.yml -P pull_secret='${{env.PULLSECRET}}' -P version='${{env.VERSION}}' -P tag='${{env.TAG}}' ${{env.PLAN}}-libvirt
     deploy-openshift-on-kubevirt:
       runs-on: kubevirt
       steps:
@@ -27,8 +29,10 @@ jobs:
        - run: git pull origin ${GITHUB_REF##*/}
        - name: Install kcli
          run: curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | bash
+       - name: Delete old install
+         run: kcli delete cluster --yes ${{github.event.inputs.PLAN}}
        - name: Deploy Openshift on Kubevirt
-         run: kcli create cluster openshift --paramfile openshift-ci-paramfiles/kubevirt.yml -P pull_secret='${{env.PULLSECRET}}' -P version='${{env.VERSION}}' -P tag='${{env.TAG}}' ${{env.PLAN}}-kubevirt --force
+         run: kcli create cluster openshift --paramfile openshift-ci-paramfiles/kubevirt.yml -P pull_secret='${{env.PULLSECRET}}' -P version='${{env.VERSION}}' -P tag='${{env.TAG}}' ${{env.PLAN}}-kubevirt
     deploy-openshift-on-openstack:
       runs-on: openstack
       steps:
@@ -36,8 +40,10 @@ jobs:
        - run: git pull origin ${GITHUB_REF##*/}
        - name: Install kcli
          run: curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | bash
+       - name: Delete old install
+         run: kcli delete cluster --yes ${{github.event.inputs.PLAN}}
        - name: Deploy Openshift on Openstack
-         run: kcli create cluster openshift --paramfile openshift-ci-paramfiles/openstack.yml -P pull_secret='${{env.PULLSECRET}}' -P version='${{env.VERSION}}' -P tag='${{env.TAG}}' ${{env.PLAN}}-openstack --force
+         run: kcli create cluster openshift --paramfile openshift-ci-paramfiles/openstack.yml -P pull_secret='${{env.PULLSECRET}}' -P version='${{env.VERSION}}' -P tag='${{env.TAG}}' ${{env.PLAN}}-openstack
     deploy-openshift-on-ovirt:
       runs-on: ovirt
       steps:
@@ -45,5 +51,7 @@ jobs:
        - run: git pull origin ${GITHUB_REF##*/}
        - name: Install kcli
          run: curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | bash
+       - name: Delete old install
+         run: kcli delete cluster --yes ${{github.event.inputs.PLAN}}
        - name: Deploy Openshift on Ovirt
-         run: kcli create cluster openshift --paramfile openshift-ci-paramfiles/ovirt.yml -P pull_secret='${{env.PULLSECRET}}' -P version='${{env.VERSION}}' -P tag='${{env.TAG}}' ${{env.PLAN}}-ovirt --force
+         run: kcli create cluster openshift --paramfile openshift-ci-paramfiles/ovirt.yml -P pull_secret='${{env.PULLSECRET}}' -P version='${{env.VERSION}}' -P tag='${{env.TAG}}' ${{env.PLAN}}-ovirt
