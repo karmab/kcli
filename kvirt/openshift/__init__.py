@@ -959,7 +959,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 file_mode = 'a' if os.path.exists(authorized_keys_file) else 'w'
                 with open(authorized_keys_file, file_mode) as f:
                     publickey = open("%s/id_rsa.pub" % orissh).read().strip()
-                    f.write(publickey)
+                    f.write("\n%s" % publickey)
             ns = "openshift-infra"
             dest = "%s/openshift/99-kcli-conf-cm.yaml" % clusterdir
             cmcmd = 'KUBECONFIG=%s/fake_kubeconfig.json ' % plandir
