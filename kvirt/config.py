@@ -1515,20 +1515,22 @@ class Kconfig(Kbaseconfig):
             error("%s doesn't look like a valid plan.Leaving...." % inputfile)
             sys.exit(1)
         inputdir = os.path.dirname(inputfile) if os.path.dirname(inputfile) != '' else '.'
-        pre_script = '%s/kcli_pre.sh' % inputdir
+        pre_base = os.path.splitext(os.path.basename(inputfile))[0]
+        pre_script = '%s/kcli_pre.sh' % inputdir if pre_base == 'kcli_plan' else "%s/%s_pre.sh" % (inputdir, pre_base)
         if os.path.exists(pre_script):
+            pre_script_short = os.path.basename(pre_script)
             if pre:
-                pprint("Running kcli_pre.sh")
+                pprint("Running %s" % pre_script_short)
                 with TemporaryDirectory() as tmpdir:
                     pre_script = self.process_inputfile('xxx', pre_script, overrides=overrides)
                     with open("%s/pre.sh" % tmpdir, 'w') as f:
                         f.write(pre_script)
                     run = call('bash %s/pre.sh' % tmpdir, shell=True)
                     if run != 0:
-                        error("Issues running kcli_pre.sh. Leaving")
+                        error("Issues running %s. Leaving" % pre_script_short)
                         sys.exit(run)
             else:
-                warning("Skipping kcli_pre.sh as requested")
+                warning("Skipping %s as requested" % pre_script_short)
         vmentries = [entry for entry in entries if 'type' not in entries[entry] or entries[entry]['type'] == 'vm']
         diskentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'disk']
         networkentries = [entry for entry in entries
