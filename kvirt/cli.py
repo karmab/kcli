@@ -867,6 +867,16 @@ def choose_parameter_file(paramfile):
     return paramfile
 
 
+def get_cluster_parameter_file(paramfile):
+    clustersdir = os.path.expanduser("~/.kcli/clusters")
+    if not os.path.exists(paramfile) and os.environ['KUBECONFIG'].startswith(clustersdir):
+        cluster = os.environ['KUBECONFIG'].replace("%s/" % clustersdir, '').split('/')[0]
+        clusterparamfile = "%s/%s/kcli_parameters.yml" % (clustersdir, cluster)
+        if os.path.exists(clusterparamfile):
+            paramfile = clusterparamfile
+    return paramfile
+
+
 def create_app_generic(args):
     apps = args.apps
     outputdir = args.outputdir
@@ -887,6 +897,7 @@ def create_app_generic(args):
         sys.exit(1)
     elif not os.path.isabs(os.environ['KUBECONFIG']):
         os.environ['KUBECONFIG'] = "%s/%s" % (os.getcwd(), os.environ['KUBECONFIG'])
+    paramfile = get_cluster_parameter_file(paramfile)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     available_apps = baseconfig.list_apps_generic(quiet=True)
@@ -919,6 +930,7 @@ def create_app_openshift(args):
         sys.exit(1)
     elif not os.path.isabs(os.environ['KUBECONFIG']):
         os.environ['KUBECONFIG'] = "%s/%s" % (os.getcwd(), os.environ['KUBECONFIG'])
+    paramfile = get_cluster_parameter_file(paramfile)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     for app in apps:
@@ -945,7 +957,7 @@ def create_app_openshift(args):
 
 def delete_app_generic(args):
     apps = args.apps
-    paramfile = args.paramfile
+    paramfile = choose_parameter_file(args.paramfile)
     if find_executable('kubectl') is None:
         error("You need kubectl to install apps")
         sys.exit(1)
@@ -954,6 +966,7 @@ def delete_app_generic(args):
         sys.exit(1)
     elif not os.path.isabs(os.environ['KUBECONFIG']):
         os.environ['KUBECONFIG'] = "%s/%s" % (os.getcwd(), os.environ['KUBECONFIG'])
+    paramfile = get_cluster_parameter_file(paramfile)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     available_apps = baseconfig.list_apps_generic(quiet=True)
@@ -977,6 +990,7 @@ def delete_app_openshift(args):
         sys.exit(1)
     elif not os.path.isabs(os.environ['KUBECONFIG']):
         os.environ['KUBECONFIG'] = "%s/%s" % (os.getcwd(), os.environ['KUBECONFIG'])
+    paramfile = get_cluster_parameter_file(paramfile)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     for app in apps:
