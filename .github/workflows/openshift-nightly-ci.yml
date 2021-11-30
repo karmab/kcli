@@ -23,6 +23,6 @@ jobs:
      - name: Install kcli
        run: curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | bash
      - name: Delete old install
-       run: kcli delete cluster --yes ${{env.PLAN}}
+       run: kcli delete cluster --yes ${{env.PLAN}}-${{ matrix.provider }}
      - name: Deploy Openshift on ${{ matrix.provider }}
        run: kcli create cluster openshift --paramfile openshift-ci-paramfiles/${{ matrix.provider }}.yml -P pull_secret='${{env.PULLSECRET}}' -P version='${{env.VERSION}}' -P tag='${{env.TAG}}' ${{env.PLAN}}-${{ matrix.provider }}
