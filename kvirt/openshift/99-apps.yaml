@@ -29,7 +29,7 @@ spec:
       - "-c"
       - |
         #!/bin/sh
-        curl -s -L https://github.com/karmab/tasty/releases/download/v0.4.0/tasty-linux-amd64 > /usr/bin/tasty
+        curl -s -L https://github.com/karmab/tasty/releases/download/v0.5.0/tasty-linux-amd64 > /usr/bin/tasty
         chmod u+x /usr/bin/tasty
         {% for app in apps %}
         tasty install {{ app }}
