@@ -1041,3 +1041,7 @@ boot || reboot""" % (kernel, ipxeparameters, metal, ignition_url, initrd)
     def list_bucketfiles(self, bucket):
         print("not implemented")
         return []
+
+    def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False):
+        print("not implemented")
+        return

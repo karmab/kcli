@@ -1015,3 +1015,7 @@ class Kopenstack(object):
     def public_bucketfile_url(self, bucket, path):
         swift_url = self.swift.http_connection()[0].geturl()
         return "%s/%s/%s" % (swift_url, bucket, path)
+
+    def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False):
+        print("not implemented")
+        return

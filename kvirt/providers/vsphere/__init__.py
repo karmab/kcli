@@ -1457,3 +1457,7 @@ class Ksphere:
         else:
             guestid = 'rhel7_64Guest'
         return guestid
+
+    def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False):
+        print("not implemented")
+        return
