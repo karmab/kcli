@@ -2235,6 +2235,7 @@ def create_plandata(args):
     """Create cloudinit/ignition data"""
     plan = None
     inputfile = args.inputfile
+    pre = not args.skippre
     outputdir = args.outputdir
     paramfile = args.paramfile
     if os.path.exists("/i_am_a_container"):
@@ -2254,7 +2255,7 @@ def create_plandata(args):
     if not os.path.exists(inputfile):
         error("File %s not found" % inputfile)
         return 0
-    results = config.plan(plan, inputfile=inputfile, overrides=overrides, onlyassets=True)
+    results = config.plan(plan, inputfile=inputfile, overrides=overrides, onlyassets=True, pre=pre)
     if results.get('assets'):
         for num, asset in enumerate(results['assets']):
             if outputdir is None:
@@ -3947,6 +3948,7 @@ def cli():
                                                          help=plandatacreate_desc, epilog=plandatacreate_epilog,
                                                          formatter_class=rawhelp)
     plandatacreate_parser.add_argument('-f', '--inputfile', help='Input Plan file', default='kcli_plan.yml')
+    plandatacreate_parser.add_argument('-k', '--skippre', action='store_true', help='Skip pre script')
     plandatacreate_parser.add_argument('--outputdir', '-o', help='Output directory', metavar='OUTPUTDIR')
     plandatacreate_parser.add_argument('-P', '--param', action='append',
                                        help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
