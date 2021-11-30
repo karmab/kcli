@@ -1507,6 +1507,8 @@ class Kconfig(Kbaseconfig):
             baseentries, baseoverrides = baseinfo[0], baseinfo[1]
             if baseoverrides:
                 overrides.update({key: baseoverrides[key] for key in baseoverrides if key not in overrides})
+        if entries is None:
+            entries = {}
         parameters = entries.get('parameters')
         if parameters is not None:
             del entries['parameters']
