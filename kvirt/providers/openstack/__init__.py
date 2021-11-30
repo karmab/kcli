@@ -60,10 +60,8 @@ class Kopenstack(object):
 
     def net_exists(self, name):
         neutron = self.neutron
-        networks = neutron.list_networks(name=name)
-        if not networks:
-            False
-        return True
+        networks = {net['name']: net['id'] for net in neutron.list_networks()['networks']}
+        return name in networks
 
     def disk_exists(self, pool, name):
         print("not implemented")
@@ -120,6 +118,12 @@ class Kopenstack(object):
             else:
                 msg = "you don't have image %s" % image
                 return {'result': 'failure', 'reason': msg}
+        elif not disks:
+            msg = "you need a bootable disk if not using a glance image"
+            return {'result': 'failure', 'reason': msg}
+        else:
+            glanceimage = None
+            warning("If booting without image, you'll need your first disk to be bootable")
         block_dev_mapping = {}
         for index, disk in enumerate(disks):
             imageref = None
