@@ -271,13 +271,16 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             userdata += "ssh_pwauth: True\ndisable_root: false\n"
         if domain is not None:
             userdata += "fqdn: %s.%s\n" % (name, domain)
+        validkeyfound = False
         if keys or publickeyfile is not None:
             userdata += "ssh_authorized_keys:\n"
+            validkeyfound = True
         elif find_executable('ssh-add') is not None:
             agent_keys = os.popen('ssh-add -L 2>/dev/null | head -1').readlines()
             if agent_keys:
                 keys = agent_keys
-        else:
+                validkeyfound = True
+        if not validkeyfound:
             warning("neither id_rsa, id_dsa nor id_ed25519 public keys found in your .ssh or .kcli directories, "
                     "you might have trouble accessing the vm")
         if keys:
