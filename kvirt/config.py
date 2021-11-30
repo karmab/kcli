@@ -1391,7 +1391,7 @@ class Kconfig(Kbaseconfig):
 
     def plan(self, plan, ansible=False, url=None, path=None, container=False, inputfile=None, inputstring=None,
              overrides={}, info=False, update=False, embedded=False, download=False, quiet=False, doc=False,
-             onlyassets=False, pre=True, post=True, excludevms=[]):
+             onlyassets=False, pre=True, post=True, excludevms=[], basemode=False):
         """Manage plan file"""
         k = self.k
         no_overrides = not overrides
@@ -1512,8 +1512,12 @@ class Kconfig(Kbaseconfig):
             del entries['parameters']
         dict_types = [entry for entry in entries if isinstance(entries[entry], dict)]
         if not dict_types:
-            error("%s doesn't look like a valid plan.Leaving...." % inputfile)
-            sys.exit(1)
+            if basemode:
+                warning("%s doesn't look like a valid plan.Skipping...." % inputfile)
+                return
+            else:
+                error("%s doesn't look like a valid plan.Leaving...." % inputfile)
+                sys.exit(1)
         inputdir = os.path.dirname(inputfile) if os.path.dirname(inputfile) != '' else '.'
         pre_base = os.path.splitext(os.path.basename(inputfile))[0]
         pre_script = '%s/kcli_pre.sh' % inputdir if pre_base == 'kcli_plan' else "%s/%s_pre.sh" % (inputdir, pre_base)
@@ -1701,7 +1705,7 @@ class Kconfig(Kbaseconfig):
             baseplans = []
             vmnames = [name for name in vmentries]
             if basefile is not None:
-                self.plan(plan, inputfile=basefile, overrides=overrides, excludevms=vmnames)
+                self.plan(plan, inputfile=basefile, overrides=overrides, excludevms=vmnames, basemode=True)
                 baseplans.append(basefile)
             for name in vmentries:
                 if name in excludevms:
@@ -1724,7 +1728,7 @@ class Kconfig(Kbaseconfig):
                             baseplan = "/workdir/%s" % baseplan
                         basevm = profile['basevm'] if 'basevm' in profile else name
                         if baseplan not in baseplans:
-                            self.plan(plan, inputfile=baseplan, overrides=overrides, excludevms=vmnames)
+                            self.plan(plan, inputfile=baseplan, overrides=overrides, excludevms=vmnames, basemode=True)
                             baseplans.append(baseplan)
                         baseinfo = self.process_inputfile(plan, baseplan, overrides=overrides, full=True)
                         baseprofile = baseinfo[0][basevm] if basevm in baseinfo[0] else {}
