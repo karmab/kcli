@@ -932,6 +932,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             with open("%s/openshift/99-autoapprovercron-cronjob.yaml" % clusterdir, 'w') as _f:
                 _f.write(cronfile)
             continue
+        if '99-monitoring.yaml' in f:
+            monitoring_retention = data['monitoring_retention']
+            monitoringfile = config.process_inputfile(cluster, f, overrides={'retention': monitoring_retention})
+            with open("%s/openshift/99-monitoring.yaml" % clusterdir, 'w') as _f:
+                _f.write(monitoringfile)
+            continue
         copy2(f, "%s/openshift" % clusterdir)
     if async_install:
         registry = disconnected_url if disconnected_url is not None else 'quay.io'
