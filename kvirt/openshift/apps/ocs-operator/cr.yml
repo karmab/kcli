@@ -20,5 +20,5 @@ spec:
     name: ocs-deviceset
     placement: {}
     portable: {{ ocs_portable }}
-    replica: {{ ocs_replicas|default(3) }}
+    replica: {{ ocs_replicas or 3 }}
     resources: {}

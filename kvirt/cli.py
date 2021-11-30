@@ -869,7 +869,7 @@ def choose_parameter_file(paramfile):
 
 def get_cluster_parameter_file(paramfile):
     clustersdir = os.path.expanduser("~/.kcli/clusters")
-    if not os.path.exists(paramfile) and os.environ['KUBECONFIG'].startswith(clustersdir):
+    if (paramfile is None or not os.path.exists(paramfile)) and os.environ['KUBECONFIG'].startswith(clustersdir):
         cluster = os.environ['KUBECONFIG'].replace("%s/" % clustersdir, '').split('/')[0]
         clusterparamfile = "%s/%s/kcli_parameters.yml" % (clustersdir, cluster)
         if os.path.exists(clusterparamfile):
