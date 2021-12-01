@@ -119,12 +119,9 @@ class Kopenstack(object):
             else:
                 msg = "you don't have image %s" % target
                 return {'result': 'failure', 'reason': msg}
-        elif not disks:
-            msg = "you need a bootable disk if not using a glance image"
-            return {'result': 'failure', 'reason': msg}
         else:
-            glanceimage = None
-            warning("If booting without image, you'll need your first disk to be bootable")
+            msg = "a bootable disk is needed"
+            return {'result': 'failure', 'reason': msg}
         if iso is not None:
             disks.insert(0, 10)
         block_dev_mapping = {}
