@@ -3361,7 +3361,6 @@ class Kvirt(object):
         else:
             hostscmd = "sudo sh -c 'echo %s >>%s'" % (hosts.replace('"', '\\"'), hostsfile)
             hostscmd = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host, hostscmd)
-            print(hostscmd)
             call(hostscmd, shell=True)
             dnsmasqcmd = "/usr/bin/systemctl restart dnsmasq"
             if self.user != 'root':
