@@ -308,10 +308,13 @@ class Kvirt(object):
         allnetworks = self.list_networks()
         bridges = []
         networks = []
+        ovsnetworks = []
         ipv6networks = []
         for n in allnetworks:
             if allnetworks[n]['type'] == 'bridged':
                 bridges.append(n)
+            elif allnetworks[n]['type'] == 'ovs':
+                ovsnetworks.append(n)
             else:
                 networks.append(n)
             if ':' in allnetworks[n]['cidr']:
@@ -573,6 +576,8 @@ class Kvirt(object):
                     netmasks and len(netmasks) > index and netmasks[index] is not None and gateway is not None:
                 nets[index]['ip'] = ips[index]
                 nets[index]['netmask'] = netmasks[index]
+            if netname in ovsnetworks:
+                ovs = True
             if netname in networks:
                 iftype = 'network'
                 sourcexml = "<source network='%s'/>" % netname
@@ -2946,6 +2951,23 @@ class Kvirt(object):
                 new_net.setAutostart(True)
                 new_net.create()
                 return {'result': 'success'}
+        if 'ovs' in overrides and overrides['ovs']:
+            networkxml = """<network>
+                            <metadata>
+                            <kvirt:info xmlns:kvirt="kvirt">
+                            <kvirt:ovs>true</kvirt:ovs>
+                            </kvirt:info>
+                            </metadata>
+                            <name>%s</name>
+                            <bridge name='%s'/>
+                            <forward mode="bridge">
+                            <virtualport type='openvswitch'/>
+                            </forward>
+                            </network>""" % (name, name)
+            new_net = conn.networkDefineXML(networkxml)
+            new_net.setAutostart(True)
+            new_net.create()
+            return {'result': 'success'}
         if cidr is None:
             return {'result': 'failure', 'reason': "Missing Cidr"}
         cidrs = [network['cidr'] for network in list(networks.values())]
@@ -3114,6 +3136,9 @@ class Kvirt(object):
             networks[networkname] = {'cidr': cidr, 'dhcp': dhcp, 'domain': domainname, 'type': 'routed', 'mode': mode}
             plan = 'N/A'
             for element in list(root.iter('{kvirt}info')):
+                e = element.find('{kvirt}ovs')
+                if e is not None:
+                    networks[networkname]['type'] = 'ovs'
                 e = element.find('{kvirt}plan')
                 if e is not None:
                     plan = e.text
