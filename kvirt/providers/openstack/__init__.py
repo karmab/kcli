@@ -111,12 +111,13 @@ class Kopenstack(object):
                 error(e)
                 return {'result': 'failure', 'reason': "Network %s not found" % netname}
             nics.append({'net-id': net.id})
-        if image is not None:
-            glanceimages = [img for img in glance.images.list() if img.name == image]
+        target = iso if iso is not None else image
+        if target is not None:
+            glanceimages = [img for img in glance.images.list() if img.name == target]
             if glanceimages:
                 glanceimage = glanceimages[0]
             else:
-                msg = "you don't have image %s" % image
+                msg = "you don't have image %s" % target
                 return {'result': 'failure', 'reason': msg}
         elif not disks:
             msg = "you need a bootable disk if not using a glance image"
@@ -686,6 +687,8 @@ class Kopenstack(object):
 
     def add_image(self, url, pool, short=None, cmd=None, name=None, size=None):
         shortimage = os.path.basename(url).split('?')[0]
+        if name is not None and name.endswith('iso'):
+            shortimage = name
         if [i for i in self.glance.images.list() if i['name'] == shortimage]:
             return {'result': 'success'}
         if not os.path.exists('/tmp/%s' % shortimage):
