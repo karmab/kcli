@@ -577,7 +577,7 @@ class Kvirt(object):
                 iftype = 'network'
                 sourcexml = "<source network='%s'/>" % netname
             elif netname in bridges or ovs:
-                if 'ip' in allnetworks[netname] and 'config_host' not in overrides:
+                if netname in bridges and 'ip' in allnetworks[netname] and 'config_host' not in overrides:
                     overrides['config_host'] = allnetworks[netname]['ip']
                 iftype = 'bridge'
                 sourcexml = "<source bridge='%s'/>" % netname
