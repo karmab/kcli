@@ -695,7 +695,8 @@ class Kopenstack(object):
                 error("gunzip not found. Can't uncompress image")
                 return {'result': 'failure', 'reason': "gunzip not found. Can't uncompress image"}
             shortimage = shortimage.replace('.gz', '')
-        glanceimage = self.glance.images.create(name=shortimage, disk_format='qcow2', container_format='bare')
+        disk_format = 'iso' if shortimage.endswith('iso') else 'qcow2'
+        glanceimage = self.glance.images.create(name=shortimage, disk_format=disk_format, container_format='bare')
         self.glance.images.upload(glanceimage.id, open('/tmp/%s' % shortimage, 'rb'))
         os.remove('/tmp/%s' % shortimage)
         return {'result': 'success'}
