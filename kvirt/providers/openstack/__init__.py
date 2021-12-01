@@ -411,9 +411,15 @@ class Kopenstack(object):
 
     def volumes(self, iso=False):
         glanceimages = []
+        isos = []
         glance = self.glance
         for img in glance.images.list():
-            glanceimages.append(img.name)
+            imagename = img.name
+            if imagename.endswith('.iso'):
+                isos.append(imagename)
+            glanceimages.append(imagename)
+        if isos:
+            return sorted(isos)
         return sorted(glanceimages)
 
     def delete(self, name, snapshots=False):
