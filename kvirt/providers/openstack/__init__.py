@@ -145,6 +145,14 @@ class Kopenstack(object):
                 else:
                     continue
             newvol = self.cinder.volumes.create(name=diskname, size=disksize, imageRef=imageref)
+            if index == 0 and image is not None:
+                while True:
+                    newvolstatus = self.cinder.volumes.get(newvol.id).status
+                    if newvolstatus == 'available':
+                        break
+                    else:
+                        pprint("Waiting 10s for image disk to be available")
+                        sleep(10)
             block_dev_mapping['vd%s' % letter] = newvol.id
         key_name = 'kvirt'
         keypairs = [k.name for k in nova.keypairs.list()]
