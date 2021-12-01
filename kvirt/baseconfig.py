@@ -19,6 +19,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             CPUFLAGS, CPUPINNING, NUMAMODE, NUMA, PCIDEVICES, VIRTTYPE, MAILSERVER, MAILFROM, MAILTO,
                             TPM, JENKINSMODE, RNG, ZEROTIER_NETS, ZEROTIER_KUBELET, VMPORT, VMUSER, VMRULES, CACHE,
                             SECURITYGROUPS, LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG, ROOTPASSWORD)
+from ipaddress import ip_address
 from random import choice
 from kvirt import common
 from kvirt.common import error, pprint, warning
@@ -242,11 +243,16 @@ class Kbaseconfig:
         else:
             self.client = client
         if self.client not in self.ini:
-            warning("Missing section for client %s in config file. Trying to connect..." % self.client)
             if '@' in self.client:
                 u, h = self.client.split('@')
             else:
                 u, h = 'root', self.client
+            try:
+                ip_address(h)
+                warning("Missing section for client %s in config file. Trying to connect to %s" % h)
+            except ValueError:
+                error("Missing Section for client %s.Leaving..." % client)
+                sys.exit(1)
             self.ini[self.client] = {'host': h, 'user': u}
         self.options = self.ini[self.client]
         if self.options.get('type', 'kvm') == 'group':
