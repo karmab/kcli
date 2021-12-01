@@ -138,17 +138,18 @@ class Kopenstack(object):
             elif isinstance(disk, dict):
                 disksize = disk.get('size', '10')
                 diskthin = disk.get('thin', True)
-            imageref = glanceimage.id if index == 0 and glanceimage is not None else None
-            newvol = self.cinder.volumes.create(name=diskname, size=disksize, imageRef=imageref)
-            if not diskthin:
-                while True:
-                    newvolstatus = self.cinder.volumes.get(newvol.id).status
-                    if newvolstatus == 'available':
-                        break
-                    else:
-                        pprint("Waiting 10s for image disk to be available")
-                        sleep(10)
-            block_dev_mapping['vd%s' % letter] = newvol.id
+            if index > 0 or not diskthin:
+                imageref = glanceimage.id if index == 0 and glanceimage is not None else None
+                newvol = self.cinder.volumes.create(name=diskname, size=disksize, imageRef=imageref)
+                if not diskthin:
+                    while True:
+                        newvolstatus = self.cinder.volumes.get(newvol.id).status
+                        if newvolstatus == 'available':
+                            break
+                        else:
+                            pprint("Waiting 10s for image disk to be available")
+                            sleep(10)
+                block_dev_mapping['vd%s' % letter] = newvol.id
         key_name = 'kvirt'
         keypairs = [k.name for k in nova.keypairs.list()]
         if key_name not in keypairs:
