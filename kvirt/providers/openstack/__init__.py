@@ -125,6 +125,8 @@ class Kopenstack(object):
         else:
             glanceimage = None
             warning("If booting without image, you'll need your first disk to be bootable")
+        if iso is not None:
+            disks.insert(0, 10)
         block_dev_mapping = {}
         for index, disk in enumerate(disks):
             diskname = "%s-disk%s" % (name, index)
