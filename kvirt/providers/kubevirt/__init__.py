@@ -740,7 +740,7 @@ class Kubevirt(Kubecommon):
                     size = int(size)
                 if image != 'N/A' and self.cdi:
                     size -= 1
-            elif 'cloudInitNoCloud' in volumeinfo:
+            elif 'cloudInitNoCloud' in volumeinfo or 'cloudInitConfigDrive' in volumeinfo:
                 continue
             elif 'containerDisk' in volumeinfo:
                 _type = 'containerdisk'
