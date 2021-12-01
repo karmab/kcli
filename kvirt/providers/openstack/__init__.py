@@ -127,7 +127,6 @@ class Kopenstack(object):
             warning("If booting without image, you'll need your first disk to be bootable")
         block_dev_mapping = {}
         for index, disk in enumerate(disks):
-            imageref = None
             diskname = "%s-disk%s" % (name, index)
             letter = chr(index + ord('a'))
             if isinstance(disk, int):
@@ -139,13 +138,9 @@ class Kopenstack(object):
             elif isinstance(disk, dict):
                 disksize = disk.get('size', '10')
                 diskthin = disk.get('thin', True)
-            if index == 0 and image is not None:
-                if not diskthin:
-                    imageref = glanceimage.id
-                else:
-                    continue
+            imageref = glanceimage.id if index == 0 and glanceimage is not None else None
             newvol = self.cinder.volumes.create(name=diskname, size=disksize, imageRef=imageref)
-            if index == 0 and image is not None:
+            if not diskthin:
                 while True:
                     newvolstatus = self.cinder.volumes.get(newvol.id).status
                     if newvolstatus == 'available':
