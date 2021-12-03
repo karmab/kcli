@@ -680,7 +680,7 @@ For ignition support on ovirt, you will need a version of ovirt >= 4.3.4. Note t
 - Delete disk named vm1_2.img from vm1
   - `kcli delete disk --vm vm1 vm1_2.img`
 - Update memory in vm1 to 2GB memory
-  - `kcli update vm -m 2048 vm1`
+  - `kcli update vm -P memory=2048 vm1`
 - Clone vm1 to new vm2
   - `kcli clone vm -b vm1 vm2`
 - Connect with ssh to vm vm1
