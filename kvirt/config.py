@@ -991,6 +991,11 @@ class Kconfig(Kbaseconfig):
         if kube is not None and kubetype is not None:
             metadata['kubetype'] = kubetype
             metadata['kube'] = kube
+        if not cmds and not files:
+            wrong_keys = [key for key in overrides if key != 'name' and key != 'noname' and
+                          not key.startswith('config_') and key not in self.list_keywords()]
+            if wrong_keys:
+                warning("The following parameters might not be used: %s" % ','.join(wrong_keys))
         if onlyassets:
             if image is not None and common.needs_ignition(image):
                 version = common.ignition_version(image)
