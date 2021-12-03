@@ -991,7 +991,7 @@ class Kconfig(Kbaseconfig):
         if kube is not None and kubetype is not None:
             metadata['kubetype'] = kubetype
             metadata['kube'] = kube
-        if not cmds and not files:
+        if start and cloudinit and not cmds and not files:
             wrong_keys = [key for key in overrides if key != 'name' and key != 'noname' and
                           not key.startswith('config_') and key not in self.list_keywords()]
             if wrong_keys:
