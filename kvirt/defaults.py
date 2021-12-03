@@ -47,7 +47,7 @@ IMAGES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-i
           'centos8stream': 'https://cloud.centos.org/centos/8-stream/x86_64/'
           'images/CentOS-Stream-GenericCloud-8-20210603.0.x86_64.qcow2',
           'centos9stream': 'https://composes.stream.centos.org/production/'
-          'latest-CentOS-Stream/compose/BaseOS/x86_64/images/CentOS-Stream-GenericCloud-9-20210730.0.x86_64.qcow2',
+          'latest-CentOS-Stream/compose/BaseOS/x86_64/images/CentOS-Stream-GenericCloud-9-20211203.0.x86_64.qcow2',
           'cirros': 'http://download.cirros-cloud.net/0.5.2/cirros-0.5.2-x86_64-disk.img',
           'coreos': 'https://stable.release.core-os.net/amd64-usr/current/coreos_production_qemu_image.img.bz2',
           'debian8': DEBIAN + 'openstack/archive/8.11.0/debian-8.11.0-openstack-amd64.qcow2',
