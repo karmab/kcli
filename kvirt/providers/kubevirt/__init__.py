@@ -838,6 +838,19 @@ class Kubevirt(Kubecommon):
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
         crds.delete_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
+        dvvolumes = [v['dataVolume']['name'] for v in vm['spec']['template']['spec']['volumes'] if
+                     'dataVolume' in v]
+        if dvvolumes:
+            timeout = 0
+            while True:
+                dvpvcs = [pvc for pvc in core.list_namespaced_persistent_volume_claim(namespace).items
+                          if pvc.metadata.name in dvvolumes]
+                if not dvpvcs or timeout > 60:
+                    break
+                else:
+                    pprint("Waiting 5s for pvcs associated to datavolumes of %s to disappear" % name)
+                    time.sleep(5)
+                    timeout += 5
         pvcvolumes = [v['persistentVolumeClaim']['claimName'] for v in vm['spec']['template']['spec']['volumes'] if
                       'persistentVolumeClaim' in v]
         pvcs = [pvc for pvc in core.list_namespaced_persistent_volume_claim(namespace).items
