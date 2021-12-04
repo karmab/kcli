@@ -992,10 +992,11 @@ class Kconfig(Kbaseconfig):
             metadata['kubetype'] = kubetype
             metadata['kube'] = kube
         if start and cloudinit and not cmds and not files:
-            wrong_keys = [key for key in overrides if key != 'name' and key != 'noname' and
+            good_keys = ['name', 'noname', 'type', 'plan']
+            wrong_keys = [key for key in overrides if key not in good_keys and
                           not key.startswith('config_') and key not in self.list_keywords()]
             if wrong_keys:
-                warning("The following parameters might not be used: %s" % ','.join(wrong_keys))
+                warning("The following parameters might not be used in vm %s: %s" % (name, ','.join(wrong_keys)))
         if onlyassets:
             if image is not None and common.needs_ignition(image):
                 version = common.ignition_version(image)
