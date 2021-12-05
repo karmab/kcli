@@ -1514,7 +1514,7 @@ class Kconfig(Kbaseconfig):
         entries, overrides, basefile, basedir = self.process_inputfile(plan, inputfile, overrides=overrides,
                                                                        onfly=onfly, full=True)
         if basefile is not None:
-            baseinfo = self.process_inputfile(plan, basefile, overrides=overrides, full=True)
+            baseinfo = self.process_inputfile(plan, "%s/%s" % (basedir, basefile), overrides=overrides, full=True)
             baseentries, baseoverrides = baseinfo[0], baseinfo[1]
             if baseoverrides:
                 overrides.update({key: baseoverrides[key] for key in baseoverrides if key not in overrides})
@@ -1718,7 +1718,11 @@ class Kconfig(Kbaseconfig):
             baseplans = []
             vmnames = [name for name in vmentries]
             if basefile is not None:
-                self.plan(plan, inputfile=basefile, overrides=overrides, excludevms=vmnames, basemode=True)
+                basedir = os.path.dirname(inputfile) if '/' in inputfile else '.'
+                baseinputfile = "%s/%s" % (basedir, basefile)
+                if os.path.exists("/i_am_a_container") and not os.path.isabs(basefile) and '/workdir' not in basedir:
+                    baseinputfile = "/workdir/%s/%s" % (basedir, basefile)
+                self.plan(plan, inputfile=baseinputfile, overrides=overrides, excludevms=vmnames, basemode=True)
                 baseplans.append(basefile)
             for name in vmentries:
                 if name in excludevms:
@@ -1737,13 +1741,17 @@ class Kconfig(Kbaseconfig):
                     appendkeys = ['disks', 'nets', 'files', 'scripts', 'cmds']
                     if 'baseplan' in profile:
                         baseplan = profile['baseplan']
-                        if os.path.exists("/i_am_a_container") and not os.path.isabs(baseplan):
-                            baseplan = "/workdir/%s" % baseplan
+                        basedir = os.path.dirname(inputfile) if '/' in inputfile else '.'
+                        baseinputfile = "%s/%s" % (basedir, baseplan)
+                        if os.path.exists("/i_am_a_container") and not os.path.isabs(baseplan)\
+                           and '/workdir' not in basedir:
+                            baseinputfile = "/workdir/%s/%s" % (basedir, baseplan)
                         basevm = profile['basevm'] if 'basevm' in profile else name
                         if baseplan not in baseplans:
-                            self.plan(plan, inputfile=baseplan, overrides=overrides, excludevms=vmnames, basemode=True)
+                            self.plan(plan, inputfile=baseinputfile, overrides=overrides, excludevms=vmnames,
+                                      basemode=True)
                             baseplans.append(baseplan)
-                        baseinfo = self.process_inputfile(plan, baseplan, overrides=overrides, full=True)
+                        baseinfo = self.process_inputfile(plan, baseinputfile, overrides=overrides, full=True)
                         baseprofile = baseinfo[0][basevm] if basevm in baseinfo[0] else {}
                         currentplandir = baseinfo[3]
                     elif 'basevm' in profile and profile['basevm'] in baseentries:

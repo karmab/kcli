@@ -762,15 +762,17 @@ class Kbaseconfig:
         if parameters:
             if 'baseplan' in parameters:
                 basefile = parameters['baseplan']
-                if os.path.exists("/i_am_a_container") and not os.path.isabs(basefile):
-                    basefile = "/workdir/%s" % basefile
+                basedir = os.path.dirname(inputfile) if '/' in inputfile else '.'
+                baseinputfile = "%s/%s" % (basedir, basefile)
+                if os.path.exists("/i_am_a_container") and not os.path.isabs(basefile) and '/workdir' not in basedir:
+                    baseinputfile = "/workdir/%s/%s" % (basedir, basefile)
                 if onfly is not None:
                     common.fetch("%s/%s" % (onfly, basefile), '.')
-                baseparameters = self.process_inputfile(plan, basefile, overrides=overrides, onfly=onfly,
+                baseparameters = self.process_inputfile(plan, baseinputfile, overrides=overrides, onfly=onfly,
                                                         full=True)[1]
                 if baseparameters:
                     parameters.update({key: baseparameters[key] for key in baseparameters if key not in parameters})
-                baseparameters = common.get_parameters(basefile, planfile=True)
+                baseparameters = common.get_parameters(baseinputfile, planfile=True)
                 if baseparameters:
                     baseparameters = yaml.safe_load(baseparameters)['parameters']
                     for baseparameter in baseparameters:
