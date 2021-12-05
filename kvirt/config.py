@@ -96,6 +96,9 @@ class Kconfig(Kbaseconfig):
                         error("Ca file %s doesn't exist. Leaving" % ca_file)
                         sys.exit(1)
                 disk_hotplug = self.options.get('disk_hotplug', False)
+                kubeconfig_file = self.options.get('kubeconfig')
+                if kubeconfig_file is not None:
+                    os.environ['KUBECONFIG'] = os.path.expanduser(kubeconfig_file)
                 token = self.options.get('token')
                 token_file = self.options.get('token_file')
                 if token_file is not None:

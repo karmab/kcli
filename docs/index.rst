@@ -364,6 +364,7 @@ Authentication is either handled by your local ~/.kubeconfig (kcli will try to c
 
 You can use additional parameters for the kubevirt section:
 
+-  kubeconfig: kubeconfig file path
 -  context: the k8s context to use.
 -  pool: your default storageclass. can also be set as blank, if no storage class should try to bind pvcs.
 -  host: k8s api node .Also used for tunneling ssh.
@@ -730,7 +731,7 @@ Typical commands
 
 -  Update memory in vm1 to 2GB memory
 
-   -  ``kcli update vm -m 2048 vm1``
+   -  ``kcli update vm -P memory=2048 vm1``
 
 -  Clone vm1 to new vm2
 

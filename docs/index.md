@@ -353,6 +353,7 @@ kubevirt:
 
 You can use additional parameters for the kubevirt section:
 
+- kubeconfig: kubeconfig file path
 - context: the k8s context to use.
 - pool: your default storageclass. can also be set as blank, if no storage class should try to bind pvcs.
 - host: k8s api node .Also used for tunneling ssh.
