@@ -1502,6 +1502,8 @@ class Kconfig(Kbaseconfig):
         if not os.path.exists(inputfile):
             error("Input file %s not found.Leaving...." % inputfile)
             sys.exit(1)
+        elif os.path.isdir(inputfile):
+            inputfile = "%s/kcli_plan.yml" % inputfile
         if info:
             self.info_plan(inputfile, onfly=onfly, quiet=quiet, doc=doc)
             if toclean:
