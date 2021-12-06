@@ -2022,7 +2022,7 @@ class Kvirt(object):
                 source = serial.find('source')
                 source.set('service', str(common.get_free_port()))
         newxml = ET.tostring(tree)
-        conn.defineXML(newxml)
+        conn.defineXML(newxml.decode("utf-8"))
         vm = conn.lookupByName(new)
         if start:
             vm.setAutostart(1)
