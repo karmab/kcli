@@ -1270,7 +1270,9 @@ def clone_vm(args):
     pprint("Cloning vm %s from vm %s..." % (name, base))
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
-    k.clone(base, name, full=full, start=start)
+    result = k.clone(base, name, full=full, start=start)
+    if result['result'] == 'success' and os.access(os.path.expanduser('~/.kcli'), os.W_OK):
+        common.set_lastvm(name, config.client)
 
 
 def update_vm(args):

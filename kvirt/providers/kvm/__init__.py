@@ -1983,7 +1983,17 @@ class Kvirt(object):
         :param start:
         """
         conn = self.conn
-        oldvm = conn.lookupByName(old)
+        try:
+            oldvm = conn.lookupByName(old)
+        except:
+            msg = "Base VM %s not found" % old
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
+        if oldvm.isActive() != 0:
+            msg = "Base VM %s needs to be down" % old
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
+        oldautostart = oldvm.autostart()
         oldxml = oldvm.XMLDesc(0)
         tree = ET.fromstring(oldxml)
         uuid = list(tree.iter('uuid'))[0]
@@ -2024,9 +2034,10 @@ class Kvirt(object):
         newxml = ET.tostring(tree)
         conn.defineXML(newxml.decode("utf-8"))
         vm = conn.lookupByName(new)
+        vm.setAutostart(oldautostart)
         if start:
-            vm.setAutostart(1)
             vm.create()
+        return {'result': 'success'}
 
     def _reserve_ip(self, name, domain, vmxml, nets, force=True, primary=False, networks={}):
         conn = self.conn
