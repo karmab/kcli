@@ -300,8 +300,8 @@ def wait_for_ignition(cluster, domain, role='worker'):
                 data = urlopen(req).read()
                 dest.write(data.decode("utf-8"))
         except:
-            pprint("Waiting 5s before retrieving %s ignition data" % role)
-            sleep(5)
+            pprint("Waiting 10s before retrieving %s ignition data" % role)
+            sleep(10)
 
 
 def scale(config, plandir, cluster, overrides):
