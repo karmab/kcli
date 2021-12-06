@@ -116,3 +116,4 @@ ipsec: false
 async: false
 notify: false
 monitoring_retention: 24h
+static_networking: False

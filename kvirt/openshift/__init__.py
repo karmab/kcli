@@ -20,7 +20,7 @@ from shutil import copy2, move, rmtree
 from subprocess import call
 from tempfile import TemporaryDirectory
 from time import sleep
-from urllib.request import urlopen
+from urllib.request import urlopen, Request
 from requests import get, post, put
 # import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -288,6 +288,22 @@ def contrail_allow_vips(ip, api_ip, ingress_ip=None, mac=None):
                 put(href, verify=False, json=body)
 
 
+def wait_for_ignition(cluster, domain, role='worker'):
+    clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
+    ignitionfile = "%s/%s.ign" % (clusterdir, role)
+    os.remove(ignitionfile)
+    while not os.path.exists(ignitionfile) or os.stat(ignitionfile).st_size == 0:
+        try:
+            with open(ignitionfile, 'w') as dest:
+                req = Request("http://api.%s.%s:22624/config/%s" % (cluster, domain, role))
+                req.add_header("Accept", "application/vnd.coreos.ignition+json; version=3.1.0")
+                data = urlopen(req).read()
+                dest.write(data.decode("utf-8"))
+        except:
+            pprint("Waiting 5s before retrieving %s ignition data" % role)
+            sleep(5)
+
+
 def scale(config, plandir, cluster, overrides):
     plan = cluster
     client = config.client
@@ -388,7 +404,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'sno': False,
             'sno_virtual': False,
             'notify': False,
-            'async': False}
+            'async': False,
+            'static_networking': False}
     data.update(overrides)
     if 'cluster' in overrides:
         clustervalue = overrides.get('cluster')
@@ -399,6 +416,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     data['cluster'] = clustervalue
     domain = data.get('domain')
     async_install = data.get('async')
+    static_networking = data.get('static_networking')
     notify = data.get('notify')
     postscripts = data.get('postscripts', [])
     pprint("Deploying cluster %s" % clustervalue)
@@ -1213,6 +1231,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         result = config.plan(plan, inputfile='%s/bootstrap.yml' % plandir, overrides=overrides)
         if result['result'] != 'success':
             sys.exit(1)
+        if static_networking:
+            wait_for_ignition(cluster, domain, role='master')
         pprint("Deploying masters")
         result = config.plan(plan, inputfile='%s/masters.yml' % plandir, overrides=overrides)
         if result['result'] != 'success':
@@ -1282,6 +1302,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             error("You can delete it with kcli delete cluster --yes %s" % cluster)
             sys.exit(run)
     if workers > 0:
+        if static_networking:
+            wait_for_ignition(cluster, domain, role='worker')
         pprint("Deploying workers")
         if 'name' in overrides:
             del overrides['name']
