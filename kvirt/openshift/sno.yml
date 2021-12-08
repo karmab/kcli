@@ -4,15 +4,6 @@
 {% if extra_master_disks %}
 % set extra_disks = extra_master_disks %}
 {% endif %}
-{% if numa_master != None %}
-{% set numa = numa_master %}
-{% endif %}
-{% if numamode_master != None %}
-{% set numamode = numamode_master %}
-{% endif %}
-{% if cpupinning_master != None %}
-{% set cpupinning = cpupinning_master %}
-{% endif %}
 {% if flavor_master != None %}
 {% set flavor = flavor_master %}
 {% endif %}
@@ -27,22 +18,6 @@
  keys: {{ keys }}
  numcpus: {{ master_numcpus | default(numcpus, numcpus) }}
  memory: {{ master_memory | default(memory, memory) }}
- rng: {{ master_rng }}
- tpm: {{ master_tpm }}
  autostart: {{ autostart }}
  nets: {{ [network] + extra_networks }}
- zerotier_nets: {{ zerotier_nets }}
- zerotier_kubelet: {{ zerotier_kubelet }}
  disks: {{ [disk_size] + extra_disks }}
-{% if numa != None %}
- numa: {{ numa }}
-{% endif %}
-{% if numamode != None %}
- numamode: {{ numamode }}
-{% endif %}
-{% if cpupinning != None %}
- cpupinning: {{ cpupinning }}
-{% endif %}
-{% if pcidevices != None %}
- pcidevices: {{ pcidevices }}
-{% endif %}

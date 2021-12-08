@@ -25,11 +25,7 @@ master_numcpus:
 memory: 6144
 master_memory:
 worker_memory:
-master_tpm: false
-master_rng: false
 disk_size: 30
-worker_tpm: false
-worker_rng: false
 nfs: true
 nfs_pv_size: 30
 sdn: flannel
@@ -43,15 +39,6 @@ metallb_range: 192.168.122.240-192.168.122.250
 multus: true
 notifycmd: "kubectl get pod -A"
 notify: false
-numa:
-numa_master:
-numa_worker:
-numamode:
-numamode_master:
-numamode_worker:
-cpupinning:
-cpupinning_master:
-cpupinning_worker:
 apps: []
 kubevirt_disk_size:
 extra_disks: []
@@ -63,8 +50,6 @@ extra_worker_networks: []
 xip: false
 autolabel: true
 virtual_router_id:
-zerotier_nets: []
-zerotier_kubelet: false
 registry: false
 registry_pvc: false
 registry_user: dummy

@@ -20,22 +20,9 @@ master_numcpus:
 memory: 1024
 master_memory:
 worker_memory:
-master_tpm: false
-master_rng: false
 disk_size: 10
-worker_tpm: false
-worker_rng: false
 notifycmd: "kubectl get pod -A"
 notify: false
-numa:
-numa_master:
-numa_worker:
-numamode:
-numamode_master:
-numamode_worker:
-cpupinning:
-cpupinning_master:
-cpupinning_worker:
 kubevirt_disk_size:
 extra_disks: []
 extra_master_disks: []

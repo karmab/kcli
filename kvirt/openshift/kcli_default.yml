@@ -43,10 +43,6 @@ bootstrap_memory:
 master_memory:
 worker_memory:
 mdns: true
-master_tpm: false
-master_rng: false
-worker_tpm: false
-worker_rng: false
 disk_size: 30
 autostart: false
 keys: []
@@ -65,16 +61,6 @@ bootstrap_mac:
 bootstrap_ip: 
 worker_macs: []
 worker_ips: []
-pcidevices:
-numa:
-numa_master:
-numa_worker:
-numamode:
-numamode_master:
-numamode_worker:
-cpupinning:
-cpupinning_master:
-cpupinning_worker:
 disconnected_url:
 disconnected_deploy: False
 disconnected_haproxy: False
@@ -93,9 +79,6 @@ cloud_tag:
 cloud_scale: false
 cloud_api_internal: false
 virtual_router_id:
-zerotier_nets: []
-zerotier_ip:
-zerotier_kubelet: false
 http_proxy:
 no_proxy:
 sno: false
