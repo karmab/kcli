@@ -2527,7 +2527,7 @@ class Kconfig(Kbaseconfig):
 
     def create_openshift_iso(self, cluster, overrides={}, ignitionfile=None):
         metal_url = None
-        iso_version = overrides.get('version', 'latest')
+        iso_version = str(overrides.get('version', 'latest'))
         if iso_version not in ['latest', 'pre-release'] and not iso_version.startswith('4.'):
             error("Incorrect live iso version. Choose between latest, pre-release or 4.X")
             sys.exit(1)
@@ -2592,6 +2592,8 @@ class Kconfig(Kbaseconfig):
                 isoscript = 'iso.sh'
             else:
                 isoscript = '%s/iso.sh' % plandir
+            if os.path.exists('macs.txt'):
+                _files.append({"path": "/root/macs.txt", "origin": 'macs.txt'})
             iso_overrides = {'scripts': [isoscript], 'files': _files, 'metal_url': metal_url}
             if metal_url is not None:
                 iso_overrides['need_network'] = True
@@ -2605,7 +2607,8 @@ class Kconfig(Kbaseconfig):
             if self.type not in ['kvm', 'fake']:
                 warning("Iso only get generated for kvm type")
             else:
-                generate_rhcos_iso(self.k, cluster, overrides.get('pool', 'default'), version=iso_version)
+                iso_pool = overrides.get('pool') or self.pool
+                generate_rhcos_iso(self.k, cluster, iso_pool, version=iso_version)
 
     def create_openshift_disconnecter(self, plan, overrides={}):
         data = overrides

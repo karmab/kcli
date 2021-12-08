@@ -405,7 +405,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'sno_virtual': False,
             'notify': False,
             'async': False,
-            'static_networking': False}
+            'baremetal': False}
     data.update(overrides)
     if 'cluster' in overrides:
         clustervalue = overrides.get('cluster')
@@ -416,7 +416,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     data['cluster'] = clustervalue
     domain = data.get('domain')
     async_install = data.get('async')
-    static_networking = data.get('static_networking')
+    baremetal_iso = data.get('baremetal')
+    baremetal_iso_bootstrap = data.get('baremetal_bootstrap', baremetal_iso)
+    baremetal_iso_master = data.get('baremetal_master', baremetal_iso)
+    baremetal_iso_worker = data.get('baremetal_worker', baremetal_iso)
+    baremetal_iso_any = baremetal_iso_bootstrap or baremetal_iso_master or baremetal_iso_worker
+    baremetal_iso_all = baremetal_iso_bootstrap and baremetal_iso_master and baremetal_iso_worker
     notify = data.get('notify')
     postscripts = data.get('postscripts', [])
     pprint("Deploying cluster %s" % clustervalue)
@@ -623,7 +628,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if platform == 'packet' and not upstream:
         overrides['commit_id'] = COMMIT_ID
     pprint("Using installer version %s" % INSTALLER_VERSION)
-    if sno or ipi:
+    if sno or ipi or baremetal_iso_all:
         pass
     elif image is None:
         image_type = 'openstack' if data.get('kvm_openstack', False) and config.type == 'kvm' else config.type
@@ -665,6 +670,35 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         error("Missing image in your parameters file. This is required for packet")
         sys.exit(1)
     overrides['image'] = image
+    if baremetal_iso_any:
+        iso_overrides = overrides.copy()
+        iso_overrides['image'] = 'rhcos49'
+        iso_overrides['noname'] = True
+    static_networking_master, static_networking_worker = False, False
+    macentries = []
+    vmrules = overrides.get('vmrules', [])
+    for entry in vmrules:
+        if isinstance(entry, dict):
+            hostname = list(entry.keys())[0]
+            if isinstance(entry[hostname], dict):
+                rule = entry[hostname]
+                if 'nets' in rule and isinstance(rule['nets'], list):
+                    netrule = rule['nets'][0]
+                    if isinstance(netrule, dict) and 'mac' in netrule and\
+                       'ip' in netrule and 'netmask' in netrule and 'gateway' in netrule:
+                        mac, ip = netrule['mac'], netrule['ip']
+                        netmask, gateway = netrule['netmask'], netrule['gateway']
+                        nameserver = netrule.get('dns', gateway)
+                        macentries.append("%s;%s;%s;%s;%s;%s" % (mac, hostname, ip, netmask, gateway,
+                                                                 nameserver))
+                        if hostname.startswith("%s-master" % cluster):
+                            static_networking_master = True
+                        elif hostname.startswith("%s-master" % cluster):
+                            static_networking_worker = True
+    if macentries and (baremetal_iso_master or baremetal_iso_worker):
+        pprint("Creating a macs.txt to include in isos for static networking")
+        with open('macs.txt', 'w') as f:
+            f.write('\n'.join(macentries))
     overrides['cluster'] = cluster
     if not os.path.exists(clusterdir):
         os.makedirs(clusterdir)
@@ -1228,13 +1262,29 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         call(sedcmd, shell=True)
     if platform in virtplatforms:
         pprint("Deploying bootstrap")
-        result = config.plan(plan, inputfile='%s/bootstrap.yml' % plandir, overrides=overrides)
-        if result['result'] != 'success':
-            sys.exit(1)
-        if static_networking:
+        if baremetal_iso_bootstrap:
+            result = config.plan(plan, inputfile='%s/bootstrap.yml' % plandir, overrides=iso_overrides, onlyassets=True)
+            with open('iso.ign', 'w') as f:
+                f.write(result['assets'][0])
+            iso_pool = data['pool'] or config.pool
+            generate_rhcos_iso(k, cluster + '-bootstrap', iso_pool, force=True)
+        else:
+            result = config.plan(plan, inputfile='%s/bootstrap.yml' % plandir, overrides=overrides)
+            if result['result'] != 'success':
+                sys.exit(1)
+        if static_networking_master and not baremetal_iso_master:
             wait_for_ignition(cluster, domain, role='master')
         pprint("Deploying masters")
-        result = config.plan(plan, inputfile='%s/masters.yml' % plandir, overrides=overrides)
+        if baremetal_iso_master:
+            result = config.plan(plan, inputfile='%s/masters.yml' % plandir, overrides=iso_overrides, onlyassets=True)
+            ignitionfile = '%s-master.ign' % cluster
+            with open(ignitionfile, 'w') as f:
+                f.write(result['assets'][0])
+            iso_overrides['version'] = tag
+            config.create_openshift_iso(ignitionfile, overrides=iso_overrides, ignitionfile=ignitionfile)
+            os.remove(ignitionfile)
+        else:
+            result = config.plan(plan, inputfile='%s/masters.yml' % plandir, overrides=overrides)
         if result['result'] != 'success':
             sys.exit(1)
         if platform == 'packet':
@@ -1302,13 +1352,23 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             error("You can delete it with kcli delete cluster --yes %s" % cluster)
             sys.exit(run)
     if workers > 0:
-        if static_networking:
+        if static_networking_worker and not baremetal_iso_worker:
             wait_for_ignition(cluster, domain, role='worker')
         pprint("Deploying workers")
         if 'name' in overrides:
             del overrides['name']
         if platform in virtplatforms:
-            result = config.plan(plan, inputfile='%s/workers.yml' % plandir, overrides=overrides)
+            if baremetal_iso_worker:
+                result = config.plan(plan, inputfile='%s/workers.yml' % plandir, overrides=iso_overrides,
+                                     onlyassets=True)
+                ignitionfile = '%s-worker' % cluster
+                with open(ignitionfile, 'w') as f:
+                    f.write(result['assets'][0])
+                iso_overrides['version'] = tag
+                config.create_openshift_iso(ignitionfile, overrides=iso_overrides, ignitionfile=ignitionfile)
+                os.remove(ignitionfile)
+            else:
+                result = config.plan(plan, inputfile='%s/workers.yml' % plandir, overrides=overrides)
             if result['result'] != 'success':
                 sys.exit(1)
         elif platform in cloudplatforms:
