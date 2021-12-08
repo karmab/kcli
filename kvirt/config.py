@@ -758,6 +758,10 @@ class Kconfig(Kbaseconfig):
                 if path is None:
                     pprint("Using current directory for path in files of %s" % name)
                     path = os.path.basename(origin)
+        env_parameters = [key for key in overrides if key.isupper()]
+        if env_parameters:
+            env_data = '\n'.join(["export %s=%s" % (key, overrides[key]) for key in env_parameters])
+            files.append({'path': '/etc/profile.d/kcli.sh', 'content': env_data, 'mode': 644})
         enableroot = profile.get('enableroot', default_enableroot)
         tags = profile.get('tags', [])
         if default_tags:
