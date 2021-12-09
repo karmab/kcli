@@ -993,46 +993,47 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         copy2(f, "%s/openshift" % clusterdir)
     if async_install:
         registry = disconnected_url if disconnected_url is not None else 'quay.io'
-        deletionfile = "%s/99-bootstrap-deletion.yaml" % plandir
-        deletionfile = config.process_inputfile(cluster, deletionfile, overrides={'cluster': cluster,
-                                                                                  'registry': registry,
-                                                                                  'arch_tag': arch_tag})
-        with open("%s/openshift/99-bootstrap-deletion.yaml" % clusterdir, 'w') as _f:
-            _f.write(deletionfile)
-        oriconf = os.path.expanduser('~/.kcli')
-        orissh = os.path.expanduser('~/.ssh')
-        with TemporaryDirectory() as tmpdir:
-            if config.type == 'kvm' and config.k.host in ['localhost', '127.0.0.1']:
-                oriconf = "%s/.kcli" % tmpdir
-                orissh = "%s/.ssh" % tmpdir
-                os.mkdir(oriconf)
-                os.mkdir(orissh)
-                kcliconf = config.process_inputfile(cluster, "%s/local_kcli_conf.j2" % plandir,
-                                                    overrides={'network': network, 'user': getuser()})
-                with open("%s/config.yml" % oriconf, 'w') as _f:
-                    _f.write(kcliconf)
-                sshcmd = "ssh-keygen -t rsa -N '' -f %s/id_rsa > /dev/null" % orissh
-                call(sshcmd, shell=True)
-                authorized_keys_file = os.path.expanduser('~/.ssh/authorized_keys')
-                file_mode = 'a' if os.path.exists(authorized_keys_file) else 'w'
-                with open(authorized_keys_file, file_mode) as f:
-                    publickey = open("%s/id_rsa.pub" % orissh).read().strip()
-                    f.write("\n%s" % publickey)
-            ns = "openshift-infra"
-            dest = "%s/openshift/99-kcli-conf-cm.yaml" % clusterdir
-            cmcmd = 'KUBECONFIG=%s/fake_kubeconfig.json ' % plandir
-            cmcmd += "oc create cm -n %s kcli-conf --from-file=%s --dry-run=client -o yaml > %s" % (ns, oriconf,
-                                                                                                    dest)
-            call(cmcmd, shell=True)
-            dest = "%s/openshift/99-kcli-ssh-cm.yaml" % clusterdir
-            cmcmd = 'KUBECONFIG=%s/fake_kubeconfig.json  ' % plandir
-            cmcmd += "oc create cm -n %s kcli-ssh --from-file=%s --dry-run=client -o yaml > %s" % (ns, orissh, dest)
-            call(cmcmd, shell=True)
-        deletionfile2 = "%s/99-bootstrap-deletion-2.yaml" % plandir
-        deletionfile2 = config.process_inputfile(cluster, deletionfile2, overrides={'registry': registry,
-                                                                                    'arch_tag': arch_tag})
-        with open("%s/openshift/99-bootstrap-deletion-2.yaml" % clusterdir, 'w') as _f:
-            _f.write(deletionfile2)
+        if not baremetal_iso_bootstrap:
+            deletionfile = "%s/99-bootstrap-deletion.yaml" % plandir
+            deletionfile = config.process_inputfile(cluster, deletionfile, overrides={'cluster': cluster,
+                                                                                      'registry': registry,
+                                                                                      'arch_tag': arch_tag})
+            with open("%s/openshift/99-bootstrap-deletion.yaml" % clusterdir, 'w') as _f:
+                _f.write(deletionfile)
+            oriconf = os.path.expanduser('~/.kcli')
+            orissh = os.path.expanduser('~/.ssh')
+            with TemporaryDirectory() as tmpdir:
+                if config.type == 'kvm' and config.k.host in ['localhost', '127.0.0.1']:
+                    oriconf = "%s/.kcli" % tmpdir
+                    orissh = "%s/.ssh" % tmpdir
+                    os.mkdir(oriconf)
+                    os.mkdir(orissh)
+                    kcliconf = config.process_inputfile(cluster, "%s/local_kcli_conf.j2" % plandir,
+                                                        overrides={'network': network, 'user': getuser()})
+                    with open("%s/config.yml" % oriconf, 'w') as _f:
+                        _f.write(kcliconf)
+                    sshcmd = "ssh-keygen -t rsa -N '' -f %s/id_rsa > /dev/null" % orissh
+                    call(sshcmd, shell=True)
+                    authorized_keys_file = os.path.expanduser('~/.ssh/authorized_keys')
+                    file_mode = 'a' if os.path.exists(authorized_keys_file) else 'w'
+                    with open(authorized_keys_file, file_mode) as f:
+                        publickey = open("%s/id_rsa.pub" % orissh).read().strip()
+                        f.write("\n%s" % publickey)
+                ns = "openshift-infra"
+                dest = "%s/openshift/99-kcli-conf-cm.yaml" % clusterdir
+                cmcmd = 'KUBECONFIG=%s/fake_kubeconfig.json ' % plandir
+                cmcmd += "oc create cm -n %s kcli-conf --from-file=%s --dry-run=client -o yaml > %s" % (ns, oriconf,
+                                                                                                        dest)
+                call(cmcmd, shell=True)
+                dest = "%s/openshift/99-kcli-ssh-cm.yaml" % clusterdir
+                cmcmd = 'KUBECONFIG=%s/fake_kubeconfig.json  ' % plandir
+                cmcmd += "oc create cm -n %s kcli-ssh --from-file=%s --dry-run=client -o yaml > %s" % (ns, orissh, dest)
+                call(cmcmd, shell=True)
+            deletionfile2 = "%s/99-bootstrap-deletion-2.yaml" % plandir
+            deletionfile2 = config.process_inputfile(cluster, deletionfile2, overrides={'registry': registry,
+                                                                                        'arch_tag': arch_tag})
+            with open("%s/openshift/99-bootstrap-deletion-2.yaml" % clusterdir, 'w') as _f:
+                _f.write(deletionfile2)
         if notify:
             notifycmd = "echo Cluster %s installed on %s" % (cluster, config.client)
             notifycmds, mailcontent = config.handle_notifications(cluster, notifymethods=config.notifymethods,
