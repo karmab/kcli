@@ -1229,6 +1229,8 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
         result = json.dumps(data, sort_keys=True, indent=indent, separators=separators)
     except:
         result = json.dumps(data, indent=indent, separators=separators)
+    if compact:
+        result = "".join(result.split())
     return result
 
 

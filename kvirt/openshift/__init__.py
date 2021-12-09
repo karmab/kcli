@@ -674,6 +674,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         iso_overrides = overrides.copy()
         iso_overrides['image'] = 'rhcos49'
         iso_overrides['noname'] = True
+        iso_overrides['compact'] = True
     static_networking_master, static_networking_worker = False, False
     macentries = []
     vmrules = overrides.get('vmrules', [])
@@ -1264,8 +1265,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         pprint("Deploying bootstrap")
         if baremetal_iso_bootstrap:
             result = config.plan(plan, inputfile='%s/bootstrap.yml' % plandir, overrides=iso_overrides, onlyassets=True)
+            iso_data = result['assets'][0]
             with open('iso.ign', 'w') as f:
-                f.write(result['assets'][0])
+                f.write(iso_data)
             iso_pool = data['pool'] or config.pool
             generate_rhcos_iso(k, cluster + '-bootstrap', iso_pool, force=True)
         else:
@@ -1277,9 +1279,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         pprint("Deploying masters")
         if baremetal_iso_master:
             result = config.plan(plan, inputfile='%s/masters.yml' % plandir, overrides=iso_overrides, onlyassets=True)
+            iso_data = result['assets'][0]
             ignitionfile = '%s-master.ign' % cluster
             with open(ignitionfile, 'w') as f:
-                f.write(result['assets'][0])
+                f.write(iso_data)
             iso_overrides['version'] = tag
             config.create_openshift_iso(ignitionfile, overrides=iso_overrides, ignitionfile=ignitionfile)
             os.remove(ignitionfile)
@@ -1361,9 +1364,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             if baremetal_iso_worker:
                 result = config.plan(plan, inputfile='%s/workers.yml' % plandir, overrides=iso_overrides,
                                      onlyassets=True)
+                iso_data = result['assets'][0]
                 ignitionfile = '%s-worker' % cluster
                 with open(ignitionfile, 'w') as f:
-                    f.write(result['assets'][0])
+                    f.write(iso_data)
                 iso_overrides['version'] = tag
                 config.create_openshift_iso(ignitionfile, overrides=iso_overrides, ignitionfile=ignitionfile)
                 os.remove(ignitionfile)
