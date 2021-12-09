@@ -685,16 +685,15 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 rule = entry[hostname]
                 if 'nets' in rule and isinstance(rule['nets'], list):
                     netrule = rule['nets'][0]
-                    if isinstance(netrule, dict) and 'mac' in netrule and\
-                       'ip' in netrule and 'netmask' in netrule and 'gateway' in netrule:
-                        mac, ip = netrule['mac'], netrule['ip']
+                    if isinstance(netrule, dict) and 'ip' in netrule and 'netmask' in netrule and 'gateway' in netrule:
+                        mac, ip = netrule.get('mac'), netrule['ip']
                         netmask, gateway = netrule['netmask'], netrule['gateway']
                         nameserver = netrule.get('dns', gateway)
-                        macentries.append("%s;%s;%s;%s;%s;%s" % (mac, hostname, ip, netmask, gateway,
-                                                                 nameserver))
+                        if mac is not None:
+                            macentries.append("%s;%s;%s;%s;%s;%s" % (mac, hostname, ip, netmask, gateway, nameserver))
                         if hostname.startswith("%s-master" % cluster):
                             static_networking_master = True
-                        elif hostname.startswith("%s-master" % cluster):
+                        elif hostname.startswith("%s-worker" % cluster):
                             static_networking_worker = True
     if macentries and (baremetal_iso_master or baremetal_iso_worker):
         pprint("Creating a macs.txt to include in isos for static networking")

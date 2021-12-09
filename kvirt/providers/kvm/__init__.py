@@ -2929,6 +2929,7 @@ class Kvirt(object):
                                                                                              self.host, poolpath,
                                                                                              shortimage_uncompressed,
                                                                                              cmd)
+                print(cmd)
                 os.system(cmd)
         if pooltype in ['logical', 'zfs']:
             product = list(root.iter('product'))
