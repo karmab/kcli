@@ -7,7 +7,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from distutils.spawn import find_executable
 from kvirt import common
-from kvirt.common import error, pprint, warning
+from kvirt.common import error, pprint
 from kvirt.defaults import UBUNTUS, METADATA_FIELDS
 from math import ceil
 from pyVmomi import vim, vmodl
@@ -1334,7 +1334,6 @@ class Ksphere:
         while True:
             if lease.state == vim.HttpNfcLease.State.ready:
                 pprint("Uploading vmdk")
-                warning("If hitting any issues when uploading image, please upload manually")
                 host = self._getfirshost()
                 url = lease.info.deviceUrl[0].url.replace('*', host.name)
                 keepalive_thread = Thread(target=keep_lease_alive, args=(lease,))
