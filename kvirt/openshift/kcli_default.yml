@@ -99,4 +99,7 @@ ipsec: false
 async: false
 notify: false
 monitoring_retention: 24h
-static_networking: False
+baremetal: false
+baremetal_bootstrap: false
+baremetal_master: false
+baremetal_worker: false
