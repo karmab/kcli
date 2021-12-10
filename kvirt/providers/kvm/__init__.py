@@ -746,8 +746,8 @@ class Kvirt(object):
                     ignitiontmpdir.cleanup()
             if image is not None and not ignition and diskpath is not None:
                 cloudinitiso = "%s/%s.ISO" % (default_poolpath, name)
-                dtype = 'block' if '/dev' in diskpath else 'file'
-                dsource = 'dev' if '/dev' in diskpath else 'file'
+                dtype = 'block' if diskpath.startswith('/dev') else 'file'
+                dsource = 'dev' if diskpath.startswith('/dev') else 'file'
                 isobus = 'scsi' if aarch64_full else 'sata'
                 isoxml = """%s<disk type='%s' device='cdrom'>
 <driver name='qemu' type='raw'/>
