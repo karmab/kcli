@@ -6,6 +6,7 @@ Kvirt config class
 
 import base64
 from datetime import datetime
+from fnmatch import fnmatch
 import json
 from jinja2 import Environment, FileSystemLoader
 from jinja2 import StrictUndefined as undefined
@@ -1774,7 +1775,7 @@ class Kconfig(Kbaseconfig):
                         error("Wrong vm rule %s" % entry)
                         sys.exit(1)
                     rule = list(entry.keys())[0]
-                    if re.match(rule, name) and isinstance(entry[rule], dict):
+                    if (re.match(rule, name) or fnmatch(name, rule)) and isinstance(entry[rule], dict):
                         listkeys = ['cmds', 'files', 'scripts']
                         for rule in entry:
                             current = entry[rule]
