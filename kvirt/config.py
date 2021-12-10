@@ -1700,18 +1700,19 @@ class Kconfig(Kbaseconfig):
                     error("Client %s not found. skipped" % kubeclient)
                     continue
                 kubetype = kubeprofile.get('kubetype', 'generic')
-                overrides = kubeprofile
-                overrides['cluster'] = cluster
+                kube_overrides = overrides.copy()
+                kube_overrides.update(kubeprofile)
+                kube_overrides['cluster'] = cluster
                 existing_masters = [v for v in currentconfig.k.list() if '%s-master' % cluster in v['name']]
                 if existing_masters:
                     pprint("Cluster %s found. skipped!" % cluster)
                     continue
                 if kubetype == 'openshift':
-                    currentconfig.create_kube_openshift(plan, overrides=overrides)
+                    currentconfig.create_kube_openshift(plan, overrides=kube_overrides)
                 elif kubetype == 'k3s':
-                    currentconfig.create_kube_k3s(plan, overrides=overrides)
+                    currentconfig.create_kube_k3s(plan, overrides=kube_overrides)
                 elif kubetype == 'generic':
-                    currentconfig.create_kube_generic(plan, overrides=overrides)
+                    currentconfig.create_kube_generic(plan, overrides=kube_overrides)
                 else:
                     warning("Incorrect kubetype %s specified. skipped!" % kubetype)
                     continue
