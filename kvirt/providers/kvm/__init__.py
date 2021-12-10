@@ -334,6 +334,7 @@ class Kvirt(object):
         fixqcow2path, fixqcow2backing = None, None
         volsxml = {}
         virtio_index, ide_index, scsi_index = 0, 0, 0
+        firstdisk = None
         for index, disk in enumerate(disks):
             if disk is None:
                 disksize = default_disksize
@@ -418,6 +419,7 @@ class Kvirt(object):
             diskpath = "%s/%s" % (diskpoolpath, storagename)
             if image is not None and index == 0:
                 diskimage = image
+                firstdisk = diskpath
             if diskimage is not None:
                 manual_disk_path = False
                 try:
@@ -1187,6 +1189,18 @@ class Kvirt(object):
                 storagepool.createXML(volxml, 0)
         if fixqcow2path is not None and fixqcow2backing is not None:
             self._fixqcow2(fixqcow2path, fixqcow2backing)
+        if firstdisk is not None and ('rhcos' in image or 'fcos' in image) and cmdline is not None:
+            bootdisk = '/dev/sda3'
+            bootfile = "/boot/loader/entries/ostree-1-rhcos.conf"
+            cmd = "virt-edit -a %s -m %s %s -e 's/^options/options %s/'" % (firstdisk, bootdisk, bootfile, cmdline)
+            if self.host == 'localhost' or self.host == '127.0.0.1':
+                if find_executable('virt-edit') is not None:
+                    os.system(cmd)
+            elif self.protocol == 'ssh':
+                cmd = cmd.replace("'", "\'")
+                cmd = 'ssh %s -p %s %s@%s "%s"' % (self.identitycommand, self.port, self.user, self.host, cmd)
+                print(cmd)
+                os.system(cmd)
         xml = vm.XMLDesc(0)
         vmxml = ET.fromstring(xml)
         self._reserve_ip(name, domain, vmxml, nets, primary=reserveip, networks=allnetworks)
