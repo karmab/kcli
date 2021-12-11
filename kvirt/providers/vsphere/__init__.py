@@ -703,6 +703,23 @@ class Ksphere:
                         groups_spec = vim.cluster.ConfigSpecEx(rulesSpec=[rulespec])
                         t = clu.ReconfigureEx(groups_spec, modify=True)
                         waitForMe(t)
+        antipeers = overrides.get('antipeers', [])
+        if antipeers and antipeers[-1] == name:
+            antipeers_rule = '-'.join(antipeers)
+            pprint("Creating anti affinity rule %s" % antipeers_rule)
+            vms = []
+            for member in antipeers:
+                vm = findvm(si, vmFolder, member)
+                if vm is None:
+                    error("VM %s not found" % member)
+                else:
+                    vms.append(vm)
+            if len(vms) > 1:
+                rule_obj = vim.cluster.AntiAffinityRuleSpec(vm=vms, enabled=True, mandatory=True, name=antipeers_rule)
+                rulespec = vim.cluster.RuleSpec(info=rule_obj, operation='add')
+                groups_spec = vim.cluster.ConfigSpecEx(rulesSpec=[rulespec])
+                t = clu.ReconfigureEx(groups_spec, modify=True)
+                waitForMe(t)
         if start:
             t = vm.PowerOnVM_Task(None)
             waitForMe(t)

@@ -525,8 +525,8 @@ Note that pool in Vsphere context refers to datastore.
 
 To use this provider with kcli rpm, you’ll need to install *python3-pyvmomi* and *python3-requests*
 
-Using hostgroups
-~~~~~~~~~~~~~~~~
+Using hostgroups and vm-host rules
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The requisite is to create the hostgroup by yourself so that you can associate your hosts to it.
 
@@ -539,6 +539,11 @@ hostgroup and hostrule: if both are provided and the hostrule doesnt exist, it w
 Note that when using this within a plan (or a cluster), it’s enough to provide hostgroup and hostrule for the first vm of the plan so that the hostrule gets created ( though a kcli vmrule for instance), and vmgroup for all of them, so that the group gets created with the first vm, and then the remaining vm only get added.
 
 Also note that vmgroups and hostrules dont get deleted along with vms (to ease recreation of the same assets)
+
+Using vm anti affinity rules
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Within a plan, you can set the keyword ``antipeers`` to a list of vms which should never land on the same esx host. When the last vm from this list gets created, the corresponding anti affinity rule will be created (and vsphere will relocate the other vms accordingly)
 
 Packet
 ------
