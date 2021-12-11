@@ -2163,9 +2163,10 @@ class Kvirt(object):
                     base.append(dns)
                     newxml = ET.tostring(root)
                     conn.networkDefineXML(newxml.decode("utf-8"))
-                fqdn = "%s.%s" % (name, domain) if domain is not None else name
+                fqdn = "%s.%s" % (name, domain) if domain is not None and not name.endswith(domain) else name
                 hostnamexml = '<hostname>%s</hostname>' % fqdn
-                alias = ["%s.%s" % (entry, domain) if domain is not None else entry for entry in alias]
+                alias = ["%s.%s" % (entry, domain) if domain is not None and
+                         not entry.endswith(domain) else entry for entry in alias]
                 aliasxml = ["<hostname>%s</hostname>" % entry for entry in alias]
                 if dns:
                     for hostentry in list(dns[0].iter('host')):
