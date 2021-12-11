@@ -511,7 +511,19 @@ Note that pool in Vsphere context refers to datastore.
 
 To use this provider with kcli rpm, you'll need to install *python3-pyvmomi* and *python3-requests*
 
-Also note that kcli download will only upload OVAS, either from specified urls or gathering them in the case of rhcos/fcos.
+### Using hostgroups
+
+The requisite is to create the hostgroup by yourself so that you can associate your hosts to it.
+
+Then, when creating a vm, one can provide 3 extra parameters:
+
+vmgroup: if it doesn't exist, the group will be created and in any case, the vm will get added to it.
+
+hostgroup and hostrule: if both are provided and the hostrule doesnt exist, it will be created as affinity rule with the vmgroup and the hostgroup to it.
+
+Note that when using this within a plan (or a cluster), it's enough to provide hostgroup and hostrule for the first vm of the plan so that the hostrule gets created ( though a kcli vmrule for instance), and vmgroup for all of them, so that the group gets created with the first vm, and then the remaining vm only get added.
+
+Also note that vmgroups and hostrules dont get deleted along with vms (to ease recreation of the same assets)
 
 ## Packet
 

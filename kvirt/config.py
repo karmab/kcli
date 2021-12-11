@@ -1000,7 +1000,7 @@ class Kconfig(Kbaseconfig):
             metadata['kubetype'] = kubetype
             metadata['kube'] = kube
         if start and cloudinit and not cmds and not files:
-            good_keys = ['name', 'noname', 'type', 'plan', 'compact']
+            good_keys = ['name', 'noname', 'type', 'plan', 'compact', 'hostgroup', 'hostrule', 'vmgroup']
             wrong_keys = [key for key in overrides if key not in good_keys and
                           not key.startswith('config_') and key not in self.list_keywords()]
             if wrong_keys:
