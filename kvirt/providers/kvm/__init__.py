@@ -3068,8 +3068,9 @@ class Kvirt(object):
             dnsxml = "<dns>%s</dns>" % forwarderxml
         namespace = ''
         dnsmasqxml = ''
-        dhcpoptions = {k: overrides[k] for k in overrides if k not in
-                       ['type', 'cidr', 'dhcp', 'forwarders', 'macvtap', 'nic', 'dual_cidr', 'mtu', 'domain', 'nat']}
+        keywordoptions = ['type', 'isolated', 'cidr', 'dhcp', 'forwarders', 'macvtap', 'nic', 'dual_cidr', 'mtu',
+                          'domain', 'nat']
+        dhcpoptions = {k: overrides[k] for k in overrides if k not in keywordoptions}
         if dhcpoptions:
             namespace = "xmlns:dnsmasq='http://libvirt.org/schemas/network/dnsmasq/1.0'"
             dnsmasqxml = "<dnsmasq:options>"
