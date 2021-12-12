@@ -1148,9 +1148,8 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
                     cidr = IPAddress(netmask).netmask_bits()
                 netdata = "DEVICE=%s\nNAME=%s\nONBOOT=yes\nNM_CONTROLLED=yes\n" % (nicname, nicname)
                 netdata += "BOOTPROTO=static\nIPADDR=%s\nPREFIX=%s\nGATEWAY=%s" % (ip, cidr, gateway)
-                dns = net.get('dns')
-                if dns is not None:
-                    netdata += "\nDNS1=%s\n" % dns
+                dns = net.get('dns', gateway)
+                netdata += "\nDNS1=%s\n" % dns
                 if isinstance(vips, list) and vips:
                     for vip in vips:
                         netdata += "[Network]\nAddress=%s/%s\nGateway=%s\n" % (vip, netmask, gateway)
@@ -1930,8 +1929,8 @@ def filter_compression_extension(name):
     return name.replace('.gz', '').replace('.xz', '').replace('.bz2', '')
 
 
-def generate_rhcos_iso(k, cluster, pool, version='latest', force=False):
-    if force:
+def generate_rhcos_iso(k, cluster, pool, version='latest', podman=False, installer=False):
+    if installer:
         liveiso = get_installer_iso()
         baseiso = os.path.basename(liveiso)
     else:
@@ -1945,18 +1944,30 @@ def generate_rhcos_iso(k, cluster, pool, version='latest', force=False):
         k.delete_image('%s.iso' % cluster)
     pprint("Creating iso %s.iso" % cluster)
     poolpath = k.get_pool_path(pool)
-    isocmd = "coreos-installer iso ignition embed -fi %s/iso.ign -o %s/%s.iso %s/%s" % (poolpath, poolpath, cluster,
-                                                                                        poolpath, baseiso)
-    if not os.path.exists('coreos-installer'):
-        arch = os.uname().machine if not os.path.exists('/Users') else 'x86_64'
-        get_coreos_installer(arch=arch)
+    if podman:
+        coreosinstaller = "podman run --privileged --rm -w /data -v %s:/data -v /dev:/dev" % poolpath
+        if not os.path.exists('/Users'):
+            coreosinstaller += " -v /run/udev:/run/udev"
+        coreosinstaller += " quay.io/coreos/coreos-installer:release"
+        isocmd = "%s iso ignition embed -fi iso.ign -o %s.iso %s" % (coreosinstaller, cluster, baseiso)
+    else:
+        isocmd = "coreos-installer iso ignition embed -fi %s/iso.ign -o %s/%s.iso %s/%s" % (poolpath, poolpath, cluster,
+                                                                                            poolpath, baseiso)
+        if not os.path.exists('coreos-installer'):
+            arch = os.uname().machine if not os.path.exists('/Users') else 'x86_64'
+            get_coreos_installer(arch=arch)
     os.environ["PATH"] += ":%s" % os.getcwd()
     if k.conn == 'fake':
         os.system(isocmd)
     elif k.host in ['localhost', '127.0.0.1']:
+        if podman and find_executable('podman') is None:
+            error("podman is required in order to embed iso ignition")
+            sys.exit(1)
         copy2('iso.ign', poolpath)
         os.system(isocmd)
     elif k.protocol == 'ssh':
+        if podman:
+            warning("podman is required in the remote hypervisor in order to embed iso ignition")
         createbindircmd = 'ssh %s -p %s %s@%s "mkdir bin >/dev/null 2>&1"' % (k.identitycommand, k.port, k.user, k.host)
         os.system(createbindircmd)
         scpbincmd = 'scp %s -qP %s coreos-installer %s@%s:bin' % (k.identitycommand, k.port, k.user, k.host)

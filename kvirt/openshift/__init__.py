@@ -670,11 +670,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         error("Missing image in your parameters file. This is required for packet")
         sys.exit(1)
     overrides['image'] = image
-    if baremetal_iso_any:
-        iso_overrides = overrides.copy()
-        iso_overrides['image'] = 'rhcos49'
-        iso_overrides['noname'] = True
-        iso_overrides['compact'] = True
     static_networking_master, static_networking_worker = False, False
     macentries = []
     vmrules = overrides.get('vmrules', [])
@@ -1132,14 +1127,14 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             f.write(result['data'])
         if config.type == 'fake':
             pprint("Storing iso in current dir")
-            generate_rhcos_iso(k, cluster, 'default', force=True)
+            generate_rhcos_iso(k, cluster, 'default', installer=True)
         elif config.type != 'kvm':
             pprint("Additional workflow not available on %s" % config.type)
             pprint("Embed iso.ign in rhcos live iso")
             sys.exit(0)
         else:
             iso_pool = data['pool'] or config.pool
-            generate_rhcos_iso(k, cluster, iso_pool, force=True)
+            generate_rhcos_iso(k, cluster, iso_pool, installer=True)
             if sno_virtual:
                 pprint("Deploying sno vm")
                 result = config.plan(plan, inputfile='%s/sno.yml' % plandir, overrides=data)
@@ -1263,15 +1258,26 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         sedcmd = 'sed "s@%s/config/master@%s@" ' % (ori_url, bucket_url)
         sedcmd += '%s/master.ign > %s/bootstrap.ign' % (clusterdir, clusterdir)
         call(sedcmd, shell=True)
+    if baremetal_iso_any:
+        baremetal_iso_overrides = overrides.copy()
+        baremetal_iso_overrides['image'] = 'rhcos49'
+        baremetal_iso_overrides['noname'] = True
+        baremetal_iso_overrides['compact'] = True
+        baremetal_iso_overrides['version'] = tag
     if platform in virtplatforms:
         pprint("Deploying bootstrap")
         if baremetal_iso_bootstrap:
-            result = config.plan(plan, inputfile='%s/bootstrap.yml' % plandir, overrides=iso_overrides, onlyassets=True)
+            result = config.plan(plan, inputfile='%s/bootstrap.yml' % plandir, overrides=baremetal_iso_overrides,
+                                 onlyassets=True)
             iso_data = result['assets'][0]
             with open('iso.ign', 'w') as f:
                 f.write(iso_data)
-            iso_pool = data['pool'] or config.pool
-            generate_rhcos_iso(k, cluster + '-bootstrap', iso_pool, force=True)
+            ignitionfile = '%s-bootstrap.ign' % cluster
+            with open(ignitionfile, 'w') as f:
+                f.write(iso_data)
+            config.create_openshift_iso(ignitionfile, overrides=baremetal_iso_overrides, ignitionfile=ignitionfile,
+                                        podman=True, installer=True)
+            os.remove(ignitionfile)
         else:
             result = config.plan(plan, inputfile='%s/bootstrap.yml' % plandir, overrides=overrides)
             if result['result'] != 'success':
@@ -1280,13 +1286,14 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             wait_for_ignition(cluster, domain, role='master')
         pprint("Deploying masters")
         if baremetal_iso_master:
-            result = config.plan(plan, inputfile='%s/masters.yml' % plandir, overrides=iso_overrides, onlyassets=True)
+            result = config.plan(plan, inputfile='%s/masters.yml' % plandir, overrides=baremetal_iso_overrides,
+                                 onlyassets=True)
             iso_data = result['assets'][0]
             ignitionfile = '%s-master.ign' % cluster
             with open(ignitionfile, 'w') as f:
                 f.write(iso_data)
-            iso_overrides['version'] = tag
-            config.create_openshift_iso(ignitionfile, overrides=iso_overrides, ignitionfile=ignitionfile)
+            config.create_openshift_iso(ignitionfile, overrides=baremetal_iso_overrides, ignitionfile=ignitionfile,
+                                        podman=True, installer=True)
             os.remove(ignitionfile)
         else:
             result = config.plan(plan, inputfile='%s/masters.yml' % plandir, overrides=overrides)
@@ -1364,14 +1371,14 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             del overrides['name']
         if platform in virtplatforms:
             if baremetal_iso_worker:
-                result = config.plan(plan, inputfile='%s/workers.yml' % plandir, overrides=iso_overrides,
+                result = config.plan(plan, inputfile='%s/workers.yml' % plandir, overrides=baremetal_iso_overrides,
                                      onlyassets=True)
                 iso_data = result['assets'][0]
                 ignitionfile = '%s-worker' % cluster
                 with open(ignitionfile, 'w') as f:
                     f.write(iso_data)
-                iso_overrides['version'] = tag
-                config.create_openshift_iso(ignitionfile, overrides=iso_overrides, ignitionfile=ignitionfile)
+                config.create_openshift_iso(ignitionfile, overrides=baremetal_iso_overrides, ignitionfile=ignitionfile,
+                                            podman=True, installer=True)
                 os.remove(ignitionfile)
             else:
                 result = config.plan(plan, inputfile='%s/workers.yml' % plandir, overrides=overrides)
