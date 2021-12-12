@@ -1267,7 +1267,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if platform in virtplatforms:
         pprint("Deploying bootstrap")
         if baremetal_iso_bootstrap:
-            result = config.plan(plan, inputfile='%s/bootstrap.yml' % plandir, overrides=baremetal_iso_overrides,
+            bootstrap_iso_overrides = baremetal_iso_overrides.copy()
+            bootstrap_iso_overrides['noname'] = False
+            result = config.plan(plan, inputfile='%s/bootstrap.yml' % plandir, overrides=bootstrap_iso_overrides,
                                  onlyassets=True)
             iso_data = result['assets'][0]
             with open('iso.ign', 'w') as f:
@@ -1275,9 +1277,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             ignitionfile = '%s-bootstrap.ign' % cluster
             with open(ignitionfile, 'w') as f:
                 f.write(iso_data)
-            config.create_openshift_iso(ignitionfile, overrides=baremetal_iso_overrides, ignitionfile=ignitionfile,
-                                        podman=True, installer=True)
-            os.remove(ignitionfile)
+            iso_pool = data['pool'] or config.pool
+            generate_rhcos_iso(k, cluster + '-bootstrap', iso_pool, installer=True)
         else:
             result = config.plan(plan, inputfile='%s/bootstrap.yml' % plandir, overrides=overrides)
             if result['result'] != 'success':
