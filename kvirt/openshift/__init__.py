@@ -712,6 +712,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         disconnected_overrides = data.copy()
         disconnected_overrides['arch_tag'] = arch_tag
         disconnected_overrides['openshift_version'] = INSTALLER_VERSION
+        disconnected_overrides['disconnected_operators_version'] = INSTALLER_VERSION[:3]
         disconnected_overrides['openshift_release_image'] = get_release_image()
         data['openshift_release_image'] = disconnected_overrides['openshift_release_image']
         if metal3:
