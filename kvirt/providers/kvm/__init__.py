@@ -1192,7 +1192,7 @@ class Kvirt(object):
         if firstdisk is not None and ('rhcos' in image or 'fcos' in image) and cmdline is not None:
             bootdisk = '/dev/sda3'
             bootfile = "/boot/loader/entries/ostree-1-rhcos.conf"
-            cmd = "virt-edit -a %s -m %s %s -e 's/^options/options %s/'" % (firstdisk, bootdisk, bootfile, cmdline)
+            cmd = "sudo virt-edit -a %s -m %s %s -e 's/^options/options %s/'" % (firstdisk, bootdisk, bootfile, cmdline)
             if self.host == 'localhost' or self.host == '127.0.0.1':
                 if find_executable('virt-edit') is not None:
                     os.system(cmd)
