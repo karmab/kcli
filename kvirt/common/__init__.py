@@ -1554,7 +1554,7 @@ def mergeignition(name, ignitionextrapath, data):
                     ignitionextra[key][children[key]] = data[key][children[key]]
             elif key in data and key not in ignitionextra:
                 ignitionextra[key] = data[key]
-        if data['ignition']['config']:
+        if 'config' in data['ignition'] and data['ignition']['config']:
             ignitionextra['ignition']['config'] = data['ignition']['config']
     return ignitionextra
 
