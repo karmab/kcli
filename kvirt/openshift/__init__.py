@@ -720,7 +720,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             except:
                 openstack_uri = get_commit_rhcos(COMMIT_ID, 'openstack')
             disconnected_overrides['openstack_uri'] = openstack_uri
-        disconnected_operators.extend([app for app in apps if app not in disconnected_operators])
+        disconnected_operators.extend([app for app in apps if app not in disconnected_operators and app != 'users'])
         disconnected_overrides['disconnected_operators'] = disconnected_operators
         result = config.plan(disconnected_plan, inputfile='%s/disconnected.yml' % plandir,
                              overrides=disconnected_overrides)
