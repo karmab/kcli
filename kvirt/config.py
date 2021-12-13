@@ -1784,7 +1784,6 @@ class Kconfig(Kbaseconfig):
                                 if key in listkeys and isinstance(current[key], list) and key in profile:
                                     current[key] = profile[key] + current[key]
                             profile.update(entry[rule])
-                        break
                 vmclient = profile.get('client')
                 if vmclient is None:
                     z = k
