@@ -1002,7 +1002,7 @@ def get_user(image):
     :param image:
     :return:
     """
-    if 'centos9stream' in image.lower():
+    if 'centos-stream' in image.lower():
         user = 'cloud-user'
     elif 'centos' in image.lower() and not image.startswith('ibm'):
         user = 'centos'
