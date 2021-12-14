@@ -1,0 +1,118 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+ name: kcli-{{ plan }}
+spec:
+ workspaces:
+ - name: source
+ params:
+ - name: plan
+   description: plan
+   type: string
+   default: "{{ plan }}"
+{% if paramfile != None %}
+ - name: paramfile
+   type: string
+   default: "{{ paramfile }}"
+{% endif %}
+{% for param in parameters %}
+ - name: {{ param }}
+   description: {{ param }}
+   type: string
+   default: "{{ parameters[param] }}"
+{% endfor %}
+ steps:
+   - name: deploy
+     image: "quay.io/karmab/kcli:latest"
+     env:
+     - name: PLAN
+       value: $(params.plan)
+{% if paramfile != None %}
+     - name: PARAMFILE
+       value: $(params.paramfile)
+{% endif %}
+{% for param in parameters %}
+     - name: {{ param|upper }}
+       value: $(params.{{ param }})
+{% endfor %}
+     script: |
+      #!/usr/bin/env bash
+      cd /workspace/source
+      rm -rf /i_am_a_container
+      cp -Lr /root/.kcli_ori /root/.kcli
+      chmod 700 /root/.kcli/id*
+{% if kube %}
+      echo kcli create cluster {{ kubetype }} --force {{ paramfileline }} {{ parameterline }} $PLAN
+      kcli create cluster {{ kubetype }} --force {{ paramfileline }} {{ parameterline }} $PLAN
+{% else %}
+      echo kcli create plan --force -f {{ gitbase + inputfile }} {{ paramfileline }} {{ parameterline }} $PLAN
+      kcli create plan --force -f {{ gitbase + inputfile }} {{ paramfileline }} {{ parameterline }} $PLAN
+{% endif %}
+     volumeMounts:
+     - mountPath: /root/.kcli_ori
+       name: kcli-config
+ volumes:
+ - configMap:
+     defaultMode: 0700
+     name: kcli-config
+   name: kcli-config
+---
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: deploy-plan-{{ plan }}
+spec:
+  description: deploy plan {{ plan }}
+  params:
+  - name: plan
+    type: string
+    default: "{{ plan }}"
+{% if paramfile != None %}
+  - name: paramfile
+    type: string
+    default: "{{ paramfile }}"
+{% endif %}
+  - name: commit
+    type: string
+    default: "master"
+{% if parameters %}
+{% for param in parameters %}
+  - name: {{ param }}
+    description: {{ param }}
+    type: string
+    default: "{{ parameters[param] }}"
+{% endfor %}
+{% endif %}
+  workspaces:
+  - name: git-source
+  tasks:
+  - name: clone-repo
+    taskRef:
+      name: git-clone
+    workspaces:
+    - name: output
+      workspace: git-source
+    params:
+    - name: url
+      value: {{ giturl }}
+    - name: revision
+      value: $(params.commit)
+  - name: kcli-{{ plan }}
+    taskRef:
+      name: kcli-{{ plan }}
+    runAfter:
+    - clone-repo
+    workspaces:
+    - name: source
+      workspace: git-source
+    params:
+    - name: plan
+      value: $(params.plan)
+{% if paramfile != None %}
+    - name: paramfile
+      value: $(params.paramfile)
+{% endif %}
+{% for param in parameters %}
+    - name: {{ param }}
+      value: $(params.{{ param }})
+{% endfor %}

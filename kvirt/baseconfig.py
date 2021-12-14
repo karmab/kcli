@@ -1115,6 +1115,59 @@ class Kbaseconfig:
                                     client=client, kube=kube, kubetype=kubetype, runscript=runscript)
         return workflowfile
 
+    def create_tekton_pipeline(self, inputfile, paramfile=None, overrides={}, kube=False):
+        plan = overrides.get('plan')
+        if not kube:
+            inputfile = os.path.expanduser(inputfile) if inputfile is not None else 'kcli_plan.yml'
+            basedir = os.path.dirname(inputfile)
+            if basedir == "":
+                basedir = '.'
+            if not os.path.exists(inputfile):
+                error("No input file found nor default kcli_plan.yml. Leaving....")
+                sys.exit(1)
+            if plan is None:
+                plan = os.path.basename(inputfile).replace('.yml', '').replace('.yaml', '')
+        else:
+            inputfile = None
+            if plan is None:
+                plan = 'testk'
+        if 'plan' in overrides:
+            del overrides['plan']
+        client = 'local'
+        if 'client' in overrides:
+            client = overrides['client']
+            del overrides['client']
+        kubetype = 'generic'
+        if kube:
+            if 'kubetype' in overrides:
+                kubetype = overrides['kubetype']
+                del overrides['kubetype']
+        workflowdir = os.path.dirname(common.__file__)
+        env = Environment(loader=FileSystemLoader(workflowdir), extensions=['jinja2.ext.do'], trim_blocks=True,
+                          lstrip_blocks=True)
+        for jinjafilter in jinjafilters.jinjafilters:
+            env.filters[jinjafilter] = jinjafilters.jinjafilters[jinjafilter]
+        try:
+            workflowfile = "pipeline.yml.j2"
+            templ = env.get_template(os.path.basename(workflowfile))
+        except TemplateSyntaxError as e:
+            error("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message))
+            sys.exit(1)
+        except TemplateError as e:
+            error("Error rendering file %s. Got: %s" % (inputfile, e.message))
+            sys.exit(1)
+        paramline = []
+        for parameter in overrides:
+            paramline.append('-P %s="$%s"' % (parameter, parameter.upper()))
+        parameterline = " ".join(paramline)
+        paramfileline = "--paramfile $PARAMFILE" if paramfile is not None else ""
+        giturl = os.popen('git config --get remote.origin.url').read().strip()
+        gitbase = os.popen('git rev-parse --show-prefix 2>/dev/null').read().strip()
+        workflowfile = templ.render(plan=plan, inputfile=inputfile, parameters=overrides, parameterline=parameterline,
+                                    paramfileline=paramfileline, paramfile=paramfile, gitbase=gitbase, giturl=giturl,
+                                    client=client, kube=kube, kubetype=kubetype)
+        return workflowfile
+
     def info_kube_generic(self, quiet, web=False):
         plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
         inputfile = '%s/masters.yml' % plandir

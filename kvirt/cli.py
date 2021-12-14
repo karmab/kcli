@@ -2181,6 +2181,28 @@ def create_pipeline_jenkins(args):
     return 0
 
 
+def create_pipeline_tekton(args):
+    """Create Tekton Pipeline"""
+    inputfile = args.inputfile
+    kube = args.kube
+    paramfile = args.paramfile
+    if inputfile is None:
+        inputfile = 'kcli_plan.yml'
+    if os.path.exists("/i_am_a_container"):
+        inputfile = "/workdir/%s" % inputfile
+        if paramfile is not None:
+            paramfile = "/workdir/%s" % paramfile
+        elif os.path.exists("/workdir/kcli_parameters.yml"):
+            paramfile = "/workdir/kcli_parameters.yml"
+    elif paramfile is None and os.path.exists("kcli_parameters.yml"):
+        paramfile = "kcli_parameters.yml"
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    overrides = common.get_overrides(param=args.param)
+    renderfile = baseconfig.create_tekton_pipeline(inputfile, paramfile=paramfile, overrides=overrides, kube=kube)
+    print(renderfile)
+    return 0
+
+
 def render_file(args):
     """Render file"""
     plan = None
@@ -3874,6 +3896,18 @@ def cli():
                                               metavar='PARAM')
     jenkinspipelinecreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
     jenkinspipelinecreate_parser.set_defaults(func=create_pipeline_jenkins)
+
+    tektonpipelinecreate_desc = 'Create Tekton Pipeline'
+    tektonpipelinecreate_parser = pipelinecreate_subparsers.add_parser('tekton',
+                                                                       description=tektonpipelinecreate_desc,
+                                                                       help=tektonpipelinecreate_desc)
+    tektonpipelinecreate_parser.add_argument('-f', '--inputfile', help='Input Plan file')
+    tektonpipelinecreate_parser.add_argument('-k', '--kube', action='store_true', help='Create kube pipeline')
+    tektonpipelinecreate_parser.add_argument('-P', '--param', action='append',
+                                             help='Define parameter for rendering (can specify multiple)',
+                                             metavar='PARAM')
+    tektonpipelinecreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    tektonpipelinecreate_parser.set_defaults(func=create_pipeline_tekton)
 
     plancreate_desc = 'Create Plan'
     plancreate_epilog = "examples:\n%s" % plancreate
