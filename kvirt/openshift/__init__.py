@@ -324,9 +324,13 @@ def scale(config, plandir, cluster, overrides):
     if platform in virtplatforms:
         if api_ip is None:
             network = data.get('network')
-            if network == 'default' and platform == 'kvm':
-                warning("Using 192.168.122.253 as api_ip")
-                data['api_ip'] = "192.168.122.253"
+            networkinfo = k.info_network(network)
+            if platform == 'kvm' and networkinfo['type'] == 'routed':
+                cidr = networkinfo['cidr']
+                api_index = 2 if ':' in cidr else -3
+                api_ip = str(IPNetwork(cidr)[api_index])
+                warning("Using %s as api_ip" % api_ip)
+                data['api_ip'] = api_ip
             elif platform == 'kubevirt':
                 selector = {'kcli/plan': plan, 'kcli/role': 'master'}
                 api_ip = config.k.create_service("%s-api" % cluster, config.k.namespace, selector,
@@ -490,18 +494,26 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     image = data.get('image')
     ipi = data.get('ipi', False)
     api_ip = data.get('api_ip')
+    cidr = None
     if platform in virtplatforms and not sno and not ipi and api_ip is None:
-        if network == 'default' and platform == 'kvm':
-            warning("Using 192.168.122.253 as api_ip")
-            overrides['api_ip'] = "192.168.122.253"
-            api_ip = "192.168.122.253"
+        network = data.get('network')
+        networkinfo = k.info_network(network)
+        if platform == 'kvm' and networkinfo['type'] == 'routed':
+            cidr = networkinfo['cidr']
+            api_index = 2 if ':' in cidr else -3
+            api_ip = str(IPNetwork(cidr)[api_index])
+            warning("Using %s as api_ip" % api_ip)
+            overrides['api_ip'] = api_ip
         else:
             error("You need to define api_ip in your parameters file")
             sys.exit(1)
     if metal3:
         if 'baremetal_cidr' not in data:
-            error("You need to define baremetal_cidr in your parameters file for metal3")
-            sys.exit(1)
+            if cidr is not None:
+                data['baremetal_cidr'] = cidr
+            else:
+                error("You need to define baremetal_cidr in your parameters file for metal3")
+                sys.exit(1)
         if api_ip is None:
             error("You need to define api_ip for metal3")
             sys.exit(1)
@@ -510,8 +522,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             sys.exit(1)
         ingress_ip = data.get('ingress_ip')
         if ingress_ip is None:
-            error("You need to define ingress_ip for metal3")
-            sys.exit(1)
+            if cidr is not None:
+                ingress_index = 3 if ':' in cidr else -4
+                data.get['ingress_ip'] = str(IPNetwork(cidr)[ingress_index])
+            else:
+                error("You need to define ingress_ip for metal3")
+                sys.exit(1)
         if ingress_ip == api_ip:
             error("You need to set a different value for ingress_ip than api_ip for metal3")
             sys.exit(1)
@@ -562,8 +578,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             error("Missing flavor in parameter file")
             sys.exit(1)
         if api_ip is None:
-            cidr = config.k.list_networks()[network]['cidr']
-            api_ip = IPNetwork(cidr)[-2]
+            cidr = k.info_network(network)['cidr']
+            api_ip = str(IPNetwork(cidr)[-3])
             data['api_ip'] = api_ip
             warning("Using %s as api_ip" % api_ip)
         if public_api_ip is None:
