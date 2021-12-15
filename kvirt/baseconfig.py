@@ -962,6 +962,10 @@ class Kbaseconfig:
         self.profiles[profile] = overrides
         if not os.path.exists(rootdir):
             os.makedirs(rootdir)
+        if not os.access(path, os.W_OK):
+            msg = "Can't write in %s" % path
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
         with open(path, 'w') as profile_file:
             try:
                 yaml.safe_dump(self.profiles, profile_file, default_flow_style=False, encoding='utf-8',
