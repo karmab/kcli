@@ -1156,10 +1156,11 @@ def list_vmdisk(args):
 def create_openshift_iso(args):
     cluster = args.cluster
     ignitionfile = args.ignitionfile
+    direct = args.direct
     overrides = common.get_overrides(param=args.param)
     client = 'fake' if common.need_fake() else args.client
     config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.create_openshift_iso(cluster, overrides=overrides, ignitionfile=ignitionfile)
+    config.create_openshift_iso(cluster, overrides=overrides, ignitionfile=ignitionfile, direct=direct)
 
 
 def create_openshift_disconnecter(args):
@@ -3859,6 +3860,7 @@ def cli():
     isocreate_desc = 'Create an iso ignition for baremetal install'
     isocreate_epilog = "examples:\n%s" % isocreate
     isocreate_parser = argparse.ArgumentParser(add_help=False)
+    isocreate_parser.add_argument('-d', '--direct', action='store_true', help='Embed directly target ignition in iso')
     isocreate_parser.add_argument('-f', '--ignitionfile', help='Ignition file')
     isocreate_parser.add_argument('-P', '--param', action='append',
                                   help='specify parameter or keyword for rendering (can specify multiple)',

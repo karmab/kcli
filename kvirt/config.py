@@ -2527,7 +2527,8 @@ class Kconfig(Kbaseconfig):
                             installermode=installermode)
         kexposer.run()
 
-    def create_openshift_iso(self, cluster, overrides={}, ignitionfile=None, podman=False, installer=False):
+    def create_openshift_iso(self, cluster, overrides={}, ignitionfile=None, podman=False, installer=False,
+                             direct=False):
         metal_url = None
         iso_version = str(overrides.get('version', 'latest'))
         if iso_version not in ['latest', 'pre-release'] and not iso_version.startswith('4.'):
@@ -2588,23 +2589,26 @@ class Kconfig(Kbaseconfig):
                 ignition_url = "http://%s:22624/config/%s" % (api_ip, role)
                 finaldata = templ.render(ignition_url=ignition_url, hosts_content=hosts_content,
                                          ignition_version=ignition_version)
-            _files = [{"path": "/root/config.ign", "content": finaldata}]
-            if os.path.exists('iso.sh'):
-                pprint("Using local iso.sh script")
-                isoscript = 'iso.sh'
+            if direct:
+                f.write(finaldata)
             else:
-                isoscript = '%s/iso.sh' % plandir
-            if os.path.exists('macs.txt'):
-                _files.append({"path": "/root/macs.txt", "origin": 'macs.txt'})
-            iso_overrides = {'scripts': [isoscript], 'files': _files, 'metal_url': metal_url}
-            if metal_url is not None:
-                iso_overrides['need_network'] = True
-            iso_overrides.update(overrides)
-            result = self.create_vm('autoinstaller', 'rhcos46', overrides=iso_overrides, onlyassets=True)
-            if 'reason' in result:
-                error(result['reason'])
-            else:
-                f.write(result['data'])
+                _files = [{"path": "/root/config.ign", "content": finaldata}]
+                if os.path.exists('iso.sh'):
+                    pprint("Using local iso.sh script")
+                    isoscript = 'iso.sh'
+                else:
+                    isoscript = '%s/iso.sh' % plandir
+                if os.path.exists('macs.txt'):
+                    _files.append({"path": "/root/macs.txt", "origin": 'macs.txt'})
+                iso_overrides = {'scripts': [isoscript], 'files': _files, 'metal_url': metal_url}
+                if metal_url is not None:
+                    iso_overrides['need_network'] = True
+                iso_overrides.update(overrides)
+                result = self.create_vm('autoinstaller', 'rhcos46', overrides=iso_overrides, onlyassets=True)
+                if 'reason' in result:
+                    error(result['reason'])
+                else:
+                    f.write(result['data'])
         if iso:
             if self.type not in ['kvm', 'fake']:
                 warning("Iso only get generated for kvm type")
