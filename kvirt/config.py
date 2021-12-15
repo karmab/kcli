@@ -1945,8 +1945,6 @@ class Kconfig(Kbaseconfig):
                             IMAGES[imageprofile] not in [os.path.basename(v) for v in self.k.volumes()]:
                         pprint("Image %s not found. Downloading" % imageprofile)
                         self.handle_host(pool=self.pool, image=imageprofile, download=True, update_profile=True)
-                        profile['image'] = os.path.basename(IMAGES[imageprofile])
-                        currentoverrides['image'] = profile['image']
                 result = self.create_vm(name, profilename, overrides=currentoverrides, customprofile=profile, k=z,
                                         plan=plan, basedir=currentplandir, client=vmclient, onfly=onfly,
                                         onlyassets=onlyassets)
