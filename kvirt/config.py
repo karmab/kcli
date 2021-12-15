@@ -16,7 +16,7 @@ from kvirt import ansibleutils
 from kvirt.jinjafilters import jinjafilters
 from kvirt import nameutils
 from kvirt import common
-from kvirt.common import error, pprint, success, warning, generate_rhcos_iso, pwd_path
+from kvirt.common import error, pprint, success, warning, generate_rhcos_iso, pwd_path, container_mode
 from kvirt.common import ssh, scp, _ssh_credentials
 from kvirt import k3s
 from kvirt import kubeadm
@@ -1435,7 +1435,7 @@ class Kconfig(Kbaseconfig):
             path = plan if path is None else path
             if not quiet:
                 pprint("Retrieving specified plan from %s to %s" % (url, path))
-            if os.path.exists("/i_am_a_container"):
+            if container_mode():
                 path = "/workdir/%s" % path
             if not os.path.exists(path):
                 toclean = True if info else False
@@ -1727,7 +1727,7 @@ class Kconfig(Kbaseconfig):
             if basefile is not None:
                 basedir = os.path.dirname(inputfile) if '/' in inputfile else '.'
                 baseinputfile = "%s/%s" % (basedir, basefile)
-                if os.path.exists("/i_am_a_container") and not os.path.isabs(basefile) and '/workdir' not in basedir:
+                if container_mode() and not os.path.isabs(basefile) and '/workdir' not in basedir:
                     baseinputfile = "/workdir/%s/%s" % (basedir, basefile)
                 self.plan(plan, inputfile=baseinputfile, overrides=overrides, excludevms=vmnames, basemode=True)
                 baseplans.append(basefile)
@@ -1750,8 +1750,7 @@ class Kconfig(Kbaseconfig):
                         baseplan = profile['baseplan']
                         basedir = os.path.dirname(inputfile) if '/' in inputfile else '.'
                         baseinputfile = "%s/%s" % (basedir, baseplan)
-                        if os.path.exists("/i_am_a_container") and not os.path.isabs(baseplan)\
-                           and '/workdir' not in basedir:
+                        if container_mode() and not os.path.isabs(baseplan) and '/workdir' not in basedir:
                             baseinputfile = "/workdir/%s/%s" % (basedir, baseplan)
                         basevm = profile['basevm'] if 'basevm' in profile else name
                         if baseplan not in baseplans:
@@ -2397,7 +2396,7 @@ class Kconfig(Kbaseconfig):
         return True
 
     def create_kube_generic(self, cluster, overrides={}):
-        if os.path.exists('/i_am_a_container'):
+        if container_mode():
             os.environ['PATH'] += ':/workdir'
         else:
             os.environ['PATH'] += ':%s' % os.getcwd()
@@ -2405,7 +2404,7 @@ class Kconfig(Kbaseconfig):
         kubeadm.create(self, plandir, cluster, overrides)
 
     def create_kube_k3s(self, cluster, overrides={}):
-        if os.path.exists('/i_am_a_container'):
+        if container_mode():
             os.environ['PATH'] += ':/workdir'
         else:
             os.environ['PATH'] += ':%s' % os.getcwd()
@@ -2413,7 +2412,7 @@ class Kconfig(Kbaseconfig):
         k3s.create(self, plandir, cluster, overrides)
 
     def create_kube_openshift(self, cluster, overrides={}):
-        if os.path.exists('/i_am_a_container'):
+        if container_mode():
             os.environ['PATH'] += ':/workdir'
         else:
             os.environ['PATH'] += ':%s' % os.getcwd()

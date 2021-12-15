@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from distutils.spawn import find_executable
-from kvirt.common import success, pprint, error, warning, get_kubectl, scp, _ssh_credentials, info2
+from kvirt.common import success, pprint, error, warning, get_kubectl, scp, _ssh_credentials, info2, container_mode
 import os
 import sys
 import yaml
@@ -12,7 +12,7 @@ cloudplatforms = ['aws', 'gcp']
 def scale(config, plandir, cluster, overrides):
     plan = cluster
     data = {'cluster': cluster, 'kube': cluster, 'kubetype': 'k3s'}
-    data['basedir'] = '/workdir' if os.path.exists("/i_am_a_container") else '.'
+    data['basedir'] = '/workdir' if container_mode() else '.'
     cluster = data.get('cluster')
     clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
     if os.path.exists("%s/kcli_parameters.yml" % clusterdir):
@@ -74,7 +74,7 @@ def create(config, plandir, cluster, overrides):
             else:
                 error("You need to define api_ip in your parameters file")
                 sys.exit(1)
-    data['basedir'] = '/workdir' if os.path.exists("/i_am_a_container") else '.'
+    data['basedir'] = '/workdir' if container_mode() else '.'
     install_k3s_args = []
     for arg in data:
         if arg.startswith('install_k3s'):

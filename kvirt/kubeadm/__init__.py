@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from distutils.spawn import find_executable
-from kvirt.common import success, error, pprint, warning, info2
+from kvirt.common import success, error, pprint, warning, info2, container_mode
 from kvirt.common import get_kubectl, kube_create_app, scp, _ssh_credentials, get_ssh_pub_key
 from kvirt.defaults import UBUNTUS
 import os
@@ -15,7 +15,7 @@ cloudplatforms = ['aws', 'gcp']
 def scale(config, plandir, cluster, overrides):
     plan = cluster
     data = {'cluster': cluster, 'xip': False, 'kube': cluster, 'kubetype': 'generic'}
-    data['basedir'] = '/workdir' if os.path.exists("/i_am_a_container") else '.'
+    data['basedir'] = '/workdir' if container_mode() else '.'
     cluster = data.get('cluster')
     clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
     if os.path.exists("%s/kcli_parameters.yml" % clusterdir):
@@ -95,7 +95,7 @@ def create(config, plandir, cluster, overrides):
     if data.get('eksd', False) and data.get('engine', 'containerd') != 'docker':
         warning("Forcing engine to docker for eksd")
         data['engine'] = 'docker'
-    data['basedir'] = '/workdir' if os.path.exists("/i_am_a_container") else '.'
+    data['basedir'] = '/workdir' if container_mode() else '.'
     cluster = data.get('cluster')
     image = data.get('image', 'centos7')
     data['ubuntu'] = True if 'ubuntu' in image.lower() or [entry for entry in UBUNTUS if entry in image] else False

@@ -254,7 +254,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             netdata = ''
     else:
         netdata = None
-    existing = "%s.cloudinit" % name if not os.path.exists('/i_am_a_container') else "/workdir/%s.cloudinit" % name
+    existing = "/workdir/%s.cloudinit" % name if container_mode() else "%s.cloudinit" % name
     if os.path.exists(existing):
         pprint("using cloudinit from existing %s for %s" % (existing, name))
         userdata = open(existing).read()
@@ -1196,16 +1196,15 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
         ignitionclusterpath = find_ignition_files(role, cluster=cluster)
         if ignitionclusterpath is not None:
             data = mergeignition(name, ignitionclusterpath, data)
-        rolepath = "/workdir/%s-%s.ign" % (plan, role) if os.path.exists('/i_am_a_container') else "%s-%s.ign" % (plan,
-                                                                                                                  role)
+        rolepath = "/workdir/%s-%s.ign" % (plan, role) if container_mode() else "%s-%s.ign" % (plan, role)
         if os.path.exists(rolepath):
             ignitionextrapath = rolepath
             data = mergeignition(name, ignitionextrapath, data)
-    planpath = "/workdir/%s.ign" % plan if os.path.exists('/i_am_a_container') else "%s.ign" % plan
+    planpath = "/workdir/%s.ign" % plan if container_mode() else "%s.ign" % plan
     if os.path.exists(planpath):
         ignitionextrapath = planpath
         data = mergeignition(name, ignitionextrapath, data)
-    namepath = "/workdir/%s.ign" % name if os.path.exists('/i_am_a_container') else "%s.ign" % name
+    namepath = "/workdir/%s.ign" % name if container_mode() else "%s.ign" % name
     if os.path.exists(namepath):
         ignitionextrapath = namepath
         data = mergeignition(name, ignitionextrapath, data)
@@ -1355,7 +1354,7 @@ def get_latest_rhcos_metal(url):
 
 def find_ignition_files(role, cluster):
     clusterpath = os.path.expanduser("~/.kcli/clusters/%s/%s.ign" % (cluster, role))
-    if os.path.exists('/i_am_a_container'):
+    if container_mode():
         oldclusterpath = "/workdir/clusters/%s/%s.ign" % (cluster, role)
         rolepath = "/workdir/%s/%s.ign" % (cluster, role)
     else:
@@ -1576,7 +1575,7 @@ def gen_mac():
 def pwd_path(x):
     if x is None:
         return None
-    result = '/workdir/%s' % x if os.path.exists('/i_am_a_container') else x
+    result = '/workdir/%s' % x if container_mode() else x
     return result
 
 
@@ -1695,7 +1694,7 @@ def get_oc(version='latest', macosx=False):
     occmd += "| tar zxf - oc"
     occmd += "; chmod 700 oc"
     call(occmd, shell=True)
-    if os.path.exists('/i_am_a_container'):
+    if container_mode():
         if macosx:
             occmd += "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/%s/" % version
             occmd += "openshift-client-%s.tar.gz" % SYSTEM
@@ -2061,3 +2060,7 @@ def get_ssh_pub_key():
             return kclipath
         elif os.path.exists(sshpath) and os.path.exists(sshprivpath):
             return sshpath
+
+
+def container_mode():
+    return True if os.path.exists("/i_am_a_container") and os.path.exists('/workdir') else False

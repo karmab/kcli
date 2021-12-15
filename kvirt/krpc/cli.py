@@ -20,7 +20,7 @@ from prettytable import PrettyTable
 import argcomplete
 import argparse
 from kvirt.krpc import commoncli as common
-from kvirt.krpc.commoncli import pprint, error, success
+from kvirt.krpc.commoncli import pprint, error, success, container_mode
 from kvirt import nameutils
 import os
 import random
@@ -1156,7 +1156,7 @@ def create_generic_kube(args):
     paramfile = args.paramfile
     force = args.force
     cluster = args.cluster if args.cluster is not None else 'testk'
-    if os.path.exists("/i_am_a_container"):
+    if container_mode():
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
         elif os.path.exists("/workdir/kcli_parameters.yml"):
@@ -1177,7 +1177,7 @@ def create_openshift_kube(args):
     paramfile = args.paramfile
     force = args.force
     cluster = args.cluster if args.cluster is not None else 'testk'
-    if os.path.exists("/i_am_a_container"):
+    if container_mode():
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
         elif os.path.exists("/workdir/kcli_parameters.yml"):
@@ -1215,7 +1215,7 @@ def scale_generic_kube(args):
     workers = args.workers
     paramfile = args.paramfile
     cluster = args.cluster if args.cluster is not None else 'testk'
-    if os.path.exists("/i_am_a_container"):
+    if container_mode():
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
         elif os.path.exists("/workdir/kcli_parameters.yml"):
@@ -1236,7 +1236,7 @@ def scale_openshift_kube(args):
     workers = args.workers
     paramfile = args.paramfile
     cluster = args.cluster if args.cluster is not None else 'testk'
-    if os.path.exists("/i_am_a_container"):
+    if container_mode():
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
         elif os.path.exists("/workdir/kcli_parameters.yml"):
@@ -1319,7 +1319,7 @@ def create_plan(args):
     wait = args.wait
     if inputfile is None:
         inputfile = 'kcli_plan.yml'
-    if os.path.exists("/i_am_a_container"):
+    if container_mode():
         inputfile = "/workdir/%s" % inputfile
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
@@ -1354,7 +1354,7 @@ def update_plan(args):
     container = args.container
     inputfile = args.inputfile
     paramfile = args.paramfile
-    if os.path.exists("/i_am_a_container"):
+    if container_mode():
         inputfile = "/workdir/%s" % inputfile if inputfile is not None else "/workdir/kcli_plan.yml"
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
@@ -1446,7 +1446,7 @@ def info_plan(args):
     url = args.url
     path = args.path
     inputfile = args.inputfile
-    if os.path.exists("/i_am_a_container"):
+    if container_mode():
         inputfile = "/workdir/%s" % inputfile if inputfile is not None else "/workdir/kcli_plan.yml"
     if url is None:
         inputfile = plan if inputfile is None and plan is not None else inputfile
@@ -1496,7 +1496,7 @@ def download_oc(args):
 def download_openshift_installer(args):
     """Download Openshift Installer"""
     paramfile = args.paramfile
-    if os.path.exists("/i_am_a_container"):
+    if container_mode():
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
         elif os.path.exists("/workdir/kcli_parameters.yml"):
@@ -1518,7 +1518,7 @@ def create_pipeline(args):
     paramfile = args.paramfile
     if inputfile is None:
         inputfile = 'kcli_plan.yml'
-    if os.path.exists("/i_am_a_container"):
+    if container_mode():
         inputfile = "/workdir/%s" % inputfile
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
@@ -1542,7 +1542,7 @@ def render_file(args):
     inputfile = args.inputfile
     paramfile = args.paramfile
     ignore = args.ignore
-    if os.path.exists("/i_am_a_container"):
+    if container_mode():
         inputfile = "/workdir/%s" % inputfile if inputfile is not None else "/workdir/kcli_plan.yml"
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
@@ -1683,7 +1683,7 @@ def scp_vm(args):
     """Scp into vm"""
     recursive = args.recursive
     source = args.source[0]
-    source = source if not os.path.exists("/i_am_a_container") else "/workdir/%s" % source
+    source = "/workdir/%s" % source if container_mode() else source
     destination = args.destination[0]
     user = args.user
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)

@@ -22,7 +22,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
 from ipaddress import ip_address
 from random import choice
 from kvirt import common
-from kvirt.common import error, pprint, warning
+from kvirt.common import error, pprint, warning, container_mode
 from kvirt.jinjafilters import jinjafilters
 from kvirt import k3s
 from kvirt import kubeadm
@@ -728,7 +728,7 @@ class Kbaseconfig:
 
     def process_inputfile(self, plan, inputfile, overrides={}, onfly=None, full=False, ignore=False,
                           download_mode=False):
-        default_dir = '/workdir' if os.path.exists("/i_am_a_container") else '.'
+        default_dir = '/workdir' if container_mode() else '.'
         basedir = os.path.dirname(inputfile) if os.path.dirname(inputfile) != '' else default_dir
         basefile = None
         undefined = strictundefined if not ignore else defaultundefined
@@ -764,7 +764,7 @@ class Kbaseconfig:
                 basefile = parameters['baseplan']
                 basedir = os.path.dirname(inputfile) if '/' in inputfile else '.'
                 baseinputfile = "%s/%s" % (basedir, basefile)
-                if os.path.exists("/i_am_a_container") and not os.path.isabs(basefile) and '/workdir' not in basedir:
+                if container_mode() and not os.path.isabs(basefile) and '/workdir' not in basedir:
                     baseinputfile = "/workdir/%s/%s" % (basedir, basefile)
                 if onfly is not None:
                     common.fetch("%s/%s" % (onfly, basefile), '.')
@@ -1376,7 +1376,7 @@ class Kbaseconfig:
 
     def create_plan_template(self, directory, overrides, skipfiles=False, skipscripts=False):
         pprint("Creating plan template in %s..." % directory)
-        if os.path.exists("/i_am_a_container"):
+        if container_mode():
             directory = "/workdir/%s" % directory
         if not os.path.exists(directory):
             os.makedirs(directory)

@@ -260,3 +260,7 @@ def get_oc(macosx=False):
             call(occmd, shell=True)
         else:
             move('oc', '/workdir/oc')
+
+
+def container_mode():
+    return True if os.path.exists("/i_am_a_container") and os.path.exists('/workdir') else False
