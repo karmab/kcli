@@ -7,7 +7,7 @@ info: |
     nfs can be set to deploy an initial set of pvcs on the first master node
     You can deploy extra apps with the apps array and for each of the supported app, indicate with the variable
     ${app}_version with version to target (instead of latest)
-    You can set xip to true to use $api_ip.xip.io as base domain
+    You can set nip to true to use $api_ip.nip.io as base domain
     Default container engine is containerd, but crio or docker can be specified instead.
 image: centos8
 network: default
@@ -47,7 +47,7 @@ extra_worker_disks: []
 extra_networks: []
 extra_master_networks: []
 extra_worker_networks: []
-xip: false
+nip: false
 autolabel: true
 virtual_router_id:
 registry: false

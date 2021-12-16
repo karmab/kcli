@@ -14,7 +14,7 @@ cloudplatforms = ['aws', 'gcp']
 
 def scale(config, plandir, cluster, overrides):
     plan = cluster
-    data = {'cluster': cluster, 'xip': False, 'kube': cluster, 'kubetype': 'generic'}
+    data = {'cluster': cluster, 'nip': False, 'kube': cluster, 'kubetype': 'generic'}
     data['basedir'] = '/workdir' if container_mode() else '.'
     cluster = data.get('cluster')
     clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
@@ -48,7 +48,7 @@ def scale(config, plandir, cluster, overrides):
 def create(config, plandir, cluster, overrides):
     platform = config.type
     k = config.k
-    data = {'kubetype': 'generic', 'xip': False, 'domain': 'karmalabs.com'}
+    data = {'kubetype': 'generic', 'nip': False, 'domain': 'karmalabs.com'}
     data.update(overrides)
     if 'keys' not in overrides and get_ssh_pub_key() is None:
         error("No usable public key found, which is required for the deployment")
@@ -61,7 +61,7 @@ def create(config, plandir, cluster, overrides):
         error("Invalid number of masters")
         sys.exit(1)
     network = data.get('network', 'default')
-    xip = data['xip']
+    nip = data['nip']
     api_ip = data.get('api_ip')
     if platform in cloudplatforms:
         domain = data.get('domain', 'karmalabs.com')
@@ -83,8 +83,8 @@ def create(config, plandir, cluster, overrides):
         else:
             error("You need to define api_ip in your parameters file")
             sys.exit(1)
-    if xip and platform not in cloudplatforms:
-        data['domain'] = "%s.xip.io" % api_ip
+    if nip and platform not in cloudplatforms:
+        data['domain'] = "%s.nip.io" % api_ip
     if data.get('virtual_router_id') is None:
         data['virtual_router_id'] = hash(data['cluster']) % 254 + 1
     pprint("Using keepalived virtual_router_id %s" % data['virtual_router_id'])
