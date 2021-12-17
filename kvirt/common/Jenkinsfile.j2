@@ -60,9 +60,6 @@ spec:
                 cp "$KCLI_SSH_ID_RSA" $HOME/.kcli/id_rsa
                 chmod 600 $HOME/.kcli/id_rsa
                 cp "$KCLI_SSH_ID_RSA_PUB" $HOME/.kcli/id_rsa.pub
-                {% if jenkinsmode == 'kubernetes' %}
-                [ -f /i_am_a_container ] && rm /i_am_a_container
-                {% endif %}
                 '''
             }
         }
