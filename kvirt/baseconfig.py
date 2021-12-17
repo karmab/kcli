@@ -1177,7 +1177,7 @@ class Kbaseconfig:
             paramfileline = 'echo -ne """%s""" > kcli_parameters.yml' % paramfiledata
             paramfileline = paramfileline.replace('\n', '\n      ')
             if "pull_secret" not in paramfiledata:
-                parameterline += "-P pull_secret=/root/.kcli/openshift_pull.json"
+                parameterline += " -P pull_secret=/root/.kcli/openshift_pull.json"
         else:
             paramfileline = "--paramfile $PARAMFILE" if paramfile is not None else ""
             giturl = os.popen('git config --get remote.origin.url').read().strip()
