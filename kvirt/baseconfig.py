@@ -1152,7 +1152,7 @@ class Kbaseconfig:
         for jinjafilter in jinjafilters.jinjafilters:
             env.filters[jinjafilter] = jinjafilters.jinjafilters[jinjafilter]
         try:
-            workflowfile = "pipeline.yml.j2"
+            workflowfile = "pipeline_kube.yml.j2" if kube else "pipeline.yml.j2"
             templ = env.get_template(os.path.basename(workflowfile))
         except TemplateSyntaxError as e:
             error("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message))
@@ -1164,9 +1164,16 @@ class Kbaseconfig:
         for parameter in overrides:
             paramline.append('-P %s="$%s"' % (parameter, parameter.upper()))
         parameterline = " ".join(paramline)
-        paramfileline = "--paramfile $PARAMFILE" if paramfile is not None else ""
-        giturl = os.popen('git config --get remote.origin.url').read().strip()
-        gitbase = os.popen('git rev-parse --show-prefix 2>/dev/null').read().strip()
+        giturl, gitbase = None, None
+        paramfileline = None
+        if kube and paramfile is not None:
+            paramfiledata = open(paramfile).read()
+            paramfileline = 'echo -ne """%s""" > kcli_parameters.yml' % paramfiledata
+            paramfileline = paramfileline.replace('\n', '\n      ')
+        else:
+            paramfileline = "--paramfile $PARAMFILE" if paramfile is not None else ""
+            giturl = os.popen('git config --get remote.origin.url').read().strip()
+            gitbase = os.popen('git rev-parse --show-prefix 2>/dev/null').read().strip()
         workflowfile = templ.render(plan=plan, inputfile=inputfile, parameters=overrides, parameterline=parameterline,
                                     paramfileline=paramfileline, paramfile=paramfile, gitbase=gitbase, giturl=giturl,
                                     client=client, kube=kube, kubetype=kubetype)
