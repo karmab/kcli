@@ -66,12 +66,12 @@ def update_etc_hosts(cluster, domain, host_ip, ingress_ip=None):
         if ingress_ip is None:
             entries.extend(ingress_entries)
         entries = ' '.join(entries)
-        call("sudo sh -c 'echo %s %s >> /etc/hosts'" % (host_ip, entries), shell=True)
+        call("sh -c 'echo %s %s >> /etc/hosts'" % (host_ip, entries), shell=True)
         if os.path.exists('/etcdir/hosts'):
             call("sh -c 'echo %s %s >> /etcdir/hosts'" % (host_ip, entries), shell=True)
             if ingress_ip is not None:
                 entries = ' '.join(ingress_entries)
-                call("sudo sh -c 'echo %s %s >> /etcdir/hosts'" % (ingress_ip, entries), shell=True)
+                call("sh -c 'echo %s %s >> /etcdir/hosts'" % (ingress_ip, entries), shell=True)
         else:
             warning("Make sure to have the following entry in your /etc/hosts")
             warning("%s %s" % (host_ip, entries))
