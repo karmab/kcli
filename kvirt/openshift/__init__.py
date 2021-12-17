@@ -320,37 +320,6 @@ def scale(config, plandir, cluster, overrides):
     data.update(overrides)
     with open("%s/kcli_parameters.yml" % clusterdir, 'w') as paramfile:
         yaml.safe_dump(data, paramfile)
-    api_ip = data.get('api_ip')
-    if platform in virtplatforms:
-        if api_ip is None:
-            network = data.get('network')
-            networkinfo = k.info_network(network)
-            if platform == 'kvm' and networkinfo['type'] == 'routed':
-                cidr = networkinfo['cidr']
-                api_index = 2 if ':' in cidr else -3
-                api_ip = str(IPNetwork(cidr)[api_index])
-                warning("Using %s as api_ip" % api_ip)
-                data['api_ip'] = api_ip
-            elif platform == 'kubevirt':
-                selector = {'kcli/plan': plan, 'kcli/role': 'master'}
-                api_ip = config.k.create_service("%s-api" % cluster, config.k.namespace, selector,
-                                                 _type="LoadBalancer", ports=[6443, 22623, 22624])
-                if api_ip is None:
-                    sys.exit(1)
-                else:
-                    pprint("Using api_ip %s" % api_ip)
-                    data['api_ip'] = api_ip
-            else:
-                error("You need to define api_ip in your parameters file")
-                sys.exit(1)
-        if data.get('virtual_router_id') is None:
-            data['virtual_router_id'] = hash(cluster) % 254 + 1
-        pprint("Using keepalived virtual_router_id %s" % data['virtual_router_id'])
-    if platform == 'packet':
-        network = data.get('network')
-        if network is None:
-            error("You need to indicate a specific vlan network")
-            sys.exit(1)
     image = overrides.get('image')
     if image is None:
         cluster_image = k.info("%s-master-0" % cluster).get('image')
@@ -374,7 +343,7 @@ def scale(config, plandir, cluster, overrides):
             sys.exit(1)
         elif platform == 'packet' and 'newvms' in result and result['newvms']:
             for node in result['newvms']:
-                k.add_nic(node, network)
+                k.add_nic(node, data['network'])
 
 
 def create(config, plandir, cluster, overrides, dnsconfig=None):
@@ -504,6 +473,16 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             api_ip = str(IPNetwork(cidr)[api_index])
             warning("Using %s as api_ip" % api_ip)
             overrides['api_ip'] = api_ip
+        elif platform == 'kubevirt':
+            selector = {'kcli/plan': plan, 'kcli/role': 'master'}
+            api_ip = config.k.create_service("%s-api" % cluster, config.k.namespace, selector,
+                                             _type="LoadBalancer", ports=[6443, 22623, 22624])
+            if api_ip is None:
+                error("Couldnt gather an api_ip from your cluster")
+                sys.exit(1)
+            else:
+                pprint("Using api_ip %s" % api_ip)
+                overrides['api_ip'] = api_ip
         else:
             error("You need to define api_ip in your parameters file")
             sys.exit(1)
