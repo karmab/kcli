@@ -5,6 +5,7 @@ Kubecommon Base Class
 """
 
 from kubernetes import client, config
+import os
 
 
 class Kubecommon(object):
@@ -22,6 +23,7 @@ class Kubecommon(object):
         self.accessmode = 'ReadWriteMany' if readwritemany else 'ReadWriteOnce'
         self.conn = 'OK'
         self.namespace = namespace
+        self.contextname = None
         self.token = token
         api_client = None
         if host is not None and port is not None and token is not None:
@@ -33,6 +35,8 @@ class Kubecommon(object):
             else:
                 configuration.verify_ssl = False
             api_client = client.ApiClient(configuration)
+        elif 'KUBERNETES_PORT' in os.environ and 'KUBECONFIG' not in os.environ:
+            config.load_incluster_config()
         else:
             contexts, current = config.list_kube_config_contexts()
             if context is not None:
