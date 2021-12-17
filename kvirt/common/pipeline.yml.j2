@@ -81,6 +81,7 @@ spec:
   - name: clone-repo
     taskRef:
       name: git-clone
+      kind: ClusterTask
     workspaces:
     - name: output
       workspace: git-source
