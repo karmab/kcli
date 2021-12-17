@@ -2042,7 +2042,10 @@ def copy_ipi_credentials(platform, k):
 def need_fake():
     kclidir = os.path.expanduser("~/.kcli")
     if not glob.glob("%s/config.y*ml" % kclidir) and not os.path.exists("/var/run/libvirt/libvirt-sock"):
-        return True
+        if os.path.exists('/i_am_a_container') and os.environ.get('KUBERNETES_SERVICE_HOST') is not None:
+            return False
+        else:
+            return True
     else:
         return False
 
