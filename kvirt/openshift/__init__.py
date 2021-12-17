@@ -475,8 +475,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             overrides['api_ip'] = api_ip
         elif platform == 'kubevirt':
             selector = {'kcli/plan': plan, 'kcli/role': 'master'}
-            api_ip = config.k.create_service("%s-api" % cluster, config.k.namespace, selector,
-                                             _type="LoadBalancer", ports=[6443, 22623, 22624])
+            service_type = "LoadBalancer" if k.access_mode == 'LoadBalancer' else 'ClusterIP'
+            api_ip = k.create_service("%s-api" % cluster, k.namespace, selector, _type=service_type,
+                                      ports=[6443, 22623, 22624, 80, 443])
             if api_ip is None:
                 error("Couldnt gather an api_ip from your cluster")
                 sys.exit(1)

@@ -1474,9 +1474,10 @@ class Kubevirt(Kubecommon):
 
     def create_service(self, name, namespace, selector, _type="NodePort", ports=[], wait=True):
         spec = {'kind': 'Service', 'apiVersion': 'v1', 'metadata': {'namespace': namespace, 'name': '%s-svc' % name},
-                'spec': {'externalTrafficPolicy': 'Cluster', 'sessionAffinity': 'None',
-                         'selector': selector}}
+                'spec': {'sessionAffinity': 'None', 'selector': selector}}
         spec['spec']['type'] = _type
+        if _type in ['NodePort', 'LoadBalancer']:
+            spec['spec']['externalTrafficPolicy'] = 'Cluster'
         portspec = []
         portname = True if len(ports) > 1 else False
         for portinfo in ports:
@@ -1515,6 +1516,9 @@ class Kubevirt(Kubecommon):
                         time.sleep(5)
                         pprint("Waiting to get a loadbalancer ip for service %s..." % name)
                         runtime += 5
+        elif _type == 'ClusterIP':
+            api_service = self.core.read_namespaced_service('%s-svc' % name, namespace)
+            return api_service.spec.cluster_ip
 
     def delete_service(self, name, namespace):
         try:

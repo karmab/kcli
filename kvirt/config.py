@@ -2454,7 +2454,7 @@ class Kconfig(Kbaseconfig):
                 k.delete(name, snapshots=True)
                 common.set_lastvm(name, self.client, delete=True)
                 success("%s deleted on %s!" % (name, self.client))
-        if self.type == 'kubevirt' and self.k.access_mode == 'LoadBalancer':
+        if self.type == 'kubevirt':
             try:
                 k.delete_service("%s-api-svc" % cluster, k.namespace)
             except:
