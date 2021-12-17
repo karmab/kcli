@@ -194,9 +194,13 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                     netdata[nicname]['nameservers'] = {}
                 if dns is not None:
                     if legacy:
+                        if isinstance(dns, list):
+                            dns = ' '.join(dns)
                         netdata += "  dns-nameservers %s\n" % dns
                     else:
-                        netdata[nicname]['nameservers']['addresses'] = [dns]
+                        if isinstance(dns, str):
+                            dns = dns.split(',')
+                        netdata[nicname]['nameservers']['addresses'] = dns
                     if dns_hack:
                         dnscontent = "nameserver %s\n" % dns
                         dnsdata = {'path': 'etc/resolvconf/resolv.conf.d/base', 'content': dnscontent}
@@ -1147,9 +1151,12 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
                 else:
                     cidr = IPAddress(netmask).netmask_bits()
                 netdata = "DEVICE=%s\nNAME=%s\nONBOOT=yes\nNM_CONTROLLED=yes\n" % (nicname, nicname)
-                netdata += "BOOTPROTO=static\nIPADDR=%s\nPREFIX=%s\nGATEWAY=%s" % (ip, cidr, gateway)
+                netdata += "BOOTPROTO=static\nIPADDR=%s\nPREFIX=%s\nGATEWAY=%s\n" % (ip, cidr, gateway)
                 dns = net.get('dns', gateway)
-                netdata += "\nDNS1=%s\n" % dns
+                if isinstance(dns, str):
+                    dns = dns.split(',')
+                for index, dnsentry in enumerate(dns):
+                    netdata += "DNS%s=%s\n" % (index + 1, dnsentry)
                 if isinstance(vips, list) and vips:
                     for vip in vips:
                         netdata += "[Network]\nAddress=%s/%s\nGateway=%s\n" % (vip, netmask, gateway)
