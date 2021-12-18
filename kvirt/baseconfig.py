@@ -1171,11 +1171,13 @@ class Kbaseconfig:
         parameterline = " ".join(paramline)
         giturl, gitbase = None, None
         paramfileline = None
-        if kube and paramfile is not None:
-            paramfiledata = open(paramfile).read()
-            paramfileline = 'echo -ne """%s""" > kcli_parameters.yml' % paramfiledata
-            paramfileline = paramfileline.replace('\n', '\n      ')
-            if "pull_secret" not in paramfiledata:
+        if kube:
+            paramfiledata = ''
+            if paramfile is not None:
+                paramfiledata = open(paramfile).read()
+                paramfileline = 'echo -ne """%s""" > kcli_parameters.yml' % paramfiledata
+                paramfileline = paramfileline.replace('\n', '\n      ')
+            if "pull_secret" not in paramfiledata and "pull_secret" not in overrides:
                 parameterline += " -P pull_secret=/root/.kcli/openshift_pull.json"
         else:
             paramfileline = "--paramfile $PARAMFILE" if paramfile is not None else ""
