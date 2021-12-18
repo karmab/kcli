@@ -3,13 +3,23 @@ kind: Task
 metadata:
  name: kcli-plan-{{ plan }}
 spec:
- workspaces:
- - name: source
  params:
  - name: plan
    description: plan
    type: string
    default: "{{ plan }}"
+ - name: inputfile
+   description: inputfile
+   type: string
+   default: "{{ gitbase + inputfile }}"
+ - name: url
+   description: url
+   type: string
+   default: "{{ giturl }}"
+ - name: commit
+   description: commit
+   type: string
+   default: "master"
 {% if paramfile != None %}
  - name: paramfile
    type: string
@@ -22,32 +32,53 @@ spec:
    default: "{{ parameters[param] }}"
 {% endfor %}
  steps:
-   - name: deploy
-     image: "quay.io/karmab/kcli:latest"
-     env:
-     - name: PLAN
-       value: $(params.plan)
+  - name: git-clone
+    image: "gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/git-init:v0.21.0"
+    env:
+    - name: URL
+      value: $(params.URL)
+    - name: COMMIT
+      value: $(params.COMMIT)
+    script: |
+     #!/usr/bin/env bash
+     cd /source
+     git clone $URL .
+     git checkout $COMMIT
+    volumeMounts:
+    - mountPath: /source
+      name: git-source
+  - name: deploy
+    image: "quay.io/karmab/kcli:latest"
+    env:
+    - name: PLAN
+      value: $(params.plan)
+    - name: INPUTFILE
+      value: $(params.inputfile)
 {% if paramfile != None %}
-     - name: PARAMFILE
-       value: $(params.paramfile)
+    - name: PARAMFILE
+      value: $(params.paramfile)
 {% endif %}
 {% for param in parameters %}
-     - name: {{ param|upper }}
-       value: $(params.{{ param }})
+    - name: {{ param|upper }}
+      value: $(params.{{ param }})
 {% endfor %}
-     script: |
-      #!/usr/bin/env bash
-      cd /workspace/source
-      echo kcli create plan --force -f {{ gitbase + inputfile }} {{ paramfileline }} {{ parameterline }} $PLAN
-      kcli create plan --force -f {{ gitbase + inputfile }} {{ paramfileline }} {{ parameterline }} $PLAN
-     volumeMounts:
-     - mountPath: /root/.kcli
-       name: kcli-config
+    script: |
+     #!/usr/bin/env bash
+     cd /source
+     echo kcli create plan --force $INPUTFILE {{ paramfileline }} {{ parameterline }} $PLAN
+     kcli create plan --force -f $INPUTFILE {{ paramfileline }} {{ parameterline }} $PLAN
+    volumeMounts:
+    - mountPath: /root/.kcli
+      name: kcli-config
+    - mountPath: /source
+      name: git-source
  volumes:
  - configMap:
      defaultMode: 0700
      name: kcli-config
    name: kcli-config
+ - name: git-source
+   emptyDir: {}
 ---
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
@@ -59,6 +90,9 @@ spec:
   - name: plan
     type: string
     default: "{{ plan }}"
+  - name: inputfile
+    type: string
+    default: "{{ gitbase + inputfile }}"
 {% if paramfile != None %}
   - name: paramfile
     type: string
@@ -75,36 +109,23 @@ spec:
     default: "{{ parameters[param] }}"
 {% endfor %}
 {% endif %}
-  workspaces:
-  - name: git-source
   tasks:
-  - name: clone-repo
-    taskRef:
-      name: git-clone
-      kind: ClusterTask
-    workspaces:
-    - name: output
-      workspace: git-source
-    params:
-    - name: url
-      value: {{ giturl }}
-    - name: revision
-      value: $(params.commit)
   - name: kcli-plan-{{ plan }}
     taskRef:
       name: kcli-plan-{{ plan }}
-    runAfter:
-    - clone-repo
-    workspaces:
-    - name: source
-      workspace: git-source
     params:
     - name: plan
       value: $(params.plan)
+    - name: inputfile
+      value: $(params.inputfile)
 {% if paramfile != None %}
     - name: paramfile
       value: $(params.paramfile)
 {% endif %}
+    - name: url
+      value: {{ giturl }}
+    - name: commit
+      value: $(params.commit)
 {% for param in parameters %}
     - name: {{ param }}
       value: $(params.{{ param }})
