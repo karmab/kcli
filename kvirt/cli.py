@@ -1820,7 +1820,7 @@ def create_plan(args):
     if force:
         if plan is None:
             error("Force requires specifying a plan name")
-            return
+            return 1
         else:
             config.delete_plan(plan, unregister=config.rhnunregister)
     if plan is None:
