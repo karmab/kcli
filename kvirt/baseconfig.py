@@ -1112,13 +1112,10 @@ class Kbaseconfig:
             sys.exit(1)
         paramline = []
         for parameter in overrides:
-            newparam = "${{github.event.inputs.%s}}" % parameter.upper()
-            value = overrides[parameter]
-            if isinstance(value, str):
-                newparam = "'%s'" % newparam
-            paramline.append("-P %s=%s" % (parameter, newparam))
+            newparam = "%s" % parameter.upper()
+            paramline.append("-P %s=$%s" % (parameter, newparam))
         parameterline = " ".join(paramline)
-        paramfileline = "--paramfile ${{github.event.inputs.PARAMFILE}}" if paramfile is not None else ""
+        paramfileline = "--paramfile $PARAMFILE" if paramfile is not None else ""
         gitbase = os.popen('git rev-parse --show-prefix 2>/dev/null').read().strip()
         workflowfile = templ.render(plan=plan, inputfile=inputfile, parameters=overrides, parameterline=parameterline,
                                     paramfileline=paramfileline, paramfile=paramfile, gitbase=gitbase, runner=runner,

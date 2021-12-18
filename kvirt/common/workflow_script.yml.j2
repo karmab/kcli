@@ -33,10 +33,25 @@ on:
 
 env:
  HOME: {{ parameters['home']|default('/root') }}
+ CLIENT: {% raw %}${{github.event.inputs.CLIENT}}{% endraw %}
+
+ SCRIPT: {% raw %}${{github.event.inputs.SCRIPT}}{% endraw %}
+
+ RUN_SCRIPT: {% raw %}${{github.event.inputs.RUN_SCRIPT}}{% endraw %}
+
+{% if paramfile != None %}
+ PARAMFILE: {% raw %}${{github.event.inputs.PARAMFILE}}{% endraw %}
+
+{% endif %}
+{% for parameter in parameters %}
+ {{ parameter|upper }}: {% raw %}${{github.event.inputs.{% endraw %}{{ parameter|upper}}{% raw %}}}{% endraw %}
+
+{% endfor %}
 
 jobs:
     requirements:
       runs-on: {% raw %}${{github.event.inputs.RUNNER}}{% endraw %}
+
 
       steps:
        - uses: actions/checkout@v2
@@ -53,11 +68,11 @@ jobs:
   
       steps:
        - name: Render script
-         run: kcli -C {% raw %}${{github.event.inputs.CLIENT}}{% endraw %} render -f {% raw %}${{github.event.inputs.SCRIPT}}{% endraw %} {{ paramfileline }} {{ parameterline }} > run.sh
+         run: kcli -C $CLIENT render -f $SCRIPT {{ paramfileline }} {{ parameterline }} > run.sh
 
        - name: Display script
          run: cat run.sh
 
        - name: Run script
          run: bash run.sh
-         if: {% raw %}${{github.event_inputs.RUN_SCRIPT}}{% endraw %} == 'true' 
+         if: $RUN_SCRIPT == 'true' 
