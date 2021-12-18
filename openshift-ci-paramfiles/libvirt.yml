@@ -11,6 +11,8 @@ master_memory: 28672
 worker_memory: 28672
 bootstrap_memory: 8192
 disk_size: 50
+extra_disks:
+- 100
 kvm_openstack: true
 async: true
 notify: true
