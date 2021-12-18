@@ -3,6 +3,13 @@ kind: Task
 metadata:
  name: kcli-kube-{{ plan }}
 spec:
+ results:
+ - name: kubeconfig
+   description: kubeconfig
+{% if kubetype == 'openshift' %}
+ - name: kubeadmin-password
+   description: kubeadmin-password
+{% endif %}
  params:
  - name: cluster
    description: cluster
@@ -31,46 +38,58 @@ spec:
       {% endif %}
       echo kcli create cluster {{ kubetype }} --force {{ parameterline }} $CLUSTER
       kcli create cluster {{ kubetype }} --force {{ parameterline }} $CLUSTER
+      cp /root/.kcli/clusters/$CLUSTER/auth/kubeconfig $(results.kubeconfig.path)
+      {% if kubetype == 'openshift' %}
+      cp /root/.kcli/clusters/$CLUSTER/auth/kubeadmin-password $(results.kubeconfig.path)
+      {% endif %}
      volumeMounts:
      - mountPath: /root/.kcli
        name: kcli-config
      - mountPath: /root/.kcli/clusters
-       name: kcli-clusters
+       name: cluster-assets
  volumes:
  - configMap:
      defaultMode: 0700
      name: kcli-config
    name: kcli-config
- - name: kcli-clusters
-   persistentVolumeClaim:
-     claimName: kcli-clusters
+ - name: cluster-assets
+   emptyDir: {}
 ---
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
   name: kcli-kube-{{ plan }}
 spec:
+ results:
+ - name: kubeconfig
+   description: kubeconfig
+   value: $(tasks.deploy-openshift.results.kubeconfig)
+{% if kubetype == 'openshift' %}
+ - name: kubeadmin-password
+   description: kubeadmin-password
+   value: $(tasks.deploy-openshift.results.kubeadmin-password)
+{% endif %}
   description: deploy cluster {{ plan }}
-  params:
-  - name: cluster
-    type: string
-    default: "{{ plan }}"
+ params:
+ - name: cluster
+   type: string
+   default: "{{ plan }}"
 {% if parameters %}
 {% for param in parameters %}
-  - name: {{ param }}
-    description: {{ param }}
-    type: string
-    default: "{{ parameters[param] }}"
+ - name: {{ param }}
+   description: {{ param }}
+   type: string
+   default: "{{ parameters[param] }}"
 {% endfor %}
 {% endif %}
-  tasks:
-  - name: kcli-kube-{{ plan }}
-    taskRef:
-      name: kcli-kube-{{ plan }}
-    params:
-    - name: cluster
-      value: $(params.cluster)
+ tasks:
+ - name: kcli-kube-{{ plan }}
+   taskRef:
+     name: kcli-kube-{{ plan }}
+   params:
+   - name: cluster
+     value: $(params.cluster)
 {% for param in parameters %}
-    - name: {{ param }}
-      value: $(params.{{ param }})
+   - name: {{ param }}
+     value: $(params.{{ param }})
 {% endfor %}

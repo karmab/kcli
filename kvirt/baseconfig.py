@@ -999,7 +999,7 @@ class Kbaseconfig:
                                allow_unicode=True)
         return {'result': 'success'}
 
-    def create_jenkins_pipeline(self, inputfile, overrides={}, kube=False):
+    def create_jenkins_pipeline(self, plan, inputfile, overrides={}, kube=False):
         _type = 'plan'
         if kube:
             _type = 'generic'
@@ -1025,7 +1025,8 @@ class Kbaseconfig:
         basedir = os.path.dirname(inputfile)
         if basedir == "":
             basedir = '.'
-        plan = os.path.basename(inputfile).replace('.yml', '').replace('.yaml', '')
+        if plan is None:
+            plan = os.path.basename(inputfile).replace('.yml', '').replace('.yaml', '')
         if not os.path.exists(inputfile):
             error("No input file found nor default kcli_plan.yml. Leaving....")
             sys.exit(1)
@@ -1060,8 +1061,7 @@ class Kbaseconfig:
                                    _type=_type)
         return jenkinsfile
 
-    def create_github_pipeline(self, inputfile, paramfile=None, overrides={}, kube=False, script=False):
-        plan = overrides.get('plan')
+    def create_github_pipeline(self, plan, inputfile, paramfile=None, overrides={}, kube=False, script=False):
         if not kube:
             inputfile = os.path.expanduser(inputfile) if inputfile is not None else 'kcli_plan.yml'
             basedir = os.path.dirname(inputfile)
@@ -1125,8 +1125,7 @@ class Kbaseconfig:
                                     client=client, kube=kube, kubetype=kubetype, runscript=runscript)
         return workflowfile
 
-    def create_tekton_pipeline(self, inputfile, paramfile=None, overrides={}, kube=False):
-        plan = overrides.get('plan')
+    def create_tekton_pipeline(self, plan, inputfile, paramfile=None, overrides={}, kube=False):
         if not kube:
             inputfile = os.path.expanduser(inputfile) if inputfile is not None else 'kcli_plan.yml'
             basedir = os.path.dirname(inputfile)

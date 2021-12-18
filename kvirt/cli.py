@@ -2135,6 +2135,7 @@ def download_okd_installer(args):
 
 def create_pipeline_github(args):
     """Create Github Pipeline"""
+    plan = args.plan
     inputfile = args.inputfile
     kube = args.kube
     script = args.script
@@ -2151,14 +2152,15 @@ def create_pipeline_github(args):
         paramfile = "kcli_parameters.yml"
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     overrides = common.get_overrides(param=args.param)
-    renderfile = baseconfig.create_github_pipeline(inputfile, paramfile=paramfile, overrides=overrides, kube=kube,
-                                                   script=script)
+    renderfile = baseconfig.create_github_pipeline(plan, inputfile, paramfile=paramfile, overrides=overrides,
+                                                   kube=kube, script=script)
     print(renderfile)
     return 0
 
 
 def create_pipeline_jenkins(args):
     """Create Jenkins Pipeline"""
+    plan = args.plan
     inputfile = args.inputfile
     kube = args.kube
     paramfile = args.paramfile
@@ -2177,7 +2179,7 @@ def create_pipeline_jenkins(args):
         error("File %s not found" % inputfile)
         return 0
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
-    renderfile = baseconfig.create_jenkins_pipeline(inputfile, overrides=overrides, kube=kube)
+    renderfile = baseconfig.create_jenkins_pipeline(plan, inputfile, overrides=overrides, kube=kube)
     print(renderfile)
     return 0
 
@@ -2187,6 +2189,7 @@ def create_pipeline_tekton(args):
     inputfile = args.inputfile
     kube = args.kube
     paramfile = args.paramfile
+    plan = args.plan
     if inputfile is None:
         inputfile = 'kcli_plan.yml'
     if container_mode():
@@ -2199,7 +2202,7 @@ def create_pipeline_tekton(args):
         paramfile = "kcli_parameters.yml"
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     overrides = common.get_overrides(param=args.param)
-    renderfile = baseconfig.create_tekton_pipeline(inputfile, paramfile=paramfile, overrides=overrides, kube=kube)
+    renderfile = baseconfig.create_tekton_pipeline(plan, inputfile, paramfile=paramfile, overrides=overrides, kube=kube)
     print(renderfile)
     return 0
 
@@ -3885,6 +3888,7 @@ def cli():
                                              help='Define parameter for rendering (can specify multiple)',
                                              metavar='PARAM')
     githubpipelinecreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    githubpipelinecreate_parser.add_argument('plan', metavar='PLAN', nargs='?')
     githubpipelinecreate_parser.set_defaults(func=create_pipeline_github)
 
     jenkinspipelinecreate_desc = 'Create Jenkins Pipeline'
@@ -3897,6 +3901,7 @@ def cli():
                                               help='Define parameter for rendering (can specify multiple)',
                                               metavar='PARAM')
     jenkinspipelinecreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    jenkinspipelinecreate_parser.add_argument('plan', metavar='PLAN', nargs='?')
     jenkinspipelinecreate_parser.set_defaults(func=create_pipeline_jenkins)
 
     tektonpipelinecreate_desc = 'Create Tekton Pipeline'
@@ -3909,6 +3914,7 @@ def cli():
                                              help='Define parameter for rendering (can specify multiple)',
                                              metavar='PARAM')
     tektonpipelinecreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    tektonpipelinecreate_parser.add_argument('plan', metavar='PLAN', nargs='?')
     tektonpipelinecreate_parser.set_defaults(func=create_pipeline_tekton)
 
     plancreate_desc = 'Create Plan'
