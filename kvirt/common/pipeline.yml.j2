@@ -36,11 +36,11 @@ spec:
     image: "gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/git-init:v0.21.0"
     env:
     - name: URL
-      value: $(params.URL)
+      value: $(params.url)
     - name: COMMIT
-      value: $(params.COMMIT)
+      value: $(params.commit)
     script: |
-     #!/usr/bin/env bash
+     #!/usr/bin/env sh
      cd /source
      git clone $URL .
      git checkout $COMMIT
