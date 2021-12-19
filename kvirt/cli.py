@@ -2469,7 +2469,7 @@ def ssh_vm(args):
     tunnelhost = baseconfig.tunnelhost
     tunneluser = baseconfig.tunneluser
     tunnelport = baseconfig.tunnelport
-    if tunnel and tunnelhost is None:
+    if tunnel and tunnelhost is None and baseconfig.type != 'kubevirt':
         error("Tunnel requested but no tunnelhost defined")
         sys.exit(1)
     insecure = baseconfig.insecure
@@ -2507,6 +2507,11 @@ def ssh_vm(args):
                          namespace=args.namespace)
         k = config.k
         u, ip, vmport = common._ssh_credentials(k, name)
+        if tunnel and tunnelhost is None and config.type == 'kubevirt':
+            info = k.info(name, debug=False)
+            tunnelhost = k.node_host(name=info.get('host'))
+            if tunnelhost is None:
+                error("No valid node ip found for %s" % name)
         if ip is None:
             return
         if user is None:
