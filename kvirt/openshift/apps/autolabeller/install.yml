@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: autorules
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: autorules
+  namespace: autorules
+data:
+{% for rule in autolabeller_rules %}
+{% set number = loop.index %}
+{% for k,v in rule.items() %}
+  rules{{ number }}.properties: |
+    name: {{ k }}
+    labels: {{ v }}
+{% endfor %}
+{% endfor %}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: autorules-cluster-admin
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: autorules
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: autoruler
+  namespace: autorules
+  labels:
+    app: autoruler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: autoruler
+  template:
+    metadata:
+      labels:
+        app: autoruler
+    spec:
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
+        operator: Exists
+      containers:
+      - name: autolabeller
+        image: quay.io/karmab/autolabeller:latest

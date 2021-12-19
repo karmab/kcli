@@ -1203,7 +1203,7 @@ class Kbaseconfig:
         return sorted([x for x in os.listdir(appdir) if os.path.isdir("%s/%s" % (appdir, x)) and x != '__pycache__'])
 
     def list_apps_openshift(self, quiet=True):
-        results = ['users']
+        results = ['autolabeller', 'users']
         manifestscmd = "oc get packagemanifest -n openshift-marketplace -o name"
         manifestsdata = os.popen(manifestscmd).read().split('\n')
         results.extend([entry.replace('packagemanifest.packages.operators.coreos.com/', '') for entry in manifestsdata])
