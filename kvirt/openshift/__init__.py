@@ -719,7 +719,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             except:
                 openstack_uri = get_commit_rhcos(COMMIT_ID, 'openstack')
             disconnected_overrides['openstack_uri'] = openstack_uri
-        disconnected_operators.extend([app for app in apps if app not in disconnected_operators and app != 'users'])
+        x_apps = ['users', 'autolabeller']
+        disconnected_operators.extend([app for app in apps if app not in disconnected_operators and app not in x_apps])
         disconnected_overrides['disconnected_operators'] = disconnected_operators
         result = config.plan(disconnected_plan, inputfile='%s/disconnected.yml' % plandir,
                              overrides=disconnected_overrides)
@@ -1047,7 +1048,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             with open("%s/openshift/99-notifications.yaml" % clusterdir, 'w') as _f:
                 _f.write(notifyfile)
     if apps and (async_install or sno):
-        apps = [a for a in apps if a != 'users']
+        apps = [a for a in apps if a not in ['users', 'autolabellers']]
         appsfile = "%s/99-apps.yaml" % plandir
         appsfile = config.process_inputfile(cluster, appsfile, overrides={'registry': registry,
                                                                           'arch_tag': arch_tag,

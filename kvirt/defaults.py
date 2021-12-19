@@ -219,6 +219,6 @@ METADATA_FIELDS = ['dnsclient', 'domain', 'image', 'kube', 'kubetype', 'loadbala
 VMRULES = []
 CACHE = False
 SECURITYGROUPS = []
-LOCAL_OPENSHIFT_APPS = ['argocd', 'istio', 'users']
+LOCAL_OPENSHIFT_APPS = ['argocd', 'istio', 'users', 'autolabeller']
 SSH_PUB_LOCATIONS = ['id_ed25519.pub', 'id_dsa.pub', 'id_rsa.pub']
 ROOTPASSWORD = None

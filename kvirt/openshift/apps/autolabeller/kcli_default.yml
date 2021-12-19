@@ -1,0 +1,5 @@
+autolabeller_rules:
+ - .*worker.*:
+    - node-role.kubernetes.io/worker
+ - .*master.*:
+    - node-role.kubernetes.io/master
