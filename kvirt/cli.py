@@ -2022,6 +2022,21 @@ def info_network(args):
         common.pretty_print(networkinfo)
 
 
+def info_keyword(args):
+    """Info keyword"""
+    keyword = args.keyword
+    pprint("Providing information about keyword %s..." % keyword)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
+    default = baseconfig.default
+    keywords = baseconfig.list_keywords()
+    if keyword not in keywords:
+        error("Keyword %s not found" % keyword)
+        return 1
+    else:
+        print("Default value: %s" % default[keyword])
+        print("Current value: %s" % keywords[keyword])
+
+
 def download_plan(args):
     """Download plan"""
     plan = args.plan
@@ -2979,12 +2994,14 @@ def switch_host(args):
 def list_keyword(args):
     """List keywords"""
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-    keywordstable = PrettyTable(["Keyword", "Default Value"])
+    default = baseconfig.default
+    keywordstable = PrettyTable(["Keyword", "Default Value", "Current Value"])
     keywordstable.align["Client"] = "l"
     keywords = baseconfig.list_keywords()
     for keyword in sorted(keywords):
         value = keywords[keyword]
-        keywordstable.add_row([keyword, value])
+        default_value = default[keyword]
+        keywordstable.add_row([keyword, default_value, value])
     print(keywordstable)
     return
 
@@ -3769,6 +3786,11 @@ def cli():
                                                aliases=['loadbalancers', 'lbs'])
     lblist_parser.add_argument('--short', action='store_true')
     lblist_parser.set_defaults(func=list_lb)
+
+    keywordinfo_desc = 'Info Keyword'
+    keywordinfo_parser = info_subparsers.add_parser('keyword', description=keywordinfo_desc, help=keywordinfo_desc)
+    keywordinfo_parser.add_argument('keyword', metavar='KEYWORD')
+    keywordinfo_parser.set_defaults(func=info_keyword)
 
     profilecreate_desc = 'Create Profile'
     profilecreate_parser = argparse.ArgumentParser(add_help=False)
