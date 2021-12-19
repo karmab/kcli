@@ -1059,7 +1059,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         apps_namespace = {'advanced-cluster-management': 'open-cluster-management',
                           'kubevirt-hyperconverged': 'openshift-cnv',
                           'local-storage-operator': 'openshift-local-storage',
-                          'ocs-operator': 'openshift-storage'}
+                          'ocs-operator': 'openshift-storage', 'autolabeller': 'autorules'}
+        apps = [a for a in apps if a not in ['users']]
         for appname in apps:
             app_data = data.copy()
             if data.get('apps_install_cr') and os.path.exists("%s/%s/cr.yml" % (appdir, appname)):
