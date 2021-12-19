@@ -47,6 +47,7 @@ disk_size: 30
 autostart: false
 keys: []
 apps: []
+apps_install_cr: true
 postscripts: []
 kubevirt_disk_size:
 extra_disks: []

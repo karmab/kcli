@@ -18,7 +18,5 @@ spec:
         storageClassName: {{ ocs_storageclass }}
         volumeMode: Block
     name: ocs-deviceset
-    placement: {}
     portable: {{ ocs_portable }}
     replica: {{ ocs_replicas or 3 }}
-    resources: {}

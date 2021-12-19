@@ -1,8 +1,8 @@
-apiVersion: "local.storage.openshift.io/v1"
-kind: "LocalVolume"
+apiVersion: local.storage.openshift.io/v1
+kind: LocalVolume
 metadata:
-  name: "{{ localstorage_name }}"
-  namespace: "{{ namespace }}"
+  name: {{ localstorage_name }}
+  namespace: {{ namespace }}
 spec:
   nodeSelector:
     nodeSelectorTerms:

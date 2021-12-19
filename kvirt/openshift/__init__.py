@@ -230,6 +230,8 @@ def process_apps(config, clusterdir, apps, overrides):
     os.environ['KUBECONFIG'] = "%s/auth/kubeconfig" % clusterdir
     for app in apps:
         app_data = overrides.copy()
+        if 'apps_install_cr' in app_data:
+            app_data['install_cr'] = app_data['apps_install_cr']
         if app in LOCAL_OPENSHIFT_APPS:
             name = app
         else:
@@ -1045,12 +1047,30 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             with open("%s/openshift/99-notifications.yaml" % clusterdir, 'w') as _f:
                 _f.write(notifyfile)
     if apps and (async_install or sno):
+        apps = [a for a in apps if a != 'users']
         appsfile = "%s/99-apps.yaml" % plandir
         appsfile = config.process_inputfile(cluster, appsfile, overrides={'registry': registry,
                                                                           'arch_tag': arch_tag,
                                                                           'apps': apps})
         with open("%s/openshift/99-apps.yaml" % clusterdir, 'w') as _f:
             _f.write(appsfile)
+        appdir = "%s/apps" % plandir
+        apps_namespace = {'advanced-cluster-management': 'open-cluster-management',
+                          'kubevirt-hyperconverged': 'openshift-cnv',
+                          'local-storage-operator': 'openshift-local-storage',
+                          'ocs-operator': 'openshift-storage'}
+        for appname in apps:
+            app_data = data.copy()
+            if data.get('apps_install_cr') and os.path.exists("%s/%s/cr.yml" % (appdir, appname)):
+                app_data['namespace'] = apps_namespace[appname]
+                cr_content = config.process_inputfile(cluster, "%s/%s/cr.yml" % (appdir, appname), overrides=app_data)
+                rendered = config.process_inputfile(cluster, "%s/99-apps-cr.yaml" % plandir,
+                                                    overrides={'registry': registry,
+                                                               'arch_tag': arch_tag,
+                                                               'app': appname,
+                                                               'cr_content': cr_content})
+                with open("%s/openshift/99-apps-%s.yaml" % (clusterdir, appname), 'w') as g:
+                    g.write(rendered)
     if metal3:
         for f in glob("%s/openshift/99_openshift-cluster-api_master-machines-*.yaml" % clusterdir):
             os.remove(f)
