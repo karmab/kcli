@@ -16,3 +16,17 @@ extra_disks:
 kvm_openstack: true
 async: true
 notify: true
+apps:
+- autolabeller
+- local-storage-operator
+- ocs-operator
+- kubevirt-hyperconverged
+autolabeller_rules:
+- ci-libvirt-master.*:
+   - cluster.ocs.openshift.io/openshift-storage
+- ci-libvirt-master-0:
+  - topology.rook.io/rack: rack0
+- ci-libvirt-master-1:
+  - topology.rook.io/rack: rack1
+- ci-libvirt-master-2:
+  - topology.rook.io/rack: rack2
