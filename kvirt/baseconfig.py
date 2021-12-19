@@ -72,8 +72,11 @@ class Kbaseconfig:
             defaultclient = 'local'
             _type = 'kvm'
             if not os.path.exists('/var/run/libvirt/libvirt-sock') and not offline:
-                error("No configuration found nor local hypervisor")
-                sys.exit(1)
+                if os.path.exists('/i_am_a_container') and os.environ.get('KUBERNETES_SERVICE_HOST') is not None:
+                    _type = 'kubevirt'
+                else:
+                    error("No configuration found nor local hypervisor")
+                    sys.exit(1)
             self.ini = {'default': {'client': defaultclient}, defaultclient:
                         {'pool': 'default', 'type': _type}}
         else:
@@ -106,16 +109,10 @@ class Kbaseconfig:
                     self.host = None
                     return
             if 'client' not in self.ini['default']:
-                if os.path.exists('/i_am_a_container') and os.environ.get('KUBERNETES_SERVICE_HOST') is not None:
-                    default_target = 'kubevirt'
-                    self.ini['default']['client'] = default_target
-                    self.ini['kubevirt'] = {'type': default_target}
-                else:
-                    default_target = 'local libvirt'
-                    self.ini['default']['client'] = 'local'
-                    self.ini['local'] = {}
+                self.ini['default']['client'] = 'local'
+                self.ini['local'] = {}
                 if not quiet:
-                    warning("Using %s as no client was specified..." % default_target)
+                    warning("Using local as no client was specified...")
         self.clients = [e for e in self.ini if e != 'default']
         defaults = {}
         default = self.ini['default']
