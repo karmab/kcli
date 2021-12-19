@@ -1,12 +1,12 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: install-operators
+  name: install-cr-{{ app }}
   namespace: openshift-infra
   labels:
     app: kcli
 spec:
-  backoffLimit: 12
+  backoffLimit: 30
   template:
    spec:
     serviceAccountName: autoapprover
@@ -22,15 +22,11 @@ spec:
         CLUSTER_VERSION=$(kubectl get clusterversion  version -o jsonpath='{.status.history[0].state}')
         [ "$CLUSTER_VERSION" == "Completed" ] && exit 0
     containers:
-    - name: install-operators
-      image: {{ registry }}/karmab/curl:{{ arch_tag }}
+    - name: install-cr-{{ app }}
+      image: {{ registry }}/karmab/kubectl:{{ arch_tag }}
       command:
       - "/bin/sh"
       - "-c"
       - |
         #!/bin/sh
-        curl -s -L https://github.com/karmab/tasty/releases/download/v0.5.0/tasty-linux-amd64 > /usr/bin/tasty
-        chmod u+x /usr/bin/tasty
-        {% for app in apps %}
-        tasty install {{ app }} -w
-        {% endfor %}
+        echo {{ cr_content|base64 }} | base64 -d | kubectl apply -f -
