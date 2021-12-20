@@ -2427,7 +2427,6 @@ class Kconfig(Kbaseconfig):
         cluster = overrides.get('cluster', cluster)
         if cluster is None:
             cluster = 'testk'
-        clusterdata = {}
         clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
         if os.path.exists(clusterdir):
             ipi = False
@@ -2455,7 +2454,7 @@ class Kconfig(Kbaseconfig):
                 k.delete(name, snapshots=True)
                 common.set_lastvm(name, self.client, delete=True)
                 success("%s deleted on %s!" % (name, self.client))
-        if self.type == 'kubevirt' and clusterdata and clusterdata.get('api_ip') is None:
+        if self.type == 'kubevirt' and "%s-api-svc" % cluster in k.list_services(k.namespace):
             k.delete_service("%s-api-svc" % cluster, k.namespace)
         if self.type in ['aws', 'gcp', 'ibm']:
             for lb in ['api', 'apps']:

@@ -1520,6 +1520,12 @@ class Kubevirt(Kubecommon):
             api_service = self.core.read_namespaced_service('%s-svc' % name, namespace)
             return api_service.spec.cluster_ip
 
+    def list_services(self, namespace):
+        services = []
+        for s in self.core.list_namespaced_service(namespace).items:
+            services.append(s.metadata.name)
+        return services
+
     def delete_service(self, name, namespace):
         try:
             self.core.delete_namespaced_service(name, namespace)
