@@ -1377,7 +1377,7 @@ class Kubevirt(Kubecommon):
 
     def import_completed(self, volname, namespace):
         core = self.core
-        pvctimeout = 900
+        pvctimeout = 1200
         pvcruntime = 0
         phase = ''
         while phase != 'Succeeded':
