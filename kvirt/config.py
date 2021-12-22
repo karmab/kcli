@@ -601,6 +601,7 @@ class Kconfig(Kbaseconfig):
             default_virttype = father.get('virttype', self.virttype)
             default_securitygroups = father.get('securitygroups', self.securitygroups)
             default_rootpassword = father.get('rootpassword', self.rootpassword)
+            default_waitcommand = father.get('waitcommand', self.waitcommand)
         else:
             default_numcpus = self.numcpus
             default_memory = self.memory
@@ -674,6 +675,7 @@ class Kconfig(Kbaseconfig):
             default_virttype = self.virttype
             default_securitygroups = self.securitygroups
             default_rootpassword = self.rootpassword
+            default_waitcommand = self.waitcommand
         plan = profile.get('plan', plan)
         template = profile.get('template', default_image)
         image = profile.get('image', template)
@@ -797,6 +799,7 @@ class Kconfig(Kbaseconfig):
         cpuhotplug = profile.get('cpuhotplug', default_cpuhotplug)
         memoryhotplug = profile.get('memoryhotplug', default_memoryhotplug)
         rootpassword = profile.get('rootpassword', default_rootpassword)
+        waitcommand = profile.get('waitcommand', default_waitcommand)
         virttype = profile.get('virttype', default_virttype)
         overrides.update(profile)
         scriptcmds = []
@@ -1073,7 +1076,7 @@ class Kconfig(Kbaseconfig):
             if not cloudinit or not start or image is None:
                 pprint("Skipping wait on %s" % name)
             else:
-                self.wait(name, image=image)
+                self.wait(name, image=image, waitcommand=waitcommand)
                 finishfiles = profile.get('finishfiles', [])
                 if finishfiles:
                     self.handle_finishfiles(name, finishfiles)
@@ -2337,16 +2340,16 @@ class Kconfig(Kbaseconfig):
         else:
             return k.list_loadbalancers()
 
-    def wait(self, name, image=None, quiet=False):
+    def wait(self, name, image=None, quiet=False, waitcommand=None):
         k = self.k
         if image is None:
             image = k.info(name)['image']
         pprint("Waiting for vm %s to finish customisation" % name)
         if 'cos' in image:
-            cmd = 'journalctl --identifier=ignition --all --no-pager'
+            cmd = waitcommand or 'journalctl --identifier=ignition --all --no-pager'
         else:
             cloudinitfile = common.get_cloudinitfile(image)
-            cmd = "sudo tail -n 50 %s" % cloudinitfile
+            cmd = waitcommand or "sudo tail -n 50 %s" % cloudinitfile
         user, ip, vmport = None, None, None
         hostip = None
         while ip is None:
@@ -2384,7 +2387,10 @@ class Kconfig(Kbaseconfig):
             sshcmd = common.ssh(name, user=user, ip=ip, tunnel=self.tunnel, tunnelhost=self.tunnelhost, vmport=vmport,
                                 tunnelport=self.tunnelport, tunneluser=self.tunneluser, insecure=self.insecure, cmd=cmd)
             output = os.popen(sshcmd).read()
-            if 'kcli boot finished' in output:
+            if waitcommand is not None and output != '':
+                print(output)
+                break
+            elif 'kcli boot finished' in output:
                 break
             output = output.replace(oldoutput, '')
             if not quiet:
