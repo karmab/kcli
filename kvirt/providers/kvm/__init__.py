@@ -2993,12 +2993,12 @@ class Kvirt(object):
             return {'result': 'success'}
         if cidr is None:
             return {'result': 'failure', 'reason': "Missing Cidr"}
-        cidrs = [network['cidr'] for network in list(networks.values())]
+        cidrs = [networks[n]['cidr'] for n in networks]
         try:
             range = IPNetwork(cidr)
         except:
             return {'result': 'failure', 'reason': "Invalid Cidr %s" % cidr}
-        if IPNetwork(cidr) in cidrs:
+        if cidr in cidrs:
             return {'result': 'failure', 'reason': "Cidr %s already exists" % cidr}
         gateway = str(range[1])
         family = 'ipv6' if ':' in gateway else 'ipv4'
