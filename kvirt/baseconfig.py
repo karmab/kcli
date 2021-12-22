@@ -38,6 +38,13 @@ import re
 import sys
 
 
+def other_client(profile, clients):
+    for cli in clients:
+        if profile.startswith("%s_" % cli):
+            return True
+    return False
+
+
 class Kbaseconfig:
     """
 
@@ -824,8 +831,11 @@ class Kbaseconfig:
         default_disksize = '10'
         default = self.default
         results = []
+        other_clients = [cli for cli in self.clients if cli != self.client]
         for profile in [p for p in self.profiles if 'base' not in self.profiles[p]] + [p for p in self.profiles
                                                                                        if 'base' in self.profiles[p]]:
+            if other_client(profile, other_clients):
+                continue
             info = self.profiles[profile]
             if 'base' in info:
                 father = self.profiles[info['base']]
@@ -892,6 +902,8 @@ class Kbaseconfig:
             flavor = info.get('flavor', default_flavor)
             if flavor is None:
                 flavor = "%scpus %sMb ram" % (numcpus, memory)
+            if profile.startswith('%s_' % self.client):
+                profile = profile.replace('%s_' % self.client, '')
             results.append([profile, flavor, pool, diskinfo, image, netinfo, cloudinit, nested,
                             reservedns, reservehost])
         return sorted(results, key=lambda x: x[0])
