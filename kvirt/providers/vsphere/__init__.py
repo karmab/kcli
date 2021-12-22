@@ -459,9 +459,8 @@ class Ksphere:
                 if image is not None and common.needs_ignition(image):
                     version = common.ignition_version(image)
                     ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
-                                                   domain=domain, reserveip=reserveip, files=files,
-                                                   enableroot=enableroot, overrides=overrides, version=version,
-                                                   plan=plan, image=image)
+                                                   domain=domain, files=files, enableroot=enableroot,
+                                                   overrides=overrides, version=version, plan=plan, image=image)
                     ignitionopt = vim.option.OptionValue()
                     ignitionopt.key = 'guestinfo.ignition.config.data'
                     ignitionopt.value = base64.b64encode(ignitiondata.encode()).decode()
@@ -491,8 +490,7 @@ class Ksphere:
                     cloudinitiso = "%s/%s.ISO" % (isofolder, name)
                     userdata, meta, netdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets,
                                                                gateway=gateway, dns=dns, domain=domain,
-                                                               reserveip=reserveip, files=files,
-                                                               enableroot=enableroot, overrides=overrides,
+                                                               files=files, enableroot=enableroot, overrides=overrides,
                                                                storemetadata=storemetadata, machine='vsphere',
                                                                image=image)
             for key in overrides:

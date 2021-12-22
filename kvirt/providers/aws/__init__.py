@@ -126,11 +126,11 @@ class Kaws(object):
             if image is not None and common.needs_ignition(image):
                 version = common.ignition_version(image)
                 userdata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
-                                           domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
+                                           domain=domain, files=files, enableroot=enableroot,
                                            overrides=overrides, version=version, plan=plan, image=image)
             else:
                 userdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
-                                            domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
+                                            domain=domain, files=files, enableroot=enableroot,
                                             overrides=overrides, fqdn=True, storemetadata=storemetadata)[0]
         else:
             userdata = ''

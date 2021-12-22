@@ -93,7 +93,6 @@ class Kbase(object):
         :param iso:
         :param vnc:
         :param cloudinit:
-        :param reserveip:
         :param reservedns:
         :param reservehost:
         :param start:

@@ -311,8 +311,8 @@ class Kgcp(object):
         if image is not None and common.needs_ignition(image):
             version = common.ignition_version(image)
             userdata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
-                                       domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
-                                       overrides=overrides, version=version, plan=plan, image=image)
+                                       domain=domain, files=files, enableroot=enableroot, overrides=overrides,
+                                       version=version, plan=plan, image=image)
             newval = {'key': 'user-data', 'value': userdata}
             body['metadata']['items'].append(newval)
         newval = {'key': 'serial-port-enable', 'value': 1}

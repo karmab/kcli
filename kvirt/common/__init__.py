@@ -83,8 +83,8 @@ def fetch(url, path):
         sys.exit(1)
 
 
-def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False,
-              files=[], enableroot=True, overrides={}, fqdn=False, storemetadata=True, image=None, ipv6=[],
+def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, files=[], enableroot=True,
+              overrides={}, fqdn=False, storemetadata=True, image=None, ipv6=[],
               machine='pc'):
     """
 
@@ -95,7 +95,6 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
     :param gateway:
     :param dns:
     :param domain:
-    :param reserveip:
     :param files:
     :param enableroot:
     :param overrides:
@@ -166,7 +165,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 else:
                     targetfamily = 'dhcp6' if netname in ipv6 else 'dhcp4'
                     netdata[nicname] = {targetfamily: False}
-            elif ip is not None and netmask is not None and not reserveip:
+            elif ip is not None and netmask is not None:
                 if legacy:
                     netdata += "  iface %s inet static\n" % nicname
                     netdata += "  address %s\n" % ip
@@ -1048,9 +1047,9 @@ def get_cloudinitfile(image):
     return cloudinitfile
 
 
-def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[],
-             enableroot=True, overrides={}, iso=True, fqdn=False, version='3.1.0', plan=None, compact=False,
-             removetls=False, ipv6=[], image=None):
+def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, files=[], enableroot=True,
+             overrides={}, iso=True, fqdn=False, version='3.1.0', plan=None, compact=False, removetls=False, ipv6=[],
+             image=None):
     """
 
     :param name:
@@ -1060,7 +1059,6 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     :param gateway:
     :param dns:
     :param domain:
-    :param reserveip:
     :param files:
     :param enableroot:
     :param overrides:
@@ -1143,7 +1141,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
             nicpath = "/etc/sysconfig/network-scripts/ifcfg-%s" % nicname
             if noconf is not None:
                 netdata = "DEVICE=%s\nNAME=%s\nONBOOT=no" % (nicname, nicname)
-            elif ip is not None and netmask is not None and not reserveip and gateway is not None:
+            elif ip is not None and netmask is not None and gateway is not None:
                 if index == 0 and default_gateway is not None:
                     gateway = default_gateway
                 if isinstance(netmask, int):

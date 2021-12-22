@@ -171,12 +171,12 @@ class Kopenstack(object):
             if image is not None and common.needs_ignition(image):
                 version = common.ignition_version(image)
                 userdata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
-                                           domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
-                                           overrides=overrides, version=version, plan=plan, image=image)
+                                           domain=domain, files=files, enableroot=enableroot, overrides=overrides,
+                                           version=version, plan=plan, image=image)
             else:
                 userdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
-                                            domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
-                                            overrides=overrides, storemetadata=storemetadata)[0]
+                                            domain=domain, files=files, enableroot=enableroot, overrides=overrides,
+                                            storemetadata=storemetadata)[0]
         meta = {x: metadata[x] for x in metadata if x in METADATA_FIELDS}
         instance = nova.servers.create(name=name, image=glanceimage, flavor=flavor, key_name=key_name, nics=nics,
                                        meta=meta, userdata=userdata, block_device_mapping=block_dev_mapping,

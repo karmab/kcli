@@ -724,9 +724,8 @@ class Kvirt(object):
                     ignitiondir = ignitiontmpdir.name
                 version = common.ignition_version(image)
                 ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
-                                               domain=domain, reserveip=reserveip, files=files,
-                                               enableroot=enableroot, overrides=overrides, version=version, plan=plan,
-                                               ipv6=ipv6, image=image)
+                                               domain=domain, files=files, enableroot=enableroot,
+                                               overrides=overrides, version=version, plan=plan, ipv6=ipv6, image=image)
                 with open('%s/%s.ign' % (ignitiondir, name), 'w') as ignitionfile:
                     ignitionfile.write(ignitiondata)
                     identityfile = None
@@ -763,10 +762,9 @@ class Kvirt(object):
                 else:
                     userdata, metadata, netdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets,
                                                                    gateway=gateway, dns=dns, domain=domain,
-                                                                   reserveip=reserveip, files=files,
-                                                                   enableroot=enableroot, overrides=overrides,
-                                                                   storemetadata=storemetadata, image=image, ipv6=ipv6,
-                                                                   machine=dest_machine)
+                                                                   files=files, enableroot=enableroot,
+                                                                   overrides=overrides, storemetadata=storemetadata,
+                                                                   image=image, ipv6=ipv6, machine=dest_machine)
                 with TemporaryDirectory() as tmpdir:
                     common.make_iso(name, tmpdir, userdata, metadata, netdata, openstack=openstack)
                     self._uploadimage(name, pool=default_storagepool, origin=tmpdir)

@@ -116,7 +116,6 @@ class Kpacket(object):
         :param iso:
         :param vnc:
         :param cloudinit:
-        :param reserveip:
         :param reservedns:
         :param reservehost:
         :param start:
@@ -214,9 +213,8 @@ class Kpacket(object):
             ignitiondir = '/tmp'
             ipv6 = []
             ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
-                                           domain=domain, reserveip=reserveip, files=files,
-                                           enableroot=enableroot, overrides=overrides, version=version, plan=plan,
-                                           ipv6=ipv6, image=image)
+                                           domain=domain, files=files, enableroot=enableroot, overrides=overrides,
+                                           version=version, plan=plan, ipv6=ipv6, image=image)
             image = 'custom_ipxe'
             with open('%s/%s.ign' % (ignitiondir, name), 'w') as ignitionfile:
                 ignitionfile.write(ignitiondata)
@@ -253,8 +251,8 @@ class Kpacket(object):
         features = ['tpm'] if tpm else []
         if cloudinit and userdata is None:
             userdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
-                                        domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
-                                        overrides=overrides, fqdn=True, storemetadata=storemetadata)[0]
+                                        domain=domain, files=files, enableroot=enableroot, overrides=overrides,
+                                        fqdn=True, storemetadata=storemetadata)[0]
         validfacilities = [os.path.basename(e['href']) for e in validfacilities]
         validfacilities = [f.code for f in self.conn.list_facilities() if f.id in validfacilities]
         if not validfacilities:

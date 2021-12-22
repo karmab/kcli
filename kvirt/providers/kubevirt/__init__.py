@@ -370,14 +370,13 @@ class Kubevirt(Kubecommon):
                 cloudinitsource = "cloudInitConfigDrive"
                 version = common.ignition_version(image)
                 userdata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
-                                           domain=domain, reserveip=reserveip, files=files,
-                                           enableroot=enableroot, overrides=overrides, version=version,
-                                           plan=plan, compact=True, image=image)
+                                           domain=domain, files=files, enableroot=enableroot, overrides=overrides,
+                                           version=version, plan=plan, compact=True, image=image)
             else:
                 cloudinitsource = "cloudInitNoCloud"
                 userdata, metadata, netdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets,
                                                                gateway=gateway, dns=dns, domain=domain,
-                                                               reserveip=reserveip, files=files, enableroot=enableroot,
+                                                               files=files, enableroot=enableroot,
                                                                overrides=overrides, storemetadata=storemetadata,
                                                                image=image, machine=machine)
                 if 'static' in metadata:
