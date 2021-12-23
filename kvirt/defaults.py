@@ -222,4 +222,7 @@ SECURITYGROUPS = []
 LOCAL_OPENSHIFT_APPS = ['argocd', 'istio', 'users', 'autolabeller']
 SSH_PUB_LOCATIONS = ['id_ed25519.pub', 'id_dsa.pub', 'id_rsa.pub']
 ROOTPASSWORD = None
+WAIT = False
+WAIT = False
+WAITTIMEOUT = 0
 WAITCOMMAND = None

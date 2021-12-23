@@ -1182,12 +1182,11 @@ def create_vm(args):
     count = args.count
     profilefile = args.profilefile
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
-    wait = args.wait
     console = args.console
     serial = args.serial
-    if 'wait' in overrides and isinstance(overrides['wait'], bool) and overrides['wait']:
-        wait = True
-    if wait and 'keys' not in overrides and common.get_ssh_pub_key() is None:
+    if args.wait:
+        overrides['wait'] = args.wait
+    if overrides['wait'] and 'keys' not in overrides and common.get_ssh_pub_key() is None:
         error("No usable public key found, which is mandatory when using wait")
         sys.exit(1)
     customprofile = {}
@@ -1234,7 +1233,7 @@ def create_vm(args):
         error("You need to either provide a profile, an image or some parameters")
         sys.exit(1)
     if count == 1:
-        result = config.create_vm(name, profile, overrides=overrides, customprofile=customprofile, wait=wait,
+        result = config.create_vm(name, profile, overrides=overrides, customprofile=customprofile,
                                   onlyassets=onlyassets)
         if not onlyassets:
             if console:
@@ -1254,7 +1253,7 @@ def create_vm(args):
             overrides['plan'] = name
         for number in range(count):
             currentname = "%s-%d" % (name, number)
-            result = config.create_vm(currentname, profile, overrides=overrides, customprofile=customprofile, wait=wait,
+            result = config.create_vm(currentname, profile, overrides=overrides, customprofile=customprofile,
                                       onlyassets=onlyassets)
             if not onlyassets:
                 codes.append(common.handle_response(result, currentname, element='', action='created',

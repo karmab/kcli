@@ -1240,6 +1240,9 @@ parameters:
 |*zerotier_kubelet*|False|Whether to configure kubelet to use the first zerotier address as node ip|
 |*playbook*|False|Generates a playbook for the vm of the plan instead of creating it. Useful to run parts of a plan on baremetal|
 |*vmrules*|[]|List of rules with an associated dict to apply for the corresponding entry, if a regex on the entry name is matched. The profile of the matching vm will be updated with the content of the rule|
+|*wait*|False|Whether to wait for cloudinit/ignition to fully apply|
+|*waitcommand*|None|a specific command to use to validate that vm is ready|
+|*waittimeout*|0|Timeout when waiting for a vm to be ready. Default zero value means the wait wont timeout|
 
 # Ansible support
 

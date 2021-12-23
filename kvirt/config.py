@@ -448,7 +448,7 @@ class Kconfig(Kbaseconfig):
         self.overrides.update(config_data)
 
     def create_vm(self, name, profile, overrides={}, customprofile={}, k=None,
-                  plan='kvirt', basedir='.', client=None, onfly=None, wait=False, onlyassets=False):
+                  plan='kvirt', basedir='.', client=None, onfly=None, onlyassets=False):
         """
 
         :param k:
@@ -601,7 +601,9 @@ class Kconfig(Kbaseconfig):
             default_virttype = father.get('virttype', self.virttype)
             default_securitygroups = father.get('securitygroups', self.securitygroups)
             default_rootpassword = father.get('rootpassword', self.rootpassword)
+            default_wait = father.get('wait', self.wait)
             default_waitcommand = father.get('waitcommand', self.waitcommand)
+            default_waittimeout = father.get('waittimeout', self.waittimeout)
         else:
             default_numcpus = self.numcpus
             default_memory = self.memory
@@ -675,7 +677,9 @@ class Kconfig(Kbaseconfig):
             default_virttype = self.virttype
             default_securitygroups = self.securitygroups
             default_rootpassword = self.rootpassword
+            default_wait = self.wait
             default_waitcommand = self.waitcommand
+            default_waittimeout = self.waittimeout
         plan = profile.get('plan', plan)
         template = profile.get('template', default_image)
         image = profile.get('image', template)
@@ -799,7 +803,11 @@ class Kconfig(Kbaseconfig):
         cpuhotplug = profile.get('cpuhotplug', default_cpuhotplug)
         memoryhotplug = profile.get('memoryhotplug', default_memoryhotplug)
         rootpassword = profile.get('rootpassword', default_rootpassword)
+        wait = profile.get('wait', default_wait)
         waitcommand = profile.get('waitcommand', default_waitcommand)
+        if waitcommand is not None:
+            wait = True
+        waittimeout = profile.get('waittimeout', default_waittimeout)
         virttype = profile.get('virttype', default_virttype)
         overrides.update(profile)
         scriptcmds = []
@@ -1076,7 +1084,7 @@ class Kconfig(Kbaseconfig):
             if not cloudinit or not start or image is None:
                 pprint("Skipping wait on %s" % name)
             else:
-                self.wait(name, image=image, waitcommand=waitcommand)
+                self.wait_finish(name, image=image, waitcommand=waitcommand, waittimeout=waittimeout)
                 finishfiles = profile.get('finishfiles', [])
                 if finishfiles:
                     self.handle_finishfiles(name, finishfiles)
@@ -1958,6 +1966,10 @@ class Kconfig(Kbaseconfig):
                     start = profile.get('start', True)
                     cloudinit = profile.get('cloudinit', True)
                     wait = profile.get('wait', False)
+                    waitcommand = profile.get('waitcommand')
+                    if waitcommand is not None:
+                        wait = True
+                    waittimeout = profile.get('waittimeout', 0)
                     asyncwait = profile.get('asyncwait', False)
                     finishfiles = profile.get('finishfiles', [])
                     if onlyassets:
@@ -1967,10 +1979,11 @@ class Kconfig(Kbaseconfig):
                     elif not start or not cloudinit or profile.get('image') is None:
                         pprint("Skipping wait on %s" % name)
                     elif asyncwait:
-                        asyncwaitvm = {'name': name, 'finishfiles': finishfiles}
+                        asyncwaitvm = {'name': name, 'finishfiles': finishfiles, 'waitcommand': waitcommand,
+                                       'waittimeout': waittimeout}
                         asyncwaitvms.append(asyncwaitvm)
                     else:
-                        self.wait(name)
+                        self.wait_finish(name, waitcomand=waitcommand, waittimeout=waittimeout)
                         if finishfiles:
                             self.handle_finishfiles(name, finishfiles)
                 else:
@@ -2126,7 +2139,8 @@ class Kconfig(Kbaseconfig):
             os.remove("temp_plan_%s.yml" % plan)
         for entry in asyncwaitvms:
             name, finishfiles = entry['name'], entry['finishfiles']
-            self.wait(name)
+            waitcommand, waittimeout = entry['waitcommand'], entry['waittimeout']
+            self.wait(name, waitcommand=waitcommand, waittimeout=waittimeout)
             if finishfiles:
                 self.handle_finishfiles(self, name, finishfiles)
         post_script = '%s/kcli_post.sh' % inputdir
@@ -2340,7 +2354,7 @@ class Kconfig(Kbaseconfig):
         else:
             return k.list_loadbalancers()
 
-    def wait(self, name, image=None, quiet=False, waitcommand=None):
+    def wait_finish(self, name, image=None, quiet=False, waitcommand=None, waittimeout=0):
         k = self.k
         if image is None:
             image = k.info(name)['image']
@@ -2354,6 +2368,7 @@ class Kconfig(Kbaseconfig):
             cmd = waitcommand or "sudo tail -n 50 %s" % cloudinitfile
         user, ip, vmport = None, None, None
         hostip = None
+        timeout = 0
         while ip is None:
             info = k.info(name)
             if self.type == 'packet' and info.get('status') != 'active':
@@ -2383,22 +2398,35 @@ class Kconfig(Kbaseconfig):
                             ip = None
             pprint("Waiting for vm to be accessible...")
             sleep(5)
+            timeout += 5
+            if waittimeout > 0 and timeout > waittimeout:
+                error("Timeout waiting for vm to be accessible...")
+                break
         sleep(5)
         oldoutput = ''
+        timeout = 0
         while True:
-            sshcmd = common.ssh(name, user=user, ip=ip, tunnel=self.tunnel, tunnelhost=self.tunnelhost, vmport=vmport,
+            sshcmd = common.ssh(name, user='root', ip=ip, tunnel=self.tunnel, tunnelhost=self.tunnelhost, vmport=vmport,
                                 tunnelport=self.tunnelport, tunneluser=self.tunneluser, insecure=self.insecure, cmd=cmd)
             output = os.popen(sshcmd).read()
-            if waitcommand is not None and output != '':
-                print(output)
-                break
-            elif 'kcli boot finished' in output:
-                break
-            output = output.replace(oldoutput, '')
-            if not quiet:
-                print(output)
-            oldoutput = output
+            if waitcommand is not None:
+                if output != '':
+                    print(output)
+                    break
+                else:
+                    pprint("Waiting for waitcommand to succeed...")
+            else:
+                if 'kcli boot finished' in output:
+                    break
+                output = output.replace(oldoutput, '')
+                if not quiet:
+                    print(output)
+                oldoutput = output
             sleep(2)
+            timeout += 2
+            if waittimeout > 0 and timeout > waittimeout:
+                error("Timeout waiting for waitcommand to execute...")
+                break
         return True
 
     def create_kube_generic(self, cluster, overrides={}):

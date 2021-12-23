@@ -18,7 +18,8 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             SHAREDFOLDERS, KERNEL, INITRD, CMDLINE, PLACEMENT, YAMLINVENTORY, CPUHOTPLUG, MEMORYHOTPLUG,
                             CPUFLAGS, CPUPINNING, NUMAMODE, NUMA, PCIDEVICES, VIRTTYPE, MAILSERVER, MAILFROM, MAILTO,
                             TPM, JENKINSMODE, RNG, ZEROTIER_NETS, ZEROTIER_KUBELET, VMPORT, VMUSER, VMRULES, CACHE,
-                            SECURITYGROUPS, LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG, ROOTPASSWORD, WAITCOMMAND)
+                            SECURITYGROUPS, LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG, ROOTPASSWORD, WAIT, WAITCOMMAND,
+                            WAITTIMEOUT)
 from ipaddress import ip_address
 from random import choice
 from kvirt import common
@@ -204,7 +205,9 @@ class Kbaseconfig:
         defaults['cache'] = default.get('cache', CACHE)
         defaults['securitygroups'] = default.get('securitygroups', SECURITYGROUPS)
         defaults['rootpassword'] = default.get('rootpassword', ROOTPASSWORD)
+        defaults['wait'] = default.get('wait', WAIT)
         defaults['waitcommand'] = default.get('waitcommand', WAITCOMMAND)
+        defaults['waittimeout'] = default.get('waittimeout', WAITTIMEOUT)
         currentplanfile = "%s/.kcli/plan" % os.environ.get('HOME')
         if os.path.exists(currentplanfile):
             self.currentplan = open(currentplanfile).read().strip()
@@ -403,7 +406,9 @@ class Kbaseconfig:
         self.cache = options.get('cache', self.default['cache'])
         self.securitygroups = options.get('securitygroups', self.default['securitygroups'])
         self.rootpassword = options.get('rootpassword', self.default['rootpassword'])
+        self.wait = options.get('wait', self.default['wait'])
         self.waitcommand = options.get('waitcommand', self.default['waitcommand'])
+        self.waittimeout = options.get('waittimeout', self.default['waittimeout'])
         self.overrides = {}
 
     def switch_host(self, client):
