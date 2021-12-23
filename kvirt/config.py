@@ -2345,6 +2345,8 @@ class Kconfig(Kbaseconfig):
         if image is None:
             image = k.info(name)['image']
         pprint("Waiting for vm %s to finish customisation" % name)
+        if waitcommand is not None and '2>' not in waitcommand:
+            waitcommand += " 2>/dev/null"
         if 'cos' in image:
             cmd = waitcommand or 'journalctl --identifier=ignition --all --no-pager'
         else:
