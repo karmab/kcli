@@ -29,4 +29,8 @@ spec:
       - "-c"
       - |
         #!/bin/sh
+        {% if app == 'autolabeller' %}
+        echo {{ cr_content|base64 }} | base64 -d | sed "s@\\\\\\\1@\\\1@g" | sed "s@\\\\\\\2@\\\2@g" | sed "s@\\\\\\\3@\\\3@g" | kubectl apply -f -
+        {% else %}
         echo {{ cr_content|base64 }} | base64 -d | kubectl apply -f -
+        {% endif %}
