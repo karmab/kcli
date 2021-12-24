@@ -73,8 +73,9 @@ def create(config, plandir, cluster, overrides):
             api_ip = "192.168.122.253"
         elif platform == 'kubevirt':
             selector = {'kcli/plan': plan, 'kcli/role': 'master'}
-            api_ip = config.k.create_service("%s-api" % cluster, config.k.namespace, selector,
-                                             _type="LoadBalancer", ports=[6443])
+            service_type = "LoadBalancer" if k.access_mode == 'LoadBalancer' else 'ClusterIP'
+            api_ip = config.k.create_service("%s-api" % cluster, config.k.namespace, selector, _type=service_type,
+                                             ports=[6443])
             if api_ip is None:
                 sys.exit(1)
             else:
