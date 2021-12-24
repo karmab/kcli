@@ -1984,6 +1984,7 @@ def generate_rhcos_iso(k, cluster, pool, version='latest', podman=False, install
 
 def olm_app(package):
     os.environ["PATH"] += ":%s" % os.getcwd()
+    own = True
     name, source, defaultchannel, csv, description, installmodes, crd = None, None, None, None, None, None, None
     target_namespace = None
     channels = []
@@ -2004,10 +2005,11 @@ def olm_app(package):
                 for mode in installmodes:
                     if mode['type'] == 'OwnNamespace' and not mode['supported']:
                         target_namespace = 'openshift-operators'
+                        own = False
                         break
                 csvdesc = channel['currentCSVDesc']
                 csvdescannotations = csvdesc['annotations']
-                if 'operatorframework.io/suggested-namespace' in csvdescannotations:
+                if own and 'operatorframework.io/suggested-namespace' in csvdescannotations:
                     target_namespace = csvdescannotations['operatorframework.io/suggested-namespace']
                 if 'customresourcedefinitions' in csvdesc and 'owned' in csvdesc['customresourcedefinitions']:
                     crd = csvdesc['customresourcedefinitions']['owned'][0]['name']
