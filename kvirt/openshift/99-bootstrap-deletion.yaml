@@ -10,6 +10,10 @@ spec:
 #  ttlSecondsAfterFinished: 100
   template:
    spec:
+    tolerations:
+    - effect: NoSchedule
+      key: node-role.kubernetes.io/master
+      operator: Exists
     serviceAccountName: autoapprover
     restartPolicy: OnFailure
     initContainers:

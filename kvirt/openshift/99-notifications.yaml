@@ -20,8 +20,13 @@ spec:
       - "-c"
       - |
         #!/bin/sh
-        CLUSTER_VERSION=$(kubectl get clusterversion  version -o jsonpath='{.status.history[0].state}')
-        [ "$CLUSTER_VERSION" == "Completed" ] && exit 0
+        CLUSTER_VERSION=$(kubectl get clusterversion version -o jsonpath='{.status.history[0].state}')
+        [ "$CLUSTER_VERSION" == "Completed" ] || exit 1
+        kubectl get clusterversion > /shared/results.txt
+        kubectl get nodes >> /shared/results.txt
+      volumeMounts:
+      - mountPath: /shared
+        name: shared
     containers:
     - name: launch-notify-cmds
       image: {{ registry }}/karmab/curl:{{ arch_tag }}
@@ -39,3 +44,9 @@ spec:
 {% for cmd in cmds %}
         {{ cmd }}
 {% endfor %}
+      volumeMounts:
+      - mountPath: /shared
+        name: shared
+    volumes:
+    - emptyDir: {}
+      name: shared

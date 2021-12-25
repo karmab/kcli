@@ -1032,7 +1032,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             with open("%s/openshift/99-bootstrap-deletion-2.yaml" % clusterdir, 'w') as _f:
                 _f.write(deletionfile2)
         if notify:
-            notifycmd = "echo Cluster %s installed on %s" % (cluster, config.client)
+            notifycmd = "cat /shared/results.txt"
             notifycmds, mailcontent = config.handle_notifications(cluster, notifymethods=config.notifymethods,
                                                                   pushbullettoken=config.pushbullettoken,
                                                                   notifycmd=notifycmd, slackchannel=config.slackchannel,

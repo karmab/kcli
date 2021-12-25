@@ -19,8 +19,8 @@ spec:
       - "-c"
       - |
         #!/bin/sh
-        CLUSTER_VERSION=$(kubectl get clusterversion  version -o jsonpath='{.status.history[0].state}')
-        [ "$CLUSTER_VERSION" == "Completed" ] && exit 0
+        CLUSTER_VERSION=$(kubectl get clusterversion version -o jsonpath='{.status.history[0].state}')
+        [ "$CLUSTER_VERSION" == "Completed" ] || exit 1
     containers:
     - name: install-cr-{{ app }}
       image: {{ registry }}/karmab/kubectl:{{ arch_tag }}
