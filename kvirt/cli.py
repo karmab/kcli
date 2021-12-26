@@ -1186,7 +1186,7 @@ def create_vm(args):
     serial = args.serial
     if args.wait:
         overrides['wait'] = args.wait
-    if overrides['wait'] and 'keys' not in overrides and common.get_ssh_pub_key() is None:
+    if overrides.get('wait', False) and 'keys' not in overrides and common.get_ssh_pub_key() is None:
         error("No usable public key found, which is mandatory when using wait")
         sys.exit(1)
     customprofile = {}
