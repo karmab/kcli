@@ -1501,9 +1501,11 @@ def _ssh_credentials(k, name):
         error("%s down" % name)
     if 'nodeport' in info:
         vmport = info['nodeport']
-        ip = k.node_host(name=info.get('host'))
+        nodehost = info.get('host')
+        ip = k.node_host(name=nodehost)
         if ip is None:
-            error("No valid node ip found for %s" % name)
+            warning("No valid node ip found for %s" % name)
+            ip = nodehost
     elif 'loadbalancerip' in info:
         ip = info['loadbalancerip']
     if ip is None:
