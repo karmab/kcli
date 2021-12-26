@@ -31,7 +31,7 @@ HDOMAIN = "harvesterhci.io"
 HVERSION = "v1beta1"
 CONTAINERDISKS = ['quay.io/kubevirt/alpine-container-disk-demo', 'quay.io/kubevirt/cirros-container-disk-demo',
                   'quay.io/karmab/debian-container-disk-demo', 'quay.io/karmab/freebsd-container-disk-demo',
-                  'quay.io/kubevirt/fedora-cloud-container-disk-demo',
+                  'quay.io/kubevirt/fedora-cloud-container-disk-demo', 'quay.io/containerdisks/fedora:35',
                   'quay.io/karmab/fedora-coreos-container-disk-demo', 'quay.io/karmab/gentoo-container-disk-demo',
                   'quay.io/karmab/ubuntu-container-disk-demo']
 KUBECTL_LINUX = "https://storage.googleapis.com/kubernetes-release/release/v1.16.1/bin/linux/amd64/kubectl"
