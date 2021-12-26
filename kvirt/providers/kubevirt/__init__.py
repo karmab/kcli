@@ -1303,10 +1303,12 @@ class Kubevirt(Kubecommon):
 
     def list_networks(self):
         core = self.core
-        cidr = 'N/A'
-        for node in core.list_node().items:
-            cidr = node.spec.pod_cidr
-            break
+        try:
+            for node in core.list_node().items:
+                cidr = node.spec.pod_cidr
+                break
+        except:
+            cidr = 'N/A'
         networks = {'default': {'cidr': cidr, 'dhcp': True, 'type': 'bridge', 'mode': 'N/A'}}
         crds = self.crds
         namespace = self.namespace
@@ -1462,7 +1464,11 @@ class Kubevirt(Kubecommon):
 
     def node_host(self, name=None):
         ip = None
-        for node in self.core.list_node().items:
+        try:
+            nodesinfo = self.core.list_node().items
+        except:
+            return ip
+        for node in nodesinfo:
             if name is not None and node.metadata.name != name:
                 continue
             addresses = [x.address for x in node.status.addresses if x.type == 'InternalIP']
