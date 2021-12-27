@@ -36,6 +36,7 @@ CONTAINERDISKS = ['quay.io/kubevirt/alpine-container-disk-demo', 'quay.io/kubevi
                   'quay.io/karmab/ubuntu-container-disk-demo']
 KUBECTL_LINUX = "https://storage.googleapis.com/kubernetes-release/release/v1.16.1/bin/linux/amd64/kubectl"
 KUBECTL_MACOSX = KUBECTL_LINUX.replace('linux', 'darwin')
+DEFAULT_SC = 'storageclass.kubernetes.io/is-default-class'
 
 
 def _base_image_size(image):
@@ -991,13 +992,14 @@ class Kubevirt(Kubecommon):
         index = len(currentdisks)
         diskname = '%s-disk%d' % (name, index)
         diskpool = self.check_pool(pool)
+        diskpool, volume_mode, volume_access = self.get_default_storage(diskpool, self.volume_mode, self.volume_access)
         myvolume = {'name': diskname, 'persistentVolumeClaim': {'claimName': diskname}}
         if self.disk_hotplug:
             pprint("Hotplugging disk %s" % diskname)
             dv = {'kind': 'DataVolume', 'apiVersion': "%s/%s" % (CDIDOMAIN, CDIVERSION),
                   'metadata': {'name': diskname, 'annotations': {'sidecar.istio.io/inject': 'false'}},
-                  'spec': {'pvc': {'volumeMode': self.volume_mode,
-                                   'accessModes': [self.volume_access],
+                  'spec': {'pvc': {'volumeMode': volume_mode,
+                                   'accessModes': [volume_access],
                                    'resources': {'requests': {'storage': '%sGi' % size}}},
                            'source': {'blank': {}}}, 'status': {}}
             crds.create_namespaced_custom_object(CDIDOMAIN, CDIVERSION, namespace, 'datavolumes', dv)
@@ -1008,7 +1010,10 @@ class Kubevirt(Kubecommon):
                 body['disk']['serial'] = str(overrides['serial'])
             self.core.api_client.call_api(subresource, 'PUT', body=body)
         else:
-            self.create_disk(diskname, size=size, pool=diskpool, thin=thin, image=image, overrides=overrides)
+            disk_overrides = overrides.copy()
+            disk_overrides['volume_mode'] = volume_mode
+            disk_overrides['volume_access'] = volume_access
+            self.create_disk(diskname, size=size, pool=diskpool, thin=thin, image=image, overrides=disk_overrides)
             bound = self.pvc_bound(diskname, namespace)
             if not bound:
                 return {'result': 'failure', 'reason': 'timeout waiting for pvc %s to get bound' % diskname}
@@ -1176,9 +1181,10 @@ class Kubevirt(Kubecommon):
             return {'result': 'success'}
         now = datetime.datetime.now().strftime("%Y%M%d%H%M")
         podname = '%s-%s-importer' % (now, volname)
+        pool, volume_mode, volume_access = self.get_default_storage(pool, self.volume_mode, self.volume_access)
         pvc = {'kind': 'PersistentVolumeClaim', 'spec': {'storageClassName': pool,
-                                                         'volumeMode': self.volume_mode,
-                                                         'accessModes': [self.volume_access],
+                                                         'volumeMode': volume_mode,
+                                                         'accessModes': [volume_access],
                                                          'resources': {'requests': {'storage': '%sGi' % size}}},
                'apiVersion': 'v1', 'metadata': {'name': volname, 'annotations': {'kcli/image': uncompressed}}}
         if cdi:
@@ -1186,7 +1192,7 @@ class Kubevirt(Kubecommon):
             pvc['metadata']['annotations'] = {'cdi.kubevirt.io/storage.import.endpoint': url}
         else:
             container = {'image': 'kubevirtci/disk-importer', 'name': 'importer'}
-            if self.volume_mode == 'Filesystem':
+            if volume_mode == 'Filesystem':
                 container['volumeMounts'] = [{'mountPath': '/storage', 'name': 'storage1'}]
                 targetpath = '/storage/disk.img'
             else:
@@ -1588,3 +1594,33 @@ class Kubevirt(Kubecommon):
     def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False):
         print("not implemented")
         return
+
+    def get_default_sc(self):
+        default_sc = None
+        storageapi = self.storageapi
+        for sc in storageapi.list_storage_class().items:
+            annotations = sc.metadata.annotations
+            if annotations is not None and DEFAULT_SC in annotations and annotations[DEFAULT_SC] == 'true':
+                default_sc = sc.metadata.name
+        return default_sc
+
+    def get_sc_details(self, name):
+        volume_mode, volume_access = None, None
+        crds = self.crds
+        storageprofiles = crds.list_cluster_custom_object(CDIDOMAIN, CDIVERSION, 'storageprofiles')["items"]
+        for entry in storageprofiles:
+            if entry['metadata']['name'] == name and 'claimPropertySets' in entry['status']:
+                claimset = entry['status']['claimPropertySets'][0]
+                volume_mode, volume_access = claimset['volumeMode'], claimset['accessModes'][0]
+        return volume_mode, volume_access
+
+    def get_default_storage(self, pool, volume_mode, volume_access):
+        if pool is None:
+            default_pool = self.get_default_sc()
+            if default_pool is not None:
+                pool = default_pool
+        if pool is not None:
+            pool_volume_mode, pool_volume_access = self.get_sc_details(pool)
+            if pool_volume_mode is not None and pool_volume_access is not None:
+                volume_mode, volume_access = pool_volume_mode, pool_volume_access
+        return pool, volume_mode, volume_access
