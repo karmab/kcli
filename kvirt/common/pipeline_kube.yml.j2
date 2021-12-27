@@ -38,22 +38,18 @@ spec:
       {% endif %}
       echo kcli create cluster {{ kubetype }} --force {{ parameterline }} $CLUSTER
       kcli create cluster {{ kubetype }} --force {{ parameterline }} $CLUSTER
-      cp /root/.kcli/clusters/$CLUSTER/auth/kubeconfig $(results.kubeconfig.path)
+      cp $HOME/.kcli/clusters/$CLUSTER/auth/kubeconfig $(results.kubeconfig.path)
       {% if kubetype == 'openshift' %}
-      cp /root/.kcli/clusters/$CLUSTER/auth/kubeadmin-password $(results.kubeconfig.path)
+      cp $HOME/.kcli/clusters/$CLUSTER/auth/kubeadmin-password $(results.kubeadmin-password.path)
       {% endif %}
      volumeMounts:
-     - mountPath: /root/.kcli
+     - mountPath: /home/tekton/.kcli
        name: kcli-config
-     - mountPath: /root/.kcli/clusters
-       name: cluster-assets
  volumes:
  - configMap:
      defaultMode: 0700
      name: kcli-config
    name: kcli-config
- - name: cluster-assets
-   emptyDir: {}
 ---
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline

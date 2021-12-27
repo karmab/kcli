@@ -68,7 +68,7 @@ spec:
      echo kcli create plan --force $INPUTFILE {{ paramfileline }} {{ parameterline }} $PLAN
      kcli create plan --force -f $INPUTFILE {{ paramfileline }} {{ parameterline }} $PLAN
     volumeMounts:
-    - mountPath: /root/.kcli
+    - mountPath: /home/tekton/.kcli
       name: kcli-config
     - mountPath: /source
       name: git-source
