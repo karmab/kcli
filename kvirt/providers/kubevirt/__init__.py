@@ -1248,7 +1248,7 @@ class Kubevirt(Kubecommon):
         container['args'] = [command]
         pvc = {'kind': 'PersistentVolumeClaim', 'spec': {'storageClassName': pool, 'accessModes': [self.volume_access],
                                                          'volumeMode': self.volume_mode,
-                                                         'resources': {'requests': {'storage': '%sMi' % size}}},
+                                                         'resources': {'requests': {'storage': '%sGi' % size}}},
                'apiVersion': 'v1', 'metadata': {'name': dest}}
         pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'Never', 'containers': [container],
                                        'volumes': [{'name': 'storage1', 'persistentVolumeClaim': {'claimName': ori}},
