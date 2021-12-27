@@ -106,6 +106,7 @@ class Kubevirt(Kubecommon):
                sharedfolders=[], kernel=None, initrd=None, cmdline=None, placement=[], autostart=False,
                cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False,
                metadata={}, securitygroups=[]):
+        owners = []
         guestagent = False
         if self.exists(name):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
@@ -385,17 +386,23 @@ class Kubevirt(Kubecommon):
                     netdata = None
             cloudinitdisk = {'cdrom': {'bus': 'sata'}, 'name': 'cloudinitdisk'}
             vm['spec']['template']['spec']['domain']['devices']['disks'].append(cloudinitdisk)
-            self.create_secret("%s-userdata-secret" % name, namespace, userdata, field='userdata')
-            cloudinitvolume = {cloudinitsource: {'secretRef': {'name': "%s-userdata-secret" % name}},
+            userdatasecretname = "%s-userdata-secret" % name
+            self.create_secret(userdatasecretname, namespace, userdata, field='userdata')
+            cloudinitvolume = {cloudinitsource: {'secretRef': {'name': userdatasecretname}},
                                'name': 'cloudinitdisk'}
+            owners.append(userdatasecretname)
             if netdata is not None and netdata != '':
-                cloudinitvolume[cloudinitsource]['networkDataSecretRef'] = {'name': "%s-netdata-secret" % name}
-                self.create_secret("%s-netdata-secret" % name, namespace, netdata, field='networkdata')
+                netdatasecretname = "%s-netdata-secret" % name
+                cloudinitvolume[cloudinitsource]['networkDataSecretRef'] = {'name': netdatasecretname}
+                self.create_secret(netdatasecretname, namespace, netdata, field='networkdata')
+                owners.append(netdatasecretname)
             vm['spec']['template']['spec']['volumes'].append(cloudinitvolume)
         if self.debug:
             common.pretty_print(vm)
         for index, pvc in enumerate(pvcs):
             pvcname = pvc['metadata']['name']
+            if not pvcname.endswith('iso'):
+                owners.append(pvcname)
             try:
                 core.read_namespaced_persistent_volume_claim(pvcname, namespace)
                 pprint("Using existing pvc %s" % pvcname)
@@ -447,12 +454,16 @@ class Kubevirt(Kubecommon):
                 return {'result': 'failure', 'reason': 'timeout waiting for pvc %s to get bound' % pvcname}
         if 'affinity' in overrides and isinstance(overrides['affinity'], dict):
             vm['spec']['template']['spec']['affinity'] = overrides['affinity']
-        crds.create_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', vm)
+        vminfo = crds.create_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', vm)
+        uid = vminfo.get("metadata")['uid']
+        api_version = "%s/%s" % (DOMAIN, VERSION)
+        reference = {'apiVersion': api_version, 'kind': 'VirtualMachine', 'name': name, 'uid': uid}
         if reservedns and domain is not None:
             try:
                 core.read_namespaced_service(domain, namespace)
             except:
-                dnsspec = {'apiVersion': 'v1', 'kind': 'Service', 'metadata': {'name': domain},
+                dnsspec = {'apiVersion': 'v1', 'kind': 'Service', 'metadata': {'name': domain,
+                                                                               'ownerReferences': [reference]},
                            'spec': {'selector': {'subdomain': domain}, 'clusterIP': 'None',
                                     'ports': [{'name': 'foo', 'port': 1234, 'targetPort': 1234}]}}
                 core.create_namespaced_service(namespace, dnsspec)
@@ -463,7 +474,8 @@ class Kubevirt(Kubecommon):
                 localport = common.get_free_nodeport() if self.access_mode == 'NodePort' else None
                 selector = {'kubevirt.io/provider': 'kcli', 'kubevirt.io/domain': name}
                 self.create_service('%s-ssh' % name, namespace, selector, _type=self.access_mode,
-                                    ports=[{'port': 22, 'nodePort': localport}])
+                                    ports=[{'port': 22, 'nodePort': localport}], reference=reference)
+        self.update_reference(owners, namespace, reference)
         return {'result': 'success'}
 
     def start(self, name):
@@ -851,28 +863,6 @@ class Kubevirt(Kubecommon):
                     pprint("Waiting 5s for pvcs associated to datavolumes of %s to disappear" % name)
                     time.sleep(5)
                     timeout += 5
-        pvcvolumes = [v['persistentVolumeClaim']['claimName'] for v in vm['spec']['template']['spec']['volumes'] if
-                      'persistentVolumeClaim' in v]
-        pvcs = [pvc for pvc in core.list_namespaced_persistent_volume_claim(namespace).items
-                if pvc.metadata.name in pvcvolumes]
-        for p in pvcs:
-            pvcname = p.metadata.name
-            if pvcname.endswith('iso'):
-                continue
-            pprint("Deleting pvc %s" % pvcname)
-            core.delete_namespaced_persistent_volume_claim(pvcname, namespace)
-        try:
-            core.delete_namespaced_service('%s-ssh-svc' % name, namespace)
-        except:
-            pass
-        try:
-            core.delete_namespaced_secret('%s-userdata-secret' % name, namespace)
-        except:
-            pass
-        try:
-            core.delete_namespaced_secret('%s-netdata-secret' % name, namespace)
-        except:
-            pass
         return {'result': 'success'}
 
     def clone(self, old, new, full=False, start=False):
@@ -1483,9 +1473,11 @@ class Kubevirt(Kubecommon):
                 break
         return ip
 
-    def create_service(self, name, namespace, selector, _type="NodePort", ports=[], wait=True):
+    def create_service(self, name, namespace, selector, _type="NodePort", ports=[], wait=True, reference=None):
         spec = {'kind': 'Service', 'apiVersion': 'v1', 'metadata': {'namespace': namespace, 'name': '%s-svc' % name},
                 'spec': {'sessionAffinity': 'None', 'selector': selector}}
+        if reference is not None:
+            spec['metadata']['ownerReferences'] = [reference]
         spec['spec']['type'] = _type
         if _type in ['NodePort', 'LoadBalancer']:
             spec['spec']['externalTrafficPolicy'] = 'Cluster'
@@ -1624,3 +1616,12 @@ class Kubevirt(Kubecommon):
             if pool_volume_mode is not None and pool_volume_access is not None:
                 volume_mode, volume_access = pool_volume_mode, pool_volume_access
         return pool, volume_mode, volume_access
+
+    def update_reference(self, owners, namespace, reference):
+        core = self.core
+        body = {'metadata': {'ownerReferences': [reference]}}
+        for entry in owners:
+            if 'disk' in entry:
+                core.patch_namespaced_persistent_volume_claim(entry, namespace, body)
+            elif 'secret' in entry:
+                core.patch_namespaced_secret(entry, namespace, body)
