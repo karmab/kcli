@@ -415,6 +415,7 @@ class Kubevirt(Kubecommon):
             if index == 0 and image is not None and image not in CONTAINERDISKS:
                 if cdi:
                     if datavolumes:
+                        owners.pop()
                         dvt = {'metadata': {'name': pvcname, 'annotations': {'sidecar.istio.io/inject': 'false'}},
                                'spec': {'pvc': {'volumeMode': pvc_volume_mode,
                                                 'accessModes': pvc_access_mode,
