@@ -472,10 +472,9 @@ class Kubevirt(Kubecommon):
             try:
                 core.read_namespaced_service('%s-ssh' % name, namespace)
             except:
-                localport = common.get_free_nodeport() if self.access_mode == 'NodePort' else None
                 selector = {'kubevirt.io/provider': 'kcli', 'kubevirt.io/domain': name}
-                self.create_service('%s-ssh' % name, namespace, selector, _type=self.access_mode,
-                                    ports=[{'port': 22, 'nodePort': localport}], reference=reference)
+                self.create_service('%s-ssh' % name, namespace, selector, _type=self.access_mode, ports=[{'port': 22}],
+                                    reference=reference)
         self.update_reference(owners, namespace, reference)
         return {'result': 'success'}
 

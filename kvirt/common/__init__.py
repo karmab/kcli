@@ -12,7 +12,6 @@ from jinja2 import StrictUndefined as undefined
 from jinja2.exceptions import TemplateSyntaxError, TemplateError, TemplateNotFound
 from distutils.spawn import find_executable
 from netaddr import IPAddress
-import random
 import re
 import socket
 import ssl
@@ -553,21 +552,6 @@ def get_free_port():
     addr, port = s.getsockname()
     s.close()
     return port
-
-
-def get_free_nodeport():
-    """
-    :return:
-    """
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    while True:
-        port = random.randint(30000, 32767)
-        try:
-            s.bind(('', port))
-            s.close()
-            return port
-        except Exception:
-            continue
 
 
 def pprint(text):
