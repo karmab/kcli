@@ -1983,7 +1983,7 @@ class Kconfig(Kbaseconfig):
                                        'waittimeout': waittimeout}
                         asyncwaitvms.append(asyncwaitvm)
                     else:
-                        self.wait_finish(name, waitcomand=waitcommand, waittimeout=waittimeout)
+                        self.wait_finish(name, waitcommand=waitcommand, waittimeout=waittimeout)
                         if finishfiles:
                             self.handle_finishfiles(name, finishfiles)
                 else:
