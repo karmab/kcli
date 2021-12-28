@@ -1393,7 +1393,7 @@ class Kubevirt(Kubecommon):
 
     def pod_completed(self, podname, namespace):
         core = self.core
-        podtimeout = 600
+        podtimeout = 1200
         podruntime = 0
         podstatus = ''
         while podstatus != 'Succeeded':
