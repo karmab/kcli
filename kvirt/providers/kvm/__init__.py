@@ -1052,6 +1052,7 @@ class Kvirt(object):
         bootdev = "<boot dev='hd'/>"
         if iso:
             bootdev += "<boot dev='cdrom'/>"
+        bootdev += "<boot dev='network'/>"
         memoryhotplugxml = "<maxMemory slots='16' unit='MiB'>1524288</maxMemory>" if memoryhotplug else ""
         videoxml = ""
         firmwarexml = ""
