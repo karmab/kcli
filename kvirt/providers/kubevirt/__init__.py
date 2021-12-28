@@ -741,7 +741,7 @@ class Kubevirt(Kubecommon):
                 _type = 'pvc'
                 try:
                     pvc = core.read_namespaced_persistent_volume_claim(pvcname, namespace)
-                    size = pvc.spec.resources.requests['storage'].replace('Gi', '')
+                    size = pvc.status.capacity['storage'].replace('Gi', '')
                 except:
                     error("pvc %s not found. That can't be good" % pvcname)
                     pvc = 'N/A'
@@ -750,8 +750,6 @@ class Kubevirt(Kubecommon):
                     size = int(size.replace('Mi', '')) / 1024
                 else:
                     size = int(size)
-                if image != 'N/A' and self.cdi:
-                    size -= 1
             elif 'cloudInitNoCloud' in volumeinfo or 'cloudInitConfigDrive' in volumeinfo:
                 continue
             elif 'containerDisk' in volumeinfo:
