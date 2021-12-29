@@ -1488,7 +1488,7 @@ def _ssh_credentials(k, name):
         nodehost = info.get('host')
         ip = k.node_host(name=nodehost)
         if ip is None:
-            warning("No valid node ip found for %s" % name)
+            warning("Connecting to %s using node fqdn" % name)
             ip = nodehost
     elif 'loadbalancerip' in info:
         ip = info['loadbalancerip']
