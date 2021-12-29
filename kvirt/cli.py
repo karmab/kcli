@@ -2771,7 +2771,7 @@ def create_host_kubevirt(args):
         data['pool'] = args.pool
     if args.token is not None:
         data['token'] = args.token
-    if args.ca_file is not None:
+    if args.ca is not None:
         data['ca_file'] = args.ca
     data['multus'] = args.multus
     data['cdi'] = args.cdi

@@ -477,6 +477,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             overrides['api_ip'] = api_ip
         elif platform == 'kubevirt':
             selector = {'kcli/plan': plan, 'kcli/role': 'master'}
+            # selector = {'kubevirt.io/domain': "%s-bootstrap" % cluster}
             service_type = "LoadBalancer" if k.access_mode == 'LoadBalancer' else 'NodePort'
             api_ip = k.create_service("%s-api" % cluster, k.namespace, selector, _type=service_type,
                                       ports=[6443, 22623, 22624, 80, 443])
