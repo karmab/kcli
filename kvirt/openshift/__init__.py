@@ -477,7 +477,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             overrides['api_ip'] = api_ip
         elif platform == 'kubevirt':
             selector = {'kcli/plan': plan, 'kcli/role': 'master'}
-            service_type = "LoadBalancer" if k.access_mode == 'LoadBalancer' else 'ClusterIP'
+            service_type = "LoadBalancer" if k.access_mode == 'LoadBalancer' else 'NodePort'
             api_ip = k.create_service("%s-api" % cluster, k.namespace, selector, _type=service_type,
                                       ports=[6443, 22623, 22624, 80, 443])
             if api_ip is None:
@@ -486,6 +486,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             else:
                 pprint("Using api_ip %s" % api_ip)
                 overrides['api_ip'] = api_ip
+                overrides['kubevirt_api_service'] = True
         else:
             error("You need to define api_ip in your parameters file")
             sys.exit(1)

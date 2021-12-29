@@ -1517,7 +1517,7 @@ class Kubevirt(Kubecommon):
                         time.sleep(5)
                         pprint("Waiting to get a loadbalancer ip for service %s..." % name)
                         runtime += 5
-        elif _type == 'ClusterIP':
+        else:
             api_service = self.core.read_namespaced_service('%s-svc' % name, namespace)
             return api_service.spec.cluster_ip
 

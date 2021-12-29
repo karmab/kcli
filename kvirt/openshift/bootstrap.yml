@@ -43,10 +43,12 @@
   - path: /etc/kubernetes/haproxy.cfg
     origin: haproxy.cfg
 {% endif %}
+{% if not kubevirt_api_service|default(False) %}
   - path: /etc/kubernetes/manifests/keepalived.yml
     origin: staticpods/keepalived.yml
   - path: /etc/kubernetes/keepalived.conf
     origin: keepalived.conf
+{% endif %}
 {% if config_type == 'packet' %}
   - path: /etc/kubernetes/packet-hack.sh
     origin: packet-hack.sh
