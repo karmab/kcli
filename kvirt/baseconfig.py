@@ -744,13 +744,15 @@ class Kbaseconfig:
                 return {'product': product, 'parameters': parameters}
 
     def process_inputfile(self, plan, inputfile, overrides={}, onfly=None, full=False, ignore=False,
-                          download_mode=False):
+                          download_mode=False, extra_funcs=[]):
         default_dir = '/workdir' if container_mode() else '.'
         basedir = os.path.dirname(inputfile) if os.path.dirname(inputfile) != '' else default_dir
         basefile = None
         undefined = strictundefined if not ignore else defaultundefined
         env = Environment(loader=FileSystemLoader(basedir), undefined=undefined, extensions=['jinja2.ext.do'],
                           trim_blocks=True, lstrip_blocks=True)
+        for func in extra_funcs:
+            env.globals[func.__name__] = func
         for jinjafilter in jinjafilters.jinjafilters:
             env.filters[jinjafilter] = jinjafilters.jinjafilters[jinjafilter]
         try:
