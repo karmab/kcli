@@ -18,6 +18,7 @@ from kvirt import nameutils
 from kvirt import common
 from kvirt.common import error, pprint, success, warning, generate_rhcos_iso, pwd_path, container_mode
 from kvirt.common import ssh, scp, _ssh_credentials
+from kvirt import kind
 from kvirt import k3s
 from kvirt import kubeadm
 from kvirt.expose import Kexposer
@@ -1720,6 +1721,8 @@ class Kconfig(Kbaseconfig):
                     continue
                 if kubetype == 'openshift':
                     currentconfig.create_kube_openshift(plan, overrides=kube_overrides)
+                elif kubetype == 'kind':
+                    currentconfig.create_kube_kind(plan, overrides=kube_overrides)
                 elif kubetype == 'k3s':
                     currentconfig.create_kube_k3s(plan, overrides=kube_overrides)
                 elif kubetype == 'generic':
@@ -2436,6 +2439,14 @@ class Kconfig(Kbaseconfig):
             os.environ['PATH'] += ':%s' % os.getcwd()
         plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
         kubeadm.create(self, plandir, cluster, overrides)
+
+    def create_kube_kind(self, cluster, overrides={}):
+        if container_mode():
+            os.environ['PATH'] += ':/workdir'
+        else:
+            os.environ['PATH'] += ':%s' % os.getcwd()
+        plandir = os.path.dirname(kind.create.__code__.co_filename)
+        kind.create(self, plandir, cluster, overrides)
 
     def create_kube_k3s(self, cluster, overrides={}):
         if container_mode():

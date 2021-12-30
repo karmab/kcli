@@ -156,6 +156,16 @@ $ kcli create kube generic -P masters=1 -P workers=2 mykube
 $ kcli create kube generic --paramfile=myparameters.yml mykube2
 """
 
+kubekindcreate = """# Create a kube kind instance named mykube with default values
+$ kcli create kube kind mykube
+
+# Do the same with workers
+$ kcli create kube kind -P workers=2 mykube
+
+# Use a parameter file
+$ kcli create kube kind --paramfile=myparameters.yml mykube2
+"""
+
 kubek3screate = """# Create a kube k3s instance named mykube with default values
 $ kcli create kube k3s mykube
 
@@ -163,7 +173,7 @@ $ kcli create kube k3s mykube
 $ kcli create kube k3s -P workers=2 mykube
 
 # Use a parameter file
-$ kcli create kube generic --paramfile=myparameters.yml mykube2
+$ kcli create kube k3s --paramfile=myparameters.yml mykube2
 """
 
 kubeopenshiftcreate = """# Create a kube instance named mykube with default values
