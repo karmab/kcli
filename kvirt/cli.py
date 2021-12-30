@@ -5,8 +5,8 @@
 from distutils.spawn import find_executable
 from getpass import getuser
 from kvirt.config import Kconfig
-from kvirt.examples import plandatacreate, vmdatacreate, hostcreate, _list, plancreate, planinfo, productinfo
-from kvirt.examples import repocreate, isocreate, kubegenericcreate, kubek3screate, kubeopenshiftcreate, start
+from kvirt.examples import plandatacreate, vmdatacreate, hostcreate, _list, plancreate, planinfo, productinfo, start
+from kvirt.examples import repocreate, isocreate, kubegenericcreate, kubek3screate, kubeopenshiftcreate, kubekindcreate
 from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsole, vmexport, niccreate, nicdelete
 from kvirt.examples import disconnectercreate, appopenshiftcreate, plantemplatecreate
 from kvirt.baseconfig import Kbaseconfig
@@ -1547,6 +1547,27 @@ def create_generic_kube(args):
     config.create_kube_generic(cluster, overrides=overrides)
 
 
+def create_kind_kube(args):
+    """Create K3s kube"""
+    paramfile = args.paramfile
+    force = args.force
+    cluster = args.cluster if args.cluster is not None else 'testk'
+    if container_mode():
+        if paramfile is not None:
+            paramfile = "/workdir/%s" % paramfile
+        elif os.path.exists("/workdir/kcli_parameters.yml"):
+            paramfile = "/workdir/kcli_parameters.yml"
+            pprint("Using default parameter file kcli_parameters.yml")
+    elif paramfile is None and os.path.exists("kcli_parameters.yml"):
+        paramfile = "kcli_parameters.yml"
+        pprint("Using default parameter file kcli_parameters.yml")
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    if force:
+        config.delete_kube(cluster, overrides=overrides)
+    config.create_kube_kind(cluster, overrides=overrides)
+
+
 def create_k3s_kube(args):
     """Create K3s kube"""
     paramfile = args.paramfile
@@ -1687,6 +1708,11 @@ def update_generic_kube(args):
 
 def update_openshift_kube(args):
     args.type = 'openshift'
+    update_kube(args)
+
+
+def update_kind_kube(args):
+    args.type = 'kind'
     update_kube(args)
 
 
@@ -1997,6 +2023,12 @@ def info_generic_kube(args):
     """Info Generic kube"""
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     baseconfig.info_kube_generic(quiet=True)
+
+
+def info_kind_kube(args):
+    """Info Kind kube"""
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
+    baseconfig.info_kube_kind(quiet=True)
 
 
 def info_k3s_kube(args):
@@ -3620,6 +3652,22 @@ def cli():
                                      epilog=kubegenericcreate_epilog,
                                      formatter_class=rawhelp, aliases=['kubeadm'])
 
+    kubekindcreate_desc = 'Create Kind Kube'
+    kubekindcreate_epilog = "examples:\n%s" % kubekindcreate
+    kubekindcreate_parser = argparse.ArgumentParser(add_help=False)
+    kubekindcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
+    kubekindcreate_parser.add_argument('-P', '--param', action='append',
+                                       help='specify parameter or keyword for rendering (multiple can be specified)',
+                                       metavar='PARAM')
+    kubekindcreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    kubekindcreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
+    kubekindcreate_parser.set_defaults(func=create_kind_kube)
+    kubecreate_subparsers.add_parser('kind', parents=[kubekindcreate_parser],
+                                     description=kubekindcreate_desc,
+                                     help=kubekindcreate_desc,
+                                     epilog=kubekindcreate_epilog,
+                                     formatter_class=rawhelp)
+
     kubek3screate_desc = 'Create K3s Kube'
     kubek3screate_epilog = "examples:\n%s" % kubek3screate
     kubek3screate_parser = argparse.ArgumentParser(add_help=False)
@@ -3672,6 +3720,10 @@ def cli():
     kubegenericinfo_parser = kubeinfo_subparsers.add_parser('generic', description=kubegenericinfo_desc,
                                                             help=kubegenericinfo_desc, aliases=['kubeadm'])
     kubegenericinfo_parser.set_defaults(func=info_generic_kube)
+
+    kubekindinfo_desc = 'Info Kind Kube'
+    kubekindinfo_parser = kubeinfo_subparsers.add_parser('kind', description=kubekindinfo_desc, help=kubekindinfo_desc)
+    kubekindinfo_parser.set_defaults(func=info_kind_kube)
 
     kubek3sinfo_desc = 'Info K3s Kube'
     kubek3sinfo_parser = kubeinfo_subparsers.add_parser('k3s', description=kubek3sinfo_desc, help=kubek3sinfo_desc)

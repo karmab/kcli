@@ -1,0 +1,17 @@
+info: |
+  Deploy kubernetes using kind on a single vm
+  Several masters and workers can be specified
+image : centos8
+numcpus: 4
+memory: 8192
+kind_version:
+cluster: testk
+masters: 1
+workers: 0
+network: default
+disk_size: 30
+extra_disks: []
+extra_networks: []
+notifycmd: "kubectl get pod -A"
+notify: false
+KUBECONFIG: /root/kubeconfig

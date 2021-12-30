@@ -1,0 +1,33 @@
+{{ cluster }}-kind:
+  image: {{ image }}
+  numcpus: {{ numcpus }}
+  memory: {{ memory }}
+  nets: {{ [network] + extra_networks }}
+  disks: {{ [disk_size] + extra_disks }}
+  wait: true
+  notify: {{ notify }}
+  notifycmd: {{ notifycmd }}
+  cmds:
+  - sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/sysconfig/selinux
+  - setenforce 0
+  - curl -L https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl > /usr/bin/kubectl
+  - chmod u+x /usr/bin/kubectl
+  - curl -Lo /usr/bin/kind https://kind.sigs.k8s.io/dl/{{ 'kubernetes-sigs/kind' | github_version(kind_version) }}/kind-linux-amd64
+  - chmod u+x /usr/bin/kind
+  - yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+  - yum -y install docker-ce docker-ce-cli containerd.io
+  - systemctl enable --now docker
+  - kind create cluster --name  {{ cluster }} --config /root/{{ cluster }}-config.yaml
+  - mv /.kube/config {{ KUBECONFIG }}
+  files:
+  - path: /root/{{ cluster }}-config.yaml
+    content: |
+      kind: Cluster
+      apiVersion: kind.x-k8s.io/v1alpha4
+      nodes:
+{% for master in range (0, masters) %}
+      - role: control-plane
+{% endfor %}
+{% for worker in range (0, workers) %}
+      - role: control-plane
+{% endfor %}
