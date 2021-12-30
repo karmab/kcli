@@ -15,3 +15,8 @@ extra_networks: []
 notifycmd: "kubectl get pod -A"
 notify: false
 KUBECONFIG: /root/kubeconfig
+feature_gates: []
+ipv6: false
+dualstack: false
+disable_default_cni: false
+external_api_address: true
