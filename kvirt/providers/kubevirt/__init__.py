@@ -177,8 +177,8 @@ class Kubevirt(Kubecommon):
         if domain is not None:
             if reservedns:
                 vm['spec']['template']['spec']['hostname'] = name
-                vm['spec']['template']['spec']['subdomain'] = domain
-                vm['spec']['template']['metadata']['labels']['subdomain'] = domain
+                vm['spec']['template']['spec']['subdomain'] = domain.replace('.', '-')
+                vm['spec']['template']['metadata']['labels']['subdomain'] = domain.replace('.', '-')
         features = {}
         machine = 'q35'
         if 'machine' in overrides:
@@ -460,12 +460,15 @@ class Kubevirt(Kubecommon):
         api_version = "%s/%s" % (DOMAIN, VERSION)
         reference = {'apiVersion': api_version, 'kind': 'VirtualMachine', 'name': name, 'uid': uid}
         if reservedns and domain is not None:
+            newdomain = domain.replace('.', '-')
             try:
-                core.read_namespaced_service(domain, namespace)
+                core.read_namespaced_service(newdomain, namespace)
             except:
-                dnsspec = {'apiVersion': 'v1', 'kind': 'Service', 'metadata': {'name': domain,
+                if newdomain != domain:
+                    warning("converting dns domain %s to %s" % (domain, newdomain))
+                dnsspec = {'apiVersion': 'v1', 'kind': 'Service', 'metadata': {'name': newdomain,
                                                                                'ownerReferences': [reference]},
-                           'spec': {'selector': {'subdomain': domain}, 'clusterIP': 'None',
+                           'spec': {'selector': {'subdomain': newdomain}, 'clusterIP': 'None',
                                     'ports': [{'name': 'foo', 'port': 1234, 'targetPort': 1234}]}}
                 core.create_namespaced_service(namespace, dnsspec)
         if not tunnel and self.access_mode != 'External':
@@ -1471,7 +1474,8 @@ class Kubevirt(Kubecommon):
                 break
         return ip
 
-    def create_service(self, name, namespace, selector, _type="NodePort", ports=[], wait=True, reference=None):
+    def create_service(self, name, namespace, selector, _type="NodePort", ports=[], wait=True, reference=None,
+                       openshift_hack=False):
         spec = {'kind': 'Service', 'apiVersion': 'v1', 'metadata': {'namespace': namespace, 'name': '%s-svc' % name},
                 'spec': {'sessionAffinity': 'None', 'selector': selector}}
         if reference is not None:
@@ -1485,12 +1489,13 @@ class Kubevirt(Kubecommon):
             newportspec = {}
             if isinstance(portinfo, int):
                 port = portinfo
-                targetport = port
+                targetport = portinfo + 1000 if openshift_hack else portinfo
                 protocol = 'TCP'
             elif isinstance(portinfo, dict):
-                port = portinfo.get('port')
+                port = int(portinfo.get('port'))
+                targetport = port + 1000 if openshift_hack else port
                 protocol = portinfo.get('protocol', 'TCP')
-                targetport = portinfo.get('targetPort', port)
+                targetport = portinfo.get('targetPort', targetport)
                 if _type == 'NodePort' and 'nodePort' in portinfo:
                     newportspec['nodePort'] = portinfo['nodePort']
             newportspec['protocol'] = protocol
