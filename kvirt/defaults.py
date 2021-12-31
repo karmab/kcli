@@ -53,7 +53,7 @@ IMAGES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-i
           'debian8': DEBIAN + 'openstack/archive/8.11.0/debian-8.11.0-openstack-amd64.qcow2',
           'debian9': DEBIAN + 'openstack/current-9/debian-9-openstack-amd64.qcow2',
           'debian10': DEBIAN + 'openstack/current-10/debian-10-openstack-amd64.qcow2',
-          'debian11': 'https://cdimage.debian.org/images/cloud/bullseye/latest/debian-11-generic-amd64.qcow2',
+          'debian11': DEBIAN + 'cloud/bullseye/latest/debian-11-generic-amd64.qcow2',
           'fcos': 'https://builds.coreos.fedoraproject.org/streams/stable.json',
           'fedora28': FEDORA_ARCHIVE + '28/Cloud/x86_64/images/Fedora-Cloud-Base-28-1.1.x86_64.qcow2',
           'fedora29': FEDORA_ARCHIVE + '29/Cloud/x86_64/images/Fedora-Cloud-Base-29-1.2.x86_64.qcow2',
