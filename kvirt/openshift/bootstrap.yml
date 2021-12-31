@@ -9,6 +9,9 @@
  numcpus: {{ bootstrap_numcpus | default(numcpus, numcpus) }}
  flavor: {{ flavor }}
  memory: {{ bootstrap_memory | default(memory, memory) }}
+{% if kubevirt_api_service %}
+ reservedns: true
+{% endif %}
  nets:
   - name: {{ network }}
 {% if bootstrap_mac != None %}
@@ -37,13 +40,13 @@
   - path: /etc/kubernetes/config.hcl.templ
     origin: config.hcl.templ
 {% endif %}
-{% if network_type == 'Contrail' %}
+{% if network_type == 'Contrail' or kubevirt_api_service %}
   - path: /etc/kubernetes/manifests/haproxy.yml
     origin: staticpods/haproxy.yml
   - path: /etc/kubernetes/haproxy.cfg
-    origin: haproxy.cfg
+    origin: haproxy.cfg{{ '.kubevirt' if kubevirt_api_service else '' }}
 {% endif %}
-{% if not kubevirt_api_service|default(False) %}
+{% if not kubevirt_api_service %}
   - path: /etc/kubernetes/manifests/keepalived.yml
     origin: staticpods/keepalived.yml
   - path: /etc/kubernetes/keepalived.conf
