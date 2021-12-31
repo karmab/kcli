@@ -1526,6 +1526,13 @@ class Kubevirt(Kubecommon):
             api_service = self.core.read_namespaced_service('%s-svc' % name, namespace)
             return api_service.spec.cluster_ip
 
+    def get_node_ports(self, service, namespace):
+        results = {}
+        api_service = self.core.read_namespaced_service(service, namespace)
+        for port in api_service.spec.ports:
+            results[port.port] = port.node_port
+        return results
+
     def list_services(self, namespace):
         services = []
         for s in self.core.list_namespaced_service(namespace).items:

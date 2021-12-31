@@ -6,6 +6,7 @@ from getpass import getuser
 from glob import glob
 import json
 import os
+from socket import gethostbyname
 import sys
 from ipaddress import ip_address, ip_network
 from netaddr import IPNetwork
@@ -380,6 +381,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'sno_virtual': False,
             'notify': False,
             'async': False,
+            'kubevirt_api_service': False,
             'baremetal': False}
     data.update(overrides)
     if 'cluster' in overrides:
@@ -447,6 +449,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     ipsec = data.get('ipsec')
     upstream = data.get('upstream')
     metal3 = data.get('metal3')
+    kubevirt_api_service, kubevirt_api_service_node_port = False, False
     version = data.get('version')
     tag = data.get('tag')
     if str(tag) == '4.1':
@@ -477,10 +480,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             overrides['api_ip'] = api_ip
         elif platform == 'kubevirt':
             selector = {'kcli/plan': plan, 'kcli/role': 'master'}
-            # selector = {'kubevirt.io/domain': "%s-bootstrap" % cluster}
             service_type = "LoadBalancer" if k.access_mode == 'LoadBalancer' else 'NodePort'
+            if service_type == 'NodePort':
+                kubevirt_api_service_node_port = True
             api_ip = k.create_service("%s-api" % cluster, k.namespace, selector, _type=service_type,
-                                      ports=[6443, 22623, 22624, 80, 443])
+                                      ports=[6443, 22623, 22624, 80, 443], openshift_hack=True)
             if api_ip is None:
                 error("Couldnt gather an api_ip from your cluster")
                 sys.exit(1)
@@ -488,6 +492,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 pprint("Using api_ip %s" % api_ip)
                 overrides['api_ip'] = api_ip
                 overrides['kubevirt_api_service'] = True
+                kubevirt_api_service = True
+                overrides['mdns'] = False
         else:
             error("You need to define api_ip in your parameters file")
             sys.exit(1)
@@ -586,6 +592,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         else:
             pprint("Removing directory %s" % clusterdir)
             rmtree(clusterdir)
+    orikubeconfig = os.environ.get('KUBECONFIG')
     os.environ['KUBECONFIG'] = "%s/auth/kubeconfig" % clusterdir
     if find_executable('oc') is None:
         get_oc(macosx=macosx)
@@ -1018,6 +1025,14 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                     with open(authorized_keys_file, file_mode) as f:
                         publickey = open("%s/id_rsa.pub" % orissh).read().strip()
                         f.write("\n%s" % publickey)
+                elif config.type == 'kubevirt':
+                    oriconf = "%s/.kcli" % tmpdir
+                    os.mkdir(oriconf)
+                    kcliconf = config.process_inputfile(cluster, "%s/kubevirt_kcli_conf.j2" % plandir)
+                    with open("%s/config.yml" % oriconf, 'w') as _f:
+                        _f.write(kcliconf)
+                    destkubeconfig = os.path.expanduser(config.options.get('kubeconfig', orikubeconfig))
+                    copy2(destkubeconfig, "%s/kubeconfig" % oriconf)
                 ns = "openshift-infra"
                 dest = "%s/openshift/99-kcli-conf-cm.yaml" % clusterdir
                 cmcmd = 'KUBECONFIG=%s/fake_kubeconfig.json ' % plandir
@@ -1205,7 +1220,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         pprint("Using keepalived virtual_router_id %s" % overrides['virtual_router_id'])
         pprint("Using %s for api vip...." % api_ip)
         host_ip = api_ip if platform != "openstack" else public_api_ip
-        if ignore_hosts:
+        if ignore_hosts or (kubevirt_api_service and kubevirt_api_service_node_port):
             warning("Ignoring /etc/hosts")
         else:
             update_etc_hosts(cluster, domain, host_ip, ingress_ip)
@@ -1376,6 +1391,19 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             if result['result'] != 'success':
                 sys.exit(1)
         todelete = ["%s-bootstrap" % cluster]
+    if kubevirt_api_service and kubevirt_api_service_node_port:
+        nodeport = k.get_node_ports('%s-api-svc' % cluster, k.namespace)[6443]
+        while True:
+            nodehost = k.info("%s-bootstrap" % cluster).get('host')
+            if nodehost is not None:
+                break
+            else:
+                pprint("Waiting 5s for bootstrap vm to be up")
+                sleep(5)
+        nodehostip = gethostbyname(nodehost)
+        update_etc_hosts(cluster, domain, nodehostip)
+        sedcmd = 'sed -i "s@:6443@:%s@" %s/auth/kubeconfig' % (nodeport, clusterdir)
+        call(sedcmd, shell=True)
     if not async_install:
         bootstrapcommand = 'openshift-install --dir=%s --log-level=%s wait-for bootstrap-complete' % (clusterdir,
                                                                                                       log_level)
