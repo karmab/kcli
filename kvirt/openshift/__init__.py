@@ -979,8 +979,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 f.write(nodeip)
     for f in glob("%s/customisation/*.yaml" % plandir):
         if '99-ingress-controller.yaml' in f:
-            ingressrole = 'master' if workers == 0 else 'worker'
-            replicas = masters if workers == 0 else workers
+            ingressrole = 'master' if workers == 0 or kubevirt_api_service else 'worker'
+            replicas = masters if workers == 0 or kubevirt_api_service else workers
             ingressconfig = config.process_inputfile(cluster, f, overrides={'replicas': replicas, 'role': ingressrole,
                                                                             'cluster': cluster, 'domain': domain})
             with open("%s/openshift/99-ingress-controller.yaml" % clusterdir, 'w') as _f:

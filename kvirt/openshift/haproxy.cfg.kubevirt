@@ -37,14 +37,6 @@ listen stats-50000
     stats auth admin:password
     stats uri  /haproxy?stats
 
-{% if workers > 0 %}
-{% set ingresses = workers %}
-{% set ingressprefix = "worker" %}
-{% else %}
-{% set ingresses = masters %}
-{% set ingressprefix = "master" %}
-{% endif %}
-
 {% if ingress_ip != None %}
 {% set final_ip = ingress_ip %}
 {% else %}
@@ -84,14 +76,14 @@ listen ingress-1080
     bind 0.0.0.0:1080
     mode tcp
     balance source
-{% for num in range(0, ingresses) %}
-    server {{ ingressprefix }}{{ num }} {{ cluster }}-{{ ingressprefix }}-{{ num }}.{{ domain }}:80 check inter 1s
+{% for num in range(0, masters) %}
+    server master{{ num }} {{ cluster }}-master-{{ num }}.{{ domain }}:80 check inter 1s
 {% endfor %}
 
 listen ingress-1443
     bind 0.0.0.0:1443
     mode tcp
     balance source
-{% for num in range(0, ingresses) %}
-    server {{ ingressprefix }}{{ num }} {{ cluster }}-{{ ingressprefix }}-{{ num }}.{{ domain }}:443 check inter 1s
+{% for num in range(0, masters) %}
+    server master{{ num }} {{ cluster }}-master-{{ num }}.{{ domain }}:443 check inter 1s
 {% endfor %}
