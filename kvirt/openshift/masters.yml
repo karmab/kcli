@@ -27,7 +27,7 @@
  numcpus: {{ master_numcpus | default(numcpus, numcpus) }}
  memory: {{ master_memory | default(memory, memory) }}
  autostart: {{ autostart }}
-{% if kubevirt_api_service %}
+{% if kubevirt_api_service|default(False) %}
  reservedns: true
 {% endif %}
  nets: {{ [net0] + extra_networks }}
@@ -51,15 +51,15 @@
     origin: packet-hack.sh
     mode: 700
 {% endif %}
-{% if workers > 0 or kubevirt_api_service %}
+{% if workers > 0 or kubevirt_api_service|default(False) %}
   - path: /etc/kubernetes/manifests/haproxy.yml
     origin: staticpods/haproxy.yml
   - path: /etc/kubernetes/haproxy.cfg
-    origin: haproxy.cfg{{ '.kubevirt' if kubevirt_api_service else '' }}
+    origin: haproxy.cfg{{ '.kubevirt' if kubevirt_api_service|default(False) else '' }}
   - path: /etc/sysctl.d/nonlocalbind.conf
     origin: nonlocalbind.conf
 {% endif %}
-{% if not kubevirt_api_service %}
+{% if not kubevirt_api_service|default(False) %}
   - path: {{ '/etc/kubernetes/manifests/keepalived.yml' if network_type != 'Contrail' else '/root/keepalived.yml' }}
     origin: staticpods/keepalived.yml
   - path: /etc/kubernetes/keepalived.conf
