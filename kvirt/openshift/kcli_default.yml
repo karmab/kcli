@@ -53,7 +53,9 @@ keys: []
 apps: []
 apps_install_cr: true
 postscripts: []
+kubevirt_api_service: False
 kubevirt_disk_size:
+kubevirt_ignore_node_port: False
 extra_disks: []
 extra_master_disks: []
 extra_worker_disks: []

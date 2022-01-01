@@ -382,6 +382,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'notify': False,
             'async': False,
             'kubevirt_api_service': False,
+            'kubevirt_ignore_node_port': False,
             'baremetal': False}
     data.update(overrides)
     if 'cluster' in overrides:
@@ -450,6 +451,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     upstream = data.get('upstream')
     metal3 = data.get('metal3')
     kubevirt_api_service, kubevirt_api_service_node_port = False, False
+    kubevirt_ignore_node_port = data['kubevirt_ignore_node_port']
     version = data.get('version')
     tag = data.get('tag')
     if str(tag) == '4.1':
@@ -1220,7 +1222,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         pprint("Using keepalived virtual_router_id %s" % overrides['virtual_router_id'])
         pprint("Using %s for api vip...." % api_ip)
         host_ip = api_ip if platform != "openstack" else public_api_ip
-        if ignore_hosts or (kubevirt_api_service and kubevirt_api_service_node_port):
+        if ignore_hosts or (not kubevirt_ignore_node_port and kubevirt_api_service and kubevirt_api_service_node_port):
             warning("Ignoring /etc/hosts")
         else:
             update_etc_hosts(cluster, domain, host_ip, ingress_ip)
@@ -1391,7 +1393,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             if result['result'] != 'success':
                 sys.exit(1)
         todelete = ["%s-bootstrap" % cluster]
-    if kubevirt_api_service and kubevirt_api_service_node_port:
+    if not kubevirt_ignore_node_port and kubevirt_api_service and kubevirt_api_service_node_port:
         nodeport = k.get_node_ports('%s-api-svc' % cluster, k.namespace)[6443]
         while True:
             nodehost = k.info("%s-bootstrap" % cluster).get('host')
