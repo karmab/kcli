@@ -486,7 +486,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             if service_type == 'NodePort':
                 kubevirt_api_service_node_port = True
             api_ip = k.create_service("%s-api" % cluster, k.namespace, selector, _type=service_type,
-                                      ports=[6443, 22623, 22624, 80, 443], openshift_hack=True)
+                                      ports=[6443, 22623, 22624, 80, 443])
             if api_ip is None:
                 error("Couldnt gather an api_ip from your cluster")
                 sys.exit(1)

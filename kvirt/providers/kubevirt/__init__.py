@@ -1486,8 +1486,7 @@ class Kubevirt(Kubecommon):
                 break
         return ip
 
-    def create_service(self, name, namespace, selector, _type="NodePort", ports=[], wait=True, reference=None,
-                       openshift_hack=False):
+    def create_service(self, name, namespace, selector, _type="NodePort", ports=[], wait=True, reference=None):
         spec = {'kind': 'Service', 'apiVersion': 'v1', 'metadata': {'namespace': namespace, 'name': '%s-svc' % name},
                 'spec': {'sessionAffinity': 'None', 'selector': selector}}
         if reference is not None:
@@ -1501,11 +1500,11 @@ class Kubevirt(Kubecommon):
             newportspec = {}
             if isinstance(portinfo, int):
                 port = portinfo
-                targetport = portinfo + 1000 if openshift_hack else portinfo
+                targetport = portinfo
                 protocol = 'TCP'
             elif isinstance(portinfo, dict):
                 port = int(portinfo.get('port'))
-                targetport = port + 1000 if openshift_hack else port
+                targetport = port
                 protocol = portinfo.get('protocol', 'TCP')
                 targetport = portinfo.get('targetPort', targetport)
                 if _type == 'NodePort' and 'nodePort' in portinfo:

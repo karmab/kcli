@@ -10,7 +10,7 @@
  flavor: {{ flavor }}
  memory: {{ bootstrap_memory | default(memory, memory) }}
 {% if kubevirt_api_service %}
- reservedns: true
+ checkport: 6443
 {% endif %}
  nets:
   - name: {{ network }}
@@ -40,11 +40,11 @@
   - path: /etc/kubernetes/config.hcl.templ
     origin: config.hcl.templ
 {% endif %}
-{% if network_type == 'Contrail' or kubevirt_api_service %}
+{% if network_type == 'Contrail' %}
   - path: /etc/kubernetes/manifests/haproxy.yml
     origin: staticpods/haproxy.yml
   - path: /etc/kubernetes/haproxy.cfg
-    origin: haproxy.cfg{{ '.kubevirt' if kubevirt_api_service else '' }}
+    origin: haproxy.cfg
 {% endif %}
 {% if not kubevirt_api_service %}
   - path: /etc/kubernetes/manifests/keepalived.yml

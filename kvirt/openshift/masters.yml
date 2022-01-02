@@ -28,7 +28,7 @@
  memory: {{ master_memory | default(memory, memory) }}
  autostart: {{ autostart }}
 {% if kubevirt_api_service %}
- reservedns: true
+ checkport: 6443
 {% endif %}
  nets: {{ [net0] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
@@ -51,11 +51,11 @@
     origin: packet-hack.sh
     mode: 700
 {% endif %}
-{% if workers > 0 or kubevirt_api_service %}
+{% if workers > 0 %}
   - path: /etc/kubernetes/manifests/haproxy.yml
     origin: staticpods/haproxy.yml
   - path: /etc/kubernetes/haproxy.cfg
-    origin: haproxy.cfg{{ '.kubevirt' if kubevirt_api_service else '' }}
+    origin: haproxy.cfg
   - path: /etc/sysctl.d/nonlocalbind.conf
     origin: nonlocalbind.conf
 {% endif %}
