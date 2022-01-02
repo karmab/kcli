@@ -953,7 +953,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         copy2("%s/dualstack.yml" % plandir, "%s/openshift" % clusterdir)
     if ipsec:
         copy2("%s/99-ipsec.yaml" % plandir, "%s/openshift" % clusterdir)
-    if workers == 0:
+    if workers == 0 or kubevirt_api_service:
         copy2('%s/99-scheduler.yaml' % plandir, "%s/openshift" % clusterdir)
     if disconnected_operators:
         if os.path.exists('%s/imageContentSourcePolicy.yaml' % clusterdir):
