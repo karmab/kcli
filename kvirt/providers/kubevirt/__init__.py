@@ -456,10 +456,17 @@ class Kubevirt(Kubecommon):
         if 'affinity' in overrides and isinstance(overrides['affinity'], dict):
             vm['spec']['template']['spec']['affinity'] = overrides['affinity']
         if 'checkport' in overrides and isinstance(overrides['checkport'], int):
+            readinessprobe = {'initialDelaySeconds': 180, 'periodSeconds': 2, 'successThreshold': 3,
+                              'failureThreshold': 2}
             checkport = overrides['checkport']
-            checkpath = overrides.get('checkpath', '/readyz')
-            vm['spec']['template']['spec']['readinessProbe'] = {'httpGet': {'port': checkport, 'path': checkpath},
-                                                                'initialDelaySeconds': 180}
+            checkpath = overrides.get('checkpath')
+            checkscheme = overrides.get('checkscheme', 'HTTP').upper()
+            checktype = 'httpGet' if checkpath is not None else 'tcpSocket'
+            readinessprobe[checktype] = {'port': checkport}
+            if checkpath is not None:
+                readinessprobe[checktype]['path'] = checkpath
+                readinessprobe[checktype]['scheme'] = checkscheme
+            vm['spec']['template']['spec']['readinessProbe'] = readinessprobe
         vminfo = crds.create_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', vm)
         uid = vminfo.get("metadata")['uid']
         api_version = "%s/%s" % (DOMAIN, VERSION)
