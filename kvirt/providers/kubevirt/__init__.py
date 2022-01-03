@@ -758,7 +758,7 @@ class Kubevirt(Kubecommon):
                     pvc = core.read_namespaced_persistent_volume_claim(pvcname, namespace)
                     size = pvc.status.capacity['storage'].replace('Gi', '')
                 except:
-                    error("pvc %s not found. That can't be good" % pvcname)
+                    warning("pvc %s not found. That can't be good" % pvcname)
                     pvc = 'N/A'
                     size = "0"
                 if 'Mi' in size:

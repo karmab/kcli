@@ -1075,8 +1075,8 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
             if agent_keys:
                 publickeys = agent_keys
         if not publickeys:
-            error("neither id_rsa, id_dsa nor id_ed25519 public keys found in your .ssh or .kcli directories, "
-                  "you might have trouble accessing the vm")
+            warning("neither id_rsa, id_dsa nor id_ed25519 public keys found in your .ssh or .kcli directories, "
+                    "you might have trouble accessing the vm")
     if not noname:
         hostnameline = quote("%s\n" % localhostname)
         storage["files"].append({"filesystem": "root", "path": "/etc/hostname", "overwrite": True,
