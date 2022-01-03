@@ -149,7 +149,6 @@ def get_downstream_installer(nightly=False, macosx=False, tag=None, debug=False,
         cmd += "; mv %s openshift-install ; chmod 700 openshift-install" % target
         return call(cmd, shell=True)
     if arch == 'arm64':
-        repo = 'ocp-dev-preview'
         cmd = "curl -s https://mirror.openshift.com/pub/openshift-v4/%s/clients/%s/" % (arch, repo)
     else:
         cmd = "curl -s https://mirror.openshift.com/pub/openshift-v4/clients/%s/" % repo
