@@ -9,11 +9,6 @@
 {% set machine_cidrs = machine_cidr_ipv4 + machine_cidr_ipv6 %}
 {% set cluster_networks = [cluster_network_ipv4] + [cluster_network_ipv6] %}
 {% set service_networks = service_network_ipv4 + service_network_ipv6 %}
-{% if ipv6 %}
-{% set machine_cidrs = machine_cidrs|reverse %}
-{% set cluster_networks = cluster_networks|reverse %}
-{% set service_networks = service_networks|reverse %}
-{% endif %}
 {% elif ipv6 %}
 {% set machine_cidrs = machine_cidr_ipv6 %}
 {% set cluster_networks = [cluster_network_ipv6] %}
