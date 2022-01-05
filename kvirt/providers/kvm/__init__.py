@@ -1126,6 +1126,18 @@ class Kvirt(object):
             acpixml = "<gic version='3'/>"
         else:
             acpixml = ''
+        hugepagesxml = ""
+        hugepages = overrides.get('hugepages', 0)
+        if isinstance(hugepages, int) and hugepages > 0:
+            if hugepages > memory:
+                return {'result': 'failure', 'reason': "Cant allocate more hugepages memory than the memory of the VM"}
+            hugepages = 1024 * hugepages
+            hugepagesxml = """<memoryBacking>
+<hugepages>
+<page size='%s' unit='KiB' nodeset='0'/>
+</hugepages>
+<locked/>
+</memoryBacking>""" % hugepages
         machine = "" if aarch64_full else "machine='%s'" % machine
         emulatorxml = "<emulator>%s</emulator>" % emulator
         vmxml = """<domain type='{virttype}' {namespace}>
@@ -1134,6 +1146,7 @@ class Kvirt(object):
 {memoryhotplugxml}
 {cpupinningxml}
 {numatunexml}
+{hugepagesxml}
 <memory unit='MiB'>{memory}</memory>
 {vcpuxml}
 <os {osfirmware}>
@@ -1175,10 +1188,10 @@ class Kvirt(object):
 {qemuextraxml}
 </domain>""".format(virttype=virttype, namespace=namespace, name=name, metadataxml=metadataxml,
                     memoryhotplugxml=memoryhotplugxml, cpupinningxml=cpupinningxml, numatunexml=numatunexml,
-                    memory=memory, vcpuxml=vcpuxml, osfirmware=osfirmware, arch=arch, machine=machine, ramxml=ramxml,
-                    firmwarexml=firmwarexml, bootdev=bootdev, kernelxml=kernelxml, smmxml=smmxml,
-                    emulatorxml=emulatorxml, disksxml=disksxml, busxml=busxml, netxml=netxml, isoxml=isoxml,
-                    floppyxml=floppyxml, displayxml=displayxml, serialxml=serialxml, sharedxml=sharedxml,
+                    hugepagesxml=hugepagesxml, memory=memory, vcpuxml=vcpuxml, osfirmware=osfirmware, arch=arch,
+                    machine=machine, ramxml=ramxml, firmwarexml=firmwarexml, bootdev=bootdev, kernelxml=kernelxml,
+                    smmxml=smmxml, emulatorxml=emulatorxml, disksxml=disksxml, busxml=busxml, netxml=netxml,
+                    isoxml=isoxml, floppyxml=floppyxml, displayxml=displayxml, serialxml=serialxml, sharedxml=sharedxml,
                     guestxml=guestxml, videoxml=videoxml, hostdevxml=hostdevxml, rngxml=rngxml, tpmxml=tpmxml,
                     cpuxml=cpuxml, qemuextraxml=qemuextraxml, ioapicxml=ioapicxml, acpixml=acpixml, iommuxml=iommuxml)
         if self.debug:
