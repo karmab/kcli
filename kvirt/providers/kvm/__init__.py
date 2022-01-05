@@ -529,6 +529,7 @@ class Kvirt(object):
         netxml = ''
         nicslots = {k: 0 for k in range(0, 20)}
         alias = []
+        vhostsindex = 0
         guestagent = False
         for index, net in enumerate(nets):
             if usermode:
@@ -540,6 +541,7 @@ class Kvirt(object):
             mtuxml = ''
             multiqueuexml = ''
             nettype = 'virtio'
+            vhost = False
             if isinstance(net, str):
                 netname = net
                 nets[index] = {'name': netname}
@@ -559,6 +561,8 @@ class Kvirt(object):
                     metadataxml += "<kvirt:ip >%s</kvirt:ip>" % nets[index]['ip']
                 if 'numa' in nets[index] and numa:
                     nicnuma = nets[index]['numa']
+                if 'vhost' in nets[index] and nets[index]['vhost']:
+                    vhost = True
                 if 'mtu' in nets[index]:
                     mtuxml = "<mtu size='%s'/>" % nets[index]['mtu']
                 if 'vfio' in nets[index] and nets[index]['vfio']:
@@ -616,6 +620,12 @@ class Kvirt(object):
                                                                                                                 slot)
             else:
                 nicnumaxml = ""
+            if vhost:
+                iftype = 'vhostuser'
+                vhostsindex += 1
+                vhostpath = nets[index].get('vhostpath', "/tmp/vhost-user%s" % vhostsindex)
+                sourcexml = "<source type='unix' path='%s' mode='client'/>" % vhostpath
+                sourcexml += "<driver name='vhost' rx_queue_size='256'/>"
             netxml = """%s
 <interface type='%s'>
 %s
