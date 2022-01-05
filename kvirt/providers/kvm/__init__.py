@@ -529,7 +529,7 @@ class Kvirt(object):
         netxml = ''
         nicslots = {k: 0 for k in range(0, 20)}
         alias = []
-        vhostsindex = 0
+        vhostindex = 0
         guestagent = False
         for index, net in enumerate(nets):
             if usermode:
@@ -622,8 +622,9 @@ class Kvirt(object):
                 nicnumaxml = ""
             if vhost:
                 iftype = 'vhostuser'
-                vhostsindex += 1
-                vhostpath = nets[index].get('vhostpath', "/tmp/vhost-user%s" % vhostsindex)
+                vhostindex += 1
+                vhostdir = '/var/lib/libvirt/images'
+                vhostpath = nets[index].get('vhostpath', "%s/vhost-user%s" % (vhostdir, vhostindex))
                 sourcexml = "<source type='unix' path='%s' mode='client'/>" % vhostpath
                 sourcexml += "<driver name='vhost' rx_queue_size='256'/>"
             netxml = """%s
