@@ -1023,8 +1023,8 @@ class Kconfig(Kbaseconfig):
                 version = common.ignition_version(image)
                 compact = True if overrides.get('compact') else False
                 data = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
-                                       domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
-                                       overrides=overrides, version=version, plan=plan, image=image, compact=compact)
+                                       domain=domain, files=files, enableroot=enableroot, overrides=overrides,
+                                       version=version, plan=plan, image=image, compact=compact)
             else:
                 data = common.cloudinit(name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                         domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
