@@ -51,7 +51,7 @@
     origin: packet-hack.sh
     mode: 700
 {% endif %}
-{% if workers > 0 or kubevirt_api_service %}
+{% if (mdns and workers > 0) or kubevirt_api_service %}
   - path: /etc/kubernetes/manifests/haproxy.yml
     origin: staticpods/haproxy.yml
   - path: /etc/kubernetes/haproxy.cfg

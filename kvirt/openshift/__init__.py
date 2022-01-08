@@ -449,6 +449,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     ipsec = data.get('ipsec')
     upstream = data.get('upstream')
     metal3 = data.get('metal3')
+    mdns = data.get('mdns', True)
     kubevirt_api_service, kubevirt_api_service_node_port = False, False
     kubevirt_ignore_node_port = data['kubevirt_ignore_node_port']
     version = data.get('version')
@@ -952,7 +953,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         copy2("%s/dualstack.yml" % plandir, "%s/openshift" % clusterdir)
     if ipsec:
         copy2("%s/99-ipsec.yaml" % plandir, "%s/openshift" % clusterdir)
-    if workers == 0 or kubevirt_api_service:
+    if workers == 0 or not mdns or kubevirt_api_service:
         copy2('%s/99-scheduler.yaml' % plandir, "%s/openshift" % clusterdir)
     if disconnected_operators:
         if os.path.exists('%s/imageContentSourcePolicy.yaml' % clusterdir):
@@ -978,8 +979,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 f.write(nodeip)
     for f in glob("%s/customisation/*.yaml" % plandir):
         if '99-ingress-controller.yaml' in f:
-            ingressrole = 'master' if workers == 0 or kubevirt_api_service else 'worker'
-            replicas = masters if workers == 0 or kubevirt_api_service else workers
+            ingressrole = 'master' if workers == 0 or not mdns or kubevirt_api_service else 'worker'
+            replicas = masters if workers == 0 or not mdns or kubevirt_api_service else workers
             ingressconfig = config.process_inputfile(cluster, f, overrides={'replicas': replicas, 'role': ingressrole,
                                                                             'cluster': cluster, 'domain': domain})
             with open("%s/openshift/99-ingress-controller.yaml" % clusterdir, 'w') as _f:

@@ -40,7 +40,7 @@
   - path: /etc/kubernetes/config.hcl.templ
     origin: config.hcl.templ
 {% endif %}
-{% if network_type == 'Contrail' or kubevirt_api_service %}
+{% if (mdns and network_type == 'Contrail') or kubevirt_api_service %}
   - path: /etc/kubernetes/manifests/haproxy.yml
     origin: staticpods/haproxy.yml
   - path: /etc/kubernetes/haproxy.cfg
