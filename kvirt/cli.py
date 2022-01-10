@@ -1284,7 +1284,6 @@ def update_vm(args):
     memory = overrides.get('memory')
     plan = overrides.get('plan')
     autostart = overrides.get('autostart')
-    noautostart = overrides.get('noautostart')
     dns = overrides.get('dns')
     host = overrides.get('host')
     domain = overrides.get('domain')
@@ -1326,12 +1325,9 @@ def update_vm(args):
         if numcpus is not None:
             pprint(f"Updating numcpus of vm {name} to {numcpus}...")
             k.update_cpus(name, numcpus)
-        if autostart:
-            pprint(f"Setting autostart for vm {name}...")
-            k.update_start(name, start=True)
-        if noautostart:
-            pprint(f"Removing autostart for vm {name}...")
-            k.update_start(name, start=False)
+        if autostart is not None:
+            pprint(f"Setting autostart to {autostart} for vm {name}...")
+            k.update_start(name, start=autostart)
         if information:
             pprint(f"Setting information for vm {name}...")
             k.update_information(name, information)
