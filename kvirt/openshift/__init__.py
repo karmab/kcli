@@ -8,10 +8,10 @@ import json
 import os
 from socket import gethostbyname
 import sys
-from ipaddress import ip_address, ip_network
+from ipaddress import ip_network
 from kvirt.common import error, pprint, success, warning, info2
 from kvirt.common import get_oc, pwd_path
-from kvirt.common import get_commit_rhcos, get_latest_fcos, patch_bootstrap, generate_rhcos_iso, olm_app
+from kvirt.common import get_commit_rhcos, get_latest_fcos, generate_rhcos_iso, olm_app
 from kvirt.common import get_installer_rhcos
 from kvirt.common import ssh, scp, _ssh_credentials, copy_ipi_credentials
 from kvirt.defaults import LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG
@@ -510,33 +510,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         else:
             error("You need to define api_ip in your parameters file")
             sys.exit(1)
-    if metal3:
-        if 'baremetal_cidr' not in data:
-            if cidr is not None:
-                data['baremetal_cidr'] = cidr
-            else:
-                error("You need to define baremetal_cidr in your parameters file for metal3")
-                sys.exit(1)
-        if api_ip is None:
-            error("You need to define api_ip for metal3")
-            sys.exit(1)
-        if not ip_address(api_ip) in ip_network(data['baremetal_cidr']):
-            error("api_ip doesn't belong to your baremetal_cidr")
-            sys.exit(1)
-        ingress_ip = data.get('ingress_ip')
-        if ingress_ip is None:
-            if cidr is not None:
-                ingress_index = 3 if ':' in cidr else -4
-                data.get['ingress_ip'] = str(ip_network(cidr)[ingress_index])
-            else:
-                error("You need to define ingress_ip for metal3")
-                sys.exit(1)
-        if ingress_ip == api_ip:
-            error("You need to set a different value for ingress_ip than api_ip for metal3")
-            sys.exit(1)
-        if not ip_address(ingress_ip) in ip_network(data['baremetal_cidr']):
-            error("ingress_ip doesn't belong to your baremetal_cidr")
-            sys.exit(1)
     if platform in virtplatforms and not sno and not ipi and ':' in api_ip:
         ipv6 = True
     if ipv6:
@@ -734,12 +707,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         disconnected_overrides['disconnected_operators_version'] = INSTALLER_VERSION[:3]
         disconnected_overrides['openshift_release_image'] = get_release_image()
         data['openshift_release_image'] = disconnected_overrides['openshift_release_image']
-        if metal3:
-            try:
-                openstack_uri = get_installer_rhcos('openstack')
-            except:
-                openstack_uri = get_commit_rhcos(COMMIT_ID, 'openstack')
-            disconnected_overrides['openstack_uri'] = openstack_uri
         x_apps = ['users', 'autolabeller']
         disconnected_operators.extend([app for app in apps if app not in disconnected_operators and app not in x_apps])
         disconnected_overrides['disconnected_operators'] = disconnected_operators
@@ -786,13 +753,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                          tunnelport=config.tunnelport, tunneluser=config.tunneluser, download=True, insecure=True,
                          vmport=disconnected_vmport)
             os.system(scpcmd)
-        if metal3:
-            clusterosimagecmd = "cat /root/clusterOSImage.txt"
-            clusterosimagecmd = ssh(disconnected_vm, ip=disconnected_ip, user='root', tunnel=config.tunnel,
-                                    tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
-                                    tunneluser=config.tunneluser,
-                                    insecure=True, cmd=clusterosimagecmd, vmport=disconnected_vmport)
-            data['clusterosimage'] = os.popen(clusterosimagecmd).read().strip()
         os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = disconnected_version
         pprint("Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to %s" % disconnected_version)
     if disconnected_url is not None and disconnected_user is not None and disconnected_password is not None:
@@ -1108,19 +1068,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 with open("%s/openshift/99-apps-%s.yaml" % (clusterdir, appname), 'w') as g:
                     g.write(rendered)
     if metal3:
-        for f in glob("%s/openshift/99_openshift-cluster-api_master-machines-*.yaml" % clusterdir):
-            os.remove(f)
-        for f in glob("%s/openshift/99_openshift-cluster-api_worker-machineset-*.yaml" % clusterdir):
-            os.remove(f)
-        for f in glob("%s/openshift/99_openshift-cluster-api_hosts-*.yaml" % clusterdir):
-            os.remove(f)
-        for f in glob("%s/openshift/99_openshift-cluster-api_host-bmc-secrets-*.yaml" % clusterdir):
-            os.remove(f)
-        for role in ['master', 'worker']:
-            blacklist = config.process_inputfile(cluster, "%s/99-blacklist-ipi.yaml" % plandir,
-                                                 overrides={'role': role})
-            with open("%s/openshift/99-blacklist-ipi-%s.yaml" % (clusterdir, role), 'w') as f:
-                f.write(blacklist)
+        copy2("%s/99-metal3-provisioning.yaml" % plandir, "%s/openshift" % clusterdir)
     if sno:
         sno_name = "%s-sno" % cluster
         sno_disable_nics = data.get('sno_disable_nics', [])
@@ -1232,19 +1180,6 @@ unmanaged-devices=interface-name:%s""" % sno_disable_nics
     for role in ['master', 'worker']:
         ori = "%s/%s.ign" % (clusterdir, role)
         copy2(ori, "%s.ori" % ori)
-    if masters < 3:
-        version_match = re.match("4.([0-9]*).*", INSTALLER_VERSION)
-        COS_VERSION = "4%s" % version_match.group(1) if version_match is not None else '45'
-        if not upstream and int(COS_VERSION) > 43:
-            script_content = open('%s/bootstrap_singlenode.sh' % plandir).read()
-            service_content = open('%s/bootstrap_singlenode.service' % plandir).read()
-            service_name = 'kcli-singlenode-patch'
-            patch_bootstrap("%s/bootstrap.ign" % clusterdir, script_content, service_content, service_name)
-    if metal3:
-        script_content = open('%s/bootstrap_metal3.sh' % plandir).read()
-        service_content = open('%s/bootstrap_metal3.service' % plandir).read()
-        service_name = 'kcli-metal3-patch'
-        patch_bootstrap("%s/bootstrap.ign" % clusterdir, script_content, service_content, service_name)
     if platform in virtplatforms:
         if data.get('virtual_router_id') is None:
             overrides['virtual_router_id'] = hash(cluster) % 254 + 1
