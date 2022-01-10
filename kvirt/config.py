@@ -95,7 +95,7 @@ class Kconfig(Kbaseconfig):
                 if ca_file is not None:
                     ca_file = os.path.expanduser(ca_file)
                     if not os.path.exists(ca_file):
-                        error("Ca file %s doesn't exist. Leaving" % ca_file)
+                        error(f"Ca file {ca_file} doesn't exist. Leaving")
                         sys.exit(1)
                 disk_hotplug = self.options.get('disk_hotplug', False)
                 kubeconfig_file = self.options.get('kubeconfig')
@@ -113,17 +113,17 @@ class Kconfig(Kbaseconfig):
                 registry = self.options.get('registry')
                 access_mode = self.options.get('access_mode', 'NodePort')
                 if access_mode not in ['External', 'LoadBalancer', 'NodePort']:
-                    msg = "Incorrect access_mode %s. Should be External, NodePort or LoadBalancer" % access_mode
+                    msg = f"Incorrect access_mode {access_mode}. Should be External, NodePort or LoadBalancer"
                     error(msg)
                     sys.exit(1)
                 volume_mode = self.options.get('volume_mode', 'Filesystem')
                 if volume_mode not in ['Filesystem', 'Block']:
-                    msg = "Incorrect volume_mode %s. Should be Filesystem or Block" % volume_mode
+                    msg = f"Incorrect volume_mode {volume_mode}. Should be Filesystem or Block"
                     error(msg)
                     sys.exit(1)
                 volume_access = self.options.get('volume_access', 'ReadWriteOnce')
                 if volume_access not in ['ReadWriteMany', 'ReadWriteOnce']:
-                    msg = "Incorrect volume_access %s. Should be ReadWriteOnce or ReadWriteOnce" % volume_access
+                    msg = f"Incorrect volume_access {volume_access}. Should be ReadWriteOnce or ReadWriteOnce"
                     error(msg)
                     sys.exit(1)
                 harvester = self.options.get('harvester', False)
@@ -156,10 +156,10 @@ class Kconfig(Kbaseconfig):
                     home = os.environ['HOME']
                     access_key_id, access_key_secret, keypair, region, session_token = None, None, None, None, None
                     import configparser
-                    if os.path.exists("%s/.aws/credentials" % home):
+                    if os.path.exists(f"{home}/.aws/credentials"):
                         try:
                             credconfig = configparser.ConfigParser()
-                            credconfig.read("%s/.aws/credentials" % home)
+                            credconfig.read(f"{home}/.aws/credentials")
                             if 'default' not in credconfig:
                                 error("Missing default section in ~/.aws/credentials file. Leaving")
                                 sys.exit(1)
@@ -170,10 +170,10 @@ class Kconfig(Kbaseconfig):
                         except:
                             error("Coudln't parse ~/.aws/credentials file. Leaving")
                             sys.exit(1)
-                    if os.path.exists("%s/.aws/config" % home):
+                    if os.path.exists(f"{home}/.aws/config"):
                         try:
                             confconfig = configparser.ConfigParser()
-                            confconfig.read("%s/.aws/config" % home)
+                            confconfig.read(f"{home}/.aws/config")
                             if 'default' not in confconfig:
                                 error("Missing default section in ~/.aws/config file. Leaving")
                                 sys.exit(1)
@@ -210,10 +210,10 @@ class Kconfig(Kbaseconfig):
                     iam_api_key, region, zone, vpc = None, None, None, None
                     cos_api_key, cos_resource_instance_id, cis_resource_instance_id = None, None, None
                     import configparser
-                    if os.path.exists("%s/.ibm/credentials" % home):
+                    if os.path.exists(f"{home}/.ibm/credentials"):
                         try:
                             credconfig = configparser.ConfigParser()
-                            credconfig.read("%s/.ibm/credentials" % home)
+                            credconfig.read(f"{home}/.ibm/credentials")
                             if 'default' not in credconfig:
                                 error(
                                     "Missing default section in ~/.ibm/credentials file. Leaving")
@@ -227,10 +227,10 @@ class Kconfig(Kbaseconfig):
                         except:
                             error("Coudln't parse ~/.ibm/credentials file. Leaving")
                             sys.exit(1)
-                    if os.path.exists("%s/.ibm/config" % home):
+                    if os.path.exists(f"{home}/.ibm/config"):
                         try:
                             confconfig = configparser.ConfigParser()
-                            confconfig.read("%s/.ibm/config" % home)
+                            confconfig.read(f"{home}/.ibm/config")
                             if 'default' not in confconfig:
                                 error(
                                     "Missing default section in ~/.ibm/config file. Leaving")
@@ -325,7 +325,7 @@ class Kconfig(Kbaseconfig):
                 if auth_url.endswith('v2.0'):
                     domain = None
                 if ca_file is not None and not os.path.exists(os.path.expanduser(ca_file)):
-                    error("Indicated ca_file %s not found. Leaving" % ca_file)
+                    error(f"Indicated ca_file {ca_file} not found. Leaving")
                     sys.exit(1)
                 from kvirt.providers.openstack import Kopenstack
                 k = Kopenstack(host=self.host, port=self.port, user=user, password=password, version=version,
@@ -354,7 +354,7 @@ class Kconfig(Kbaseconfig):
                         isofolder = isofolder.split('/')
                         isopool = isofolder[0]
                         isofolder = isofolder[1:]
-                    isofolder = '[%s]/%s' % (isopool, isofolder)
+                    isofolder = f'[{isopool}]/{isofolder}'
                 filtervms = self.options.get('filtervms', False)
                 filteruser = self.options.get('filteruser', False)
                 filtertag = self.options.get('filtertag')
@@ -389,17 +389,17 @@ class Kconfig(Kbaseconfig):
                 k = Kvirt(host=self.host, port=self.port, user=self.user, protocol=self.protocol, url=self.url,
                           debug=debug, insecure=self.insecure, session=session, remotednsmasq=remotednsmasq)
             if k.conn is None:
-                error("Couldn't connect to client %s. Leaving..." % self.client)
+                error(f"Couldn't connect to client {self.client}. Leaving...")
                 sys.exit(1)
             for extraclient in self._extraclients:
                 if extraclient not in self.ini:
-                    warning("Missing section for client %s in config file. Trying to connect..." % extraclient)
+                    warning(f"Missing section for client {extraclient} in config file. Trying to connect...")
                     self.ini[extraclient] = {'host': extraclient}
                 c = Kconfig(client=extraclient)
                 e = c.k
                 self.extraclients[extraclient] = e
                 if e.conn is None:
-                    error("Couldn't connect to specify hypervisor %s. Leaving..." % extraclient)
+                    error(f"Couldn't connect to specify hypervisor {extraclient}. Leaving...")
                     sys.exit(1)
             if hasattr(self, 'algorithm'):
                 if self.algorithm == 'free':
@@ -436,7 +436,7 @@ class Kconfig(Kbaseconfig):
                                     self.client = newcli
                                 break
 
-                pprint("Selecting client %s from group %s" % (self.client, self.group))
+                pprint(f"Selecting client {self.client} from group {self.group}")
         self.k = k
         default_data = {'config_%s' % k: self.default[k] for k in self.default}
         config_data = {'config_%s' % k: self.ini[self.client][k] for k in self.ini[self.client]}
@@ -464,7 +464,7 @@ class Kconfig(Kbaseconfig):
         wrong_overrides = [y for y in overrides if '-' in y]
         if wrong_overrides:
             for wrong_override in wrong_overrides:
-                error("Incorrect parameter %s. Hyphens are not allowed" % wrong_override)
+                error(f"Incorrect parameter {wrong_overrides}. Hyphens are not allowed")
             sys.exit(1)
         overrides['name'] = name
         kube = overrides.get('kube')
@@ -474,9 +474,9 @@ class Kconfig(Kbaseconfig):
         if custom_region is not None and hasattr(k, 'region'):
             k.region = custom_region
             if hasattr(k, 'zone') and custom_region not in k.zone:
-                k.zone = "%s-2" % custom_region
+                k.zone = f"{custom_region}-2"
             if self.type == 'ibm':
-                k.conn.set_service_url("https://%s.iaas.cloud.ibm.com/v1" % custom_region)
+                k.conn.set_service_url(f"https://{custom_region}.iaas.cloud.ibm.com/v1")
         custom_zone = next((e for e in [customprofile.get('zone'), overrides.get('zone')] if e is not None), None)
         if custom_zone is not None and hasattr(k, 'zone'):
             k.zone = custom_zone
@@ -491,18 +491,18 @@ class Kconfig(Kbaseconfig):
                 vmprofiles[profile] = customprofile
                 customprofileimage = customprofile.get('image')
                 if customprofileimage is not None:
-                    clientprofile = "%s_%s" % (self.client, customprofileimage)
+                    clientprofile = f"{self.client}_{customprofileimage}"
                     if clientprofile in vmprofiles and 'image' in vmprofiles[clientprofile]:
                         vmprofiles[profile]['image'] = vmprofiles[clientprofile]['image']
                     elif customprofileimage in IMAGES and self.type not in ['packet', 'vsphere'] and\
                             IMAGES[customprofileimage] not in [os.path.basename(v) for v in self.k.volumes()]:
-                        pprint("Image %s not found. Downloading" % customprofileimage)
+                        pprint(f"Image {customprofileimage} not found. Downloading")
                         self.handle_host(pool=self.pool, image=customprofileimage, download=True, update_profile=True)
                         vmprofiles[profile]['image'] = os.path.basename(IMAGES[customprofileimage])
             else:
-                pprint("Deploying vm %s from profile %s..." % (name, profile))
+                pprint(f"Deploying vm {name} from profile {profile}...")
             if profile not in vmprofiles:
-                clientprofile = "%s_%s" % (self.client, profile)
+                clientprofile = f"{self.client}_{profile}"
                 if clientprofile in vmprofiles:
                     if 'image' in vmprofiles[clientprofile]:
                         vmprofiles[profile] = {'image': vmprofiles[clientprofile]['image']}
@@ -510,14 +510,14 @@ class Kconfig(Kbaseconfig):
                         vmprofiles[profile] = {'iso': vmprofiles[clientprofile]['iso']}
                 elif profile in IMAGES and IMAGES[profile] not in [os.path.basename(v) for v in self.k.volumes()]\
                         and self.type not in ['aws', 'gcp', 'packet', 'vsphere']:
-                    pprint("Image %s not found. Downloading" % profile)
+                    pprint(f"Image {profile} not found. Downloading")
                     self.handle_host(pool=self.pool, image=profile, download=True, update_profile=True)
                     good_image = os.path.basename(IMAGES[profile])
                     if not good_image.endswith('.qcow2') and not good_image.endswith('.img'):
                         good_image = [x[4] for x in self.list_profiles() if x[0] == clientprofile][0]
                     vmprofiles[profile] = {'image': good_image}
                 else:
-                    pprint("Profile %s not found. Using the image as profile..." % profile)
+                    pprint(f"Profile {profile} not found. Using the image as profile...")
                     vmprofiles[profile] = {'image': profile}
         elif customprofile:
             vmprofiles[profile] = customprofile
@@ -730,16 +730,16 @@ class Kconfig(Kbaseconfig):
         if files:
             for index, fil in enumerate(files):
                 if isinstance(fil, str):
-                    path = "/root/%s" % fil
+                    path = f"/root/{fil}"
                     if basedir != '.':
-                        origin = "%s/%s" % (basedir, path)
+                        origin = f"{basedir}/{path}"
                     origin = fil
                     content = None
                     files[index] = {'path': path, 'origin': origin}
                 elif isinstance(fil, dict):
                     path = fil.get('path')
                     if path is None or not path.startswith('/'):
-                        error("Incorrect path %s.Leaving..." % path)
+                        error(f"Incorrect path {path}.Leaving...")
                         sys.exit(1)
                     origin = fil.get('origin')
                     content = fil.get('content')
@@ -751,20 +751,20 @@ class Kconfig(Kbaseconfig):
                         if '/' in origin:
                             destdir = os.path.dirname(origin)
                             os.makedirs(destdir, exist_ok=True)
-                        common.fetch("%s/%s" % (onfly, origin), destdir)
+                        common.fetch(f"{onfly}/{origin}", destdir)
                     origin = os.path.expanduser(origin)
                     if not os.path.isabs(origin):
                         if isinstance(fil, dict) and fil.get('currentdir', False):
                             files[index]['origin'] = "%s/%s" % (os.getcwd(), os.path.basename(origin))
                         elif basedir != '.' and not origin.startswith('./') and not origin.startswith('/workdir/'):
-                            origin = "%s/%s" % (basedir, origin)
+                            origin = f"{basedir}/{origin}"
                             files[index]['origin'] = origin
                     if not os.path.exists(origin):
-                        return {'result': 'failure', 'reason': "File %s not found in %s" % (origin, name)}
+                        return {'result': 'failure', 'reason': f"File {origin} not found in {name}"}
                 elif content is None:
-                    return {'result': 'failure', 'reason': "Content of file %s not found in %s" % (path, name)}
+                    return {'result': 'failure', 'reason': f"Content of file {path} not found in {name}"}
                 if path is None:
-                    pprint("Using current directory for path in files of %s" % name)
+                    pprint(f"Using current directory for path in files of {name}")
                     path = os.path.basename(origin)
         env_parameters = [key for key in overrides if key.isupper()]
         if env_parameters:
@@ -828,7 +828,7 @@ class Kconfig(Kbaseconfig):
                     msg += "Define rhnuser/rhnpassword or rhnak/rhnorg"
                     return {'result': 'failure', 'reason': msg}
             else:
-                warning("%s will require manual subscription to Red Hat Network" % name)
+                warning(f"{name} will require manual subscription to Red Hat Network")
         if scripts:
             for script in scripts:
                 scriptname = os.path.basename(script)
@@ -837,14 +837,14 @@ class Kconfig(Kbaseconfig):
                     if '/' in script:
                         destdir = os.path.dirname(script)
                         os.makedirs(destdir, exist_ok=True)
-                    common.fetch("%s/%s" % (onfly, script), destdir)
+                    common.fetch(f"{onfly}/{script}", destdir)
                 script = os.path.expanduser(script)
                 if basedir != '.':
-                    script = '%s/%s' % (basedir, script)
+                    script = f'{basedir}/{script}'
                 if script.endswith('register.sh') and skip_rhnregister_script:
                     continue
                 elif not os.path.exists(script):
-                    return {'result': 'failure', 'reason': "Script %s not found" % script}
+                    return {'result': 'failure', 'reason': f"Script {script} not found"}
                 else:
                     scriptbasedir = os.path.dirname(script) if os.path.dirname(script) != '' else '.'
                     env = Environment(loader=FileSystemLoader(scriptbasedir), undefined=undefined,
@@ -865,7 +865,7 @@ class Kconfig(Kbaseconfig):
                         return {'result': 'failure', 'reason': msg}
                     scriptlines = [line.strip() for line in scriptentries.split('\n') if line.strip() != '']
                     if scriptlines:
-                        scriptlines.insert(0, "echo Running script %s" % scriptname)
+                        scriptlines.insert(0, f"echo Running script {scriptname}")
                         scriptcmds.extend(scriptlines)
         if skip_rhnregister_script and cloudinit and image is not None and image.lower().startswith('rhel'):
             rhncommands = []
@@ -880,7 +880,7 @@ class Kconfig(Kbaseconfig):
                 rhncommands.append('subscription-manager register --serverurl=%s --force --username=%s --password=%s'
                                    % (rhnserver, rhnuser, rhnpassword))
                 if rhnpool is not None:
-                    rhncommands.append('subscription-manager attach --pool=%s' % rhnpool)
+                    rhncommands.append(f'subscription-manager attach --pool={rhnpool}')
                 else:
                     rhncommands.append('subscription-manager attach --auto')
         else:
@@ -889,7 +889,7 @@ class Kconfig(Kbaseconfig):
         if sharedfolders and self.type == 'kvm':
             for sharedfolder in sharedfolders:
                 basefolder = os.path.basename(sharedfolder)
-                cmd1 = "mkdir -p /mnt/%s" % sharedfolder
+                cmd1 = f"mkdir -p /mnt/{sharedfolder}"
                 cmd2 = "echo %s /mnt/%s 9p trans=virtio,version=9p2000.L,rw 0 0 >> /etc/fstab" % (basefolder,
                                                                                                   sharedfolder)
                 sharedfoldercmds.append(cmd1)
@@ -907,9 +907,9 @@ class Kconfig(Kbaseconfig):
             else:
                 zerotiercmds.append("curl -s https://install.zerotier.com | bash")
                 for entry in zerotier_nets:
-                    zerotiercmds.append("zerotier-cli join %s" % entry)
-        networkwaitcommand = ['sleep %s' % networkwait] if networkwait > 0 else []
-        rootcommand = ['echo root:%s | chpasswd' % rootpassword] if rootpassword is not None else []
+                    zerotiercmds.append(f"zerotier-cli join {entry}")
+        networkwaitcommand = [f'sleep {networkwait}'] if networkwait > 0 else []
+        rootcommand = [f'echo root:{rootpassword} | chpasswd'] if rootpassword is not None else []
         cmds = rootcommand + networkwaitcommand + rhncommands + sharedfoldercmds + zerotiercmds + cmds + scriptcmds
         if notify:
             if notifycmd is None and notifyscript is None:
@@ -921,11 +921,11 @@ class Kconfig(Kbaseconfig):
             if notifyscript is not None:
                 notifyscript = os.path.expanduser(notifyscript)
                 if basedir != '.':
-                    notifyscript = '%s/%s' % (basedir, notifyscript)
+                    notifyscript = f'{basedir}/{notifyscript}'
                 if not os.path.exists(notifyscript):
                     notifycmd = None
                     notifyscript = None
-                    warning("Notification required for %s but missing notifyscript" % name)
+                    warning(f"Notification required for {name} but missing notifyscript")
                 else:
                     files.append({'path': '/root/.notify.sh', 'origin': notifyscript})
                     notifycmd = "bash /root/.notify.sh"
@@ -951,7 +951,7 @@ class Kconfig(Kbaseconfig):
             if privatekeyfile is not None and publickeyfile is not None:
                 privatekey = open(privatekeyfile).read().strip()
                 publickey = open(publickeyfile).read().strip()
-                warning("Injecting private key for %s" % name)
+                warning(f"Injecting private key for {name}")
                 if files:
                     files.append({'path': '/root/.ssh/id_rsa', 'content': privatekey})
                     files.append({'path': '/root/.ssh/id_rsa.pub', 'content': publickey})
@@ -967,7 +967,7 @@ class Kconfig(Kbaseconfig):
                                 found = True
                                 break
                         if not found:
-                            warning("Adding public key to authorized_keys_file for %s" % name)
+                            warning(f"Adding public key to authorized_keys_file for {name}")
                             with open(authorized_keys_file, 'a') as f:
                                 f.write(publickey)
                     else:
@@ -1063,7 +1063,7 @@ class Kconfig(Kbaseconfig):
                 else:
                     z.reserve_dns(name=name, nets=[domain], domain=domain, ip=ip, force=True)
             else:
-                warning("Client %s not found. Skipping" % dnsclient)
+                warning(f"Client {dnsclient} not found. Skipping")
         if os.access(os.path.expanduser('~/.kcli'), os.W_OK):
             client = client if client is not None else self.client
             common.set_lastvm(name, client)
@@ -1084,7 +1084,7 @@ class Kconfig(Kbaseconfig):
                                       tunneluser=self.user, yamlinventory=yamlinventory, insecure=self.insecure)
         if wait:
             if not cloudinit or not start or image is None:
-                pprint("Skipping wait on %s" % name)
+                pprint(f"Skipping wait on {name}")
             else:
                 self.wait_finish(name, image=image, waitcommand=waitcommand, waittimeout=waittimeout)
                 finishfiles = profile.get('finishfiles', [])
@@ -1155,7 +1155,7 @@ class Kconfig(Kbaseconfig):
             for product in products:
                 group = product['group']
                 repo = product['repo']
-                print("repo:%s\tgroup:%s" % (repo, group))
+                print(f"repo:{repo}\tgroup:{group}")
             sys.exit(1)
         else:
             product = products[0]
@@ -1173,21 +1173,21 @@ class Kconfig(Kbaseconfig):
             image = product.get('image')
             parameters = product.get('parameters')
             if image is not None:
-                print("Note that this product uses image: %s" % image)
+                print(f"Note that this product uses image: {image}")
             if parameters is not None:
                 for parameter in parameters:
                     applied_parameter = overrides[parameter] if parameter in overrides else parameters[parameter]
-                    print("Using parameter %s: %s" % (parameter, applied_parameter))
+                    print(f"Using parameter {parameter}: {applied_parameter}")
             extraparameters = list(set(overrides) - set(parameters)) if parameters is not None else overrides
             for parameter in extraparameters:
                 print("Using parameter %s: %s" % (parameter, overrides[parameter]))
             if not latest:
-                pprint("Using directory %s" % repodir)
+                pprint(f"Using directory {repodir}")
                 self.plan(plan, path=repodir, inputfile=inputfile, overrides=overrides)
             else:
                 self.update_repo(repo)
                 self.plan(plan, path=repodir, inputfile=inputfile, overrides=overrides)
-            pprint("Product can be deleted with: kcli delete plan --yes %s" % plan)
+            pprint(f"Product can be deleted with: kcli delete plan --yes {plan}")
         return {'result': 'success', 'plan': plan}
 
     def start_plan(self, plan, container=False):
@@ -1207,7 +1207,7 @@ class Kconfig(Kbaseconfig):
                 if description == plan:
                     startfound = True
                     c.start(name)
-                    success("%s started on %s!" % (name, hypervisor))
+                    success(f"{name} started on {hypervisor}!")
         if container:
             cont = Kcontainerconfig(self, client=self.containerclient).cont
             for conta in sorted(cont.list_containers(k)):
@@ -1216,9 +1216,9 @@ class Kconfig(Kbaseconfig):
                 if containerplan == plan:
                     startfound = True
                     cont.start_container(name)
-                    success("Container %s started!" % name)
+                    success(f"Container {name} started!")
         if startfound:
-            success("Plan %s started!" % plan)
+            success(f"Plan {plan} started!")
         else:
             warning("No matching objects found")
         return {'result': 'success'}
@@ -1226,7 +1226,7 @@ class Kconfig(Kbaseconfig):
     def stop_plan(self, plan, soft=False, container=False):
         k = self.k
         stopfound = True
-        pprint("Stopping vms from plan %s" % plan)
+        pprint(f"Stopping vms from plan {plan}")
         if not self.extraclients:
             stopclients = {self.client: k}
         else:
@@ -1240,7 +1240,7 @@ class Kconfig(Kbaseconfig):
                 if description == plan:
                     stopfound = True
                     c.stop(name, soft=soft)
-                    success("%s stopped on %s!" % (name, hypervisor))
+                    success(f"{name} stopped on {hypervisor}!")
         if container:
             cont = Kcontainerconfig(self, client=self.containerclient).cont
             for conta in sorted(cont.list_containers()):
@@ -1249,33 +1249,33 @@ class Kconfig(Kbaseconfig):
                 if containerplan == plan:
                     stopfound = True
                     cont.stop_container(name)
-                    success("Container %s stopped!" % name)
+                    success(f"Container {name} stopped!")
         if stopfound:
-            success("Plan %s stopped!" % plan)
+            success(f"Plan {plan} stopped!")
         else:
             warning("No matching objects found")
         return {'result': 'success'}
 
     def autostart_plan(self, plan):
         k = self.k
-        pprint("Set vms from plan %s to autostart" % plan)
+        pprint(f"Set vms from plan {plan} to autostart")
         for vm in sorted(k.list(), key=lambda x: x['name']):
             name = vm['name']
             description = vm['plan']
             if description == plan:
                 k.update_start(name, start=True)
-                success("%s set to autostart!" % name)
+                success(f"{name} set to autostart!")
         return {'result': 'success'}
 
     def noautostart_plan(self, plan):
         k = self.k
-        pprint("Preventing vms from plan %s to autostart" % plan)
+        pprint(f"Preventing vms from plan {plan} to autostart")
         for vm in sorted(k.list(), key=lambda x: x['name']):
             name = vm['name']
             description = vm['plan']
             if description == plan:
                 k.update_start(name, start=False)
-                success("%s prevented to autostart!" % name)
+                success(f"{name} prevented to autostart!")
         return {'result': 'success'}
 
     def delete_plan(self, plan, container=False, unregister=False):
@@ -1312,7 +1312,7 @@ class Kconfig(Kbaseconfig):
                     if unregister:
                         image = k.info(name).get('image')
                         if 'rhel' in image:
-                            pprint("Removing rhel subscription for %s" % name)
+                            pprint(f"Removing rhel subscription for {name}")
                             ip, vmport = _ssh_credentials(k, name)[1:]
                             cmd = "subscription-manager unregister"
                             sshcmd = ssh(name, ip=ip, user='root', tunnel=self.tunnel,
@@ -1328,14 +1328,14 @@ class Kconfig(Kbaseconfig):
                             dnsclients[dnsclient] = z
                         z.delete_dns(dnsclient, domain)
                     common.set_lastvm(name, self.client, delete=True)
-                    success("%s deleted on %s!" % (name, hypervisor))
+                    success(f"{name} deleted on {hypervisor}!")
                     deletedvms.append(name)
                     found = True
                     cluster = vm.get('kube')
                     if cluster is not None:
-                        clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
+                        clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
                         if os.path.exists(clusterdir):
-                            pprint("Deleting directory %s" % clusterdir)
+                            pprint(f"Deleting directory {clusterdir}")
                             rmtree(clusterdir, ignore_errors=True)
         if container:
             cont = Kcontainerconfig(self, client=self.containerclient).cont
@@ -1344,7 +1344,7 @@ class Kconfig(Kbaseconfig):
                 container_plan = conta[3]
                 if container_plan == plan:
                     cont.delete_container(name)
-                    success("Container %s deleted!" % name)
+                    success(f"Container {name} deleted!")
                     found = True
         if not self.keep_networks:
             if self.type == 'kvm':
@@ -1353,36 +1353,36 @@ class Kconfig(Kbaseconfig):
                     if 'plan' in networks[network] and networks[network]['plan'] == plan:
                         networkresult = k.delete_network(network)
                         if networkresult['result'] == 'success':
-                            success("network %s deleted!" % network)
+                            success(f"network {network} deleted!")
                             found = True
             elif networks:
                 found = True
                 for network in networks:
                     networkresult = k.delete_network(network)
                     if networkresult['result'] == 'success':
-                        success("Unused network %s deleted!" % network)
+                        success(f"Unused network {network} deleted!")
         for keyfile in glob.glob("%s.key*" % plan):
-            success("file %s from %s deleted!" % (keyfile, plan))
+            success(f"file {keyfile} from {plan} deleted!")
             os.remove(keyfile)
         for ansiblefile in glob.glob("/tmp/%s*inv*" % plan):
-            success("file %s from %s deleted!" % (ansiblefile, plan))
+            success(f"file {ansiblefile} from {plan} deleted!")
             os.remove(ansiblefile)
         if deletedlbs and self.type in ['aws', 'gcp']:
             for lb in deletedlbs:
                 self.delete_loadbalancer(lb)
         if found:
-            success("Plan %s deleted!" % plan)
+            success(f"Plan {plan} deleted!")
         else:
-            warning("No objects found during deletion of plan %s" % plan)
+            warning(f"No objects found during deletion of plan {plan}")
             return {'result': 'success'}
         return {'result': 'success', 'deletedvm': deletedvms}
 
     def snapshot_plan(self, plan, snapshotname=None):
         k = self.k
         snapshotfound = False
-        pprint("Snapshotting vms from plan %s" % plan)
+        pprint(f"Snapshotting vms from plan {plan}")
         if snapshotname is None:
-            warning("Using %s as snapshot name as None was provided" % plan)
+            warning(f"Using {plan} as snapshot name as None was provided")
             snapshotname = plan
         for vm in sorted(k.list(), key=lambda x: x['name']):
             name = vm['name']
@@ -1390,9 +1390,9 @@ class Kconfig(Kbaseconfig):
             if description == plan:
                 snapshotfound = True
                 k.snapshot(snapshotname, name)
-                success("%s snapshotted!" % name)
+                success(f"{name} snapshotted!")
         if snapshotfound:
-            success("Plan %s snapshotted!" % plan)
+            success(f"Plan {plan} snapshotted!")
         else:
             warning("No matching vms found")
         return {'result': 'success'}
@@ -1400,9 +1400,9 @@ class Kconfig(Kbaseconfig):
     def revert_plan(self, plan, snapshotname=None):
         k = self.k
         revertfound = False
-        pprint("Reverting snapshots of vms from plan %s" % plan)
+        pprint(f"Reverting snapshots of vms from plan {plan}")
         if snapshotname is None:
-            warning("Using %s as snapshot name as None was provided" % plan)
+            warning(f"Using {plan} as snapshot name as None was provided")
             snapshotname = plan
         for vm in sorted(k.list(), key=lambda x: x['name']):
             name = vm['name']
@@ -1410,9 +1410,9 @@ class Kconfig(Kbaseconfig):
             if description == plan:
                 revertfound = True
                 k.snapshot(snapshotname, name, revert=True)
-                success("snapshot of %s reverted!" % name)
+                success(f"snapshot of {name} reverted!")
         if revertfound:
-            success("Plan %s reverted with snapshot %s!" % (plan, snapshotname))
+            success(f"Plan {plan} reverted with snapshot {snapshotname}!")
         else:
             warning("No matching vms found")
         return {'result': 'success'}
@@ -1439,34 +1439,34 @@ class Kconfig(Kbaseconfig):
             plan = nameutils.get_random_name()
         if url is not None:
             if url.startswith('/'):
-                url = "file://%s" % url
+                url = f"file://{url}"
             if not url.endswith('.yml'):
-                url = "%s/kcli_plan.yml" % url
-                pprint("Trying to retrieve %s" % url)
+                url = f"{url}/kcli_plan.yml"
+                pprint(f"Trying to retrieve {url}")
             inputfile = os.path.basename(url)
             onfly = os.path.dirname(url)
             path = plan if path is None else path
             if not quiet:
-                pprint("Retrieving specified plan from %s to %s" % (url, path))
+                pprint(f"Retrieving specified plan from {url} to {path}")
             if container_mode():
-                path = "/workdir/%s" % path
+                path = f"/workdir/{path}"
             if not os.path.exists(path):
                 toclean = True if info else False
                 common.fetch(url, path)
-                for default_parameter_file in ['/kcli_default.yml', '/%s_default.yml' % plan,
+                for default_parameter_file in ['/kcli_default.yml', f'/{plan}_default.yml',
                                                "/%s_default%s" % os.path.splitext(os.path.basename(url))]:
                     try:
                         common.fetch(os.path.dirname(url) + default_parameter_file, path)
                     except:
                         pass
             elif download:
-                msg = "target directory %s already there" % (path)
+                msg = f"target directory {path} already there"
                 error(msg)
                 return {'result': 'failure', 'reason': msg}
             else:
-                pprint("Using existing directory %s" % path)
+                pprint(f"Using existing directory {path}")
             if download:
-                inputfile = "%s/%s" % (path, inputfile)
+                inputfile = f"{path}/{inputfile}"
                 entries, overrides, basefile, basedir = self.process_inputfile(plan, inputfile, overrides=overrides,
                                                                                onfly=onfly, full=True,
                                                                                download_mode=True)
@@ -1489,26 +1489,26 @@ class Kconfig(Kbaseconfig):
                             if '/' in origin:
                                 destdir = os.path.dirname(origin)
                                 os.makedirs(destdir, exist_ok=True)
-                            pprint("Retrieving file %s/%s" % (onfly, origin))
+                            pprint(f"Retrieving file {onfly}/{origin}")
                             try:
-                                common.fetch("%s/%s" % (onfly, origin), destdir)
+                                common.fetch(f"{onfly}/{origin}", destdir)
                             except:
-                                if common.url_exists("%s/%s/README.md" % (onfly, origin)):
+                                if common.url_exists(f"{onfly}/{origin}/README.md"):
                                     os.makedirs(origin, exist_ok=True)
                                 else:
-                                    pprint("file %s/%s skipped" % (onfly, origin))
+                                    pprint(f"file {onfly}/{origin} skipped")
                     for script in scriptfiles:
                         if '~' not in script:
                             destdir = "."
                             if '/' in script:
                                 destdir = os.path.dirname(script)
                                 os.makedirs(destdir, exist_ok=True)
-                            pprint("Retrieving script %s/%s" % (onfly, script))
-                            common.fetch("%s/%s" % (onfly, script), destdir)
+                            pprint(f"Retrieving script {onfly}/{script}")
+                            common.fetch(f"{onfly}/{script}", destdir)
                 os.chdir('..')
                 return {'result': 'success'}
         if inputstring is not None:
-            inputfile = "temp_plan_%s.yml" % plan
+            inputfile = f"temp_plan_{plan}.yml"
             with open(inputfile, "w") as f:
                 f.write(inputstring)
         if inputfile is None:
@@ -1519,10 +1519,10 @@ class Kconfig(Kbaseconfig):
             getback = True
         inputfile = os.path.expanduser(inputfile)
         if not os.path.exists(inputfile):
-            error("Input file %s not found.Leaving...." % inputfile)
+            error(f"Input file {inputfile} not found.Leaving....")
             sys.exit(1)
         elif os.path.isdir(inputfile):
-            inputfile = "%s/kcli_plan.yml" % inputfile
+            inputfile = f"{inputfile}/kcli_plan.yml"
         if info:
             self.info_plan(inputfile, onfly=onfly, quiet=quiet, doc=doc)
             if toclean:
@@ -1533,7 +1533,7 @@ class Kconfig(Kbaseconfig):
         entries, overrides, basefile, basedir = self.process_inputfile(plan, inputfile, overrides=overrides,
                                                                        onfly=onfly, full=True)
         if basefile is not None:
-            baseinfo = self.process_inputfile(plan, "%s/%s" % (basedir, basefile), overrides=overrides, full=True)
+            baseinfo = self.process_inputfile(plan, f"{basedir}/{basefile}", overrides=overrides, full=True)
             baseentries, baseoverrides = baseinfo[0], baseinfo[1]
             if baseoverrides:
                 overrides.update({key: baseoverrides[key] for key in baseoverrides if key not in overrides})
@@ -1545,28 +1545,28 @@ class Kconfig(Kbaseconfig):
         dict_types = [entry for entry in entries if isinstance(entries[entry], dict)]
         if not dict_types:
             if basemode:
-                warning("%s doesn't look like a valid plan.Skipping...." % inputfile)
+                warning(f"{inputfile} doesn't look like a valid plan.Skipping....")
                 return
             else:
-                error("%s doesn't look like a valid plan.Leaving...." % inputfile)
+                error(f"{inputfile} doesn't look like a valid plan.Leaving....")
                 sys.exit(1)
         inputdir = os.path.dirname(inputfile) if os.path.dirname(inputfile) != '' else '.'
         pre_base = os.path.splitext(os.path.basename(inputfile))[0]
-        pre_script = '%s/kcli_pre.sh' % inputdir if pre_base == 'kcli_plan' else "%s/%s_pre.sh" % (inputdir, pre_base)
+        pre_script = f'{inputdir}/kcli_pre.sh' if pre_base == 'kcli_plan' else f"{inputdir}/{pre_base}_pre.sh"
         if os.path.exists(pre_script):
             pre_script_short = os.path.basename(pre_script)
             if pre:
-                pprint("Running %s" % pre_script_short)
+                pprint(f"Running {pre_script_short}")
                 with TemporaryDirectory() as tmpdir:
                     pre_script = self.process_inputfile('xxx', pre_script, overrides=overrides)
-                    with open("%s/pre.sh" % tmpdir, 'w') as f:
+                    with open(f"{tmpdir}/pre.sh", 'w') as f:
                         f.write(pre_script)
-                    run = call('bash %s/pre.sh' % tmpdir, shell=True)
+                    run = call(f'bash {tmpdir}/pre.sh', shell=True)
                     if run != 0:
-                        error("Issues running %s. Leaving" % pre_script_short)
+                        error(f"Issues running {pre_script_short}. Leaving")
                         sys.exit(run)
             else:
-                warning("Skipping %s as requested" % pre_script_short)
+                warning(f"Skipping {pre_script_short} as requested")
         vmentries = [entry for entry in entries if 'type' not in entries[entry] or entries[entry]['type'] == 'vm']
         diskentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'disk']
         networkentries = [entry for entry in entries
@@ -1594,12 +1594,12 @@ class Kconfig(Kbaseconfig):
                 planurl = details.get('url')
                 planfile = details.get('file')
                 if planurl is None and planfile is None:
-                    warning("Missing Url/File for plan %s. Not creating it..." % planentry)
+                    warning(f"Missing Url/File for plan {planentry}. Not creating it...")
                     continue
                 elif planurl is not None:
                     path = planentry
                     if not planurl.endswith('yml'):
-                        planurl = "%s/kcli_plan.yml" % planurl
+                        planurl = f"{planurl}/kcli_plan.yml"
                 elif '/' in planfile:
                     path = os.path.dirname(planfile)
                     inputfile = os.path.basename(planfile)
@@ -1618,12 +1618,12 @@ class Kconfig(Kbaseconfig):
             for net in networkentries:
                 netprofile = entries[net]
                 if k.net_exists(net):
-                    pprint("Network %s skipped!" % net)
+                    pprint(f"Network {net} skipped!")
                     continue
                 cidr = netprofile.get('cidr')
                 nat = bool(netprofile.get('nat', True))
                 if cidr is None:
-                    warning("Missing Cidr for network %s. Not creating it..." % net)
+                    warning(f"Missing Cidr for network {net}. Not creating it...")
                     continue
                 dhcp = netprofile.get('dhcp', True)
                 domain = netprofile.get('domain')
@@ -1635,22 +1635,22 @@ class Kconfig(Kbaseconfig):
             pools = k.list_pools()
             for pool in poolentries:
                 if pool in pools:
-                    pprint("Pool %s skipped!" % pool)
+                    pprint(f"Pool {pool} skipped!")
                     continue
                 else:
                     poolprofile = entries[pool]
                     poolpath = poolprofile.get('path')
                     if poolpath is None:
-                        warning("Pool %s skipped as path is missing!" % pool)
+                        warning(f"Pool {pool} skipped as path is missing!")
                         continue
                     k.create_pool(pool, poolpath)
         if imageentries and not onlyassets:
             pprint("Deploying Images...")
             images = [os.path.basename(t) for t in k.volumes()]
             for image in imageentries:
-                clientprofile = "%s_%s" % (self.client, image)
+                clientprofile = f"{self.client}_{image}"
                 if image in images or image in self.profiles or clientprofile in self.profiles:
-                    pprint("Image %s skipped!" % image)
+                    pprint(f"Image {image} skipped!")
                     continue
                 else:
                     imageprofile = entries[image]
@@ -1680,7 +1680,7 @@ class Kconfig(Kbaseconfig):
                     z = Kconfig(client=dnsclient).k
                     dnsclients[dnsclient] = z
                 else:
-                    warning("Client %s not found. Skipping" % dnsclient)
+                    warning(f"Client {dnsclient} not found. Skipping")
                     return
                 if dnsip is None:
                     warning("Missing ip. Skipping!")
@@ -1702,7 +1702,7 @@ class Kconfig(Kbaseconfig):
             pprint("Deploying Kube Entries...")
             dnsclients = {}
             for cluster in kubeentries:
-                pprint("Deploying Cluster %s..." % cluster)
+                pprint(f"Deploying Cluster {cluster}...")
                 kubeprofile = entries[cluster]
                 kubeclient = kubeprofile.get('client')
                 if kubeclient is None:
@@ -1710,15 +1710,15 @@ class Kconfig(Kbaseconfig):
                 elif kubeclient in self.clients:
                     currentconfig = Kconfig(client=kubeclient)
                 else:
-                    error("Client %s not found. skipped" % kubeclient)
+                    error(f"Client {kubeclient} not found. skipped")
                     continue
                 kubetype = kubeprofile.get('kubetype', 'generic')
                 kube_overrides = overrides.copy()
                 kube_overrides.update(kubeprofile)
                 kube_overrides['cluster'] = cluster
-                existing_masters = [v for v in currentconfig.k.list() if '%s-master' % cluster in v['name']]
+                existing_masters = [v for v in currentconfig.k.list() if f'{cluster}-master' in v['name']]
                 if existing_masters:
-                    pprint("Cluster %s found. skipped!" % cluster)
+                    pprint(f"Cluster {cluster} found. skipped!")
                     continue
                 if kubetype == 'openshift':
                     currentconfig.create_kube_openshift(plan, overrides=kube_overrides)
@@ -1729,7 +1729,7 @@ class Kconfig(Kbaseconfig):
                 elif kubetype == 'generic':
                     currentconfig.create_kube_generic(plan, overrides=kube_overrides)
                 else:
-                    warning("Incorrect kubetype %s specified. skipped!" % kubetype)
+                    warning(f"Incorrect kubetype {kubetype} specified. skipped!")
                     continue
         if vmentries:
             if not onlyassets:
@@ -1741,9 +1741,9 @@ class Kconfig(Kbaseconfig):
             vmnames = [name for name in vmentries]
             if basefile is not None:
                 basedir = os.path.dirname(inputfile) if '/' in inputfile else '.'
-                baseinputfile = "%s/%s" % (basedir, basefile)
+                baseinputfile = f"{basedir}/{basefile}"
                 if container_mode() and not os.path.isabs(basefile) and '/workdir' not in basedir:
-                    baseinputfile = "/workdir/%s/%s" % (basedir, basefile)
+                    baseinputfile = f"/workdir/{basedir}/{basefile}"
                 self.plan(plan, inputfile=baseinputfile, overrides=overrides, excludevms=vmnames, basemode=True)
                 baseplans.append(basefile)
             for name in vmentries:
@@ -1764,9 +1764,9 @@ class Kconfig(Kbaseconfig):
                     if 'baseplan' in profile:
                         baseplan = profile['baseplan']
                         basedir = os.path.dirname(inputfile) if '/' in inputfile else '.'
-                        baseinputfile = "%s/%s" % (basedir, baseplan)
+                        baseinputfile = f"{basedir}/{baseplan}"
                         if container_mode() and not os.path.isabs(baseplan) and '/workdir' not in basedir:
-                            baseinputfile = "/workdir/%s/%s" % (basedir, baseplan)
+                            baseinputfile = f"/workdir/{basedir}/{baseplan}"
                         basevm = profile['basevm'] if 'basevm' in profile else name
                         if baseplan not in baseplans:
                             self.plan(plan, inputfile=baseinputfile, overrides=overrides, excludevms=vmnames,
@@ -1778,7 +1778,7 @@ class Kconfig(Kbaseconfig):
                     elif 'basevm' in profile and profile['basevm'] in baseentries:
                         baseprofile = baseentries[profile['basevm']]
                     else:
-                        warning("Incorrect base entry for %s. skipping..." % name)
+                        warning(f"Incorrect base entry for {name}. skipping...")
                         continue
                     for key in baseprofile:
                         if key not in profile:
@@ -1787,7 +1787,7 @@ class Kconfig(Kbaseconfig):
                             profile[key] = baseprofile[key] + profile[key]
                 for entry in overrides.get('vmrules', self.vmrules):
                     if len(entry) != 1:
-                        error("Wrong vm rule %s" % entry)
+                        error(f"Wrong vm rule {entry}")
                         sys.exit(1)
                     rule = list(entry.keys())[0]
                     if (re.match(rule, name) or fnmatch(name, rule)) and isinstance(entry[rule], dict):
@@ -1811,7 +1811,7 @@ class Kconfig(Kbaseconfig):
                     z = newclient.k
                     hosts[vmclient] = newclient
                 else:
-                    pprint("Client %s not found. Using default one" % vmclient)
+                    pprint(f"Client {vmclient} not found. Using default one")
                     z = k
                     vmclient = self.client
                     if vmclient not in hosts:
@@ -1828,26 +1828,26 @@ class Kconfig(Kbaseconfig):
                     profile = customprofile
                 if 'playbook' in profile and profile['playbook']:
                     if 'scripts' not in profile and 'files' not in profile and 'cmds' not in profile:
-                        pprint("Skipping empty playbook for %s" % name)
+                        pprint(f"Skipping empty playbook for {name}")
                     else:
                         if 'image' in profile and 'rhel' in profile['image']\
                                 and 'rhnregister' in profile and profile['rhnregister']:
-                            warning("Make sure to subscribe %s to Red Hat network" % name)
+                            warning(f"Make sure to subscribe {name} to Red Hat network")
                         if 'privatekey' in profile and profile['privatekey']:
-                            warning("Copy your private key to %s" % name)
+                            warning(f"Copy your private key to {name}")
                         for net in profile.get('nets', []):
                             if 'ip' in net and 'mask' in net and 'gateway' in net:
                                 ip, mask, gateway = net['ip'], net['mask'], net['gateway']
-                                warning("Add manually this network %s/%s with gateway %s" % (ip, mask, gateway))
+                                warning(f"Add manually this network {ip}/{mask} with gateway {gateway}")
                             if 'vips' in net:
                                 vips = ','.join(net['vips'])
-                                warning("Add manually vips %s" % vips)
+                                warning(f"Add manually vips {vips}")
                         pprint("Make sure to export ANSIBLE_JINJA2_EXTENSIONS=jinja2.ext.do")
                         self.create_vm_playbook(name, profile, overrides=overrides, store=True)
                         continue
                 if z.exists(name) and not onlyassets:
                     if not update:
-                        pprint("%s skipped on %s!" % (name, vmclient))
+                        pprint(f"{name} skipped on {vmclient}!")
                     else:
                         updated = False
                         currentvm = z.info(name)
@@ -1861,25 +1861,25 @@ class Kconfig(Kbaseconfig):
                         currentflavor = currentvm.get('flavor')
                         if 'autostart' in profile and currentstart != profile['autostart']:
                             updated = True
-                            pprint("Updating autostart of %s to %s" % (name, profile['autostart']))
+                            pprint(f"Updating autostart of {name} to {profile['autostart']}")
                             z.update_start(name, profile['autostart'])
                         if 'flavor' in profile and currentflavor != profile['flavor']:
                             updated = True
-                            pprint("Updating flavor of %s to %s" % (name, profile['flavor']))
+                            pprint(f"Updating flavor of {name} to {profile['flavor']}")
                             z.update_flavor(name, profile['flavor'])
                         else:
                             if 'memory' in profile and currentmemory != profile['memory']:
                                 updated = True
-                                pprint("Updating memory of %s to %s" % (name, profile['memory']))
+                                pprint(f"Updating memory of {name} to {profile['memory']}")
                                 z.update_memory(name, profile['memory'])
                             if 'numcpus' in profile and currentcpus != profile['numcpus']:
                                 updated = True
-                                pprint("Updating cpus of %s to %s" % (name, profile['numcpus']))
+                                pprint(f"Updating cpus of {name} to {profile['numcpus']}")
                                 z.update_cpus(name, profile['numcpus'])
                         if 'disks' in profile:
                             if len(currentdisks) < len(profile['disks']):
                                 updated = True
-                                pprint("Adding Disks to %s" % name)
+                                pprint(f"Adding Disks to {name}")
                                 for disk in profile['disks'][len(currentdisks):]:
                                     if isinstance(disk, int):
                                         size = disk
@@ -1895,7 +1895,7 @@ class Kconfig(Kbaseconfig):
                                     z.add_disk(name=name, size=size, pool=pool)
                             if len(currentdisks) > len(profile['disks']):
                                 updated = True
-                                pprint("Removing Disks of %s" % name)
+                                pprint(f"Removing Disks of {name}")
                                 for disk in currentdisks[len(currentdisks) - len(profile['disks']):]:
                                     diskname = os.path.basename(disk['path'])
                                     diskpool = os.path.dirname(disk['path'])
@@ -1903,24 +1903,24 @@ class Kconfig(Kbaseconfig):
                         if 'nets' in profile:
                             if len(currentnets) < len(profile['nets']):
                                 updated = True
-                                pprint("Adding Nics to %s" % name)
+                                pprint(f"Adding Nics to {name}")
                                 for net in profile['nets'][len(currentnets):]:
                                     if isinstance(net, str):
                                         network = net
                                     elif isinstance(net, dict) and 'name' in net:
                                         network = net['name']
                                     else:
-                                        error("Skpping wrong nic spec for %s" % name)
+                                        error(f"Skpping wrong nic spec for {name}")
                                         continue
                                     z.add_nic(name, network)
                             if len(currentnets) > len(profile['nets']):
                                 updated = True
-                                pprint("Removing Nics of %s" % name)
+                                pprint(f"Removing Nics of {name}")
                                 for net in range(len(currentnets), len(profile['nets']), -1):
-                                    interface = "eth%s" % (net - 1)
+                                    interface = f"eth{net -1}"
                                     z.delete_nic(name, interface)
                         if not updated:
-                            pprint("%s skipped on %s!" % (name, vmclient))
+                            pprint(f"{name} skipped on {vmclient}!")
                     existingvms.append(name)
                     continue
                 # cmds = default_cmds + customprofile.get('cmds', []) + profile.get('cmds', [])
@@ -1928,10 +1928,10 @@ class Kconfig(Kbaseconfig):
                 sharedkey = profile.get('sharedkey', self.sharedkey)
                 if sharedkey:
                     vmcounter += 1
-                    if not os.path.exists("%s.key" % plan) or not os.path.exists("%s.key.pub" % plan):
-                        os.system("ssh-keygen -qt rsa -N '' -f %s.key" % plan)
-                    publickey = open("%s.key.pub" % plan).read().strip()
-                    privatekey = open("%s.key" % plan).read().strip()
+                    if not os.path.exists(f"{plan}.key") or not os.path.exists(f"{plan}.key.pub"):
+                        os.system(f"ssh-keygen -qt rsa -N '' -f {plan}.key")
+                    publickey = open(f"{plan}.key.pub").read().strip()
+                    privatekey = open(f"{plan}.key").read().strip()
                     if 'keys' not in profile:
                         profile['keys'] = [publickey]
                     else:
@@ -1943,14 +1943,14 @@ class Kconfig(Kbaseconfig):
                         profile['files'] = [{'path': '/root/.ssh/id_rsa', 'content': privatekey},
                                             {'path': '/root/.ssh/id_rsa.pub', 'content': publickey}]
                     if vmcounter >= len(vmentries):
-                        os.remove("%s.key.pub" % plan)
-                        os.remove("%s.key" % plan)
+                        os.remove(f"{plan}.key.pub")
+                        os.remove(f"{plan}.key")
                 currentoverrides = overrides.copy()
                 if 'image' in profile:
                     for entry in self.list_profiles():
                         currentimage = profile['image']
                         entryprofile = entry[0]
-                        clientprofile = "%s_%s" % (self.client, currentimage)
+                        clientprofile = f"{self.client}_{currentimage}"
                         if entryprofile == currentimage or entryprofile == clientprofile:
                             profile['image'] = entry[4]
                             currentoverrides['image'] = profile['image']
@@ -1958,7 +1958,7 @@ class Kconfig(Kbaseconfig):
                     imageprofile = profile['image']
                     if imageprofile in IMAGES and self.type not in ['packet', 'vsphere'] and\
                             IMAGES[imageprofile] not in [os.path.basename(v) for v in self.k.volumes()]:
-                        pprint("Image %s not found. Downloading" % imageprofile)
+                        pprint(f"Image {imageprofile} not found. Downloading")
                         self.handle_host(pool=self.pool, image=imageprofile, download=True, update_profile=True)
                 result = self.create_vm(name, profilename, overrides=currentoverrides, customprofile=profile, k=z,
                                         plan=plan, basedir=currentplandir, client=vmclient, onfly=onfly,
@@ -1981,7 +1981,7 @@ class Kconfig(Kbaseconfig):
                     elif not wait and not asyncwait:
                         continue
                     elif not start or not cloudinit or profile.get('image') is None:
-                        pprint("Skipping wait on %s" % name)
+                        pprint(f"Skipping wait on {name}")
                     elif asyncwait:
                         asyncwaitvm = {'name': name, 'finishfiles': finishfiles, 'waitcommand': waitcommand,
                                        'waittimeout': waittimeout}
@@ -2002,37 +2002,37 @@ class Kconfig(Kbaseconfig):
             image = profile.get('image', template)
             size = int(profile.get('size', 10))
             if pool is None:
-                error("Missing Key Pool for disk section %s. Not creating it..." % disk)
+                error(f"Missing Key Pool for disk section {disk}. Not creating it...")
                 continue
             if vms is None:
-                error("Missing or Incorrect Key Vms for disk section %s. Not creating it..." % disk)
+                error(f"Missing or Incorrect Key Vms for disk section {disk}. Not creating it...")
                 continue
             shareable = True if len(vms) > 1 else False
             if k.disk_exists(pool, disk):
-                pprint("Creation for Disk %s skipped!" % disk)
+                pprint(f"Creation for Disk {disk} skipped!")
                 poolpath = k.get_pool_path(pool)
-                newdisk = "%s/%s" % (poolpath, disk)
+                newdisk = f"{poolpath}/{disk}"
                 for vm in vms:
-                    pprint("Adding disk %s to %s" % (disk, vm))
+                    pprint(f"Adding disk {disk} to {vm}")
                     k.add_disk(name=vm, size=size, pool=pool, image=image, shareable=shareable, existing=newdisk,
                                thin=False)
             else:
                 newdisk = k.create_disk(disk, size=size, pool=pool, image=image, thin=False)
                 if newdisk is None:
-                    error("Disk %s not deployed. It won't be added to any vm" % disk)
+                    error(f"Disk {disk} not deployed. It won't be added to any vm")
                 else:
-                    common.pprint("Disk %s deployed!" % disk)
+                    common.pprint(f"Disk {disk} deployed!")
                     for vm in vms:
-                        pprint("Adding disk %s to %s" % (disk, vm))
+                        pprint(f"Adding disk {disk} to {vm}")
                         k.add_disk(name=vm, size=size, pool=pool, image=image, shareable=shareable,
                                    existing=newdisk, thin=False)
         if containerentries and not onlyassets:
             cont = Kcontainerconfig(self, client=self.containerclient).cont
             pprint("Deploying Containers...")
-            label = "plan=%s" % plan
+            label = f"plan={plan}"
             for container in containerentries:
                 if cont.exists_container(container):
-                    pprint("Container %s skipped!" % container)
+                    pprint(f"Container {container} skipped!")
                     continue
                 profile = entries[container]
                 if 'profile' in profile and profile['profile'] in containerprofiles:
@@ -2050,7 +2050,7 @@ class Kconfig(Kbaseconfig):
                 environment = next((e for e in [profile.get('environment'), customprofile.get('environment')]
                                     if e is not None), None)
                 cmds = next((e for e in [profile.get('cmds'), customprofile.get('cmds')] if e is not None), [])
-                success("Container %s deployed!" % container)
+                success(f"Container {container} deployed!")
                 cont.create_container(name=container, image=containerimage, nets=nets, cmds=cmds, ports=ports,
                                       volumes=volumes, environment=environment, label=label)
         if ansibleentries and not onlyassets:
@@ -2074,7 +2074,7 @@ class Kconfig(Kbaseconfig):
                 ansiblecommand = "ansible-playbook"
                 if verbose:
                     ansiblecommand += " -vvv"
-                inventoryfile = "/tmp/%s.inv.yaml" % plan if self.yamlinventory else "/tmp/%s.inv" % plan
+                inventoryfile = f"/tmp/{plan}.inv.yaml" if self.yamlinventory else f"/tmp/{plan}.inv"
                 ansibleutils.make_plan_inventory(vms_to_host, plan, targetvms, groups=groups, user=user,
                                                  yamlinventory=self.yamlinventory, tunnel=self.tunnel,
                                                  tunnelhost=self.tunnelhost, tunneluser=self.tunneluser,
@@ -2084,20 +2084,20 @@ class Kconfig(Kbaseconfig):
                     with open(ansibleconfig, "w") as f:
                         f.write("[ssh_connection]\nretries=10\n")
                 if variables:
-                    varsfile = "/tmp/%s.vars.yml" % plan
+                    varsfile = f"/tmp/{plan}.vars.yml"
                     with open(varsfile, 'w') as f:
                         yaml.dump(variables, f, default_flow_style=False)
-                    ansiblecommand += " --extra-vars @%s" % (varsfile)
-                ansiblecommand += " -i %s %s" % (inventoryfile, playbook)
-                pprint("Running: %s" % ansiblecommand)
+                    ansiblecommand += f" --extra-vars @{varsfile}"
+                ansiblecommand += f" -i {inventoryfile} {playbook}"
+                pprint(f"Running: {ansiblecommand}")
                 os.system(ansiblecommand)
         if ansible and not onlyassets:
             pprint("Deploying Ansible Inventory...")
-            inventoryfile = "/tmp/%s.inv.yaml" % plan if self.yamlinventory else "/tmp/%s.inv" % plan
+            inventoryfile = f"/tmp/{plan}.inv.yaml" if self.yamlinventory else f"/tmp/{plan}.inv"
             if os.path.exists(inventoryfile):
-                pprint("Inventory in %s skipped!" % inventoryfile)
+                pprint(f"Inventory in {inventoryfile} skipped!")
             else:
-                pprint("Creating ansible inventory for plan %s in %s" % (plan, inventoryfile))
+                pprint(f"Creating ansible inventory for plan {plan} in {inventoryfile}")
                 vms = []
                 for vm in sorted(k.list(), key=lambda x: x['name']):
                     name = vm['name']
@@ -2139,23 +2139,23 @@ class Kconfig(Kbaseconfig):
             os.chdir('..')
         if toclean:
             rmtree(path)
-        if inputstring is not None and os.path.exists("temp_plan_%s.yml" % plan):
-            os.remove("temp_plan_%s.yml" % plan)
+        if inputstring is not None and os.path.exists(f"temp_plan_{plan}.yml"):
+            os.remove(f"temp_plan_{plan}.yml")
         for entry in asyncwaitvms:
             name, finishfiles = entry['name'], entry['finishfiles']
             waitcommand, waittimeout = entry['waitcommand'], entry['waittimeout']
             self.wait(name, waitcommand=waitcommand, waittimeout=waittimeout)
             if finishfiles:
                 self.handle_finishfiles(self, name, finishfiles)
-        post_script = '%s/kcli_post.sh' % inputdir
+        post_script = f'{inputdir}/kcli_post.sh'
         if os.path.exists(post_script):
             if post:
                 pprint("Running kcli_post.sh")
                 with TemporaryDirectory() as tmpdir:
                     post_script = self.process_inputfile('xxx', post_script, overrides=overrides)
-                    with open("%s/post.sh" % tmpdir, 'w') as f:
+                    with open(f"{tmpdir}/post.sh", 'w') as f:
                         f.write(post_script)
-                    run = call('bash %s/post.sh' % tmpdir, shell=True)
+                    run = call(f'bash {tmpdir}/post.sh', shell=True)
                     if run != 0:
                         error("Issues running kcli_post.sh. Leaving")
             else:
@@ -2182,14 +2182,14 @@ class Kconfig(Kbaseconfig):
             k = self.k
             if pool is None:
                 pool = self.pool
-                pprint("Using pool %s" % pool)
+                pprint(f"Using pool {pool}")
             if image is not None:
                 if url is None:
                     if arch != 'x86_64':
                         IMAGES.update({i: IMAGES[i].replace('x86_64', arch).replace('amd64', arch)
                                        for i in IMAGES})
                     if image not in IMAGES:
-                        error("Image %s has no associated url" % image)
+                        error(f"Image {image} has no associated url")
                         return {'result': 'failure', 'reason': "Incorrect image"}
                     url = IMAGES[image]
                     image_type = 'openstack' if kvm_openstack and self.type == 'kvm' else self.type
@@ -2198,7 +2198,7 @@ class Kconfig(Kbaseconfig):
                             url = common.get_commit_rhcos(commit, _type=image_type)
                         else:
                             if arch != 'x86_64':
-                                url += '-%s' % arch
+                                url += f'-{arch}'
                             url = common.get_latest_rhcos(url, _type=image_type, arch=arch)
                     if 'fcos' in image:
                         url = common.get_latest_fcos(url, _type=image_type)
@@ -2206,7 +2206,7 @@ class Kconfig(Kbaseconfig):
                     if image.startswith('rhel'):
                         if 'web' in sys.argv[0]:
                             return {'result': 'failure', 'reason': "Missing url"}
-                        pprint("Opening url %s for you to grab complete url for %s kvm guest image" % (url, image))
+                        pprint(f"Opening url {url} for you to grab complete url for {image} kvm guest image")
                         webbrowser.open(url, new=2, autoraise=True)
                         url = input("Copy Url:\n")
                         if url.strip() == '':
@@ -2214,14 +2214,14 @@ class Kconfig(Kbaseconfig):
                             return {'result': 'failure', 'reason': "Missing image"}
                 if cmd is None and image != '' and image in IMAGESCOMMANDS:
                     cmd = IMAGESCOMMANDS[image]
-                pprint("Using url %s..." % url)
-                pprint("Grabbing image %s..." % image)
+                pprint(f"Using url {url}...")
+                pprint(f"Grabbing image {image}...")
                 shortname = os.path.basename(url).split('?')[0]
                 try:
                     result = k.add_image(url, pool, cmd=cmd, name=image, size=size)
                 except Exception as e:
-                    error("Got %s" % e)
-                    error("Please run kcli delete image --yes %s" % shortname)
+                    error(f"Got {e}")
+                    error(f"Please run kcli delete image --yes {shortname}")
                     return {'result': 'failure', 'reason': "User interruption"}
                 common.handle_response(result, image, element='Image', action='Added')
                 if update_profile and result['result'] == 'success':
@@ -2231,30 +2231,30 @@ class Kconfig(Kbaseconfig):
                         shortname = image
                     if self.type == 'ibm':
                         shortname = shortname.replace('.', '-').replace('_', '-').lower()
-                    clientprofile = "%s_%s" % (self.client, imagename)
+                    clientprofile = f"{self.client}_{imagename}"
                     profileinfo = {'iso': shortname} if shortname.endswith('.iso') else {'image': shortname}
                     if clientprofile not in self.profiles:
-                        pprint("Adding a profile named %s with default values" % clientprofile)
+                        pprint(f"Adding a profile named {clientprofile} with default values")
                         self.create_profile(clientprofile, profileinfo, quiet=True)
                     else:
-                        pprint("Updating profile %s" % clientprofile)
+                        pprint(f"Updating profile {clientprofile}")
                         self.update_profile(clientprofile, profileinfo, quiet=True)
             return {'result': 'success'}
         elif switch:
             if switch not in self.clients:
-                error("Client %s not found in config.Leaving...." % switch)
-                return {'result': 'failure', 'reason': "Client %s not found in config" % switch}
+                error(f"Client {switch} not found in config.Leaving....")
+                return {'result': 'failure', 'reason': f"Client {switch} not found in config"}
             enabled = self.ini[switch].get('enabled', True)
             if not enabled:
-                error("Client %s is disabled.Leaving...." % switch)
-                return {'result': 'failure', 'reason': "Client %s is disabled" % switch}
-            pprint("Switching to client %s..." % switch)
+                error(f"Client {switch} is disabled.Leaving....")
+                return {'result': 'failure', 'reason': f"Client {switch} is disabled"}
+            pprint(f"Switching to client {switch}...")
             inifile = "%s/.kcli/config.yml" % os.environ.get('HOME')
             if os.path.exists(inifile):
                 newini = ''
                 for line in open(inifile).readlines():
                     if 'client' in line:
-                        newini += " client: %s\n" % switch
+                        newini += f" client: {switch}\n"
                     else:
                         newini += line
                 open(inifile, 'w').write(newini)
@@ -2266,12 +2266,12 @@ class Kconfig(Kbaseconfig):
                 return {'result': 'success'}
             for cli in self.extraclients:
                 dest = self.extraclients[cli]
-                pprint("syncing client images from %s to %s" % (self.client, cli))
+                pprint(f"syncing client images from {self.client} to {cli}")
                 warning("Note rhel images are currently not synced")
             for vol in k.volumes():
                 image = os.path.basename(vol)
                 if image in [os.path.basename(v) for v in dest.volumes()]:
-                    warning("Ignoring %s as it's already there" % image)
+                    warning(f"Ignoring {image} as it's already there")
                     continue
                 url = None
                 for n in list(IMAGES.values()):
@@ -2284,7 +2284,7 @@ class Kconfig(Kbaseconfig):
                 if image.startswith('rhel'):
                     if 'web' in sys.argv[0]:
                         return {'result': 'failure', 'reason': "Missing url"}
-                    pprint("Opening url %s for you to grab complete url for %s kvm guest image" % (url, vol))
+                    pprint(f"Opening url {url} for you to grab complete url for {vol} kvm guest image")
                     webbrowser.open(url, new=2, autoraise=True)
                     url = input("Copy Url:\n")
                     if url.strip() == '':
@@ -2293,20 +2293,20 @@ class Kconfig(Kbaseconfig):
                 cmd = None
                 if vol in IMAGESCOMMANDS:
                     cmd = IMAGESCOMMANDS[image]
-                pprint("Grabbing image %s..." % image)
+                pprint(f"Grabbing image {image}...")
                 dest.add_image(url, pool, cmd=cmd)
         return {'result': 'success'}
 
     def delete_loadbalancer(self, name, domain=None):
         k = self.k
-        pprint("Deleting loadbalancer %s" % name)
+        pprint(f"Deleting loadbalancer {name}")
         if self.type in ['aws', 'gcp', 'ibm']:
             dnsclient = k.delete_loadbalancer(name)
             if domain is not None and dnsclient is not None and isinstance(dnsclient, str):
                 if dnsclient in self.clients:
                     z = Kconfig(client=dnsclient).k
                 else:
-                    warning("Client %s not found. Skipping" % dnsclient)
+                    warning(f"Client {dnsclient} not found. Skipping")
                 z.delete_dns(name.replace('_', '-'), domain)
         elif self.type == 'kvm':
             k.delete(name)
@@ -2314,7 +2314,7 @@ class Kconfig(Kbaseconfig):
     def create_loadbalancer(self, name, nets=['default'], ports=[], checkpath='/', vms=[], domain=None,
                             plan=None, checkport=80, alias=[], internal=False, dnsclient=None):
         name = nameutils.get_random_name().replace('_', '-') if name is None else name
-        pprint("Deploying loadbalancer %s" % name)
+        pprint(f"Deploying loadbalancer {name}")
         k = self.k
         if self.type in ['aws', 'gcp', 'ibm']:
             lb_ip = k.create_loadbalancer(name, ports=ports, checkpath=checkpath, vms=vms, domain=domain,
@@ -2324,7 +2324,7 @@ class Kconfig(Kbaseconfig):
                 if dnsclient in self.clients:
                     z = Kconfig(client=dnsclient).k
                 else:
-                    warning("Client %s not found. Skipping" % dnsclient)
+                    warning(f"Client {dnsclient} not found. Skipping")
                 z.reserve_dns(name.replace('_', '-'), ip=lb_ip, domain=domain, alias=alias)
         else:
             vminfo = []
@@ -2338,7 +2338,7 @@ class Kconfig(Kbaseconfig):
                     ip = k.ip(vm)
                     if ip is None:
                         sleep(5)
-                        print("Waiting 5 seconds to grab ip for vm %s..." % vm)
+                        print(f"Waiting 5 seconds to grab ip for vm {vm}...")
                         counter += 5
                     else:
                         break
@@ -2362,14 +2362,14 @@ class Kconfig(Kbaseconfig):
         k = self.k
         if image is None:
             image = k.info(name)['image']
-        pprint("Waiting for vm %s to finish customisation" % name)
+        pprint(f"Waiting for vm {name} to finish customisation")
         if waitcommand is not None and '2>' not in waitcommand:
             waitcommand += " 2>/dev/null"
         if 'cos' in image:
             cmd = waitcommand or 'journalctl --identifier=ignition --all --no-pager'
         else:
             cloudinitfile = common.get_cloudinitfile(image)
-            cmd = waitcommand or "sudo tail -n 50 %s" % cloudinitfile
+            cmd = waitcommand or f"sudo tail -n 50 {cloudinitfile}"
         user, ip, vmport = None, None, None
         hostip = None
         timeout = 0
@@ -2475,10 +2475,10 @@ class Kconfig(Kbaseconfig):
         cluster = overrides.get('cluster', cluster)
         if cluster is None:
             cluster = 'testk'
-        clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
+        clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
         if os.path.exists(clusterdir):
             ipi = False
-            parametersfile = "%s/kcli_parameters.yml" % clusterdir
+            parametersfile = f"{clusterdir}/kcli_parameters.yml"
             if os.path.exists(parametersfile):
                 with open(parametersfile) as f:
                     clusterdata = yaml.safe_load(f)
@@ -2489,8 +2489,8 @@ class Kconfig(Kbaseconfig):
                     dnsclient = clusterdata.get('dnsclient')
                 if ipi:
                     os.environ["PATH"] += ":%s" % os.getcwd()
-                    call('openshift-install --dir=%s destroy cluster' % clusterdir, shell=True)
-            pprint("Deleting directory %s" % clusterdir)
+                    call(f'openshift-install --dir={clusterdir} destroy cluster', shell=True)
+            pprint(f"Deleting directory {clusterdir}")
             rmtree(clusterdir)
             if ipi:
                 return
@@ -2501,20 +2501,20 @@ class Kconfig(Kbaseconfig):
             if currentcluster is not None and currentcluster == cluster:
                 k.delete(name, snapshots=True)
                 common.set_lastvm(name, self.client, delete=True)
-                success("%s deleted on %s!" % (name, self.client))
-        if self.type == 'kubevirt' and "%s-api-svc" % cluster in k.list_services(k.namespace):
-            k.delete_service("%s-api-svc" % cluster, k.namespace)
+                success(f"{name} deleted on {self.client}!")
+        if self.type == 'kubevirt' and f"{cluster}-api-svc" in k.list_services(k.namespace):
+            k.delete_service(f"{cluster}-api-svc", k.namespace)
         if self.type in ['aws', 'gcp', 'ibm']:
             for lb in ['api', 'apps']:
-                self.delete_loadbalancer("%s.%s" % (lb, cluster), domain=domain)
-            bucket = "%s-%s" % (cluster, domain)
+                self.delete_loadbalancer(f"{lb}.{cluster}", domain=domain)
+            bucket = f"{cluster}-{domain}"
             if bucket in self.k.list_buckets():
-                pprint("Deleting bucket %s" % bucket)
+                pprint(f"Deleting bucket {bucket}")
                 k.delete_bucket(bucket)
         elif dnsclient is not None:
             z = Kconfig(client=dnsclient).k
-            z.delete_dns("api.%s" % cluster, domain)
-            z.delete_dns("apps.%s" % cluster, domain)
+            z.delete_dns(f"api.{cluster}.{domain}")
+            z.delete_dns(f"apps.{cluster}.{domain}")
 
     def scale_kube_generic(self, cluster, overrides={}):
         plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
@@ -2549,14 +2549,14 @@ class Kconfig(Kbaseconfig):
             del roles[-1]
         os.chdir(os.path.expanduser("~/.kcli"))
         for role in roles:
-            pprint("Updating vms with %s role" % role)
-            plandata = self.plan(plan, inputfile='%s/%s.yml' % (plandir, role), overrides=overrides, update=True)
+            pprint(f"Updating vms with {role} role")
+            plandata = self.plan(plan, inputfile=f'{plandir}/{role}.yml', overrides=overrides, update=True)
             planvms.extend(plandata['newvms'] + plandata['existingvms'])
         for vm in self.k.list():
             vmname = vm['name']
             vmplan = vm.get('plan', 'kvirt')
             if vmplan == plan and vmname not in planvms:
-                pprint("Deleting vm %s" % vmname)
+                pprint(f"Deleting vm {vmname}")
                 self.k.delete(vmname)
 
     def expose_plan(self, plan, inputfile=None, overrides={}, port=9000, extraconfigs={}, installermode=False):
@@ -2564,7 +2564,7 @@ class Kconfig(Kbaseconfig):
         if not os.path.exists(inputfile):
             error("No input file found nor default kcli_plan.yml.Leaving....")
             sys.exit(1)
-        pprint("Handling expose of plan with name %s and inputfile %s" % (plan, inputfile))
+        pprint(f"Handling expose of plan with name {plan} and inputfile {inputfile}")
         kexposer = Kexposer(self, plan, inputfile, overrides=overrides, port=port, extraconfigs=extraconfigs,
                             installermode=installermode)
         kexposer.run()
@@ -2579,7 +2579,7 @@ class Kconfig(Kbaseconfig):
         elif iso_version.startswith('4.'):
             minor_version = iso_version.split('.')[1]
             if minor_version.isdigit() and int(minor_version) < 6:
-                metal_url = "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/%s/latest/" % iso_version
+                metal_url = f"https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/{iso_version}/latest/"
                 metal_url += "rhcos-metal.x86_64.raw.gz"
                 warning("Embedding metal url in iso for target version and installing with a more recent iso")
                 iso_version = 'latest'
@@ -2591,33 +2591,33 @@ class Kconfig(Kbaseconfig):
         iso = overrides.get('iso', True)
         if '.' in cluster:
             domain = '.'.join(cluster.split('.')[1:])
-            pprint("Using domain %s" % domain)
-            cluster = cluster.replace(".%s" % domain, '')
+            pprint(f"Using domain {domain}")
+            cluster = cluster.replace(f".{domain}", '')
         hosts_content = None
         finaldata = None
         if ignitionfile is not None:
             if not os.path.exists(ignitionfile):
-                error("%s not found" % ignitionfile)
+                error(f"{ignitionfile} not found")
                 sys.exit(1)
             finaldata = open(ignitionfile).read()
         else:
-            ignitionfile = "%s.ign" % role
+            ignitionfile = f"{role}.ign"
             if os.path.exists(ignitionfile):
-                warning("Using existing %s" % ignitionfile)
+                warning(f"Using existing {ignitionfile}")
                 finaldata = open(ignitionfile).read()
             else:
                 if api_ip is None:
                     try:
-                        api_ip = socket.gethostbyname('api.%s.%s' % (cluster, domain))
+                        api_ip = socket.gethostbyname(f'api.{cluster}.{domain}')
                     except:
                         pass
                 if api_ip is None:
                     warning("Couldn't figure out api_ip. Relying on dns")
-                    api_ip = "api.%s.%s" % (cluster, domain)
+                    api_ip = f"api.{cluster}.{domain}"
                 else:
                     hosts_content = "127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4\n"
                     hosts_content += "::1         localhost localhost.localdomain localhost6 localhost6.localdomain6\n"
-                    hosts_content += "%s api-int.%s.%s api.%s.%s" % (api_ip, cluster, domain, cluster, domain)
+                    hosts_content += f"{api_ip} api-int.{cluster}.{domain} api.{cluster}.{domain}"
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
         with open("iso.ign", 'w') as f:
             pprint("Writing file iso.ign for %s in %s.%s" % (role, cluster, domain if domain is not None else ''))
@@ -2628,7 +2628,7 @@ class Kconfig(Kbaseconfig):
                 templ = env.get_template(os.path.basename("ignition.j2"))
                 if hosts_content is not None:
                     hosts_content = base64.b64encode(hosts_content.encode()).decode("UTF-8")
-                ignition_url = "http://%s:22624/config/%s" % (api_ip, role)
+                ignition_url = f"http://{api_ip}:22624/config/{role}"
                 finaldata = templ.render(ignition_url=ignition_url, hosts_content=hosts_content,
                                          ignition_version=ignition_version)
             if direct:
@@ -2639,7 +2639,7 @@ class Kconfig(Kbaseconfig):
                     pprint("Using local iso.sh script")
                     isoscript = 'iso.sh'
                 else:
-                    isoscript = '%s/iso.sh' % plandir
+                    isoscript = f'{plandir}/iso.sh'
                 if os.path.exists('macs.txt'):
                     _files.append({"path": "/root/macs.txt", "origin": 'macs.txt'})
                 iso_overrides = {'scripts': [isoscript], 'files': _files, 'metal_url': metal_url}
@@ -2665,28 +2665,28 @@ class Kconfig(Kbaseconfig):
         upstream = data.get('upstream', False)
         version = data.get('version', 'nightly')
         tag = data.get('tag', OPENSHIFT_TAG)
-        disconnected_vm = "%s-disconnecter" % cluster
+        disconnected_vm = f"{cluster}-disconnecter"
         disconnected_reuse = data.get('disconnected_reuse', False)
         disconnected_operators = data.get('disconnected_operators', False)
         disconnected_url = data.get('disconnected_url')
         disconnected_user = data.get('disconnected_user')
         disconnected_password = data.get('disconnected_password')
-        pprint("Deploying disconnected vm %s" % disconnected_vm)
-        pull_secret = pwd_path(data.get('pull_secret')) if not upstream else "%s/fake_pull.json" % plandir
+        pprint(f"Deploying disconnected vm {disconnected_vm}")
+        pull_secret = pwd_path(data.get('pull_secret')) if not upstream else f"{plandir}/fake_pull.json"
         if not upstream:
             pull_secret = pwd_path(data.get('pull_secret', 'openshift_pull.json'))
         else:
-            pull_secret = "%s/fake_pull.json" % plandir
+            pull_secret = f"{plandir}/fake_pull.json"
         if not os.path.exists(pull_secret):
-            error("Missing pull secret file %s" % pull_secret)
+            error(f"Missing pull secret file {pull_secret}")
             sys.exit(1)
         data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
-        disconnected_plan = "%s-reuse" % plan if disconnected_reuse else plan
+        disconnected_plan = f"{plan}-reuse" if disconnected_reuse else plan
         if version == 'ci' and 'disconnected_origin' not in overrides:
             reg = 'registry.build01.ci.openshift.org' if str(tag).startswith('ci-') else 'registry.ci.openshift.org'
-            warning("Forcing disconnected_origin to %s" % reg)
+            warning(f"Forcing disconnected_origin to {reg}")
             data['disconnected_origin'] = reg
-        result = self.plan(disconnected_plan, inputfile='%s/disconnected.yml' % plandir, overrides=data)
+        result = self.plan(disconnected_plan, inputfile=f'{plandir}/disconnected.yml', overrides=data)
         if result['result'] != 'success':
             sys.exit(1)
         return
@@ -2730,9 +2730,9 @@ class Kconfig(Kbaseconfig):
                          vmport=disconnected_vmport)
             os.system(scpcmd)
         os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = disconnected_version
-        pprint("Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to %s" % disconnected_version)
+        pprint(f"Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to {disconnected_version}")
         if disconnected_url is not None and disconnected_user is not None and disconnected_password is not None:
-            key = "%s:%s" % (disconnected_user, disconnected_password)
+            key = f"{disconnected_user}:{disconnected_password}"
             key = str(base64.b64encode(key.encode('utf-8')), 'utf-8')
             auths = {'auths': {disconnected_url: {'auth': key, 'email': 'jhendrix@karmalabs.com'}}}
             data['pull_secret'] = json.dumps(auths)
@@ -2742,11 +2742,11 @@ class Kconfig(Kbaseconfig):
         for finishfile in finishfiles:
             if isinstance(finishfile, str):
                 destination = '.'
-                source = finishfile if '/' in finishfile else '/root/%s' % finishfile
+                source = finishfile if '/' in finishfile else f'/root/{finishfile}'
             elif isinstance(finishfile, dict) and 'origin' in finishfile and 'path' in finishfile:
                 source, destination = finishfile.get('origin'), finishfile.get('path', '.')
             else:
-                warning("Incorrect finishfile entry %s. Skipping" % finishfile)
+                warning(f"Incorrect finishfile entry {finishfile}. Skipping")
                 continue
             scpcmd = common.scp(name, ip=current_ip, user='root', source=source, destination=destination,
                                 tunnel=self.tunnel, tunnelhost=self.tunnelhost, tunnelport=self.tunnelport,
@@ -2757,12 +2757,12 @@ class Kconfig(Kbaseconfig):
                              slackchannel=None, slacktoken=None, mailserver=None, mailfrom=None, mailto=None,
                              cluster=False):
         _type = 'Cluster' if cluster else 'Vm'
-        title = "%s %s on %s report" % (_type, name, self.client)
+        title = f"{_type} {name} on {self.client} report"
         cmds, mailcontent = [], None
         for notifymethod in sorted(notifymethods, reverse=True):
             if notifymethod == 'pushbullet':
                 if pushbullettoken is None:
-                    warning("Notification required for %s but missing pushbullettoken" % name)
+                    warning(f"Notification required for {name} but missing pushbullettoken")
                 elif notifyscript is None and notifycmd is None:
                     continue
                 else:
@@ -2774,11 +2774,11 @@ class Kconfig(Kbaseconfig):
                     cmds.append(pbcmd)
             elif notifymethod == 'slack':
                 if slackchannel is None:
-                    warning("Notification required for %s but missing slack channel" % name)
+                    warning(f"Notification required for {name} but missing slack channel")
                 elif slacktoken is None:
-                    warning("Notification required for %s but missing slacktoken" % name)
+                    warning(f"Notification required for {name} but missing slacktoken")
                 else:
-                    slackcmd = "info=`%s 2>&1 | sed 's/\\x2/ /g'`;" % notifycmd
+                    slackcmd = f"info=`{notifycmd} 2>&1 | sed 's/\\x2/ /g'`;"
                     slackcmd += """curl -X POST -H 'Authorization: Bearer %s'
  -H 'Content-type: application/json; charset=utf-8'
  --data '{"channel":"%s","text":"%s","attachments": [{"text":"'"$info"'","fallback":"nothing",
@@ -2788,11 +2788,11 @@ class Kconfig(Kbaseconfig):
                     cmds.append(slackcmd)
             elif notifymethod == 'mail':
                 if mailserver is None:
-                    warning("Notification required for %s but missing mailserver" % name)
+                    warning(f"Notification required for {name} but missing mailserver")
                 elif mailfrom is None:
-                    warning("Notification required for %s but missing mailfrom" % name)
+                    warning(f"Notification required for {name} but missing mailfrom")
                 elif not mailto:
-                    warning("Notification required for %s but missing mailto" % name)
+                    warning(f"Notification required for {name} but missing mailto")
                 else:
                     now = datetime.now()
                     now = now. strftime("%a,%d %b %Y %H:%M:%S")
@@ -2803,13 +2803,13 @@ class Kconfig(Kbaseconfig):
                     if not cluster:
                         mailcmd.append('test -f /etc/debian_version && apt-get -y install curl')
                         mailcmd.append('echo "" >> /tmp/mail.txt')
-                    mailcmd.append('%s 2>&1 >> /tmp/mail.txt' % notifycmd)
-                    curlcmd = "curl --silent --url smtp://%s:25 --mail-from %s" % (mailserver, mailfrom)
+                    mailcmd.append(f'{notifycmd} 2>&1 >> /tmp/mail.txt')
+                    curlcmd = f"curl --silent --url smtp://{mailserver}:25 --mail-from {mailfrom}"
                     for address in mailto:
-                        curlcmd += " --mail-rcpt %s " % address
+                        curlcmd += f" --mail-rcpt {address} "
                     curlcmd += " --upload-file /tmp/mail.txt"
                     mailcmd.append(curlcmd)
                     cmds.extend(mailcmd)
             else:
-                error("Invalid method %s" % notifymethod)
+                error(f"Invalid method {notifymethod}")
         return cmds, mailcontent
