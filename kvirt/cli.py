@@ -41,7 +41,7 @@ def cache_vms(baseconfig, region, zone, namespace):
                          namespace=namespace)
         _list = config.k.list()
         with open(cache_file, 'w') as c:
-            pprint("Caching results for %s..." % baseconfig.client)
+            pprint(f"Caching results for {baseconfig.client}...")
             try:
                 yaml.safe_dump(_list, c, default_flow_style=False, encoding='utf-8', allow_unicode=True,
                                sort_keys=False)
@@ -137,10 +137,10 @@ def delete_cache(args):
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     cache_file = "%s/.kcli/%s_vms.yml" % (os.environ['HOME'], baseconfig.client)
     if os.path.exists(cache_file):
-        pprint("Deleting cache on %s" % baseconfig.client)
+        pprint(f"Deleting cache on {baseconfig.client}")
         os.remove(cache_file)
     else:
-        warning("No cache file found for %s" % baseconfig.client)
+        warning(f"No cache file found for {baseconfig.client}")
 
 
 def start_vm(args):
@@ -150,7 +150,7 @@ def start_vm(args):
     k = config.k
     codes = []
     for name in names:
-        pprint("Starting vm %s..." % name)
+        pprint(f"Starting vm {name}...")
         result = k.start(name)
         code = common.handle_response(result, name, element='', action='started')
         codes.append(code)
@@ -163,7 +163,7 @@ def start_container(args):
     names = [common.get_lastvm(config.client)] if not args.names else args.names
     cont = Kcontainerconfig(config, client=args.containerclient).cont
     for name in names:
-        pprint("Starting container %s..." % name)
+        pprint(f"Starting container {name}...")
         cont.start_container(name)
 
 
@@ -181,7 +181,7 @@ def stop_vm(args):
     for cli in ks:
         k = ks[cli]
         for name in names:
-            pprint("Stopping vm %s in %s..." % (name, cli))
+            pprint(f"Stopping vm {name} in {cli}...")
             result = k.stop(name, soft=soft)
             code = common.handle_response(result, name, element='', action='stopped')
             codes.append(code)
@@ -200,7 +200,7 @@ def stop_container(args):
     for cli in ks:
         cont = Kcontainerconfig(config, client=args.containerclient).cont
         for name in names:
-            pprint("Stopping container %s in %s..." % (name, cli))
+            pprint(f"Stopping container {name} in {cli}...")
             cont.stop_container(name)
 
 
@@ -211,7 +211,7 @@ def restart_vm(args):
     k = config.k
     codes = []
     for name in names:
-        pprint("Restarting vm %s..." % name)
+        pprint(f"Restarting vm {name}...")
         result = k.restart(name)
         code = common.handle_response(result, name, element='', action='restarted')
         codes.append(code)
@@ -224,7 +224,7 @@ def restart_container(args):
     names = [common.get_lastvm(config.client)] if not args.names else args.names
     cont = Kcontainerconfig(config, client=args.containerclient).cont
     for name in names:
-        pprint("Restarting container %s..." % name)
+        pprint(f"Restarting container {name}...")
         cont.stop_container(name)
         cont.start_container(name)
 
@@ -281,12 +281,12 @@ def delete_vm(args):
             common.confirm("Are you sure?")
         codes = []
         for name in names:
-            pprint("Deleting vm %s on %s" % (name, cli))
+            pprint(f"Deleting vm {name} on {cli}")
             dnsclient, domain = k.dnsinfo(name)
             if config.rhnunregister:
                 image = k.info(name).get('image')
                 if 'rhel' in image:
-                    pprint("Removing rhel subscription for %s" % name)
+                    pprint(f"Removing rhel subscription for {name}")
                     ip, vmport = _ssh_credentials(k, name)[1:]
                     cmd = "subscription-manager unregister"
                     sshcmd = ssh(name, ip=ip, user='root', tunnel=config.tunnel,
@@ -294,19 +294,19 @@ def delete_vm(args):
                                  tunneluser=config.tunneluser, insecure=True, cmd=cmd, vmport=vmport)
                     os.system(sshcmd)
                 else:
-                    warning("vm %s doesnt appear as a rhel box. Skipping unregistration" % name)
+                    warning(f"vm {name} doesnt appear as a rhel box. Skipping unregistration")
             result = k.delete(name, snapshots=snapshots)
             if result['result'] == 'success':
-                success("%s deleted" % name)
+                success(f"{name} deleted")
                 codes.append(0)
                 common.set_lastvm(name, cli, delete=True)
             else:
                 reason = result['reason']
                 codes.append(1)
-                error("Could not delete %s because %s" % (name, reason))
+                error(f"Could not delete {name} because {reason}")
                 common.set_lastvm(name, cli, delete=True)
             if dnsclient is not None and domain is not None:
-                pprint("Deleting Dns entry for %s in %s" % (name, domain))
+                pprint(f"Deleting Dns entry for {name} in {domain}")
                 if dnsclient in dnsclients:
                     z = dnsclients[dnsclient]
                 else:
@@ -325,8 +325,8 @@ def delete_vm(args):
                         domain = installparam.get('domain')
                         if domain is not None:
                             try:
-                                pprint("Deleting node %s.%s from your cluster" % (name, domain))
-                                call('%s delete node %s.%s' % (binary, name, domain), shell=True)
+                                pprint(f"Deleting node {name}.{domain} from your cluster")
+                                call(f'{binary} delete node {name}.{domain}', shell=True)
                             except:
                                 continue
     sys.exit(1 if 1 in codes else 0)
@@ -350,7 +350,7 @@ def delete_container(args):
         codes = [0]
         cont = Kcontainerconfig(config, client=args.containerclient).cont
         for name in names:
-            pprint("Deleting container %s on %s" % (name, cli))
+            pprint(f"Deleting container {name} on {cli}")
             cont.delete_container(name)
     sys.exit(1 if 1 in codes else 0)
 
@@ -408,7 +408,7 @@ def delete_image(args):
             imgprofiles = [p for p in config.profiles if 'image' in config.profiles[p] and
                            config.profiles[p]['image'] == os.path.basename(image) and
                            p.startswith('%s_' % cli)]
-            pprint("Deleting image %s on %s" % (image, cli))
+            pprint(f"Deleting image {image} on {cli}")
             if clientprofile in config.profiles and 'image' in config.profiles[clientprofile]:
                 profileimage = config.profiles[clientprofile]['image']
                 config.delete_profile(clientprofile, quiet=True)
@@ -420,11 +420,11 @@ def delete_image(args):
             else:
                 result = k.delete_image(image, pool=pool)
             if result['result'] == 'success':
-                success("%s deleted" % image)
+                success(f"{image} deleted")
                 codes.append(0)
             else:
                 reason = result['reason']
-                error("Could not delete image %s because %s" % (image, reason))
+                error(f"Could not delete image {image} because {reason}")
                 codes.append(1)
     sys.exit(1 if 1 in codes else 0)
 
@@ -445,7 +445,7 @@ def delete_profile(args):
     profile = args.profile
     baseconfig = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
-    pprint("Deleting on %s" % baseconfig.client)
+    pprint(f"Deleting on {baseconfig.client}")
     result = baseconfig.delete_profile(profile)
     code = common.handle_response(result, profile, element='Profile', action='deleted', client=baseconfig.client)
     return code
@@ -674,19 +674,19 @@ def info_profile(args):
     for entry in profiles:
         if entry[0] == profile:
             profile, flavor, pool, disks, image, nets, cloudinit, nested, reservedns, reservehost = entry
-            print("profile: %s" % profile)
-            print("flavor: %s" % flavor)
-            print("pool: %s" % pool)
-            print("disks: %s" % disks)
-            print("image: %s" % image)
-            print("nets: %s" % nets)
-            print("cloudinit: %s" % cloudinit)
-            print("nested: %s" % nested)
-            print("reservedns: %s" % reservedns)
-            print("reservehost: %s" % reservehost)
+            print(f"profile: {profile}")
+            print(f"flavor: {flavor}")
+            print(f"pool: {pool}")
+            print(f"disks: {disks}")
+            print(f"image: {image}")
+            print(f"nets: {nets}")
+            print(f"cloudinit: {cloudinit}")
+            print(f"nested: {nested}")
+            print(f"reservedns: {reservedns}")
+            print(f"reservehost: {reservehost}")
             sys.exit(0)
             break
-    error("Profile %s doesn't exist" % profile)
+    error(f"Profile {profile} doesn't exist")
     sys.exit(1)
 
 
@@ -903,9 +903,9 @@ def create_app_generic(args):
     available_apps = baseconfig.list_apps_generic(quiet=True)
     for app in apps:
         if app not in available_apps:
-            error("app %s not available. Skipping..." % app)
+            error(f"app {app} not available. Skipping...")
             continue
-        pprint("Adding app %s" % app)
+        pprint(f"Adding app {app}")
         overrides['%s_version' % app] = overrides['%s_version' % app] if '%s_version' % app in overrides else 'latest'
         baseconfig.create_app_generic(app, overrides, outputdir=outputdir)
 
@@ -917,7 +917,7 @@ def create_app_openshift(args):
         if container_mode() and not outputdir.startswith('/'):
             outputdir = "/workdir/%s" % outputdir
         if os.path.exists(outputdir) and os.path.isfile(outputdir):
-            error("Invalid outputdir %s" % outputdir)
+            error(f"Invalid outputdir {outputdir}")
             sys.exit(1)
         elif not os.path.exists(outputdir):
             os.mkdir(outputdir)
@@ -939,19 +939,19 @@ def create_app_openshift(args):
         else:
             name, source, channel, csv, description, namespace, channels, crd = common.olm_app(app)
             if name is None:
-                error("Couldn't find any app matching %s. Skipping..." % app)
+                error(f"Couldn't find any app matching {app}. Skipping...")
                 continue
             if 'channel' in overrides:
                 overrides_channel = overrides['channel']
                 if overrides_channel not in channels:
-                    error("Target channel %s not found in %s. Skipping..." % (channel, channels))
+                    error(f"Target channel {channel} not found in {channels}. Skipping...")
                     continue
                 else:
                     channel = overrides_channel
             app_data = {'name': name, 'source': source, 'channel': channel, 'csv': csv, 'namespace': namespace,
                         'crd': crd}
             overrides.update(app_data)
-        pprint("Adding app %s" % name)
+        pprint(f"Adding app {app}")
         baseconfig.create_app_openshift(name, overrides, outputdir=outputdir)
 
 
@@ -972,9 +972,9 @@ def delete_app_generic(args):
     available_apps = baseconfig.list_apps_generic(quiet=True)
     for app in apps:
         if app not in available_apps:
-            error("app %s not available. Skipping..." % app)
+            error(f"app {app} not available. Skipping...")
             continue
-        pprint("Deleting app %s" % app)
+        pprint(f"Deleting app {app}")
         overrides['%s_version' % app] = overrides['%s_version' % app] if '%s_version' % app in overrides else 'latest'
         baseconfig.delete_app_generic(app, overrides)
 
@@ -999,12 +999,12 @@ def delete_app_openshift(args):
         else:
             name, source, channel, csv, description, namespace, channels, crd = common.olm_app(app)
             if name is None:
-                error("Couldn't find any app matching %s. Skipping..." % app)
+                error(f"Couldn't find any app matching {app}. Skipping...")
                 continue
             app_data = {'name': name, 'source': source, 'channel': channel, 'csv': csv, 'namespace': namespace,
                         'crd': crd}
             overrides.update(app_data)
-        pprint("Deleting app %s" % name)
+        pprint(f"Deleting app {name}")
         baseconfig.delete_app_openshift(app, overrides)
 
 
@@ -1167,7 +1167,7 @@ def create_openshift_disconnecter(args):
     plan = args.plan
     if plan is None:
         plan = nameutils.get_random_name()
-        pprint("Using %s as name of the plan" % plan)
+        pprint(f"Using {plan} as name of the plan")
     overrides = common.get_overrides(param=args.param)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     config.create_openshift_disconnecter(plan, overrides=overrides)
@@ -1194,7 +1194,7 @@ def create_vm(args):
     for key in overrides:
         if key in vars(config) and vars(config)[key] is not None and type(overrides[key]) != type(vars(config)[key]):
             key_type = str(type(vars(config)[key]))
-            error("The provided parameter %s has a wrong type, it should be %s" % (key, key_type))
+            error(f"The provided parameter {key} has a wrong type, it should be {key_type}")
             sys.exit(1)
     if 'name' in overrides:
         name = overrides['name']
@@ -1203,17 +1203,17 @@ def create_vm(args):
         if config.type in ['gcp', 'kubevirt']:
             name = name.replace('_', '-')
         if config.type != 'aws' and not onlyassets:
-            pprint("Using %s as name of the vm" % name)
+            pprint(f"Using {name} as name of the vm")
     if image is not None:
         if image in config.profiles and not onlyassets:
-            pprint("Using %s as profile" % image)
+            pprint(f"Using {image} as profile")
         profile = image
     elif profile is not None:
         if profile.endswith('.yml'):
             profilefile = profile
             profile = None
             if not os.path.exists(profilefile):
-                error("Missing profile file %s" % profilefile)
+                error(f"Missing profile file {profilefile}")
                 sys.exit(1)
             else:
                 with open(profilefile, 'r') as entries:
@@ -1222,9 +1222,9 @@ def create_vm(args):
                     if len(entrieskeys) == 1:
                         profile = entrieskeys[0]
                         customprofile = entries[profile]
-                        pprint("Using data from %s as profile" % profilefile)
+                        pprint(f"Using data from {profilefile} as profile")
                     else:
-                        error("Cant' parse %s as profile file" % profilefile)
+                        error(f"Cant' parse {profilefile} as profile file")
                         sys.exit(1)
     elif overrides or onlyassets:
         profile = 'kvirt'
@@ -1267,7 +1267,7 @@ def clone_vm(args):
     base = args.base
     full = args.full
     start = args.start
-    pprint("Cloning vm %s from vm %s..." % (name, base))
+    pprint(f"Cloning vm {name} from vm {base}...")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     result = k.clone(base, name, full=full, start=start)
@@ -1300,7 +1300,7 @@ def update_vm(args):
     names = [common.get_lastvm(config.client)] if not args.names else args.names
     for name in names:
         if dns:
-            pprint("Creating Dns entry for %s..." % name)
+            pprint(f"Creating Dns entry for {name}...")
             networks = k.vm_ports(name)
             if networks and domain is None:
                 domain = networks[0]
@@ -1309,42 +1309,42 @@ def update_vm(args):
             else:
                 k.reserve_dns(name=name, nets=networks, domain=domain, ip=ip1)
         if ip1 is not None:
-            pprint("Updating ip of vm %s to %s..." % (name, ip1))
+            pprint(f"Updating ip of vm {name} to {ip1}...")
             k.update_metadata(name, 'ip', ip1)
         if cloudinit:
-            pprint("Removing cloudinit information of vm %s" % name)
+            pprint(f"Removing cloudinit information of vm {name}")
             k.remove_cloudinit(name)
         if plan is not None:
-            pprint("Updating plan of vm %s to %s..." % (name, plan))
+            pprint(f"Updating plan of vm {name} to {plan}...")
             k.update_metadata(name, 'plan', plan)
         if image is not None:
-            pprint("Updating image of vm %s to %s..." % (name, image))
+            pprint(f"Updating image of vm {name} to {image}...")
             k.update_metadata(name, 'image', image)
         if memory is not None:
-            pprint("Updating memory of vm %s to %s..." % (name, memory))
+            pprint(f"Updating memory of vm {name} to {memory}...")
             k.update_memory(name, memory)
         if numcpus is not None:
-            pprint("Updating numcpus of vm %s to %s..." % (name, numcpus))
+            pprint(f"Updating numcpus of vm {name} to {numcpus}...")
             k.update_cpus(name, numcpus)
         if autostart:
-            pprint("Setting autostart for vm %s..." % name)
+            pprint(f"Setting autostart for vm {name}...")
             k.update_start(name, start=True)
         if noautostart:
-            pprint("Removing autostart for vm %s..." % name)
+            pprint(f"Removing autostart for vm {name}...")
             k.update_start(name, start=False)
         if information:
-            pprint("Setting information for vm %s..." % name)
+            pprint(f"Setting information for vm {name}...")
             k.update_information(name, information)
         if iso is not None:
-            pprint("Switching iso for vm %s to %s..." % (name, iso))
+            pprint(f"Switching iso for vm {name} to {iso}...")
             if iso == 'None':
                 iso = None
             k.update_iso(name, iso)
         if flavor is not None:
-            pprint("Updating flavor of vm %s to %s..." % (name, flavor))
+            pprint(f"Updating flavor of vm {name} to {flavor}...")
             k.update_flavor(name, flavor)
         if host:
-            pprint("Creating Host entry for vm %s..." % name)
+            pprint(f"Creating Host entry for vm {name}...")
             networks = k.vm_ports(name)
             if networks:
                 if domain is None:
@@ -1354,9 +1354,9 @@ def update_vm(args):
         currentnets = currentvm.get('nets', [])
         currentdisks = currentvm.get('disks', [])
         if disks:
-            pprint("Updating disks of vm %s" % name)
+            pprint(f"Updating disks of vm {name}")
             if len(currentdisks) < len(disks):
-                pprint("Adding Disks to %s" % name)
+                pprint(f"Adding Disks to {name}")
                 for disk in disks[len(currentdisks):]:
                     if isinstance(disk, int):
                         size = disk
@@ -1371,26 +1371,26 @@ def update_vm(args):
                         continue
                     k.add_disk(name=name, size=size, pool=pool)
             if len(currentdisks) > len(disks):
-                pprint("Removing Disks of %s" % name)
+                pprint(f"Removing Disks of {name}")
                 for disk in currentdisks[len(currentdisks) - len(disks):]:
                     diskname = os.path.basename(disk['path'])
                     diskpool = os.path.dirname(disk['path'])
                     k.delete_disk(name=name, diskname=diskname, pool=diskpool)
         if nets:
-            pprint("Updating nets of vm %s" % name)
+            pprint(f"Updating nets of vm {name}")
             if len(currentnets) < len(nets):
-                pprint("Adding Nics to %s" % name)
+                pprint(f"Adding Nics to {name}")
                 for net in nets[len(currentnets):]:
                     if isinstance(net, str):
                         network = net
                     elif isinstance(net, dict) and 'name' in net:
                         network = net['name']
                     else:
-                        error("Skpping wrong nic spec for %s" % name)
+                        error(f"Skipping wrong nic spec for {name}")
                         continue
                     k.add_nic(name, network)
             if len(currentnets) > len(nets):
-                pprint("Removing Nics of %s" % name)
+                pprint(f"Removing Nics of {name}")
                 for net in range(len(currentnets), len(nets), -1):
                     interface = "eth%s" % (net - 1)
                     k.delete_nic(name, interface)
@@ -1420,9 +1420,9 @@ def create_vmdisk(args):
         error("Missing pool. Leaving...")
         sys.exit(1)
     if novm:
-        pprint("Creating disk %s..." % name)
+        pprint(f"Creating disk {name}...")
     else:
-        pprint("Adding disk to %s..." % name)
+        pprint(f"Adding disk to {name}...")
     k.add_disk(name=name, size=size, pool=pool, image=image, interface=interface, novm=novm, overrides=overrides)
 
 
@@ -1438,7 +1438,7 @@ def delete_vmdisk(args):
     pool = args.pool
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
-    pprint("Deleting disk %s" % diskname)
+    pprint(f"Deleting disk {diskname}")
     k.delete_disk(name=name, diskname=diskname, pool=pool, novm=novm)
     return
 
@@ -1471,7 +1471,7 @@ def delete_dns(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     for name in names:
-        pprint("Deleting Dns entry for %s..." % name)
+        pprint(f"Deleting Dns entry for {name}")
         k.delete_dns(name, domain, allentries=allentries)
 
 
@@ -1485,11 +1485,11 @@ def export_vm(args):
     for name in names:
         result = k.export(name=name, image=image)
         if result['result'] == 'success':
-            success("Vm %s exported" % name)
+            success(f"Vm {name} exported")
             codes.append(0)
         else:
             reason = result['reason']
-            error("Could not export vm %s because %s" % (name, reason))
+            error(f"Could not export vm {name} because {reason}")
             codes.append(1)
     sys.exit(1 if 1 in codes else 0)
 
@@ -1633,7 +1633,7 @@ def scale_generic_kube(args):
     cluster = overrides.get('cluster', args.cluster)
     clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
     if not os.path.exists(clusterdir):
-        error("Cluster directory %s not found..." % clusterdir)
+        error(f"Cluster directory {clusterdir} not found...")
         sys.exit(1)
     if container_mode():
         if paramfile is not None:
@@ -1658,7 +1658,7 @@ def scale_k3s_kube(args):
     cluster = overrides.get('cluster', args.cluster)
     clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
     if not os.path.exists(clusterdir):
-        error("Cluster directory %s not found..." % clusterdir)
+        error(f"Cluster directory {clusterdir} not found...")
         sys.exit(1)
     if container_mode():
         if paramfile is not None:
@@ -1684,7 +1684,7 @@ def scale_openshift_kube(args):
     cluster = overrides.get('cluster', args.cluster)
     clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
     if not os.path.exists(clusterdir):
-        error("Cluster directory %s not found..." % clusterdir)
+        error(f"Cluster directory {clusterdir} not found...")
         sys.exit(1)
     if container_mode():
         if paramfile is not None:
@@ -1769,7 +1769,7 @@ def create_vmnic(args):
     if network is None:
         error("Missing network. Leaving...")
         sys.exit(1)
-    pprint("Adding nic to vm %s..." % name)
+    pprint(f"Adding nic to vm {name}...")
     k.add_nic(name=name, network=network)
 
 
@@ -1779,7 +1779,7 @@ def delete_vmnic(args):
     interface = args.interface
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
-    pprint("Deleting nic from vm %s..." % name)
+    pprint(f"Deleting nic from vm {name}...")
     k.delete_nic(name, interface)
     return
 
@@ -1795,7 +1795,7 @@ def create_pool(args):
     if path is None:
         error("Missing path. Leaving...")
         sys.exit(1)
-    pprint("Creating pool %s..." % pool)
+    pprint(f"Creating pool {pool}...")
     k.create_pool(name=pool, poolpath=path, pooltype=pooltype, thinpool=thinpool)
 
 
@@ -1809,7 +1809,7 @@ def delete_pool(args):
         common.confirm("Are you sure?")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
-    pprint("Deleting pool %s..." % pool)
+    pprint(f"Deleting pool {pool}...")
     result = k.delete_pool(name=pool, full=full)
     common.handle_response(result, pool, element='Pool', action='deleted')
 
@@ -1850,7 +1850,7 @@ def create_plan(args):
             config.delete_plan(plan, unregister=config.rhnunregister)
     if plan is None:
         plan = nameutils.get_random_name()
-        pprint("Using %s as name of the plan" % plan)
+        pprint(f"Using {plan} as name of the plan")
     config.plan(plan, ansible=ansible, url=url, path=path, container=container, inputfile=inputfile,
                 overrides=overrides, pre=pre, post=post)
     return 0
@@ -1923,7 +1923,7 @@ def expose_plan(args):
     plan = args.plan
     if plan is None:
         plan = nameutils.get_random_name()
-        pprint("Using %s as name of the plan" % plan)
+        pprint(f"Using {plan} as name of the plan")
     port = args.port
     inputfile = args.inputfile
     installermode = args.installermode
@@ -2046,7 +2046,7 @@ def info_openshift_kube(args):
 def info_network(args):
     """Info network """
     name = args.name
-    pprint("Providing information about network %s..." % name)
+    pprint(f"Providing information about network {name}...")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     networkinfo = config.k.info_network(name)
     if networkinfo:
@@ -2056,12 +2056,12 @@ def info_network(args):
 def info_keyword(args):
     """Info keyword"""
     keyword = args.keyword
-    pprint("Providing information about keyword %s..." % keyword)
+    pprint(f"Providing information about keyword {keyword}...")
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     default = baseconfig.default
     keywords = baseconfig.list_keywords()
     if keyword not in keywords:
-        error("Keyword %s not found" % keyword)
+        error(f"Keyword {keyword} not found")
         return 1
     else:
         print("Default value: %s" % default[keyword])
@@ -2074,7 +2074,7 @@ def download_plan(args):
     url = args.url
     if plan is None:
         plan = nameutils.get_random_name()
-        pprint("Using %s as name of the plan" % plan)
+        pprint(f"Using {plan} as name of the plan")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     config.plan(plan, url=url, download=True)
     return 0
@@ -2222,7 +2222,7 @@ def create_pipeline_jenkins(args):
         paramfile = "kcli_parameters.yml"
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     if not kube and not os.path.exists(inputfile):
-        error("File %s not found" % inputfile)
+        error(f"File {inputfile} not found")
         return 0
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     renderfile = baseconfig.create_jenkins_pipeline(plan, inputfile, overrides=overrides, kube=kube)
@@ -2285,7 +2285,7 @@ def render_file(args):
     config_data.update(client_data)
     overrides.update(config_data)
     if not os.path.exists(inputfile):
-        error("File %s not found" % inputfile)
+        error(f"File {inputfile} not found")
         return 0
     renderfile = baseconfig.process_inputfile(plan, inputfile, overrides=overrides, ignore=ignore)
     print(renderfile)
@@ -2327,7 +2327,7 @@ def create_plandata(args):
     config_data['config_type'] = config_data.get('config_type', 'kvm')
     overrides.update(config_data)
     if not os.path.exists(inputfile):
-        error("File %s not found" % inputfile)
+        error(f"File {inputfile} not found")
         return 0
     results = config.plan(plan, inputfile=inputfile, overrides=overrides, onlyassets=True, pre=pre)
     if results.get('assets'):
@@ -2402,7 +2402,7 @@ def delete_snapshot_plan(args):
     for vm in sorted(k.list(), key=lambda x: x['name']):
         name = vm['name']
         if vm['plan'] == plan:
-            pprint("Deleting snapshot %s of vm %s..." % (snapshot, name))
+            pprint(f"Deleting snapshot {snapshot} of vm {name}...")
             k.snapshot(snapshot, name, delete=True)
     return 0
 
@@ -2427,7 +2427,7 @@ def create_repo(args):
     if url is None:
         error("Missing url. Leaving...")
         sys.exit(1)
-    pprint("Adding repo %s..." % repo)
+    pprint(f"Adding repo {repo}...")
     baseconfig.create_repo(repo, url)
     return 0
 
@@ -2439,7 +2439,7 @@ def delete_repo(args):
     if repo is None:
         error("Missing repo. Leaving...")
         sys.exit(1)
-    pprint("Deleting repo %s..." % repo)
+    pprint(f"Deleting repo {repo}...")
     baseconfig.delete_repo(repo)
     return
 
@@ -2452,10 +2452,10 @@ def update_repo(args):
         pprint("Updating all repos...")
         repos = baseconfig.list_repos()
         for repo in repos:
-            pprint("Updating repo %s..." % repo)
+            pprint(f"Updating repo {repo}...")
             baseconfig.update_repo(repo)
     else:
-        pprint("Updating repo %s..." % repo)
+        pprint(f"Updating repo {repo}...")
         baseconfig.update_repo(repo)
     return
 
@@ -2466,7 +2466,7 @@ def info_product(args):
     product = args.product
     group = args.group
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-    pprint("Providing information on product %s..." % product)
+    pprint(f"Providing information on product {product}...")
     baseconfig.info_product(product, repo, group)
 
 
@@ -2479,7 +2479,7 @@ def create_product(args):
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
     plan = overrides['plan'] if 'plan' in overrides else None
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    pprint("Creating product %s..." % product)
+    pprint(f"Creating product {product}...")
     config.create_product(product, repo=repo, group=group, plan=plan, latest=latest, overrides=overrides)
     return 0
 
@@ -2523,7 +2523,7 @@ def ssh_vm(args):
             vm = vms[0]
             ip = vm.get('ip')
             if ip is None:
-                error("No ip found in cache for %s..." % name)
+                error(f"No ip found in cache for {name}...")
             else:
                 if user is None:
                     user = baseconfig.vmuser if baseconfig.vmuser is not None else vm.get('user')
@@ -2542,7 +2542,7 @@ def ssh_vm(args):
             info = k.info(name, debug=False)
             tunnelhost = k.node_host(name=info.get('host'))
             if tunnelhost is None:
-                error("No valid node ip found for %s" % name)
+                error(f"No valid node ip found for {name}")
         if ip is None:
             return
         if user is None:
@@ -2562,7 +2562,7 @@ def ssh_vm(args):
         else:
             print(sshcommand)
     else:
-        error("Couldnt ssh to %s" % name)
+        error(f"Couldnt ssh to {name}")
 
 
 def scp_vm(args):
@@ -2595,9 +2595,9 @@ def scp_vm(args):
     if '@' in name and len(name.split('@')) == 2:
         user, name = name.split('@')
     if download:
-        pprint("Retrieving file %s from %s" % (source, name))
+        pprint(f"Retrieving file {source} from {name}")
     else:
-        pprint("Copying file %s to %s" % (source, name))
+        pprint(f"Copying file {source} to {name}")
     scpcommand = None
     if baseconfig.cache:
         _list = cache_vms(baseconfig, args.region, args.zone, args.namespace)
@@ -2606,7 +2606,7 @@ def scp_vm(args):
             vm = vms[0]
             ip = vm.get('ip')
             if ip is None:
-                error("No ip found in cache for %s..." % name)
+                error(f"No ip found in cache for {name}...")
             else:
                 if user is None:
                     user = baseconfig.vmuser if baseconfig.vmuser is not None else vm.get('user')
@@ -2851,14 +2851,14 @@ def create_container(args):
     if image is not None:
         profile = image
         if image in containerprofiles:
-            pprint("Using %s as a profile" % image)
+            pprint(f"Using {image} as a profile")
         else:
             containerprofiles[image] = {'image': image}
-    pprint("Deploying container %s from profile %s..." % (name, profile))
+    pprint(f"Deploying container {name} from profile {profile}...")
     profile = containerprofiles[profile]
     image = next((e for e in [profile.get('image'), profile.get('image')] if e is not None), None)
     if image is None:
-        error("Missing image in profile %s. Leaving..." % profile)
+        error(f"Missing image in profile {profile}. Leaving...")
         sys.exit(1)
     cmd = profile.get('cmd')
     ports = profile.get('ports')
@@ -2870,7 +2870,7 @@ def create_container(args):
     if cmd is not None:
         params['cmds'] = [cmd]
     cont.create_container(**params)
-    success("container %s created" % name)
+    success(f"container {name} created")
     return
 
 
@@ -2880,7 +2880,7 @@ def snapshotcreate_vm(args):
     name = args.name
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
-    pprint("Creating snapshot of %s named %s..." % (name, snapshot))
+    pprint(f"Creating snapshot of {name} named {snapshot}...")
     result = k.snapshot(snapshot, name)
     code = common.handle_response(result, name, element='', action='snapshotted')
     return code
@@ -2892,7 +2892,7 @@ def snapshotdelete_vm(args):
     name = args.name
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
-    pprint("Deleting snapshot %s of vm %s..." % (snapshot, name))
+    pprint(f"Deleting snapshot {snapshot} of vm {name}...")
     result = k.snapshot(snapshot, name, delete=True)
     code = common.handle_response(result, name, element='', action='snapshot deleted')
     return code
@@ -2904,7 +2904,7 @@ def snapshotrevert_vm(args):
     name = args.name
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
-    pprint("Reverting snapshot %s of vm %s..." % (snapshot, name))
+    pprint(f"Reverting snapshot {snapshot} of vm {name}...")
     result = k.snapshot(snapshot, name, revert=True)
     code = common.handle_response(result, name, element='', action='snapshot reverted')
     return code
@@ -2915,10 +2915,10 @@ def snapshotlist_vm(args):
     name = args.name
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
-    pprint("Listing snapshots of %s..." % name)
+    pprint(f"Listing snapshots of {name}...")
     snapshots = k.snapshot('', name, listing=True)
     if isinstance(snapshots, dict):
-        error("Vm %s not found" % name)
+        error(f"Vm {name} not found")
         return
     else:
         for snapshot in snapshots:
@@ -2933,7 +2933,7 @@ def create_bucket(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     for bucket in buckets:
-        pprint("Creating bucket %s..." % bucket)
+        pprint(f"Creating bucket {bucket}...")
         k.create_bucket(bucket, public=public)
 
 
@@ -2947,7 +2947,7 @@ def delete_bucket(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     for bucket in buckets:
-        pprint("Deleting bucket %s..." % bucket)
+        pprint(f"Deleting bucket {bucket}...")
         k.delete_bucket(bucket)
 
 
@@ -2967,7 +2967,7 @@ def list_bucket(args):
 def list_bucketfiles(args):
     """List bucket files"""
     bucket = args.bucket
-    pprint("Listing bucket files of bucket %s..." % bucket)
+    pprint(f"Listing bucket files of bucket {bucket}...")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     bucketfiles = k.list_bucketfiles(bucket)
@@ -2985,10 +2985,10 @@ def create_bucketfile(args):
     path = args.path
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
-    pprint("Uploading file %s to bucket %s..." % (path, bucket))
+    pprint(f"Uploading file {path} to bucket {bucket}...")
     result = k.upload_to_bucket(bucket, path, temp_url=temp_url, public=public)
     if result is not None:
-        pprint("bucketfile available at the following url:\n\n%s" % result)
+        pprint(f"bucketfile available at the following url:\n\n{result}")
 
 
 def delete_bucketfile(args):
@@ -2996,7 +2996,7 @@ def delete_bucketfile(args):
     path = args.path
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
-    pprint("Deleting file %s to bucket %s..." % (path, bucket))
+    pprint(f"Deleting file {path} to bucket {bucket}...")
     k.delete_from_bucket(bucket, path)
 
 
@@ -3005,7 +3005,7 @@ def download_bucketfile(args):
     path = args.path
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
-    pprint("Downloading file %s from bucket %s..." % (path, bucket))
+    pprint(f"Downloading file {path} from bucket {bucket}...")
     k.download_from_bucket(bucket, path)
 
 
@@ -4532,7 +4532,7 @@ def cli():
         sys.exit(0)
     elif args.func.__name__ == 'vmcreate' and args.client is not None and ',' in args.client:
         args.client = random.choice(args.client.split(','))
-        pprint("Selecting %s for creation" % args.client)
+        pprint(f"Selecting {args.client} for creation")
     args.func(args)
 
 

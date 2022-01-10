@@ -1193,7 +1193,7 @@ class Kconfig(Kbaseconfig):
     def start_plan(self, plan, container=False):
         k = self.k
         startfound = False
-        pprint("Starting vms from plan %s" % plan)
+        pprint(f"Starting vms from plan {plan}")
         if not self.extraclients:
             startclients = {self.client: k}
         else:
