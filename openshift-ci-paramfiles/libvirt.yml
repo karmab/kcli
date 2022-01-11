@@ -22,7 +22,7 @@ apps:
 - ocs-operator
 - kubevirt-hyperconverged
 autolabeller_rules:
-- ci-libvirt-master.*:
+- ci-*virt-master.*:
    - cluster.ocs.openshift.io/openshift-storage
-- ci-libvirt-master-(.):
-  - topology.rook.io/rack: rack\1
+- ci-(kubevirt|libvirt|ovirt)-master-(.):
+  - topology.rook.io/rack: rack\2
