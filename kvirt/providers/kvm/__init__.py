@@ -31,6 +31,7 @@ import re
 import string
 from tempfile import TemporaryDirectory
 import time
+from uuid import UUID
 import xml.etree.ElementTree as ET
 
 
@@ -1141,8 +1142,17 @@ class Kvirt(object):
 </memoryBacking>""" % hugepages
         machine = "" if aarch64_full else "machine='%s'" % machine
         emulatorxml = "<emulator>%s</emulator>" % emulator
+        uuidxml = ""
+        if 'uuid' in overrides:
+            uuid = str(overrides['uuid'])
+            try:
+                UUID(uuid)
+                uuidxml = f"<uuid>{uuid}</uuid>"
+            except:
+                warning(f"couldn't use {uuid} as uuid")
         vmxml = """<domain type='{virttype}' {namespace}>
 <name>{name}</name>
+{uuidxml}
 {metadataxml}
 {memoryhotplugxml}
 {cpupinningxml}
@@ -1187,7 +1197,7 @@ class Kvirt(object):
 </devices>
 {cpuxml}
 {qemuextraxml}
-</domain>""".format(virttype=virttype, namespace=namespace, name=name, metadataxml=metadataxml,
+</domain>""".format(virttype=virttype, namespace=namespace, name=name, uuidxml=uuidxml, metadataxml=metadataxml,
                     memoryhotplugxml=memoryhotplugxml, cpupinningxml=cpupinningxml, numatunexml=numatunexml,
                     hugepagesxml=hugepagesxml, memory=memory, vcpuxml=vcpuxml, osfirmware=osfirmware, arch=arch,
                     machine=machine, ramxml=ramxml, firmwarexml=firmwarexml, bootdev=bootdev, kernelxml=kernelxml,
