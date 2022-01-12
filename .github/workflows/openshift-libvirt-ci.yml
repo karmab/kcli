@@ -21,6 +21,7 @@ on:
 
 env:
  HOME: /root
+ PYTHONUNBUFFERED: true
 
 jobs:
     deploy-openshift:

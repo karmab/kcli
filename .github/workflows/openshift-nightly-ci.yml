@@ -5,6 +5,7 @@ on:
 
 env:
  HOME: /root
+ PYTHONUNBUFFERED: true
  PLAN: ci
  PULLSECRET: /root/openshift_pull.json
  VERSION: stable
