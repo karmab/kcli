@@ -9,7 +9,6 @@ import os
 from socket import gethostbyname
 import sys
 from ipaddress import ip_address, ip_network
-from netaddr import IPNetwork
 from kvirt.common import error, pprint, success, warning, info2
 from kvirt.common import get_oc, pwd_path
 from kvirt.common import get_commit_rhcos, get_latest_fcos, patch_bootstrap, generate_rhcos_iso, olm_app
@@ -477,7 +476,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if platform == 'kvm' and networkinfo['type'] == 'routed':
             cidr = networkinfo['cidr']
             api_index = 2 if ':' in cidr else -3
-            api_ip = str(IPNetwork(cidr)[api_index])
+            api_ip = str(ip_network(cidr)[api_index])
             warning("Using %s as api_ip" % api_ip)
             overrides['api_ip'] = api_ip
         elif platform == 'kubevirt':
@@ -516,7 +515,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if ingress_ip is None:
             if cidr is not None:
                 ingress_index = 3 if ':' in cidr else -4
-                data.get['ingress_ip'] = str(IPNetwork(cidr)[ingress_index])
+                data.get['ingress_ip'] = str(ip_network(cidr)[ingress_index])
             else:
                 error("You need to define ingress_ip for metal3")
                 sys.exit(1)
@@ -571,7 +570,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             sys.exit(1)
         if api_ip is None:
             cidr = k.info_network(network)['cidr']
-            api_ip = str(IPNetwork(cidr)[-3])
+            api_ip = str(ip_network(cidr)[-3])
             data['api_ip'] = api_ip
             warning("Using %s as api_ip" % api_ip)
         if public_api_ip is None:

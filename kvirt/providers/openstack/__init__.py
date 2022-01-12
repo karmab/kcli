@@ -5,7 +5,6 @@ Openstack Provider Class
 """
 
 from distutils.spawn import find_executable
-from netaddr import IPNetwork
 from kvirt import common
 from kvirt.common import pprint, error, warning, get_ssh_pub_key
 from kvirt.defaults import METADATA_FIELDS
@@ -720,7 +719,7 @@ class Kopenstack(object):
             routers = [router for router in self.neutron.list_routers()['routers'] if router['name'] == 'kvirt']
             router_id = routers[0]['id'] if routers else None
         try:
-            IPNetwork(cidr)
+            ip_network(cidr)
         except:
             return {'result': 'failure', 'reason': "Invalid Cidr %s" % cidr}
         neutron = self.neutron

@@ -4,6 +4,7 @@
 Gcp Provider Class
 """
 
+from ipaddress import ip_network
 from jinja2 import Environment, FileSystemLoader
 from jinja2 import StrictUndefined as undefined
 from jinja2.exceptions import TemplateSyntaxError, TemplateError, TemplateNotFound
@@ -14,7 +15,6 @@ from dateutil import parser as dateparser
 from getpass import getuser
 import googleapiclient.discovery
 from google.cloud import dns, storage
-from netaddr import IPNetwork
 import os
 import sys
 from time import sleep
@@ -822,7 +822,7 @@ class Kgcp(object):
         # sleep(20)
         if cidr is not None:
             try:
-                IPNetwork(cidr)
+                ip_network(cidr)
             except:
                 return {'result': 'failure', 'reason': "Invalid Cidr %s" % cidr}
             regionpath = "https://www.googleapis.com/compute/v1/projects/%s/regions/%s" % (project, region)

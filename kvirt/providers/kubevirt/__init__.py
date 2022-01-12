@@ -5,10 +5,10 @@ Kubevirt Provider Class
 """
 
 import base64
+from ipaddress import ip_address
 from kubernetes import client
 # from kubernetes.stream import stream
 from kvirt.kubecommon import Kubecommon
-from netaddr import IPAddress
 from kvirt import common
 from kvirt.common import error, pprint, warning
 from kvirt.defaults import IMAGES, UBUNTUS, METADATA_FIELDS
@@ -817,7 +817,7 @@ class Kubevirt(Kubecommon):
             if 'interfaces' in status:
                 interfaces = vmi['status']['interfaces']
                 for interface in interfaces:
-                    if 'ipAddress' in interface and IPAddress(interface['ipAddress'].split('/')[0]).version == 4:
+                    if 'ipAddress' in interface and ip_address(interface['ipAddress'].split('/')[0]).version == 4:
                         ip = interface['ipAddress'].split('/')[0]
                         break
         except Exception:

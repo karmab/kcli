@@ -17,7 +17,7 @@ from kvirt.jinjafilters import jinjafilters
 from kvirt import nameutils
 from kvirt import common
 from kvirt.common import error, pprint, success, warning, generate_rhcos_iso, pwd_path, container_mode
-from kvirt.common import ssh, scp, _ssh_credentials
+from kvirt.common import ssh, scp, _ssh_credentials, valid_ip
 from kvirt import kind
 from kvirt import k3s
 from kvirt import kubeadm
@@ -27,7 +27,6 @@ from kvirt.internalplans import haproxy as haproxyplan
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
 from distutils.spawn import find_executable
-from netaddr import valid_ipv4, valid_ipv6
 from getpass import getuser
 import glob
 import os
@@ -2329,7 +2328,7 @@ class Kconfig(Kbaseconfig):
         else:
             vminfo = []
             for vm in vms:
-                if valid_ipv4(vm) or valid_ipv6(vm):
+                if valid_ip(vm):
                     vmname = vm.replace(':', '-').replace('.', '-')
                     vminfo.append({'name': vmname, 'ip': vm})
                     continue

@@ -5,13 +5,13 @@ from ast import literal_eval
 import glob
 from kvirt.jinjafilters import jinjafilters
 from kvirt.defaults import UBUNTUS, SSH_PUB_LOCATIONS
+from ipaddress import ip_address
 from random import randint
 import base64
 from jinja2 import Environment, FileSystemLoader
 from jinja2 import StrictUndefined as undefined
 from jinja2.exceptions import TemplateSyntaxError, TemplateError, TemplateNotFound
 from distutils.spawn import find_executable
-from netaddr import IPAddress
 import re
 import socket
 import ssl
@@ -173,7 +173,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                     if isinstance(netmask, int):
                         cidr = netmask
                     else:
-                        cidr = IPAddress(netmask).netmask_bits()
+                        cidr = netmask_to_prefix(netmask)
                     dhcp = 'dhcp6' if ':' in ip else 'dhcp4'
                     netdata[nicname] = {dhcp: False, 'addresses': ["%s/%s" % (ip, cidr)]}
                 gateway = net.get('gateway')
@@ -1131,7 +1131,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
                 if isinstance(netmask, int):
                     cidr = netmask
                 else:
-                    cidr = IPAddress(netmask).netmask_bits()
+                    cidr = netmask_to_prefix(netmask)
                 netdata = "DEVICE=%s\nNAME=%s\nONBOOT=yes\nNM_CONTROLLED=yes\n" % (nicname, nicname)
                 netdata += "BOOTPROTO=static\nIPADDR=%s\nPREFIX=%s\nGATEWAY=%s\n" % (ip, cidr, gateway)
                 dns = net.get('dns', gateway)
@@ -2060,3 +2060,15 @@ def get_ssh_pub_key():
 
 def container_mode():
     return True if os.path.exists("/i_am_a_container") and os.path.exists('/workdir') else False
+
+
+def netmask_to_prefix(netmask):
+    return sum(bin(int(x)).count('1') for x in netmask.split('.'))
+
+
+def valid_ip(ip):
+    try:
+        ip_address(ip)
+        return True
+    except:
+        return False

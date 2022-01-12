@@ -1,7 +1,7 @@
 from base64 import b64encode
+from ipaddress import ip_network
 import os
 from distutils.version import LooseVersion
-from netaddr import IPNetwork
 import requests
 import sys
 import yaml
@@ -120,7 +120,7 @@ def local_ip(net, wrap=False):
 
 def network_ip(network, num=0, version=False):
     try:
-        ip = IPNetwork(network)[num]
+        ip = str(ip_network(network)[num])
         if version and ':' in network:
             return "[%s]" % ip
         else:

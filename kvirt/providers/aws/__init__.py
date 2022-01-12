@@ -4,11 +4,11 @@
 Aws Provider Class
 """
 
+from ipaddress import ip_network
 from kvirt import common
 from kvirt.common import pprint, error, warning, get_ssh_pub_key
 from kvirt.defaults import METADATA_FIELDS
 import boto3
-from netaddr import IPNetwork
 import os
 import sys
 from socket import gethostbyname
@@ -774,7 +774,7 @@ class Kaws(object):
         conn = self.conn
         if cidr is not None:
             try:
-                network = IPNetwork(cidr)
+                network = ip_network(cidr)
             except:
                 return {'result': 'failure', 'reason': "Invalid Cidr %s" % cidr}
             if str(network.version) == "6":

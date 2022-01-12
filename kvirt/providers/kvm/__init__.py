@@ -11,7 +11,7 @@ from kvirt.defaults import IMAGES
 from kvirt.defaults import UBUNTUS, METADATA_FIELDS
 from kvirt import common
 from kvirt.common import error, pprint, warning, get_ssh_pub_key
-from netaddr import IPAddress, IPNetwork
+from ipaddress import ip_address, ip_network
 from libvirt import open as libvirtopen, registerErrorHandler, libvirtError
 from libvirt import VIR_DOMAIN_AFFECT_LIVE, VIR_DOMAIN_AFFECT_CONFIG
 from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_AGENT as vir_src_agent
@@ -1409,8 +1409,8 @@ class Kvirt(object):
                 if netmask is None:
                     netmask = attributes.get('prefix')
                 try:
-                    ip = IPNetwork('%s/%s' % (firstip, netmask))
-                    cidr = ip.cidr
+                    ip = ip_network('%s/%s' % (firstip, netmask), strict=False)
+                    cidr = str(ip)
                 except:
                     cidr = "N/A"
             dhcp = list(root.iter('dhcp'))
@@ -2131,11 +2131,11 @@ class Kvirt(object):
                 attributes = ipentry.attrib
                 firstip = attributes.get('address')
                 netmask = next(a for a in [attributes.get('netmask'), attributes.get('prefix')] if a is not None)
-                netip = IPNetwork('%s/%s' % (firstip, netmask))
+                netip = ip_network('%s/%s' % (firstip, netmask), strict=False)
                 dhcp = list(root.iter('dhcp'))
                 if not dhcp:
                     continue
-                if not IPAddress(ip) in netip:
+                if not ip_address(ip) in netip:
                     continue
                 pprint("Adding a reserved ip entry for ip %s and mac %s " % (ip, mac))
                 if ':' in ip:
@@ -3030,16 +3030,16 @@ class Kvirt(object):
             return {'result': 'failure', 'reason': "Missing Cidr"}
         cidrs = [networks[n]['cidr'] for n in networks]
         try:
-            range = IPNetwork(cidr)
+            cidr_range = ip_network(cidr)
         except:
             return {'result': 'failure', 'reason': "Invalid Cidr %s" % cidr}
         if cidr in cidrs:
             return {'result': 'failure', 'reason': "Cidr %s already exists" % cidr}
-        gateway = str(range[1])
+        gateway = str(cidr_range[1])
         family = 'ipv6' if ':' in gateway else 'ipv4'
         if dhcp:
-            start = str(range[2])
-            end = str(range[65535 if family == 'ipv6' else -2])
+            start = str(cidr_range[2])
+            end = str(cidr_range[65535 if family == 'ipv6' else -2])
             dhcpxml = """<dhcp>
                     <range start='%s' end='%s'/>""" % (start, end)
             if 'pxe' in overrides:
@@ -3079,12 +3079,12 @@ class Kvirt(object):
             if dualfamily == family:
                 return {'result': 'failure', 'reason': "Dual Cidr %s needs to be of a different family"}
             try:
-                dualrange = IPNetwork(dualcidr)
+                dual_range = ip_network(dualcidr)
             except:
                 return {'result': 'failure', 'reason': "Invalid Dual Cidr %s" % dualcidr}
-            dualgateway = str(dualrange[1])
-            dualstart = str(dualrange[2])
-            dualend = str(dualrange[65535 if dualfamily == 'ipv6' else -2])
+            dualgateway = str(dual_range[1])
+            dualstart = str(dual_range[2])
+            dualend = str(dual_range[65535 if dualfamily == 'ipv6' else -2])
             dualprefix = dualcidr.split('/')[1]
             if dhcp:
                 dualdhcpxml = "<dhcp><range start='%s' end='%s' /></dhcp>" % (dualstart, dualend)
@@ -3173,8 +3173,8 @@ class Kvirt(object):
                 netmask = attributes.get('netmask')
                 netmask = attributes.get('prefix') if netmask is None else netmask
                 ipnet = '%s/%s' % (firstip, netmask) if netmask is not None else firstip
-                ipnet = IPNetwork(ipnet)
-                cidr = str(ipnet.cidr)
+                ipnet = ip_network(ipnet, strict=False)
+                cidr = str(ipnet)
             dhcp = list(root.iter('dhcp'))
             if dhcp:
                 dhcp = True
@@ -3223,8 +3223,8 @@ class Kvirt(object):
                 if ip.startswith('fe80'):
                     continue
                 prefix = attributes.get('prefix')
-                ipnet = IPNetwork('%s/%s' % (ip, prefix))
-                cidr = str(ipnet.cidr)
+                ipnet = ip_network('%s/%s' % (ip, prefix), strict=False)
+                cidr = str(ipnet)
                 if ':' not in ip:
                     break
             networks[interface] = {'cidr': cidr, 'dhcp': 'N/A', 'type': 'bridged', 'mode': 'N/A'}

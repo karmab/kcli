@@ -5,6 +5,7 @@ IBM Cloud provider class
 """
 
 from distutils.spawn import find_executable
+from ipaddress import ip_network
 from kvirt import common
 from kvirt.common import pprint, error
 from kvirt.defaults import METADATA_FIELDS
@@ -17,7 +18,6 @@ from ibm_platform_services import GlobalTaggingV1, ResourceControllerV2, IamPoli
 from ibm_platform_services.iam_policy_management_v1 import PolicySubject, SubjectAttribute, PolicyResource, PolicyRole
 from ibm_platform_services.iam_policy_management_v1 import ResourceAttribute
 from ibm_cloud_networking_services import DnsRecordsV1, ZonesV1
-from netaddr import IPNetwork
 import os
 from time import sleep
 from requests import get, post
@@ -814,7 +814,7 @@ class Kibm(object):
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
         if cidr is not None:
             try:
-                network = IPNetwork(cidr)
+                network = ip_network(cidr)
             except:
                 return {'result': 'failure', 'reason': "Invalid Cidr %s" % cidr}
             if str(network.version) == "6":
