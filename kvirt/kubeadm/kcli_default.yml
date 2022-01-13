@@ -56,3 +56,6 @@ registry_user: dummy
 registry_password: dummy
 eksd: false
 eksd_version: latest
+threaded: false
+masters_threaded: false
+workers_threaded: false

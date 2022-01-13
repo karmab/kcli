@@ -333,13 +333,15 @@ def scale(config, plandir, cluster, overrides):
     data['image'] = image
     for role in ['masters', 'workers']:
         overrides = data.copy()
+        threaded = data.get('threaded', False) or data.get(f'{role}_threaded', False)
         if overrides.get(role, 0) == 0:
             continue
         if platform in virtplatforms:
             os.chdir(os.path.expanduser("~/.kcli"))
-            result = config.plan(plan, inputfile='%s/%s.yml' % (plandir, role), overrides=overrides)
+            result = config.plan(plan, inputfile='%s/%s.yml' % (plandir, role), overrides=overrides, threaded=threaded)
         elif platform in cloudplatforms:
-            result = config.plan(plan, inputfile='%s/cloud_%s.yml' % (plandir, role), overrides=overrides)
+            result = config.plan(plan, inputfile='%s/cloud_%s.yml' % (plandir, role), overrides=overrides,
+                                 threaded=threaded)
         if result['result'] != 'success':
             sys.exit(1)
         elif platform == 'packet' and 'newvms' in result and result['newvms']:
@@ -1334,7 +1336,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                                         podman=True, installer=True)
             os.remove(ignitionfile)
         else:
-            result = config.plan(plan, inputfile='%s/masters.yml' % plandir, overrides=overrides)
+            threaded = data.get('threaded', False) or data.get('masters_threaded', False)
+            result = config.plan(plan, inputfile='%s/masters.yml' % plandir, overrides=overrides, threaded=threaded)
         if result['result'] != 'success':
             sys.exit(1)
         if platform == 'packet':
@@ -1370,7 +1373,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             sedcmd = 'sed -i "s@api-int.%s.%s@%s@" %s/master.ign' % (cluster, domain, api_ip, clusterdir)
             call(sedcmd, shell=True)
         pprint("Deploying masters")
-        result = config.plan(plan, inputfile='%s/cloud_masters.yml' % plandir, overrides=overrides)
+        threaded = data.get('threaded', False) or data.get('masters_threaded', False)
+        result = config.plan(plan, inputfile='%s/cloud_masters.yml' % plandir, overrides=overrides, threaded=threaded)
         if result['result'] != 'success':
             sys.exit(1)
         if platform == 'ibm':
@@ -1432,7 +1436,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                                             podman=True, installer=True)
                 os.remove(ignitionfile)
             else:
-                result = config.plan(plan, inputfile='%s/workers.yml' % plandir, overrides=overrides)
+                threaded = data.get('threaded', False) or data.get('workers_threaded', False)
+                result = config.plan(plan, inputfile='%s/workers.yml' % plandir, overrides=overrides, threaded=threaded)
             if result['result'] != 'success':
                 sys.exit(1)
         elif platform in cloudplatforms:

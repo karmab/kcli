@@ -110,3 +110,6 @@ baremetal: false
 baremetal_bootstrap: false
 baremetal_master: false
 baremetal_worker: false
+threaded: false
+masters_threaded: false
+workers_threaded: false

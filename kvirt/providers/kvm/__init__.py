@@ -302,7 +302,7 @@ class Kvirt(object):
                 poo.refresh(0)
             except Exception as e:
                 warning("Hit %s when refreshing pool %s" % (e, poo.name()))
-                continue
+                pass
             for vol in poo.listAllVolumes():
                 volumes[vol.name()] = {'pool': poo, 'object': vol}
                 volumespaths[vol.path()] = {'pool': poo, 'object': vol}
@@ -1217,7 +1217,7 @@ class Kvirt(object):
                 storagepool.refresh(0)
             except Exception as e:
                 warning("Hit %s when refreshing pool %s" % (e, pool))
-                continue
+                pass
             for volxml in volsxml[pool]:
                 storagepool.createXML(volxml, 0)
         if fixqcow2path is not None and fixqcow2backing is not None:

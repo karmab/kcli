@@ -42,7 +42,8 @@ def scale(config, plandir, cluster, overrides):
         overrides = data.copy()
         if overrides.get(role, 0) == 0:
             continue
-        config.plan(plan, inputfile='%s/%s.yml' % (plandir, role), overrides=overrides)
+        threaded = data.get('threaded', False) or data.get(f'{role}_threaded', False)
+        config.plan(plan, inputfile='%s/%s.yml' % (plandir, role), overrides=overrides, threaded=threaded)
 
 
 def create(config, plandir, cluster, overrides):
@@ -117,7 +118,8 @@ def create(config, plandir, cluster, overrides):
             installparam['plan'] = plan
             installparam['kubetype'] = 'generic'
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
-    result = config.plan(plan, inputfile='%s/masters.yml' % plandir, overrides=data)
+    master_threaded = data.get('threaded', False) or data.get('masters_threaded', False)
+    result = config.plan(plan, inputfile='%s/masters.yml' % plandir, overrides=data, threaded=master_threaded)
     if result['result'] != "success":
         sys.exit(1)
     source, destination = "/root/join.sh", "%s/join.sh" % clusterdir
@@ -137,7 +139,8 @@ def create(config, plandir, cluster, overrides):
         if 'name' in data:
             del data['name']
         os.chdir(os.path.expanduser("~/.kcli"))
-        config.plan(plan, inputfile='%s/workers.yml' % plandir, overrides=data)
+        worker_threaded = data.get('threaded', False) or data.get('workers_threaded', False)
+        config.plan(plan, inputfile='%s/workers.yml' % plandir, overrides=data, threaded=worker_threaded)
     success("Kubernetes cluster %s deployed!!!" % cluster)
     masters = data.get('masters', 1)
     info2("export KUBECONFIG=$HOME/.kcli/clusters/%s/auth/kubeconfig" % cluster)
