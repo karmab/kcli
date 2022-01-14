@@ -543,6 +543,7 @@ class Kvirt(object):
             multiqueuexml = ''
             nettype = 'virtio'
             vhost = False
+            filterref = None
             if isinstance(net, str):
                 netname = net
                 nets[index] = {'name': netname}
@@ -562,6 +563,8 @@ class Kvirt(object):
                     metadataxml += "<kvirt:ip >%s</kvirt:ip>" % nets[index]['ip']
                 if 'numa' in nets[index] and numa:
                     nicnuma = nets[index]['numa']
+                if 'filter' in nets[index]:
+                    filterref = nets[index]['filter']
                 if 'vhost' in nets[index] and nets[index]['vhost']:
                     vhost = True
                 if 'mtu' in nets[index]:
@@ -628,6 +631,7 @@ class Kvirt(object):
                 vhostpath = nets[index].get('vhostpath', "%s/vhost-user%s" % (vhostdir, vhostindex))
                 sourcexml = "<source type='unix' path='%s' mode='client'/>" % vhostpath
                 sourcexml += "<driver name='vhost' rx_queue_size='256'/>"
+            filterrefxml = f'<filterref filter="{filterref}"/>' if filterref is not None else ''
             netxml = """%s
 <interface type='%s'>
 %s
@@ -635,9 +639,10 @@ class Kvirt(object):
 %s
 %s
 %s
+%s
 <model type='%s'/>
 %s
-</interface>""" % (netxml, iftype, mtuxml, macxml, sourcexml, ovsxml, nicnumaxml, nettype, multiqueuexml)
+</interface>""" % (netxml, iftype, mtuxml, macxml, sourcexml, ovsxml, nicnumaxml, filterrefxml, nettype, multiqueuexml)
         metadataxml += "</kvirt:info></metadata>"
         if guestagent:
             gcmds = []
