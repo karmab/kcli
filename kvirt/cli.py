@@ -1918,7 +1918,7 @@ def delete_plan(args):
         common.confirm("Are you sure?")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     result = config.delete_plan(plan, unregister=config.rhnunregister)
-    sys.exit(0 if 'result' in result and result['result'] == 'success' else 1)
+    sys.exit(0 if 'result' in result and result['result'] == 'success' else 4)
 
 
 def expose_plan(args):
