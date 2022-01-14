@@ -2126,7 +2126,7 @@ class Kconfig(Kbaseconfig):
         returndata['assets'] = newassets if newassets else []
         if failedvms:
             returndata['result'] = 'failure'
-            returndata['reason'] = 'The following vm failed: %s' % ','.join(failedvms)
+            returndata['reason'] = 'The following vms failed: %s' % ','.join(failedvms)
         if getback or toclean:
             os.chdir('..')
         if toclean:
@@ -2807,7 +2807,10 @@ class Kconfig(Kbaseconfig):
         return cmds, mailcontent
 
     def handle_vm_result(self, name, profile, result, newvms, failedvms, asyncwaitvms, onlyassets=False, newassets=[]):
-        newvms.append(name)
+        if 'result' in result and result['result'] == 'success':
+            newvms.append(name)
+        else:
+            failedvms.append(name)
         start = profile.get('start', True)
         cloudinit = profile.get('cloudinit', True)
         wait = profile.get('wait', False)

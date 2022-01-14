@@ -1848,9 +1848,14 @@ def create_plan(args):
     if plan is None:
         plan = nameutils.get_random_name()
         pprint(f"Using {plan} as name of the plan")
-    config.plan(plan, ansible=ansible, url=url, path=path, container=container, inputfile=inputfile,
-                overrides=overrides, pre=pre, post=post, threaded=threaded)
-    return 0
+    result = config.plan(plan, ansible=ansible, url=url, path=path, container=container, inputfile=inputfile,
+                         overrides=overrides, pre=pre, post=post, threaded=threaded)
+    if 'result' in result and result['result'] == 'success':
+        return 0
+    else:
+        if 'reason' in result:
+            error(result['reason'])
+            return 1
 
 
 def create_playbook(args):
