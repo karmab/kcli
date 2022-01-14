@@ -1822,6 +1822,7 @@ def create_plan(args):
     pre = not args.skippre
     post = not args.skippost
     paramfile = args.paramfile
+    threaded = args.threaded
     if inputfile is None:
         inputfile = 'kcli_plan.yml'
     if container_mode():
@@ -1848,7 +1849,7 @@ def create_plan(args):
         plan = nameutils.get_random_name()
         pprint(f"Using {plan} as name of the plan")
     config.plan(plan, ansible=ansible, url=url, path=path, container=container, inputfile=inputfile,
-                overrides=overrides, pre=pre, post=post)
+                overrides=overrides, pre=pre, post=post, threaded=threaded)
     return 0
 
 
@@ -4008,6 +4009,7 @@ def cli():
     plancreate_parser.add_argument('-P', '--param', action='append',
                                    help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
     plancreate_parser.add_argument('--paramfile', help='Parameters file', metavar='PARAMFILE')
+    plancreate_parser.add_argument('-t', '--threaded', help='Run threaded', action='store_true')
     plancreate_parser.add_argument('plan', metavar='PLAN', nargs='?')
     plancreate_parser.set_defaults(func=create_plan)
 

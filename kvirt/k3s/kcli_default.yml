@@ -34,3 +34,6 @@ extra_args: []
 extra_master_args: []
 extra_worker_args: []
 extra_worker_disks: []
+threaded: false
+masters_threaded: false
+workers_threaded: false

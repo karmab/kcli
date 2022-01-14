@@ -36,9 +36,10 @@ def scale(config, plandir, cluster, overrides):
     os.chdir(os.path.expanduser("~/.kcli"))
     for role in ['masters', 'workers']:
         overrides = data.copy()
+        threaded = data.get('threaded', False) or data.get(f'{role}_threaded', False)
         if role == 'masters' and overrides.get('masters', 1) == 1:
             continue
-        config.plan(plan, inputfile='%s/%s.yml' % (plandir, role), overrides=overrides)
+        config.plan(plan, inputfile='%s/%s.yml' % (plandir, role), overrides=overrides, threaded=threaded)
 
 
 def create(config, plandir, cluster, overrides):
@@ -116,7 +117,8 @@ def create(config, plandir, cluster, overrides):
     nodes_overrides['install_k3s_args'] = nodes_install_k3s_args
     if masters > 1:
         pprint("Deploying extra masters")
-        config.plan(plan, inputfile='%s/masters.yml' % plandir, overrides=nodes_overrides)
+        threaded = data.get('threaded', False) or data.get('masters_threaded', False)
+        config.plan(plan, inputfile='%s/masters.yml' % plandir, overrides=nodes_overrides, threaded=threaded)
     firstmasterip, firstmastervmport = _ssh_credentials(k, firstmaster)[1:]
     with open("%s/join.sh" % clusterdir, 'w') as f:
         if api_ip is None:
@@ -136,7 +138,8 @@ def create(config, plandir, cluster, overrides):
         if 'name' in data:
             del data['name']
         os.chdir(os.path.expanduser("~/.kcli"))
-        config.plan(plan, inputfile='%s/workers.yml' % plandir, overrides=data)
+        threaded = data.get('threaded', False) or data.get('workers_threaded', False)
+        config.plan(plan, inputfile='%s/workers.yml' % plandir, overrides=data, threaded=threaded)
     success("K3s cluster %s deployed!!!" % cluster)
     info2("export KUBECONFIG=$HOME/.kcli/clusters/%s/auth/kubeconfig" % cluster)
     info2("export PATH=$PWD:$PATH")

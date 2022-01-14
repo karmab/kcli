@@ -36,6 +36,7 @@ from shutil import rmtree
 import sys
 from subprocess import call
 from tempfile import TemporaryDirectory
+import threading
 from time import sleep
 import webbrowser
 import yaml
@@ -1418,10 +1419,11 @@ class Kconfig(Kbaseconfig):
 
     def plan(self, plan, ansible=False, url=None, path=None, container=False, inputfile=None, inputstring=None,
              overrides={}, info=False, update=False, embedded=False, download=False, quiet=False, doc=False,
-             onlyassets=False, pre=True, post=True, excludevms=[], basemode=False):
+             onlyassets=False, pre=True, post=True, excludevms=[], basemode=False, threaded=False):
         """Manage plan file"""
         k = self.k
         no_overrides = not overrides
+        threads = []
         newvms = []
         newassets = []
         failedvms = []
@@ -1959,38 +1961,29 @@ class Kconfig(Kbaseconfig):
                             IMAGES[imageprofile] not in [os.path.basename(v) for v in self.k.volumes()]:
                         pprint(f"Image {imageprofile} not found. Downloading")
                         self.handle_host(pool=self.pool, image=imageprofile, download=True, update_profile=True)
-                result = self.create_vm(name, profilename, overrides=currentoverrides, customprofile=profile, k=z,
-                                        plan=plan, basedir=currentplandir, client=vmclient, onfly=onfly,
-                                        onlyassets=onlyassets)
-                if not onlyassets:
-                    common.handle_response(result, name, client=vmclient)
-                if result['result'] == 'success':
-                    newvms.append(name)
-                    start = profile.get('start', True)
-                    cloudinit = profile.get('cloudinit', True)
-                    wait = profile.get('wait', False)
-                    waitcommand = profile.get('waitcommand')
-                    if waitcommand is not None:
-                        wait = True
-                    waittimeout = profile.get('waittimeout', 0)
-                    asyncwait = profile.get('asyncwait', False)
-                    finishfiles = profile.get('finishfiles', [])
-                    if onlyassets:
-                        newassets.append(result['data'])
-                    elif not wait and not asyncwait:
-                        continue
-                    elif not start or not cloudinit or profile.get('image') is None:
-                        pprint(f"Skipping wait on {name}")
-                    elif asyncwait:
-                        asyncwaitvm = {'name': name, 'finishfiles': finishfiles, 'waitcommand': waitcommand,
-                                       'waittimeout': waittimeout}
-                        asyncwaitvms.append(asyncwaitvm)
-                    else:
-                        self.wait_finish(name, waitcommand=waitcommand, waittimeout=waittimeout)
-                        if finishfiles:
-                            self.handle_finishfiles(name, finishfiles)
+                if threaded:
+                    new_args = (name, profilename, currentoverrides, profile, z, plan, currentplandir, vmclient,
+                                onfly, onlyassets, newvms, failedvms, asyncwaitvms, newassets)
+                    t = threading.Thread(target=self.threaded_create_vm, args=new_args)
+                    threads.append(t)
+                    t.start()
                 else:
-                    failedvms.append(name)
+                    result = self.create_vm(name, profilename, overrides=currentoverrides, customprofile=profile, k=z,
+                                            plan=plan, basedir=currentplandir, client=vmclient, onfly=onfly,
+                                            onlyassets=onlyassets)
+                    if not onlyassets:
+                        common.handle_response(result, name, client=vmclient)
+                    self.handle_vm_result(name, profile, result=result, newvms=newvms, failedvms=failedvms,
+                                          asyncwaitvms=asyncwaitvms, onlyassets=onlyassets, newassets=newassets)
+        if vmentries and threaded:
+            while True:
+                for index, t in enumerate(threads):
+                    if not t.is_alive():
+                        del threads[index]
+                if not threads:
+                    break
+                else:
+                    sleep(1)
         if diskentries and not onlyassets:
             pprint("Deploying Disks...")
         for disk in diskentries:
@@ -2812,3 +2805,39 @@ class Kconfig(Kbaseconfig):
             else:
                 error(f"Invalid method {notifymethod}")
         return cmds, mailcontent
+
+    def handle_vm_result(self, name, profile, result, newvms, failedvms, asyncwaitvms, onlyassets=False, newassets=[]):
+        newvms.append(name)
+        start = profile.get('start', True)
+        cloudinit = profile.get('cloudinit', True)
+        wait = profile.get('wait', False)
+        waitcommand = profile.get('waitcommand')
+        if waitcommand is not None:
+            wait = True
+        waittimeout = profile.get('waittimeout', 0)
+        asyncwait = profile.get('asyncwait', False)
+        finishfiles = profile.get('finishfiles', [])
+        if onlyassets:
+            newassets.append(result['data'])
+        elif not wait and not asyncwait:
+            return
+        elif not start or not cloudinit or profile.get('image') is None:
+            pprint(f"Skipping wait on {name}")
+        elif asyncwait:
+            asyncwaitvm = {'name': name, 'finishfiles': finishfiles, 'waitcommand': waitcommand,
+                           'waittimeout': waittimeout}
+            asyncwaitvms.append(asyncwaitvm)
+        else:
+            self.wait_finish(name, waitcommand=waitcommand, waittimeout=waittimeout)
+            if finishfiles:
+                self.handle_finishfiles(name, finishfiles)
+
+    def threaded_create_vm(self, name, profilename, currentoverrides, profile, z, plan, currentplandir, vmclient,
+                           onfly, onlyassets, newvms, failedvms, asyncwaitvms, newassets):
+        result = self.create_vm(name, profilename, overrides=currentoverrides, customprofile=profile, k=z,
+                                plan=plan, basedir=currentplandir, client=vmclient, onfly=onfly,
+                                onlyassets=onlyassets)
+        if not onlyassets:
+            common.handle_response(result, name, client=vmclient)
+        self.handle_vm_result(name, profile, result=result, newvms=newvms, failedvms=failedvms,
+                              asyncwaitvms=asyncwaitvms, onlyassets=onlyassets, newassets=newassets)
