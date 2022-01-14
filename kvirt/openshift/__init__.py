@@ -445,7 +445,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     disconnected_user = data.get('disconnected_user')
     disconnected_password = data.get('disconnected_password')
     disconnected_prefix = data.get('disconnected_prefix', 'ocp4')
-    dualstack = data.get('dualstack')
     forcestack = data.get('forcestack')
     ipsec = data.get('ipsec')
     upstream = data.get('upstream')
@@ -950,8 +949,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             with open("%s/patch_rhcos_image.sh" % tmpdir, 'w') as f:
                 f.write(patchscript)
             call('bash %s/patch_rhcos_image.sh' % tmpdir, shell=True)
-    if dualstack:
-        copy2("%s/dualstack.yml" % plandir, "%s/openshift" % clusterdir)
     if ipsec:
         copy2("%s/99-ipsec.yaml" % plandir, "%s/openshift" % clusterdir)
     if workers == 0 or not mdns or kubevirt_api_service:
