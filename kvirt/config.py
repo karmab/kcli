@@ -1372,10 +1372,10 @@ class Kconfig(Kbaseconfig):
                 self.delete_loadbalancer(lb)
         if found:
             success(f"Plan {plan} deleted!")
+            return {'result': 'success', 'deletedvm': deletedvms}
         else:
-            warning(f"No objects found during deletion of plan {plan}")
-            return {'result': 'success'}
-        return {'result': 'success', 'deletedvm': deletedvms}
+            error(f"No objects found during deletion of plan {plan}")
+            return {'result': 'failure'}
 
     def snapshot_plan(self, plan, snapshotname=None):
         k = self.k

@@ -1851,11 +1851,11 @@ def create_plan(args):
     result = config.plan(plan, ansible=ansible, url=url, path=path, container=container, inputfile=inputfile,
                          overrides=overrides, pre=pre, post=post, threaded=threaded)
     if 'result' in result and result['result'] == 'success':
-        return 0
+        sys.exit(0)
     else:
         if 'reason' in result:
             error(result['reason'])
-            return 1
+        sys.exit(1)
 
 
 def create_playbook(args):
@@ -1917,8 +1917,8 @@ def delete_plan(args):
     if not yes and not yes_top:
         common.confirm("Are you sure?")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.delete_plan(plan, unregister=config.rhnunregister)
-    return 0
+    result = config.delete_plan(plan, unregister=config.rhnunregister)
+    sys.exit(0 if 'result' in result and result['result'] == 'success' else 1)
 
 
 def expose_plan(args):
