@@ -76,7 +76,10 @@ limitations under the License.
 
 ## Problems?
 
-Open an issue or join us on [kcli slack channel](https://app.slack.com/client/T09NY5SBT/CU76B52JE)
+Open an issue or join us on slack
+
+- [k8s slack instance](https://slack.k8s.io)
+- [kcli slack channel](https://app.slack.com/client/T09NY5SBT/CU76B52JE)
 
 Mc Fly!!!
 
