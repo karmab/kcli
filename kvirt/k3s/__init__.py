@@ -51,7 +51,7 @@ def create(config, plandir, cluster, overrides):
     data['kube'] = data['cluster']
     masters = data.get('masters', 1)
     network = data.get('network', 'default')
-    sdn = data.get('sdn')
+    sdn = None if 'sdn' in overrides and overrides['sdn'] is None else data.get('sdn')
     token = data.get('token', 'supersecret')
     api_ip = data.get('api_ip')
     if masters > 1:
