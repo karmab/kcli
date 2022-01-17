@@ -1396,16 +1396,13 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if not kubevirt_ignore_node_port and kubevirt_api_service and kubevirt_api_service_node_port:
         nodeport = k.get_node_ports('%s-api-svc' % cluster, k.namespace)[6443]
         while True:
-            nodehostip = k.info("%s-bootstrap" % cluster).get('ip')
-            if nodehostip is not None:
-                break
             nodehost = k.info("%s-bootstrap" % cluster).get('host')
             if nodehost is not None:
                 break
             else:
                 pprint("Waiting 5s for bootstrap vm to be up")
                 sleep(5)
-        nodehostip = nodehostip or gethostbyname(nodehost)
+        nodehostip = gethostbyname(nodehost)
         update_etc_hosts(cluster, domain, nodehostip)
         sedcmd = 'sed -i "s@:6443@:%s@" %s/auth/kubeconfig' % (nodeport, clusterdir)
         call(sedcmd, shell=True)
