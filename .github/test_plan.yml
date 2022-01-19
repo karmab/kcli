@@ -1,6 +1,6 @@
 parameters:
  pool: default
- image: fedora33
+ image: fedora35
 
 {{ image }}:
  type: image
