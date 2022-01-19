@@ -1588,32 +1588,6 @@ class Kconfig(Kbaseconfig):
         bucketentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'bucket']
         for p in profileentries:
             vmprofiles[p] = entries[p]
-        if planentries:
-            pprint("Deploying Plans...")
-            for planentry in planentries:
-                details = entries[planentry]
-                planurl = details.get('url')
-                planfile = details.get('file')
-                if planurl is None and planfile is None:
-                    warning(f"Missing Url/File for plan {planentry}. Not creating it...")
-                    continue
-                elif planurl is not None:
-                    path = planentry
-                    if not planurl.endswith('yml'):
-                        planurl = f"{planurl}/kcli_plan.yml"
-                elif '/' in planfile:
-                    path = os.path.dirname(planfile)
-                    inputfile = os.path.basename(planfile)
-                else:
-                    path = '.'
-                    inputfile = planentry
-                if no_overrides and parameters:
-                    pprint("Using parameters from master plan in child ones")
-                    for override in overrides:
-                        print("Using parameter %s: %s" % (override, overrides[override]))
-                self.plan(plan, ansible=False, url=planurl, path=path, container=False, inputfile=inputfile,
-                          overrides=overrides, embedded=embedded, download=download)
-            return {'result': 'success'}
         if networkentries and not onlyassets:
             pprint("Deploying Networks...")
             for net in networkentries:
@@ -1699,6 +1673,32 @@ class Kconfig(Kbaseconfig):
                 self.k.create_bucket(bucketentry)
                 for _fil in _files:
                     self.k.upload_to_bucket(bucketentry, _fil)
+        if planentries:
+            pprint("Deploying Plans...")
+            for planentry in planentries:
+                details = entries[planentry]
+                planurl = details.get('url')
+                planfile = details.get('file')
+                if planurl is None and planfile is None:
+                    warning(f"Missing Url/File for plan {planentry}. Not creating it...")
+                    continue
+                elif planurl is not None:
+                    path = planentry
+                    if not planurl.endswith('yml'):
+                        planurl = f"{planurl}/kcli_plan.yml"
+                elif '/' in planfile:
+                    path = os.path.dirname(planfile)
+                    inputfile = os.path.basename(planfile)
+                else:
+                    path = '.'
+                    inputfile = planentry
+                if no_overrides and parameters:
+                    pprint("Using parameters from master plan in child ones")
+                    for override in overrides:
+                        print("Using parameter %s: %s" % (override, overrides[override]))
+                self.plan(plan, ansible=False, url=planurl, path=path, container=False, inputfile=inputfile,
+                          overrides=overrides, embedded=embedded, download=download)
+            return {'result': 'success'}
         if kubeentries and not onlyassets:
             pprint("Deploying Kube Entries...")
             dnsclients = {}
