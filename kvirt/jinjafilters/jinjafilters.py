@@ -1,4 +1,5 @@
 from base64 import b64encode
+from glob import glob
 from ipaddress import ip_network
 import os
 from distutils.version import LooseVersion
@@ -140,10 +141,17 @@ def kcli_info(name, key=None):
     return result
 
 
+def find_manifests(directory, suffix='yaml'):
+    results = []
+    for f in glob("%s/*.y*ml" % directory):
+        results.append(os.path.basename(f))
+    return results
+
+
 jinjafilters = {'basename': basename, 'dirname': dirname, 'ocpnodes': ocpnodes, 'none': none, 'type': _type,
                 'certificate': certificate, 'base64': base64, 'github_version': github_version,
                 'defaultnodes': defaultnodes, 'waitcrd': waitcrd, 'local_ip': local_ip, 'network_ip': network_ip,
-                'kcli_info': kcli_info}
+                'kcli_info': kcli_info, 'find_manifests': find_manifests}
 
 
 class FilterModule(object):
