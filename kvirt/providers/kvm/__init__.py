@@ -3155,10 +3155,13 @@ class Kvirt(object):
         if allowed_nets:
             netfilterxml = f"<filter name='kcli-{name}' chain='ipv4' priority='-700'>"
             for dest in allowed_nets:
-                if dest not in networks:
+                if '/' in dest:
+                    dest_net, dest_prefix = dest.split('/')
+                elif dest not in networks:
                     warning(f"Network {dest} not found. Filter rule won't be created")
                     continue
-                dest_net, dest_prefix = networks[dest]['cidr'].split('/')
+                else:
+                    dest_net, dest_prefix = networks[dest]['cidr'].split('/')
                 outrule = "<rule action='accept' direction='out' priority='500'>"
                 outcomment = f'kcli {name}-{dest}'
                 outrule += f"<all srcipaddr='{cidr_net}' srcipmask='{cidr_prefix}' "
