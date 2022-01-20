@@ -1919,13 +1919,13 @@ def filter_compression_extension(name):
     return name.replace('.gz', '').replace('.xz', '').replace('.bz2', '')
 
 
-def generate_rhcos_iso(k, cluster, pool, version='latest', podman=False, installer=False):
+def generate_rhcos_iso(k, cluster, pool, version='latest', podman=False, installer=False, arch='x86_64'):
     if installer:
         liveiso = get_installer_iso()
         baseiso = os.path.basename(liveiso)
     else:
-        baseiso = 'rhcos-live.x86_64.iso'
-        liveiso = "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/%s/latest/%s" % (version, baseiso)
+        baseiso = f'rhcos-live.{arch}.iso'
+        liveiso = f"https://mirror.openshift.com/pub/openshift-v4/{arch}/dependencies/rhcos/{version}/latest/{baseiso}"
     if baseiso not in k.volumes(iso=True):
         pprint("Downloading %s" % baseiso)
         k.add_image(liveiso, pool)
