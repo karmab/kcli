@@ -62,6 +62,8 @@ spec:
     - name: {{ param|upper }}
       value: $(params.{{ param }})
 {% endfor %}
+    - name: PYTHONUNBUFFERED
+      value: "true"
     script: |
      #!/usr/bin/env bash
      cd /source
