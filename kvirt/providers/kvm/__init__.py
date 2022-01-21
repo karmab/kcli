@@ -1453,10 +1453,10 @@ class Kvirt(object):
         try:
             vm = conn.lookupByName(name)
         except:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': "VM {name} not found"}
         if not vm.isActive():
-            error("VM down")
+            error(f"VM {name} down")
             return
         else:
             xml = vm.XMLDesc(0)
