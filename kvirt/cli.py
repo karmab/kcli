@@ -4288,7 +4288,7 @@ def cli():
     okddownload_parser.set_defaults(func=download_okd_installer)
     download_subparsers.add_parser('okd-installer', parents=[okddownload_parser],
                                    description=okddownload_desc,
-                                   help=okddownload_desc)
+                                   help=okddownload_desc, aliases=['okd-install'])
 
     openshiftdownload_desc = 'Download Openshift Installer'
     openshiftdownload_parser = argparse.ArgumentParser(add_help=False)
@@ -4298,7 +4298,7 @@ def cli():
     openshiftdownload_parser.set_defaults(func=download_openshift_installer)
     download_subparsers.add_parser('openshift-installer', parents=[openshiftdownload_parser],
                                    description=openshiftdownload_desc,
-                                   help=openshiftdownload_desc)
+                                   help=openshiftdownload_desc, aliases=['openshift-install'])
 
     helmdownload_desc = 'Download Helm'
     helmdownload_parser = argparse.ArgumentParser(add_help=False)
