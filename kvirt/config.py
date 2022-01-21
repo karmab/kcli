@@ -2217,7 +2217,9 @@ class Kconfig(Kbaseconfig):
                     error(f"Please run kcli delete image --yes {shortname}")
                     return {'result': 'failure', 'reason': "User interruption"}
                 common.handle_response(result, image, element='Image', action='Added')
-                if update_profile and result['result'] == 'success':
+                if result['result'] != 'success':
+                    return {'result': 'failure', 'reason': result['reason']}
+                elif update_profile:
                     if shortname.endswith('.bz2') or shortname.endswith('.gz') or shortname.endswith('.xz'):
                         shortname = os.path.splitext(shortname)[0]
                     if self.type == 'vsphere':
