@@ -1,5 +1,6 @@
 {{ cluster }}-kind:
   image: {{ image }}
+  keys: {{ keys }}
   numcpus: {{ numcpus }}
   memory: {{ memory }}
   nets: {{ [network] + extra_networks }}

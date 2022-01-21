@@ -16,6 +16,7 @@
  wait: true
  enableroot: true
  pool: {{ pool or config_pool }}
+ keys: {{ keys }}
  numcpus: {{ master_numcpus | default(numcpus, numcpus) }}
  memory: {{ master_memory | default(memory, memory) }}
  nets: {{ [network] + extra_networks }}

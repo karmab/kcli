@@ -20,3 +20,4 @@ ipv6: false
 dualstack: false
 disable_default_cni: false
 external_api_address: true
+keys: []
