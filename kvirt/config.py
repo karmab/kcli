@@ -1745,7 +1745,8 @@ class Kconfig(Kbaseconfig):
                 baseinputfile = f"{basedir}/{basefile}"
                 if container_mode() and not os.path.isabs(basefile) and '/workdir' not in basedir:
                     baseinputfile = f"/workdir/{basedir}/{basefile}"
-                self.plan(plan, inputfile=baseinputfile, overrides=overrides, excludevms=vmnames, basemode=True)
+                self.plan(plan, inputfile=baseinputfile, overrides=overrides, excludevms=vmnames, basemode=True,
+                          onlyassets=onlyassets)
                 baseplans.append(basefile)
             for name in vmentries:
                 if name in excludevms:
@@ -1771,7 +1772,7 @@ class Kconfig(Kbaseconfig):
                         basevm = profile['basevm'] if 'basevm' in profile else name
                         if baseplan not in baseplans:
                             self.plan(plan, inputfile=baseinputfile, overrides=overrides, excludevms=vmnames,
-                                      basemode=True)
+                                      basemode=True, onlyassets=onlyassets)
                             baseplans.append(baseplan)
                         baseinfo = self.process_inputfile(plan, baseinputfile, overrides=overrides, full=True)
                         baseprofile = baseinfo[0][basevm] if basevm in baseinfo[0] else {}

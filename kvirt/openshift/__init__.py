@@ -1278,8 +1278,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             sedcmd += ' > %s/worker.ign' % clusterdir
             call(sedcmd, shell=True)
         new_api_ip = api_ip if not ipv6 else "[%s]" % api_ip
-        sedcmd = 'sed -i "s@https://api-int.%s.%s:22623/config@http://%s:22624/config@"' % (cluster, domain, new_api_ip)
-        sedcmd += ' %s/master.ign %s/worker.ign' % (clusterdir, clusterdir)
+        sedcmd = f'sed -i "s@api-int.{cluster}.{domain}@{new_api_ip}@" {clusterdir}/master.ign {clusterdir}/worker.ign'
+        call(sedcmd, shell=True)
+        sedcmd = f'sed -i "s@https://{new_api_ip}:22623/config@http://{new_api_ip}:22624/config@"'
+        sedcmd += f' {clusterdir}/master.ign {clusterdir}/worker.ign'
         call(sedcmd, shell=True)
     if platform in cloudplatforms + ['openstack']:
         bucket = "%s-%s" % (cluster, domain.replace('.', '-'))
