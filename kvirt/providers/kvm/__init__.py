@@ -2184,7 +2184,11 @@ class Kvirt(object):
             try:
                 network = conn.networkLookupByName(netname)
             except:
-                bridged = True
+                if self.remotednsmasq:
+                    bridged = True
+                else:
+                    warning(f"Network {netname} not found")
+                    return
             if ip is None:
                 if isinstance(net, dict):
                     ip = net.get('ip')
