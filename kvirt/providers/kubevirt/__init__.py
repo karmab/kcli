@@ -842,7 +842,9 @@ class Kubevirt(Kubecommon):
             pvc = core.list_namespaced_persistent_volume_claim(namespace)
             allimages = [self.get_image_name(p.metadata.annotations['cdi.kubevirt.io/storage.import.endpoint'])
                          for p in pvc.items if p.metadata.annotations is not None and
-                         'cdi.kubevirt.io/storage.import.endpoint' in p.metadata.annotations]
+                         'cdi.kubevirt.io/storage.import.endpoint' in p.metadata.annotations and
+                         'cdi.kubevirt.io/storage.condition.running.reason' in p.metadata.annotations and
+                         p.metadata.annotations['cdi.kubevirt.io/storage.condition.running.reason'] == 'Completed']
         else:
             pvc = core.list_namespaced_persistent_volume_claim(namespace)
             allimages = [p.metadata.annotations['kcli/image'] for p in pvc.items

@@ -1670,7 +1670,6 @@ class Kconfig(Kbaseconfig):
                         print("Using parameter %s: %s" % (override, overrides[override]))
                 self.plan(plan, ansible=False, url=planurl, path=path, container=False, inputfile=inputfile,
                           overrides=overrides, embedded=embedded, download=download)
-            return {'result': 'success'}
         if kubeentries and not onlyassets:
             pprint("Deploying Kube Entries...")
             dnsclients = {}
