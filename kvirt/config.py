@@ -1637,34 +1637,6 @@ class Kconfig(Kbaseconfig):
                     cmd = imageprofile.get('cmd')
                     self.handle_host(pool=pool, image=image, download=True, cmd=cmd, url=imageurl, update_profile=True,
                                      size=imagesize)
-        if dnsentries and not onlyassets:
-            pprint("Deploying Dns Entries...")
-            dnsclients = {}
-            for dnsentry in dnsentries:
-                dnsprofile = entries[dnsentry]
-                dnsdomain = dnsprofile.get('domain')
-                dnsnet = dnsprofile.get('net', 'default')
-                dnsip = dnsprofile.get('ip')
-                dnsalias = dnsprofile.get('alias', [])
-                dnsclient = dnsprofile.get('client')
-                if dnsclient is None:
-                    z = k
-                elif dnsclient in dnsclients:
-                    z = dnsclients[dnsclient]
-                elif dnsclient in self.clients:
-                    z = Kconfig(client=dnsclient).k
-                    dnsclients[dnsclient] = z
-                else:
-                    warning(f"Client {dnsclient} not found. Skipping")
-                    return
-                if dnsip is None:
-                    warning("Missing ip. Skipping!")
-                    return
-                if dnsnet is None:
-                    warning("Missing net. Skipping!")
-                    return
-                z.reserve_dns(name=dnsentry, nets=[dnsnet], domain=dnsdomain, ip=dnsip, alias=dnsalias, force=True,
-                              primary=True)
         if bucketentries and not onlyassets and self.type in ['aws', 'gcp', 'openstack']:
             pprint("Deploying Bucket Entries...")
             for bucketentry in bucketentries:
@@ -2046,6 +2018,34 @@ class Kconfig(Kbaseconfig):
                 success(f"Container {container} deployed!")
                 cont.create_container(name=container, image=containerimage, nets=nets, cmds=cmds, ports=ports,
                                       volumes=volumes, environment=environment, label=label)
+        if dnsentries and not onlyassets:
+            pprint("Deploying Dns Entries...")
+            dnsclients = {}
+            for dnsentry in dnsentries:
+                dnsprofile = entries[dnsentry]
+                dnsdomain = dnsprofile.get('domain')
+                dnsnet = dnsprofile.get('net', 'default')
+                dnsip = dnsprofile.get('ip')
+                dnsalias = dnsprofile.get('alias', [])
+                dnsclient = dnsprofile.get('client')
+                if dnsclient is None:
+                    z = k
+                elif dnsclient in dnsclients:
+                    z = dnsclients[dnsclient]
+                elif dnsclient in self.clients:
+                    z = Kconfig(client=dnsclient).k
+                    dnsclients[dnsclient] = z
+                else:
+                    warning(f"Client {dnsclient} not found. Skipping")
+                    return
+                if dnsip is None:
+                    warning("Missing ip. Skipping!")
+                    return
+                if dnsnet is None:
+                    warning("Missing net. Skipping!")
+                    return
+                z.reserve_dns(name=dnsentry, nets=[dnsnet], domain=dnsdomain, ip=dnsip, alias=dnsalias, force=True,
+                              primary=True)
         if ansibleentries and not onlyassets:
             if not newvms:
                 warning("Ansible skipped as no new vm within playbook provisioned")
