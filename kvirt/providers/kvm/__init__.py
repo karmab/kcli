@@ -1404,10 +1404,20 @@ class Kvirt(object):
             available = float(available)
             print(("Storage:%s Type: %s Path:%s Used space: %sGB Available space: %sGB" % (poolname, pooltype, poolpath,
                                                                                            used, available)))
-        for interface in conn.listInterfaces():
-            if interface == 'lo':
-                continue
-            print("Network: %s Type: bridged" % interface)
+        try:
+            for interface in conn.listInterfaces():
+                if interface == 'lo':
+                    continue
+                print("Network: %s Type: bridged" % interface)
+        except libvirtError as e:
+            # at some host it is not possible to list interfaces because of permissions
+            # (for example using qemu:///session instead of qemu:///system), or because
+            # of bugs (like in openSUSE Leap 15.3 and earlier).
+            if 'this function is not supported by the connection driver: virConnectNumOfInterfaces' in str(e):
+                print("Network: system interfaces are unavailable")
+            else:
+                raise(e)
+
         for network in conn.listAllNetworks():
             networkname = network.name()
             netxml = network.XMLDesc(0)
