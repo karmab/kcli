@@ -263,16 +263,14 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
     else:
         publickeyfile = get_ssh_pub_key() if not overrides.get('nopubkey', False) else None
         userdata = '#cloud-config\n'
+        userdata += 'final_message: kcli boot finished, up $UPTIME seconds\n'
         if not noname:
             userdata += 'hostname: %s\n' % name
-        userdata += 'final_message: kcli boot finished, up $UPTIME seconds\n'
-        if fqdn:
-            fqdn = "%s.%s" % (name, domain) if domain is not None else name
-            userdata += "fqdn: %s\n" % fqdn
+            if fqdn:
+                fqdn = "%s.%s" % (name, domain) if domain is not None else name
+                userdata += "fqdn: %s\n" % fqdn
         if enableroot:
             userdata += "ssh_pwauth: True\ndisable_root: false\n"
-        if domain is not None:
-            userdata += "fqdn: %s.%s\n" % (name, domain)
         validkeyfound = False
         if keys or publickeyfile is not None:
             userdata += "ssh_authorized_keys:\n"
