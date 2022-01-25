@@ -356,11 +356,12 @@ def keep_lease_alive(lease):
 
 class Ksphere:
     def __init__(self, host, user, password, datacenter, cluster, debug=False, isofolder=None,
-                 filtervms=False, filteruser=False, filtertag=None):
+                 filtervms=False, filteruser=False, filtertag=None, category='kcli'):
         si = connect.SmartConnectNoSSL(host=host, port=443, user=user, pwd=password)
         self.conn = si
         self.si = si
         self.vcip = host
+        self.category = category
         self.url = "https://%s:%s@%s/sdk" % (user, password, host)
         self.user = user
         self.password = password
@@ -451,6 +452,11 @@ class Ksphere:
                 opt = vim.option.OptionValue()
                 opt.key = entry
                 opt.value = metadata[entry]
+                extraconfig.append(opt)
+            if tags:
+                opt = vim.option.OptionValue()
+                opt.key = 'tags'
+                opt.value = ','.join(tags)
                 extraconfig.append(opt)
             clonespec.config = confspec
             clonespec.powerOn = False
@@ -721,6 +727,23 @@ class Ksphere:
         if start:
             t = vm.PowerOnVM_Task(None)
             waitForMe(t)
+        if tags:
+            pprint("Assigning tags")
+            from kvirt.providers.vsphere.tagging import KsphereTag
+            ktag = KsphereTag(self.vcip, self.user, self.password)
+            category = self.category
+            category_id = ktag.get_category_id(category)
+            if category_id is None:
+                category_id = ktag.create_category(category)
+            tags_ids = []
+            for tag in tags:
+                tag_id = ktag.get_tag_id(tag)
+                if tag_id is None:
+                    tag_id = ktag.create_tag(category_id, tag)
+                tags_ids.append(tag_id)
+            if tags_ids:
+                vm_id = vm._moId
+                ktag.add_tags(vm_id, tags_ids)
         return {'result': 'success'}
 
     def start(self, name):
@@ -885,6 +908,8 @@ class Ksphere:
                 yamlinfo[entry.key] = entry.value
             if entry.key == 'image':
                 yamlinfo['user'] = common.get_user(entry.value)
+            if entry.key == 'tags':
+                yamlinfo['tags'] = entry.value
         if listinfo:
             return yamlinfo
         if debug:
@@ -915,6 +940,11 @@ class Ksphere:
                 disk = {'device': device, 'size': int(disksize), 'format': diskformat, 'type': drivertype,
                         'path': path}
                 yamlinfo['disks'].append(disk)
+            # from kvirt.providers.vsphere.tagging import KsphereTag
+            # ktag = KsphereTag(self.vcip, self.user, self.password)
+            # tags = ktag.list_vm_tags(vm._moId)
+            # if tags:
+            #     yamlinfo['tags'] = ','.join(tags)
         return yamlinfo
 
     def list(self):
