@@ -731,12 +731,21 @@ class Ksphere:
             pprint("Assigning tags")
             from kvirt.providers.vsphere.tagging import KsphereTag
             ktag = KsphereTag(self.vcip, self.user, self.password)
-            category = self.category
-            category_id = ktag.get_category_id(category)
-            if category_id is None:
-                category_id = ktag.create_category(category)
+            categories = {}
             tags_ids = []
-            for tag in tags:
+            for entry in tags:
+                if isinstance(entry, str) and '=' in entry:
+                    category, tag = entry.split('=')
+                elif isinstance(entry, dict) and len(list(entry.keys())) == 1:
+                    category, tag = list(entry.keys())[0], list(entry.values())[0]
+                else:
+                    category, tag = self.category, entry
+                if category not in categories:
+                    category_id = ktag.get_category_id(category)
+                    if category_id is None:
+                        category_id = ktag.create_category(category)
+                    categories[category] = category_id
+                category_id = categories[category]
                 tag_id = ktag.get_tag_id(tag)
                 if tag_id is None:
                     tag_id = ktag.create_tag(category_id, tag)
