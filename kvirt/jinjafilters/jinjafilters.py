@@ -148,10 +148,14 @@ def find_manifests(directory, suffix='yaml'):
     return results
 
 
+def exists(name):
+    return True if os.path.exists(name) else False
+
+
 jinjafilters = {'basename': basename, 'dirname': dirname, 'ocpnodes': ocpnodes, 'none': none, 'type': _type,
                 'certificate': certificate, 'base64': base64, 'github_version': github_version,
                 'defaultnodes': defaultnodes, 'waitcrd': waitcrd, 'local_ip': local_ip, 'network_ip': network_ip,
-                'kcli_info': kcli_info, 'find_manifests': find_manifests}
+                'kcli_info': kcli_info, 'find_manifests': find_manifests, 'exists': exists}
 
 
 class FilterModule(object):
