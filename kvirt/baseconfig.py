@@ -19,7 +19,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             CPUFLAGS, CPUPINNING, NUMAMODE, NUMA, PCIDEVICES, VIRTTYPE, MAILSERVER, MAILFROM, MAILTO,
                             TPM, JENKINSMODE, RNG, ZEROTIER_NETS, ZEROTIER_KUBELET, VMPORT, VMUSER, VMRULES, CACHE,
                             SECURITYGROUPS, LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG, ROOTPASSWORD, WAIT, WAITCOMMAND,
-                            WAITTIMEOUT)
+                            WAITTIMEOUT, NOPUBKEY)
 from ipaddress import ip_address
 from random import choice
 from kvirt import common
@@ -212,6 +212,7 @@ class Kbaseconfig:
         defaults['wait'] = default.get('wait', WAIT)
         defaults['waitcommand'] = default.get('waitcommand', WAITCOMMAND)
         defaults['waittimeout'] = default.get('waittimeout', WAITTIMEOUT)
+        defaults['nopubkey'] = default.get('nopubkey', NOPUBKEY)
         currentplanfile = "%s/.kcli/plan" % os.environ.get('HOME')
         if os.path.exists(currentplanfile):
             self.currentplan = open(currentplanfile).read().strip()
@@ -411,6 +412,7 @@ class Kbaseconfig:
         self.wait = options.get('wait', self.default['wait'])
         self.waitcommand = options.get('waitcommand', self.default['waitcommand'])
         self.waittimeout = options.get('waittimeout', self.default['waittimeout'])
+        self.nopubkey = options.get('nopubkey', self.default['nopubkey'])
         self.overrides = {}
 
     def switch_host(self, client):

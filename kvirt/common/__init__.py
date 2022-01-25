@@ -288,7 +288,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
         if keys:
             for key in list(set(keys)):
                 userdata += "- %s\n" % key
-        elif publickeyfile is not None:
+        if publickeyfile is not None:
             with open(publickeyfile, 'r') as ssh:
                 key = ssh.read().rstrip()
                 userdata += "- %s\n" % key
