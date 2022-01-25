@@ -261,7 +261,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
         pprint("using cloudinit from existing %s for %s" % (existing, name))
         userdata = open(existing).read()
     else:
-        publickeyfile = get_ssh_pub_key()
+        publickeyfile = get_ssh_pub_key() if not overrides.get('nopubkey', False) else None
         userdata = '#cloud-config\n'
         if not noname:
             userdata += 'hostname: %s\n' % name
@@ -278,7 +278,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             userdata += "ssh_authorized_keys:\n"
             validkeyfound = True
         elif find_executable('ssh-add') is not None:
-            agent_keys = os.popen('ssh-add -L 2>/dev/null | head -1').readlines()
+            agent_keys = os.popen('ssh-add -L 2>/dev/null | grep ssh | head -1').readlines()
             if agent_keys:
                 keys = agent_keys
                 validkeyfound = True
