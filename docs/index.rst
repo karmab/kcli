@@ -1293,7 +1293,7 @@ Parameter          Default Value                        Comments
 *reserveip*        false                                
 *reservedns*       false                                
 *reservehost*      false                                
-*keys*             []                                   Array of ssh public keys to inject to th vm
+*keys*             []                                   Array of ssh public keys to inject to the vm. Note it’s the actual content of the public key
 *cmds*             []                                   Array of commands to run
 *profile*          None                                 name of one of your profile
 *scripts*          []                                   array of paths of custom script to inject with cloudinit. It will be merged with cmds parameter. You can either specify full paths or relative to where you’re running kcli. Only checked in profile or plan file
