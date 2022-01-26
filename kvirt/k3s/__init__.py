@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from distutils.spawn import find_executable
-from kvirt.common import success, pprint, error, warning, get_kubectl, scp, _ssh_credentials, info2, container_mode
+from kvirt.common import success, pprint, error, warning, get_kubectl, info2, container_mode
 import os
 import sys
 import yaml
@@ -119,7 +119,6 @@ def create(config, plandir, cluster, overrides):
         pprint("Deploying extra masters")
         threaded = data.get('threaded', False) or data.get('masters_threaded', False)
         config.plan(plan, inputfile='%s/masters.yml' % plandir, overrides=nodes_overrides, threaded=threaded)
-    firstmasterip, firstmastervmport = _ssh_credentials(k, firstmaster)[1:]
     with open("%s/join.sh" % clusterdir, 'w') as f:
         if api_ip is None:
             api_ip = k.info(firstmaster)['ip']
@@ -127,11 +126,6 @@ def create(config, plandir, cluster, overrides):
         extra_args = data['extra_worker_args'] if data.get('extra_worker_args', []) else data.get('extra_args', [])
         extra_args = ' '.join(extra_args)
         f.write("%s sh -s - agent %s \n" % (joincmd, extra_args))
-    source, destination = "/root/kubeconfig", "%s/auth/kubeconfig" % clusterdir
-    scpcmd = scp(firstmaster, ip=firstmasterip, user='root', source=source, destination=destination,
-                 tunnel=config.tunnel, tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
-                 tunneluser=config.tunneluser, download=True, insecure=True, vmport=firstmastervmport)
-    os.system(scpcmd)
     workers = data.get('workers', 0)
     if workers > 0:
         pprint("Deploying workers")

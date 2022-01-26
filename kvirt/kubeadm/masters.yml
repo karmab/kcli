@@ -43,6 +43,11 @@
  wait: true
  notify: {{ notify }}
  notifycmd: {{ notifycmd }}
+ finishfiles:
+ - origin: /root/join.sh
+   path: ~/.kcli/clusters/{{ cluster }}/join.sh
+ - origin: /etc/kubernetes/admin.conf
+   path: ~/.kcli/clusters/{{ cluster }}/auth/kubeconfig
 {% endif %}
  nets: {{ [network] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}

@@ -2,7 +2,7 @@
 
 from distutils.spawn import find_executable
 from kvirt.common import success, error, pprint, warning, info2, container_mode
-from kvirt.common import get_kubectl, kube_create_app, scp, _ssh_credentials, get_ssh_pub_key
+from kvirt.common import get_kubectl, kube_create_app, get_ssh_pub_key
 from kvirt.defaults import UBUNTUS
 import os
 import sys
@@ -102,7 +102,6 @@ def create(config, plandir, cluster, overrides):
     image = data.get('image', 'centos7')
     data['ubuntu'] = True if 'ubuntu' in image.lower() or [entry for entry in UBUNTUS if entry in image] else False
     clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
-    firstmaster = "%s-master-0" % cluster
     if os.path.exists(clusterdir):
         error("Please remove existing directory %s first..." % clusterdir)
         sys.exit(1)
@@ -122,17 +121,6 @@ def create(config, plandir, cluster, overrides):
     result = config.plan(plan, inputfile='%s/masters.yml' % plandir, overrides=data, threaded=master_threaded)
     if result['result'] != "success":
         sys.exit(1)
-    source, destination = "/root/join.sh", "%s/join.sh" % clusterdir
-    firstmasterip, firstmastervmport = _ssh_credentials(k, firstmaster)[1:]
-    scpcmd = scp(firstmaster, ip=firstmasterip, user='root', source=source, destination=destination,
-                 tunnel=config.tunnel, tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
-                 tunneluser=config.tunneluser, download=True, insecure=True, vmport=firstmastervmport)
-    os.system(scpcmd)
-    source, destination = "/etc/kubernetes/admin.conf", "%s/auth/kubeconfig" % clusterdir
-    scpcmd = scp(firstmaster, ip=firstmasterip, user='root', source=source, destination=destination,
-                 tunnel=config.tunnel, tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
-                 tunneluser=config.tunneluser, download=True, insecure=True, vmport=firstmastervmport)
-    os.system(scpcmd)
     workers = data.get('workers', 0)
     if workers > 0:
         pprint("Deploying workers")

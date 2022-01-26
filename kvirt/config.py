@@ -2739,7 +2739,7 @@ class Kconfig(Kbaseconfig):
                 destination = '.'
                 source = finishfile if '/' in finishfile else f'/root/{finishfile}'
             elif isinstance(finishfile, dict) and 'origin' in finishfile and 'path' in finishfile:
-                source, destination = finishfile.get('origin'), finishfile.get('path', '.')
+                source, destination = finishfile.get('origin'), os.path.expanduser(finishfile.get('path', '.'))
             else:
                 warning(f"Incorrect finishfile entry {finishfile}. Skipping")
                 continue

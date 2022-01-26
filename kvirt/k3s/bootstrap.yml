@@ -27,3 +27,6 @@
 {% if masters > 1 and config_type not in ['aws', 'gcp'] %}
   - keepalived.sh
 {% endif %}
+ finishfiles:
+ - origin: /root/kubeconfig
+   path: ~/.kcli/clusters/{{ cluster }}/auth/kubeconfig
