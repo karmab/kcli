@@ -2816,27 +2816,20 @@ class Kconfig(Kbaseconfig):
             failedvms.append(name)
         start = profile.get('start', True)
         cloudinit = profile.get('cloudinit', True)
-        wait = profile.get('wait', False)
-        waitcommand = profile.get('waitcommand')
-        if waitcommand is not None:
-            wait = True
-        waittimeout = profile.get('waittimeout', 0)
         asyncwait = profile.get('asyncwait', False)
         finishfiles = profile.get('finishfiles', [])
         if onlyassets:
             newassets.append(result['data'])
-        elif not wait and not asyncwait:
+        if not asyncwait:
             return
         elif not start or not cloudinit or profile.get('image') is None:
             pprint(f"Skipping wait on {name}")
-        elif asyncwait:
+        else:
+            waitcommand = profile.get('waitcommand')
+            waittimeout = profile.get('waittimeout', 0)
             asyncwaitvm = {'name': name, 'finishfiles': finishfiles, 'waitcommand': waitcommand,
                            'waittimeout': waittimeout}
             asyncwaitvms.append(asyncwaitvm)
-        else:
-            self.wait_finish(name, waitcommand=waitcommand, waittimeout=waittimeout)
-            if finishfiles:
-                self.handle_finishfiles(name, finishfiles)
 
     def threaded_create_vm(self, name, profilename, currentoverrides, profile, z, plan, currentplandir, vmclient,
                            onfly, onlyassets, newvms, failedvms, asyncwaitvms, newassets):
