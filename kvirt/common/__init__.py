@@ -286,6 +286,15 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
         if keys:
             for key in list(set(keys)):
                 userdata += "- %s\n" % key
+        tempkeydir = overrides.get('tempkeydir')
+        if tempkeydir is not None:
+            if not keys:
+                warning("no extra keys specified along with tempkey one, you might have trouble accessing the vm")
+            privatekeyfile = f"{tempkeydir.name}/id_rsa"
+            publickeyfile = f"{privatekeyfile}.pub"
+            if not os.path.exists(privatekeyfile):
+                tempkeycmd = f"echo n | ssh-keygen -q -t rsa -N '' -f {privatekeyfile}"
+                os.system(tempkeycmd)
         if publickeyfile is not None:
             with open(publickeyfile, 'r') as ssh:
                 key = ssh.read().rstrip()
