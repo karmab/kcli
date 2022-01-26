@@ -603,7 +603,6 @@ class Kconfig(Kbaseconfig):
             default_virttype = father.get('virttype', self.virttype)
             default_securitygroups = father.get('securitygroups', self.securitygroups)
             default_rootpassword = father.get('rootpassword', self.rootpassword)
-            default_nopubkey = father.get('nopubkey', self.nopubkey)
             default_wait = father.get('wait', self.wait)
             default_waitcommand = father.get('waitcommand', self.waitcommand)
             default_waittimeout = father.get('waittimeout', self.waittimeout)
@@ -680,7 +679,6 @@ class Kconfig(Kbaseconfig):
             default_virttype = self.virttype
             default_securitygroups = self.securitygroups
             default_rootpassword = self.rootpassword
-            default_nopubkey = self.nopubkey
             default_wait = self.wait
             default_waitcommand = self.waitcommand
             default_waittimeout = self.waittimeout
@@ -807,7 +805,6 @@ class Kconfig(Kbaseconfig):
         cpuhotplug = profile.get('cpuhotplug', default_cpuhotplug)
         memoryhotplug = profile.get('memoryhotplug', default_memoryhotplug)
         rootpassword = profile.get('rootpassword', default_rootpassword)
-        nopubkey = profile.get('nopubkey', default_nopubkey)
         wait = profile.get('wait', default_wait)
         waitcommand = profile.get('waitcommand', default_waitcommand)
         if waitcommand is not None:
