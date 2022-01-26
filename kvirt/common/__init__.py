@@ -887,9 +887,10 @@ def ssh(name, ip='', user=None, local=None, remote=None, tunnel=False, tunnelhos
         return None
     else:
         sshcommand = "%s@%s" % (user, ip)
-        publickeyfile = get_ssh_pub_key()
-        if publickeyfile is not None:
-            identityfile = publickeyfile.replace('.pub', '')
+        if identityfile is None:
+            publickeyfile = get_ssh_pub_key()
+            if publickeyfile is not None:
+                identityfile = publickeyfile.replace('.pub', '')
         if identityfile is not None:
             sshcommand = "-i %s %s" % (identityfile, sshcommand)
         if D:
