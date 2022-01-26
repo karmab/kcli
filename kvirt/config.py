@@ -603,6 +603,7 @@ class Kconfig(Kbaseconfig):
             default_virttype = father.get('virttype', self.virttype)
             default_securitygroups = father.get('securitygroups', self.securitygroups)
             default_rootpassword = father.get('rootpassword', self.rootpassword)
+            default_tempkey = father.get('tempkey', self.tempkey)
             default_wait = father.get('wait', self.wait)
             default_waitcommand = father.get('waitcommand', self.waitcommand)
             default_waittimeout = father.get('waittimeout', self.waittimeout)
@@ -679,6 +680,7 @@ class Kconfig(Kbaseconfig):
             default_virttype = self.virttype
             default_securitygroups = self.securitygroups
             default_rootpassword = self.rootpassword
+            default_tempkey = self.tempkey
             default_wait = self.wait
             default_waitcommand = self.waitcommand
             default_waittimeout = self.waittimeout
@@ -805,6 +807,7 @@ class Kconfig(Kbaseconfig):
         cpuhotplug = profile.get('cpuhotplug', default_cpuhotplug)
         memoryhotplug = profile.get('memoryhotplug', default_memoryhotplug)
         rootpassword = profile.get('rootpassword', default_rootpassword)
+        tempkey = profile.get('tempkey', default_tempkey)
         wait = profile.get('wait', default_wait)
         waitcommand = profile.get('waitcommand', default_waitcommand)
         if waitcommand is not None:
@@ -1012,6 +1015,10 @@ class Kconfig(Kbaseconfig):
         if kube is not None and kubetype is not None:
             metadata['kubetype'] = kubetype
             metadata['kube'] = kube
+        if tempkey:
+            if overrides.get('tempkeydir') is None:
+                tempkeydir = TemporaryDirectory()
+                overrides['tempkeydir'] = tempkeydir
         if start and cloudinit and not cmds and not files:
             good_keys = ['name', 'noname', 'type', 'plan', 'compact', 'hostgroup', 'hostrule', 'vmgroup', 'antipeers',
                          'hugepages']
@@ -1087,10 +1094,16 @@ class Kconfig(Kbaseconfig):
             if not cloudinit or not start or image is None:
                 pprint(f"Skipping wait on {name}")
             else:
-                self.wait_finish(name, image=image, waitcommand=waitcommand, waittimeout=waittimeout)
+                identityfile = None
+                if overrides.get('tempkeydir') is not None:
+                    identityfile = f"{overrides['tempkeydir'].name}/id_rsa"
+                self.wait_finish(name, image=image, waitcommand=waitcommand, waittimeout=waittimeout,
+                                 identityfile=identityfile)
                 finishfiles = profile.get('finishfiles', [])
                 if finishfiles:
-                    self.handle_finishfiles(name, finishfiles)
+                    self.handle_finishfiles(name, finishfiles, identityfile=identityfile)
+        if overrides.get('tempkeydir') is not None and not overrides.get('tempkeydirkeep', False):
+            overrides.get('tempkeydir').cleanup()
         return {'result': 'success', 'vm': name}
 
     def list_plans(self):
@@ -1646,6 +1659,11 @@ class Kconfig(Kbaseconfig):
                 self.k.create_bucket(bucketentry)
                 for _fil in _files:
                     self.k.upload_to_bucket(bucketentry, _fil)
+        tempkey = overrides.get('tempkey', False) or self.tempkey
+        if tempkey:
+            tempkeydir = TemporaryDirectory()
+            overrides['tempkeydir'] = tempkeydir
+            overrides['tempkeydirkeep'] = True
         if planentries:
             pprint("Deploying Plans...")
             for planentry in planentries:
@@ -2153,6 +2171,8 @@ class Kconfig(Kbaseconfig):
                         error("Issues running kcli_post.sh. Leaving")
             else:
                 warning("Skipping kcli_post.sh as requested")
+        if overrides.get('tempkeydir') is not None:
+            overrides.get('tempkeydir').cleanup()
         return returndata
 
     def handle_host(self, pool=None, image=None, switch=None, download=False,
@@ -2353,7 +2373,7 @@ class Kconfig(Kbaseconfig):
         else:
             return k.list_loadbalancers()
 
-    def wait_finish(self, name, image=None, quiet=False, waitcommand=None, waittimeout=0):
+    def wait_finish(self, name, image=None, quiet=False, waitcommand=None, waittimeout=0, identityfile=None):
         k = self.k
         if image is None:
             image = k.info(name)['image']
@@ -2391,7 +2411,8 @@ class Kconfig(Kbaseconfig):
                     else:
                         testcmd = common.ssh(name, user=user, ip=ip, tunnel=self.tunnel, tunnelhost=self.tunnelhost,
                                              tunnelport=self.tunnelport, tunneluser=self.tunneluser,
-                                             insecure=self.insecure, cmd='id -un', vmport=vmport)
+                                             insecure=self.insecure, cmd='id -un', vmport=vmport,
+                                             identityfile=identityfile)
                         if os.popen(testcmd).read().strip() != user:
                             warning("Gathered ip not functional yet...")
                             ip = None
@@ -2406,7 +2427,8 @@ class Kconfig(Kbaseconfig):
         timeout = 0
         while True:
             sshcmd = common.ssh(name, user='root', ip=ip, tunnel=self.tunnel, tunnelhost=self.tunnelhost, vmport=vmport,
-                                tunnelport=self.tunnelport, tunneluser=self.tunneluser, insecure=self.insecure, cmd=cmd)
+                                tunnelport=self.tunnelport, tunneluser=self.tunneluser, insecure=self.insecure, cmd=cmd,
+                                identityfile=identityfile)
             output = os.popen(sshcmd).read()
             if waitcommand is not None:
                 if output != '':
@@ -2732,7 +2754,7 @@ class Kconfig(Kbaseconfig):
             auths = {'auths': {disconnected_url: {'auth': key, 'email': 'jhendrix@karmalabs.com'}}}
             data['pull_secret'] = json.dumps(auths)
 
-    def handle_finishfiles(self, name, finishfiles):
+    def handle_finishfiles(self, name, finishfiles, identityfile=None):
         current_ip = common._ssh_credentials(self.k, name)[1]
         for finishfile in finishfiles:
             if isinstance(finishfile, str):
@@ -2745,7 +2767,7 @@ class Kconfig(Kbaseconfig):
                 continue
             scpcmd = common.scp(name, ip=current_ip, user='root', source=source, destination=destination,
                                 tunnel=self.tunnel, tunnelhost=self.tunnelhost, tunnelport=self.tunnelport,
-                                tunneluser=self.tunneluser, download=True, insecure=True)
+                                tunneluser=self.tunneluser, download=True, insecure=True, identityfile=identityfile)
             os.system(scpcmd)
 
     def handle_notifications(self, name, notifymethods=[], pushbullettoken=None, notifyscript=None, notifycmd=None,
