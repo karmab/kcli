@@ -2057,15 +2057,12 @@ def info_network(k, name):
 
 
 def get_ssh_pub_key():
-    for path in SSH_PUB_LOCATIONS:
-        sshpath = os.path.expanduser("~/.ssh/%s" % path)
-        sshprivpath = sshpath.replace('.pub', '')
-        kclipath = os.path.expanduser("~/.kcli/%s" % path)
-        kcliprivpath = kclipath.replace('.pub', '')
-        if os.path.exists(kclipath) and os.path.exists(kcliprivpath):
-            return kclipath
-        elif os.path.exists(sshpath) and os.path.exists(sshprivpath):
-            return sshpath
+    for _dir in ['.kcli', '.ssh']:
+        for path in SSH_PUB_LOCATIONS:
+            pubpath = os.path.expanduser(f"~/{_dir}/{path}")
+            privpath = pubpath.replace('.pub', '')
+            if os.path.exists(pubpath) and os.path.exists(privpath):
+                return pubpath
 
 
 def container_mode():
