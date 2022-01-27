@@ -2,6 +2,7 @@
 # PYTHON_ARGCOMPLETE_OK
 # coding=utf-8
 
+from copy import deepcopy
 from distutils.spawn import find_executable
 from getpass import getuser
 from kvirt.config import Kconfig
@@ -17,6 +18,7 @@ from prettytable import PrettyTable
 import argcomplete
 import argparse
 from argparse import RawDescriptionHelpFormatter as rawhelp
+from ipaddress import ip_address
 from glob import glob
 from kvirt import common
 from kvirt.common import error, pprint, success, warning, ssh, _ssh_credentials, container_mode
@@ -1253,7 +1255,18 @@ def create_vm(args):
             overrides['plan'] = name
         for number in range(count):
             currentname = "%s-%d" % (name, number)
-            result = config.create_vm(currentname, profile, overrides=overrides, customprofile=customprofile,
+            currentoverrides = deepcopy(overrides)
+            if 'nets' in currentoverrides:
+                for index, net in enumerate(currentoverrides['nets']):
+                    if not isinstance(net, dict):
+                        continue
+                    if 'mac' in net:
+                        suffix = hex(int(net['mac'][-2:]) + number)[2:].rjust(2, '0')
+                        currentoverrides['nets'][index]['mac'] = f"{net['mac'][:-2]}{suffix}"
+                    if 'ip' in net:
+                        ip = str(ip_address(net['ip']) + number)
+                        currentoverrides['nets'][index]['ip'] = ip
+            result = config.create_vm(currentname, profile, overrides=currentoverrides, customprofile=customprofile,
                                       onlyassets=onlyassets)
             if not onlyassets:
                 codes.append(common.handle_response(result, currentname, element='', action='created',
