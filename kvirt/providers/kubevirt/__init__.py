@@ -662,7 +662,7 @@ class Kubevirt(Kubecommon):
             listinfo = True
         metadata = vm.get("metadata")
         spec = vm.get("spec")
-        running = spec.get("running")
+        running = spec.get("running", True)
         annotations = metadata.get("annotations")
         spectemplate = vm['spec'].get('template')
         volumes = spectemplate['spec']['volumes']
@@ -774,8 +774,8 @@ class Kubevirt(Kubecommon):
             disk = {'device': d['name'], 'size': size, 'format': bus, 'type': _type, 'path': volumename}
             disks.append(disk)
         yamlinfo['disks'] = disks
-        interfaces = vm['spec']['template']['spec']['domain']['devices']['interfaces']
-        networks = vm['spec']['template']['spec']['networks']
+        interfaces = vm['spec']['template']['spec']['domain']['devices'].get('interfaces', [])
+        networks = vm['spec']['template']['spec'].get('networks', [])
         for index, interface in enumerate(interfaces):
             device = 'eth%s' % index
             net = networks[index]
