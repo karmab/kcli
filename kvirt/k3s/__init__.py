@@ -75,6 +75,9 @@ def create(config, plandir, cluster, overrides):
             else:
                 error("You need to define api_ip in your parameters file")
                 sys.exit(1)
+        if data.get('virtual_router_id') is None:
+            data['virtual_router_id'] = hash(data['cluster']) % 254 + 1
+            pprint("Using keepalived virtual_router_id %s" % data['virtual_router_id'])
     data['basedir'] = '/workdir' if container_mode() else '.'
     install_k3s_args = []
     for arg in data:
