@@ -293,7 +293,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             privatekeyfile = f"{tempkeydir.name}/id_rsa"
             publickeyfile = f"{privatekeyfile}.pub"
             if not os.path.exists(privatekeyfile):
-                tempkeycmd = f"echo n | ssh-keygen -q -t rsa -N '' -f {privatekeyfile}"
+                tempkeycmd = f"echo n | ssh-keygen -q -t rsa -N '' -C 'temp-kcli-key' -f {privatekeyfile}"
                 os.system(tempkeycmd)
         if publickeyfile is not None:
             with open(publickeyfile, 'r') as ssh:
