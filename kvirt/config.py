@@ -1466,7 +1466,7 @@ class Kconfig(Kbaseconfig):
             if container_mode():
                 path = f"/workdir/{path}"
             if not os.path.exists(path):
-                toclean = True if info else False
+                toclean = True
                 common.fetch(url, path)
                 for default_parameter_file in ['/kcli_default.yml', f'/{plan}_default.yml',
                                                "/%s_default%s" % os.path.splitext(os.path.basename(url))]:
