@@ -359,9 +359,11 @@ class Kconfig(Kbaseconfig):
                 filteruser = self.options.get('filteruser', False)
                 filtertag = self.options.get('filtertag')
                 category = self.options.get('category', 'kcli')
+                basefolder = self.options.get('basefolder')
                 from kvirt.providers.vsphere import Ksphere
                 k = Ksphere(self.host, user, password, datacenter, cluster, isofolder=isofolder, debug=debug,
-                            filtervms=filtervms, filteruser=filteruser, filtertag=filtertag, category=category)
+                            filtervms=filtervms, filteruser=filteruser, filtertag=filtertag, category=category,
+                            basefolder=basefolder)
             elif self.type == 'packet':
                 auth_token = self.options.get('auth_token')
                 if auth_token is None:

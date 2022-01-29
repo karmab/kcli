@@ -356,7 +356,7 @@ def keep_lease_alive(lease):
 
 class Ksphere:
     def __init__(self, host, user, password, datacenter, cluster, debug=False, isofolder=None,
-                 filtervms=False, filteruser=False, filtertag=None, category='kcli'):
+                 filtervms=False, filteruser=False, filtertag=None, category='kcli', basefolder=None):
         si = connect.SmartConnectNoSSL(host=host, port=443, user=user, pwd=password)
         self.conn = si
         self.si = si
@@ -389,6 +389,7 @@ class Ksphere:
             for portg in dvnetw.portgroup:
                 portgs[portg.name] = [uuid, portg.key]
         self.portgs = portgs
+        self.basefolder = basefolder
         return
 
     def close(self):
@@ -424,16 +425,22 @@ class Ksphere:
         memory = int(memory)
         numcpus = int(numcpus)
         si = self.si
+        basefolder = self.basefolder
         rootFolder = self.rootFolder
+        if basefolder is not None:
+            createfolder(si, dc.vmFolder, basefolder)
+            basefolder = find(si, dc.vmFolder, vim.Folder, basefolder)
+        else:
+            basefolder = dc.vmFolder
         cluster = overrides.get('cluster')
         if cluster is not None:
-            createfolder(si, dc.vmFolder, cluster)
-            vmfolder = find(si, dc.vmFolder, vim.Folder, cluster)
+            createfolder(si, basefolder, cluster)
+            vmfolder = find(si, basefolder, vim.Folder, cluster)
         elif plan != 'kvirt':
-            createfolder(si, dc.vmFolder, plan)
-            vmfolder = find(si, dc.vmFolder, vim.Folder, plan)
+            createfolder(si, basefolder, plan)
+            vmfolder = find(si, basefolder, vim.Folder, plan)
         else:
-            vmfolder = dc.vmFolder
+            vmfolder = basefolder
         si = self.si
         clu = find(si, rootFolder, vim.ComputeResource, self.clu)
         resourcepool = clu.resourcePool

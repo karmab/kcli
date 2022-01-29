@@ -521,6 +521,7 @@ The following parameters are specific to vsphere:
 -  datacenter Defaults to Default
 -  filtervms Defaults to True. Only list vms created by kcli. Useful for environments when you are superadmin and have a ton of vms!!!
 -  category: Defaults to kcli. Category where to create tags in order to apply them to vms. If tags are requested for a given vm, they will be created on the fly along with the category, if missing
+-  basefolder: Optional base folder where to create all vms
 
 Note that pool in Vsphere context refers to datastore.
 
