@@ -23,5 +23,4 @@
  - mount bpffs -t bpf /sys/fs/bpf
 {% endif %}
  - bash /root/join.sh
- - apt-get -y remove curl
 {% endfor %}
