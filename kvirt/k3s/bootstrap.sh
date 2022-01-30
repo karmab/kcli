@@ -19,4 +19,3 @@ tar xzvfC cilium-linux-amd64.tar.gz /usr/local/bin
 rm -f cilium-linux-amd64.tar.gz
 cilium install
 {% endif %}
-apt-get -y remove curl
