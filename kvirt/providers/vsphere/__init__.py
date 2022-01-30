@@ -796,7 +796,8 @@ class Ksphere:
     def delete(self, name, snapshots=False):
         si = self.si
         dc = self.dc
-        vmFolder = dc.vmFolder
+        basefolder = self.basefolder
+        vmFolder = find(si, dc.vmFolder, vim.Folder, basefolder) if basefolder is not None else dc.vmFolder
         vm = findvm(si, vmFolder, name)
         if vm is None:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
