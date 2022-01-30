@@ -126,7 +126,7 @@ def create(config, plandir, cluster, overrides):
         if api_ip is None:
             api_ip = k.info(firstmaster)['ip']
         joincmd = f"curl -sfL https://get.k3s.io | K3S_URL=https://{api_ip}:6443 K3S_TOKEN={token} "
-        joincmd += nodes_install_k3s_args
+        joincmd += install_k3s_args.copy()
         extra_args = data['extra_worker_args'] if data.get('extra_worker_args', []) else data.get('extra_args', [])
         extra_args = ' '.join(extra_args)
         f.write("%s sh -s - agent %s \n" % (joincmd, extra_args))
