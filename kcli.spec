@@ -11,8 +11,8 @@ Url:            http://github.com/karmab/kcli
 Summary:        Wrapper for libvirt,gcp,aws,ovirt,openstack,kubevirt and vsphere
 License:        ASL 2.0
 Group:          Development/Languages/Python
-VCS:            {{{ git_dir_vcs }}}
-Source:         {{{ git_pack }}}
+VCS:            {{{ git_dir_vcs}}}
+Source:         {{{ git_archive }}}
 AutoReq:        no
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildRequires:  python3-devel rubygem-ronn gzip python3-setuptools
