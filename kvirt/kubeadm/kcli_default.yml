@@ -9,7 +9,7 @@ info: |
     ${app}_version with version to target (instead of latest)
     You can set nip to true to use $api_ip.nip.io as base domain
     Default container engine is containerd, but crio or docker can be specified instead.
-image: centos8
+image: centos8stream
 network: default
 api_ip:
 masters: 1

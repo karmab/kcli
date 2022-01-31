@@ -1427,7 +1427,7 @@ class Kbaseconfig:
             os.makedirs(f"{directory}/files")
         else:
             warning(f"Directory {directory} already exists")
-        ori_data = {'cluster': 'testk', 'image': 'centos8', 'vms_number': 3, 'memory': 8192, 'numcpus': 4,
+        ori_data = {'cluster': 'testk', 'image': 'centos8stream', 'vms_number': 3, 'memory': 8192, 'numcpus': 4,
                     'nets': ['default', {'name': 'default', 'type': 'e1000'}],
                     'disks': [10, {'size': 20, 'interface': 'scsi'}], 'bestguitarist': 'jimihendrix',
                     'bestmovie': 'interstellar'}
