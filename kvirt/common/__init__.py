@@ -372,9 +372,8 @@ def process_files(files=[], overrides={}):
         mode = fil.get('mode', '0600' if not path.endswith('sh') and not path.endswith('py') else '0700')
         permissions = fil.get('permissions', mode)
         render = fil.get('render', True)
-        file_index = fil.get('index')
-        if file_index is not None and isinstance(file_index, int):
-            overrides['index'] = file_index
+        file_overrides = overrides.copy()
+        file_overrides.update(fil)
         binary = False
         if origin is not None:
             origin = os.path.expanduser(origin)
@@ -391,7 +390,7 @@ def process_files(files=[], overrides={}):
                     env.filters[jinjafilter] = jinjafilters.jinjafilters[jinjafilter]
                 try:
                     templ = env.get_template(os.path.basename(origin))
-                    fileentries = templ.render(overrides)
+                    fileentries = templ.render(file_overrides)
                 except TemplateNotFound:
                     error("File %s not found" % os.path.basename(origin))
                     sys.exit(1)
