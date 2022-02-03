@@ -52,8 +52,8 @@ If you don't have libvirt installed on the target hypervisor, you can use the fo
 ```bash
 sudo yum -y install libvirt libvirt-daemon-driver-qemu qemu-kvm 
 sudo usermod -aG qemu,libvirt $(id -un)
-newgrp libvirt
-systemctl enable --now libvirtd
+sudo newgrp libvirt
+sudo systemctl enable --now libvirtd
 ```
 
 (Optional) For interaction with your local docker daemon, you also need the following:
@@ -62,12 +62,6 @@ systemctl enable --now libvirtd
 sudo groupadd docker
 sudo usermod -aG docker YOUR_USER
 sudo systemctl restart docker
-```
-
-If not running as root, you'll have to add your user to those groups
-
-```bash
-sudo usermod -aG qemu,libvirt YOUR_USER
 ```
 
 ## Supported installation methods
@@ -86,7 +80,7 @@ The script can also be used for installation, which will make a guess on which m
 
 
 ```Shell
-curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | bash
+curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | sudo bash
 ```
 
 ## Package install method
@@ -94,7 +88,7 @@ curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | bash
 If using *fedora* or *rhel/centos8*,  you can run this as root:
 
 ```bash
-dnf -y copr enable karmab/kcli ; dnf -y install kcli
+sudo dnf -y copr enable karmab/kcli ; sudo dnf -y install kcli
 ```
 
 If using a debian based distribution, you can use this :
@@ -195,7 +189,7 @@ On most distributions, default network and storage pool for libvirt are already 
 If needed, you can create this default storage pool with this:
 
 ```Shell
-kcli create pool -p /var/lib/libvirt/images default
+sudo kcli create pool -p /var/lib/libvirt/images default
 sudo setfacl -m u:$(id -un):rwx /var/lib/libvirt/images
 ```
 
