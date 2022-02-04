@@ -845,6 +845,10 @@ class Kvirt(object):
                         continue
                     elif policy in ['force', 'require', 'optional', 'disable', 'forbid']:
                         cpuxml += "<feature policy='%s' name='%s'/>" % (policy, feature)
+        sockets, cores, threads = overrides.get('sockets'), overrides.get('cores'), overrides.get('threads', 1)
+        if sockets is not None and isinstance(sockets, int) and cores is not None and isinstance(cores, int):
+            numcpus = int(sockets) * int(cores) * int(threads)
+            cpuxml += f"<topology sockets='{sockets}' cores='{cores}' threads='{threads}'/>"
         busxml = ""
         if cpuxml != '':
             if numa:
