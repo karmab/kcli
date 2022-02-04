@@ -281,11 +281,17 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 keys = agent_keys
                 validkeyfound = True
         if not validkeyfound:
-            warning("neither id_rsa, id_dsa nor id_ed25519 public keys found in your .ssh or .kcli directories, "
-                    "you might have trouble accessing the vm")
+            warning("no valid public keys found in .ssh/.kcli directories, you might have trouble accessing the vm")
         if keys:
             for key in list(set(keys)):
-                userdata += "- %s\n" % key
+                newkey = key
+                if os.path.exists(os.path.expanduser(key)):
+                    keypath = os.path.expanduser(key)
+                    newkey = open(keypath, 'r').read().rstrip()
+                if not newkey.startswith('ssh-'):
+                    warning(f"Skipping invalid key {key}")
+                    continue
+                userdata += "- %s\n" % newkey
         tempkeydir = overrides.get('tempkeydir')
         if tempkeydir is not None:
             if not keys:
@@ -1081,14 +1087,20 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
                 publickeys.append(ssh.read().strip())
         if keys:
             for key in list(set(keys)):
-                publickeys.append(key)
+                newkey = key
+                if os.path.exists(os.path.expanduser(key)):
+                    keypath = os.path.expanduser(key)
+                    newkey = open(keypath, 'r').read().rstrip()
+                if not newkey.startswith('ssh-'):
+                    warning(f"Skipping invalid key {key}")
+                    continue
+                publickeys.append(newkey)
         elif not publickeys and find_executable('ssh-add') is not None:
             agent_keys = os.popen('ssh-add -L 2>/dev/null | head -1').readlines()
             if agent_keys:
                 publickeys = agent_keys
         if not publickeys:
-            warning("neither id_rsa, id_dsa nor id_ed25519 public keys found in your .ssh or .kcli directories, "
-                    "you might have trouble accessing the vm")
+            warning("no valid public keys found in .ssh/.kcli directories, you might have trouble accessing the vm")
     if not noname:
         hostnameline = quote("%s\n" % localhostname)
         storage["files"].append({"filesystem": "root", "path": "/etc/hostname", "overwrite": True,
