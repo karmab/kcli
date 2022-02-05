@@ -1567,7 +1567,7 @@ class Kconfig(Kbaseconfig):
             else:
                 error(f"{inputfile} doesn't look like a valid plan.Leaving....")
                 sys.exit(1)
-        inputdir = os.path.dirname(inputfile) if os.path.dirname(inputfile) != '' else '.'
+        inputdir = os.path.dirname(inputfile) if os.path.dirname(inputfile) != '' and os.path.isabs(inputfile) else '.'
         pre_base = os.path.splitext(os.path.basename(inputfile))[0]
         pre_script = f'{inputdir}/kcli_pre.sh' if pre_base == 'kcli_plan' else f"{inputdir}/{pre_base}_pre.sh"
         if os.path.exists(pre_script):
@@ -1733,7 +1733,7 @@ class Kconfig(Kbaseconfig):
             baseplans = []
             vmnames = [name for name in vmentries]
             if basefile is not None:
-                basedir = os.path.dirname(inputfile) if '/' in inputfile else '.'
+                basedir = os.path.dirname(inputfile) if os.path.isabs(inputfile) else '.'
                 baseinputfile = f"{basedir}/{basefile}"
                 if container_mode() and not os.path.isabs(basefile) and '/workdir' not in basedir:
                     baseinputfile = f"/workdir/{basedir}/{basefile}"
@@ -1768,7 +1768,7 @@ class Kconfig(Kbaseconfig):
                             baseplans.append(baseplan)
                         baseinfo = self.process_inputfile(plan, baseinputfile, overrides=overrides, full=True)
                         baseprofile = baseinfo[0][basevm] if basevm in baseinfo[0] else {}
-                        currentplandir = baseinfo[3]
+                        currentplandir = baseinfo[3] if os.path.isabs(baseinfo[3]) else '.'
                     elif 'basevm' in profile and profile['basevm'] in baseentries:
                         baseprofile = baseentries[profile['basevm']]
                     else:
