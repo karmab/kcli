@@ -1924,14 +1924,20 @@ def update_plan(args):
 
 def delete_plan(args):
     """Delete plan"""
-    plan = args.plan
+    plans = args.plans
+    codes = []
     yes = args.yes
     yes_top = args.yes_top
     if not yes and not yes_top:
         common.confirm("Are you sure?")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    result = config.delete_plan(plan, unregister=config.rhnunregister)
-    sys.exit(0 if 'result' in result and result['result'] == 'success' else 4)
+    for plan in plans:
+        result = config.delete_plan(plan, unregister=config.rhnunregister)
+        if 'result' in result and result['result'] == 'success':
+            codes.append(0)
+        else:
+            codes.append(4)
+    sys.exit(4 if 4 in codes else 0)
 
 
 def expose_plan(args):
@@ -4034,7 +4040,7 @@ def cli():
     plandelete_desc = 'Delete Plan'
     plandelete_parser = delete_subparsers.add_parser('plan', description=plandelete_desc, help=plandelete_desc)
     plandelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    plandelete_parser.add_argument('plan', metavar='PLAN')
+    plandelete_parser.add_argument('plans', metavar='PLAN', nargs='*')
     plandelete_parser.set_defaults(func=delete_plan)
 
     plansnapshotdelete_desc = 'Delete Plan Snapshot'
