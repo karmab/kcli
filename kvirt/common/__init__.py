@@ -368,12 +368,17 @@ def process_files(files=[], overrides={}):
                         files.append({'path': subpath, 'origin': "%s/%s" % (origin, entry)})
     for directory in todelete:
         files.remove(directory)
+    processed_files = []
     for fil in files:
         if not isinstance(fil, dict):
             continue
         origin = fil.get('origin')
         content = fil.get('content')
         path = fil.get('path')
+        if path in processed_files:
+            continue
+        else:
+            processed_files.append(path)
         owner = fil.get('owner', 'root')
         mode = fil.get('mode', '0600' if not path.endswith('sh') and not path.endswith('py') else '0700')
         permissions = fil.get('permissions', mode)
