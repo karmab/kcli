@@ -38,12 +38,12 @@ flavor:
 flavor_bootstrap:
 flavor_master:
 flavor_worker:
-numcpus: 4
+numcpus: 8
 bootstrap_numcpus:
 master_numcpus:
 worker_numcpus:
-memory: 8192
-bootstrap_memory:
+memory: 16384
+bootstrap_memory: 8192
 master_memory:
 worker_memory:
 mdns: true
