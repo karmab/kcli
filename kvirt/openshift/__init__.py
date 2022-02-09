@@ -534,6 +534,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             data['network_type'] = 'OVNKubernetes'
         data['ipv6'] = True
         overrides['ipv6'] = True
+        data['disconnected_ipv6_network'] = True
         if not disconnected_deploy and disconnected_url is None:
             warning("Forcing disconnected_deploy to True as no disconnected_url was provided")
             data['disconnected_deploy'] = True

@@ -6,8 +6,7 @@ export OCP_RELEASE="{{ disconnected_operators_version|default(tag) }}"
 export OCP_PULLSECRET_AUTHFILE='/root/openshift_pull.json'
 IP=$(ip -o addr show eth0 |head -1 | awk '{print $4}' | cut -d'/' -f1)
 REVERSE_NAME=$(dig -x $IP +short | sed 's/\.[^\.]*$//')
-echo $IP | grep -q ':' && SERVER6=$(grep : /etc/resolv.conf | grep -v fe80 | cut -d" " -f2) && REVERSE_NAME=$(dig -6x $IP +short @$SERVER6 | sed 's/\.[^\.]*$//')
-REGISTRY_NAME=${REVERSE_NAME:-$(hostname -f)}
+REGISTRY_NAME=$(echo $IP | sed 's/\./-/g' | sed 's/:/-/g').sslip.io
 export LOCAL_REGISTRY=$REGISTRY_NAME:5000
 export LOCAL_REGISTRY_INDEX_TAG=olm-index/redhat-operator-index:v$OCP_RELEASE
 export LOCAL_REGISTRY_IMAGE_TAG=olm

@@ -1171,6 +1171,8 @@ def create_openshift_disconnecter(args):
         plan = nameutils.get_random_name()
         pprint(f"Using {plan} as name of the plan")
     overrides = common.get_overrides(param=args.param)
+    if 'cluster' not in overrides:
+        overrides['cluster'] = plan
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     config.create_openshift_disconnecter(plan, overrides=overrides)
 
