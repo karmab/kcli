@@ -760,7 +760,8 @@ class Kconfig(Kbaseconfig):
                     origin = os.path.expanduser(origin)
                     if not os.path.isabs(origin):
                         if isinstance(fil, dict) and fil.get('currentdir', False):
-                            files[index]['origin'] = "%s/%s" % (os.getcwd(), os.path.basename(origin))
+                            origin = f"{os.getcwd()}/{origin}"
+                            files[index]['origin'] = origin
                         elif basedir != '.' and not origin.startswith('./') and not origin.startswith('/workdir/'):
                             origin = f"{basedir}/{origin}"
                             files[index]['origin'] = origin
