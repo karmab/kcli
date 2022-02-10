@@ -1,4 +1,4 @@
-FROM alpine:3.10
+FROM alpine:3.15
 
 MAINTAINER Karim Boumedhel <karimboumedhel@gmail.com>
 
@@ -12,7 +12,7 @@ LABEL name="karmab/kcli" \
 
 EXPOSE 9000
 
-RUN apk add --update --no-cache g++ gcc libvirt libvirt-dev libc6-compat python3-dev openssh-client curl curl-dev libressl-dev libxml2-dev linux-headers libffi-dev cdrkit xauth bash
+RUN apk add --update --no-cache g++ gcc libvirt libvirt-dev libc6-compat python3-dev openssh-client curl curl-dev libressl-dev libxml2-dev linux-headers libffi-dev cdrkit xauth bash py3-pip py3-wheel
 
 # Group the pip installation
 RUN mkdir /root/kcli
