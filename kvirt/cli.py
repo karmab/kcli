@@ -3867,7 +3867,8 @@ def cli():
     lblist_parser.set_defaults(func=list_lb)
 
     keywordinfo_desc = 'Info Keyword'
-    keywordinfo_parser = info_subparsers.add_parser('keyword', description=keywordinfo_desc, help=keywordinfo_desc)
+    keywordinfo_parser = info_subparsers.add_parser('keyword', description=keywordinfo_desc, help=keywordinfo_desc,
+                                                    aliases=['parameter'])
     keywordinfo_parser.add_argument('keyword', metavar='KEYWORD')
     keywordinfo_parser.set_defaults(func=info_keyword)
 
@@ -3912,7 +3913,7 @@ def cli():
 
     keywordlist_desc = 'List Keyword'
     keywordlist_parser = list_subparsers.add_parser('keyword', description=keywordlist_desc, help=keywordlist_desc,
-                                                    aliases=['keywords'])
+                                                    aliases=['keywords', 'parameter', 'parameters'])
     keywordlist_parser.set_defaults(func=list_keyword)
 
     networkinfo_desc = 'Info Network'
