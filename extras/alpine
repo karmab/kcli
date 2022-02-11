@@ -12,17 +12,14 @@ LABEL name="karmab/kcli" \
 
 EXPOSE 9000
 
-RUN apk add --update --no-cache g++ gcc libvirt libvirt-dev libc6-compat python3-dev openssh-client curl curl-dev libressl-dev libxml2-dev linux-headers libffi-dev cdrkit xauth bash py3-pip py3-wheel
-
-# Group the pip installation
 RUN mkdir /root/kcli
 ADD kvirt /root/kcli/kvirt
 COPY setup.py /root/kcli
 ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
-RUN pip3 install -U pip && pip3 install -e /root/kcli[all]
+RUN apk add --update --no-cache g++ gcc libvirt libvirt-dev libc6-compat python3-dev openssh-client curl curl-dev libressl-dev libxml2-dev linux-headers libffi-dev cdrkit xauth bash py3-pip py3-wheel && pip3 install -U pip && pip3 install --no-cache -e /root/kcli[all] && apk del g++ gcc libvirt-dev curl-dev libressl-dev libxml2-dev linux-headers libffi-dev
 ADD extras/i_am_a_container /i_am_a_container
 
-RUN echo eval \"\$\(register-python-argcomplete kcli\)\" >> /root/.bashrc && apk del g++ gcc libvirt-dev curl-dev libressl-dev libxml2-dev linux-headers libffi-dev
+RUN echo eval \"\$\(register-python-argcomplete kcli\)\" >> /root/.bashrc
 
 ENTRYPOINT ["/usr/bin/kcli"]
 CMD ["-h"]
