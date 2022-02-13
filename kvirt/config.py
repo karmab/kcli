@@ -874,7 +874,7 @@ class Kconfig(Kbaseconfig):
                     if scriptlines:
                         scriptlines.insert(0, f"echo Running script {scriptname}")
                         scriptcmds.extend(scriptlines)
-        if skip_rhnregister_script and cloudinit and image is not None and image.lower().startswith('rhel'):
+        if skip_rhnregister_script and cloudinit and image is not None and 'rhel' in image.lower():
             rhncommands = []
             if rhnak is not None and rhnorg is not None:
                 rhncommands.append('subscription-manager register --serverurl=%s --force --activationkey=%s --org=%s'
