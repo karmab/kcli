@@ -1293,7 +1293,7 @@ def clone_vm(args):
 def update_vm(args):
     """Update ip, memory or numcpus"""
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
-    ip1 = overrides.get('ip1')
+    ip = overrides.get('ip')
     flavor = overrides.get('flavor')
     numcpus = overrides.get('numcpus')
     memory = overrides.get('memory')
@@ -1321,10 +1321,10 @@ def update_vm(args):
             if not nets:
                 return
             else:
-                k.reserve_dns(name=name, nets=networks, domain=domain, ip=ip1)
-        if ip1 is not None:
-            pprint(f"Updating ip of vm {name} to {ip1}...")
-            k.update_metadata(name, 'ip', ip1)
+                k.reserve_dns(name=name, nets=networks, domain=domain, ip=ip)
+        if ip is not None:
+            pprint(f"Updating ip of vm {name} to {ip}...")
+            k.update_metadata(name, 'ip', ip)
         if cloudinit:
             pprint(f"Removing cloudinit information of vm {name}")
             k.remove_cloudinit(name)
@@ -1408,6 +1408,10 @@ def update_vm(args):
         if extra_metadata:
             for key in extra_metadata:
                 k.update_metadata(name, key, extra_metadata[key])
+        if overrides.get('files', []):
+            newfiles = overrides['files']
+            pprint(f"Remediating files of {name}")
+            config.remediate_files(name, newfiles, overrides)
 
 
 def create_vmdisk(args):
@@ -1902,6 +1906,7 @@ def update_plan(args):
     """Update plan"""
     autostart = args.autostart
     noautostart = args.noautostart
+    remediate = args.remediate
     plan = args.plan
     url = args.url
     path = args.path
@@ -1920,7 +1925,8 @@ def update_plan(args):
     elif noautostart:
         config.noautostart_plan(plan)
         return 0
-    config.plan(plan, url=url, path=path, container=container, inputfile=inputfile, overrides=overrides, update=True)
+    config.plan(plan, url=url, path=path, container=container, inputfile=inputfile, overrides=overrides, update=True,
+                remediate=remediate)
     return 0
 
 
@@ -4155,6 +4161,7 @@ def cli():
     planupdate_parser.add_argument('-P', '--param', action='append',
                                    help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
     planupdate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    planupdate_parser.add_argument('-r', '--remediate', action='store_true', help='Remediate files in the vms')
     planupdate_parser.add_argument('plan', metavar='PLAN')
     planupdate_parser.set_defaults(func=update_plan)
 

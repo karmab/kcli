@@ -327,14 +327,14 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
     return userdata.strip(), metadata, netdata
 
 
-def process_files(files=[], overrides={}):
+def process_files(files=[], overrides={}, remediate=False):
     """
 
     :param files:
     :param overrides:
     :return:
     """
-    data = ''
+    data = [] if remediate else ''
     todelete = []
     for directory in files:
         if not isinstance(directory, dict) or 'origin' not in directory\
@@ -423,6 +423,10 @@ def process_files(files=[], overrides={}):
                 #             f.write("%s\n" % line.rstrip())
             else:
                 content = [line.rstrip() for line in open(origin, 'r').readlines()]
+        if remediate:
+            newcontent = "%s\n" % '\n'.join(content) if isinstance(content, list) else content
+            data.append({'owner': owner, 'path': path, 'permissions': permissions, 'content': newcontent})
+            continue
         data += "- owner: %s:%s\n" % (owner, owner)
         data += "  path: %s\n" % path
         data += "  permissions: '%s'\n" % permissions
@@ -929,9 +933,9 @@ def ssh(name, ip='', user=None, local=None, remote=None, tunnel=False, tunnelhos
                 tunnelcommand = "-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o LogLevel=ERROR "
             else:
                 tunnelcommand = ""
-            tunnelcommand += "-qp %s -W %%h:%%p %s@%s" % (tunnelport, tunneluser, tunnelhost)
+            tunnelcommand += f"-qp {tunnelport} -W %h:%p {tunneluser}@{tunnelhost}"
             if identityfile is not None:
-                tunnelcommand = "-i %s %s" % (identityfile, tunnelcommand)
+                tunnelcommand = f"-i {identityfile} {tunnelcommand}"
             sshcommand = "-o ProxyCommand='ssh %s' %s" % (tunnelcommand, sshcommand)
             if ':' in ip:
                 sshcommand = sshcommand.replace(ip, '[%s]' % ip)
@@ -978,7 +982,8 @@ def scp(name, ip='', user=None, source=None, destination=None, recursive=None, t
         arguments = ''
         if tunnelhost is not None and tunnelhost not in ['localhost', '127.0.0.1'] and\
                 tunnel and tunneluser is not None:
-            arguments += "-o ProxyCommand='ssh -qp %s -W %%h:%%p %s@%s'" % (tunnelport, tunneluser, tunnelhost)
+            h = "[%h]" if ':' in ip else "%h"
+            arguments += f"-o ProxyCommand='ssh -qp {tunnelport} -W {h}:%p {tunneluser}@{tunnelhost}'"
         if insecure:
             arguments += " -o LogLevel=quiet -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
         scpcommand = 'scp -q'

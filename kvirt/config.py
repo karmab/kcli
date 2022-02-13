@@ -17,7 +17,7 @@ from kvirt.jinjafilters import jinjafilters
 from kvirt import nameutils
 from kvirt import common
 from kvirt.common import error, pprint, success, warning, generate_rhcos_iso, pwd_path, container_mode
-from kvirt.common import ssh, scp, _ssh_credentials, valid_ip
+from kvirt.common import ssh, scp, _ssh_credentials, valid_ip, process_files
 from kvirt import kind
 from kvirt import k3s
 from kvirt import kubeadm
@@ -732,46 +732,9 @@ class Kconfig(Kbaseconfig):
         dnsclient = profile.get('dnsclient', overrides.get('dnsclient', default_dnsclient))
         scripts = common.remove_duplicates(default_scripts + profile.get('scripts', []))
         files = profile.get('files', default_files)
-        if files:
-            for index, fil in enumerate(files):
-                if isinstance(fil, str):
-                    path = f"/root/{fil}"
-                    if basedir != '.':
-                        origin = f"{basedir}/{path}"
-                    origin = fil
-                    content = None
-                    files[index] = {'path': path, 'origin': origin}
-                elif isinstance(fil, dict):
-                    path = fil.get('path')
-                    if path is None or not path.startswith('/'):
-                        error(f"Incorrect path {path}.Leaving...")
-                        sys.exit(1)
-                    origin = fil.get('origin')
-                    content = fil.get('content')
-                else:
-                    return {'result': 'failure', 'reason': "Incorrect file entry"}
-                if origin is not None:
-                    if onfly is not None and '~' not in origin:
-                        destdir = basedir
-                        if '/' in origin:
-                            destdir = os.path.dirname(origin)
-                            os.makedirs(destdir, exist_ok=True)
-                        common.fetch(f"{onfly}/{origin}", destdir)
-                    origin = os.path.expanduser(origin)
-                    if not os.path.isabs(origin):
-                        if isinstance(fil, dict) and fil.get('currentdir', False):
-                            origin = f"{os.getcwd()}/{origin}"
-                            files[index]['origin'] = origin
-                        elif basedir != '.' and not origin.startswith('./') and not origin.startswith('/workdir/'):
-                            origin = f"{basedir}/{origin}"
-                            files[index]['origin'] = origin
-                    if not os.path.exists(origin):
-                        return {'result': 'failure', 'reason': f"File {origin} not found in {name}"}
-                elif content is None:
-                    return {'result': 'failure', 'reason': f"Content of file {path} not found in {name}"}
-                if path is None:
-                    pprint(f"Using current directory for path in files of {name}")
-                    path = os.path.basename(origin)
+        result = self.parse_files(name, files, basedir, onfly)
+        if result is not None:
+            return result
         env_parameters = [key for key in overrides if key.isupper()]
         if env_parameters:
             env_data = '\n'.join(["export %s=%s" % (key, overrides[key]) for key in env_parameters])
@@ -1436,7 +1399,7 @@ class Kconfig(Kbaseconfig):
 
     def plan(self, plan, ansible=False, url=None, path=None, container=False, inputfile=None, inputstring=None,
              overrides={}, info=False, update=False, embedded=False, download=False, quiet=False, doc=False,
-             onlyassets=False, pre=True, post=True, excludevms=[], basemode=False, threaded=False):
+             onlyassets=False, pre=True, post=True, excludevms=[], basemode=False, threaded=False, remediate=False):
         """Manage plan file"""
         k = self.k
         no_overrides = not overrides
@@ -1914,6 +1877,11 @@ class Kconfig(Kbaseconfig):
                                 for net in range(len(currentnets), len(profile['nets']), -1):
                                     interface = f"eth{net -1}"
                                     z.delete_nic(name, interface)
+                        newfiles = profile.get('files', [])
+                        if remediate and newfiles:
+                            pprint(f"Remediating files of {name} on {vmclient}")
+                            updated = True
+                            self.remediate_files(name, newfiles, overrides)
                         if not updated:
                             pprint(f"{name} skipped on {vmclient}!")
                     existingvms.append(name)
@@ -2865,3 +2833,78 @@ class Kconfig(Kbaseconfig):
             common.handle_response(result, name, client=vmclient)
         self.handle_vm_result(name, profile, result=result, newvms=newvms, failedvms=failedvms,
                               asyncwaitvms=asyncwaitvms, onlyassets=onlyassets, newassets=newassets)
+
+    def parse_files(self, name, files, basedir='.', onfly=None):
+        if not files:
+            return
+        for index, fil in enumerate(files):
+            if isinstance(fil, str):
+                path = f"/root/{fil}"
+                if basedir != '.':
+                    origin = f"{basedir}/{path}"
+                origin = fil
+                content = None
+                files[index] = {'path': path, 'origin': origin}
+            elif isinstance(fil, dict):
+                path = fil.get('path')
+                if path is None or not path.startswith('/'):
+                    error(f"Incorrect path {path}.Leaving...")
+                    sys.exit(1)
+                origin = fil.get('origin')
+                content = fil.get('content')
+            else:
+                return {'result': 'failure', 'reason': "Incorrect file entry"}
+            if origin is not None:
+                if onfly is not None and '~' not in origin:
+                    destdir = basedir
+                    if '/' in origin:
+                        destdir = os.path.dirname(origin)
+                        os.makedirs(destdir, exist_ok=True)
+                    common.fetch(f"{onfly}/{origin}", destdir)
+                origin = os.path.expanduser(origin)
+                if not os.path.isabs(origin):
+                    if isinstance(fil, dict) and fil.get('currentdir', False):
+                        origin = f"{os.getcwd()}/{origin}"
+                        files[index]['origin'] = origin
+                    elif basedir != '.' and not origin.startswith('./') and not origin.startswith('/workdir/'):
+                        origin = f"{basedir}/{origin}"
+                        files[index]['origin'] = origin
+                if not os.path.exists(origin):
+                    return {'result': 'failure', 'reason': f"File {origin} not found in {name}"}
+            elif content is None:
+                return {'result': 'failure', 'reason': f"Content of file {path} not found in {name}"}
+
+    def remediate_files(self, name, newfiles, overrides={}):
+        ip, vmport = _ssh_credentials(self.k, name)[1:]
+        self.parse_files(name, newfiles)
+        data = process_files(files=newfiles, overrides=overrides, remediate=True)
+        datadirs = {}
+        with TemporaryDirectory() as tmpdir:
+            for index, entry in enumerate(data):
+                destination = entry['path']
+                pathdir = os.path.dirname(destination)
+                if pathdir not in datadirs:
+                    pathdircmd = f'ls -a {pathdir} 2>&1'
+                    pathdircmd = ssh(name, ip=ip, user='root', tunnel=self.tunnel, tunnelhost=self.tunnelhost,
+                                     tunnelport=self.tunnelport, tunneluser=self.tunneluser, insecure=True,
+                                     cmd=pathdircmd, vmport=vmport)
+                    pathdirfiles = os.popen(pathdircmd).readlines()
+                    if len(pathdirfiles) == 1 and 'No such file or directory' in pathdirfiles[0]:
+                        createdircmd = f'mkdir -p {pathdir}'
+                        createdircmd = ssh(name, ip=ip, user='root', tunnel=self.tunnel, tunnelhost=self.tunnelhost,
+                                           tunnelport=self.tunnelport, tunneluser=self.tunneluser, insecure=True,
+                                           cmd=createdircmd, vmport=vmport)
+                        os.popen(createdircmd)
+                        pathdirfiles = []
+                    else:
+                        pathdirfiles = [x.strip() for x in pathdirfiles]
+                    datadirs[pathdir] = pathdirfiles
+                if os.path.basename(destination) not in datadirs[pathdir]:
+                    pprint(f"Updating {destination} in {name}")
+                    source = f"{tmpdir}/fic{index}"
+                    with open(source, 'w') as f:
+                        f.write(entry['content'])
+                    scpcmd = scp(name, ip=ip, user='root', source=source, destination=destination, tunnel=self.tunnel,
+                                 tunnelhost=self.tunnelhost, tunnelport=self.tunnelport, tunneluser=self.tunneluser,
+                                 download=False, insecure=True, vmport=vmport)
+                    os.system(scpcmd)
