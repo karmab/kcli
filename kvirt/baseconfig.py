@@ -1003,10 +1003,13 @@ class Kbaseconfig:
         return {'result': 'success'}
 
     def update_profile(self, profile, overrides={}, quiet=False):
-        if profile not in self.profiles:
+        mathching_profiles = [p for p in self.profiles if p == profile or p == f'{self.client}_{profile}']
+        if not mathching_profiles:
             if quiet:
                 error(f"Profile {profile} not found")
             return {'result': 'failure', 'reason': f'Profile {profile} not found'}
+        else:
+            profile = mathching_profiles[0]
         if not overrides:
             return {'result': 'failure', 'reason': "You need to specify at least one parameter"}
         path = os.path.expanduser('~/.kcli/profiles.yml')
