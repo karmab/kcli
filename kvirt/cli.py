@@ -1906,7 +1906,6 @@ def update_plan(args):
     """Update plan"""
     autostart = args.autostart
     noautostart = args.noautostart
-    remediate = args.remediate
     plan = args.plan
     url = args.url
     path = args.path
@@ -1925,8 +1924,7 @@ def update_plan(args):
     elif noautostart:
         config.noautostart_plan(plan)
         return 0
-    config.plan(plan, url=url, path=path, container=container, inputfile=inputfile, overrides=overrides, update=True,
-                remediate=remediate)
+    config.plan(plan, url=url, path=path, container=container, inputfile=inputfile, overrides=overrides, update=True)
     return 0
 
 
@@ -4161,7 +4159,6 @@ def cli():
     planupdate_parser.add_argument('-P', '--param', action='append',
                                    help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
     planupdate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    planupdate_parser.add_argument('-r', '--remediate', action='store_true', help='Remediate files in the vms')
     planupdate_parser.add_argument('plan', metavar='PLAN')
     planupdate_parser.set_defaults(func=update_plan)
 

@@ -1399,7 +1399,7 @@ class Kconfig(Kbaseconfig):
 
     def plan(self, plan, ansible=False, url=None, path=None, container=False, inputfile=None, inputstring=None,
              overrides={}, info=False, update=False, embedded=False, download=False, quiet=False, doc=False,
-             onlyassets=False, pre=True, post=True, excludevms=[], basemode=False, threaded=False, remediate=False):
+             onlyassets=False, pre=True, post=True, excludevms=[], basemode=False, threaded=False):
         """Manage plan file"""
         k = self.k
         no_overrides = not overrides
@@ -1877,11 +1877,8 @@ class Kconfig(Kbaseconfig):
                                 for net in range(len(currentnets), len(profile['nets']), -1):
                                     interface = f"eth{net -1}"
                                     z.delete_nic(name, interface)
-                        newfiles = profile.get('files', [])
-                        if remediate and newfiles:
-                            pprint(f"Remediating files of {name} on {vmclient}")
+                        if self.remediate_files(name, profile.get('files', []), overrides):
                             updated = True
-                            self.remediate_files(name, newfiles, overrides)
                         if not updated:
                             pprint(f"{name} skipped on {vmclient}!")
                     existingvms.append(name)
@@ -2875,6 +2872,7 @@ class Kconfig(Kbaseconfig):
                 return {'result': 'failure', 'reason': f"Content of file {path} not found in {name}"}
 
     def remediate_files(self, name, newfiles, overrides={}):
+        updated_files = []
         ip, vmport = _ssh_credentials(self.k, name)[1:]
         self.parse_files(name, newfiles)
         data = process_files(files=newfiles, overrides=overrides, remediate=True)
@@ -2908,3 +2906,5 @@ class Kconfig(Kbaseconfig):
                                  tunnelhost=self.tunnelhost, tunnelport=self.tunnelport, tunneluser=self.tunneluser,
                                  download=False, insecure=True, vmport=vmport)
                     os.system(scpcmd)
+                    updated_files.append(destination)
+        return updated_files
