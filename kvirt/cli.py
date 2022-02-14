@@ -1448,13 +1448,14 @@ def delete_vmdisk(args):
     if not yes and not yes_top:
         common.confirm("Are you sure?")
     name = args.vm
-    diskname = args.diskname
+    disknames = args.disknames
     novm = args.novm
     pool = args.pool
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
-    pprint(f"Deleting disk {diskname}")
-    k.delete_disk(name=name, diskname=diskname, pool=pool, novm=novm)
+    for diskname in disknames:
+        pprint(f"Deleting disk {diskname}")
+        k.delete_disk(name=name, diskname=diskname, pool=pool, novm=novm)
     return
 
 
@@ -4437,7 +4438,7 @@ def cli():
     vmdiskdelete_parser.add_argument('--vm', help='Name of the vm', metavar='VMNAME')
     vmdiskdelete_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
     vmdiskdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    vmdiskdelete_parser.add_argument('diskname', metavar='DISKNAME')
+    vmdiskdelete_parser.add_argument('disknames', metavar='DISKNAMES', nargs='*')
     vmdiskdelete_parser.set_defaults(func=delete_vmdisk)
     delete_subparsers.add_parser('vm-disk', parents=[vmdiskdelete_parser], description=vmdiskdelete_desc,
                                  aliases=['disk'], help=vmdiskdelete_desc, epilog=diskdelete_epilog,
