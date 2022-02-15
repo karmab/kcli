@@ -379,6 +379,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'ipsec': False,
             'sno': False,
             'sno_virtual': False,
+            'sno_disable_nics': [],
             'notify': False,
             'async': False,
             'kubevirt_api_service': False,
@@ -1107,6 +1108,20 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 f.write(blacklist)
     if sno:
         sno_name = "%s-sno" % cluster
+        sno_disable_nics = data.get('sno_disable_nics', [])
+        if sno_disable_nics:
+            sno_disable_nics = ';interface-name:'.join(sno_disable_nics)
+            nmdata = """[main]
+rc-manager=file
+[connection]
+ipv6.dhcp-duid=ll
+ipv6.dhcp-iaid=mac
+[keyfile]
+unmanaged-devices=interface-name:%s""" % sno_disable_nics
+            rendered = config.process_inputfile(cluster, f"{plandir}/99-disable-nics.yaml",
+                                                overrides={'nmdata': nmdata})
+            with open(f"{clusterdir}/openshift/99-disable-nics.yaml", 'w') as f:
+                f.write(rendered)
         sno_dns = data.get('sno_dns', True)
         run = call('openshift-install --dir=%s --log-level=%s create single-node-ignition-config' % (clusterdir,
                                                                                                      log_level),

@@ -1,0 +1,18 @@
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  name: disable-nics-master
+  labels:
+    machineconfiguration.openshift.io/role: master
+spec:
+  config:
+    ignition:
+      version: 2.2.0
+    storage:
+      files:
+        - contents:
+            source: data:text/plain;charset=utf-8;base64,{{ nmdata|base64 }}
+            verification: {}
+          filesystem: root
+          mode: 420
+          path: /etc/NetworkManager/conf.d/99-disable-nics.conf
