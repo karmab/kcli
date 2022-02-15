@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from base64 import b64encode
+import bcrypt
 from distutils.spawn import find_executable
 from getpass import getuser
 from glob import glob
@@ -1106,6 +1107,17 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                                                  overrides={'role': role})
             with open("%s/openshift/99-blacklist-ipi-%s.yaml" % (clusterdir, role), 'w') as f:
                 f.write(blacklist)
+    kubeadminpassword = data.get('kubeadmin_password')
+    if kubeadminpassword is not None:
+        if len(kubeadminpassword) < 23:
+            warning("kubeadmin_password needs a minimum of 23 characters. Skipping it")
+            kubeadminpassword = None
+        else:
+            hashed = bcrypt.hashpw(kubeadminpassword.encode(), bcrypt.gensalt())
+            kubeadminsecret = config.process_inputfile(cluster, "%s/99-kubeadmin-password-secret.yaml" % plandir,
+                                                       overrides={'hashed': hashed})
+            with open("%s/openshift/99_kubeadmin-password-secret.yaml" % clusterdir, 'w') as f:
+                f.write(kubeadminsecret)
     if sno:
         sno_name = "%s-sno" % cluster
         sno_disable_nics = data.get('sno_disable_nics', [])
@@ -1214,6 +1226,9 @@ unmanaged-devices=interface-name:%s""" % sno_disable_nics
                 warning("$your_node_ip %s" % dnsentry)
         sys.exit(0)
     call('openshift-install --dir=%s --log-level=%s create ignition-configs' % (clusterdir, log_level), shell=True)
+    if kubeadminpassword is not None:
+        with open(f"{clusterdir}/auth/kubeadmin-password", 'w') as f:
+            f.write(kubeadminpassword)
     for role in ['master', 'worker']:
         ori = "%s/%s.ign" % (clusterdir, role)
         copy2(ori, "%s.ori" % ori)
