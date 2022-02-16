@@ -9,7 +9,7 @@ from kvirt.config import Kconfig
 from kvirt.examples import plandatacreate, vmdatacreate, hostcreate, _list, plancreate, planinfo, productinfo, start
 from kvirt.examples import repocreate, isocreate, kubegenericcreate, kubek3screate, kubeopenshiftcreate, kubekindcreate
 from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsole, vmexport, niccreate, nicdelete
-from kvirt.examples import disconnectercreate, appopenshiftcreate, plantemplatecreate
+from kvirt.examples import disconnectercreate, appopenshiftcreate, plantemplatecreate, kubehypershiftcreate
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
 from kvirt import version
@@ -1605,6 +1605,27 @@ def create_k3s_kube(args):
     config.create_kube_k3s(cluster, overrides=overrides)
 
 
+def create_hypershift_kube(args):
+    """Create Hypershift kube"""
+    paramfile = args.paramfile
+    force = args.force
+    cluster = args.cluster if args.cluster is not None else 'testk'
+    if container_mode():
+        if paramfile is not None:
+            paramfile = "/workdir/%s" % paramfile
+        elif os.path.exists("/workdir/kcli_parameters.yml"):
+            paramfile = "/workdir/kcli_parameters.yml"
+            pprint("Using default parameter file kcli_parameters.yml")
+    elif paramfile is None and os.path.exists("kcli_parameters.yml"):
+        paramfile = "kcli_parameters.yml"
+        pprint("Using default parameter file kcli_parameters.yml")
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    if force:
+        config.delete_kube(cluster, overrides=overrides)
+    config.create_kube_hypershift(cluster, overrides=overrides)
+
+
 def create_openshift_kube(args):
     """Create Openshift kube"""
     paramfile = args.paramfile
@@ -1692,6 +1713,31 @@ def scale_k3s_kube(args):
     config.scale_kube_k3s(cluster, overrides=overrides)
 
 
+def scale_hypershift_kube(args):
+    """Scale hypershift kube"""
+    workers = args.workers
+    paramfile = args.paramfile
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    cluster = overrides.get('cluster', args.cluster)
+    clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
+    if not os.path.exists(clusterdir):
+        error(f"Cluster directory {clusterdir} not found...")
+        sys.exit(1)
+    if container_mode():
+        if paramfile is not None:
+            paramfile = "/workdir/%s" % paramfile
+        elif os.path.exists("/workdir/kcli_parameters.yml"):
+            paramfile = "/workdir/kcli_parameters.yml"
+            pprint("Using default parameter file kcli_parameters.yml")
+    elif paramfile is None and os.path.exists("kcli_parameters.yml"):
+        paramfile = "kcli_parameters.yml"
+        pprint("Using default parameter file kcli_parameters.yml")
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    if workers > 0:
+        overrides['workers'] = workers
+    config.scale_kube_hypershift(cluster, overrides=overrides)
+
+
 def scale_openshift_kube(args):
     """Scale openshift kube"""
     workers = args.workers
@@ -1719,6 +1765,11 @@ def scale_openshift_kube(args):
 
 def update_generic_kube(args):
     args.type = 'generic'
+    update_kube(args)
+
+
+def update_hypershift_kube(args):
+    args.type = 'hypershift'
     update_kube(args)
 
 
@@ -2063,6 +2114,12 @@ def info_k3s_kube(args):
     """Info K3s kube"""
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     baseconfig.info_kube_k3s(quiet=True)
+
+
+def info_hypershift_kube(args):
+    """Info Hypershift kube"""
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
+    baseconfig.info_kube_hypershift(quiet=True)
 
 
 def info_openshift_kube(args):
@@ -3713,6 +3770,21 @@ def cli():
                                      formatter_class=rawhelp)
 
     parameterhelp = "specify parameter or keyword for rendering (multiple can be specified)"
+    kubehypershiftcreate_desc = 'Create Hypershift Kube'
+    kubehypershiftcreate_epilog = "examples:\n%s" % kubehypershiftcreate
+    kubehypershiftcreate_parser = argparse.ArgumentParser(add_help=False)
+    kubehypershiftcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
+    kubehypershiftcreate_parser.add_argument('-P', '--param', action='append', help=parameterhelp, metavar='PARAM')
+    kubehypershiftcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    kubehypershiftcreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
+    kubehypershiftcreate_parser.set_defaults(func=create_hypershift_kube)
+    kubecreate_subparsers.add_parser('hypershift', parents=[kubehypershiftcreate_parser],
+                                     description=kubehypershiftcreate_desc,
+                                     help=kubehypershiftcreate_desc,
+                                     epilog=kubehypershiftcreate_epilog,
+                                     formatter_class=rawhelp)
+
+    parameterhelp = "specify parameter or keyword for rendering (multiple can be specified)"
     kubeopenshiftcreate_desc = 'Create Openshift Kube'
     kubeopenshiftcreate_epilog = "examples:\n%s" % kubeopenshiftcreate
     kubeopenshiftcreate_parser = argparse.ArgumentParser(add_help=False)
@@ -3757,6 +3829,11 @@ def cli():
     kubek3sinfo_parser = kubeinfo_subparsers.add_parser('k3s', description=kubek3sinfo_desc, help=kubek3sinfo_desc)
     kubek3sinfo_parser.set_defaults(func=info_k3s_kube)
 
+    kubehypershiftinfo_desc = 'Info Hypershift Kube'
+    kubehypershiftinfo_parser = kubeinfo_subparsers.add_parser('hypershift', description=kubehypershiftinfo_desc,
+                                                               help=kubehypershiftinfo_desc)
+    kubehypershiftinfo_parser.set_defaults(func=info_hypershift_kube)
+
     kubeopenshiftinfo_desc = 'Info Openshift Kube'
     kubeopenshiftinfo_parser = kubeinfo_subparsers.add_parser('openshift', description=kubeopenshiftinfo_desc,
                                                               help=kubeopenshiftinfo_desc, aliases=['okd'])
@@ -3795,6 +3872,18 @@ def cli():
     kubek3sscale_parser.set_defaults(func=scale_k3s_kube)
     kubescale_subparsers.add_parser('k3s', parents=[kubek3sscale_parser], description=kubek3sscale_desc,
                                     help=kubek3sscale_desc)
+
+    parameterhelp = "specify parameter or keyword for rendering (multiple can be specified)"
+    kubehypershiftscale_desc = 'Scale Hypershift Kube'
+    kubehypershiftscale_parser = argparse.ArgumentParser(add_help=False)
+    kubehypershiftscale_parser.add_argument('-P', '--param', action='append', help=parameterhelp, metavar='PARAM')
+    kubehypershiftscale_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    kubehypershiftscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int, default=0)
+    kubehypershiftscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
+    kubehypershiftscale_parser.set_defaults(func=scale_hypershift_kube)
+    kubescale_subparsers.add_parser('hypershift', parents=[kubehypershiftscale_parser],
+                                    description=kubehypershiftscale_desc,
+                                    help=kubehypershiftscale_desc, aliases=['okd'])
 
     parameterhelp = "specify parameter or keyword for rendering (multiple can be specified)"
     kubeopenshiftscale_desc = 'Scale Openshift Kube'

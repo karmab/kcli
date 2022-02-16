@@ -1,27 +1,9 @@
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: autoapprover
-  namespace: openshift-infra
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: autoapprover
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: cluster-admin
-subjects:
-- kind: ServiceAccount
-  name: autoapprover
-  namespace: openshift-infra
 ---
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
-  name: autoapprover
-  namespace: openshift-infra
+  name: {{ cluster }}-autoapprover
+  namespace: {{ namespace }}
 spec:
   concurrencyPolicy: Replace
   successfulJobsHistoryLimit: 0
@@ -42,12 +24,22 @@ spec:
             - "-c"
             - |
               #!/bin/sh
+              export KUBECONFIG=/tmp/kubeconfig
+              cp /secret/kubeconfig /tmp
+              sed -i 's/api.{{ cluster }}.{{ domain }}:.*/kube-apiserver.{{ namespace }}-{{ cluster }}.svc.cluster.local:6443/' /tmp/kubeconfig
               for cert in $(kubectl get csr -o name) ; do
+                echo $cert
                 kubectl certificate approve $cert
               done
             image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/karmab/kubectl:{{ arch_tag }}
             imagePullPolicy: IfNotPresent
             name: autoapprover
+            volumeMounts:
+            - name: kubeconfig
+              mountPath: "/secret"
+          volumes:
+          - name: kubeconfig
+            secret:
+              secretName: {{ cluster }}-admin-kubeconfig
           restartPolicy: OnFailure
-          serviceAccountName: autoapprover
   schedule: '*/2 * * * *'

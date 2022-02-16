@@ -28,6 +28,7 @@ from kvirt.jinjafilters import jinjafilters
 from kvirt import kind
 from kvirt import k3s
 from kvirt import kubeadm
+from kvirt import hypershift
 from kvirt import openshift
 import os
 from shutil import copytree, rmtree
@@ -1222,6 +1223,11 @@ class Kbaseconfig:
     def info_kube_k3s(self, quiet, web=False):
         plandir = os.path.dirname(k3s.create.__code__.co_filename)
         inputfile = f'{plandir}/masters.yml'
+        return self.info_plan(inputfile, quiet=quiet, web=web)
+
+    def info_kube_hypershift(self, quiet, web=False):
+        plandir = os.path.dirname(hypershift.create.__code__.co_filename)
+        inputfile = f'{plandir}/kcli_plan.yml'
         return self.info_plan(inputfile, quiet=quiet, web=web)
 
     def info_kube_openshift(self, quiet, web=False):

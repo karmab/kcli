@@ -1,0 +1,42 @@
+info: |
+    Deploys an hypershift cluster with an arbitray number of workers
+    It relies on a valid KUBECONFIG env variable pointing to a cluster where hypershift operator is running
+    version can be stable, nightly, ci or cluster (which means picking the version from top cluster)
+    autosigning csrs for workers is handled with a cronjob running on the top cluster in the dedicated namespace
+    ingress_ip is required for virt platforms to provide a way to access apps from the outside.
+    The vip will be running through a dedicated keepalived static pod
+version: stable
+tag: '4.9'
+pull_secret: openshift_pull.json
+image: rhcos48
+network: default
+worker_network:
+workers: 2
+cluster: testk
+domain: karmalabs.com
+pool:
+flavor:
+flavor_worker:
+numcpus: 8
+worker_numcpus:
+memory: 16384
+worker_memory:
+disk_size: 30
+keys: []
+apps: []
+apps_install_cr: true
+postscripts: []
+extra_disks: []
+extra_worker_disks: []
+extra_networks: []
+extra_worker_networks: []
+async: false
+notify: false
+threaded: false
+workers_threaded: false
+tempkey: false
+namespace: mynamespace
+disconnected_url:
+ingress_ip:
+async: false
+kvm_openstack: False
