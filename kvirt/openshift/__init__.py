@@ -385,7 +385,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'async': False,
             'kubevirt_api_service': False,
             'kubevirt_ignore_node_port': False,
-            'baremetal': False}
+            'baremetal': False,
+            'retries': 2}
     data.update(overrides)
     if 'cluster' in overrides:
         clustervalue = overrides.get('cluster')
@@ -393,6 +394,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         clustervalue = cluster
     else:
         clustervalue = 'testk'
+    retries = data.get('retries')
     data['cluster'] = clustervalue
     domain = data.get('domain')
     async_install = data.get('async')
@@ -1215,8 +1217,8 @@ unmanaged-devices=interface-name:%s""" % sno_disable_nics
                     update_etc_hosts(cluster, domain, api_ip)
                 installcommand = 'openshift-install --dir=%s --log-level=%s wait-for install-complete' % (clusterdir,
                                                                                                           log_level)
-                installcommand += " || %s" % installcommand
-                pprint("Launching install-complete step. It will be retried one extra time in case of timeouts")
+                installcommand = ' || '.join([installcommand for x in range(retries)])
+                pprint("Launching install-complete step. It will be retried extra times in case of timeouts")
                 call(installcommand, shell=True)
             else:
                 warning("You might need to manually add the following entry in /etc/hosts")
@@ -1442,7 +1444,7 @@ unmanaged-devices=interface-name:%s""" % sno_disable_nics
     if not async_install:
         bootstrapcommand = 'openshift-install --dir=%s --log-level=%s wait-for bootstrap-complete' % (clusterdir,
                                                                                                       log_level)
-        bootstrapcommand += ' || %s' % bootstrapcommand
+        bootstrapcommand = ' || '.join([bootstrapcommand for x in range(retries)])
         run = call(bootstrapcommand, shell=True)
         if run != 0:
             error("Leaving environment for debugging purposes")
