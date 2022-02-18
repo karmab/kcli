@@ -10,6 +10,7 @@ from kvirt.examples import plandatacreate, vmdatacreate, hostcreate, _list, plan
 from kvirt.examples import repocreate, isocreate, kubegenericcreate, kubek3screate, kubeopenshiftcreate, kubekindcreate
 from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsole, vmexport, niccreate, nicdelete
 from kvirt.examples import disconnectercreate, appopenshiftcreate, plantemplatecreate, kubehypershiftcreate
+from kvirt.examples import changelog
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
 from kvirt import version
@@ -28,6 +29,7 @@ import random
 import requests
 from subprocess import call
 import sys
+from tempfile import TemporaryDirectory
 from urllib.parse import urlparse
 import yaml
 
@@ -111,15 +113,15 @@ def get_subparser(parser, subcommand):
 
 
 def get_version(args):
-    full_version = "version: %s" % VERSION
+    full_version = f"version: {VERSION}"
     versiondir = os.path.dirname(version.__file__)
-    git_file = '%s/git' % versiondir
+    git_file = f'{versiondir}/git'
     git_version = 'N/A'
     git_date = ''
     if os.path.exists(git_file) and os.stat(git_file).st_size > 0:
         git_version, git_date = open(git_file).read().rstrip().split(' ')
-        git_date = '(%s)' % git_date
-    full_version += " commit: %s %s" % (git_version, git_date)
+        git_date = f'({git_date})'
+    full_version += f" commit: {git_version} {git_date}"
     update = 'N/A'
     if git_version != 'N/A':
         try:
@@ -127,8 +129,36 @@ def get_version(args):
             update = True if upstream_version != git_version else False
         except:
             pass
-    full_version += " Available Updates: %s" % update
+    full_version += f" Available Updates: {update}"
     print(full_version)
+
+
+def get_changelog(args):
+    if find_executable('git') is None:
+        error("git needed for this functionality")
+        sys.exit(1)
+    diff = args.diff
+    if not diff:
+        diff = ['master']
+    if len(diff) > 1:
+        ori, dest = diff[:2]
+    else:
+        versiondir = os.path.dirname(version.__file__)
+        git_file = f'{versiondir}/git'
+        git_version = 'N/A'
+        if os.path.exists(git_file) and os.stat(git_file).st_size > 0:
+            git_version = open(git_file).read().rstrip().split(' ')[0]
+        if git_version != 'N/A':
+            ori, dest = git_version, diff[0]
+        else:
+            error("No source commit available. Use kcli changelog diff1 diff2")
+            sys.exit(1)
+    with TemporaryDirectory() as tmpdir:
+        cmd = f"git clone -q https://github.com/karmab/kcli {tmpdir}"
+        call(cmd, shell=True)
+        os.chdir(tmpdir)
+        cmd = f"git log --oneline {ori}..{dest}"
+        call(cmd, shell=True)
 
 
 def delete_cache(args):
@@ -3148,6 +3178,14 @@ def cli():
                                                     help=containerconsole_desc)
     containerconsole_parser.add_argument('name', metavar='CONTAINERNAME', nargs='?')
     containerconsole_parser.set_defaults(func=console_container)
+
+    changelog_desc = 'Changelog'
+    changelog_epilog = "examples:\n%s" % changelog
+    changelog_parser = argparse.ArgumentParser(add_help=False)
+    changelog_parser.add_argument('diff', metavar='DIFF', nargs=argparse.REMAINDER)
+    changelog_parser.set_defaults(func=get_changelog)
+    subparsers.add_parser('changelog', parents=[changelog_parser], description=changelog_desc, help=changelog_desc,
+                          epilog=changelog_epilog, formatter_class=rawhelp)
 
     create_desc = 'Create Object'
     create_parser = subparsers.add_parser('create', description=create_desc, help=create_desc, aliases=['add'])

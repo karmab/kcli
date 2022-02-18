@@ -264,3 +264,16 @@ $ kcli create app openshift local-storage --paramfile your_paramfile.yml
 # Deploy local storage without the cr
 $ kcli create app openshift local-storage -P install_cr=false
 """
+
+changelog = """Get commits between current version and master
+$ kcli changelog
+
+# Do the same between current version and a given sha
+$ kcli changelog sha1
+
+# Use a commit number
+$ kcli changelog f173cb7e032a5b72092451255c58dfec8b11af35
+
+# Get commits between two shas
+$ kcli changelog sha1 sha2
+"""
