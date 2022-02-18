@@ -27,7 +27,7 @@ spec:
                 kubectl certificate approve $cert
               done
             image: {{ registry }}/karmab/kubectl:{{ arch_tag }}
-            imagePullPolicy: Always
+            imagePullPolicy: IfNotPresent
             name: autoapprover
           restartPolicy: OnFailure
           serviceAccountName: autoapprover

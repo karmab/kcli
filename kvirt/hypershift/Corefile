@@ -1,0 +1,14 @@
+. {
+    errors
+    health :18080
+    forward . NAMESERVER
+    cache 30
+    reload
+    hosts {{ cluster }}.{{ domain }} {
+        {{ api_ip }} api-int.{{ cluster }}.{{ domain }} api.{{ cluster }}.{{ domain }}
+        fallthrough
+    }
+    template ANY ANY apps.{{ cluster }}.{{ domain }} {
+       answer "{% raw %}{{ .Name }}{% endraw %} A IP"
+    }
+}

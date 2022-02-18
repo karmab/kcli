@@ -1,0 +1,21 @@
+#!/bin/bash
+
+which crictl >/dev/null 2>&1
+if [ "$?" != "0" ] ; then
+  exit 0
+fi
+
+if [ "$2" = "dhcp4-change" ] || [ "$2" = "dhcp6-change" ] || [ "$2" = "up" ] || [ "$2" = "connectivity-change" ]; then
+  sleep 2
+  IP=$(/bin/hostname -I | awk '{print $1}')
+  if [ "$IP" != "" ] ; then
+    sed -i "s/IP/$IP/" /etc/kubernetes/Corefile
+    grep -q $IP /etc/resolv.conf
+    if [ "$?" != "0" ] ; then
+      sed -i 's/{{ cluster }}.{{ domain }}//' /etc/resolv.conf
+      sed -i 's/search /search {{ cluster }}.{{ domain }} /' /etc/resolv.conf
+      sed -i "/nameserver.* # coredns/d" /etc/resolv.conf
+      sed -i "0,/nameserver/s/nameserver/nameserver $IP #coredns\n&/" /etc/resolv.conf
+    fi
+  fi
+fi

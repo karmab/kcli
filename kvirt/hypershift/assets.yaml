@@ -1,0 +1,82 @@
+---
+apiVersion: v1
+data:
+ .dockerconfigjson: {{ pull_secret|default('')|base64 }}
+kind: Secret
+metadata:
+ name: {{ cluster }}-pull-secret
+ namespace: {{ namespace }}
+type: kubernetes.io/dockerconfigjson
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ cluster }}-ssh-key
+  namespace: {{ namespace }}
+stringData:
+  id_rsa.pub: {{ pub_key|default('') }}
+---
+apiVersion: hypershift.openshift.io/v1alpha1
+kind: HostedCluster
+metadata:
+  name: {{ cluster }}
+  namespace: {{ namespace }}
+spec:
+  release:
+    image: "{{ release_image|default('') }}"
+  pullSecret:
+    name: {{ cluster }}-pull-secret
+  sshKey:
+    name: {{ cluster }}-ssh-key
+  networking:
+    serviceCIDR: "172.31.0.0/16"
+    podCIDR: "10.132.0.0/14"
+    machineCIDR: {{ cidr|default('') }}
+  platform:
+    type: None
+  infraID: {{ cluster }}
+  dns:
+    baseDomain: {{ domain }}
+  services:
+  - service: APIServer
+    servicePublishingStrategy:
+      nodePort:
+        address: api.{{ cluster }}.{{ domain }}
+      type: NodePort
+  - service: OAuthServer
+    servicePublishingStrategy:
+      nodePort:
+        address: api.{{ cluster }}.{{ domain }}
+      type: NodePort
+  - service: OIDC
+    servicePublishingStrategy:
+      nodePort:
+        address: api.{{ cluster }}.{{ domain }}
+      type: None
+  - service: Konnectivity
+    servicePublishingStrategy:
+      nodePort:
+        address: api.{{ cluster}}.{{ domain }}
+      type: NodePort
+  - service: Ignition
+    servicePublishingStrategy:
+      nodePort:
+        address: api.{{ cluster }}.{{ domain }}
+      type: NodePort
+---
+apiVersion: hypershift.openshift.io/v1alpha1
+kind: NodePool
+metadata:
+  name: {{ cluster }}-workers
+  namespace: {{ namespace }}
+spec:
+  clusterName: {{ cluster }}
+  nodeCount: 0
+  management:
+    autoRepair: false
+    upgradeType: Replace
+  platform:
+    type: None
+  release:
+    image: "{{ release_image|default('') }}"
+---

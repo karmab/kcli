@@ -21,6 +21,7 @@ from kvirt.common import ssh, scp, _ssh_credentials, valid_ip, process_files
 from kvirt import kind
 from kvirt import k3s
 from kvirt import kubeadm
+from kvirt import hypershift
 from kvirt.expose import Kexposer
 from kvirt import openshift
 from kvirt.internalplans import haproxy as haproxyplan
@@ -1679,6 +1680,8 @@ class Kconfig(Kbaseconfig):
                     continue
                 if kubetype == 'openshift':
                     currentconfig.create_kube_openshift(plan, overrides=kube_overrides)
+                if kubetype == 'hypershift':
+                    currentconfig.create_kube_hypershift(plan, overrides=kube_overrides)
                 elif kubetype == 'kind':
                     currentconfig.create_kube_kind(plan, overrides=kube_overrides)
                 elif kubetype == 'k3s':
@@ -2442,6 +2445,16 @@ class Kconfig(Kbaseconfig):
         plandir = os.path.dirname(k3s.create.__code__.co_filename)
         k3s.create(self, plandir, cluster, overrides)
 
+    def create_kube_hypershift(self, cluster, overrides={}):
+        if container_mode():
+            os.environ['PATH'] += ':/workdir'
+        else:
+            os.environ['PATH'] += ':%s' % os.getcwd()
+        plandir = os.path.dirname(hypershift.create.__code__.co_filename)
+        # dnsclient = overrides.get('dnsclient')
+        # dnsconfig = Kconfig(client=dnsclient) if dnsclient is not None else None
+        hypershift.create(self, plandir, cluster, overrides)
+
     def create_kube_openshift(self, cluster, overrides={}):
         if container_mode():
             os.environ['PATH'] += ':/workdir'
@@ -2454,6 +2467,7 @@ class Kconfig(Kbaseconfig):
 
     def delete_kube(self, cluster, overrides={}):
         ipi = False
+        hypershift = False
         domain = overrides.get('domain', 'karmalabs.com')
         dnsclient = None
         k = self.k
@@ -2470,11 +2484,19 @@ class Kconfig(Kbaseconfig):
                     kubetype = clusterdata.get('kubetype', 'generic')
                     if kubetype == 'openshift' and 'ipi' in clusterdata and clusterdata['ipi']:
                         ipi = True
+                    elif kubetype == 'hypershift':
+                        hypershift = True
                     domain = clusterdata.get('domain', domain)
                     dnsclient = clusterdata.get('dnsclient')
                 if ipi:
                     os.environ["PATH"] += ":%s" % os.getcwd()
                     call(f'openshift-install --dir={clusterdir} destroy cluster', shell=True)
+                if hypershift:
+                    if 'KUBECONFIG' not in os.environ:
+                        error("Missing KUBECONFIG for hypershift...")
+                        sys.exit(1)
+                    call(f'oc delete -f {clusterdir}/assets.yaml', shell=True)
+                    call(f'oc delete -f {clusterdir}/autoapprovercron.yml', shell=True)
             pprint(f"Deleting directory {clusterdir}")
             rmtree(clusterdir)
             if ipi:
@@ -2508,6 +2530,10 @@ class Kconfig(Kbaseconfig):
     def scale_kube_k3s(self, cluster, overrides={}):
         plandir = os.path.dirname(k3s.create.__code__.co_filename)
         k3s.scale(self, plandir, cluster, overrides)
+
+    def scale_kube_hypershift(self, cluster, overrides={}):
+        plandir = os.path.dirname(hypershift.create.__code__.co_filename)
+        hypershift.scale(self, plandir, cluster, overrides)
 
     def scale_kube_openshift(self, cluster, overrides={}):
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
