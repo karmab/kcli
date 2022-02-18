@@ -633,14 +633,14 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     os.environ["PATH"] += ":%s" % os.getcwd()
     if disconnected_url is not None:
         if '/' not in str(tag):
-            tag = '%s/%s/release:%s' % (disconnected_url, disconnected_prefix, tag)
+            tag = f'{disconnected_url}/{disconnected_prefix}:{tag}'
             os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = tag
-        pprint("Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to %s" % tag)
+        pprint(f"Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to {tag}")
     INSTALLER_VERSION = get_installer_version()
     COMMIT_ID = os.popen('openshift-install version').readlines()[1].replace('built from commit', '').strip()
     if platform == 'packet' and not upstream:
         overrides['commit_id'] = COMMIT_ID
-    pprint("Using installer version %s" % INSTALLER_VERSION)
+    pprint(f"Using installer version {INSTALLER_VERSION}")
     if sno or ipi or baremetal_iso_all:
         pass
     elif image is None:
