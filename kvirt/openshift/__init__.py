@@ -1295,12 +1295,14 @@ unmanaged-devices=interface-name:%s""" % sno_disable_nics
             sedcmd += '%s/master.ign' % clusterdir
             sedcmd += ' > %s/worker.ign' % clusterdir
             call(sedcmd, shell=True)
-        new_api_ip = api_ip if not ipv6 else "[%s]" % api_ip
-        sedcmd = f'sed -i "s@api-int.{cluster}.{domain}@{new_api_ip}@" {clusterdir}/master.ign {clusterdir}/worker.ign'
+        sedcmd = f'sed -i "s@api-int.{cluster}.{domain}@{api_ip}@" {clusterdir}/master.ign {clusterdir}/worker.ign'
         call(sedcmd, shell=True)
-        sedcmd = f'sed -i "s@https://{new_api_ip}:22623/config@http://{new_api_ip}:22624/config@"'
+        sedcmd = f'sed -i "s@https://{api_ip}:22623/config@http://{api_ip}:22624/config@"'
         sedcmd += f' {clusterdir}/master.ign {clusterdir}/worker.ign'
         call(sedcmd, shell=True)
+        if ipv6:
+            sedcmd = f'sed -i "s@{api_ip}@[{api_ip}]@" {clusterdir}/master.ign {clusterdir}/worker.ign'
+            call(sedcmd, shell=True)
     if platform in cloudplatforms + ['openstack']:
         bucket = "%s-%s" % (cluster, domain.replace('.', '-'))
         if bucket not in config.k.list_buckets():
