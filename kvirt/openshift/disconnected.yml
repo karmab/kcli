@@ -3,7 +3,6 @@
  pool: {{ pool or config_pool }}
  wait: true
  enableroot: true
- reservedns: {{ disconnected_dns|default(False) }}
  domain: {{ domain }}
  numcpus: {{ numcpus }}
  keys: {{ keys }}
