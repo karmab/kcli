@@ -1680,7 +1680,7 @@ class Kconfig(Kbaseconfig):
                     continue
                 if kubetype == 'openshift':
                     currentconfig.create_kube_openshift(plan, overrides=kube_overrides)
-                if kubetype == 'hypershift':
+                elif kubetype == 'hypershift':
                     currentconfig.create_kube_hypershift(plan, overrides=kube_overrides)
                 elif kubetype == 'kind':
                     currentconfig.create_kube_kind(plan, overrides=kube_overrides)
