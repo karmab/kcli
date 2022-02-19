@@ -2,6 +2,6 @@
 
 set -ex
 
-"./cloudsmith_clean.sh"
-"./cloudsmith.sh"
-"./pypi.sh"
+".github/cloudsmith_clean.sh"
+".github/cloudsmith.sh"
+".github/pypi.sh"

@@ -35,10 +35,9 @@ jobs:
         shell: bash
       - if: github.ref == 'refs/heads/master' && github.repository_owner == 'karmab'
         name: Release artifacts
-        run: ./cloudsmith_snapshot.sh
+        run: .github/cloudsmith_snapshot.sh
         shell: bash
       - if: github.ref == 'refs/heads/master' && github.repository_owner == 'karmab'
         name: Build And Push Snapshot Container
         run: .github/container_snapshot.sh
         shell: bash
-
