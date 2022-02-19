@@ -368,7 +368,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'ipv6': False,
             'pub_key': os.path.expanduser('~/.ssh/id_rsa.pub'),
             'pull_secret': 'openshift_pull.json',
-            'version': 'nightly',
+            'version': 'stable',
             'macosx': False,
             'upstream': False,
             'fips': False,
@@ -464,8 +464,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         pprint("Removing old openshift-install")
         os.remove('openshift-install')
     minimal = data.get('minimal')
-    if version not in ['ci', 'nightly']:
-        pprint("Using stable version")
+    if version not in ['ci', 'nightly', 'stable']:
+        error(f"Incorrect version {version}")
+        sys.exit(1)
     else:
         pprint("Using %s version" % version)
     cluster = data.get('cluster')
@@ -618,7 +619,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             baremetal = False
         if upstream:
             run = get_upstream_installer(tag=tag)
-        elif version == 'ci':
+        elif version == 'ci' or ('/' in tag):
             run = get_ci_installer(pull_secret, tag=tag, upstream=upstream, baremetal=baremetal)
         elif version == 'nightly':
             run = get_downstream_installer(nightly=True, tag=tag, baremetal=baremetal, pull_secret=pull_secret)
