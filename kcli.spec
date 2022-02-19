@@ -6,7 +6,7 @@
 
 Name:           {{{ git_dir_name }}}
 Version:        99.{{{ git_custom_version }}}
-Release:        1%{?dist}
+Release:        0%{?dist}
 Url:            http://github.com/karmab/kcli
 Summary:        Wrapper for libvirt,gcp,aws,ovirt,openstack,kubevirt and vsphere
 License:        ASL 2.0
