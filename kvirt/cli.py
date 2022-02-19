@@ -157,7 +157,7 @@ def get_changelog(args):
         cmd = f"git clone -q https://github.com/karmab/kcli {tmpdir}"
         call(cmd, shell=True)
         os.chdir(tmpdir)
-        cmd = f"git log --oneline {ori}..{dest}"
+        cmd = f"git log --decorate=no --oneline {ori}..{dest}"
         call(cmd, shell=True)
 
 
