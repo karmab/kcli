@@ -2,6 +2,15 @@ export HOME=.
 export PATH=/usr/local/bin:$PATH
 export DEB_BUILD_OPTIONS=nocheck debuild
 export VERSION="$(date +%y.%m).0"
+
+DEB_VERSION="$(date +%y.%-m)"
+PACKAGES=$(cloudsmith list package karmab/kcli | grep 'python3-kcli.*$DEB_VERSION' | cut -d'|' -f4 | xargs | awk '{$NF=""; print $0}')
+if [ "$(echo $PACKAGES | wc -w)" != "0" ] ; then
+for package in $PACKAGES ; do
+  cloudsmith delete $package -y
+done
+fi
+
 sed -i "s/99.0/$VERSION/" setup.py
 export MINOR=0
 find . -name *pyc -exec rm {} \;
