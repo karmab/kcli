@@ -2294,6 +2294,22 @@ def download_okd_installer(args):
     return baseconfig.download_openshift_installer(overrides)
 
 
+def download_tasty(args):
+    """Download Tasty"""
+    paramfile = args.paramfile
+    if container_mode():
+        if paramfile is not None:
+            paramfile = "/workdir/%s" % paramfile
+        elif os.path.exists("/workdir/kcli_parameters.yml"):
+            paramfile = "/workdir/kcli_parameters.yml"
+            pprint("Using default parameter file kcli_parameters.yml")
+    elif paramfile is None and os.path.exists("kcli_parameters.yml"):
+        paramfile = "kcli_parameters.yml"
+        pprint("Using default parameter file kcli_parameters.yml")
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    common.get_tasty(version=overrides.get('version', 'latest'))
+
+
 def create_pipeline_github(args):
     """Create Github Pipeline"""
     plan = args.plan
@@ -4491,6 +4507,15 @@ def cli():
     plandownload_parser.set_defaults(func=download_plan)
     download_subparsers.add_parser('plan', parents=[plandownload_parser], description=plandownload_desc,
                                    help=plandownload_desc)
+
+    tastydownload_desc = 'Download Tasty'
+    tastydownload_parser = argparse.ArgumentParser(add_help=False)
+    tastydownload_parser.add_argument('-P', '--param', action='append',
+                                      help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    tastydownload_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    tastydownload_parser.set_defaults(func=download_tasty)
+    download_subparsers.add_parser('tasty', parents=[tastydownload_parser], description=tastydownload_desc,
+                                   help=tastydownload_desc)
 
     imagelist_desc = 'List Images'
     imagelist_parser = list_subparsers.add_parser('image', description=imagelist_desc, help=imagelist_desc,

@@ -1742,6 +1742,17 @@ def get_helm(version='latest'):
     call(helmcmd, shell=True)
 
 
+def get_tasty(version='latest'):
+    SYSTEM = 'darwin' if os.path.exists('/Users') else 'linux'
+    if version == 'latest':
+        version = jinjafilters.github_version('karmab/tasty')
+    elif not version.startswith('v'):
+        version = "v%s" % version
+    tastycmd = f"curl -Ls https://github.com/karmab/tasty/releases/download/{version}/tasty-{SYSTEM}-amd64 > tasty"
+    tastycmd += "; chmod 700 tasty"
+    call(tastycmd, shell=True)
+
+
 def kube_create_app(config, appdir, overrides={}, outputdir=None):
     appdata = {'cluster': 'testk', 'domain': 'karmalabs.com', 'masters': 1, 'workers': 0}
     cluster = appdata['cluster']
