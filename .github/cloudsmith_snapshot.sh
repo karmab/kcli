@@ -6,7 +6,7 @@ DEB_VERSION="$(date +%y.%-m)"
 PACKAGES=$(cloudsmith list package karmab/kcli | grep "python3-kcli.*$DEB_VERSION\.0" | cut -d'|' -f4 | xargs | awk '{$NF=""; print $0}')
 if [ "$(echo $PACKAGES | wc -w)" != "0" ] ; then
 for package in $PACKAGES ; do
-  cloudsmith delete $package -y
+ cloudsmith delete $package -y
 done
 fi
 

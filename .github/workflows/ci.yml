@@ -30,8 +30,16 @@ jobs:
         run: .github/testing.sh
         shell: bash
       - if: github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository_owner == 'karmab'
-        name: Release Artifacts
-        run: .github/release.sh
+        name: Release RPM
+        run: .github/copr.sh
+        shell: bash
+      - if: github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository_owner == 'karmab'
+        name: Release DEB
+        run: .github/cloudsmith.sh
+        shell: bash
+      - if: github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository_owner == 'karmab'
+        name: Release PYPI
+        run: .github/pypi.sh
         shell: bash
       - if: github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository_owner == 'karmab'
         name: Build And Push Container
