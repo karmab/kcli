@@ -1,5 +1,11 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
 # Variables to set, suit to your installation
+export RH_OP_PACKAGES=${RH_OP_PACKAGES:-{{ disconnected_operators|join(",") }}}
+if [ -z $RH_OP_PACKAGES ] ; then
+ echo Usage: $0 RH_OP_PACKAGES
+ exit 1
+fi
 cd /root
 export PATH=/root/bin:$PATH
 export OCP_RELEASE="{{ disconnected_operators_version|default(tag) }}"
@@ -11,7 +17,9 @@ export LOCAL_REGISTRY_INDEX_TAG=olm-index/redhat-operator-index:v$OCP_RELEASE
 export LOCAL_REGISTRY_IMAGE_TAG=olm
 
 # Login registries
-podman login -u '{{ disconnected_user if disconnected_user != None else "dummy" }}' -p '{{ disconnected_password if disconnected_password != None else "dummy" }}' $LOCAL_REGISTRY
+REGISTRY_USER={{ disconnected_user if disconnected_user != None else "dummy" }}
+REGISTRY_PASSWORD={{ disconnected_password if disconnected_password != None else "dummy" }}
+podman login -u $REGISTRY_USER -p $REGISTRY_PASSWORD $LOCAL_REGISTRY
 #podman login registry.redhat.io --authfile /root/openshift_pull.json
 REDHAT_CREDS=$(cat /root/openshift_pull.json | jq .auths.\"registry.redhat.io\".auth -r | base64 -d)
 RHN_USER=$(echo $REDHAT_CREDS | cut -d: -f1)
@@ -34,7 +42,6 @@ export CERT_OP_INDEX="registry.redhat.io/redhat/certified-operator-index:v${OCP_
 export COMM_OP_INDEX="registry.redhat.io/redhat/community-operator-index:v${OCP_RELEASE}"
 export MARKETPLACE_OP_INDEX="registry.redhat.io/redhat-marketplace-index:v${OCP_RELEASE}"
 #export RH_OP_PACKAGES='local-storage-operator,performance-addon-operator,ptp-operator,sriov-network-operator'
-export RH_OP_PACKAGES='{{ disconnected_operators|join(",") }}'
 
 opm index prune --from-index $RH_OP_INDEX --packages $RH_OP_PACKAGES --tag $LOCAL_REGISTRY/$LOCAL_REGISTRY_INDEX_TAG
 podman push $LOCAL_REGISTRY/$LOCAL_REGISTRY_INDEX_TAG --authfile $OCP_PULLSECRET_AUTHFILE
