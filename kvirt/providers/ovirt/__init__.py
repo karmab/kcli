@@ -291,13 +291,6 @@ class KOvirt(object):
             cmds.insert(1, 'sleep 10')
             ignorednics = "docker0 tun0 tun1 cni0 flannel.1"
             gcmds = []
-            if image is not None and image.lower().startswith('centos'):
-                gcmds.append('yum -y install centos-release-ovirt42')
-            if image is not None and common.need_guest_agent(image):
-                gcmds.append('yum -y install ovirt-guest-agent-common')
-                gcmds.append('sed -i "s/# ignored_nic.*/ignored_nics = %s/" /etc/ovirt-guest-agent.conf' % ignorednics)
-                gcmds.append('systemctl enable ovirt-guest-agent')
-                gcmds.append('systemctl restart ovirt-guest-agent')
             if image is not None and image.lower().startswith('debian'):
                 gcmds.append('echo "deb http://download.opensuse.org/repositories/home:/evilissimo:/deb/Debian_7.0/ ./"'
                              ' >> /etc/apt/sources.list')
@@ -624,7 +617,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         nics = self.vms_service.vm_service(vm.id).nics_service().list()
         profiles_service = self.conn.system_service().vnic_profiles_service()
         if ips:
-            yamlinfo['ip'] = ips[-1]
+            yamlinfo['ip'] = ips[0]
         if minimal:
             return yamlinfo
         if not self.netprofiles:
