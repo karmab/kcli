@@ -106,27 +106,27 @@ $ kcli start plan X
 $ kcli start container mycontainer
 """
 
-vmcreate = """# Create a centos vm from image centos7 with a random name
-$ kcli create vm -i centos7
+vmcreate = """# Create a centos vm from image centos8stream with a random name
+$ kcli create vm -i centos8stream
 
 # Create a centos vm named myvm customizing its memory and cpus
-$ kcli create vm -i centos7 -P memory=4096 -P numcpus=4
+$ kcli create vm -i centos8stream -P memory=4096 -P numcpus=4
 
 # Pass disks, networks and even cmds
-$ kcli create vm -i CentOS-7-x86_64-GenericCloud.qcow2 -P disks=[10,20] -P nets=[default] -P cmds=['yum -y install nc']
+$ kcli create vm -i centos8stream -P disks=[10,20] -P nets=[default] -P cmds=['yum -y install nc']
 
 # Use more advanced information for nets
-$ kcli create vm -i centos8 -P nets=['{"name": "default", "type": "e1000"}']
+$ kcli create vm -i centos8stream -P nets=['{"name": "default", "type": "e1000"}']
 
 # Or specify a custom mtu
-$ kcli create vm -i centos8 -P nets=['{"name": "default", "mtu": 1400}']
+$ kcli create vm -i centos8stream -P nets=['{"name": "default", "mtu": 1400}']
 
 # Create a vm with static ip
-$ img=centos8
+$ img=centos8stream
 $ kcli create vm -i $img -P nets=['{"name":"default","ip":"192.168.122.250","netmask":"24","gateway":"192.168.122.1"}']
 
 # Use more advanced information for disks
-$ kcli create vm -i centos8 -P disks=['{"size": 10, "interface": "sata"}']
+$ kcli create vm -i centos8stream -P disks=['{"size": 10, "interface": "sata"}']
 
 # Create a vm from a custom profile
 $ kcli create vm -p myprofile myvm
@@ -209,7 +209,7 @@ $ kcli create vmdata -i rhcos46 myname
 $ kcli create vmdata -i rhcos -P scripts=[myscript.sh] -P files=[myfile.txt] zzz
 
 # Generate a cloudinit userdata
-$ kcli create vmdata -i centos8 myname
+$ kcli create vmdata -i centos8stream myname
 """
 
 plandatacreate = """# Generate all the ignition/cloudinit userdatas from a plan file
