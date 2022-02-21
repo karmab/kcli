@@ -619,7 +619,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             baremetal = False
         if upstream:
             run = get_upstream_installer(tag=tag)
-        elif version == 'ci' or ('/' in tag):
+        elif version == 'ci' or '/' in str(tag):
             run = get_ci_installer(pull_secret, tag=tag, upstream=upstream, baremetal=baremetal)
         elif version == 'nightly':
             run = get_downstream_installer(nightly=True, tag=tag, baremetal=baremetal, pull_secret=pull_secret)
