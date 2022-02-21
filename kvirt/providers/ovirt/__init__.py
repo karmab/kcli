@@ -634,7 +634,9 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         for nic in nics:
             device = nic.name
             mac = nic.mac.address
-            network = self.netprofiles[nic.vnic_profile.id] if nic.vnic_profile is not None else 'N/A'
+            network = 'N/A'
+            if nic.vnic_profile is not None and nic.vnic_profile.id in self.netprofiles:
+                network = self.netprofiles[nic.vnic_profile.id]
             network_type = str(nic.interface)
             yamlinfo['nets'].append({'device': device, 'mac': mac, 'net': network, 'type': network_type})
         attachments = self.vms_service.vm_service(vm.id).disk_attachments_service().list()
