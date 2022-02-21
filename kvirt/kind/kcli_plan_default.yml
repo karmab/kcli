@@ -1,7 +1,7 @@
 info: |
   Deploy kubernetes using kind on a single vm
   Several masters and workers can be specified
-image : centos8
+image : centos8stream
 numcpus: 4
 memory: 8192
 kind_version:
