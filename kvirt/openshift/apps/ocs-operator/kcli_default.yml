@@ -6,3 +6,4 @@ ocs_replicas:
 ocs_accessmode: ReadWriteOnce
 ocs_portable: false
 ocs_deploycluster: true
+ocs_default_storageclass: true
