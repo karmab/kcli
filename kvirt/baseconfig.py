@@ -1240,11 +1240,19 @@ class Kbaseconfig:
         appdir = plandir + '/apps'
         return sorted([x for x in os.listdir(appdir) if os.path.isdir(f"{appdir}/{x}") and x != '__pycache__'])
 
-    def list_apps_openshift(self, quiet=True):
-        results = ['autolabeller', 'users']
-        manifestscmd = "oc get packagemanifest -n openshift-marketplace -o name"
-        manifestsdata = os.popen(manifestscmd).read().split('\n')
-        results.extend([entry.replace('packagemanifest.packages.operators.coreos.com/', '') for entry in manifestsdata])
+    def list_apps_openshift(self, quiet=True, installed=False):
+        if installed:
+            header = 'subscription.operators.coreos.com/'
+            results = []
+            manifestscmd = "oc get subscription -A -o name"
+            manifestsdata = os.popen(manifestscmd).read().split('\n')
+            print(manifestsdata)
+        else:
+            header = 'packagemanifest.packages.operators.coreos.com/'
+            results = ['autolabeller', 'users']
+            manifestscmd = "oc get packagemanifest -n openshift-marketplace -o name"
+            manifestsdata = os.popen(manifestscmd).read().split('\n')
+        results.extend([entry.replace(header, '') for entry in manifestsdata])
         return sorted(results)
 
     def create_app_generic(self, app, overrides={}, outputdir=None):

@@ -1061,7 +1061,7 @@ def list_apps_openshift(args):
         os.environ['KUBECONFIG'] = "%s/%s" % (os.getcwd(), os.environ['KUBECONFIG'])
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     apps = PrettyTable(["Name"])
-    for app in baseconfig.list_apps_openshift(quiet=True):
+    for app in baseconfig.list_apps_openshift(quiet=True, installed=args.installed):
         apps.add_row([app])
     print(apps)
 
@@ -3448,6 +3448,7 @@ def cli():
     appopenshiftlist_desc = 'List Available Kube Components Openshift'
     appopenshiftlist_parser = listapp_subparsers.add_parser('openshift', description=appopenshiftlist_desc,
                                                             help=appopenshiftlist_desc)
+    appopenshiftlist_parser.add_argument('-i', '--installed', action='store_true', help='Show installed apps')
     appopenshiftlist_parser.set_defaults(func=list_apps_openshift)
 
     bucketcreate_desc = 'Create Bucket'
