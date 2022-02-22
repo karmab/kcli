@@ -1298,6 +1298,9 @@ def create_vm(args):
                     if 'ip' in net:
                         ip = str(ip_address(net['ip']) + number)
                         currentoverrides['nets'][index]['ip'] = ip
+            if 'uuid' in currentoverrides:
+                uuid = overrides['uuid']
+                currentoverrides['uuid'] = '-'.join(uuid.split('-')[:-1] + [str(int(uuid.split('-')[-1]) + number)])
             result = config.create_vm(currentname, profile, overrides=currentoverrides, customprofile=customprofile,
                                       onlyassets=onlyassets)
             if not onlyassets:
