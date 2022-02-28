@@ -1278,7 +1278,12 @@ class Kvirt(object):
             try:
                 vm.create()
             except Exception as e:
-                return {'result': 'failure', 'reason': e}
+                if 'Cannot access storage file' in str(e) and '.iso' in str(e):
+                    warning(f"Handling {e}")
+                    self.update_iso(name, None)
+                    vm.create()
+                else:
+                    return {'result': 'failure', 'reason': e}
         return {'result': 'success'}
 
     def stop(self, name, soft=False):
@@ -2436,6 +2441,7 @@ class Kvirt(object):
 
     def update_iso(self, name, iso):
         warning("Note it will only be effective upon next start")
+        source = None
         if iso is not None:
             if self.host in ['localhost', '127.0.0.1'] and os.path.exists(iso):
                 source = os.path.abspath(iso)
