@@ -1075,11 +1075,18 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             with open("%s/openshift/99-notifications.yaml" % clusterdir, 'w') as _f:
                 _f.write(notifyfile)
     if apps and (async_install or sno):
-        apps = [a for a in apps if a not in ['users', 'autolabellers']]
+        final_apps = []
+        for a in apps:
+            if isinstance(a, str) and a not in ['users', 'autolabellers']:
+                final_apps.append(a)
+            elif isinstance(a, dict) and 'name' in a:
+                final_apps.append(a['name'])
+            else:
+                error(f"Invalid app {a}. Skipping")
         appsfile = "%s/99-apps.yaml" % plandir
         appsfile = config.process_inputfile(cluster, appsfile, overrides={'registry': registry,
                                                                           'arch_tag': arch_tag,
-                                                                          'apps': apps})
+                                                                          'apps': final_apps})
         with open("%s/openshift/99-apps.yaml" % clusterdir, 'w') as _f:
             _f.write(appsfile)
         appdir = "%s/apps" % plandir
