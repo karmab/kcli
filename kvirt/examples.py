@@ -263,6 +263,12 @@ $ kcli create app openshift local-storage --paramfile your_paramfile.yml
 
 # Deploy local storage without the cr
 $ kcli create app openshift local-storage -P install_cr=false
+
+# Force a specific csv for a given operator
+$ kcli create app openshift serverless-operator -P csv=serverless-operator.v1.22.0
+
+# Set installplan to manual
+$ kcli create app openshift serverless-operator -P installplan=manual
 """
 
 changelog = """Get commits between current version and master

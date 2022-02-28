@@ -26,3 +26,9 @@ spec:
   name: {{ name }}
   source: {{ source | default('redhat-operators') }}
   sourceNamespace: openshift-marketplace
+{% if csv is defined %}
+  startingCSV: {{ csv }}
+{% endif %}
+{% if installplan is defined %}
+  installPlanApproval: {{ installplan }}
+{% endif %}

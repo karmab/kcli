@@ -980,11 +980,10 @@ def create_app_openshift(args):
                     continue
                 else:
                     channel = overrides_channel
-            app_data = {'name': name, 'source': source, 'channel': channel, 'csv': csv, 'namespace': namespace,
-                        'crd': crd}
-            overrides.update(app_data)
+            app_data = {'name': name, 'source': source, 'channel': channel, 'namespace': namespace, 'crd': crd}
+            app_data.update(overrides)
         pprint(f"Adding app {app}")
-        baseconfig.create_app_openshift(name, overrides, outputdir=outputdir)
+        baseconfig.create_app_openshift(name, app_data, outputdir=outputdir)
 
 
 def delete_app_generic(args):
@@ -1033,11 +1032,10 @@ def delete_app_openshift(args):
             if name is None:
                 error(f"Couldn't find any app matching {app}. Skipping...")
                 continue
-            app_data = {'name': name, 'source': source, 'channel': channel, 'csv': csv, 'namespace': namespace,
-                        'crd': crd}
-            overrides.update(app_data)
+            app_data = {'name': name, 'source': source, 'channel': channel, 'namespace': namespace, 'crd': crd}
+            app_data.update(overrides)
         pprint(f"Deleting app {name}")
-        baseconfig.delete_app_openshift(app, overrides)
+        baseconfig.delete_app_openshift(app, app_data)
 
 
 def list_apps_generic(args):

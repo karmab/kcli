@@ -228,20 +228,27 @@ def process_apps(config, clusterdir, apps, overrides):
         return
     os.environ['KUBECONFIG'] = "%s/auth/kubeconfig" % clusterdir
     for app in apps:
-        app_data = overrides.copy()
-        if 'apps_install_cr' in app_data:
-            app_data['install_cr'] = app_data['apps_install_cr']
-        if app in LOCAL_OPENSHIFT_APPS:
-            name = app
-        else:
-            name, source, channel, csv, description, namespace, channels, crd = olm_app(app)
-            if name is None:
-                error("Couldn't find any app matching %s. Skipping..." % app)
+        base_data = overrides.copy()
+        if isinstance(app, str):
+            appname = app
+        elif isinstance(app, dict):
+            appname = app.get('name')
+            if appname is None:
+                error(f"Missing name in dict {app}. Skipping")
                 continue
-            current_app_data = {'name': name, 'source': source, 'channel': channel, 'csv': csv,
-                                'namespace': namespace, 'crd': crd}
-            app_data.update(current_app_data)
-        pprint("Adding app %s" % name)
+            base_data.overrides(app)
+        if 'apps_install_cr' in base_data:
+            base_data['install_cr'] = base_data['apps_install_cr']
+        if appname in LOCAL_OPENSHIFT_APPS:
+            name = appname
+        else:
+            name, source, channel, csv, description, namespace, channels, crd = olm_app(appname)
+            if name is None:
+                error(f"Couldn't find any app matching {app}. Skipping...")
+                continue
+            app_data = {'name': name, 'source': source, 'channel': channel, 'namespace': namespace, 'crd': crd}
+            app_data.update(base_data)
+        pprint(f"Adding app {name}")
         config.create_app_openshift(name, app_data)
 
 
