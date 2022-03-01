@@ -1187,7 +1187,7 @@ def create_openshift_iso(args):
     cluster = args.cluster
     ignitionfile = args.ignitionfile
     direct = args.direct
-    overrides = common.get_overrides(param=args.param)
+    overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
     client = 'fake' if common.need_fake() else args.client
     config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     config.create_openshift_iso(cluster, overrides=overrides, ignitionfile=ignitionfile, direct=direct)
@@ -1198,7 +1198,7 @@ def create_openshift_disconnecter(args):
     if plan is None:
         plan = nameutils.get_random_name()
         pprint(f"Using {plan} as name of the plan")
-    overrides = common.get_overrides(param=args.param)
+    overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
     if 'cluster' not in overrides:
         overrides['cluster'] = plan
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -4118,6 +4118,7 @@ def cli():
     disconnectercreate_parser.add_argument('-P', '--param', action='append',
                                            help='specify parameter or keyword for rendering (can specify multiple)',
                                            metavar='PARAM')
+    disconnectercreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     disconnectercreate_parser.add_argument('plan', metavar='PLAN', help='Plan', nargs='?')
     disconnectercreate_parser.set_defaults(func=create_openshift_disconnecter)
     create_subparsers.add_parser('openshift-disconnecter', parents=[disconnectercreate_parser],
@@ -4132,6 +4133,7 @@ def cli():
     isocreate_parser.add_argument('-P', '--param', action='append',
                                   help='specify parameter or keyword for rendering (can specify multiple)',
                                   metavar='PARAM')
+    isocreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     isocreate_parser.add_argument('cluster', metavar='CLUSTER', help='Cluster')
     isocreate_parser.set_defaults(func=create_openshift_iso)
     create_subparsers.add_parser('openshift-iso', parents=[isocreate_parser], description=isocreate_desc,
