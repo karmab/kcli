@@ -1397,6 +1397,18 @@ def update_vm(args):
         currentdisks = currentvm.get('disks', [])
         if disks:
             pprint(f"Updating disks of vm {name}")
+            for index, currentdisk in enumerate(currentdisks):
+                if index < len(disks):
+                    disk = disks[index]
+                    currentdisksize = currentdisk['size']
+                    disksize = disk.get('size', 10) if isinstance(disk, dict) else int(disk)
+                    if disksize > currentdisksize:
+                        if currentvm.get('status') != 'down':
+                            warning(f"Cant resize Disk {index} in {name} while VM is up")
+                            break
+                        pprint(f"Resizing Disk {index} in {name}")
+                        diskpath = currentdisk['path']
+                        k.resize_disk(diskpath, disksize)
             if len(currentdisks) < len(disks):
                 pprint(f"Adding Disks to {name}")
                 for disk in disks[len(currentdisks):]:

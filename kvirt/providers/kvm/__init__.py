@@ -3618,3 +3618,9 @@ class Kvirt(object):
             if e is not None:
                 return e.text.split(',')
         return []
+
+    def resize_disk(self, path, size):
+        conn = self.conn
+        volume = conn.storageVolLookupByPath(path)
+        size = int(size) * MB
+        volume.resize(size)
