@@ -311,6 +311,7 @@ class Kvirt(object):
         networks = []
         ovsnetworks = []
         ipv6networks = []
+        nvmedisks = []
         for n in allnetworks:
             if allnetworks[n]['type'] == 'bridged':
                 bridges.append(n)
@@ -349,6 +350,7 @@ class Kvirt(object):
                 diskwwn = None
                 diskimage = None
                 diskmacosx = False
+                nvme = False
             elif isinstance(disk, int):
                 disksize = disk
                 diskthin = default_diskthin
@@ -362,6 +364,7 @@ class Kvirt(object):
                 diskimage = None
                 diskname = None
                 diskmacosx = False
+                nvme = False
             elif isinstance(disk, str) and disk.isdigit():
                 disksize = int(disk)
                 diskthin = default_diskthin
@@ -375,6 +378,7 @@ class Kvirt(object):
                 diskimage = None
                 diskname = None
                 diskmacosx = False
+                nvme = False
             elif isinstance(disk, dict):
                 disksize = disk.get('size', default_disksize)
                 diskthin = disk.get('thin', default_diskthin)
@@ -385,6 +389,10 @@ class Kvirt(object):
                 diskimage = disk.get('image')
                 diskname = disk.get('name')
                 diskmacosx = disk.get('macosx', False)
+                nvme = disk.get('nvme', False)
+                if index == 0 and nvme:
+                    warning("Nvme on primary disk is not supported. Skipping")
+                    nvme = False
                 try:
                     storagediskpool = conn.storagePoolLookupByName(diskpool)
                 except:
@@ -473,8 +481,9 @@ class Kvirt(object):
             if backing is not None and not diskthin:
                 diskformat = 'qcow2'
                 warning("Raw disks don't support a backing, so using thin mode instead")
+            owner = '107' if nvme else None
             volxml = self._xmlvolume(path=diskpath, size=disksize, pooltype=diskpooltype, backing=backing,
-                                     diskformat=diskformat)
+                                     diskformat=diskformat, owner=owner)
             if index == 0 and image is not None and diskpooltype in ['logical', 'zfs']\
                     and diskpool is None and not backing.startswith('/dev'):
                 fixqcow2path = diskpath
@@ -502,7 +511,8 @@ class Kvirt(object):
             dsource = 'dev' if diskpath.startswith('/dev') else 'file'
             if diskpooltype in ['logical', 'zfs'] and (backing is None or backing.startswith('/dev')):
                 diskformat = 'raw'
-            disksxml = """%s<disk type='%s' device='disk'>
+            if not nvme:
+                disksxml = """%s<disk type='%s' device='disk'>
 <driver name='qemu' type='%s'/>
 <source %s='%s'/>
 %s
@@ -510,6 +520,8 @@ class Kvirt(object):
 %s
 %s
 </disk>""" % (disksxml, dtype, diskformat, dsource, diskpath, backingxml, diskdev, diskbus, diskwwn, diskserial)
+            else:
+                nvmedisks.append(diskpath)
         expanderinfo = {}
         for index, cell in enumerate(numa):
             if not isinstance(cell, dict) or 'id' not in cell:
@@ -650,7 +662,6 @@ class Kvirt(object):
 <model type='%s'/>
 %s
 </interface>""" % (netxml, iftype, mtuxml, macxml, sourcexml, ovsxml, nicnumaxml, filterxml, nettype, multiqueuexml)
-        metadataxml += "</kvirt:info></metadata>"
         if guestagent:
             gcmds = []
             if image is not None and 'cos' not in image and 'fedora-coreos' not in image:
@@ -957,7 +968,7 @@ class Kvirt(object):
         else:
             vcpuxml = "<vcpu>%d</vcpu>" % numcpus
         qemuextraxml = ''
-        if ignition or usermode or macosx or tpm or qemuextra is not None:
+        if ignition or usermode or macosx or tpm or qemuextra is not None or nvmedisks:
             namespace = "xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'"
             ignitionxml = ""
             if ignition:
@@ -988,12 +999,21 @@ class Kvirt(object):
                     freeformxml += "<qemu:arg value='%s'/>\n" % entry
             else:
                 freeformxml = ""
+            nvmexml = ""
+            if nvmedisks:
+                metadataxml += "\n<kvirt:nvmedisks>{nvmedisks}</kvirt:nvmedisks>".format(nvmedisks=','.join(nvmedisks))
+                for index, diskpath in enumerate(nvmedisks):
+                    nvmexml += """<qemu:arg value='-drive'/>
+<qemu:arg value='file={diskpath},format=qcow2,if=none,id=NVME{index}'/>
+<qemu:arg value='-device'/>
+<qemu:arg value='nvme,drive=NVME{index},serial=nvme-{index}'/>""".format(index=index, diskpath=diskpath)
             qemuextraxml = """<qemu:commandline>
 %s
 %s
 %s
 %s
-</qemu:commandline>""" % (ignitionxml, usermodexml, macosxml, freeformxml)
+%s
+</qemu:commandline>""" % (ignitionxml, usermodexml, macosxml, freeformxml, nvmexml)
         sharedxml = ""
         if sharedfolders:
             for folder in sharedfolders:
@@ -1166,6 +1186,7 @@ class Kvirt(object):
                 uuidxml = f"<uuid>{uuid}</uuid>"
             except:
                 warning(f"couldn't use {uuid} as uuid")
+        metadataxml += "</kvirt:info></metadata>"
         vmxml = """<domain type='{virttype}' {namespace}>
 <name>{name}</name>
 {uuidxml}
@@ -1574,6 +1595,7 @@ class Kvirt(object):
         uuid = vm.UUIDString()
         yamlinfo = {'name': name, 'nets': [], 'disks': [], 'id': uuid}
         plan, profile, image, ip, creationdate = '', None, None, None, None
+        nvmedisks = []
         kube, kubetype = None, None
         for element in list(root.iter('{kvirt}info')):
             e = element.find('{kvirt}plan')
@@ -1604,6 +1626,9 @@ class Kvirt(object):
             e = element.find('{kvirt}domain')
             if e is not None:
                 yamlinfo['domain'] = e.text
+            e = element.find('{kvirt}nvmedisks')
+            if e is not None:
+                nvmedisks = e.text.split(',')
         if image is not None:
             yamlinfo['image'] = image
         yamlinfo['plan'] = plan
@@ -1691,6 +1716,10 @@ class Kvirt(object):
                 disksize = 'N/A'
             yamlinfo['disks'].append({'device': device, 'size': disksize, 'format': diskformat, 'type': drivertype,
                                       'path': path})
+        if nvmedisks:
+            for index, diskpath in enumerate(nvmedisks):
+                yamlinfo['disks'].append({'device': f'nvme{index}', 'size': 'N/A', 'format': 'nvme', 'type': 'qcow2',
+                                          'path': diskpath})
         if vm.hasCurrentSnapshot():
             currentsnapshot = vm.snapshotCurrent().getName()
         else:
@@ -1851,6 +1880,9 @@ class Kvirt(object):
         disks = []
         domain, image = None, None
         for element in list(root.iter('{kvirt}info')):
+            e = element.find('{kvirt}nvmedisks')
+            if e is not None:
+                disks.extend(e.text.split(','))
             e = element.find('{kvirt}domain')
             if e is not None:
                 domain = e.text
@@ -2001,7 +2033,8 @@ class Kvirt(object):
         </disk>""" % (diskformat, diskpath, diskbus, diskdev, sharexml)
         return diskxml
 
-    def _xmlvolume(self, path, size, pooltype='file', backing=None, diskformat='qcow2'):
+    def _xmlvolume(self, path, size, pooltype='file', backing=None, diskformat='qcow2', owner=None):
+        ownerxml = f"<owner>{owner}</owner>" if owner is not None else ''
         disktype = 'file' if pooltype == 'file' else 'block'
         size = int(size) * MB
         if int(size) == 0:
@@ -2039,12 +2072,13 @@ class Kvirt(object):
 <path>%s</path>
 <format type='%s'/>
 <permissions>
+%s
 <mode>0644</mode>
 </permissions>
 <compat>1.1</compat>
 </target>
 %s
-</volume>""" % (disktype, name, size, path, diskformat, backingstore)
+</volume>""" % (disktype, name, size, path, diskformat, ownerxml, backingstore)
         return volume
 
     def clone(self, old, new, full=False, start=False):
