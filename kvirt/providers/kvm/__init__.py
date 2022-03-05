@@ -383,16 +383,19 @@ class Kvirt(object):
                 disksize = disk.get('size', default_disksize)
                 diskthin = disk.get('thin', default_diskthin)
                 diskinterface = disk.get('interface', default_diskinterface)
+                nvme = False
+                if diskinterface == 'nvme':
+                    diskinterface = default_diskinterface
+                    if index == 0:
+                        warning("Nvme on primary disk is not supported. Skipping")
+                    else:
+                        nvme = True
                 diskpool = disk.get('pool', default_pool)
                 diskwwn = disk.get('wwn')
                 diskserial = disk.get('serial')
                 diskimage = disk.get('image')
                 diskname = disk.get('name')
                 diskmacosx = disk.get('macosx', False)
-                nvme = disk.get('nvme', False)
-                if index == 0 and nvme:
-                    warning("Nvme on primary disk is not supported. Skipping")
-                    nvme = False
                 try:
                     storagediskpool = conn.storagePoolLookupByName(diskpool)
                 except:
