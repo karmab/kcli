@@ -311,7 +311,6 @@ class Kvirt(object):
         networks = []
         ovsnetworks = []
         ipv6networks = []
-        nvmedisks = []
         for n in allnetworks:
             if allnetworks[n]['type'] == 'bridged':
                 bridges.append(n)
@@ -337,6 +336,8 @@ class Kvirt(object):
         volsxml = {}
         virtio_index, ide_index, scsi_index = 0, 0, 0
         firstdisk = None
+        ssddisks = []
+        nvmedisks = []
         for index, disk in enumerate(disks):
             if disk is None:
                 disksize = default_disksize
@@ -390,6 +391,9 @@ class Kvirt(object):
                         warning("Nvme on primary disk is not supported. Skipping")
                     else:
                         nvme = True
+                if diskinterface == 'ssd':
+                    diskinterface = 'sata'
+                    ssddisks.append(index)
                 diskpool = disk.get('pool', default_pool)
                 diskwwn = disk.get('wwn')
                 diskserial = disk.get('serial')
@@ -971,7 +975,7 @@ class Kvirt(object):
         else:
             vcpuxml = "<vcpu>%d</vcpu>" % numcpus
         qemuextraxml = ''
-        if ignition or usermode or macosx or tpm or qemuextra is not None or nvmedisks:
+        if ignition or usermode or macosx or tpm or qemuextra is not None or nvmedisks or ssddisks:
             namespace = "xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'"
             ignitionxml = ""
             if ignition:
@@ -1010,13 +1014,19 @@ class Kvirt(object):
 <qemu:arg value='file={diskpath},format=qcow2,if=none,id=NVME{index}'/>
 <qemu:arg value='-device'/>
 <qemu:arg value='nvme,drive=NVME{index},serial=nvme-{index}'/>""".format(index=index, diskpath=diskpath)
+            ssdxml = ""
+            if ssddisks:
+                for index in range(len(ssddisks)):
+                    ssdxml += """<qemu:arg value='-set'/>
+<qemu:arg value='device.sata0-0-{index}.rotation_rate=1'/>""".format(index=index)
             qemuextraxml = """<qemu:commandline>
 %s
 %s
 %s
 %s
 %s
-</qemu:commandline>""" % (ignitionxml, usermodexml, macosxml, freeformxml, nvmexml)
+%s
+</qemu:commandline>""" % (ignitionxml, usermodexml, macosxml, freeformxml, nvmexml, ssdxml)
         sharedxml = ""
         if sharedfolders:
             for folder in sharedfolders:
@@ -1707,7 +1717,8 @@ class Kvirt(object):
                     yamlinfo['iso'] = iso_file
                 continue
             device = element.find('target').get('dev')
-            diskformat = 'file'
+            diskformat = element.find('target').get('bus')
+            # diskformat = 'file'
             drivertype = element.find('driver').get('type')
             imagefiles = [element.find('source').get('file'), element.find('source').get('dev'),
                           element.find('source').get('volume')]

@@ -1274,7 +1274,7 @@ Parameter          Default Value                        Comments
 *guestid*          guestrhel764                         
 *pool*             default                              
 *image*            None                                 Should point to your base cloud image(optional). You can either specify short name or complete path. If you omit the full path and your image lives in several pools, the one from last (alphabetical) pool will be used\\
-*diskinterface*    virtio                               You can set it to ide or nvme instead
+*diskinterface*    virtio                               You can set it to ide, ssd or nvme instead
 *diskthin*         True                                 
 *disks*            []                                   Array of disks to define. For each of them, you can specify pool, size, thin (as boolean), interface (either ide or virtio) and a wwn.If you omit parameters, default values will be used from config or profile file (You can actually let the entire entry blank or just indicate a size number directly)
 *iso*              None                                 
