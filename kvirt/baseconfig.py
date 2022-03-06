@@ -23,7 +23,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
 from ipaddress import ip_address
 from random import choice
 from kvirt import common
-from kvirt.common import error, pprint, warning, container_mode
+from kvirt.common import error, pprint, warning, container_mode, ssh, scp
 from kvirt.jinjafilters import jinjafilters
 from kvirt import kind
 from kvirt import k3s
@@ -1498,6 +1498,7 @@ class Kbaseconfig:
                 f.write(myfile01data)
 
     def create_workflow(self, workflow, overrides={}):
+        target = overrides.get('target')
         requirefile = overrides.get('requirefile')
         if requirefile is not None:
             requirefile = os.path.expanduser(requirefile)
@@ -1533,10 +1534,34 @@ class Kbaseconfig:
                     f.write(rendered)
                 if index < len(scripts):
                     finalscripts.append(path)
+            if target is not None:
+                remotedir = f"/tmp/{os.path.basename(tmpdir)}"
+                if '@' in target:
+                    target = target.split('@')
+                    if len(target) == 2:
+                        user, host = target
+                    else:
+                        msg = f"Invalid target {target}"
+                        error(msg)
+                        return {'result': 'failure', 'reason': msg}
+                else:
+                    user, host = 'root', target
+                scpcmd = scp(host, ip=host, user=user, source=tmpdir, destination=remotedir, download=False,
+                             insecure=True)
+                os.system(scpcmd)
+                cmd = [f"cd {remotedir}"]
+                for script in finalscripts:
+                    cmd.append(f'bash {script}' if script.endswith('.sh') else f'./{script}')
+                cmd.append(f"rm -rf {remotedir}")
+                cmd = ';'.join(cmd)
+                pprint(f"Running script {script} on {host}")
+                sshcommand = ssh(host, ip=host, user=user, cmd=cmd)
+                os.system(sshcommand)
+                return {'result': 'success'}
             os.chdir(tmpdir)
             for script in finalscripts:
                 os.chmod(script, 0o700)
-                pprint(f"Running script {script}")
+                pprint(f"Running script {script} locally")
                 command = f'bash {script}' if script.endswith('.sh') else f'./{script}'
                 result = call(command, shell=True)
                 if result != 0:

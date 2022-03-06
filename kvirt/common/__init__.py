@@ -1003,6 +1003,8 @@ def scp(name, ip='', user=None, source=None, destination=None, recursive=None, t
         if download:
             scpcommand = "%s %s %s@%s:%s %s" % (scpcommand, arguments, user, ip, source, destination)
         else:
+            if os.path.isdir(source):
+                arguments += ' -r'
             scpcommand = "%s %s %s %s@%s:%s" % (scpcommand, arguments, source, user, ip, destination)
         if debug:
             pprint(scpcommand)

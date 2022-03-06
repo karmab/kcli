@@ -287,6 +287,9 @@ $ kcli changelog sha1 sha2
 workflowcreate = """# Run workflow from a single script
 $ kcli run workflow myscript.sh
 
-# Create a workflow based on some scripts and files
+# Run workflow based on some scripts and files
 $ kcli run workflow -P scripts=[deploy.sh] -P files=[file1,file2] myworkflow
+
+# Run workflow on another target/host
+$ kcli run workflow myscript.sh -P target=192.168.1.1
 """
