@@ -290,6 +290,12 @@ $ kcli run workflow myscript.sh
 # Run workflow based on some scripts and files
 $ kcli run workflow -P scripts=[deploy.sh] -P files=[file1,file2] myworkflow
 
+# Run workflow on a kcli vm
+$ kcli run workflow myscript.sh -P target=myvm
+
+# Force the user
+$ kcli run workflow myscript.sh -P target=root@myvm
+
 # Run workflow on another target/host
 $ kcli run workflow myscript.sh -P target=192.168.1.1
 """

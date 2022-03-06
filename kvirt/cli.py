@@ -3193,9 +3193,25 @@ def create_workflow(args):
     if workflow is None:
         workflow = nameutils.get_random_name()
         pprint(f"Using {workflow} as name of the workflow")
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
-    result = baseconfig.create_workflow(workflow, overrides)
+    config = None
+    if 'target' in overrides:
+        user = None
+        vmport = None
+        target = overrides['target']
+        if '@' in target:
+            user, hostname = target.split('@')
+        else:
+            hostname = target
+        if '.' not in hostname and ':' not in hostname:
+            config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
+                             namespace=args.namespace)
+            vmuser, vmip, vmport = _ssh_credentials(config.k, hostname)
+            if vmip is not None:
+                overrides['target'] = {'user': user or vmuser, 'port': vmport, 'ip': vmip, 'hostname': hostname}
+    if config is None:
+        config = Kbaseconfig(client=args.client, debug=args.debug)
+    result = config.create_workflow(workflow, overrides)
     sys.exit(0 if result['result'] == 'success' else 1)
 
 

@@ -1499,6 +1499,29 @@ class Kbaseconfig:
 
     def create_workflow(self, workflow, overrides={}):
         target = overrides.get('target')
+        if target is not None:
+            if isinstance(target, str):
+                tunnel, tunnelhost, tunnelport, tunneluser, vmport = False, None, 22, 'root', None
+                if '@' in target:
+                    target = target.split('@')
+                    if len(target) == 2:
+                        user, hostname = target
+                        ip = hostname
+                    else:
+                        msg = f"Invalid target {target}"
+                        error(msg)
+                        return {'result': 'failure', 'reason': msg}
+                else:
+                    user, hostname, ip = 'root', target, target
+            elif isinstance(target, dict):
+                hostname = target.get('hostname')
+                user = target.get('user')
+                ip = target.get('ip')
+                vmport = target.get('vmport')
+                tunnel = self.tunnel
+                tunnelhost = self.tunnelhost
+                tunnelport = self.tunnelport
+                tunneluser = self.tunneluser
         requirefile = overrides.get('requirefile')
         if requirefile is not None:
             requirefile = os.path.expanduser(requirefile)
@@ -1536,36 +1559,28 @@ class Kbaseconfig:
                     finalscripts.append(path)
             if target is not None:
                 remotedir = f"/tmp/{os.path.basename(tmpdir)}"
-                if '@' in target:
-                    target = target.split('@')
-                    if len(target) == 2:
-                        user, host = target
-                    else:
-                        msg = f"Invalid target {target}"
-                        error(msg)
-                        return {'result': 'failure', 'reason': msg}
-                else:
-                    user, host = 'root', target
-                scpcmd = scp(host, ip=host, user=user, source=tmpdir, destination=remotedir, download=False,
-                             insecure=True)
+                scpcmd = scp(hostname, ip=ip, user=user, source=tmpdir, destination=remotedir, download=False,
+                             insecure=True, tunnel=tunnel, tunnelhost=tunnelhost, tunnelport=tunnelport,
+                             tunneluser=tunneluser, vmport=vmport)
                 os.system(scpcmd)
                 cmd = [f"cd {remotedir}"]
                 for script in finalscripts:
                     cmd.append(f'bash {script}' if script.endswith('.sh') else f'./{script}')
                 cmd.append(f"rm -rf {remotedir}")
                 cmd = ';'.join(cmd)
-                pprint(f"Running script {script} on {host}")
-                sshcommand = ssh(host, ip=host, user=user, cmd=cmd)
+                pprint(f"Running script {script} on {hostname}")
+                sshcommand = ssh(hostname, ip=ip, user=user, cmd=cmd, tunnel=tunnel, tunnelhost=tunnelhost,
+                                 tunnelport=tunnelport, tunneluser=tunneluser, vmport=vmport)
                 os.system(sshcommand)
-                return {'result': 'success'}
-            os.chdir(tmpdir)
-            for script in finalscripts:
-                os.chmod(script, 0o700)
-                pprint(f"Running script {script} locally")
-                command = f'bash {script}' if script.endswith('.sh') else f'./{script}'
-                result = call(command, shell=True)
-                if result != 0:
-                    msg = f"Failure in script {script}"
-                    error(msg)
-                    return {'result': 'failure', 'reason': msg}
+            else:
+                os.chdir(tmpdir)
+                for script in finalscripts:
+                    os.chmod(script, 0o700)
+                    pprint(f"Running script {script} locally")
+                    command = f'bash {script}' if script.endswith('.sh') else f'./{script}'
+                    result = call(command, shell=True)
+                    if result != 0:
+                        msg = f"Failure in script {script}"
+                        error(msg)
+                        return {'result': 'failure', 'reason': msg}
         return {'result': 'success'}
