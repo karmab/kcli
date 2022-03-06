@@ -10,6 +10,7 @@ from kvirt.examples import plandatacreate, vmdatacreate, hostcreate, _list, plan
 from kvirt.examples import repocreate, isocreate, kubegenericcreate, kubek3screate, kubeopenshiftcreate, kubekindcreate
 from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsole, vmexport, niccreate, nicdelete
 from kvirt.examples import disconnectercreate, appopenshiftcreate, plantemplatecreate, kubehypershiftcreate
+from kvirt.examples import workflowcreate
 from kvirt.examples import changelog
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
@@ -3186,6 +3187,18 @@ def list_keyword(args):
     return
 
 
+def create_workflow(args):
+    """Create workflow"""
+    workflow = args.workflow
+    if workflow is None:
+        workflow = nameutils.get_random_name()
+        pprint(f"Using {workflow} as name of the workflow")
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
+    result = baseconfig.create_workflow(workflow, overrides)
+    sys.exit(0 if result['result'] == 'success' else 1)
+
+
 def cli():
     """
 
@@ -3217,7 +3230,7 @@ def cli():
                           epilog=changelog_epilog, formatter_class=rawhelp)
 
     create_desc = 'Create Object'
-    create_parser = subparsers.add_parser('create', description=create_desc, help=create_desc, aliases=['add'])
+    create_parser = subparsers.add_parser('create', description=create_desc, help=create_desc, aliases=['add', 'run'])
     create_subparsers = create_parser.add_subparsers(metavar='', dest='subcommand_create')
 
     vmclone_desc = 'Clone Vm'
@@ -4708,6 +4721,18 @@ def cli():
     vmupdate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     vmupdate_parser.add_argument('names', help='VMNAMES', nargs='*')
     vmupdate_parser.set_defaults(func=update_vm)
+
+    workflowcreate_desc = 'Create Workflow'
+    workflowcreate_epilog = "examples:\n%s" % workflowcreate
+    workflowcreate_parser = create_subparsers.add_parser('workflow', description=workflowcreate_desc,
+                                                         help=workflowcreate_desc, epilog=workflowcreate_epilog,
+                                                         formatter_class=rawhelp)
+    workflowcreate_parser.add_argument('-P', '--param', action='append',
+                                       help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    workflowcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    # workflowcreate_parser.add_argument('-t', '--threaded', help='Run threaded', action='store_true')
+    workflowcreate_parser.add_argument('workflow', metavar='WORKFLOW', nargs='?')
+    workflowcreate_parser.set_defaults(func=create_workflow)
 
     argcomplete.autocomplete(parser)
     if len(sys.argv) == 1 or (len(sys.argv) == 3 and sys.argv[1] == '-C'):

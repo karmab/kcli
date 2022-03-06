@@ -283,3 +283,10 @@ $ kcli changelog f173cb7e032a5b72092451255c58dfec8b11af35
 # Get commits between two shas
 $ kcli changelog sha1 sha2
 """
+
+workflowcreate = """# Run workflow from a single script
+$ kcli run workflow myscript.sh
+
+# Create a workflow based on some scripts and files
+$ kcli run workflow -P scripts=[deploy.sh] -P files=[file1,file2] myworkflow
+"""

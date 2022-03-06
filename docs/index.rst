@@ -783,6 +783,10 @@ Typical commands
 
    -  ``kcli export vm vm1``
 
+-  Run workflow script named myworkflow.sh with some parameters:
+
+   -  ``kcli create workflow myworkflow.sh -P xx=jimi``
+
 Omitting vm’s name
 ------------------
 
@@ -828,6 +832,7 @@ The following types can be used within a plan:
 -  dns
 -  plan (so you can compose plans from several urls)
 -  kube
+-  workflow
 
 plan types
 ----------
@@ -954,6 +959,23 @@ dns
     type: dns
     net: default
     ip: 192.168.1.35
+
+workflow
+~~~~~~~~
+
+Workflow allows you to launch scripts locally after they are rendered
+
+.. code:: yaml
+
+   myworkflow:
+     type: workflow
+     scripts:
+     - frout.sh
+     - prout.py
+     files:
+     - frout.txt
+
+This would execute the two scripts after rendering them into a temporary directory, along with the files if provided. Note that you can omit the scripts section and instead indicate the script to run as name of the workflow. This requires it to be a sh/bash script and as such beeing suffixed by .sh
 
 vms
 ~~~

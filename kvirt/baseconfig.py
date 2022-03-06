@@ -39,6 +39,9 @@ from jinja2.runtime import Undefined as defaultundefined
 from jinja2.exceptions import TemplateSyntaxError, TemplateError, TemplateNotFound
 import re
 import sys
+from subprocess import call
+from tempfile import TemporaryDirectory
+from time import sleep
 
 
 def other_client(profile, clients):
@@ -1493,3 +1496,51 @@ class Kbaseconfig:
             myfile01data = 'a good movie to see is {{ bestmovie }}'
             with open(f"{directory}/files/myfile01", "w") as f:
                 f.write(myfile01data)
+
+    def create_workflow(self, workflow, overrides={}):
+        requirefile = overrides.get('requirefile')
+        if requirefile is not None:
+            requirefile = os.path.expanduser(requirefile)
+            while not os.path.exists(requirefile):
+                pprint(f"Waiting 5s for file {requirefile} to be present")
+                sleep(5)
+        files = overrides.get('files', [])
+        scripts = overrides.get('scripts', [])
+        if not scripts:
+            if workflow.endswith('.sh'):
+                scripts = [workflow]
+            else:
+                msg = "No scripts provided"
+                error(msg)
+                return {'result': 'failure', 'reason': msg}
+        finalscripts = []
+        with TemporaryDirectory() as tmpdir:
+            for index, entry in enumerate(scripts + files):
+                if isinstance(entry, dict):
+                    origin = os.path.expanduser(entry.get('origin') or entry.get('path'))
+                    content = entry.get('content')
+                else:
+                    origin = os.path.expanduser(entry)
+                    content = None
+                if not os.path.exists(origin):
+                    msg = f"File {origin} not found"
+                    error(msg)
+                    return {'result': 'failure', 'reason': msg}
+                path = os.path.basename(origin)
+                rendered = self.process_inputfile(workflow, origin, overrides=overrides) if not content else content
+                destfile = f"{tmpdir}/{path}"
+                with open(destfile, 'w') as f:
+                    f.write(rendered)
+                if index < len(scripts):
+                    finalscripts.append(path)
+            os.chdir(tmpdir)
+            for script in finalscripts:
+                os.chmod(script, 0o700)
+                pprint(f"Running script {script}")
+                command = f'bash {script}' if script.endswith('.sh') else f'./{script}'
+                result = call(command, shell=True)
+                if result != 0:
+                    msg = f"Failure in script {script}"
+                    error(msg)
+                    return {'result': 'failure', 'reason': msg}
+        return {'result': 'success'}

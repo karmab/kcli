@@ -1567,6 +1567,8 @@ class Kconfig(Kbaseconfig):
         kubeentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'kube']
         lbs = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'loadbalancer']
         bucketentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'bucket']
+        workflowentries = [entry for entry in entries
+                           if 'type' in entries[entry] and entries[entry]['type'] == 'workflow']
         for p in profileentries:
             vmprofiles[p] = entries[p]
         if networkentries and not onlyassets:
@@ -2109,6 +2111,12 @@ class Kconfig(Kbaseconfig):
                 self.create_loadbalancer(lbentry, nets=lbnets, ports=ports, checkpath=checkpath, vms=lbvms,
                                          domain=domain, plan=plan, checkport=checkport, alias=alias,
                                          internal=internal, dnsclient=dnsclient)
+        if workflowentries and not onlyassets:
+            pprint("Deploying Workflow Entries...")
+            for workflow in workflowentries:
+                workflow_overrides = overrides.copy()
+                workflow_overrides.update(entries[workflow])
+                self.create_workflow(workflow, overrides=workflow_overrides)
         returndata = {'result': 'success', 'plan': plan}
         returndata['newvms'] = newvms if newvms else []
         returndata['existingvms'] = existingvms if existingvms else []
