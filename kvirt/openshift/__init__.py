@@ -241,6 +241,7 @@ def process_apps(config, clusterdir, apps, overrides):
             base_data['install_cr'] = base_data['apps_install_cr']
         if appname in LOCAL_OPENSHIFT_APPS:
             name = appname
+            app_data = base_data
         else:
             name, source, channel, csv, description, namespace, channels, crd = olm_app(appname)
             if name is None:

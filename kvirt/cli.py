@@ -969,6 +969,7 @@ def create_app_openshift(args):
     for app in apps:
         if app in LOCAL_OPENSHIFT_APPS:
             name = app
+            app_data = overrides.copy()
         else:
             name, source, channel, csv, description, namespace, channels, crd = common.olm_app(app)
             if name is None:
@@ -1007,7 +1008,7 @@ def delete_app_generic(args):
             error(f"app {app} not available. Skipping...")
             continue
         pprint(f"Deleting app {app}")
-        overrides['%s_version' % app] = overrides['%s_version' % app] if '%s_version' % app in overrides else 'latest'
+        overrides[f'{app}_version'] = overrides[f'{app}_version'] if f'{app}_version' in overrides else 'latest'
         baseconfig.delete_app_generic(app, overrides)
 
 
