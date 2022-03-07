@@ -1530,7 +1530,8 @@ class Kbaseconfig:
                 sleep(5)
         files = overrides.get('files', [])
         scripts = overrides.get('scripts', [])
-        if not scripts:
+        cmds = overrides.get('cmds', [])
+        if not scripts and not cmds:
             if workflow.endswith('.sh'):
                 scripts = [workflow]
             else:
@@ -1557,6 +1558,12 @@ class Kbaseconfig:
                     f.write(rendered)
                 if index < len(scripts):
                     finalscripts.append(path)
+            if cmds:
+                cmdscontent = '\n'.join(cmds)
+                destfile = f"{tmpdir}/cmds.sh"
+                with open(destfile, 'w') as f:
+                    f.write(cmdscontent)
+                finalscripts.append('cmds.sh')
             if target is not None:
                 remotedir = f"/tmp/{os.path.basename(tmpdir)}"
                 scpcmd = scp(hostname, ip=ip, user=user, source=tmpdir, destination=remotedir, download=False,

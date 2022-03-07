@@ -298,4 +298,7 @@ $ kcli run workflow myscript.sh -P target=root@myvm
 
 # Run workflow on another target/host
 $ kcli run workflow myscript.sh -P target=192.168.1.1
+
+# Run workflow from some commands
+$ kcli run workflow myworkflow -P cmds=[hostname]
 """
