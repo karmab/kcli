@@ -31,7 +31,7 @@ TUNNELDIR = '/var/www/html'
 TUNNELPORT = 22
 VMUSER = None
 VMPORT = None
-OPENSHIFT_TAG = '4.9'
+OPENSHIFT_TAG = '4.10'
 BSD = "https://object-storage.public.mtl1.vexxhost.net/swift/v1/1dbafeefbd4f4c80864414a441e72dd2"
 BSD += "/bsd-cloud-image.org/images/"
 DEBIAN = "https://cdimage.debian.org/cdimage/"
@@ -97,7 +97,8 @@ IMAGES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-i
           'rhcos48': RHCOS + 'rhcos-4.8',
           'rhcos49': RHCOS + 'rhcos-4.9',
           'rhcos410': RHCOS + 'rhcos-4.10',
-          'rhcoslatest': RHCOS + 'rhcos-4.10',
+          'rhcos411': RHCOS + 'rhcos-4.11',
+          'rhcoslatest': RHCOS + 'rhcos-4.11',
           'rhel7': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7',
           'rhel8': 'https://access.redhat.com/downloads/content/479/ver=/rhel---8',
           'rhelbeta': 'https://access.redhat.com/downloads/content/486/ver=/rhel---9',

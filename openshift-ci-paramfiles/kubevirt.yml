@@ -3,7 +3,7 @@ domain: karmalabs.com
 masters: 3
 workers: 0
 version: stable
-tag: 4.9
+tag: "4.10"
 api_ip: 10.19.135.111
 network: baremetal
 master_memory: 16384
