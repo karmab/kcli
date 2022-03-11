@@ -1247,9 +1247,8 @@ class Kbaseconfig:
         if installed:
             header = 'subscription.operators.coreos.com/'
             results = []
-            manifestscmd = "oc get subscription -A -o name"
+            manifestscmd = "oc get subscriptions.operators.coreos.com -A -o name"
             manifestsdata = os.popen(manifestscmd).read().split('\n')
-            print(manifestsdata)
         else:
             header = 'packagemanifest.packages.operators.coreos.com/'
             results = ['autolabeller', 'users']
