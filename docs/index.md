@@ -408,7 +408,6 @@ myovirt:
  pool: Default
  org: YourOrg
  ca_file: ~/ovirt.pem
- imagerepository: ovirt-image-repository
 ```
 
 The following parameters are specific to ovirt:
@@ -421,7 +420,6 @@ The following parameters are specific to ovirt:
 - filtervms Defaults to True. Only list vms created by kcli.
 - filteruser Defaults to False. Only list vms created by own user
 - filtertag Defaults to None. Only list vms created by kcli with the corresponding filter=filtertag in their description. Useful for environments when you share the same user
-- imagerepository (Optional). A Glance image provider repository to use to retrieve images. Defaults to `ovirt-image-repository`.
 
 Note that pool in Ovirt context refers to storage domain.
 

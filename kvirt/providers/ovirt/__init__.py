@@ -46,8 +46,8 @@ class KOvirt(object):
     """
     def __init__(self, host='127.0.0.1', port=22, user='admin@internal',
                  password=None, insecure=True, ca_file=None, org=None, debug=False,
-                 cluster='Default', datacenter='Default', ssh_user='root', imagerepository='ovirt-image-repository',
-                 filtervms=False, filteruser=False, filtertag=None):
+                 cluster='Default', datacenter='Default', ssh_user='root', filtervms=False, filteruser=False,
+                 filtertag=None):
         try:
             url = "https://%s/ovirt-engine/api" % host
             self.conn = sdk.Connection(url=url, username=user,
@@ -68,7 +68,6 @@ class KOvirt(object):
         self.ca_file = ca_file
         self.org = org
         self.ssh_user = ssh_user
-        self.imagerepository = imagerepository
         self.filtervms = filtervms
         self.filteruser = filteruser
         self.filtertag = filtertag
@@ -972,30 +971,6 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         poolcheck = sds_service.list(search='name=%s' % pool)
         if not poolcheck:
             return {'result': 'failure', 'reason': "Pool %s not found" % pool}
-        sd = sds_service.list(search='name=%s' % self.imagerepository)
-        if sd:
-            pprint("Trying to use glance repository %s" % self.imagerepository)
-            sd_service = sds_service.storage_domain_service(sd[0].id)
-            images_service = sd_service.images_service()
-            images = images_service.list()
-            if self.imagerepository != 'ovirt-image-repository':
-                ximages = {i.name: i.name for i in images}
-            else:
-                ximages = oimages
-            if shortimage in ximages:
-                imageobject = next((i for i in images if ximages[shortimage] in i.name), None)
-                if imageobject is None:
-                    error("Unable to locate the image in glance repository")
-                    return {'result': 'failure', 'reason': "Unable to locate the image in glance repository"}
-                image_service = images_service.image_service(imageobject.id)
-                image_service.import_(import_as_template=True, template=types.Template(name=shortimage),
-                                      cluster=types.Cluster(name=self.cluster),
-                                      storage_domain=types.StorageDomain(name=pool))
-                return {'result': 'success'}
-            else:
-                pprint("Image not found in %s. Manually downloading" % self.imagerepository)
-        else:
-            pprint("No glance repository found. Manually downloading")
         disks_service = self.conn.system_service().disks_service()
         disksearch = disks_service.list(search='alias=%s' % shortimage)
         if not disksearch:
