@@ -312,7 +312,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 userdata += data
         userdata += 'ssh_pwauth: True\n'
         if storemetadata and overrides:
-            storeoverrides = {k: overrides[k] for k in overrides if k not in ['password', 'rhnpassword', 'rhnak']}
+            storeoverrides = {key: overrides[key] for key in overrides if not key.startswith('config_')}
             storedata = {'path': '/root/.metadata', 'content': yaml.dump(storeoverrides, default_flow_style=False,
                                                                          indent=2)}
             if files:
