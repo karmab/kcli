@@ -1528,7 +1528,7 @@ class Kconfig(Kbaseconfig):
                 warning(f"{inputfile} doesn't look like a valid plan.Skipping....")
                 return
             else:
-                error(f"{inputfile} doesn't look like a valid plan.Leaving....")
+                error(f"{inputfile} doesn't look like a valid plan file.Maybe you provided a parameter file?...")
                 sys.exit(1)
         inputdir = os.path.dirname(inputfile) if os.path.dirname(inputfile) != '' and os.path.isabs(inputfile) else '.'
         pre_base = os.path.splitext(os.path.basename(inputfile))[0]
