@@ -1937,21 +1937,24 @@ def create_plan(args):
     force = args.force
     pre = not args.skippre
     post = not args.skippost
-    paramfile = args.paramfile
+    paramfiles = args.paramfile if args.paramfile is not None else []
     threaded = args.threaded
     if inputfile is None:
         inputfile = 'kcli_plan.yml'
     if container_mode():
-        inputfile = "/workdir/%s" % inputfile
-        if paramfile is not None:
-            paramfile = "/workdir/%s" % paramfile
+        inputfile = f"/workdir/{inputfile}"
+        if paramfiles:
+            paramfiles = [f"/workdir/{paramfile}" for paramfile in paramfiles]
         elif os.path.exists("/workdir/kcli_parameters.yml"):
-            paramfile = "/workdir/kcli_parameters.yml"
+            paramfiles = ["/workdir/kcli_parameters.yml"]
             pprint("Using default parameter file kcli_parameters.yml")
-    elif paramfile is None and os.path.exists("kcli_parameters.yml"):
-        paramfile = "kcli_parameters.yml"
+    elif not paramfiles and os.path.exists("kcli_parameters.yml"):
+        paramfiles = ["kcli_parameters.yml"]
         pprint("Using default parameter file kcli_parameters.yml")
-    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    overrides = {}
+    for paramfile in paramfiles:
+        overrides.update(common.get_overrides(paramfile=paramfile))
+    overrides.update(common.get_overrides(param=args.param))
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     _type = config.ini[config.client].get('type', 'kvm')
     overrides.update({'type': _type})
@@ -2406,9 +2409,9 @@ def render_file(args):
     paramfiles = args.paramfile if args.paramfile is not None else []
     ignore = args.ignore
     if container_mode():
-        inputfile = "/workdir/%s" % inputfile if inputfile is not None else "/workdir/kcli_plan.yml"
+        inputfile = f"/workdir/{inputfile}" if inputfile is not None else "/workdir/kcli_plan.yml"
         if paramfiles:
-            paramfiles = ["/workdir/%s" % paramfile for paramfile in paramfiles]
+            paramfiles = [f"/workdir/{paramfile}" for paramfile in paramfiles]
         elif os.path.exists("/workdir/kcli_parameters.yml"):
             paramfiles = ["/workdir/kcli_parameters.yml"]
     elif not paramfiles and os.path.exists("kcli_parameters.yml"):
@@ -2457,16 +2460,19 @@ def create_plandata(args):
     inputfile = args.inputfile
     pre = not args.skippre
     outputdir = args.outputdir
-    paramfile = args.paramfile
+    paramfiles = args.paramfile if args.paramfile is not None else []
     if container_mode():
-        inputfile = "/workdir/%s" % inputfile
-        if paramfile is not None:
-            paramfile = "/workdir/%s" % paramfile
+        inputfile = f"/workdir/{inputfile}"
+        if paramfiles:
+            paramfiles = [f"/workdir/{paramfile}" for paramfile in paramfiles]
         elif os.path.exists("/workdir/kcli_parameters.yml"):
-            paramfile = "/workdir/kcli_parameters.yml"
-    elif paramfile is None and os.path.exists("kcli_parameters.yml"):
-        paramfile = "kcli_parameters.yml"
-    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+            paramfiles = ["/workdir/kcli_parameters.yml"]
+    elif not paramfiles and os.path.exists("kcli_parameters.yml"):
+        paramfiles = ["kcli_parameters.yml"]
+    overrides = {}
+    for paramfile in paramfiles:
+        overrides.update(common.get_overrides(paramfile=paramfile))
+    overrides.update(common.get_overrides(param=args.param))
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                      namespace=args.namespace)
     config_data = {'config_%s' % k: config.ini[config.client][k] for k in config.ini[config.client]}
@@ -4240,7 +4246,7 @@ def cli():
     plancreate_parser.add_argument('-z', '--skippost', action='store_true', help='Skip post script')
     plancreate_parser.add_argument('-P', '--param', action='append',
                                    help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    plancreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    plancreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE', action='append')
     plancreate_parser.add_argument('-t', '--threaded', help='Run threaded', action='store_true')
     plancreate_parser.add_argument('plan', metavar='PLAN', nargs='?')
     plancreate_parser.set_defaults(func=create_plan)
@@ -4304,7 +4310,8 @@ def cli():
     plandatacreate_parser.add_argument('--outputdir', '-o', help='Output directory', metavar='OUTPUTDIR')
     plandatacreate_parser.add_argument('-P', '--param', action='append',
                                        help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    plandatacreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    plandatacreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE',
+                                       action='append')
     plandatacreate_parser.add_argument('name', metavar='VMNAME', nargs='?', type=valid_fqdn)
     plandatacreate_parser.set_defaults(func=create_plandata)
 
