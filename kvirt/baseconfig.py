@@ -1540,6 +1540,8 @@ class Kbaseconfig:
         finalscripts = []
         with TemporaryDirectory() as tmpdir:
             destdir = outputdir or tmpdir
+            directoryfiles = []
+            directories = []
             for index, entry in enumerate(scripts + files):
                 if isinstance(entry, dict):
                     origin = os.path.expanduser(entry.get('origin') or entry.get('path'))
@@ -1547,17 +1549,33 @@ class Kbaseconfig:
                 else:
                     origin = os.path.expanduser(entry)
                     content = None
-                if not os.path.exists(origin):
+                if origin in directories:
+                    continue
+                elif not os.path.exists(origin):
                     msg = f"File {origin} not found"
                     error(msg)
                     return {'result': 'failure', 'reason': msg}
+                elif os.path.isdir(origin):
+                    origindir = entry if not isinstance(entry, dict) else entry.get('origin') or entry.get('path')
+                    if not os.path.exists(f"{destdir}/{origindir}"):
+                        os.makedirs(f"{destdir}/{origindir}")
+                        directories.append(origin)
+                        for _fic in os.listdir(origindir):
+                            directoryfiles.append(f'{origindir}/{_fic}')
+                    continue
                 path = os.path.basename(origin)
-                rendered = self.process_inputfile(workflow, origin, overrides=overrides) if not content else content
+                rendered = content or self.process_inputfile(workflow, origin, overrides=overrides)
                 destfile = f"{destdir}/{path}"
                 with open(destfile, 'w') as f:
                     f.write(rendered)
                 if index < len(scripts):
                     finalscripts.append(path)
+            for entry in directoryfiles:
+                path = os.path.basename(entry)
+                rendered = self.process_inputfile(workflow, entry, overrides=overrides)
+                destfile = f"{destdir}/{path}"
+                with open(destfile, 'w') as f:
+                    f.write(rendered)
             if cmds:
                 cmdscontent = '\n'.join(cmds)
                 destfile = f"{destdir}/cmds.sh"
