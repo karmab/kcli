@@ -3190,6 +3190,16 @@ def list_keyword(args):
 
 def create_workflow(args):
     """Create workflow"""
+    outputdir = args.outputdir
+    if outputdir is not None:
+        if container_mode() and not outputdir.startswith('/'):
+            outputdir = "/workdir/%s" % outputdir
+        if os.path.exists(outputdir) and os.path.isfile(outputdir):
+            error("Invalid outputdir %s" % outputdir)
+            sys.exit(1)
+        elif not os.path.exists(outputdir):
+            os.mkdir(outputdir)
+        pprint(f"Saving rendered assets in {outputdir}")
     workflow = args.workflow
     if workflow is None:
         workflow = nameutils.get_random_name()
@@ -3212,7 +3222,8 @@ def create_workflow(args):
                 overrides['target'] = {'user': user or vmuser, 'port': vmport, 'ip': vmip, 'hostname': hostname}
     if config is None:
         config = Kbaseconfig(client=args.client, debug=args.debug)
-    result = config.create_workflow(workflow, overrides)
+    run = not args.dry
+    result = config.create_workflow(workflow, overrides, outputdir=outputdir, run=run)
     sys.exit(0 if result['result'] == 'success' else 1)
 
 
@@ -4744,10 +4755,11 @@ def cli():
     workflowcreate_parser = create_subparsers.add_parser('workflow', description=workflowcreate_desc,
                                                          help=workflowcreate_desc, epilog=workflowcreate_epilog,
                                                          formatter_class=rawhelp)
+    workflowcreate_parser.add_argument('--outputdir', '-o', help='Output directory', metavar='OUTPUTDIR')
     workflowcreate_parser.add_argument('-P', '--param', action='append',
                                        help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
     workflowcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    # workflowcreate_parser.add_argument('-t', '--threaded', help='Run threaded', action='store_true')
+    workflowcreate_parser.add_argument('-d', '--dry', help='Dry run. Only render', action='store_true')
     workflowcreate_parser.add_argument('workflow', metavar='WORKFLOW', nargs='?')
     workflowcreate_parser.set_defaults(func=create_workflow)
 

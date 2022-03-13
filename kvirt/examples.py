@@ -301,4 +301,8 @@ $ kcli run workflow myscript.sh -P target=192.168.1.1
 
 # Run workflow from some commands
 $ kcli run workflow myworkflow -P cmds=[hostname]
+
+# Only output assets to dir without running
+$ kcli run workflow myscript.sh -do mydir
+
 """

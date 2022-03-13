@@ -1496,7 +1496,7 @@ class Kbaseconfig:
             with open(f"{directory}/files/myfile01", "w") as f:
                 f.write(myfile01data)
 
-    def create_workflow(self, workflow, overrides={}):
+    def create_workflow(self, workflow, overrides={}, outputdir=None, run=True):
         target = overrides.get('target')
         if target is not None:
             if isinstance(target, str):
@@ -1539,6 +1539,7 @@ class Kbaseconfig:
                 return {'result': 'failure', 'reason': msg}
         finalscripts = []
         with TemporaryDirectory() as tmpdir:
+            destdir = outputdir or tmpdir
             for index, entry in enumerate(scripts + files):
                 if isinstance(entry, dict):
                     origin = os.path.expanduser(entry.get('origin') or entry.get('path'))
@@ -1552,17 +1553,20 @@ class Kbaseconfig:
                     return {'result': 'failure', 'reason': msg}
                 path = os.path.basename(origin)
                 rendered = self.process_inputfile(workflow, origin, overrides=overrides) if not content else content
-                destfile = f"{tmpdir}/{path}"
+                destfile = f"{destdir}/{path}"
                 with open(destfile, 'w') as f:
                     f.write(rendered)
                 if index < len(scripts):
                     finalscripts.append(path)
             if cmds:
                 cmdscontent = '\n'.join(cmds)
-                destfile = f"{tmpdir}/cmds.sh"
+                destfile = f"{destdir}/cmds.sh"
                 with open(destfile, 'w') as f:
                     f.write(cmdscontent)
                 finalscripts.append('cmds.sh')
+            if not run:
+                pprint("Not running as dry mode was requested")
+                return {'result': 'success'}
             if target is not None:
                 remotedir = f"/tmp/{os.path.basename(tmpdir)}"
                 scpcmd = scp(hostname, ip=ip, user=user, source=tmpdir, destination=remotedir, download=False,
@@ -1579,7 +1583,7 @@ class Kbaseconfig:
                                  tunnelport=tunnelport, tunneluser=tunneluser, vmport=vmport)
                 os.system(sshcommand)
             else:
-                os.chdir(tmpdir)
+                os.chdir(destdir)
                 for script in finalscripts:
                     os.chmod(script, 0o700)
                     pprint(f"Running script {script} locally")
