@@ -658,8 +658,8 @@ class Ksphere:
             obj = o.obj
             vmname = obj.name
             vm = convert_properties(o)
-            runtime, config = vm['runtime'], vm['config']
-            if runtime.connectionState != 'orphaned' and not config.template:
+            summary, config = vm['summary'], vm['config']
+            if summary.runtime.connectionState != 'orphaned' and not config.template:
                 if self.filtervms and 'plan' not in [x.key for x in config.extraConfig]:
                     continue
                 vms.append(self.info(vmname, vm=vm))
