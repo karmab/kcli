@@ -1,0 +1,19 @@
+{{ cluster }}-microshift:
+  image: {{ image }}
+  keys: {{ keys }}
+  numcpus: {{ numcpus }}
+  memory: {{ memory }}
+  nets: {{ [network] + extra_networks }}
+  disks: {{ [disk_size] + extra_disks }}
+  wait: true
+  notify: {{ notify }}
+  notifycmd: {{ notifycmd }}
+  cmds:
+  - dnf install -y curl podman firewalld 
+  - curl -L -o /etc/yum.repos.d/devel:kubic:libcontainers:stable.repo https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/CentOS_8_Stream/devel:kubic:libcontainers:stable.repo
+  - curl -L -o /etc/yum.repos.d/devel:kubic:libcontainers:stable:cri-o:1.21.repo https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable:cri-o:1.21/CentOS_8_Stream/devel:kubic:libcontainers:stable:cri-o:1.21.repo
+  - dnf install -y cri-o cri-tools
+  - systemctl enable crio --now
+  - curl -o /etc/systemd/system/microshift.service {{ SERVICE_SCRIPT }}
+  - systemctl enable microshift --now
+  - podman cp microshift:/var/lib/microshift/resources/kubeadmin/kubeconfig {{ KUBECONFIG }}
