@@ -447,7 +447,9 @@ class Ksphere:
 
     def start(self, name):
         si = self.si
-        vm, info = findvm2(si, name)
+        dc = self.dc
+        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vm, info = findvm2(si, vmFolder, name)
         if vm is None:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         runtime = info['runtime']
@@ -458,7 +460,9 @@ class Ksphere:
 
     def stop(self, name, soft=False):
         si = self.si
-        vm, info = findvm2(si, name)
+        dc = self.dc
+        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vm, info = findvm2(si, vmFolder, name)
         if vm is None:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         runtime = info['runtime']
@@ -469,16 +473,17 @@ class Ksphere:
 
     def status(self, name):
         si = self.si
-        vm, info = findvm2(si, name)
+        dc = self.dc
+        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vm, info = findvm2(si, vmFolder, name)
         runtime = info['runtime']
         return runtime.powerState if vm is not None else ''
 
     def delete(self, name, snapshots=False):
         si = self.si
         dc = self.dc
-        basefolder = self.basefolder
-        vmFolder = find(si, dc.vmFolder, vim.Folder, basefolder) if basefolder is not None else dc.vmFolder
-        vm, info = findvm2(si, name)
+        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vm, info = findvm2(si, vmFolder, name)
         if vm is None:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         summary = info['summary']
@@ -519,7 +524,9 @@ class Ksphere:
     def console(self, name, tunnel=False, web=False):
         si = self.si
         vcip = self.vcip
-        vm, info = findvm2(si, name)
+        dc = self.dc
+        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vm, info = findvm2(si, vmFolder, name)
         if vm is None:
             print(f"VM {name} not found")
             return
@@ -581,7 +588,10 @@ class Ksphere:
         si = self.si
         if vm is None:
             listinfo = False
-            obj, vm = findvm2(si, name)
+            dc = self.dc
+            basefolder = self.basefolder
+            vmFolder = find(si, dc.vmFolder, vim.Folder, basefolder) if basefolder is not None else dc.vmFolder
+            obj, vm = findvm2(si, vmFolder, name)
             if vm is None:
                 error(f"VM {name} not found")
                 return {}
@@ -646,9 +656,11 @@ class Ksphere:
 
     def list(self):
         si = self.si
+        dc = self.dc
         content = si.content
         vms = []
-        all_vms = get_all_obj(content, [vim.VirtualMachine])
+        folder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        all_vms = get_all_obj(content, [vim.VirtualMachine], folder=folder)
         prop_collector = content.propertyCollector
         props = ['runtime', 'config', 'summary', 'guest']
         filter_spec = create_filter_spec(all_vms, props)
@@ -829,7 +841,9 @@ class Ksphere:
     def add_disk(self, name, size=1, pool=None, thin=True, image=None, shareable=False, existing=None,
                  interface='virtio', novm=False, overrides={}):
         si = self.si
-        vm, info = findvm2(si, name)
+        dc = self.dc
+        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vm, info = findvm2(si, vmFolder, name)
         if vm is None:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         config = info['config']
@@ -861,7 +875,9 @@ class Ksphere:
 
     def delete_disk(self, name=None, diskname=None, pool=None, novm=False):
         si = self.si
-        vm, info = findvm2(si, name)
+        dc = self.dc
+        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vm, info = findvm2(si, vmFolder, name)
         if vm is None:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         config = info['config']
@@ -881,7 +897,9 @@ class Ksphere:
         if network == 'default':
             network = 'VM Network'
         si = self.si
-        vm, info = findvm2(si, name)
+        dc = self.dc
+        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vm, info = findvm2(si, vmFolder, name)
         if vm is None:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         config = info['config']
@@ -897,7 +915,9 @@ class Ksphere:
 
     def delete_nic(self, name, interface):
         si = self.si
-        vm, info = findvm2(si, name)
+        dc = self.dc
+        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vm, info = findvm2(si, vmFolder, name)
         if vm is None:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         config = info['config']
@@ -1128,7 +1148,9 @@ class Ksphere:
 
     def delete_image(self, image, pool=None):
         si = self.si
-        vm, info = findvm2(si, image)
+        dc = self.dc
+        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vm, info = findvm2(si, vmFolder, image)
         if vm is None or not info['config'].template:
             return {'result': 'failure', 'reason': f'Image {image} not found'}
         else:
@@ -1138,7 +1160,9 @@ class Ksphere:
 
     def export(self, name, image=None):
         si = self.si
-        vm, info = findvm2(si, name)
+        dc = self.dc
+        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vm, info = findvm2(si, vmFolder, name)
         if vm is None:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         if info['runtime'].powerState == "poweredOn":

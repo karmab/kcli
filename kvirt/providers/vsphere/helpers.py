@@ -75,9 +75,9 @@ def findvm(si, folder, name):
         return None
 
 
-def findvm2(si, name, props=['runtime', 'config', 'summary', 'guest']):
+def findvm2(si, folder, name, props=['runtime', 'config', 'summary', 'guest']):
     content = si.content
-    all_vms = get_all_obj(content, [vim.VirtualMachine])
+    all_vms = get_all_obj(content, [vim.VirtualMachine], folder=folder)
     prop_collector = content.propertyCollector
     filter_spec = create_filter_spec(all_vms, props)
     options = vmodl.query.PropertyCollector.RetrieveOptions()
