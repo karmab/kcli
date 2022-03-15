@@ -27,6 +27,7 @@ from kvirt.common import error, pprint, success, warning, ssh, _ssh_credentials,
 from kvirt import nameutils
 import os
 import random
+import re
 import requests
 from subprocess import call
 import sys
@@ -346,7 +347,8 @@ def delete_vm(args):
                     z = Kconfig(client=dnsclient).k
                     dnsclients[dnsclient] = z
                 z.delete_dns(name, domain)
-            cluster = name.split('-')[0] if '-master-' in name or '-worker-' in name else None
+            match = re.match(r'(.*)-(master|worker)-[0-9]', name)
+            cluster = match.group(1) if match is not None else None
             clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
             if cluster is not None and os.path.exists(clusterdir):
                 os.environ['KUBECONFIG'] = "%s/auth/kubeconfig" % clusterdir
