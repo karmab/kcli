@@ -3906,8 +3906,8 @@ def cli():
     kubemicroshiftcreate_parser = argparse.ArgumentParser(add_help=False)
     kubemicroshiftcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
     kubemicroshiftcreate_parser.add_argument('-P', '--param', action='append',
-                                       help='specify parameter or keyword for rendering (multiple can be specified)',
-                                       metavar='PARAM')
+                                             help='specify parameter or keyword for rendering (multiple can be specified)',
+                                             metavar='PARAM')
     kubemicroshiftcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     kubemicroshiftcreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubemicroshiftcreate_parser.set_defaults(func=create_microshift_kube)
