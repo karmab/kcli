@@ -26,6 +26,7 @@ from kvirt import common
 from kvirt.common import error, pprint, warning, container_mode, ssh, scp
 from kvirt.jinjafilters import jinjafilters
 from kvirt import kind
+from kvirt import microshift
 from kvirt import k3s
 from kvirt import kubeadm
 from kvirt import hypershift
@@ -1220,6 +1221,11 @@ class Kbaseconfig:
 
     def info_kube_kind(self, quiet, web=False):
         plandir = os.path.dirname(kind.create.__code__.co_filename)
+        inputfile = f'{plandir}/kcli_plan.yml'
+        return self.info_plan(inputfile, quiet=quiet, web=web)
+
+    def info_kube_microshift(self, quiet, web=False):
+        plandir = os.path.dirname(microshift.create.__code__.co_filename)
         inputfile = f'{plandir}/kcli_plan.yml'
         return self.info_plan(inputfile, quiet=quiet, web=web)
 
