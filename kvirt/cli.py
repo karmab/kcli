@@ -7,7 +7,8 @@ from distutils.spawn import find_executable
 from getpass import getuser
 from kvirt.config import Kconfig
 from kvirt.examples import plandatacreate, vmdatacreate, hostcreate, _list, plancreate, planinfo, productinfo, start
-from kvirt.examples import repocreate, isocreate, kubegenericcreate, kubek3screate, kubeopenshiftcreate, kubekindcreate, kubemicroshiftcreate
+from kvirt.examples import repocreate, isocreate
+from kvirt.examples import kubegenericcreate, kubek3screate, kubeopenshiftcreate, kubekindcreate, kubemicroshiftcreate
 from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsole, vmexport, niccreate, nicdelete
 from kvirt.examples import disconnectercreate, appopenshiftcreate, plantemplatecreate, kubehypershiftcreate
 from kvirt.examples import workflowcreate
@@ -3989,7 +3990,8 @@ def cli():
     kubekindinfo_parser.set_defaults(func=info_kind_kube)
 
     kubemicroshiftinfo_desc = 'Info Microshift Kube'
-    kubemicroshiftinfo_parser = kubeinfo_subparsers.add_parser('microshift', description=kubemicroshiftinfo_desc, help=kubemicroshiftinfo_desc)
+    kubemicroshiftinfo_parser = kubeinfo_subparsers.add_parser('microshift', description=kubemicroshiftinfo_desc,
+                                                               help=kubemicroshiftinfo_desc)
     kubemicroshiftinfo_parser.set_defaults(func=info_microshift_kube)
 
     kubek3sinfo_desc = 'Info K3s Kube'
