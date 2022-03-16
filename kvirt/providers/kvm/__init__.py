@@ -688,7 +688,6 @@ class Kvirt(object):
                 if subindex:
                     index = subindex.pop() + 1
             cmds = cmds[:index] + gcmds + cmds[index:]
-        isoxml = ''
         if iso is not None:
             if os.path.isabs(iso):
                 if self.protocol == 'ssh' and self.host not in ['localhost', '127.0.0.1']:
@@ -723,13 +722,13 @@ class Kvirt(object):
                 else:
                     isovolume = volumes[iso]['object']
                     iso = isovolume.path()
-            isobus = 'scsi' if aarch64_full else 'sata'
-            isoxml = """<disk type='file' device='cdrom'>
-<driver name='qemu' type='raw'/>
-<source file='%s'/>
+        isobus = 'scsi' if aarch64_full else 'sata'
+        isosourcexml = "<source file='%s'/>" if iso is not None else ''
+        isoxml = """<disk type='file' device='cdrom'>
+<driver name='qemu' type='raw'/>%s
 <target dev='hdc' bus='%s'/>
 <readonly/>
-</disk>""" % (iso, isobus)
+</disk>""" % (isosourcexml, isobus)
         floppyxml = ''
         floppy = overrides.get('floppy')
         if floppy is not None:
