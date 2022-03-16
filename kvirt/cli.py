@@ -1853,8 +1853,8 @@ def update_kind_kube(args):
 def update_microshift_kube(args):
     args.type = 'microshift'
     update_kube(args)
-    
-    
+
+
 def update_k3s_kube(args):
     args.type = 'k3s'
     update_kube(args)
@@ -2189,8 +2189,8 @@ def info_microshift_kube(args):
     """Info Microshift kube"""
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     baseconfig.info_kube_microshift(quiet=True)
-    
-    
+
+
 def info_k3s_kube(args):
     """Info K3s kube"""
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
