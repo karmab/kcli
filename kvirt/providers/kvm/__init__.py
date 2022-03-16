@@ -2525,8 +2525,11 @@ class Kvirt(object):
                 source = element.find('source')
             if iso is None:
                 element.remove(source)
-            else:
+            elif source is not None:
                 source.set('file', iso)
+            else:
+                isoxml = f"<source file='{iso}'/>"
+                element.append((ET.fromstring(isoxml)))
             break
         if not cdromfound:
             isoxml = """<disk type='file' device='cdrom'>
