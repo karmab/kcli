@@ -1109,10 +1109,7 @@ class Kvirt(object):
             kernelxml = "<kernel>%s</kernel><initrd>%s</initrd>" % (kernel, initrd)
             if cmdline is not None:
                 kernelxml += "<cmdline>%s</cmdline>" % cmdline
-        bootdev = "<boot dev='hd'/>"
-        if iso:
-            bootdev += "<boot dev='cdrom'/>"
-        bootdev += "<boot dev='network'/>"
+        bootdev = "<boot dev='hd'/><boot dev='cdrom'/><boot dev='network'/>"
         memoryhotplugxml = "<maxMemory slots='16' unit='MiB'>1524288</maxMemory>" if memoryhotplug else ""
         videoxml = ""
         firmwarexml = ""
