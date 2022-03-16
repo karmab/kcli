@@ -723,7 +723,7 @@ class Kvirt(object):
                     isovolume = volumes[iso]['object']
                     iso = isovolume.path()
         isobus = 'scsi' if aarch64_full else 'sata'
-        isosourcexml = "<source file='%s'/>" if iso is not None else ''
+        isosourcexml = f"<source file='{iso}'/>" if iso is not None else ''
         isoxml = """<disk type='file' device='cdrom'>
 <driver name='qemu' type='raw'/>%s
 <target dev='hdc' bus='%s'/>
