@@ -178,15 +178,17 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                     netdata[nicname] = {dhcp: False, 'addresses': ["%s/%s" % (ip, cidr)]}
                 gateway = net.get('gateway')
                 if index == 0 and default_gateway is not None:
+                    gateway_name = 'gateway6' if ':' in default_gateway else 'gateway4'
                     if legacy:
                         netdata += "  gateway %s\n" % default_gateway
                     else:
-                        netdata[nicname]['gateway4'] = default_gateway
+                        netdata[nicname][gateway_name] = default_gateway
                 elif gateway is not None:
+                    gateway_name = 'gateway6' if ':' in gateway else 'gateway4'
                     if legacy:
                         netdata += "  gateway %s\n" % gateway
                     else:
-                        netdata[nicname]['gateway4'] = gateway
+                        netdata[nicname][gateway_name] = gateway
                 dns = net.get('dns')
                 if not legacy:
                     netdata[nicname]['nameservers'] = {}
