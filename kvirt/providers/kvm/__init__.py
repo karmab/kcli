@@ -1275,6 +1275,8 @@ class Kvirt(object):
             if self.host == 'localhost' or self.host == '127.0.0.1':
                 if find_executable('virt-edit') is not None:
                     os.system(cmd)
+                else:
+                    warning("virt-edit missing from PATH. cmdline won't be injected")
             elif self.protocol == 'ssh':
                 cmd = cmd.replace("'", "\'")
                 cmd = 'ssh %s -p %s %s@%s "%s"' % (self.identitycommand, self.port, self.user, self.host, cmd)
