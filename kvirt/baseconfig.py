@@ -1625,7 +1625,7 @@ class Kbaseconfig:
             kvirt_dir = os.path.dirname(self.__init__.__code__.co_filename)
             with open(f'{kvirt_dir}/keywords.yaml') as f:
                 keywords_info = yaml.safe_load(f)
-                if keyword in keywords_info:
+                if keyword in keywords_info and keywords_info[keyword] is not None:
                     pprint("Detailed information:")
-                    pprint(keywords_info[keyword])
+                    pprint(keywords_info[keyword].strip())
         return 0
