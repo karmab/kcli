@@ -14,3 +14,4 @@ recursive-include kvirt/hypershift *
 recursive-include kvirt/version *
 recursive-include kvirt/common *
 recursive-include kvirt/expose *
+include kvirt/keywords.yaml

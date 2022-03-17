@@ -1612,3 +1612,20 @@ class Kbaseconfig:
                         error(msg)
                         return {'result': 'failure', 'reason': msg}
         return {'result': 'success'}
+
+    def info_keyword(self, keyword):
+        default = self.default
+        keywords = self.list_keywords()
+        if keyword not in keywords:
+            error(f"Keyword {keyword} not found")
+            return 1
+        else:
+            print("Default value: %s" % default[keyword])
+            print("Current value: %s" % keywords[keyword])
+            kvirt_dir = os.path.dirname(self.__init__.__code__.co_filename)
+            with open(f'{kvirt_dir}/keywords.yaml') as f:
+                keywords_info = yaml.safe_load(f)
+                if keyword in keywords_info:
+                    pprint("Detailed information:")
+                    pprint(keywords_info[keyword])
+        return 0

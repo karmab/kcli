@@ -2193,14 +2193,7 @@ def info_keyword(args):
     keyword = args.keyword
     pprint(f"Providing information about keyword {keyword}...")
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
-    default = baseconfig.default
-    keywords = baseconfig.list_keywords()
-    if keyword not in keywords:
-        error(f"Keyword {keyword} not found")
-        return 1
-    else:
-        print("Default value: %s" % default[keyword])
-        print("Current value: %s" % keywords[keyword])
+    return baseconfig.info_keyword(keyword)
 
 
 def download_plan(args):
