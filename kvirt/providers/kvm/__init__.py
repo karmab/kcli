@@ -3328,8 +3328,12 @@ class Kvirt(object):
         for interface in interfaces:
             if interface == 'lo' or interface in networks:
                 continue
-            netxml = conn.interfaceLookupByName(interface).XMLDesc(0)
-            root = ET.fromstring(netxml)
+            try:
+                netxml = conn.interfaceLookupByName(interface).XMLDesc(0)
+                root = ET.fromstring(netxml)
+            except:
+                warning(f"Issue parsing your {interface}. Skipping")
+                continue
             bridge = list(root.iter('bridge'))
             if not bridge:
                 continue
