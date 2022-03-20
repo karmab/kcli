@@ -1129,6 +1129,10 @@ unmanaged-devices=interface-name:%s""" % sno_disable_nics
                         ifcfg += "%s\nGATEWAY=%s\nDNS1=%s" % (netmask_info, gateway, nameserver)
                         _ifcfg_file = [{"path": "/etc/sysconfig/network-scripts/ifcfg-%s" % device, "content": ifcfg}]
                         _files.extend(_ifcfg_file)
+                if ipv6:
+                    nmcfg = "[main]\nrc-manager=file\n[connection]\nipv6.dhcp-duid=ll\nipv6.dhcp-iaid=mac\n"
+                    nm_file = [{"path": "/etc/NetworkManager/conf.d/99-ipv6.conf", "content": nmcfg}]
+                    _files.extend(nm_file)
                 if api_ip is not None:
                     if data.get('virtual_router_id') is None:
                         data['virtual_router_id'] = hash(cluster) % 254 + 1
