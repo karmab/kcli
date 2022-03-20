@@ -1,13 +1,13 @@
 apiVersion: machineconfiguration.openshift.io/v1
 kind: MachineConfig
 metadata:
-  name: disable-nics-master
+  name: ipv6-sno-master
   labels:
     machineconfiguration.openshift.io/role: master
 spec:
   config:
     ignition:
-      version: 2.2.0
+      version: 3.2.0
     storage:
       files:
         - contents:
@@ -15,4 +15,4 @@ spec:
             verification: {}
           filesystem: root
           mode: 420
-          path: /etc/NetworkManager/conf.d/99-disable-nics.conf
+          path: /etc/NetworkManager/conf.d/99-ipv6.conf

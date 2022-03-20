@@ -7,7 +7,7 @@ until ls /opt/openshift/.bootkube.done; do
 done
 
 {% if sno_dns  %}
-{% if "ip=dhcp6" in extra_args|default("") %}
+{% if ipv6 %}
 IP=$(hostname -I | xargs -n1 | grep ":" | head -1)
 {% else %}
 IP=$(hostname -I | cut -d" " -f1)

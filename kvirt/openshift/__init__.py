@@ -1076,16 +1076,17 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if sno:
         sno_name = "%s-sno" % cluster
         sno_disable_nics = data.get('sno_disable_nics', [])
-        if sno_disable_nics:
-            sno_disable_nics = ';interface-name:'.join(sno_disable_nics)
+        if ipv6 or sno_disable_nics:
             nmdata = """[main]
 rc-manager=file
 [connection]
 ipv6.dhcp-duid=ll
-ipv6.dhcp-iaid=mac
-[keyfile]
+ipv6.dhcp-iaid=mac"""
+            if sno_disable_nics:
+                sno_disable_nics = ';interface-name:'.join(sno_disable_nics)
+                nmdata = """[keyfile]
 unmanaged-devices=interface-name:%s""" % sno_disable_nics
-            rendered = config.process_inputfile(cluster, f"{plandir}/99-disable-nics.yaml",
+            rendered = config.process_inputfile(cluster, f"{plandir}/99-sno-ipv6.yaml",
                                                 overrides={'nmdata': nmdata})
             with open(f"{clusterdir}/openshift/99-disable-nics.yaml", 'w') as f:
                 f.write(rendered)
