@@ -7,7 +7,11 @@ until ls /opt/openshift/.bootkube.done; do
 done
 
 {% if sno_dns  %}
+{% if "ip=dhcp6" in extra_args|default("") %}
+IP=$(hostname -I | xargs -n1 | grep ":" | head -1)
+{% else %}
 IP=$(hostname -I | cut -d" " -f1)
+{% endif %}
 sed -i "s/None/$IP/" /root/Corefile
 COREDNS="$(cat /root/coredns.yml | base64 -w0)"
 COREFILE="$(cat /root/Corefile | base64 -w0)"
