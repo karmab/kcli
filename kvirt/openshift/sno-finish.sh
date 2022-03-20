@@ -6,7 +6,7 @@ until ls /opt/openshift/.bootkube.done; do
   sleep 5
 done
 
-{% if sno_dns  %}
+{% if sno_dns %}
 {% if ipv6 %}
 IP=$(hostname -I | xargs -n1 | grep ":" | head -1)
 {% else %}

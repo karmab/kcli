@@ -526,7 +526,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             disconnected_deploy = True
         if sno and 'extra_args' not in overrides:
             warning("Forcing extra_args to ip=dhcp6 for sno to boot with ipv6")
-            overrides['extra_args'] = 'ip=dhcp6'
+            data['extra_args'] = 'ip=dhcp6'
     ingress_ip = data.get('ingress_ip')
     if ingress_ip is not None and api_ip is not None and ingress_ip == api_ip:
         ingress_ip = None
