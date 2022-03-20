@@ -524,9 +524,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             warning("Forcing disconnected_deploy to True as no disconnected_url was provided")
             data['disconnected_deploy'] = True
             disconnected_deploy = True
-        if sno and 'extra_args' not in overrides:
-            warning("Forcing extra_args to ip=dhcp6 for sno to boot with ipv6")
-            data['extra_args'] = 'ip=dhcp6'
     ingress_ip = data.get('ingress_ip')
     if ingress_ip is not None and api_ip is not None and ingress_ip == api_ip:
         ingress_ip = None
@@ -1129,7 +1126,7 @@ unmanaged-devices=interface-name:%s""" % sno_disable_nics
                         ifcfg += "%s\nGATEWAY=%s\nDNS1=%s" % (netmask_info, gateway, nameserver)
                         _ifcfg_file = [{"path": "/etc/sysconfig/network-scripts/ifcfg-%s" % device, "content": ifcfg}]
                         _files.extend(_ifcfg_file)
-                if ipv6:
+                if extra_args is not None and 'ip=dhcp6' in extra_args:
                     nmcfg = "[main]\nrc-manager=file\n[connection]\nipv6.dhcp-duid=ll\nipv6.dhcp-iaid=mac\n"
                     nm_file = [{"path": "/etc/NetworkManager/conf.d/99-ipv6.conf", "content": nmcfg}]
                     _files.extend(nm_file)
