@@ -111,7 +111,7 @@ class Kubernetes():
                                                                                  'restartPolicy': 'Always'}}}}
         if volumes:
             deploy['spec']['template']['spec']['volumes'] = vols
-        self.v1beta.create_namespaced_deployment(namespace=namespace, body=deploy)
+        self.appsv1.create_namespaced_deployment(namespace=namespace, body=deploy)
         return {'result': 'success'}
 
     def delete_container(self, name):
@@ -123,7 +123,7 @@ class Kubernetes():
         try:
             pods = []
             rsname = None
-            for rs in self.v1beta.list_namespaced_replica_set(self.namespace).items:
+            for rs in self.appsv1.list_namespaced_replica_set(self.namespace).items:
                 owner_references = rs.metadata.owner_references
                 if owner_references is None:
                     continue
@@ -139,9 +139,9 @@ class Kubernetes():
                         ownername = owner_references[0].name
                         if ownerkind == 'ReplicaSet' and ownername == rsname:
                             pods.append(pod.metadata.name)
-            self.v1beta.delete_namespaced_deployment(name, self.namespace, client.V1DeleteOptions())
+            self.appsv1.delete_namespaced_deployment(name, self.namespace, client.V1DeleteOptions())
             if rsname is not None:
-                self.v1beta.delete_namespaced_replica_set(rs.metadata.name, self.namespace, client.V1DeleteOptions())
+                self.appsv1.delete_namespaced_replica_set(rs.metadata.name, self.namespace, client.V1DeleteOptions())
             for pod in pods:
                 self.core.delete_namespaced_pod(pod, self.namespace, client.V1DeleteOptions())
         except client.rest.ApiException:
@@ -204,7 +204,7 @@ class Kubernetes():
                 ownerkind = owner_references[0].kind
                 ownername = owner_references[0].name
                 if ownerkind == 'ReplicaSet':
-                    rs = self.v1beta.read_namespaced_replica_set(ownername, self.namespace)
+                    rs = self.appsv1.read_namespaced_replica_set(ownername, self.namespace)
                     owner_references = rs.metadata.owner_references
                     if owner_references is not None:
                         ownerkind = owner_references[0].kind
