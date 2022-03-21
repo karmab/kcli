@@ -34,9 +34,11 @@ spec:
         sed -i "s@NAMESERVER@$NAMESERVER@" /etc/coredns/Corefile
         {% if sno_dns %}
         {% if ipv6 %}
-        IP=$(hostname -I | xargs -n1 | grep ':' | head -1)
+        NIC=$(ip -6 r | grep -v lo | head -1 | sed 's/.*dev \(.*\) \(proto\|metric\).*/\1/' | awk '{print $1}')
+        IP=$(ip -6 -o addr show $NIC | awk '{print $4}' | cut -d "/" -f 1 | head -1)
         {% else %}
-        IP=$(hostname -I | cut -d" " -f1)
+        NIC=$(ip r | grep default | head -1 | sed 's/.*dev \(.*\) \(proto\|metric\).*/\1/')
+        NETMASK=$(ip -o -f inet addr show | awk '/scope global/ {print $4}' | head -1 | cut -d'/' -f2)
         {% endif %}
         sed -i "s@None@$IP@" /etc/coredns/Corefile
         {% endif %}

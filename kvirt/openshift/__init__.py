@@ -1086,7 +1086,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             sno_files.extend([{'path': "/etc/kubernetes/manifests/coredns.yml", 'data': coredns_data},
                               {'path': "/etc/kubernetes/Corefile", 'data': corefile_data},
                               {"path": "/etc/NetworkManager/dispatcher.d/99-forcedns", "data": forcedns_data,
-                               "mode": 755}])
+                               "mode": int('755', 8)}])
         if api_ip is not None:
             if data.get('virtual_router_id') is None:
                 data['virtual_router_id'] = hash(cluster) % 254 + 1
