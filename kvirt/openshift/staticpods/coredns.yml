@@ -32,6 +32,14 @@ spec:
         exit 0
       else
         sed -i "s@NAMESERVER@$NAMESERVER@" /etc/coredns/Corefile
+        {% if sno_dns %}
+        {% if ipv6 %}
+        IP=$(hostname -I | xargs -n1 | grep ':' | head -1)
+        {% else %}
+        IP=$(hostname -I | cut -d" " -f1)
+        {% endif %}
+        sed -i "s@None@$IP@" /etc/coredns/Corefile
+        {% endif %}
       fi
     resources: {}
     volumeMounts:

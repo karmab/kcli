@@ -1072,22 +1072,34 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         copy2("%s/99-metal3-provisioning.yaml" % plandir, "%s/openshift" % clusterdir)
     if sno:
         sno_name = "%s-sno" % cluster
+        sno_files = []
         sno_disable_nics = data.get('sno_disable_nics', [])
         if ipv6 or sno_disable_nics:
-            nmdata = """[main]
-rc-manager=file
-[connection]
-ipv6.dhcp-duid=ll
-ipv6.dhcp-iaid=mac"""
-            if sno_disable_nics:
-                sno_disable_nics = ';interface-name:'.join(sno_disable_nics)
-                nmdata = """[keyfile]
-unmanaged-devices=interface-name:%s""" % sno_disable_nics
-            rendered = config.process_inputfile(cluster, f"{plandir}/99-sno-ipv6.yaml",
-                                                overrides={'nmdata': nmdata})
-            with open(f"{clusterdir}/openshift/99-disable-nics.yaml", 'w') as f:
-                f.write(rendered)
+            nm_data = config.process_inputfile(cluster, f"{plandir}/ipv6.conf", overrides=data)
+            sno_files.append({'path': "/etc/NetworkManager/conf.d/ipv6.conf", 'data': nm_data})
         sno_dns = data.get('sno_dns', True)
+        if sno_dns:
+            coredns_data = config.process_inputfile(cluster, f"{plandir}/staticpods/coredns.yml", overrides=data)
+            corefile_data = config.process_inputfile(cluster, f"{plandir}/Corefile", overrides=data)
+            forcedns_data = config.process_inputfile(cluster, f"{plandir}/99-forcedns", overrides=data)
+            sno_files.extend([{'path': "/etc/kubernetes/manifests/coredns.yml", 'data': coredns_data},
+                              {'path': "/etc/kubernetes/Corefile", 'data': corefile_data},
+                              {"path": "/etc/NetworkManager/dispatcher.d/99-forcedns", "data": forcedns_data,
+                               "mode": 755}])
+        if api_ip is not None:
+            if data.get('virtual_router_id') is None:
+                data['virtual_router_id'] = hash(cluster) % 254 + 1
+                vips = [api_ip, ingress_ip] if ingress_ip is not None else [api_ip]
+                pprint("Injecting keepalived static pod with %s" % ','.join(vips))
+                pprint("Using keepalived virtual_router_id %s" % data['virtual_router_id'])
+            keepalived_data = config.process_inputfile(cluster, f"{plandir}/staticpods/coredns.yml", overrides=data)
+            keepalivedconf_data = config.process_inputfile(cluster, f"{plandir}/keepalived.conf", overrides=data)
+            sno_files.extend([{"path": "/etc/kubernetes/manifests/keepalived.yml", "data": keepalived_data},
+                              {"path": "/etc/kubernetes/keepalived.conf", "data": keepalivedconf_data}])
+        if sno_files:
+            rendered = config.process_inputfile(cluster, f"{plandir}/99-sno.yaml", overrides={'files': sno_files})
+            with open(f"{clusterdir}/openshift/99-sno.yaml", 'w') as f:
+                f.write(rendered)
         run = call('openshift-install --dir=%s --log-level=%s create single-node-ignition-config' % (clusterdir,
                                                                                                      log_level),
                    shell=True)
@@ -1098,16 +1110,11 @@ unmanaged-devices=interface-name:%s""" % sno_disable_nics
         with open("iso.ign", 'w') as f:
             iso_overrides = {}
             extra_args = overrides.get('extra_args')
-            if sno_dns or sno_disk is None or extra_args is not None or api_ip is not None:
+            if sno_disk is None or extra_args is not None:
                 _files = [{"path": "/root/sno-finish.service",
                            "origin": "%s/sno-finish.service" % plandir},
                           {"path": "/usr/local/bin/sno-finish.sh", "origin": "%s/sno-finish.sh" % plandir,
                           "mode": 700}]
-                if sno_dns:
-                    _dns_files = [{"path": "/root/coredns.yml", "origin": "%s/staticpods/coredns.yml" % plandir},
-                                  {"path": "/root/Corefile", "origin": "%s/Corefile" % plandir},
-                                  {"path": "/root/99-forcedns", "origin": "%s/99-forcedns" % plandir}]
-                    _files.extend(_dns_files)
                 if extra_args is not None and 'ip=' in extra_args:
                     ip, netmask, gateway, device, nameserver = None, None, None, None, None
                     nameservermatch = re.match(".*nameserver=(.*).*", extra_args)
@@ -1130,17 +1137,6 @@ unmanaged-devices=interface-name:%s""" % sno_disable_nics
                     nmcfg = "[main]\nrc-manager=file\n[connection]\nipv6.dhcp-duid=ll\nipv6.dhcp-iaid=mac\n"
                     nm_file = [{"path": "/etc/NetworkManager/conf.d/99-ipv6.conf", "content": nmcfg}]
                     _files.extend(nm_file)
-                if api_ip is not None:
-                    if data.get('virtual_router_id') is None:
-                        data['virtual_router_id'] = hash(cluster) % 254 + 1
-                        vips = [api_ip, ingress_ip] if ingress_ip is not None else [api_ip]
-                        pprint("Injecting keepalived static pod with %s" % ','.join(vips))
-                        pprint("Using keepalived virtual_router_id %s" % data['virtual_router_id'])
-                    _vip_files = [{"path": "/root/keepalived.yml", "origin": "%s/staticpods/keepalived.yml" % plandir,
-                                   "mode": 420},
-                                  {"path": "/root/keepalived.conf", "origin": "%s/keepalived.conf" % plandir,
-                                   "mode": 420}]
-                    _files.extend(_vip_files)
                 iso_overrides['files'] = _files
             iso_overrides.update(data)
             result = config.create_vm(sno_name, 'rhcos46', overrides=iso_overrides, onlyassets=True)

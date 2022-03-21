@@ -1,7 +1,7 @@
 apiVersion: machineconfiguration.openshift.io/v1
 kind: MachineConfig
 metadata:
-  name: ipv6-sno-master
+  name: sno-custom
   labels:
     machineconfiguration.openshift.io/role: master
 spec:
@@ -10,9 +10,11 @@ spec:
       version: 3.2.0
     storage:
       files:
+{% for file in files %}
         - contents:
-            source: data:text/plain;charset=utf-8;base64,{{ nmdata|base64 }}
+            source: data:text/plain;charset=utf-8;base64,{{ file['data']|base64 }}
             verification: {}
           filesystem: root
-          mode: 420
-          path: /etc/NetworkManager/conf.d/99-ipv6.conf
+          mode: {{ file['mode']|default(420) }}
+          path: {{ file['path'] }}
+{% endfor %}
