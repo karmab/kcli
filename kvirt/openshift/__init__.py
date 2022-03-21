@@ -1112,32 +1112,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             iso_overrides = {}
             extra_args = overrides.get('extra_args')
             if sno_disk is None or extra_args is not None:
-                _files = [{"path": "/root/sno-finish.service",
-                           "origin": "%s/sno-finish.service" % plandir},
-                          {"path": "/usr/local/bin/sno-finish.sh", "origin": "%s/sno-finish.sh" % plandir,
-                          "mode": 700}]
-                if extra_args is not None and 'ip=' in extra_args:
-                    ip, netmask, gateway, device, nameserver = None, None, None, None, None
-                    nameservermatch = re.match(".*nameserver=(.*).*", extra_args)
-                    if nameservermatch is not None:
-                        nameserver = nameservermatch.group(1)
-                    ipmatch = re.match(".*ip=(.*)::(.*):(.*):.*:(.*):.*", extra_args)
-                    if ipmatch is not None:
-                        ip = ipmatch.group(1)
-                        gateway = ipmatch.group(2)
-                        netmask = ipmatch.group(3)
-                        device = ipmatch.group(4)
-                    if ip is not None and netmask is not None and gateway is not None and device is not None\
-                            and nameserver is not None:
-                        ifcfg = "DEVICE=%s\nONBOOT=yes\nNM_CONTROLLED=yes\nBOOTPROTO=static\nIPADDR=%s\n" % (device, ip)
-                        netmask_info = 'NETMASK=%s' if '.' in netmask else 'PREFIX=%s' % netmask
-                        ifcfg += "%s\nGATEWAY=%s\nDNS1=%s" % (netmask_info, gateway, nameserver)
-                        _ifcfg_file = [{"path": "/etc/sysconfig/network-scripts/ifcfg-%s" % device, "content": ifcfg}]
-                        _files.extend(_ifcfg_file)
-                if extra_args is not None and 'ip=dhcp6' in extra_args:
-                    nmcfg = "[main]\nrc-manager=file\n[connection]\nipv6.dhcp-duid=ll\nipv6.dhcp-iaid=mac\n"
-                    nm_file = [{"path": "/etc/NetworkManager/conf.d/99-ipv6.conf", "content": nmcfg}]
-                    _files.extend(nm_file)
+                _files = [{"path": "/root/sno-finish.service", "origin": "%s/sno-finish.service" % plandir},
+                          {"path": "/usr/local/bin/sno-finish.sh", "origin": "%s/sno-finish.sh" % plandir, "mode": 700}]
                 iso_overrides['files'] = _files
             iso_overrides.update(data)
             result = config.create_vm(sno_name, 'rhcos46', overrides=iso_overrides, onlyassets=True)
@@ -1145,14 +1121,14 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             f.write(result['data'])
         if config.type == 'fake':
             pprint("Storing iso in current dir")
-            generate_rhcos_iso(k, cluster, 'default', installer=True)
+            generate_rhcos_iso(k, cluster, 'default', installer=True, extra_args=extra_args)
         elif config.type != 'kvm':
             pprint("Additional workflow not available on %s" % config.type)
             pprint("Embed iso.ign in rhcos live iso")
             sys.exit(0)
         else:
             iso_pool = data['pool'] or config.pool
-            generate_rhcos_iso(k, cluster, iso_pool, installer=True)
+            generate_rhcos_iso(k, cluster, iso_pool, installer=True, extra_args=extra_args)
             if sno_virtual:
                 pprint("Deploying sno vm")
                 result = config.plan(plan, inputfile='%s/sno.yml' % plandir, overrides=data)

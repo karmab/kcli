@@ -1968,7 +1968,8 @@ def filter_compression_extension(name):
     return name.replace('.gz', '').replace('.xz', '').replace('.bz2', '')
 
 
-def generate_rhcos_iso(k, cluster, pool, version='latest', podman=False, installer=False, arch='x86_64'):
+def generate_rhcos_iso(k, cluster, pool, version='latest', podman=False, installer=False, arch='x86_64',
+                       extra_args=None):
     if installer:
         liveiso = get_installer_iso()
         baseiso = os.path.basename(liveiso)
@@ -1984,17 +1985,21 @@ def generate_rhcos_iso(k, cluster, pool, version='latest', podman=False, install
     pprint("Creating iso %s.iso" % cluster)
     poolpath = k.get_pool_path(pool)
     if podman:
-        coreosinstaller = "podman run --privileged --rm -w /data -v %s:/data -v /dev:/dev" % poolpath
+        coreosinstaller = f"podman run --privileged --rm -w /data -v {poolpath}:/data -v /dev:/dev"
         if not os.path.exists('/Users'):
             coreosinstaller += " -v /run/udev:/run/udev"
         coreosinstaller += " quay.io/coreos/coreos-installer:release"
-        isocmd = "%s iso ignition embed -fi iso.ign -o %s.iso %s" % (coreosinstaller, cluster, baseiso)
+        destiso = f"{cluster}.iso"
+        isocmd = "f{coreosinstaller} iso ignition embed -fi iso.ign -o {destiso} {baseiso}"
     else:
-        isocmd = "coreos-installer iso ignition embed -fi %s/iso.ign -o %s/%s.iso %s/%s" % (poolpath, poolpath, cluster,
-                                                                                            poolpath, baseiso)
+        coreosinstaller = "coreos-installer"
+        destiso = f"{poolpath}/{cluster}.iso"
+        isocmd = f"{coreosinstaller} iso ignition embed -fi {poolpath}/iso.ign -o {destiso} {poolpath}/{baseiso}"
         if not os.path.exists('coreos-installer'):
             arch = os.uname().machine if not os.path.exists('/Users') else 'x86_64'
             get_coreos_installer(arch=arch)
+    if extra_args is not None:
+        isocmd += f"; {coreosinstaller} iso kargs modify -a '{extra_args}' {destiso}"
     os.environ["PATH"] += ":%s" % os.getcwd()
     if k.conn == 'fake':
         os.system(isocmd)
