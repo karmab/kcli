@@ -704,6 +704,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         disconnected_plan = "%s-reuse" % plan if disconnected_reuse else plan
         disconnected_overrides = data.copy()
         disconnected_overrides['arch_tag'] = arch_tag
+        disconnected_overrides['kube'] = "%s-reuse" % cluster if disconnected_reuse else cluster
         disconnected_overrides['openshift_version'] = INSTALLER_VERSION
         disconnected_overrides['disconnected_operators_version'] = INSTALLER_VERSION[:3]
         disconnected_overrides['openshift_release_image'] = get_release_image()
