@@ -38,7 +38,7 @@ spec:
         IP=$(ip -6 -o addr show $NIC | awk '{print $4}' | cut -d "/" -f 1 | head -1)
         {% else %}
         NIC=$(ip r | grep default | head -1 | sed 's/.*dev \(.*\) \(proto\|metric\).*/\1/')
-        NETMASK=$(ip -o -f inet addr show | awk '/scope global/ {print $4}' | head -1 | cut -d'/' -f2)
+        IP=$(ip -o addr show $NIC | awk '{print $4}' | cut -d "/" -f 1 | head -1)
         {% endif %}
         sed -i "s@None@$IP@" /etc/coredns/Corefile
         {% endif %}
