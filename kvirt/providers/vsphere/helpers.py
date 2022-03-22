@@ -215,7 +215,7 @@ def creatediskspec(number, disksize, ds, diskmode, thin=False, index=0):
     diskspec.fileOperation = vim.vm.device.VirtualDeviceSpec.FileOperation.create
     vd = vim.vm.device.VirtualDisk()
     vd.capacityInKB = disksize
-    vd.key = index
+    vd.key = 2000 + index
     diskspec.device = vd
     vd.unitNumber = number
     vd.controllerKey = ckey
