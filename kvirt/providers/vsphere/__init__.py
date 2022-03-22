@@ -1029,12 +1029,13 @@ class Ksphere:
         vmFolder = self.dc.vmFolder
         manager = si.content.ovfManager
         shortimage = os.path.basename(url).split('?')[0]
-        if not shortimage.endswith('ova') and not shortimage.endswith('zip') and find_executable('qemu-img') is None:
+        name = name.replace('.ova', '').replace('.x86_64', '') if name is not None else shortimage
+        iso = True if shortimage.endswith('.iso') or name.endswith('.iso') else False
+        if not shortimage.endswith('ova') and not shortimage.endswith('zip') and not iso\
+           and find_executable('qemu-img') is None:
             msg = "qemu-img is required for conversion"
             error(msg)
             return {'result': 'failure', 'reason': msg}
-        if name is None:
-            name = name.replace('.ova', '').replace('.x86_64', '')
         if shortimage in self.volumes():
             pprint(f"Template {shortimage} already there")
             return {'result': 'success'}
@@ -1048,6 +1049,21 @@ class Ksphere:
                 return {'result': 'failure', 'reason': "Unable to download indicated image"}
         else:
             pprint(f"Using found /tmp/{shortimage}")
+        if iso:
+            isofile = f"/tmp/{shortimage}"
+            if name is not None:
+                os.rename(f"/tmp/{shortimage}", f"/tmp/{name}")
+                isofile = f"/tmp/{name}"
+            if self.isofolder is not None:
+                isofolder = self.isofolder.split('/')
+                isopool = re.sub(r"[\[\]]", '', isofolder[0])
+                isofolder = isofolder[1]
+            else:
+                isopool = pool
+                isofolder = None
+            destination = '' if isofolder is not None else name
+            self._uploadimage(isopool, isofile, destination, isofolder=isofolder)
+            return {'result': 'success'}
         vmdk_path = None
         ovf_path = None
         if url.endswith('zip'):
