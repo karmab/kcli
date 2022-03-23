@@ -2661,14 +2661,14 @@ class Kvirt(object):
         virtio_index, scsi_index, ide_index = 0, 0, 0
         for element in list(root.iter('disk')):
             disktype = element.get('device')
+            if disktype == 'cdrom':
+                continue
             device = element.find('target').get('dev')
             imagefiles = [element.find('source').get('file'), element.find('source').get('dev'),
                           element.find('source').get('volume')]
             path = next(item for item in imagefiles if item is not None)
             diskpaths.append(path)
-            if disktype == 'cdrom':
-                continue
-            elif device.startswith('sd'):
+            if device.startswith('sd'):
                 scsi_index += 1
             elif device.startswith('hd'):
                 ide_index += 1
