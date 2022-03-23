@@ -1084,7 +1084,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         sno_dns = data.get('sno_dns', True)
         if sno_dns:
             coredns_data = config.process_inputfile(cluster, f"{plandir}/staticpods/coredns.yml", overrides=data)
-            corefile_data = config.process_inputfile(cluster, f"{plandir}/Corefile", overrides=data)
+            corefile_data = config.process_inputfile(cluster, f"{plandir}/Corefile.template", overrides=data)
             forcedns_data = config.process_inputfile(cluster, f"{plandir}/99-forcedns", overrides=data)
             sno_files.extend([{'path': "/etc/kubernetes/manifests/coredns.yml", 'data': coredns_data},
                               {'path': "/etc/kubernetes/Corefile", 'data': corefile_data},
@@ -1096,7 +1096,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 vips = [api_ip, ingress_ip] if ingress_ip is not None else [api_ip]
                 pprint("Injecting keepalived static pod with %s" % ','.join(vips))
                 pprint("Using keepalived virtual_router_id %s" % data['virtual_router_id'])
-            keepalived_data = config.process_inputfile(cluster, f"{plandir}/staticpods/coredns.yml", overrides=data)
+            keepalived_data = config.process_inputfile(cluster, f"{plandir}/staticpods/keepalived.yml", overrides=data)
             keepalivedconf_data = config.process_inputfile(cluster, f"{plandir}/keepalived.conf", overrides=data)
             sno_files.extend([{"path": "/etc/kubernetes/manifests/keepalived.yml", "data": keepalived_data},
                               {"path": "/etc/kubernetes/keepalived.conf", "data": keepalivedconf_data}])

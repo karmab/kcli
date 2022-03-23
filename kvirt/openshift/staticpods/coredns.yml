@@ -27,6 +27,7 @@ spec:
       if [ "$NAMESERVER" == "" ] ; then
         exit 1
       fi
+      [ ! -f /etc/coredns/Corefile ] && [ -f /etc/coredns/Corefile.template ] && cp /etc/coredns/Corefile.template /etc/coredns/Corefile
       grep -q "NAMESERVER" /etc/coredns/Corefile
       if [ "$?" != "0" ] ; then
         exit 0
