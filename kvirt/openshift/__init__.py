@@ -701,7 +701,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     data['pub_key'] = open(pub_key).read().strip()
     if platform in virtplatforms and disconnected_deploy:
-        disconnected_vm = "%s-disconnecter" % cluster
+        disconnected_vm = "%s-disconnecter" % data.get('disconnected_reuse_name', cluster)
         pprint("Deploying disconnected vm %s" % disconnected_vm)
         data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
         disconnected_plan = "%s-reuse" % plan if disconnected_reuse else plan

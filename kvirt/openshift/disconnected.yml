@@ -1,4 +1,4 @@
-{{ cluster }}-disconnecter:
+{{ disconnected_reuse_name or cluster }}-disconnecter:
  image: centos8stream
  pool: {{ pool or config_pool }}
  wait: true
