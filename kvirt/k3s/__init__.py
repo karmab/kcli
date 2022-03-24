@@ -26,7 +26,7 @@ def scale(config, plandir, cluster, overrides):
     client = config.client
     k = config.k
     pprint("Scaling on client %s" % client)
-    image = k.info("%s-master-0" % cluster).get('image')
+    image = data.get('image') or k.info("%s-master-0" % cluster).get('image')
     if image is None:
         error("Missing image...")
         sys.exit(1)
