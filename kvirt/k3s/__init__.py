@@ -53,6 +53,7 @@ def create(config, plandir, cluster, overrides):
     network = data.get('network', 'default')
     sdn = None if 'sdn' in overrides and overrides['sdn'] is None else data.get('sdn')
     token = data.get('token', 'supersecret')
+    image = data.get('image', 'ubuntu2004')
     api_ip = data.get('api_ip')
     if masters > 1:
         if platform in cloudplatforms:
@@ -99,6 +100,7 @@ def create(config, plandir, cluster, overrides):
             installparam['api_ip'] = api_ip
             installparam['plan'] = plan
             installparam['kubetype'] = 'k3s'
+            installparam['image'] = image
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     if os.path.exists("manifests") and os.path.isdir("manifests"):
         data['files'] = [{"path": "/root/manifests", "currentdir": True, "origin": "manifests"}]

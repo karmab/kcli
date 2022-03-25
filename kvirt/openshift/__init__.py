@@ -329,7 +329,7 @@ def scale(config, plandir, cluster, overrides):
     data.update(overrides)
     with open("%s/kcli_parameters.yml" % clusterdir, 'w') as paramfile:
         yaml.safe_dump(data, paramfile)
-    image = overrides.get('image')
+    image = data.get('image')
     if image is None:
         cluster_image = k.info("%s-master-0" % cluster).get('image')
         if cluster_image is None:
@@ -698,6 +698,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         with open("%s/kcli_parameters.yml" % clusterdir, 'w') as p:
             installparam['cluster'] = cluster
             installparam['plan'] = plan
+            installparam['image'] = image
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     data['pub_key'] = open(pub_key).read().strip()
     if platform in virtplatforms and disconnected_deploy:

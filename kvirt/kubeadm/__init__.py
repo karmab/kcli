@@ -99,7 +99,7 @@ def create(config, plandir, cluster, overrides):
         data['engine'] = 'docker'
     data['basedir'] = '/workdir' if container_mode() else '.'
     cluster = data.get('cluster')
-    image = data.get('image', 'centos7')
+    image = data.get('image', 'centos8stream')
     data['ubuntu'] = True if 'ubuntu' in image.lower() or [entry for entry in UBUNTUS if entry in image] else False
     clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
     if os.path.exists(clusterdir):
@@ -116,6 +116,7 @@ def create(config, plandir, cluster, overrides):
             installparam['virtual_router_id'] = data['virtual_router_id']
             installparam['plan'] = plan
             installparam['kubetype'] = 'generic'
+            installparam['image'] = image
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     master_threaded = data.get('threaded', False) or data.get('masters_threaded', False)
     result = config.plan(plan, inputfile='%s/masters.yml' % plandir, overrides=data, threaded=master_threaded)
