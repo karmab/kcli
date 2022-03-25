@@ -10,7 +10,7 @@ from kvirt.examples import plandatacreate, vmdatacreate, hostcreate, _list, plan
 from kvirt.examples import repocreate, isocreate, kubegenericcreate, kubek3screate, kubeopenshiftcreate, kubekindcreate
 from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsole, vmexport, niccreate, nicdelete
 from kvirt.examples import disconnectercreate, appopenshiftcreate, plantemplatecreate, kubehypershiftcreate
-from kvirt.examples import workflowcreate
+from kvirt.examples import workflowcreate, kubegenericscale, kubek3sscale, kubeopenshiftscale
 from kvirt.examples import changelog
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
@@ -1711,7 +1711,6 @@ def delete_kube(args):
 
 def scale_generic_kube(args):
     """Scale generic kube"""
-    workers = args.workers
     paramfile = args.paramfile
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     cluster = overrides.get('cluster', args.cluster)
@@ -1729,14 +1728,15 @@ def scale_generic_kube(args):
         paramfile = "kcli_parameters.yml"
         pprint("Using default parameter file kcli_parameters.yml")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    if workers > 0:
-        overrides['workers'] = workers
+    if overrides.get('masters') is None and args.masters is not None:
+        overrides['masters'] = args.masters
+    if overrides.get('workers') is None and args.workers is not None:
+        overrides['workers'] = args.workers
     config.scale_kube_generic(cluster, overrides=overrides)
 
 
 def scale_k3s_kube(args):
     """Scale k3s kube"""
-    workers = args.workers
     paramfile = args.paramfile
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     cluster = overrides.get('cluster', args.cluster)
@@ -1755,14 +1755,15 @@ def scale_k3s_kube(args):
         pprint("Using default parameter file kcli_parameters.yml")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
-    if workers > 0:
-        overrides['workers'] = workers
+    if overrides.get('masters') is None and args.masters is not None:
+        overrides['masters'] = args.masters
+    if overrides.get('workers') is None and args.workers is not None:
+        overrides['workers'] = args.workers
     config.scale_kube_k3s(cluster, overrides=overrides)
 
 
 def scale_hypershift_kube(args):
     """Scale hypershift kube"""
-    workers = args.workers
     paramfile = args.paramfile
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     cluster = overrides.get('cluster', args.cluster)
@@ -1780,14 +1781,13 @@ def scale_hypershift_kube(args):
         paramfile = "kcli_parameters.yml"
         pprint("Using default parameter file kcli_parameters.yml")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    if workers > 0:
-        overrides['workers'] = workers
+    if overrides['workers'] is None and args.workers is not None:
+        overrides['workers'] = args.workers
     config.scale_kube_hypershift(cluster, overrides=overrides)
 
 
 def scale_openshift_kube(args):
     """Scale openshift kube"""
-    workers = args.workers
     paramfile = args.paramfile
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     cluster = overrides.get('cluster', args.cluster)
@@ -1805,8 +1805,10 @@ def scale_openshift_kube(args):
         paramfile = "kcli_parameters.yml"
         pprint("Using default parameter file kcli_parameters.yml")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    if workers > 0:
-        overrides['workers'] = workers
+    if overrides.get('masters') is None and args.masters is not None:
+        overrides['masters'] = args.masters
+    if overrides.get('workers') is None and args.workers is not None:
+        overrides['workers'] = args.workers
     config.scale_kube_openshift(cluster, overrides=overrides)
 
 
@@ -3960,35 +3962,40 @@ def cli():
     kubescale_subparsers = kubescale_parser.add_subparsers(metavar='', dest='subcommand_scale_kube')
 
     kubegenericscale_desc = 'Scale Generic Kube'
+    kubegenericscale_epilog = "examples:\n%s" % kubegenericscale
     kubegenericscale_parser = argparse.ArgumentParser(add_help=False)
     kubegenericscale_parser.add_argument('-P', '--param', action='append',
                                          help='specify parameter or keyword for rendering (multiple can be specified)',
                                          metavar='PARAM')
     kubegenericscale_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    kubegenericscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int, default=0)
+    kubegenericscale_parser.add_argument('-m', '--masters', help='Total number of masters', type=int)
+    kubegenericscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
     kubegenericscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
     kubegenericscale_parser.set_defaults(func=scale_generic_kube)
     kubescale_subparsers.add_parser('generic', parents=[kubegenericscale_parser], description=kubegenericscale_desc,
-                                    help=kubegenericscale_desc, aliases=['kubeadm'])
+                                    help=kubegenericscale_desc, aliases=['kubeadm'], epilog=kubegenericscale_epilog,
+                                    formatter_class=rawhelp)
 
     kubek3sscale_desc = 'Scale K3s Kube'
+    kubek3sscale_epilog = "examples:\n%s" % kubek3sscale
     kubek3sscale_parser = argparse.ArgumentParser(add_help=False)
     kubek3sscale_parser.add_argument('-P', '--param', action='append',
                                      help='specify parameter or keyword for rendering (multiple can be specified)',
                                      metavar='PARAM')
     kubek3sscale_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    kubek3sscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int, default=0)
+    kubek3sscale_parser.add_argument('-m', '--masters', help='Total number of masters', type=int)
+    kubek3sscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
     kubek3sscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
     kubek3sscale_parser.set_defaults(func=scale_k3s_kube)
     kubescale_subparsers.add_parser('k3s', parents=[kubek3sscale_parser], description=kubek3sscale_desc,
-                                    help=kubek3sscale_desc)
+                                    help=kubek3sscale_desc, epilog=kubek3sscale_epilog, formatter_class=rawhelp)
 
     parameterhelp = "specify parameter or keyword for rendering (multiple can be specified)"
     kubehypershiftscale_desc = 'Scale Hypershift Kube'
     kubehypershiftscale_parser = argparse.ArgumentParser(add_help=False)
     kubehypershiftscale_parser.add_argument('-P', '--param', action='append', help=parameterhelp, metavar='PARAM')
     kubehypershiftscale_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    kubehypershiftscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int, default=0)
+    kubehypershiftscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
     kubehypershiftscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
     kubehypershiftscale_parser.set_defaults(func=scale_hypershift_kube)
     kubescale_subparsers.add_parser('hypershift', parents=[kubehypershiftscale_parser],
@@ -3997,15 +4004,18 @@ def cli():
 
     parameterhelp = "specify parameter or keyword for rendering (multiple can be specified)"
     kubeopenshiftscale_desc = 'Scale Openshift Kube'
+    kubeopenshiftscale_epilog = "examples:\n%s" % kubeopenshiftscale
     kubeopenshiftscale_parser = argparse.ArgumentParser(add_help=False)
     kubeopenshiftscale_parser.add_argument('-P', '--param', action='append', help=parameterhelp, metavar='PARAM')
     kubeopenshiftscale_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    kubeopenshiftscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int, default=0)
+    kubeopenshiftscale_parser.add_argument('-m', '--masters', help='Total number of masters', type=int)
+    kubeopenshiftscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
     kubeopenshiftscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
     kubeopenshiftscale_parser.set_defaults(func=scale_openshift_kube)
     kubescale_subparsers.add_parser('openshift', parents=[kubeopenshiftscale_parser],
                                     description=kubeopenshiftscale_desc,
-                                    help=kubeopenshiftscale_desc, aliases=['okd'])
+                                    help=kubeopenshiftscale_desc, aliases=['okd'],
+                                    epilog=kubeopenshiftscale_epilog, formatter_class=rawhelp)
 
     kubeupdate_desc = 'Update Kube'
     kubeupdate_parser = update_subparsers.add_parser('kube', description=kubeupdate_desc, help=kubeupdate_desc,
