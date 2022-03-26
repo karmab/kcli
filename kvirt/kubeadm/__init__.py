@@ -14,7 +14,7 @@ cloudplatforms = ['aws', 'gcp']
 
 def scale(config, plandir, cluster, overrides):
     plan = cluster
-    data = {'cluster': cluster, 'nip': False, 'kube': cluster, 'kubetype': 'generic'}
+    data = {'cluster': cluster, 'nip': False, 'kube': cluster, 'kubetype': 'generic', 'image': 'centos8stream'}
     data['basedir'] = '/workdir' if container_mode() else '.'
     cluster = data.get('cluster')
     clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
@@ -27,15 +27,8 @@ def scale(config, plandir, cluster, overrides):
     with open("%s/kcli_parameters.yml" % clusterdir, 'w') as paramfile:
         yaml.safe_dump(data, paramfile)
     client = config.client
-    k = config.k
     pprint("Scaling on client %s" % client)
-    image = data.get('image') or k.info("%s-master-0" % cluster).get('image')
-    if image is None:
-        error("Missing image...")
-        sys.exit(1)
-    else:
-        pprint("Using image %s" % image)
-    data['image'] = image
+    image = data.get('image')
     data['ubuntu'] = True if 'ubuntu' in image.lower() or [entry for entry in UBUNTUS if entry in image] else False
     os.chdir(os.path.expanduser("~/.kcli"))
     for role in ['masters', 'workers']:
