@@ -773,6 +773,10 @@ def get_overrides(paramfile=None, param=[]):
                             v = v.strip()
                             value[index] = v
                 overrides[key] = value
+    required = [key for key in overrides if isinstance(overrides[key], str) and overrides[key] == '?required']
+    if required:
+        error("A value needs to be set for the following parameters: %s" % ' '.join(required))
+        sys.exit(1)
     return overrides
 
 
@@ -813,6 +817,10 @@ def get_parameters(inputfile, planfile=False):
                     pass
         if not isinstance(results, dict):
             error("Error rendering parameters from file %s" % inputfile)
+            sys.exit(1)
+        required = [key for key in results if isinstance(results[key], str) and results[key] == '?required']
+        if required:
+            error("A value needs to be set for the following parameters: %s" % ' '.join(required))
             sys.exit(1)
         return results
 
