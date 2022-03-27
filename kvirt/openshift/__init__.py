@@ -1085,10 +1085,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         sno_dns = data.get('sno_dns', True)
         if sno_dns:
             coredns_data = config.process_inputfile(cluster, f"{plandir}/staticpods/coredns.yml", overrides=data)
-            corefile_data = config.process_inputfile(cluster, f"{plandir}/Corefile.template", overrides=data)
+            corefile_data = config.process_inputfile(cluster, f"{plandir}/Corefile", overrides=data)
             forcedns_data = config.process_inputfile(cluster, f"{plandir}/99-forcedns", overrides=data)
             sno_files.extend([{'path': "/etc/kubernetes/manifests/coredns.yml", 'data': coredns_data},
-                              {'path': "/etc/kubernetes/Corefile", 'data': corefile_data},
+                              {'path': "/etc/kubernetes/Corefile.template", 'data': corefile_data},
                               {"path": "/etc/NetworkManager/dispatcher.d/99-forcedns", "data": forcedns_data,
                                "mode": int('755', 8)}])
         if api_ip is not None:
