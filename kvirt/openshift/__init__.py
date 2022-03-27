@@ -1158,6 +1158,13 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                               'prometheus-k8s-openshift-monitoring.apps']
                 dnsentry = ' '.join(["%s.%s.%s" % (entry, cluster, domain) for entry in dnsentries])
                 warning("$your_node_ip %s" % dnsentry)
+                pprint(f"Plug {cluster}.iso to your target node to complete the installation")
+                c = os.environ['KUBECONFIG']
+                kubepassword = open("%s/auth/kubeadmin-password" % clusterdir).read()
+                console = f"https://console-openshift-console.apps.{cluster}.{domain}"
+                info2(f"To access the cluster as the system:admin user when running 'oc', run export KUBECONFIG={c}")
+                info2(f"Access the Openshift web-console here: {console}")
+                info2(f"Login to the console with user: kubeadmin, password: {kubepassword}")
         sys.exit(0)
     call('openshift-install --dir=%s --log-level=%s create ignition-configs' % (clusterdir, log_level), shell=True)
     for role in ['master', 'worker']:
