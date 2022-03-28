@@ -9,6 +9,7 @@ recursive-include kvirt/internalplans *
 recursive-include kvirt/kind *
 recursive-include kvirt/k3s *
 recursive-include kvirt/kubeadm *
+recursive-include kvirt/microshift *
 recursive-include kvirt/openshift *
 recursive-include kvirt/hypershift *
 recursive-include kvirt/version *

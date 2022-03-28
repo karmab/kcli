@@ -1,19 +1,32 @@
-{{ cluster }}-microshift:
-  image: {{ image }}
-  keys: {{ keys }}
-  numcpus: {{ numcpus }}
-  memory: {{ memory }}
-  nets: {{ [network] + extra_networks }}
-  disks: {{ [disk_size] + extra_disks }}
-  wait: true
-  notify: {{ notify }}
-  notifycmd: {{ notifycmd }}
-  cmds:
-  - dnf install -y curl podman firewalld 
-  - curl -L -o /etc/yum.repos.d/devel:kubic:libcontainers:stable.repo https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/CentOS_8_Stream/devel:kubic:libcontainers:stable.repo
-  - curl -L -o /etc/yum.repos.d/devel:kubic:libcontainers:stable:cri-o:1.21.repo https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable:cri-o:1.21/CentOS_8_Stream/devel:kubic:libcontainers:stable:cri-o:1.21.repo
-  - dnf install -y cri-o cri-tools
-  - systemctl enable crio --now
-  - curl -o /etc/systemd/system/microshift.service {{ SERVICE_SCRIPT }}
-  - systemctl enable microshift --now
-  - podman cp microshift:/var/lib/microshift/resources/kubeadmin/kubeconfig {{ KUBECONFIG }}
+microshift_profile:
+ type: profile
+ domain: {{ domain }}
+ image: {{ image }}
+ noname: {{ noname }}
+ nets: [{{ network }}] 
+ memory: {{ memory }}
+ numcpus: {{ numcpus }}
+ files:
+ - scripts
+{% if 'manifests'|find_manifests %}
+ - manifests
+{% endif %}
+{% if pull_secret|exists %}
+ - path: /root/auth.json
+   origin: {{ pull_secret }}
+{% endif %}
+{% if kubeconfig_extra != None %}
+ - path: /root/kubeconfig.extra
+   origin: {{ kubeconfig_extra }}
+{% endif %}
+ scripts:
+ - scripts/deploy.sh
+
+{% for number in range(0, nodes) %}
+{{ cluster }}-{{ number }}:
+ profile: microshift_profile
+ wait: true
+ finishfiles:
+ - origin: {{ KUBECONFIG }}
+   path: ~/.kcli/clusters/{{ cluster }}/auth/kubeconfig.{{ number }}
+{% endfor %}

@@ -1,22 +1,17 @@
 info: |
-  Deploy kubernetes using microshift on a single vm
-image : centos8stream
+  Deploy kubernetes using microshift on $nodes vms
 nodes: 1
-numcpus: 4
-memory: 8192
-microshift_version:
-cluster: testk
+cluster: microshift
+domain: karmalabs.com
+image: centos8stream
 network: default
-disk_size: 30
-extra_disks: []
-extra_networks: []
-notifycmd: "kubectl get pod -A"
-notify: false
-KUBECONFIG: /root/kubeconfig
-SERVICE_SCRIPT: https://raw.githubusercontent.com/redhat-et/microshift/main/packaging/systemd/microshift-containerized.service
-feature_gates: []
-ipv6: false
-dualstack: false
-disable_default_cni: false
-external_api_address: true
-keys: []
+memory: 4096
+numcpus: 4
+KUBECONFIG: /var/lib/microshift/resources/kubeadmin/kubeconfig
+podman: false
+nightly: false
+pull_secret:
+noname: false
+sslip: true
+register_acm: false
+kubeconfig_extra:

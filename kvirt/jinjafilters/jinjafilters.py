@@ -149,6 +149,8 @@ def find_manifests(directory, suffix='yaml'):
 
 
 def exists(name):
+    if name is None:
+        return False
     return True if os.path.exists(name) else False
 
 
