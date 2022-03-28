@@ -19,6 +19,7 @@ from kvirt import common
 from kvirt.common import error, pprint, success, warning, generate_rhcos_iso, pwd_path, container_mode
 from kvirt.common import ssh, scp, _ssh_credentials, valid_ip, process_files
 from kvirt import kind
+from kvirt import microshift
 from kvirt import k3s
 from kvirt import kubeadm
 from kvirt import hypershift
@@ -1684,6 +1685,8 @@ class Kconfig(Kbaseconfig):
                     currentconfig.create_kube_hypershift(plan, overrides=kube_overrides)
                 elif kubetype == 'kind':
                     currentconfig.create_kube_kind(plan, overrides=kube_overrides)
+                elif kubetype == 'microshift':
+                    currentconfig.create_kube_microshift(plan, overrides=kube_overrides)
                 elif kubetype == 'k3s':
                     currentconfig.create_kube_k3s(plan, overrides=kube_overrides)
                 elif kubetype == 'generic':
@@ -2444,6 +2447,14 @@ class Kconfig(Kbaseconfig):
             os.environ['PATH'] += ':%s' % os.getcwd()
         plandir = os.path.dirname(kind.create.__code__.co_filename)
         kind.create(self, plandir, cluster, overrides)
+
+    def create_kube_microshift(self, cluster, overrides={}):
+        if container_mode():
+            os.environ['PATH'] += ':/workdir'
+        else:
+            os.environ['PATH'] += ':%s' % os.getcwd()
+        plandir = os.path.dirname(microshift.create.__code__.co_filename)
+        microshift.create(self, plandir, cluster, overrides)
 
     def create_kube_k3s(self, cluster, overrides={}):
         if container_mode():

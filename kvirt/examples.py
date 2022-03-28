@@ -166,6 +166,13 @@ $ kcli create kube kind -P workers=2 mykube
 $ kcli create kube kind --paramfile=myparameters.yml mykube2
 """
 
+kubemicroshiftcreate = """# Create a kube microshift instance named mykube with default values
+$ kcli create kube microshift mykube
+
+# Use a parameter file
+$ kcli create kube microshift --paramfile=myparameters.yml mykube2
+"""
+
 kubek3screate = """# Create a kube k3s instance named mykube with default values
 $ kcli create kube k3s mykube
 
