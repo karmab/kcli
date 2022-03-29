@@ -2,9 +2,11 @@
 # coding=utf-8
 
 from ast import literal_eval
+from datetime import datetime
 import glob
 from kvirt.jinjafilters import jinjafilters
 from kvirt.defaults import UBUNTUS, SSH_PUB_LOCATIONS
+from kvirt import version
 from ipaddress import ip_address
 from random import randint
 import base64
@@ -2131,3 +2133,27 @@ def valid_ip(ip):
         return True
     except:
         return False
+
+
+def get_git_version():
+    git_version, git_date = 'N/A', 'N/A'
+    versiondir = os.path.dirname(version.__file__)
+    git_file = f'{versiondir}/git'
+    if os.path.exists(git_file) and os.stat(git_file).st_size > 0:
+        git_version, git_data = open(git_file).read().rstrip().split(' ')[0]
+    return git_version, git_date
+
+
+def compare_git_versions(commit1, commit2):
+    date1, date2 = None, None
+    mycwd = os.getcwd()
+    with TemporaryDirectory() as tmpdir:
+        cmd = f"git clone -q https://github.com/karmab/kcli {tmpdir}"
+        call(cmd, shell=True)
+        os.chdir(tmpdir)
+        timestamp1 = os.popen(f"git show -s --format=%ct {commit1}").read().strip()
+        date1 = datetime.fromtimestamp(int(timestamp1))
+        timestamp2 = os.popen(f"git show -s --format=%ct {commit2}").read().strip()
+        date2 = datetime.fromtimestamp(int(timestamp2))
+        os.chdir(mycwd)
+    return True if date1 < date2 else False

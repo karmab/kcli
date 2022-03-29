@@ -15,7 +15,6 @@ from kvirt.examples import workflowcreate, kubegenericscale, kubek3sscale, kubeo
 from kvirt.examples import changelog
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
-from kvirt import version
 from kvirt.defaults import IMAGES, VERSION, LOCAL_OPENSHIFT_APPS, SSH_PUB_LOCATIONS
 from prettytable import PrettyTable
 import argcomplete
@@ -25,6 +24,7 @@ from ipaddress import ip_address
 from glob import glob
 from kvirt import common
 from kvirt.common import error, pprint, success, warning, ssh, _ssh_credentials, container_mode
+from kvirt.common import get_git_version, compare_git_versions
 from kvirt import nameutils
 import os
 import random
@@ -117,13 +117,7 @@ def get_subparser(parser, subcommand):
 
 def get_version(args):
     full_version = f"version: {VERSION}"
-    versiondir = os.path.dirname(version.__file__)
-    git_file = f'{versiondir}/git'
-    git_version = 'N/A'
-    git_date = ''
-    if os.path.exists(git_file) and os.stat(git_file).st_size > 0:
-        git_version, git_date = open(git_file).read().rstrip().split(' ')
-        git_date = f'({git_date})'
+    git_version, git_date = get_git_version()
     full_version += f" commit: {git_version} {git_date}"
     update = 'N/A'
     if git_version != 'N/A':
@@ -146,11 +140,7 @@ def get_changelog(args):
     if len(diff) > 1:
         ori, dest = diff[:2]
     else:
-        versiondir = os.path.dirname(version.__file__)
-        git_file = f'{versiondir}/git'
-        git_version = 'N/A'
-        if os.path.exists(git_file) and os.stat(git_file).st_size > 0:
-            git_version = open(git_file).read().rstrip().split(' ')[0]
+        git_version = get_git_version()[0]
         if git_version != 'N/A':
             ori, dest = git_version, diff[0]
         else:
@@ -1986,6 +1976,12 @@ def create_plan(args):
     for paramfile in paramfiles:
         overrides.update(common.get_overrides(paramfile=paramfile))
     overrides.update(common.get_overrides(param=args.param))
+    if 'minimum_version' in overrides:
+        minimum_version = overrides['minimum_version']
+        current_version = get_git_version()[0]
+        if current_version != 'N/A' and not compare_git_versions(minimum_version, current_version):
+            error(f"Current version {current_version} lower than Plan minimum version {minimum_version}")
+            return 1
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     _type = config.ini[config.client].get('type', 'kvm')
     overrides.update({'type': _type})
