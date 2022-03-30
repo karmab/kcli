@@ -1985,9 +1985,10 @@ def generate_rhcos_iso(k, cluster, pool, version='latest', podman=False, install
         baseiso = os.path.basename(liveiso)
     else:
         baseiso = f'rhcos-live.{arch}.iso'
-        liveiso = f"https://mirror.openshift.com/pub/openshift-v4/{arch}/dependencies/rhcos/{version}/latest/{baseiso}"
+        path = f'{version}/latest' if version != 'latest' else 'latest'
+        liveiso = f"https://mirror.openshift.com/pub/openshift-v4/{arch}/dependencies/rhcos/{path}/{baseiso}"
     if baseiso not in k.volumes(iso=True):
-        pprint("Downloading %s" % baseiso)
+        pprint(f"Downloading {liveiso}")
         k.add_image(liveiso, pool)
     if '%s.iso' % cluster in [os.path.basename(iso) for iso in k.volumes(iso=True)]:
         warning("Deleting old iso %s.iso" % cluster)
