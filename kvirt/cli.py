@@ -1979,9 +1979,12 @@ def create_plan(args):
     if 'minimum_version' in overrides:
         minimum_version = overrides['minimum_version']
         current_version = get_git_version()[0]
-        if current_version != 'N/A' and not compare_git_versions(minimum_version, current_version):
-            error(f"Current version {current_version} lower than Plan minimum version {minimum_version}")
-            return 1
+        if current_version != 'N/A':
+            if not compare_git_versions(minimum_version, current_version):
+                error(f"Current kcli version {current_version} lower than plan minimum version {minimum_version}")
+                return 1
+            else:
+                pprint("Current kcli version compatible with this plan")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     _type = config.ini[config.client].get('type', 'kvm')
     overrides.update({'type': _type})
