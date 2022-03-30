@@ -622,6 +622,8 @@ class Ksphere:
                 yamlinfo['tags'] = entry.value
         if listinfo:
             return yamlinfo
+        if 'kubetype' in yamlinfo and yamlinfo['kubetype'] == 'openshift':
+            yamlinfo['user'] = 'core'
         if debug:
             yamlinfo['debug'] = config
         if not self.networks:

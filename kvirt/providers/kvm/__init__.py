@@ -1745,6 +1745,8 @@ class Kvirt(object):
             snapshots.append({'snapshot': snapshot, 'current': current})
         if snapshots:
             yamlinfo['snapshots'] = snapshots
+        if 'kubetype' in yamlinfo and yamlinfo['kubetype'] == 'openshift':
+            yamlinfo['user'] = 'core'
         if debug:
             yamlinfo['debug'] = xml
         return yamlinfo

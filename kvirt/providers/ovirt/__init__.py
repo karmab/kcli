@@ -642,6 +642,8 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             path = disk.id
             yamlinfo['disks'].append({'device': device, 'size': disksize, 'format': diskformat, 'type': drivertype,
                                       'path': "%s/%s" % (storagedomain, path)})
+        if 'kubetype' in yamlinfo and yamlinfo['kubetype'] == 'openshift':
+            yamlinfo['user'] = 'core'
         if debug:
             yamlinfo['debug'] = vars(vm)
         return yamlinfo
