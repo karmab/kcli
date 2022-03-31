@@ -1093,10 +1093,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                                "mode": int('755', 8)}])
         if api_ip is not None:
             if data.get('virtual_router_id') is None:
-                data['virtual_router_id'] = hash(cluster) % 254 + 1
+                virtual_router_id = hash(cluster) % 254 + 1
                 vips = [api_ip, ingress_ip] if ingress_ip is not None else [api_ip]
                 pprint("Injecting keepalived static pod with %s" % ','.join(vips))
-                pprint("Using keepalived virtual_router_id %s" % data['virtual_router_id'])
+                pprint(f"Using keepalived virtual_router_id {virtual_router_id}")
+                installparam['virtual_router_id'] = virtual_router_id
+                data['virtual_router_id'] = virtual_router_id
             keepalived_data = config.process_inputfile(cluster, f"{plandir}/staticpods/keepalived.yml", overrides=data)
             keepalivedconf_data = config.process_inputfile(cluster, f"{plandir}/keepalived.conf", overrides=data)
             sno_files.extend([{"path": "/etc/kubernetes/manifests/keepalived.yml", "data": keepalived_data},
