@@ -1100,7 +1100,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             keepalived_data = config.process_inputfile(cluster, f"{plandir}/staticpods/keepalived.yml", overrides=data)
             keepalivedconf_data = config.process_inputfile(cluster, f"{plandir}/keepalived.conf", overrides=data)
             sno_files.extend([{"path": "/etc/kubernetes/manifests/keepalived.yml", "data": keepalived_data},
-                              {"path": "/etc/kubernetes/keepalived.conf", "data": keepalivedconf_data}])
+                              {"path": "/etc/kubernetes/keepalived.conf.template", "data": keepalivedconf_data}])
         if sno_files:
             rendered = config.process_inputfile(cluster, f"{plandir}/99-sno.yaml", overrides={'files': sno_files})
             with open(f"{clusterdir}/openshift/99-sno.yaml", 'w') as f:

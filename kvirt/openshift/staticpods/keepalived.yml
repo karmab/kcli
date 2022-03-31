@@ -23,6 +23,7 @@ spec:
     - "-c"
     - |
       #/bin/sh
+      [ ! -f /etc/keepalived/keepalived.conf ] && [ -f /etc/keepalived/keepalived.conf.template ] && cp /etc/keepalived/keepalived.conf.template /etc/keepalived/keepalived.conf
       grep "{{ api_ip }}/" /etc/keepalived/keepalived.conf
       if [ "$?" == "0" ] ; then
         exit 0
