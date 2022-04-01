@@ -1142,13 +1142,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                     sys.exit(1)
                 if ignore_hosts:
                     warning("Not updating /etc/hosts as per your request")
-                else:
-                    api_ip = None
+                elif api_ip is None:
                     while api_ip is None:
                         api_ip = k.info(sno_name).get('ip')
                         pprint("Waiting 5s to retrieve sno ip...")
                         sleep(5)
-                    update_etc_hosts(cluster, domain, api_ip)
+                update_etc_hosts(cluster, domain, api_ip)
                 installcommand = 'openshift-install --dir=%s --log-level=%s wait-for install-complete' % (clusterdir,
                                                                                                           log_level)
                 installcommand = ' || '.join([installcommand for x in range(retries)])
