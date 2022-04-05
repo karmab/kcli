@@ -352,6 +352,7 @@ class Kvirt(object):
                 diskimage = None
                 diskmacosx = False
                 nvme = False
+                dextra = ''
             elif isinstance(disk, int):
                 disksize = disk
                 diskthin = default_diskthin
@@ -366,6 +367,7 @@ class Kvirt(object):
                 diskname = None
                 diskmacosx = False
                 nvme = False
+                dextra = ''
             elif isinstance(disk, str) and disk.isdigit():
                 disksize = int(disk)
                 diskthin = default_diskthin
@@ -380,6 +382,7 @@ class Kvirt(object):
                 diskname = None
                 diskmacosx = False
                 nvme = False
+                dextra = ''
             elif isinstance(disk, dict):
                 disksize = disk.get('size', default_disksize)
                 diskthin = disk.get('thin', default_diskthin)
@@ -400,6 +403,7 @@ class Kvirt(object):
                 diskimage = disk.get('image')
                 diskname = disk.get('name')
                 diskmacosx = disk.get('macosx', False)
+                dextra = disk.get('driver_extra', '')
                 try:
                     storagediskpool = conn.storagePoolLookupByName(diskpool)
                 except:
@@ -520,13 +524,13 @@ class Kvirt(object):
                 diskformat = 'raw'
             if not nvme:
                 disksxml = """%s<disk type='%s' device='disk'>
-<driver name='qemu' type='%s'/>
+<driver name='qemu' type='%s' %s/>
 <source %s='%s'/>
 %s
 <target dev='%s' bus='%s'/>
 %s
 %s
-</disk>""" % (disksxml, dtype, diskformat, dsource, diskpath, backingxml, diskdev, diskbus, diskwwn, diskserial)
+</disk>""" % (disksxml, dtype, diskformat, dextra, dsource, diskpath, backingxml, diskdev, diskbus, diskwwn, diskserial)
             else:
                 nvmedisks.append(diskpath)
         expanderinfo = {}
