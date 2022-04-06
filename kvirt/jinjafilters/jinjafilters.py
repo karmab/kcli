@@ -1,6 +1,6 @@
 from base64 import b64encode
 from glob import glob
-from ipaddress import ip_network
+from ipaddress import ip_address, ip_network
 import os
 from distutils.version import LooseVersion
 import requests
@@ -154,10 +154,20 @@ def exists(name):
     return True if os.path.exists(name) else False
 
 
+def ipv6_wrap(name):
+    try:
+        if ip_address(name).version == 6:
+            return f'[{name}]'
+        else:
+            return name
+    except:
+        return name
+
+
 jinjafilters = {'basename': basename, 'dirname': dirname, 'ocpnodes': ocpnodes, 'none': none, 'type': _type,
                 'certificate': certificate, 'base64': base64, 'github_version': github_version,
                 'defaultnodes': defaultnodes, 'waitcrd': waitcrd, 'local_ip': local_ip, 'network_ip': network_ip,
-                'kcli_info': kcli_info, 'find_manifests': find_manifests, 'exists': exists}
+                'kcli_info': kcli_info, 'find_manifests': find_manifests, 'exists': exists, 'ipv6_wrap': ipv6_wrap}
 
 
 class FilterModule(object):
