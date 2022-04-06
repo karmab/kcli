@@ -1217,7 +1217,8 @@ def create_vm(args):
         error("No usable public key found, which is mandatory when using wait")
         sys.exit(1)
     customprofile = {}
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    client = overrides.get('client', args.client)
+    config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     for key in overrides:
         if key in vars(config) and vars(config)[key] is not None and type(overrides[key]) != type(vars(config)[key]):
             key_type = str(type(vars(config)[key]))
@@ -1985,7 +1986,8 @@ def create_plan(args):
                 return 1
             else:
                 pprint("Current kcli version compatible with this plan")
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    client = overrides.get('client', args.client)
+    config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     _type = config.ini[config.client].get('type', 'kvm')
     overrides.update({'type': _type})
     if force:

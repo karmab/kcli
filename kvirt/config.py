@@ -1722,8 +1722,6 @@ class Kconfig(Kbaseconfig):
                     profile = entries[name]
                 if 'name' in profile:
                     name = profile['name']
-                if 'client' in overrides:
-                    profile['client'] = overrides['client']
                 if 'basevm' in profile or 'baseplan' in profile:
                     baseprofile = {}
                     appendkeys = ['disks', 'nets', 'files', 'scripts', 'cmds']
