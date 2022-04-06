@@ -328,7 +328,7 @@ class Kbaseconfig:
         self.tunnelport = options.get('tunnelport', self.default['tunnelport'])
         self.tunneluser = options.get('tunneluser', self.default['tunneluser'])
         if self.tunnelhost is None and self.type == 'kvm' and self.host != '127.0.0.1':
-            self.tunnelhost = self.host
+            self.tunnelhost = self.host.replace('[', '').replace(']', '')
             self.tunnelport = self.port
             self.tunneluser = self.user
         self.tunneldir = options.get('tunneldir', self.default['tunneldir'])
