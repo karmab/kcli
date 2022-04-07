@@ -795,12 +795,12 @@ class Kvirt(object):
                 dtype = 'block' if diskpath.startswith('/dev') else 'file'
                 dsource = 'dev' if diskpath.startswith('/dev') else 'file'
                 isobus = 'scsi' if aarch64_full else 'sata'
-                isoxml = """%s<disk type='%s' device='cdrom'>
+                isoxml = """<disk type='%s' device='cdrom'>
 <driver name='qemu' type='raw'/>
 <source %s='%s'/>
 <target dev='hdd' bus='%s'/>
 <readonly/>
-</disk>""" % (isoxml, dtype, dsource, cloudinitiso, isobus)
+</disk>""" % (dtype, dsource, cloudinitiso, isobus)
                 dest_machine = 'q99' if aarch64_full else machine
                 if ignitiondata is not None:
                     userdata, metadata, netdata = ignitiondata, '', None
