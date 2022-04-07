@@ -103,6 +103,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
     :param fqdn:
     """
     userdata, metadata, netdata = None, None, None
+    forcev1 = False
     default_gateway = gateway
     noname = overrides.get('noname', False)
     legacy = True if image is not None and (is_7(image) or is_debian9(image)) else False
@@ -237,6 +238,8 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                             targetfamily = 'ipv6_dhcpv6-stateless'
                         if net.get('ipv6_slaac', False):
                             targetfamily = 'ipv6_slaac'
+                        if targetfamily != 'dhcp6':
+                            forcev1 = True
                     else:
                         targetfamily = 'dhcp4'
                     netdata[nicname] = {targetfamily: True}
@@ -262,6 +265,8 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 final_netdata['ethernets'] = netdata
             if bridges:
                 final_netdata['bridges'] = bridges
+            if forcev1:
+                final_netdata = {'version': 1, 'config': netv1(netdata)}
             netdata = yaml.safe_dump(final_netdata, default_flow_style=False, encoding='utf-8').decode("utf-8")
         else:
             netdata = ''
@@ -2165,3 +2170,12 @@ def compare_git_versions(commit1, commit2):
         date2 = datetime.fromtimestamp(int(timestamp2))
         os.chdir(mycwd)
     return True if date1 < date2 else False
+
+
+def netv1(netdata):
+    result = []
+    for interface in netdata:
+        net_type = list(netdata[interface].keys())[0]
+        newentry = {'type': 'physical', 'name': interface, 'subnets': [{'type': net_type}]}
+        result.append(newentry)
+    return result
