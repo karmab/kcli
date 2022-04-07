@@ -78,6 +78,7 @@ disconnected_user:
 disconnected_password:
 disconnected_operators: []
 disconnected_ipv6_network: false
+disconnected_sync: true
 imagecontentsources: []
 ca:
 ipv6: false

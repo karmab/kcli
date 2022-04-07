@@ -7,7 +7,6 @@ Kvirt config class
 import base64
 from datetime import datetime
 from fnmatch import fnmatch
-import json
 from jinja2 import Environment, FileSystemLoader
 from jinja2 import StrictUndefined as undefined
 from jinja2.exceptions import TemplateSyntaxError, TemplateError, TemplateNotFound
@@ -2686,29 +2685,27 @@ class Kconfig(Kbaseconfig):
                 iso_pool = overrides.get('pool') or self.pool
                 generate_rhcos_iso(self.k, cluster, iso_pool, version=iso_version, podman=podman, installer=installer)
 
-    def create_openshift_disconnecter(self, plan, overrides={}):
+    def create_openshift_disconnected(self, plan, overrides={}):
         data = overrides
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
         cluster = data.get('cluster', 'testk')
         upstream = data.get('upstream', False)
         version = data.get('version', 'nightly')
         tag = data.get('tag', OPENSHIFT_TAG)
-        disconnected_vm = f"{cluster}-disconnecter"
+        disconnected_vm = f"{cluster}-disconnected"
         disconnected_reuse = data.get('disconnected_reuse', False)
-        disconnected_operators = data.get('disconnected_operators', False)
-        disconnected_url = data.get('disconnected_url')
-        disconnected_user = data.get('disconnected_user')
-        disconnected_password = data.get('disconnected_password')
+        disconnected_sync = data.get('disconnected_sync', True)
         pprint(f"Deploying disconnected vm {disconnected_vm}")
-        pull_secret = pwd_path(data.get('pull_secret')) if not upstream else f"{plandir}/fake_pull.json"
-        if not upstream:
-            pull_secret = pwd_path(data.get('pull_secret', 'openshift_pull.json'))
-        else:
-            pull_secret = f"{plandir}/fake_pull.json"
-        if not os.path.exists(pull_secret):
-            error(f"Missing pull secret file {pull_secret}")
-            sys.exit(1)
-        data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
+        if disconnected_sync:
+            pull_secret = pwd_path(data.get('pull_secret')) if not upstream else f"{plandir}/fake_pull.json"
+            if not upstream:
+                pull_secret = pwd_path(data.get('pull_secret', 'openshift_pull.json'))
+            else:
+                pull_secret = f"{plandir}/fake_pull.json"
+            if not os.path.exists(pull_secret):
+                error(f"Missing pull secret file {pull_secret}")
+                sys.exit(1)
+            data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
         disconnected_plan = f"{plan}-reuse" if disconnected_reuse else plan
         if version == 'ci' and 'disconnected_origin' not in overrides:
             reg = 'registry.build01.ci.openshift.org' if str(tag).startswith('ci-') else 'registry.ci.openshift.org'
@@ -2718,52 +2715,6 @@ class Kconfig(Kbaseconfig):
         if result['result'] != 'success':
             sys.exit(1)
         return
-        disconnected_ip, disconnected_vmport = _ssh_credentials(self.k, disconnected_vm)[1:]
-        cacmd = "cat /opt/registry/certs/domain.crt"
-        cacmd = ssh(disconnected_vm, ip=disconnected_ip, user='root', tunnel=self.tunnel,
-                    tunnelhost=self.tunnelhost, tunnelport=self.tunnelport, tunneluser=self.tunneluser,
-                    insecure=True, cmd=cacmd, vmport=disconnected_vmport)
-        disconnected_ca = os.popen(cacmd).read().strip()
-        if data['ca'] is not None:
-            data['ca'] += disconnected_ca
-        else:
-            data['ca'] = disconnected_ca
-        urlcmd = "cat /root/url.txt"
-        urlcmd = ssh(disconnected_vm, ip=disconnected_ip, user='root', tunnel=self.tunnel,
-                     tunnelhost=self.tunnelhost, tunnelport=self.tunnelport, tunneluser=self.tunneluser,
-                     insecure=True, cmd=urlcmd, vmport=disconnected_vmport)
-        disconnected_url = os.popen(urlcmd).read().strip()
-        overrides['disconnected_url'] = disconnected_url
-        data['disconnected_url'] = disconnected_url
-        if disconnected_user is None:
-            disconnected_user = 'dummy'
-        if disconnected_password is None:
-            disconnected_password = 'dummy'
-        versioncmd = "cat /root/version.txt"
-        versioncmd = ssh(disconnected_vm, ip=disconnected_ip, user='root', tunnel=self.tunnel,
-                         tunnelhost=self.tunnelhost, tunnelport=self.tunnelport, tunneluser=self.tunneluser,
-                         insecure=True, cmd=versioncmd, vmport=disconnected_vmport)
-        disconnected_version = os.popen(versioncmd).read().strip()
-        if disconnected_operators:
-            source, destination = "/root/imageContentSourcePolicy.yaml", '.'
-            scpcmd = scp(disconnected_vm, ip=disconnected_ip, user='root', source=source,
-                         destination=destination, tunnel=self.tunnel, tunnelhost=self.tunnelhost,
-                         tunnelport=self.tunnelport, tunneluser=self.tunneluser, download=True, insecure=True,
-                         vmport=disconnected_vmport)
-            os.system(scpcmd)
-            source, destination = "/root/catalogSource.yaml", '.'
-            scpcmd = scp(disconnected_vm, ip=disconnected_ip, user='root', source=source,
-                         destination=destination, tunnel=self.tunnel, tunnelhost=self.tunnelhost,
-                         tunnelport=self.tunnelport, tunneluser=self.tunneluser, download=True, insecure=True,
-                         vmport=disconnected_vmport)
-            os.system(scpcmd)
-        os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = disconnected_version
-        pprint(f"Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to {disconnected_version}")
-        if disconnected_url is not None and disconnected_user is not None and disconnected_password is not None:
-            key = f"{disconnected_user}:{disconnected_password}"
-            key = str(base64.b64encode(key.encode('utf-8')), 'utf-8')
-            auths = {'auths': {disconnected_url: {'auth': key, 'email': 'jhendrix@karmalabs.com'}}}
-            data['pull_secret'] = json.dumps(auths)
 
     def handle_finishfiles(self, name, finishfiles, identityfile=None):
         current_ip = common._ssh_credentials(self.k, name)[1]

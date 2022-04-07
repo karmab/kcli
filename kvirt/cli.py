@@ -10,7 +10,7 @@ from kvirt.examples import plandatacreate, vmdatacreate, hostcreate, _list, plan
 from kvirt.examples import repocreate, isocreate
 from kvirt.examples import kubegenericcreate, kubek3screate, kubeopenshiftcreate, kubekindcreate, kubemicroshiftcreate
 from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsole, vmexport, niccreate, nicdelete
-from kvirt.examples import disconnectercreate, appopenshiftcreate, plantemplatecreate, kubehypershiftcreate
+from kvirt.examples import disconnectedcreate, appopenshiftcreate, plantemplatecreate, kubehypershiftcreate
 from kvirt.examples import workflowcreate, kubegenericscale, kubek3sscale, kubeopenshiftscale
 from kvirt.examples import changelog
 from kvirt.baseconfig import Kbaseconfig
@@ -1188,7 +1188,7 @@ def create_openshift_iso(args):
     config.create_openshift_iso(cluster, overrides=overrides, ignitionfile=ignitionfile, direct=direct)
 
 
-def create_openshift_disconnecter(args):
+def create_openshift_disconnected(args):
     plan = args.plan
     if plan is None:
         plan = nameutils.get_random_name()
@@ -1197,7 +1197,7 @@ def create_openshift_disconnecter(args):
     if 'cluster' not in overrides:
         overrides['cluster'] = plan
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.create_openshift_disconnecter(plan, overrides=overrides)
+    config.create_openshift_disconnected(plan, overrides=overrides)
 
 
 def create_vm(args):
@@ -2149,9 +2149,9 @@ def info_generic_app(args):
     baseconfig.info_app_generic(args.app)
 
 
-def info_openshift_disconnecter(args):
+def info_openshift_disconnected(args):
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
-    baseconfig.info_openshift_disconnecter()
+    baseconfig.info_openshift_disconnected()
 
 
 def info_openshift_app(args):
@@ -3519,12 +3519,12 @@ def cli():
     appopenshiftinfo_parser.add_argument('app', metavar='APP')
     appopenshiftinfo_parser.set_defaults(func=info_openshift_app)
 
-    openshiftdisconnecterinfo_desc = 'Info Openshift Disonnecter'
-    openshiftdisconnecterinfo_parser = info_subparsers.add_parser('disconnecter',
-                                                                  description=openshiftdisconnecterinfo_desc,
-                                                                  help=openshiftdisconnecterinfo_desc,
-                                                                  aliases=['openshift-disconnecter'])
-    openshiftdisconnecterinfo_parser.set_defaults(func=info_openshift_disconnecter)
+    openshiftdisconnectedinfo_desc = 'Info Openshift Disconnected registry vm'
+    openshiftdisconnectedinfo_parser = info_subparsers.add_parser('disconnected',
+                                                                  description=openshiftdisconnectedinfo_desc,
+                                                                  help=openshiftdisconnectedinfo_desc,
+                                                                  aliases=['openshift-disconnected'])
+    openshiftdisconnectedinfo_parser.set_defaults(func=info_openshift_disconnected)
 
     listapp_desc = 'List Available Kube Apps'
     listapp_parser = list_subparsers.add_parser('app', description=listapp_desc,
@@ -4218,18 +4218,19 @@ def cli():
     networkdelete_parser.add_argument('names', metavar='NETWORKS', nargs='+')
     networkdelete_parser.set_defaults(func=delete_network)
 
-    disconnectercreate_desc = 'Create a disconnecter vm for openshift'
-    disconnectercreate_epilog = "examples:\n%s" % disconnectercreate
-    disconnectercreate_parser = argparse.ArgumentParser(add_help=False)
-    disconnectercreate_parser.add_argument('-P', '--param', action='append',
+    disconnectedcreate_desc = 'Create a disconnected registry vm for openshift'
+    disconnectedcreate_epilog = "examples:\n%s" % disconnectedcreate
+    disconnectedcreate_parser = argparse.ArgumentParser(add_help=False)
+    disconnectedcreate_parser.add_argument('-P', '--param', action='append',
                                            help='specify parameter or keyword for rendering (can specify multiple)',
                                            metavar='PARAM')
-    disconnectercreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    disconnectercreate_parser.add_argument('plan', metavar='PLAN', help='Plan', nargs='?')
-    disconnectercreate_parser.set_defaults(func=create_openshift_disconnecter)
-    create_subparsers.add_parser('openshift-disconnecter', parents=[disconnectercreate_parser],
-                                 description=disconnectercreate_desc, help=disconnectercreate_desc,
-                                 epilog=disconnectercreate_epilog, formatter_class=rawhelp)
+    disconnectedcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    disconnectedcreate_parser.add_argument('plan', metavar='PLAN', help='Plan', nargs='?')
+    disconnectedcreate_parser.set_defaults(func=create_openshift_disconnected)
+    create_subparsers.add_parser('openshift-disconnected', parents=[disconnectedcreate_parser],
+                                 description=disconnectedcreate_desc, help=disconnectedcreate_desc,
+                                 epilog=disconnectedcreate_epilog, formatter_class=rawhelp,
+                                 aliases=['openshift-registry'])
 
     isocreate_desc = 'Create an iso ignition for baremetal install'
     isocreate_epilog = "examples:\n%s" % isocreate
