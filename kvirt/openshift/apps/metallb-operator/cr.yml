@@ -1,0 +1,17 @@
+---
+apiVersion: metallb.io/v1beta1
+kind: MetalLB
+metadata:
+  name: metallb
+  namespace: metallb
+---
+apiVersion: metallb.io/v1alpha1
+kind: AddressPool
+metadata:
+  name: {{ metallb_pool }}
+  namespace: metallb
+spec:
+  protocol: layer2
+  autoAssign: false
+  addresses:
+    - {{ metallb_range }}
