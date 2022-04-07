@@ -164,14 +164,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 if legacy:
                     netdata += "  iface %s inet manual\n" % nicname
                 else:
-                    if netname in ipv6:
-                        targetfamily = 'dhcp6'
-                        if net.get('ipv6_stateless', False):
-                            targetfamily = 'ipv6_dhcpv6-stateless'
-                        if net.get('ipv6_slaac', False):
-                            targetfamily = 'ipv6_slaac'
-                    else:
-                        targetfamily = 'dhcp4'
+                    targetfamily = 'dhcp6' if netname in ipv6 else 'dhcp4'
                     netdata[nicname] = {targetfamily: False}
             elif ip is not None and netmask is not None:
                 if legacy:
@@ -238,7 +231,14 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                     if not bridge:
                         netdata += "  iface %s inet dhcp\n" % nicname
                 else:
-                    targetfamily = 'dhcp6' if enableipv6 or netname in ipv6 else 'dhcp4'
+                    if enableipv6 or netname in ipv6:
+                        targetfamily = 'dhcp6'
+                        if net.get('ipv6_stateless', False):
+                            targetfamily = 'ipv6_dhcpv6-stateless'
+                        if net.get('ipv6_slaac', False):
+                            targetfamily = 'ipv6_slaac'
+                    else:
+                        targetfamily = 'dhcp4'
                     netdata[nicname] = {targetfamily: True}
                     if 'dualstack' in overrides and overrides['dualstack'] and index == 0:
                         dualfamily = 'dhcp6' if targetfamily == 'dhcp4' else 'dhcp4'
