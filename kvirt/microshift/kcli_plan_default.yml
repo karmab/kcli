@@ -1,7 +1,7 @@
 info: |
   Deploy kubernetes using microshift on $nodes vms
 nodes: 1
-cluster: microshift
+cluster: testk
 domain: karmalabs.com
 image: centos8stream
 network: default
@@ -14,4 +14,4 @@ pull_secret:
 noname: false
 sslip: true
 register_acm: false
-kubeconfig_extra:
+kubeconfig_acm:

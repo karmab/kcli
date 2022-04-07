@@ -1,5 +1,5 @@
 KUBECONFIG_MICROSHIFT=kubeconfig
-KUBECONFIG_ACM=kubeconfig.extra
+KUBECONFIG_ACM=kubeconfig.acm
 cd /root
 export CLUSTER_NAME={{ name }}
 export KUBECONFIG=${KUBECONFIG_ACM}
