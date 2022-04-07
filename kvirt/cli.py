@@ -1627,7 +1627,7 @@ def create_microshift_kube(args):
     """Create Microshift kube"""
     paramfile = args.paramfile
     force = args.force
-    cluster = args.cluster if args.cluster is not None else 'testk'
+    cluster = args.cluster
     if container_mode():
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile

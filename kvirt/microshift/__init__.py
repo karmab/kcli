@@ -15,6 +15,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     data['cluster'] = overrides.get('cluster', cluster if cluster is not None else 'testk')
     plan = cluster if cluster is not None else data['cluster']
     data['kube'] = data['cluster']
+    cluster = data.get('cluster')
     nodes = data.get('nodes', 1)
     if nodes == 0:
         error("Invalid number of nodes")
