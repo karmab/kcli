@@ -1,6 +1,6 @@
 export PATH=/root/bin:$PATH
 export PULL_SECRET=/root/openshift_pull.json
-dnf  -y install podman httpd httpd-tools jq skopeo
+dnf -y install podman httpd httpd-tools jq skopeo libseccomp-devel
 IP=$(ip -o addr show eth0 |head -1 | awk '{print $4}' | cut -d'/' -f1)
 REGISTRY_NAME=$(echo $IP | sed 's/\./-/g' | sed 's/:/-/g').sslip.io
 echo $REGISTRY_NAME:5000 > /root/url.txt
