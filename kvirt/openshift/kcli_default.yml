@@ -77,6 +77,9 @@ disconnected_disk_size: 100
 disconnected_user:
 disconnected_password:
 disconnected_operators: []
+disconnected_certified_operators: []
+disconnected_community_operators: []
+disconnected_marketplace_operators: []
 disconnected_ipv6_network: false
 disconnected_sync: true
 imagecontentsources: []

@@ -2690,8 +2690,9 @@ class Kconfig(Kbaseconfig):
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
         cluster = data.get('cluster', 'testk')
         upstream = data.get('upstream', False)
-        version = data.get('version', 'nightly')
+        version = data.get('version', 'stable')
         tag = data.get('tag', OPENSHIFT_TAG)
+        pprint(f"Using version {version} and tag {tag}")
         disconnected_vm = f"{cluster}-disconnected"
         disconnected_reuse = data.get('disconnected_reuse', False)
         disconnected_sync = data.get('disconnected_sync', True)
