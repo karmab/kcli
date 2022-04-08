@@ -795,7 +795,7 @@ class Kubevirt(Kubecommon):
             loadbalancerip = self.ssh_loadbalancer_ip(name, namespace)
             if loadbalancerip is not None:
                 yamlinfo['loadbalancerip'] = loadbalancerip
-        if 'kubetype' in yamlinfo and yamlinfo['kubetype'] == 'openshift':
+        if image == 'N/A' and 'kubetype' in yamlinfo and yamlinfo['kubetype'] == 'openshift':
             yamlinfo['user'] = 'core'
         if debug:
             yamlinfo['debug'] = common.pretty_print(vm)

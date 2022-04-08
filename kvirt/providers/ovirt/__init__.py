@@ -586,9 +586,9 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         status = str(vm.status)
         yamlinfo = {'name': vm.name, 'disks': [], 'nets': [], 'status': status, 'instanceid': vm.id}
         template = conn.follow_link(vm.template)
-        source = template.name
-        yamlinfo['image'] = source
-        yamlinfo['user'] = common.get_user(source)
+        image = template.name
+        yamlinfo['image'] = image
+        yamlinfo['user'] = common.get_user(image)
         for description in vm.description.split(','):
             desc = description.split('=')
             if len(desc) == 2:
@@ -642,7 +642,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             path = disk.id
             yamlinfo['disks'].append({'device': device, 'size': disksize, 'format': diskformat, 'type': drivertype,
                                       'path': "%s/%s" % (storagedomain, path)})
-        if 'kubetype' in yamlinfo and yamlinfo['kubetype'] == 'openshift':
+        if image is None and 'kubetype' in yamlinfo and yamlinfo['kubetype'] == 'openshift':
             yamlinfo['user'] = 'core'
         if debug:
             yamlinfo['debug'] = vars(vm)

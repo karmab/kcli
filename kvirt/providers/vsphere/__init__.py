@@ -584,6 +584,7 @@ class Ksphere:
 
     def info(self, name, output='plain', fields=[], values=False, vm=None, debug=False):
         translation = {'poweredOff': 'down', 'poweredOn': 'up', 'suspended': 'suspended'}
+        image = None
         yamlinfo = {}
         si = self.si
         if vm is None:
@@ -617,12 +618,13 @@ class Ksphere:
             if entry.key in METADATA_FIELDS:
                 yamlinfo[entry.key] = entry.value
             if entry.key == 'image':
+                image = entry.value
                 yamlinfo['user'] = common.get_user(entry.value)
             if entry.key == 'tags':
                 yamlinfo['tags'] = entry.value
         if listinfo:
             return yamlinfo
-        if 'kubetype' in yamlinfo and yamlinfo['kubetype'] == 'openshift':
+        if image is None and 'kubetype' in yamlinfo and yamlinfo['kubetype'] == 'openshift':
             yamlinfo['user'] = 'core'
         if debug:
             yamlinfo['debug'] = config
