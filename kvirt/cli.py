@@ -581,7 +581,7 @@ def list_vm(args):
                     vms.add_row(vminfo)
         print(vms)
     else:
-        vms = PrettyTable(["Name", "Status", "Ips", "Source", "Plan", "Profile"])
+        vms = PrettyTable(["Name", "Status", "Ip", "Source", "Plan", "Profile"])
         config = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
         if config.cache:
             _list = cache_vms(config, args.region, args.zone, args.namespace)
