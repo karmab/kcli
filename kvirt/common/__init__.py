@@ -236,6 +236,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                         if net.get('ipv6_stateless', False):
                             nmcontent = "[main]\nrc-manager=file\n[connection]\nipv6.dhcp-duid=ll\nipv6.dhcp-iaid=mac"
                             files.append({'path': '/etc/NetworkManager/conf.d/ipv6.conf', 'content': nmcontent})
+                            cmds.insert(0, "systemctl restart NetworkManager")
                     else:
                         targetfamily = 'dhcp4'
                     netdata[nicname] = {targetfamily: True}
