@@ -941,7 +941,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         for f in glob("%s/*.y*ml" % manifestsdir):
             copy2(f, "%s/openshift" % clusterdir)
     for yamlfile in glob(f"{clusterdir}/*.yaml"):
-        if 'catalogSource' in yamlfile or 'imageContentSourcePolicy' in yamlfile:
+        if os.stat(yamlfile).st_size == 0:
+            warning(f"Skipping empty file {yamlfile}")
+        elif 'catalogSource' in yamlfile or 'imageContentSourcePolicy' in yamlfile:
             copy2(yamlfile, f"{clusterdir}/openshift")
     if 'network_type' in data and data['network_type'] == 'Calico':
         with TemporaryDirectory() as tmpdir:
