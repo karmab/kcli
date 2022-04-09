@@ -1161,6 +1161,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             rendered = config.process_inputfile(cluster, f"{plandir}/99-sno.yaml", overrides={'files': sno_files})
             with open(f"{clusterdir}/openshift/99-sno.yaml", 'w') as f:
                 f.write(rendered)
+        pprint("Generating bootstrap-in-place ignition")
         run = call('openshift-install --dir=%s --log-level=%s create single-node-ignition-config' % (clusterdir,
                                                                                                      log_level),
                    shell=True)
@@ -1180,7 +1181,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             pprint("Writing iso.ign to current dir")
             f.write(result['data'])
         if config.type == 'fake':
-            pprint("Storing iso in current dir")
+            pprint("Storing generated iso in current dir")
             generate_rhcos_iso(k, cluster, 'default', installer=True, extra_args=extra_args)
         elif config.type != 'kvm':
             pprint("Additional workflow not available on %s" % config.type)
@@ -1188,8 +1189,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             sys.exit(0)
         else:
             iso_pool = data['pool'] or config.pool
+            pprint(f"Storing generated iso in pool {iso_pool}")
             generate_rhcos_iso(k, cluster, iso_pool, installer=True, extra_args=extra_args)
             if sno_virtual:
+                warning("Note that you can also get a sno vm simply by setting masters to 1")
                 pprint("Deploying sno vm")
                 result = config.plan(plan, inputfile='%s/sno.yml' % plandir, overrides=data)
                 if result['result'] != 'success':
@@ -1208,18 +1211,18 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 pprint("Launching install-complete step. It will be retried extra times in case of timeouts")
                 call(installcommand, shell=True)
             else:
-                warning("You might need to manually add the following entry in /etc/hosts")
+                warning("Add the following entry in /etc/hosts if needed")
                 dnsentries = ['api', 'console-openshift-console.apps', 'oauth-openshift.apps',
                               'prometheus-k8s-openshift-monitoring.apps']
                 dnsentry = ' '.join(["%s.%s.%s" % (entry, cluster, domain) for entry in dnsentries])
                 warning("$your_node_ip %s" % dnsentry)
-                pprint(f"Plug {cluster}.iso to your target node to complete the installation")
                 c = os.environ['KUBECONFIG']
                 kubepassword = open("%s/auth/kubeadmin-password" % clusterdir).read()
                 console = f"https://console-openshift-console.apps.{cluster}.{domain}"
                 info2(f"To access the cluster as the system:admin user when running 'oc', run export KUBECONFIG={c}")
                 info2(f"Access the Openshift web-console here: {console}")
                 info2(f"Login to the console with user: kubeadmin, password: {kubepassword}")
+                pprint(f"Plug {cluster}.iso to your target node to complete the installation")
         sys.exit(0)
     call('openshift-install --dir=%s --log-level=%s create ignition-configs' % (clusterdir, log_level), shell=True)
     for role in ['master', 'worker']:
