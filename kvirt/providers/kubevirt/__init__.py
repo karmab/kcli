@@ -155,14 +155,14 @@ class Kubevirt(Kubecommon):
         vm = {'kind': 'VirtualMachine', 'spec': {'running': start, 'template':
                                                  {'metadata': {'labels': labels},
                                                   'spec': {'domain': {'resources':
-                                                                      {'requests': {'memory': '%sM' % memory}},
-                                                                      # 'cpu': {'cores': numcpus, 'model': cpumodel},
+                                                                      {'requests': {'memory': f'{memory}M'},
+                                                                       'limits': {'memory': f'{memory}M'}},
                                                                       'cpu': {'cores': numcpus},
                                                                       'devices': {'disks': []}}, 'volumes': []}}},
-              'apiVersion': 'kubevirt.io/%s' % VERSION, 'metadata': {'name': name, 'namespace': namespace,
-                                                                     'labels': {'kubevirt.io/os': 'linux',
-                                                                                'special': 'vmi-migratable'},
-                                                                     'annotations': {}}}
+              'apiVersion': f'kubevirt.io/{VERSION}', 'metadata': {'name': name, 'namespace': namespace,
+                                                                   'labels': {'kubevirt.io/os': 'linux',
+                                                                              'special': 'vmi-migratable'},
+                                                                   'annotations': {}}}
         kube = False
         for entry in sorted([field for field in metadata if field in METADATA_FIELDS]):
             vm['metadata']['annotations']['kcli/%s' % entry] = metadata[entry]
