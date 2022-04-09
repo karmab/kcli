@@ -3451,7 +3451,7 @@ def cli():
     # sub subcommands
     createapp_desc = 'Create Kube Apps'
     createapp_parser = create_subparsers.add_parser('app', description=createapp_desc,
-                                                    help=createapp_desc, aliases=['apps'])
+                                                    help=createapp_desc, aliases=['apps', 'operator', 'operators'])
     createapp_subparsers = createapp_parser.add_subparsers(metavar='', dest='subcommand_create_app')
 
     appgenericcreate_desc = 'Create Kube App Generic'
@@ -3482,7 +3482,7 @@ def cli():
 
     deleteapp_desc = 'Delete Kube App'
     deleteapp_parser = delete_subparsers.add_parser('app', description=deleteapp_desc,
-                                                    help=deleteapp_desc, aliases=['apps'])
+                                                    help=deleteapp_desc, aliases=['apps', 'operator', 'operators'])
     deleteapp_subparsers = deleteapp_parser.add_subparsers(metavar='', dest='subcommand_delete_app')
 
     appgenericdelete_desc = 'Delete Kube App Generic'
@@ -3536,7 +3536,7 @@ def cli():
 
     listapp_desc = 'List Available Kube Apps'
     listapp_parser = list_subparsers.add_parser('app', description=listapp_desc,
-                                                help=listapp_desc, aliases=['apps'])
+                                                help=listapp_desc, aliases=['apps', 'operator', 'operators'])
     listapp_subparsers = listapp_parser.add_subparsers(metavar='', dest='subcommand_list_app')
 
     appgenericlist_desc = 'List Available Kube Apps Generic'
