@@ -1444,6 +1444,14 @@ def update_vm(args):
                 for net in range(len(currentnets), len(nets), -1):
                     interface = "eth%s" % (net - 1)
                     k.delete_nic(name, interface)
+            for index, currentnet in enumerate(currentnets):
+                if index > len(nets):
+                    break
+                netname = currentnet['net']
+                targetnetname = nets[index]['name'] if isinstance(nets[index], dict) else nets[index]
+                if targetnetname != netname:
+                    pprint(f"Updating nic {index} to network {targetnetname}")
+                    k.update_nic(name, index, targetnetname)
         if extra_metadata:
             for key in extra_metadata:
                 k.update_metadata(name, key, extra_metadata[key])

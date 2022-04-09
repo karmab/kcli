@@ -1651,3 +1651,6 @@ class Kubevirt(Kubecommon):
                 core.patch_namespaced_persistent_volume_claim(entry, namespace, body)
             elif 'secret' in entry:
                 core.patch_namespaced_secret(entry, namespace, body)
+
+    def update_nic(self, name, index, network):
+        print("not implemented")

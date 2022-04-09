@@ -1405,3 +1405,6 @@ class Kibm(object):
         vm = self._get_vm("%s-master-0" % cluster)
         nic_id = vm['primary_network_interface']['id']
         self.conn.add_security_group_network_interface(security_group_id, nic_id)
+
+    def update_nic(self, name, index, network):
+        print("not implemented")

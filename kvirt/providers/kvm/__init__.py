@@ -3683,3 +3683,41 @@ class Kvirt(object):
         volume = conn.storageVolLookupByPath(path)
         size = int(size) * MB
         volume.resize(size)
+
+    def update_nic(self, name, index, network):
+        conn = self.conn
+        networks = {}
+        for interface in conn.listInterfaces():
+            networks[interface] = 'bridge'
+        for net in conn.listAllNetworks():
+            networks[net.name()] = 'network'
+        try:
+            vm = conn.lookupByName(name)
+        except:
+            error("VM %s not found" % name)
+            return {'result': 'failure', 'reason': "VM %s not found" % name}
+        if network not in networks:
+            error("Network %s not found" % network)
+            return {'result': 'failure', 'reason': "Network %s not found" % network}
+        else:
+            networktype = networks[network]
+            # source = "<source %s='%s'/>" % (networktype, network)
+        vm = conn.lookupByName(name)
+        vmxml = vm.XMLDesc(0)
+        root = ET.fromstring(vmxml)
+        for netindex, element in enumerate(list(root.iter('interface'))):
+            if netindex == index:
+                current_networktype = element.get('type')
+                if current_networktype != networktype:
+                    msg = f"Network type can't be changed from {current_networktype} to {networktype}"
+                    error(msg)
+                    return {'result': 'failure', 'reason': msg}
+                elif networktype == 'bridge':
+                    element.find('source').set('bridge', network)
+                else:
+                    element.find('source').set('network', network)
+                break
+        warning("Note it will only be effective upon next start")
+        newxml = ET.tostring(root)
+        conn.defineXML(newxml.decode("utf-8"))
+        return {'result': 'success'}

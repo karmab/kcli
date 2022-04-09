@@ -1240,3 +1240,6 @@ class Kaws(object):
 
     def public_bucketfile_url(self, bucket, path):
         return "https://%s.s3.%s.amazonaws.com/%s" % (bucket, self.region, path)
+
+    def update_nic(self, name, index, network):
+        print("not implemented")

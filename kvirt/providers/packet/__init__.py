@@ -1043,3 +1043,6 @@ boot || reboot""" % (kernel, ipxeparameters, metal, ignition_url, initrd)
     def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False):
         print("not implemented")
         return
+
+    def update_nic(self, name, index, network):
+        print("not implemented")

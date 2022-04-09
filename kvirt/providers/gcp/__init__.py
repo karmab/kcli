@@ -1424,3 +1424,6 @@ class Kgcp(object):
 
     def public_bucketfile_url(self, bucket, path):
         return "https://storage.googleapis.com/%s/%s" % (bucket, path)
+
+    def update_nic(self, name, index, network):
+        print("not implemented")

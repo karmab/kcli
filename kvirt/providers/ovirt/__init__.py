@@ -1250,3 +1250,6 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
     def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False):
         print("not implemented")
         return
+
+    def update_nic(self, name, index, network):
+        print("not implemented")
