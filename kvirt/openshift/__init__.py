@@ -940,10 +940,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if os.path.exists(manifestsdir) and os.path.isdir(manifestsdir):
         for f in glob("%s/*.y*ml" % manifestsdir):
             copy2(f, "%s/openshift" % clusterdir)
-    if os.path.exists("%s/imageContentSourcePolicy.yaml" % clusterdir):
-        copy2("%s/imageContentSourcePolicy.yaml" % clusterdir, "%s/openshift" % clusterdir)
-    if os.path.exists("%s/catalogSource.yaml" % clusterdir):
-        copy2("%s/catalogSource.yaml" % clusterdir, "%s/openshift" % clusterdir)
+    for yamlfile in glob(f"{clusterdir}/*.yaml"):
+        if 'catalogSource' in yamlfile or 'imageContentSourcePolicy' in yamlfile:
+            copy2(yamlfile, f"{clusterdir}/openshift")
     if 'network_type' in data and data['network_type'] == 'Calico':
         with TemporaryDirectory() as tmpdir:
             calicodata = {'clusterdir': clusterdir}
