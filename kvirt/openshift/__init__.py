@@ -717,7 +717,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         disconnected_overrides['openshift_release_image'] = get_release_image()
         data['openshift_release_image'] = disconnected_overrides['openshift_release_image']
         x_apps = ['users', 'autolabeller']
-        disconnected_operators.extend([app for app in apps if app not in disconnected_operators and app not in x_apps])
+        for app in apps:
+            if app not in x_apps and app not in disconnected_operators:
+                warning(f"Adding app {app} to disconnected_operators array")
+                disconnected_operators.append(app)
         disconnected_overrides['disconnected_operators'] = disconnected_operators
         result = config.plan(disconnected_plan, inputfile='%s/disconnected.yml' % plandir,
                              overrides=disconnected_overrides)
