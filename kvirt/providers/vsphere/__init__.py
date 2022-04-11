@@ -796,12 +796,13 @@ class Ksphere:
         dc = self.dc
         vmFolder = dc.vmFolder
         vm = findvm(si, vmFolder, name)
-        isos = [i for i in self._getisos() if i.endswith(iso)]
-        if not isos:
-            error(f"Iso {iso} not found.Leaving...")
-            return {'result': 'failure', 'reason': f"Iso {iso} not found"}
-        else:
-            iso = isos[0]
+        if iso is not None:
+            isos = [i for i in self._getisos() if i.endswith(iso)]
+            if not isos:
+                error(f"Iso {iso} not found.Leaving...")
+                return {'result': 'failure', 'reason': f"Iso {iso} not found"}
+            else:
+                iso = isos[0]
         if vm is None:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         c = changecd(self.si, vm, iso)
