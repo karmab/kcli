@@ -13,7 +13,7 @@ from kvirt.common import error, pprint, success, warning, info2
 from kvirt.common import get_oc, pwd_path
 from kvirt.common import get_commit_rhcos, get_latest_fcos, generate_rhcos_iso, olm_app
 from kvirt.common import get_installer_rhcos
-from kvirt.common import ssh, scp, _ssh_credentials, copy_ipi_credentials
+from kvirt.common import ssh, scp, _ssh_credentials, copy_ipi_credentials, get_ssh_pub_key
 from kvirt.defaults import LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG
 import re
 from shutil import copy2, move, rmtree
@@ -393,6 +393,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'kubevirt_api_service': False,
             'kubevirt_ignore_node_port': False,
             'baremetal': False,
+            'sushy': False,
             'retries': 2}
     data.update(overrides)
     if 'cluster' in overrides:
@@ -463,6 +464,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     ipsec = data.get('ipsec')
     upstream = data.get('upstream')
     metal3 = data.get('metal3')
+    sushy = data.get('sushy')
     mdns = data.get('mdns', True)
     kubevirt_api_service, kubevirt_api_service_node_port = False, False
     kubevirt_ignore_node_port = data['kubevirt_ignore_node_port']
@@ -1129,6 +1131,38 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                     g.write(rendered)
     if metal3:
         copy2("%s/99-metal3-provisioning.yaml" % plandir, "%s/openshift" % clusterdir)
+    if sushy:
+        if config.type != 'kvm':
+            warning(f"Ignoring sushy request as platform is {config.type}")
+        else:
+            with TemporaryDirectory() as tmpdir:
+                copy2(f"{plandir}/sushy/deployment.yaml", f"{clusterdir}/openshift/99-sushy-deployment.yaml")
+                copy2(f"{plandir}/sushy/service.yaml", f"{clusterdir}/openshift/99-sushy-service.yaml")
+                listen = "::" if ':' in api_ip else "0.0.0.0"
+                sushyconf = config.process_inputfile(cluster, f"{plandir}/sushy/conf.j2",
+                                                     overrides={'network': network, 'listen': listen})
+                with open(f"{tmpdir}/sushy.conf", 'w') as _f:
+                    _f.write(sushyconf)
+                # routedata = config.process_inputfile(cluster, f"{plandir}/sushy/route.yaml",
+                #                                     overrides={'cluster': cluster, 'domain': domain})
+                # with open(f"{clusterdir}/openshift/99-sushy-route.yaml", 'w') as _f:
+                #    _f.write(routedata)
+                if config.k.host in ['localhost', '127.0.0.1']:
+                    sshcmd = f"ssh-keygen -t rsa -N '' -f {tmpdir}/id_rsa > /dev/null"
+                    call(sshcmd, shell=True)
+                    authorized_keys_file = os.path.expanduser('~/.ssh/authorized_keys')
+                    file_mode = 'a' if os.path.exists(authorized_keys_file) else 'w'
+                    with open(authorized_keys_file, file_mode) as f:
+                        publickey = open(f"{tmpdir}/id_rsa.pub").read().strip()
+                        f.write(f"\n{publickey}")
+                else:
+                    privkey = get_ssh_pub_key().replace('.pub', '')
+                    copy2(privkey, f"{tmpdir}/id_rsa")
+                dest = f"{clusterdir}/openshift/99-sushy-cm.yaml"
+                cmcmd = f'KUBECONFIG={plandir}/fake_kubeconfig.json  '
+                cmcmd += f"oc create cm -n openshift-infra sushy-credentials --from-file={tmpdir} --dry-run=client"
+                cmcmd += f" -o yaml > {dest}"
+                call(cmcmd, shell=True)
     if sno:
         sno_name = "%s-sno" % cluster
         sno_files = []
@@ -1507,6 +1541,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             pprint("Deleting Dns entry for %s in %s" % (vm, domain))
             z = dnsconfig.k
             z.delete_dns(vm, domain)
+    if sushy and config.type == 'kvm':
+        return call("oc expose -n openshift-infra svc/sushy", shell=True)
     if platform in cloudplatforms:
         bucket = "%s-%s" % (cluster, domain.replace('.', '-'))
         config.k.delete_bucket(bucket)

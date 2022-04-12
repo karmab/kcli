@@ -1,0 +1,22 @@
+{% set libvirt_ip = config_host if config_host != '127.0.0.1' else network|local_ip %}
+{% if ':' in libvirt_ip %}
+{% set libvirt_ip = '[' + libvirt_ip + ']' %}
+{% endif %}
+{% set libvirt_url = 'qemu+ssh://' + config_user + '@' + libvirt_ip + '/system?no_verify=1&keyfile=/tmp/id_rsa' %}
+SUSHY_EMULATOR_LISTEN_IP = u'{{ listen }}'
+SUSHY_EMULATOR_LISTEN_PORT = 8000
+SUSHY_EMULATOR_SSL_CERT = None
+SUSHY_EMULATOR_SSL_KEY = None
+SUSHY_EMULATOR_OS_CLOUD = None
+SUSHY_EMULATOR_LIBVIRT_URI = u'{{ libvirt_url }}'
+SUSHY_EMULATOR_IGNORE_BOOT_DEVICE = True
+SUSHY_EMULATOR_BOOT_LOADER_MAP = {
+    u'UEFI': {
+        u'x86_64': u'/usr/share/OVMF/OVMF_CODE.secboot.fd',
+        u'aarch64': u'/usr/share/AAVMF/AAVMF_CODE.fd'
+    },
+    u'Legacy': {
+        u'x86_64': None,
+        u'aarch64': None
+    }
+}

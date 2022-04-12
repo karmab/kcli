@@ -1,0 +1,41 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sushy
+  namespace: openshift-infra
+  labels:
+    app: sushy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sushy
+  template:
+    metadata:
+      labels:
+        app: sushy
+    spec:
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
+        operator: Exists
+      containers:
+      - name: sushy
+        image: quay.io/metal3-io/sushy-tools
+        command:
+        - /bin/sh
+        - -c
+        - |
+          cp /etc/sushy/id_rsa /tmp/id_rsa
+          chmod 600 /tmp/id_rsa
+          sushy-emulator --config /etc/sushy/sushy.conf
+        ports:
+        - containerPort: 8000
+        volumeMounts:
+        - mountPath: /etc/sushy
+          name: sushy-credentials
+      volumes:
+      - configMap:
+          name: sushy-credentials
+        name: sushy-credentials
