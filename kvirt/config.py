@@ -986,7 +986,7 @@ class Kconfig(Kbaseconfig):
                 overrides['tempkeydir'] = tempkeydir
         if start and cloudinit and not cmds and not files:
             good_keys = ['name', 'noname', 'type', 'plan', 'compact', 'hostgroup', 'hostrule', 'vmgroup', 'antipeers',
-                         'hugepages']
+                         'hugepages', 'unplugcd']
             wrong_keys = [key for key in overrides if key not in good_keys and
                           not key.startswith('config_') and key not in self.list_keywords()]
             if wrong_keys:
@@ -1055,7 +1055,8 @@ class Kconfig(Kbaseconfig):
                     ansibleutils.play(k, name, playbook=playbook, variables=variables, verbose=verbose, user=user,
                                       tunnel=self.tunnel, tunnelhost=self.host, tunnelport=self.port,
                                       tunneluser=self.user, yamlinventory=yamlinventory, insecure=self.insecure)
-        if wait:
+        unplugcd = overrides.get('unplugcd', False)
+        if wait or unplugcd:
             if not cloudinit or not start or image is None:
                 pprint(f"Skipping wait on {name}")
             else:
@@ -1067,6 +1068,8 @@ class Kconfig(Kbaseconfig):
                 finishfiles = profile.get('finishfiles', [])
                 if finishfiles:
                     self.handle_finishfiles(name, finishfiles, identityfile=identityfile)
+            if unplugcd:
+                self.k.update_iso(name, None)
         if overrides.get('tempkeydir') is not None and not overrides.get('tempkeydirkeep', False):
             overrides.get('tempkeydir').cleanup()
         return {'result': 'success', 'vm': name}
