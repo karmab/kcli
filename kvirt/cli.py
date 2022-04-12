@@ -1334,7 +1334,6 @@ def update_vm(args):
     nets = overrides.get('nets')
     disks = overrides.get('disks')
     information = overrides.get('information')
-    iso = overrides.get('iso')
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     extra_metadata = {k: overrides[k] for k in overrides if k not in config.list_keywords()}
     k = config.k
@@ -1373,7 +1372,8 @@ def update_vm(args):
         if information:
             pprint(f"Setting information for vm {name}...")
             k.update_information(name, information)
-        if iso is not None:
+        if 'iso' in overrides:
+            iso = overrides['iso']
             pprint(f"Switching iso for vm {name} to {iso}...")
             if iso == 'None':
                 iso = None

@@ -224,6 +224,14 @@ class Ksphere:
             opt.key = entry
             opt.value = metadata[entry]
             confspec.extraConfig.append(opt)
+        iso_warning_opt = vim.option.OptionValue()
+        iso_warning_opt.key = "cdrom.showIsoLockWarning"
+        iso_warning_opt.value = False
+        confspec.extraConfig.append(iso_warning_opt)
+        answer_opt = vim.option.OptionValue()
+        answer_opt.key = "msg.autoanswer"
+        answer_opt.value = True
+        confspec.extraConfig.append(answer_opt)
         confspec.guestId = 'centos7_64Guest'
         vmfi = vim.vm.FileInfo()
         filename = "[" + default_pool + "]"
