@@ -3585,7 +3585,33 @@ class Kvirt(object):
 
     def delete_dns(self, name, domain, allentries=False):
         conn = self.conn
-        try:
+        if domain is None:
+            for network in conn.listAllNetworks():
+                netname = network.name()
+                netxml = network.XMLDesc()
+                netroot = ET.fromstring(netxml)
+                dns = list(netroot.iter('dns'))
+                if not dns:
+                    continue
+                dnsinfo = {}
+                ip = None
+                for host in list(dns[0].iter('host')):
+                    iphost = host.get('ip')
+                    dnsinfo[iphost] = []
+                    for hostname in list(host.iter('hostname')):
+                        if hostname.text == name:
+                            ip = iphost
+                        dnsinfo[iphost].append(hostname.text)
+                if ip is not None:
+                    currentries = dnsinfo[ip]
+                    hostentry = f'<host ip="{ip}"><hostname>{name}</hostname></host>'
+                    network.update(2, 10, 0, hostentry, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
+                    if not allentries and len(currentries) != 1:
+                        others = ["f<hostname>{hostname}</hostname>" for hostname in currentries if hostname != name]
+                        newhostentry = '<host ip="%s">%s</host>' % (ip, ''.join(others))
+                        network.update(4, 10, 0, newhostentry, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
+                    pprint(f"Entry {name} with ip {iphost} deleted in network {netname}")
+        else:
             network = conn.networkLookupByName(domain)
             netxml = network.XMLDesc()
             netroot = ET.fromstring(netxml)
@@ -3612,34 +3638,6 @@ class Kvirt(object):
                     network.update(4, 10, 0, newhostentry, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
                 pprint(f"Entry {name} with ip {iphost} deleted")
                 return {'result': 'success'}
-        except:
-            warning(f"Network {domain} not found. Parsing over all networks")
-            for network in conn.listAllNetworks():
-                netname = network.name()
-                netxml = network.XMLDesc()
-                netroot = ET.fromstring(netxml)
-                dns = list(netroot.iter('dns'))
-                if not dns:
-                    continue
-                dnsinfo = {}
-                ip = None
-                for host in list(dns[0].iter('host')):
-                    iphost = host.get('ip')
-                    dnsinfo[iphost] = []
-                    for hostname in list(host.iter('hostname')):
-                        if hostname.text == name:
-                            ip = iphost
-                        dnsinfo[iphost].append(hostname.text)
-                if ip is not None:
-                    currentries = dnsinfo[ip]
-                    hostentry = f'<host ip="{ip}"><hostname>{name}</hostname></host>'
-                    network.update(2, 10, 0, hostentry, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
-                    if not allentries and len(currentries) != 1:
-                        others = ["f<hostname>{hostname}</hostname>" for hostname in currentries if hostname != name]
-                        newhostentry = '<host ip="%s">%s</host>' % (ip, ''.join(others))
-                        network.update(4, 10, 0, newhostentry, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
-                    pprint(f"Entry {name} with ip {iphost} deleted in network {netname}")
-            return
 
     def list_dns(self, domain):
         results = []
@@ -3653,7 +3651,6 @@ class Kvirt(object):
                 for hostname in list(host.iter('hostname')):
                     results.append([hostname.text, 'A', '0', iphost])
         except:
-            warning("Network %s not found. Parsing over all networks" % domain)
             for network in conn.listAllNetworks():
                 netname = network.name()
                 netxml = network.XMLDesc(0)
