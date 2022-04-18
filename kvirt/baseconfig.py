@@ -1308,16 +1308,16 @@ class Kbaseconfig:
         if app not in LOCAL_OPENSHIFT_APPS:
             name, source, defaultchannel, csv, description, target_namespace, channels, crd = common.olm_app(app)
             if name is None:
-                error(f"Couldn't find any app matching {app}")
-                return 1
-            pprint(f"Providing information for app {name}")
-            print(f"source: {source}")
-            print(f"channels: {channels}")
-            print(f"channel: {defaultchannel}")
-            print(f"target namespace: {target_namespace}")
-            print(f"csv: {csv}")
-            print(f"description:\n{description}")
-            app = name
+                warning(f"Couldn't find any app matching {app}")
+            else:
+                pprint(f"Providing information for app {name}")
+                print(f"source: {source}")
+                print(f"channels: {channels}")
+                print(f"channel: {defaultchannel}")
+                print(f"target namespace: {target_namespace}")
+                print(f"csv: {csv}")
+                print(f"description:\n{description}")
+                app = name
         appdir = f"{plandir}/apps/{app}"
         default_parameter_file = f"{appdir}/kcli_default.yml"
         if os.path.exists(default_parameter_file):
