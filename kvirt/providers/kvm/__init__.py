@@ -3587,34 +3587,58 @@ class Kvirt(object):
         conn = self.conn
         try:
             network = conn.networkLookupByName(domain)
+            netxml = network.XMLDesc()
+            netroot = ET.fromstring(netxml)
+            dns = list(netroot.iter('dns'))
+            if not dns:
+                warning(f"No dns information found in network {domain}")
+                return
+            dnsinfo = {}
+            ip = None
+            for host in list(dns[0].iter('host')):
+                iphost = host.get('ip')
+                dnsinfo[iphost] = []
+                for hostname in list(host.iter('hostname')):
+                    if hostname.text == name:
+                        ip = iphost
+                    dnsinfo[iphost].append(hostname.text)
+            if ip is not None:
+                currentries = dnsinfo[ip]
+                hostentry = f'<host ip="{ip}"><hostname>{name}</hostname></host>'
+                network.update(2, 10, 0, hostentry, 1)
+                if not allentries and len(currentries) != 1:
+                    others = ["f<hostname>{hostname}</hostname>" for hostname in currentries if hostname != name]
+                    newhostentry = '<host ip="%s">%s</host>' % (ip, ''.join(others))
+                    network.update(4, 10, 0, newhostentry, 0)
+                pprint(f"Entry {name} with ip {iphost} deleted")
+                return {'result': 'success'}
         except:
-            warning("Network %s not found" % domain)
+            warning(f"Network {domain} not found. Parsing over all networks")
+            for network in conn.listAllNetworks():
+                netxml = network.XMLDesc()
+                netroot = ET.fromstring(netxml)
+                dns = list(netroot.iter('dns'))
+                if not dns:
+                    continue
+                dnsinfo = {}
+                ip = None
+                for host in list(dns[0].iter('host')):
+                    iphost = host.get('ip')
+                    dnsinfo[iphost] = []
+                    for hostname in list(host.iter('hostname')):
+                        if hostname.text == name:
+                            ip = iphost
+                        dnsinfo[iphost].append(hostname.text)
+                if ip is not None:
+                    currentries = dnsinfo[ip]
+                    hostentry = f'<host ip="{ip}"><hostname>{name}</hostname></host>'
+                    network.update(2, 10, 0, hostentry, 1)
+                    if not allentries and len(currentries) != 1:
+                        others = ["f<hostname>{hostname}</hostname>" for hostname in currentries if hostname != name]
+                        newhostentry = '<host ip="%s">%s</host>' % (ip, ''.join(others))
+                        network.update(4, 10, 0, newhostentry, 0)
+                    pprint(f"Entry {name} with ip {iphost} deleted in network {domain}")
             return
-        netxml = network.XMLDesc()
-        netroot = ET.fromstring(netxml)
-        dns = list(netroot.iter('dns'))
-        if not dns:
-            warning("No dns information found in network %s" % domain)
-            return
-        dnsinfo = {}
-        ip = None
-        for host in list(dns[0].iter('host')):
-            iphost = host.get('ip')
-            dnsinfo[iphost] = []
-            for hostname in list(host.iter('hostname')):
-                if hostname.text == name:
-                    ip = iphost
-                dnsinfo[iphost].append(hostname.text)
-        if ip is not None:
-            currentries = dnsinfo[ip]
-            hostentry = '<host ip="%s"><hostname>%s</hostname></host>' % (ip, name)
-            network.update(2, 10, 0, hostentry, 1)
-            if not allentries and len(currentries) != 1:
-                otherentries = ["<hostname>%s</hostname>" % hostname for hostname in currentries if hostname != name]
-                newhostentry = '<host ip="%s">%s</host>' % (ip, ''.join(otherentries))
-                network.update(4, 10, 0, newhostentry, 0)
-            pprint("Entry %s with ip %s deleted" % (name, iphost))
-            return {'result': 'success'}
 
     def list_dns(self, domain):
         results = []

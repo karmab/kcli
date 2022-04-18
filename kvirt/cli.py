@@ -3689,8 +3689,7 @@ def cli():
     dnsdelete_parser.add_argument('-a', '--all', action='store_true',
                                   help='Whether to delete the entire host block. Libvirt specific')
     dnsdelete_parser.add_argument('-d', '--domain', help='Domain of the entry', metavar='DOMAIN')
-    dnsdelete_parser.add_argument('-n', '--net', help='Network where to delete entry. Defaults to default',
-                                  default='default', metavar='NET')
+    dnsdelete_parser.add_argument('-n', '--net', help='Network where to delete entry', metavar='NET')
     dnsdelete_parser.add_argument('names', metavar='NAMES', nargs='*')
     dnsdelete_parser.set_defaults(func=delete_dns)
 
