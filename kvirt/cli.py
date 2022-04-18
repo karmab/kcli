@@ -1527,6 +1527,10 @@ def create_dns(args):
 
 def delete_dns(args):
     """Delete dns entries"""
+    yes_top = args.yes_top
+    yes = args.yes
+    if not yes and not yes_top:
+        common.confirm("Are you sure?")
     names = args.names
     net = args.net
     allentries = args.all
@@ -3690,6 +3694,7 @@ def cli():
                                   help='Whether to delete the entire host block. Libvirt specific')
     dnsdelete_parser.add_argument('-d', '--domain', help='Domain of the entry', metavar='DOMAIN')
     dnsdelete_parser.add_argument('-n', '--net', help='Network where to delete entry', metavar='NET')
+    dnsdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     dnsdelete_parser.add_argument('names', metavar='NAMES', nargs='*')
     dnsdelete_parser.set_defaults(func=delete_dns)
 
