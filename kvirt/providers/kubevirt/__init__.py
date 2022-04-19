@@ -153,7 +153,21 @@ class Kubevirt(Kubecommon):
             allpvc = core.list_namespaced_persistent_volume_claim(namespace)
             images = {p.metadata.annotations['kcli/image']: p.metadata.name for p in allpvc.items
                       if p.metadata.annotations is not None and 'kcli/image' in p.metadata.annotations}
-        labels = {'kubevirt.io/provider': 'kcli', 'kubevirt.io/domain': name}
+        final_tags = {}
+        if tags:
+            if isinstance(tags, dict):
+                final_tags.update(tags)
+            else:
+                for tag in tags:
+                    if isinstance(tag, str) and len(tag.split('=')) == 2:
+                        final_tags[tag.split('=')[0]] = tag.split('=')[1]
+                    elif isinstance(tag, dict):
+                        final_tags.update(tag)
+                    else:
+                        warning("Couldn't process tag %s. Skipping..." % tag)
+                        continue
+        labels = {'kubevirt.io/provider': 'kcli', 'kubevirt.io/domain': name, 'kubevirt.io/os': 'linux'}
+        labels.update(final_tags)
         vm = {'kind': 'VirtualMachine', 'spec': {'running': start, 'template':
                                                  {'metadata': {'labels': labels},
                                                   'spec': {'domain': {'resources':
@@ -162,9 +176,7 @@ class Kubevirt(Kubecommon):
                                                                       'cpu': {'cores': numcpus},
                                                                       'devices': {'disks': []}}, 'volumes': []}}},
               'apiVersion': f'kubevirt.io/{VERSION}', 'metadata': {'name': name, 'namespace': namespace,
-                                                                   'labels': {'kubevirt.io/os': 'linux',
-                                                                              'special': 'vmi-migratable'},
-                                                                   'annotations': {}}}
+                                                                   'labels': labels, 'annotations': {}}}
         kube = False
         for entry in sorted([field for field in metadata if field in METADATA_FIELDS]):
             vm['metadata']['annotations']['kcli/%s' % entry] = metadata[entry]
@@ -207,21 +219,6 @@ class Kubevirt(Kubecommon):
                 features[feature] = {'enabled': enable}
         if features:
             vm['spec']['template']['spec']['domain']['features'] = features
-        if tags:
-            final_tags = {}
-            if isinstance(tags, dict):
-                final_tags.update(tags)
-            else:
-                for tag in tags:
-                    if isinstance(tag, str) and len(tag.split('=')) == 2:
-                        final_tags[tag.split('=')[0]] = tag.split('=')[1]
-                    elif isinstance(tag, dict):
-                        final_tags.update(tag)
-                    else:
-                        warning("Couldn't process tag %s. Skipping..." % tag)
-                        continue
-            if final_tags:
-                vm['spec']['template']['metadata']['labels'].update(final_tags)
         node_selector = overrides.get('nodeSelector', {})
         if isinstance(node_selector, dict) and node_selector:
             vm['spec']['template']['spec']['nodeSelector'] = node_selector
