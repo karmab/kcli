@@ -2845,7 +2845,7 @@ def create_network(args):
     isolated = args.isolated
     cidr = args.cidr
     nodhcp = args.nodhcp
-    domain = args.domain
+    domain = overrides.get('domain', args.domain)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     if name is None:
