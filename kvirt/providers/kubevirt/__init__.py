@@ -55,7 +55,8 @@ class Kubevirt(Kubecommon):
     """
     def __init__(self, token=None, ca_file=None, context=None, host='127.0.0.1', port=6443, user='root', debug=False,
                  namespace=None, cdi=True, datavolumes=False, disk_hotplug=False, readwritemany=False, registry=None,
-                 access_mode='NodePort', volume_mode='Filesystem', volume_access='ReadWriteOnce', harvester=False):
+                 access_mode='NodePort', volume_mode='Filesystem', volume_access='ReadWriteOnce', harvester=False,
+                 embed_userdata=False):
         Kubecommon.__init__(self, token=token, ca_file=ca_file, context=context, host=host, port=port,
                             namespace=namespace, readwritemany=readwritemany)
         self.crds = client.CustomObjectsApi(api_client=self.api_client)
@@ -69,6 +70,7 @@ class Kubevirt(Kubecommon):
         self.cdi = cdi
         self.disk_hotplug = disk_hotplug
         self.harvester = harvester
+        self.embed_userdata = embed_userdata
         return
 
     def close(self):
@@ -384,18 +386,24 @@ class Kubevirt(Kubecommon):
                 if 'static' in metadata:
                     warning("Legacy network not supported in kubevirt. Ignoring")
                     netdata = None
+            embed_userdata = overrides.get('embed_userdata', self.embed_userdata)
             cloudinitdisk = {'cdrom': {'bus': 'sata'}, 'name': 'cloudinitdisk'}
             vm['spec']['template']['spec']['domain']['devices']['disks'].append(cloudinitdisk)
-            userdatasecretname = "%s-userdata-secret" % name
-            self.create_secret(userdatasecretname, namespace, userdata, field='userdata')
-            cloudinitvolume = {cloudinitsource: {'secretRef': {'name': userdatasecretname}},
-                               'name': 'cloudinitdisk'}
-            owners.append(userdatasecretname)
-            if netdata is not None and netdata != '':
-                netdatasecretname = "%s-netdata-secret" % name
-                cloudinitvolume[cloudinitsource]['networkDataSecretRef'] = {'name': netdatasecretname}
-                self.create_secret(netdatasecretname, namespace, netdata, field='networkdata')
-                owners.append(netdatasecretname)
+            cloudinitvolume = {'name': 'cloudinitdisk'}
+            if embed_userdata:
+                cloudinitvolume[cloudinitsource] = {'userData': userdata}
+                if netdata is not None and netdata != '':
+                    cloudinitvolume[cloudinitsource]['networkData'] = netdata
+            else:
+                userdatasecretname = "%s-userdata-secret" % name
+                self.create_secret(userdatasecretname, namespace, userdata, field='userdata')
+                cloudinitvolume[cloudinitsource] = {'secretRef': {'name': userdatasecretname}}
+                owners.append(userdatasecretname)
+                if netdata is not None and netdata != '':
+                    netdatasecretname = "%s-netdata-secret" % name
+                    cloudinitvolume[cloudinitsource]['networkDataSecretRef'] = {'name': netdatasecretname}
+                    self.create_secret(netdatasecretname, namespace, netdata, field='networkdata')
+                    owners.append(netdatasecretname)
             vm['spec']['template']['spec']['volumes'].append(cloudinitvolume)
         if self.debug:
             common.pretty_print(vm)

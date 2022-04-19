@@ -361,6 +361,7 @@ You can use additional parameters for the kubevirt section:
 - volume_mode: Volume Mode. Defaults to Filesystem (Block can be specified instead).
 - volume_access: Volume access mode. Defaults to ReadWriteOnce.
 - disk_hotplug: Whether to allow to hotplug (and unplug) disks. Defaults to false. Note it also requires to enable The HotplugVolumes featureGate within Kubevirt
+- embed_userdata: Whether to embed userdata directly in the vm spec. Defaults to false
 
 You can use the following indications to gather context, create a suitable service account and retrieve its associated token:
 
