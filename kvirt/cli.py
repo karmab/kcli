@@ -1962,17 +1962,20 @@ def delete_pool(args):
 
 def create_plan(args):
     """Create plan"""
-    plan = args.plan
     ansible = args.ansible
     url = args.url
     path = args.path
     container = args.container
-    inputfile = args.inputfile
     force = args.force
     pre = not args.skippre
     post = not args.skippost
     paramfiles = args.paramfile if args.paramfile is not None else []
     threaded = args.threaded
+    overrides = {}
+    for paramfile in paramfiles:
+        overrides.update(common.get_overrides(paramfile=paramfile))
+    overrides.update(common.get_overrides(param=args.param))
+    inputfile = overrides.get('inputfile', args.inputfile)
     if inputfile is None:
         inputfile = 'kcli_plan.yml'
     if container_mode():
@@ -1985,10 +1988,6 @@ def create_plan(args):
     elif not paramfiles and os.path.exists("kcli_parameters.yml"):
         paramfiles = ["kcli_parameters.yml"]
         pprint("Using default parameter file kcli_parameters.yml")
-    overrides = {}
-    for paramfile in paramfiles:
-        overrides.update(common.get_overrides(paramfile=paramfile))
-    overrides.update(common.get_overrides(param=args.param))
     if 'minimum_version' in overrides:
         minimum_version = overrides['minimum_version']
         current_version = get_git_version()[0]
@@ -2002,15 +2001,16 @@ def create_plan(args):
     config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     _type = config.ini[config.client].get('type', 'kvm')
     overrides.update({'type': _type})
+    plan = overrides.get('plan', args.plan)
+    if plan is None:
+        plan = nameutils.get_random_name()
+        pprint(f"Using {plan} as name of the plan")
     if force:
         if plan is None:
             error("Force requires specifying a plan name")
             return 1
         else:
             config.delete_plan(plan, unregister=config.rhnunregister)
-    if plan is None:
-        plan = nameutils.get_random_name()
-        pprint(f"Using {plan} as name of the plan")
     result = config.plan(plan, ansible=ansible, url=url, path=path, container=container, inputfile=inputfile,
                          overrides=overrides, pre=pre, post=post, threaded=threaded)
     if 'result' in result and result['result'] == 'success':
