@@ -129,12 +129,14 @@ class Kconfig(Kbaseconfig):
                     sys.exit(1)
                 harvester = self.options.get('harvester', False)
                 embed_userdata = self.options.get('embed_userdata', False)
+                first_consumer = self.options.get('first_consumer', False)
                 from kvirt.providers.kubevirt import Kubevirt
                 k = Kubevirt(context=context, token=token, ca_file=ca_file, host=self.host,
                              port=6443, user=self.user, debug=debug, namespace=namespace, cdi=cdi,
                              datavolumes=datavolumes, disk_hotplug=disk_hotplug, readwritemany=readwritemany,
                              registry=registry, access_mode=access_mode, volume_mode=volume_mode,
-                             volume_access=volume_access, harvester=harvester, embed_userdata=embed_userdata)
+                             volume_access=volume_access, harvester=harvester, embed_userdata=embed_userdata,
+                             first_consumer=first_consumer)
                 self.host = k.host
             elif self.type == 'gcp':
                 credentials = self.options.get('credentials')

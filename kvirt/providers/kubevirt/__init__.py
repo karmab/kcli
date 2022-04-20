@@ -56,7 +56,7 @@ class Kubevirt(Kubecommon):
     def __init__(self, token=None, ca_file=None, context=None, host='127.0.0.1', port=6443, user='root', debug=False,
                  namespace=None, cdi=True, datavolumes=False, disk_hotplug=False, readwritemany=False, registry=None,
                  access_mode='NodePort', volume_mode='Filesystem', volume_access='ReadWriteOnce', harvester=False,
-                 embed_userdata=False):
+                 embed_userdata=False, first_consumer=False):
         Kubecommon.__init__(self, token=token, ca_file=ca_file, context=context, host=host, port=port,
                             namespace=namespace, readwritemany=readwritemany)
         self.crds = client.CustomObjectsApi(api_client=self.api_client)
@@ -71,6 +71,7 @@ class Kubevirt(Kubecommon):
         self.disk_hotplug = disk_hotplug
         self.harvester = harvester
         self.embed_userdata = embed_userdata
+        self.first_consumer = first_consumer
         return
 
     def close(self):
@@ -439,7 +440,7 @@ class Kubevirt(Kubecommon):
                         vm['spec']['dataVolumeTemplates'] = [dvt]
                     else:
                         core.create_namespaced_persistent_volume_claim(namespace, pvc)
-                        bound = self.pvc_bound(pvcname, namespace)
+                        bound = self.pvc_bound(pvcname, namespace, first_consumer=self.first_consumer)
                         if not bound:
                             return {'result': 'failure', 'reason': 'timeout waiting for pvc %s to get bound' % pvcname}
                         completed = self.import_completed(pvcname, namespace)
@@ -454,7 +455,7 @@ class Kubevirt(Kubecommon):
                         return {'result': 'failure', 'reason': reason}
                 continue
             core.create_namespaced_persistent_volume_claim(namespace, pvc)
-            bound = self.pvc_bound(pvcname, namespace)
+            bound = self.pvc_bound(pvcname, namespace, first_consumer=self.first_consumer)
             if not bound:
                 error('timeout waiting for pvc %s to get bound' % pvcname)
                 return {'result': 'failure', 'reason': 'timeout waiting for pvc %s to get bound' % pvcname}
@@ -1026,7 +1027,7 @@ class Kubevirt(Kubecommon):
             disk_overrides['volume_mode'] = volume_mode
             disk_overrides['volume_access'] = volume_access
             self.create_disk(diskname, size=size, pool=diskpool, thin=thin, image=image, overrides=disk_overrides)
-            bound = self.pvc_bound(diskname, namespace)
+            bound = self.pvc_bound(diskname, namespace, first_consumer=self.first_consumer)
             if not bound:
                 return {'result': 'failure', 'reason': 'timeout waiting for pvc %s to get bound' % diskname}
             bus = overrides.get('interface', 'virtio')
@@ -1223,7 +1224,7 @@ class Kubevirt(Kubecommon):
             pprint("Using existing pvc")
         except:
             core.create_namespaced_persistent_volume_claim(namespace, pvc)
-            bound = self.pvc_bound(volname, namespace)
+            bound = self.pvc_bound(volname, namespace, first_consumer=self.first_consumer)
             if not bound:
                 return {'result': 'failure', 'reason': 'timeout waiting for pvc to get bound'}
         if cdi:
@@ -1271,7 +1272,7 @@ class Kubevirt(Kubecommon):
             pprint("Using existing pvc")
         except:
             core.create_namespaced_persistent_volume_claim(namespace, pvc)
-            bound = self.pvc_bound(dest, namespace)
+            bound = self.pvc_bound(dest, namespace, first_consumer=self.first_consumer)
             if not bound:
                 return {'result': 'failure', 'reason': 'timeout waiting for pvc to get bound'}
         core.create_namespaced_pod(namespace, pod)
@@ -1379,7 +1380,21 @@ class Kubevirt(Kubecommon):
         storageclass = storageapi.read_storage_class(pool)
         return storageclass.provisioner
 
-    def pvc_bound(self, volname, namespace):
+    def pvc_bound(self, volname, namespace, first_consumer=False):
+        if first_consumer:
+            job_name = f"temp-{volname}"
+            container = {'name': 'hello', 'image': 'quay.io/karmab/kubectl', 'command': ["echo", "hello"]}
+            volume = {'name': volname, 'persistentVolumeClaim': {'claimName': volname}}
+            template = {'metadata': {'labels': {"app": "hello"}},
+                        'spec': {'containers': [container], 'volumes': [volume], 'restartPolicy': "Never"}}
+            spec = {'template': template, 'backoff_limit': 0, 'ttlSecondsAfterFinished': 10}
+            job = {'api_version': 'batch/v1', 'kind': 'Job', 'metadata': {'name': job_name}, 'spec': spec}
+            self.batch_v1.create_namespaced_job(body=job, namespace=namespace)
+            completed = False
+            while not completed:
+                response = self.batch_v1.read_namespaced_job_status(name=job_name, namespace=namespace)
+                if response.status.succeeded is not None or response.status.failed is not None:
+                    completed = True
         core = self.core
         pvctimeout = 40
         pvcruntime = 0

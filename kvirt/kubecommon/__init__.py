@@ -61,6 +61,7 @@ class Kubecommon(object):
         except:
             self.appsv1 = client.ExtensionsV1beta1Api(api_client=api_client)
         self.storageapi = client.StorageV1Api(api_client=api_client)
+        self.batch_v1 = client.BatchV1Api(api_client=api_client)
         self.api_client = api_client
         self.debug = debug
         if self.namespace is None:
