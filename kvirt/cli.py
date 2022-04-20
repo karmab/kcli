@@ -1596,7 +1596,6 @@ def delete_lb(args):
 def create_generic_kube(args):
     """Create Generic kube"""
     paramfile = args.paramfile
-    force = args.force
     cluster = args.cluster
     if container_mode():
         if paramfile is not None:
@@ -1609,7 +1608,7 @@ def create_generic_kube(args):
         pprint("Using default parameter file kcli_parameters.yml")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
-    if force:
+    if overrides.get('force', args.force):
         config.delete_kube(cluster, overrides=overrides)
     config.create_kube_generic(cluster, overrides=overrides)
 
@@ -1617,7 +1616,6 @@ def create_generic_kube(args):
 def create_kind_kube(args):
     """Create K3s kube"""
     paramfile = args.paramfile
-    force = args.force
     cluster = args.cluster if args.cluster is not None else 'testk'
     if container_mode():
         if paramfile is not None:
@@ -1630,7 +1628,7 @@ def create_kind_kube(args):
         pprint("Using default parameter file kcli_parameters.yml")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
-    if force:
+    if overrides.get('force', args.force):
         config.delete_kube(cluster, overrides=overrides)
     config.create_kube_kind(cluster, overrides=overrides)
 
@@ -1638,7 +1636,6 @@ def create_kind_kube(args):
 def create_microshift_kube(args):
     """Create Microshift kube"""
     paramfile = args.paramfile
-    force = args.force
     cluster = args.cluster
     if container_mode():
         if paramfile is not None:
@@ -1651,7 +1648,7 @@ def create_microshift_kube(args):
         pprint("Using default parameter file kcli_parameters.yml")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
-    if force:
+    if overrides.get('force', args.force):
         config.delete_kube(cluster, overrides=overrides)
     config.create_kube_microshift(cluster, overrides=overrides)
 
@@ -1659,7 +1656,6 @@ def create_microshift_kube(args):
 def create_k3s_kube(args):
     """Create K3s kube"""
     paramfile = args.paramfile
-    force = args.force
     cluster = args.cluster if args.cluster is not None else 'testk'
     if container_mode():
         if paramfile is not None:
@@ -1672,7 +1668,7 @@ def create_k3s_kube(args):
         pprint("Using default parameter file kcli_parameters.yml")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
-    if force:
+    if overrides.get('force', args.force):
         config.delete_kube(cluster, overrides=overrides)
     config.create_kube_k3s(cluster, overrides=overrides)
 
@@ -1680,7 +1676,6 @@ def create_k3s_kube(args):
 def create_hypershift_kube(args):
     """Create Hypershift kube"""
     paramfile = args.paramfile
-    force = args.force
     cluster = args.cluster if args.cluster is not None else 'testk'
     if container_mode():
         if paramfile is not None:
@@ -1693,7 +1688,7 @@ def create_hypershift_kube(args):
         pprint("Using default parameter file kcli_parameters.yml")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
-    if force:
+    if overrides.get('force', args.force):
         config.delete_kube(cluster, overrides=overrides)
     config.create_kube_hypershift(cluster, overrides=overrides)
 
@@ -1701,7 +1696,6 @@ def create_hypershift_kube(args):
 def create_openshift_kube(args):
     """Create Openshift kube"""
     paramfile = args.paramfile
-    force = args.force
     cluster = args.cluster
     if container_mode():
         if paramfile is not None:
@@ -1717,7 +1711,7 @@ def create_openshift_kube(args):
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     if args.subcommand_create_kube == 'okd':
         overrides['upstream'] = True
-    if force:
+    if overrides.get('force', args.force):
         config.delete_kube(cluster, overrides=overrides)
     config.create_kube_openshift(cluster, overrides=overrides)
 
@@ -1966,7 +1960,6 @@ def create_plan(args):
     url = args.url
     path = args.path
     container = args.container
-    force = args.force
     pre = not args.skippre
     post = not args.skippost
     paramfiles = args.paramfile if args.paramfile is not None else []
@@ -2005,7 +1998,7 @@ def create_plan(args):
     if plan is None:
         plan = nameutils.get_random_name()
         pprint(f"Using {plan} as name of the plan")
-    if force:
+    if overrides.get('force', args.force):
         if plan is None:
             error("Force requires specifying a plan name")
             return 1
