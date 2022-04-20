@@ -1,0 +1,8 @@
+apiVersion: lvm.topolvm.io/v1alpha1
+kind: LVMCluster
+metadata:
+  name: lvmcluster
+spec:
+  storage:
+    deviceClasses:
+    - name: {{ topolvm_vg }}
