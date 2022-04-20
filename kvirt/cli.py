@@ -3508,7 +3508,8 @@ def cli():
     appopenshiftdelete_parser.set_defaults(func=delete_app_openshift)
 
     appinfo_desc = 'Info App'
-    appinfo_parser = info_subparsers.add_parser('app', description=appinfo_desc, help=appinfo_desc)
+    appinfo_parser = info_subparsers.add_parser('app', description=appinfo_desc, help=appinfo_desc,
+                                                aliases=['operator'])
     appinfo_subparsers = appinfo_parser.add_subparsers(metavar='', dest='subcommand_info_app')
 
     appgenericinfo_desc = 'Info Generic App'
