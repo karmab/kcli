@@ -975,6 +975,8 @@ def create_app_openshift(args):
                     continue
                 else:
                     channel = overrides_channel
+            if 'namespace' in overrides:
+                namespace = overrides['namespace']
             app_data = {'name': name, 'source': source, 'channel': channel, 'namespace': namespace, 'crd': crd}
             app_data.update(overrides)
         pprint(f"Adding app {app}")
