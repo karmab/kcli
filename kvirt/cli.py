@@ -22,6 +22,7 @@ import argparse
 from argparse import RawDescriptionHelpFormatter as rawhelp
 from ipaddress import ip_address
 from glob import glob
+import json
 from kvirt import common
 from kvirt.common import error, pprint, success, warning, ssh, _ssh_credentials, container_mode
 from kvirt.common import get_git_version, compare_git_versions
@@ -550,9 +551,17 @@ def sync_host(args):
         sys.exit(1)
 
 
+def _list_output(_list, output):
+    if output == 'yaml':
+        print(yaml.dump(_list))
+    elif output == 'json':
+        print(json.dumps(_list))
+
+
 def list_vm(args):
     """List vms"""
     filters = args.filters
+    output = args.output
     if args.client is not None and args.client == 'all':
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
         args.client = ','.join(baseconfig.clients)
@@ -566,6 +575,9 @@ def list_vm(args):
                 config = Kconfig(client=client, debug=args.debug, region=args.region,
                                  zone=args.zone, namespace=args.namespace)
                 _list = config.k.list()
+            if output is not None:
+                _list_output(_list, output)
+                return
             for vm in _list:
                 name = vm.get('name')
                 status = vm.get('status')
@@ -589,6 +601,9 @@ def list_vm(args):
             config = Kconfig(client=args.client, debug=args.debug, region=args.region,
                              zone=args.zone, namespace=args.namespace)
             _list = config.k.list()
+        if output is not None:
+            _list_output(_list, output)
+            return
         for vm in _list:
             name = vm.get('name')
             status = vm.get('status')
@@ -4747,6 +4762,7 @@ def cli():
     vmlist_desc = 'List Vms'
     vmlist_parser = argparse.ArgumentParser(add_help=False)
     vmlist_parser.add_argument('--filters', choices=('up', 'down'))
+    vmlist_parser.add_argument('-o', '--output', choices=['json', 'yaml'], help='Format of the output')
     vmlist_parser.set_defaults(func=list_vm)
     list_subparsers.add_parser('vm', parents=[vmlist_parser], description=vmlist_desc, help=vmlist_desc,
                                aliases=['vms'])
