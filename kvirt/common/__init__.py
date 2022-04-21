@@ -394,6 +394,8 @@ def process_files(files=[], overrides={}, remediate=False):
         mode = fil.get('mode', '0600' if not path.endswith('sh') and not path.endswith('py') else '0700')
         permissions = fil.get('permissions', mode)
         render = fil.get('render', True)
+        if isinstance(render, str):
+            render = True if render.lower() == 'true' else False
         file_overrides = overrides.copy()
         file_overrides.update(fil)
         binary = False
@@ -482,6 +484,8 @@ def process_ignition_files(files=[], overrides={}):
         mode = int(str(fil.get('mode', '644')), 8)
         permissions = fil.get('permissions', mode)
         render = fil.get('render', True)
+        if isinstance(render, str):
+            render = True if render.lower() == 'true' else False
         if origin is not None:
             origin = os.path.expanduser(origin)
             if not os.path.exists(origin):
