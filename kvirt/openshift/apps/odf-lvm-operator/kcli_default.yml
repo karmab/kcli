@@ -1,1 +1,2 @@
 topolvm_vg: vg1
+namespace: openshift-storage

@@ -1838,13 +1838,16 @@ def openshift_create_app(config, appdir, overrides={}, outputdir=None):
     install_cr = overrides.get('install_cr', True)
     cluster = appdata['cluster']
     cwd = os.getcwd()
-    os.environ["PATH"] += ":%s" % cwd
+    os.environ["PATH"] += f":{cwd}"
     overrides['cwd'] = cwd
-    default_parameter_file = "%s/%s/kcli_default.yml" % (appdir, appname)
+    default_parameter_file = f"{appdir}/{appname}/kcli_default.yml"
     if os.path.exists(default_parameter_file):
         with open(default_parameter_file, 'r') as entries:
             appdefault = yaml.safe_load(entries)
             appdata.update(appdefault)
+            if 'namespace' in appdefault and 'namespace' in overrides:
+                warning(f"Forcing namespace to {appdefault['namespace']}")
+                del overrides['namespace']
     appdata.update(overrides)
     with TemporaryDirectory() as tmpdir:
         env = Environment(loader=FileSystemLoader(appdir), extensions=['jinja2.ext.do'], trim_blocks=True,
@@ -1854,39 +1857,37 @@ def openshift_create_app(config, appdir, overrides={}, outputdir=None):
         try:
             templ = env.get_template(os.path.basename("install.yml.j2"))
         except TemplateSyntaxError as e:
-            error("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message))
+            error(f"Error rendering line {e.lineno} of file {e.filename}. Got: {e.message}")
             sys.exit(1)
         except TemplateError as e:
-            error("Error rendering file %s. Got: %s" % (e.filename, e.message))
+            error(f"Error rendering file {e.filename}. Got: {e.message}")
             sys.exit(1)
-        destfile = "%s/install.yml" % outputdir if outputdir is not None else "%s/install.yml" % tmpdir
+        destfile = f"{outputdir}/install.yml" if outputdir is not None else f"{tmpdir}/install.yml"
         with open(destfile, 'w') as f:
-            olmfile = templ.render(overrides)
+            olmfile = templ.render(appdata)
             f.write(olmfile)
-        destfile = "%s/install.sh" % outputdir if outputdir is not None else "%s/install.sh" % tmpdir
+        destfile = f"{outputdir}/install.sh" if outputdir is not None else f"{tmpdir}/install.sh"
         with open(destfile, 'w') as f:
             f.write("oc create -f install.yml\n")
-            if os.path.exists("%s/%s/pre.sh" % (appdir, appname)):
-                rendered = config.process_inputfile(cluster, "%s/%s/pre.sh" % (appdir, appname),
-                                                    overrides=appdata)
-                f.write("%s\n" % rendered)
-            if install_cr and os.path.exists("%s/%s/cr.yml" % (appdir, appname)):
-                rendered = config.process_inputfile(cluster, "%s/%s/cr.yml" % (appdir, appname), overrides=appdata)
-                destfile = "%s/cr.yml" % outputdir if outputdir is not None else "%s/cr.yml" % tmpdir
+            if os.path.exists(f"{appdir}/{appname}/pre.sh"):
+                rendered = config.process_inputfile(cluster, f"{appdir}/{appname}/pre.sh", overrides=appdata)
+                f.write(f"{rendered}\n")
+            if install_cr and os.path.exists(f"{appdir}/{appname}/cr.yml"):
+                rendered = config.process_inputfile(cluster, f"{appdir}/{appname}/cr.yml", overrides=appdata)
+                destfile = f"{outputdir}/cr.yml" if outputdir is not None else f"{tmpdir}/cr.yml"
                 with open(destfile, 'w') as g:
                     g.write(rendered)
                 crd = overrides.get('crd')
-                rendered = config.process_inputfile(cluster, "%s/cr.sh" % appdir, overrides={'crd': crd})
+                rendered = config.process_inputfile(cluster, f"{appdir}/cr.sh", overrides={'crd': crd})
                 f.write(rendered)
-            if os.path.exists("%s/%s/post.sh" % (appdir, appname)):
-                rendered = config.process_inputfile(cluster, "%s/%s/post.sh" % (appdir, appname),
-                                                    overrides=appdata)
+            if os.path.exists(f"{appdir}/{appname}/post.sh"):
+                rendered = config.process_inputfile(cluster, f"{appdir}/{appname}/post.sh", overrides=appdata)
                 f.write(rendered)
         if outputdir is None:
             os.chdir(tmpdir)
-            result = call('bash %s/install.sh' % tmpdir, shell=True)
+            result = call(f'bash {tmpdir}/install.sh', shell=True)
         else:
-            pprint("Copied artifacts to %s" % outputdir)
+            pprint(f"Copied artifacts to {outputdir}")
             result = 0
     os.chdir(cwd)
     return result
@@ -1897,13 +1898,16 @@ def openshift_delete_app(config, appdir, overrides={}):
     appdata = {'cluster': 'testk', 'domain': 'karmalabs.com', 'masters': 1, 'workers': 0}
     cluster = appdata['cluster']
     cwd = os.getcwd()
-    os.environ["PATH"] += ":%s" % cwd
+    os.environ["PATH"] += f":{cwd}"
     overrides['cwd'] = cwd
-    default_parameter_file = "%s/%s/kcli_default.yml" % (appdir, appname)
+    default_parameter_file = f"{appdir}/{appname}/kcli_default.yml"
     if os.path.exists(default_parameter_file):
         with open(default_parameter_file, 'r') as entries:
             appdefault = yaml.safe_load(entries)
             appdata.update(appdefault)
+            if 'namespace' in appdefault and 'namespace' in overrides:
+                warning(f"Forcing namespace to {appdefault['namespace']}")
+                del overrides['namespace']
     appdata.update(overrides)
     with TemporaryDirectory() as tmpdir:
         env = Environment(loader=FileSystemLoader(appdir), extensions=['jinja2.ext.do'], trim_blocks=True,
@@ -1913,26 +1917,26 @@ def openshift_delete_app(config, appdir, overrides={}):
         try:
             templ = env.get_template(os.path.basename("install.yml.j2"))
         except TemplateSyntaxError as e:
-            error("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message))
+            error(f"Error rendering line {e.lineno} of file {e.filename}. Got: {e.message}")
             sys.exit(1)
         except TemplateError as e:
-            error("Error rendering file %s. Got: %s" % (e.filename, e.message))
+            error(f"Error rendering file {e.filename}. Got: {e.message}")
             sys.exit(1)
-        destfile = "%s/install.yml" % tmpdir
+        destfile = f"{tmpdir}/install.yml"
         with open(destfile, 'w') as f:
-            olmfile = templ.render(overrides)
+            olmfile = templ.render(appdata)
             f.write(olmfile)
-        destfile = "%s/uninstall.sh" % tmpdir
+        destfile = f"{tmpdir}/uninstall.sh"
         with open(destfile, 'w') as f:
-            if os.path.exists("%s/%s/cr.yml" % (appdir, appname)):
-                rendered = config.process_inputfile(cluster, "%s/%s/cr.yml" % (appdir, appname), overrides=appdata)
-                destfile = "%s/cr.yml" % tmpdir
+            if os.path.exists(f"{appdir}/{appname}/cr.yml"):
+                rendered = config.process_inputfile(cluster, f"{appdir}/{appname}/cr.yml", overrides=appdata)
+                destfile = f"{tmpdir}/cr.yml"
                 with open(destfile, 'w') as g:
                     g.write(rendered)
                 f.write("oc delete -f cr.yml\n")
             f.write("oc delete -f install.yml")
         os.chdir(tmpdir)
-        result = call('bash %s/uninstall.sh' % tmpdir, shell=True)
+        result = call(f'bash {tmpdir}/uninstall.sh', shell=True)
     os.chdir(cwd)
     return result
 
