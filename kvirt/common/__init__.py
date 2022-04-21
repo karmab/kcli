@@ -481,6 +481,7 @@ def process_ignition_files(files=[], overrides={}):
         path = fil.get('path')
         mode = int(str(fil.get('mode', '644')), 8)
         permissions = fil.get('permissions', mode)
+        render = fil.get('render', True)
         if origin is not None:
             origin = os.path.expanduser(origin)
             if not os.path.exists(origin):
@@ -490,7 +491,7 @@ def process_ignition_files(files=[], overrides={}):
             if binary:
                 with open(origin, "rb") as f:
                     content = f.read().encode("base64")
-            elif overrides:
+            elif overrides and render:
                 basedir = os.path.dirname(origin) if os.path.dirname(origin) != '' else '.'
                 env = Environment(loader=FileSystemLoader(basedir), undefined=undefined, extensions=['jinja2.ext.do'])
                 for jinjafilter in jinjafilters.jinjafilters:
