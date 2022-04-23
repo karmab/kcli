@@ -1182,10 +1182,12 @@ class Kubevirt(Kubecommon):
         harvester = self.harvester
         shortimage = os.path.basename(url).split('?')[0]
         uncompressed = shortimage.replace('.gz', '').replace('.xz', '').replace('.bz2', '')
-        if name is None:
-            volname = [k for k in IMAGES if IMAGES[k] == url][0]
-        else:
+        if name is not None:
             volname = name.replace('_', '-').replace('.', '-').lower()
+        elif url in IMAGES.values():
+            volname = [key for key in IMAGES if IMAGES[key] == url][0]
+        else:
+            volname = os.path.basename(url).replace('_', '-').replace('.', '-').lower()
         if harvester:
             virtualmachineimage = {'kind': 'VirtualMachineImage', 'spec': {'url': url, "displayName": uncompressed},
                                    'apiVersion': '%s/%s' % (HDOMAIN, HVERSION), 'metadata': {'name': volname}}
@@ -1282,6 +1284,49 @@ class Kubevirt(Kubecommon):
             return {'result': 'failure', 'reason': 'timeout waiting for copy to finish'}
         else:
             core.delete_namespaced_pod(podname, namespace)
+        return {'result': 'success'}
+
+    def patch_pvc(self, pvc, command, image="quay.io/karmab/curl", files=[]):
+        core = self.core
+        namespace = self.namespace
+        now = datetime.datetime.now().strftime("%Y%M%d%H%M")
+        podname = f'{now}-{pvc}-patch'
+        configmap = None
+        if files:
+            data = {}
+            for entry in files:
+                _fil = os.path.expanduser(entry)
+                _fil_name = os.path.basename(entry)
+                if os.path.exists(_fil):
+                    data[_fil_name] = open(_fil).read()
+                else:
+                    warning(f"Skipping {entry} as it's not present")
+            configmap = {'kind': 'ConfigMap', 'data': data, 'apiVersion': 'v1', 'metadata': {'name': podname}}
+            core.create_namespaced_config_map(namespace, configmap)
+        container = {'image': image, 'name': 'patch', 'command': ['/bin/sh', '-c']}
+        if self.volume_mode == 'Filesystem':
+            container['volumeMounts'] = [{'mountPath': '/storage', 'name': 'storage'}]
+            if configmap is not None:
+                container['volumeMounts'].append({'mountPath': '/files', 'name': 'files'})
+        else:
+            container['volumeDevices'] = [{'devicePath': '/dev/storage', 'name': 'storage'}]
+            if configmap is not None:
+                container['volumeDevices'] = [{'devicePath': '/dev/files', 'name': 'files'}]
+        container['args'] = [command]
+        pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'Never', 'containers': [container],
+                                       'volumes': [{'name': 'storage', 'persistentVolumeClaim': {'claimName': pvc}}]},
+               'apiVersion': 'v1', 'metadata': {'name': podname}}
+        if configmap is not None:
+            pod['spec']['volumes'].append({'name': 'files', 'configMap': {'name': podname}})
+        core.create_namespaced_pod(namespace, pod)
+        completed = self.pod_completed(podname, namespace)
+        if not completed:
+            error("Using with pod %s. Leaving it for debugging purposes" % podname)
+            return {'result': 'failure', 'reason': 'timeout waiting for copy to finish'}
+        else:
+            core.delete_namespaced_pod(podname, namespace)
+        if configmap is not None:
+            core.delete_namespaced_config_map(configmap, namespace)
         return {'result': 'success'}
 
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
@@ -1674,3 +1719,8 @@ class Kubevirt(Kubecommon):
 
     def update_nic(self, name, index, network):
         print("not implemented")
+
+    def update_cdi_endpoint(self, pvc, endpoint):
+        core = self.core
+        body = {'metadata': {'annotations': {"cdi.kubevirt.io/storage.import.endpoint": endpoint}}}
+        core.patch_namespaced_persistent_volume_claim(pvc, self.namespace, body)

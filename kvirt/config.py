@@ -2685,7 +2685,7 @@ class Kconfig(Kbaseconfig):
                 else:
                     f.write(result['data'])
         if iso:
-            if self.type not in ['kvm', 'fake']:
+            if self.type not in ['kvm', 'fake', 'kubevirt']:
                 warning("Iso only get generated for kvm type")
             else:
                 iso_pool = overrides.get('pool') or self.pool

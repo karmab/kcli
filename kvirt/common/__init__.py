@@ -2003,24 +2003,33 @@ def generate_rhcos_iso(k, cluster, pool, version='latest', podman=False, install
         baseiso = f'rhcos-live.{arch}.iso'
         path = f'{version}/latest' if version != 'latest' else 'latest'
         liveiso = f"https://mirror.openshift.com/pub/openshift-v4/{arch}/dependencies/rhcos/{path}/{baseiso}"
+    kubevirt = 'kubevirt' in str(type(k))
+    name = f'{cluster}-iso' if kubevirt else f'{cluster}.iso'
+    if name in [os.path.basename(iso) for iso in k.volumes(iso=True)]:
+        warning(f"Deleting old iso {name}")
+        k.delete_image(name)
+    if kubevirt:
+        pprint(f"Creating iso {name}")
+        k.add_image(liveiso, pool, name=name)
+        isocmd = "coreos-installer iso ignition embed -fi /files/iso.ign /storage/disk.img"
+        pvc = name.replace('_', '-').replace('.', '-').lower()
+        k.patch_pvc(pvc, isocmd, image="quay.io/coreos/coreos-installer:release", files=['iso.ign'])
+        k.update_cdi_endpoint(f'{cluster}.iso')
+        return
     if baseiso not in k.volumes(iso=True):
         pprint(f"Downloading {liveiso}")
         k.add_image(liveiso, pool)
-    if '%s.iso' % cluster in [os.path.basename(iso) for iso in k.volumes(iso=True)]:
-        warning("Deleting old iso %s.iso" % cluster)
-        k.delete_image('%s.iso' % cluster)
-    pprint("Creating iso %s.iso" % cluster)
+    pprint(f"Creating iso {name}")
     poolpath = k.get_pool_path(pool)
     if podman:
         coreosinstaller = f"podman run --privileged --rm -w /data -v {poolpath}:/data -v /dev:/dev"
         if not os.path.exists('/Users'):
             coreosinstaller += " -v /run/udev:/run/udev"
         coreosinstaller += " quay.io/coreos/coreos-installer:release"
-        destiso = f"{cluster}.iso"
-        isocmd = "f{coreosinstaller} iso ignition embed -fi iso.ign -o {destiso} {baseiso}"
+        isocmd = "f{coreosinstaller} iso ignition embed -fi iso.ign -o {name} {baseiso}"
     else:
         coreosinstaller = "coreos-installer"
-        destiso = f"{poolpath}/{cluster}.iso"
+        destiso = f"{poolpath}/{name}"
         isocmd = f"{coreosinstaller} iso ignition embed -fi {poolpath}/iso.ign -o {destiso} {poolpath}/{baseiso}"
         if not os.path.exists('coreos-installer'):
             arch = os.uname().machine if not os.path.exists('/Users') else 'x86_64'
