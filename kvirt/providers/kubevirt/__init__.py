@@ -321,6 +321,8 @@ class Kubevirt(Kubecommon):
             if index > 0 or image is None:
                 myvolume['persistentVolumeClaim'] = {'claimName': diskname}
             newdisk = {'disk': {'bus': diskinterface}, 'name': diskname}
+            if index == 0:
+                newdisk['bootOrder'] = 1
             vm['spec']['template']['spec']['domain']['devices']['disks'].append(newdisk)
             vm['spec']['template']['spec']['volumes'].append(myvolume)
             if index == 0 and image is not None and containerdisk:
@@ -343,7 +345,7 @@ class Kubevirt(Kubecommon):
             if iso not in self.volumes(iso=True):
                 return {'result': 'failure', 'reason': "you don't have iso %s" % iso}
             diskname = '%s-iso' % name
-            newdisk = {'bootOrder': 1, 'cdrom': {'readOnly': False, 'bus': 'sata'}, 'name': diskname}
+            newdisk = {'bootOrder': 2, 'cdrom': {'readOnly': False, 'bus': 'sata'}, 'name': diskname}
             good_iso = iso.replace('_', '-').replace('.', '-').lower()
             myvolume = {'name': diskname, 'persistentVolumeClaim': {'claimName': good_iso}}
             vm['spec']['template']['spec']['domain']['devices']['disks'].append(newdisk)
