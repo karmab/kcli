@@ -2014,7 +2014,7 @@ def generate_rhcos_iso(k, cluster, pool, version='latest', podman=False, install
         isocmd = "coreos-installer iso ignition embed -fi /files/iso.ign /storage/disk.img"
         pvc = name.replace('_', '-').replace('.', '-').lower()
         k.patch_pvc(pvc, isocmd, image="quay.io/coreos/coreos-installer:release", files=['iso.ign'])
-        k.update_cdi_endpoint(f'{cluster}.iso')
+        k.update_cdi_endpoint(pvc, f'{cluster}.iso')
         return
     if baseiso not in k.volumes(iso=True):
         pprint(f"Downloading {liveiso}")

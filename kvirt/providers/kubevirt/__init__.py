@@ -1328,7 +1328,7 @@ class Kubevirt(Kubecommon):
         else:
             core.delete_namespaced_pod(podname, namespace)
         if configmap is not None:
-            core.delete_namespaced_config_map(configmap, namespace)
+            core.delete_namespaced_config_map(podname, namespace)
         return {'result': 'success'}
 
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
