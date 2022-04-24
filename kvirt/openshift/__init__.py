@@ -1217,7 +1217,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if config.type == 'fake':
             pprint("Storing generated iso in current dir")
             generate_rhcos_iso(k, cluster, 'default', installer=True, extra_args=extra_args)
-        elif config.type != 'kvm':
+        elif config.type not in ['kvm', 'kubevirt']:
             pprint("Additional workflow not available on %s" % config.type)
             pprint("Embed iso.ign in rhcos live iso")
             sys.exit(0)
