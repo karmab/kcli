@@ -111,6 +111,7 @@ IMAGES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-i
           'ubuntu2010': 'https://cloud-images.ubuntu.com/groovy/current/groovy-server-cloudimg-amd64.img',
           'ubuntu2104': 'https://cloud-images.ubuntu.com/hirsute/current/hirsute-server-cloudimg-amd64.img',
           'ubuntu2110': 'https://cloud-images.ubuntu.com/impish/current/impish-server-cloudimg-amd64.img',
+          'ubuntu2204': 'https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img',
           'rockylinux84': ROCKY + '8.4/images/Rocky-8-GenericCloud-8.4-20210620.0.x86_64.qcow2',
           'rockylinux85': ROCKY + '8.5/images/Rocky-8-GenericCloud-8.5-20211114.2.x86_64.qcow2',
           'rockylinux8': ROCKY + '8.5/images/Rocky-8-GenericCloud-8.5-20211114.2.x86_64.qcow2'}
