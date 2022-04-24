@@ -17,13 +17,6 @@
 {% if bootstrap_mac != None %}
     mac: {{ bootstrap_mac }}
 {% endif %}
-{% if config_type == 'packet' %}
-  - name: {{ network }}
-    ip: 192.168.122.99
-    mask: 255.255.255.0
-    gateway: 192.168.122.1
-    dns: 8.8.8.8
-{% endif %}
  disks:
   - size: {{ disk_size }}
  files:
@@ -51,9 +44,4 @@
     origin: staticpods/keepalived.yml
   - path: /etc/kubernetes/keepalived.conf
     origin: keepalived.conf
-{% endif %}
-{% if config_type == 'packet' %}
-  - path: /etc/kubernetes/packet-hack.sh
-    origin: packet-hack.sh
-    mode: 700
 {% endif %}

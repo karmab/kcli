@@ -13,9 +13,6 @@
 {% if flavor_master != None %}
 {% set flavor = flavor_master %}
 {% endif %}
-{% if config_type == 'packet' %}
-{% set extra_networks = [{"name": network, "ip": "192.168.122.10" + num|string, "mask": "255.255.255.0", "gateway": "192.168.122.1"}] %}
-{% endif %}
 
 {{ cluster }}-master-{{ num }}:
  domain: {{ domain }} 
@@ -45,11 +42,6 @@
     origin: staticpods/mdns.yml
   - path: /etc/kubernetes/config.hcl.templ
     origin: config.hcl.templ
-{% endif %}
-{% if config_type == 'packet' %}
-  - path: /etc/kubernetes/packet-hack.sh
-    origin: packet-hack.sh
-    mode: 700
 {% endif %}
 {% if (mdns and workers > 0) or kubevirt_api_service %}
   - path: /etc/kubernetes/manifests/haproxy.yml

@@ -38,19 +38,12 @@ spec:
         {% elif network_type == 'Contrail' and name != cluster + '-bootstrap' %}
         NIC=vhost0
         NETMASK=32
-        {% elif config_type == 'packet' %}
-        NIC={{ 'eth1' if 'fcos' in image else 'ens3f1' }}
-        NETMASK=32
         {% else %}
         NIC=$(ip r | grep default | head -1 | sed 's/.*dev \(.*\) \(proto\|metric\).*/\1/')
         NETMASK=$(ip -o -f inet addr show | awk '/scope global/ {print $4}' | head -1 | cut -d'/' -f2)
         {% endif %}
         sed -i "s@NIC@$NIC@" /etc/keepalived/keepalived.conf
         if [ "$NETMASK" != "" ] ; then
-          {% if config_type == 'packet' %}
-          NIC_PUBLIC={{ 'eth0' if 'fcos' in image else 'ens3f0' }}
-          sed -i "s@{{ api_ip }}@{{ api_ip }} dev $NIC_PUBLIC@" /etc/keepalived/keepalived.conf
-          {% endif %}
           sed -i "s@{{ api_ip }}@{{ api_ip }}/$NETMASK@" /etc/keepalived/keepalived.conf
           {% if ingress_ip != None %}
           sed -i "s@{{ ingress_ip }}@{{ ingress_ip }}/$NETMASK@" /etc/keepalived/keepalived.conf

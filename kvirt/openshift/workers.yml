@@ -18,9 +18,6 @@
 {% if flavor_worker != None %}
 {% set flavor = flavor_worker %}
 {% endif %}
-{% if config_type == 'packet' %}
-{% set extra_networks = [{"name": network, "ip": "192.168.122.20" + num|string, "mask": "255.255.255.0", "gateway": "192.168.122.1"}] %}
-{% endif %}
 
 {{ cluster }}-worker-{{ num }}:
  domain: {{ domain }} 

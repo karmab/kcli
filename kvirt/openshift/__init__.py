@@ -28,7 +28,7 @@ from requests.packages.urllib3 import disable_warnings
 import yaml
 
 
-virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere', 'packet']
+virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere']
 cloudplatforms = ['aws', 'gcp', 'ibm']
 
 
@@ -352,15 +352,11 @@ def scale(config, plandir, cluster, overrides):
                                  threaded=threaded)
         if result['result'] != 'success':
             sys.exit(1)
-        elif platform == 'packet' and 'newvms' in result and result['newvms']:
-            for node in result['newvms']:
-                k.add_nic(node, data['network'])
 
 
 def create(config, plandir, cluster, overrides, dnsconfig=None):
     k = config.k
     log_level = 'debug' if config.debug else 'info'
-    bootstrap_helper_ip = None
     client = config.client
     platform = config.type
     arch = k.get_capabilities()['arch'] if platform == 'kvm' else 'x86_64'
@@ -483,7 +479,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     else:
         pprint("Using %s version" % version)
     cluster = data.get('cluster')
-    helper_image = data.get('helper_image')
     image = data.get('image')
     ipi = data.get('ipi', False)
     api_ip = data.get('api_ip')
@@ -538,18 +533,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         overrides['ingress_ip'] = None
     public_api_ip = data.get('public_api_ip')
     network = data.get('network')
-    if platform == 'packet':
-        if network == 'default':
-            error("You need to indicate a specific vlan network")
-            sys.exit(1)
-        else:
-            facilities = [n['domain'] for n in k.list_networks().values() if str(n['cidr']) == network]
-            if not facilities:
-                error("Vlan network %s not found in any facility" % network)
-                sys.exit(1)
-            elif k.facility not in facilities:
-                error("Vlan network %s not found in facility %s" % (network, k.facility))
-                sys.exit(1)
     masters = data.get('masters')
     workers = data.get('workers')
     tag = data.get('tag')
@@ -628,8 +611,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         pprint(f"Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to {tag}")
     INSTALLER_VERSION = get_installer_version()
     COMMIT_ID = os.popen('openshift-install version').readlines()[1].replace('built from commit', '').strip()
-    if platform == 'packet' and not upstream:
-        overrides['commit_id'] = COMMIT_ID
     pprint(f"Using installer version {INSTALLER_VERSION}")
     if sno or ipi or baremetal_iso_all:
         pass
@@ -663,15 +644,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 if result['result'] != 'success':
                     sys.exit(1)
         pprint("Using image %s" % image)
-    elif platform != 'packet':
+    else:
         pprint("Checking if image %s is available" % image)
         images = [v for v in k.volumes() if image in v]
         if not images:
             error("Missing %s. Indicate correct image in your parameters file..." % image)
             sys.exit(1)
-    else:
-        error("Missing image in your parameters file. This is required for packet")
-        sys.exit(1)
     overrides['image'] = image
     static_networking_master, static_networking_worker = False, False
     macentries = []
@@ -1272,59 +1250,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             warning("Ignoring /etc/hosts")
         else:
             update_etc_hosts(cluster, domain, host_ip, ingress_ip)
-        if platform == 'packet' and config.k.tunnelhost is None:
-            # bootstrap ignition is too big in those platforms so we deploy a temporary web server to serve it
-            helper_overrides = {}
-            if helper_image is None:
-                images = [v for v in k.volumes() if 'centos' in v.lower() or 'fedora' in v.lower()]
-                if images:
-                    image = os.path.basename(images[0])
-                else:
-                    helper_image = "CentOS-7-x86_64-GenericCloud.qcow2"
-                    pprint("Downloading centos helper image")
-                    result = config.handle_host(pool=config.pool, image="centos7", download=True,
-                                                update_profile=False)
-                pprint("Using helper image %s" % helper_image)
-            else:
-                images = [v for v in k.volumes() if helper_image in v]
-                if not images:
-                    error("Missing image %s. Indicate correct helper image in your parameters file" % helper_image)
-                    sys.exit(1)
-            helper_overrides['nets'] = [network]
-            helper_overrides['enableroot'] = True
-            helper_overrides['plan'] = cluster
-            bootstrap_helper_name = "%s-bootstrap-helper" % cluster
-            cmds = ["iptables -F", "yum -y install httpd", "setenforce 0"]
-            if platform == 'packet':
-                config.k.tunnelhost = bootstrap_helper_ip
-                cmds.append("sed -i 's/apache/root/' /etc/httpd/conf/httpd.conf")
-            cmds.append("systemctl enable --now httpd")
-            helper_overrides['cmds'] = cmds
-            helper_overrides['memory'] = 1024
-            helper_overrides['numcpus'] = 4
-            config.create_vm("%s-bootstrap-helper" % cluster, helper_image, overrides=helper_overrides, wait=True)
-            bootstrap_helper_ip, bootstrap_helper_vmport = _ssh_credentials(k, bootstrap_helper_name)[1:]
-            source, destination = "%s/bootstrap.ign" % clusterdir, "/var/www/html/bootstrap"
-            scpcmd = scp(bootstrap_helper_name, ip=bootstrap_helper_ip, user='root', source=source,
-                         destination=destination, tunnel=config.tunnel, tunnelhost=config.tunnelhost,
-                         tunnelport=config.tunnelport, tunneluser=config.tunneluser, download=False, insecure=True,
-                         vmport=bootstrap_helper_vmport)
-            os.system(scpcmd)
-            cmd = "chown apache.apache /var/www/html/bootstrap"
-            sshcmd = ssh(bootstrap_helper_name, ip=bootstrap_helper_ip, user='root', tunnel=config.tunnel,
-                         tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
-                         tunneluser=config.tunneluser, insecure=True, cmd=cmd, vmport=bootstrap_helper_vmport)
-            os.system(sshcmd)
-            sedcmd = 'sed "s@https://api-int.%s.%s:22623/config/master@http://%s/bootstrap@" ' % (cluster, domain,
-                                                                                                  bootstrap_helper_ip)
-            sedcmd += '%s/master.ign' % clusterdir
-            sedcmd += ' > %s/bootstrap.ign' % clusterdir
-            call(sedcmd, shell=True)
-            sedcmd = 'sed "s@https://api-int.%s.%s:22623/config/master@http://%s/worker@" ' % (cluster, domain,
-                                                                                               bootstrap_helper_ip)
-            sedcmd += '%s/master.ign' % clusterdir
-            sedcmd += ' > %s/worker.ign' % clusterdir
-            call(sedcmd, shell=True)
         sedcmd = f'sed -i "s@api-int.{cluster}.{domain}@{api_ip}@" {clusterdir}/master.ign {clusterdir}/worker.ign'
         call(sedcmd, shell=True)
         sedcmd = f'sed -i "s@https://{api_ip}:22623/config@http://{api_ip}:22624/config@"'
@@ -1389,17 +1314,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             result = config.plan(plan, inputfile='%s/masters.yml' % plandir, overrides=overrides, threaded=threaded)
         if result['result'] != 'success':
             sys.exit(1)
-        if platform == 'packet':
-            allnodes = ["%s-bootstrap" % cluster] + ["%s-master-%s" % (cluster, num) for num in range(masters)]
-            for node in allnodes:
-                try:
-                    k.add_nic(node, network)
-                except Exception as e:
-                    error("Hit %s. Continuing still" % str(e))
-                    continue
         todelete = ["%s-bootstrap" % cluster]
-        if platform == 'packet':
-            todelete.append("%s-bootstrap-helper" % cluster)
         if dnsconfig is not None:
             dns_overrides = {'api_ip': api_ip, 'ingress_ip': ingress_ip, 'cluster': cluster, 'domain': domain}
             result = dnsconfig.plan(plan, inputfile='%s/cloud_dns.yml' % plandir, overrides=dns_overrides)
@@ -1498,13 +1413,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             result = config.plan(plan, inputfile='%s/cloud_lb_apps.yml' % plandir, overrides=lb_overrides)
             if result['result'] != 'success':
                 sys.exit(1)
-        if platform == 'packet':
-            allnodes = ["%s-worker-%s" % (cluster, num) for num in range(workers)]
-            for node in allnodes:
-                k.add_nic(node, network)
-    # if 'network_type' in data and data['network_type'] == 'Contrail':
-    #    pprint("Waiting 5mn on install to be stable")
-    #    sleep(300)
     if minimal or async_install:
         kubeconf = os.environ['KUBECONFIG']
         kubepassword = open("%s/auth/kubeadmin-password" % clusterdir).read()

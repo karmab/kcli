@@ -8,7 +8,7 @@ import os
 import sys
 import yaml
 
-# virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere', 'packet']
+# virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere']
 cloudplatforms = ['aws', 'gcp']
 
 
