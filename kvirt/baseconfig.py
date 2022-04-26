@@ -1458,6 +1458,11 @@ class Kbaseconfig:
                     'bestmovie': 'interstellar'}
         data = ori_data.copy()
         data.update(overrides)
+        with open(f"{directory}/README.md", "w") as f:
+            f.write("This is a sample plan for you to understand how to create yours. It showcases:\n\n")
+            f.write("- how the plan looks like\n- can optionally use jinja\n- defines default parameters")
+            f.write("\n- can overrides those parameters at run time")
+            f.write("\n- can include hardware spec, inject files in different ways or scripts\n")
         with open(f"{directory}/kcli_default.yml", "w") as f:
             f.write("# Default parameter values for your plan\n# This is a YAML-formatted file\n")
             yaml.safe_dump(data, f, default_flow_style=False, encoding='utf-8', allow_unicode=True,
@@ -1473,21 +1478,20 @@ class Kbaseconfig:
    origin: files/myfile01\n""" if not skipfiles else ''
         scriptssection = """ scripts:
  - scripts/script01.sh
-{%% if num == 0 %%}
+{% if num == 0 %}
  - scripts/script02.sh
-{%% endif %%}\n""" if not skipscripts else ''
+{% endif %}\n""" if not skipscripts else ''
         plankeys = "\n".join([" %s: {{ %s }}" % (key, key) for key in sorted(overrides) if key not in ori_data])
-        plantemplatedata = """{%% for num in range(0, vms_number) %%}
+        plantemplatedata = """{% for num in range(0, vms_number) %}
 
 {{ cluster }}-{{ num }}:
  image: {{ image }}
  memory: {{ memory }}
  numcpus: {{ numcpus }}
  disks: {{ disks }}
- nets: {{ nets }}
-%s%s%s
-
-{%% endfor %%}""" % (filessection, scriptssection, plankeys)
+ nets: {{ nets }}"""
+        plantemplatedata += f"\n{filessection}{scriptssection}{plankeys}"
+        plantemplatedata += "{% endfor %}"
         with open(f"{directory}/kcli_plan.yml", "w") as f:
             f.write(plantemplatedata)
         if not skipscripts:
