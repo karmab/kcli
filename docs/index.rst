@@ -836,6 +836,79 @@ The following types can be used within a plan:
 -  kube
 -  workflow
 
+Create and run your first plan
+------------------------------
+
+Here’s a basic plan to get a feel of plan’s logic
+
+::
+
+   vm1:
+    image: centos8stream
+    numcpus: 8
+    memory: 2048
+    files:
+    - path: /etc/motd
+      content: Welcome to the cruel world
+
+   vm2:
+    image: centos8stream
+    numcpus: 8
+    memory: 2048
+    cmds:
+    - yum -y install httpd
+
+To run this plan, we save it as ``myplan.yml`` and we can then deploy it using ``kcli create plan -f myplan.yml``
+
+This will create two vms based on the centos8stream cloud image, with the specified hardware characteristics and injecting a specific file for vm1, or running a command to install httpd for vm2.
+
+Additionally, your ssh public key gets automatically injected to the node, and the hostname of those vms get set, all through cloudinit.
+
+Although this is a simple plan, note that:
+
+-  it’s expected to behave exactly the same regardless of your target virtualization platform
+-  can be relaunched in an idempotent manner
+
+Make it more powerful with variables
+------------------------------------
+
+Let’s modify our plan to make it more dynamic
+
+::
+
+   parameters:
+    image: centos8stream
+    numcpus: 8
+    memory: 2048
+    packages:
+    - httpd
+    motd: Welcome to the cruel world
+
+   vm1:
+    image: {{ image }}
+    numcpus: {{ numcpus }}
+    memory: {{ memory }}
+    files:
+    - path: /etc/motd
+      content: {{ motd }}
+
+   vm2:
+    image: {{ image }}
+    numcpus: {{ numcpus }}
+    memory: {{ memory }}
+    cmds:
+   {% for package in packages %}
+    - yum -y install {{ package }}
+   {% endfor %}
+
+This looks similar to the first example, but now we have a parameters section where we define default values for a set of variables that is then used within the plan, through jinja.
+
+When creating the plan, any of those parameter can we overriden by using ``-P key=value``, or providing a parameter file.
+
+For instance, we would run ``kcli create plan -f my_plan.yml -P numcpus=16 -P memory=4096 -P motd="Welcome to the cool world`` to create the two same vms with different hardware values and with a custom motd in vm1
+
+Note that any jinja construct can be used within a plan (or through the files or the scripts referenced by said plan)
+
 plan types
 ----------
 
