@@ -383,6 +383,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'ipsec': False,
             'sno': False,
             'sno_virtual': False,
+            'sno_masters': False,
+            'sno_workers': False,
             'sno_disable_nics': [],
             'notify': False,
             'async': False,
@@ -423,6 +425,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     ignore_hosts = data.get('ignore_hosts', False)
     if sno:
         sno_virtual = data.get('sno_virtual', False)
+        sno_masters = data.get('sno_masters', False)
+        sno_workers = data.get('sno_workers', False)
         if sno_virtual:
             sno_memory = data.get('master_memory', data.get('memory', 8192))
             if sno_memory < 20480:
@@ -1235,6 +1239,17 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 info2(f"Access the Openshift web-console here: {console}")
                 info2(f"Login to the console with user: kubeadmin, password: {kubepassword}")
                 pprint(f"Plug {cluster}.iso to your target node to complete the installation")
+        if sno_masters:
+            if api_ip is None:
+                warning("sno masters requires api vip to be defined. Skipping")
+            else:
+                master_overrides = overrides.copy()
+                master_overrides['role'] = 'master'
+                config.create_openshift_iso(cluster, overrides=master_overrides)
+        if sno_workers:
+            worker_overrides = overrides.copy()
+            worker_overrides['role'] = 'worker'
+            config.create_openshift_iso(cluster, overrides=worker_overrides)
         sys.exit(0)
     call('openshift-install --dir=%s --log-level=%s create ignition-configs' % (clusterdir, log_level), shell=True)
     for role in ['master', 'worker']:
