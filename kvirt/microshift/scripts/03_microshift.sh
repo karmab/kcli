@@ -1,20 +1,21 @@
 if [ -d /root/manifests ] ; then
-  mkdir -p /var/lib/microshift/manifests
-  cp /root/manifests/*y*ml /var/lib/microshift/manifests
+ mkdir -p /var/lib/microshift/manifests
+ cp /root/manifests/*y*ml /var/lib/microshift/manifests
 fi
-{% if podman %}
-curl -o /etc/systemd/system/microshift.service https://raw.githubusercontent.com/redhat-et/microshift/main/packaging/systemd/microshift-containerized.service
-systemctl enable microshift --now
 KUBEADMINDIR=/var/lib/microshift/resources/kubeadmin
+{% if podman %}
 mkdir -p $KUBEADMINDIR
-while true ; do podman cp microshift:$KUBEADMINDIR/kubeconfig $KUBEADMINDIR && break ; sleep 5 ; done
+curl -o /etc/systemd/system/microshift.service https://raw.githubusercontent.com/redhat-et/microshift/main/packaging/systemd/microshift-containerized.service
 {% else %}
 dnf copr enable -y @redhat-et/microshift{{ '-nightly' if nightly else ''}}
-dnf install -y microshift firewalld
-systemctl enable microshift --now
+dnf -y install microshift
 {% endif %}
-until [ -f /var/lib/microshift/resources/kubeadmin/kubeconfig ] ; do
+systemctl enable microshift --now
+until [ -f $KUBEADMINDIR/kubeconfig ] ; do
  echo Waiting on kubeconfig to be available
  sleep 5
+ {% if podman %}
+ podman cp microshift:$KUBEADMINDIR/kubeconfig $KUBEADMINDIR
+ {% endif %}
 done
-ln -s /var/lib/microshift/resources/kubeadmin/kubeconfig /root/kubeconfig
+ln -s $KUBEADMINDIR/kubeconfig /root/kubeconfig
