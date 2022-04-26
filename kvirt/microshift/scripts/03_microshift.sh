@@ -13,4 +13,8 @@ dnf copr enable -y @redhat-et/microshift{{ '-nightly' if nightly else ''}}
 dnf install -y microshift firewalld
 systemctl enable microshift --now
 {% endif %}
+until [ -f /var/lib/microshift/resources/kubeadmin/kubeconfig ] ; do
+ echo Waiting on kubeconfig to be available
+ sleep 5
+done
 ln -s /var/lib/microshift/resources/kubeadmin/kubeconfig /root/kubeconfig
