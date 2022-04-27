@@ -1198,7 +1198,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             f.write(result['data'])
         if config.type == 'fake':
             pprint("Storing generated iso in current dir")
-            generate_rhcos_iso(k, cluster, 'default', installer=True, extra_args=extra_args)
+            generate_rhcos_iso(k, f"{cluster}-sno", 'default', installer=True, extra_args=extra_args)
         elif config.type not in ['kvm', 'kubevirt']:
             pprint("Additional workflow not available on %s" % config.type)
             pprint("Embed iso.ign in rhcos live iso")
@@ -1206,7 +1206,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         else:
             iso_pool = data['pool'] or config.pool
             pprint(f"Storing generated iso in pool {iso_pool}")
-            generate_rhcos_iso(k, cluster, iso_pool, installer=True, extra_args=extra_args)
+            generate_rhcos_iso(k, f"{cluster}-sno", iso_pool, installer=True, extra_args=extra_args)
             if sno_virtual:
                 warning("Note that you can also get a sno vm simply by setting masters to 1")
                 pprint("Deploying sno vm")
@@ -1227,11 +1227,14 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 pprint("Launching install-complete step. It will be retried extra times in case of timeouts")
                 call(installcommand, shell=True)
             else:
-                warning("Add the following entry in /etc/hosts if needed")
-                dnsentries = ['api', 'console-openshift-console.apps', 'oauth-openshift.apps',
-                              'prometheus-k8s-openshift-monitoring.apps']
-                dnsentry = ' '.join(["%s.%s.%s" % (entry, cluster, domain) for entry in dnsentries])
-                warning("$your_node_ip %s" % dnsentry)
+                if api_ip is not None:
+                    update_etc_hosts(cluster, domain, api_ip)
+                else:
+                    warning("Add the following entry in /etc/hosts if needed")
+                    dnsentries = ['api', 'console-openshift-console.apps', 'oauth-openshift.apps',
+                                  'prometheus-k8s-openshift-monitoring.apps']
+                    dnsentry = ' '.join(["%s.%s.%s" % (entry, cluster, domain) for entry in dnsentries])
+                    warning("$your_node_ip %s" % dnsentry)
                 c = os.environ['KUBECONFIG']
                 kubepassword = open("%s/auth/kubeadmin-password" % clusterdir).read()
                 console = f"https://console-openshift-console.apps.{cluster}.{domain}"
@@ -1245,11 +1248,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             else:
                 master_overrides = overrides.copy()
                 master_overrides['role'] = 'master'
-                config.create_openshift_iso(cluster, overrides=master_overrides)
+                config.create_openshift_iso(cluster, overrides=master_overrides, installer=True)
         if sno_workers:
             worker_overrides = overrides.copy()
             worker_overrides['role'] = 'worker'
-            config.create_openshift_iso(cluster, overrides=worker_overrides)
+            config.create_openshift_iso(cluster, overrides=worker_overrides, installer=True)
         sys.exit(0)
     call('openshift-install --dir=%s --log-level=%s create ignition-configs' % (clusterdir, log_level), shell=True)
     for role in ['master', 'worker']:

@@ -10,7 +10,7 @@
 
 {{ cluster }}-sno:
  domain: {{ domain }} 
- iso: {{ cluster }}.iso
+ iso: {{ cluster }}-sno.iso
  pool: {{ pool or config_pool }}
  enableroot: false 
  flavor: {{ flavor }}
