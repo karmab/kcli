@@ -1227,7 +1227,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 pprint("Launching install-complete step. It will be retried extra times in case of timeouts")
                 call(installcommand, shell=True)
             else:
-                if api_ip is not None:
+                if ignore_hosts:
+                    warning("Not updating /etc/hosts as per your request")
+                elif api_ip is not None:
                     update_etc_hosts(cluster, domain, api_ip)
                 else:
                     warning("Add the following entry in /etc/hosts if needed")
