@@ -101,6 +101,7 @@ sno_cloud_remove_lb: true
 sno_disable_nics: []
 sno_masters: false
 sno_workers: false
+sno_wait: true
 metal3: False
 metal3_provisioning_enable: false
 metal3_provisioning_net: provisioning

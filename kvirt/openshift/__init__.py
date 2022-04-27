@@ -385,6 +385,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'sno_virtual': False,
             'sno_masters': False,
             'sno_workers': False,
+            'sno_wait': True,
             'sno_disable_nics': [],
             'notify': False,
             'async': False,
@@ -424,9 +425,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     sno = data.get('sno', False)
     ignore_hosts = data.get('ignore_hosts', False)
     if sno:
-        sno_virtual = data.get('sno_virtual', False)
-        sno_masters = data.get('sno_masters', False)
-        sno_workers = data.get('sno_workers', False)
+        sno_virtual = data.get('sno_virtual')
+        sno_masters = data.get('sno_masters')
+        sno_workers = data.get('sno_workers')
+        sno_wait = data.get('sno_wait')
         if sno_virtual:
             sno_memory = data.get('master_memory', data.get('memory', 8192))
             if sno_memory < 20480:
@@ -1213,37 +1215,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 result = config.plan(plan, inputfile='%s/sno.yml' % plandir, overrides=data)
                 if result['result'] != 'success':
                     sys.exit(1)
-                if ignore_hosts:
                     warning("Not updating /etc/hosts as per your request")
-                elif api_ip is None:
+                if api_ip is None and not ignore_hosts:
                     while api_ip is None:
                         api_ip = k.info(sno_name).get('ip')
                         pprint("Waiting 5s to retrieve sno ip...")
                         sleep(5)
-                update_etc_hosts(cluster, domain, api_ip)
-                installcommand = 'openshift-install --dir=%s --log-level=%s wait-for install-complete' % (clusterdir,
-                                                                                                          log_level)
-                installcommand = ' || '.join([installcommand for x in range(retries)])
-                pprint("Launching install-complete step. It will be retried extra times in case of timeouts")
-                call(installcommand, shell=True)
-            else:
-                if ignore_hosts:
-                    warning("Not updating /etc/hosts as per your request")
-                elif api_ip is not None:
-                    update_etc_hosts(cluster, domain, api_ip)
-                else:
-                    warning("Add the following entry in /etc/hosts if needed")
-                    dnsentries = ['api', 'console-openshift-console.apps', 'oauth-openshift.apps',
-                                  'prometheus-k8s-openshift-monitoring.apps']
-                    dnsentry = ' '.join(["%s.%s.%s" % (entry, cluster, domain) for entry in dnsentries])
-                    warning("$your_node_ip %s" % dnsentry)
-                c = os.environ['KUBECONFIG']
-                kubepassword = open("%s/auth/kubeadmin-password" % clusterdir).read()
-                console = f"https://console-openshift-console.apps.{cluster}.{domain}"
-                info2(f"To access the cluster as the system:admin user when running 'oc', run export KUBECONFIG={c}")
-                info2(f"Access the Openshift web-console here: {console}")
-                info2(f"Login to the console with user: kubeadmin, password: {kubepassword}")
-                pprint(f"Plug {cluster}.iso to your target node to complete the installation")
         if sno_masters:
             if api_ip is None:
                 warning("sno masters requires api vip to be defined. Skipping")
@@ -1255,6 +1232,31 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             worker_overrides = overrides.copy()
             worker_overrides['role'] = 'worker'
             config.create_openshift_iso(cluster, overrides=worker_overrides, installer=True)
+        if ignore_hosts:
+            warning("Not updating /etc/hosts as per your request")
+        elif api_ip is not None:
+            update_etc_hosts(cluster, domain, api_ip)
+        else:
+            warning("Add the following entry in /etc/hosts if needed")
+            dnsentries = ['api', 'console-openshift-console.apps', 'oauth-openshift.apps',
+                          'prometheus-k8s-openshift-monitoring.apps']
+            dnsentry = ' '.join([f"{entry}.{cluster}.{domain}" for entry in dnsentries])
+            warning(f"$your_node_ip {dnsentry}")
+        if sno_wait:
+            installcommand = f'openshift-install --dir={clusterdir} --log-level={log_level} wait-for install-complete'
+            installcommand = ' || '.join([installcommand for x in range(retries)])
+            pprint("Launching install-complete step. It will be retried extra times in case of timeouts")
+            call(installcommand, shell=True)
+        else:
+            c = os.environ['KUBECONFIG']
+            kubepassword = open(f"{clusterdir}/auth/kubeadmin-password").read()
+            console = f"https://console-openshift-console.apps.{cluster}.{domain}"
+            info2(f"To access the cluster as the system:admin user when running 'oc', run export KUBECONFIG={c}")
+            info2(f"Access the Openshift web-console here: {console}")
+            info2(f"Login to the console with user: kubeadmin, password: {kubepassword}")
+            pprint(f"Plug {cluster}-sno.iso to your SNO node to complete the installation")
+            pprint(f"Plug {cluster}-master.iso to additional masters")
+            pprint(f"Plug {cluster}-worker.iso to additional masters")
         sys.exit(0)
     call('openshift-install --dir=%s --log-level=%s create ignition-configs' % (clusterdir, log_level), shell=True)
     for role in ['master', 'worker']:
