@@ -2689,7 +2689,8 @@ class Kconfig(Kbaseconfig):
                 warning("Iso only get generated for kvm type")
             else:
                 iso_pool = overrides.get('pool') or self.pool
-                generate_rhcos_iso(self.k, cluster, iso_pool, version=iso_version, podman=podman, installer=installer)
+                generate_rhcos_iso(self.k, f"{cluster}-{role}", iso_pool, version=iso_version, podman=podman,
+                                   installer=installer)
 
     def create_openshift_disconnected(self, plan, overrides={}):
         data = overrides

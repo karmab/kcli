@@ -1321,7 +1321,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             ignitionfile = '%s-master.ign' % cluster
             with open(ignitionfile, 'w') as f:
                 f.write(iso_data)
-            config.create_openshift_iso(ignitionfile, overrides=baremetal_iso_overrides, ignitionfile=ignitionfile,
+            baremetal_iso_overrides['role'] = 'master'
+            config.create_openshift_iso(cluster, overrides=baremetal_iso_overrides, ignitionfile=ignitionfile,
                                         podman=True, installer=True)
             os.remove(ignitionfile)
         else:
@@ -1411,7 +1412,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 ignitionfile = '%s-worker' % cluster
                 with open(ignitionfile, 'w') as f:
                     f.write(iso_data)
-                config.create_openshift_iso(ignitionfile, overrides=baremetal_iso_overrides, ignitionfile=ignitionfile,
+                baremetal_iso_overrides['role'] = 'worker'
+                config.create_openshift_iso(cluster, overrides=baremetal_iso_overrides, ignitionfile=ignitionfile,
                                             podman=True, installer=True)
                 os.remove(ignitionfile)
             else:
