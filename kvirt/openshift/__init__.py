@@ -393,6 +393,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'kubevirt_ignore_node_port': False,
             'baremetal': False,
             'sushy': False,
+            'localhost_fix': False,
             'retries': 2}
     data.update(overrides)
     if 'cluster' in overrides:
@@ -468,6 +469,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     metal3 = data.get('metal3')
     sushy = data.get('sushy')
     mdns = data.get('mdns', True)
+    localhost_fix = data.get('localhost_fix', False)
     kubevirt_api_service, kubevirt_api_service_node_port = False, False
     kubevirt_ignore_node_port = data['kubevirt_ignore_node_port']
     version = data.get('version')
@@ -1147,6 +1149,15 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 cmcmd += f"oc create cm -n openshift-infra sushy-credentials --from-file={tmpdir} --dry-run=client"
                 cmcmd += f" -o yaml > {dest}"
                 call(cmcmd, shell=True)
+    if localhost_fix:
+        localmaster = config.process_inputfile(cluster, f"{plandir}/99-localhost-fix.yaml",
+                                               overrides={'role': 'master'})
+        with open(f"{clusterdir}/openshift/99-localhost-fix-master.yaml", 'w') as _f:
+            _f.write(localmaster)
+        localworker = config.process_inputfile(cluster, f"{plandir}/99-localhost-fix.yaml",
+                                               overrides={'role': 'worker'})
+        with open(f"{clusterdir}/openshift/99-localhost-fix-worker.yaml", 'w') as _f:
+            _f.write(localworker)
     if sno:
         sno_name = "%s-sno" % cluster
         sno_files = []
