@@ -1227,10 +1227,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             else:
                 master_overrides = overrides.copy()
                 master_overrides['role'] = 'master'
+                master_overrides['image'] = 'rhcos410'
                 config.create_openshift_iso(cluster, overrides=master_overrides, installer=True)
         if sno_workers:
             worker_overrides = overrides.copy()
             worker_overrides['role'] = 'worker'
+            worker_overrides['image'] = 'rhcos410'
             config.create_openshift_iso(cluster, overrides=worker_overrides, installer=True)
         if ignore_hosts:
             warning("Not updating /etc/hosts as per your request")
