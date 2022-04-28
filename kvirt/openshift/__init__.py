@@ -1193,7 +1193,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if sno_masters:
             ingress = config.process_inputfile(cluster, f"{plandir}/customisation/99-ingress-controller.yaml",
                                                overrides={'role': 'master', 'cluster': cluster, 'domain': domain,
-                                                          'replicas': masters})
+                                                          'replicas': 3})
             with open(f"{clusterdir}/openshift/99-ingress-controller.yaml", 'w') as _f:
                 _f.write(ingress)
         pprint("Generating bootstrap-in-place ignition")

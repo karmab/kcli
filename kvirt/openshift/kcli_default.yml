@@ -21,7 +21,7 @@ network: default
 worker_network:
 api_ip: 
 ingress_ip: 
-masters: 1
+masters: 3
 workers: 0
 fips: false
 cluster: testk
