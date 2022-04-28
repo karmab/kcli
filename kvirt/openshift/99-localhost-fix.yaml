@@ -10,7 +10,7 @@ spec:
       version: 3.2.0
     systemd:
       units:
-      - name: localhost-master-fix.service
+      - name: localhost-{{ role }}-fix.service
         enabled: true
         contents: |
           [Unit]
