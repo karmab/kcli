@@ -10,7 +10,7 @@ spec:
       version: 3.2.0
     systemd:
       units:
-      - name: localhost-{{ role }}-fix.service
+      - name: localhost-fix.service
         enabled: true
         contents: |
           [Unit]
@@ -29,3 +29,4 @@ spec:
              else echo Hostname properly set; exit 0 ; fi"
           [Install]
           WantedBy=multi-user.target
+

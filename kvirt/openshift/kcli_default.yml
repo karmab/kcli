@@ -102,6 +102,7 @@ sno_disable_nics: []
 sno_masters: false
 sno_workers: false
 sno_wait: true
+sno_localhost_fix: false
 metal3: False
 metal3_provisioning_enable: false
 metal3_provisioning_net: provisioning
@@ -126,4 +127,3 @@ workers_threaded: false
 tempkey: false
 kubeadmin_password:
 retries: 2
-localhost_fix: false
