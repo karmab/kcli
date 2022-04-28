@@ -1190,6 +1190,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                                                    overrides={'role': 'worker'})
             with open(f"{clusterdir}/openshift/99-localhost-fix-worker.yaml", 'w') as _f:
                 _f.write(localworker)
+        if sno_masters:
+            ingress = config.process_inputfile(cluster, f"{plandir}/customisation/99-ingress-controller.yaml",
+                                               overrides={'role': 'master', 'cluster': cluster, 'domain': domain,
+                                                          'replicas': masters})
+            with open(f"{clusterdir}/openshift/99-ingress-controller.yaml", 'w') as _f:
+                _f.write(ingress)
         pprint("Generating bootstrap-in-place ignition")
         run = call('openshift-install --dir=%s --log-level=%s create single-node-ignition-config' % (clusterdir,
                                                                                                      log_level),
