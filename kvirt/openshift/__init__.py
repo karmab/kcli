@@ -480,6 +480,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if os.path.exists('openshift-install'):
         pprint("Removing old openshift-install")
         os.remove('openshift-install')
+    if os.path.exists('coreos-installer'):
+        pprint("Removing old coreos-installer")
+        os.remove('coreos-installer')
     minimal = data.get('minimal')
     if version not in ['ci', 'nightly', 'stable']:
         error(f"Incorrect version {version}")
