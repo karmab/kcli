@@ -19,8 +19,8 @@ fi
 {% endif %}
 
 {% if sno_dns %}
-cp /opt/openshift/master.ign /opt/openshift/master.ign.ori
-cat /opt/openshift/master.ign.ori | jq ".storage.files |= . + [{\"filesystem\": \"root\", \"mode\": 420, \"path\": \"/etc/hostname\", \"contents\": {\"source\":\"data:,{{ cluster }}-sno.{{ domain }}%0A\",\"verification\": {}}}]" > /opt/openshift/master.ign
+[ -f /opt/openshift/master.ign.ori ] || cp /opt/openshift/master.ign /opt/openshift/master.ign.ori
+cat /opt/openshift/master.ign.ori | jq ".storage.files |= . + [{\"mode\": 420, \"path\": \"/etc/hostname\", \"contents\": {\"source\":\"data:,{{ cluster }}-sno.{{ domain }}%0A\",\"verification\": {}}}]" > /opt/openshift/master.ign
 {% endif %}
 
 firstboot_args='console=tty0 rd.neednet=1 {{ extra_args|default("") }}'
