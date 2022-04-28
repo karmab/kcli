@@ -2026,7 +2026,7 @@ def generate_rhcos_iso(k, cluster, pool, version='latest', podman=False, install
         if not os.path.exists('/Users'):
             coreosinstaller += " -v /run/udev:/run/udev"
         coreosinstaller += " quay.io/coreos/coreos-installer:release"
-        isocmd = "f{coreosinstaller} iso ignition embed -fi iso.ign -o {name} {baseiso}"
+        isocmd = f"{coreosinstaller} iso ignition embed -fi iso.ign -o {name} {baseiso}"
     else:
         coreosinstaller = "coreos-installer"
         destiso = f"{poolpath}/{name}"
