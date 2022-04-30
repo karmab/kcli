@@ -347,15 +347,15 @@ def delete_vm(args):
                 if os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
                     with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
                         installparam = yaml.safe_load(install)
-                        kubetype = installparam.get('kubetype', 'kubectl')
+                        kubetype = installparam.get('kubetype', 'generic')
                         binary = 'oc' if kubetype == 'openshift' else 'kubectl'
-                        domain = installparam.get('domain')
-                        target_node = f"{name}.{domain}" if domain is not None else name
-                        try:
-                            pprint(f"Deleting node {target_node} from your cluster")
-                            call(f'{binary} delete node {target_node}', shell=True)
-                        except:
-                            continue
+                        nodescmd = f'{binary} get node -o name'
+                        nodes = [n.strip().replace('node/', '') for n in os.popen(nodescmd).readlines()]
+                        for node in nodes:
+                            if node.split('.')[0] == name:
+                                pprint(f"Deleting node {node} from your cluster")
+                                call(f'{binary} delete node {node}', shell=True)
+                                break
     sys.exit(1 if 1 in codes else 0)
 
 
