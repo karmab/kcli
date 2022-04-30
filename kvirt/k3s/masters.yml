@@ -1,4 +1,5 @@
-{% for number in range(1, masters) %}
+{% set first_master = 0 if scale|default(False) else 1 %}
+{% for number in range(first_master, masters) %}
 {% if extra_master_networks %}
  {% set extra_networks = extra_master_networks %}
 {% endif %}

@@ -28,6 +28,7 @@ def scale(config, plandir, cluster, overrides):
     os.chdir(os.path.expanduser("~/.kcli"))
     for role in ['masters', 'workers']:
         overrides = data.copy()
+        overrides['scale'] = True
         threaded = data.get('threaded', False) or data.get(f'{role}_threaded', False)
         if role == 'masters' and overrides.get('masters', 1) == 1:
             continue
