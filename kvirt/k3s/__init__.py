@@ -32,6 +32,8 @@ def scale(config, plandir, cluster, overrides):
         threaded = data.get('threaded', False) or data.get(f'{role}_threaded', False)
         if role == 'masters' and overrides.get('masters', 1) == 1:
             continue
+        if role == 'workers' and overrides.get('workers', 0) == 0:
+            continue
         config.plan(plan, inputfile='%s/%s.yml' % (plandir, role), overrides=overrides, threaded=threaded)
 
 
