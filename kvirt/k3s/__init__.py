@@ -11,7 +11,7 @@ cloudplatforms = ['aws', 'gcp']
 
 def scale(config, plandir, cluster, overrides):
     plan = cluster
-    data = {'cluster': cluster, 'kube': cluster, 'kubetype': 'k3s', 'image': 'ubuntu2004'}
+    data = {'cluster': cluster, 'kube': cluster, 'kubetype': 'k3s', 'image': 'ubuntu2004', 'sdn': 'flannel'}
     data['basedir'] = '/workdir' if container_mode() else '.'
     cluster = data.get('cluster')
     clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
@@ -21,6 +21,7 @@ def scale(config, plandir, cluster, overrides):
             data.update(installparam)
             plan = installparam.get('plan', plan)
     data.update(overrides)
+    sdn = data['sdn']
     with open("%s/kcli_parameters.yml" % clusterdir, 'w') as paramfile:
         yaml.safe_dump(data, paramfile)
     client = config.client
@@ -30,8 +31,17 @@ def scale(config, plandir, cluster, overrides):
         overrides = data.copy()
         overrides['scale'] = True
         threaded = data.get('threaded', False) or data.get(f'{role}_threaded', False)
-        if role == 'masters' and overrides.get('masters', 1) == 1:
-            continue
+        if role == 'masters':
+            if overrides.get('masters', 1) == 1:
+                continue
+            install_k3s_args = []
+            for arg in data:
+                if arg.startswith('install_k3s'):
+                    install_k3s_args.append("%s=%s" % (arg.upper(), data[arg]))
+            if sdn is None or sdn != 'flannel':
+                install_k3s_args.append("INSTALL_K3S_EXEC='--flannel-backend=none'")
+            install_k3s_args = ' '.join(install_k3s_args)
+            overrides['install_k3s_args'] = install_k3s_args
         if role == 'workers' and overrides.get('workers', 0) == 0:
             continue
         config.plan(plan, inputfile='%s/%s.yml' % (plandir, role), overrides=overrides, threaded=threaded)
