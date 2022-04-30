@@ -224,14 +224,6 @@ class Ksphere:
             opt.key = entry
             opt.value = metadata[entry]
             confspec.extraConfig.append(opt)
-        iso_warning_opt = vim.option.OptionValue()
-        iso_warning_opt.key = "cdrom.showIsoLockWarning"
-        iso_warning_opt.value = False
-        confspec.extraConfig.append(iso_warning_opt)
-        answer_opt = vim.option.OptionValue()
-        answer_opt.key = "msg.autoanswer"
-        answer_opt.value = True
-        confspec.extraConfig.append(answer_opt)
         confspec.guestId = 'centos7_64Guest'
         vmfi = vim.vm.FileInfo()
         filename = "[" + default_pool + "]"
@@ -814,6 +806,20 @@ class Ksphere:
         if vm is None:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         c = changecd(self.si, vm, iso)
+        if iso is None:
+            answered = False
+            timeout = 0
+            while not answered:
+                question = vm.runtime.question
+                if question is not None:
+                    pprint(f"Answering {vm.runtime.question.text}")
+                    choice = vm.runtime.question.choice.choiceInfo[0].key
+                    vm.AnswerVM(question.id, choice)
+                    answered = True
+                elif timeout > 20:
+                    break
+                else:
+                    time.sleep(5)
         waitForMe(c)
         return {'result': 'success'}
 
