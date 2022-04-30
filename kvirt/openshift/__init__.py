@@ -933,6 +933,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     manifestsdir = pwd_path("manifests")
     if os.path.exists(manifestsdir) and os.path.isdir(manifestsdir):
         for f in glob("%s/*.y*ml" % manifestsdir):
+            pprint(f"Injecting manifest {f}")
             copy2(f, "%s/openshift" % clusterdir)
     for yamlfile in glob(f"{clusterdir}/*.yaml"):
         if os.stat(yamlfile).st_size == 0:
@@ -1230,7 +1231,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             pprint(f"Storing generated iso in pool {iso_pool}")
             generate_rhcos_iso(k, f"{cluster}-sno", iso_pool, installer=True, extra_args=extra_args)
             if sno_virtual:
-                warning("Note that you can also get a sno vm simply by setting masters to 1")
+                warning("You can also get a sno by setting masters to 1")
                 pprint("Deploying sno vm")
                 result = config.plan(plan, inputfile='%s/sno.yml' % plandir, overrides=data)
                 if result['result'] != 'success':
