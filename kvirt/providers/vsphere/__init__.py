@@ -665,6 +665,8 @@ class Ksphere:
         vms = []
         folder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
         all_vms = get_all_obj(content, [vim.VirtualMachine], folder=folder)
+        if not all_vms:
+            return vms
         prop_collector = content.propertyCollector
         props = ['runtime', 'config', 'summary', 'guest']
         filter_spec = create_filter_spec(all_vms, props)
