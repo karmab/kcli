@@ -108,6 +108,9 @@ def create(config, plandir, cluster, overrides):
             installparam['image'] = image
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     if os.path.exists("manifests") and os.path.isdir("manifests"):
+        for arg in data.get('extra_master_args', []):
+            if arg.startswith('data_dir='):
+                data['data_dir'] = arg.split('=')[1]
         data['files'] = [{"path": "/root/manifests", "currentdir": True, "origin": "manifests"}]
     k = config.k
     bootstrap_overrides = data.copy()
