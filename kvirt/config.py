@@ -2606,15 +2606,16 @@ class Kconfig(Kbaseconfig):
                              direct=False):
         metal_url = None
         iso_version = str(overrides.get('version', 'latest'))
-        if iso_version not in ['latest', 'pre-release'] and not iso_version.startswith('4.'):
-            error("Incorrect live iso version. Choose between latest, pre-release or 4.X")
-            sys.exit(1)
-        elif iso_version.startswith('4.'):
-            minor_version = iso_version.split('.')[1]
-            if minor_version.isdigit() and int(minor_version) < 6:
-                metal_url = f"https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/{iso_version}/latest/"
-                metal_url += "rhcos-metal.x86_64.raw.gz"
-                warning("Embedding metal url in iso for target version and installing with a more recent iso")
+        if not installer:
+            if iso_version not in ['latest', 'pre-release'] and not iso_version.startswith('4.'):
+                error("Incorrect live iso version. Choose between latest, pre-release or 4.X")
+                sys.exit(1)
+            elif iso_version.startswith('4.'):
+                minor_version = iso_version.split('.')[1]
+                if minor_version.isdigit() and int(minor_version) < 6:
+                    metal_url = f"https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/{iso_version}/latest"
+                    metal_url += "/rhcos-metal.x86_64.raw.gz"
+                    warning("Embedding metal url in iso for target version and installing with a more recent iso")
                 iso_version = 'latest'
         api_ip = overrides.get('api_ip')
         domain = overrides.get('domain')
