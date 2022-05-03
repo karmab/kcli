@@ -1,0 +1,16 @@
+apiVersion: "k8s.cni.cncf.io/v1"
+kind: NetworkAttachmentDefinition
+metadata:
+  name: {{ ocs_cluster_network }}
+  namespace: openshift-storage
+spec:
+  config: '{
+  	"cniVersion": "0.3.1",
+  	"type": "macvlan",
+  	"master": "{{ ocs_cluster_interface }}",
+  	"mode": "bridge",
+  	"ipam": {
+    	    "type": "whereabouts",
+    	    "range": "192.168.2.0/24"
+  	}
+  }'
