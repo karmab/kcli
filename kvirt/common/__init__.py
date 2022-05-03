@@ -295,14 +295,20 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             warning("no valid public keys found in .ssh/.kcli directories, you might have trouble accessing the vm")
         if keys:
             for key in list(set(keys)):
-                newkey = key
                 if os.path.exists(os.path.expanduser(key)):
                     keypath = os.path.expanduser(key)
                     newkey = open(keypath, 'r').read().rstrip()
+                else:
+                    newkey = key.rstrip()
                 if not newkey.startswith('ssh-'):
                     warning(f"Skipping invalid key {key}")
                     continue
                 userdata += "- %s\n" % newkey
+        if publickeyfile is not None:
+            with open(publickeyfile, 'r') as ssh:
+                key = ssh.read().rstrip()
+                if key not in keys:
+                    userdata += "- %s\n" % key
         tempkeydir = overrides.get('tempkeydir')
         if tempkeydir is not None:
             if not keys:
@@ -312,10 +318,6 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             if not os.path.exists(privatekeyfile):
                 tempkeycmd = f"echo n | ssh-keygen -q -t rsa -N '' -C 'temp-kcli-key' -f {privatekeyfile}"
                 os.system(tempkeycmd)
-        if publickeyfile is not None:
-            with open(publickeyfile, 'r') as ssh:
-                key = ssh.read().rstrip()
-                userdata += "- %s\n" % key
         if cmds:
             data = process_cmds(cmds, overrides)
             if data != '':
