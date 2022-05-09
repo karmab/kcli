@@ -1764,9 +1764,9 @@ def scale_generic_kube(args):
         paramfile = "kcli_parameters.yml"
         pprint("Using default parameter file kcli_parameters.yml")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    if overrides.get('masters') is None and args.masters is not None:
+    if args.masters is not None:
         overrides['masters'] = args.masters
-    if overrides.get('workers') is None and args.workers is not None:
+    if args.workers is not None:
         overrides['workers'] = args.workers
     config.scale_kube_generic(cluster, overrides=overrides)
 
@@ -1791,9 +1791,9 @@ def scale_k3s_kube(args):
         pprint("Using default parameter file kcli_parameters.yml")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
-    if overrides.get('masters') is None and args.masters is not None:
+    if args.masters is not None:
         overrides['masters'] = args.masters
-    if overrides.get('workers') is None and args.workers is not None:
+    if args.workers is not None:
         overrides['workers'] = args.workers
     config.scale_kube_k3s(cluster, overrides=overrides)
 
@@ -1817,7 +1817,7 @@ def scale_hypershift_kube(args):
         paramfile = "kcli_parameters.yml"
         pprint("Using default parameter file kcli_parameters.yml")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    if overrides['workers'] is None and args.workers is not None:
+    if args.workers is not None:
         overrides['workers'] = args.workers
     config.scale_kube_hypershift(cluster, overrides=overrides)
 
@@ -1841,9 +1841,9 @@ def scale_openshift_kube(args):
         paramfile = "kcli_parameters.yml"
         pprint("Using default parameter file kcli_parameters.yml")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    if overrides.get('masters') is None and args.masters is not None:
+    if args.masters is not None:
         overrides['masters'] = args.masters
-    if overrides.get('workers') is None and args.workers is not None:
+    if args.workers is not None:
         overrides['workers'] = args.workers
     config.scale_kube_openshift(cluster, overrides=overrides)
 
