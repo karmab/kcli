@@ -19,8 +19,10 @@ VERSION=$(dnf --showduplicates list kubectl  | grep kubectl | grep {{ version }}
 VERSION=$(dnf --showduplicates list kubectl  | grep kubectl | tail -1 | awk '{print $2}' | xargs)
 {% endif %}
 
+TARGET={{ 'fedora' if 'fedora' in image|lower else 'centos' }}
+[ "$TARGET" == 'fedora' ] && dnf -y remove zram-generator-defaults && swapoff -a
 {% if engine == 'docker' %}
-dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
+dnf config-manager --add-repo=https://download.docker.com/linux/$TARGET/docker-ce.repo
 dnf -y install -y docker-ce iptables --nobest
 export PATH=/sbin:$PATH
 systemctl enable --now docker
@@ -43,7 +45,7 @@ sed -i 's@conmon = .*@conmon = "/bin/conmon"@' /etc/crio/crio.conf
 systemctl enable --now crio
 {% else %}
 yum install -y yum-utils device-mapper-persistent-data lvm2
-yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+yum-config-manager --add-repo https://download.docker.com/linux/$TARGET/docker-ce.repo
 yum install -y containerd.io
 mkdir -p /etc/containerd
 containerd config default > /etc/containerd/config.toml
@@ -52,7 +54,7 @@ systemctl restart containerd
 {% endif %}
 {% endif %}
 
-dnf -y install -y kubelet-$VERSION kubectl-$VERSION kubeadm-$VERSION git
+dnf -y install -y kubelet-$VERSION kubectl-$VERSION kubeadm-$VERSION git openssl
 {% if engine == 'crio' %}
 echo KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime-endpoint=unix:///var/run/crio/crio.sock > /etc/sysconfig/kubelet
 {% endif %}

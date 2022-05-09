@@ -47,7 +47,7 @@ containerd config default > /etc/containerd/config.toml
 systemctl restart containerd
 {% endif %}
 {% endif %}
-apt-get -y install kubelet=$VERSION kubectl=$VERSION kubeadm=$VERSION
+apt-get -y install kubelet=$VERSION kubectl=$VERSION kubeadm=$VERSION openssl
 {% if engine == 'crio' %}
 echo KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime-endpoint=unix:///var/run/crio/crio.sock > /etc/default/kubelet
 {% endif %}

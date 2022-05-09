@@ -1,7 +1,7 @@
 info: |
     Deploys kubernetes using kubeadm on an arbitrary number of masters and workers.
     when using more than a master, a vip is used with keepalived
-    default image is centos8stream, but there's also support for ubuntu based ones
+    default image is centos8stream, but there's also support for ubuntu based ones and fedora
     version can be let blank to get latest, or specified as x.yy or x.yy.z
     sdn can be choosen between flannel, weavenet, calico, canal, romana or cilium
     nfs can be set to deploy an initial set of pvcs on the first master node
