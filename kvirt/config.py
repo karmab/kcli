@@ -2662,7 +2662,10 @@ class Kconfig(Kbaseconfig):
                 templ = env.get_template(os.path.basename("ignition.j2"))
                 if hosts_content is not None:
                     hosts_content = base64.b64encode(hosts_content.encode()).decode("UTF-8")
-                ignition_url = f"http://{api_ip}:22624/config/{role}"
+                if ':' in api_ip:   # IPv6 address
+                    ignition_url = f"http://[{api_ip}]:22624/config/{role}"
+                else:               # IPv4 address
+                    ignition_url = f"http://{api_ip}:22624/config/{role}"
                 finaldata = templ.render(ignition_url=ignition_url, hosts_content=hosts_content,
                                          ignition_version=ignition_version)
             if direct:
