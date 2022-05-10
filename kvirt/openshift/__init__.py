@@ -695,6 +695,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             installparam['image'] = image
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     data['pub_key'] = open(pub_key).read().strip()
+    if not data['pub_key'].startswith('ssh-'):
+        error(f"File {pub_key} doesnt seem to contain a valid public key")
+        sys.exit(1)
     if platform in virtplatforms and disconnected_deploy:
         disconnected_vm = "%s-disconnected" % data.get('disconnected_reuse_name', cluster)
         pprint("Deploying disconnected vm %s" % disconnected_vm)
