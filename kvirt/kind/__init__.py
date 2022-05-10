@@ -1,4 +1,4 @@
-from kvirt.common import success, info2, error
+from kvirt.common import success, info2, error, warning
 from kvirt.common import scp, _ssh_credentials, get_ssh_pub_key
 import os
 import sys
@@ -31,6 +31,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             installparam['plan'] = plan
             installparam['kubetype'] = 'kind'
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
+    if os.path.exists('cni_bin'):
+        warning("Disabling default cni to use yours instead")
+        data['cni_bin_path'] = f"{os.getcwd()}/cni_bin"
+        data['disable_default_cni'] = True
     result = config.plan(plan, inputfile='%s/kcli_plan.yml' % plandir, overrides=data)
     if result['result'] != 'success':
         sys.exit(1)

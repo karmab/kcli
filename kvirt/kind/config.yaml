@@ -4,9 +4,19 @@ name: {{ cluster }}
 nodes:
 {% for master in range (0, masters) %}
 - role: control-plane
+{% if cni_bin_path is defined %}
+  extraMounts:
+  - hostPath: /root/cni_bin
+    containerPath: /opt/cni/bin
+{% endif %}
 {% endfor %}
 {% for worker in range (0, workers) %}
 - role: control-plane
+{% if cni_bin_path is defined %}
+  extraMounts:
+  - hostPath: /root/cni_bin
+    containerPath: /opt/cni/bin
+{% endif %}
 {% endfor %}
 {% if feature_gates %}
 featureGates:

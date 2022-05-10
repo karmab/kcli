@@ -26,3 +26,7 @@
   files:
   - path: /root/{{ cluster }}-config.yaml
     origin: config.yaml
+{% if cni_bin_path is defined %}
+  - path: /root/cni_bin
+    origin: {{ cni_bin_path }}
+{% endif %}

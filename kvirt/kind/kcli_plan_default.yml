@@ -1,6 +1,7 @@
 info: |
   Deploy kubernetes using kind on a single vm
   Several masters and workers can be specified
+  You can put your cni binaries in a directory called cni_bin to inject them
 image : centos8stream
 numcpus: 4
 memory: 8192
