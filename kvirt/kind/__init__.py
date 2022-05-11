@@ -4,6 +4,8 @@ import os
 import sys
 import yaml
 
+CNI_DIR = 'cni_bin'
+
 
 def create(config, plandir, cluster, overrides, dnsconfig=None):
     k = config.k
@@ -31,9 +33,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             installparam['plan'] = plan
             installparam['kubetype'] = 'kind'
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
-    if os.path.exists('cni_bin'):
-        warning("Disabling default cni to use yours instead")
-        data['cni_bin_path'] = f"{os.getcwd()}/cni_bin"
+    if os.path.exists(CNI_DIR) and os.path.isdir(CNI_DIR):
+        warning("Disabling default CNI to use yours instead")
+        if not os.listdir(CNI_DIR):
+            error("No CNI plugin provided, aborting...")
+            sys.exit(1)
+        data['cni_bin_path'] = f"{os.getcwd()}/{CNI_DIR}"
         data['disable_default_cni'] = True
     result = config.plan(plan, inputfile='%s/kcli_plan.yml' % plandir, overrides=data)
     if result['result'] != 'success':
