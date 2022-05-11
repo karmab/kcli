@@ -814,7 +814,7 @@ class Ksphere:
             while not answered:
                 question = vm.runtime.question
                 if question is not None:
-                    pprint(f"Answering {vm.runtime.question.text}")
+                    pprint(f"Answering the following question automatically\n{vm.runtime.question.text}")
                     choice = vm.runtime.question.choice.choiceInfo[0].key
                     vm.AnswerVM(question.id, choice)
                     answered = True
