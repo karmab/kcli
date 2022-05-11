@@ -307,7 +307,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
         if publickeyfile is not None:
             with open(publickeyfile, 'r') as ssh:
                 key = ssh.read().rstrip()
-                if key not in keys:
+                if keys is None or key not in keys:
                     userdata += "- %s\n" % key
         tempkeydir = overrides.get('tempkeydir')
         if tempkeydir is not None:
