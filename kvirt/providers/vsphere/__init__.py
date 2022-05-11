@@ -7,7 +7,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from distutils.spawn import find_executable
 from kvirt import common
-from kvirt.common import error, pprint
+from kvirt.common import error, pprint, warning
 from kvirt.defaults import UBUNTUS, METADATA_FIELDS
 from pyVmomi import vim, vmodl
 from pyVim import connect
@@ -301,6 +301,7 @@ class Ksphere:
                 else:
                     netname = 'VM Network'
             if index < len(currentnics):
+                currentnetwork = None
                 currentnic = currentnics[index]
                 try:
                     currentnetwork = currentnic.backing.deviceName
@@ -311,7 +312,9 @@ class Ksphere:
                         if self.portgs[dvsnet][0] == currentswitchuuid and\
                                 self.portgs[dvsnet][1] == currentportgroupkey:
                             currentnetwork = dvsnet
-                if currentnetwork != netname:
+                if currentnetwork is None:
+                    warning(f"Couldn't figure out network associated to nic {index}")
+                elif currentnetwork != netname:
                     if netname in self.portgs:
                         switchuuid = self.portgs[netname][0]
                         portgroupkey = self.portgs[netname][1]
