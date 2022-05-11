@@ -2,7 +2,7 @@
 subscription-manager repos --enable rhocp-4.8-for-rhel-8-x86_64-rpms
 {% else %}
 CRIO_VERSION=1.$(kubectl version -o yaml | grep minor | cut -d: -f2 | sed 's/"//g' | xargs)
-{% if 'fedora' in image %}
+{% if 'fedora' in image|lower %}
 dnf module enable -y cri-o:$CRIO_VERSION
 {% else %}
 #OS="CentOS_8"
