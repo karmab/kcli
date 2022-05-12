@@ -1266,7 +1266,7 @@ class Kvirt(object):
             try:
                 storagepool.refresh(0)
             except Exception as e:
-                warning("Hit %s when refreshing pool %s" % (e, pool))
+                warning(f"Hit {e} when refreshing pool {pool}")
                 pass
             for volxml in volsxml[pool]:
                 storagepool.createXML(volxml, 0)
@@ -1275,7 +1275,7 @@ class Kvirt(object):
         if firstdisk is not None and ('rhcos' in image or 'fcos' in image) and cmdline is not None:
             bootdisk = '/dev/sda3'
             bootfile = "/boot/loader/entries/ostree-1-rhcos.conf"
-            cmd = "sudo virt-edit -a %s -m %s %s -e 's@^options@options %s@'" % (firstdisk, bootdisk, bootfile, cmdline)
+            cmd = f"sudo virt-edit -a {firstdisk} -m {bootdisk} {bootfile} -e 's@^options@options {cmdline}@'"
             if self.host == 'localhost' or self.host == '127.0.0.1':
                 if find_executable('virt-edit') is not None:
                     os.system(cmd)
@@ -1283,7 +1283,7 @@ class Kvirt(object):
                     warning("virt-edit missing from PATH. cmdline won't be injected")
             elif self.protocol == 'ssh':
                 cmd = cmd.replace("'", "\'")
-                cmd = 'ssh %s -p %s %s@%s "%s"' % (self.identitycommand, self.port, self.user, self.host, cmd)
+                cmd = f'ssh {self.identitycommand} -p {self.port} {self.user}@{self.host} "{cmd}"'
                 os.system(cmd)
         xml = vm.XMLDesc(0)
         vmxml = ET.fromstring(xml)
@@ -1303,7 +1303,7 @@ class Kvirt(object):
         try:
             vm = conn.lookupByName(name)
         except:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         status = vm.state()[0]
         if status == 3:
             try:
@@ -1328,7 +1328,7 @@ class Kvirt(object):
         try:
             vm = conn.lookupByName(name)
         except:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         if status[vm.isActive()] != "down":
             if soft:
                 vm.shutdown()
@@ -1342,19 +1342,19 @@ class Kvirt(object):
             vm = conn.lookupByName(base)
             vmxml = vm.XMLDesc(0)
         except:
-            return {'result': 'failure', 'reason': "VM %s not found" % base}
+            return {'result': 'failure', 'reason': f"VM {base} not found"}
         if listing:
             return vm.snapshotListNames()
         if revert and name not in vm.snapshotListNames():
-            return {'result': 'failure', 'reason': "Snapshot %s doesn't exist" % name}
+            return {'result': 'failure', 'reason': f"Snapshot {name} doesn't exist"}
         if delete and name not in vm.snapshotListNames():
-            return {'result': 'failure', 'reason': "Snapshot %s doesn't exist" % name}
+            return {'result': 'failure', 'reason': f"Snapshot {name} doesn't exist"}
         if delete:
             snap = vm.snapshotLookupByName(name)
             snap.delete()
             return {'result': 'success'}
         if not revert and name in vm.snapshotListNames():
-            return {'result': 'failure', 'reason': "Snapshot %s already exists" % name}
+            return {'result': 'failure', 'reason': f"Snapshot {name} already exists"}
         if revert:
             snap = vm.snapshotLookupByName(name)
             vm.revertToSnapshot(snap)
@@ -1381,7 +1381,7 @@ class Kvirt(object):
         try:
             vm = conn.lookupByName(name)
         except:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         if status[vm.isActive()] == "down":
             return {'result': 'success'}
         else:
@@ -1412,9 +1412,9 @@ class Kvirt(object):
         hostname = conn.getHostname()
         cpus = conn.getCPUMap()[0]
         totalmemory = conn.getInfo()[1]
-        print("Connection: %s" % self.url)
-        print("Host: %s" % hostname)
-        print("Cpus: %s" % cpus)
+        print(f"Connection: {self.url}")
+        print(f"Host: {hostname}")
+        print(f"Cpus: {cpus}")
         totalvms = 0
         usedmemory = 0
         for vm in conn.listAllDomains(0):
@@ -1430,8 +1430,8 @@ class Kvirt(object):
                 memory = float(memory) / 1024
                 memory = int(memory)
             usedmemory += memory
-        print("Vms Running: %s" % totalvms)
-        print("Total Memory Assigned: %sMB of %sMB" % (usedmemory, totalmemory))
+        print(f"Vms Running: {totalvms}")
+        print(f"Total Memory Assigned: {usedmemory}MB of {totalmemory}MB")
         for pool in conn.listAllStoragePools(VIR_CONNECT_LIST_STORAGE_POOLS_ACTIVE):
             poolname = pool.name()
             poolxml = pool.XMLDesc(0)
@@ -1443,17 +1443,17 @@ class Kvirt(object):
                 poolpath = list(root.iter('device'))[0].get('path')
             s = pool.info()
             used = "%.2f" % (float(s[2]) / 1024 / 1024 / 1024)
-            available = "%.2f" % (float(s[3]) / 1024 / 1024 / 1024)
+            avail = "%.2f" % (float(s[3]) / 1024 / 1024 / 1024)
             # Type,Status, Total space in Gb, Available space in Gb
             used = float(used)
-            available = float(available)
-            print(("Storage:%s Type: %s Path:%s Used space: %sGB Available space: %sGB" % (poolname, pooltype, poolpath,
-                                                                                           used, available)))
+            avail = float(avail)
+            msg = f"Storage:{poolname} Type: {pooltype} Path:{poolpath} Used space: {used}GB Available space: {avail}GB"
+            print(msg)
         try:
             for interface in conn.listInterfaces():
                 if interface == 'lo':
                     continue
-                print("Network: %s Type: bridged" % interface)
+                print(f"Network: {interface} Type: bridged")
         except libvirtError as e:
             if 'this function is not supported by the connection driver: virConnectNumOfInterfaces' in str(e):
                 warning("Network: system interfaces are unavailable")
@@ -1481,7 +1481,7 @@ class Kvirt(object):
                 dhcp = True
             else:
                 dhcp = False
-            print("Network: %s Type: routed Cidr: %s Dhcp: %s" % (networkname, cidr, dhcp))
+            print(f"Network: {networkname} Type: routed Cidr: {cidr} Dhcp: {dhcp}")
 
     def status(self, name):
         conn = self.conn
@@ -1505,7 +1505,7 @@ class Kvirt(object):
             vm = conn.lookupByName(name)
         except:
             error(f"VM {name} not found")
-            return {'result': 'failure', 'reason': "VM {name} not found"}
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         if not vm.isActive():
             error(f"VM {name} down")
             return
@@ -1530,17 +1530,17 @@ class Kvirt(object):
                     consolecommand += "ssh %s -o LogLevel=QUIET -f -p %s -L %s:127.0.0.1:%s %s@%s sleep 10;"\
                         % (self.identitycommand, self.port, localport, port, self.user, self.host)
                     host = '127.0.0.1'
-                url = "%s://%s:%s" % (protocol, host, localport)
+                url = f"{protocol}://{host}:{localport}"
                 if web:
                     if tunnel:
                         os.popen(consolecommand)
                     return url
                 if os.path.exists('/Applications') and os.path.exists('/Applications/RemoteViewer.app'):
-                    consolecommand += "open -a RemoteViewer --args %s &" % url
+                    consolecommand += f"open -a RemoteViewer --args {url} &"
                 else:
-                    consolecommand += "remote-viewer %s &" % url
+                    consolecommand += f"remote-viewer {url} &"
                 if self.debug or os.path.exists("/i_am_a_container"):
-                    msg = "Run the following command:\n%s" % consolecommand if not self.debug else consolecommand
+                    msg = f"Run the following command:\n{consolecommand}" if not self.debug else consolecommand
                     pprint(msg)
                 else:
                     os.popen(consolecommand)
@@ -1550,10 +1550,10 @@ class Kvirt(object):
         try:
             vm = conn.lookupByName(name)
         except:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         if not vm.isActive():
-            error("VM down")
+            error(f"VM {name} down")
             return
         else:
             xml = vm.XMLDesc(0)
@@ -1578,14 +1578,14 @@ class Kvirt(object):
                 if web:
                     return serialcommand
                 if self.debug or os.path.exists("/i_am_a_container"):
-                    msg = "Run the following command:\n%s" % serialcommand if not self.debug else serialcommand
+                    msg = f"Run the following command:\n{serialcommand}" if not self.debug else serialcommand
                     pprint(msg)
                 else:
                     os.system(serialcommand)
             elif self.host in ['localhost', '127.0.0.1']:
-                cmd = 'virsh -c %s console %s' % (self.url, name)
+                cmd = f'virsh -c {self.url} console {name}'
                 if self.debug or os.path.exists("/i_am_a_container"):
-                    msg = "Run the following command:\n%s" % cmd
+                    msg = f"Run the following command:\n{cmd}"
                     pprint(msg)
                 else:
                     os.system(cmd)
@@ -1601,7 +1601,7 @@ class Kvirt(object):
             try:
                 vm = conn.lookupByName(name)
             except:
-                error("VM %s not found" % name)
+                error(f"VM {name} not found")
                 return {}
         else:
             listinfo = True
@@ -1673,7 +1673,7 @@ class Kvirt(object):
         interfaces = list(root.iter('interface'))
         for index, element in enumerate(interfaces):
             networktype = element.get('type').replace('network', 'routed')
-            device = "eth%s" % index
+            device = f"eth{index}"
             mac = element.find('mac').get('address')
             if networktype == 'user':
                 network = 'user'
@@ -1833,7 +1833,7 @@ class Kvirt(object):
             try:
                 pool.refresh(0)
             except Exception as e:
-                warning("Hit %s when refreshing pool %s" % (e, poolname))
+                warning(f"Hit {e} when refreshing pool {poolname}")
                 continue
             poolxml = pool.XMLDesc(0)
             root = ET.fromstring(poolxml)
@@ -1845,12 +1845,12 @@ class Kvirt(object):
                 thinpool = list(root.iter('product'))[0].get('name')
                 for volume in self.thinimages(poolpath, thinpool):
                     if volume.endswith('qcow2') or volume.endswith('qc2') or volume in default_images:
-                        images.extend("%s/%s" % (poolpath, volume))
+                        images.extend(f"{poolpath}/{volume}")
             for volume in pool.listVolumes():
                 if volume.endswith('iso') or volume.endswith('fd'):
-                    isos.append("%s/%s" % (poolpath, volume))
+                    isos.append(f"{poolpath}/{volume}")
                 elif volume.endswith('qcow2') or volume.endswith('qc2') or volume in default_images:
-                    images.append("%s/%s" % (poolpath, volume))
+                    images.append(f"{poolpath}/{volume}")
         if iso:
             return sorted(isos, key=lambda s: s.lower())
         else:
@@ -1882,13 +1882,13 @@ class Kvirt(object):
         try:
             vm = conn.lookupByName(name)
         except:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         if vm.snapshotListNames():
             if not snapshots:
-                return {'result': 'failure', 'reason': "VM %s has snapshots" % name}
+                return {'result': 'failure', 'reason': f"VM {name} has snapshots"}
             else:
                 for snapshot in vm.snapshotListNames():
-                    pprint("Deleting snapshot %s" % snapshot)
+                    pprint(f"Deleting snapshot {snapshot}")
                     snap = vm.snapshotLookupByName(snapshot)
                     snap.delete()
         ip = self.ip(name)
@@ -1919,7 +1919,7 @@ class Kvirt(object):
                 imagefile = next(item for item in imagefiles if item is not None)
                 if imagefile.endswith('.iso'):
                     continue
-                elif imagefile.endswith("%s.ISO" % name) or "%s_" % name in imagefile or "%s.img" % name in imagefile:
+                elif imagefile.endswith(f"{name}.ISO") or f"{name}_" in imagefile or f"{name}.img" in imagefile:
                     disks.append(imagefile)
                 elif imagefile == name:
                     disks.append(imagefile)
@@ -1982,35 +1982,35 @@ class Kvirt(object):
                     iphost = host.get('ip')
                     hostname = host.get('name')
                     if hostmac == mac:
-                        hostentry = "<host mac='%s' name='%s' ip='%s'/>" % (mac, hostname, iphost)
+                        hostentry = f"<host mac='{mac}' name='{hostname}' ip='{iphost}'/>"
                         network.update(2, 4, 0, hostentry, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
                     hostname = host.find('hostname')
-                    matchinghostname = "%s.%s" % (name, domain) if domain is not None else name
+                    matchinghostname = f"{name}.{domain}" if domain is not None else name
                     if hostname is not None and (hostname.text == matchinghostname):
-                        hostentry = '<host ip="%s"><hostname>%s</hostname></host>' % (iphost, matchinghostname)
+                        hostentry = f'<host ip="{iphost}"><hostname>{matchinghostname}</hostname></host>'
                         network.update(2, 10, 0, hostentry, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
             except:
                 if networktype == 'bridge':
                     bridged = True
         if ip is not None:
-            os.system("ssh-keygen -q -R %s >/dev/null 2>&1" % ip)
+            os.system(f"ssh-keygen -q -R {ip} >/dev/null 2>&1")
             # delete hosts entry
             found = False
-            hostentry = "%s %s.* # KVIRT" % (ip, name)
+            hostentry = f"{ip} {name}.* # KVIRT"
             for line in open('/etc/hosts'):
                 if re.findall(hostentry, line):
                     found = True
                     break
             if found:
                 print("Deleting host entry. sudo password might be asked")
-                call("sudo sed -i '/%s/d' /etc/hosts" % hostentry, shell=True)
+                call(f"sudo sed -i '/{hostentry}/d' /etc/hosts", shell=True)
                 if bridged and self.host in ['localhost', '127.0.0.1']:
                     try:
                         call("sudo /usr/bin/systemctl restart dnsmasq", shell=True)
                     except:
                         pass
             if remotednsmasq and bridged and self.protocol == 'ssh' and self.host not in ['localhost', '127.0.0.1']:
-                deletecmd = "sed -i '/%s/d' /etc/hosts" % hostentry
+                deletecmd = f"sed -i '/{hostentry}/d' /etc/hosts"
                 if self.user != 'root':
                     deletecmd = "sudo %s" % deletecmd
                 deletecmd = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host,
@@ -2021,16 +2021,16 @@ class Kvirt(object):
                 try:
                     dnsmasqcmd = "/usr/bin/systemctl restart dnsmasq"
                     if self.user != 'root':
-                        dnsmasqcmd = "sudo %s" % dnsmasqcmd
+                        dnsmasqcmd = f"sudo {dnsmasqcmd}"
                     dnsmasqcmd = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host,
                                                                 dnsmasqcmd)
                     call(dnsmasqcmd, shell=True)
                 except:
                     pass
         if ignition:
-            ignitionpath = '/var/lib/libvirt/images/%s' % name
+            ignitionpath = f'/var/lib/libvirt/images/{name}'
             if self.protocol == 'ssh' and self.host not in ['localhost', '127.0.0.1']:
-                ignitiondeletecmd = "ls %s.ign >/dev/null 2>&1 && rm -f %s.ign" % (ignitionpath, ignitionpath)
+                ignitiondeletecmd = f"ls {ignitionpath}.ign >/dev/null 2>&1 && rm -f {ignitionpath}.ign"
                 ignitiondeletecmd = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user,
                                                                    self.host, ignitiondeletecmd)
                 call(ignitiondeletecmd, shell=True)
