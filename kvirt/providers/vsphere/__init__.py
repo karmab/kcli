@@ -7,7 +7,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from distutils.spawn import find_executable
 from kvirt import common
-from kvirt.common import error, pprint
+from kvirt.common import error, pprint, warning
 from kvirt.defaults import UBUNTUS, METADATA_FIELDS
 from pyVmomi import vim, vmodl
 from pyVim import connect
@@ -301,6 +301,7 @@ class Ksphere:
                 else:
                     netname = 'VM Network'
             if index < len(currentnics):
+                currentnetwork = None
                 currentnic = currentnics[index]
                 try:
                     currentnetwork = currentnic.backing.deviceName
@@ -311,7 +312,9 @@ class Ksphere:
                         if self.portgs[dvsnet][0] == currentswitchuuid and\
                                 self.portgs[dvsnet][1] == currentportgroupkey:
                             currentnetwork = dvsnet
-                if currentnetwork != netname:
+                if currentnetwork is None:
+                    warning(f"Couldn't figure out network associated to nic {index}")
+                elif currentnetwork != netname:
                     if netname in self.portgs:
                         switchuuid = self.portgs[netname][0]
                         portgroupkey = self.portgs[netname][1]
@@ -648,7 +651,7 @@ class Ksphere:
                 net = {'device': device, 'mac': mac, 'net': network, 'type': networktype}
                 yamlinfo['nets'].append(net)
             if type(dev).__name__ == 'vim.vm.device.VirtualDisk':
-                device = f"disk{dev.unitNumber}"
+                device = dev.deviceInfo.label
                 disksize = convert(1000 * dev.capacityInKB, GB=False)
                 diskformat = dev.backing.diskMode
                 drivertype = 'thin' if dev.backing.thinProvisioned else 'thick'
@@ -814,7 +817,7 @@ class Ksphere:
             while not answered:
                 question = vm.runtime.question
                 if question is not None:
-                    pprint(f"Answering {vm.runtime.question.text}")
+                    pprint(f"Answering the following question automatically\n{vm.runtime.question.text}")
                     choice = vm.runtime.question.choice.choiceInfo[0].key
                     vm.AnswerVM(question.id, choice)
                     answered = True
@@ -900,7 +903,9 @@ class Ksphere:
         vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
         vm, info = findvm2(si, vmFolder, name)
         if vm is None:
-            return {'result': 'failure', 'reason': f"VM {name} not found"}
+            msg = f"VM {name} not found"
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
         config = info['config']
         for dev in config.hardware.device:
             if isinstance(dev, vim.vm.device.VirtualDisk) and dev.deviceInfo.label == diskname:
@@ -912,7 +917,9 @@ class Ksphere:
                 t = vm.ReconfigVM_Task(spec=spec)
                 waitForMe(t)
                 return {'result': 'success'}
-        return {'result': 'failure', 'reason': f"Disk {diskname} not found in {name}"}
+        msg = f"Disk {diskname} not found in {name}"
+        error(msg)
+        return {'result': 'failure', 'reason': error}
 
     def add_nic(self, name, network):
         if network == 'default':
