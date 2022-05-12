@@ -651,7 +651,7 @@ class Ksphere:
                 net = {'device': device, 'mac': mac, 'net': network, 'type': networktype}
                 yamlinfo['nets'].append(net)
             if type(dev).__name__ == 'vim.vm.device.VirtualDisk':
-                device = f"disk{dev.unitNumber}"
+                device = dev.deviceInfo.label
                 disksize = convert(1000 * dev.capacityInKB, GB=False)
                 diskformat = dev.backing.diskMode
                 drivertype = 'thin' if dev.backing.thinProvisioned else 'thick'
