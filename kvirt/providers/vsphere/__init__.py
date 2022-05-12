@@ -903,7 +903,9 @@ class Ksphere:
         vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
         vm, info = findvm2(si, vmFolder, name)
         if vm is None:
-            return {'result': 'failure', 'reason': f"VM {name} not found"}
+            msg = f"VM {name} not found"
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
         config = info['config']
         for dev in config.hardware.device:
             if isinstance(dev, vim.vm.device.VirtualDisk) and dev.deviceInfo.label == diskname:
@@ -915,7 +917,9 @@ class Ksphere:
                 t = vm.ReconfigVM_Task(spec=spec)
                 waitForMe(t)
                 return {'result': 'success'}
-        return {'result': 'failure', 'reason': f"Disk {diskname} not found in {name}"}
+        msg = f"Disk {diskname} not found in {name}"
+        error(msg)
+        return {'result': 'failure', 'reason': error}
 
     def add_nic(self, name, network):
         if network == 'default':
