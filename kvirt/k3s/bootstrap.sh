@@ -8,8 +8,7 @@ export IP={{ api_ip if masters > 1 else '$(hostname -I | cut -f1 -d" ")' }}
 export K3S_TOKEN=$(cat /var/lib/rancher/k3s/server/node-token)
 sed "s/127.0.0.1/$IP/" /etc/rancher/k3s/k3s.yaml > /root/kubeconfig
 if [ -d /root/manifests ] ; then
- mkdir -p {{ data_dir|default("/var/lib/rancher/k3s/server") }}
- mv /root/manifests {{ data_dir|default("/var/lib/rancher/k3s/server") }}
+    mv /root/manifests {{ data_dir|default("/var/lib/rancher/k3s/server") }}
 fi
 {% if sdn != None and sdn == 'cilium' %}
 echo bpffs /sys/fs/bpf bpf defaults 0 0 >> /etc/fstab
