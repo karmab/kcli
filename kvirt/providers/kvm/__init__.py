@@ -1272,15 +1272,20 @@ class Kvirt(object):
                 storagepool.createXML(volxml, 0)
         if fixqcow2path is not None and fixqcow2backing is not None:
             self._fixqcow2(fixqcow2path, fixqcow2backing)
-        if firstdisk is not None and ('rhcos' in image or 'fcos' in image) and cmdline is not None:
-            bootdisk = '/dev/sda3'
-            bootfile = "/boot/loader/entries/ostree-1-rhcos.conf"
-            cmd = f"sudo virt-edit -a {firstdisk} -m {bootdisk} {bootfile} -e 's@^options@options {cmdline}@'"
+        if cmdline is not None and firstdisk is not None:
+            if 'rhcos' in image or 'fcos' in image:
+                virtcmd = 'virt-edit'
+                bootdisk = '/dev/sda3'
+                bootfile = "/boot/loader/entries/ostree-1-rhcos.conf"
+                cmd = f"sudo {virtcmd} -a {firstdisk} -m {bootdisk} {bootfile} -e 's@^options@options {cmdline}@'"
+            else:
+                virtcmd = 'virt-customize'
+                cmd = f"sudo {virtcmd} -a {firstdisk} --run-command 'grubby --update-kernel=ALL --args={cmdline}'"
             if self.host == 'localhost' or self.host == '127.0.0.1':
-                if find_executable('virt-edit') is not None:
+                if find_executable(virtcmd) is not None:
                     os.system(cmd)
                 else:
-                    warning("virt-edit missing from PATH. cmdline won't be injected")
+                    warning(f"{virtcmd} missing from PATH. cmdline won't be injected")
             elif self.protocol == 'ssh':
                 cmd = cmd.replace("'", "\'")
                 cmd = f'ssh {self.identitycommand} -p {self.port} {self.user}@{self.host} "{cmd}"'
