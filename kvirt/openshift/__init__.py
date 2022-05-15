@@ -1051,13 +1051,17 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                         publickey = open(f"{orissh}/id_rsa.pub").read().strip()
                         f.write(f"\n{publickey}")
                 elif config.type == 'kubevirt':
+                    destkubeconfig = config.options.get('kubeconfig', orikubeconfig)
+                    if destkubeconfig is not None:
+                        destkubeconfig = os.path.expanduser(destkubeconfig)
+                        copy2(destkubeconfig, f"{oriconf}/kubeconfig")
                     oriconf = f"{tmpdir}/.kcli"
                     os.mkdir(oriconf)
-                    kcliconf = config.process_inputfile(cluster, f"{plandir}/kubevirt_kcli_conf.j2")
+                    kubeconfig_overrides = {'kubeconfig': True if destkubeconfig is not None else False}
+                    kcliconf = config.process_inputfile(cluster, f"{plandir}/kubevirt_kcli_conf.j2",
+                                                        overrides=kubeconfig_overrides)
                     with open(f"{oriconf}/config.yml", 'w') as _f:
                         _f.write(kcliconf)
-                    destkubeconfig = os.path.expanduser(config.options.get('kubeconfig', orikubeconfig))
-                    copy2(destkubeconfig, f"{oriconf}/kubeconfig")
                 ns = "openshift-infra"
                 dest = f"{clusterdir}/openshift/99-kcli-conf-cm.yaml"
                 cmcmd = f'KUBECONFIG={plandir}/fake_kubeconfig.json '
