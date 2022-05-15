@@ -1035,43 +1035,42 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             orissh = os.path.expanduser('~/.ssh')
             with TemporaryDirectory() as tmpdir:
                 if config.type == 'kvm' and config.k.host in ['localhost', '127.0.0.1']:
-                    oriconf = "%s/.kcli" % tmpdir
-                    orissh = "%s/.ssh" % tmpdir
+                    oriconf = f"{tmpdir}/.kcli"
+                    orissh = f"{tmpdir}/.ssh"
                     os.mkdir(oriconf)
                     os.mkdir(orissh)
-                    kcliconf = config.process_inputfile(cluster, "%s/local_kcli_conf.j2" % plandir,
+                    kcliconf = config.process_inputfile(cluster, f"{plandir}/local_kcli_conf.j2",
                                                         overrides={'network': network, 'user': getuser()})
-                    with open("%s/config.yml" % oriconf, 'w') as _f:
+                    with open(f"{oriconf}/config.yml", 'w') as _f:
                         _f.write(kcliconf)
-                    sshcmd = "ssh-keygen -t rsa -N '' -f %s/id_rsa > /dev/null" % orissh
+                    sshcmd = f"ssh-keygen -t rsa -N '' -f {orissh}/id_rsa > /dev/null"
                     call(sshcmd, shell=True)
                     authorized_keys_file = os.path.expanduser('~/.ssh/authorized_keys')
                     file_mode = 'a' if os.path.exists(authorized_keys_file) else 'w'
                     with open(authorized_keys_file, file_mode) as f:
-                        publickey = open("%s/id_rsa.pub" % orissh).read().strip()
-                        f.write("\n%s" % publickey)
+                        publickey = open(f"{orissh}/id_rsa.pub").read().strip()
+                        f.write(f"\n{publickey}")
                 elif config.type == 'kubevirt':
-                    oriconf = "%s/.kcli" % tmpdir
+                    oriconf = f"{tmpdir}/.kcli"
                     os.mkdir(oriconf)
-                    kcliconf = config.process_inputfile(cluster, "%s/kubevirt_kcli_conf.j2" % plandir)
-                    with open("%s/config.yml" % oriconf, 'w') as _f:
+                    kcliconf = config.process_inputfile(cluster, f"{plandir}/kubevirt_kcli_conf.j2")
+                    with open(f"{oriconf}/config.yml", 'w') as _f:
                         _f.write(kcliconf)
                     destkubeconfig = os.path.expanduser(config.options.get('kubeconfig', orikubeconfig))
-                    copy2(destkubeconfig, "%s/kubeconfig" % oriconf)
+                    copy2(destkubeconfig, f"{oriconf}/kubeconfig")
                 ns = "openshift-infra"
-                dest = "%s/openshift/99-kcli-conf-cm.yaml" % clusterdir
-                cmcmd = 'KUBECONFIG=%s/fake_kubeconfig.json ' % plandir
-                cmcmd += "oc create cm -n %s kcli-conf --from-file=%s --dry-run=client -o yaml > %s" % (ns, oriconf,
-                                                                                                        dest)
+                dest = f"{clusterdir}/openshift/99-kcli-conf-cm.yaml"
+                cmcmd = f'KUBECONFIG={plandir}/fake_kubeconfig.json '
+                cmcmd += f"oc create cm -n {ns} kcli-conf --from-file={oriconf} --dry-run=client -o yaml > {dest}"
                 call(cmcmd, shell=True)
-                dest = "%s/openshift/99-kcli-ssh-cm.yaml" % clusterdir
-                cmcmd = 'KUBECONFIG=%s/fake_kubeconfig.json  ' % plandir
-                cmcmd += "oc create cm -n %s kcli-ssh --from-file=%s --dry-run=client -o yaml > %s" % (ns, orissh, dest)
+                dest = f"{clusterdir}/openshift/99-kcli-ssh-cm.yaml"
+                cmcmd = f'KUBECONFIG={plandir}/fake_kubeconfig.json  '
+                cmcmd += f"oc create cm -n {ns} kcli-ssh --from-file={orissh} --dry-run=client -o yaml > {dest}"
                 call(cmcmd, shell=True)
-            deletionfile2 = "%s/99-bootstrap-deletion-2.yaml" % plandir
+            deletionfile2 = f"{plandir}/99-bootstrap-deletion-2.yaml"
             deletionfile2 = config.process_inputfile(cluster, deletionfile2, overrides={'registry': registry,
                                                                                         'arch_tag': arch_tag})
-            with open("%s/openshift/99-bootstrap-deletion-2.yaml" % clusterdir, 'w') as _f:
+            with open(f"{clusterdir}/openshift/99-bootstrap-deletion-2.yaml", 'w') as _f:
                 _f.write(deletionfile2)
         if notify:
             notifycmd = "cat /shared/results.txt"
@@ -1082,12 +1081,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                                                                   mailserver=config.mailserver,
                                                                   mailfrom=config.mailfrom, mailto=config.mailto,
                                                                   cluster=True)
-            notifyfile = "%s/99-notifications.yaml" % plandir
+            notifyfile = f"{plandir}/99-notifications.yaml"
             notifyfile = config.process_inputfile(cluster, notifyfile, overrides={'registry': registry,
                                                                                   'arch_tag': arch_tag,
                                                                                   'cmds': notifycmds,
                                                                                   'mailcontent': mailcontent})
-            with open("%s/openshift/99-notifications.yaml" % clusterdir, 'w') as _f:
+            with open(f"{clusterdir}/openshift/99-notifications.yaml", 'w') as _f:
                 _f.write(notifyfile)
     if apps and (async_install or sno):
         final_apps = []
@@ -1098,13 +1097,13 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 final_apps.append(a['name'])
             else:
                 error(f"Invalid app {a}. Skipping")
-        appsfile = "%s/99-apps.yaml" % plandir
+        appsfile = f"{plandir}/99-apps.yaml"
         appsfile = config.process_inputfile(cluster, appsfile, overrides={'registry': registry,
                                                                           'arch_tag': arch_tag,
                                                                           'apps': final_apps})
-        with open("%s/openshift/99-apps.yaml" % clusterdir, 'w') as _f:
+        with open(f"{clusterdir}/openshift/99-apps.yaml", 'w') as _f:
             _f.write(appsfile)
-        appdir = "%s/apps" % plandir
+        appdir = f"{plandir}/apps"
         apps_namespace = {'advanced-cluster-management': 'open-cluster-management',
                           'kubevirt-hyperconverged': 'openshift-cnv',
                           'local-storage-operator': 'openshift-local-storage',
@@ -1112,10 +1111,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         apps = [a for a in apps if a not in ['users']]
         for appname in apps:
             app_data = data.copy()
-            if data.get('apps_install_cr') and os.path.exists("%s/%s/cr.yml" % (appdir, appname)):
+            if data.get('apps_install_cr') and os.path.exists(f"{appdir}/{appname}/cr.yml"):
                 app_data['namespace'] = apps_namespace[appname]
-                cr_content = config.process_inputfile(cluster, "%s/%s/cr.yml" % (appdir, appname), overrides=app_data)
-                rendered = config.process_inputfile(cluster, "%s/99-apps-cr.yaml" % plandir,
+                cr_content = config.process_inputfile(cluster, f"{appdir}/{appname}/cr.yml", overrides=app_data)
+                rendered = config.process_inputfile(cluster, f"{plandir}/99-apps-cr.yaml",
                                                     overrides={'registry': registry,
                                                                'arch_tag': arch_tag,
                                                                'app': appname,
@@ -1123,7 +1122,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 with open("%s/openshift/99-apps-%s.yaml" % (clusterdir, appname), 'w') as g:
                     g.write(rendered)
     if metal3:
-        copy2("%s/99-metal3-provisioning.yaml" % plandir, "%s/openshift" % clusterdir)
+        copy2(f"{plandir}/99-metal3-provisioning.yaml", "{clusterdir}/openshift")
     if sushy:
         if config.type != 'kvm':
             warning(f"Ignoring sushy request as platform is {config.type}")
@@ -1157,7 +1156,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 cmcmd += f" -o yaml > {dest}"
                 call(cmcmd, shell=True)
     if sno:
-        sno_name = "%s-sno" % cluster
+        sno_name = f"{cluster}-sno"
         sno_files = []
         sno_disable_nics = data.get('sno_disable_nics', [])
         if ipv6 or sno_disable_nics:
