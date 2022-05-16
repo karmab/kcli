@@ -2143,7 +2143,9 @@ def get_ssh_pub_key():
         for path in SSH_PUB_LOCATIONS:
             pubpath = os.path.expanduser(f"~/{_dir}/{path}")
             privpath = pubpath.replace('.pub', '')
-            if os.path.exists(pubpath) and os.path.exists(privpath):
+            if os.path.exists(pubpath):
+                if not os.path.exists(privpath):
+                    warning(f"private key associated to {pubpath} not found, you might have trouble accessing the vm")
                 return pubpath
 
 
