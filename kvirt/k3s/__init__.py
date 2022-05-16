@@ -42,6 +42,8 @@ def scale(config, plandir, cluster, overrides):
                 install_k3s_args.append("INSTALL_K3S_EXEC='--flannel-backend=none'")
             install_k3s_args = ' '.join(install_k3s_args)
             overrides['install_k3s_args'] = install_k3s_args
+            if os.path.exists("manifests") and os.path.isdir("manifests"):
+                data['files'] = [{"path": "/root/manifests", "currentdir": True, "origin": "manifests"}]
         if role == 'workers' and overrides.get('workers', 0) == 0:
             continue
         config.plan(plan, inputfile=f'{plandir}/{role}.yml', overrides=overrides, threaded=threaded)
@@ -107,13 +109,13 @@ def create(config, plandir, cluster, overrides):
             installparam['kubetype'] = 'k3s'
             installparam['image'] = image
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
-    if os.path.exists("manifests") and os.path.isdir("manifests"):
-        data['files'] = [{"path": "/root/manifests", "currentdir": True, "origin": "manifests"}]
     for arg in data.get('extra_master_args', []):
         if arg.startswith('--data-dir='):
             data['data_dir'] = arg.split('=')[1]
     k = config.k
     bootstrap_overrides = data.copy()
+    if os.path.exists("manifests") and os.path.isdir("manifests"):
+        bootstrap_overrides['files'] = [{"path": "/root/manifests", "currentdir": True, "origin": "manifests"}]
     bootstrap_install_k3s_args = install_k3s_args.copy()
     if sdn is None or sdn != 'flannel':
         bootstrap_install_k3s_args.append("INSTALL_K3S_EXEC='--flannel-backend=none'")

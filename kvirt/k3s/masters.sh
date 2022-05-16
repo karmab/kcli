@@ -8,3 +8,6 @@ echo bpffs /sys/fs/bpf bpf defaults 0 0 >> /etc/fstab
 mount /sys/fs/bpf
 {% endif %}
 curl -sfL https://get.k3s.io | {{ install_k3s_args|default("") }} K3S_TOKEN={{ token }} sh -s - server --server https://{{ api_ip }}:6443 {{ extra_args|join(" ") }}
+if [ -d /root/manifests ] ; then
+  mv /root/manifests {{ data_dir|default("/var/lib/rancher/k3s/server") }}
+fi
