@@ -113,6 +113,7 @@ sushy: False
 baremetal_user: root
 baremetal_password: calvin
 kvm_openstack: False
+kvm_forcestack: False
 ipsec: false
 async: false
 notify: false

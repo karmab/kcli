@@ -29,6 +29,9 @@
  numcpus: {{ worker_numcpus | default(numcpus, numcpus) }}
  memory: {{ worker_memory | default(memory, memory) }}
  autostart: {{ autostart }}
+{% if kvm_forcestack %}
+ cmdline: {{ 'ip=dhcp6' if ':' in api_ip else 'ip=dhcp' }}
+{% endif %}
 {% if kubevirt_api_service %}
  reservedns: true
 {% endif %}
