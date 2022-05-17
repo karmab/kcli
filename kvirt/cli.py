@@ -2125,45 +2125,48 @@ def expose_plan(args):
 
 def start_plan(args):
     """Start plan"""
-    plan = args.plan
+    plans = args.plans
+    codes = []
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.start_plan(plan)
-    return 0
+    for plan in plans:
+        result = config.start_plan(plan)
+        if 'result' in result and result['result'] == 'success':
+            codes.append(0)
+        else:
+            codes.append(4)
+    sys.exit(4 if 4 in codes else 0)
 
 
 def stop_plan(args):
     """Stop plan"""
-    plan = args.plan
+    plans = args.plans
+    codes = []
     soft = args.soft
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.stop_plan(plan, soft=soft)
-    return 0
-
-
-def autostart_plan(args):
-    """Autostart plan"""
-    plan = args.plan
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.autostart_plan(plan)
-    return 0
-
-
-def noautostart_plan(args):
-    """Noautostart plan"""
-    plan = args.plan
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.noautostart_plan(plan)
-    return 0
+    for plan in plans:
+        result = config.stop_plan(plan, soft=soft)
+        if 'result' in result and result['result'] == 'success':
+            codes.append(0)
+        else:
+            codes.append(4)
+    sys.exit(4 if 4 in codes else 0)
 
 
 def restart_plan(args):
     """Restart plan"""
     soft = args.soft
-    plan = args.plan
+    plans = args.plans
+    codes = []
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.stop_plan(plan, soft=soft)
-    config.start_plan(plan)
-    return 0
+    for plan in plans:
+        result1 = config.stop_plan(plan, soft=soft)
+        result2 = config.start_plan(plan)
+        if 'result' in result1 and result1['result'] == 'success'\
+           and 'result' in result2 and result2['result'] == 'success':
+            codes.append(0)
+        else:
+            codes.append(4)
+    sys.exit(4 if 4 in codes else 0)
 
 
 def info_generic_app(args):
@@ -4380,7 +4383,7 @@ def cli():
     planrestart_desc = 'Restart Plan'
     planrestart_parser = restart_subparsers.add_parser('plan', description=planrestart_desc, help=planrestart_desc)
     planrestart_parser.add_argument('-s', '--soft', action='store_true', help='Do a soft stop')
-    planrestart_parser.add_argument('plan', metavar='PLAN')
+    planrestart_parser.add_argument('plans', metavar='PLAN', nargs='*')
     planrestart_parser.set_defaults(func=restart_plan)
 
     plandatacreate_desc = 'Create Cloudinit/Ignition from plan file'
@@ -4429,13 +4432,13 @@ def cli():
 
     planstart_desc = 'Start Plan'
     planstart_parser = start_subparsers.add_parser('plan', description=planstart_desc, help=planstart_desc)
-    planstart_parser.add_argument('plan', metavar='PLAN')
+    planstart_parser.add_argument('plans', metavar='PLAN', nargs='*')
     planstart_parser.set_defaults(func=start_plan)
 
     planstop_desc = 'Stop Plan'
     planstop_parser = stop_subparsers.add_parser('plan', description=planstop_desc, help=planstop_desc)
     planstop_parser.add_argument('-s', '--soft', action='store_true', help='Do a soft stop')
-    planstop_parser.add_argument('plan', metavar='PLAN')
+    planstop_parser.add_argument('plans', metavar='PLAN', nargs='*')
     planstop_parser.set_defaults(func=stop_plan)
 
     planupdate_desc = 'Update Plan'
