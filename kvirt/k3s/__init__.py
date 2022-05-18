@@ -27,11 +27,11 @@ def scale(config, plandir, cluster, overrides):
     if os.path.exists(clusterdir):
         with open(f"{clusterdir}/kcli_parameters.yml", 'w') as paramfile:
             yaml.safe_dump(data, paramfile)
-    install_k3s_args = []
-    for arg in data:
-        if arg.startswith('install_k3s'):
-            install_k3s_args.append(f"{arg.upper()}={data[arg]}")
     for role in ['masters', 'workers']:
+        install_k3s_args = []
+        for arg in data:
+            if arg.startswith('install_k3s'):
+                install_k3s_args.append(f"{arg.upper()}={data[arg]}")
         overrides = data.copy()
         overrides['scale'] = True
         threaded = data.get('threaded', False) or data.get(f'{role}_threaded', False)
@@ -41,11 +41,11 @@ def scale(config, plandir, cluster, overrides):
             if sdn is None or sdn != 'flannel':
                 install_k3s_args.append("INSTALL_K3S_EXEC='--flannel-backend=none'")
             install_k3s_args = ' '.join(install_k3s_args)
-            overrides['install_k3s_args'] = install_k3s_args
             if os.path.exists("manifests") and os.path.isdir("manifests"):
                 data['files'] = [{"path": "/root/manifests", "currentdir": True, "origin": "manifests"}]
         if role == 'workers' and overrides.get('workers', 0) == 0:
             continue
+        overrides['install_k3s_args'] = install_k3s_args
         config.plan(plan, inputfile=f'{plandir}/{role}.yml', overrides=overrides, threaded=threaded)
 
 
