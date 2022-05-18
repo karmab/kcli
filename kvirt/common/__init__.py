@@ -2171,7 +2171,7 @@ def get_git_version():
     versiondir = os.path.dirname(version.__file__)
     git_file = f'{versiondir}/git'
     if os.path.exists(git_file) and os.stat(git_file).st_size > 0:
-        git_version, git_data = open(git_file).read().rstrip().split(' ')
+        git_version, git_date = open(git_file).read().rstrip().split(' ')
     return git_version, git_date
 
 
