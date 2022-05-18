@@ -27,6 +27,10 @@ def scale(config, plandir, cluster, overrides):
     if os.path.exists(clusterdir):
         with open(f"{clusterdir}/kcli_parameters.yml", 'w') as paramfile:
             yaml.safe_dump(data, paramfile)
+    install_k3s_args = []
+    for arg in data:
+        if arg.startswith('install_k3s'):
+            install_k3s_args.append(f"{arg.upper()}={data[arg]}")
     for role in ['masters', 'workers']:
         overrides = data.copy()
         overrides['scale'] = True
@@ -34,10 +38,6 @@ def scale(config, plandir, cluster, overrides):
         if role == 'masters':
             if overrides.get('masters', 1) == 1:
                 continue
-            install_k3s_args = []
-            for arg in data:
-                if arg.startswith('install_k3s'):
-                    install_k3s_args.append(f"{arg.upper()}={data[arg]}")
             if sdn is None or sdn != 'flannel':
                 install_k3s_args.append("INSTALL_K3S_EXEC='--flannel-backend=none'")
             install_k3s_args = ' '.join(install_k3s_args)
