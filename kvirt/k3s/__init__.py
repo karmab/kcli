@@ -41,8 +41,6 @@ def scale(config, plandir, cluster, overrides):
             if sdn is None or sdn != 'flannel':
                 install_k3s_args.append("INSTALL_K3S_EXEC='--flannel-backend=none'")
             install_k3s_args = ' '.join(install_k3s_args)
-            if os.path.exists("manifests") and os.path.isdir("manifests"):
-                data['files'] = [{"path": "/root/manifests", "currentdir": True, "origin": "manifests"}]
         if role == 'workers' and overrides.get('workers', 0) == 0:
             continue
         overrides['install_k3s_args'] = install_k3s_args
