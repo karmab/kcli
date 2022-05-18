@@ -102,7 +102,7 @@ IMAGES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-i
           'rhcoslatest': RHCOS + 'rhcos-4.11',
           'rhel7': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7',
           'rhel8': 'https://access.redhat.com/downloads/content/479/ver=/rhel---8',
-          'rhelbeta': 'https://access.redhat.com/downloads/content/486/ver=/rhel---9',
+          'rhel9': 'https://access.redhat.com/downloads/content/479/ver=/rhel---9',
           'ubuntu1804': 'https://cloud-images.ubuntu.com/bionic/current/bionic-server-cloudimg-amd64.img',
           'ubuntu1810': 'https://cloud-images.ubuntu.com/releases/cosmic/release-20190628/'
           'ubuntu-18.10-server-cloudimg-amd64.img',
