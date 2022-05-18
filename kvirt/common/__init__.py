@@ -240,7 +240,8 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                     else:
                         targetfamily = 'dhcp4'
                     netdata[nicname] = {targetfamily: True}
-                    if 'dualstack' in overrides and overrides['dualstack'] and index == 0:
+                    if net.get('dualstack', False) or\
+                       'dualstack' in overrides and overrides['dualstack'] and index == 0:
                         dualfamily = 'dhcp6' if targetfamily == 'dhcp4' else 'dhcp4'
                         netdata[nicname][dualfamily] = True
             if bridge and not legacy:
