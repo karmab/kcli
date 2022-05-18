@@ -1,2 +1,3 @@
-topolvm_vg: vg1
+lvm_vg: vg1
 namespace: openshift-storage
+lvm_default_storageclass: true

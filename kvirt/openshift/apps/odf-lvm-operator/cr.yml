@@ -6,4 +6,4 @@ metadata:
 spec:
   storage:
     deviceClasses:
-    - name: {{ topolvm_vg }}
+    - name: {{ lvm_vg }}
