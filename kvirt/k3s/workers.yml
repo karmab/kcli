@@ -15,8 +15,7 @@
  nets: {{ [network] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
  files:
-  - path: /root/join.sh
-    origin: {{ basedir }}/clusters/{{ cluster }}/join.sh
+ - join.sh
  cmds:
  - apt-get -y install curl
 {% if sdn != None and sdn == 'cilium' %}

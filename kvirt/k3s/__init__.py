@@ -22,11 +22,11 @@ def scale(config, plandir, cluster, overrides):
             plan = installparam.get('plan', plan)
     data.update(overrides)
     sdn = data['sdn']
-    with open(f"{clusterdir}/kcli_parameters.yml", 'w') as paramfile:
-        yaml.safe_dump(data, paramfile)
     client = config.client
     pprint(f"Scaling on client {client}")
-    os.chdir(os.path.expanduser("~/.kcli"))
+    if os.path.exists(clusterdir):
+        with open(f"{clusterdir}/kcli_parameters.yml", 'w') as paramfile:
+            yaml.safe_dump(data, paramfile)
     for role in ['masters', 'workers']:
         overrides = data.copy()
         overrides['scale'] = True
@@ -59,7 +59,6 @@ def create(config, plandir, cluster, overrides):
     masters = data.get('masters', 1)
     network = data.get('network', 'default')
     sdn = None if 'sdn' in overrides and overrides['sdn'] is None else data.get('sdn')
-    token = data.get('token', 'supersecret')
     image = data.get('image', 'ubuntu2004')
     api_ip = data.get('api_ip')
     if masters > 1:
@@ -93,7 +92,6 @@ def create(config, plandir, cluster, overrides):
             install_k3s_args.append(f"{arg.upper()}={data[arg]}")
     cluster = data.get('cluster')
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
-    firstmaster = f"{cluster}-master-0"
     if os.path.exists(clusterdir):
         error(f"Please remove existing directory {clusterdir} first...")
         sys.exit(1)
@@ -112,7 +110,6 @@ def create(config, plandir, cluster, overrides):
     for arg in data.get('extra_master_args', []):
         if arg.startswith('--data-dir='):
             data['data_dir'] = arg.split('=')[1]
-    k = config.k
     bootstrap_overrides = data.copy()
     if os.path.exists("manifests") and os.path.isdir("manifests"):
         bootstrap_overrides['files'] = [{"path": "/root/manifests", "currentdir": True, "origin": "manifests"}]
@@ -134,14 +131,6 @@ def create(config, plandir, cluster, overrides):
         pprint("Deploying extra masters")
         threaded = data.get('threaded', False) or data.get('masters_threaded', False)
         config.plan(plan, inputfile=f'{plandir}/masters.yml', overrides=nodes_overrides, threaded=threaded)
-    with open(f"{clusterdir}/join.sh", 'w') as f:
-        if api_ip is None:
-            api_ip = k.info(firstmaster)['ip']
-        joincmd = f"curl -sfL https://get.k3s.io | K3S_URL=https://{api_ip}:6443 K3S_TOKEN={token} "
-        joincmd += ' '.join(install_k3s_args)
-        extra_args = data['extra_worker_args'] if data.get('extra_worker_args', []) else data.get('extra_args', [])
-        extra_args = ' '.join(extra_args)
-        f.write(f"{joincmd} sh -s - agent {extra_args} \n")
     workers = data.get('workers', 0)
     if workers > 0:
         pprint("Deploying workers")
