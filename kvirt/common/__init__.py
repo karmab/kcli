@@ -2057,7 +2057,7 @@ def generate_rhcos_iso(k, cluster, pool, version='latest', podman=False, install
         os.system(scpbincmd)
         scpcmd = 'scp %s -qP %s iso.ign %s@%s:%s' % (k.identitycommand, k.port, k.user, k.host, poolpath)
         os.system(scpcmd)
-        isocmd = 'ssh %s -p %s %s@%s "%s"' % (k.identitycommand, k.port, k.user, k.host, isocmd)
+        isocmd = 'ssh %s -p %s %s@%s "PATH=/root/bin %s"' % (k.identitycommand, k.port, k.user, k.host, isocmd)
         os.system(isocmd)
 
 
