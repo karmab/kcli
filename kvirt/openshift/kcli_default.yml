@@ -6,7 +6,7 @@ info: |
     Otherwise, extra static pods (coredns with mdns, keepalived and haproxy) are deployed on the nodes to provide a self contained platform.
     Default version is latest stable but you can instead use ci, for which you will need a specific pull secret
     Upstream okd version can be specified with the upstream flag.
-    Sdn defaults to OpenShiftSDN but OVNKubernetes, Calico or Contrail can be specified instead.
+    Sdn defaults to OpenShiftSDN but OVNKubernetes or Calico can be specified instead.
     To avoid keepalived collision, you can force virtual_router_id. Otherwise, the id is calculated from cluster variable
     You can deploy extra apps with the apps array and for each of the supported app, indicate with the variable
     ${app}_version with version to target (instead of latest)

@@ -21,10 +21,7 @@ from subprocess import call
 from tempfile import TemporaryDirectory
 from time import sleep
 from urllib.request import urlopen, Request
-from requests import get, post, put
-# import requests
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
-from requests.packages.urllib3 import disable_warnings
+from requests import post
 import yaml
 
 
@@ -262,39 +259,6 @@ def process_postscripts(clusterdir, postscripts):
         script_path = os.path.expanduser(script) if script.startswith('/') else '%s/%s' % (currentdir, script)
         pprint("Running script %s" % os.path.basename(script))
         call(script_path, shell=True)
-
-
-def contrail_allow_vips(ip, api_ip, ingress_ip=None, mac=None):
-    disable_warnings(InsecureRequestWarning)
-    vips = [api_ip]
-    if ingress_ip is not None:
-        vips.append(ingress_ip)
-    url = "https://%s:8082" % ip
-    data = get("%s/virtual-machine-interfaces" % url, verify=False).json()['virtual-machine-interfaces']
-    for entry in data:
-        if 'vhost0' in entry['fq_name']:
-            host = entry['fq_name'][1]
-            href = entry['href']
-            nodedata = get(href, verify=False).json()['virtual-machine-interface']
-            found_vips = []
-            pairs = []
-            if 'virtual_machine_interface_allowed_address_pairs' in nodedata:
-                pairs = nodedata['virtual_machine_interface_allowed_address_pairs']['allowed_address_pair']
-                for ip in pairs:
-                    for vip in vips:
-                        if ip['ip']['ip_prefix'] == vip:
-                            found_vips.append(vip)
-            missing_vips = [ip for ip in vips if ip not in found_vips]
-            for vip in missing_vips:
-                pprint("Adding vip %s in %s" % (vip, host))
-                newentry = {'ip': {'ip_prefix': vip, 'ip_prefix_len': 32}, 'address_mode': 'active-standby'}
-                if mac is not None:
-                    newentry['mac'] = mac
-                pairs.append(newentry)
-                new = {'virtual_machine_interface_allowed_address_pairs':
-                       {'allowed_address_pair': pairs}}
-                body = {'virtual-machine-interface': new}
-                put(href, verify=False, json=body)
 
 
 def wait_for_ignition(cluster, domain, role='worker'):
@@ -949,16 +913,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             with open("%s/calico.sh" % tmpdir, 'w') as f:
                 f.write(calicoscript)
             call('bash %s/calico.sh' % tmpdir, shell=True)
-    if 'network_type' in data and data['network_type'] == 'Contrail':
-        if find_executable('git') is None:
-            error('git is needed for contrail')
-            sys.exit(1)
-        with TemporaryDirectory() as tmpdir:
-            contraildata = {'cluster': cluster, 'domain': domain, 'tmpdir': tmpdir}
-            contrailscript = config.process_inputfile(cluster, "%s/contrail.sh.j2" % plandir, overrides=contraildata)
-            with open("%s/contrail.sh" % tmpdir, 'w') as f:
-                f.write(contrailscript)
-            call('bash %s/contrail.sh' % tmpdir, shell=True)
     if ipsec:
         copy2("%s/99-ipsec.yaml" % plandir, "%s/openshift" % clusterdir)
     if workers == 0 or not mdns or kubevirt_api_service:
@@ -1470,16 +1424,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         installcommand += " || %s" % installcommand
         pprint("Launching install-complete step. It will be retried one extra time in case of timeouts")
         call(installcommand, shell=True)
-    if platform in virtplatforms and 'network_type' in data and data['network_type'] == 'Contrail':
-        pprint("Allowing vips in Contrail api")
-        masteripscmd = "oc get node -o wide --no-headers | awk '{print $6}'"
-        masterips = [x.strip() for x in os.popen(masteripscmd).readlines()]
-        contrail_allow_vips(masterips[0], api_ip, ingress_ip=ingress_ip)
-        pprint("Enabling keepalived in the masters")
-        for masterip in masterips:
-            mvcmd = "sudo mv /root/keepalived.yml /etc/kubernetes/manifests"
-            mvcmd = 'ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no core@%s "%s"' % (masterip, mvcmd)
-            os.system(mvcmd)
     for vm in todelete:
         pprint("Deleting %s" % vm)
         k.delete(vm)

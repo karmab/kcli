@@ -31,11 +31,7 @@ spec:
       IP=$(ip -4 -o addr show $NIC | awk '{print $4}' | cut -d "/" -f 1 | head -1)
       {% endif %}
       [ -z "$IP" ] && exit 1
-      {% if network_type == 'Contrail' and noname|default(False) %}
-      HOSTNAME={{ name }}.{{ cluster }}.{{ domain }}
-      {% else %}
       HOSTNAME=$(hostname -s)
-      {% endif %}
       sed "s/IP/$IP/" /etc/mdns/config.hcl.templ > /etc/mdns/config.hcl
       sed -i "s/HOSTNAME/$HOSTNAME/" /etc/mdns/config.hcl
     resources: {}

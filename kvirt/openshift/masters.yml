@@ -55,7 +55,7 @@
     origin: nonlocalbind.conf
 {% endif %}
 {% if not kubevirt_api_service %}
-  - path: {{ '/etc/kubernetes/manifests/keepalived.yml' if network_type != 'Contrail' else '/root/keepalived.yml' }}
+  - path: /etc/kubernetes/manifests/keepalived.yml
     origin: staticpods/keepalived.yml
   - path: /etc/kubernetes/keepalived.conf
     origin: keepalived.conf

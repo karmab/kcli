@@ -33,13 +33,12 @@
   - path: /etc/kubernetes/config.hcl.templ
     origin: config.hcl.templ
 {% endif %}
-{% if (mdns and network_type == 'Contrail') or kubevirt_api_service %}
+{% if kubevirt_api_service %}
   - path: /etc/kubernetes/manifests/haproxy.yml
     origin: staticpods/haproxy.yml
   - path: /etc/kubernetes/haproxy.cfg
-    origin: haproxy.cfg{{ '.kubevirt' if kubevirt_api_service else '' }}
-{% endif %}
-{% if not kubevirt_api_service %}
+    origin: haproxy.cfg.kubevirt
+{% else %}
   - path: /etc/kubernetes/manifests/keepalived.yml
     origin: staticpods/keepalived.yml
   - path: /etc/kubernetes/keepalived.conf
