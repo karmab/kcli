@@ -3,7 +3,7 @@ info: |
 nodes: 1
 cluster: testk
 domain: karmalabs.com
-image: fedora35
+image: centos8stream
 network: default
 memory: 4096
 numcpus: 4
