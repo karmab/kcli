@@ -147,6 +147,9 @@ virttype: |
 vmrules: |
   List of rules with an associated dict to apply for te corresponding entry, if a regex on the entry name is matched.
   The profile of the matching vm will be updated with the content of the rule
+vmrules_strict: |
+  A boolean to create vms only if they are associated to a vmrules
+  Note that if no vmrules at all exist, the vm will still get created
 vmport: Custom port to use when sshing into a vm, instead of the evaluated one
 vmuser: Custom user to use when sshing into a vm, instead of the evaluated one
 vnc: if set to true, vnc is used for console instead of spice

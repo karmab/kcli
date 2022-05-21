@@ -1715,6 +1715,7 @@ class Kconfig(Kbaseconfig):
                 self.plan(plan, inputfile=baseinputfile, overrides=overrides, excludevms=vmnames, basemode=True,
                           onlyassets=onlyassets)
                 baseplans.append(basefile)
+            vmrules_strict = overrides.get('vmrules_strict', self.vmrules_strict)
             for name in vmentries:
                 if name in excludevms:
                     continue
@@ -1747,7 +1748,7 @@ class Kconfig(Kbaseconfig):
                     elif 'basevm' in profile and profile['basevm'] in baseentries:
                         baseprofile = baseentries[profile['basevm']]
                     else:
-                        warning(f"Incorrect base entry for {name}. skipping...")
+                        warning(f"Incorrect base entry for {name}. Skipping...")
                         continue
                     for key in baseprofile:
                         if key not in profile:
@@ -1767,6 +1768,9 @@ class Kconfig(Kbaseconfig):
                                 if key in listkeys and isinstance(current[key], list) and key in profile:
                                     current[key] = profile[key] + current[key]
                             profile.update(entry[rule])
+                    elif vmrules_strict:
+                        warning(f"No vmrules found for {name}. Skipping...")
+                        continue
                 vmclient = profile.get('client')
                 if vmclient is None:
                     z = k

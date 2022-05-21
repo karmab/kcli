@@ -17,9 +17,9 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             PUSHBULLETTOKEN, NOTIFYSCRIPT, SLACKTOKEN, NOTIFYCMD, NOTIFYMETHODS, SLACKCHANNEL,
                             SHAREDFOLDERS, KERNEL, INITRD, CMDLINE, PLACEMENT, YAMLINVENTORY, CPUHOTPLUG, MEMORYHOTPLUG,
                             CPUFLAGS, CPUPINNING, NUMAMODE, NUMA, PCIDEVICES, VIRTTYPE, MAILSERVER, MAILFROM, MAILTO,
-                            TPM, JENKINSMODE, RNG, ZEROTIER_NETS, ZEROTIER_KUBELET, VMPORT, VMUSER, VMRULES, CACHE,
-                            SECURITYGROUPS, LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG, ROOTPASSWORD, WAIT, WAITCOMMAND,
-                            WAITTIMEOUT, TEMPKEY)
+                            TPM, JENKINSMODE, RNG, ZEROTIER_NETS, ZEROTIER_KUBELET, VMPORT, VMUSER, VMRULES,
+                            VMRULES_STRICT, CACHE, SECURITYGROUPS, LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG, ROOTPASSWORD,
+                            WAIT, WAITCOMMAND, WAITTIMEOUT, TEMPKEY)
 from ipaddress import ip_address
 from random import choice
 from kvirt import common
@@ -211,6 +211,7 @@ class Kbaseconfig:
         defaults['vmuser'] = default.get('vmuser', VMUSER)
         defaults['vmport'] = default.get('vmport', VMPORT)
         defaults['vmrules'] = default.get('vmrules', VMRULES)
+        defaults['vmrules_strict'] = default.get('vmrules_strict', VMRULES_STRICT)
         defaults['cache'] = default.get('cache', CACHE)
         defaults['securitygroups'] = default.get('securitygroups', SECURITYGROUPS)
         defaults['rootpassword'] = default.get('rootpassword', ROOTPASSWORD)
@@ -411,6 +412,7 @@ class Kbaseconfig:
         self.vmuser = options.get('vmuser', self.default['vmuser'])
         self.vmport = options.get('vmport', self.default['vmport'])
         self.vmrules = options.get('vmrules', self.default['vmrules'])
+        self.vmrules_strict = options.get('vmrules_strict', self.default['vmrules_strict'])
         self.cache = options.get('cache', self.default['cache'])
         self.securitygroups = options.get('securitygroups', self.default['securitygroups'])
         self.rootpassword = options.get('rootpassword', self.default['rootpassword'])
