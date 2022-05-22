@@ -6,7 +6,10 @@
  {% set extra_disks = extra_worker_disks %}
 {% endif %}
 
-{{cluster }}-worker-{{ number }}:
+{% set default_worker = cluster + '-worker-' + number|string %}
+{% set worker = vmrules_names[number] if vmrules_names is defined else default_worker %}
+
+{{ worker }}:
  image: {{ image }}
  pool: {{ pool or config_pool }}
  keys: {{ keys }}

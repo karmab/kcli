@@ -7,7 +7,10 @@
  {% set extra_disks = extra_master_disks %}
 {% endif %}
 
-{{cluster}}-master-{{ number }}:
+{% set default_master = cluster + '-master-' + number|string %}
+{% set master = vmrules_names[number] if vmrules_names is defined else default_master %}
+
+{{ master }}:
  image: {{ image }}
  pool: {{ pool or config_pool }}
  keys: {{ keys }}
