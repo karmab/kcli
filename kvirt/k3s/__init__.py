@@ -3,6 +3,7 @@
 from distutils.spawn import find_executable
 from kvirt.common import success, pprint, error, warning, get_kubectl, info2, container_mode
 import os
+import re
 import sys
 import yaml
 
@@ -27,6 +28,9 @@ def scale(config, plandir, cluster, overrides):
     if os.path.exists(clusterdir):
         with open(f"{clusterdir}/kcli_parameters.yml", 'w') as paramfile:
             yaml.safe_dump(data, paramfile)
+    vmrules_all_names = []
+    if data.get('vmrules', config.vmrules) and data.get('vmrules_strict', config.vmrules_strict):
+        vmrules_all_names = [list(entry.keys())[0] for entry in data.get('vmrules', config.vmrules)]
     for role in ['masters', 'workers']:
         install_k3s_args = []
         for arg in data:
@@ -43,6 +47,13 @@ def scale(config, plandir, cluster, overrides):
             install_k3s_args = ' '.join(install_k3s_args)
         if role == 'workers' and overrides.get('workers', 0) == 0:
             continue
+        if vmrules_all_names:
+            reg = re.compile(f'{cluster}-{role[:-1]}-[0-9]+')
+            vmrules_names = [name for name in vmrules_all_names if reg.match(name)]
+            if len(vmrules_names) != overrides.get(role, 1):
+                warning(f"Adjusting {role} number to vmrule entries")
+                overrides[role] = len(vmrules_names)
+            overrides['vmrules_names'] = sorted(vmrules_names)
         overrides['install_k3s_args'] = install_k3s_args
         config.plan(plan, inputfile=f'{plandir}/{role}.yml', overrides=overrides, threaded=threaded)
 

@@ -1755,12 +1755,14 @@ class Kconfig(Kbaseconfig):
                             profile[key] = baseprofile[key]
                         elif key in baseprofile and key in profile and key in appendkeys:
                             profile[key] = baseprofile[key] + profile[key]
+                rulefound = False
                 for entry in overrides.get('vmrules', self.vmrules):
                     if len(entry) != 1:
                         error(f"Wrong vm rule {entry}")
                         sys.exit(1)
                     rule = list(entry.keys())[0]
                     if (re.match(rule, name) or fnmatch(name, rule)) and isinstance(entry[rule], dict):
+                        rulefound = True
                         listkeys = ['cmds', 'files', 'scripts']
                         for rule in entry:
                             current = entry[rule]
@@ -1768,9 +1770,9 @@ class Kconfig(Kbaseconfig):
                                 if key in listkeys and isinstance(current[key], list) and key in profile:
                                     current[key] = profile[key] + current[key]
                             profile.update(entry[rule])
-                    elif vmrules_strict:
-                        warning(f"No vmrules found for {name}. Skipping...")
-                        continue
+                if vmrules_strict and not rulefound:
+                    warning(f"No vmrules found for {name}. Skipping...")
+                    continue
                 vmclient = profile.get('client')
                 if vmclient is None:
                     z = k
