@@ -66,6 +66,7 @@ def create(config, plandir, cluster, overrides):
     plan = cluster if cluster is not None else data['cluster']
     data['kube'] = data['cluster']
     masters = data.get('masters', 1)
+    workers = data.get('workers', 0)
     network = data.get('network', 'default')
     sdn = None if 'sdn' in overrides and overrides['sdn'] is None else data.get('sdn')
     image = data.get('image', 'ubuntu2004')
@@ -131,26 +132,24 @@ def create(config, plandir, cluster, overrides):
     if result['result'] != "success":
         sys.exit(1)
     for role in ['masters', 'workers']:
+        if (role == 'masters' and masters == 1) or (role == 'workers' and workers == 0):
+            continue
         nodes_overrides = data.copy()
         nodes_install_k3s_args = install_k3s_args.copy()
+        nodes_overrides['install_k3s_args'] = nodes_install_k3s_args
         if role == 'masters':
             if sdn is None or sdn != 'flannel':
                 nodes_install_k3s_args.append("INSTALL_K3S_EXEC='--flannel-backend=none'")
             nodes_install_k3s_args = ' '.join(nodes_install_k3s_args)
-        nodes_overrides['install_k3s_args'] = nodes_install_k3s_args
-        if role == 'masters' and masters > 1:
+            nodes_overrides['install_k3s_args'] = nodes_install_k3s_args
             pprint("Deploying extra masters")
             threaded = data.get('threaded', False) or data.get('masters_threaded', False)
             config.plan(plan, inputfile=f'{plandir}/masters.yml', overrides=nodes_overrides, threaded=threaded)
         if role == 'workers':
-            workers = data.get('workers', 0)
-            if workers > 0:
-                pprint("Deploying workers")
-                if 'name' in data:
-                    del data['name']
-                os.chdir(os.path.expanduser("~/.kcli"))
-                threaded = data.get('threaded', False) or data.get('workers_threaded', False)
-                config.plan(plan, inputfile=f'{plandir}/workers.yml', overrides=nodes_overrides, threaded=threaded)
+            pprint("Deploying workers")
+            os.chdir(os.path.expanduser("~/.kcli"))
+            threaded = data.get('threaded', False) or data.get('workers_threaded', False)
+            config.plan(plan, inputfile=f'{plandir}/workers.yml', overrides=nodes_overrides, threaded=threaded)
     success(f"K3s cluster {cluster} deployed!!!")
     info2(f"export KUBECONFIG=$HOME/.kcli/clusters/{cluster}/auth/kubeconfig")
     info2("export PATH=$PWD:$PATH")
