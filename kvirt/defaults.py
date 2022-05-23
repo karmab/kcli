@@ -1,6 +1,6 @@
 # coding=utf-8
 UBUNTUS = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety', 'zesty', 'artful', 'bionic', 'cosmic', 'eoan', 'focal',
-           'groovy', 'hirsute', 'impish']
+           'groovy', 'hirsute', 'impish', 'jammy']
 VERSION = "99.0"
 NETS = ['default']
 POOL = 'default'
