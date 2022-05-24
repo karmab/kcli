@@ -1432,7 +1432,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             z = dnsconfig.k
             z.delete_dns(vm, domain)
     if sushy and config.type == 'kvm':
-        return call("oc expose -n openshift-infra svc/sushy", shell=True)
+        call("oc expose -n openshift-infra svc/sushy", shell=True)
     if platform in cloudplatforms:
         bucket = "%s-%s" % (cluster, domain.replace('.', '-'))
         config.k.delete_bucket(bucket)
