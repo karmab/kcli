@@ -1065,7 +1065,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 with open("%s/openshift/99-apps-%s.yaml" % (clusterdir, appname), 'w') as g:
                     g.write(rendered)
     if metal3:
-        copy2(f"{plandir}/99-metal3-provisioning.yaml", "{clusterdir}/openshift")
+        copy2(f"{plandir}/99-metal3-provisioning.yaml", f"{clusterdir}/openshift")
     if sushy:
         if config.type != 'kvm':
             warning(f"Ignoring sushy request as platform is {config.type}")
