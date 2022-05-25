@@ -128,8 +128,6 @@ class Kbaseconfig:
             if 'client' not in self.ini['default']:
                 self.ini['default']['client'] = 'local'
                 self.ini['local'] = {}
-                if not quiet:
-                    warning("Using local as no client was specified...")
         self.clients = [e for e in self.ini if e != 'default']
         defaults = {}
         default = self.ini['default']
