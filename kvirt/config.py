@@ -2614,8 +2614,8 @@ class Kconfig(Kbaseconfig):
         iso_version = str(overrides.get('version', 'latest'))
         if not installer:
             if iso_version not in ['latest', 'pre-release'] and not iso_version.startswith('4.'):
-                error("Incorrect live iso version. Choose between latest, pre-release or 4.X")
-                sys.exit(1)
+                warning("Forcing live iso version to latest")
+                iso_version = 'latest'
             elif iso_version.startswith('4.'):
                 minor_version = iso_version.split('.')[1]
                 if minor_version.isdigit() and int(minor_version) < 6:
