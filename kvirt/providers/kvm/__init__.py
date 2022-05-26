@@ -1899,6 +1899,7 @@ class Kvirt(object):
         ip = self.ip(name)
         status = {0: 'down', 1: 'up'}
         vmxml = vm.XMLDesc(0)
+        uuid = vm.UUIDString()
         root = ET.fromstring(vmxml)
         disks = []
         domain, image = None, None
@@ -1922,11 +1923,11 @@ class Kvirt(object):
                 imagefiles = [element.find('source').get('file'), element.find('source').get('dev'),
                               element.find('source').get('volume')]
                 imagefile = next(item for item in imagefiles if item is not None)
-                if imagefile.endswith('.iso'):
-                    continue
-                elif imagefile.endswith(f"{name}.ISO") or f"{name}_" in imagefile or f"{name}.img" in imagefile:
+                if imagefile.endswith(f"{name}.ISO") or f"{name}_" in imagefile or f"{name}.img" in imagefile:
                     disks.append(imagefile)
                 elif imagefile == name:
+                    disks.append(imagefile)
+                elif uuid in imagefile:
                     disks.append(imagefile)
                 else:
                     continue
