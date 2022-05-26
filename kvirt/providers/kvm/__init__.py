@@ -2033,9 +2033,9 @@ class Kvirt(object):
                 except:
                     pass
         if ignition:
-            ignitionpath = f'/var/lib/libvirt/images/{name}'
+            ignitionpath = f'/var/lib/libvirt/images/{name}.ign'
             if self.protocol == 'ssh' and self.host not in ['localhost', '127.0.0.1']:
-                ignitiondeletecmd = f"ls {ignitionpath}.ign >/dev/null 2>&1 && rm -f {ignitionpath}.ign"
+                ignitiondeletecmd = f"ls {ignitionpath} >/dev/null 2>&1 && rm -f {ignitionpath}"
                 ignitiondeletecmd = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user,
                                                                    self.host, ignitiondeletecmd)
                 call(ignitiondeletecmd, shell=True)
