@@ -460,6 +460,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if platform in virtplatforms and not sno and not ipi and api_ip is None:
         network = data.get('network')
         networkinfo = k.info_network(network)
+        if not networkinfo:
+            sys.exit(1)
         if platform == 'kvm' and networkinfo['type'] == 'routed':
             cidr = networkinfo['cidr']
             api_index = 2 if ':' in cidr else -3
