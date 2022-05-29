@@ -4,7 +4,7 @@
   size: {{ kubevirt_disk_size }}
 {% endif %}
 
-{% if masters > 1 and config_type in ['aws', 'gcp'] %}
+{% if masters|int > 1 and config_type in ['aws', 'gcp'] %}
 {{ cluster }}-master:
  type: loadbalancer
  nets:
@@ -16,12 +16,12 @@
  ports:
  - 6443
  vms:
-{% for number in range(0, masters) %}
+{% for number in range(0, masters|int) %}
   - {{cluster}}-master-{{ number }}
 {% endfor %}
 {% endif %}
 
-{% for number in range(0, masters) %}
+{% for number in range(0, masters|int) %}
 {% if extra_master_networks %}
  {% set extra_networks = extra_master_networks %}
 {% endif %}

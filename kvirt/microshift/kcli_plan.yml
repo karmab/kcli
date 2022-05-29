@@ -22,7 +22,7 @@ microshift_profile:
  scripts:
  - scripts/deploy.sh
 
-{% for number in range(0, nodes) %}
+{% for number in range(0, nodes|int) %}
 {{ cluster }}-{{ number }}:
  profile: microshift_profile
  wait: true

@@ -1,5 +1,5 @@
-{% for num in range(0, masters) %}
-{% if master_macs and master_macs|length >= masters %}
+{% for num in range(0, masters|int) %}
+{% if master_macs and master_macs|length >= masters|int %}
 {% set net0 = {"name": network, "mac": master_macs[num]} %}
 {% else %}
 {% set net0 = network %}
