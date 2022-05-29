@@ -658,6 +658,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             installparam['cluster'] = cluster
             installparam['plan'] = plan
             installparam['image'] = image
+            if dnsconfig is not None:
+                installparam['dnsclient'] = dnsconfig.client
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     data['pub_key'] = open(pub_key).read().strip()
     if not data['pub_key'].startswith('ssh-'):
