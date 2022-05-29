@@ -2531,7 +2531,7 @@ class Kconfig(Kbaseconfig):
                 return
         for vm in sorted(k.list(), key=lambda x: x['name']):
             name = vm['name']
-            dnsclient = vm.get('dnsclient')
+            dnsclient = vm.get('dnsclient') or dnsclient
             currentcluster = vm.get('kube')
             if currentcluster is not None and currentcluster == cluster:
                 k.delete(name, snapshots=True)
@@ -2548,8 +2548,8 @@ class Kconfig(Kbaseconfig):
                 k.delete_bucket(bucket)
         elif dnsclient is not None:
             z = Kconfig(client=dnsclient).k
-            z.delete_dns(f"api.{cluster}.{domain}")
-            z.delete_dns(f"apps.{cluster}.{domain}")
+            z.delete_dns(f"api.{cluster}", domain)
+            z.delete_dns(f"apps.{cluster}", domain)
 
     def scale_kube_generic(self, cluster, overrides={}):
         plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
