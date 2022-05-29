@@ -1420,7 +1420,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         info2("Access the Openshift web-console here: https://console-openshift-console.apps.%s.%s" % (cluster, domain))
         info2("Login to the console with user: kubeadmin, password: %s" % kubepassword)
         if async_install:
-            sys.exit(0)
+            return
     else:
         installcommand = 'openshift-install --dir=%s --log-level=%s wait-for install-complete' % (clusterdir, log_level)
         installcommand += " || %s" % installcommand
