@@ -2227,7 +2227,7 @@ def info_generic_kube(args):
     if args.cluster is not None:
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
-        _list = config.info_kube(args.cluster)
+        _list = config.info_specific_kube(args.cluster)
         _parse_vms_list(_list)
     else:
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
@@ -2239,7 +2239,7 @@ def info_kind_kube(args):
     if args.cluster is not None:
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
-        _list = config.info_kube(args.cluster)
+        _list = config.info_specific_kube(args.cluster)
         _parse_vms_list(_list)
     else:
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
@@ -2251,7 +2251,7 @@ def info_microshift_kube(args):
     if args.cluster is not None:
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
-        _list = config.info_kube(args.cluster)
+        _list = config.info_specific_kube(args.cluster)
         _parse_vms_list(_list)
     else:
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
@@ -2263,7 +2263,7 @@ def info_k3s_kube(args):
     if args.cluster is not None:
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
-        _list = config.info_kube(args.cluster)
+        _list = config.info_specific_kube(args.cluster)
         _parse_vms_list(_list)
     else:
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
@@ -2275,7 +2275,7 @@ def info_hypershift_kube(args):
     if args.cluster is not None:
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
-        _list = config.info_kube(args.cluster)
+        _list = config.info_specific_kube(args.cluster)
         _parse_vms_list(_list)
     else:
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
@@ -2287,7 +2287,7 @@ def info_openshift_kube(args):
     if args.cluster is not None:
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
-        _list = config.info_kube(args.cluster)
+        _list = config.info_specific_kube(args.cluster)
         _parse_vms_list(_list)
     else:
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)

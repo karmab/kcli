@@ -2921,7 +2921,7 @@ class Kconfig(Kbaseconfig):
                     updated_files.append(destination)
         return updated_files
 
-    def info_kube(self, cluster):
+    def info_specific_kube(self, cluster):
         pprint(f"Providing information about cluster {cluster}")
         k = self.k
         results = []
@@ -2930,7 +2930,7 @@ class Kconfig(Kbaseconfig):
                 results.append(vm)
         return results
 
-    def info_plan(self, plan):
+    def info_specific_plan(self, plan):
         pprint(f"Providing information about plan {plan}")
         k = self.k
         results = []
