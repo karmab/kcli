@@ -558,6 +558,20 @@ def _list_output(_list, output):
         print(json.dumps(_list))
 
 
+def _parse_vms_list(_list):
+    vms = PrettyTable(["Name", "Status", "Ips", "Source", "Plan", "Profile"])
+    for vm in _list:
+        name = vm.get('name')
+        status = vm.get('status')
+        ip = vm.get('ip', '')
+        source = vm.get('image', '')
+        plan = vm.get('plan', '')
+        profile = vm.get('profile', '')
+        vminfo = [name, status, ip, source, plan, profile]
+        vms.add_row(vminfo)
+    print(vms)
+
+
 def list_vm(args):
     """List vms"""
     filters = args.filters
@@ -2193,7 +2207,12 @@ def info_plan(args):
     inputfile = args.inputfile
     if container_mode():
         inputfile = "/workdir/%s" % inputfile if inputfile is not None else "/workdir/kcli_plan.yml"
-    if url is None:
+    if args.plan is not None:
+        config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
+                         namespace=args.namespace)
+        _list = config.info_plan(args.plan)
+        _parse_vms_list(_list)
+    elif url is None:
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
         baseconfig.info_plan(inputfile, quiet=quiet, doc=doc)
     else:
@@ -2205,38 +2224,74 @@ def info_plan(args):
 
 def info_generic_kube(args):
     """Info Generic kube"""
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
-    baseconfig.info_kube_generic(quiet=True)
+    if args.cluster is not None:
+        config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
+                         namespace=args.namespace)
+        _list = config.info_kube(args.cluster)
+        _parse_vms_list(_list)
+    else:
+        baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
+        baseconfig.info_kube_generic(quiet=True)
 
 
 def info_kind_kube(args):
     """Info Kind kube"""
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
-    baseconfig.info_kube_kind(quiet=True)
+    if args.cluster is not None:
+        config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
+                         namespace=args.namespace)
+        _list = config.info_kube(args.cluster)
+        _parse_vms_list(_list)
+    else:
+        baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
+        baseconfig.info_kube_kind(quiet=True)
 
 
 def info_microshift_kube(args):
     """Info Microshift kube"""
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
-    baseconfig.info_kube_microshift(quiet=True)
+    if args.cluster is not None:
+        config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
+                         namespace=args.namespace)
+        _list = config.info_kube(args.cluster)
+        _parse_vms_list(_list)
+    else:
+        baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
+        baseconfig.info_kube_microshift(quiet=True)
 
 
 def info_k3s_kube(args):
     """Info K3s kube"""
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
-    baseconfig.info_kube_k3s(quiet=True)
+    if args.cluster is not None:
+        config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
+                         namespace=args.namespace)
+        _list = config.info_kube(args.cluster)
+        _parse_vms_list(_list)
+    else:
+        baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
+        baseconfig.info_kube_k3s(quiet=True)
 
 
 def info_hypershift_kube(args):
     """Info Hypershift kube"""
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
-    baseconfig.info_kube_hypershift(quiet=True)
+    if args.cluster is not None:
+        config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
+                         namespace=args.namespace)
+        _list = config.info_kube(args.cluster)
+        _parse_vms_list(_list)
+    else:
+        baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
+        baseconfig.info_kube_hypershift(quiet=True)
 
 
 def info_openshift_kube(args):
     """Info Openshift kube"""
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
-    baseconfig.info_kube_openshift(quiet=True)
+    if args.cluster is not None:
+        config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
+                         namespace=args.namespace)
+        _list = config.info_kube(args.cluster)
+        _parse_vms_list(_list)
+    else:
+        baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
+        baseconfig.info_kube_openshift(quiet=True)
 
 
 def info_network(args):
@@ -4006,29 +4061,35 @@ def cli():
     kubegenericinfo_desc = 'Info Generic Kube'
     kubegenericinfo_parser = kubeinfo_subparsers.add_parser('generic', description=kubegenericinfo_desc,
                                                             help=kubegenericinfo_desc, aliases=['kubeadm'])
+    kubegenericinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubegenericinfo_parser.set_defaults(func=info_generic_kube)
 
     kubekindinfo_desc = 'Info Kind Kube'
     kubekindinfo_parser = kubeinfo_subparsers.add_parser('kind', description=kubekindinfo_desc, help=kubekindinfo_desc)
+    kubekindinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubekindinfo_parser.set_defaults(func=info_kind_kube)
 
     kubemicroshiftinfo_desc = 'Info Microshift Kube'
     kubemicroshiftinfo_parser = kubeinfo_subparsers.add_parser('microshift', description=kubemicroshiftinfo_desc,
                                                                help=kubemicroshiftinfo_desc)
+    kubemicroshiftinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubemicroshiftinfo_parser.set_defaults(func=info_microshift_kube)
 
     kubek3sinfo_desc = 'Info K3s Kube'
     kubek3sinfo_parser = kubeinfo_subparsers.add_parser('k3s', description=kubek3sinfo_desc, help=kubek3sinfo_desc)
+    kubek3sinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubek3sinfo_parser.set_defaults(func=info_k3s_kube)
 
     kubehypershiftinfo_desc = 'Info Hypershift Kube'
     kubehypershiftinfo_parser = kubeinfo_subparsers.add_parser('hypershift', description=kubehypershiftinfo_desc,
                                                                help=kubehypershiftinfo_desc)
+    kubehypershiftinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubehypershiftinfo_parser.set_defaults(func=info_hypershift_kube)
 
     kubeopenshiftinfo_desc = 'Info Openshift Kube'
     kubeopenshiftinfo_parser = kubeinfo_subparsers.add_parser('openshift', description=kubeopenshiftinfo_desc,
                                                               help=kubeopenshiftinfo_desc, aliases=['okd'])
+    kubeopenshiftinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubeopenshiftinfo_parser.set_defaults(func=info_openshift_kube)
 
     kubelist_desc = 'List Kubes'
@@ -4373,6 +4434,7 @@ def cli():
     planinfo_parser.add_argument('-p', '--path', help='Path where to download plans. Defaults to plan', metavar='PATH')
     planinfo_parser.add_argument('-q', '--quiet', action='store_true', help='Provide parameter file output')
     planinfo_parser.add_argument('-u', '--url', help='Url for plan', metavar='URL', type=valid_url)
+    planinfo_parser.add_argument('plan', metavar='PLAN', nargs='?')
     planinfo_parser.set_defaults(func=info_plan)
 
     planlist_desc = 'List Plans'

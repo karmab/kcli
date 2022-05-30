@@ -2920,3 +2920,21 @@ class Kconfig(Kbaseconfig):
                     os.system(scpcmd)
                     updated_files.append(destination)
         return updated_files
+
+    def info_kube(self, cluster):
+        pprint(f"Providing information about cluster {cluster}")
+        k = self.k
+        results = []
+        for vm in k.list():
+            if vm.get('kube', '') == cluster:
+                results.append(vm)
+        return results
+
+    def info_plan(self, plan):
+        pprint(f"Providing information about plan {plan}")
+        k = self.k
+        results = []
+        for vm in k.list():
+            if vm.get('plan', '') == plan:
+                results.append(vm)
+        return results
