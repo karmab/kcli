@@ -2121,7 +2121,6 @@ def expose_plan(args):
         pprint(f"Using {plan} as name of the plan")
     port = args.port
     inputfile = args.inputfile
-    installermode = args.installermode
     if inputfile is None:
         inputfile = 'kcli_plan.yml'
     if container_mode():
@@ -2132,8 +2131,7 @@ def expose_plan(args):
     for extraclient in config.extraclients:
         extraconfigs[extraclient] = Kconfig(client=extraclient, debug=args.debug, region=args.region, zone=args.zone,
                                             namespace=args.namespace)
-    config.expose_plan(plan, inputfile=inputfile, overrides=overrides, port=port, extraconfigs=extraconfigs,
-                       installermode=installermode)
+    config.expose_plan(plan, inputfile=inputfile, overrides=overrides, port=port, extraconfigs=extraconfigs)
     return 0
 
 
@@ -4415,7 +4413,6 @@ def cli():
     planexpose_epilog = None
     planexpose_parser = argparse.ArgumentParser(add_help=False)
     planexpose_parser.add_argument('-f', '--inputfile', help='Input Plan file')
-    planexpose_parser.add_argument('-i', '--installermode', action='store_true', help='Filter by installervm')
     planexpose_parser.add_argument('-P', '--param', action='append',
                                    help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
     planexpose_parser.add_argument('--port', help='Port where to listen', type=int, default=9000, metavar='PORT')

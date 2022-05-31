@@ -1,87 +1,42 @@
 from flask import Flask
 from flask import render_template, request, jsonify
 from glob import glob
-from kvirt.common import get_overrides
+from kvirt.common import get_overrides, pprint
 import os
-import re
 
 
 class Kexposer():
-    def __init__(self, config, plan, inputfile, overrides={}, port=9000, extraconfigs=[], installermode=False):
+    def __init__(self, config, plan, inputfile, overrides={}, port=9000, extraconfigs=[]):
         app = Flask(__name__)
         self.basedir = os.path.dirname(inputfile) if '/' in inputfile else '.'
-        clients = {}
-        plans = {}
-        for parameterfile in glob(f"{self.basedir}/parameters_*.y*ml"):
-            search = re.match('.*parameters_(.*)\\.(ya?ml)', parameterfile)
-            plan_name = search.group(1)
-            ext = search.group(2)
-            plans[plan_name] = config.client
-            if config.client in clients:
-                clients[config.client][plan_name] = f"{self.basedir}/parameters_{plan_name}.{ext}"
-            else:
-                clients[config.client] = {plan_name: f"{self.basedir}/parameters_{plan_name}.{ext}"}
-        for client in [config.client] + list(config.extraclients.keys()):
-            if not config.ini[client].get('enabled', True):
-                continue
-            self.parametersfiles = glob(f"{self.basedir}/{client}/parameters_*.y*ml")
-            for parameterfile in self.parametersfiles:
-                search = re.match('.*parameters_(.*)\\.(ya?ml)', parameterfile)
-                plan_name = search.group(1)
-                ext = search.group(2)
-                plans[plan_name] = client
-                if client in clients:
-                    clients[client][plan_name] = f"{self.basedir}/{client}/parameters_{plan_name}.{ext}"
-                else:
-                    clients[client] = {plan_name: f"{self.basedir}/{client}/parameters_{plan_name}.{ext}"}
-        self.clients = clients if clients else {config.client: {plan: None}}
-        self.plans = plans if plans else {plan: config.client}
+        plans = []
+        for parameterfile in glob(f"{self.basedir}/paramfiles/*.yaml"):
+            plan = os.path.basename(parameterfile).replace('.yaml', '')
+            pprint(f"Adding parameter file {plan}")
+            plans.append(plan)
+        self.plans = plans if plans else [plan]
         self.overrides = overrides
-        self.installermode = installermode
 
         @app.route('/')
         def index():
-            data = {}
-            for client in sorted(self.clients):
-                data[client] = {}
-                for plan_name in sorted(self.clients[client]):
-                    current_data = {'vms': []}
-                    currentk = config.k if client == config.client else config.extraclients[client]
-                    if self.installermode:
-                        current_filtervm = f'{plan_name}-installer'
-                        try:
-                            vm = currentk.info(current_filtervm)
-                            current_data['vms'].append(vm)
-                            if 'creationdate' in vm:
-                                current_data['creationdate'] = vm['creationdate']
-                            if 'owner' in vm:
-                                current_data['owner'] = vm['owner']
-                        except:
-                            pass
-                    else:
-                        for vm in currentk.list():
-                            if vm['plan'] == plan_name:
-                                current_data['vms'].append(vm)
-                                if 'creationdate' not in current_data and 'creationdate' in vm:
-                                    current_data['creationdate'] = vm['creationdate']
-                                if 'owner' not in current_data and 'owner' in vm:
-                                    current_data['owner'] = vm['owner']
-                    data[client][plan_name] = current_data
-            return render_template('index.html', clients=data)
+            return render_template('index.html', plans=self.plans)
 
         @app.route("/exposedelete", methods=['POST'])
         def exposedelete():
             """
             delete plan
             """
+            currentconfig = self.config
             if 'name' in request.form:
                 plan = request.form['name']
                 if plan not in self.plans:
                     return f'Invalid plan name {plan}'
-                elif self.plans[plan] == config.client:
-                    currentconfig = self.config
-                else:
-                    currentconfig = self.extraconfigs[self.plans[plan]]
+                paramfile = f"{self.basedir}/paramfiles/{plan}.yaml"
+                if os.path.exists(paramfile):
+                    fileoverrides = get_overrides(paramfile=paramfile)
+                    if 'client' in fileoverrides:
+                        client = fileoverrides['client']
+                        currentconfig.__init__(client=client)
                 result = currentconfig.delete_plan(plan)
                 response = jsonify(result)
                 response.status_code = 200
@@ -96,16 +51,11 @@ class Kexposer():
             """
             create plan
             """
+            currentconfig = self.config
             if 'plan' in request.form:
                 plan = request.form['plan']
                 if plan not in self.plans:
                     return f'Invalid plan name {plan}'
-                elif self.plans[plan] == config.client:
-                    currentconfig = self.config
-                    client = config.client
-                else:
-                    client = self.plans[plan]
-                    currentconfig = self.extraconfigs[client]
                 parameters = {}
                 for p in request.form:
                     if p.startswith('parameter'):
@@ -118,9 +68,12 @@ class Kexposer():
                         parameters[key] = value
                 try:
                     overrides = parameters
-                    paramfile = self.clients[client][plan]
-                    if paramfile is not None:
+                    paramfile = f"{self.basedir}/paramfiles/{plan}.yaml"
+                    if os.path.exists(paramfile):
                         fileoverrides = get_overrides(paramfile=paramfile)
+                        if 'client' in fileoverrides:
+                            client = fileoverrides['client']
+                            currentconfig.__init__(client=client)
                         fileoverrides.update(overrides)
                         overrides = fileoverrides
                     if 'mail' in currentconfig.notifymethods and 'mailto' in overrides and overrides['mailto'] != "":
@@ -152,6 +105,29 @@ class Kexposer():
             if plan not in self.plans:
                 return f'Invalid plan name {plan}'
             return render_template('form.html', parameters=parameters, plan=plan)
+
+        @app.route("/infoplan/<string:plan>", methods=['GET'])
+        def infoplan(plan):
+            """
+            info plan
+            """
+            currentconfig = self.config
+            client = currentconfig.client
+            if plan not in self.plans:
+                return f'Invalid plan name {plan}'
+            paramfile = f"{self.basedir}/paramfiles/{plan}.yaml"
+            if os.path.exists(paramfile):
+                fileoverrides = get_overrides(paramfile=paramfile)
+                if 'client' in fileoverrides:
+                    client = fileoverrides['client']
+                    currentconfig.__init__(client=client)
+            vms = currentconfig.info_specific_plan(plan)
+            creationdate = ''
+            if vms:
+                creationdate = vms[0].get('creationdate', '')
+                owner = vms[0].get('owner', '')
+            return render_template('infoplan.html', vms=vms, plan=plan, client=client, creationdate=creationdate,
+                                   owner=owner)
 
         self.app = app
         self.config = config
