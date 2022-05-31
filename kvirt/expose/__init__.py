@@ -12,28 +12,28 @@ class Kexposer():
         self.basedir = os.path.dirname(inputfile) if '/' in inputfile else '.'
         clients = {}
         plans = {}
-        for parameterfile in glob("%s/parameters_*.y*ml" % self.basedir):
+        for parameterfile in glob(f"{self.basedir}/parameters_*.y*ml"):
             search = re.match('.*parameters_(.*)\\.(ya?ml)', parameterfile)
             plan_name = search.group(1)
             ext = search.group(2)
             plans[plan_name] = config.client
             if config.client in clients:
-                clients[config.client][plan_name] = "%s/parameters_%s.%s" % (self.basedir, plan_name, ext)
+                clients[config.client][plan_name] = f"{self.basedir}/parameters_{plan_name}.{ext}"
             else:
-                clients[config.client] = {plan_name: "%s/parameters_%s.%s" % (self.basedir, plan_name, ext)}
+                clients[config.client] = {plan_name: f"{self.basedir}/parameters_{plan_name}.{ext}"}
         for client in [config.client] + list(config.extraclients.keys()):
             if not config.ini[client].get('enabled', True):
                 continue
-            self.parametersfiles = glob("%s/%s/parameters_*.y*ml" % (self.basedir, client))
+            self.parametersfiles = glob(f"{self.basedir}/{client}/parameters_*.y*ml")
             for parameterfile in self.parametersfiles:
                 search = re.match('.*parameters_(.*)\\.(ya?ml)', parameterfile)
                 plan_name = search.group(1)
                 ext = search.group(2)
                 plans[plan_name] = client
                 if client in clients:
-                    clients[client][plan_name] = "%s/%s/parameters_%s.%s" % (self.basedir, client, plan_name, ext)
+                    clients[client][plan_name] = f"{self.basedir}/{client}/parameters_{plan_name}.{ext}"
                 else:
-                    clients[client] = {plan_name: "%s/%s/parameters_%s.%s" % (self.basedir, client, plan_name, ext)}
+                    clients[client] = {plan_name: f"{self.basedir}/{client}/parameters_{plan_name}.{ext}"}
         self.clients = clients if clients else {config.client: {plan: None}}
         self.plans = plans if plans else {plan: config.client}
         self.overrides = overrides
@@ -48,7 +48,7 @@ class Kexposer():
                     current_data = {'vms': []}
                     currentk = config.k if client == config.client else config.extraclients[client]
                     if self.installermode:
-                        current_filtervm = '%s-installer' % plan_name
+                        current_filtervm = f'{plan_name}-installer'
                         try:
                             vm = currentk.info(current_filtervm)
                             current_data['vms'].append(vm)
@@ -77,7 +77,7 @@ class Kexposer():
             if 'name' in request.form:
                 plan = request.form['name']
                 if plan not in self.plans:
-                    return 'Invalid plan name %s' % plan
+                    return f'Invalid plan name {plan}'
                 elif self.plans[plan] == config.client:
                     currentconfig = self.config
                 else:
@@ -99,7 +99,7 @@ class Kexposer():
             if 'plan' in request.form:
                 plan = request.form['plan']
                 if plan not in self.plans:
-                    return 'Invalid plan name %s' % plan
+                    return f'Invalid plan name {plan}'
                 elif self.plans[plan] == config.client:
                     currentconfig = self.config
                     client = config.client
@@ -134,7 +134,7 @@ class Kexposer():
                     currentconfig.delete_plan(plan)
                     result = currentconfig.plan(plan, inputfile=inputfile, overrides=overrides)
                 except Exception as e:
-                    error = 'Hit issue when running plan: %s' % str(e)
+                    error = f'Hit issue when running plan: {str(e)}'
                     return render_template('error.html', plan=plan, error=error)
                 if result['result'] == 'success':
                     return render_template('success.html', plan=plan)
@@ -150,7 +150,7 @@ class Kexposer():
             """
             parameters = self.overrides
             if plan not in self.plans:
-                return 'Invalid plan name %s' % plan
+                return f'Invalid plan name {plan}'
             return render_template('form.html', parameters=parameters, plan=plan)
 
         self.app = app
