@@ -4,6 +4,7 @@
 from ast import literal_eval
 from datetime import datetime
 import glob
+from hashlib import sha256
 from kvirt.jinjafilters import jinjafilters
 from kvirt.defaults import UBUNTUS, SSH_PUB_LOCATIONS
 from kvirt import version
@@ -1392,6 +1393,12 @@ def get_installer_iso():
     return data['architectures']['x86_64']['artifacts']['metal']['formats']['iso']['disk']['location']
 
 
+def get_installer_iso_sha():
+    INSTALLER_COREOS = os.popen('openshift-install coreos print-stream-json 2>/dev/null').read()
+    data = json.loads(INSTALLER_COREOS)
+    return data['architectures']['x86_64']['artifacts']['metal']['formats']['iso']['disk']['sha256']
+
+
 def get_latest_rhcos_metal(url):
     buildurl = '%s/builds.json' % url
     with urlopen(buildurl) as b:
@@ -2022,8 +2029,12 @@ def generate_rhcos_iso(k, cluster, pool, version='latest', podman=False, install
     if baseiso not in k.volumes(iso=True):
         pprint(f"Downloading {liveiso}")
         k.add_image(liveiso, pool)
-    pprint(f"Creating iso {name}")
     poolpath = k.get_pool_path(pool)
+    if installer and (k.conn == 'fake' or k.host in ['localhost', '127.0.0.1']):
+        if not correct_sha(f"{poolpath}/{baseiso}", get_installer_iso_sha()):
+            error(f"Corrupted iso {poolpath}/{baseiso}")
+            sys.exit(1)
+    pprint(f"Creating iso {name}")
     if podman:
         coreosinstaller = f"podman run --privileged --rm -w /data -v {poolpath}:/data -v /dev:/dev"
         if not os.path.exists('/Users'):
@@ -2188,3 +2199,12 @@ def compare_git_versions(commit1, commit2):
         date2 = datetime.fromtimestamp(int(timestamp2))
         os.chdir(mycwd)
     return True if date1 < date2 else False
+
+
+def correct_sha(_file, sha):
+    sha256_hash = sha256()
+    with open(_file, "rb") as f:
+        for byte_block in iter(lambda: f.read(4096), b""):
+            sha256_hash.update(byte_block)
+    downloaded_sha = sha256_hash.hexdigest()
+    return downloaded_sha == sha
