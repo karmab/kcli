@@ -2136,9 +2136,8 @@ class Kconfig(Kbaseconfig):
         returndata['assets'] = newassets if newassets else []
         if failedvms:
             returndata['result'] = 'failure'
-            returndata['reason'] = 'The following vms failed:\n'
-            for entry in failedvms:
-                returndata['reason'] += f"{entry['name']}: { entry['reason']}\n"
+            failednames = ','.join([v['name'] for v in failedvms])
+            returndata['reason'] = f'The following vms failed: {failednames}'
         if getback or toclean:
             os.chdir('..')
         if toclean:

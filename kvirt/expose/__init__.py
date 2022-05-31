@@ -14,7 +14,7 @@ class Kexposer():
             plan = os.path.basename(parameterfile).replace('.yaml', '')
             pprint(f"Adding parameter file {plan}")
             plans.append(plan)
-        self.plans = plans if plans else [plan]
+        self.plans = sorted(plans) if plans else [plan]
         self.overrides = overrides
 
         @app.route('/')
@@ -92,7 +92,7 @@ class Kexposer():
                 if result['result'] == 'success':
                     return render_template('success.html', plan=plan)
                 else:
-                    return render_template('error.html', plan=plan, error=result['reason'])
+                    return render_template('error.html', plan=plan, failedvms=result['failedvms'])
             else:
                 return 'Invalid data'
 
@@ -122,7 +122,7 @@ class Kexposer():
                     client = fileoverrides['client']
                     currentconfig.__init__(client=client)
             vms = currentconfig.info_specific_plan(plan)
-            creationdate = ''
+            owner, creationdate = '', ''
             if vms:
                 creationdate = vms[0].get('creationdate', '')
                 owner = vms[0].get('owner', '')
