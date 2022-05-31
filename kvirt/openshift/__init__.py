@@ -327,8 +327,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     arch_tag = 'arm64' if arch in ['aarch64', 'arm64'] else 'latest'
     overrides['arch_tag'] = arch_tag
     pprint("Deploying on client %s" % client)
-    data = {'helper_image': 'CentOS-7-x86_64-GenericCloud.qcow2',
-            'domain': 'karmalabs.com',
+    data = {'domain': 'karmalabs.com',
             'network': 'default',
             'masters': 1,
             'workers': 0,
@@ -358,7 +357,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'kubevirt_ignore_node_port': False,
             'baremetal': False,
             'sushy': False,
-            'liveiso_latest': False,
             'retries': 2}
     data.update(overrides)
     if 'cluster' in overrides:
@@ -368,7 +366,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     else:
         clustervalue = 'testk'
     retries = data.get('retries')
-    liveiso_installer = not data.get('liveiso_latest')
     data['cluster'] = clustervalue
     domain = data.get('domain')
     async_install = data.get('async')
@@ -1172,7 +1169,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             f.write(result['data'])
         if config.type == 'fake':
             pprint("Storing generated iso in current dir")
-            generate_rhcos_iso(k, f"{cluster}-sno", 'default', installer=liveiso_installer, extra_args=extra_args)
+            generate_rhcos_iso(k, f"{cluster}-sno", 'default', installer=True, extra_args=extra_args)
         elif config.type not in ['kvm', 'kubevirt']:
             pprint("Additional workflow not available on %s" % config.type)
             pprint("Embed iso.ign in rhcos live iso")
@@ -1180,7 +1177,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         else:
             iso_pool = data['pool'] or config.pool
             pprint(f"Storing generated iso in pool {iso_pool}")
-            generate_rhcos_iso(k, f"{cluster}-sno", iso_pool, installer=liveiso_installer, extra_args=extra_args)
+            generate_rhcos_iso(k, f"{cluster}-sno", iso_pool, installer=True, extra_args=extra_args)
             if sno_virtual:
                 warning("You can also get a sno by setting masters to 1")
                 pprint("Deploying sno vm")
@@ -1200,12 +1197,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 master_overrides = overrides.copy()
                 master_overrides['role'] = 'master'
                 master_overrides['image'] = 'rhcos410'
-                config.create_openshift_iso(cluster, overrides=master_overrides, installer=liveiso_installer)
+                config.create_openshift_iso(cluster, overrides=master_overrides, installer=True)
         if sno_workers:
             worker_overrides = overrides.copy()
             worker_overrides['role'] = 'worker'
             worker_overrides['image'] = 'rhcos410'
-            config.create_openshift_iso(cluster, overrides=worker_overrides, installer=liveiso_installer)
+            config.create_openshift_iso(cluster, overrides=worker_overrides, installer=True)
         if ignore_hosts:
             warning("Not updating /etc/hosts as per your request")
         elif api_ip is not None:
@@ -1287,7 +1284,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             with open(ignitionfile, 'w') as f:
                 f.write(iso_data)
             iso_pool = data['pool'] or config.pool
-            generate_rhcos_iso(k, cluster + '-bootstrap', iso_pool, installer=liveiso_installer)
+            generate_rhcos_iso(k, cluster + '-bootstrap', iso_pool, installer=True)
         else:
             result = config.plan(plan, inputfile='%s/bootstrap.yml' % plandir, overrides=overrides)
             if result['result'] != 'success':
@@ -1304,7 +1301,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 f.write(iso_data)
             baremetal_iso_overrides['role'] = 'master'
             config.create_openshift_iso(cluster, overrides=baremetal_iso_overrides, ignitionfile=ignitionfile,
-                                        podman=True, installer=liveiso_installer)
+                                        podman=True, installer=True)
             os.remove(ignitionfile)
         else:
             threaded = data.get('threaded', False) or data.get('masters_threaded', False)
@@ -1395,7 +1392,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                     f.write(iso_data)
                 baremetal_iso_overrides['role'] = 'worker'
                 config.create_openshift_iso(cluster, overrides=baremetal_iso_overrides, ignitionfile=ignitionfile,
-                                            podman=True, installer=liveiso_installer)
+                                            podman=True, installer=True)
                 os.remove(ignitionfile)
             else:
                 threaded = data.get('threaded', False) or data.get('workers_threaded', False)
