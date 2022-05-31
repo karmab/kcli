@@ -2136,7 +2136,9 @@ class Kconfig(Kbaseconfig):
         returndata['assets'] = newassets if newassets else []
         if failedvms:
             returndata['result'] = 'failure'
-            returndata['reason'] = 'The following vms failed: %s' % ','.join(failedvms)
+            returndata['reason'] = 'The following vms failed:\n'
+            for entry in failedvms:
+                returndata['reason'] += f"{entry['name']}: { entry['reason']}\n"
         if getback or toclean:
             os.chdir('..')
         if toclean:
@@ -2814,7 +2816,7 @@ class Kconfig(Kbaseconfig):
         if 'result' in result and result['result'] == 'success':
             newvms.append(name)
         else:
-            failedvms.append(name)
+            failedvms.append({'name': name, 'reason': result['reason']})
         start = profile.get('start', True)
         cloudinit = profile.get('cloudinit', True)
         asyncwait = profile.get('asyncwait', False)
