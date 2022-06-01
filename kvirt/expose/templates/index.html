@@ -9,7 +9,7 @@
     <th>Actions</th>
   <tr>
   <th>{{ plan }}</th>
-  <th><button type="button" class="btn btn-success" onclick="location.href='{{ url_for('exposeform', plan=plan) }}'" target="_blank" >Reprovision</button><button type="button" class="btn btn-danger" onclick="exposedelete('{{ plan }}');">Delete</button><button type="button" class="btn btn-info" onclick="location.href='{{ url_for('infoplan', plan=plan) }}'" target="_blank" >Info</button></th>
+  <th><button type="button" class="btn btn-info" onclick="location.href='{{ url_for('infoplan', plan=plan) }}'" target="_blank" >Info</button><button type="button" class="btn btn-success" onclick="location.href='{{ url_for('exposeform', plan=plan) }}'" target="_blank" >Reprovision</button><button type="button" class="btn btn-danger" onclick="exposedelete('{{ plan }}');">Delete</button></th>
     <th></th>
   </tr>
   </tbody>
