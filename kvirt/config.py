@@ -2599,13 +2599,13 @@ class Kconfig(Kbaseconfig):
                 pprint(f"Deleting vm {vmname}")
                 self.k.delete(vmname)
 
-    def expose_plan(self, plan, inputfile=None, overrides={}, port=9000, extraconfigs={}):
+    def expose_plan(self, plan, inputfile=None, overrides={}, port=9000):
         inputfile = os.path.expanduser(inputfile)
         if not os.path.exists(inputfile):
             error("No input file found nor default kcli_plan.yml.Leaving....")
             sys.exit(1)
         pprint(f"Handling expose of plan with name {plan} and inputfile {inputfile}")
-        kexposer = Kexposer(self, plan, inputfile, overrides=overrides, port=port, extraconfigs=extraconfigs)
+        kexposer = Kexposer(self, plan, inputfile, overrides=overrides, port=port)
         kexposer.run()
 
     def create_openshift_iso(self, cluster, overrides={}, ignitionfile=None, podman=False, installer=False,

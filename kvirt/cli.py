@@ -2127,11 +2127,7 @@ def expose_plan(args):
         inputfile = "/workdir/%s" % inputfile
     overrides = common.get_overrides(param=args.param)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    extraconfigs = {}
-    for extraclient in config.extraclients:
-        extraconfigs[extraclient] = Kconfig(client=extraclient, debug=args.debug, region=args.region, zone=args.zone,
-                                            namespace=args.namespace)
-    config.expose_plan(plan, inputfile=inputfile, overrides=overrides, port=port, extraconfigs=extraconfigs)
+    config.expose_plan(plan, inputfile=inputfile, overrides=overrides, port=port)
     return 0
 
 

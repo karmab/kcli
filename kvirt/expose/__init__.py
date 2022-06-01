@@ -3,15 +3,17 @@ from flask import render_template, request, jsonify
 from glob import glob
 from kvirt.common import get_overrides, pprint
 import os
+import re
 
 
 class Kexposer():
-    def __init__(self, config, plan, inputfile, overrides={}, port=9000, extraconfigs=[]):
+    def __init__(self, config, plan, inputfile, overrides={}, port=9000):
         app = Flask(__name__)
         self.basedir = os.path.dirname(inputfile) if '/' in inputfile else '.'
         plans = []
-        for parameterfile in glob(f"{self.basedir}/paramfiles/*.yaml"):
-            plan = os.path.basename(parameterfile).replace('.yaml', '')
+        for parameterfile in glob(f"{self.basedir}/**/parameters_*.y*ml", recursive=True):
+            search = re.match('.*parameters_(.*)\\.ya?ml', parameterfile)
+            plan = search.group(1)
             pprint(f"Adding parameter file {plan}")
             plans.append(plan)
         self.plans = sorted(plans) if plans else [plan]
@@ -31,8 +33,9 @@ class Kexposer():
                 plan = request.form['name']
                 if plan not in self.plans:
                     return f'Invalid plan name {plan}'
-                paramfile = f"{self.basedir}/paramfiles/{plan}.yaml"
-                if os.path.exists(paramfile):
+                matching = glob(f"{self.basedir}/**/parameters_{plan}.y*ml", recursive=True)
+                if matching:
+                    paramfile = matching[0]
                     fileoverrides = get_overrides(paramfile=paramfile)
                     if 'client' in fileoverrides:
                         client = fileoverrides['client']
@@ -68,8 +71,9 @@ class Kexposer():
                         parameters[key] = value
                 try:
                     overrides = parameters
-                    paramfile = f"{self.basedir}/paramfiles/{plan}.yaml"
-                    if os.path.exists(paramfile):
+                    matching = glob(f"{self.basedir}/**/parameters_{plan}.y*ml", recursive=True)
+                    if matching:
+                        paramfile = matching[0]
                         fileoverrides = get_overrides(paramfile=paramfile)
                         if 'client' in fileoverrides:
                             client = fileoverrides['client']
@@ -115,8 +119,9 @@ class Kexposer():
             client = currentconfig.client
             if plan not in self.plans:
                 return f'Invalid plan name {plan}'
-            paramfile = f"{self.basedir}/paramfiles/{plan}.yaml"
-            if os.path.exists(paramfile):
+            matching = glob(f"{self.basedir}/**/parameters_{plan}.y*ml", recursive=True)
+            if matching:
+                paramfile = matching[0]
                 fileoverrides = get_overrides(paramfile=paramfile)
                 if 'client' in fileoverrides:
                     client = fileoverrides['client']
@@ -131,7 +136,6 @@ class Kexposer():
 
         self.app = app
         self.config = config
-        self.extraconfigs = extraconfigs
         self.overrides = overrides
         self.port = port
 
