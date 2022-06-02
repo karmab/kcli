@@ -14,7 +14,7 @@ class Kexposer():
         for parameterfile in glob(f"{self.basedir}/**/parameters_*.y*ml", recursive=True):
             search = re.match('.*parameters_(.*)\\.ya?ml', parameterfile)
             plan = search.group(1)
-            pprint(f"Adding parameter file {plan}")
+            pprint(f"Adding parameter file {parameterfile}")
             plans.append(plan)
         self.plans = sorted(plans) if plans else [plan]
         self.overrides = overrides
