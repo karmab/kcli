@@ -275,6 +275,15 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
         userdata = open(existing).read()
     else:
         publickeyfile = get_ssh_pub_key() if not overrides.get('nopubkey', False) else None
+        tempkeydir = overrides.get('tempkeydir')
+        if tempkeydir is not None:
+            if not keys:
+                warning("no extra keys specified along with tempkey one, you might have trouble accessing the vm")
+            privatekeyfile = f"{tempkeydir.name}/id_rsa"
+            publickeyfile = f"{privatekeyfile}.pub"
+            if not os.path.exists(privatekeyfile):
+                tempkeycmd = f"echo n | ssh-keygen -q -t rsa -N '' -C 'temp-kcli-key' -f {privatekeyfile}"
+                os.system(tempkeycmd)
         userdata = '#cloud-config\n'
         userdata += 'final_message: kcli boot finished, up $UPTIME seconds\n'
         if not noname:
@@ -311,15 +320,6 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 key = ssh.read().rstrip()
                 if key not in keys:
                     userdata += "- %s\n" % key
-        tempkeydir = overrides.get('tempkeydir')
-        if tempkeydir is not None:
-            if not keys:
-                warning("no extra keys specified along with tempkey one, you might have trouble accessing the vm")
-            privatekeyfile = f"{tempkeydir.name}/id_rsa"
-            publickeyfile = f"{privatekeyfile}.pub"
-            if not os.path.exists(privatekeyfile):
-                tempkeycmd = f"echo n | ssh-keygen -q -t rsa -N '' -C 'temp-kcli-key' -f {privatekeyfile}"
-                os.system(tempkeycmd)
         if cmds:
             data = process_cmds(cmds, overrides)
             if data != '':
