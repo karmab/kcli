@@ -556,6 +556,9 @@ def _list_output(_list, output):
         print(yaml.dump(_list))
     elif output == 'json':
         print(json.dumps(_list))
+    elif output == 'name':
+        for entry in sorted(_list, key=lambda x: x['name']):
+            print(entry['name'])
 
 
 def _parse_vms_list(_list):
@@ -4820,7 +4823,7 @@ def cli():
     vmlist_desc = 'List Vms'
     vmlist_parser = argparse.ArgumentParser(add_help=False)
     vmlist_parser.add_argument('--filters', choices=('up', 'down'))
-    vmlist_parser.add_argument('-o', '--output', choices=['json', 'yaml'], help='Format of the output')
+    vmlist_parser.add_argument('-o', '--output', choices=['json', 'name', 'yaml'], help='Format of the output')
     vmlist_parser.set_defaults(func=list_vm)
     list_subparsers.add_parser('vm', parents=[vmlist_parser], description=vmlist_desc, help=vmlist_desc,
                                aliases=['vms'])
