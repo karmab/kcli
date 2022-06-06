@@ -557,8 +557,12 @@ def _list_output(_list, output):
     elif output == 'json':
         print(json.dumps(_list))
     elif output == 'name':
-        for entry in sorted(_list, key=lambda x: x['name']):
-            print(entry['name'])
+        if isinstance(_list, list):
+            for entry in sorted(_list, key=lambda x: x['name']):
+                print(entry['name'])
+        else:
+            for key in sorted(list(_list.keys())):
+                print(key)
 
 
 def _parse_vms_list(_list):
@@ -846,6 +850,9 @@ def list_network(args):
         k = config.k
     if not subnets:
         networks = k.list_networks()
+        if args.output is not None:
+            _list_output(networks, args.output)
+            return
         pprint("Listing Networks...")
         if short:
             networkstable = PrettyTable(["Network"])
@@ -4276,6 +4283,7 @@ def cli():
     networklist_desc = 'List Networks'
     networklist_parser = list_subparsers.add_parser('network', description=networklist_desc, help=networklist_desc,
                                                     aliases=['networks'])
+    networklist_parser.add_argument('-o', '--output', choices=['json', 'name', 'yaml'], help='Format of the output')
     networklist_parser.add_argument('--short', action='store_true')
     networklist_parser.add_argument('-s', '--subnets', action='store_true')
     networklist_parser.set_defaults(func=list_network)
