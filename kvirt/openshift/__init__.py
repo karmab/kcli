@@ -612,6 +612,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             image = os.path.basename(os.path.splitext(image_url)[0])
             if platform == 'ibm':
                 image = image.replace('.', '-').replace('_', '-').lower()
+            if platform == 'vsphere':
+                image = image.replace(f'.{arch}', '')
             images = [v for v in k.volumes() if image in v]
             if not images:
                 result = config.handle_host(pool=config.pool, image=image, download=True, update_profile=False,
