@@ -11,17 +11,22 @@ class Kexposer():
         app = Flask(__name__)
         self.basedir = os.path.dirname(inputfile) if '/' in inputfile else '.'
         plans = []
-        for parameterfile in glob(f"{self.basedir}/**/parameters_*.y*ml", recursive=True):
-            search = re.match('.*parameters_(.*)\\.ya?ml', parameterfile)
+        owners = {}
+        for paramfile in glob(f"{self.basedir}/**/parameters_*.y*ml", recursive=True):
+            search = re.match('.*parameters_(.*)\\.ya?ml', paramfile)
             plan = search.group(1)
-            pprint(f"Adding parameter file {parameterfile}")
+            pprint(f"Adding parameter file {paramfile}")
             plans.append(plan)
+            fileoverrides = get_overrides(paramfile=paramfile)
+            if 'owner' in fileoverrides:
+                owners[plan] = fileoverrides['owner']
         self.plans = sorted(plans) if plans else [plan]
         self.overrides = overrides
+        self.owners = owners
 
         @app.route('/')
         def index():
-            return render_template('index.html', plans=self.plans)
+            return render_template('index.html', plans=self.plans, owners=self.owners)
 
         @app.route("/exposedelete", methods=['POST'])
         def exposedelete():
@@ -127,10 +132,12 @@ class Kexposer():
                     client = fileoverrides['client']
                     currentconfig.__init__(client=client)
             vms = currentconfig.info_specific_plan(plan)
-            owner, creationdate = '', ''
+            creationdate = ''
+            owner = self.owners[plan] if plan in self.owners else ''
             if vms:
-                creationdate = vms[0].get('creationdate', '')
-                owner = vms[0].get('owner', '')
+                creationdate = vms[0].get('creationdate', creationdate)
+                if 'owner' in vms[0]:
+                    owner = vms[0]['owner']
             return render_template('infoplan.html', vms=vms, plan=plan, client=client, creationdate=creationdate,
                                    owner=owner)
 
