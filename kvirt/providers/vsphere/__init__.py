@@ -838,6 +838,18 @@ class Ksphere:
         else:
             vm.MarkAsTemplate()
 
+    def convert_to_vm(self, name):
+        si = self.si
+        dc = self.dc
+        vmFolder = dc.vmFolder
+        vm = findvm(si, vmFolder, name)
+        if vm is None:
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
+        else:
+            rootFolder = self.rootFolder
+            clu = find(si, rootFolder, vim.ComputeResource, self.clu)
+            vm.MarkAsVirtualMachine(pool=clu.resourcePool)
+
     def dnsinfo(self, name):
         return None, None
 

@@ -1375,9 +1375,11 @@ def update_vm(args):
     nets = overrides.get('nets')
     disks = overrides.get('disks')
     information = overrides.get('information')
-    template = overrides.get('template', False)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     extra_metadata = {k: overrides[k] for k in overrides if k not in config.list_keywords()}
+    template = overrides.get('template')
+    if template is not None:
+        del extra_metadata['template']
     k = config.k
     names = [common.get_lastvm(config.client)] if not args.names else args.names
     for name in names:
@@ -1423,9 +1425,6 @@ def update_vm(args):
         if flavor is not None:
             pprint(f"Updating flavor of vm {name} to {flavor}...")
             k.update_flavor(name, flavor)
-        if template and config.type == 'vsphere':
-            pprint(f"Updating vm {name} to template...")
-            k.convert_to_template(name)
         if host:
             pprint(f"Creating Host entry for vm {name}...")
             networks = k.vm_ports(name)
@@ -1498,12 +1497,20 @@ def update_vm(args):
                     pprint(f"Updating nic {index} to network {targetnetname}")
                     k.update_nic(name, index, targetnetname)
         if extra_metadata:
+            print(extra_metadata)
             for key in extra_metadata:
                 k.update_metadata(name, key, extra_metadata[key])
         if overrides.get('files', []):
             newfiles = overrides['files']
             pprint(f"Remediating files of {name}")
             config.remediate_files(name, newfiles, overrides)
+        if config.type == 'vsphere' and template is not None and isinstance(template, bool):
+            target = 'template' if template else 'vm'
+            pprint(f"Updating vm {name} to {target}...")
+            if template:
+                k.convert_to_template(name)
+            else:
+                k.convert_to_vm(name)
 
 
 def create_vmdisk(args):
