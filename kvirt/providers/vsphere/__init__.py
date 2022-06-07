@@ -1090,8 +1090,8 @@ class Ksphere:
         if iso:
             isofile = f"/tmp/{shortimage}"
             if name is not None:
-                os.rename(f"/tmp/{shortimage}", f"/tmp/{name}")
                 isofile = f"/tmp/{name}"
+                os.rename(f"/tmp/{shortimage}", isofile)
             if self.isofolder is not None:
                 isofolder = self.isofolder.split('/')
                 isopool = re.sub(r"[\[\]]", '', isofolder[0])
@@ -1164,10 +1164,12 @@ class Ksphere:
                 os.system(upload_cmd)
                 lease.HttpNfcLeaseComplete()
                 keepalive_thread.join()
-                return {'result': 'success'}
+                break
             elif lease.state == vim.HttpNfcLease.State.error:
                 error(f"Lease error: {lease.error}")
                 sys.exit(1)
+        self.convert_to_template(shortimage)
+        return {'result': 'success'}
 
     def _getfirshost(self):
         si = self.si
