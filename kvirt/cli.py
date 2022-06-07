@@ -1375,6 +1375,7 @@ def update_vm(args):
     nets = overrides.get('nets')
     disks = overrides.get('disks')
     information = overrides.get('information')
+    template = overrides.get('template', False)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     extra_metadata = {k: overrides[k] for k in overrides if k not in config.list_keywords()}
     k = config.k
@@ -1422,6 +1423,9 @@ def update_vm(args):
         if flavor is not None:
             pprint(f"Updating flavor of vm {name} to {flavor}...")
             k.update_flavor(name, flavor)
+        if template and config.type == 'vsphere':
+            pprint(f"Updating vm {name} to template...")
+            k.convert_to_template(name)
         if host:
             pprint(f"Creating Host entry for vm {name}...")
             networks = k.vm_ports(name)

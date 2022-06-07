@@ -828,6 +828,16 @@ class Ksphere:
         waitForMe(c)
         return {'result': 'success'}
 
+    def convert_to_template(self, name):
+        si = self.si
+        dc = self.dc
+        vmFolder = dc.vmFolder
+        vm = findvm(si, vmFolder, name)
+        if vm is None:
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
+        else:
+            vm.MarkAsTemplate()
+
     def dnsinfo(self, name):
         return None, None
 
