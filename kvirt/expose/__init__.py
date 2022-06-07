@@ -7,9 +7,8 @@ import re
 
 
 class Kexposer():
-    def __init__(self, config, plan, inputfile, overrides={}, port=9000):
-        app = Flask(__name__)
-        self.basedir = os.path.dirname(inputfile) if '/' in inputfile else '.'
+
+    def refresh_plans(self):
         plans = []
         owners = {}
         for paramfile in glob(f"{self.basedir}/**/parameters_*.y*ml", recursive=True):
@@ -21,11 +20,17 @@ class Kexposer():
             if 'owner' in fileoverrides:
                 owners[plan] = fileoverrides['owner']
         self.plans = sorted(plans) if plans else [plan]
-        self.overrides = overrides
         self.owners = owners
+
+    def __init__(self, config, plan, inputfile, overrides={}, port=9000):
+        app = Flask(__name__)
+        self.basedir = os.path.dirname(inputfile) if '/' in inputfile else '.'
+        self.overrides = overrides
+        self.refresh_plans()
 
         @app.route('/')
         def index():
+            self.refresh_plans()
             return render_template('index.html', plans=self.plans, owners=self.owners)
 
         @app.route("/exposedelete", methods=['POST'])
