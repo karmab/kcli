@@ -521,7 +521,7 @@ The following parameters are specific to vsphere:
 
 Note that pool in Vsphere context refers to datastore.
 
-To use this provider with kcli rpm, you’ll need to install *python3-pyvmomi* and *python3-requests*
+To use this provider with kcli rpm, you’ll need to install *python3-pyvmomi*, *python3-cryptography* and *python3-requests*
 
 Using hostgroups and vm-host rules
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
