@@ -2660,7 +2660,8 @@ class Kconfig(Kbaseconfig):
                     hosts_content += f"{api_ip} api-int.{cluster}.{domain} api.{cluster}.{domain}"
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
         with open("iso.ign", 'w') as f:
-            pprint("Writing file iso.ign for %s in %s.%s" % (role, cluster, domain if domain is not None else ''))
+            full_name = f'{cluster}.{domain}' if domain is not None else cluster
+            pprint(f"Writing file iso.ign for {role} in {full_name}")
             isodir = os.path.dirname(common.__file__)
             if finaldata is None:
                 env = Environment(loader=FileSystemLoader(isodir), extensions=['jinja2.ext.do'], trim_blocks=True,

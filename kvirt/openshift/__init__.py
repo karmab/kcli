@@ -1122,11 +1122,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if api_ip is not None:
             if data.get('virtual_router_id') is None:
                 virtual_router_id = hash(cluster) % 254 + 1
-                vips = [api_ip, ingress_ip] if ingress_ip is not None else [api_ip]
-                pprint("Injecting keepalived static pod with %s" % ','.join(vips))
                 pprint(f"Using keepalived virtual_router_id {virtual_router_id}")
                 installparam['virtual_router_id'] = virtual_router_id
                 data['virtual_router_id'] = virtual_router_id
+            vips = [api_ip, ingress_ip] if ingress_ip is not None else [api_ip]
+            pprint("Injecting keepalived static pod with %s" % ','.join(vips))
             keepalived_data = config.process_inputfile(cluster, f"{plandir}/staticpods/keepalived.yml", overrides=data)
             keepalivedconf_data = config.process_inputfile(cluster, f"{plandir}/keepalived.conf", overrides=data)
             sno_files.extend([{"path": "/etc/kubernetes/manifests/keepalived.yml", "data": keepalived_data},
@@ -1186,8 +1186,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 result = config.plan(plan, inputfile='%s/sno.yml' % plandir, overrides=data)
                 if result['result'] != 'success':
                     sys.exit(1)
-                    warning("Not updating /etc/hosts as per your request")
-                if api_ip is None and not ignore_hosts:
+                if api_ip is None:
                     while api_ip is None:
                         api_ip = k.info(sno_name).get('ip')
                         pprint("Waiting 5s to retrieve sno ip...")
@@ -1228,8 +1227,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             info2(f"Access the Openshift web-console here: {console}")
             info2(f"Login to the console with user: kubeadmin, password: {kubepassword}")
             pprint(f"Plug {cluster}-sno.iso to your SNO node to complete the installation")
-            pprint(f"Plug {cluster}-master.iso to additional masters")
-            pprint(f"Plug {cluster}-worker.iso to additional masters")
+            if sno_masters:
+                pprint(f"Plug {cluster}-master.iso to get additional masters")
+            if sno_workers:
+                pprint(f"Plug {cluster}-worker.iso to get additional workers")
         sys.exit(0)
     call('openshift-install --dir=%s --log-level=%s create ignition-configs' % (clusterdir, log_level), shell=True)
     for role in ['master', 'worker']:
