@@ -1328,8 +1328,18 @@ def create_vm(args):
                     if not isinstance(net, dict):
                         continue
                     if 'mac' in net:
-                        suffix = hex(int(net['mac'][-2:]) + number)[2:].rjust(2, '0')
-                        currentoverrides['nets'][index]['mac'] = f"{net['mac'][:-2]}{suffix}"
+                        last = net['mac'][-2:]
+                        if last.isnumeric():
+                            suffix = int(last) + number
+                            if suffix > 99:
+                                warning(f"Can't adjust mac for {currentname}, it would go beyond 100")
+                                del currentoverrides['nets'][index]['mac']
+                            else:
+                                suffix = str(suffix).rjust(2, '0')
+                                currentoverrides['nets'][index]['mac'] = f"{net['mac'][:-2]}{suffix}"
+                        else:
+                            warning(f"Can't adjust mac for {currentname}, an int prefix is needed")
+                            del currentoverrides['nets'][index]['mac']
                     if 'ip' in net:
                         ip = str(ip_address(net['ip']) + number)
                         currentoverrides['nets'][index]['ip'] = ip
