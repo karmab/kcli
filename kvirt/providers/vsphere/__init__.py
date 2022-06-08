@@ -1179,7 +1179,7 @@ class Ksphere:
             elif lease.state == vim.HttpNfcLease.State.error:
                 error(f"Lease error: {lease.error}")
                 sys.exit(1)
-        self.convert_to_template(shortimage)
+        self.convert_to_template(name)
         return {'result': 'success'}
 
     def _getfirshost(self):
