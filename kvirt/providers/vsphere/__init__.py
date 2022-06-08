@@ -1142,10 +1142,9 @@ class Ksphere:
             vmdk_path = f"/tmp/{vmdk_file}"
             if not os.path.exists(vmdk_path):
                 pprint("Converting qcow2 file to vmdk")
-                os.popen(f"qemu-img convert -O vmdk -o subformat=streamOptimized /tmp/{shortimage} {vmdk_path}")
+                os.popen(f"qemu-img convert -O vmdk -o subformat=streamOptimized /tmp/{shortimage} {vmdk_path}").read()
             ovf_path = "/tmp/%s" % shortimage.replace(extension, 'ovf')
             commondir = os.path.dirname(common.pprint.__code__.co_filename)
-            time.sleep(5)
             vmdk_info = json.loads(os.popen(f"qemu-img info {vmdk_path} --output json").read())
             virtual_size = vmdk_info['virtual-size']
             actual_size = vmdk_info['actual-size']
