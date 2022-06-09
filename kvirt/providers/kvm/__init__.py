@@ -1664,13 +1664,9 @@ class Kvirt(object):
         leasefaces = {}
         ifaces = {}
         if vm.isActive():
-            networktypes = [element.get('type') for element in list(root.iter('interface'))]
-            if 'bridge' in networktypes:
-                try:
-                    agentfaces = vm.interfaceAddresses(vir_src_agent, 0)
-                except:
-                    pass
-            if 'network' in networktypes:
+            try:
+                agentfaces = vm.interfaceAddresses(vir_src_agent, 0)
+            except:
                 try:
                     leasefaces = vm.interfaceAddresses(vir_src_lease, 0)
                 except:
@@ -1798,13 +1794,9 @@ class Kvirt(object):
             agentfaces = {}
             leasefaces = {}
             ifaces = {}
-            networktypes = [element.get('type') for element in list(root.iter('interface'))]
-            if 'bridge' in networktypes:
-                try:
-                    agentfaces = vm.interfaceAddresses(vir_src_agent, 0)
-                except:
-                    pass
-            if 'network' in networktypes:
+            try:
+                agentfaces = vm.interfaceAddresses(vir_src_agent, 0)
+            except:
                 try:
                     leasefaces = vm.interfaceAddresses(vir_src_lease, 0)
                 except:
