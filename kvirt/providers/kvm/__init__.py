@@ -694,6 +694,8 @@ class Kvirt(object):
                     index = subindex.pop() + 1
             cmds = cmds[:index] + gcmds + cmds[index:]
         if iso is not None:
+            if os.path.exists(iso):
+                iso = os.path.abspath(iso)
             if os.path.isabs(iso):
                 if self.protocol == 'ssh' and self.host not in ['localhost', '127.0.0.1']:
                     isocheckcmd = 'ssh %s -p %s %s@%s "ls %s >/dev/null 2>&1"' % (self.identitycommand, self.port,
