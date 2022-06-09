@@ -2939,6 +2939,7 @@ def create_network(args):
     cidr = args.cidr
     nodhcp = args.nodhcp
     domain = overrides.get('domain', args.domain)
+    plan = overrides.get('plan', 'kvirt')
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     if name is None:
@@ -2951,7 +2952,7 @@ def create_network(args):
     dhcp = not nodhcp
     if args.dual is not None:
         overrides['dual_cidr'] = args.dual
-    result = k.create_network(name=name, cidr=cidr, dhcp=dhcp, nat=nat, domain=domain, overrides=overrides)
+    result = k.create_network(name=name, cidr=cidr, dhcp=dhcp, nat=nat, domain=domain, overrides=overrides, plan=plan)
     common.handle_response(result, name, element='Network')
 
 

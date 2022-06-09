@@ -11,6 +11,7 @@ from kvirt.defaults import IMAGES
 from kvirt.defaults import UBUNTUS, METADATA_FIELDS
 from kvirt import common
 from kvirt.common import error, pprint, warning, get_ssh_pub_key
+from kvirt.providers.kvm.helpers import DHCPKEYWORDS
 from ipaddress import ip_address, ip_network
 from libvirt import open as libvirtopen, registerErrorHandler, libvirtError
 from libvirt import VIR_DOMAIN_AFFECT_LIVE, VIR_DOMAIN_AFFECT_CONFIG
@@ -3085,7 +3086,7 @@ class Kvirt(object):
         conn = self.conn
         networks = self.list_networks()
         if name in networks:
-            pprint("Network %s already exists" % name)
+            pprint(f"Network {name} already exists")
             return {'result': 'exist'}
         if 'macvtap' in overrides and overrides['macvtap']:
             if 'nic' not in overrides:
@@ -3093,11 +3094,11 @@ class Kvirt(object):
             else:
                 nic = overrides['nic']
                 networkxml = """<network>
-                                <name>%s</name>
+                                <name>{name}</name>
                                 <forward mode="bridge">
-                                <interface dev="%s"/>
+                                <interface dev="{nic}"/>
                                 </forward>
-                                </network>""" % (name, nic)
+                                </network>""".format(name=name, nic=nic)
                 new_net = conn.networkDefineXML(networkxml)
                 new_net.setAutostart(True)
                 new_net.create()
@@ -3109,12 +3110,12 @@ class Kvirt(object):
                             <kvirt:ovs>true</kvirt:ovs>
                             </kvirt:info>
                             </metadata>
-                            <name>%s</name>
-                            <bridge name='%s'/>
+                            <name>{name}</name>
+                            <bridge name='{name}'/>
                             <forward mode="bridge">
                             <virtualport type='openvswitch'/>
                             </forward>
-                            </network>""" % (name, name)
+                            </network>""".format(name=name)
             new_net = conn.networkDefineXML(networkxml)
             new_net.setAutostart(True)
             new_net.create()
@@ -3125,28 +3126,24 @@ class Kvirt(object):
         try:
             cidr_range = ip_network(cidr)
         except:
-            return {'result': 'failure', 'reason': "Invalid Cidr %s" % cidr}
+            return {'result': 'failure', 'reason': f"Invalid Cidr {cidr}"}
         if cidr in cidrs:
-            return {'result': 'failure', 'reason': "Cidr %s already exists" % cidr}
+            return {'result': 'failure', 'reason': f"Cidr {cidr} already exists"}
         gateway = str(cidr_range[1])
         family = 'ipv6' if ':' in gateway else 'ipv4'
         if dhcp:
             start = str(cidr_range[2])
             end = str(cidr_range[65535 if family == 'ipv6' else -2])
-            dhcpxml = """<dhcp>
-                    <range start='%s' end='%s'/>""" % (start, end)
+            dhcpxml = f"<dhcp><range start='{start}' end='{end}'/>"
             if 'pxe' in overrides:
                 pxe = overrides['pxe']
                 del overrides['pxe']
-                dhcpxml = """%s
-                          <bootp file='pxelinux.0' server='%s'/>""" % (dhcpxml, pxe)
-            dhcpxml = "%s</dhcp>" % dhcpxml
+                dhcpxml = f"{dhcpxml}<bootp file='pxelinux.0' server='{pxe}'/>"
+            dhcpxml = f"{dhcpxml}</dhcp>"
         else:
             dhcpxml = ''
         if nat:
             natxml = "<forward mode='nat'><nat><port start='1024' end='65535'/></nat></forward>"
-        # elif dhcp:
-        #    natxml = "<forward mode='route'></forward>"
         else:
             natxml = ''
         if domain is not None:
@@ -3155,9 +3152,9 @@ class Kvirt(object):
             domainxml = "<domain name='%s'/>" % name
         if len(name) < 16:
             bridgename = name if name != 'default' else 'virbr0'
-            bridgexml = "<bridge name='%s' stp='on' delay='0'/>" % bridgename
+            bridgexml = f"<bridge name='{bridgename}' stp='on' delay='0'/>"
         else:
-            return {'result': 'failure', 'reason': "network %s is more than 16 characters" % name}
+            return {'result': 'failure', 'reason': f"network {name} is more than 16 characters"}
         allowed_nets = overrides.get('allowed_nets')
         allowed_nets_xml = ""
         if allowed_nets:
@@ -3166,42 +3163,39 @@ class Kvirt(object):
         prefix = cidr.split('/')[1]
         metadata = """<metadata>
         <kvirt:info xmlns:kvirt="kvirt">
-        <kvirt:plan>%s</kvirt:plan>
-        %s
+        <kvirt:plan>{plan}</kvirt:plan>
+        {allowed_nets_xml}
         </kvirt:info>
-        </metadata>""" % (plan, allowed_nets_xml)
-        mtuxml = '<mtu size="%s"/>' % overrides['mtu'] if 'mtu' in overrides else ''
+        </metadata>""".format(plan=plan, allowed_nets_xml=allowed_nets_xml)
+        mtuxml = f'<mtu size="{overrides["mtu"]}"/>'if 'mtu' in overrides else ''
         dualxml = ''
         if 'dual_cidr' in overrides:
             dualcidr = overrides['dual_cidr']
             dualfamily = 'ipv6' if ':' in dualcidr else 'ipv4'
             if dualfamily == family:
-                return {'result': 'failure', 'reason': "Dual Cidr %s needs to be of a different family"}
+                return {'result': 'failure', 'reason': f"Dual Cidr {dualfamily} needs to be of a different family"}
             try:
                 dual_range = ip_network(dualcidr)
             except:
-                return {'result': 'failure', 'reason': "Invalid Dual Cidr %s" % dualcidr}
+                return {'result': 'failure', 'reason': f"Invalid Dual Cidr {dualcidr}"}
             dualgateway = str(dual_range[1])
             dualstart = str(dual_range[2])
             dualend = str(dual_range[65535 if dualfamily == 'ipv6' else -2])
             dualprefix = dualcidr.split('/')[1]
             if dhcp:
-                dualdhcpxml = "<dhcp><range start='%s' end='%s' /></dhcp>" % (dualstart, dualend)
+                dualdhcpxml = f"<dhcp><range start='{dualstart}' end='{dualend}' /></dhcp>"
             else:
                 dualdhcpxml = ""
-            dualxml = "<ip address='%s' prefix='%s' family='%s'>%s</ip>" % (dualgateway, dualprefix, dualfamily,
-                                                                            dualdhcpxml)
+            dualxml = f"<ip address='{dualgateway}' prefix='{dualprefix}' family='{dualfamily}'>{dualdhcpxml}</ip>"
         dnsxml = ''
         if 'forwarders' in overrides:
             forwarders = overrides['forwarders']
             forwarderxml = '\n'.join("<forwarder domain='%s' addr='%s'/>" % (entry['domain'],
                                                                              entry['address']) for entry in forwarders)
-            dnsxml = "<dns>%s</dns>" % forwarderxml
+            dnsxml = f"<dns>{forwarderxml}</dns>"
         namespace = ''
         dnsmasqxml = ''
-        keywordoptions = ['type', 'isolated', 'cidr', 'dhcp', 'forwarders', 'macvtap', 'nic', 'dual_cidr', 'mtu',
-                          'domain', 'nat', 'allowed_nets']
-        dhcpoptions = {k: overrides[k] for k in overrides if k not in keywordoptions}
+        dhcpoptions = {key: overrides[key] for key in overrides if key in DHCPKEYWORDS or key.isdigit()}
         if dhcpoptions:
             namespace = "xmlns:dnsmasq='http://libvirt.org/schemas/network/dnsmasq/1.0'"
             dnsmasqxml = "<dnsmasq:options>"
@@ -3209,8 +3203,8 @@ class Kvirt(object):
                 option = 'option'
                 if family == 'ipv6':
                     option += '6'
-                option = key if key.isdigit() else "%s:%s" % (option, key)
-                dnsmasqxml += '<dnsmasq:option value="dhcp-option=%s,%s"/>' % (option, dhcpoptions[key])
+                option = key if key.isdigit() else f"{option}:{key}"
+                dnsmasqxml += f'<dnsmasq:option value="dhcp-option={option},{dhcpoptions[key]}"/>'
             dnsmasqxml += "</dnsmasq:options>"
         networkxml = """<network {namespace}><name>{name}</name>
                     {dnsmasqxml}
