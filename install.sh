@@ -12,11 +12,19 @@ if [ "$(which dnf)" != "" ] ; then
   packagefound=true
   sudo dnf -y copr enable karmab/kcli
   sudo dnf -y install kcli
+  if [ "$?" != "0" ] ; then
+    echo -e "${RED}Package installation didnt work(${NC}"
+    exit 1
+  fi
 elif [ "$(which apt-get)" != "" ] ; then
   packagefound=true
   curl -1sLf https://dl.cloudsmith.io/public/karmab/kcli/cfg/setup/bash.deb.sh | sudo -E bash
   sudo apt-get update 
   sudo apt-get -y install python3-kcli
+  if [ "$?" != "0" ] ; then
+    echo -e "${RED}Package installation didnt work(${NC}"
+    exit 1
+  fi
 fi
 
 if [ "$packagefound" == "true" ] ; then
