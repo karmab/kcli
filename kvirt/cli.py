@@ -4447,7 +4447,7 @@ def cli():
     planexpose_parser.add_argument('--port', help='Port where to listen', type=int, default=9000, metavar='PORT')
     planexpose_parser.add_argument('plan', metavar='PLAN', nargs='?')
     planexpose_parser.set_defaults(func=expose_plan)
-    expose_subparsers.add_parser('plan', parents=[planexpose_parser], description=vmssh_desc, help=planexpose_desc,
+    expose_subparsers.add_parser('plan', parents=[planexpose_parser], description=planexpose_desc, help=planexpose_desc,
                                  epilog=planexpose_epilog, formatter_class=rawhelp)
 
     planinfo_desc = 'Info Plan'

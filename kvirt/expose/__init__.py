@@ -39,8 +39,8 @@ class Kexposer():
             delete plan
             """
             currentconfig = self.config
-            if 'name' in request.form:
-                plan = request.form['name']
+            if 'plan' in request.form:
+                plan = request.form['plan']
                 if plan not in self.plans:
                     return f'Invalid plan name {plan}'
                 matching = glob(f"{self.basedir}/**/parameters_{plan}.y*ml", recursive=True)
@@ -55,7 +55,7 @@ class Kexposer():
                 response.status_code = 200
                 return response
             else:
-                result = {'result': 'failure', 'reason': "Invalid Data"}
+                result = {'result': 'failure', 'reason': "Missing plan in data"}
                 response = jsonify(result)
                 response.status_code = 400
 
@@ -108,7 +108,7 @@ class Kexposer():
                 else:
                     return render_template('error.html', plan=plan, failedvms=result['failedvms'])
             else:
-                return 'Invalid data'
+                return 'Missing plan in data'
 
         @app.route("/exposeform/<string:plan>", methods=['GET'])
         def exposeform(plan):
