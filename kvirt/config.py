@@ -739,7 +739,10 @@ class Kconfig(Kbaseconfig):
             return result
         env_parameters = [key for key in overrides if key.isupper()]
         if env_parameters:
-            env_data = '\n'.join(["export %s=%s" % (key, overrides[key]) for key in env_parameters])
+            env_data = ''
+            for key in env_parameters:
+                value = overrides[key]
+                env_data += f"export {key}={value}\nexport {key.lower()}={value}\n"
             files.append({'path': '/etc/profile.d/kcli.sh', 'content': env_data, 'mode': 644})
         enableroot = profile.get('enableroot', default_enableroot)
         tags = profile.get('tags', [])
