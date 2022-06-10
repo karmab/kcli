@@ -1,3 +1,6 @@
+# source env variables, if present
+test -f /etc/profile.d/kcli.sh && source /etc/profile.d/kcli.sh
+
 apt-get update && apt-get -y install apt-transport-https curl git
 curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
 cat <<EOF >/etc/apt/sources.list.d/kubernetes.list

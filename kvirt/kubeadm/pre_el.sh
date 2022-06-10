@@ -1,3 +1,6 @@
+# source env variables, if present
+test -f /etc/profile.d/kcli.sh && source /etc/profile.d/kcli.sh
+
 echo """[kubernetes]
 name=Kubernetes
 baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64

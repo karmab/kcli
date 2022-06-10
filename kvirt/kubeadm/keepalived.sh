@@ -1,3 +1,6 @@
+# source env variables, if present
+test -f /etc/profile.d/kcli.sh && source /etc/profile.d/kcli.sh
+
 PKGMGR="{{ 'apt-get' if ubuntu else 'yum' }}"
 $PKGMGR -y install keepalived
 NETMASK=$(ip -o -f inet addr show | awk '/scope global/ {print $4}' | head -1 | cut -d'/' -f2)
