@@ -94,7 +94,7 @@ class Kgcp(object):
     def create(self, name, virttype=None, profile='', flavor=None, plan='kvirt', cpumodel='Westmere', cpuflags=[],
                cpupinning=[], numcpus=2, memory=512, guestid='guestrhel764', pool='default', image=None,
                disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None,
-               vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None,
+               vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=[],
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
                files=[], enableroot=True, alias=[], overrides={}, tags=[], storemetadata=False,
                sharedfolders=[], kernel=None, initrd=None, cmdline=None, placement=[], autostart=False,
@@ -282,7 +282,7 @@ class Kgcp(object):
         else:
             publickeyfile = open(publickeyfile).read()
             keys = [publickeyfile] + keys if keys is not None else [publickeyfile]
-        if keys is not None:
+        if keys:
             user = common.get_user(image)
             if user == 'root':
                 user = getuser()

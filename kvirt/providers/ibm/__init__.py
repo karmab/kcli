@@ -116,7 +116,7 @@ class Kibm(object):
                disks=[{'size': 10}], disksize=10, diskthin=True,
                diskinterface='virtio', nets=[], iso=None, vnc=False,
                cloudinit=True, reserveip=False, reservedns=False,
-               reservehost=False, start=True, keys=None, cmds=[], ips=None,
+               reservehost=False, start=True, keys=[], cmds=[], ips=None,
                netmasks=None, gateway=None, nested=True, dns=None, domain=None,
                tunnel=False, files=[], enableroot=True, alias=[], overrides={},
                tags=[], storemetadata=False, sharedfolders=[], kernel=None, initrd=None, cmdline=None,
@@ -135,7 +135,7 @@ class Kibm(object):
             return {'result': 'failure', 'reason': 'Unable to retrieve vpc information. %s' % exc}
         if self.exists(name):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
-        if keys is None:
+        if not keys:
             return {'result': 'failure', 'reason': 'SSH Keys not found in configuration'}
         key_list = []
         try:
