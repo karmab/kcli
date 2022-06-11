@@ -192,10 +192,15 @@ class KOvirt(object):
         cdrom = cdroms_service.list()[0]
         cdrom_service = cdroms_service.cdrom_service(cdrom.id)
         if iso is not None:
+            iso_id = iso
+            disks_service = self.conn.system_service().disks_service()
+            disksearch = disks_service.list(search=f'name={iso}')
+            if disksearch:
+                iso_id = disksearch[0].id
             try:
-                cdrom_service.update(cdrom=types.Cdrom(file=types.File(id=iso)))
+                cdrom_service.update(cdrom=types.Cdrom(file=types.File(id=iso_id)))
             except:
-                return {'result': 'failure', 'reason': "Iso %s not found" % iso}
+                return {'result': 'failure', 'reason': f"Iso {iso} not found"}
         timeout = 0
         while True:
             vm = vm_service.get()
@@ -644,6 +649,16 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                                       'path': "%s/%s" % (storagedomain, path)})
         if image is None and 'kubetype' in yamlinfo and yamlinfo['kubetype'] == 'openshift':
             yamlinfo['user'] = 'core'
+        cdroms_service = self.vms_service.vm_service(vm.id).cdroms_service()
+        cdroms = cdroms_service.list()
+        if cdroms:
+            cdrom = cdroms[0]
+            if cdrom.file is not None:
+                iso = cdrom.file.id
+                disks_service = self.conn.system_service().disks_service()
+                disksearch = disks_service.list(search=f'id={iso}')
+                if disksearch:
+                    yamlinfo['iso'] = disksearch[0].name
         if debug:
             yamlinfo['debug'] = vars(vm)
         return yamlinfo
@@ -670,11 +685,16 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         if iso:
             isos = []
             for pool in self.conn.system_service().storage_domains_service().list():
+                sd_service = self.sds_service.storage_domain_service(pool.id)
                 if str(pool.type) == 'iso':
-                    sd_service = self.sds_service.storage_domain_service(pool.id)
                     file_service = sd_service.files_service()
                     for isofile in file_service.list():
                         isos.append(isofile._name)
+                else:
+                    disks_service = sd_service.disks_service()
+                    for disk in disks_service.list():
+                        if disk.name.endswith('.iso'):
+                            isos.append(disk.name)
             return isos
         else:
             images = []
@@ -767,10 +787,10 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         return
 
     def update_iso(self, name, iso):
-        vmsearch = self.vms_service.list(search='name=%s' % name)
+        vmsearch = self.vms_service.list(search=f'name={name}')
         if not vmsearch:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         vminfo = vmsearch[0]
         vm = self.vms_service.vm_service(vminfo.id)
         cdroms_service = vm.cdroms_service()
@@ -782,8 +802,8 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         try:
             cdrom_service.update(cdrom=types.Cdrom(file=types.File(id=iso)), current=True)
         except:
-            error("Iso %s not found" % iso)
-            return {'result': 'failure', 'reason': "Iso %s not found" % iso}
+            error(f"Iso {iso} not found")
+            return {'result': 'failure', 'reason': f"Iso {iso} not found"}
         return {'result': 'success'}
 
     def update_flavor(self, name, flavor):
@@ -950,8 +970,9 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
 
     def add_image(self, url, pool, short=None, cmd=None, name=None, size=None):
         shortimage = os.path.basename(url).split('?')[0]
-        if shortimage in self.volumes():
-            pprint("Template %s already there" % shortimage)
+        iso = True if shortimage.endswith('.iso') or name.endswith('.iso') else False
+        if shortimage in self.volumes(iso=iso):
+            pprint(f"Template {shortimage} already there")
             return {'result': 'success'}
         system_service = self.conn.system_service()
         profiles_service = self.conn.system_service().vnic_profiles_service()
@@ -968,49 +989,57 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             elif 'rhevm' in self.netprofiles:
                 profile_id = self.netprofiles['rhevm']
         if profile_id is None:
-            return {'result': 'failure', 'reason': "Couldnt find ovirtmgmt nor rhevm network!!!"}
+            return {'result': 'failure', 'reason': "Couldn't find ovirtmgmt nor rhevm network!!!"}
         sds_service = system_service.storage_domains_service()
-        poolcheck = sds_service.list(search='name=%s' % pool)
+        poolcheck = sds_service.list(search=f'name={pool}')
         if not poolcheck:
-            return {'result': 'failure', 'reason': "Pool %s not found" % pool}
+            return {'result': 'failure', 'reason': f"Pool {pool} not found"}
         disks_service = self.conn.system_service().disks_service()
-        disksearch = disks_service.list(search='alias=%s' % shortimage)
+        disksearch = disks_service.list(search=f'alias={shortimage}')
         if not disksearch:
-            if not os.path.exists('/tmp/%s' % shortimage):
-                pprint("Downloading locally %s" % shortimage)
-                downloadcmd = "curl -Lo /tmp/%s -f '%s'" % (shortimage, url)
+            if os.path.exists(url):
+                pprint(f"Using {url} as path")
+            elif not os.path.exists(f'/tmp/{shortimage}'):
+                pprint(f"Downloading locally {shortimage}")
+                downloadcmd = f"curl -Lo /tmp/{shortimage} -f '{url}'"
                 code = os.system(downloadcmd)
                 if code != 0:
                     return {'result': 'failure', 'reason': "Unable to download indicated image"}
             else:
-                pprint("Using found /tmp/%s" % shortimage)
+                pprint(f"Using found /tmp/{shortimage}")
             BUF_SIZE = 128 * 1024
-            image_path = '/tmp/%s' % shortimage
+            image_path = os.path.abspath(url) if os.path.exists(url) else f'/tmp/{shortimage}'
             extensions = {'bz2': 'bunzip2', 'gz': 'gunzip', 'xz': 'unxz'}
             for extension in extensions:
                 if shortimage.endswith(extension):
                     executable = extensions[extension]
                     if which(executable) is None:
-                        pprint("%s not found. Can't uncompress image" % executable)
+                        pprint(f"{executable} not found. Can't uncompress image")
                         sys.exit(1)
                     else:
-                        uncompresscmd = "%s %s" % (executable, image_path)
+                        uncompresscmd = f"{executable} {image_path}"
                         os.system(uncompresscmd)
-                        shortimage = shortimage.replace(".%s" % extension, '')
-                        image_path = '/tmp/%s' % shortimage
+                        shortimage = shortimage.replace(f".{extension}", '')
+                        image_path = f'/tmp/{shortimage}'
                         break
-            out = check_output(["qemu-img", "info", "--output", "json", image_path])
-            image_info = json.loads(out)
             image_size = os.path.getsize(image_path)
-            virtual_size = image_info["virtual-size"]
-            content_type = types.DiskContentType.DATA
-            disk_format = types.DiskFormat.COW
+            if not iso:
+                out = check_output(["qemu-img", "info", "--output", "json", image_path])
+                image_info = json.loads(out)
+                virtual_size = image_info["virtual-size"]
+                content_type = types.DiskContentType.DATA
+                disk_format = types.DiskFormat.COW
+            else:
+                virtual_size = image_size
+                content_type = types.DiskContentType.ISO
+                disk_format = types.DiskFormat.RAW
+            sparse = True if disk_format == types.DiskFormat.COW else False
             disks_service = self.conn.system_service().disks_service()
             disk = disks_service.add(disk=types.Disk(name=os.path.basename(shortimage), content_type=content_type,
                                                      description='Kcli Uploaded disk', format=disk_format,
                                                      initial_size=image_size,
                                                      provisioned_size=virtual_size,
-                                                     sparse=disk_format == types.DiskFormat.COW,
+                                                     sparse=sparse,
                                                      storage_domains=[types.StorageDomain(name=pool)]))
             disk_service = disks_service.disk_service(disk.id)
             disk_id = disk.id
@@ -1020,21 +1049,19 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                 if disk.status == types.DiskStatus.OK:
                     break
             transfers_service = self.conn.system_service().image_transfers_service()
-            transfer = transfers_service.add(types.ImageTransfer(image=types.Image(id=disk.id)))
+            transfer = transfers_service.add(types.ImageTransfer(image=types.Image(id=disk_id)))
             transfer_service = transfers_service.image_transfer_service(transfer.id)
             while transfer.phase == types.ImageTransferPhase.INITIALIZING:
                 sleep(1)
                 transfer = transfer_service.get()
             destination_url = urlparse(transfer.proxy_url)
-            # context = ssl.create_default_context()
-            # context.load_verify_locations(cafile=self.ca_file)
             context = ssl._create_unverified_context()
             proxy_connection = HTTPSConnection(destination_url.hostname, destination_url.port, context=context)
             proxy_connection.putrequest("PUT", destination_url.path)
-            proxy_connection.putheader('Content-Length', "%d" % (image_size,))
+            proxy_connection.putheader('Content-Length', image_size)
             proxy_connection.endheaders()
             last_progress = time()
-            pprint("Uploading image %s" % shortimage)
+            pprint(f"Uploading image {shortimage}")
             with open(image_path, "rb") as disk:
                 pos = 0
                 while pos < image_size:
@@ -1042,7 +1069,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                     chunk = disk.read(to_read)
                     if not chunk:
                         transfer_service.pause()
-                        raise RuntimeError("Unexpected end of file at pos=%d" % pos)
+                        raise RuntimeError(f"Unexpected end of file at pos={pos}")
                     proxy_connection.send(chunk)
                     pos += len(chunk)
                     now = time()
@@ -1052,12 +1079,14 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             response = proxy_connection.getresponse()
             if response.status != 200:
                 transfer_service.pause()
-                return {'result': 'failure', 'reason': "Upload failed: %s %s" % (response.status, response.reason)}
+                return {'result': 'failure', 'reason': f"Upload failed: {response.status} {response.reason}"}
             transfer_service.finalize()
             proxy_connection.close()
         else:
             disk_id = disksearch[0].id
             disk_service = disks_service.disk_service(disk_id)
+        if iso:
+            return {'result': 'success'}
         _template = types.Template(name='Blank')
         _os = types.OperatingSystem(boot=types.Boot(devices=[types.BootDevice.HD, types.BootDevice.CDROM]))
         console = types.Console(enabled=True)
@@ -1068,7 +1097,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                                                memory=memory, cpu=cpu, template=_template, console=console, os=_os),
                                       clone=False)
         while True:
-            pprint("Preparing temporary vm %s" % tempname)
+            pprint(f"Preparing temporary vm {tempname}")
             sleep(5)
             disk_service = disks_service.disk_service(disk_id)
             disk = disk_service.get()
@@ -1093,11 +1122,11 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             template = template_service.get()
             if template.status == types.TemplateStatus.OK:
                 break
-        tempvmsearch = self.vms_service.list(search='name=%s' % tempname)
+        tempvmsearch = self.vms_service.list(search=f'name={tempname}')
         tempvminfo = tempvmsearch[0]
         tempvm = self.vms_service.vm_service(tempvminfo.id)
         tempvm.remove()
-        os.remove('/tmp/%s' % shortimage)
+        os.remove(f'/tmp/{shortimage}')
         return {'result': 'success'}
 
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
