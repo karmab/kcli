@@ -1,9 +1,6 @@
 # set global variable
 CIDR="10.244.0.0/16"
 
-# source env variables, if present
-test -f /etc/profile.d/kcli.sh && source /etc/profile.d/kcli.sh
-
 # initialize cluster
 kubeadm init --control-plane-endpoint "{{ api_ip }}:6443" --pod-network-cidr $CIDR --upload-certs {{ '--image-repository public.ecr.aws/eks-distro/kubernetes --kubernetes-version $EKSD_API_VERSION' if eksd else '' }}
 
