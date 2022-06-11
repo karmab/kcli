@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-from distutils.spawn import find_executable
 from kvirt.common import success, error, pprint, warning, info2, container_mode
 from kvirt.common import get_kubectl, kube_create_app, get_ssh_pub_key
 from kvirt.defaults import UBUNTUS
+from shutil import which
 import os
 import sys
 import yaml
@@ -98,7 +98,7 @@ def create(config, plandir, cluster, overrides):
     if os.path.exists(clusterdir):
         error("Please remove existing directory %s first..." % clusterdir)
         sys.exit(1)
-    if find_executable('kubectl') is None:
+    if which('kubectl') is None:
         get_kubectl()
     if not os.path.exists(clusterdir):
         os.makedirs(clusterdir)

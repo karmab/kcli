@@ -4,7 +4,6 @@
 Openstack Provider Class
 """
 
-from distutils.spawn import find_executable
 from kvirt import common
 from kvirt.common import pprint, error, warning, get_ssh_pub_key
 from kvirt.defaults import METADATA_FIELDS
@@ -16,6 +15,7 @@ from novaclient import client as novaclient
 from neutronclient.v2_0.client import Client as neutronclient
 import swiftclient.client as swiftclient
 import os
+from shutil import which
 from time import sleep
 import webbrowser
 from ipaddress import ip_address, ip_network
@@ -699,7 +699,7 @@ class Kopenstack(object):
             if code != 0:
                 return {'result': 'failure', 'reason': "Unable to download indicated image"}
         if shortimage.endswith('gz'):
-            if find_executable('gunzip') is not None:
+            if which('gunzip') is not None:
                 uncompresscmd = "gunzip /tmp/%s" % (shortimage)
                 os.system(uncompresscmd)
             else:

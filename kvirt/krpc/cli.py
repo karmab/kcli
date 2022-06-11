@@ -9,7 +9,6 @@ from kvirt.krpc import kcli_pb2_grpc
 from kvirt.krpc.kcli_pb2 import empty
 
 
-from distutils.spawn import find_executable
 from kvirt.examples import hostcreate, _list, plancreate, planinfo, productinfo, repocreate, start
 from kvirt.examples import kubegenericcreate, kubeopenshiftcreate
 from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsole, vmexport, niccreate, nicdelete
@@ -22,6 +21,7 @@ import argparse
 from kvirt.krpc import commoncli as common
 from kvirt.krpc.commoncli import pprint, error, success, container_mode
 from kvirt import nameutils
+from shutil import which
 import os
 import random
 import requests
@@ -1671,7 +1671,7 @@ def ssh_vm(args):
     if sshcommand != '':
         if args.debug:
             print(sshcommand)
-        if find_executable('ssh') is not None:
+        if which('ssh') is not None:
             os.system(sshcommand)
         else:
             print(sshcommand)
@@ -1707,7 +1707,7 @@ def scp_vm(args):
                                      recursive=recursive)
     scpcommand = k.scp(scpdetails).sshcmd
     if scpcommand != '':
-        if find_executable('scp') is not None:
+        if which('scp') is not None:
             os.system(scpcommand)
         else:
             print(scpcommand)

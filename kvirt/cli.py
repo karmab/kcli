@@ -3,7 +3,6 @@
 # coding=utf-8
 
 from copy import deepcopy
-from distutils.spawn import find_executable
 from getpass import getuser
 from kvirt.config import Kconfig
 from kvirt.examples import plandatacreate, vmdatacreate, hostcreate, _list, plancreate, planinfo, productinfo, start
@@ -31,6 +30,7 @@ import os
 import random
 import re
 import requests
+from shutil import which
 from subprocess import call
 import sys
 from tempfile import TemporaryDirectory
@@ -132,7 +132,7 @@ def get_version(args):
 
 
 def get_changelog(args):
-    if find_executable('git') is None:
+    if which('git') is None:
         error("git needed for this functionality")
         sys.exit(1)
     diff = args.diff
@@ -954,7 +954,7 @@ def create_app_generic(args):
         elif not os.path.exists(outputdir):
             os.mkdir(outputdir)
     paramfile = choose_parameter_file(args.paramfile)
-    if find_executable('kubectl') is None:
+    if which('kubectl') is None:
         error("You need kubectl to install apps")
         sys.exit(1)
     if 'KUBECONFIG' not in os.environ:
@@ -987,7 +987,7 @@ def create_app_openshift(args):
         elif not os.path.exists(outputdir):
             os.mkdir(outputdir)
     paramfile = choose_parameter_file(args.paramfile)
-    if find_executable('oc') is None:
+    if which('oc') is None:
         error("You need oc to install apps")
         sys.exit(1)
     if 'KUBECONFIG' not in os.environ:
@@ -1025,7 +1025,7 @@ def create_app_openshift(args):
 def delete_app_generic(args):
     apps = args.apps
     paramfile = choose_parameter_file(args.paramfile)
-    if find_executable('kubectl') is None:
+    if which('kubectl') is None:
         error("You need kubectl to install apps")
         sys.exit(1)
     if 'KUBECONFIG' not in os.environ:
@@ -1049,7 +1049,7 @@ def delete_app_generic(args):
 def delete_app_openshift(args):
     apps = args.apps
     paramfile = choose_parameter_file(args.paramfile)
-    if find_executable('oc') is None:
+    if which('oc') is None:
         error("You need oc to install apps")
         sys.exit(1)
     if 'KUBECONFIG' not in os.environ:
@@ -1085,7 +1085,7 @@ def list_apps_generic(args):
 
 def list_apps_openshift(args):
     """List openshift kube apps"""
-    if find_executable('oc') is None:
+    if which('oc') is None:
         error("You need oc to list apps")
         sys.exit(1)
     if 'KUBECONFIG' not in os.environ:
@@ -2845,7 +2845,7 @@ def ssh_vm(args):
                                 insecure=insecure, cmd=cmd, X=X, Y=Y, D=D, debug=args.debug, vmport=vmport,
                                 identityfile=identityfile)
     if sshcommand is not None:
-        if find_executable('ssh') is not None:
+        if which('ssh') is not None:
             os.system(sshcommand)
         else:
             print(sshcommand)
@@ -2923,7 +2923,7 @@ def scp_vm(args):
                                 debug=config.debug, download=download, vmport=vmport, insecure=insecure,
                                 identityfile=identityfile)
     if scpcommand is not None:
-        if find_executable('scp') is not None:
+        if which('scp') is not None:
             os.system(scpcommand)
         else:
             print(scpcommand)

@@ -5,7 +5,6 @@ from binascii import hexlify
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
-from distutils.spawn import find_executable
 from kvirt import common
 from kvirt.common import error, pprint, warning
 from kvirt.defaults import UBUNTUS, METADATA_FIELDS
@@ -19,6 +18,7 @@ import random
 from ssl import get_server_certificate
 import sys
 import tarfile
+from shutil import which
 from tempfile import TemporaryDirectory
 from threading import Thread
 import time
@@ -1082,7 +1082,7 @@ class Ksphere:
         name = name.replace('.ova', '').replace('.x86_64', '') if name is not None else shortimage
         iso = True if shortimage.endswith('.iso') or name.endswith('.iso') else False
         if not shortimage.endswith('ova') and not shortimage.endswith('zip') and not iso\
-           and find_executable('qemu-img') is None:
+           and which('qemu-img') is None:
             msg = "qemu-img is required for conversion"
             error(msg)
             return {'result': 'failure', 'reason': msg}

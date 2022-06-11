@@ -14,7 +14,6 @@ import base64
 from jinja2 import Environment, FileSystemLoader
 from jinja2 import StrictUndefined as undefined
 from jinja2.exceptions import TemplateSyntaxError, TemplateError, TemplateNotFound
-from distutils.spawn import find_executable
 import re
 import socket
 import ssl
@@ -24,7 +23,7 @@ import json
 import os
 import sys
 from subprocess import call
-from shutil import copy2, move
+from shutil import copy2, move, which
 from tempfile import TemporaryDirectory
 import yaml
 
@@ -297,7 +296,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
         if keys or publickeyfile is not None:
             userdata += "ssh_authorized_keys:\n"
             validkeyfound = True
-        elif find_executable('ssh-add') is not None:
+        elif which('ssh-add') is not None:
             agent_keys = os.popen('ssh-add -L 2>/dev/null | grep ssh | head -1').readlines()
             if agent_keys:
                 keys = agent_keys
@@ -712,7 +711,7 @@ def set_lastvm(name, client, delete=False):
         if not os.path.exists(vmfile):
             return
         else:
-            deletecmd = "sed -i ''" if os.path.exists('/Users') and 'gnu' not in find_executable('sed') else "sed -i"
+            deletecmd = "sed -i ''" if os.path.exists('/Users') and 'gnu' not in which('sed') else "sed -i"
             deletecmd += " '/%s %s/d' %s/vm" % (client, name, configdir)
             os.system(deletecmd)
         return
@@ -1135,7 +1134,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
                     warning(f"Skipping invalid key {key}")
                     continue
                 publickeys.append(newkey)
-        elif not publickeys and find_executable('ssh-add') is not None:
+        elif not publickeys and which('ssh-add') is not None:
             agent_keys = os.popen('ssh-add -L 2>/dev/null | head -1').readlines()
             if agent_keys:
                 publickeys = agent_keys
@@ -1528,8 +1527,8 @@ def delete_host(name):
 
 
 def get_binary(name, linuxurl, macosurl, compressed=False):
-    if find_executable(name) is not None:
-        return find_executable(name)
+    if which(name) is not None:
+        return which(name)
     binary = '/var/tmp/%s' % name
     if os.path.exists(binary):
         pprint("Using %s from /var/tmp" % name)
@@ -1956,10 +1955,10 @@ def make_iso(name, tmpdir, userdata, metadata, netdata, openstack=False):
         x.write(userdata)
     with open("%s/meta-data" % tmpdir, 'w') as y:
         y.write(metadata)
-    if find_executable('mkisofs') is None and find_executable('genisoimage') is None:
+    if which('mkisofs') is None and which('genisoimage') is None:
         error("mkisofs or genisoimage are required in order to create cloudinit iso")
         sys.exit(1)
-    isocmd = 'genisoimage' if find_executable('genisoimage') is not None else 'mkisofs'
+    isocmd = 'genisoimage' if which('genisoimage') is not None else 'mkisofs'
     isocmd += " --quiet -o %s/%s.ISO --volid cidata" % (tmpdir, name)
     if openstack:
         os.makedirs("%s/root/openstack/latest" % tmpdir)
@@ -2054,7 +2053,7 @@ def generate_rhcos_iso(k, cluster, pool, version='latest', podman=False, install
     if k.conn == 'fake':
         os.system(isocmd)
     elif k.host in ['localhost', '127.0.0.1']:
-        if podman and find_executable('podman') is None:
+        if podman and which('podman') is None:
             error("podman is required in order to embed iso ignition")
             sys.exit(1)
         copy2('iso.ign', poolpath)

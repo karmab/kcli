@@ -4,7 +4,6 @@
 IBM Cloud provider class
 """
 
-from distutils.spawn import find_executable
 from ipaddress import ip_network
 from kvirt import common
 from kvirt.common import pprint, error
@@ -19,6 +18,7 @@ from ibm_platform_services.iam_policy_management_v1 import PolicySubject, Subjec
 from ibm_platform_services.iam_policy_management_v1 import ResourceAttribute
 from ibm_cloud_networking_services import DnsRecordsV1, ZonesV1
 import os
+from shutil import which
 from time import sleep
 from requests import get, post
 import webbrowser
@@ -773,7 +773,7 @@ class Kibm(object):
                 if code != 0:
                     return {'result': 'failure', 'reason': "Unable to download indicated image"}
             if shortimage.endswith('gz'):
-                if find_executable('gunzip') is not None:
+                if which('gunzip') is not None:
                     uncompresscmd = "gunzip /tmp/%s" % (shortimage)
                     os.system(uncompresscmd)
                 else:

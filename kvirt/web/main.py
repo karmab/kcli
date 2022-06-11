@@ -1,7 +1,6 @@
 #!/usr/bin/python
 # coding=utf-8
 
-from distutils.spawn import find_executable
 from flask import Flask, render_template, request, jsonify, redirect, Response
 from kvirt.config import Kconfig
 from kvirt.common import print_info, get_free_port
@@ -10,6 +9,7 @@ from kvirt.containerconfig import Kcontainerconfig
 from kvirt.defaults import IMAGES, WEBSOCKIFYCERT
 from kvirt import nameutils
 import os
+from shutil import which
 from time import sleep
 from threading import Thread
 
@@ -918,7 +918,7 @@ def vmconsole(name):
     k = config.k
     password = ''
     scheme = 'ws://'
-    if find_executable('websockify') is None:
+    if which('websockify') is None:
         return Response(status=404)
     consoleurl = k.console(name, tunnel=config.tunnel, web=True)
     if consoleurl.startswith('spice') or consoleurl.startswith('vnc'):

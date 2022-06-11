@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 from base64 import b64encode
-from distutils.spawn import find_executable
 from getpass import getuser
 from glob import glob
 import json
@@ -16,7 +15,7 @@ from kvirt.common import get_installer_rhcos
 from kvirt.common import ssh, scp, _ssh_credentials, copy_ipi_credentials, get_ssh_pub_key
 from kvirt.defaults import LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG
 import re
-from shutil import copy2, move, rmtree
+from shutil import copy2, move, rmtree, which
 from subprocess import call
 from tempfile import TemporaryDirectory
 from time import sleep
@@ -548,7 +547,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             rmtree(clusterdir)
     orikubeconfig = os.environ.get('KUBECONFIG')
     os.environ['KUBECONFIG'] = "%s/auth/kubeconfig" % clusterdir
-    if find_executable('oc') is None:
+    if which('oc') is None:
         get_oc(macosx=macosx)
     if version == 'ci':
         if '/' not in str(tag):
@@ -559,7 +558,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 tag = 'registry.ci.openshift.org/%s/release:%s' % (basetag, tag)
         os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = tag
         pprint("Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to %s" % tag)
-    if find_executable('openshift-install') is None:
+    if which('openshift-install') is None:
         if data.get('ipi', False) and data.get('ipi_platform', platform) in ['kvm', 'libvirt', 'baremetal']:
             baremetal = True
         else:

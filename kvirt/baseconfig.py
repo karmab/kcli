@@ -4,7 +4,6 @@
 Kvirt config class
 """
 
-from distutils.spawn import find_executable
 from getpass import getuser
 from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID,
@@ -32,7 +31,7 @@ from kvirt import kubeadm
 from kvirt import hypershift
 from kvirt import openshift
 import os
-from shutil import copytree, rmtree
+from shutil import copytree, rmtree, which
 import yaml
 from jinja2 import Environment, FileSystemLoader
 from jinja2 import StrictUndefined as strictundefined
@@ -532,7 +531,7 @@ class Kbaseconfig:
             repodirs = [d for d in os.listdir(plansdir) if os.path.isdir(f"{plansdir}/{d}")]
             for d in repodirs:
                 repos[d] = None
-                if os.path.exists(f"{plansdir}/{d}/.git/config") and find_executable('git') is not None:
+                if os.path.exists(f"{plansdir}/{d}/.git/config") and which('git') is not None:
                     gitcmd = f"git config -f {plansdir}/{d}/.git/config  --get remote.origin.url"
                     giturl = os.popen(gitcmd).read().strip()
                     repos[d] = giturl
@@ -595,7 +594,7 @@ class Kbaseconfig:
             os.makedirs(repodir, exist_ok=True)
         if not url.startswith('http') and not url.startswith('git'):
             os.symlink(url, repodir)
-        elif find_executable('git') is None:
+        elif which('git') is None:
             error('repo operations require git')
             sys.exit(1)
         else:
@@ -620,7 +619,7 @@ class Kbaseconfig:
         repodir = "%s/.kcli/plans/%s" % (os.environ.get('HOME'), name)
         if not os.path.exists(repodir):
             return {'result': 'failure', 'reason': f'repo {name} not found'}
-        elif find_executable('git') is None:
+        elif which('git') is None:
             return {'result': 'failure', 'reason': 'repo operations require git'}
         else:
             os.chdir(repodir)

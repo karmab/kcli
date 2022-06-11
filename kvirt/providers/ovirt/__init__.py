@@ -4,7 +4,6 @@
 Ovirt Provider Class
 """
 
-from distutils.spawn import find_executable
 from kvirt import common
 from kvirt.common import error, pprint, warning, get_ssh_pub_key
 from kvirt.defaults import UBUNTUS, METADATA_FIELDS
@@ -22,6 +21,7 @@ import ssl
 from urllib.parse import urlparse
 from random import choice
 from string import ascii_lowercase
+from shutil import which
 
 oimages = {'CentOS-6-x86_64-GenericCloud.qcow2': 'CentOS 6 Generic Cloud Image',
            'CentOS-Atomic-Host-7-GenericCloud.qcow2': 'CentOS 7 Atomic Host Image',
@@ -990,7 +990,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             for extension in extensions:
                 if shortimage.endswith(extension):
                     executable = extensions[extension]
-                    if find_executable(executable) is None:
+                    if which(executable) is None:
                         pprint("%s not found. Can't uncompress image" % executable)
                         sys.exit(1)
                     else:

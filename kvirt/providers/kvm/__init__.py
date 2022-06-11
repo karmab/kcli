@@ -4,7 +4,6 @@
 Kvm Provider class
 """
 
-from distutils.spawn import find_executable
 # from urllib.request import urlopen, urlretrieve
 from urllib.request import urlopen
 from kvirt.defaults import IMAGES
@@ -30,6 +29,7 @@ import os
 from subprocess import call
 import re
 import string
+from shutil import which
 from tempfile import TemporaryDirectory
 import time
 from uuid import UUID
@@ -1285,7 +1285,7 @@ class Kvirt(object):
                 virtcmd = 'virt-customize'
                 cmd = f"sudo {virtcmd} -a {firstdisk} --run-command 'grubby --update-kernel=ALL --args={cmdline}'"
             if self.host == 'localhost' or self.host == '127.0.0.1':
-                if find_executable(virtcmd) is not None:
+                if which(virtcmd) is not None:
                     os.system(cmd)
                 else:
                     warning(f"{virtcmd} missing from PATH. cmdline won't be injected")
@@ -3043,7 +3043,7 @@ class Kvirt(object):
             extension = os.path.splitext(shortimage)[1].replace('.', '')
             executable = executable[extension] if name != 'rhcos42' else 'gunzip'
             if self.host == 'localhost' or self.host == '127.0.0.1':
-                if find_executable(executable) is not None:
+                if which(executable) is not None:
                     uncompresscmd = "%s %s/%s" % (executable, poolpath, shortimage)
                     os.system(uncompresscmd)
                 else:
@@ -3055,7 +3055,7 @@ class Kvirt(object):
                 os.system(uncompresscmd)
         if cmd is not None:
             if self.host == 'localhost' or self.host == '127.0.0.1':
-                if find_executable('virt-customize') is not None:
+                if which('virt-customize') is not None:
                     cmd = "virt-customize -a %s/%s --run-command '%s'" % (poolpath, shortimage_uncompressed, cmd)
                     os.system(cmd)
             elif self.protocol == 'ssh':

@@ -27,13 +27,12 @@ from kvirt import openshift
 from kvirt.internalplans import haproxy as haproxyplan
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
-from distutils.spawn import find_executable
 from getpass import getuser
 import glob
 import os
 import re
 import socket
-from shutil import rmtree
+from shutil import rmtree, which
 import sys
 from subprocess import call
 from tempfile import TemporaryDirectory
@@ -717,7 +716,7 @@ class Kconfig(Kbaseconfig):
         vnc = profile.get('vnc', default_vnc)
         cloudinit = profile.get('cloudinit', default_cloudinit)
         if cloudinit and self.type == 'kvm' and\
-                find_executable('mkisofs') is None and find_executable('genisoimage') is None:
+                which('mkisofs') is None and which('genisoimage') is None:
             return {'result': 'failure', 'reason': "Missing mkisofs/genisoimage needed for cloudinit"}
         reserveip = profile.get('reserveip', default_reserveip)
         reservedns = profile.get('reservedns', default_reservedns)
@@ -1048,7 +1047,7 @@ class Kconfig(Kbaseconfig):
             common.set_lastvm(name, client)
         ansibleprofile = profile.get('ansible')
         if ansibleprofile is not None:
-            if find_executable('ansible-playbook') is None:
+            if which('ansible-playbook') is None:
                 warning("ansible-playbook executable not found. Skipping ansible play")
             else:
                 for element in ansibleprofile:

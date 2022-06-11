@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-from distutils.spawn import find_executable
 from kvirt.common import success, pprint, error, warning, get_kubectl, info2, container_mode
 import os
 import re
 import sys
 import yaml
+from shutil import which
 
 cloudplatforms = ['aws', 'gcp']
 
@@ -105,7 +105,7 @@ def create(config, plandir, cluster, overrides):
     if os.path.exists(clusterdir):
         error(f"Please remove existing directory {clusterdir} first...")
         sys.exit(1)
-    if find_executable('kubectl') is None:
+    if which('kubectl') is None:
         get_kubectl()
     if not os.path.exists(clusterdir):
         os.makedirs(clusterdir)

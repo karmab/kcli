@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-from distutils.spawn import find_executable
 from kvirt.common import success, error, pprint, info2, container_mode, warning
 from kvirt.common import get_oc, pwd_path, get_installer_rhcos, generate_rhcos_iso
 from kvirt.defaults import OPENSHIFT_TAG
@@ -10,6 +9,7 @@ from ipaddress import ip_network
 import os
 import re
 import sys
+from shutil import which
 from subprocess import call
 import time
 import yaml
@@ -89,7 +89,7 @@ def create(config, plandir, cluster, overrides):
     if os.path.exists(clusterdir):
         error("Please remove existing directory %s first..." % clusterdir)
         sys.exit(1)
-    if find_executable('oc') is None:
+    if which('oc') is None:
         get_oc()
     pub_key = data.get('pub_key')
     pull_secret = pwd_path(data.get('pull_secret'))
@@ -137,7 +137,7 @@ def create(config, plandir, cluster, overrides):
         if os.path.exists('openshift-install'):
             pprint("Removing old openshift-install")
             os.remove('openshift-install')
-        if find_executable('openshift-install') is None:
+        if which('openshift-install') is None:
             if version == 'ci':
                 run = get_ci_installer(pull_secret, tag=tag)
             elif version == 'nightly':
@@ -242,7 +242,7 @@ def create(config, plandir, cluster, overrides):
         f.write(autoapprover)
     call(f"oc apply -f {autoapproverpath}", shell=True)
     async_install = data.get('async')
-    if async_install or find_executable('openshift-install') is None:
+    if async_install or which('openshift-install') is None:
         success(f"Kubernetes cluster {cluster} deployed!!!")
         info2(f"export KUBECONFIG=$HOME/.kcli/clusters/{cluster}/auth/kubeconfig")
         info2("export PATH=$PWD:$PATH")
