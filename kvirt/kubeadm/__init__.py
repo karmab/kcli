@@ -3,7 +3,9 @@
 from kvirt.common import success, error, pprint, warning, info2, container_mode
 from kvirt.common import get_kubectl, kube_create_app, get_ssh_pub_key
 from kvirt.defaults import UBUNTUS
+from random import choice
 from shutil import which
+from string import ascii_letters, digits
 import os
 import sys
 import yaml
@@ -82,7 +84,10 @@ def create(config, plandir, cluster, overrides):
         data['domain'] = "%s.nip.io" % api_ip
     if data.get('virtual_router_id') is None:
         data['virtual_router_id'] = hash(data['cluster']) % 254 + 1
-    pprint("Using keepalived virtual_router_id %s" % data['virtual_router_id'])
+    virtual_router_id = data['virtual_router_id']
+    pprint(f"Using keepalived virtual_router_id {virtual_router_id}")
+    auth_pass = ''.join(choice(ascii_letters + digits) for i in range(5))
+    data['auth_pass'] = auth_pass
     version = data.get('version')
     if version is not None and not str(version).startswith('1.'):
         error("Invalid version %s" % version)
@@ -110,6 +115,7 @@ def create(config, plandir, cluster, overrides):
             installparam['plan'] = plan
             installparam['kubetype'] = 'generic'
             installparam['image'] = image
+            installparam['auth_pass'] = auth_pass
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     master_threaded = data.get('threaded', False) or data.get('masters_threaded', False)
     result = config.plan(plan, inputfile='%s/masters.yml' % plandir, overrides=data, threaded=master_threaded)

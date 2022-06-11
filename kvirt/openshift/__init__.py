@@ -20,12 +20,24 @@ from subprocess import call
 from tempfile import TemporaryDirectory
 from time import sleep
 from urllib.request import urlopen, Request
+from random import choice
 from requests import post
+from string import ascii_letters, digits
 import yaml
 
 
 virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere']
 cloudplatforms = ['aws', 'gcp', 'ibm']
+
+
+def backup_paramfile(installparam, clusterdir, cluster, plan, image, dnsconfig):
+    with open(f"{clusterdir}/kcli_parameters.yml", 'w') as p:
+        installparam['cluster'] = cluster
+        installparam['plan'] = plan
+        installparam['image'] = image
+        if dnsconfig is not None:
+            installparam['dnsclient'] = dnsconfig.client
+        yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
 
 
 def update_etc_hosts(cluster, domain, host_ip, ingress_ip=None):
@@ -654,13 +666,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     overrides['cluster'] = cluster
     if not os.path.exists(clusterdir):
         os.makedirs(clusterdir)
-        with open("%s/kcli_parameters.yml" % clusterdir, 'w') as p:
-            installparam['cluster'] = cluster
-            installparam['plan'] = plan
-            installparam['image'] = image
-            if dnsconfig is not None:
-                installparam['dnsclient'] = dnsconfig.client
-            yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     data['pub_key'] = open(pub_key).read().strip()
     if not data['pub_key'].startswith('ssh-'):
         error(f"File {pub_key} doesnt seem to contain a valid public key")
@@ -1119,11 +1124,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                               {"path": "/etc/NetworkManager/dispatcher.d/99-forcedns", "data": forcedns_data,
                                "mode": int('755', 8)}])
         if api_ip is not None:
-            if data.get('virtual_router_id') is None:
-                virtual_router_id = hash(cluster) % 254 + 1
-                pprint(f"Using keepalived virtual_router_id {virtual_router_id}")
-                installparam['virtual_router_id'] = virtual_router_id
-                data['virtual_router_id'] = virtual_router_id
+            data['virtual_router_id'] = data.get('virtual_router_id') or hash(cluster) % 254 + 1
+            virtual_router_id = data['virtual_router_id']
+            pprint(f"Using keepalived virtual_router_id {virtual_router_id}")
+            data['auth_pass'] = ''.join(choice(ascii_letters + digits) for i in range(5))
             vips = [api_ip, ingress_ip] if ingress_ip is not None else [api_ip]
             pprint("Injecting keepalived static pod with %s" % ','.join(vips))
             keepalived_data = config.process_inputfile(cluster, f"{plandir}/staticpods/keepalived.yml", overrides=data)
@@ -1230,16 +1234,21 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 pprint(f"Plug {cluster}-master.iso to get additional masters")
             if sno_workers:
                 pprint(f"Plug {cluster}-worker.iso to get additional workers")
+        backup_paramfile(installparam, clusterdir, cluster, plan, image, dnsconfig)
         sys.exit(0)
     call('openshift-install --dir=%s --log-level=%s create ignition-configs' % (clusterdir, log_level), shell=True)
     for role in ['master', 'worker']:
         ori = "%s/%s.ign" % (clusterdir, role)
         copy2(ori, "%s.ori" % ori)
     if platform in virtplatforms:
-        if data.get('virtual_router_id') is None:
-            overrides['virtual_router_id'] = hash(cluster) % 254 + 1
-        pprint("Using keepalived virtual_router_id %s" % overrides['virtual_router_id'])
-        pprint("Using %s for api vip...." % api_ip)
+        overrides['virtual_router_id'] = data.get('virtual_router_id') or hash(cluster) % 254 + 1
+        virtual_router_id = overrides['virtual_router_id']
+        pprint(f"Using keepalived virtual_router_id {virtual_router_id}")
+        installparam['virtual_router_id'] = virtual_router_id
+        auth_pass = ''.join(choice(ascii_letters + digits) for i in range(5))
+        overrides['auth_pass'] = auth_pass
+        installparam['auth_pass'] = auth_pass
+        pprint(f"Using {api_ip} for api vip....")
         host_ip = api_ip if platform != "openstack" else public_api_ip
         if ignore_hosts or (not kubevirt_ignore_node_port and kubevirt_api_service and kubevirt_api_service_node_port):
             warning("Ignoring /etc/hosts")
@@ -1272,6 +1281,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         baremetal_iso_overrides['noname'] = True
         baremetal_iso_overrides['compact'] = True
         baremetal_iso_overrides['version'] = tag
+    backup_paramfile(installparam, clusterdir, cluster, plan, image, dnsconfig)
     if platform in virtplatforms:
         pprint("Deploying bootstrap")
         if baremetal_iso_bootstrap:

@@ -5,6 +5,8 @@ import os
 import re
 import sys
 import yaml
+from random import choice
+from string import ascii_letters, digits
 from shutil import which
 
 cloudplatforms = ['aws', 'gcp']
@@ -95,6 +97,9 @@ def create(config, plandir, cluster, overrides):
         if data.get('virtual_router_id') is None:
             data['virtual_router_id'] = hash(data['cluster']) % 254 + 1
             pprint(f"Using keepalived virtual_router_id {data['virtual_router_id']}")
+    virtual_router_id = data['virtual_router_id']
+    auth_pass = ''.join(choice(ascii_letters + digits) for i in range(5))
+    data['auth_pass'] = auth_pass
     data['basedir'] = '/workdir' if container_mode() else '.'
     install_k3s_args = []
     for arg in data:
@@ -116,6 +121,8 @@ def create(config, plandir, cluster, overrides):
             installparam['plan'] = plan
             installparam['kubetype'] = 'k3s'
             installparam['image'] = image
+            installparam['auth_pass'] = auth_pass
+            installparam['virtual_router_id'] = virtual_router_id
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     for arg in data.get('extra_master_args', []):
         if arg.startswith('--data-dir='):
