@@ -741,16 +741,15 @@ class Ksphere:
             fileinfo = result.file
             for element in fileinfo:
                 folderpath = element.path
-                if not folderpath.endswith('iso') and 'ISO' in folderpath.upper():
-                    t = browser.SearchDatastoreSubFolders_Task(f"{datastorepath}{folderpath}", searchspec)
-                    waitForMe(t)
-                    results = t.info.result
-                    for r in results:
-                        fileinfo = r.file
-                        for isofile in fileinfo:
-                            path = isofile.path
-                            if path.endswith('.iso'):
-                                isos.append(f"{datastorepath}/{folderpath}/{path}")
+                t = browser.SearchDatastoreSubFolders_Task(f"{datastorepath}{folderpath}", searchspec)
+                waitForMe(t)
+                results = t.info.result
+                for r in results:
+                    fileinfo = r.file
+                    for isofile in fileinfo:
+                        path = isofile.path
+                        if path.endswith('.iso'):
+                            isos.append(f"{datastorepath}/{folderpath}/{path}")
         return isos
 
     def volumes(self, iso=False):
@@ -1091,7 +1090,9 @@ class Ksphere:
             return {'result': 'success'}
         if not find(si, rootFolder, vim.Datastore, pool):
             return {'result': 'failure', 'reason': f"Pool {pool} not found"}
-        if not os.path.exists(f'/tmp/{shortimage}'):
+        if os.path.exists(url):
+            pprint(f"Using {url} as path")
+        elif not os.path.exists(f'/tmp/{shortimage}'):
             pprint(f"Downloading locally {shortimage}")
             downloadcmd = f"curl -Lo /tmp/{shortimage} -f '{url}'"
             code = os.system(downloadcmd)
@@ -1100,10 +1101,11 @@ class Ksphere:
         else:
             pprint(f"Using found /tmp/{shortimage}")
         if iso:
-            isofile = f"/tmp/{shortimage}"
+            isofile = os.path.abspath(url) if os.path.exists(url) else f"/tmp/{shortimage}"
             if name is not None:
-                isofile = f"/tmp/{name}"
-                os.rename(f"/tmp/{shortimage}", isofile)
+                new_file = f"{os.path.dirname(isofile)}/{name}"
+                os.rename(isofile, new_file)
+                isofile = new_file
             if self.isofolder is not None:
                 isofolder = self.isofolder.split('/')
                 isopool = re.sub(r"[\[\]]", '', isofolder[0])

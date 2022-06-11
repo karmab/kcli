@@ -68,6 +68,8 @@ def valid_fqdn(name):
 
 def valid_url(url):
     if url is not None:
+        if os.path.exists(url):
+            return url
         parsed_url = urlparse(url)
         if parsed_url.scheme == '' or parsed_url.netloc == '':
             msg = "Malformed url"
