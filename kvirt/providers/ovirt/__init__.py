@@ -878,10 +878,10 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         return {'result': 'success'}
 
     def delete_disk(self, name=None, diskname=None, pool=None, novm=False):
-        vmsearch = self.vms_service.list(search='name=%s' % name)
+        vmsearch = self.vms_service.list(search=f'name={name}')
         if not vmsearch:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         vm = self.vms_service.vm_service(vmsearch[0].id)
         disk_attachments_service = vm.disk_attachments_service()
         for disk in disk_attachments_service.list():
@@ -897,8 +897,8 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                 disk_service = disks_service.disk_service(disk.disk.id)
                 disk_service.remove()
                 return {'result': 'success'}
-        error("Disk %s not found" % diskname)
-        return {'result': 'failure', 'reason': "Disk %s not found" % diskname}
+        error(f"Disk {diskname} not found")
+        return {'result': 'failure', 'reason': f"Disk {diskname} not found"}
 
     def list_disks(self):
         volumes = {}
@@ -958,7 +958,18 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         return
 
     def delete_image(self, image, pool=None):
-        pprint("Deleting Template %s" % image)
+        if image.endswith('.iso'):
+            pprint(f"Deleting Iso {image}")
+            disks_service = self.conn.system_service().disks_service()
+            disksearch = disks_service.list(search=f'name={image}')
+            if not disksearch:
+                return {'result': 'failure', 'reason': f"Image {image} not found"}
+            else:
+                disk_id = disksearch[0].id
+                disk_service = disks_service.disk_service(disk_id)
+                disk_service.remove()
+                return {'result': 'success'}
+        pprint("Deleting Template {image}")
         templates_service = self.templates_service
         templateslist = templates_service.list()
         for template in templateslist:
@@ -966,7 +977,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                 template_service = templates_service.template_service(template.id)
                 template_service.remove()
                 return {'result': 'success'}
-        return {'result': 'failure', 'reason': "Image %s not found" % image}
+        return {'result': 'failure', 'reason': f"Image {image} not found"}
 
     def add_image(self, url, pool, short=None, cmd=None, name=None, size=None):
         shortimage = os.path.basename(url).split('?')[0]
