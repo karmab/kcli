@@ -786,15 +786,12 @@ class Kconfig(Kbaseconfig):
         virttype = profile.get('virttype', default_virttype)
         overrides.update(profile)
         scriptcmds = []
-        skip_rhnregister_script = False
         if image is not None and 'rhel' in image.lower():
             if rhnregister:
                 if rhnuser is not None and rhnpassword is not None:
-                    skip_rhnregister_script = True
                     overrides['rhnuser'] = rhnuser
                     overrides['rhnpassword'] = rhnpassword
                 elif rhnak is not None and rhnorg is not None:
-                    skip_rhnregister_script = True
                     overrides['rhnak'] = rhnak
                     overrides['rhnorg'] = rhnorg
                 else:
@@ -815,8 +812,6 @@ class Kconfig(Kbaseconfig):
                 script = os.path.expanduser(script)
                 if basedir != '.':
                     script = f'{basedir}/{script}'
-                if script.endswith('register.sh') and skip_rhnregister_script:
-                    continue
                 elif not os.path.exists(script):
                     return {'result': 'failure', 'reason': f"Script {script} not found"}
                 else:
@@ -841,8 +836,11 @@ class Kconfig(Kbaseconfig):
                     if scriptlines:
                         scriptlines.insert(0, f"echo Running script {scriptname}")
                         scriptcmds.extend(scriptlines)
-        if skip_rhnregister_script and cloudinit and image is not None and 'rhel' in image.lower():
+        if cloudinit and image is not None and 'rhel' in image.lower():
             rhncommands = []
+            if rhnserver != "https://subscription.rhsm.redhat.com" and not valid_ip(rhnserver):
+                fqdn = os.path.basename(rhnserver)
+                rhncommands.append(f'rpm -Uvh http://{fqdn}/pub/katello-ca-consumer-{fqdn}-1.0-1.noarch.rpm')
             if rhnak is not None and rhnorg is not None:
                 rhncommands.append('subscription-manager register --serverurl=%s --force --activationkey=%s --org=%s'
                                    % (rhnserver, rhnak, rhnorg))
@@ -864,8 +862,7 @@ class Kconfig(Kbaseconfig):
             for sharedfolder in sharedfolders:
                 basefolder = os.path.basename(sharedfolder)
                 cmd1 = f"mkdir -p /mnt/{sharedfolder}"
-                cmd2 = "echo %s /mnt/%s 9p trans=virtio,version=9p2000.L,rw 0 0 >> /etc/fstab" % (basefolder,
-                                                                                                  sharedfolder)
+                cmd2 = f"echo {basefolder} /mnt/{sharedfolder} 9p trans=virtio,version=9p2000.L,rw 0 0 >> /etc/fstab"
                 sharedfoldercmds.append(cmd1)
                 sharedfoldercmds.append(cmd2)
         if sharedfoldercmds:
