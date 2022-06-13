@@ -368,6 +368,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'kubevirt_ignore_node_port': False,
             'baremetal': False,
             'sushy': False,
+            'coredns': True,
+            'mdns': True,
             'retries': 2}
     data.update(overrides)
     if 'cluster' in overrides:
@@ -441,7 +443,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     upstream = data.get('upstream')
     metal3 = data.get('metal3')
     sushy = data.get('sushy')
-    mdns = data.get('mdns', True)
+    if not data.get('coredns'):
+        warning("You will need to provide DNS records for api and ingress on your own")
+    mdns = data.get('mdns')
     sno_localhost_fix = data.get('sno_localhost_fix', False)
     kubevirt_api_service, kubevirt_api_service_node_port = False, False
     kubevirt_ignore_node_port = data['kubevirt_ignore_node_port']
