@@ -39,7 +39,9 @@ RHCOS = "https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/"
 FEDORA = "http://mirror.uv.es/mirror/fedora/linux/releases/"
 FEDORA_ARCHIVE = "https://archives.fedoraproject.org/pub/archive/fedora/linux/releases/"
 ROCKY = 'https://dl.rockylinux.org/pub/rocky/'
-IMAGES = {'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-image-bootstrap.qcow2',
+IMAGES = {'almalinux9': 'http://repo.ifca.es/almalinux/9.0/cloud/x86_64/images/'
+          'AlmaLinux-9-GenericCloud-latest.x86_64.qcow2',
+          'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-image-bootstrap.qcow2',
           'centos6': 'https://cloud.centos.org/centos/6/images/CentOS-6-x86_64-GenericCloud.qcow2',
           'centos7': 'https://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2',
           'centos8': 'https://cloud.centos.org/centos/8/x86_64/images/'
