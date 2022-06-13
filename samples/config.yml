@@ -66,7 +66,7 @@ default:
  # Graphical connection to use for libvirt.
  vnc: true
  # Array of ssh public keys to inject to the vm
- keys:
+ keys: []
  # Array of commands to run through cloudinit
  cmds: []
  # array of paths of custom script to inject with cloudinit. It will be merged with cmds parameter. You can either specify full paths or relative to where you're running kcli. Only checked in profile or plan file
