@@ -26,8 +26,9 @@ def scale(config, plandir, cluster, overrides):
             data.update(installparam)
             plan = installparam.get('plan', plan)
     data.update(overrides)
-    with open("%s/kcli_parameters.yml" % clusterdir, 'w') as paramfile:
-        yaml.safe_dump(data, paramfile)
+    if os.path.exists(clusterdir):
+        with open("%s/kcli_parameters.yml" % clusterdir, 'w') as paramfile:
+            yaml.safe_dump(data, paramfile)
     client = config.client
     pprint("Scaling on client %s" % client)
     image = data.get('image')

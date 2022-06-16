@@ -1825,8 +1825,7 @@ def scale_k3s_kube(args):
     cluster = overrides.get('cluster', args.cluster)
     clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
     if not os.path.exists(clusterdir):
-        error(f"Cluster directory {clusterdir} not found...")
-        sys.exit(1)
+        warning(f"Cluster directory {clusterdir} not found...")
     if container_mode():
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
