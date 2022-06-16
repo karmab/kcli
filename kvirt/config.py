@@ -812,7 +812,7 @@ class Kconfig(Kbaseconfig):
                 script = os.path.expanduser(script)
                 if basedir != '.':
                     script = f'{basedir}/{script}'
-                elif not os.path.exists(script):
+                if not os.path.exists(script):
                     return {'result': 'failure', 'reason': f"Script {script} not found"}
                 else:
                     scriptbasedir = os.path.dirname(script) if os.path.dirname(script) != '' else '.'

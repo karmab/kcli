@@ -100,7 +100,6 @@ def create(config, plandir, cluster, overrides):
     virtual_router_id = data['virtual_router_id']
     auth_pass = ''.join(choice(ascii_letters + digits) for i in range(5))
     data['auth_pass'] = auth_pass
-    data['basedir'] = '/workdir' if container_mode() else '.'
     install_k3s_args = []
     for arg in data:
         if arg.startswith('install_k3s'):
