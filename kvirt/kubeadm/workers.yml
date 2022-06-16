@@ -18,9 +18,9 @@
  disks: {{ [disk_size] + extra_disks }}
  files:
   - path: /root/join.sh
-    origin: {{ basedir }}/clusters/{{ cluster }}/join.sh
+    origin: ~/.kcli/clusters/{{ cluster }}/join.sh
   - path: /root/admin.conf
-    origin: {{ basedir }}/clusters/{{ cluster }}/auth/kubeconfig
+    origin: ~/.kcli/clusters/{{ cluster }}/auth/kubeconfig
 {% if eksd %}
   - eksd.sh
 {% endif %}
