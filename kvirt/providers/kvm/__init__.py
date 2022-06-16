@@ -4,6 +4,7 @@
 Kvm Provider class
 """
 
+from getpass import getuser
 # from urllib.request import urlopen, urlretrieve
 from urllib.request import urlopen
 from kvirt.defaults import IMAGES
@@ -620,14 +621,13 @@ class Kvirt(object):
                 if netname in bridges and 'ip' in allnetworks[netname] and 'config_host' not in overrides:
                     overrides['config_host'] = allnetworks[netname]['ip']
                 iftype = 'bridge'
-                sourcexml = "<source bridge='%s'/>" % netname
+                sourcexml = f"<source bridge='{netname}'/>"
                 guestagent = True
-                if reservedns and index == 0:
-                    dnscmdhost = dns if dns is not None else self.host
-                    dnscmd = "sed -i 's/nameserver .*/nameserver %s/' /etc/resolv.conf" % dnscmdhost
+                if reservedns and index == 0 and dns is not None:
+                    dnscmd = f"sed -i 's/nameserver .*/nameserver {dns}/' /etc/resolv.conf"
                     cmds = cmds[:index] + [dnscmd] + cmds[index:]
             else:
-                return {'result': 'failure', 'reason': "Invalid network %s" % netname}
+                return {'result': 'failure', 'reason': f"Invalid network {netname}"}
             if filterxml == "":
                 for target_net in allnetworks:
                     if 'allowed_nets' in allnetworks[target_net] and netname in allnetworks[target_net]['allowed_nets']:
@@ -2003,7 +2003,7 @@ class Kvirt(object):
                     found = True
                     break
             if found:
-                print("Deleting host entry. sudo password might be asked")
+                pprint("Deleting host entry. sudo password might be asked")
                 call(f"sudo sed -i '/{hostentry}/d' /etc/hosts", shell=True)
                 if bridged and self.host in ['localhost', '127.0.0.1']:
                     try:
@@ -2249,7 +2249,7 @@ class Kvirt(object):
                 if self.remotednsmasq:
                     bridged = True
                 else:
-                    warning(f"Network {netname} not found")
+                    warning(f"Network {netname} can't be used for dns entries")
                     return
             if ip is None:
                 if isinstance(net, dict):
@@ -2343,8 +2343,8 @@ class Kvirt(object):
                 ip = self.ip(name)
                 if ip is None:
                     time.sleep(5)
-                    pprint("Waiting 5 seconds to grab ip and create Host record...")
-                    counter += 10
+                    pprint("Waiting 5 seconds to grab ip and create /etc/host entry...")
+                    counter += 5
                 else:
                     break
         if ip is None:
@@ -3560,9 +3560,9 @@ class Kvirt(object):
                 return
         pprint("Creating hosts entry. Password for sudo might be asked")
         if not self.remotednsmasq:
-            hostscmd = "sh -c 'echo %s >>%s'" % (hosts, hostsfile)
-            if self.user != 'root':
-                hostscmd = "sudo %s" % hostscmd
+            hostscmd = f"sh -c 'echo {hosts} >>{hostsfile}'"
+            if getuser() != 'root':
+                hostscmd = f"sudo {hostscmd}"
             call(hostscmd, shell=True)
         elif self.protocol != 'ssh' or self.host in ['localhost', '127.0.0.1']:
             return
