@@ -1631,7 +1631,7 @@ A minimal one could be the following one
    version: stable
    tag: '4.8'
    masters: 3 
-   workers:2
+   workers: 2
    memory: 16384
    numcpus: 16
 
