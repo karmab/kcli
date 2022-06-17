@@ -1921,6 +1921,8 @@ class Kconfig(Kbaseconfig):
                     if vmcounter >= len(vmentries):
                         os.remove(f"{plan}.key.pub")
                         os.remove(f"{plan}.key")
+                if 'rootpassword' in overrides:
+                    profile['rootpassword'] = overrides['rootpassword']
                 currentoverrides = overrides.copy()
                 if 'image' in profile:
                     for entry in self.list_profiles():
