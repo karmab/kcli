@@ -1552,6 +1552,14 @@ class Kconfig(Kbaseconfig):
                         sys.exit(run)
             else:
                 warning(f"Skipping {pre_script_short} as requested")
+        keywords = self.list_keywords()
+        for key in overrides:
+            if key in keywords:
+                key_type = type(getattr(self, key))
+                if key_type != type(overrides[key]):
+                    error(f"The provided parameter {key} has a wrong type, it should be {key_type}")
+                    sys.exit(1)
+                setattr(self, key, overrides[key])
         vmentries = [entry for entry in entries if 'type' not in entries[entry] or entries[entry]['type'] == 'vm']
         diskentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'disk']
         networkentries = [entry for entry in entries
