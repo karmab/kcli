@@ -1555,8 +1555,9 @@ class Kconfig(Kbaseconfig):
         keywords = self.list_keywords()
         for key in overrides:
             if key in keywords:
-                key_type = type(getattr(self, key))
-                if key_type != type(overrides[key]):
+                key_value = getattr(self, key)
+                key_type = type(key_value)
+                if key_value is not None and key_type != type(overrides[key]):
                     error(f"The provided parameter {key} has a wrong type, it should be {key_type}")
                     sys.exit(1)
                 setattr(self, key, overrides[key])
