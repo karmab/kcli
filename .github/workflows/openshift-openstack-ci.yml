@@ -34,6 +34,8 @@ env:
  PARAMFILE: ${{github.event.inputs.PARAMFILE}}
  EXTRAPARAMS: ${{github.event.inputs.EXTRAPARAMS}}
  PULLSECRET: ${{github.event.inputs.PULLSECRET}}
+ VERSION: ${{github.event.inputs.VERSION}}
+ TAG: ${{github.event.inputs.TAG}}
 
 jobs:
     deploy-openshift:
@@ -46,4 +48,4 @@ jobs:
        - name: Delete old install
          run: kcli delete cluster --yes $PLAN
        - name: Deploy Openshift on Openstack
-         run: kcli create cluster openshift --paramfile $PARAMFILE -P pull_secret="$PULLSECRET" -P version="$VERSION" -P tag="$TAG" $EXTRAPARAMS $PLAN
+         run: kcli create cluster openshift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET -P version=$VERSION -P tag="$TAG" $EXTRAPARAMS $PLAN
