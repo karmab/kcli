@@ -1,3 +1,4 @@
+from subprocess import call
 from flask import Flask
 from flask import render_template, request, jsonify
 from glob import glob
@@ -8,13 +9,14 @@ import re
 
 class Kexposer():
 
-    def refresh_plans(self):
+    def refresh_plans(self, verbose=False):
         plans = []
         owners = {}
         for paramfile in glob(f"{self.basedir}/**/parameters_*.y*ml", recursive=True):
             search = re.match('.*parameters_(.*)\\.ya?ml', paramfile)
             plan = search.group(1)
-            pprint(f"Adding parameter file {paramfile}")
+            if verbose:
+                pprint(f"Adding parameter file {paramfile}")
             plans.append(plan)
             fileoverrides = get_overrides(paramfile=paramfile)
             if 'owner' in fileoverrides:
@@ -22,11 +24,12 @@ class Kexposer():
         self.plans = sorted(plans) if plans else [plan]
         self.owners = owners
 
-    def __init__(self, config, plan, inputfile, overrides={}, port=9000):
+    def __init__(self, config, plan, inputfile, overrides={}, port=9000, custom=None):
         app = Flask(__name__)
         self.basedir = os.path.dirname(inputfile) if '/' in inputfile else '.'
         self.overrides = overrides
-        self.refresh_plans()
+        self.refresh_plans(verbose=True)
+        self.custom = custom
 
         @app.route('/')
         def index():
@@ -90,8 +93,8 @@ class Kexposer():
                             currentconfig.__init__(client=client)
                         fileoverrides.update(overrides)
                         overrides = fileoverrides
-                    if 'mail' in currentconfig.notifymethods and 'mailto' in overrides and overrides['mailto'] != "":
-                        newmails = overrides['mailto'].split(',')
+                    if 'mail' in currentconfig.notifymethods and 'mail_to' in overrides and overrides['mail_to'] != "":
+                        newmails = overrides['mail_to'].split(',')
                         if currentconfig.mailto:
                             currentconfig.mailto.extend(newmails)
                         else:
@@ -99,7 +102,15 @@ class Kexposer():
                     if 'owner' in overrides and overrides['owner'] == '':
                         del overrides['owner']
                     currentconfig.delete_plan(plan)
-                    result = currentconfig.plan(plan, inputfile=inputfile, overrides=overrides)
+                    if self.custom is not None:
+                        print(f'{self.custom} {plan} {inputfile} "{overrides}"')
+                        run = call(f'{self.custom} {plan} {inputfile} "{overrides}"', shell=True)
+                        if run == 0:
+                            result = {'result': 'success'}
+                        else:
+                            result = {'result': 'failure', 'reason': 'something wrong happened', 'failedvms': []}
+                    else:
+                        result = currentconfig.plan(plan, inputfile=inputfile, overrides=overrides)
                 except Exception as e:
                     error = f'Hit issue when running plan: {str(e)}'
                     return render_template('error.html', plan=plan, error=error)
