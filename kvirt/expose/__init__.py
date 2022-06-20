@@ -1,7 +1,7 @@
 from subprocess import call
 from flask import Flask
 from flask import render_template, request, jsonify
-from glob import glob
+from glob import glob, iglob
 from kvirt.common import get_overrides, pprint
 import os
 import re
@@ -30,15 +30,36 @@ class Kexposer():
     def refresh_plans_cnfhack(self, verbose=False):
         plans = []
         owners = {}
-        dirs = [os.path.basename(d.path) for d in os.scandir(f'{self.basedir}/../param_files') if d.is_dir() and
-                os.path.basename(d.path).startswith('cnf') and not
-                os.path.basename(d.path).endswith('_hv')]
+        dirs = [os.path.basename(d) for d in iglob(f'{self.basedir}/../param_files/*/*') if os.path.isdir(d) and
+                os.path.basename(d).startswith('cnf') and
+                not os.path.basename(d).endswith('_hv')]
         for plan in dirs:
             if verbose:
                 pprint(f"Adding plan {plan}")
             plans.append(plan)
         self.plans = sorted(plans) if plans else [self.plan]
         self.owners = owners
+
+    def get_client(self, plan, currentconfig, overrides={}):
+        if self.cnfhack:
+            self.get_client_cnfhack(plan, currentconfig)
+            return
+        matching = glob(f"{self.basedir}/**/parameters_{plan}.y*ml", recursive=True)
+        if matching:
+            paramfile = matching[0]
+            fileoverrides = get_overrides(paramfile=paramfile)
+            if 'client' in fileoverrides:
+                client = fileoverrides['client']
+                currentconfig.__init__(client=client)
+                if overrides:
+                    fileoverrides.update(overrides)
+                    overrides = fileoverrides
+
+    def get_client_cnfhack(self, plan, currentconfig):
+        matching = glob(f"{self.basedir}/../param_files/*/{plan}")
+        if matching:
+            client = os.path.dirname(matching[0].replace(f"{self.basedir}/../param_files/", ''))
+            currentconfig.__init__(client=client)
 
     def __init__(self, config, plan, inputfile, overrides={}, port=9000, customcmd=None, cnfhack=False):
         app = Flask(__name__)
@@ -64,13 +85,7 @@ class Kexposer():
                 plan = request.form['plan']
                 if plan not in self.plans:
                     return f'Invalid plan name {plan}'
-                matching = glob(f"{self.basedir}/**/parameters_{plan}.y*ml", recursive=True)
-                if matching:
-                    paramfile = matching[0]
-                    fileoverrides = get_overrides(paramfile=paramfile)
-                    if 'client' in fileoverrides:
-                        client = fileoverrides['client']
-                        currentconfig.__init__(client=client)
+                self.get_client(plan, currentconfig)
                 result = currentconfig.delete_plan(plan)
                 response = jsonify(result)
                 response.status_code = 200
@@ -102,15 +117,7 @@ class Kexposer():
                         parameters[key] = value
                 try:
                     overrides = parameters
-                    matching = glob(f"{self.basedir}/**/parameters_{plan}.y*ml", recursive=True)
-                    if matching:
-                        paramfile = matching[0]
-                        fileoverrides = get_overrides(paramfile=paramfile)
-                        if 'client' in fileoverrides:
-                            client = fileoverrides['client']
-                            currentconfig.__init__(client=client)
-                        fileoverrides.update(overrides)
-                        overrides = fileoverrides
+                    self.get_client(plan, currentconfig, overrides=overrides)
                     if 'mail' in currentconfig.notifymethods and 'mail_to' in overrides and overrides['mail_to'] != "":
                         newmails = overrides['mail_to'].split(',')
                         if currentconfig.mailto:
@@ -155,16 +162,9 @@ class Kexposer():
             info plan
             """
             currentconfig = self.config
-            client = currentconfig.client
             if plan not in self.plans:
                 return f'Invalid plan name {plan}'
-            matching = glob(f"{self.basedir}/**/parameters_{plan}.y*ml", recursive=True)
-            if matching:
-                paramfile = matching[0]
-                fileoverrides = get_overrides(paramfile=paramfile)
-                if 'client' in fileoverrides:
-                    client = fileoverrides['client']
-                    currentconfig.__init__(client=client)
+            self.get_client(plan, currentconfig)
             vms = currentconfig.info_specific_plan(plan)
             creationdate = ''
             owner = self.owners[plan] if plan in self.owners else ''
@@ -172,8 +172,8 @@ class Kexposer():
                 creationdate = vms[0].get('creationdate', creationdate)
                 if 'owner' in vms[0]:
                     owner = vms[0]['owner']
-            return render_template('infoplan.html', vms=vms, plan=plan, client=client, creationdate=creationdate,
-                                   owner=owner)
+            return render_template('infoplan.html', vms=vms, plan=plan, client=currentconfig.client,
+                                   creationdate=creationdate, owner=owner)
 
         self.app = app
         self.config = config
