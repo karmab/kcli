@@ -1553,12 +1553,13 @@ class Kconfig(Kbaseconfig):
             else:
                 warning(f"Skipping {pre_script_short} as requested")
         keywords = self.list_keywords()
-        for key in overrides:
+        for key in sorted(overrides):
             if key in keywords:
                 key_value = getattr(self, key)
                 key_type = type(key_value)
-                if key_value is not None and key_type != type(overrides[key]):
-                    error(f"The provided parameter {key} has a wrong type, it should be {key_type}")
+                override_key_type = type(overrides[key])
+                if key_value is not None and overrides[key] is not None and key_type != override_key_type:
+                    error(f"The provided parameter {key} has a wrong type {override_key_type}, it should be {key_type}")
                     sys.exit(1)
                 setattr(self, key, overrides[key])
         vmentries = [entry for entry in entries if 'type' not in entries[entry] or entries[entry]['type'] == 'vm']
