@@ -2159,7 +2159,8 @@ def expose_plan(args):
         inputfile = "/workdir/%s" % inputfile
     overrides = common.get_overrides(param=args.param)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.expose_plan(plan, inputfile=inputfile, overrides=overrides, port=port, custom=args.custom)
+    config.expose_plan(plan, inputfile=inputfile, overrides=overrides, port=port, customcmd=args.customcmd,
+                       cnfhack=args.cnfhack)
     return 0
 
 
@@ -4442,7 +4443,8 @@ def cli():
     planexpose_desc = 'Expose plan'
     planexpose_epilog = None
     planexpose_parser = argparse.ArgumentParser(add_help=False)
-    planexpose_parser.add_argument('-c', '--custom', help='Custom command to run when creating plan')
+    planexpose_parser.add_argument('-c', '--customcmd', help='Custom command to run when creating plan')
+    planexpose_parser.add_argument('--cnfhack', action='store_true', help='specific Cnf Hack')
     planexpose_parser.add_argument('-f', '--inputfile', help='Input Plan file')
     planexpose_parser.add_argument('-P', '--param', action='append',
                                    help='Define parameter for rendering (can specify multiple)', metavar='PARAM')

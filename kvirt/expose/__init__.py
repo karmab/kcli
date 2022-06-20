@@ -10,6 +10,9 @@ import re
 class Kexposer():
 
     def refresh_plans(self, verbose=False):
+        if self.cnfhack:
+            self.refresh_plans_cnfhack(verbose=verbose)
+            return
         plans = []
         owners = {}
         for paramfile in glob(f"{self.basedir}/**/parameters_*.y*ml", recursive=True):
@@ -21,15 +24,30 @@ class Kexposer():
             fileoverrides = get_overrides(paramfile=paramfile)
             if 'owner' in fileoverrides:
                 owners[plan] = fileoverrides['owner']
-        self.plans = sorted(plans) if plans else [plan]
+        self.plans = sorted(plans) if plans else [self.plan]
         self.owners = owners
 
-    def __init__(self, config, plan, inputfile, overrides={}, port=9000, custom=None):
+    def refresh_plans_cnfhack(self, verbose=False):
+        plans = []
+        owners = {}
+        dirs = [os.path.basename(d.path) for d in os.scandir(f'{self.basedir}/../param_files') if d.is_dir() and
+                os.path.basename(d.path).startswith('cnf') and not
+                os.path.basename(d.path).endswith('_hv')]
+        for plan in dirs:
+            if verbose:
+                pprint(f"Adding plan {plan}")
+            plans.append(plan)
+        self.plans = sorted(plans) if plans else [self.plan]
+        self.owners = owners
+
+    def __init__(self, config, plan, inputfile, overrides={}, port=9000, customcmd=None, cnfhack=False):
         app = Flask(__name__)
         self.basedir = os.path.dirname(inputfile) if '/' in inputfile else '.'
+        self.plan = plan
         self.overrides = overrides
+        self.cnfhack = cnfhack
+        self.customcmd = customcmd
         self.refresh_plans(verbose=True)
-        self.custom = custom
 
         @app.route('/')
         def index():
@@ -102,9 +120,9 @@ class Kexposer():
                     if 'owner' in overrides and overrides['owner'] == '':
                         del overrides['owner']
                     currentconfig.delete_plan(plan)
-                    if self.custom is not None:
-                        print(f'{self.custom} {plan} {inputfile} "{overrides}"')
-                        run = call(f'{self.custom} {plan} {inputfile} "{overrides}"', shell=True)
+                    if self.customcmd is not None:
+                        print(f'{self.customcmd} {plan} {inputfile} "{overrides}"')
+                        run = call(f'{self.customcmd} {plan} {inputfile} "{overrides}"', shell=True)
                         if run == 0:
                             result = {'result': 'success'}
                         else:
