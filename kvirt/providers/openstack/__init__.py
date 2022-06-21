@@ -354,7 +354,7 @@ class Kopenstack(object):
             except:
                 error("VM %s not found" % name)
                 return {}
-        yamlinfo = {'name': vm.name, 'status': vm.status, 'project': self.project}
+        yamlinfo = {'name': vm.name, 'status': vm.status, 'project': self.project, 'id': vm.id}
         if vm.status.lower() == 'error':
             try:
                 yamlinfo['error'] = vm.fault['message']
@@ -413,17 +413,19 @@ class Kopenstack(object):
         return None
 
     def volumes(self, iso=False):
-        glanceimages = []
+        images = []
         isos = []
         glance = self.glance
         for img in glance.images.list():
             imagename = img.name
             if imagename.endswith('.iso'):
                 isos.append(imagename)
-            glanceimages.append(imagename)
-        if isos:
+            else:
+                images.append(imagename)
+        if iso:
             return sorted(isos)
-        return sorted(glanceimages)
+        else:
+            return sorted(images)
 
     def delete(self, name, snapshots=False):
         cinder = self.cinder
