@@ -2027,15 +2027,7 @@ def create_plan(args):
     post = not args.skippost
     paramfiles = args.paramfile if args.paramfile is not None else []
     threaded = args.threaded
-    overrides = {}
-    for paramfile in paramfiles:
-        overrides.update(common.get_overrides(paramfile=paramfile))
-    overrides.update(common.get_overrides(param=args.param))
-    inputfile = overrides.get('inputfile', args.inputfile)
-    if inputfile is None:
-        inputfile = 'kcli_plan.yml'
     if container_mode():
-        inputfile = f"/workdir/{inputfile}"
         if paramfiles:
             paramfiles = [f"/workdir/{paramfile}" for paramfile in paramfiles]
         elif os.path.exists("/workdir/kcli_parameters.yml"):
@@ -2044,6 +2036,13 @@ def create_plan(args):
     elif not paramfiles and os.path.exists("kcli_parameters.yml"):
         paramfiles = ["kcli_parameters.yml"]
         pprint("Using default parameter file kcli_parameters.yml")
+    overrides = {}
+    for paramfile in paramfiles:
+        overrides.update(common.get_overrides(paramfile=paramfile))
+    overrides.update(common.get_overrides(param=args.param))
+    inputfile = overrides.get('inputfile') or args.inputfile or 'kcli_plan.yml'
+    if container_mode():
+        inputfile = f"/workdir/{inputfile}"
     if 'minimum_version' in overrides:
         minimum_version = overrides['minimum_version']
         current_version = get_git_version()[0]
@@ -2543,11 +2542,9 @@ def create_pipeline_tekton(args):
 def render_file(args):
     """Render file"""
     plan = None
-    inputfile = args.inputfile
-    paramfiles = args.paramfile if args.paramfile is not None else []
     ignore = args.ignore
+    paramfiles = args.paramfile if args.paramfile is not None else []
     if container_mode():
-        inputfile = f"/workdir/{inputfile}" if inputfile is not None else "/workdir/kcli_plan.yml"
         if paramfiles:
             paramfiles = [f"/workdir/{paramfile}" for paramfile in paramfiles]
         elif os.path.exists("/workdir/kcli_parameters.yml"):
@@ -2560,6 +2557,9 @@ def render_file(args):
     for paramfile in allparamfiles:
         overrides.update(common.get_overrides(paramfile=paramfile))
     overrides.update(common.get_overrides(param=args.param))
+    inputfile = overrides.get('inputfile') or args.inputfile or 'kcli_plan.yml'
+    if container_mode():
+        inputfile = f"/workdir/{inputfile}"
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     default_data = {'config_%s' % k: baseconfig.default[k] for k in baseconfig.default}
     client_data = {'config_%s' % k: baseconfig.ini[baseconfig.client][k] for k in baseconfig.ini[baseconfig.client]}
@@ -2595,12 +2595,10 @@ def create_vmdata(args):
 def create_plandata(args):
     """Create cloudinit/ignition data"""
     plan = None
-    inputfile = args.inputfile
     pre = not args.skippre
     outputdir = args.outputdir
     paramfiles = args.paramfile if args.paramfile is not None else []
     if container_mode():
-        inputfile = f"/workdir/{inputfile}"
         if paramfiles:
             paramfiles = [f"/workdir/{paramfile}" for paramfile in paramfiles]
         elif os.path.exists("/workdir/kcli_parameters.yml"):
@@ -2611,6 +2609,9 @@ def create_plandata(args):
     for paramfile in paramfiles:
         overrides.update(common.get_overrides(paramfile=paramfile))
     overrides.update(common.get_overrides(param=args.param))
+    inputfile = overrides.get('inputfile') or args.inputfile or 'kcli_plan.yml'
+    if container_mode():
+        inputfile = f"/workdir/{inputfile}"
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                      namespace=args.namespace)
     config_data = {'config_%s' % k: config.ini[config.client][k] for k in config.ini[config.client]}
