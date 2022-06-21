@@ -603,7 +603,7 @@ class Kopenstack(object):
     def create_disk(self, name, size, pool=None, thin=True, image=None):
         glance = self.glance
         cinder = self.cinder
-        image = None
+        glanceimage = None
         if image is not None:
             glanceimages = [img for img in glance.images.list() if img.name == image]
             if glanceimages:
@@ -624,6 +624,7 @@ class Kopenstack(object):
         except:
             error("VM %s not found" % name)
             return {'result': 'failure', 'reason': "VM %s not found" % name}
+        glanceimage = None
         if image is not None:
             glanceimages = [img for img in glance.images.list() if img.name == image]
             if glanceimages:
@@ -631,8 +632,11 @@ class Kopenstack(object):
             else:
                 msg = "you don't have image %s" % image
                 return {'result': 'failure', 'reason': msg}
-        volume = cinder.volumes.create(name=name, size=size, imageRef=glanceimage)
-        cinder.volumes.attach(volume, vm.id, '/dev/vdi', mode='rw')
+        index = len(vm._info.get('os-extended-volumes:volumes_attached', []))
+        diskname = f"{name}-disk{index}"
+        letter = chr(index + ord('a'))
+        volume = cinder.volumes.create(name=diskname, size=size, imageRef=glanceimage)
+        cinder.volumes.attach(volume, vm.id, f'/dev/vd{letter}', mode='rw')
         return {'result': 'success'}
 
     def delete_disk(self, name=None, diskname=None, pool=None, novm=False):
