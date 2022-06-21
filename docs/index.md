@@ -309,9 +309,9 @@ If accessing behind a proxy, be sure to set *HTTPS_PROXY* environment variable t
 
 To use this provider with kcli rpm, you'll need to install (from pip):
 
-- *google-api-python-client*
-- *google-auth-httplib2*
-- *google-cloud-dns*
+```
+pip3 install google-api-python-client google-auth-httplib2 google-cloud-dns
+```
 
 ## Aws
 
@@ -332,7 +332,11 @@ The following parameters are specific to aws:
 - keypair 
 - session_token
 
-To use this provider with kcli rpm, you'll need to install *python3-boto3* rpm
+To use this provider with kcli rpm, you'll need to install 
+
+```
+dnf -y install python3-boto3
+```
 
 ## Kubevirt
 
@@ -395,7 +399,11 @@ oc whoami -t
 
 *kubectl* is currently a hard requirement for consoles
 
-To use this provider with kcli rpm, you'll need to install *python3-kubernetes* rpm
+To use this provider with kcli rpm, you'll need to install 
+
+```
+dnf -y install python3-kubernetes
+```
 
 ## Ovirt
 
@@ -427,8 +435,10 @@ Note that pool in Ovirt context refers to storage domain.
 
 To use this provider with kcli rpm, you'll need to install
 
-- http://resources.ovirt.org/pub/yum-repo/ovirt-release-master.rpm
-- python3-ovirt-engine-sdk4
+```
+dnf -y install http://resources.ovirt.org/pub/yum-repo/ovirt-release-master.rpm
+dnf -y install python3-ovirt-engine-sdk4
+```
 
 ### Deploying Ovirt dependencies with pip
 
@@ -473,12 +483,10 @@ The following parameters are specific to openstack:
 
 To use this provider with kcli rpm, you'll need to install the following rpms 
 
-- *python3-keystoneclient*
-- *python3-glanceclient*
-- *python3-cinderclient*
-- *python3-neutronclient*
-- *python3-novaclient*
-- *python3-swiftclient*
+```
+grep -q 'Red Hat' /etc/redhat-release && subscription-manager repos --enable openstack-16-tools-for-rhel-8-x86_64-rpms
+dnf -y install python3-keystoneclient python3-glanceclient python3-cinderclient python3-neutronclient python3-novaclient python3-swiftclient
+```
 
 ## Vsphere
 
@@ -507,7 +515,11 @@ The following parameters are specific to vsphere:
 
 Note that pool in Vsphere context refers to datastore.
 
-To use this provider with kcli rpm, you'll need to install *python3-pyvmomi*, *python3-cryptography* and *python3-requests*
+To use this provider with kcli rpm, you'll need to install
+
+```
+dnf -y install python3-pyvmomi python3-cryptography python3-requests
+```
 
 ### Using hostgroups and vm-host rules
 
@@ -547,7 +559,11 @@ The following parameters are specific to packet:
 - tunnelhost. Optional. When creating vms using ignition, the generated ignition file will be copied to the tunnelhost so it can be served (typically via web)
 - tunneldir. Where to copy the ignition files when using a tunnelhost. Defaults to */var/www/html*
 
-To use this provider with kcli rpm, you'll need to install packet-python from pip.
+To use this provider with kcli rpm, you'll need to install packet-python (from pip):
+
+```
+pip3 install packet-python
+```
 
 ## IBM Cloud
 
@@ -570,13 +586,13 @@ The following parameters are specific to ibm cloud:
 - cos_resource_instance_id. Optional Cloud object storage resource_instance_id (something like "crn:v1:bluemix:public:cloud-object-storage:global:a/yyy:xxxx::"). Alternatively you can provide the resource name
 - cos_resource_instance_id. Optional Cis resource_instance_id used for DNS. Alternatively, you can provide the resource name
 
-To use this provider with kcli rpm, you'll need to install the following packets from pip:
+To use this provider with kcli rpm, you'll need to install the following packets (from pip):
 
-- ibm_vpc
-- ibm-cos-sdk
-- ibm-platform-services
-- ibm-cloud-networking-services
-- cos-aspera (optional)
+```
+pip3 install ibm_vpc ibm-cos-sdk ibm-platform-services ibm-cloud-networking-services
+# optionally
+pip install cos-aspera
+```
 
 # Usage
 
