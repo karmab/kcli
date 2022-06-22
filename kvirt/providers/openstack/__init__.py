@@ -649,6 +649,8 @@ class Kopenstack(object):
             else:
                 msg = "Disk %s not found" % diskname
                 return {'result': 'failure', 'reason': msg}
+            if volume.attachments:
+                volume.detach()
             cinder.volumes.delete(volume.id)
             return {'result': 'success'}
         try:
