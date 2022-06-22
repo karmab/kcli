@@ -1210,9 +1210,9 @@ Exposing a plan
 Basic functionality
 ~~~~~~~~~~~~~~~~~~~
 
-You can expose through web a single plan with ``kcli expose`` so that others can make use of some infrastructure you own without having to deal with kcli themseleves.
+You can expose a given plan in a web fashion with ``kcli expose`` so that others can make use of some infrastructure you own without having to deal with kcli themseleves.
 
-The user will be presented with a simple UI with a listing of the current vms of the plan and buttons allowing to either delete the plan or reprovision it.
+The user will be presented with a simple UI with a listing of the current vms of the plan and buttons allowing to either get info on the plan, delete or reprovision it.
 
 To expose your plan (with an optional list of parameters):
 
@@ -1220,7 +1220,7 @@ To expose your plan (with an optional list of parameters):
 
    kcli expose plan -f your_plan.yml -P param1=value1 -P param2=value plan_name
 
-The indicated parameters are the ones from the plan that you want to expose to the user upon provisioning, with their corresponding default value.
+The indicated parameters are the ones from the plan that you want to expose to the user upon provisioning, with a provided default value that they’ll be able to overwrite.
 
 When the user reprovisions, In addition to those parameters, he will be able to specify:
 
@@ -1230,13 +1230,12 @@ When the user reprovisions, In addition to those parameters, he will be able to 
 Precreating a list of plans
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you’re running the same plan with different parameter files, you can simply create them in the directory where your plan lives, naming them parameters_XXX.yml (or .yaml). The UI will then show you those as separated plans so that they can be provisioned individually applying the corresponding values from the parameter files (after merging them with the user provided data).
+If you’re running the same plan with different parameter files, you can simply create below the directory where your plan lives, naming them parameters_XXX.yml|yaml. The UI will then show you those as separated plans so that they can be provisioned individually applying the corresponding values from the parameter files (after merging them with the user provided data).
 
 Using several clients
 ~~~~~~~~~~~~~~~~~~~~~
 
-You can have the expose feature handling several clients at once. For this, launch the expose command with the flag -C to indicate several clients ( for instance *-C twix,bumblefoot*) and put your parameter files under a dedicated directory matching the client name. The code will then select the proper client for create/delete operations and report the vms belonging to those plans from the
-different clients declared.
+When specifying different parameter files, you can include the ``client`` keyword to target a given client The code will then select the proper client for create/delete/info operations.
 
 Using expose feature from a web server
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1274,16 +1273,11 @@ For instance, you could create the following kcli.conf in apache
    inputfile = '/var/www/myplans/plan1.yml'
    overrides = {'param1': 'jimi_hendrix', 'param2': False}
    config = Kconfig()
-   extraconfigs = {}
-   for extraclient in config.extraclients:
-       extraconfigs[extraclient] = Kconfig(client=extraclient)
-   kexposer = Kexposer(config, 'myplan', inputfile, overrides=overrides, extraconfigs=extraconfigs)
+   kexposer = Kexposer(config, 'myplan', inputfile, overrides=overrides)
    application = kexposer.app
    application.secret_key = ‘XXX’
 
-Note that further configuration will tipically be needed for apache user so that kcli can be used with it
-
-In the example invocation, the directive ``config = KConfig()`` can be changed to ``config = Kconfig('client1,client2')`` to handle several clients at once
+Note that further configuration will tipically be needed for apache user so that kcli can be used with it.
 
 An alternative is to create different WSGI applications and tweak the *WSGIScriptAlias* to serve them from different paths.
 
