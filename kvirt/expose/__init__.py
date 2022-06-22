@@ -58,8 +58,10 @@ class Kexposer():
     def get_client_cnfhack(self, plan, currentconfig):
         matching = glob(f"{self.basedir}/../param_files/*/{plan}")
         if matching:
-            client = os.path.dirname(matching[0].replace(f"{self.basedir}/../param_files/", ''))
-            currentconfig.__init__(client=client)
+            secondmatching = glob(f"{os.path.dirname(matching[0])}/*_hv")
+            if secondmatching:
+                client = os.path.basename(secondmatching[0]).replace('_hv', '')
+                currentconfig.__init__(client=client)
 
     def __init__(self, config, plan, inputfile, overrides={}, port=9000, customcmd=None, cnfhack=False):
         app = Flask(__name__)
