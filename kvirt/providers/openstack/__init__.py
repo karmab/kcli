@@ -141,7 +141,14 @@ class Kopenstack(object):
                     imageref = glanceimage.id
                     glanceimage = None
             newvol = self.cinder.volumes.create(name=diskname, size=disksize, imageRef=imageref)
-            if index == 0:
+            while True:
+                newvolstatus = self.cinder.volumes.get(newvol.id).status
+                if newvolstatus == 'available':
+                    break
+                else:
+                    pprint("Waiting 10s for Disk {diskname} to be available")
+                    sleep(10)
+            if index == 0 or (iso is not None and index == 1):
                 self.cinder.volumes.set_bootable(newvol.id, True)
             block_dev_mapping[f'vd{letter}'] = newvol.id
         key_name = 'kvirt'
