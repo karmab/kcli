@@ -404,7 +404,9 @@ class Kopenstack(object):
             volume = cinder.volumes.get(diskid)
             disksize = volume.size
             devname = volume.name
-            disks.append({'device': devname, 'size': disksize, 'format': '', 'type': '', 'path': diskid})
+            _type = volume.volume_type
+            _format = volume.availability_zone
+            disks.append({'device': devname, 'size': disksize, 'format': _format, 'type': _type, 'path': diskid})
         if disks:
             yamlinfo['disks'] = disks
         metadata = vm.metadata
