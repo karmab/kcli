@@ -146,7 +146,7 @@ class Kopenstack(object):
                 if newvolstatus == 'available':
                     break
                 else:
-                    pprint("Waiting 10s for Disk {diskname} to be available")
+                    pprint(f"Waiting 10s for Disk {diskname} to be available")
                     sleep(10)
             if index == 0 or (iso is not None and index == 1):
                 self.cinder.volumes.set_bootable(newvol.id, True)
