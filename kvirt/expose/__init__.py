@@ -42,7 +42,7 @@ class Kexposer():
 
     def get_client(self, plan, currentconfig, overrides={}):
         if self.cnfhack:
-            self.get_client_cnfhack(plan, currentconfig)
+            self.get_client_cnfhack(plan, currentconfig, overrides)
             return
         matching = glob(f"{self.basedir}/**/parameters_{plan}.y*ml", recursive=True)
         if matching:
@@ -54,14 +54,16 @@ class Kexposer():
                 if overrides:
                     fileoverrides.update(overrides)
                     overrides = fileoverrides
+        return overrides
 
-    def get_client_cnfhack(self, plan, currentconfig):
+    def get_client_cnfhack(self, plan, currentconfig, overrides={}):
         matching = glob(f"{self.basedir}/../param_files/*/{plan}")
         if matching:
             secondmatching = glob(f"{os.path.dirname(matching[0])}/*_hv")
             if secondmatching:
                 client = os.path.basename(secondmatching[0]).replace('_hv', '')
                 currentconfig.__init__(client=client)
+        return overrides
 
     def __init__(self, config, plan, inputfile, overrides={}, port=9000, customcmd=None, cnfhack=False):
         app = Flask(__name__)
@@ -118,8 +120,7 @@ class Kexposer():
                         key = p.replace('parameter_', '')
                         parameters[key] = value
                 try:
-                    overrides = parameters
-                    self.get_client(plan, currentconfig, overrides=overrides)
+                    overrides = self.get_client(plan, currentconfig, overrides=parameters)
                     if 'mail' in currentconfig.notifymethods and 'mail_to' in overrides and overrides['mail_to'] != "":
                         newmails = overrides['mail_to'].split(',')
                         if currentconfig.mailto:
