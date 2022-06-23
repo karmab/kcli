@@ -26,7 +26,8 @@ class Kopenstack(object):
 
     """
     def __init__(self, host='127.0.0.1', version='3', port=None, user='root', password=None, debug=False, project=None,
-                 domain='Default', auth_url=None, ca_file=None, external_network=None, region_name=None):
+                 domain='Default', auth_url=None, ca_file=None, external_network=None, region_name=None,
+                 glance_disk=False):
         self.debug = debug
         self.host = host
         loader = loading.get_plugin_loader('password')
@@ -47,6 +48,7 @@ class Kopenstack(object):
         self.project = project
         self.external_network = external_network
         self.region_name = region_name
+        self.glance_disk = glance_disk
         return
 
 # should cleanly close your connection, if needed
@@ -110,7 +112,7 @@ class Kopenstack(object):
                 error(e)
                 return {'result': 'failure', 'reason': "Network %s not found" % netname}
             nics.append({'net-id': net.id})
-        target = iso if iso is not None else image
+        target = iso or image
         if target is not None:
             glanceimages = [img for img in glance.images.list() if img.name == target]
             if glanceimages:
@@ -121,33 +123,38 @@ class Kopenstack(object):
         else:
             msg = "a bootable disk is needed"
             return {'result': 'failure', 'reason': msg}
-        if iso is not None:
-            disks.insert(0, 10)
         block_dev_mapping = {}
         for index, disk in enumerate(disks):
-            diskname = "%s-disk%s" % (name, index)
+            diskname = f"{name}-disk{index}"
             letter = chr(index + ord('a'))
             if isinstance(disk, int):
                 disksize = disk
-                diskthin = True
+                # diskthin = True
             elif isinstance(disk, str) and disk.isdigit():
                 disksize = int(disk)
-                diskthin = True
+                # diskthin = True
             elif isinstance(disk, dict):
                 disksize = disk.get('size', '10')
-                diskthin = disk.get('thin', True)
-            if index > 0 or not diskthin:
-                imageref = glanceimage.id if index == 0 and glanceimage is not None else None
-                newvol = self.cinder.volumes.create(name=diskname, size=disksize, imageRef=imageref)
-                if not diskthin:
-                    while True:
-                        newvolstatus = self.cinder.volumes.get(newvol.id).status
-                        if newvolstatus == 'available':
-                            break
-                        else:
-                            pprint("Waiting 10s for image disk to be available")
-                            sleep(10)
-                block_dev_mapping['vd%s' % letter] = newvol.id
+                # diskthin = disk.get('thin', True)
+            imageref = None
+            if index == 0:
+                if self.glance_disk:
+                    continue
+                else:
+                    imageref = glanceimage.id
+                    glanceimage = None
+            newvol = self.cinder.volumes.create(name=diskname, size=disksize, imageRef=imageref)
+            if index == 0:
+                self.cinder.volumes.set_bootable(newvol.id, True)
+            # if not diskthin:
+            #     while True:
+            #         newvolstatus = self.cinder.volumes.get(newvol.id).status
+            #         if newvolstatus == 'available':
+            #             break
+            #         else:
+            #             pprint("Waiting 10s for image disk to be available")
+            #             sleep(10)
+            block_dev_mapping['vd%s' % letter] = newvol.id
         key_name = 'kvirt'
         keypairs = [k.name for k in nova.keypairs.list()]
         if key_name not in keypairs:

@@ -327,10 +327,11 @@ class Kconfig(Kbaseconfig):
                 if ca_file is not None and not os.path.exists(os.path.expanduser(ca_file)):
                     error(f"Indicated ca_file {ca_file} not found. Leaving")
                     sys.exit(1)
+                glance_disk = self.options.get('glance_disk', False)
                 from kvirt.providers.openstack import Kopenstack
                 k = Kopenstack(host=self.host, port=self.port, user=user, password=password, version=version,
                                debug=debug, project=project, domain=domain, auth_url=auth_url, ca_file=ca_file,
-                               external_network=external_network, region_name=region_name)
+                               external_network=external_network, region_name=region_name, glance_disk=glance_disk)
             elif self.type == 'vsphere':
                 user = self.options.get('user')
                 if user is None:

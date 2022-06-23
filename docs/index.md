@@ -480,6 +480,7 @@ The following parameters are specific to openstack:
 - ca_file (Optional)
 - external_network (Optional). Indicates which network use for floating ips (useful when you have several ones)
 - region_name (Optional). Used in OVH Openstack
+- glance_disk (Optional). Prevents creating a disk from glance image. Defaults to false
 
 To use this provider with kcli rpm, you'll need to install the following rpms 
 
