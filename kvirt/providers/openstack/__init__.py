@@ -371,7 +371,7 @@ class Kopenstack(object):
                 source = self.glance.images.get(vm.image['id']).name
             except:
                 pass
-        yamlinfo['image'] = source
+        yamlinfo['iso' if source.endswith('.iso') else 'image'] = source
         yamlinfo['creationdate'] = vm.created
         yamlinfo['user'] = common.get_user(source)
         flavor = nova.flavors.get(vm.flavor['id'])
@@ -402,6 +402,10 @@ class Kopenstack(object):
             devname = volume.name
             _type = volume.volume_type
             _format = volume.availability_zone
+            volinfo = volume.to_dict()
+            if 'volume_image_metadata' in volinfo and 'image_name' in volinfo['volume_image_metadata']:
+                source = volinfo['volume_image_metadata']['image_name']
+                yamlinfo['iso' if source.endswith('.iso') else 'image'] = source
             disks.append({'device': devname, 'size': disksize, 'format': _format, 'type': _type, 'path': diskid})
         if disks:
             yamlinfo['disks'] = disks
