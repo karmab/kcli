@@ -121,8 +121,8 @@ class Kopenstack(object):
             if len(disks) == 0:
                 return {'result': 'failure', 'reason': "Booting from iso requires to specify at least one extra disk"}
             else:
-                warning("Adding primary disk for booting from iso")
-                disks.insert(0, 10)
+                warning("Adding additional disk for booting from iso")
+                disks.append(10)
         if target is not None:
             glanceimages = [img for img in glance.images.list() if img.name == target]
             if glanceimages:
