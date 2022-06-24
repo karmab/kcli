@@ -117,6 +117,8 @@ class Kopenstack(object):
                 return {'result': 'failure', 'reason': f"Network {netname} not found"}
             nics.append({'net-id': net.id})
         target = iso or image
+        if iso is not None and not self.glance_disk and len(disks) in [0, 1]:
+            return {'result': 'failure', 'reason': "Booting from iso requires to specify at least one extra disk"}
         if target is not None:
             glanceimages = [img for img in glance.images.list() if img.name == target]
             if glanceimages:
@@ -127,7 +129,7 @@ class Kopenstack(object):
         else:
             msg = "a bootable disk is needed"
             return {'result': 'failure', 'reason': msg}
-        os_index = 1 if disks and iso is not None else 0
+        os_index = len(disks) - 1 if disks and iso is not None else 0
         block_device_mapping_v2 = []
         for index, disk in enumerate(disks):
             if index == os_index and self.glance_disk:
@@ -165,6 +167,7 @@ class Kopenstack(object):
                 block_device_mapping['boot_index'] = 0
             if iso is not None and index == os_index:
                 block_device_mapping['device_type'] = 'cdrom'
+                del block_device_mapping['disk_bus']
                 block_device_mapping['boot_index'] = 1
             block_device_mapping_v2.append(block_device_mapping)
         key_name = 'kvirt'
