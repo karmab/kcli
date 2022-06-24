@@ -721,19 +721,25 @@ class Kopenstack(object):
         return {'result': 'failure', 'reason': f"Image {image} not found"}
 
     def add_image(self, url, pool, short=None, cmd=None, name=None, size=None):
+        downloaded = False
         shortimage = os.path.basename(url).split('?')[0]
         if name is not None and name.endswith('iso'):
             shortimage = name
         if [i for i in self.glance.images.list() if i['name'] == shortimage]:
+            pprint(f"Image {shortimage} already there")
             return {'result': 'success'}
-        if not os.path.exists(f'/tmp/{shortimage}'):
+        if os.path.exists(url):
+            pprint(f"Using {url} as path")
+        elif not os.path.exists(f'/tmp/{shortimage}'):
+            downloaded = True
             downloadcmd = f"curl -Lo /tmp/{shortimage} -f '{url}'"
             code = os.system(downloadcmd)
             if code != 0:
                 return {'result': 'failure', 'reason': "Unable to download indicated image"}
+        image_path = os.path.abspath(url) if os.path.exists(url) else f'/tmp/{shortimage}'
         if shortimage.endswith('gz'):
             if which('gunzip') is not None:
-                uncompresscmd = f"gunzip /tmp/{shortimage}"
+                uncompresscmd = f"gunzip {image_path}"
                 os.system(uncompresscmd)
             else:
                 error("gunzip not found. Can't uncompress image")
@@ -741,8 +747,9 @@ class Kopenstack(object):
             shortimage = shortimage.replace('.gz', '')
         disk_format = 'iso' if shortimage.endswith('iso') else 'qcow2'
         glanceimage = self.glance.images.create(name=shortimage, disk_format=disk_format, container_format='bare')
-        self.glance.images.upload(glanceimage.id, open(f'/tmp/{shortimage}', 'rb'))
-        os.remove(f'/tmp/{shortimage}')
+        self.glance.images.upload(glanceimage.id, open(image_path, 'rb'))
+        if downloaded:
+            os.remove(f'/tmp/{shortimage}')
         return {'result': 'success'}
 
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):

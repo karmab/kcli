@@ -1071,6 +1071,7 @@ class Ksphere:
         return []
 
     def add_image(self, url, pool, short=None, cmd=None, name=None, size=None):
+        downloaded = False
         si = self.si
         rootFolder = self.rootFolder
         clu = find(si, rootFolder, vim.ComputeResource, self.clu)
@@ -1093,6 +1094,7 @@ class Ksphere:
         if os.path.exists(url):
             pprint(f"Using {url} as path")
         elif not os.path.exists(f'/tmp/{shortimage}'):
+            downloaded = True
             pprint(f"Downloading locally {shortimage}")
             downloadcmd = f"curl -Lo /tmp/{shortimage} -f '{url}'"
             code = os.system(downloadcmd)
@@ -1182,6 +1184,8 @@ class Ksphere:
                 error(f"Lease error: {lease.error}")
                 sys.exit(1)
         self.convert_to_template(name)
+        if downloaded:
+            os.remove(f'/tmp/{shortimage}')
         return {'result': 'success'}
 
     def _getfirshost(self):

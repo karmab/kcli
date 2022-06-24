@@ -980,6 +980,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         return {'result': 'failure', 'reason': f"Image {image} not found"}
 
     def add_image(self, url, pool, short=None, cmd=None, name=None, size=None):
+        downloaded = False
         shortimage = os.path.basename(url).split('?')[0]
         iso = True if shortimage.endswith('.iso') or name.endswith('.iso') else False
         if shortimage in self.volumes(iso=iso):
@@ -1011,6 +1012,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             if os.path.exists(url):
                 pprint(f"Using {url} as path")
             elif not os.path.exists(f'/tmp/{shortimage}'):
+                downloaded = True
                 pprint(f"Downloading locally {shortimage}")
                 downloadcmd = f"curl -Lo /tmp/{shortimage} -f '{url}'"
                 code = os.system(downloadcmd)
@@ -1137,7 +1139,8 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         tempvminfo = tempvmsearch[0]
         tempvm = self.vms_service.vm_service(tempvminfo.id)
         tempvm.remove()
-        os.remove(f'/tmp/{shortimage}')
+        if downloaded:
+            os.remove(f'/tmp/{shortimage}')
         return {'result': 'success'}
 
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
