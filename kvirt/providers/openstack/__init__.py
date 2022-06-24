@@ -160,7 +160,8 @@ class Kopenstack(object):
                 if newvolstatus == 'available':
                     break
                 elif newvolstatus == 'error':
-                    return(f"Hit error when waiting for Disk {diskname} to be available")
+                    msg = f"Hit error when waiting for Disk {diskname} to be available"
+                    return {'result': 'failure', 'reason': msg}
                 else:
                     pprint(f"Waiting 10s for Disk {diskname} to be available")
                     sleep(10)
