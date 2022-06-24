@@ -158,9 +158,9 @@ class Kopenstack(object):
                 else:
                     pprint(f"Waiting 10s for Disk {diskname} to be available")
                     sleep(10)
-                block_device_mapping = {'device_name': f'vd{letter}', 'device_type': 'disk', 'disk_bus': diskinterface,
-                                        'source_type': 'blank', "destination_type": "volume",
-                                        'volume_size': disksize, "delete_on_termination": True, 'volume_id': newvol.id}
+            block_device_mapping = {'device_name': f'vd{letter}', 'device_type': 'disk', 'disk_bus': diskinterface,
+                                    'source_type': 'blank', "destination_type": "volume",
+                                    'volume_size': disksize, "delete_on_termination": True, 'volume_id': newvol.id}
             if index == 0:
                 block_device_mapping['boot_index'] = 0
             if iso is not None and index == os_index:
