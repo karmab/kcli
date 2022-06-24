@@ -79,6 +79,7 @@ class Kopenstack(object):
                tags=[], storemetadata=False, sharedfolders=[], kernel=None, initrd=None,
                cmdline=None, placement=[], autostart=False, cpuhotplug=False, memoryhotplug=False, numamode=None,
                numa=[], pcidevices=[], tpm=False, rng=False, metadata={}, securitygroups=[]):
+        default_diskinterface = diskinterface
         glance = self.glance
         nova = self.nova
         neutron = self.neutron
@@ -91,8 +92,11 @@ class Kopenstack(object):
         allflavornames = [flavor.name for flavor in allflavors]
         if flavor is None:
             flavors = [flavor for flavor in allflavors if flavor.ram >= memory and flavor.vcpus >= numcpus]
-            flavor = flavors[0] if flavors else nova.flavors.find(name="m1.tiny")
-            pprint(f"Using flavor {flavor.name}")
+            if flavors:
+                flavor = flavors[0]
+                pprint(f"Using flavor {flavor.name}")
+            else:
+                return {'result': 'failure', 'reason': "Couldn't find a valid flavor matching your specs"}
         elif flavor not in allflavornames:
             return {'result': 'failure', 'reason': f"Flavor {flavor} not found"}
         else:
@@ -123,34 +127,46 @@ class Kopenstack(object):
         else:
             msg = "a bootable disk is needed"
             return {'result': 'failure', 'reason': msg}
-        block_dev_mapping = {}
+        os_index = 1 if disks and iso is not None else 0
+        block_device_mapping_v2 = []
         for index, disk in enumerate(disks):
+            if index == os_index and self.glance_disk:
+                continue
             diskname = f"{name}-disk{index}"
             letter = chr(index + ord('a'))
+            diskinterface = default_diskinterface
             if isinstance(disk, int):
                 disksize = disk
             elif isinstance(disk, str) and disk.isdigit():
                 disksize = int(disk)
             elif isinstance(disk, dict):
                 disksize = disk.get('size', '10')
+                diskinterface = disk.get('interface', default_diskinterface)
             imageref = None
-            if index == 0:
-                if self.glance_disk:
-                    continue
-                else:
-                    imageref = glanceimage.id
-                    glanceimage = None
+            if index == os_index:
+                imageref = glanceimage.id
+                glanceimage = None
             newvol = self.cinder.volumes.create(name=diskname, size=disksize, imageRef=imageref)
+            if index in [0, os_index]:
+                self.cinder.volumes.set_bootable(newvol.id, True)
             while True:
                 newvolstatus = self.cinder.volumes.get(newvol.id).status
                 if newvolstatus == 'available':
                     break
+                elif newvolstatus == 'error':
+                    return(f"Hit error when waiting for Disk {diskname} to be available")
                 else:
                     pprint(f"Waiting 10s for Disk {diskname} to be available")
                     sleep(10)
-            if index == 0 or (iso is not None and index == 1):
-                self.cinder.volumes.set_bootable(newvol.id, True)
-            block_dev_mapping[f'vd{letter}'] = newvol.id
+                block_device_mapping = {'device_name': f'vd{letter}', 'device_type': 'disk', 'disk_bus': diskinterface,
+                                        'source_type': 'blank', "destination_type": "volume",
+                                        'volume_size': disksize, "delete_on_termination": True, 'volume_id': newvol.id}
+            if index == 0:
+                block_device_mapping['boot_index'] = 0
+            if iso is not None and index == os_index:
+                block_device_mapping['device_type'] = 'cdrom'
+                block_device_mapping['boot_index'] = 1
+            block_device_mapping_v2.append(block_device_mapping)
         key_name = 'kvirt'
         keypairs = [k.name for k in nova.keypairs.list()]
         if key_name not in keypairs:
@@ -181,7 +197,7 @@ class Kopenstack(object):
                                             storemetadata=storemetadata)[0]
         meta = {x: metadata[x] for x in metadata if x in METADATA_FIELDS}
         instance = nova.servers.create(name=name, image=glanceimage, flavor=flavor, key_name=key_name, nics=nics,
-                                       meta=meta, userdata=userdata, block_device_mapping=block_dev_mapping,
+                                       meta=meta, userdata=userdata, block_device_mapping_v2=block_device_mapping_v2,
                                        security_groups=securitygroups)
         tenant_id = instance.tenant_id
         if need_floating:
