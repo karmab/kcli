@@ -680,7 +680,7 @@ class Kopenstack(object):
         volumes = {}
         cinder = self.cinder
         for volume in cinder.volumes.list():
-            volumes[volume.name] = {'pool': 'default', 'path': volume.id}
+            volumes[volume.name] = {'pool': volume.volume_type, 'path': volume.id}
         return volumes
 
     def add_nic(self, name, network):
