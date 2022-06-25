@@ -421,7 +421,11 @@ class Kopenstack(object):
         disks = []
         for disk in vm._info['os-extended-volumes:volumes_attached']:
             diskid = disk['id']
-            volume = cinder.volumes.get(diskid)
+            try:
+                volume = cinder.volumes.get(diskid)
+            except cinderclient.exceptions.NotFound:
+                disks.append({'device': 'N/A', 'size': 'N/A', 'format': 'N/A', 'type': 'N/A', 'path': diskid})
+                continue
             disksize = volume.size
             devname = volume.name
             _type = volume.volume_type
@@ -698,7 +702,10 @@ class Kopenstack(object):
                     if attachment['server_id'] == vm.id:
                         cinder.volumes.detach(volume, attachment['attachment_id'])
                 cinder.volumes.delete(disk['id'])
-            return {'result': 'success'}
+                return {'result': 'success'}
+        msg = f"Disk {diskname} not found in {name}"
+        error(msg)
+        return {'result': 'failure', 'reason': msg}
 
     def list_disks(self):
         volumes = {}
