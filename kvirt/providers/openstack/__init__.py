@@ -496,7 +496,10 @@ class Kopenstack(object):
                 error(f"Hit {str(e)} when trying to delete floating {floating}")
         index = 0
         for disk in vm._info['os-extended-volumes:volumes_attached']:
-            volume = cinder.volumes.get(disk['id'])
+            try:
+                volume = cinder.volumes.get(disk['id'])
+            except cinderclient.exceptions.NotFound:
+                continue
             for attachment in volume.attachments:
                 if attachment['server_id'] == vm.id:
                     cinder.volumes.detach(volume, attachment['attachment_id'])
