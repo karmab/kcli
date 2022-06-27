@@ -1,7 +1,6 @@
-from subprocess import call
 from flask import Flask
 from flask import render_template, request, jsonify
-from glob import glob, iglob
+from glob import glob
 from kvirt.common import get_overrides, pprint
 import os
 import re
@@ -10,9 +9,6 @@ import re
 class Kexposer():
 
     def refresh_plans(self, verbose=False):
-        if self.cnfhack:
-            self.refresh_plans_cnfhack(verbose=verbose)
-            return
         plans = []
         owners = {}
         for paramfile in glob(f"{self.basedir}/**/parameters_*.y*ml", recursive=True):
@@ -27,23 +23,7 @@ class Kexposer():
         self.plans = sorted(plans) if plans else [self.plan]
         self.owners = owners
 
-    def refresh_plans_cnfhack(self, verbose=False):
-        plans = []
-        owners = {}
-        dirs = [os.path.basename(d) for d in iglob(f'{self.basedir}/../param_files/*/*') if os.path.isdir(d) and
-                os.path.basename(d).startswith('cnf') and
-                not os.path.basename(d).endswith('_hv')]
-        for plan in dirs:
-            if verbose:
-                pprint(f"Adding plan {plan}")
-            plans.append(plan)
-        self.plans = sorted(plans) if plans else [self.plan]
-        self.owners = owners
-
     def get_client(self, plan, currentconfig, overrides={}):
-        if self.cnfhack:
-            self.get_client_cnfhack(plan, currentconfig, overrides)
-            return
         matching = glob(f"{self.basedir}/**/parameters_{plan}.y*ml", recursive=True)
         if matching:
             paramfile = matching[0]
@@ -56,22 +36,11 @@ class Kexposer():
                     overrides = fileoverrides
         return overrides
 
-    def get_client_cnfhack(self, plan, currentconfig, overrides={}):
-        matching = glob(f"{self.basedir}/../param_files/*/{plan}")
-        if matching:
-            secondmatching = glob(f"{os.path.dirname(matching[0])}/*_hv")
-            if secondmatching:
-                client = os.path.basename(secondmatching[0]).replace('_hv', '')
-                currentconfig.__init__(client=client)
-        return overrides
-
-    def __init__(self, config, plan, inputfile, overrides={}, port=9000, customcmd=None, cnfhack=False):
+    def __init__(self, config, plan, inputfile, overrides={}, port=9000):
         app = Flask(__name__)
         self.basedir = os.path.dirname(inputfile) if '/' in inputfile else '.'
         self.plan = plan
         self.overrides = overrides
-        self.cnfhack = cnfhack
-        self.customcmd = customcmd
         self.refresh_plans(verbose=True)
 
         @app.route('/')
@@ -130,15 +99,7 @@ class Kexposer():
                     if 'owner' in overrides and overrides['owner'] == '':
                         del overrides['owner']
                     currentconfig.delete_plan(plan)
-                    if self.customcmd is not None:
-                        print(f'{self.customcmd} {plan} {inputfile} "{overrides}"')
-                        run = call(f'{self.customcmd} {plan} {inputfile} "{overrides}"', shell=True)
-                        if run == 0:
-                            result = {'result': 'success'}
-                        else:
-                            result = {'result': 'failure', 'reason': 'something wrong happened', 'failedvms': []}
-                    else:
-                        result = currentconfig.plan(plan, inputfile=inputfile, overrides=overrides)
+                    result = currentconfig.plan(plan, inputfile=inputfile, overrides=overrides)
                 except Exception as e:
                     error = f'Hit issue when running plan: {str(e)}'
                     return render_template('error.html', plan=plan, error=error)
