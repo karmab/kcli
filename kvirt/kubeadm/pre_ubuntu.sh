@@ -43,7 +43,7 @@ cat > /etc/systemd/system/crio.service.d/http_proxy.conf << EOF
 Environment="HTTP_PROXY={{ HTTP_PROXY }}"
 EOF
 {% if 'HTTPS_PROXY' is defined %}
-cat > /etc/systemd/system/crio.service.d/http_proxy.conf << EOF
+cat > /etc/systemd/system/crio.service.d/https_proxy.conf << EOF
 [Service]
 Environment="HTTPS_PROXY={{ HTTPS_PROXY }}"
 EOF
@@ -71,7 +71,7 @@ cat > /etc/systemd/system/containerd.service.d/http_proxy.conf << EOF
 Environment="HTTP_PROXY={{ HTTP_PROXY }}"
 EOF
 {% if 'HTTPS_PROXY' is defined %}
-cat > /etc/systemd/system/containerd.service.d/http_proxy.conf << EOF
+cat > /etc/systemd/system/containerd.service.d/https_proxy.conf << EOF
 [Service]
 Environment="HTTPS_PROXY={{ HTTPS_PROXY }}"
 EOF
