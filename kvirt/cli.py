@@ -4169,7 +4169,7 @@ def cli():
     kubehypershiftscale_parser.set_defaults(func=scale_hypershift_kube)
     kubescale_subparsers.add_parser('hypershift', parents=[kubehypershiftscale_parser],
                                     description=kubehypershiftscale_desc,
-                                    help=kubehypershiftscale_desc, aliases=['okd'])
+                                    help=kubehypershiftscale_desc)
 
     parameterhelp = "specify parameter or keyword for rendering (multiple can be specified)"
     kubeopenshiftscale_desc = 'Scale Openshift Kube'
