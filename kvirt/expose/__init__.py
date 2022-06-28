@@ -14,12 +14,15 @@ class Kexposer():
         for paramfile in glob(f"{self.basedir}/**/parameters_*.y*ml", recursive=True):
             search = re.match('.*parameters_(.*)\\.ya?ml', paramfile)
             plan = search.group(1)
-            if verbose:
-                pprint(f"Adding parameter file {paramfile}")
-            plans.append(plan)
-            fileoverrides = get_overrides(paramfile=paramfile)
+            try:
+                fileoverrides = get_overrides(paramfile=paramfile)
+            except:
+                continue
             if 'owner' in fileoverrides:
                 owners[plan] = fileoverrides['owner']
+            plans.append(plan)
+            if verbose:
+                pprint(f"Adding parameter file {paramfile}")
         self.plans = sorted(plans) if plans else [self.plan]
         self.owners = owners
 
