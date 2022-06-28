@@ -519,7 +519,7 @@ class Kconfig(Kbaseconfig):
                     self.handle_host(pool=self.pool, image=profile, download=True, update_profile=True)
                     good_image = os.path.basename(IMAGES[profile])
                     if not good_image.endswith('.qcow2') and not good_image.endswith('.img'):
-                        good_image = [x[4] for x in self.list_profiles() if x[0] == clientprofile][0]
+                        good_image = [x[4] for x in self.list_profiles() if x[0] == profile][0]
                     vmprofiles[profile] = {'image': good_image}
                 else:
                     pprint(f"Profile {profile} not found. Using the image as profile...")
