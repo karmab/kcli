@@ -1296,3 +1296,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
 
     def update_nic(self, name, index, network):
         print("not implemented")
+
+    def update_network(self, name, dhcp=None, nat=None, domain=None, plan=None, overrides={}):
+        print("not implemented")
+        return {'result': 'success'}

@@ -1726,3 +1726,7 @@ class Kubevirt(Kubecommon):
         core = self.core
         body = {'metadata': {'annotations': {"cdi.kubevirt.io/storage.import.endpoint": endpoint}}}
         core.patch_namespaced_persistent_volume_claim(pvc, self.namespace, body)
+
+    def update_network(self, name, dhcp=None, nat=None, domain=None, plan=None, overrides={}):
+        print("not implemented")
+        return {'result': 'success'}

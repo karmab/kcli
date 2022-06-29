@@ -6,7 +6,7 @@ from copy import deepcopy
 from getpass import getuser
 from kvirt.config import Kconfig
 from kvirt.examples import plandatacreate, vmdatacreate, hostcreate, _list, plancreate, planinfo, productinfo, start
-from kvirt.examples import repocreate, isocreate
+from kvirt.examples import repocreate, isocreate, networkupdate
 from kvirt.examples import kubegenericcreate, kubek3screate, kubeopenshiftcreate, kubekindcreate, kubemicroshiftcreate
 from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsole, vmexport, niccreate, nicdelete
 from kvirt.examples import disconnectedcreate, appopenshiftcreate, plantemplatecreate, kubehypershiftcreate
@@ -2947,10 +2947,7 @@ def create_network(args):
     if name is None:
         error("Missing Network")
         sys.exit(1)
-    if isolated:
-        nat = False
-    else:
-        nat = True
+    nat = not isolated
     dhcp = not nodhcp
     if args.dual is not None:
         overrides['dual_cidr'] = args.dual
@@ -2970,6 +2967,20 @@ def delete_network(args):
     for name in names:
         result = k.delete_network(name=name)
         common.handle_response(result, name, element='Network', action='deleted')
+
+
+def update_network(args):
+    """Update Network"""
+    name = args.name
+    overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
+    nat = False if 'isolated' in args else overrides.get('nat')
+    dhcp = False if 'nodhcp' in args else overrides.get('dhcp')
+    domain = overrides.get('domain', args.domain)
+    plan = overrides.get('plan')
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    k = config.k
+    result = k.update_network(name=name, dhcp=dhcp, nat=nat, domain=domain, overrides=overrides, plan=plan)
+    common.handle_response(result, name, element='Network', action='updated')
 
 
 def create_host_group(args):
@@ -4333,6 +4344,22 @@ def cli():
     networkdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     networkdelete_parser.add_argument('names', metavar='NETWORKS', nargs='+')
     networkdelete_parser.set_defaults(func=delete_network)
+
+    networkupdate_desc = 'Update Network'
+    networkupdate_epilog = f"examples:\n{networkupdate}"
+    networkupdate_parser = update_subparsers.add_parser('network', description=networkupdate_desc,
+                                                        epilog=networkupdate_epilog, formatter_class=rawhelp,
+                                                        help=networkupdate_desc)
+    networkupdate_parser.add_argument('-i', '--isolated', action='store_true', help='Isolated Network',
+                                      default=argparse.SUPPRESS)
+    networkupdate_parser.add_argument('--nodhcp', action='store_true', help='Disable dhcp on the net',
+                                      default=argparse.SUPPRESS)
+    networkupdate_parser.add_argument('--domain', help='DNS domain. Defaults to network name')
+    networkupdate_parser.add_argument('-P', '--param', action='append',
+                                      help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    networkupdate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    networkupdate_parser.add_argument('name', metavar='NETWORK')
+    networkupdate_parser.set_defaults(func=update_network)
 
     disconnectedcreate_desc = 'Create a disconnected registry vm for openshift'
     disconnectedcreate_epilog = "examples:\n%s" % disconnectedcreate

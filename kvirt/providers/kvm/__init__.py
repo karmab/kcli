@@ -3737,3 +3737,74 @@ class Kvirt(object):
         newxml = ET.tostring(root)
         conn.defineXML(newxml.decode("utf-8"))
         return {'result': 'success'}
+
+    def update_network(self, name, dhcp=None, nat=None, domain=None, plan=None, overrides={}):
+        modified = False
+        conn = self.conn
+        try:
+            network = conn.networkLookupByName(name)
+        except:
+            error(f"Network {name} not found")
+            return {'result': 'not found'}
+        netxml = network.XMLDesc(0)
+        root = ET.fromstring(netxml)
+        forward = root.find('forward')
+        if nat is not None:
+            if not isinstance(nat, bool):
+                error("Nat not set to correct value")
+            elif nat and forward is None:
+                forward = ET.fromstring("<forward mode='nat'><nat><port start='1024' end='65535'/></nat></forward>")
+                root.append(forward)
+                modified = True
+            if not nat and forward is not None:
+                root.remove(forward)
+                modified = True
+        currentdomain = root.find('domain')
+        if domain is not None:
+            if currentdomain is None:
+                domain = ET.fromstring(f"<domain name='{domain}'</>")
+                root.append(domain)
+                modified = True
+            elif currentdomain.get('name') != domain:
+                currentdomain.set('name', domain)
+                modified = True
+        currentip = root.find('ip')
+        currentdhcp = currentip.find('dhcp')
+        if dhcp is not None:
+            if not dhcp and currentdhcp is not None:
+                currentip.remove(currentdhcp)
+                modified = True
+            if dhcp and currentdhcp is None:
+                for entry in list(root.iter('ip')):
+                    attributes = entry.attrib
+                    firstip = attributes.get('address')
+                    netmask = attributes.get('netmask')
+                    netmask = attributes.get('prefix') if netmask is None else netmask
+                    ipnet = f'{firstip}/{netmask}' if netmask is not None else firstip
+                    ipnet = ip_network(ipnet, strict=False)
+                    cidr = str(ipnet)
+                cidr_range = ip_network(cidr)
+                gateway = str(cidr_range[1])
+                family = 'ipv6' if ':' in gateway else 'ipv4'
+                start = str(cidr_range[2])
+                end = str(cidr_range[65535 if family == 'ipv6' else -2])
+                dhcp = ET.fromstring(f"<dhcp><range start='{start}' end='{end}'/></dhcp>")
+                currentip.append(dhcp)
+                modified = True
+        if plan is not None:
+            for element in list(root.iter('{kvirt}info')):
+                e = element.find('{kvirt}plan')
+                if e is not None:
+                    if e.text != plan:
+                        e.text = plan
+                        modified = True
+                else:
+                    plan = ET.fromstring(f"<kvirt:plan>{plan}</kvirt:plan>")
+                    root.find('{kvirt}info').append(plan)
+                    modified = True
+        if modified:
+            network.destroy()
+            newxml = ET.tostring(root)
+            conn.networkDefineXML(newxml.decode("utf-8"))
+            network.create()
+        return {'result': 'success'}
