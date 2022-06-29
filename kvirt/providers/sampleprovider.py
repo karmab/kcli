@@ -611,3 +611,7 @@ class Kbase(object):
 
     def update_nic(self, name, index, network):
         print("not implemented")
+
+    def update_network(self, name, dhcp=None, nat=None, domain=None, plan=None, overrides={}):
+        print("not implemented")
+        return {'result': 'success'}

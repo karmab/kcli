@@ -361,3 +361,19 @@ $ kcli scale cluster openshift --workers 3 mycly
 # Alternative way to indicate masters
 $ kcli scale cluster openshift --masters 3 mycly
 """
+
+networkupdate = """# Change network to isolated
+$ kcli update network mynetwork -i
+
+# Disable dhcp
+$ kcli update network mynetwork --nodhcp
+
+# Enable dhcp
+$ kcli update network mynetwork -P dhcp=true
+
+# Change domain
+$ kcli update network mynetwork --domain superdomain.com
+
+# Update plan
+$ kcli update network mynetwork -P plan=newplan
+"""
