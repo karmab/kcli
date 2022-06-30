@@ -2,8 +2,8 @@ cluster: ci-kubevirt
 domain: karmalabs.com
 masters: 3
 workers: 0
-version: stable
-tag: "4.10"
+version: nightly
+tag: "4.11"
 api_ip: 10.19.135.111
 network: baremetal
 master_memory: 16384
