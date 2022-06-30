@@ -3803,6 +3803,7 @@ class Kvirt(object):
                     root.find('{kvirt}info').append(plan)
                     modified = True
         if modified:
+            warning("Network will be restarted")
             network.destroy()
             newxml = ET.tostring(root)
             conn.networkDefineXML(newxml.decode("utf-8"))
