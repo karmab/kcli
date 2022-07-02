@@ -1105,5 +1105,45 @@ class Kopenstack(object):
         print("not implemented")
 
     def update_network(self, name, dhcp=None, nat=None, domain=None, plan=None, overrides={}):
-        print("not implemented")
+        neutron = self.neutron
+        networks = [net for net in neutron.list_networks()['networks'] if net['name'] == name]
+        if not networks:
+            msg = f"Network {name} not found"
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
+        else:
+            network = networks[0]
+            network_id = network['id']
+        network_data = {}
+        if 'port_security_enabled' in overrides and isinstance(overrides['port_security_enabled'], bool):
+            network_data['port_security_enabled'] = overrides['port_security_enabled']
+        if 'mtu' in overrides and isinstance(overrides['port_security_enabled'], int):
+            network_data['mtu'] = overrides['mtu']
+        if 'description' in overrides:
+            network_data['description'] = str(overrides['description'])
+        if 'tags' in overrides and isinstance(overrides['tags'], list):
+            network_data['tags'] = overrides['tags']
+        if 'availability_zones' in overrides and isinstance(overrides['availability_zones'], list):
+            network_data['availability_zones'] = overrides['availability_zones']
+        if 'availability_zone_hints' in overrides and isinstance(overrides['availability_zone_hints'], list):
+            network_data['availability_zone_hints'] = overrides['availability_zone_hints']
+        if network_data:
+            neutron.update_network(network_id, {'network': network_data})
+        subnets = [sub for sub in self.neutron.list_subnets()['subnets'] if sub['id'] in network['subnets']]
+        if subnets:
+            subnet_data = {}
+            subnet = subnets[0]
+            subnet_id = subnet['id']
+            currentdhcp = subnet['enable_dhcp']
+            if dhcp is not None:
+                if not dhcp and currentdhcp:
+                    subnet_data['enable_dhcp'] = False
+                if dhcp and not currentdhcp:
+                    subnet_data['enable_dhcp'] = True
+            if 'dns_nameservers' in overrides and isinstance(overrides['dns_nameservers'], list):
+                subnet_data['dns_nameservers'] = overrides['dns_nameservers']
+            if 'dns' in overrides and isinstance(overrides['dns'], list):
+                subnet_data['dns_nameservers'] = overrides['dns']
+            if subnet_data:
+                neutron.update_subnet(subnet_id, {'subnet': subnet_data})
         return {'result': 'success'}
