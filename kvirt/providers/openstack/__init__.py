@@ -903,6 +903,12 @@ class Kopenstack(object):
 
     def info_network(self, name):
         networkinfo = common.info_network(self, name)
+        if self.debug and networkinfo:
+            network = [net for net in self.neutron.list_networks()['networks'] if net['name'] == name][0]
+            print(network)
+            subnets = [sub for sub in self.neutron.list_subnets()['subnets'] if sub['id'] in network['subnets']]
+            for subnet in subnets:
+                print(subnet)
         return networkinfo
 
     def list_subnets(self):
