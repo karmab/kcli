@@ -978,8 +978,10 @@ class Kconfig(Kbaseconfig):
                 reservedns = False
         if image is not None:
             metadata['image'] = image
-        if 'owner' in overrides:
-            metadata['owner'] = overrides['owner']
+        if 'owner' in profile or 'owner' in overrides:
+            metadata['owner'] = profile.get('owner') or overrides.get('owner')
+        if 'user' in profile or 'user' in overrides:
+            metadata['user'] = profile.get('user') or overrides.get('user')
         if kube is not None and kubetype is not None:
             metadata['kubetype'] = kubetype
             metadata['kube'] = kube

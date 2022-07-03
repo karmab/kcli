@@ -1646,6 +1646,9 @@ class Kvirt(object):
             e = element.find('{kvirt}owner')
             if e is not None:
                 yamlinfo['owner'] = e.text
+            e = element.find('{kvirt}user')
+            if e is not None:
+                yamlinfo['user'] = e.text
             e = element.find('{kvirt}domain')
             if e is not None:
                 yamlinfo['domain'] = e.text
