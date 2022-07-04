@@ -20,6 +20,30 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if nodes == 0:
         error("Invalid number of nodes")
         sys.exit(1)
+    register_acm = data.get('register_acm', False)
+    if register_acm:
+        pull_secret = data.get('pull_secret')
+        if pull_secret is not None:
+            if not os.path.isabs(pull_secret):
+                pull_secret = os.path.abspath(pull_secret)
+                data['pull_secret'] = pull_secret
+            if not os.path.exists(pull_secret):
+                error(f"pull_secret path {pull_secret} not found")
+                sys.exit(1)
+        else:
+            error("pull_secret is required when using register_acm")
+            sys.exit(1)
+        kubeconfig_acm = data.get('kubeconfig_acm')
+        if kubeconfig_acm is not None:
+            if not os.path.isabs(kubeconfig_acm):
+                kubeconfig_acm = os.path.abspath(kubeconfig_acm)
+                data['kubeconfig_acm'] = kubeconfig_acm
+            if not os.path.exists(kubeconfig_acm):
+                error(f"kubeconfig_acm path {kubeconfig_acm} not found")
+                sys.exit(1)
+        else:
+            error("kubeconfig_acm is required when using register_acm")
+            sys.exit(1)
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if os.path.exists(clusterdir):
         error(f"Please remove existing directory {clusterdir} first...")

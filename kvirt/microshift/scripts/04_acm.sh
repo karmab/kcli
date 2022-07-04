@@ -46,7 +46,7 @@ while true ; do
  sleep 10
 done
 
-test -f /root/auth.json && podman login registry.redhat.io --authfile /root/auth.json
+podman login registry.redhat.io --authfile auth.json
 
 oc new-project open-cluster-management-agent
 oc create secret generic rhacm --from-file=.dockerconfigjson=auth.json --type=kubernetes.io/dockerconfigjson
