@@ -642,6 +642,9 @@ class Kvirt(object):
                 if "port_name" in nets[index] and nets[index]["port_name"]:
                     port_name = "<target dev='{port_name}'/>".format(**nets[index])
                     ovsxml.format(port_name)
+                elif "vlan" in nets[index]:
+                    port_name = "<target dev='vlan-{vlan}'/>".format(vlan=nets[index]['vlan'])
+                    ovsxml.format(port_name)
                 else:
                     ovsxml.format("")
             if nicnuma is not None:
@@ -3096,11 +3099,25 @@ class Kvirt(object):
                                 <interface dev="{nic}"/>
                                 </forward>
                                 </network>""".format(name=name, nic=nic)
+                if self.debug:
+                    print(networkxml)
                 new_net = conn.networkDefineXML(networkxml)
                 new_net.setAutostart(True)
                 new_net.create()
                 return {'result': 'success'}
         if 'ovs' in overrides and overrides['ovs']:
+            bridgescmd = f"ovs-vsctl list-br | grep name || ovs-vsctl add-br {name}"
+            if self.protocol == 'ssh' and self.host not in ['localhost', '127.0.0.1']:
+                bridgescmd = 'ssh %s -p %s %s@%s "%s"' % (self.identitycommand, self.port, self.user, self.host,
+                                                          bridgescmd)
+            os.system(bridgescmd)
+            portgroupxml = "<portgroup name='default' default='yes'/>"
+            if 'vlans' in overrides and isinstance(overrides['vlans'], list) and overrides['vlans']:
+                for vlan in overrides['vlans']:
+                    if not str(vlan).isnumeric():
+                        warning(f"Ignoring vlan {vlan}")
+                    else:
+                        portgroupxml += f"<portgroup name='vlan-{vlan}'><vlan><tag id='{vlan}'/></vlan></portgroup>"
             networkxml = """<network>
                             <metadata>
                             <kvirt:info xmlns:kvirt="kvirt">
@@ -3111,8 +3128,11 @@ class Kvirt(object):
                             <bridge name='{name}'/>
                             <forward mode="bridge">
                             <virtualport type='openvswitch'/>
+                            {portgroupxml}
                             </forward>
-                            </network>""".format(name=name)
+                            </network>""".format(name=name, portgroupxml=portgroupxml)
+            if self.debug:
+                print(networkxml)
             new_net = conn.networkDefineXML(networkxml)
             new_net.setAutostart(True)
             new_net.create()
