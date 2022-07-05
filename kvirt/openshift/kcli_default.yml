@@ -54,9 +54,9 @@ keys: []
 apps: []
 apps_install_cr: true
 postscripts: []
-kubevirt_api_service: False
+kubevirt_api_service: false
 kubevirt_disk_size:
-kubevirt_ignore_node_port: False
+kubevirt_ignore_node_port: false
 extra_disks: []
 extra_master_disks: []
 extra_worker_disks: []
@@ -70,9 +70,9 @@ bootstrap_ip:
 worker_macs: []
 worker_ips: []
 disconnected_url:
-disconnected_deploy: False
-disconnected_haproxy: False
-disconnected_reuse: False
+disconnected_deploy: false
+disconnected_haproxy: false
+disconnected_reuse: false
 disconnected_reuse_name:
 disconnected_disk_size: 100
 disconnected_user:
@@ -104,17 +104,17 @@ sno_masters: false
 sno_workers: false
 sno_wait: true
 sno_localhost_fix: false
-metal3: False
+metal3: false
 metal3_provisioning_enable: false
 metal3_provisioning_net: provisioning
 metal3_provisioning_interface: ens3
 metal3_noprovisioning_ip:
 metal3_noprovisioning_bootstrap_ip:
-sushy: False
+sushy: false
 baremetal_user: root
 baremetal_password: calvin
-kvm_openstack: False
-kvm_forcestack: False
+kvm_openstack: true
+kvm_forcestack: false
 ipsec: false
 async: false
 notify: false
