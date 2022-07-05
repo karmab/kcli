@@ -3027,10 +3027,11 @@ class Kvirt(object):
         if name == 'rhcos42':
             shortimage += '.gz'
         if self.host == 'localhost' or self.host == '127.0.0.1':
-            downloadcmd = "curl -Lo %s/%s -f '%s'" % (downloadpath, shortimage, url)
+            downloadcmd = "curl -Lko %s/%s -f '%s'" % (downloadpath, shortimage, url)
         elif self.protocol == 'ssh':
-            downloadcmd = 'ssh %s -p %s %s@%s "curl -Lo %s/%s -f \'%s\'"' % (self.identitycommand, self.port, self.user,
-                                                                             self.host, downloadpath, shortimage, url)
+            downloadcmd = 'ssh %s -p %s %s@%s "curl -Lko %s/%s -f \'%s\'"' % (self.identitycommand, self.port,
+                                                                              self.user, self.host, downloadpath,
+                                                                              shortimage, url)
         code = call(downloadcmd, shell=True)
         if code == 23:
             pprint("Consider running the following command on the hypervisor:")
