@@ -256,7 +256,6 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 vlan_name = f'vlan{vlan}'
                 vlans[vlan_name] = {'id': int(vlan), 'link': nicname}
                 vlans[vlan_name].update(netdata[nicname])
-                # del netdata[nicname]
                 targetfamily = 'dhcp6' if netname in ipv6 else 'dhcp4'
                 netdata[nicname] = {targetfamily: False}
     if domain is not None:
@@ -1197,7 +1196,16 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
                 gateway = net.get('gateway')
                 netmask = next((e for e in [net.get('mask'), net.get('netmask')] if e is not None), None)
                 noconf = net.get('noconf')
+                vlan = net.get('vlan')
                 vips = net.get('vips')
+            if vlan is not None:
+                nicpath = f"/etc/sysconfig/network-scripts/ifcfg-{nicname}"
+                netdata = f"DEVICE={nicname}\nNAME={nicname}\nONBOOT=no"
+                static = quote(netdata)
+                storage["files"].append({"filesystem": "root", "path": nicpath,
+                                         "contents": {"source": "data:,%s" % static, "verification": {}},
+                                         "mode": int(static_nic_file_mode, 8)})
+                nicname += f'.{vlan}'
             nicpath = f"/etc/sysconfig/network-scripts/ifcfg-{nicname}"
             if noconf is not None:
                 netdata = f"DEVICE={nicname}\nNAME={nicname}\nONBOOT=no"
@@ -1215,6 +1223,8 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
                     dns = dns.split(',')
                 for index, dnsentry in enumerate(dns):
                     netdata += f"DNS{index +1 }={dnsentry}\n"
+                if vlan is not None:
+                    netdata += "VLAN=yes\n"
                 if isinstance(vips, list) and vips:
                     for vip in vips:
                         netdata += f"[Network]\nAddress={vip}/{netmask}\nGateway={gateway}\n"
@@ -1226,8 +1236,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
                     static_nic_file_mode = '0600'
             if netdata != '':
                 static = quote(netdata)
-                storage["files"].append({"filesystem": "root",
-                                         "path": nicpath,
+                storage["files"].append({"filesystem": "root", "path": nicpath,
                                          "contents": {"source": "data:,%s" % static, "verification": {}},
                                          "mode": int(static_nic_file_mode, 8)})
     if files:
