@@ -124,10 +124,10 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             elif isinstance(netinfo, dict):
                 net = netinfo.copy()
             else:
-                error("Wrong net entry %s" % index)
+                error(f"Wrong net entry {index}")
                 sys.exit(1)
             if 'name' not in net:
-                error("Missing name in net %s" % index)
+                error(f"Missing name in net {index}")
                 sys.exit(1)
             netname = net['name']
             if index == 0 and 'type' in net and net.get('type') != 'virtio':
@@ -135,11 +135,11 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             nicname = net.get('nic')
             if nicname is None:
                 if prefix.startswith('ens19'):
-                    nicname = "ens%d" % (192 + 32 * index)
+                    nicname = f"ens{192 + 32 * index}"
                 elif prefix.startswith('ens'):
-                    nicname = "%s%d" % (prefix, 3 + index)
+                    nicname = f"{prefix}{index + 3}"
                 else:
-                    nicname = "%s%d" % (prefix, index)
+                    nicname = f"{prefix}{index}"
             ip = net.get('ip')
             netmask = next((e for e in [net.get('mask'), net.get('netmask')] if e is not None), None)
             noconf = net.get('noconf')
@@ -149,46 +149,46 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             bridgename = net.get('bridgename', netname)
             if bridge:
                 if legacy:
-                    netdata += "  auto %s\n" % nicname
-                    netdata += "  iface %s inet manual\n" % nicname
-                    netdata += "  auto %s\n" % bridgename
-                    netdata += "  iface %s inet dhcp\n" % bridgename
-                    netdata += "     bridge_ports %s\n" % nicname
+                    netdata += f"  auto {nicname}\n"
+                    netdata += f"  iface {nicname} inet manual\n"
+                    netdata += f"  auto {bridgename}\n"
+                    netdata += f"  iface {bridgename} inet dhcp\n"
+                    netdata += f"     bridge_ports {nicname}\n"
                 else:
                     bridges[bridgename] = {'interfaces': [nicname]}
                 realnicname = nicname
                 nicname = bridgename
             if legacy:
-                netdata += "  auto %s\n" % nicname
+                netdata += f"  auto {nicname}\n"
             if noconf is not None:
                 if legacy:
-                    netdata += "  iface %s inet manual\n" % nicname
+                    netdata += f"  iface {nicname} inet manual\n"
                 else:
                     targetfamily = 'dhcp6' if netname in ipv6 else 'dhcp4'
                     netdata[nicname] = {targetfamily: False}
             elif ip is not None and netmask is not None:
                 if legacy:
-                    netdata += "  iface %s inet static\n" % nicname
-                    netdata += "  address %s\n" % ip
-                    netdata += "  netmask %s\n" % netmask
+                    netdata += f"  iface {nicname} inet static\n"
+                    netdata += f"  address {ip}\n"
+                    netdata += f"  netmask {netmask}\n"
                 else:
-                    if isinstance(netmask, int):
+                    if str(netmask).isnumeric():
                         cidr = netmask
                     else:
                         cidr = netmask_to_prefix(netmask)
                     dhcp = 'dhcp6' if ':' in ip else 'dhcp4'
-                    netdata[nicname] = {dhcp: False, 'addresses': ["%s/%s" % (ip, cidr)]}
+                    netdata[nicname] = {dhcp: False, 'addresses': [f"{ip}/{cidr}"]}
                 gateway = net.get('gateway')
                 if index == 0 and default_gateway is not None:
                     gateway_name = 'gateway6' if ':' in default_gateway else 'gateway4'
                     if legacy:
-                        netdata += "  gateway %s\n" % default_gateway
+                        netdata += f"  gateway {default_gateway}\n"
                     else:
                         netdata[nicname][gateway_name] = default_gateway
                 elif gateway is not None:
                     gateway_name = 'gateway6' if ':' in gateway else 'gateway4'
                     if legacy:
-                        netdata += "  gateway %s\n" % gateway
+                        netdata += f"  gateway {gateway}\n"
                     else:
                         netdata[nicname][gateway_name] = gateway
                 dns = net.get('dns')
@@ -198,13 +198,13 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                     if legacy:
                         if isinstance(dns, list):
                             dns = ' '.join(dns)
-                        netdata += "  dns-nameservers %s\n" % dns
+                        netdata += f"  dns-nameservers {dns}\n"
                     else:
                         if isinstance(dns, str):
                             dns = dns.split(',')
                         netdata[nicname]['nameservers']['addresses'] = dns
                     if dns_hack:
-                        dnscontent = "nameserver %s\n" % dns
+                        dnscontent = f"nameserver {dns}\n"
                         dnsdata = {'path': 'etc/resolvconf/resolv.conf.d/base', 'content': dnscontent}
                         if files:
                             files.append(dnsdata)
@@ -214,7 +214,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 netdomain = net.get('domain')
                 if netdomain is not None:
                     if legacy:
-                        netdata += "  dns-search %s\n" % netdomain
+                        netdata += f"  dns-search {netdomain}\n"
                     else:
                         netdata[nicname]['nameservers']['search'] = [netdomain]
                 if not legacy and not netdata[nicname]['nameservers']:
@@ -225,11 +225,11 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                             netdata += "  auto %s:%s\n  iface %s:%s inet static\n  address %s\n  netmask %s\n"\
                                 % (nicname, index, nicname, index, vip, netmask)
                         else:
-                            netdata[nicname]['addresses'].append("%s/%s" % (vip, netmask))
+                            netdata[nicname]['addresses'].append(f"{vip}/{netmask}")
             else:
                 if legacy:
                     if not bridge:
-                        netdata += "  iface %s inet dhcp\n" % nicname
+                        netdata += f"  iface {nicname} inet dhcp\n"
                 else:
                     if enableipv6 or netname in ipv6:
                         targetfamily = 'dhcp6'
@@ -249,7 +249,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 del netdata[nicname]
                 netdata[realnicname] = {'match': {'name': realnicname}}
     if domain is not None:
-        localhostname = "%s.%s" % (name, domain)
+        localhostname = f"{name}.{domain}"
     else:
         localhostname = name
     metadata = {"instance-id": localhostname, "local-hostname": localhostname} if not noname else {}
@@ -268,9 +268,9 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             netdata = ''
     else:
         netdata = None
-    existing = "/workdir/%s.cloudinit" % name if container_mode() else "%s.cloudinit" % name
+    existing = f"/workdir/{name}.cloudinit" if container_mode() else f"{name}.cloudinit"
     if os.path.exists(existing):
-        pprint("using cloudinit from existing %s for %s" % (existing, name))
+        pprint(f"using cloudinit from existing {existing} for {name}")
         userdata = open(existing).read()
     else:
         publickeyfile = get_ssh_pub_key() if not overrides.get('nopubkey', False) else None
@@ -286,10 +286,10 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
         userdata = '#cloud-config\n'
         userdata += 'final_message: kcli boot finished, up $UPTIME seconds\n'
         if not noname:
-            userdata += 'hostname: %s\n' % name
+            userdata += f'hostname: {name}\n'
             if fqdn:
-                fqdn = "%s.%s" % (name, domain) if domain is not None else name
-                userdata += "fqdn: %s\n" % fqdn
+                fqdn = f"{name}.{domain}" if domain is not None else name
+                userdata += f"fqdn: {fqdn}\n"
         if enableroot:
             userdata += "ssh_pwauth: True\ndisable_root: false\n"
         validkeyfound = False
@@ -313,12 +313,12 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 if not newkey.startswith('ssh-'):
                     warning(f"Skipping invalid key {key}")
                     continue
-                userdata += "- %s\n" % newkey
+                userdata += f"- {newkey}\n"
         if publickeyfile is not None:
             with open(publickeyfile, 'r') as ssh:
                 key = ssh.read().rstrip()
                 if key not in keys:
-                    userdata += "- %s\n" % key
+                    userdata += f"- {key}\n"
         if cmds:
             data = process_cmds(cmds, overrides)
             if data != '':
@@ -1162,21 +1162,21 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
                 if index == 0:
                     continue
                 if image is not None and ('fcos' in image or 'fedora-coreos' in image):
-                    nicname = "eth%d" % index
+                    nicname = f"eth{index}"
                 else:
-                    nicname = "ens%d" % (index + 3)
+                    nicname = f"ens{index + 3}"
                 ip = None
                 netmask = None
                 noconf = None
                 vips = []
             elif isinstance(net, dict):
                 if image is not None and ('fcos' in image or 'fedora-coreos' in image):
-                    default_nicname = "eth%s" % index
+                    default_nicname = f"eth{index}"
                 elif net.get('numa') is not None:
-                    default_nicname = "enp%ds0" % enpindex
+                    default_nicname = f"enp{enpindex}s0"
                     enpindex -= 2
                 else:
-                    default_nicname = "ens%d" % (index + 3)
+                    default_nicname = f"ens{index + 3}"
                 if image == 'custom_ipxe':
                     default_nicname = "ens3f1"
                 nicname = net.get('nic', default_nicname)
@@ -1185,31 +1185,31 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
                 netmask = next((e for e in [net.get('mask'), net.get('netmask')] if e is not None), None)
                 noconf = net.get('noconf')
                 vips = net.get('vips')
-            nicpath = "/etc/sysconfig/network-scripts/ifcfg-%s" % nicname
+            nicpath = f"/etc/sysconfig/network-scripts/ifcfg-{nicname}"
             if noconf is not None:
-                netdata = "DEVICE=%s\nNAME=%s\nONBOOT=no" % (nicname, nicname)
+                netdata = f"DEVICE={nicname}\nNAME={nicname}\nONBOOT=no"
             elif ip is not None and netmask is not None and gateway is not None:
                 if index == 0 and default_gateway is not None:
                     gateway = default_gateway
-                if isinstance(netmask, int):
+                if str(netmask).isnumeric():
                     cidr = netmask
                 else:
                     cidr = netmask_to_prefix(netmask)
-                netdata = "DEVICE=%s\nNAME=%s\nONBOOT=yes\nNM_CONTROLLED=yes\n" % (nicname, nicname)
-                netdata += "BOOTPROTO=static\nIPADDR=%s\nPREFIX=%s\nGATEWAY=%s\n" % (ip, cidr, gateway)
+                netdata = f"DEVICE={nicname}\nNAME={nicname}\nONBOOT=yes\nNM_CONTROLLED=yes\n"
+                netdata += f"BOOTPROTO=static\nIPADDR={ip}\nPREFIX={cidr}\nGATEWAY={gateway}\n"
                 dns = net.get('dns', gateway)
                 if isinstance(dns, str):
                     dns = dns.split(',')
                 for index, dnsentry in enumerate(dns):
-                    netdata += "DNS%s=%s\n" % (index + 1, dnsentry)
+                    netdata += f"DNS{index +1 }={dnsentry}\n"
                 if isinstance(vips, list) and vips:
                     for vip in vips:
-                        netdata += "[Network]\nAddress=%s/%s\nGateway=%s\n" % (vip, netmask, gateway)
+                        netdata += f"[Network]\nAddress={vip}/{netmask}\nGateway={gateway}\n"
                 if image is not None and ('fcos' in image or 'fedora-coreos' in image):
-                    netdata = "[connection]\ntype=ethernet\ninterface-name=%s\n" % nicname
-                    netdata += "match-device=interface-name:%s\n\n" % nicname
-                    netdata += "[ipv4]\nmethod=manual\naddresses=%s/%s\ngateway=%s\n" % (ip, netmask, gateway)
-                    nicpath = "/etc/NetworkManager/system-connections/%s.nmconnection" % nicname
+                    netdata = f"[connection]\ntype=ethernet\ninterface-name={nicname}\n"
+                    netdata += f"match-device=interface-name:{nicname}\n\n"
+                    netdata += f"[ipv4]\nmethod=manual\naddresses={ip}/{netmask}\ngateway={gateway}\n"
+                    nicpath = f"/etc/NetworkManager/system-connections/{nicname}.nmconnection"
                     static_nic_file_mode = '0600'
             if netdata != '':
                 static = quote(netdata)
