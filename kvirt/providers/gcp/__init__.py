@@ -292,17 +292,21 @@ class Kgcp(object):
             keys = '\n'.join(finalkeys)
             newval = {'key': 'ssh-keys', 'value': keys}
             body['metadata']['items'].append(newval)
-        if 'kubetype' in metadata and metadata['kubetype'] == "openshift":
+        if 'kubetype' in metadata and metadata['kubetype'] in ["generic", "openshift"]:
             kube = metadata['kube']
+            kubetype = metadata['kubetype']
             if not [r for r in conn.firewalls().list(project=project).execute()['items'] if r['name'] == kube]:
-                pprint("Adding vm to security group %s" % kube)
-                tcp_ports = [22, 80, 8080, 443, 5443, 8443, 6443, 2379, 2380, 22624, 4789, 6080, 6081, '30000-32767',
-                             '10250-10259', '9000-9999']
-                udp_ports = ['4789', '6081', '30000-32767', '9000-9999']
+                pprint(f"Adding vm to security group {kube}")
+                tcp_ports = [22, 80, 443, 2379, 2380]
                 firewall_body = {"name": kube, "direction": "INGRESS", "targetTags": [kube],
-                                 "allowed": [{"IPProtocol": "tcp", "ports": tcp_ports},
-                                             {"IPProtocol": "udp", "ports": udp_ports}]}
-                pprint("Creating firewall rule %s" % kube)
+                                 "allowed": [{"IPProtocol": "tcp", "ports": tcp_ports}]}
+                if kubetype == 'openshift':
+                    extra_tcp_ports = [8080, 443, 5443, 8443, 22624, 4789, 6080, 6081, '30000-32767',
+                                       '10250-10259', '9000-9999']
+                    firewall_body['allowed'][0]['ports'].extend(extra_tcp_ports)
+                    udp_ports = ['4789', '6081', '30000-32767', '9000-9999']
+                    firewall_body['allowed'].append({"IPProtocol": "udp", "ports": udp_ports})
+                pprint(f"Creating firewall rule {kube}")
                 operation = conn.firewalls().insert(project=project, body=firewall_body).execute()
                 self._wait_for_operation(operation)
             tags.extend([kube])
