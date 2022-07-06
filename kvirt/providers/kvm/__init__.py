@@ -642,8 +642,8 @@ class Kvirt(object):
                 if "port_name" in nets[index] and nets[index]["port_name"]:
                     port_name = "<target dev='{port_name}'/>".format(**nets[index])
                     ovsxml.format(port_name)
-                elif "vlan" in nets[index]:
-                    port_name = "<target dev='vlan-{vlan}'/>".format(vlan=nets[index]['vlan'])
+                elif "ovs_vlan" in nets[index]:
+                    port_name = "<target dev='vlan-{vlan}'/>".format(vlan=nets[index]['ovs_vlan'])
                     ovsxml.format(port_name)
                 else:
                     ovsxml.format("")

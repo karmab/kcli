@@ -117,6 +117,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
     dns_hack = True if image is not None and is_debian10(image) else False
     netdata = {} if not legacy else ''
     bridges = {}
+    vlans = {}
     if nets:
         for index, netinfo in enumerate(nets):
             if isinstance(netinfo, str):
@@ -145,6 +146,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             noconf = net.get('noconf')
             vips = net.get('vips', [])
             enableipv6 = net.get('ipv6', False)
+            vlan = net.get('vlan')
             bridge = net.get('bridge', False)
             bridgename = net.get('bridgename', netname)
             if bridge:
@@ -159,6 +161,8 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 realnicname = nicname
                 nicname = bridgename
             if legacy:
+                if vlan is not None:
+                    nicname += f'.{vlan}'
                 netdata += f"  auto {nicname}\n"
             if noconf is not None:
                 if legacy:
@@ -248,6 +252,13 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 bridges[bridgename].update(netdata[nicname])
                 del netdata[nicname]
                 netdata[realnicname] = {'match': {'name': realnicname}}
+            if vlan is not None and not legacy:
+                vlan_name = f'vlan{vlan}'
+                vlans[vlan_name] = {'id': int(vlan), 'link': nicname}
+                vlans[vlan_name].update(netdata[nicname])
+                # del netdata[nicname]
+                targetfamily = 'dhcp6' if netname in ipv6 else 'dhcp4'
+                netdata[nicname] = {targetfamily: False}
     if domain is not None:
         localhostname = f"{name}.{domain}"
     else:
@@ -257,12 +268,14 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
         metadata["network-interfaces"] = netdata
     metadata = json.dumps(metadata)
     if not legacy:
-        if netdata or bridges:
+        if netdata or bridges or vlans:
             final_netdata = {'version': 2}
             if netdata:
                 final_netdata['ethernets'] = netdata
             if bridges:
                 final_netdata['bridges'] = bridges
+            if vlans:
+                final_netdata['vlans'] = vlans
             netdata = yaml.safe_dump(final_netdata, default_flow_style=False, encoding='utf-8').decode("utf-8")
         else:
             netdata = ''
