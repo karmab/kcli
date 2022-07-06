@@ -11,7 +11,7 @@ import sys
 import yaml
 
 # virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere']
-cloudplatforms = ['aws', 'gcp']
+cloudplatforms = ['aws', 'gcp', 'ibm']
 
 
 def scale(config, plandir, cluster, overrides):
@@ -122,6 +122,11 @@ def create(config, plandir, cluster, overrides):
     result = config.plan(plan, inputfile='%s/masters.yml' % plandir, overrides=data, threaded=master_threaded)
     if result['result'] != "success":
         sys.exit(1)
+    if config.type in cloudplatforms:
+        config.k.delete_dns('api.%s' % cluster, domain=domain)
+        result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_api.yml', overrides=data)
+        if result['result'] != 'success':
+            sys.exit(1)
     workers = data.get('workers', 0)
     if workers > 0:
         pprint("Deploying workers")

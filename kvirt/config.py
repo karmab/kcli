@@ -2510,6 +2510,7 @@ class Kconfig(Kbaseconfig):
         ipi = False
         hypershift = False
         domain = overrides.get('domain', 'karmalabs.com')
+        kubetype = 'generic'
         dnsclient = None
         k = self.k
         cluster = overrides.get('cluster', cluster)
@@ -2553,7 +2554,10 @@ class Kconfig(Kbaseconfig):
         if self.type == 'kubevirt' and f"{cluster}-api-svc" in k.list_services(k.namespace):
             k.delete_service(f"{cluster}-api-svc", k.namespace)
         if self.type in ['aws', 'gcp', 'ibm']:
-            for lb in ['api', 'apps']:
+            lbs = ['api']
+            if kubetype not in ['k3s', 'generic']:
+                lbs.append('apps')
+            for lb in lbs:
                 self.delete_loadbalancer(f"{lb}.{cluster}", domain=domain)
             bucket = f"{cluster}-{domain}"
             if bucket in self.k.list_buckets():

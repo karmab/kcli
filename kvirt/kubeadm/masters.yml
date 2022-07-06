@@ -1,26 +1,3 @@
-{{ image }}:
-  type: image
-{% if kubevirt_disk_size != None and config_type == 'kubevirt' %}
-  size: {{ kubevirt_disk_size }}
-{% endif %}
-
-{% if masters|int > 1 and config_type in ['aws', 'gcp'] %}
-{{ cluster }}-master:
- type: loadbalancer
- nets:
- - name: {{ network }}
-   alias:
-   - {{ cluster }}-master.{{ domain }}
-   - {{ cluster }}-master.{{ network }}
-   reservedns: true
- ports:
- - 6443
- vms:
-{% for number in range(0, masters|int) %}
-  - {{cluster}}-master-{{ number }}
-{% endfor %}
-{% endif %}
-
 {% for number in range(0, masters|int) %}
 {% if extra_master_networks %}
  {% set extra_networks = extra_master_networks %}
@@ -30,6 +7,11 @@
 {% endif %}
 
 {{cluster}}-master-{{ number }}:
+{% set primary_network = {'name': network} %}
+{% if number == 0 and config_type in ['aws', 'gcp', 'ibm'] %}
+{% set _= primary_network.__setitem__("reservedns", True) %}
+{% set _= primary_network.__setitem__("alias", ["api.%s.%s" % (cluster,domain)]) %}
+{% endif %}
  image: {{ image }}
  pool: {{ pool or config_pool }}
  keys: {{ keys }}
@@ -37,6 +19,9 @@
  memory: {{ master_memory | default(memory, memory) }}
 {% if number == 0 %}
  enableroot: true
+{% if config_type in ['aws', 'gcp', 'ibm'] %}
+ reservedns: true
+{% endif %}
 {% endif %}
  domain: {{ domain }}
 {% if number == 0 %}
@@ -49,11 +34,13 @@
  - origin: /etc/kubernetes/admin.conf
    path: ~/.kcli/clusters/{{ cluster }}/auth/kubeconfig
 {% endif %}
- nets: {{ [network] + extra_networks }}
+ nets: {{ [primary_network] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
  files:
+{% if config_type not in ['aws', 'gcp', 'ibm'] %}
   - keepalived.conf
   - keepalived.sh
+{% endif %}
   - registry.yml
 {% if number == 0 %}
 {% if multus %}
@@ -68,9 +55,7 @@
   - nfs.sh
 {% endif %}
 {% endif %}
-{% if config_type not in ['aws', 'gcp'] %}
   - apache.sh
-{% endif %}
 {% if eksd %}
   - eksd.sh
 {% endif %}

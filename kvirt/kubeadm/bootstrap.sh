@@ -1,8 +1,10 @@
 # set global variable
 CIDR="10.244.0.0/16"
 
+API_IP={{ "api.%s.%s" % (cluster, domain) if config_type in ['aws', 'gcp', 'ibm'] else api_ip }}
+
 # initialize cluster
-kubeadm init --control-plane-endpoint "{{ api_ip }}:6443" --pod-network-cidr $CIDR --upload-certs {{ '--image-repository public.ecr.aws/eks-distro/kubernetes --kubernetes-version $EKSD_API_VERSION' if eksd else '' }}
+kubeadm init --control-plane-endpoint "${API_IP}:6443" --pod-network-cidr $CIDR --upload-certs {{ '--image-repository public.ecr.aws/eks-distro/kubernetes --kubernetes-version $EKSD_API_VERSION' if eksd else '' }}
 
 # config cluster credentials
 cp /etc/kubernetes/admin.conf /root/
@@ -40,11 +42,9 @@ cp -i /etc/kubernetes/admin.conf /root/.kube/config
 chown root:root /root/.kube/config
 
 # join worker(s) to cluster
-#IP=`hostname -I | cut -f1 -d" "`
-IP={{ api_ip }}
 TOKEN=`kubeadm token create --ttl 0`
 HASH=`openssl x509 -in /etc/kubernetes/pki/ca.crt -noout -pubkey | openssl rsa -pubin -outform DER 2>/dev/null | sha256sum | cut -d' ' -f1`
-CMD="kubeadm join $IP:6443 --token $TOKEN --discovery-token-ca-cert-hash sha256:$HASH"
+CMD="kubeadm join ${API_IP}:6443 --token $TOKEN --discovery-token-ca-cert-hash sha256:$HASH"
 
 sleep 60
 

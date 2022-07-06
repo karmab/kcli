@@ -194,7 +194,7 @@ class Kaws(object):
                         SecurityGroupIds.append(sgid)
                 if 'kubetype' in metadata and metadata['kubetype'] == "openshift":
                     kube = metadata['kube']
-                    pprint("Adding vm to security group %s" % kube)
+                    pprint(f"Adding vm to security group {kube}")
                     kubesgid = self.get_security_group_id(kube, vpcid)
                     if kubesgid is None:
                         sg = self.resource.create_security_group(GroupName=kube, Description=kube)
@@ -238,6 +238,28 @@ class Kaws(object):
                         sg.authorize_ingress(GroupName=kube, FromPort=6081, ToPort=6081, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
                         sg.authorize_ingress(GroupName=kube, FromPort=6081, ToPort=6081, IpProtocol='udp',
+                                             CidrIp="0.0.0.0/0")
+                    SecurityGroupIds.append(kubesgid)
+                elif 'kubetype' in metadata and metadata['kubetype'] == "generic":
+                    kube = metadata['kube']
+                    pprint(f"Adding vm to security group {kube}")
+                    kubesgid = self.get_security_group_id(kube, vpcid)
+                    if kubesgid is None:
+                        sg = self.resource.create_security_group(GroupName=kube, Description=kube)
+                        sgtags = [{"Key": "Name", "Value": kube}]
+                        sg.create_tags(Tags=sgtags)
+                        kubesgid = sg.id
+                        sg.authorize_ingress(GroupName=kube, FromPort=-1, ToPort=-1, IpProtocol='icmp',
+                                             CidrIp="0.0.0.0/0")
+                        sg.authorize_ingress(GroupName=kube, FromPort=22, ToPort=22, IpProtocol='tcp',
+                                             CidrIp="0.0.0.0/0")
+                        sg.authorize_ingress(GroupName=kube, FromPort=80, ToPort=80, IpProtocol='tcp',
+                                             CidrIp="0.0.0.0/0")
+                        sg.authorize_ingress(GroupName=kube, FromPort=6443, ToPort=6443, IpProtocol='tcp',
+                                             CidrIp="0.0.0.0/0")
+                        sg.authorize_ingress(GroupName=kube, FromPort=2379, ToPort=2380, IpProtocol='tcp',
+                                             CidrIp="0.0.0.0/0")
+                        sg.authorize_ingress(GroupName=kube, FromPort=2380, ToPort=2380, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
                     SecurityGroupIds.append(kubesgid)
                 networkinterface['Groups'] = SecurityGroupIds
@@ -458,7 +480,6 @@ class Kaws(object):
         instanceid = vm['InstanceId']
         name = instanceid
         state = vm['State']['Name']
-        ip = vm['PublicIpAddress'] if 'PublicIpAddress' in vm else ''
         amid = vm['ImageId']
         az = vm['Placement']['AvailabilityZone']
         image = resource.Image(amid)
@@ -473,16 +494,14 @@ class Kaws(object):
         yamlinfo['name'] = name
         yamlinfo['status'] = state
         yamlinfo['az'] = az
-        yamlinfo['ip'] = ip
+        yamlinfo['ip'] = vm.get('PublicIpAddress')
         machinetype = vm['InstanceType']
         yamlinfo['flavor'] = machinetype
         if machinetype in staticf:
             yamlinfo['cpus'] = staticf[machinetype]['cpus']
             yamlinfo['memory'] = staticf[machinetype]['memory']
-        # yamlinfo['autostart'] = vm['scheduling']['automaticRestart']
         yamlinfo['image'] = source
         yamlinfo['user'] = common.get_user(yamlinfo['image'])
-        # yamlinfo['creationdate'] = dateparser.parse(vm['creationTimestamp']).strftime("%d-%m-%Y %H:%M")
         yamlinfo['instanceid'] = instanceid
         nets = []
         for interface in vm['NetworkInterfaces']:
@@ -518,8 +537,7 @@ class Kaws(object):
             vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
         except:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
-        ip = vm['PublicIpAddress'] if 'PublicIpAddress' in vm else None
-        return ip
+        return vm.get('PublicIpAddress')
 
     def internalip(self, name):
         ip = None

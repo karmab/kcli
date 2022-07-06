@@ -1,0 +1,14 @@
+api.{{ cluster }}:
+ type: loadbalancer
+ domain: {{ domain }}
+ reservedns: true
+ checkport: 6443
+ ports:
+ - 6443
+ - 80
+ - 2379
+ - 2380
+ vms:
+{% for num in range(0, masters|int) %}
+ - {{ cluster }}-master-{{ num }}
+{% endfor %}
