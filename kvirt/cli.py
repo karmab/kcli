@@ -1632,6 +1632,7 @@ def create_lb(args):
     ports = args.ports
     domain = args.domain
     internal = args.internal
+    vpcid = args.vpcid
     if args.vms is None:
         vms = []
     else:
@@ -1642,7 +1643,7 @@ def create_lb(args):
     name = nameutils.get_random_name().replace('_', '-') if args.name is None else args.name
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     config.create_loadbalancer(name, ports=ports, checkpath=checkpath, vms=vms, domain=domain, checkport=checkport,
-                               internal=internal)
+                               internal=internal, vpcid=vpcid)
     return 0
 
 
@@ -4244,6 +4245,7 @@ def cli():
     lbcreate_parser.add_argument('-i', '--internal', action='store_true')
     lbcreate_parser.add_argument('-p', '--ports', default='443', help='Load Balancer Ports. Defaults to 443')
     lbcreate_parser.add_argument('-v', '--vms', help='Vms to add to the pool. Can also be a list of ips')
+    lbcreate_parser.add_argument('--vpcid', help='Vpcid. Specific to AWS')
     lbcreate_parser.add_argument('name', metavar='NAME', nargs='?')
     lbcreate_parser.set_defaults(func=create_lb)
 

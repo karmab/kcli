@@ -1095,7 +1095,10 @@ class Kaws(object):
             Listeners.append(Listener)
         AvailabilityZones = [f"{self.region}{i}" for i in ['a', 'b', 'c']]
         clean_name = name.replace('.', '-')
-        sg = resource.create_security_group(GroupName=name, Description=name, VpcId=vpcid)
+        sg_data = {'GroupName': name, 'Description': name}
+        if vpcid is not None:
+            sg_data['VpcId'] = vpcid
+        sg = resource.create_security_group(**sg_data)
         sgid = sg.id
         sgtags = [{"Key": "Name", "Value": name}]
         sg.create_tags(Tags=sgtags)
