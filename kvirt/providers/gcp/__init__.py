@@ -286,11 +286,13 @@ class Kgcp(object):
             user = common.get_user(image)
             if user == 'root':
                 user = getuser()
-            finalkeys = [f"{user}: {x}"for x in keys]
+            finalkeys = [f"{user}:{x}"for x in keys]
             if enableroot:
-                finalkeys.extend([f"root: {x}" for x in keys])
+                finalkeys.extend([f"root:{x}" for x in keys])
             keys = '\n'.join(finalkeys)
             newval = {'key': 'ssh-keys', 'value': keys}
+            body['metadata']['items'].append(newval)
+            newval = {'key': 'block-project-ssh-keys', 'value': 'TRUE'}
             body['metadata']['items'].append(newval)
         if 'kubetype' in metadata and metadata['kubetype'] in ["generic", "openshift"]:
             kube = metadata['kube']
