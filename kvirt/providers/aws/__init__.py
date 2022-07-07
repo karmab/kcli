@@ -82,7 +82,7 @@ class Kaws(object):
                metadata={}, securitygroups=[]):
         conn = self.conn
         if self.exists(name):
-            return {'result': 'failure', 'reason': "VM %s already exists" % name}
+            return {'result': 'failure', 'reason': f"VM {name} already exists"}
         image = self.__evaluate_image(image)
         keypair = self.keypair
         if image is None:
@@ -95,16 +95,16 @@ class Kaws(object):
                 imageinfo = images['Images'][0]
                 imageid = imageinfo['ImageId']
                 if _filter == 'name':
-                    pprint("Using ami %s" % imageid)
+                    pprint(f"Using ami {imageid}")
                 image = imageinfo['Name']
             else:
-                return {'result': 'failure', 'reason': 'Invalid image %s' % image}
+                return {'result': 'failure', 'reason': f'Invalid image {image}'}
         defaultsubnetid = None
         if flavor is None:
             matching = [f for f in staticf if staticf[f]['cpus'] >= numcpus and staticf[f]['memory'] >= memory]
             if matching:
                 flavor = matching[0]
-                pprint("Using instance type %s" % flavor)
+                pprint(f"Using instance type {flavor}")
             else:
                 return {'result': 'failure', 'reason': 'Couldnt find instance type matching requirements'}
         vmtags = [{'ResourceType': 'instance',
@@ -112,10 +112,10 @@ class Kaws(object):
         for entry in [field for field in metadata if field in METADATA_FIELDS]:
             vmtags[0]['Tags'].append({'Key': entry, 'Value': metadata[entry]})
         if keypair is None:
-            keypair = 'kvirt_%s' % self.access_key_id
+            keypair = f'kvirt_{self.access_key_id}'
         keypairs = [k for k in conn.describe_key_pairs()['KeyPairs'] if k['KeyName'] == keypair]
         if not keypairs:
-            pprint("Importing your public key as %s" % keypair)
+            pprint(f"Importing your public key as {keypair}")
             publickeyfile = get_ssh_pub_key()
             if publickeyfile is None:
                 error("No public key found. Leaving")
@@ -140,7 +140,7 @@ class Kaws(object):
         vpcs = conn.describe_vpcs()
         subnets = conn.describe_subnets()
         for index, net in enumerate(nets):
-            networkinterface = {'DeleteOnTermination': True, 'Description': "eth%s" % index, 'DeviceIndex': index,
+            networkinterface = {'DeleteOnTermination': True, 'Description': f"eth{index}", 'DeviceIndex': index,
                                 'Groups': ['string'], 'SubnetId': 'string'}
             ip = None
             if isinstance(net, str):
@@ -155,7 +155,7 @@ class Kaws(object):
             #    netpublic = False
             networkinterface['AssociatePublicIpAddress'] = netpublic if index == 0 else False
             if netname in [subnet['SubnetId'] for subnet in subnets['Subnets']]:
-                pass
+                vpcid = [subnet['VpcId'] for subnet in subnets['Subnets'] if subnet['SubnetId'] == netname][0]
             elif netname == 'default':
                 if defaultsubnetid is not None:
                     netname = defaultsubnetid
@@ -165,17 +165,17 @@ class Kaws(object):
                                 if subnet['DefaultForAz'] and subnet['VpcId'] == vpcid][0]
                     netname = subnetid
                     defaultsubnetid = netname
-                    pprint("Using subnet %s as default" % defaultsubnetid)
+                    pprint(f"Using subnet {defaultsubnetid} as default")
             else:
                 vpcid = self.get_vpc_id(vpcs, netname) if not netname.startswith('vpc-') else netname
                 if vpcid is None:
-                    error("Couldn't find vpc %s" % netname)
+                    error(f"Couldn't find vpc {netname}")
                     sys.exit(1)
                 subnetids = [subnet['SubnetId'] for subnet in subnets['Subnets'] if subnet['VpcId'] == vpcid]
                 if subnetids:
                     netname = subnetids[0]
                 else:
-                    error("Couldn't find valid subnet for vpc %s" % netname)
+                    error(f"Couldn't find valid subnet for vpc {netname}")
                     sys.exit(1)
             if ips and len(ips) > index and ips[index] is not None:
                 ip = ips[index]
@@ -270,8 +270,7 @@ class Kaws(object):
             if image is not None and index == 0:
                 continue
             letter = chr(index + ord('a'))
-            # devicename = '/dev/sd%s1' % letter if index == 0 else '/dev/sd%s' % letter
-            devicename = '/dev/xvd%s' % letter
+            devicename = f'/dev/xvd{letter}'
             blockdevicemapping = {'DeviceName': devicename, 'Ebs': {'DeleteOnTermination': True,
                                                                     'VolumeType': 'standard'}}
             if isinstance(disk, int):
@@ -300,7 +299,7 @@ class Kaws(object):
             Filters = {'Name': "tag:Name", 'Values': [name]}
             vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
         except:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         instanceid = vm['InstanceId']
         conn.start_instances(InstanceIds=[instanceid])
         return {'result': 'success'}
@@ -311,7 +310,7 @@ class Kaws(object):
             Filters = {'Name': "tag:Name", 'Values': [name]}
             vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
         except:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         instanceid = vm['InstanceId']
         conn.stop_instances(InstanceIds=[instanceid])
         return {'result': 'success'}
@@ -326,13 +325,13 @@ class Kaws(object):
             Filters = {'Name': "tag:Name", 'Values': [name]}
             vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
         except:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         instanceid = vm['InstanceId']
         conn.start_instances(InstanceIds=[instanceid])
         return {'result': 'success'}
 
     def report(self):
-        print("Region: %s" % self.region)
+        print(f"Region: {self.region}")
         return
 
     def status(self, name):
@@ -341,7 +340,7 @@ class Kaws(object):
             Filters = {'Name': "tag:Name", 'Values': [name]}
             vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
         except:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         status = vm['State']['Name']
         return status
 
@@ -364,21 +363,21 @@ class Kaws(object):
                 Filters = {'Name': "tag:Name", 'Values': [name]}
                 vm = self.conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
         except:
-            error("VM %s not found" % name)
+            error(f"VM {name} not found")
         instanceid = vm['InstanceId']
         amid = vm['ImageId']
         image = self.resource.Image(amid)
         source = os.path.basename(image.image_location)
         user = common.get_user(source)
         user = 'ec2-user'
-        url = "https://eu-west-3.console.aws.amazon.com/ec2/v2/connect/%s/%s" % (user, instanceid)
+        url = f"https://eu-west-3.console.aws.amazon.com/ec2/v2/connect/{user}/{instanceid}"
         if web:
             return url
         if self.debug or os.path.exists("/i_am_a_container"):
-            msg = "Open the following url:\n%s" % url if os.path.exists("/i_am_a_container") else url
+            msg = f"Open the following url:\n{url}" if os.path.exists("/i_am_a_container") else url
             pprint(msg)
         else:
-            pprint("Opening url: %s" % url)
+            pprint(f"Opening url: {url}")
             webbrowser.open(url, new=2, autoraise=True)
         return
 
@@ -388,12 +387,12 @@ class Kaws(object):
             Filters = {'Name': "tag:Name", 'Values': [name]}
             vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
         except:
-            error("VM %s not found" % name)
+            error(f"VM {name} not found")
             return
         instanceid = vm['InstanceId']
         response = conn.get_console_output(InstanceId=instanceid, DryRun=False, Latest=False)
         if 'Output' not in response:
-            error("VM %s not ready yet" % name)
+            error(f"VM {name} not ready yet")
             return
         if web:
             return response['Output']
@@ -475,7 +474,7 @@ class Kaws(object):
                     Filters = {'Name': "tag:Name", 'Values': [name]}
                     vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
             except:
-                error("VM %s not found" % name)
+                error(f"VM {name} not found")
                 return {}
         instanceid = vm['InstanceId']
         name = instanceid
@@ -536,7 +535,7 @@ class Kaws(object):
             Filters = {'Name': "tag:Name", 'Values': [name]}
             vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
         except:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         return vm.get('PublicIpAddress')
 
     def internalip(self, name):
@@ -546,7 +545,7 @@ class Kaws(object):
             Filters = {'Name': "tag:Name", 'Values': [name]}
             vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
         except:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         if vm['NetworkInterfaces'] and 'PrivateIpAddresses' in vm['NetworkInterfaces'][0]:
             ip = vm['NetworkInterfaces'][0]['PrivateIpAddresses'][0]['PrivateIpAddress']
         if ip == '':
@@ -584,7 +583,7 @@ class Kaws(object):
             Filters = {'Name': "tag:Name", 'Values': [name]}
             vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
         except:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         if vm['State']['Name'] not in ['pending', 'running']:
             return {'result': 'success'}
         instanceid = vm['InstanceId']
@@ -632,7 +631,7 @@ class Kaws(object):
                     oldtags = [{"Key": metatype, "Value": oldvalue}]
                     conn.delete_tags(Resources=[instanceid], Tags=oldtags)
                     if append:
-                        metavalue = "%s,%s" % (oldvalue, metavalue)
+                        metavalue = f"{oldvalue},{metavalue}"
         newtags = [{"Key": metatype, "Value": metavalue}]
         conn.create_tags(Resources=[instanceid], Tags=newtags)
         return 0
@@ -643,16 +642,16 @@ class Kaws(object):
             Filters = {'Name': "tag:Name", 'Values': [name]}
             vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
         except:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         state = vm['State']['Name']
         if state != 'stopped':
-            error("Can't update memory of VM %s while up" % name)
-            return {'result': 'failure', 'reason': "VM %s up" % name}
+            error(f"Can't update memory of VM {name} while up")
+            return {'result': 'failure', 'reason': f"VM {name} up"}
         instanceid = vm['InstanceId']
         instancetype = [f for f in staticf if staticf[f]['memory'] >= int(memory)]
         if instancetype:
             flavor = instancetype[0]
-            pprint("Using flavor %s" % flavor)
+            pprint(f"Using flavor {flavor}")
             conn.modify_instance_attribute(InstanceId=instanceid, Attribute='instanceType', Value=flavor,
                                            DryRun=False)
             return {'result': 'success'}
@@ -666,13 +665,13 @@ class Kaws(object):
             Filters = {'Name': "tag:Name", 'Values': [name]}
             vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
         except:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         instanceid = vm['InstanceId']
         instancetype = vm['InstanceType']
         state = vm['State']['Name']
         if state != 'stopped':
-            error("Can't update cpus of VM %s while up" % name)
-            return {'result': 'failure', 'reason': "VM %s up" % name}
+            error(f"Can't update cpus of VM {name} while up")
+            return {'result': 'failure', 'reason': f"VM {name} up"}
         if instancetype != flavor:
             conn.modify_instance_attribute(InstanceId=instanceid, Attribute='instanceType', Value=flavor,
                                            DryRun=False)
@@ -684,16 +683,16 @@ class Kaws(object):
             Filters = {'Name': "tag:Name", 'Values': [name]}
             vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
         except:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         instanceid = vm['InstanceId']
         state = vm['State']['Name']
         if state != 'stopped':
-            error("Can't update cpus of VM %s while up" % name)
-            return {'result': 'failure', 'reason': "VM %s up" % name}
+            error(f"Can't update cpus of VM {name} while up")
+            return {'result': 'failure', 'reason': f"VM {name} up"}
         instancetype = [f for f in staticf if staticf[f]['cpus'] >= numcpus]
         if instancetype:
             flavor = instancetype[0]
-            pprint("Using flavor %s" % flavor)
+            pprint(f"Using flavor {flavor}")
             conn.modify_instance_attribute(InstanceId=instanceid, Attribute='instanceType', Value=flavor,
                                            DryRun=False)
             return {'result': 'success'}
@@ -724,20 +723,20 @@ class Kaws(object):
             Filters = {'Name': "tag:Name", 'Values': [name]}
             vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
         except:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         instanceid = vm['InstanceId']
         AvailabilityZone = vm['Placement']['AvailabilityZone']
         volume = conn.create_volume(Size=size, AvailabilityZone=AvailabilityZone)
         volumeid = volume['VolumeId']
         numdisks = len(vm['BlockDeviceMappings']) + 1
-        diskname = "%s-disk%s" % (name, numdisks)
+        diskname = f"{name}-disk{numdisks}"
         newtags = [{"Key": "Name", "Value": diskname}]
         conn.create_tags(Resources=[volumeid], Tags=newtags)
         currentvolume = conn.describe_volumes(VolumeIds=[volumeid])['Volumes'][0]
         while currentvolume['State'] == 'creating':
             currentvolume = conn.describe_volumes(VolumeIds=[volumeid])['Volumes'][0]
             sleep(2)
-        device = "/dev/sd%s" % ascii_lowercase[numdisks - 1]
+        device = f"/dev/sd{ascii_lowercase[numdisks - 1]}"
         conn.attach_volume(VolumeId=volumeid, InstanceId=instanceid, Device=device)
         return
 
@@ -747,7 +746,7 @@ class Kaws(object):
         try:
             volume = conn.describe_volumes(VolumeIds=[volumeid])['Volumes'][0]
         except:
-            return {'result': 'failure', 'reason': "Disk %s not found" % diskname}
+            return {'result': 'failure', 'reason': f"Disk {diskname} not found"}
         for attachment in volume['Attachments']:
             instanceid = attachment['InstanceId']
             conn.detach_volume(VolumeId=volumeid, InstanceId=instanceid)
@@ -776,13 +775,13 @@ class Kaws(object):
         return
 
     def delete_image(self, image, pool=None):
-        pprint("Deleting image %s" % image)
+        pprint(f"Deleting image {image}")
         conn = self.conn
         try:
             conn.deregister_image(ImageId=image)
             return {'result': 'success'}
         except:
-            return {'result': 'failure', 'reason': "Image %s not found" % image}
+            return {'result': 'failure', 'reason': f"Image {image} not found"}
 
     def add_image(self, url, pool, short=None, cmd=None, name=None, size=None):
         print("not implemented")
@@ -794,7 +793,7 @@ class Kaws(object):
             try:
                 network = ip_network(cidr)
             except:
-                return {'result': 'failure', 'reason': "Invalid Cidr %s" % cidr}
+                return {'result': 'failure', 'reason': f"Invalid Cidr {cidr}"}
             if str(network.version) == "6":
                 msg = 'Primary cidr needs to be ipv4 in aws. Use dual to inject ipv6 or set aws_ipv6 parameter'
                 return {'result': 'failure', 'reason': msg}
@@ -832,7 +831,7 @@ class Kaws(object):
             if vpcs:
                 vpcid = vpcs[0]['VpcId']
         if vpcid is None:
-            return {'result': 'failure', 'reason': "Network %s not found" % name}
+            return {'result': 'failure', 'reason': f"Network {name} not found"}
         Filters = [{'Name': 'vpc-id', 'Values': [vpcid]}]
         subnets = conn.describe_subnets(Filters=Filters)
         for subnet in subnets['Subnets']:
@@ -911,36 +910,36 @@ class Kaws(object):
     def __evaluate_image(self, image):
         if image is not None and image.lower().startswith('centos7'):
             image = 'ami-8352e3fe'
-            pprint("Using ami %s" % image)
+            pprint(f"Using ami {image}")
         return image
 
     def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False, instanceid=None):
         if domain is None:
             domain = nets[0]
         internalip = None
-        pprint("Using domain %s..." % domain)
+        pprint(f"Using domain {domain}")
         dns = self.dns
         cluster = None
-        fqdn = "%s.%s" % (name, domain)
+        fqdn = f"{name}.{domain}"
         if fqdn.split('-')[0] == fqdn.split('.')[1]:
             cluster = fqdn.split('-')[0]
             name = '.'.join(fqdn.split('.')[:1])
-            domain = fqdn.replace("%s." % name, '').replace("%s." % cluster, '')
+            domain = fqdn.replace(f"{name}.", '').replace(f"{cluster}.", '')
         zone = [z['Id'].split('/')[2] for z in dns.list_hosted_zones_by_name()['HostedZones']
-                if z['Name'] == '%s.' % domain]
+                if z['Name'] == f'{domain}.']
         if not zone:
-            error("Domain %s not found" % domain)
-            return {'result': 'failure', 'reason': "Domain %s not found" % domain}
+            error(f"Domain {domain} not found")
+            return {'result': 'failure', 'reason': f"Domain {domain} not found"}
         zoneid = zone[0]
-        dnsentry = name if cluster is None else "%s.%s" % (name, cluster)
-        entry = "%s.%s." % (dnsentry, domain)
+        dnsentry = name if cluster is None else f"{name}.{cluster}"
+        entry = f"{dnsentry}.{domain}."
         if cluster is not None and ('master' in name or 'worker' in name):
             counter = 0
             while counter != 100:
                 internalip = self.internalip(name)
                 if internalip is None:
                     sleep(5)
-                    pprint("Waiting 5 seconds to grab internal ip and create DNS record for %s..." % name)
+                    pprint(f"Waiting 5 seconds to grab internal ip and create DNS record for {name}")
                     counter += 10
                 else:
                     break
@@ -959,7 +958,7 @@ class Kaws(object):
                     else:
                         break
         if ip is None:
-            error("Couldn't assign DNS for %s" % name)
+            error(f"Couldn't assign DNS for {name}")
             return
         dnsip = ip if internalip is None else internalip
         changes = [{'Action': 'CREATE', 'ResourceRecordSet':
@@ -968,13 +967,13 @@ class Kaws(object):
             for a in alias:
                 if a == '*':
                     if cluster is not None and ('master' in name or 'worker' in name):
-                        new = '*.apps.%s.%s.' % (cluster, domain)
+                        new = f'*.apps.{cluster}.{domain}.'
                     else:
-                        new = '*.%s.%s.' % (name, domain)
+                        new = f'*.{name}.{domain}.'
                     changes.append({'Action': 'CREATE', 'ResourceRecordSet':
                                     {'Name': new, 'Type': 'A', 'TTL': 300, 'ResourceRecords': [{'Value': ip}]}})
                 else:
-                    new = '%s.%s.' % (a, domain) if '.' not in a else '%s.' % a
+                    new = f'{a}.{domain}.' if '.' not in a else f'{a}.'
                     changes.append({'Action': 'CREATE', 'ResourceRecordSet':
                                     {'Name': new, 'Type': 'CNAME', 'TTL': 300, 'ResourceRecords': [{'Value': entry}]}})
         dns.change_resource_record_sets(HostedZoneId=zoneid, ChangeBatch={'Changes': changes})
@@ -983,27 +982,27 @@ class Kaws(object):
     def delete_dns(self, name, domain, instanceid=None, allentries=False):
         dns = self.dns
         cluster = None
-        fqdn = "%s.%s" % (name, domain)
+        fqdn = f"{name}.{domain}"
         if fqdn.split('-')[0] == fqdn.split('.')[1]:
             cluster = fqdn.split('-')[0]
             name = '.'.join(fqdn.split('.')[:1])
-            domain = fqdn.replace("%s." % name, '').replace("%s." % cluster, '')
+            domain = fqdn.replace(f"{name}.", '').replace(f"{cluster}.", '')
         zone = [z['Id'].split('/')[2] for z in dns.list_hosted_zones_by_name()['HostedZones']
-                if z['Name'] == '%s.' % domain]
+                if z['Name'] == f'{domain}.']
         if not zone:
-            error("Domain %s not found" % domain)
-            return {'result': 'failure', 'reason': "Domain not found"}
+            error(f"Domain {domain} not found")
+            return {'result': 'failure', 'reason': f"Domain {domain} not found"}
         zoneid = zone[0]
-        dnsentry = name if cluster is None else "%s.%s" % (name, cluster)
-        entry = "%s.%s." % (dnsentry, domain)
+        dnsentry = name if cluster is None else f"{name}.{cluster}"
+        entry = f"{dnsentry}.{domain}."
         ip = self.ip(instanceid)
         if ip is None:
-            error("Couldn't Get DNS Ip for %s" % name)
+            error(f"Couldn't Get DNS Ip for {name}")
             return
         recs = []
-        clusterdomain = "%s.%s" % (cluster, domain)
+        clusterdomain = f"{cluster}.{domain}"
         for record in dns.list_resource_record_sets(HostedZoneId=zoneid)['ResourceRecordSets']:
-            if entry in record['Name'] or ('master-0' in name and record['Name'].endswith("%s." % clusterdomain)):
+            if entry in record['Name'] or ('master-0' in name and record['Name'].endswith(f"{clusterdomain}.")):
                 recs.append(record)
             else:
                 if 'ResourceRecords' in record:
@@ -1021,7 +1020,7 @@ class Kaws(object):
         results = []
         dns = self.dns
         zone = [z['Id'].split('/')[2] for z in dns.list_hosted_zones_by_name()['HostedZones']
-                if z['Name'] == '%s.' % domain]
+                if z['Name'] == f'{domain}.']
         if not zone:
             error("Domain not found")
         else:
@@ -1031,7 +1030,7 @@ class Kaws(object):
                 _type = record['Type']
                 ttl = record.get('TTL', 'N/A')
                 if _type not in ['NS', 'SOA']:
-                    name = name.replace("%s." % domain, '')
+                    name = name.replace(f"{domain}.", '')
                 name = name[:-1]
                 if 'ResourceRecords' in record:
                     data = ' '.join(x['Value'] for x in record['ResourceRecords'])
@@ -1057,10 +1056,10 @@ class Kaws(object):
             Filters = {'Name': "tag:Name", 'Values': [name]}
             vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
         except:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         InstanceId = vm['InstanceId']
-        Name = image if image is not None else "kcli %s" % name
-        Description = "image based on %s" % name
+        Name = image if image is not None else f"kcli {name}"
+        Description = f"image based on {name}"
         conn.create_image(InstanceId=InstanceId, Name=Name, Description=Description, NoReboot=True)
         return {'result': 'success'}
 
@@ -1079,7 +1078,7 @@ class Kaws(object):
             Listener = {'Protocol': protocol, 'LoadBalancerPort': port, 'InstanceProtocol': protocol,
                         'InstancePort': port}
             Listeners.append(Listener)
-        AvailabilityZones = ["%s%s" % (self.region, i) for i in ['a', 'b', 'c']]
+        AvailabilityZones = [f"{self.region}{i}" for i in ['a', 'b', 'c']]
         clean_name = name.replace('.', '-')
         sg = resource.create_security_group(GroupName=name, Description=name)
         sgid = sg.id
@@ -1094,15 +1093,11 @@ class Kaws(object):
             if dnsclient is not None:
                 lbinfo['Tags'].append({"Key": "dnsclient", "Value": dnsclient})
         lb = elb.create_load_balancer(**lbinfo)
-        # if 80 in ports:
-        #    HealthTarget = 'HTTP:80%s' % checkpath
-        # else:
-        #   HealthTarget = '%s:%s' % (protocol, port)
-        HealthTarget = '%s:%s' % (protocol, port)
+        HealthTarget = f'{protocol}:{port}'
         HealthCheck = {'Interval': 20, 'Target': HealthTarget, 'Timeout': 3, 'UnhealthyThreshold': 10,
                        'HealthyThreshold': 2}
         elb.configure_health_check(LoadBalancerName=clean_name, HealthCheck=HealthCheck)
-        pprint("Reserved dns name %s" % lb['DNSName'])
+        pprint(f"Reserved dns name {lb['DNSName']}")
         if vms:
             Instances = []
             for vm in vms:
@@ -1127,7 +1122,7 @@ class Kaws(object):
                     ip = gethostbyname(lb_dns_name)
                     break
                 except:
-                    pprint("Waiting 10s for %s to get an ip resolution" % lb_dns_name)
+                    pprint(f"Waiting 10s for {lb_dns_name} to get an ip resolution")
                     sleep(10)
             if dnsclient is not None:
                 return ip
@@ -1149,9 +1144,9 @@ class Kaws(object):
                         dnsclient = tag['Value']
                     if tag['Key'] == 'domain':
                         domain = tag['Value']
-                        pprint("Using found domain %s" % domain)
+                        pprint(f"Using found domain {domain}")
         except:
-            warning("Loadbalancer %s not found" % clean_name)
+            warning(f"Loadbalancer {clean_name} not found")
             pass
         vms = [v['name'] for v in self.list() if 'loadbalancer' in v and name in v['loadbalancer']]
         for vm in vms:
@@ -1162,17 +1157,17 @@ class Kaws(object):
                 if sg['GroupName'] != name:
                     sgids.append(sg['GroupId'])
             if sgids:
-                pprint("Removing %s from security group %s" % (vm, name))
+                pprint(f"Removing {vm} from security group {name}")
                 conn.modify_instance_attribute(InstanceId=instanceid, Groups=sgids)
         elb.delete_load_balancer(LoadBalancerName=clean_name)
         if domain is not None and dnsclient is None:
-            warning("Deleting DNS %s.%s" % (name, domain))
+            warning(f"Deleting DNS {name}.{domain}")
             self.delete_dns(name, domain, name)
         try:
             sleep(30)
             conn.delete_security_group(GroupName=name)
         except Exception as e:
-            warning("Couldn't remove security group %s. Got %s" % (name, e))
+            warning(f"Couldn't remove security group {name}. Got {e}")
         if dnsclient is not None:
             return dnsclient
 
@@ -1195,10 +1190,9 @@ class Kaws(object):
     def create_bucket(self, bucket, public=False):
         s3 = self.s3
         if bucket in self.list_buckets():
-            error("Bucket %s already there" % bucket)
+            error(f"Bucket {bucket} already there")
             return
         location = {'LocationConstraint': self.region}
-        # s3.create_bucket(Bucket=bucket, CreateBucketConfiguration=location)
         args = {'Bucket': bucket, "CreateBucketConfiguration": location}
         if public:
             args['ACL'] = 'public-read'
@@ -1207,18 +1201,18 @@ class Kaws(object):
     def delete_bucket(self, bucket):
         s3 = self.s3
         if bucket not in self.list_buckets():
-            error("Inexistent bucket %s" % bucket)
+            error(f"Inexistent bucket {bucket}")
             return
         for obj in s3.list_objects(Bucket=bucket)['Contents']:
             key = obj['Key']
-            pprint("Deleting object %s from bucket %s" % (key, bucket))
+            pprint(f"Deleting object {key} from bucket {bucket}")
             s3.delete_object(Bucket=bucket, Key=key)
         s3.delete_bucket(Bucket=bucket)
 
     def delete_from_bucket(self, bucket, path):
         s3 = self.s3
         if bucket not in self.list_buckets():
-            error("Inexistent bucket %s" % bucket)
+            error(f"Inexistent bucket {bucket}")
             return
         s3.delete_object(Bucket=bucket, Key=path)
 
@@ -1228,10 +1222,10 @@ class Kaws(object):
 
     def upload_to_bucket(self, bucket, path, overrides={}, temp_url=False, public=False):
         if not os.path.exists(path):
-            error("Invalid path %s" % path)
+            error(f"Invalid path {path}")
             return
         if bucket not in self.list_buckets():
-            error("Bucket %s doesn't exist" % bucket)
+            error(f"Bucket {bucket} doesn't exist")
             return
         ExtraArgs = {'Metadata': overrides} if overrides else {}
         if public:
@@ -1252,12 +1246,12 @@ class Kaws(object):
     def list_bucketfiles(self, bucket):
         s3 = self.s3
         if bucket not in self.list_buckets():
-            error("Inexistent bucket %s" % bucket)
+            error(f"Inexistent bucket {bucket}")
             return []
         return [obj['Key'] for obj in s3.list_objects(Bucket=bucket)['Contents']]
 
     def public_bucketfile_url(self, bucket, path):
-        return "https://%s.s3.%s.amazonaws.com/%s" % (bucket, self.region, path)
+        return f"https://{bucket}.s3.{self.region}.amazonaws.com/{path}"
 
     def update_nic(self, name, index, network):
         print("not implemented")
