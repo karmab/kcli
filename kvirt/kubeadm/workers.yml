@@ -17,18 +17,18 @@
  nets: {{ [network] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
  files:
-  - path: /root/join.sh
-    origin: ~/.kcli/clusters/{{ cluster }}/join.sh
-  - path: /root/admin.conf
-    origin: ~/.kcli/clusters/{{ cluster }}/auth/kubeconfig
+ - path: /root/join.sh
+   origin: ~/.kcli/clusters/{{ cluster }}/join.sh
+ - path: /root/admin.conf
+   origin: ~/.kcli/clusters/{{ cluster }}/auth/kubeconfig
 {% if eksd %}
-  - eksd.sh
+ - eksd.sh
 {% endif %}
-  - path: /root/pre.sh
-    origin: pre_{{ 'ubuntu' if ubuntu|default(False) else 'el' }}.sh
-  - workers.sh
-  - path: /root/deploy.sh
-    origin: deploy.sh_workers
+ - path: /root/pre.sh
+   origin: pre_{{ 'ubuntu' if ubuntu|default(False) else 'el' }}.sh
+ - workers.sh
+ - path: /root/deploy.sh
+   origin: deploy.sh_workers
  cmds:
-  - bash /root/deploy.sh
+ - bash /root/deploy.sh
 {% endfor %}

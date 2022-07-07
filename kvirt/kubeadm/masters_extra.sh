@@ -1,14 +1,6 @@
 API_IP={{ "api.%s.%s" % (cluster, domain) if config_type in ['aws', 'gcp', 'ibm'] else api_ip }}
-ready=false
-while [ "$ready" != "true" ] ; do
- curl -Lk http://${API_IP}/mastercmd.sh > /var/www/html/mastercmd.sh
- grep -q kubeadm /var/www/html/mastercmd.sh
- if [ "$?" = "0" ] ; then ready=true ; fi
-  sleep 10
-done
-curl -Lk http://${API_IP}/admin.conf > /var/www/html/admin.conf
-cp /var/www/html/admin.conf /etc/kubernetes/admin.conf 
-bash /var/www/html/mastercmd.sh | tee /root/$(hostname).log 2>&1
+cp /root/admin.conf /etc/kubernetes/admin.conf 
+bash /root/mastercmd.sh | tee /root/$(hostname).log 2>&1
 mkdir -p /root/.kube
 cp -i /etc/kubernetes/admin.conf /root/.kube/config
 chown root:root /root/.kube/config

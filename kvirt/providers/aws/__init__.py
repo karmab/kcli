@@ -253,8 +253,6 @@ class Kaws(object):
                                              CidrIp="0.0.0.0/0")
                         sg.authorize_ingress(GroupName=kube, FromPort=22, ToPort=22, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupName=kube, FromPort=80, ToPort=80, IpProtocol='tcp',
-                                             CidrIp="0.0.0.0/0")
                         sg.authorize_ingress(GroupName=kube, FromPort=6443, ToPort=6443, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
                         sg.authorize_ingress(GroupName=kube, FromPort=2379, ToPort=2380, IpProtocol='tcp',

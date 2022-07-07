@@ -33,38 +33,44 @@
    path: ~/.kcli/clusters/{{ cluster }}/join.sh
  - origin: /etc/kubernetes/admin.conf
    path: ~/.kcli/clusters/{{ cluster }}/auth/kubeconfig
+ - origin: /root/mastercmd.sh
+   path: ~/.kcli/clusters/{{ cluster }}/mastercmd.sh
 {% endif %}
  nets: {{ [primary_network] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
  files:
 {% if config_type not in ['aws', 'gcp', 'ibm'] %}
-  - keepalived.conf
-  - keepalived.sh
+ - keepalived.conf
+ - keepalived.sh
 {% endif %}
-  - registry.yml
+ - registry.yml
 {% if number == 0 %}
 {% if multus %}
-  - multus.sh
+ - multus.sh
 {% endif %}
 {% if metallb %}
-  - metal_lb.sh
-  - metal_lb_cm.yml
+ - metal_lb.sh
+ - metal_lb_cm.yml
 {% endif %}
 {% if nfs %}
-  - nfs.yml
-  - nfs.sh
+ - nfs.yml
+ - nfs.sh
 {% endif %}
+{% else %}
+ - path: /root/mastercmd.sh
+   origin: ~/.kcli/clusters/{{ cluster }}/mastercmd.sh
+ - path: /root/admin.conf
+   origin: ~/.kcli/clusters/{{ cluster }}/auth/kubeconfig
 {% endif %}
-  - apache.sh
 {% if eksd %}
-  - eksd.sh
+ - eksd.sh
 {% endif %}
-  - path: /root/pre.sh
-    origin: pre_{{ 'ubuntu' if ubuntu|default(False) else 'el' }}.sh
-  - path: /root/masters.sh
-    origin: {{ 'bootstrap.sh' if number == 0 else 'masters_extra.sh' }}
-  - path: /root/deploy.sh
-    origin: deploy.sh_masters
+ - path: /root/pre.sh
+   origin: pre_{{ 'ubuntu' if ubuntu|default(False) else 'el' }}.sh
+ - path: /root/masters.sh
+   origin: {{ 'bootstrap.sh' if number == 0 else 'masters_extra.sh' }}
+ - path: /root/deploy.sh
+   origin: deploy.sh_masters
  cmds:
-  - bash /root/deploy.sh
+ - bash /root/deploy.sh
 {% endfor %}

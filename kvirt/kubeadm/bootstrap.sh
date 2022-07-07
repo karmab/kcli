@@ -51,9 +51,7 @@ sleep 60
 LOGFILE="{{ '/var/log/cloud-init-output.log' if ubuntu else '/var/log/messages' }}"
 CERTKEY=$(grep certificate-key $LOGFILE | head -1 | sed 's/.*certificate-key \(.*\)/\1/')
 MASTERCMD="$CMD --control-plane --certificate-key $CERTKEY"
-cp /root/admin.conf /var/www/html
-echo $MASTERCMD > /var/www/html/mastercmd.sh
-chmod o+r /var/www/html/*
+echo $MASTERCMD > /root/mastercmd.sh
 
 echo ${CMD} > /root/join.sh
 
