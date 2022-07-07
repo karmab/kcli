@@ -129,6 +129,8 @@ def create(config, plandir, cluster, overrides):
         sys.exit(1)
     if config.type in cloudplatforms:
         config.k.delete_dns(f'api.{cluster}', domain=domain)
+        if config.type == 'aws':
+            data['vpcid'] = config.k.get_vpcid_of_vm(f"{cluster}-master-0")
         result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_api.yml', overrides=data)
         if result['result'] != 'success':
             sys.exit(1)

@@ -1103,7 +1103,7 @@ class Kgcp(object):
         return {'result': 'success'}
 
     def create_loadbalancer(self, name, ports=[], checkpath='/index.html', vms=[], domain=None, checkport=80, alias=[],
-                            internal=False, dnsclient=None):
+                            internal=False, dnsclient=None, vpcid=None):
         sane_name = name.replace('.', '-')
         ports = [int(port) for port in ports]
         conn = self.conn

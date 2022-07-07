@@ -3,6 +3,9 @@ api.{{ cluster }}:
  domain: {{ domain }}
  reservedns: true
  checkport: 6443
+{% if config_type == 'aws' and vpcid is defined %}
+ vpcid: {{ vcpid }}
+{% endif %}
  ports:
  - 6443
  - 2379

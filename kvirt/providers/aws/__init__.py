@@ -197,7 +197,7 @@ class Kaws(object):
                     pprint(f"Adding vm to security group {kube}")
                     kubesgid = self.get_security_group_id(kube, vpcid)
                     if kubesgid is None:
-                        sg = self.resource.create_security_group(GroupName=kube, Description=kube)
+                        sg = self.resource.create_security_group(GroupName=kube, Description=kube, VpcId=vpcid)
                         sgtags = [{"Key": "Name", "Value": kube}]
                         sg.create_tags(Tags=sgtags)
                         kubesgid = sg.id
@@ -245,7 +245,7 @@ class Kaws(object):
                     pprint(f"Adding vm to security group {kube}")
                     kubesgid = self.get_security_group_id(kube, vpcid)
                     if kubesgid is None:
-                        sg = self.resource.create_security_group(GroupName=kube, Description=kube)
+                        sg = self.resource.create_security_group(GroupName=kube, Description=kube, VpcId=vpcid)
                         sgtags = [{"Key": "Name", "Value": kube}]
                         sg.create_tags(Tags=sgtags)
                         kubesgid = sg.id
@@ -526,6 +526,23 @@ class Kaws(object):
         if debug:
             yamlinfo['debug'] = vm
         return yamlinfo
+
+    def get_vpcid_of_vm(self, name):
+        vcpid = None
+        conn = self.conn
+        try:
+            if name.startswith('i-'):
+                vm = conn.describe_instances(InstanceIds=[name])['Reservations'][0]['Instances'][0]
+            else:
+                Filters = {'Name': "tag:Name", 'Values': [name]}
+                vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
+        except:
+            error(f"VM {name} not found")
+            return {}
+        for interface in vm['NetworkInterfaces']:
+            vpcid = interface['VpcId']
+            return vpcid
+        return vcpid
 
     def ip(self, name):
         conn = self.conn
@@ -1062,7 +1079,7 @@ class Kaws(object):
         return {'result': 'success'}
 
     def create_loadbalancer(self, name, ports=[], checkpath='/index.html', vms=[], domain=None, checkport=80, alias=[],
-                            internal=False, dnsclient=None):
+                            internal=False, dnsclient=None, vpcid=None):
         ports = [int(port) for port in ports]
         resource = self.resource
         conn = self.conn
@@ -1078,7 +1095,7 @@ class Kaws(object):
             Listeners.append(Listener)
         AvailabilityZones = [f"{self.region}{i}" for i in ['a', 'b', 'c']]
         clean_name = name.replace('.', '-')
-        sg = resource.create_security_group(GroupName=name, Description=name)
+        sg = resource.create_security_group(GroupName=name, Description=name, VpcId=vpcid)
         sgid = sg.id
         sgtags = [{"Key": "Name", "Value": name}]
         sg.create_tags(Tags=sgtags)
