@@ -1,0 +1,4 @@
+knative_pod_autoscaler_class: kpa.autoscaling.knative.dev
+knative_eventing_inbroker: true
+knative_scale_to_zero: true
+knative_scale_to_zero_grace_period: 30
