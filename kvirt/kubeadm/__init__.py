@@ -36,6 +36,7 @@ def scale(config, plandir, cluster, overrides):
     os.chdir(os.path.expanduser("~/.kcli"))
     for role in ['masters', 'workers']:
         overrides = data.copy()
+        overrides['scale'] = True
         if overrides.get(role, 0) == 0:
             continue
         threaded = data.get('threaded', False) or data.get(f'{role}_threaded', False)
@@ -81,14 +82,15 @@ def create(config, plandir, cluster, overrides):
         else:
             error("You need to define api_ip in your parameters file")
             sys.exit(1)
-    if nip and platform not in cloudplatforms:
-        data['domain'] = f"{api_ip}.nip.io"
-    if data.get('virtual_router_id') is None:
-        data['virtual_router_id'] = hash(data['cluster']) % 254 + 1
-    virtual_router_id = data['virtual_router_id']
-    pprint(f"Using keepalived virtual_router_id {virtual_router_id}")
-    auth_pass = ''.join(choice(ascii_letters + digits) for i in range(5))
-    data['auth_pass'] = auth_pass
+    if platform not in cloudplatforms:
+        if nip:
+            data['domain'] = f"{api_ip}.nip.io"
+        if data.get('virtual_router_id') is None:
+            data['virtual_router_id'] = hash(data['cluster']) % 254 + 1
+        virtual_router_id = data['virtual_router_id']
+        pprint(f"Using keepalived virtual_router_id {virtual_router_id}")
+        auth_pass = ''.join(choice(ascii_letters + digits) for i in range(5))
+        data['auth_pass'] = auth_pass
     version = data.get('version')
     if version is not None and not str(version).startswith('1.'):
         error(f"Invalid version {version}")
@@ -118,10 +120,10 @@ def create(config, plandir, cluster, overrides):
             installparam['image'] = image
             installparam['auth_pass'] = auth_pass
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
+    result = config.plan(plan, inputfile=f'{plandir}/bootstrap.yml', overrides=data)
+    if result['result'] != "success":
+        sys.exit(1)
     master_threaded = data.get('threaded', False) or data.get('masters_threaded', False)
-    if master_threaded:
-        warning("Forcing unthreaded mode for masters during bootstrapping")
-        master_threaded = False
     result = config.plan(plan, inputfile=f'{plandir}/masters.yml', overrides=data, threaded=master_threaded)
     if result['result'] != "success":
         sys.exit(1)

@@ -1,5 +1,3 @@
-{% set first_master = 0 if scale|default(False) else 1 %}
-{% for number in range(first_master, masters|int) %}
 {% if extra_master_networks %}
  {% set extra_networks = extra_master_networks %}
 {% endif %}
@@ -7,14 +5,32 @@
  {% set extra_disks = extra_master_disks %}
 {% endif %}
 
-{{ cluster }}-master-{{ number }}:
+{{ cluster }}-master-0:
 {% set primary_network = {'name': network} %}
+{% if config_type in ['aws', 'gcp', 'ibm'] %}
+{% set _= primary_network.__setitem__("reservedns", True) %}
+{% set _= primary_network.__setitem__("alias", ["api.%s.%s" % (cluster,domain)]) %}
+{% endif %}
  image: {{ image }}
  pool: {{ pool or config_pool }}
  keys: {{ keys }}
  numcpus: {{ master_numcpus | default(numcpus, numcpus) }}
  memory: {{ master_memory | default(memory, memory) }}
+ enableroot: true
+{% if config_type in ['aws', 'gcp', 'ibm'] %}
+ reservedns: true
+{% endif %}
  domain: {{ domain }}
+ wait: true
+ notify: {{ notify }}
+ notifycmd: {{ notifycmd }}
+ finishfiles:
+ - origin: /root/join.sh
+   path: ~/.kcli/clusters/{{ cluster }}/join.sh
+ - origin: /etc/kubernetes/admin.conf
+   path: ~/.kcli/clusters/{{ cluster }}/auth/kubeconfig
+ - origin: /root/mastercmd.sh
+   path: ~/.kcli/clusters/{{ cluster }}/mastercmd.sh
  nets: {{ [primary_network] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
  files:
@@ -23,19 +39,25 @@
  - keepalived.sh
 {% endif %}
  - registry.yml
- - path: /root/mastercmd.sh
-   origin: ~/.kcli/clusters/{{ cluster }}/mastercmd.sh
- - path: /root/admin.conf
-   origin: ~/.kcli/clusters/{{ cluster }}/auth/kubeconfig
+{% if multus %}
+ - multus.sh
+{% endif %}
+{% if metallb %}
+ - metal_lb.sh
+ - metal_lb_cm.yml
+{% endif %}
+{% if nfs %}
+ - nfs.yml
+ - nfs.sh
+{% endif %}
 {% if eksd %}
  - eksd.sh
 {% endif %}
  - path: /root/pre.sh
    origin: pre_{{ 'ubuntu' if ubuntu|default(False) else 'el' }}.sh
  - path: /root/masters.sh
-   origin: masters_extra.sh
+   origin: bootstrap.sh
  - path: /root/deploy.sh
    origin: deploy.sh_masters
  cmds:
  - bash /root/deploy.sh
-{% endfor %}
