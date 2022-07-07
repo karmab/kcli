@@ -114,11 +114,13 @@ def create(config, plandir, cluster, overrides):
         with open(f"{clusterdir}/kcli_parameters.yml", 'w') as p:
             installparam = overrides.copy()
             installparam['api_ip'] = api_ip
-            installparam['virtual_router_id'] = data['virtual_router_id']
+            if 'virtual_router_id' in data:
+                installparam['virtual_router_id'] = data['virtual_router_id']
+            if 'auth_pass' in data:
+                installparam['auth_pass'] = auth_pass
             installparam['plan'] = plan
             installparam['kubetype'] = 'generic'
             installparam['image'] = image
-            installparam['auth_pass'] = auth_pass
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     result = config.plan(plan, inputfile=f'{plandir}/bootstrap.yml', overrides=data)
     if result['result'] != "success":
