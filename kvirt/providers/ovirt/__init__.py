@@ -1167,7 +1167,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             cidr = 'N/A'
             vlan = network._vlan
             if vlan is not None:
-                cidr = vlan
+                cidr = f"vlan {vlan.id}"
             dhcp = network._id
             domainname = network._data_center
             domainname = self.conn.follow_link(network._data_center).name
