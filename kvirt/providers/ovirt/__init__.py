@@ -798,7 +798,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         cdroms_service = vm.cdroms_service()
         cdrom = cdroms_service.list()[0]
         cdrom_service = cdroms_service.cdrom_service(cdrom.id)
-        if iso == '':
+        if iso is None or iso == '':
             cdrom_service.update(cdrom=types.Cdrom(file=types.File()), current=True)
             return {'result': 'success'}
         try:
