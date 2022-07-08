@@ -1431,7 +1431,7 @@ def update_vm(args):
         if 'iso' in overrides:
             iso = overrides['iso']
             pprint(f"Switching iso for vm {name} to {iso}...")
-            if iso == 'None':
+            if iso == 'None' or iso == '':
                 iso = None
             k.update_iso(name, iso)
         if flavor is not None:

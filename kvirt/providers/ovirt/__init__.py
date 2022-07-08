@@ -809,7 +809,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                 error(f"Hit issue {e.fault._detail}")
                 return {'result': 'failure', 'reason': f"Hit issue {e.fault._detail}"}
         else:
-            cdrom_service.update(cdrom=types.Cdrom(file=types.File()), current=current)
+            cdrom_service.update(cdrom=types.Cdrom(file=types.File(id='')), current=current)
         return {'result': 'success'}
 
     def update_flavor(self, name, flavor):
