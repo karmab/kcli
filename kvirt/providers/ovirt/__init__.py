@@ -518,6 +518,9 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         if self.debug or os.path.exists("/i_am_a_container"):
             msg = "Use remote-viewer with this:\n%s" % connectiondetails if not self.debug else connectiondetails
             pprint(msg)
+        elif os.path.exists('/Users') and str(c.protocol) == 'vnc':
+            pprint(f"Use password {ticket.value}")
+            os.popen(f"open vnc://{address}:{port}")
         else:
             os.popen("remote-viewer /tmp/console.vv &")
         return
