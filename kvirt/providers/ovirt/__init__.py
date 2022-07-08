@@ -163,11 +163,7 @@ class KOvirt(object):
         cpu = types.Cpu(topology=types.CpuTopology(cores=numcpus, sockets=1))
         try:
             if placement:
-                # placement_hosts = [types.Host(name=h) for h in placement]
-                # placement_policy = types.VmPlacementPolicy(hosts=placement_hosts, affinity=types.VmAffinity.PINNED)
-                # placement_policy = types.VmPlacementPolicy(hosts=placement_hosts)
                 placement_policy = None
-                print(choice(placement))
                 vmhost = types.Host(name=choice(placement))
             else:
                 placement_policy = None
@@ -798,14 +794,22 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         cdroms_service = vm.cdroms_service()
         cdrom = cdroms_service.list()[0]
         cdrom_service = cdroms_service.cdrom_service(cdrom.id)
-        if iso is None or iso == '':
-            cdrom_service.update(cdrom=types.Cdrom(file=types.File()), current=True)
-            return {'result': 'success'}
-        try:
-            cdrom_service.update(cdrom=types.Cdrom(file=types.File(id=iso)), current=True)
-        except Exception as e:
-            error(f"Hit issue {e.fault._detail}")
-            return {'result': 'failure', 'reason': f"Hit issue {e.fault._detail}"}
+        current = False if str(vminfo.status) == 'down' else True
+        if iso is not None and iso != '':
+            disks_service = self.conn.system_service().disks_service()
+            disksearch = disks_service.list(search=f'name={iso}')
+            if disksearch:
+                iso_id = disksearch[0].id
+            else:
+                error(f"Iso {iso} not found")
+                return {'result': 'failure', 'reason': f"Iso {iso} not found"}
+            try:
+                cdrom_service.update(cdrom=types.Cdrom(file=types.File(id=iso_id)), current=current)
+            except Exception as e:
+                error(f"Hit issue {e.fault._detail}")
+                return {'result': 'failure', 'reason': f"Hit issue {e.fault._detail}"}
+        else:
+            cdrom_service.update(cdrom=types.Cdrom(file=types.File()), current=current)
         return {'result': 'success'}
 
     def update_flavor(self, name, flavor):
