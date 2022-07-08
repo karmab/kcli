@@ -5,9 +5,6 @@ Gcp Provider Class
 """
 
 from ipaddress import ip_network
-from jinja2 import Environment, FileSystemLoader
-from jinja2 import StrictUndefined as undefined
-from jinja2.exceptions import TemplateSyntaxError, TemplateError, TemplateNotFound
 from kvirt import common
 from kvirt.common import pprint, error, warning, get_ssh_pub_key
 from kvirt.defaults import UBUNTUS, METADATA_FIELDS
@@ -16,10 +13,8 @@ from getpass import getuser
 import googleapiclient.discovery
 from google.cloud import dns, storage
 import os
-import sys
 from time import sleep
 import webbrowser
-import yaml
 
 binary_types = ['bz2', 'deb', 'jpg', 'gz', 'jpeg', 'iso', 'png', 'rpm', 'tgz', 'zip']
 
@@ -199,82 +194,6 @@ class Kgcp(object):
         for entry in [field for field in metadata if field in METADATA_FIELDS]:
             value = metadata[entry].replace('.', '-')
             body['labels'][entry] = value
-        startup_script = ''
-        sshdircreated = False
-        if storemetadata and overrides:
-            storedata = {'path': '/root/.metadata', 'content': yaml.dump(overrides, default_flow_style=False, indent=2)}
-            if files:
-                files.append(storedata)
-            else:
-                files = [storedata]
-        for fil in files:
-            if not isinstance(fil, dict):
-                continue
-            origin = fil.get('origin')
-            path = fil.get('path')
-            content = fil.get('content')
-            render = fil.get('render', True)
-            mode = fil.get('mode', '0600')
-            permissions = fil.get('permissions', mode)
-            if path is None:
-                continue
-            if path.startswith('/root/.ssh/') and not sshdircreated:
-                startup_script += 'mkdir -p /root/.ssh\nchmod 700 /root/.ssh\n'
-                sshdircreated = True
-            if origin is not None:
-                origin = os.path.expanduser(origin)
-                if not os.path.exists(origin):
-                    print(f"Skipping file {origin} as not found")
-                    continue
-                binary = True if '.' in origin and origin.split('.')[-1].lower() in binary_types else False
-                if binary:
-                    with open(origin, "rb") as f:
-                        content = f.read().encode("base64")
-                elif overrides and render:
-                    basedir = os.path.dirname(origin) if os.path.dirname(origin) != '' else '.'
-                    env = Environment(loader=FileSystemLoader(basedir), undefined=undefined,
-                                      extensions=['jinja2.ext.do'], trim_blocks=True, lstrip_blocks=True)
-                    try:
-                        templ = env.get_template(os.path.basename(origin))
-                        newfile = templ.render(overrides)
-                    except TemplateNotFound:
-                        error(f"File {os.path.basename(origin)} not found")
-                        sys.exit(1)
-                    except TemplateSyntaxError as e:
-                        error(f"Error rendering line {e.lineno} of file {e.filename}. Got: {e.message}")
-                        sys.exit(1)
-                    except TemplateError as e:
-                        error(f"Error rendering file {origin}. Got: {e.message}")
-                        sys.exit(1)
-                    startup_script += f"cat <<'EOF' >{path}\n{newfile}\nEOF\nchmod {permissions} {path}\n"
-                else:
-                    newfile = open(origin, 'r').read()
-                    startup_script += f"cat <<'EOF' >{path}\n{newfile}\nEOF\nchmod {permissions} {path}\n"
-            elif content is not None:
-                startup_script += f"cat <<'EOF' >{path}\n{content}\nEOF\nchmod {permissions} {path}\n"
-        if enableroot and image is not None:
-            enablerootcmds = ['sed -i "s/.*PermitRootLogin.*/PermitRootLogin yes/" /etc/ssh/sshd_config',
-                              'systemctl restart sshd']
-            if not cmds:
-                cmds = enablerootcmds
-            else:
-                cmds.extend(enablerootcmds)
-        if cmds:
-            for cmd in cmds:
-                if cmd.startswith('#'):
-                    continue
-                else:
-                    try:
-                        newcmd = Environment(undefined=undefined).from_string(cmd).render(overrides)
-                    except TemplateError as e:
-                        error(f"Error rendering cmd {cmd}. Got: {e.message}")
-                        sys.exit(1)
-                startup_script += f'{newcmd}\n'
-        if startup_script != '':
-            beginningcmd = 'test -f /root/.kcli_startup && exit 0\n'
-            endcmd = 'logger kcli boot finished && touch /root/.kcli_startup\n'
-            newval = {'key': 'startup-script', 'value': beginningcmd + startup_script + endcmd}
-            body['metadata']['items'].append(newval)
         publickeyfile = get_ssh_pub_key()
         if publickeyfile is None:
             warning("neither id_rsa, id_dsa nor id_ed25519 public keys found in your .ssh or .kcli directories, "
@@ -289,10 +208,34 @@ class Kgcp(object):
             finalkeys = [f"{user}:{x}"for x in keys]
             if enableroot:
                 finalkeys.extend([f"root:{x}" for x in keys])
-            keys = '\n'.join(finalkeys)
-            newval = {'key': 'ssh-keys', 'value': keys}
+                enablerootcmds = ['sed -i "s/.*PermitRootLogin.*/PermitRootLogin yes/" /etc/ssh/sshd_config',
+                                  'systemctl restart sshd']
+                cmds = enablerootcmds + cmds
+            newval = {'key': 'ssh-keys', 'value': '\n'.join(finalkeys)}
             body['metadata']['items'].append(newval)
             newval = {'key': 'block-project-ssh-keys', 'value': 'TRUE'}
+            body['metadata']['items'].append(newval)
+        if cloudinit:
+            if image is not None and common.needs_ignition(image):
+                version = common.ignition_version(image)
+                userdata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
+                                           domain=domain, files=files, enableroot=enableroot,
+                                           overrides=overrides, version=version, plan=plan, image=image)
+            else:
+                userdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
+                                            domain=domain, files=files, enableroot=enableroot,
+                                            overrides=overrides, fqdn=True, storemetadata=storemetadata)[0]
+                if 'ubuntu' in image.lower() or [entry for entry in UBUNTUS if entry in image]:
+                    pkgmgr = "apt-get"
+                else:
+                    pkgmgr = "yum"
+                startup_script = "test -f /root/.kcli_startup && exit 0\n"
+                startup_script += f"sleep 10\n{pkgmgr} install -y cloud-init\n"
+                startup_script += "systemctl enable --now cloud-init\n"
+                startup_script += "touch /root/.kcli_startup\nreboot"
+                newval = {'key': 'startup-script', 'value': startup_script}
+                body['metadata']['items'].append(newval)
+            newval = {'key': 'user-data', 'value': userdata}
             body['metadata']['items'].append(newval)
         if 'kubetype' in metadata and metadata['kubetype'] in ["generic", "openshift"]:
             kube = metadata['kube']
@@ -314,13 +257,6 @@ class Kgcp(object):
             tags.extend([kube])
         if tags:
             body['tags'] = {'items': tags}
-        if image is not None and common.needs_ignition(image):
-            version = common.ignition_version(image)
-            userdata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
-                                       domain=domain, files=files, enableroot=enableroot, overrides=overrides,
-                                       version=version, plan=plan, image=image)
-            newval = {'key': 'user-data', 'value': userdata}
-            body['metadata']['items'].append(newval)
         newval = {'key': 'serial-port-enable', 'value': 1}
         body['metadata']['items'].append(newval)
         if self.debug:
