@@ -1050,7 +1050,7 @@ class Kgcp(object):
         vmpath = f"https://www.googleapis.com/compute/v1/projects/{project}/zones/{zone}/instances"
         if vms:
             for vm in vms:
-                update = self.update_metadata(vm, 'loadbalancer', name, append=True)
+                update = self.update_metadata(vm, 'loadbalancer', sane_name, append=True)
                 if update == 0:
                     instances.append({"instance": f"{vmpath}/{vm}"})
         if internal:
