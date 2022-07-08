@@ -2388,8 +2388,9 @@ class Kconfig(Kbaseconfig):
         if 'cos' in image:
             cmd = waitcommand or 'journalctl --identifier=ignition --all --no-pager'
         else:
-            cloudinitfile = common.get_cloudinitfile(image)
-            cmd = waitcommand or f"sudo tail -n 50 {cloudinitfile}"
+            cloudinitfile = '/var/log/messages' if self.type == 'gcp' else common.get_cloudinitfile(image)
+            lines = 500 if self.type == 'gcp' else 50
+            cmd = waitcommand or f"sudo tail -n {lines} {cloudinitfile}"
         user, ip, vmport = None, None, None
         hostip = None
         timeout = 0

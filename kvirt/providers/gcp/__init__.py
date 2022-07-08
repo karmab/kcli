@@ -272,7 +272,7 @@ class Kgcp(object):
                 startup_script += f'{newcmd}\n'
         if startup_script != '':
             beginningcmd = 'test -f /root/.kcli_startup && exit 0\n'
-            endcmd = 'touch /root/.kcli_startup\n'
+            endcmd = 'logger kcli boot finished && touch /root/.kcli_startup\n'
             newval = {'key': 'startup-script', 'value': beginningcmd + startup_script + endcmd}
             body['metadata']['items'].append(newval)
         publickeyfile = get_ssh_pub_key()
