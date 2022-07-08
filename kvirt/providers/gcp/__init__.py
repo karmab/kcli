@@ -230,7 +230,8 @@ class Kgcp(object):
                 else:
                     pkgmgr = "yum"
                 startup_script = "test -f /root/.kcli_startup && exit 0\n"
-                startup_script += f"sleep 10\n{pkgmgr} install -y cloud-init\n"
+                startup_script += "sleep 10\nwhich cloud-init && touch /root/.kcli_startup && exit 0\n"
+                startup_script += f"{pkgmgr} install -y cloud-init\n"
                 startup_script += "systemctl enable --now cloud-init\n"
                 startup_script += "touch /root/.kcli_startup\nreboot"
                 newval = {'key': 'startup-script', 'value': startup_script}
