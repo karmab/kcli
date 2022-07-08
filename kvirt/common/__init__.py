@@ -914,7 +914,7 @@ def print_info(yamlinfo, output='plain', fields=[], values=False, pretty=True):
 
 def ssh(name, ip='', user=None, local=None, remote=None, tunnel=False, tunnelhost=None, tunnelport=22,
         tunneluser='root', insecure=False, cmd=None, X=False, Y=False, debug=False, D=None, vmport=None,
-        identityfile=None):
+        identityfile=None, password=True):
     """
 
     :param name:
@@ -945,6 +945,8 @@ def ssh(name, ip='', user=None, local=None, remote=None, tunnel=False, tunnelhos
             publickeyfile = get_ssh_pub_key()
             if publickeyfile is not None:
                 identityfile = publickeyfile.replace('.pub', '')
+        if not password:
+            sshcommand = f"-o PasswordAuthentication=no {sshcommand}"
         if identityfile is not None:
             sshcommand = f"-i {identityfile} {sshcommand}"
         if D:

@@ -2417,7 +2417,7 @@ class Kconfig(Kbaseconfig):
                         testcmd = common.ssh(name, user=user, ip=ip, tunnel=self.tunnel, tunnelhost=self.tunnelhost,
                                              tunnelport=self.tunnelport, tunneluser=self.tunneluser,
                                              insecure=self.insecure, cmd='id -un', vmport=vmport,
-                                             identityfile=identityfile)
+                                             identityfile=identityfile, password=False)
                         if os.popen(testcmd).read().strip() != user:
                             warning("Gathered ip not functional yet...")
                             ip = None
@@ -2433,7 +2433,7 @@ class Kconfig(Kbaseconfig):
         while True:
             sshcmd = common.ssh(name, user='root', ip=ip, tunnel=self.tunnel, tunnelhost=self.tunnelhost, vmport=vmport,
                                 tunnelport=self.tunnelport, tunneluser=self.tunneluser, insecure=self.insecure, cmd=cmd,
-                                identityfile=identityfile)
+                                identityfile=identityfile, password=False)
             output = os.popen(sshcmd).read()
             if waitcommand is not None:
                 if output != '':
