@@ -803,9 +803,9 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             return {'result': 'success'}
         try:
             cdrom_service.update(cdrom=types.Cdrom(file=types.File(id=iso)), current=True)
-        except:
-            error(f"Iso {iso} not found")
-            return {'result': 'failure', 'reason': f"Iso {iso} not found"}
+        except Exception as e:
+            error(f"Hit issue {e.fault._detail}")
+            return {'result': 'failure', 'reason': f"Hit issue {e.fault._detail}"}
         return {'result': 'success'}
 
     def update_flavor(self, name, flavor):
