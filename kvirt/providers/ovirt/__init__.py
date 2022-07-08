@@ -344,8 +344,10 @@ class KOvirt(object):
                                                   nic_configurations=nic_configurations, dns_servers=dns,
                                                   dns_search=domain, custom_script=custom_script)
         if start:
-            vm_service.start(use_cloud_init=cloudinit, use_ignition=ignition,
-                             vm=types.Vm(initialization=initialization, host=vmhost))
+            vm_data = {'use_cloud_init': cloudinit, 'vm': types.Vm(initialization=initialization, host=vmhost)}
+            if ignition:
+                vm_data['use_ignition'] = True
+            vm_service.start(**vm_data)
         if ip is not None:
             self.update_metadata(name, 'ip', ip)
         return {'result': 'success'}
