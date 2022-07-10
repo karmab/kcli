@@ -989,13 +989,6 @@ class Kconfig(Kbaseconfig):
             if overrides.get('tempkeydir') is None:
                 tempkeydir = TemporaryDirectory()
                 overrides['tempkeydir'] = tempkeydir
-        if start and cloudinit and not cmds and not files:
-            good_keys = ['name', 'noname', 'type', 'plan', 'compact', 'hostgroup', 'hostrule', 'vmgroup', 'antipeers',
-                         'hugepages', 'unplugcd', 'profile', 'project']
-            wrong_keys = [key for key in overrides if key not in good_keys and
-                          not key.startswith('config_') and key not in self.list_keywords()]
-            if wrong_keys:
-                warning("The following parameters might not be used in vm %s: %s" % (name, ','.join(wrong_keys)))
         if onlyassets:
             if image is not None and common.needs_ignition(image):
                 version = common.ignition_version(image)
