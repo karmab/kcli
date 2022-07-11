@@ -125,10 +125,11 @@ def create(config, plandir, cluster, overrides):
     result = config.plan(plan, inputfile=f'{plandir}/bootstrap.yml', overrides=data)
     if result['result'] != "success":
         sys.exit(1)
-    master_threaded = data.get('threaded', False) or data.get('masters_threaded', False)
-    result = config.plan(plan, inputfile=f'{plandir}/masters.yml', overrides=data, threaded=master_threaded)
-    if result['result'] != "success":
-        sys.exit(1)
+    if data.get('masters', 1) > 1:
+        master_threaded = data.get('threaded', False) or data.get('masters_threaded', False)
+        result = config.plan(plan, inputfile=f'{plandir}/masters.yml', overrides=data, threaded=master_threaded)
+        if result['result'] != "success":
+            sys.exit(1)
     if config.type in cloudplatforms:
         config.k.delete_dns(f'api.{cluster}', domain=domain)
         if config.type == 'aws':
