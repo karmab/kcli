@@ -836,9 +836,10 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         diskname = f'{name}_Disk{diskindex}'
         _format = types.DiskFormat.COW if thin else types.DiskFormat.RAW
         storagedomain = types.StorageDomain(name=pool)
+        bootable = True if diskindex == 0 else False
         disk_attachment = types.DiskAttachment(disk=types.Disk(name=diskname, format=_format, provisioned_size=size,
                                                                storage_domains=[storagedomain]),
-                                               interface=types.DiskInterface.VIRTIO, bootable=False, active=True)
+                                               interface=types.DiskInterface.VIRTIO, bootable=bootable, active=True)
         disk_attachment = disk_attachments_service.add(disk_attachment)
         disks_service = self.conn.system_service().disks_service()
         disk_service = disks_service.disk_service(disk_attachment.disk.id)
