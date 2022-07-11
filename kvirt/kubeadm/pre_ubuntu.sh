@@ -36,18 +36,18 @@ curl -L https://download.opensuse.org/repositories/devel:kubic:libcontainers:sta
 apt-get update
 apt-get -y install cri-o cri-o-runc
 sed -i 's@conmon = .*@conmon = "/bin/conmon"@' /etc/crio/crio.conf
-{% if 'HTTP_PROXY' is defined %}
+{% if HTTP_PROXY is defined %}
 mkdir /etc/systemd/system/crio.service.d
 cat > /etc/systemd/system/crio.service.d/http_proxy.conf << EOF
 [Service]
 Environment="HTTP_PROXY={{ HTTP_PROXY }}"
 EOF
-{% if 'HTTPS_PROXY' is defined %}
+{% if HTTPS_PROXY is defined %}
 cat > /etc/systemd/system/crio.service.d/https_proxy.conf << EOF
 [Service]
 Environment="HTTPS_PROXY={{ HTTPS_PROXY }}"
 EOF
-{% if 'NO_PROXY' is defined %}
+{% if NO_PROXY is defined %}
 cat > /etc/systemd/system/crio.service.d/no_proxy.conf << EOF
 [Service]
 Environment="NO_PROXY={{ NO_PROXY }}"
@@ -64,18 +64,18 @@ apt-get update
 apt-get install -y containerd.io
 mkdir -p /etc/containerd
 containerd config default > /etc/containerd/config.toml
-{% if 'HTTP_PROXY' is defined %}
+{% if HTTP_PROXY is defined %}
 mkdir /etc/systemd/system/containerd.service.d
 cat > /etc/systemd/system/containerd.service.d/http_proxy.conf << EOF
 [Service]
 Environment="HTTP_PROXY={{ HTTP_PROXY }}"
 EOF
-{% if 'HTTPS_PROXY' is defined %}
+{% if HTTPS_PROXY is defined %}
 cat > /etc/systemd/system/containerd.service.d/https_proxy.conf << EOF
 [Service]
 Environment="HTTPS_PROXY={{ HTTPS_PROXY }}"
 EOF
-{% if 'NO_PROXY' is defined %}
+{% if NO_PROXY is defined %}
 cat > /etc/systemd/system/containerd.service.d/no_proxy.conf << EOF
 [Service]
 Environment="NO_PROXY={{ NO_PROXY }}"
