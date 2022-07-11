@@ -1,9 +1,12 @@
-from flask import Flask
-from flask import render_template, request, jsonify
+import functools
+from kvirt.bottle import Bottle, request, static_file, jinja2_view, response
 from glob import glob
 from kvirt.common import get_overrides, pprint
 import os
 import re
+
+basedir = f"{os.path.dirname(Bottle.run.__code__.co_filename)}/expose"
+view = functools.partial(jinja2_view, template_lookup=[f"{basedir}/templates"])
 
 
 class Kexposer():
@@ -40,51 +43,55 @@ class Kexposer():
         return overrides
 
     def __init__(self, config, plan, inputfile, overrides={}, port=9000):
-        app = Flask(__name__)
+        app = Bottle()
         self.basedir = os.path.dirname(inputfile) if '/' in inputfile else '.'
         self.plan = plan
         self.overrides = overrides
         self.refresh_plans(verbose=True)
 
+        @app.route('/static/<filename:path>')
+        def server_static(filename):
+            return static_file(filename, root=f'{basedir}/static')
+
         @app.route('/')
+        @view('index.html')
         def index():
             self.refresh_plans()
-            return render_template('index.html', plans=self.plans, owners=self.owners)
+            return {'plans': self.plans, 'owners': self.owners}
 
-        @app.route("/exposedelete", methods=['POST'])
+        @app.route("/exposedelete", method=['POST'])
         def exposedelete():
             """
             delete plan
             """
             currentconfig = self.config
-            if 'plan' in request.form:
-                plan = request.form['plan']
+            if 'plan' in request.forms:
+                plan = request.forms['plan']
                 if plan not in self.plans:
                     return f'Invalid plan name {plan}'
                 self.get_client(plan, currentconfig)
                 result = currentconfig.delete_plan(plan)
-                response = jsonify(result)
-                response.status_code = 200
-                return response
+                response.status = 200
             else:
                 result = {'result': 'failure', 'reason': "Missing plan in data"}
-                response = jsonify(result)
-                response.status_code = 400
+                response.status = 400
+            return result
 
-        @app.route("/exposecreate", methods=['POST'])
+        @app.route("/exposecreate", method='POST')
+        @view('result.html')
         def exposecreate():
             """
             create plan
             """
             currentconfig = self.config
-            if 'plan' in request.form:
-                plan = request.form['plan']
+            if 'plan' in request.forms:
+                plan = request.forms['plan']
                 if plan not in self.plans:
                     return f'Invalid plan name {plan}'
                 parameters = {}
-                for p in request.form:
+                for p in request.forms:
                     if p.startswith('parameter'):
-                        value = request.form[p]
+                        value = request.forms[p]
                         if value.isdigit():
                             value = int(value)
                         elif value.lower() in ['true', 'false']:
@@ -105,15 +112,13 @@ class Kexposer():
                     result = currentconfig.plan(plan, inputfile=inputfile, overrides=overrides)
                 except Exception as e:
                     error = f'Hit issue when running plan: {str(e)}'
-                    return render_template('error.html', plan=plan, error=error)
-                if result['result'] == 'success':
-                    return render_template('success.html', plan=plan)
-                else:
-                    return render_template('error.html', plan=plan, failedvms=result['failedvms'])
+                    result = {'result': 'failure', 'error': error}
+                return {'plan': plan, 'result': result}
             else:
                 return 'Missing plan in data'
 
-        @app.route("/exposeform/<string:plan>", methods=['GET'])
+        @app.route("/exposeform/<plan>")
+        @view('form.html')
         def exposeform(plan):
             """
             form plan
@@ -121,9 +126,10 @@ class Kexposer():
             parameters = self.overrides
             if plan not in self.plans:
                 return f'Invalid plan name {plan}'
-            return render_template('form.html', parameters=parameters, plan=plan)
+            return {'parameters': parameters, 'plan': plan}
 
-        @app.route("/infoplan/<string:plan>", methods=['GET'])
+        @app.route("/infoplan/<plan>")
+        @view('infoplan.html')
         def infoplan(plan):
             """
             info plan
@@ -139,8 +145,8 @@ class Kexposer():
                 creationdate = vms[0].get('creationdate', creationdate)
                 if 'owner' in vms[0]:
                     owner = vms[0]['owner']
-            return render_template('infoplan.html', vms=vms, plan=plan, client=currentconfig.client,
-                                   creationdate=creationdate, owner=owner)
+                return {'vms': vms, 'plan': plan, 'client': currentconfig.client, 'creationdate': creationdate,
+                        'owner': owner}
 
         self.app = app
         self.config = config

@@ -48,7 +48,7 @@
                 {% set logo = 'Tux.png' %}
             {% endif %}
                 <tr>
-                <td><img src="{{ url_for('static', filename='images/'+ logo) }}"/></td>
+                <td><img src="/static/images/{{ logo }}"/></td>
                 <td align="left"> <a data-toggle="tooltip" data-placement="left" data-delay='{"show": "1000", "hide": "100"}' title="{{ vm.info }}">{{ vm.name }}</a></td>
                 <td>{{ vm.status }}</td>
                 <td>{{ vm.ip }}</td>
@@ -66,7 +66,7 @@
                         <li onclick="vmstop('{{ vm.name }}');"><span class="glyphicon glyphicon-stop" data-toggle="tooltip" title="Stop Vm"></span> Stop</li>
                         <li class="divider"></li>
                         {% if vm.status in ["up", "powering_up", "RUNNING"] %}
-                        <li onclick="location.href='{{ url_for('vmconsole', name=vm.name) }}'" target="_blank"><span class="glyphicon glyphicon-edit" data-toggle="tooltip" title="Console Vm"></span> Console</li>
+                        <li onclick="location.href='/vmconsole/{{ vm.name }}'" target="_blank"><span class="glyphicon glyphicon-edit" data-toggle="tooltip" title="Console Vm"></span> Console</li>
                         <li class="divider"></li>
                         {% endif %}
                         <li onclick="vmdelete('{{ vm.name }}');"><span class="glyphicon glyphicon-trash red" data-toggle="tooltip" title="Delete Vm"></span> Delete</li>
