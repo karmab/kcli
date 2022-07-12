@@ -424,6 +424,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         data['mdns'] = False
         data['kubetype'] = 'openshift'
         data['kube'] = data['cluster']
+        if data.get('network_type', 'OpenShiftSDN') == 'OpenShiftSDN':
+            warning("Forcing network_type to OVNKubernetes")
+            data['network_type'] = 'OVNKubernetes'
     masters = data.get('masters', 1)
     if masters == 0:
         error("Invalid number of masters")
