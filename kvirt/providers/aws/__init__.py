@@ -1179,13 +1179,17 @@ class Kaws(object):
         matching_lbs = [lb['LoadBalancerId'] for lb in elb.describe_load_balancers()['LoadBalancerDescriptions']
                         if lb['LoadBalancerName'] == clean_name]
         if matching_lbs:
+            lb_found = True
             for lb_id in matching_lbs:
                 elb.delete_load_balancer(LoadBalancerID=clean_name)
+        else:
+            lb_found = False
         if domain is not None and dnsclient is None:
             warning(f"Deleting DNS {name}.{domain}")
             self.delete_dns(name, domain, name)
         try:
-            sleep(30)
+            if lb_found:
+                sleep(30)
             matching_sgs = [sg['GroupId'] for sg in self.conn.describe_security_groups()['SecurityGroups']
                             if sg['GroupName'] == clean_name]
             if matching_sgs:
