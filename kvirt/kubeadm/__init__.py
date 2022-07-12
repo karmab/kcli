@@ -54,9 +54,13 @@ def create(config, plandir, cluster, overrides):
     data['cluster'] = overrides.get('cluster', cluster if cluster is not None else 'testk')
     plan = cluster if cluster is not None else data['cluster']
     data['kube'] = data['cluster']
+    cloud_lb = data.get('cloud_lb', True)
     masters = data.get('masters', 1)
     if masters == 0:
         error("Invalid number of masters")
+        sys.exit(1)
+    if masters > 1 and platform in cloudplatforms and not cloud_lb:
+        error("multiple masters require cloud_lb to be set to True")
         sys.exit(1)
     network = data.get('network', 'default')
     nip = data['nip']
@@ -125,12 +129,12 @@ def create(config, plandir, cluster, overrides):
     result = config.plan(plan, inputfile=f'{plandir}/bootstrap.yml', overrides=data)
     if result['result'] != "success":
         sys.exit(1)
-    if data.get('masters', 1) > 1:
+    if masters > 1:
         master_threaded = data.get('threaded', False) or data.get('masters_threaded', False)
         result = config.plan(plan, inputfile=f'{plandir}/masters.yml', overrides=data, threaded=master_threaded)
         if result['result'] != "success":
             sys.exit(1)
-    if config.type in cloudplatforms:
+    if cloud_lb and config.type in cloudplatforms:
         config.k.delete_dns(f'api.{cluster}', domain=domain)
         if config.type == 'aws':
             data['vpcid'] = config.k.get_vpcid_of_vm(f"{cluster}-master-0")

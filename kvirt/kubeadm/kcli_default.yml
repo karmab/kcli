@@ -12,6 +12,7 @@ info: |
 image: centos8stream
 network: default
 api_ip:
+cloud_lb: true
 masters: 1
 workers: 0
 version:
