@@ -1039,7 +1039,7 @@ class Kgcp(object):
         return {'result': 'success'}
 
     def create_loadbalancer(self, name, ports=[], checkpath='/index.html', vms=[], domain=None, checkport=80, alias=[],
-                            internal=False, dnsclient=None, vpcid=None):
+                            internal=False, dnsclient=None, subnetid=None):
         lb_scheme = 'INTERNAL' if internal else 'EXTERNAL'
         sane_name = name.replace('.', '-')
         ports = [int(port) for port in ports]

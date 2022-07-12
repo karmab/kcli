@@ -197,47 +197,47 @@ class Kaws(object):
                     pprint(f"Adding vm to security group {kube}")
                     kubesgid = self.get_security_group_id(kube, vpcid)
                     if kubesgid is None:
-                        sg = self.resource.create_security_group(GroupName=kube, Description=kube, VpcId=vpcid)
+                        sg = self.resource.create_security_group(GroupId=kubesgid, Description=kube, VpcId=vpcid)
                         sgtags = [{"Key": "Name", "Value": kube}]
                         sg.create_tags(Tags=sgtags)
                         kubesgid = sg.id
-                        sg.authorize_ingress(GroupName=kube, FromPort=-1, ToPort=-1, IpProtocol='icmp',
+                        sg.authorize_ingress(GroupId=kubesgid, FromPort=-1, ToPort=-1, IpProtocol='icmp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupName=kube, FromPort=22, ToPort=22, IpProtocol='tcp',
+                        sg.authorize_ingress(GroupId=kubesgid, FromPort=22, ToPort=22, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupName=kube, FromPort=80, ToPort=80, IpProtocol='tcp',
+                        sg.authorize_ingress(GroupId=kubesgid, FromPort=80, ToPort=80, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupName=kube, FromPort=8080, ToPort=8080, IpProtocol='tcp',
+                        sg.authorize_ingress(GroupId=kubesgid, FromPort=8080, ToPort=8080, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupName=kube, FromPort=5443, ToPort=5443, IpProtocol='tcp',
+                        sg.authorize_ingress(GroupId=kubesgid, FromPort=5443, ToPort=5443, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupName=kube, FromPort=8443, ToPort=8443, IpProtocol='tcp',
+                        sg.authorize_ingress(GroupId=kubesgid, FromPort=8443, ToPort=8443, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupName=kube, FromPort=443, ToPort=443, IpProtocol='tcp',
+                        sg.authorize_ingress(GroupId=kubesgid, FromPort=443, ToPort=443, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupName=kube, FromPort=6443, ToPort=6443, IpProtocol='tcp',
+                        sg.authorize_ingress(GroupId=kubesgid, FromPort=6443, ToPort=6443, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupName=kube, FromPort=22624, ToPort=22624, IpProtocol='tcp',
+                        sg.authorize_ingress(GroupId=kubesgid, FromPort=22624, ToPort=22624, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupName=kube, FromPort=2379, ToPort=2380, IpProtocol='tcp',
+                        sg.authorize_ingress(GroupId=kubesgid, FromPort=2379, ToPort=2380, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupName=kube, FromPort=30000, ToPort=32767, IpProtocol='tcp',
+                        sg.authorize_ingress(GroupId=kubesgid, FromPort=30000, ToPort=32767, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupName=kube, FromPort=30000, ToPort=32767, IpProtocol='udp',
+                        sg.authorize_ingress(GroupId=kubesgid, FromPort=30000, ToPort=32767, IpProtocol='udp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupName=kube, FromPort=10250, ToPort=10259, IpProtocol='tcp',
+                        sg.authorize_ingress(GroupId=kubesgid, FromPort=10250, ToPort=10259, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupName=kube, FromPort=9000, ToPort=9999, IpProtocol='tcp',
+                        sg.authorize_ingress(GroupId=kubesgid, FromPort=9000, ToPort=9999, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupName=kube, FromPort=9000, ToPort=9999, IpProtocol='udp',
+                        sg.authorize_ingress(GroupId=kubesgid, FromPort=9000, ToPort=9999, IpProtocol='udp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupName=kube, FromPort=4789, ToPort=4789, IpProtocol='tcp',
+                        sg.authorize_ingress(GroupId=kubesgid, FromPort=4789, ToPort=4789, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupName=kube, FromPort=4789, ToPort=4789, IpProtocol='udp',
+                        sg.authorize_ingress(GroupId=kubesgid, FromPort=4789, ToPort=4789, IpProtocol='udp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupName=kube, FromPort=6081, ToPort=6081, IpProtocol='tcp',
+                        sg.authorize_ingress(GroupId=kubesgid, FromPort=6081, ToPort=6081, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupName=kube, FromPort=6081, ToPort=6081, IpProtocol='udp',
+                        sg.authorize_ingress(GroupId=kubesgid, FromPort=6081, ToPort=6081, IpProtocol='udp',
                                              CidrIp="0.0.0.0/0")
                     SecurityGroupIds.append(kubesgid)
                 elif 'kubetype' in metadata and metadata['kubetype'] == "generic":
@@ -249,15 +249,15 @@ class Kaws(object):
                         sgtags = [{"Key": "Name", "Value": kube}]
                         sg.create_tags(Tags=sgtags)
                         kubesgid = sg.id
-                        sg.authorize_ingress(GroupName=kube, FromPort=-1, ToPort=-1, IpProtocol='icmp',
+                        sg.authorize_ingress(GroupId=kubesgid, FromPort=-1, ToPort=-1, IpProtocol='icmp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupName=kube, FromPort=22, ToPort=22, IpProtocol='tcp',
+                        sg.authorize_ingress(GroupId=kubesgid, FromPort=22, ToPort=22, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupName=kube, FromPort=6443, ToPort=6443, IpProtocol='tcp',
+                        sg.authorize_ingress(GroupId=kubesgid, FromPort=6443, ToPort=6443, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupName=kube, FromPort=2379, ToPort=2380, IpProtocol='tcp',
+                        sg.authorize_ingress(GroupId=kubesgid, FromPort=2379, ToPort=2380, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupName=kube, FromPort=2380, ToPort=2380, IpProtocol='tcp',
+                        sg.authorize_ingress(GroupId=kubesgid, FromPort=2380, ToPort=2380, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
                     SecurityGroupIds.append(kubesgid)
                 networkinterface['Groups'] = SecurityGroupIds
@@ -284,10 +284,6 @@ class Kaws(object):
                            KeyName=keypair, BlockDeviceMappings=blockdevicemappings,
                            NetworkInterfaces=networkinterfaces, UserData=userdata, TagSpecifications=vmtags)
         if reservedns and domain is not None:
-            # eip = conn.allocate_address(Domain='vpc')
-            # vmid = reservation.instances[0].id
-            # conn.associate_address(InstanceId=vmid, AllocationId=eip["AllocationId"])
-            # self.reserve_dns(name, nets=nets, domain=domain, alias=alias, instanceid=name, ip=eip["PublicIp"])
             self.reserve_dns(name, nets=nets, domain=domain, alias=alias, instanceid=name)
         return {'result': 'success'}
 
@@ -1079,13 +1075,11 @@ class Kaws(object):
         return {'result': 'success'}
 
     def create_loadbalancer(self, name, ports=[], checkpath='/index.html', vms=[], domain=None, checkport=80, alias=[],
-                            internal=False, dnsclient=None, vpcid=None):
+                            internal=False, dnsclient=None, subnetid=None):
         ports = [int(port) for port in ports]
         resource = self.resource
         conn = self.conn
         elb = self.elb
-        # protocols = {80: 'HTTP', 8080: 'HTTP', 443: 'HTTPS'}
-        # protocols = {80: 'HTTP', 8080: 'HTTP'}
         protocols = {}
         Listeners = []
         for port in ports:
@@ -1096,16 +1090,22 @@ class Kaws(object):
         AvailabilityZones = [f"{self.region}{i}" for i in ['a', 'b', 'c']]
         clean_name = name.replace('.', '-')
         sg_data = {'GroupName': name, 'Description': name}
-        if vpcid is not None:
+        if subnetid is not None:
+            vpcid = [sub['VpcId'] for sub in conn.describe_subnets()['Subnets'] if sub['SubnetId'] == subnetid][0]
             sg_data['VpcId'] = vpcid
+        else:
+            vpcid = None
         sg = resource.create_security_group(**sg_data)
         sgid = sg.id
         sgtags = [{"Key": "Name", "Value": name}]
         sg.create_tags(Tags=sgtags)
         for port in ports:
-            sg.authorize_ingress(GroupName=name, FromPort=port, ToPort=port, IpProtocol='tcp', CidrIp="0.0.0.0/0")
-        lbinfo = {"LoadBalancerName": clean_name, "Listeners": Listeners, "AvailabilityZones": AvailabilityZones,
-                  "SecurityGroups": [sgid]}
+            sg.authorize_ingress(GroupId=sgid, FromPort=port, ToPort=port, IpProtocol='tcp', CidrIp="0.0.0.0/0")
+        lbinfo = {"LoadBalancerName": clean_name, "Listeners": Listeners, "SecurityGroups": [sgid]}
+        if subnetid is not None:
+            lbinfo['Subnets'] = [subnetid]
+        else:
+            lbinfo['AvailabilityZones'] = AvailabilityZones
         if domain is not None:
             lbinfo['Tags'] = [{"Key": "domain", "Value": domain}]
             if dnsclient is not None:
@@ -1141,7 +1141,6 @@ class Kaws(object):
                     break
                 except:
                     pprint(f"Waiting 10s for {lb_dns_name} to get an ip resolution")
-                    sleep(10)
             if dnsclient is not None:
                 return ip
             self.reserve_dns(name, ip=ip, domain=domain, alias=alias)
@@ -1177,13 +1176,21 @@ class Kaws(object):
             if sgids:
                 pprint(f"Removing {vm} from security group {name}")
                 conn.modify_instance_attribute(InstanceId=instanceid, Groups=sgids)
-        elb.delete_load_balancer(LoadBalancerName=clean_name)
+        matching_lbs = [lb['LoadBalancerId'] for lb in elb.describe_load_balancers()['LoadBalancerDescriptions']
+                        if lb['LoadBalancerName'] == clean_name]
+        if matching_lbs:
+            for lb_id in matching_lbs:
+                elb.delete_load_balancer(LoadBalancerID=clean_name)
         if domain is not None and dnsclient is None:
             warning(f"Deleting DNS {name}.{domain}")
             self.delete_dns(name, domain, name)
         try:
             sleep(30)
-            conn.delete_security_group(GroupName=name)
+            matching_sgs = [sg['GroupId'] for sg in self.conn.describe_security_groups()['SecurityGroups']
+                            if sg['GroupName'] == clean_name]
+            if matching_sgs:
+                for sgid in matching_sgs:
+                    conn.delete_security_group(GroupId=sgid)
         except Exception as e:
             warning(f"Couldn't remove security group {name}. Got {e}")
         if dnsclient is not None:

@@ -3,8 +3,8 @@ api.{{ cluster }}:
  domain: {{ domain }}
  reservedns: true
  checkport: 6443
-{% if config_type == 'aws' and vpcid is defined %}
- vpcid: {{ vpcid }}
+{% if config_type == 'aws' and network.startwith('subnet-') %}
+ subnetid: {{ network }}
 {% endif %}
  ports:
  - 6443

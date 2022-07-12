@@ -3,10 +3,10 @@
 from kvirt.common import success, error, pprint, warning, info2, container_mode
 from kvirt.common import get_kubectl, kube_create_app, get_ssh_pub_key
 from kvirt.defaults import UBUNTUS
+import os
 from random import choice
 from shutil import which
 from string import ascii_letters, digits
-import os
 import sys
 import yaml
 
