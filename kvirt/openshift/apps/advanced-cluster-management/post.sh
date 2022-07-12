@@ -1,3 +1,4 @@
+oc create -n open-cluster-management secret generic open-cluster-management-image-pull-credentials --from-file=.dockerconfigjson={{ pull_secret }}  --type=kubernetes.io/dockerconfigjson
 {% if acm_deploy_baremetal_console %}
 STATUS="Installing"
 while [ "$STATUS" != "Running" ] ; do

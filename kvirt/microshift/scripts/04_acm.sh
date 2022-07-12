@@ -65,10 +65,3 @@ oc patch sa klusterlet-addon-operator -p '{"imagePullSecrets": [{"name": "rhacm"
 oc project open-cluster-management-agent
 echo $CRDS | base64 -d | oc apply -f -
 echo $IMPORT | base64 -d | oc apply -f -
-
-sleep 300
-oc project open-cluster-management-agent-addon
-for sa in klusterlet-addon-appmgr klusterlet-addon-certpolicyctrl klusterlet-addon-iampolicyctrl-sa klusterlet-addon-policyctrl klusterlet-addon-search klusterlet-addon-workmgr ; do
-  oc patch sa $sa -p '{"imagePullSecrets": [{"name": "rhacm"}]}'
-done
-oc delete pod --all -n open-cluster-management-agent-addon
