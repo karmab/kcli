@@ -52,7 +52,7 @@ def create(config, plandir, cluster, overrides):
         error("Missing KUBECONFIG...")
         sys.exit(1)
     elif not os.path.isabs(os.environ['KUBECONFIG']):
-        os.environ['KUBECONFIG'] = "%s/%s" % (os.getcwd(), os.environ['KUBECONFIG'])
+        os.environ['KUBECONFIG'] = f"{os.getcwd()}/{os.environ['KUBECONFIG']}"
     data = {'kubetype': 'hypershift',
             'domain': 'karmalabs.com',
             'network': 'default',
@@ -74,7 +74,7 @@ def create(config, plandir, cluster, overrides):
         clustervalue = 'testk'
     data['cluster'] = clustervalue
     data['kube'] = data['cluster']
-    pprint("Deploying cluster %s" % clustervalue)
+    pprint(f"Deploying cluster {clustervalue}")
     plan = cluster if cluster is not None else clustervalue
     domain = data.get('domain')
     version = data.get('version')
@@ -82,14 +82,24 @@ def create(config, plandir, cluster, overrides):
     if str(tag) == '4.1':
         tag = '4.10'
         data['tag'] = tag
+    default_sc = False
+    for sc in yaml.safe_load(os.popen('oc get sc -o yaml').read())['items']:
+        if 'annotations' in sc['metadata']\
+           and 'storageclass.kubernetes.io/is-default-class' in sc['metadata']['annotations']\
+           and sc['metadata']['annotations']['storageclass.kubernetes.io/is-default-class'] == 'true':
+            pprint(f"Using default class {sc['metadata']['name']}")
+            default_sc = True
+    if not default_sc:
+        error("Default Storage class not found. Leaving...")
+        sys.exit(1)
     data['basedir'] = '/workdir' if container_mode() else '.'
     api_ip = os.popen("oc get node -o wide | grep master | head -1 | awk '{print $6}'").read().strip()
     data['api_ip'] = api_ip
     cluster = data.get('cluster')
     namespace = data.get('namespace')
-    clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
+    clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if os.path.exists(clusterdir):
-        error("Please remove existing directory %s first..." % clusterdir)
+        error(f"Please remove existing directory {clusterdir} first...")
         sys.exit(1)
     if which('oc') is None:
         get_oc()
@@ -97,14 +107,14 @@ def create(config, plandir, cluster, overrides):
     pull_secret = pwd_path(data.get('pull_secret'))
     pull_secret = os.path.expanduser(pull_secret)
     if not os.path.exists(pull_secret):
-        error("Missing pull secret file %s" % pull_secret)
+        error(f"Missing pull secret file {pull_secret}")
         sys.exit(1)
     data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
     if not os.path.exists(pub_key):
         if os.path.exists(os.path.expanduser('~/.kcli/id_rsa.pub')):
             pub_key = os.path.expanduser('~/.kcli/id_rsa.pub')
         else:
-            error("Missing public key file %s" % pub_key)
+            error(f"Missing public key file {pub_key}")
             sys.exit(1)
     data['pub_key'] = open(pub_key).read().strip()
     ingress_ip = data.get('ingress_ip')
@@ -117,14 +127,14 @@ def create(config, plandir, cluster, overrides):
                 cidr = networkinfo['cidr']
                 ingress_index = 3 if ':' in cidr else -4
                 ingress_ip = str(ip_network(cidr)[ingress_index])
-                warning("Using %s as ingress_ip" % ingress_ip)
+                warning(f"Using {ingress_ip} as ingress_ip")
                 overrides['ingress_ip'] = ingress_ip
             else:
                 error("You need to define ingress_ip in your parameters file")
                 sys.exit(1)
         if data.get('virtual_router_id') is None:
             overrides['virtual_router_id'] = hash(cluster) % 254 + 1
-            pprint("Using keepalived virtual_router_id %s" % overrides['virtual_router_id'])
+            pprint(f"Using keepalived virtual_router_id {overrides['virtual_router_id']}")
         pprint(f"Using {ingress_ip} for ingress vip....")
         ipv6 = True if ':' in cidr else False
         data['ipv6'] = ipv6
@@ -153,7 +163,7 @@ def create(config, plandir, cluster, overrides):
         else:
             warning("Using existing openshift-install found in your PATH")
         INSTALLER_VERSION = get_installer_version()
-        pprint("Using installer version %s" % INSTALLER_VERSION)
+        pprint(f"Using installer version {INSTALLER_VERSION}")
         release_image = os.popen("openshift-install version | grep 'release image' | cut -f3 -d' '").read().strip()
         image = data.get('image')
         if image is None:
@@ -172,19 +182,19 @@ def create(config, plandir, cluster, overrides):
                                                 url=image_url, size=data.get('kubevirt_disk_size'))
                     if result['result'] != 'success':
                         sys.exit(1)
-            pprint("Using image %s" % image)
+            pprint(f"Using image {image}")
             data['image'] = image
         else:
-            pprint("Checking if image %s is available" % image)
+            pprint(f"Checking if image {image} is available")
             images = [v for v in k.volumes() if image in v]
             if not images:
-                error("Missing %s. Indicate correct image in your parameters file..." % image)
+                error(f"Missing {image}. Indicate correct image in your parameters file...")
                 sys.exit(1)
     assetdata['release_image'] = release_image
     if not os.path.exists(clusterdir):
         os.makedirs(clusterdir)
-        os.mkdir("%s/auth" % clusterdir)
-        with open("%s/kcli_parameters.yml" % clusterdir, 'w') as p:
+        os.mkdir(f"{clusterdir}/auth")
+        with open(f"{clusterdir}/kcli_parameters.yml", 'w') as p:
             installparam = overrides.copy()
             installparam['plan'] = plan
             installparam['kubetype'] = 'hypershift'
@@ -249,8 +259,8 @@ def create(config, plandir, cluster, overrides):
         info2(f"export KUBECONFIG=$HOME/.kcli/clusters/{cluster}/auth/kubeconfig")
         info2("export PATH=$PWD:$PATH")
     else:
-        installcommand = 'openshift-install --dir=%s --log-level=%s wait-for install-complete' % (clusterdir, log_level)
-        installcommand += " || %s" % installcommand
+        installcommand = f'openshift-install --dir={clusterdir} --log-level={log_level} wait-for install-complete'
+        installcommand += f" || {installcommand}"
         pprint("Launching install-complete step. It will be retried one extra time in case of timeouts")
         call(installcommand, shell=True)
     os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
