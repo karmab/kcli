@@ -24,14 +24,18 @@ metadata:
 spec:
   release:
     image: "{{ release_image|default('') }}"
+  dns:
+    baseDomain: {{ domain }}
   pullSecret:
     name: {{ cluster }}-pull-secret
   sshKey:
     name: {{ cluster }}-ssh-key
+  fips: {{ fips }}
   networking:
     serviceCIDR: "172.31.0.0/16"
     podCIDR: "10.132.0.0/14"
     machineCIDR: {{ cidr|default('') }}
+    networkType: {{ network_type }}
   platform:
     type: None
   infraID: {{ cluster }}

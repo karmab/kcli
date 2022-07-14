@@ -10,6 +10,7 @@ tag: '4.9'
 pull_secret: openshift_pull.json
 image: rhcos48
 network: default
+network_type: OpenShiftSDN
 worker_network:
 workers: 2
 cluster: testk
@@ -39,4 +40,5 @@ namespace: mynamespace
 disconnected_url:
 ingress_ip:
 async: false
-kvm_openstack: False
+kvm_openstack: true
+fips: false
