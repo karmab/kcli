@@ -60,6 +60,8 @@ def create(config, plandir, cluster, overrides):
             'async': False,
             'tag': OPENSHIFT_TAG,
             'version': 'nightly',
+            'network_type': 'OpenShiftSDN',
+            'fips': False,
             'namespace': 'mynamespace',
             'pub_key': os.path.expanduser('~/.ssh/id_rsa.pub'),
             'pull_secret': 'openshift_pull.json'}

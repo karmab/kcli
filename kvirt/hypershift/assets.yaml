@@ -75,7 +75,7 @@ metadata:
   namespace: {{ namespace }}
 spec:
   clusterName: {{ cluster }}
-  nodeCount: 0
+  replicas: 0
   management:
     autoRepair: false
     upgradeType: Replace
