@@ -167,7 +167,7 @@ def create(config, plandir, cluster, overrides):
         release_image = os.popen("openshift-install version | grep 'release image' | cut -f3 -d' '").read().strip()
         image = data.get('image')
         if image is None:
-            image_type = 'openstack' if data.get('kvm_openstack', False) and config.type == 'kvm' else config.type
+            image_type = 'openstack' if data.get('kvm_openstack', True) and config.type == 'kvm' else config.type
             region = config.k.region if config.type == 'aws' else None
             image_url = get_installer_rhcos(_type=image_type, region=region, arch=arch)
             if platform in ['aws', 'gcp']:
