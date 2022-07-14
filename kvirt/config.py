@@ -2541,8 +2541,8 @@ class Kconfig(Kbaseconfig):
                     if 'KUBECONFIG' not in os.environ:
                         error("Missing KUBECONFIG for hypershift...")
                         sys.exit(1)
-                    call(f'oc delete -f {clusterdir}/assets.yaml', shell=True)
                     call(f'oc delete -f {clusterdir}/autoapprovercron.yml', shell=True)
+                    call(f'oc delete -f {clusterdir}/assets.yaml', shell=True)
             pprint(f"Deleting directory {clusterdir}")
             rmtree(clusterdir)
             if ipi:
