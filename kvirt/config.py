@@ -521,6 +521,16 @@ class Kconfig(Kbaseconfig):
                     if not good_image.endswith('.qcow2') and not good_image.endswith('.img'):
                         good_image = [x[4] for x in self.list_profiles() if x[0] == profile][0]
                     vmprofiles[profile] = {'image': good_image}
+                elif profile.startswith('rhcos-4') and profile.endswith('qcow2'):
+                    openshift_version = profile.split('.')[0].replace('rhcos-4', 'rhcos-4.')
+                    minor_version = f"{profile.split('-')[1]}-{profile.split('-')[2]}"
+                    arch = profile.split('.')[3]
+                    url = "https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/"
+                    url += f"{openshift_version}/{minor_version}/{arch}/{profile}.gz"
+                    pprint(f"Image {profile} not found. Downloading")
+                    image = openshift_version.replace('-', '').replace('.', '')
+                    self.handle_host(pool=self.pool, image=image, url=url, download=True, update_profile=True)
+                    vmprofiles[profile] = {'image': profile}
                 else:
                     pprint(f"Profile {profile} not found. Using the image as profile...")
                     vmprofiles[profile] = {'image': profile}
