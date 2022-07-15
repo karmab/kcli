@@ -26,6 +26,14 @@ spec:
     image: "{{ release_image|default('') }}"
   dns:
     baseDomain: {{ domain }}
+  etcd:
+    managed:
+      storage:
+        persistentVolume:
+          size: {{ etcd_size }}Gi
+        restoreSnapshotURL: null
+        type: PersistentVolume
+    managementType: Managed
   pullSecret:
     name: {{ cluster }}-pull-secret
   sshKey:
@@ -67,6 +75,13 @@ spec:
       nodePort:
         address: api.{{ cluster }}.{{ domain }}
       type: NodePort
+{% if network_type == 'OVNKubernetes' %}
+  - service: OVNSbDb
+    servicePublishingStrategy:
+      nodePort:
+        address: api.{{ cluster }}.{{ domain }}
+      type: NodePort
+{% endif %}
 ---
 apiVersion: hypershift.openshift.io/v1alpha1
 kind: NodePool
@@ -83,4 +98,7 @@ spec:
     type: None
   release:
     image: "{{ release_image|default('') }}"
+status:
+  conditions: null
+  replicas: 0
 ---

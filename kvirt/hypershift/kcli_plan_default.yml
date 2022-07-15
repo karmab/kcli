@@ -10,7 +10,7 @@ tag: '4.9'
 pull_secret: openshift_pull.json
 image: rhcos48
 network: default
-network_type: OpenShiftSDN
+network_type: OVNKubernetes
 worker_network:
 workers: 2
 cluster: testk
@@ -42,3 +42,4 @@ ingress_ip:
 async: false
 kvm_openstack: true
 fips: false
+etcd_size: 4
