@@ -216,7 +216,6 @@ def create(config, plandir, cluster, overrides):
     ignitionscript = config.process_inputfile(cluster, f"{plandir}/ignition.sh", overrides=assetdata)
     with open(f"{clusterdir}/ignition.sh", 'w') as f:
         f.write(ignitionscript)
-    pprint("Waiting 4mn for ignition server to be usable")
     pprint("Waiting before ignition server is usable")
     call(f"until oc -n {namespace}-{cluster} get secret | grep user-data-{cluster} >/dev/null 2>&1 ; do sleep 1 ; done",
          shell=True)
