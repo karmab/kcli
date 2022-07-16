@@ -93,7 +93,7 @@ spec:
   replicas: 0
   management:
     autoRepair: false
-    upgradeType: Replace
+    upgradeType: InPlace
   platform:
     type: None
   release:
