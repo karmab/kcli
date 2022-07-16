@@ -16,7 +16,7 @@ from kvirt.jinjafilters import jinjafilters
 from kvirt import nameutils
 from kvirt import common
 from kvirt.common import error, pprint, success, warning, generate_rhcos_iso, pwd_path, container_mode
-from kvirt.common import ssh, scp, _ssh_credentials, valid_ip, process_files
+from kvirt.common import ssh, scp, _ssh_credentials, valid_ip, process_files, get_rhcos_url_from_file
 from kvirt import kind
 from kvirt import microshift
 from kvirt import k3s
@@ -521,15 +521,12 @@ class Kconfig(Kbaseconfig):
                     if not good_image.endswith('.qcow2') and not good_image.endswith('.img'):
                         good_image = [x[4] for x in self.list_profiles() if x[0] == profile][0]
                     vmprofiles[profile] = {'image': good_image}
-                elif profile.startswith('rhcos-4') and profile.endswith('qcow2'):
-                    openshift_version = profile.split('.')[0].replace('rhcos-4', 'rhcos-4.')
-                    minor_version = f"{profile.split('-')[1]}-{profile.split('-')[2]}"
-                    arch = profile.split('.')[3]
-                    url = "https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/"
-                    url += f"{openshift_version}/{minor_version}/{arch}/{profile}.gz"
+                elif profile.startswith('rhcos-4') and profile.endswith('qcow2')\
+                        and self.type in ['ovirt', 'openstack', 'kubevirt', 'kvm']:
                     pprint(f"Image {profile} not found. Downloading")
-                    image = openshift_version.replace('-', '').replace('.', '')
-                    self.handle_host(pool=self.pool, image=image, url=url, download=True, update_profile=True)
+                    url = get_rhcos_url_from_file(profile, _type=self.type)
+                    image = profile.split('.')[0].replace('rhcos-4', 'rhcos4')
+                    self.handle_host(pool=self.pool, image=image, url=url, download=True)
                     vmprofiles[profile] = {'image': profile}
                 else:
                     pprint(f"Profile {profile} not found. Using the image as profile...")

@@ -2220,3 +2220,12 @@ def correct_sha(_file, sha):
             sha256_hash.update(byte_block)
     downloaded_sha = sha256_hash.hexdigest()
     return downloaded_sha == sha
+
+
+def get_rhcos_url_from_file(filename, _type='kvm'):
+    openshift_version = filename.split('.')[0].replace('rhcos-4', 'rhcos-4.')
+    minor_version = f"{filename.split('-')[1]}-{filename.split('-')[2]}"
+    arch = filename.split('.')[3]
+    url = "https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/"
+    url += f"{openshift_version}/{minor_version}/{arch}/{filename}.gz"
+    return url
