@@ -17,7 +17,7 @@ subjects:
   name: autoapprover
   namespace: openshift-infra
 ---
-apiVersion: batch/v1beta1
+apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: autoapprover
