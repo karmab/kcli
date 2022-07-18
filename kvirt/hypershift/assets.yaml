@@ -4,8 +4,8 @@ data:
  .dockerconfigjson: {{ pull_secret|default('')|base64 }}
 kind: Secret
 metadata:
- name: {{ cluster }}-pull-secret
- namespace: {{ namespace }}
+  name: {{ cluster }}-pull-secret
+  namespace: {{ namespace }}
 type: kubernetes.io/dockerconfigjson
 ---
 apiVersion: v1
@@ -82,11 +82,40 @@ spec:
         address: api.{{ cluster }}.{{ domain }}
       type: NodePort
 {% endif %}
-{% if imagecontentsources|default(False) %}
+{% if ca is defined %}
+  additionalTrustBundle: disconnected-ca
+{% endif %}
+{% if imagecontentsources|default([]) %}
+  imageContentSources:
 {% for entry in imagecontentsources %}
-- mirrors:
-  - {{ entry['mirror'] }}
-  source: {{ entry['source'] }}
+  - mirrors:
+    - {{ entry['mirror'] }}
+    source: {{ entry['source'] }}
+{% endfor %}
+{% endif %}
+---
+{% if ca is defined %}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: disconnected-ca
+  namespace: {{ namespace }}
+data:
+  config: |
+    {{ ca | certificate | replace('\n', '\n ') }}
+{% endif %}
+---
+{% if manifests|default([]) %}
+{% for entry in manifests %}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ entry['name'] }}
+  namespace: {{ namespace }}
+data:
+  config: {{ entry['data'] }}
+---
 {% endfor %}
 {% endif %}
 ---
@@ -105,6 +134,12 @@ spec:
     type: None
   release:
     image: "{{ release_image|default('') }}"
+{% if manifests|default([]) %}
+  config:
+{% for entry in manifests %}
+  - name: {{ entry['name'] }}
+{% endfor %}
+{% endif %}
 status:
   conditions: null
   replicas: 0

@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 
+from glob import glob
 from kvirt.common import success, error, pprint, info2, container_mode, warning
 from kvirt.common import get_oc, pwd_path, get_installer_rhcos, generate_rhcos_iso
 from kvirt.defaults import OPENSHIFT_TAG
 from kvirt.openshift import process_apps, update_etc_hosts
 from kvirt.openshift import get_ci_installer, get_downstream_installer, get_installer_version
 from ipaddress import ip_network
+import json
 import os
 import re
 import sys
@@ -217,6 +219,15 @@ def create(config, plandir, cluster, overrides):
                 source, mirror = mirror_spec['source'], mirror_spec['mirrors'][0]
                 imagecontentsources.append({'source': source, 'mirror': mirror})
         assetsdata['imagecontentsources'] = imagecontentsources
+    manifestsdir = pwd_path("manifests")
+    if os.path.exists(manifestsdir) and os.path.isdir(manifestsdir):
+        manifests = []
+        for f in glob(f"{manifestsdir}/*.y*ml"):
+            pprint(f"Injecting manifest {f}")
+            mc_name = os.path.basename(f).replace('.yaml', '').replace('.yml', '')
+            mc_data = json.dumps(yaml.safe_load(open(f)))
+            manifests.append({'name': mc_name, 'data': mc_data})
+        assetsdata['manifests'] = manifests
     assetsfile = config.process_inputfile(cluster, f"{plandir}/assets.yaml", overrides=assetsdata)
     with open(f"{clusterdir}/assets.yaml", 'w') as f:
         f.write(assetsfile)
