@@ -114,7 +114,7 @@ metadata:
   name: {{ entry['name'] }}
   namespace: {{ namespace }}
 data:
-  config: {{ entry['data'] }}
+  config: '{{ entry["data"] }}'
 ---
 {% endfor %}
 {% endif %}
