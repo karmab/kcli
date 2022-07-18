@@ -55,6 +55,7 @@ def create(config, plandir, cluster, overrides):
         os.environ['KUBECONFIG'] = f"{os.getcwd()}/{os.environ['KUBECONFIG']}"
     data = {'kubetype': 'hypershift',
             'domain': 'karmalabs.com',
+            'baremetal_iso': False,
             'network': 'default',
             'etcd_size': 4,
             'workers': 2,
@@ -225,7 +226,7 @@ def create(config, plandir, cluster, overrides):
     pprint("Deploying workers")
     if 'name' in data:
         del data['name']
-    if data.get('baremetal', False):
+    if data.get('baremetal_iso', False):
         result = config.plan(plan, inputfile=f'{plandir}/kcli_plan.yml', overrides=data, onlyassets=True)
         iso_data = result['assets'][0]
         with open('iso.ign', 'w') as f:
@@ -235,9 +236,8 @@ def create(config, plandir, cluster, overrides):
             f.write(iso_data)
         iso_pool = data['pool'] or config.pool
         generate_rhcos_iso(k, f"{cluster}-worker", iso_pool, installer=True)
-    else:
-        worker_threaded = data.get('threaded', False) or data.get('workers_threaded', False)
-        config.plan(plan, inputfile=f'{plandir}/kcli_plan.yml', overrides=data, threaded=worker_threaded)
+    worker_threaded = data.get('threaded', False) or data.get('workers_threaded', False)
+    config.plan(plan, inputfile=f'{plandir}/kcli_plan.yml', overrides=data, threaded=worker_threaded)
     if data.get('ignore_hosts', False):
         warning("Not updating /etc/hosts as per your request")
     else:
