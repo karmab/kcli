@@ -140,7 +140,7 @@ def create(config, plandir, cluster, overrides):
         pprint(f"Using {ingress_ip} for ingress vip....")
         ipv6 = True if ':' in cidr else False
         data['ipv6'] = ipv6
-    assetdata = data.copy()
+    assetsdata = data.copy()
     if version == 'cluster':
         release_image = os.popen("oc get clusterversion version -o jsonpath={'.status.history[-1].image'}").read()
         version = os.popen("oc get clusterversion version -o jsonpath={'.status.history[-1].version'}").read()
@@ -192,7 +192,7 @@ def create(config, plandir, cluster, overrides):
             if not images:
                 error(f"Missing {image}. Indicate correct image in your parameters file...")
                 sys.exit(1)
-    assetdata['release_image'] = release_image
+    assetsdata['release_image'] = release_image
     if not os.path.exists(clusterdir):
         os.makedirs(clusterdir)
         os.mkdir(f"{clusterdir}/auth")
@@ -205,17 +205,25 @@ def create(config, plandir, cluster, overrides):
             installparam['image'] = image
             installparam['ipv6'] = ipv6
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
-    assetdata['cidr'] = cidr
+    assetsdata['cidr'] = cidr
     pprint("Creating control plane assets")
     cmcmd = f"oc create ns {namespace} -o yaml --dry-run=client | oc apply -f -"
     call(cmcmd, shell=True)
-    assetfile = config.process_inputfile(cluster, f"{plandir}/assets.yaml", overrides=assetdata)
+    icsps = yaml.safe_load(os.popen('oc get imagecontentsourcepolicies -o yaml').read())['items']
+    if icsps:
+        imagecontentsources = []
+        for icsp in icsps:
+            for mirror_spec in icsp['spec']['repositoryDigestMirrors']:
+                source, mirror = mirror_spec['source'], mirror_spec['mirrors'][0]
+                imagecontentsources.append({'source': source, 'mirror': mirror})
+        assetsdata['imagecontentsources'] = imagecontentsources
+    assetsfile = config.process_inputfile(cluster, f"{plandir}/assets.yaml", overrides=assetsdata)
     with open(f"{clusterdir}/assets.yaml", 'w') as f:
-        f.write(assetfile)
+        f.write(assetsfile)
     cmcmd = f"oc create -f {clusterdir}/assets.yaml"
     call(cmcmd, shell=True)
-    assetdata['clusterdir'] = clusterdir
-    ignitionscript = config.process_inputfile(cluster, f"{plandir}/ignition.sh", overrides=assetdata)
+    assetsdata['clusterdir'] = clusterdir
+    ignitionscript = config.process_inputfile(cluster, f"{plandir}/ignition.sh", overrides=assetsdata)
     with open(f"{clusterdir}/ignition.sh", 'w') as f:
         f.write(ignitionscript)
     pprint("Waiting before ignition server is usable")

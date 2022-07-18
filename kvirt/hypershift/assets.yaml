@@ -82,6 +82,13 @@ spec:
         address: api.{{ cluster }}.{{ domain }}
       type: NodePort
 {% endif %}
+{% if imagecontentsources|default(False) %}
+{% for entry in imagecontentsources %}
+- mirrors:
+  - {{ entry['mirror'] }}
+  source: {{ entry['source'] }}
+{% endfor %}
+{% endif %}
 ---
 apiVersion: hypershift.openshift.io/v1alpha1
 kind: NodePool
