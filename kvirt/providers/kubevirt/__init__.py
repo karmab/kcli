@@ -1443,7 +1443,7 @@ class Kubevirt(Kubecommon):
                 if response.status.succeeded is not None or response.status.failed is not None:
                     completed = True
         core = self.core
-        pvctimeout = 40
+        pvctimeout = 120
         pvcruntime = 0
         pvcstatus = ''
         while pvcstatus != 'Bound':
