@@ -1386,7 +1386,7 @@ class Kubevirt(Kubecommon):
         for naf in nafs:
             config = yaml.safe_load(naf['spec']['config'])
             name = naf['metadata']['name']
-            _type = config['type']
+            _type = config.get('type', 'N/A')
             bridge = config.get('bridge')
             vlan = config.get('vlan', 'N/A')
             ipam_type = 'N/A'
