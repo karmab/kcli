@@ -223,10 +223,12 @@ def create(config, plandir, cluster, overrides):
     if os.path.exists(manifestsdir) and os.path.isdir(manifestsdir):
         manifests = []
         for f in glob(f"{manifestsdir}/*.y*ml"):
-            pprint(f"Injecting manifest {f}")
             mc_name = os.path.basename(f).replace('.yaml', '').replace('.yml', '')
-            mc_data = json.dumps(yaml.safe_load(open(f)))
-            manifests.append({'name': mc_name, 'data': mc_data})
+            mc_data = yaml.safe_load(open(f))
+            if mc_data.get('kind', 'xx') == 'MachineConfig':
+                pprint(f"Injecting manifest {f}")
+                mc_data = json.dumps(mc_data)
+                manifests.append({'name': mc_name, 'data': mc_data})
         assetsdata['manifests'] = manifests
     assetsfile = config.process_inputfile(cluster, f"{plandir}/assets.yaml", overrides=assetsdata)
     with open(f"{clusterdir}/assets.yaml", 'w') as f:
