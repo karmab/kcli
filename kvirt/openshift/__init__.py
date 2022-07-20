@@ -950,12 +950,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     autoapprover = config.process_inputfile(cluster, "%s/autoapprovercron.yml" % plandir, overrides=data)
     with open("%s/autoapprovercron.yml" % clusterdir, 'w') as f:
         f.write(autoapprover)
-    if ipv6:
-        for role in ['master', 'worker']:
-            nodeip = config.process_inputfile(cluster, "%s/99-blacklist-nodeip.yaml" % plandir,
-                                              overrides={'role': role})
-            with open("%s/openshift/99-blacklist-nodeip-%s.yaml" % (clusterdir, role), 'w') as f:
-                f.write(nodeip)
     for f in glob("%s/customisation/*.yaml" % plandir):
         if '99-ingress-controller.yaml' in f:
             ingressrole = 'master' if workers == 0 or not mdns or kubevirt_api_service else 'worker'
