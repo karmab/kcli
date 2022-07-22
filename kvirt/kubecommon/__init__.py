@@ -13,7 +13,7 @@ class Kubecommon(object):
 
     """
     def __init__(self, token=None, ca_file=None, context=None, host='127.0.0.1', port=443, user='root', debug=False,
-                 namespace=None, readwritemany=False):
+                 namespace=None, readwritemany=False, kubeconfig_file=None):
         self.host = host
         self.port = port
         self.user = user
@@ -26,7 +26,10 @@ class Kubecommon(object):
         self.contextname = None
         self.token = token
         api_client = None
-        if host is not None and port is not None and token is not None:
+        if kubeconfig_file is not None:
+            kubeconfig_file = os.path.expanduser(kubeconfig_file)
+            config.load_kube_config(config_file=kubeconfig_file)
+        elif host is not None and port is not None and token is not None:
             configuration = client.Configuration()
             configuration.host = "https://%s:%s" % (host, port)
             configuration.api_key = {"authorization": "Bearer " + token}

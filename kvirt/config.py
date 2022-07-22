@@ -99,11 +99,6 @@ class Kconfig(Kbaseconfig):
                         sys.exit(1)
                 disk_hotplug = self.options.get('disk_hotplug', False)
                 kubeconfig_file = self.options.get('kubeconfig')
-                old_kubeconfig = None
-                if kubeconfig_file is not None:
-                    if 'KUBECONFIG' in os.environ:
-                        old_kubeconfig = os.environ['KUBECONFIG']
-                    os.environ['KUBECONFIG'] = os.path.expanduser(kubeconfig_file)
                 token = self.options.get('token')
                 token_file = self.options.get('token_file')
                 if token_file is not None:
@@ -138,7 +133,7 @@ class Kconfig(Kbaseconfig):
                              datavolumes=datavolumes, disk_hotplug=disk_hotplug, readwritemany=readwritemany,
                              registry=registry, access_mode=access_mode, volume_mode=volume_mode,
                              volume_access=volume_access, harvester=harvester, embed_userdata=embed_userdata,
-                             first_consumer=first_consumer, old_kubeconfig=old_kubeconfig)
+                             first_consumer=first_consumer, kubeconfig_file=kubeconfig_file)
                 self.host = k.host
             elif self.type == 'gcp':
                 credentials = self.options.get('credentials')

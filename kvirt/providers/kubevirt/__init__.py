@@ -56,9 +56,9 @@ class Kubevirt(Kubecommon):
     def __init__(self, token=None, ca_file=None, context=None, host='127.0.0.1', port=6443, user='root', debug=False,
                  namespace=None, cdi=True, datavolumes=False, disk_hotplug=False, readwritemany=False, registry=None,
                  access_mode='NodePort', volume_mode='Filesystem', volume_access='ReadWriteOnce', harvester=False,
-                 embed_userdata=False, first_consumer=False, old_kubeconfig=None):
+                 embed_userdata=False, first_consumer=False, kubeconfig_file=None):
         Kubecommon.__init__(self, token=token, ca_file=ca_file, context=context, host=host, port=port,
-                            namespace=namespace, readwritemany=readwritemany)
+                            namespace=namespace, readwritemany=readwritemany, kubeconfig_file=kubeconfig_file)
         self.crds = client.CustomObjectsApi(api_client=self.api_client)
         self.debug = debug
         self.cdi = cdi
@@ -72,12 +72,10 @@ class Kubevirt(Kubecommon):
         self.harvester = harvester
         self.embed_userdata = embed_userdata
         self.first_consumer = first_consumer
-        self.old_kubeconfig = None
         return
 
     def close(self):
-        if self.old_kubeconfig is not None:
-            os.environ['KUBECONFIG'] = self.old_kubeconfig
+        return
 
     def exists(self, name):
         crds = self.crds
