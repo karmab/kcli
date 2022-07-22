@@ -436,7 +436,7 @@ Note that pool in Ovirt context refers to storage domain.
 To use this provider with kcli rpm, you'll need to install
 
 ```
-dnf -y install http://resources.ovirt.org/pub/yum-repo/ovirt-release-master.rpm
+dnf -y install https://resources.ovirt.org/pub/yum-repo/ovirt-release44.rpm
 dnf -y install python3-ovirt-engine-sdk4
 ```
 
