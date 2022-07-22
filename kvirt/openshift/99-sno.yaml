@@ -14,7 +14,6 @@ spec:
         - contents:
             source: data:text/plain;charset=utf-8;base64,{{ file['data']|base64 }}
             verification: {}
-          filesystem: root
           mode: {{ file['mode']|default(420) }}
           path: {{ file['path'] }}
 {% endfor %}

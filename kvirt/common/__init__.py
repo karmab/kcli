@@ -535,7 +535,7 @@ def process_ignition_files(files=[], overrides={}):
             unitsdata.append({"contents": content, "name": os.path.basename(path), "enabled": True})
         else:
             content = base64.b64encode(content.encode()).decode("UTF-8")
-            filesdata.append({'filesystem': 'root', 'path': path, 'mode': permissions, 'overwrite': True,
+            filesdata.append({'path': path, 'mode': permissions, 'overwrite': True,
                               "contents": {"source": f"data:text/plain;charset=utf-8;base64,{content}",
                                            "verification": {}}})
     return filesdata, unitsdata
@@ -585,7 +585,7 @@ def process_ignition_cmds(cmds, overrides):
         if not content.startswith('#!'):
             content = f"#!/bin/sh\n{content}"
         content = base64.b64encode(content.encode()).decode("UTF-8")
-        data = {'filesystem': 'root', 'path': path, 'mode': int(permissions, 8),
+        data = {'path': path, 'mode': int(permissions, 8),
                 "contents": {"source": f"data:text/plain;charset=utf-8;base64,{content}", "verification": {}}}
         return data
 
@@ -1146,16 +1146,14 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
             warning("no valid public keys found in .ssh/.kcli directories, you might have trouble accessing the vm")
     if not noname:
         hostnameline = quote(f"{localhostname}\n")
-        storage["files"].append({"filesystem": "root", "path": "/etc/hostname", "overwrite": True,
+        storage["files"].append({"path": "/etc/hostname", "overwrite": True,
                                  "contents": {"source": f"data:,{hostnameline}", "verification": {}}, "mode": 420})
     if dns is not None:
         nmline = quote("[main]\ndhcp=dhclient\n")
-        storage["files"].append({"filesystem": "root", "path": "/etc/NetworkManager/conf.d/dhcp-client.conf",
-                                 "overwrite": True,
+        storage["files"].append({"path": "/etc/NetworkManager/conf.d/dhcp-client.conf", "overwrite": True,
                                  "contents": {"source": f"data:,{nmline}", "verification": {}}, "mode": 420})
         dnsline = quote(f"prepend domain-name-servers {dns};\nsend dhcp-client-identifier = hardware;\n")
-        storage["files"].append({"filesystem": "root", "path": "/etc/dhcp/dhclient.conf",
-                                 "overwrite": True,
+        storage["files"].append({"path": "/etc/dhcp/dhclient.conf", "overwrite": True,
                                  "contents": {"source": f"data:,{dnsline}", "verification": {}}, "mode": 420})
     if nets:
         enpindex = 255
@@ -1194,8 +1192,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
                 nicpath = f"/etc/sysconfig/network-scripts/ifcfg-{nicname}"
                 netdata = f"DEVICE={nicname}\nNAME={nicname}\nONBOOT=no"
                 static = quote(netdata)
-                storage["files"].append({"filesystem": "root", "path": nicpath,
-                                         "contents": {"source": f"data:,{static}", "verification": {}},
+                storage["files"].append({"path": nicpath, "contents": {"source": f"data:,{static}", "verification": {}},
                                          "mode": int(static_nic_file_mode, 8)})
                 nicname += f'.{vlan}'
             nicpath = f"/etc/sysconfig/network-scripts/ifcfg-{nicname}"
@@ -1228,8 +1225,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
                     static_nic_file_mode = '0600'
             if netdata != '':
                 static = quote(netdata)
-                storage["files"].append({"filesystem": "root", "path": nicpath,
-                                         "contents": {"source": f"data:,{static}", "verification": {}},
+                storage["files"].append({"path": nicpath, "contents": {"source": f"data:,{static}", "verification": {}},
                                          "mode": int(static_nic_file_mode, 8)})
     if files:
         filesdata, unitsdata = process_ignition_files(files=files, overrides=overrides)
@@ -1999,7 +1995,7 @@ def patch_bootstrap(path, script_content, service_content, service_name):
         data = json.load(ignition)
     script_base64 = base64.b64encode(script_content.encode()).decode("UTF-8")
     script_source = f"data:text/plain;charset=utf-8;base64,{script_base64}"
-    script_entry = {"filesystem": "root", "path": f"/usr/local/bin/{service_name}.sh",
+    script_entry = {"path": f"/usr/local/bin/{service_name}.sh",
                     "contents": {"source": script_source, "verification": {}}, "mode": 448}
     data['storage']['files'].append(script_entry)
     data['systemd']['units'].append({"contents": service_content, "name": f'{service_name}.service',
