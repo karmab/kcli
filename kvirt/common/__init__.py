@@ -27,7 +27,7 @@ from shutil import copy2, move, which
 from tempfile import TemporaryDirectory
 import yaml
 
-binary_types = ['bz2', 'deb', 'jpg', 'gz', 'jpeg', 'iso', 'png', 'rpm', 'tgz', 'zip', 'ks']
+binary_types = ['bz2', 'deb', 'jpg', 'gz', 'jpeg', 'iso', 'png', 'rpm', 'tgz', 'zip', 'exe']
 
 ceo_yaml = """apiVersion: operator.openshift.io/v1
 kind: Etcd
@@ -416,7 +416,8 @@ def process_files(files=[], overrides={}, remediate=False):
         binary = False
         if origin is not None:
             origin = os.path.expanduser(origin)
-            binary = True if '.' in origin and origin.split('.')[-1].lower() in binary_types else False
+            binary_extension = '.' in origin and origin.split('.')[-1].lower() in binary_types
+            binary = True if fil.get('binary', False) or binary_extension else False
             if binary:
                 with open(origin, "rb") as f:
                     # content = f.read().encode("base64")
