@@ -1273,11 +1273,16 @@ class Kconfig(Kbaseconfig):
             error("That would delete every vm...Not doing that")
             sys.exit(1)
         found = False
-        if not self.extraclients:
-            deleteclients = {self.client: k}
-        else:
-            deleteclients = self.extraclients
-            deleteclients.update({self.client: k})
+        deleteclients = {self.client: k}
+        vmclients = []
+        vmclients_file = os.path.expanduser(f'~/.kcli/vmclients_{plan}')
+        if os.path.exists(vmclients_file):
+            vmclients = yaml.safe_load(open(vmclients_file))
+            os.remove(vmclients_file)
+        if self.extraclients:
+            deleteclients.update(self.extraclients)
+        elif vmclients:
+            deleteclients.update({cli: Kconfig(client=cli).k for cli in vmclients if cli != self.client})
         for hypervisor in deleteclients:
             c = deleteclients[hypervisor]
             for vm in sorted(c.list(), key=lambda x: x['name']):
@@ -1725,6 +1730,7 @@ class Kconfig(Kbaseconfig):
                 self.plan(plan, inputfile=baseinputfile, overrides=overrides, excludevms=vmnames, basemode=True,
                           onlyassets=onlyassets)
                 baseplans.append(basefile)
+            vmclients = []
             vmrules_strict = overrides.get('vmrules_strict', self.vmrules_strict)
             for name in vmentries:
                 if name in excludevms:
@@ -1784,6 +1790,8 @@ class Kconfig(Kbaseconfig):
                     warning(f"No vmrules found for {name}. Skipping...")
                     continue
                 vmclient = profile.get('client')
+                if vmclient is not None and vmclient not in vmclients:
+                    vmclients.append(vmclient)
                 if vmclient is None:
                     z = k
                     vmclient = self.client
@@ -1796,7 +1804,7 @@ class Kconfig(Kbaseconfig):
                     z = newclient.k
                     hosts[vmclient] = newclient
                 else:
-                    pprint(f"Client {vmclient} not found. Using default one")
+                    warning(f"Client {vmclient} not found. Using default one")
                     z = k
                     vmclient = self.client
                     if vmclient not in hosts:
@@ -1970,6 +1978,8 @@ class Kconfig(Kbaseconfig):
                     break
                 else:
                     sleep(1)
+        if vmclients:
+            yaml.safe_dump(vmclients, open(os.path.expanduser(f'~/.kcli/vmclients_{plan}'), 'w'))
         if diskentries and not onlyassets:
             pprint("Deploying Disks...")
         for disk in diskentries:
