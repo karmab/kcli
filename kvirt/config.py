@@ -2552,14 +2552,26 @@ class Kconfig(Kbaseconfig):
             rmtree(clusterdir)
             if ipi:
                 return
-        for vm in sorted(k.list(), key=lambda x: x['name']):
-            name = vm['name']
-            dnsclient = vm.get('dnsclient') or dnsclient
-            currentcluster = vm.get('kube')
-            if currentcluster is not None and currentcluster == cluster:
-                k.delete(name, snapshots=True)
-                common.set_lastvm(name, self.client, delete=True)
-                success(f"{name} deleted on {self.client}!")
+        deleteclients = {self.client: k}
+        vmclients = []
+        vmclients_file = os.path.expanduser(f'~/.kcli/vmclients_{cluster}')
+        if os.path.exists(vmclients_file):
+            vmclients = yaml.safe_load(open(vmclients_file))
+            os.remove(vmclients_file)
+        if self.extraclients:
+            deleteclients.update(self.extraclients)
+        elif vmclients:
+            deleteclients.update({cli: Kconfig(client=cli).k for cli in vmclients if cli != self.client})
+        for hypervisor in deleteclients:
+            c = deleteclients[hypervisor]
+            for vm in sorted(c.list(), key=lambda x: x['name']):
+                name = vm['name']
+                dnsclient = vm.get('dnsclient') or dnsclient
+                currentcluster = vm.get('kube')
+                if currentcluster is not None and currentcluster == cluster:
+                    c.delete(name, snapshots=True)
+                    common.set_lastvm(name, self.client, delete=True)
+                    success(f"{name} deleted on {hypervisor}!")
         if self.type == 'kubevirt' and f"{cluster}-api-svc" in k.list_services(k.namespace):
             k.delete_service(f"{cluster}-api-svc", k.namespace)
         if self.type in ['aws', 'gcp', 'ibm']:
