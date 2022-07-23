@@ -28,7 +28,7 @@ class Kubecommon(object):
         api_client = None
         if kubeconfig_file is not None:
             kubeconfig_file = os.path.expanduser(kubeconfig_file)
-            config.load_kube_config(config_file=kubeconfig_file)
+            config.load_kube_config(config_file=kubeconfig_file, context=context)
         elif host is not None and port is not None and token is not None:
             configuration = client.Configuration()
             configuration.host = "https://%s:%s" % (host, port)
