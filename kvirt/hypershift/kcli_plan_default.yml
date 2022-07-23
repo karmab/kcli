@@ -44,3 +44,4 @@ kvm_openstack: true
 fips: false
 etcd_size: 4
 baremetal_iso: false
+virtual_router_id:

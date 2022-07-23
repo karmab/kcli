@@ -24,27 +24,27 @@ def scale(config, plandir, cluster, overrides):
     data = {'cluster': cluster, 'kube': cluster, 'kubetype': 'hypershift'}
     data['basedir'] = '/workdir' if container_mode() else '.'
     cluster = data.get('cluster')
-    clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
-    if os.path.exists("%s/kcli_parameters.yml" % clusterdir):
-        with open("%s/kcli_parameters.yml" % clusterdir, 'r') as install:
+    clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
+    if os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
+        with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
             installparam = yaml.safe_load(install)
             data.update(installparam)
             plan = installparam.get('plan', plan)
     data.update(overrides)
-    with open("%s/kcli_parameters.yml" % clusterdir, 'w') as paramfile:
+    with open(f"{clusterdir}/kcli_parameters.yml", 'w') as paramfile:
         yaml.safe_dump(data, paramfile)
     pprint(f"Scaling on client {config.client}")
     os.chdir(os.path.expanduser("~/.kcli"))
-    overrides = data.copy()
-    if overrides.get('workers', 2) == 0:
+    worker_overrides = data.copy()
+    if worker_overrides.get('workers', 2) == 0:
         return
     threaded = data.get('threaded', False) or data.get('workers_threaded', False)
-    config.plan(plan, inputfile=f'{plandir}/kcli_plan.yml', overrides=overrides, threaded=threaded)
+    config.plan(plan, inputfile=f'{plandir}/kcli_plan.yml', overrides=worker_overrides, threaded=threaded)
 
 
 def create(config, plandir, cluster, overrides):
     log_level = 'debug' if config.debug else 'info'
-    os.environ["PATH"] += ":%s" % os.getcwd()
+    os.environ["PATH"] += f":{os.getcwd()}"
     k = config.k
     platform = config.type
     arch = k.get_capabilities()['arch'] if config.type == 'kvm' else 'x86_64'
@@ -136,9 +136,11 @@ def create(config, plandir, cluster, overrides):
             else:
                 error("You need to define ingress_ip in your parameters file")
                 sys.exit(1)
+        virtual_router_id = None
         if data.get('virtual_router_id') is None:
-            overrides['virtual_router_id'] = hash(cluster) % 254 + 1
-            pprint(f"Using keepalived virtual_router_id {overrides['virtual_router_id']}")
+            virtual_router_id = hash(cluster) % 254 + 1
+            data['virtual_router_id'] = virtual_router_id
+            pprint(f"Using keepalived virtual_router_id {virtual_router_id}")
         pprint(f"Using {ingress_ip} for ingress vip....")
         ipv6 = True if ':' in cidr else False
         data['ipv6'] = ipv6
@@ -204,6 +206,8 @@ def create(config, plandir, cluster, overrides):
             installparam['kubetype'] = 'hypershift'
             installparam['api_ip'] = api_ip
             installparam['ingress_ip'] = ingress_ip
+            if virtual_router_id is not None:
+                installparam['virtual_router_id'] = virtual_router_id
             installparam['image'] = image
             installparam['ipv6'] = ipv6
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
