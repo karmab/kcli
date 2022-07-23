@@ -5,6 +5,7 @@
  image: {{ image }}
  pool: {{ pool or config_pool }}
  enableroot: false 
+ notify: false
  keys: {{ keys }}
  numcpus: {{ bootstrap_numcpus | default(numcpus, numcpus) }}
  flavor: {{ flavor }}

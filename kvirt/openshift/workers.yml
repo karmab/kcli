@@ -26,6 +26,7 @@
  keys: {{ keys }}
  flavor: {{ flavor }}
  enableroot: false 
+ notify: false
  numcpus: {{ worker_numcpus | default(numcpus, numcpus) }}
  memory: {{ worker_memory | default(memory, memory) }}
  autostart: {{ autostart }}

@@ -19,6 +19,7 @@
  image: {{ image }}
  pool: {{ pool or config_pool }}
  enableroot: false 
+ notify: false
  flavor: {{ flavor }}
  keys: {{ keys }}
  numcpus: {{ master_numcpus | default(numcpus, numcpus) }}
