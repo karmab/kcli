@@ -63,10 +63,10 @@ def create(config, plandir, cluster, overrides):
             'workers': 2,
             'async': False,
             'tag': OPENSHIFT_TAG,
-            'version': 'nightly',
+            'version': 'stable',
             'network_type': 'OVNKubernetes',
             'fips': False,
-            'namespace': 'mynamespace',
+            'namespace': 'clusters',
             'pub_key': os.path.expanduser('~/.ssh/id_rsa.pub'),
             'pull_secret': 'openshift_pull.json'}
     data.update(overrides)
