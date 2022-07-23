@@ -1681,7 +1681,7 @@ def create_generic_kube(args):
 def create_kind_kube(args):
     """Create K3s kube"""
     paramfile = args.paramfile
-    cluster = args.cluster if args.cluster is not None else 'testk'
+    cluster = args.cluster
     if container_mode():
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
@@ -1721,7 +1721,7 @@ def create_microshift_kube(args):
 def create_k3s_kube(args):
     """Create K3s kube"""
     paramfile = args.paramfile
-    cluster = args.cluster if args.cluster is not None else 'testk'
+    cluster = args.cluster
     if container_mode():
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
@@ -1741,7 +1741,7 @@ def create_k3s_kube(args):
 def create_hypershift_kube(args):
     """Create Hypershift kube"""
     paramfile = args.paramfile
-    cluster = args.cluster if args.cluster is not None else 'testk'
+    cluster = args.cluster
     if container_mode():
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
