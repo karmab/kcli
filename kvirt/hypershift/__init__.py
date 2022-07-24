@@ -132,7 +132,7 @@ def create(config, plandir, cluster, overrides):
                 ingress_index = 3 if ':' in cidr else -4
                 ingress_ip = str(ip_network(cidr)[ingress_index])
                 warning(f"Using {ingress_ip} as ingress_ip")
-                overrides['ingress_ip'] = ingress_ip
+                data['ingress_ip'] = ingress_ip
             else:
                 error("You need to define ingress_ip in your parameters file")
                 sys.exit(1)
