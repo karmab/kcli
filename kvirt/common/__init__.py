@@ -27,8 +27,6 @@ from shutil import copy2, move, which
 from tempfile import TemporaryDirectory
 import yaml
 
-binary_types = ['bz2', 'deb', 'jpg', 'gz', 'jpeg', 'iso', 'png', 'rpm', 'tgz', 'zip', 'exe']
-
 ceo_yaml = """apiVersion: operator.openshift.io/v1
 kind: Etcd
 metadata:
@@ -401,6 +399,7 @@ def process_files(files=[], overrides={}, remediate=False):
         origin = fil.get('origin')
         content = fil.get('content')
         path = fil.get('path')
+        binary = False
         if path in processed_files:
             continue
         else:
@@ -413,16 +412,9 @@ def process_files(files=[], overrides={}, remediate=False):
             render = True if render.lower() == 'true' else False
         file_overrides = overrides.copy()
         file_overrides.update(fil)
-        binary = False
         if origin is not None:
             origin = os.path.expanduser(origin)
-            binary_extension = '.' in origin and origin.split('.')[-1].lower() in binary_types
-            binary = True if fil.get('binary', False) or binary_extension else False
-            if binary:
-                with open(origin, "rb") as f:
-                    # content = f.read().encode("base64")
-                    content = base64.b64encode(f.read())
-            elif overrides and render:
+            if overrides and render:
                 basedir = os.path.dirname(origin) if os.path.dirname(origin) != '' else '.'
                 env = Environment(loader=FileSystemLoader(basedir), undefined=undefined, extensions=['jinja2.ext.do'],
                                   trim_blocks=True, lstrip_blocks=True)
@@ -431,6 +423,7 @@ def process_files(files=[], overrides={}, remediate=False):
                 try:
                     templ = env.get_template(os.path.basename(origin))
                     fileentries = templ.render(file_overrides)
+                    content = [line.rstrip() for line in fileentries.split('\n')]
                 except TemplateNotFound:
                     error(f"File {os.path.basename(origin)} not found")
                     sys.exit(1)
@@ -440,12 +433,17 @@ def process_files(files=[], overrides={}, remediate=False):
                 except TemplateError as e:
                     error(f"Error rendering file {origin}. Got: {e.message}")
                     sys.exit(1)
-                except UnicodeDecodeError as e:
-                    error(f"Error rendering file {origin}. Got: {e}")
-                    sys.exit(1)
-                content = [line.rstrip() for line in fileentries.split('\n')]
+                except UnicodeDecodeError:
+                    warning(f"Interpreting file {origin} as binary")
+                    binary = True
+                    content = base64.b64encode(open(origin, "rb").read())
             else:
-                content = [line.rstrip() for line in open(origin, 'r').readlines()]
+                try:
+                    fileentries = open(origin, 'r').readlines()
+                except UnicodeDecodeError:
+                    warning(f"Interpreting file {origin} as binary")
+                    binary = True
+                    content = base64.b64encode(open(origin, "rb").read())
         if remediate:
             newcontent = "%s\n" % '\n'.join(content) if isinstance(content, list) else content
             data.append({'owner': owner, 'path': path, 'permissions': permissions, 'content': newcontent})
@@ -500,10 +498,6 @@ def process_ignition_files(files=[], overrides={}):
             if not os.path.exists(origin):
                 print(f"Skipping file {origin} as not found")
                 continue
-            binary = True if '.' in origin and origin.split('.')[-1].lower() in binary_types else False
-            if binary:
-                with open(origin, "rb") as f:
-                    content = f.read().encode("base64")
             elif overrides and render:
                 basedir = os.path.dirname(origin) if os.path.dirname(origin) != '' else '.'
                 env = Environment(loader=FileSystemLoader(basedir), undefined=undefined, extensions=['jinja2.ext.do'])
@@ -521,9 +515,10 @@ def process_ignition_files(files=[], overrides={}):
                 except TemplateError as e:
                     error(f"Error rendering file {origin}. Got: {e.message}")
                     sys.exit(1)
-                except UnicodeDecodeError as e:
-                    error(f"Error rendering file {origin}. Got: {e}")
-                    sys.exit(1)
+                except UnicodeDecodeError:
+                    warning(f"Interpreting file {origin} as binary")
+                    with open(origin, "rb") as f:
+                        fileentries = f.read().encode("base64")
                 content = [line for line in fileentries.split('\n')]
             else:
                 content = open(origin, 'r').readlines()

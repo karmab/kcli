@@ -773,6 +773,9 @@ class Kbaseconfig:
         except TemplateError as e:
             error(f"Error rendering file {inputfile}. Got: {e.message}")
             sys.exit(1)
+        except UnicodeDecodeError as e:
+            error(f"Error rendering file {inputfile}. Got: {e}")
+            sys.exit(1)
         parameters = {}
         if os.path.exists(f"{basedir}/{plan}_default.yml"):
             parameterfile = f"{basedir}/{plan}_default.yml"
