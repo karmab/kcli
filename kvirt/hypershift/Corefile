@@ -9,6 +9,6 @@
         fallthrough
     }
     template ANY ANY apps.{{ cluster }}.{{ domain }} {
-       answer "{% raw %}{{ .Name }}{% endraw %} A IP"
+       answer "{% raw %}{{ .Name }}{% endraw %} A {{ ingress_ip or 'IP' }}"
     }
 }
