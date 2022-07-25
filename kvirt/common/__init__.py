@@ -520,14 +520,14 @@ def process_ignition_files(files=[], overrides={}):
                 except UnicodeDecodeError:
                     warning(f"Interpreting file {origin} as binary")
                     binary = True
-                    content = base64.b64encode(open(origin, "rb").read())
+                    content = str(base64.b64encode(open(origin, "rb").read()), "utf-8")
             else:
                 try:
                     content = open(origin, 'r').readlines()
                 except UnicodeDecodeError:
                     warning(f"Interpreting file {origin} as binary")
                     binary = True
-                    content = base64.b64encode(open(origin, "rb").read())
+                    content = str(base64.b64encode(open(origin, "rb").read()), "utf-8")
         elif content is None:
             continue
         if not binary and not isinstance(content, str):
