@@ -491,6 +491,7 @@ def process_ignition_files(files=[], overrides={}):
         mode = int(str(fil.get('mode', '644')), 8)
         permissions = fil.get('permissions', mode)
         render = fil.get('render', True)
+        binary = False
         if isinstance(render, str):
             render = True if render.lower() == 'true' else False
         if origin is not None:
@@ -506,6 +507,7 @@ def process_ignition_files(files=[], overrides={}):
                 try:
                     templ = env.get_template(os.path.basename(origin))
                     fileentries = templ.render(overrides)
+                    content = [line for line in fileentries.split('\n')]
                 except TemplateNotFound:
                     error(f"File {os.path.basename(origin)} not found")
                     sys.exit(1)
@@ -517,19 +519,24 @@ def process_ignition_files(files=[], overrides={}):
                     sys.exit(1)
                 except UnicodeDecodeError:
                     warning(f"Interpreting file {origin} as binary")
-                    with open(origin, "rb") as f:
-                        fileentries = f.read().encode("base64")
-                content = [line for line in fileentries.split('\n')]
+                    binary = True
+                    content = base64.b64encode(open(origin, "rb").read())
             else:
-                content = open(origin, 'r').readlines()
+                try:
+                    content = open(origin, 'r').readlines()
+                except UnicodeDecodeError:
+                    warning(f"Interpreting file {origin} as binary")
+                    binary = True
+                    content = base64.b64encode(open(origin, "rb").read())
         elif content is None:
             continue
-        if not isinstance(content, str):
+        if not binary and not isinstance(content, str):
             content = '\n'.join(content) + '\n'
         if path.endswith('.service'):
             unitsdata.append({"contents": content, "name": os.path.basename(path), "enabled": True})
         else:
-            content = base64.b64encode(content.encode()).decode("UTF-8")
+            if not binary:
+                content = base64.b64encode(content.encode()).decode("UTF-8")
             filesdata.append({'path': path, 'mode': permissions, 'overwrite': True,
                               "contents": {"source": f"data:text/plain;charset=utf-8;base64,{content}",
                                            "verification": {}}})
