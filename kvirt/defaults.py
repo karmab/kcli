@@ -101,6 +101,7 @@ IMAGES = {'almalinux9': 'http://repo.ifca.es/almalinux/9.0/cloud/x86_64/images/'
           'rhcos49': RHCOS + 'rhcos-4.9',
           'rhcos410': RHCOS + 'rhcos-4.10',
           'rhcos411': RHCOS + 'rhcos-4.11',
+          'rhcos412': RHCOS + 'rhcos-4.12',
           'rhcoslatest': RHCOS + 'rhcos-4.11',
           'rhel7': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7',
           'rhel8': 'https://access.redhat.com/downloads/content/479/ver=/rhel---8',
