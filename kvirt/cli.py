@@ -4874,7 +4874,7 @@ def cli():
     vminfo_parser = argparse.ArgumentParser(add_help=False)
     vminfo_parser.add_argument('-f', '--fields', help='Display Corresponding list of fields,'
                                'separated by a comma', metavar='FIELDS')
-    vminfo_parser.add_argument('-o', '--output', choices=['plain', 'yaml'], help='Format of the output')
+    vminfo_parser.add_argument('-o', '--output', choices=['plain', 'json', 'yaml'], help='Format of the output')
     vminfo_parser.add_argument('-v', '--values', action='store_true', help='Only report values')
     vminfo_parser.add_argument('names', help='VMNAMES', nargs='*')
     vminfo_parser.set_defaults(func=info_vm)

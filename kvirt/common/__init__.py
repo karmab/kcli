@@ -865,6 +865,8 @@ def print_info(yamlinfo, output='plain', fields=[], values=False, pretty=True):
                              encoding=None).replace("'", '')[:-1]
         else:
             return yamlinfo
+    elif output == 'json':
+        return json.dumps(yamlinfo)
     else:
         result = ''
         orderedfields = ['debug', 'name', 'project', 'namespace', 'id', 'instanceid', 'creationdate', 'owner', 'host',
