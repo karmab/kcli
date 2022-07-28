@@ -253,16 +253,16 @@ $ kcli create openshift-iso -P extra_args="super_string_of_args" testk.karmalabs
 """
 
 disconnectedcreate = """# Generate an openshift disconnected vm for 4.9
-$ kcli create openshift-disconnected -P version=stable -P tag=4.9
+$ kcli create openshift-registry -P version=stable -P tag=4.9
 
 # Do the same over an ipv4 network
-$ kcli create openshift-disconnected -P version=nightly -P tag=4.9 -P disconnected_ipv6_network=false
+$ kcli create openshift-registry -P version=nightly -P tag=4.9 -P disconnected_ipv6_network=false
 
 # Use specific version and add extra operators (from 4.8)
-$ kcli create openshift-disconnected -P version=nightly -P tag=4.8.0-fc.5 -P disconnected_operators=[sriov-operator]
+$ kcli create openshift-registry -P version=nightly -P tag=4.8.0-fc.5 -P disconnected_operators=[sriov-operator]
 
 # Deploy registry without content
-$ kcli create openshift-disconnected -P disconnected_sync=false
+$ kcli create openshift-registry -P disconnected_sync=false
 """
 
 appopenshiftcreate = """# Deploy sriov operator

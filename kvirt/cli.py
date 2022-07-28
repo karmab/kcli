@@ -3644,7 +3644,8 @@ def cli():
     openshiftdisconnectedinfo_parser = info_subparsers.add_parser('disconnected',
                                                                   description=openshiftdisconnectedinfo_desc,
                                                                   help=openshiftdisconnectedinfo_desc,
-                                                                  aliases=['openshift-disconnected'])
+                                                                  aliases=['openshift-disconnected',
+                                                                           'openshift-registry'])
     openshiftdisconnectedinfo_parser.set_defaults(func=info_openshift_disconnected)
 
     listapp_desc = 'List Available Kube Apps'
@@ -4374,7 +4375,8 @@ def cli():
     disconnectedcreate_parser.set_defaults(func=create_openshift_disconnected)
     create_subparsers.add_parser('openshift-registry', parents=[disconnectedcreate_parser],
                                  description=disconnectedcreate_desc, help=disconnectedcreate_desc,
-                                 epilog=disconnectedcreate_epilog, formatter_class=rawhelp)
+                                 epilog=disconnectedcreate_epilog, formatter_class=rawhelp,
+                                 aliases=['openshift-disconnected'])
 
     isocreate_desc = 'Create an iso ignition for baremetal install'
     isocreate_epilog = "examples:\n%s" % isocreate
