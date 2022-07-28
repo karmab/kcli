@@ -4372,10 +4372,9 @@ def cli():
     disconnectedcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     disconnectedcreate_parser.add_argument('plan', metavar='PLAN', help='Plan', nargs='?')
     disconnectedcreate_parser.set_defaults(func=create_openshift_disconnected)
-    create_subparsers.add_parser('openshift-disconnected', parents=[disconnectedcreate_parser],
+    create_subparsers.add_parser('openshift-registry', parents=[disconnectedcreate_parser],
                                  description=disconnectedcreate_desc, help=disconnectedcreate_desc,
-                                 epilog=disconnectedcreate_epilog, formatter_class=rawhelp,
-                                 aliases=['openshift-registry'])
+                                 epilog=disconnectedcreate_epilog, formatter_class=rawhelp)
 
     isocreate_desc = 'Create an iso ignition for baremetal install'
     isocreate_epilog = "examples:\n%s" % isocreate
