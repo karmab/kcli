@@ -2,12 +2,13 @@ export HOME=.
 export PATH=/usr/local/bin:$PATH
 export DEB_BUILD_OPTIONS=nocheck debuild
 
-# PACKAGES=$(cloudsmith list package karmab/kcli | grep 'python3-kcli.*99.0' | cut -d'|' -f4 | xargs | awk '{$NF=""; print $0}')
-# [ "$(echo $PACKAGES | wc -w)" == "0" ] && exit 0
-# for package in $PACKAGES ; do
-#  echo Deleting package $package
-#  cloudsmith delete $package -y
-# done
+PACKAGES=$(cloudsmith list package karmab/kcli | grep 'python3-kcli.*99.0' | cut -d'|' -f4 | xargs | awk '{$NF=""; print $0}')
+if [ "$(echo $PACKAGES | wc -w)" != "0" ] ; then
+  for package in $PACKAGES ; do
+    echo Deleting package $package
+    cloudsmith delete $package -y
+  done
+fi
 
 export VERSION="99.0.0.git."
 export MINOR=$(date "+%Y%m%d%H%M").$(git rev-parse --short HEAD)
