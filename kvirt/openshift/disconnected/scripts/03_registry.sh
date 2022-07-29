@@ -1,6 +1,7 @@
 export PATH=/root/bin:$PATH
 export PULL_SECRET=/root/openshift_pull.json
 export REGISTRY_IMAGE=quay.io/karmab/registry:{{ "arm64" if arch_tag|default('amd64') == 'arm64' else "amd64" }}
+echo "fastestmirror=1" >> /etc/dnf/dnf.conf
 dnf -y install podman httpd httpd-tools jq skopeo libseccomp-devel
 IP=$(ip -o addr show eth0 |head -1 | awk '{print $4}' | cut -d'/' -f1)
 REGISTRY_NAME=$(echo $IP | sed 's/\./-/g' | sed 's/:/-/g').sslip.io
