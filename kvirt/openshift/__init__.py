@@ -1012,7 +1012,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                                                         overrides=kubeconfig_overrides)
                     with open(f"{oriconf}/config.yml", 'w') as _f:
                         _f.write(kcliconf)
-                ns = "openshift-infra"
+                ns = "openshift-kcli-infra"
                 dest = f"{clusterdir}/openshift/99-kcli-conf-cm.yaml"
                 cmcmd = f'KUBECONFIG={plandir}/fake_kubeconfig.json '
                 cmcmd += f"oc create cm -n {ns} kcli-conf --from-file={oriconf} --dry-run=client -o yaml > {dest}"
@@ -1106,7 +1106,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                     copy2(privkey, f"{tmpdir}/id_rsa")
                 dest = f"{clusterdir}/openshift/99-sushy-cm.yaml"
                 cmcmd = f'KUBECONFIG={plandir}/fake_kubeconfig.json  '
-                cmcmd += f"oc create cm -n openshift-infra sushy-credentials --from-file={tmpdir} --dry-run=client"
+                cmcmd += f"oc create cm -n openshift-kcli-infra sushy-credentials --from-file={tmpdir} --dry-run=client"
                 cmcmd += f" -o yaml > {dest}"
                 call(cmcmd, shell=True)
     if sno:
@@ -1449,7 +1449,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             z = dnsconfig.k
             z.delete_dns(vm, domain)
     if sushy and config.type == 'kvm':
-        call("oc expose -n openshift-infra svc/sushy", shell=True)
+        call("oc expose -n openshift-kcli-infra svc/sushy", shell=True)
     if platform in cloudplatforms:
         bucket = "%s-%s" % (cluster, domain.replace('.', '-'))
         config.k.delete_bucket(bucket)

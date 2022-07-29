@@ -2,7 +2,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: kcli-bootstrap-delete-2
-  namespace: openshift-infra
+  namespace: openshift-kcli-infra
   labels:
     app: kcli
 spec:
@@ -15,8 +15,8 @@ spec:
     initContainers:
     - name: wait-for-kcli-boostrap-cm
       image: {{ registry }}/karmab/kubectl:{{ arch_tag }}
-      command: ['sh', '-c', 'kubectl get cm -n openshift-infra kcli-bootstrap']
+      command: ['sh', '-c', 'kubectl get cm -n openshift-kcli-infra kcli-bootstrap']
     containers:
     - name: delete-kcli-cms
       image: {{ registry }}/karmab/kubectl:{{ arch_tag }}
-      command: ['sh', '-c', 'kubectl delete cm -n openshift-infra kcli-conf kcli-ssh']
+      command: ['sh', '-c', 'kubectl delete cm -n openshift-kcli-infra kcli-conf kcli-ssh']
