@@ -2,7 +2,7 @@ apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
   name: autoapprover
-  namespace: openshift-infra
+  namespace: openshift-kcli-infra
 spec:
   concurrencyPolicy: Replace
   successfulJobsHistoryLimit: 0

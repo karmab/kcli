@@ -2,7 +2,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: install-operators
-  namespace: openshift-infra
+  namespace: openshift-kcli-infra
   labels:
     app: kcli
 spec:
