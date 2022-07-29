@@ -158,8 +158,8 @@ def get_changelog(args):
 
 
 def delete_cache(args):
-    yes_top = args.yes_top
     yes = args.yes
+    yes_top = args.yes_top
     if not yes and not yes_top:
         common.confirm("Are you sure?")
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
@@ -281,10 +281,10 @@ def console_container(args):
 
 def delete_vm(args):
     """Delete vm"""
+    yes = args.yes
+    yes_top = args.yes_top
     snapshots = args.snapshots
     count = args.count
-    yes_top = args.yes_top
-    yes = args.yes
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.extraclients:
         allclients = config.extraclients.copy()
@@ -417,10 +417,10 @@ def download_iso(args):
 
 
 def delete_image(args):
-    images = args.images
-    pool = args.pool
     yes = args.yes
     yes_top = args.yes_top
+    images = args.images
+    pool = args.pool
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.extraclients:
         allclients = config.extraclients.copy()
@@ -471,6 +471,10 @@ def create_profile(args):
 
 def delete_profile(args):
     """Delete profile"""
+    yes = args.yes
+    yes_top = args.yes_top
+    if not yes and not yes_top:
+        common.confirm("Are you sure?")
     profile = args.profile
     baseconfig = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
@@ -539,6 +543,10 @@ def disable_host(args):
 
 def delete_host(args):
     """Delete host"""
+    yes = args.yes
+    yes_top = args.yes_top
+    if not yes and not yes_top:
+        common.confirm("Are you sure?")
     common.delete_host(args.name)
 
 
@@ -1036,6 +1044,10 @@ def create_app_openshift(args):
 
 
 def delete_app_generic(args):
+    yes = args.yes
+    yes_top = args.yes_top
+    if not yes and not yes_top:
+        common.confirm("Are you sure?")
     apps = args.apps
     paramfile = choose_parameter_file(args.paramfile)
     if which('kubectl') is None:
@@ -1060,6 +1072,10 @@ def delete_app_generic(args):
 
 
 def delete_app_openshift(args):
+    yes = args.yes
+    yes_top = args.yes_top
+    if not yes and not yes_top:
+        common.confirm("Are you sure?")
     apps = args.apps
     paramfile = choose_parameter_file(args.paramfile)
     if which('oc') is None:
@@ -1565,8 +1581,8 @@ def create_vmdisk(args):
 
 def delete_vmdisk(args):
     """Delete disk of vm"""
-    yes_top = args.yes_top
     yes = args.yes
+    yes_top = args.yes_top
     if not yes and not yes_top:
         common.confirm("Are you sure?")
     name = args.vm
@@ -1602,8 +1618,8 @@ def create_dns(args):
 
 def delete_dns(args):
     """Delete dns entries"""
-    yes_top = args.yes_top
     yes = args.yes
+    yes_top = args.yes_top
     if not yes and not yes_top:
         common.confirm("Are you sure?")
     names = args.names
@@ -1796,9 +1812,9 @@ def delete_kube(args):
     """Delete kube"""
     yes = args.yes
     yes_top = args.yes_top
-    cluster = args.cluster if args.cluster is not None else 'testk'
     if not yes and not yes_top:
         common.confirm("Are you sure?")
+    cluster = args.cluster if args.cluster is not None else 'testk'
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
     config.delete_kube(cluster, overrides=overrides)
@@ -1990,6 +2006,10 @@ def create_vmnic(args):
 
 def delete_vmnic(args):
     """Delete nic of vm"""
+    yes = args.yes
+    yes_top = args.yes_top
+    if not yes and not yes_top:
+        common.confirm("Are you sure?")
     name = args.name
     interface = args.interface
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -2016,12 +2036,12 @@ def create_pool(args):
 
 def delete_pool(args):
     """Delete pool"""
-    pool = args.pool
-    full = args.full
     yes = args.yes
     yes_top = args.yes_top
     if not yes and not yes_top:
         common.confirm("Are you sure?")
+    pool = args.pool
+    full = args.full
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     pprint(f"Deleting pool {pool}...")
@@ -2141,12 +2161,12 @@ def update_plan(args):
 
 def delete_plan(args):
     """Delete plan"""
-    plans = args.plans
-    codes = []
     yes = args.yes
     yes_top = args.yes_top
     if not yes and not yes_top:
         common.confirm("Are you sure?")
+    plans = args.plans
+    codes = []
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     for plan in plans:
         result = config.delete_plan(plan, unregister=config.rhnunregister)
@@ -2697,6 +2717,10 @@ def create_snapshot_plan(args):
 
 def delete_snapshot_plan(args):
     """Snapshot plan"""
+    yes = args.yes
+    yes_top = args.yes_top
+    if not yes and not yes_top:
+        common.confirm("Are you sure?")
     plan = args.plan
     snapshot = args.snapshot
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -2736,6 +2760,10 @@ def create_repo(args):
 
 def delete_repo(args):
     """Delete repo"""
+    yes = args.yes
+    yes_top = args.yes_top
+    if not yes and not yes_top:
+        common.confirm("Are you sure?")
     repo = args.repo
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     if repo is None:
@@ -2971,11 +2999,11 @@ def delete_network(args):
     """Delete Network"""
     yes = args.yes
     yes_top = args.yes_top
+    if not yes and not yes_top:
+        common.confirm("Are you sure?")
     names = args.names
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
-    if not yes and not yes_top:
-        common.confirm("Are you sure?")
     for name in names:
         result = k.delete_network(name=name)
         common.handle_response(result, name, element='Network', action='deleted')
@@ -3253,8 +3281,8 @@ def create_bucket(args):
 
 def delete_bucket(args):
     """Delete bucket"""
-    yes_top = args.yes_top
     yes = args.yes
+    yes_top = args.yes_top
     if not yes and not yes_top:
         common.confirm("Are you sure?")
     buckets = args.buckets
@@ -3306,6 +3334,10 @@ def create_bucketfile(args):
 
 
 def delete_bucketfile(args):
+    yes = args.yes
+    yes_top = args.yes_top
+    if not yes and not yes_top:
+        common.confirm("Are you sure?")
     bucket = args.bucket
     path = args.path
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -3617,6 +3649,7 @@ def cli():
                                          help=PARAMETERS_HELP,
                                          metavar='PARAM')
     appgenericdelete_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    appgenericdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     appgenericdelete_parser.add_argument('apps', metavar='APPS', nargs='*')
     appgenericdelete_parser.set_defaults(func=delete_app_generic)
 
@@ -3630,6 +3663,7 @@ def cli():
                                            help=PARAMETERS_HELP,
                                            metavar='PARAM')
     appopenshiftdelete_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    appopenshiftdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     appopenshiftdelete_parser.add_argument('apps', metavar='APPS', nargs='*')
     appopenshiftdelete_parser.set_defaults(func=delete_app_openshift)
 
@@ -3705,6 +3739,7 @@ def cli():
 
     bucketfiledelete_desc = 'Delete Bucket file'
     bucketfiledelete_parser = argparse.ArgumentParser(add_help=False)
+    bucketfiledelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     bucketfiledelete_parser.add_argument('bucket', metavar='BUCKET')
     bucketfiledelete_parser.add_argument('path', metavar='PATH')
     bucketfiledelete_parser.set_defaults(func=delete_bucketfile)
@@ -3950,6 +3985,7 @@ def cli():
     hostdelete_desc = 'Delete Host'
     hostdelete_parser = delete_subparsers.add_parser('host', description=hostdelete_desc, help=hostdelete_desc,
                                                      aliases=['client'])
+    hostdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     hostdelete_parser.add_argument('name', metavar='NAME')
     hostdelete_parser.set_defaults(func=delete_host)
 
@@ -3991,8 +4027,8 @@ def cli():
     imagedelete_desc = 'Delete Image'
     imagedelete_help = "Image to delete"
     imagedelete_parser = argparse.ArgumentParser(add_help=False)
-    imagedelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     imagedelete_parser.add_argument('-p', '--pool', help='Pool to use', metavar='POOL')
+    imagedelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     imagedelete_parser.add_argument('images', help=imagedelete_help, metavar='IMAGES', nargs='*')
     imagedelete_parser.set_defaults(func=delete_image)
     delete_subparsers.add_parser('image', parents=[imagedelete_parser], description=imagedelete_desc,
@@ -4100,11 +4136,11 @@ def cli():
 
     kubedelete_desc = 'Delete Kube'
     kubedelete_parser = argparse.ArgumentParser(add_help=False)
-    kubedelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     kubedelete_parser.add_argument('-P', '--param', action='append',
                                    help='specify parameter or keyword for rendering (multiple can be specified)',
                                    metavar='PARAM')
     kubedelete_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    kubedelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     kubedelete_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubedelete_parser.set_defaults(func=delete_kube)
     delete_subparsers.add_parser('kube', parents=[kubedelete_parser], description=kubedelete_desc, help=kubedelete_desc,
@@ -4483,6 +4519,7 @@ def cli():
     plansnapshotdelete_parser = delete_subparsers.add_parser('plan-snapshot', description=plansnapshotdelete_desc,
                                                              help=plansnapshotdelete_desc)
     plansnapshotdelete_parser.add_argument('-p', '--plan', help='plan name', required=True, metavar='PLAN')
+    plansnapshotdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     plansnapshotdelete_parser.add_argument('snapshot', metavar='SNAPSHOT')
     plansnapshotdelete_parser.set_defaults(func=delete_snapshot_plan)
 
@@ -4631,6 +4668,7 @@ def cli():
     profiledelete_desc = 'Delete Profile'
     profiledelete_help = "Profile to delete"
     profiledelete_parser = argparse.ArgumentParser(add_help=False)
+    profiledelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     profiledelete_parser.add_argument('profile', help=profiledelete_help, metavar='PROFILE')
     profiledelete_parser.set_defaults(func=delete_profile)
     delete_subparsers.add_parser('profile', parents=[profiledelete_parser], description=profiledelete_desc,
@@ -4685,6 +4723,7 @@ def cli():
 
     repodelete_desc = 'Delete Repo'
     repodelete_parser = delete_subparsers.add_parser('repo', description=repodelete_desc, help=repodelete_desc)
+    repodelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     repodelete_parser.add_argument('repo')
     repodelete_parser.set_defaults(func=delete_repo)
 
@@ -4830,8 +4869,8 @@ def cli():
     vmdelete_desc = 'Delete Vm'
     vmdelete_parser = argparse.ArgumentParser(add_help=False)
     vmdelete_parser.add_argument('-c', '--count', help='How many vms to delete', type=int, default=1, metavar='COUNT')
-    vmdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     vmdelete_parser.add_argument('-s', '--snapshots', action='store_true', help='Remove snapshots if needed')
+    vmdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     vmdelete_parser.add_argument('names', metavar='VMNAMES', nargs='*')
     vmdelete_parser.set_defaults(func=delete_vm)
     delete_subparsers.add_parser('vm', parents=[vmdelete_parser], description=vmdelete_desc, help=vmdelete_desc)
@@ -4920,6 +4959,7 @@ def cli():
     delete_vmnic_parser = argparse.ArgumentParser(add_help=False)
     delete_vmnic_parser.add_argument('-i', '--interface', help='Interface name', metavar='INTERFACE')
     delete_vmnic_parser.add_argument('-n', '--network', help='Network', metavar='NETWORK')
+    delete_vmnic_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     delete_vmnic_parser.add_argument('name', metavar='VMNAME')
     delete_vmnic_parser.set_defaults(func=delete_vmnic)
     delete_subparsers.add_parser('vm-nic', parents=[delete_vmnic_parser], description=delete_vmnic_desc,
