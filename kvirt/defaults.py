@@ -39,6 +39,7 @@ RHCOS = "https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/"
 FEDORA = "http://mirror.uv.es/mirror/fedora/linux/releases/"
 FEDORA_ARCHIVE = "https://archives.fedoraproject.org/pub/archive/fedora/linux/releases/"
 ROCKY = 'https://dl.rockylinux.org/pub/rocky/'
+ROCKYVAULT = 'https://dl.rockylinux.org/vault/rocky'
 IMAGES = {'almalinux9': 'http://repo.ifca.es/almalinux/9.0/cloud/x86_64/images/'
           'AlmaLinux-9-GenericCloud-latest.x86_64.qcow2',
           'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-image-bootstrap.qcow2',
@@ -116,9 +117,12 @@ IMAGES = {'almalinux9': 'http://repo.ifca.es/almalinux/9.0/cloud/x86_64/images/'
           'ubuntu2104': 'https://cloud-images.ubuntu.com/hirsute/current/hirsute-server-cloudimg-amd64.img',
           'ubuntu2110': 'https://cloud-images.ubuntu.com/impish/current/impish-server-cloudimg-amd64.img',
           'ubuntu2204': 'https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img',
-          'rockylinux84': ROCKY + '8.4/images/Rocky-8-GenericCloud-8.4-20210620.0.x86_64.qcow2',
-          'rockylinux85': ROCKY + '8.5/images/Rocky-8-GenericCloud-8.5-20211114.2.x86_64.qcow2',
-          'rockylinux8': ROCKY + '8.5/images/Rocky-8-GenericCloud-8.5-20211114.2.x86_64.qcow2'}
+          'rockylinux84': ROCKYVAULT + '8.4/images/Rocky-8-GenericCloud-8.4-20210620.0.x86_64.qcow2',
+          'rockylinux85': ROCKYVAULT + '8.5/images/Rocky-8-GenericCloud-8.5-20211114.2.x86_64.qcow2',
+          'rockylinux86': ROCKY + '8.6/images/Rocky-8-GenericCloud.latest.x86_64.qcow2',
+          'rockylinux8': ROCKY + '8/images/Rocky-8-GenericCloud.latest.x86_64.qcow2',
+          'rockylinux90': ROCKY + '9.0/images/x86_64/Rocky-9-GenericCloud.latest.x86_64.qcow2',
+          'rockylinux9': ROCKY + '9/images/x86_64/Rocky-9-GenericCloud.latest.x86_64.qcow2'}
 
 IMAGESCOMMANDS = {'debian8': 'echo datasource_list: [NoCloud, ConfigDrive, Openstack, Ec2] > /etc/cloud/cloud.cfg.d/'
                   '90_dpkg.cfg'}
