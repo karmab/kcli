@@ -211,6 +211,7 @@ def createscsispec():
 
 
 def creatediskspec(number, disksize, ds, diskmode, thin=False, index=0):
+    unit_number = number + 1 if number > 6 else number
     ckey = 1000
     diskspec = vim.vm.device.VirtualDeviceSpec()
     diskspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
@@ -219,7 +220,7 @@ def creatediskspec(number, disksize, ds, diskmode, thin=False, index=0):
     vd.capacityInKB = disksize
     vd.key = 2000 + index
     diskspec.device = vd
-    vd.unitNumber = number
+    vd.unitNumber = unit_number
     vd.controllerKey = ckey
     diskfilebacking = vim.vm.device.VirtualDisk.FlatVer2BackingInfo()
     filename = "[" + ds.name + "]"
