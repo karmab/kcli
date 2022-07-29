@@ -817,6 +817,17 @@ def list_flavor(args):
     return
 
 
+def list_available_images(args):
+    """List images"""
+    images = IMAGES.keys()
+    imagestable = PrettyTable(["Images"])
+    imagestable.align["Images"] = "l"
+    for image in images:
+        imagestable.add_row([image])
+    print(imagestable)
+    return
+
+
 def list_image(args):
     """List images"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -3663,6 +3674,11 @@ def cli():
                                                             help=appopenshiftlist_desc)
     appopenshiftlist_parser.add_argument('-i', '--installed', action='store_true', help='Show installed apps')
     appopenshiftlist_parser.set_defaults(func=list_apps_openshift)
+
+    imagelist_desc = 'List Available Images'
+    imagelist_parser = list_subparsers.add_parser('available-images', description=imagelist_desc, help=imagelist_desc,
+                                                  aliases=['available-image'])
+    imagelist_parser.set_defaults(func=list_available_images)
 
     bucketcreate_desc = 'Create Bucket'
     bucketcreate_epilog = None
