@@ -247,6 +247,7 @@ class Ksphere:
         currentnics = [d for d in currentdevices if isinstance(d, vim.vm.device.VirtualEthernetCard)]
         confspec = vim.vm.ConfigSpec()
         devconfspec = []
+        unit_number = 0
         for index, disk in enumerate(disks):
             if disk is None:
                 disksize = default_disksize
@@ -288,8 +289,11 @@ class Ksphere:
             if index == 0:
                 scsispec = createscsispec()
                 devconfspec.append(scsispec)
-            diskspec = creatediskspec(index, disksize, datastore, diskmode, diskthin, index)
+            if unit_number == 7:
+                unit_number = 8
+            diskspec = creatediskspec(unit_number, disksize, datastore, diskmode, diskthin)
             devconfspec.append(diskspec)
+            unit_number += 1
         # NICSPEC
         if not self.networks:
             self.set_networks()
