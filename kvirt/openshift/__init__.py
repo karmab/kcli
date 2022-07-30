@@ -355,6 +355,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'minimal': False,
             'dualstack': False,
             'kvm_forcestack': False,
+            'kvm_openstack': True,
             'ipsec': False,
             'sno': False,
             'sno_virtual': False,
@@ -609,7 +610,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if sno or ipi or baremetal_iso_all:
         pass
     elif image is None:
-        image_type = 'openstack' if data.get('kvm_openstack', False) and config.type == 'kvm' else config.type
+        image_type = 'openstack' if data.get('kvm_openstack') and config.type == 'kvm' else config.type
         region = config.k.region if config.type == 'aws' else None
         if upstream:
             fcos_base = 'stable' if version == 'stable' else 'testing'
