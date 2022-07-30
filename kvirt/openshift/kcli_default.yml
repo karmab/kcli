@@ -46,7 +46,7 @@ bootstrap_memory: 8192
 master_memory:
 worker_memory:
 coredns: true
-mdns: false
+mdns: true
 ignore_hosts: false
 disk_size: 30
 autostart: false

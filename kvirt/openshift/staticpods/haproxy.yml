@@ -15,25 +15,6 @@ spec:
       path: "/etc/kubernetes"
   - name: run-dir
     empty-dir: {}
-  - name: kubeconfigvarlib
-    mountPath: "/var/lib/kubelet"
-  initContainers:
-  - name: haproxy-add-hosts
-    securityContext:
-      privileged: true
-    image: {{ registry }}/karmab/kubectl:{{ arch_tag }}
-    command:
-    - "/bin/sh"
-    - "-c"
-    - |
-      #/bin/sh
-      export KUBECONFIG=/var/lib/kubelet/kubeconfig
-      echo {{ api_ip }} api-int.{{cluster }}.{{ domain }} >> /etc/hosts
-      kubectl get node --no-headers -o wide | awk '{print $6" "$1 }' >> /etc/hosts
-    resources: {}
-    volumeMounts:
-    - name: kubeconfigvarlib
-      mountPath: "/var/lib/kubelet"
   containers:
   - name: haproxy
     image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/karmab/haproxy:{{ arch_tag }}
@@ -56,6 +37,7 @@ spec:
     terminationMessagePolicy: FallbackToLogsOnError
     imagePullPolicy: IfNotPresent
   hostNetwork: true
+  dnsPolicy: ClusterFirstWithHostNet
   tolerations:
   - operator: Exists
   priorityClassName: system-node-critical
