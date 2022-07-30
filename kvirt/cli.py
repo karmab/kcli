@@ -1810,14 +1810,15 @@ def create_openshift_kube(args):
 
 def delete_kube(args):
     """Delete kube"""
+    clusters = args.cluster if args.cluster else ['testk']
     yes = args.yes
     yes_top = args.yes_top
     if not yes and not yes_top:
         common.confirm("Are you sure?")
-    cluster = args.cluster if args.cluster is not None else 'testk'
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
-    config.delete_kube(cluster, overrides=overrides)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    for cluster in clusters:
+        config.delete_kube(cluster, overrides=overrides)
 
 
 def scale_generic_kube(args):
@@ -4141,7 +4142,7 @@ def cli():
                                    metavar='PARAM')
     kubedelete_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     kubedelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    kubedelete_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
+    kubedelete_parser.add_argument('cluster', metavar='CLUSTER', nargs='*')
     kubedelete_parser.set_defaults(func=delete_kube)
     delete_subparsers.add_parser('kube', parents=[kubedelete_parser], description=kubedelete_desc, help=kubedelete_desc,
                                  aliases=['cluster'])
