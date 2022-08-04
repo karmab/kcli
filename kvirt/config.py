@@ -846,7 +846,7 @@ class Kconfig(Kbaseconfig):
             rhncommands = []
             if rhnserver != "https://subscription.rhsm.redhat.com" and not valid_ip(rhnserver):
                 fqdn = os.path.basename(rhnserver)
-                rhncommands.append(f'rpm -Uvh http://{fqdn}/pub/katello-ca-consumer-{fqdn}-1.0-1.noarch.rpm')
+                rhncommands.append(f'rpm -Uvh http://{fqdn}/pub/katello-ca-consumer-latest.noarch.rpm')
             if rhnak is not None and rhnorg is not None:
                 rhncommands.append('subscription-manager register --serverurl=%s --force --activationkey=%s --org=%s'
                                    % (rhnserver, rhnak, rhnorg))
