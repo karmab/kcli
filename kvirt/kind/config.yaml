@@ -4,6 +4,21 @@ name: {{ cluster }}
 nodes:
 {% for master in range (0, masters) %}
 - role: control-plane
+{% if external_ingress %}
+  kubeadmConfigPatches:
+  - |
+    kind: InitConfiguration
+    nodeRegistration:
+      kubeletExtraArgs:
+        node-labels: "ingress-ready=true"
+  extraPortMappings:
+  - containerPort: 80
+    hostPort: 80
+    listenAddress: "0.0.0.0"
+  - containerPort: 443
+    hostPort: 443
+    listenAddress: "0.0.0.0"
+{% endif %}
 {% if cni_bin_path is defined %}
   extraMounts:
   - hostPath: /root/cni_bin
@@ -11,7 +26,7 @@ nodes:
 {% endif %}
 {% endfor %}
 {% for worker in range (0, workers) %}
-- role: control-plane
+- role: worker
 {% if cni_bin_path is defined %}
   extraMounts:
   - hostPath: /root/cni_bin
