@@ -13,9 +13,9 @@ info: |
     You can also define a list of scripts to launch at the end with the postscripts array.
 ipi: false
 version: stable
-tag: '4.10'
+tag: '4.11'
 pull_secret: openshift_pull.json
-image: rhcos410
+image: rhcos411
 network: default
 worker_network:
 api_ip: 

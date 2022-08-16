@@ -31,7 +31,7 @@ TUNNELDIR = '/var/www/html'
 TUNNELPORT = 22
 VMUSER = None
 VMPORT = None
-OPENSHIFT_TAG = '4.10'
+OPENSHIFT_TAG = '4.11'
 BSD = "https://object-storage.public.mtl1.vexxhost.net/swift/v1/1dbafeefbd4f4c80864414a441e72dd2"
 BSD += "/bsd-cloud-image.org/images/"
 DEBIAN = "https://cdimage.debian.org/cdimage/"
@@ -103,7 +103,7 @@ IMAGES = {'almalinux9': 'http://repo.ifca.es/almalinux/9.0/cloud/x86_64/images/'
           'rhcos410': RHCOS + 'rhcos-4.10',
           'rhcos411': RHCOS + 'rhcos-4.11',
           'rhcos412': RHCOS + 'rhcos-4.12',
-          'rhcoslatest': RHCOS + 'rhcos-4.11',
+          'rhcoslatest': RHCOS + 'rhcos-4.12',
           'rhel7': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7',
           'rhel8': 'https://access.redhat.com/downloads/content/479/ver=/rhel---8',
           'rhel9': 'https://access.redhat.com/downloads/content/479/ver=/rhel---9',
