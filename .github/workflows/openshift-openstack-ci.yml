@@ -24,7 +24,7 @@ on:
       TAG:
         description: 'tag'
         required: false
-        default: "4.10"
+        default: "4.11"
 
 env:
  HOME: /root
