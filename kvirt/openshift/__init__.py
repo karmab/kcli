@@ -127,13 +127,18 @@ def get_downstream_installer(nightly=False, macosx=False, tag=None, debug=False,
     if tag is None:
         repo += '/latest'
     elif str(tag).count('.') == 1:
-        repo += '/latest-%s' % tag
+        repo += f'/latest-{tag}'
     else:
         repo += '/%s' % tag.replace('-x86_64', '')
     INSTALLSYSTEM = 'mac' if os.path.exists('/Users') or macosx else 'linux'
-    msg = 'Downloading openshift-install from https://mirror.openshift.com/pub/openshift-v4/clients/%s' % repo
+    url = f"https://mirror.openshift.com/pub/openshift-v4/clients/{repo}"
+    msg = f'Downloading openshift-install from {url}'
     pprint(msg)
-    r = urlopen("https://mirror.openshift.com/pub/openshift-v4/clients/%s/release.txt" % repo).readlines()
+    try:
+        r = urlopen(f"{url}/release.txt").readlines()
+    except:
+        error(f"Couldn't open url {url}")
+        return 1
     version = None
     for line in r:
         if 'Name' in str(line):
@@ -144,8 +149,12 @@ def get_downstream_installer(nightly=False, macosx=False, tag=None, debug=False,
         return 1
     if baremetal:
         repo = 'ocp-dev-preview' if nightly else 'ocp'
-        url = "https://mirror.openshift.com/pub/openshift-v4/clients/%s/%s/release.txt" % (repo, version)
-        r = urlopen(url).readlines()
+        url = f"https://mirror.openshift.com/pub/openshift-v4/clients/{repo}/{version}"
+        try:
+            r = urlopen(f"{url}/release.txt").readlines()
+        except:
+            error(f"Couldn't open url {url}")
+            return 1
         for line in r:
             if 'Pull From:' in str(line):
                 openshift_image = line.decode().replace('Pull From: ', '').strip()
@@ -153,13 +162,13 @@ def get_downstream_installer(nightly=False, macosx=False, tag=None, debug=False,
         target = 'openshift-baremetal-install'
         cmd = "oc adm release extract --registry-config %s --command=%s --to . %s" % (pull_secret, target,
                                                                                       openshift_image)
-        cmd += "; mv %s openshift-install ; chmod 700 openshift-install" % target
+        cmd += f"; mv {target} openshift-install ; chmod 700 openshift-install"
         return call(cmd, shell=True)
     if arch == 'arm64':
-        cmd = "curl -s https://mirror.openshift.com/pub/openshift-v4/%s/clients/%s/" % (arch, repo)
+        cmd = f"curl -s https://mirror.openshift.com/pub/openshift-v4/{arch}/clients/{repo}/"
     else:
-        cmd = "curl -s https://mirror.openshift.com/pub/openshift-v4/clients/%s/" % repo
-    cmd += "openshift-install-%s-%s.tar.gz " % (INSTALLSYSTEM, version)
+        cmd = f"curl -s https://mirror.openshift.com/pub/openshift-v4/clients/{repo}/"
+    cmd += f"openshift-install-{INSTALLSYSTEM}-{version}.tar.gz "
     cmd += "| tar zxf - openshift-install"
     cmd += "; chmod 700 openshift-install"
     if debug:
