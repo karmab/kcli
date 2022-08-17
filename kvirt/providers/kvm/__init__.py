@@ -568,12 +568,13 @@ class Kvirt(object):
             multiqueuexml = ''
             nettype = 'virtio'
             vhost = False
+            pci_address = None
             filterxml = ''
             if isinstance(net, str):
                 netname = net
                 nets[index] = {'name': netname}
-            elif isinstance(net, dict) and 'name' in net:
-                netname = net['name']
+            elif isinstance(net, dict):
+                netname = net.get('name', 'default')
                 if 'mac' in nets[index]:
                     mac = nets[index]['mac']
                     macxml = "<mac address='%s'/>" % mac
@@ -608,13 +609,23 @@ class Kvirt(object):
                                 'reason': "multiqueues value in nic %s not between 0 and 256 " % index}
                     else:
                         multiqueuexml = "<driver name='vhost' queues='%d'/>" % multiqueues
+                if 'pci_address' in nets[index]:
+                    pci_address = nets[index]['pci_address']
+                    iftype = 'hostdev'
             if ips and len(ips) > index and ips[index] is not None and\
                     netmasks and len(netmasks) > index and netmasks[index] is not None and gateway is not None:
                 nets[index]['ip'] = ips[index]
                 nets[index]['netmask'] = netmasks[index]
             if netname in ovsnetworks:
                 ovs = True
-            if netname in networks:
+            if pci_address is not None:
+                pci_address_split = pci_address.split(':')
+                pci_bus = pci_address_split[0]
+                pci_slot, pci_function = pci_address_split[1].split('.')
+                address = "<address type='pci' domain='0x0000' "
+                address += f"bus='0x{pci_bus}' slot='0x{pci_slot}' function='0x{pci_function}'/>"
+                sourcexml = f"<source>{address}</source><driver name='vfio'/>"
+            elif netname in networks:
                 iftype = 'network'
                 sourcexml = "<source network='%s'/>" % netname
             elif netname in bridges or ovs:
@@ -655,16 +666,15 @@ class Kvirt(object):
                     slot = 0
                 else:
                     bus = nicnuma + 1
-                nicnumaxml = "<address type='pci' domain='0x0000' bus='0x0%s' slot='0x0%s' function='0x0'/>" % (bus,
-                                                                                                                slot)
+                nicnumaxml = f"<address type='pci' domain='0x0000' bus='0x0{bus}' slot='0x0{slot}' function='0x0'/>"
             else:
                 nicnumaxml = ""
             if vhost:
                 iftype = 'vhostuser'
                 vhostindex += 1
                 vhostdir = '/var/lib/libvirt/images'
-                vhostpath = nets[index].get('vhostpath', "%s/vhost-user%s" % (vhostdir, vhostindex))
-                sourcexml = "<source type='unix' path='%s' mode='client'/>" % vhostpath
+                vhostpath = nets[index].get('vhostpath', f"{vhostdir}/vhost-user{vhostindex}")
+                sourcexml = f"<source type='unix' path='{vhostpath}' mode='client'/>"
                 sourcexml += "<driver name='vhost' rx_queue_size='256'/>"
             netxml = """%s
 <interface type='%s'>
