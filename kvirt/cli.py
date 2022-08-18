@@ -1325,8 +1325,11 @@ def create_vm(args):
                         error(f"Cant' parse {profilefile} as profile file")
                         sys.exit(1)
     elif overrides or onlyassets:
-        profile = 'kvirt'
-        config.profiles[profile] = {}
+        profile = overrides.get('image', 'kvirt')
+        if profile not in IMAGES:
+            config.profiles[profile] = {}
+        else:
+            del overrides['image']
     else:
         error("You need to either provide a profile, an image or some parameters")
         sys.exit(1)
