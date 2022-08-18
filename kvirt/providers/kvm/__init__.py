@@ -1704,6 +1704,15 @@ class Kvirt(object):
                     ip6s = [i for i in ips if i not in ip4s]
                     ip = ip4s[0] if ip4s else ip6s[0]
             yamlinfo['nets'].append({'device': device, 'mac': mac, 'net': network, 'type': networktype})
+        pcidevices = []
+        hostdevs = list(root.iter('hostdev'))
+        for index, element in enumerate(hostdevs):
+            address = element.find('source').find('address')
+            bus, slot, function = address.get('bus'), address.get('slot'), address.get('function')
+            address = f'{bus}:{slot}.{function}'.replace('0x', '')
+            pcidevices.append(address)
+        if pcidevices:
+            yamlinfo['pcidevices'] = pcidevices
         if ip is not None:
             yamlinfo['ip'] = ip
             # better filter to detect user nets needed here
