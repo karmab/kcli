@@ -568,7 +568,6 @@ class Kvirt(object):
             multiqueuexml = ''
             nettype = 'virtio'
             vhost = False
-            pci_address = None
             filterxml = ''
             if isinstance(net, str):
                 netname = net
@@ -609,23 +608,13 @@ class Kvirt(object):
                                 'reason': "multiqueues value in nic %s not between 0 and 256 " % index}
                     else:
                         multiqueuexml = "<driver name='vhost' queues='%d'/>" % multiqueues
-                if 'pci_address' in nets[index]:
-                    pci_address = nets[index]['pci_address']
-                    iftype = 'hostdev'
             if ips and len(ips) > index and ips[index] is not None and\
                     netmasks and len(netmasks) > index and netmasks[index] is not None and gateway is not None:
                 nets[index]['ip'] = ips[index]
                 nets[index]['netmask'] = netmasks[index]
             if netname in ovsnetworks:
                 ovs = True
-            if pci_address is not None:
-                pci_address_split = pci_address.split(':')
-                pci_bus = pci_address_split[0]
-                pci_slot, pci_function = pci_address_split[1].split('.')
-                address = "<address type='pci' domain='0x0000' "
-                address += f"bus='0x{pci_bus}' slot='0x{pci_slot}' function='0x{pci_function}'/>"
-                sourcexml = f"<source>{address}</source><driver name='vfio'/>"
-            elif netname in networks:
+            if netname in networks:
                 iftype = 'network'
                 sourcexml = "<source network='%s'/>" % netname
             elif netname in bridges or ovs:
