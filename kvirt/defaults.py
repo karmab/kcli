@@ -81,14 +81,16 @@ IMAGES = {'almalinux9': 'http://repo.ifca.es/almalinux/9.0/cloud/x86_64/images/'
           'dragonflybsd600': BSD + "dragonflybsd/6.0.0/dragonflybsd-6.0.0.qcow2",
           'gentoo': 'https://gentoo.osuosl.org/experimental/amd64/openstack/gentoo-openstack-amd64-default-latest.'
           'qcow2',
-          'opensuse': 'https://download.opensuse.org/distribution/leap/15.3/appliances/'
-          'openSUSE-Leap-15.3-JeOS.x86_64-OpenStack-Cloud.qcow2',
-          'leap15': 'https://download.opensuse.org/distribution/leap/15.3/appliances/'
-          'openSUSE-Leap-15.3-JeOS.x86_64-OpenStack-Cloud.qcow2',
+          'opensuse': 'https://download.opensuse.org/distribution/leap/15.4/appliances/'
+          'openSUSE-Leap-15.4-JeOS.x86_64-OpenStack-Cloud.qcow2',
+          'leap15': 'https://download.opensuse.org/distribution/leap/15.4/appliances/'
+          'openSUSE-Leap-15.4-JeOS.x86_64-OpenStack-Cloud.qcow2',
           'leap152': 'https://download.opensuse.org/distribution/leap/15.2/appliances/'
           'openSUSE-Leap-15.2-JeOS.x86_64-OpenStack-Cloud.qcow2',
           'leap153': 'https://download.opensuse.org/distribution/leap/15.3/appliances/'
           'openSUSE-Leap-15.3-JeOS.x86_64-OpenStack-Cloud.qcow2',
+          'leap154': 'https://download.opensuse.org/distribution/leap/15.4/appliances/'
+          'openSUSE-Leap-15.4-JeOS.x86_64-OpenStack-Cloud.qcow2',
           'tumbleweed': 'https://download.opensuse.org/tumbleweed/appliances/'
           'openSUSE-Tumbleweed-JeOS.x86_64-OpenStack-Cloud.qcow2',
           'rhcos41': RHCOS + 'rhcos-4.1',
