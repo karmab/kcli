@@ -22,6 +22,9 @@
   - sed -i "s/127.0.0.1/$(hostname -i)/" /root/{{ cluster }}-config.yaml
 {% endif %}
   - kind create cluster --config /root/{{ cluster }}-config.yaml
+{% if external_ingress %}
+  - kubectl apply --kubeconfig=/.kube/config -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml 
+{% endif %}
   - mv /.kube/config {{ KUBECONFIG }}
   files:
   - path: /root/{{ cluster }}-config.yaml
