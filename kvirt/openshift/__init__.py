@@ -736,61 +736,42 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                          tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
                          insecure=True, cmd=versioncmd, vmport=disconnected_vmport)
         disconnected_version = os.popen(versioncmd).read().strip()
-        if disconnected_operators:
-            source = "/root/redhat-imageContentSourcePolicy.yaml"
-            destination = f"{clusterdir}/redhat-imageContentSourcePolicy.yaml"
+        if disconnected_operators or disconnected_certified_operators or disconnected_community_operators or\
+           disconnected_marketplace_operators:
+            source = "/root/imageContentSourcePolicy.yaml"
+            destination = f"{clusterdir}/imageContentSourcePolicy.yaml"
             scpcmd = scp(disconnected_vm, ip=disconnected_ip, user='root', source=source,
                          destination=destination, tunnel=config.tunnel, tunnelhost=config.tunnelhost,
                          tunnelport=config.tunnelport, tunneluser=config.tunneluser, download=True, insecure=True,
                          vmport=disconnected_vmport)
             os.system(scpcmd)
-            source = "/root/redhat-catalogSource.yaml"
-            destination = f"{clusterdir}/redhat-catalogSource.yaml"
+        if disconnected_operators:
+            source = "/root/catalogSource-redhat-operator-index.yaml"
+            destination = f"{clusterdir}/catalogSource-redhat.yaml"
             scpcmd = scp(disconnected_vm, ip=disconnected_ip, user='root', source=source,
                          destination=destination, tunnel=config.tunnel, tunnelhost=config.tunnelhost,
                          tunnelport=config.tunnelport, tunneluser=config.tunneluser, download=True, insecure=True,
                          vmport=disconnected_vmport)
             os.system(scpcmd)
         if disconnected_certified_operators:
-            source = "/root/certified-imageContentSourcePolicy.yaml"
-            destination = f"{clusterdir}/certified-imageContentSourcePolicy.yaml"
-            scpcmd = scp(disconnected_vm, ip=disconnected_ip, user='root', source=source,
-                         destination=destination, tunnel=config.tunnel, tunnelhost=config.tunnelhost,
-                         tunnelport=config.tunnelport, tunneluser=config.tunneluser, download=True, insecure=True,
-                         vmport=disconnected_vmport)
-            os.system(scpcmd)
-            source = "/root/certified-catalogSource.yaml"
-            destination = f"{clusterdir}/certified-catalogSource.yaml"
+            source = "/root/catalogSource-certified-operator-index.yaml"
+            destination = f"{clusterdir}/catalogSource-certified.yaml"
             scpcmd = scp(disconnected_vm, ip=disconnected_ip, user='root', source=source,
                          destination=destination, tunnel=config.tunnel, tunnelhost=config.tunnelhost,
                          tunnelport=config.tunnelport, tunneluser=config.tunneluser, download=True, insecure=True,
                          vmport=disconnected_vmport)
             os.system(scpcmd)
         if disconnected_community_operators:
-            source = "/root/community-imageContentSourcePolicy.yaml"
-            destination = f"{clusterdir}/community-imageContentSourcePolicy.yaml"
-            scpcmd = scp(disconnected_vm, ip=disconnected_ip, user='root', source=source,
-                         destination=destination, tunnel=config.tunnel, tunnelhost=config.tunnelhost,
-                         tunnelport=config.tunnelport, tunneluser=config.tunneluser, download=True, insecure=True,
-                         vmport=disconnected_vmport)
-            os.system(scpcmd)
-            source = "/root/community-catalogSource.yaml"
-            destination = f"{clusterdir}/community-catalogSource.yaml"
+            source = "/root/catalogSource-community-operator-index.yaml"
+            destination = f"{clusterdir}/catalogSource-community.yaml"
             scpcmd = scp(disconnected_vm, ip=disconnected_ip, user='root', source=source,
                          destination=destination, tunnel=config.tunnel, tunnelhost=config.tunnelhost,
                          tunnelport=config.tunnelport, tunneluser=config.tunneluser, download=True, insecure=True,
                          vmport=disconnected_vmport)
             os.system(scpcmd)
         if disconnected_marketplace_operators:
-            source = "/root/redhat-marketplace-imageContentSourcePolicy.yaml"
-            destination = f"{clusterdir}/redhat-marketplace-imageContentSourcePolicy.yaml"
-            scpcmd = scp(disconnected_vm, ip=disconnected_ip, user='root', source=source,
-                         destination=destination, tunnel=config.tunnel, tunnelhost=config.tunnelhost,
-                         tunnelport=config.tunnelport, tunneluser=config.tunneluser, download=True, insecure=True,
-                         vmport=disconnected_vmport)
-            os.system(scpcmd)
-            source = "/root/redhat-marketplace-catalogSource.yaml"
-            destination = f"{clusterdir}/redhat-marketplace-catalogSource.yaml"
+            source = "/root/catalogSource-redhat-marketplace-index.yaml"
+            destination = f"{clusterdir}/catalogSource-marketplace.yaml"
             scpcmd = scp(disconnected_vm, ip=disconnected_ip, user='root', source=source,
                          destination=destination, tunnel=config.tunnel, tunnelhost=config.tunnelhost,
                          tunnelport=config.tunnelport, tunneluser=config.tunneluser, download=True, insecure=True,

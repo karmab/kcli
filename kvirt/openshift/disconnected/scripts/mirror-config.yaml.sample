@@ -1,0 +1,41 @@
+apiVersion: mirror.openshift.io/v1alpha2
+kind: ImageSetConfiguration
+storageConfig:
+  registry:
+    imageURL: $LOCAL_REGISTRY/ocp4/metadata:latest
+mirror:
+  #platform:
+  #  channels:
+  #  - name: stable-4.10
+  #    minVersion: 4.10.24
+  #    maxVersion: 4.10.24
+  #  graph: true
+  operators: # Operators we want to mirror
+{% if disconnected_operators %}
+  - catalog: registry.redhat.io/redhat/redhat-operator-index:v${OCP_RELEASE}
+    packages:
+{% for package in disconnected_operators %}
+    - name: {{ package }}
+{% endfor %}
+{% endif %}
+{% if disconnected_certified_operators %}
+  - catalog: registry.redhat.io/redhat/certified-operator-index:v${OCP_RELEASE}
+    packages:
+{% for package in disconnected_certified_operators %}
+    - name: {{ package }}
+{% endfor %}
+{% endif %}
+{% if disconnected_community_operators %}
+  - catalog: registry.redhat.io/redhat/community-operator-index:v${OCP_RELEASE}
+    packages:
+{% for package in disconnected_community_operators %}
+    - name: {{ package }}
+{% endfor %}
+{% endif %}
+{% if disconnected_marketplace_operators %}
+  - catalog: registry.redhat.io/redhat/redhat-marketplace-index:v${OCP_RELEASE}
+    packages:
+{% for package in disconnected_marketplace_operators %}
+    - name: {{ package }}
+{% endfor %}
+{% endif %}
