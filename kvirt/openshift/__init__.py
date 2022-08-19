@@ -253,7 +253,7 @@ def process_apps(config, clusterdir, apps, overrides):
             if appname is None:
                 error(f"Missing name in dict {app}. Skipping")
                 continue
-            base_data.overrides(app)
+            base_data.update(app)
         if 'apps_install_cr' in base_data:
             base_data['install_cr'] = base_data['apps_install_cr']
         if appname in LOCAL_OPENSHIFT_APPS:
