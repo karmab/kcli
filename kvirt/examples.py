@@ -318,48 +318,48 @@ $ kcli run workflow myscript.sh -do mydir
 """
 
 kubegenericscale = """# Scale workers from generic cluster myclu
-$ kcli scale cluster generic -P workers=3 mycly
+$ kcli scale cluster generic -P workers=3 myclu
 
 # Scale masters
-$ kcli scale cluster generic -P masters=3 mycly
+$ kcli scale cluster generic -P masters=3 myclu
 
 # Scale both masters and workers
-$ kcli scale cluster generic -P masters=3 -P workers=2 mycly
+$ kcli scale cluster generic -P masters=3 -P workers=2 myclu
 
 # Alternative way to indicate workers
-$ kcli scale cluster generic --workers 3 mycly
+$ kcli scale cluster generic --workers 3 myclu
 """
 
 kubek3sscale = """# Scale workers from k3s cluster myclu
-$ kcli scale cluster k3s -P workers=3 mycly
+$ kcli scale cluster k3s -P workers=3 myclu
 
 # Scale masters
-$ kcli scale cluster k3s -P masters=3 mycly
+$ kcli scale cluster k3s -P masters=3 myclu
 
 # Scale both masters and workers
-$ kcli scale cluster k3s -P masters=3 -P workers=2 mycly
+$ kcli scale cluster k3s -P masters=3 -P workers=2 myclu
 
 # Alternative way to indicate workers
-$ kcli scale cluster k3s --workers 3 mycly
+$ kcli scale cluster k3s --workers 3 myclu
 
 # Alternative way to indicate masters
-$ kcli scale cluster k3s --masters 3 mycly
+$ kcli scale cluster k3s --masters 3 myclu
 """
 
 kubeopenshiftscale = """# Scale workers from openshift cluster myclu
-$ kcli scale cluster openshift -P workers=3 mycly
+$ kcli scale cluster openshift -P workers=3 myclu
 
 # Scale masters
-$ kcli scale cluster openshift -P masters=3 mycly
+$ kcli scale cluster openshift -P masters=3 myclu
 
 # Scale both masters and workers
-$ kcli scale cluster openshift -P masters=3 -P workers=2 mycly
+$ kcli scale cluster openshift -P masters=3 -P workers=2 myclu
 
 # Alternative way to indicate workers
-$ kcli scale cluster openshift --workers 3 mycly
+$ kcli scale cluster openshift --workers 3 myclu
 
 # Alternative way to indicate masters
-$ kcli scale cluster openshift --masters 3 mycly
+$ kcli scale cluster openshift --masters 3 myclu
 """
 
 networkupdate = """# Change network to isolated
