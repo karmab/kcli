@@ -825,10 +825,11 @@ class Kvirt(object):
         else:
             displayxml = """<input type='tablet' bus='usb'/>
 <input type='mouse' bus='ps2'/>"""
-        displayxml += """<graphics type='%s' port='-1' autoport='yes' listen='%s'>
+        passwd = "passwd='kcli'" if os.path.exists('/Applications') else ''
+        displayxml += """<graphics type='%s' port='-1' autoport='yes' listen='%s' %s>
 <listen type='address' address='%s'/>
 </graphics>
-<memballoon model='virtio'/>""" % (display, listen, listen)
+<memballoon model='virtio'/>""" % (display, listen, passwd, listen)
         if aarch64_full:
             displayxml += """<video><model type='virtio' vram='16384' heads='1' primary='yes'/></video>"""
         if cpumodel == 'host-model' and not aarch64:
@@ -1520,7 +1521,7 @@ class Kvirt(object):
             error(f"VM {name} down")
             return
         else:
-            xml = vm.XMLDesc(0)
+            xml = vm.XMLDesc(1)
             root = ET.fromstring(xml)
             host = self.host
             for element in list(root.iter('graphics')):
@@ -1531,6 +1532,7 @@ class Kvirt(object):
                         host = '127.0.0.1'
                 protocol = attributes['type']
                 port = attributes['port']
+                passwd = attributes.get('passwd')
                 localport = port
                 consolecommand = ''
                 if os.path.exists("/i_am_a_container"):
@@ -1540,13 +1542,19 @@ class Kvirt(object):
                     consolecommand += "ssh %s -o LogLevel=QUIET -f -p %s -L %s:127.0.0.1:%s %s@%s sleep 10;"\
                         % (self.identitycommand, self.port, localport, port, self.user, self.host)
                     host = '127.0.0.1'
-                url = f"{protocol}://{host}:{localport}"
+                if passwd is not None:
+                    url = f"{protocol}://kcli:{passwd}@{host}:{localport}"
+                else:
+                    url = f"{protocol}://{host}:{localport}"
                 if web:
                     if tunnel:
                         os.popen(consolecommand)
                     return url
-                if os.path.exists('/Applications') and os.path.exists('/Applications/RemoteViewer.app'):
-                    consolecommand += f"open -a RemoteViewer --args {url} &"
+                if os.path.exists('/Applications'):
+                    if protocol == 'spice' and os.path.exists('/Applications/RemoteViewer.app'):
+                        consolecommand += f"open -a RemoteViewer --args {url} &"
+                    else:
+                        consolecommand += f"open -a 'Screen Sharing' {url} &"
                 else:
                     consolecommand += f"remote-viewer {url} &"
                 if self.debug or os.path.exists("/i_am_a_container"):
