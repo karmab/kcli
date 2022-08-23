@@ -221,7 +221,7 @@ class Kvirt(object):
     def create(self, name, virttype=None, profile='kvirt', flavor=None, plan='kvirt', cpumodel='host-model',
                cpuflags=[], cpupinning=[], numcpus=2, memory=512, guestid='guestrhel764', pool='default', image=None,
                disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None,
-               vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=[],
+               vnc=True, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=[],
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
                files=[], enableroot=True, overrides={}, tags=[], storemetadata=False, sharedfolders=[],
                kernel=None, initrd=None, cmdline=None, placement=[], autostart=False, cpuhotplug=False,
@@ -293,10 +293,10 @@ class Kvirt(object):
         for element in root.iter('path'):
             default_poolpath = element.text
             break
-        if vnc:
-            display = 'vnc'
-        else:
+        if not vnc:
             display = 'spice'
+        else:
+            display = 'vnc'
         volumes = {}
         volumespaths = {}
         for poo in conn.listAllStoragePools(VIR_CONNECT_LIST_STORAGE_POOLS_ACTIVE):

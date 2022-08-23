@@ -152,7 +152,7 @@ vmrules_strict: |
   Note that if no vmrules at all exist, the vm will still get created
 vmport: Custom port to use when sshing into a vm, instead of the evaluated one
 vmuser: Custom user to use when sshing into a vm, instead of the evaluated one
-vnc: if set to true, vnc is used for console instead of spice
+vnc: when set to true, vnc is used for console. On kvm, spice will be used when this is set to false
 wait: Whether to wait for cloudinit/ignition to fully apply
 waitcommand: a specific command to use to validate that vm is ready
 waittimeout: Timeout when waiting for a vm to be ready. Default zero value means the wait wont timeout

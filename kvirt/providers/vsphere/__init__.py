@@ -90,7 +90,7 @@ class Ksphere:
     def create(self, name, virttype=None, profile='kvirt', flavor=None, plan='kvirt', cpumodel='host-model',
                cpuflags=[], cpupinning=[], numcpus=2, memory=512, guestid='centos7_64Guest', pool='default', image=None,
                disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None,
-               vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=[],
+               vnc=True, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=[],
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
                files=[], enableroot=True, overrides={}, tags=[], storemetadata=False, sharedfolders=[],
                kernel=None, initrd=None, cmdline=None, placement=[], autostart=False, cpuhotplug=False,
