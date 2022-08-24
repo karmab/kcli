@@ -36,7 +36,7 @@ net.bridge.bridge-nf-call-ip6tables = 1
 EOF
 sysctl --system
 {% if engine == 'crio' %}
-OS="CentOS_8"
+OS="CentOS_8_Stream"
 CRIO_VERSION=$(echo $VERSION | cut -d. -f1,2)
 curl -L -o /etc/yum.repos.d/devel:kubic:libcontainers:stable.repo https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/devel:kubic:libcontainers:stable.repo
 curl -L -o /etc/yum.repos.d/devel:kubic:libcontainers:stable:cri-o:$CRIO_VERSION.repo https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable:cri-o:$CRIO_VERSION/$OS/devel:kubic:libcontainers:stable:cri-o:$CRIO_VERSION.repo
