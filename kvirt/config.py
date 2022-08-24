@@ -2917,9 +2917,9 @@ class Kconfig(Kbaseconfig):
                         origin = f"{basedir}/{origin}"
                         files[index]['origin'] = origin
                 if not os.path.exists(origin):
-                    return {'result': 'failure', 'reason': f"File {origin} not found in {name}"}
+                    return {'result': 'failure', 'reason': f"Origin file {origin} not found for {name}"}
             elif content is None:
-                return {'result': 'failure', 'reason': f"Content of file {path} not found in {name}"}
+                return {'result': 'failure', 'reason': f"Content of file {path} not found for {name}"}
 
     def remediate_files(self, name, newfiles, overrides={}):
         updated_files = []
