@@ -24,7 +24,11 @@ EOF
 sysctl --system
 {% if engine == 'crio' %}
 OS="xUbuntu_20.04"
+{% if engine_version != None %}
+CRIO_VERSION={{ engine_version }}
+{% else %}
 CRIO_VERSION=$(echo $VERSION | cut -d. -f1,2)
+{% endif %}
 cat <<EOF | tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
 deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/ /
 EOF
