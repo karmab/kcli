@@ -43,8 +43,10 @@
  - multus.sh
 {% endif %}
 {% if metallb %}
- - metal_lb.sh
- - metal_lb_cm.yml
+ - path: /root/metallb.sh
+   origin: apps/metallb/install.sh
+ - path: /root/metallb_cr.yml
+   origin: apps/metallb/metallb_cr.yml
 {% endif %}
 {% if nfs %}
  - nfs.yml

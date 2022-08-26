@@ -56,11 +56,6 @@ echo $MASTERCMD > /root/mastercmd.sh
 
 echo ${CMD} > /root/join.sh
 
-{% if metallb %}
-# (addon) install Metal Load Balancer (LB)
-bash /root/metal_lb.sh
-{% endif %}
-
 {% if ingress %}
 # (addon) install Ingress Controller
 {% if ingress_method == 'nginx' %}
@@ -98,8 +93,14 @@ cp /opt/registry/auth/htpasswd /var/www/html
 {% endif %}
 
 {% if multus %}
-multus.sh
+/root/multus.sh
 {% endif %}
 {% if nfs %}
-nfs.sh
+/root/nfs.sh
+{% endif %}
+
+{% if metallb %}
+# (addon) install Metal Load Balancer (LB)
+cd /root
+bash /root/metallb.sh
 {% endif %}

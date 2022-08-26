@@ -37,7 +37,6 @@ ingress_method: nginx
 policy_as_code: false
 policy_as_code_method: gatekeeper
 metallb: false
-metallb_version: v0.9.3
 metallb_range: 192.168.122.240-192.168.122.250
 multus: true
 notifycmd: "kubectl get pod -A"
