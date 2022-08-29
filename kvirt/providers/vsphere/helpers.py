@@ -294,12 +294,13 @@ def changecd(si, vm, iso):
             cdromspec.device.connectable.allowGuestControl = True
             cdromspec.device.controllerKey = virtual_cdrom_device.controllerKey
             cdromspec.device.key = virtual_cdrom_device.key
-            cdromspec.device.backing = vim.vm.device.VirtualCdrom.IsoBackingInfo()
             if iso is not None:
+                cdromspec.device.backing = vim.vm.device.VirtualCdrom.IsoBackingInfo()
                 cdromspec.device.backing.fileName = iso
                 cdromspec.device.connectable.connected = True
                 cdromspec.device.connectable.startConnected = True
             else:
+                cdromspec.device.backing = vim.vm.device.VirtualCdrom.RemotePassthroughBackingInfo()
                 cdromspec.device.connectable.connected = False
                 cdromspec.device.connectable.startConnected = False
             dev_changes = []
