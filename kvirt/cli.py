@@ -1701,8 +1701,9 @@ def create_generic_kube(args):
     elif paramfile is None and os.path.exists("kcli_parameters.yml"):
         paramfile = "kcli_parameters.yml"
         pprint("Using default parameter file kcli_parameters.yml")
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    client = overrides.get('client', args.client)
+    config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if overrides.get('force', args.force):
         config.delete_kube(cluster, overrides=overrides)
     config.create_kube_generic(cluster, overrides=overrides)
@@ -1721,8 +1722,9 @@ def create_kind_kube(args):
     elif paramfile is None and os.path.exists("kcli_parameters.yml"):
         paramfile = "kcli_parameters.yml"
         pprint("Using default parameter file kcli_parameters.yml")
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    client = overrides.get('client', args.client)
+    config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if overrides.get('force', args.force):
         config.delete_kube(cluster, overrides=overrides)
     config.create_kube_kind(cluster, overrides=overrides)
@@ -1741,8 +1743,9 @@ def create_microshift_kube(args):
     elif paramfile is None and os.path.exists("kcli_parameters.yml"):
         paramfile = "kcli_parameters.yml"
         pprint("Using default parameter file kcli_parameters.yml")
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    client = overrides.get('client', args.client)
+    config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if overrides.get('force', args.force):
         config.delete_kube(cluster, overrides=overrides)
     config.create_kube_microshift(cluster, overrides=overrides)
@@ -1761,8 +1764,9 @@ def create_k3s_kube(args):
     elif paramfile is None and os.path.exists("kcli_parameters.yml"):
         paramfile = "kcli_parameters.yml"
         pprint("Using default parameter file kcli_parameters.yml")
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    client = overrides.get('client', args.client)
+    config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if overrides.get('force', args.force):
         config.delete_kube(cluster, overrides=overrides)
     config.create_kube_k3s(cluster, overrides=overrides)
@@ -1781,8 +1785,9 @@ def create_hypershift_kube(args):
     elif paramfile is None and os.path.exists("kcli_parameters.yml"):
         paramfile = "kcli_parameters.yml"
         pprint("Using default parameter file kcli_parameters.yml")
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    client = overrides.get('client', args.client)
+    config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if overrides.get('force', args.force):
         config.delete_kube(cluster, overrides=overrides)
     config.create_kube_hypershift(cluster, overrides=overrides)
@@ -1801,9 +1806,9 @@ def create_openshift_kube(args):
     elif paramfile is None and os.path.exists("kcli_parameters.yml"):
         paramfile = "kcli_parameters.yml"
         pprint("Using default parameter file kcli_parameters.yml")
-    client = 'fake' if common.need_fake() else args.client
-    config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    client = overrides.get('client', 'fake' if common.need_fake() else args.client)
+    config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if args.subcommand_create_kube == 'okd':
         overrides['upstream'] = True
     if overrides.get('force', args.force):
