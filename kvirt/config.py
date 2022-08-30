@@ -1714,6 +1714,7 @@ class Kconfig(Kbaseconfig):
                 else:
                     warning(f"Incorrect kubetype {kubetype} specified. skipped!")
                     continue
+        vmclients = []
         if vmentries:
             if not onlyassets:
                 pprint("Deploying Vms...")
@@ -1730,7 +1731,6 @@ class Kconfig(Kbaseconfig):
                 self.plan(plan, inputfile=baseinputfile, overrides=overrides, excludevms=vmnames, basemode=True,
                           onlyassets=onlyassets)
                 baseplans.append(basefile)
-            vmclients = []
             vmrules_strict = overrides.get('vmrules_strict', self.vmrules_strict)
             for name in vmentries:
                 if name in excludevms:
