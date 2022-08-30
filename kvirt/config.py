@@ -2168,9 +2168,9 @@ class Kconfig(Kbaseconfig):
         for entry in asyncwaitvms:
             name, finishfiles = entry['name'], entry['finishfiles']
             waitcommand, waittimeout = entry['waitcommand'], entry['waittimeout']
-            self.wait(name, waitcommand=waitcommand, waittimeout=waittimeout)
+            self.wait_finish(name, waitcommand=waitcommand, waittimeout=waittimeout)
             if finishfiles:
-                self.handle_finishfiles(self, name, finishfiles)
+                self.handle_finishfiles(name, finishfiles)
         post_script = f'{inputdir}/kcli_post.sh'
         if os.path.exists(post_script):
             if post:

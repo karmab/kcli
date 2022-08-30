@@ -1,5 +1,5 @@
-microshift_profile:
- type: profile
+{% for number in range(0, nodes|int) %}
+{{ cluster }}-{{ number }}:
  domain: {{ domain }}
  image: {{ image }}
  noname: {{ noname }}
@@ -21,12 +21,4 @@ microshift_profile:
 {% endif %}
  scripts:
  - scripts/deploy.sh
-
-{% for number in range(0, nodes|int) %}
-{{ cluster }}-{{ number }}:
- profile: microshift_profile
- wait: true
- finishfiles:
- - origin: {{ KUBECONFIG }}
-   path: ~/.kcli/clusters/{{ cluster }}/auth/kubeconfig.{{ number }}
 {% endfor %}

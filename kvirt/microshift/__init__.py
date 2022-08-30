@@ -7,7 +7,7 @@ import yaml
 
 
 def create(config, plandir, cluster, overrides, dnsconfig=None):
-    data = {'kubetype': 'microshift', 'KUBECONFIG': '/var/lib/microshift/resources/kubeadmin/kubeconfig', 'sslip': True}
+    data = {'kubetype': 'microshift', 'sslip': True}
     data.update(overrides)
     if 'keys' not in overrides and get_ssh_pub_key() is None:
         error("No usable public key found, which is required for the deployment")
@@ -56,11 +56,17 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             installparam['plan'] = plan
             installparam['kubetype'] = 'microshift'
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
-    result = config.plan(plan, inputfile=f'{plandir}/kcli_plan.yml', overrides=data)
+    threaded = data.get('threaded', False)
+    result = config.plan(plan, inputfile=f'{plandir}/kcli_plan.yml', overrides=data, threaded=threaded)
     if result['result'] != 'success':
         sys.exit(1)
+    KUBECONFIG = '/var/lib/microshift/resources/kubeadmin/kubeconfig'
     for index in range(nodes):
-        ip = config.k.info(f"{cluster}-{index}").get('ip')
+        name = f"{cluster}-{index}"
+        config.wait_finish(name)
+        finishfiles = [{'origin': KUBECONFIG, 'path': f"~/.kcli/clusters/{cluster}/auth/kubeconfig.{index}"}]
+        config.handle_finishfiles(name, finishfiles)
+        ip = config.k.info(name).get('ip')
         destination = f"{clusterdir}/auth/kubeconfig.{index}"
         os.system(f"sed -i -e 's/127.0.0.1/{ip}/' {destination}")
         if index == 0:
