@@ -233,6 +233,7 @@ class Kvirt(object):
         macosx = False
         diskpath = None
         qemuextra = overrides.get('qemuextra')
+        enableiommu = overrides.get('iommu', False)
         iommuxml = ""
         ioapicxml = ""
         if 'session' in self.url:
@@ -330,7 +331,7 @@ class Kvirt(object):
         uefi = overrides.get('uefi', False)
         uefi_legacy = overrides.get('uefi_legacy', False)
         secureboot = overrides.get('secureboot', False)
-        if machine == 'pc' and (uefi or uefi_legacy or secureboot or aarch64):
+        if machine == 'pc' and (uefi or uefi_legacy or secureboot or aarch64 or enableiommu):
             machine = 'q35'
         # sysinfo = "<smbios mode='sysinfo'/>"
         disksxml = ''
@@ -1206,7 +1207,6 @@ class Kvirt(object):
             except:
                 warning(f"couldn't use {uuid} as uuid")
         metadataxml += "</kvirt:info></metadata>"
-        enableiommu = overrides.get('iommu', False)
         iommumemxml = "<memtune><hard_limit unit='KiB'>104857600</hard_limit></memtune>" if enableiommu else ''
         iommufeaturesxml = "<acpi/><apic/><pae/><apic/><pae/><ioapic driver='qemu'/>" if enableiommu else ''
         iommudevicexml = "<iommu model='intel'><driver intremap='on'/></iommu>" if enableiommu else ''
