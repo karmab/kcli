@@ -1206,6 +1206,10 @@ class Kvirt(object):
             except:
                 warning(f"couldn't use {uuid} as uuid")
         metadataxml += "</kvirt:info></metadata>"
+        enableiommu = overrides.get('iommu', False)
+        iommumemxml = "<memtune><hard_limit unit='KiB'>104857600</hard_limit></memtune>" if enableiommu else ''
+        iommufeaturesxml = "<acpi/><apic/><pae/><apic/><pae/><ioapic driver='qemu'/>" if enableiommu else ''
+        iommudevicexml = "<iommu model='intel'><driver intremap='on'/></iommu>" if enableiommu else ''
         vmxml = """<domain type='{virttype}' {namespace}>
 <name>{name}</name>
 {uuidxml}
@@ -1214,6 +1218,7 @@ class Kvirt(object):
 {cpupinningxml}
 {numatunexml}
 {hugepagesxml}
+{iommumemxml}
 <memory unit='MiB'>{memory}</memory>
 {vcpuxml}
 <os {osfirmware}>
@@ -1228,6 +1233,7 @@ class Kvirt(object):
 {smmxml}
 {ioapicxml}
 {acpixml}
+{iommufeaturesxml}
 <pae/>
 </features>
 <clock offset='utc'/>
@@ -1250,6 +1256,7 @@ class Kvirt(object):
 {rngxml}
 {tpmxml}
 {iommuxml}
+{iommudevicexml}
 </devices>
 {cpuxml}
 {qemuextraxml}
@@ -1260,7 +1267,8 @@ class Kvirt(object):
                     smmxml=smmxml, emulatorxml=emulatorxml, disksxml=disksxml, busxml=busxml, netxml=netxml,
                     isoxml=isoxml, floppyxml=floppyxml, displayxml=displayxml, serialxml=serialxml, sharedxml=sharedxml,
                     guestxml=guestxml, videoxml=videoxml, hostdevxml=hostdevxml, rngxml=rngxml, tpmxml=tpmxml,
-                    cpuxml=cpuxml, qemuextraxml=qemuextraxml, ioapicxml=ioapicxml, acpixml=acpixml, iommuxml=iommuxml)
+                    cpuxml=cpuxml, qemuextraxml=qemuextraxml, ioapicxml=ioapicxml, acpixml=acpixml, iommuxml=iommuxml,
+                    iommumemxml=iommumemxml, iommufeaturesxml=iommufeaturesxml, iommudevicexml=iommudevicexml)
         if self.debug:
             print(vmxml.replace('\n\n', ''))
         conn.defineXML(vmxml)
