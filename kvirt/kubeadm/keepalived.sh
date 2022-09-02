@@ -1,4 +1,4 @@
-PKGMGR="{{ 'apt-get' if ubuntu else 'yum' }}"
+PKGMGR="{{ 'apt-get' if ubuntu else 'dnf' }}"
 $PKGMGR -y install keepalived
 NETMASK=$(ip -o -f inet addr show | awk '/scope global/ {print $4}' | head -1 | cut -d'/' -f2)
 sed -i "s/NETMASK/$NETMASK/" /root/keepalived.conf

@@ -4,6 +4,7 @@ if [ -d /root/manifests ] ; then
 fi
 KUBEADMINDIR=/var/lib/microshift/resources/kubeadmin
 {% if podman %}
+dnf -y install podman
 mkdir -p $KUBEADMINDIR
 curl -o /etc/systemd/system/microshift.service https://raw.githubusercontent.com/redhat-et/microshift/main/packaging/systemd/microshift-containerized.service
 {% else %}

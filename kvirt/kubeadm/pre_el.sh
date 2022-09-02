@@ -44,7 +44,8 @@ CRIO_VERSION=$(echo $VERSION | cut -d. -f1,2)
 {% endif %}
 curl -L -o /etc/yum.repos.d/devel:kubic:libcontainers:stable.repo https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/devel:kubic:libcontainers:stable.repo
 curl -L -o /etc/yum.repos.d/devel:kubic:libcontainers:stable:cri-o:$CRIO_VERSION.repo https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable:cri-o:$CRIO_VERSION/$OS/devel:kubic:libcontainers:stable:cri-o:$CRIO_VERSION.repo
-yum -y install cri-o conntrack
+dnf -y install containers-common-1-6.module_el8.6.0+954+963caf36
+dnf -y install cri-o conntrack
 sed -i 's@conmon = .*@conmon = "/bin/conmon"@' /etc/crio/crio.conf
 {% if HTTP_PROXY is defined %}
 mkdir /etc/systemd/system/crio.service.d
@@ -67,9 +68,9 @@ EOF
 {% endif %}
 systemctl enable --now crio
 {% else %}
-yum install -y yum-utils device-mapper-persistent-data lvm2
+dnf install -y yum-utils device-mapper-persistent-data lvm2
 yum-config-manager --add-repo https://download.docker.com/linux/$TARGET/docker-ce.repo
-yum install -y containerd.io
+dnf install -y containerd.io
 mkdir -p /etc/containerd
 containerd config default > /etc/containerd/config.toml
 {% if HTTP_PROXY is defined %}

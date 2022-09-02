@@ -1,7 +1,7 @@
 {% if ubuntu %} 
 apt-get -y install nfs-kernel-server
 {% else %}
-yum -y install nfs-utils
+dnf -y install nfs-utils
 {% endif %}
 for i in `seq -f "%03g" 1 20` ; do
 mkdir /pv${i}
