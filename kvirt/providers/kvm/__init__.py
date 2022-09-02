@@ -1209,7 +1209,7 @@ class Kvirt(object):
         metadataxml += "</kvirt:info></metadata>"
         iommumemxml = "<memtune><hard_limit unit='KiB'>104857600</hard_limit></memtune>" if enableiommu else ''
         iommufeaturesxml = "<acpi/><apic/><pae/><apic/><pae/><ioapic driver='qemu'/>" if enableiommu else ''
-        iommudevicexml = "<iommu model='intel'><driver intremap='on'/></iommu>" if enableiommu else ''
+        iommudevicexml = "<iommu model='intel'><driver intremap='on' caching_mode='on'/></iommu>" if enableiommu else ''
         vmxml = """<domain type='{virttype}' {namespace}>
 <name>{name}</name>
 {uuidxml}
