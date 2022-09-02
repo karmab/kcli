@@ -1,15 +1,15 @@
 info: |
     Deploys an openshift cluster with an arbitray number of masters or workers using openshift-install
-    and creating the node with kcli instead of terraforms.
+    and creating the nodes with kcli.
     This allows easily tweaking the hardware caracteristics of those nodes.
-    When running on cloud platforms, loadbalancer and dns from the platform is used.
+    When running on cloud platforms, loadbalancer and dns from the platform are used.
     Otherwise, extra static pods (coredns with mdns, keepalived and haproxy) are deployed on the nodes to provide a self contained platform.
-    Default version is latest stable but you can instead use ci, for which you will need a specific pull secret
-    Upstream okd version can be specified with the upstream flag.
-    Sdn defaults to OpenShiftSDN but OVNKubernetes or Calico can be specified instead.
-    To avoid keepalived collision, you can force virtual_router_id. Otherwise, the id is calculated from cluster variable
+    Default version is latest stable but you can use nightly or ci instead, for which you will need a specific pull secret.
+    Upstream okd version can be specified with the upstream boolean variable.
+    Sdn defaults to OpenShiftSDN but OVNKubernetes or Calico can also be selected.
+    To avoid keepalived collision, you can force virtual_router_id. Otherwise, the id is calculated from cluster variable.
     You can deploy extra apps with the apps array and for each of the supported app, indicate with the variable
-    ${app}_version with version to target (instead of latest)
+    ${app}_version which version to target (instead of latest).
     You can also define a list of scripts to launch at the end with the postscripts array.
 ipi: false
 version: stable
