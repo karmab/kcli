@@ -1,0 +1,11 @@
+cluster: ci-sno
+domain: karmalabs.com
+sno: true
+sno_virtual: true
+version: stable
+network_type: OVNKubernetes
+tag: "4.11"
+network: default
+numcpus: 16
+memory: 28672
+disk_size: 80

@@ -1,0 +1,23 @@
+name: SNO-NIGHTLY-CI
+on:
+  schedule:
+    - cron: '15 03 * * *'
+
+env:
+ HOME: /root
+ PYTHONUNBUFFERED: true
+ PLAN: ci-sno
+ PULLSECRET: /root/openshift_pull.json
+
+jobs:
+  deploy-openshift:
+    strategy:
+      fail-fast: false
+    runs-on: libvirt
+    steps:
+     - uses: actions/checkout@v2
+     - run: git pull origin ${GITHUB_REF##*/}
+     - name: Install kcli
+       run: curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | bash
+     - name: Deploy SNO on Libvirt
+       run: kcli create cluster openshift --paramfile openshift-ci-paramfiles/sno.yml -P pull_secret=$PULLSECRET $PLAN --force
