@@ -259,14 +259,14 @@ $ kcli create openshift-registry -P version=stable -P tag=4.9
 $ kcli create openshift-registry -P version=nightly -P tag=4.9 -P disconnected_ipv6_network=false
 
 # Use specific version and add extra operators (from 4.8)
-$ kcli create openshift-registry -P version=nightly -P tag=4.8.0-fc.5 -P disconnected_operators=[sriov-operator]
+$ kcli create openshift-registry -P version=nightly -P tag=4.8.0-fc.5 -P disconnected_operators=[sriov-network-operator]
 
 # Deploy registry without content
 $ kcli create openshift-registry -P disconnected_sync=false
 """
 
-appopenshiftcreate = """# Deploy sriov operator
-$ kcli create app openshift sriov-operator
+appopenshiftcreate = """# Deploy sriov network operator
+$ kcli create app openshift sriov-network-operator
 
 # Deploy local storage using parameters from your openshift install and creating a localvolume for each node
 $ kcli create app openshift local-storage --paramfile your_paramfile.yml
