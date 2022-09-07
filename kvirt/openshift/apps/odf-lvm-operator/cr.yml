@@ -7,3 +7,7 @@ spec:
   storage:
     deviceClasses:
     - name: {{ lvm_vg }}
+      thinPoolConfig:
+        name: {{ lvm_vg }}-thin-pool
+        sizePercent: {{ lvm_thinpool_percent }}
+        overprovisionRatio: {{ lvm_thinpool_overprovisionratio }}
