@@ -19,7 +19,7 @@ kubectl taint nodes --all node-role.kubernetes.io/control-plane-
 {% if sdn != None %}
 # install Container Network Interface (CNI)
 {% if sdn == 'flannel' %}
-kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
 {% elif sdn == 'weavenet' %}
 kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=`kubectl version | base64 | tr -d '\n'`"
 {% elif sdn == 'calico' %}
