@@ -66,6 +66,7 @@ EOF
 {% endif %}
 {% endif %}
 {% endif %}
+rm -f /etc/cni/net.d/100-crio-bridge.conf
 systemctl enable --now crio
 {% else %}
 dnf install -y yum-utils device-mapper-persistent-data lvm2
