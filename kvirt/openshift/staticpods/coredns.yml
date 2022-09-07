@@ -24,26 +24,20 @@ spec:
     - |
       #/bin/sh
       NAMESERVER=$(grep nameserver /etc/resolv.conf | grep -v 'fe80::' | tail -1 | sed 's/nameserver //')
-      if [ "$NAMESERVER" == "" ] ; then
-        exit 1
-      fi
+      [ "$NAMESERVER" == "" ] && exit 1
       [ ! -f /etc/coredns/Corefile ] && [ -f /etc/coredns/Corefile.template ] && cp /etc/coredns/Corefile.template /etc/coredns/Corefile
-      grep -q "NAMESERVER" /etc/coredns/Corefile
-      if [ "$?" != "0" ] ; then
-        exit 0
-      else
-        sed -i "s@NAMESERVER@$NAMESERVER@" /etc/coredns/Corefile
-        {% if sno_dns %}
-        {% if ipv6 %}
-        NIC=$(ip -6 r | grep -v lo | head -1 | sed 's/.*dev \(.*\) \(proto\|metric\).*/\1/' | awk '{print $1}')
-        IP=$(ip -6 -o addr show $NIC | awk '{print $4}' | cut -d "/" -f 1 | head -1)
-        {% else %}
-        NIC=$(ip r | grep default | head -1 | sed 's/.*dev \(.*\) \(proto\|metric\).*/\1/')
-        IP=$(ip -o addr show $NIC | awk '{print $4}' | cut -d "/" -f 1 | head -1)
-        {% endif %}
-        sed -i "s@None@$IP@" /etc/coredns/Corefile
-        {% endif %}
-      fi
+      grep -q "NAMESERVER" /etc/coredns/Corefile || exit 0
+      sed -i "s@NAMESERVER@$NAMESERVER@" /etc/coredns/Corefile
+      {% if sno_dns %}
+      {% if ipv6 %}
+      NIC=$(ip -6 r | grep -v lo | head -1 | awk '{print $3}')
+      IP=$(ip -6 -o addr show $NIC | awk '{print $4}' | cut -d "/" -f 1 | head -1)
+      {% else %}
+      NIC=$(ip r | grep default | head -1 | awk '{print $5}')
+      IP=$(ip -o addr show $NIC | awk '{print $4}' | cut -d "/" -f 1 | head -1)
+      {% endif %}
+      sed -i "s@None@$IP@" /etc/coredns/Corefile
+      {% endif %}
     resources: {}
     volumeMounts:
     - name: conf-dir

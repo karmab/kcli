@@ -12,6 +12,7 @@
  domain: {{ domain }} 
  iso: {{ cluster }}-sno.iso
  pool: {{ pool or config_pool }}
+ image:
  enableroot: false 
  flavor: {{ flavor }}
  keys: {{ keys }}

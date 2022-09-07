@@ -1177,7 +1177,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             pprint(f"Storing generated iso in pool {iso_pool}")
             generate_rhcos_iso(k, f"{cluster}-sno", iso_pool, installer=True, extra_args=extra_args)
             if sno_virtual:
-                warning("You can also get a sno by setting masters to 1")
+                warning("Note that you can also get a sno by setting masters to 1")
                 pprint("Deploying sno vm")
                 result = config.plan(plan, inputfile='%s/sno.yml' % plandir, overrides=data)
                 if result['result'] != 'success':
