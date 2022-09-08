@@ -1287,11 +1287,17 @@ class Kvirt(object):
         if fixqcow2path is not None and fixqcow2backing is not None:
             self._fixqcow2(fixqcow2path, fixqcow2backing)
         if cmdline is not None and firstdisk is not None:
+            pprint("Injecting cmdline in vm image")
             if 'rhcos' in image or 'fcos' in image:
                 virtcmd = 'virt-edit'
                 bootdisk = '/dev/sda3'
                 bootfile = "/boot/loader/entries/ostree-1-rhcos.conf"
                 cmd = f"sudo {virtcmd} -a {firstdisk} -m {bootdisk} {bootfile} -e 's@^options@options {cmdline}@'"
+            elif common.is_ubuntu(image) or 'debian' in image:
+                virtcmd = 'virt-customize'
+                runcommand = rf'echo GRUB_CMDLINE_LINUX_DEFAULT=\"\$GRUB_CMDLINE_LINUX_DEFAULT {cmdline}\"'
+                runcommand += ' > /etc/default/grub.d/kcli.cfg ; update-grub'
+                cmd = f"sudo {virtcmd} -a {firstdisk} --run-command '{runcommand}'"
             else:
                 virtcmd = 'virt-customize'
                 cmd = f"sudo {virtcmd} -a {firstdisk} --run-command 'grubby --update-kernel=ALL --args={cmdline}'"
