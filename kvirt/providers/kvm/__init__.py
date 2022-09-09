@@ -1301,7 +1301,10 @@ class Kvirt(object):
             else:
                 virtcmd = 'virt-customize'
                 cmd = f"sudo {virtcmd} -a {firstdisk} --run-command 'grubby --update-kernel=ALL --args={cmdline}'"
-            if self.host == 'localhost' or self.host == '127.0.0.1':
+            if os.path.exists("/i_am_a_container") and which(virtcmd) is None:
+                os.system('apt-get install -y libguestfs-tools')
+                os.system(cmd.replace('sudo ', ''))
+            elif self.host == 'localhost' or self.host == '127.0.0.1':
                 if which(virtcmd) is not None:
                     os.system(cmd)
                 else:
