@@ -63,3 +63,4 @@ masters_threaded: false
 workers_threaded: false
 keys: []
 tempkey: false
+wait_ready: false

@@ -8,6 +8,7 @@ from random import choice
 from shutil import which
 from string import ascii_letters, digits
 import sys
+from time import sleep
 import yaml
 
 # virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere']
@@ -46,7 +47,7 @@ def scale(config, plandir, cluster, overrides):
 def create(config, plandir, cluster, overrides):
     platform = config.type
     k = config.k
-    data = {'kubetype': 'generic', 'nip': False, 'domain': 'karmalabs.com'}
+    data = {'kubetype': 'generic', 'nip': False, 'domain': 'karmalabs.com', 'wait_ready': False}
     data.update(overrides)
     if 'keys' not in overrides and get_ssh_pub_key() is None:
         error("No usable public key found, which is required for the deployment")
@@ -149,10 +150,6 @@ def create(config, plandir, cluster, overrides):
         os.chdir(os.path.expanduser("~/.kcli"))
         worker_threaded = data.get('threaded', False) or data.get('workers_threaded', False)
         config.plan(plan, inputfile=f'{plandir}/workers.yml', overrides=data, threaded=worker_threaded)
-    success(f"Kubernetes cluster {cluster} deployed!!!")
-    masters = data.get('masters', 1)
-    info2(f"export KUBECONFIG=$HOME/.kcli/clusters/{cluster}/auth/kubeconfig")
-    info2("export PATH=$PWD:$PATH")
     prefile = 'pre_ubuntu.sh' if data['ubuntu'] else 'pre_el.sh'
     predata = config.process_inputfile(plan, f"{plandir}/{prefile}", overrides=data)
     with open(f"{clusterdir}/pre.sh", 'w') as f:
@@ -170,3 +167,13 @@ def create(config, plandir, cluster, overrides):
                 if f'{app}_version' not in overrides:
                     data[f'{app}_version'] = 'latest'
                 kube_create_app(config, appdir, overrides=data)
+    if data['wait_ready']:
+        pprint("Waiting for all nodes to join cluster")
+        while True:
+            if len(os.popen("kubectl get node -o name").readlines()) == masters + workers:
+                break
+            else:
+                sleep(10)
+    success(f"Kubernetes cluster {cluster} deployed!!!")
+    info2(f"export KUBECONFIG=$HOME/.kcli/clusters/{cluster}/auth/kubeconfig")
+    info2("export PATH=$PWD:$PATH")
