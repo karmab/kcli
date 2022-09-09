@@ -3183,8 +3183,8 @@ class Kvirt(object):
         gateway = str(cidr_range[1])
         family = 'ipv6' if ':' in gateway else 'ipv4'
         if dhcp:
-            start = str(cidr_range[2])
-            end = str(cidr_range[65535 if family == 'ipv6' else -2])
+            start = overrides.get('dhcp_start') or str(cidr_range[2])
+            end = overrides.get('dhcp_end') or str(cidr_range[65535 if family == 'ipv6' else -2])
             dhcpxml = f"<dhcp><range start='{start}' end='{end}'/>"
             if 'pxe' in overrides:
                 pxe = overrides['pxe']
