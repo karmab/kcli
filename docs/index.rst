@@ -1,4 +1,4 @@
-|Build Status| |Pypi| |Copr| |Documentation Status| |image1|
+|Build Status| |Pypi| |Copr| |Documentation Status|
 
 About
 =====
@@ -2031,5 +2031,3 @@ API documentation
    :target: https://copr.fedorainfracloud.org/coprs/karmab/kcli/package/kcli
 .. |Documentation Status| image:: https://readthedocs.org/projects/kcli/badge/?version=latest
    :target: https://kcli.readthedocs.io/en/latest/?badge=latest
-.. |image1| image:: https://images.microbadger.com/badges/image/karmab/kcli.svg
-   :target: https://microbadger.com/images/karmab/kcli
