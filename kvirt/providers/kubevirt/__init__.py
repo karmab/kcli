@@ -675,6 +675,7 @@ class Kubevirt(Kubecommon):
         spectemplate = vm['spec'].get('template')
         volumes = spectemplate['spec']['volumes']
         name = metadata["name"]
+        uid = metadata["uid"]
         creationdate = metadata["creationTimestamp"]
         profile, plan, image = 'N/A', 'N/A', 'N/A'
         kube, kubetype = None, None
@@ -719,7 +720,7 @@ class Kubevirt(Kubecommon):
             ip6s = [i for i in ips if i not in ip4s]
             ip = ip4s[0] if ip4s else ip6s[0]
         yamlinfo = {'name': name, 'nets': [], 'disks': [], 'status': state, 'creationdate': creationdate, 'host': host,
-                    'namespace': namespace}
+                    'namespace': namespace, 'id': uid}
         if 'cpu' in spectemplate['spec']['domain']:
             numcpus = spectemplate['spec']['domain']['cpu']['cores']
             yamlinfo['cpus'] = numcpus
