@@ -28,6 +28,7 @@ from kvirt.providers.vsphere.helpers import find, collectproperties, findvm, cre
 from kvirt.providers.vsphere.helpers import createscsispec, creatediskspec, createdvsnicspec, createclonespec
 from kvirt.providers.vsphere.helpers import createnicspec, createisospec, deletedirectory, dssize, keep_lease_alive
 from kvirt.providers.vsphere.helpers import create_filter_spec, get_all_obj, convert_properties, findvm2
+from uuid import UUID
 
 
 class Ksphere:
@@ -218,6 +219,13 @@ class Ksphere:
         confspec.annotation = name
         confspec.memoryMB = memory
         confspec.numCPUs = numcpus
+        if 'uuid' in overrides:
+            uuid = str(overrides['uuid'])
+            try:
+                UUID(uuid)
+                confspec.uuid = uuid
+            except:
+                warning(f"couldn't use {uuid} as uuid")
         confspec.extraConfig = []
         for entry in [field for field in metadata if field in METADATA_FIELDS]:
             opt = vim.option.OptionValue()
