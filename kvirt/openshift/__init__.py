@@ -690,12 +690,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         sys.exit(1)
     if platform in virtplatforms and disconnected_deploy:
         disconnected_vm = "%s-disconnected" % data.get('disconnected_reuse_name', cluster)
-        pprint("Deploying disconnected vm %s" % disconnected_vm)
+        pprint(f"Deploying disconnected vm {disconnected_vm}")
         data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
-        disconnected_plan = "%s-reuse" % plan if disconnected_reuse else plan
+        disconnected_plan = f"{plan}-reuse" if disconnected_reuse else plan
         disconnected_overrides = data.copy()
         disconnected_overrides['arch_tag'] = arch_tag
-        disconnected_overrides['kube'] = "%s-reuse" % cluster if disconnected_reuse else cluster
+        disconnected_overrides['kube'] = f"{cluster}-reuse" if disconnected_reuse else cluster
         disconnected_overrides['openshift_version'] = INSTALLER_VERSION
         disconnected_overrides['disconnected_operators_version'] = '.'.join(INSTALLER_VERSION.split('.')[:-1])
         disconnected_overrides['openshift_release_image'] = get_release_image()
@@ -706,7 +706,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 warning(f"Adding app {app} to disconnected_operators array")
                 disconnected_operators.append(app)
         disconnected_overrides['disconnected_operators'] = disconnected_operators
-        result = config.plan(disconnected_plan, inputfile='%s/disconnected.yml' % plandir,
+        result = config.plan(disconnected_plan, inputfile=f'{plandir}/disconnected.yml',
                              overrides=disconnected_overrides)
         if result['result'] != 'success':
             sys.exit(1)
