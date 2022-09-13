@@ -2518,7 +2518,7 @@ class Kconfig(Kbaseconfig):
     def delete_kube(self, cluster, overrides={}):
         ipi = False
         hypershift = False
-        domain = overrides.get('domain', 'karmalabs.com')
+        domain = overrides.get('domain', 'karmalabs.local')
         kubetype = 'generic'
         dnsclient = None
         k = self.k

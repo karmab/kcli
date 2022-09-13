@@ -511,8 +511,8 @@ Vsphere
 
    myvsphere:
     type: vsphere
-    host: xxx-vcsa67.vcenter.e2e.karmalabs.com
-    user: administrator@karmalabs.com
+    host: xxx-vcsa67.vcenter.e2e.karmalabs.local
+    user: administrator@karmalabs.local
     password: mypassword
     datacenter: Madrid
     cluster: xxx
@@ -1639,7 +1639,7 @@ A minimal one could be the following one
 ::
 
    cluster: mycluster
-   domain: karmalabs.com
+   domain: karmalabs.local
    version: stable
    tag: '4.8'
    masters: 3 
@@ -1666,7 +1666,7 @@ masters                1                                  number of masters
 workers                0                                  number of workers
 fips                   False                              
 cluster                testk                              
-domain                 karmalabs.com                      For cloud platforms, it should point to a domain name you have access to
+domain                 karmalabs.local                    
 network_type           OpenShiftSDN                       
 minimal                False                              
 pool                   default                            

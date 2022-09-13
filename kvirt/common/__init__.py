@@ -1803,7 +1803,7 @@ def get_tasty(version='latest'):
 
 
 def kube_create_app(config, appdir, overrides={}, outputdir=None):
-    appdata = {'cluster': 'testk', 'domain': 'karmalabs.com', 'masters': 1, 'workers': 0}
+    appdata = {'cluster': 'testk', 'domain': 'karmalabs.local', 'masters': 1, 'workers': 0}
     cluster = appdata['cluster']
     cwd = os.getcwd()
     os.environ["PATH"] += f":{cwd}"
@@ -1857,7 +1857,7 @@ def kube_delete_app(config, appdir, overrides={}):
 
 def openshift_create_app(config, appdir, overrides={}, outputdir=None):
     appname = overrides['name']
-    appdata = {'cluster': 'testk', 'domain': 'karmalabs.com', 'masters': 1, 'workers': 0}
+    appdata = {'cluster': 'testk', 'domain': 'karmalabs.local', 'masters': 1, 'workers': 0}
     install_cr = overrides.get('install_cr', True)
     cluster = appdata['cluster']
     cwd = os.getcwd()
@@ -1918,7 +1918,7 @@ def openshift_create_app(config, appdir, overrides={}, outputdir=None):
 
 def openshift_delete_app(config, appdir, overrides={}):
     appname = overrides['name']
-    appdata = {'cluster': 'testk', 'domain': 'karmalabs.com', 'masters': 1, 'workers': 0}
+    appdata = {'cluster': 'testk', 'domain': 'karmalabs.local', 'masters': 1, 'workers': 0}
     cluster = appdata['cluster']
     cwd = os.getcwd()
     os.environ["PATH"] += f":{cwd}"

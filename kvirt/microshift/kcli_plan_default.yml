@@ -2,7 +2,7 @@ info: |
   Deploy kubernetes using microshift on $nodes vms
 nodes: 1
 cluster: testk
-domain: karmalabs.com
+domain: karmalabs.local
 image: centos8stream
 network: default
 memory: 4096

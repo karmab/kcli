@@ -1,5 +1,5 @@
 cluster: ci-kubevirt
-domain: karmalabs.com
+domain: karmalabs.local
 masters: 3
 workers: 2
 version: nightly

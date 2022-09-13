@@ -19,7 +19,7 @@ workers: 0
 version:
 pool: 
 cluster: testk
-domain: karmalabs.com
+domain: karmalabs.local
 engine: containerd
 engine_version:
 numcpus: 4
