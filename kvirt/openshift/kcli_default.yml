@@ -129,3 +129,4 @@ workers_threaded: false
 tempkey: false
 kubeadmin_password:
 retries: 2
+sslip: false

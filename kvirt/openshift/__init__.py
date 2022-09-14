@@ -381,6 +381,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'sushy': False,
             'coredns': True,
             'mdns': True,
+            'sslip': False,
             'retries': 2}
     data.update(overrides)
     if 'cluster' in overrides:
@@ -393,6 +394,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     data['cluster'] = clustervalue
     domain = data.get('domain')
     async_install = data.get('async')
+    sslip = data.get('sslip')
     baremetal_iso = data.get('baremetal')
     baremetal_iso_bootstrap = data.get('baremetal_bootstrap', baremetal_iso)
     baremetal_iso_master = data.get('baremetal_master', baremetal_iso)
@@ -535,6 +537,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if ingress_ip is not None and api_ip is not None and ingress_ip == api_ip:
         ingress_ip = None
         overrides['ingress_ip'] = None
+    if sslip and platform in virtplatforms:
+        domain = '%s.sslip.io' % api_ip.replace('.', '-').replace(':', '-')
+        data['domain'] = domain
+        pprint(f"Setting domain to {domain}")
+        ignore_hosts = False
     public_api_ip = data.get('public_api_ip')
     network = data.get('network')
     masters = data.get('masters')
@@ -931,6 +938,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if os.path.exists('%s/catalogsource.yaml' % clusterdir):
             copy2('%s/catalogsource.yaml' % clusterdir, "%s/openshift" % clusterdir)
         copy2('%s/99-operatorhub.yaml' % plandir, "%s/openshift" % clusterdir)
+    if 'sslip' in domain:
+        ingress_sslip_data = config.process_inputfile(cluster, f"{plandir}/99-ingress-sslip.yaml",
+                                                      overrides={'domain': domain})
+        with open(f"{clusterdir}/openshift/99-ingress-sslip.yaml", 'w') as f:
+            f.write(ingress_sslip_data)
     if ipi:
         run = call('openshift-install --dir=%s --log-level=%s create cluster' % (clusterdir, log_level), shell=True)
         if run != 0:
