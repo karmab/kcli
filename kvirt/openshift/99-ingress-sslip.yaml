@@ -3,4 +3,4 @@ kind: Ingress
 metadata:
   name: cluster
 spec:
-  domain: apps.{{ domain }}
+  domain: apps.{{ cluster }}.{{ domain }}
