@@ -940,7 +940,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         copy2('%s/99-operatorhub.yaml' % plandir, "%s/openshift" % clusterdir)
     if 'sslip' in domain:
         ingress_sslip_data = config.process_inputfile(cluster, f"{plandir}/99-ingress-sslip.yaml",
-                                                      overrides={'domain': domain})
+                                                      overrides={'cluster': cluster, 'domain': domain})
         with open(f"{clusterdir}/openshift/99-ingress-sslip.yaml", 'w') as f:
             f.write(ingress_sslip_data)
     if ipi:
