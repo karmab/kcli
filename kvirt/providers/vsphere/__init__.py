@@ -96,7 +96,7 @@ class Ksphere:
                files=[], enableroot=True, overrides={}, tags=[], storemetadata=False, sharedfolders=[],
                kernel=None, initrd=None, cmdline=None, placement=[], autostart=False, cpuhotplug=False,
                memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False, metadata={},
-               securitygroups=[]):
+               securitygroups=[], vmuser=None):
         dc = self.dc
         vmFolder = dc.vmFolder
         diskmode = 'persistent'
@@ -155,7 +155,8 @@ class Ksphere:
                     version = common.ignition_version(image)
                     ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                    domain=domain, files=files, enableroot=enableroot,
-                                                   overrides=overrides, version=version, plan=plan, image=image)
+                                                   overrides=overrides, version=version, plan=plan, image=image,
+                                                   vmuser=vmuser)
                     ignitionopt = vim.option.OptionValue()
                     ignitionopt.key = 'guestinfo.ignition.config.data'
                     ignitionopt.value = base64.b64encode(ignitiondata.encode()).decode()
@@ -187,7 +188,7 @@ class Ksphere:
                                                                gateway=gateway, dns=dns, domain=domain,
                                                                files=files, enableroot=enableroot, overrides=overrides,
                                                                storemetadata=storemetadata, machine='vsphere',
-                                                               image=image)
+                                                               image=image, vmuser=vmuser)
             for key in overrides:
                 if key.startswith('guestinfo.'):
                     guestopt = vim.option.OptionValue()

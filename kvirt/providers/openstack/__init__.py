@@ -78,7 +78,7 @@ class Kopenstack(object):
                tunnel=False, files=[], enableroot=True, alias=[], overrides={},
                tags=[], storemetadata=False, sharedfolders=[], kernel=None, initrd=None,
                cmdline=None, placement=[], autostart=False, cpuhotplug=False, memoryhotplug=False, numamode=None,
-               numa=[], pcidevices=[], tpm=False, rng=False, metadata={}, securitygroups=[]):
+               numa=[], pcidevices=[], tpm=False, rng=False, metadata={}, securitygroups=[], vmuser=None):
         default_diskinterface = diskinterface
         glance = self.glance
         nova = self.nova
@@ -198,11 +198,11 @@ class Kopenstack(object):
                 version = common.ignition_version(image)
                 userdata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                            domain=domain, files=files, enableroot=enableroot, overrides=overrides,
-                                           version=version, plan=plan, image=image)
+                                           version=version, plan=plan, image=image, vmuser=vmuser)
             else:
                 userdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                             domain=domain, files=files, enableroot=enableroot, overrides=overrides,
-                                            storemetadata=storemetadata)[0]
+                                            storemetadata=storemetadata, vmuser=vmuser)[0]
         meta = {x: metadata[x] for x in metadata if x in METADATA_FIELDS}
         instance = nova.servers.create(name=name, image=glanceimage, flavor=flavor, key_name=key_name, nics=nics,
                                        meta=meta, userdata=userdata, block_device_mapping_v2=block_device_mapping_v2,

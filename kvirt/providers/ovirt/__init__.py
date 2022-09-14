@@ -114,7 +114,7 @@ class KOvirt(object):
                tunnel=False, files=[], enableroot=True, alias=[], overrides={},
                tags=[], storemetadata=False, sharedfolders=[], kernel=None, initrd=None,
                cmdline=None, placement=[], autostart=False, cpuhotplug=False, memoryhotplug=False, numamode=None,
-               numa=[], pcidevices=[], tpm=False, rng=False, metadata={}, securitygroups=[]):
+               numa=[], pcidevices=[], tpm=False, rng=False, metadata={}, securitygroups=[], vmuser=None):
         ip = None
         initialization = None
         memory = memory * 1024 * 1024
@@ -141,7 +141,8 @@ class KOvirt(object):
                 version = common.ignition_version(image)
                 ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                domain=domain, files=files, enableroot=enableroot, overrides=overrides,
-                                               version=version, plan=plan, compact=False, removetls=True, image=image)
+                                               version=version, plan=plan, compact=False, removetls=True, image=image,
+                                               vmuser=vmuser)
                 ignitiondata = ignitiondata.replace('\n', '')
                 initialization = types.Initialization(custom_script=ignitiondata)
         else:
@@ -321,7 +322,8 @@ class KOvirt(object):
             custom_script += "runcmd:\n"
             custom_script += data
             custom_script = None if custom_script == '' else custom_script
-            user_name = common.get_user(image) if image is not None else 'root'
+            vmuser = vmuser or 'root'
+            user_name = common.get_user(image) if image is not None else vmuser
             root_password = None
             # dns_servers = '8.8.8.8 1.1.1.1'
             # dns_servers = dns if dns is not None else '8.8.8.8 1.1.1.1'

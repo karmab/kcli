@@ -613,6 +613,7 @@ class Kconfig(Kbaseconfig):
             default_securitygroups = father.get('securitygroups', self.securitygroups)
             default_rootpassword = father.get('rootpassword', self.rootpassword)
             default_tempkey = father.get('tempkey', self.tempkey)
+            default_vmuser = father.get('vmuser', self.vmuser)
             default_wait = father.get('wait', self.wait)
             default_waitcommand = father.get('waitcommand', self.waitcommand)
             default_waittimeout = father.get('waittimeout', self.waittimeout)
@@ -690,6 +691,7 @@ class Kconfig(Kbaseconfig):
             default_securitygroups = self.securitygroups
             default_rootpassword = self.rootpassword
             default_tempkey = self.tempkey
+            default_vmuser = self.vmuser
             default_wait = self.wait
             default_waitcommand = self.waitcommand
             default_waittimeout = self.waittimeout
@@ -783,6 +785,7 @@ class Kconfig(Kbaseconfig):
         cpuhotplug = profile.get('cpuhotplug', default_cpuhotplug)
         memoryhotplug = profile.get('memoryhotplug', default_memoryhotplug)
         rootpassword = profile.get('rootpassword', default_rootpassword)
+        vmuser = profile.get('vmuser', default_vmuser)
         tempkey = profile.get('tempkey', default_tempkey)
         wait = profile.get('wait', default_wait)
         waitcommand = profile.get('waitcommand', default_waitcommand)
@@ -1000,11 +1003,12 @@ class Kconfig(Kbaseconfig):
                 compact = True if overrides.get('compact') else False
                 data = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                        domain=domain, files=files, enableroot=enableroot, overrides=overrides,
-                                       version=version, plan=plan, image=image, compact=compact)
+                                       version=version, plan=plan, image=image, compact=compact,
+                                       vmuser=vmuser)
             else:
                 data = common.cloudinit(name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                         domain=domain, files=files, enableroot=enableroot, overrides=overrides,
-                                        image=image, storemetadata=False)[0]
+                                        image=image, storemetadata=False, vmuser=vmuser)[0]
             return {'result': 'success', 'data': data}
         result = k.create(name=name, virttype=virttype, plan=plan, profile=profilename, flavor=flavor,
                           cpumodel=cpumodel, cpuflags=cpuflags, cpupinning=cpupinning, numamode=numamode, numa=numa,
@@ -1017,7 +1021,8 @@ class Kconfig(Kbaseconfig):
                           overrides=overrides, tags=tags, storemetadata=storemetadata,
                           sharedfolders=sharedfolders, kernel=kernel, initrd=initrd, cmdline=cmdline,
                           placement=placement, autostart=autostart, cpuhotplug=cpuhotplug, memoryhotplug=memoryhotplug,
-                          pcidevices=pcidevices, tpm=tpm, rng=rng, metadata=metadata, securitygroups=securitygroups)
+                          pcidevices=pcidevices, tpm=tpm, rng=rng, metadata=metadata, securitygroups=securitygroups,
+                          vmuser=vmuser)
         if result['result'] != 'success':
             return result
         if reservedns and dnsclient is not None and domain is not None:

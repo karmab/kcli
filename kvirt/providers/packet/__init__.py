@@ -92,7 +92,7 @@ class Kpacket(object):
                tunnel=False, files=[], enableroot=True, alias=[], overrides={},
                tags=[], storemetadata=False, sharedfolders=[], kernel=None, initrd=None,
                cmdline=None, cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False,
-               placement=[], autostart=False, rng=False, metadata={}, securitygroups=[]):
+               placement=[], autostart=False, rng=False, metadata={}, securitygroups=[], vmuser=None):
         """
 
         :param name:
@@ -214,7 +214,7 @@ class Kpacket(object):
             ipv6 = []
             ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                            domain=domain, files=files, enableroot=enableroot, overrides=overrides,
-                                           version=version, plan=plan, ipv6=ipv6, image=image)
+                                           version=version, plan=plan, ipv6=ipv6, image=image, vmuser=vmuser)
             image = 'custom_ipxe'
             with open('%s/%s.ign' % (ignitiondir, name), 'w') as ignitionfile:
                 ignitionfile.write(ignitiondata)
@@ -252,7 +252,7 @@ class Kpacket(object):
         if cloudinit and userdata is None:
             userdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                         domain=domain, files=files, enableroot=enableroot, overrides=overrides,
-                                        fqdn=True, storemetadata=storemetadata)[0]
+                                        fqdn=True, storemetadata=storemetadata, vmuser=vmuser)[0]
         validfacilities = [os.path.basename(e['href']) for e in validfacilities]
         validfacilities = [f.code for f in self.conn.list_facilities() if f.id in validfacilities]
         if not validfacilities:

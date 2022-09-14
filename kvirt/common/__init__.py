@@ -84,7 +84,7 @@ def fetch(url, path):
 
 def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, files=[], enableroot=True,
               overrides={}, fqdn=False, storemetadata=True, image=None, ipv6=[],
-              machine='pc'):
+              machine='pc', vmuser=None):
     """
 
     :param name:
@@ -313,6 +313,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 validkeyfound = True
         if not validkeyfound:
             warning("no valid public keys found in .ssh/.kcli directories, you might have trouble accessing the vm")
+        good_keys = []
         if keys:
             for key in list(set(keys)):
                 if os.path.exists(os.path.expanduser(key)):
@@ -323,12 +324,27 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 if not newkey.startswith('ssh-'):
                     warning(f"Skipping invalid key {key}")
                     continue
+                else:
+                    good_keys.append(newkey)
                 userdata += f"- {newkey}\n"
         if publickeyfile is not None:
             with open(publickeyfile, 'r') as ssh:
                 key = ssh.read().rstrip()
                 if key not in keys:
+                    good_keys.append(key)
                     userdata += f"- {key}\n"
+        if vmuser is not None:
+            userdata += """users:
+- name: {vmuser}
+  sudo: ALL=(ALL) NOPASSWD:ALL
+  groups: users, admin
+  home: /home/{vmuser}
+  shell: /bin/bash
+  lock_passwd: false\n""".format(vmuser=vmuser)
+            if good_keys:
+                userdata += "  ssh-authorized-keys:\n"
+                for key in good_keys:
+                    userdata += f"  - {key}\n"
         if cmds:
             data = process_cmds(cmds, overrides)
             if data != '':
@@ -1098,7 +1114,7 @@ def get_cloudinitfile(image):
 
 def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, files=[], enableroot=True,
              overrides={}, iso=True, fqdn=False, version='3.1.0', plan=None, compact=False, removetls=False, ipv6=[],
-             image=None):
+             image=None, vmuser=None):
     """
 
     :param name:
@@ -1252,6 +1268,9 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
             'passwd': {'users': []}}
     if publickeys:
         data['passwd']['users'] = [{'name': 'core', 'sshAuthorizedKeys': publickeys}]
+        if vmuser is not None:
+            data['passwd']['users'].append({'name': vmuser, 'sshAuthorizedKeys': publickeys,
+                                            'groups': ['sudo', 'wheel']})
     role = None
     if len(name.split('-')) >= 3 and name.split('-')[-2] in ['master', 'worker']:
         role = name.split('-')[-2]

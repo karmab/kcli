@@ -121,7 +121,7 @@ class Kibm(object):
                tunnel=False, files=[], enableroot=True, alias=[], overrides={},
                tags=[], storemetadata=False, sharedfolders=[], kernel=None, initrd=None, cmdline=None,
                cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False,
-               placement=[], autostart=False, rng=False, metadata={}, securitygroups=[]):
+               placement=[], autostart=False, rng=False, metadata={}, securitygroups=[], vmuser=None):
         try:
             vpcs = self.conn.list_vpcs().result['vpcs']
             for vpc in vpcs:
@@ -151,11 +151,13 @@ class Kibm(object):
                 version = common.ignition_version(image)
                 userdata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                            domain=domain, files=files, enableroot=enableroot,
-                                           overrides=overrides, version=version, plan=plan, image=image)
+                                           overrides=overrides, version=version, plan=plan, image=image,
+                                           vmuser=vmuser)
             else:
                 userdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                             domain=domain, files=files, enableroot=enableroot,
-                                            overrides=overrides, fqdn=True, storemetadata=storemetadata)[0]
+                                            overrides=overrides, fqdn=True, storemetadata=storemetadata,
+                                            vmuser=vmuser)[0]
         else:
             userdata = ''
         if len(nets) == 0:

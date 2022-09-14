@@ -94,7 +94,7 @@ class Kgcp(object):
                files=[], enableroot=True, alias=[], overrides={}, tags=[], storemetadata=False,
                sharedfolders=[], kernel=None, initrd=None, cmdline=None, placement=[], autostart=False,
                cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False,
-               metadata={}, securitygroups=[]):
+               metadata={}, securitygroups=[], vmuser=None):
         conn = self.conn
         project = self.project
         zone = self.zone
@@ -220,11 +220,13 @@ class Kgcp(object):
                 version = common.ignition_version(image)
                 userdata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                            domain=domain, files=files, enableroot=enableroot,
-                                           overrides=overrides, version=version, plan=plan, image=image)
+                                           overrides=overrides, version=version, plan=plan, image=image,
+                                           vmuser=vmuser)
             else:
                 userdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                             domain=domain, files=files, enableroot=enableroot,
-                                            overrides=overrides, fqdn=True, storemetadata=storemetadata)[0]
+                                            overrides=overrides, fqdn=True, storemetadata=storemetadata,
+                                            vmuser=vmuser)[0]
                 if 'ubuntu' in image.lower() or [entry for entry in UBUNTUS if entry in image]:
                     pkgmgr = "apt-get"
                 else:
