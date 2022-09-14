@@ -520,7 +520,8 @@ class Kconfig(Kbaseconfig):
                         good_image = [x[4] for x in self.list_profiles() if x[0] == profile][0]
                     vmprofiles[profile] = {'image': good_image}
                 elif profile.startswith('rhcos-4') and profile.endswith('qcow2')\
-                        and self.type in ['ovirt', 'openstack', 'kubevirt', 'kvm']:
+                        and self.type in ['ovirt', 'openstack', 'kubevirt', 'kvm']\
+                        and profile not in [os.path.basename(v) for v in self.k.volumes()]:
                     pprint(f"Image {profile} not found. Downloading")
                     url = get_rhcos_url_from_file(profile, _type=self.type)
                     image = profile.split('.')[0].replace('rhcos-4', 'rhcos4')
