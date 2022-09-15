@@ -283,7 +283,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
         pprint(f"using cloudinit from existing {existing} for {name}")
         userdata = open(existing).read()
     else:
-        publickeyfile = get_ssh_pub_key() if not overrides.get('nopubkey', False) else None
+        publickeyfile = get_ssh_pub_key() if not overrides.get('tempkey', False) else None
         tempkeydir = overrides.get('tempkeydir')
         if tempkeydir is not None:
             if not keys:
