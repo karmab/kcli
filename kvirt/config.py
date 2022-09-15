@@ -2413,7 +2413,7 @@ class Kconfig(Kbaseconfig):
                 warning("Waiting for node to be active")
                 ip = None
             else:
-                user, ip = info.get('user'), info.get('ip')
+                user, ip = self.vmuser or info.get('user'), info.get('ip')
                 if self.type == 'kubevirt':
                     if k.access_mode == 'NodePort':
                         vmport = info.get('nodeport')
