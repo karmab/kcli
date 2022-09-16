@@ -1070,13 +1070,17 @@ class Kconfig(Kbaseconfig):
                 pprint(f"Skipping wait on {name}")
             else:
                 identityfile = None
+                tempkey_clean = False
                 if overrides.get('tempkeydir') is not None:
                     identityfile = f"{overrides['tempkeydir'].name}/id_rsa"
+                    tempkey_clean = True
                 self.wait_finish(name, image=image, waitcommand=waitcommand, waittimeout=waittimeout,
                                  identityfile=identityfile)
                 finishfiles = profile.get('finishfiles', [])
                 if finishfiles:
                     self.handle_finishfiles(name, finishfiles, identityfile=identityfile)
+                if tempkey_clean:
+                    self.clean_tempkey(name, identityfile=identityfile)
             if unplugcd:
                 self.k.update_iso(name, None)
         if overrides.get('tempkeydir') is not None and not overrides.get('tempkeydirkeep', False):
@@ -2468,6 +2472,23 @@ class Kconfig(Kbaseconfig):
                 error("Timeout waiting for waitcommand to execute...")
                 break
         return True
+
+    def clean_tempkey(self, name, identityfile=None):
+        cmd = "sed -i '/temp-kcli-key/d' /home/*/.ssh/authorized_keys /root/.ssh/authorized_keys"
+        k = self.k
+        info = k.info(name)
+        vmport = None
+        ip = info.get('ip')
+        if self.type == 'kubevirt':
+            if k.access_mode == 'NodePort':
+                vmport = info.get('nodeport')
+                ip = k.node_host(name=info.get('host'))
+            elif k.access_mode == 'LoadBalancer':
+                ip = info.get('loadbalancerip')
+        sshcmd = common.ssh(name, user='root', ip=ip, tunnel=self.tunnel, tunnelhost=self.tunnelhost, vmport=vmport,
+                            tunnelport=self.tunnelport, tunneluser=self.tunneluser, insecure=self.insecure, cmd=cmd,
+                            identityfile=identityfile, password=False)
+        os.popen(sshcmd).read()
 
     def create_kube_generic(self, cluster, overrides={}):
         if container_mode():
