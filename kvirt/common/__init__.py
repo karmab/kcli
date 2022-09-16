@@ -293,6 +293,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             if not os.path.exists(privatekeyfile):
                 tempkeycmd = f"< /dev/zero ssh-keygen -q -t rsa -N '' -C 'temp-kcli-key' -f {privatekeyfile}"
                 os.system(tempkeycmd)
+            cmds.append("sed -i '/temp-kcli-key/d' /home/*/.ssh/authorized_keys /root/.ssh/authorized_keys")
         userdata = '#cloud-config\n'
         userdata += 'final_message: kcli boot finished, up $UPTIME seconds\n'
         if not noname:
