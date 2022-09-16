@@ -100,30 +100,30 @@ class Kvirt(object):
     def __init__(self, host='127.0.0.1', port=None, user='root', protocol='ssh', url=None, debug=False, insecure=False,
                  session=False, remotednsmasq=False):
         if url is None:
-            socketf = '/var/run/libvirt/libvirt-sock' if not session else '/home/%s/.cache/libvirt/libvirt-sock' % user
+            socketf = '/var/run/libvirt/libvirt-sock' if not session else f'/home/{user}/.cache/libvirt/libvirt-sock'
             conntype = 'system' if not session else 'session'
             if host == '127.0.0.1' or host == 'localhost':
-                url = "qemu:///%s" % conntype
-                if os.path.exists("/i_am_a_container") and not os.path.exists(socketf):
+                url = f"qemu:///{conntype}"
+                if os.path.exists("/i_am_a_container") and not os.path.exists('/var/run/libvirt'):
                     error("You need to add -v /var/run/libvirt:/var/run/libvirt to container alias")
                     self.conn = None
                     return
             elif protocol == 'ssh':
                 if port != 22:
-                    url = "qemu+%s://%s@%s:%s/%s?socket=%s" % (protocol, user, host, port, conntype, socketf)
+                    url = f"qemu+{protocol}://{user}@{host}:{port}/{conntype}?socket={socketf}"
                 else:
-                    url = "qemu+%s://%s@%s/%s?socket=%s" % (protocol, user, host, conntype, socketf)
+                    url = f"qemu+{protocol}://{user}@{host}/{conntype}?socket={socketf}"
             elif port:
-                url = "qemu+%s://%s@%s:%s/%s?socket=%s" % (protocol, user, host, port, conntype, socketf)
+                url = f"qemu+{protocol}://{user}@{host}:{port}/{conntype}?socket={socketf}"
             else:
-                url = "qemu:///%s" % conntype
+                url = f"qemu:///{conntype}"
             if url.startswith('qemu+ssh'):
                 publickeyfile = get_ssh_pub_key()
                 if publickeyfile is not None:
                     privkeyfile = publickeyfile.replace('.pub', '')
-                    url = "%s&no_verify=1&keyfile=%s" % (url, privkeyfile)
+                    url = f"{url}&no_verify=1&keyfile={privkeyfile}"
                 elif insecure:
-                    url = "%s&no_verify=1" % url
+                    url = f"{url}&no_verify=1"
         try:
             self.conn = libvirtopen(url)
             self.debug = debug
@@ -151,7 +151,7 @@ class Kvirt(object):
         elif os.path.exists(os.path.expanduser("~/.ssh/id_ed25519")):
             identityfile = os.path.expanduser("~/.ssh/id_ed25519")
         if identityfile is not None:
-            self.identitycommand = "-i %s" % identityfile
+            self.identitycommand = f"-i {identityfile}"
         else:
             self.identitycommand = ""
         self.remotednsmasq = remotednsmasq
