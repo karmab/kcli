@@ -29,6 +29,15 @@ spec:
             image: {{ registry }}/karmab/kubectl:{{ arch_tag }}
             imagePullPolicy: IfNotPresent
             name: autoapprover
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+               drop:
+               - ALL
+              runAsNonRoot: true
+              runAsUser: 1024
+              seccompProfile:
+                type: RuntimeDefault
           restartPolicy: OnFailure
           serviceAccountName: autoapprover
   schedule: '*/2 * * * *'
