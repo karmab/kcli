@@ -364,6 +364,11 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             if data != '':
                 userdata += "write_files:\n"
                 userdata += data
+    if os.path.exists(os.path.expanduser('~/.kcli/cloudinit.yml')):
+        with open(os.path.expanduser('~/.kcli/cloudinit.yml')) as f:
+            oridata = yaml.safe_load(f)
+            oridata.update(yaml.safe_load(userdata))
+            userdata = "#cloud-config\n" + yaml.dump(oridata, default_flow_style=False, indent=2)
     return userdata.strip(), metadata, netdata
 
 
