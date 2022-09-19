@@ -55,11 +55,3 @@ jobs:
       - name: Deploy SNO
         run: |
           kcli create cluster openshift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET -P version=$VERSION -P tag="$TAG" $EXTRAPARAMS $PLAN
-
-    clean-up:
-      needs: deploy-openshift
-      runs-on: libvirt
-      steps:
-      - name: Clean everything after success
-        run: |
-          kcli delete plan --yes $PLAN
