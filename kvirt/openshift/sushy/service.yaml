@@ -5,7 +5,7 @@ metadata:
   labels:
     app: sushy
   name: sushy
-  namespace: openshift-kcli-infra
+  namespace: kcli-infra
 spec:
   ports:
   - port: 8000

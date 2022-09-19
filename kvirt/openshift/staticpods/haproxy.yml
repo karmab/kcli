@@ -3,7 +3,7 @@ kind: Pod
 apiVersion: v1
 metadata:
   name: haproxy
-  namespace: openshift-kcli-infra
+  namespace: kcli-infra
   creationTimestamp:
   deletionGracePeriodSeconds: 65
   labels:

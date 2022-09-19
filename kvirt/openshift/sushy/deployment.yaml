@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: sushy
-  namespace: openshift-kcli-infra
+  namespace: kcli-infra
   labels:
     app: sushy
 spec:
