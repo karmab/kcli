@@ -828,7 +828,8 @@ class Kvirt(object):
         else:
             displayxml = """<input type='tablet' bus='usb'/>
 <input type='mouse' bus='ps2'/>"""
-        passwd = "passwd='kcli'" if os.path.exists('/Applications') else ''
+        vncviewerpath = '/Applications/VNC Viewer.app'
+        passwd = "passwd='kcli'" if os.path.exists('/Applications') and not os.path.exists(vncviewerpath) else ''
         displayxml += """<graphics type='%s' port='-1' autoport='yes' listen='%s' %s>
 <listen type='address' address='%s'/>
 </graphics>
@@ -1572,6 +1573,8 @@ class Kvirt(object):
                 if os.path.exists('/Applications'):
                     if protocol == 'spice' and os.path.exists('/Applications/RemoteViewer.app'):
                         consolecommand += f"open -a RemoteViewer --args {url} &"
+                    elif protocol == 'vnc' and os.path.exists('/Applications/VNC Viewer.app'):
+                        consolecommand += f"open -a 'VNC Viewer' --args {url.replace('vnc://', '')} &"
                     else:
                         consolecommand += f"open -a 'Screen Sharing' {url} &"
                 else:
