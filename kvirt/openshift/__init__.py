@@ -43,10 +43,10 @@ def backup_paramfile(installparam, clusterdir, cluster, plan, image, dnsconfig):
 def update_etc_hosts(cluster, domain, host_ip, ingress_ip=None):
     if not os.path.exists("/i_am_a_container"):
         hosts = open("/etc/hosts").readlines()
-        wronglines = [e for e in hosts if not e.startswith('#') and "api.%s.%s" % (cluster, domain) in e and
+        wronglines = [e for e in hosts if not e.startswith('#') and f"api.{cluster}.{domain}" in e and
                       host_ip not in e]
         if ingress_ip is not None:
-            o = "oauth-openshift.apps.%s.%s" % (cluster, domain)
+            o = f"oauth-openshift.apps.{cluster}.{domain}"
             wrongingresses = [e for e in hosts if not e.startswith('#') and o in e and ingress_ip not in e]
             wronglines.extend(wrongingresses)
         for wrong in wronglines:
@@ -57,32 +57,32 @@ def update_etc_hosts(cluster, domain, host_ip, ingress_ip=None):
                    host_ip in e]
         if not correct:
             entries = ["api.%s.%s" % (cluster, domain)]
-            ingress_entries = ["%s.%s.%s" % (x, cluster, domain) for x in ['console-openshift-console.apps',
+            ingress_entries = [f"{x}.{cluster}.{domain}" for x in ['console-openshift-console.apps',
                                'oauth-openshift.apps', 'prometheus-k8s-openshift-monitoring.apps']]
             if ingress_ip is None:
                 entries.extend(ingress_entries)
             entries = ' '.join(entries)
-            call("sudo sh -c 'echo %s %s >> /etc/hosts'" % (host_ip, entries), shell=True)
+            call(f"sudo sh -c 'echo {host_ip} {entries} >> /etc/hosts'", shell=True)
             if ingress_ip is not None:
                 entries = ' '.join(ingress_entries)
-                call("sudo sh -c 'echo %s %s >> /etc/hosts'" % (ingress_ip, entries), shell=True)
+                call(f"sudo sh -c 'echo {ingress_ip} {entries} >> /etc/hosts'", shell=True)
     else:
-        entries = ["api.%s.%s" % (cluster, domain)]
-        ingress_entries = ["%s.%s.%s" % (x, cluster, domain) for x in ['console-openshift-console.apps',
-                                                                       'oauth-openshift.apps',
-                                                                       'prometheus-k8s-openshift-monitoring.apps']]
+        entries = [f"api.{cluster}.{domain}"]
+        ingress_entries = [f"{x}.{cluster}.{domain}" for x in ['console-openshift-console.apps',
+                                                               'oauth-openshift.apps',
+                                                               'prometheus-k8s-openshift-monitoring.apps']]
         if ingress_ip is None:
             entries.extend(ingress_entries)
         entries = ' '.join(entries)
-        call("sh -c 'echo %s %s >> /etc/hosts'" % (host_ip, entries), shell=True)
+        call(f"sh -c 'echo {host_ip} {entries} >> /etc/hosts'", shell=True)
         if os.path.exists('/etcdir/hosts'):
-            call("sh -c 'echo %s %s >> /etcdir/hosts'" % (host_ip, entries), shell=True)
+            call(f"sh -c 'echo {host_ip} {entries} >> /etcdir/hosts'", shell=True)
             if ingress_ip is not None:
                 entries = ' '.join(ingress_entries)
-                call("sh -c 'echo %s %s >> /etcdir/hosts'" % (ingress_ip, entries), shell=True)
+                call(f"sh -c 'echo {ingress_ip} {entries} >> /etcdir/hosts'", shell=True)
         else:
             warning("Make sure to have the following entry in your /etc/hosts")
-            warning("%s %s" % (host_ip, entries))
+            warning(f"{host_ip} {entries}")
 
 
 def get_installer_version():
@@ -830,10 +830,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 workers = len(baremetal_workers)
                 data['workers'] = workers
         copy_ipi_credentials(platform, k)
-    installconfig = config.process_inputfile(cluster, "%s/install-config.yaml" % plandir, overrides=data)
-    with open("%s/install-config.yaml" % clusterdir, 'w') as f:
+    installconfig = config.process_inputfile(cluster, f"{plandir}/install-config.yaml", overrides=data)
+    with open(f"{clusterdir}/install-config.yaml", 'w') as f:
         f.write(installconfig)
-    with open("%s/install-config.yaml.bck" % clusterdir, 'w') as f:
+    with open(f"{clusterdir}/install-config.yaml.bck", 'w') as f:
         f.write(installconfig)
     if ipi:
         if ipi_platform in ['baremetal', 'vsphere', 'ovirt']:
@@ -842,21 +842,20 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             else:
                 update_etc_hosts(cluster, domain, data['api_ip'], data['ingress_ip'])
         if ipi_platform in ['kvm', 'libvirt']:
-            run = call('openshift-install --dir=%s --log-level=%s create manifests' % (clusterdir, log_level),
-                       shell=True)
+            run = call(f'openshift-install --dir={clusterdir} --log-level={log_level} create manifests', shell=True)
             if run != 0:
                 error("Leaving environment for debugging purposes")
                 sys.exit(run)
-            mastermanifest = "%s/openshift/99_openshift-cluster-api_master-machines-0.yaml" % clusterdir
-            workermanifest = "%s/openshift/99_openshift-cluster-api_worker-machineset-0.yaml" % clusterdir
+            mastermanifest = f"{clusterdir}/openshift/99_openshift-cluster-api_master-machines-0.yaml"
+            workermanifest = f"{clusterdir}/openshift/99_openshift-cluster-api_worker-machineset-0.yaml"
             master_memory = data.get('master_memory') if data.get('master_memory') is not None else data['memory']
             worker_memory = data.get('worker_memory') if data.get('worker_memory') is not None else data['memory']
             call('sed -i "s/domainMemory: .*/domainMemory: %s/" %s' % (master_memory, mastermanifest), shell=True)
             call('sed -i "s/domainMemory: .*/domainMemory: %s/" %s' % (worker_memory, workermanifest), shell=True)
             master_numcpus = data.get('master_numcpus') if data.get('master_numcpus') is not None else data['numcpus']
             worker_numcpus = data.get('worker_numcpus') if data.get('worker_numcpus') is not None else data['numcpus']
-            call('sed -i "s/domainVcpu: .*/domainVcpu: %s/" %s' % (master_numcpus, mastermanifest), shell=True)
-            call('sed -i "s/domainVcpu: .*/domainVcpu: %s/" %s' % (worker_numcpus, workermanifest), shell=True)
+            call(f'sed -i "s/domainVcpu: .*/domainVcpu: {master_numcpus}/" {mastermanifest}', shell=True)
+            call(f'sed -i "s/domainVcpu: .*/domainVcpu: {worker_numcpus}/" {workermanifest}', shell=True)
             old_libvirt_url = data['libvirt_url']
             if 'ssh' in old_libvirt_url or old_libvirt_url == 'qemu:///system':
                 warning("Patching machineset providerSpec uri to allow provisioning workers")
@@ -880,42 +879,42 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                         new_libvirt_url += '?keyfile=/tmp/id_rsa'
                 new_libvirt_url = new_libvirt_url.replace('&', '\\&')
                 call('sed -i "s#uri:.*#uri: %s#" %s' % (new_libvirt_url, workermanifest), shell=True)
-            dnsmasqfile = "/etc/NetworkManager/dnsmasq.d/%s.%s.conf" % (cluster, domain)
+            dnsmasqfile = f"/etc/NetworkManager/dnsmasq.d/{cluster}.{domain}.conf"
             dnscmd = 'echo -e "[main]\ndns=dnsmasq" > /etc/NetworkManager/conf.d/dnsmasq.conf'
-            dnscmd += "; echo server=/%s.%s/192.168.126.1 > %s" % (cluster, domain, dnsmasqfile)
+            dnscmd += f"; echo server=/{cluster}.{domain}/192.168.126.1 > {dnsmasqfile}"
             dnscmd += "; systemctl restart NetworkManager"
             if k.host in ['localhost', '127.0.0.1'] and k.user == 'root':
                 call(dnscmd, shell=True)
             else:
-                warning("Run the following commands on %s as root" % k.host)
+                warning(f"Run the following commands on {k.host} as root")
                 pprint(dnscmd)
         if ipi_platform == 'baremetal':
             pprint("Stopping nodes through redfish")
             baremetal_stop(cluster)
-    run = call('openshift-install --dir=%s --log-level=%s create manifests' % (clusterdir, log_level), shell=True)
+    run = call(f'openshift-install --dir={clusterdir} --log-level={log_level} create manifests', shell=True)
     if run != 0:
         error("Leaving environment for debugging purposes")
-        error("You can delete it with kcli delete kube --yes %s" % cluster)
+        error(f"You can delete it with kcli delete kube --yes {cluster}")
         sys.exit(run)
     if minimal:
         warning("Deploying cvo overrides to provide a minimal install")
-        with open("%s/cvo-overrides.yaml" % plandir) as f:
+        with open(f"{plandir}/cvo-overrides.yaml") as f:
             cvo_override = f.read()
-        with open("%s/manifests/cvo-overrides.yaml" % clusterdir, "a") as f:
+        with open(f"{clusterdir}/manifests/cvo-overrides.yaml", "a") as f:
             f.write(cvo_override)
     ntp_server = data.get('ntp_server')
     if ntp_server is not None:
-        ntp_data = config.process_inputfile(cluster, "%s/chrony.conf" % plandir, overrides={'ntp_server': ntp_server})
+        ntp_data = config.process_inputfile(cluster, f"{plandir}/chrony.conf", overrides={'ntp_server': ntp_server})
         for role in ['master', 'worker']:
-            ntp = config.process_inputfile(cluster, "%s/99-chrony.yaml" % plandir,
+            ntp = config.process_inputfile(cluster, f"{plandir}/99-chrony.yaml",
                                            overrides={'role': role, 'ntp_data': ntp_data})
-            with open("%s/manifests/99-chrony-%s.yaml" % (clusterdir, role), 'w') as f:
+            with open(f"{clusterdir}/manifests/99-chrony-{role}.yaml", 'w') as f:
                 f.write(ntp)
     manifestsdir = pwd_path("manifests")
     if os.path.exists(manifestsdir) and os.path.isdir(manifestsdir):
-        for f in glob("%s/*.y*ml" % manifestsdir):
+        for f in glob(f"{manifestsdir}/*.y*ml"):
             pprint(f"Injecting manifest {f}")
-            copy2(f, "%s/openshift" % clusterdir)
+            copy2(f, f"{clusterdir}/openshift")
     for yamlfile in glob(f"{clusterdir}/*.yaml"):
         if os.stat(yamlfile).st_size == 0:
             warning(f"Skipping empty file {yamlfile}")
@@ -924,36 +923,36 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if 'network_type' in data and data['network_type'] == 'Calico':
         with TemporaryDirectory() as tmpdir:
             calicodata = {'clusterdir': clusterdir}
-            calicoscript = config.process_inputfile(cluster, "%s/calico.sh.j2" % plandir, overrides=calicodata)
-            with open("%s/calico.sh" % tmpdir, 'w') as f:
+            calicoscript = config.process_inputfile(cluster, f"{plandir}/calico.sh.j2", overrides=calicodata)
+            with open(f"{tmpdir}/calico.sh", 'w') as f:
                 f.write(calicoscript)
-            call('bash %s/calico.sh' % tmpdir, shell=True)
+            call(f'bash {tmpdir}/calico.sh', shell=True)
     if ipsec:
-        copy2("%s/99-ipsec.yaml" % plandir, "%s/openshift" % clusterdir)
+        copy2(f"{plandir}/99-ipsec.yaml", f"{clusterdir}/openshift")
     if workers == 0 or not mdns or kubevirt_api_service:
-        copy2('%s/99-scheduler.yaml' % plandir, "%s/openshift" % clusterdir)
+        copy2(f'{plandir}/cluster-scheduler-02-config.yml', f"{clusterdir}/openshift")
     if disconnected_operators:
-        if os.path.exists('%s/imageContentSourcePolicy.yaml' % clusterdir):
-            copy2('%s/imageContentSourcePolicy.yaml' % clusterdir, "%s/openshift" % clusterdir)
-        if os.path.exists('%s/catalogsource.yaml' % clusterdir):
-            copy2('%s/catalogsource.yaml' % clusterdir, "%s/openshift" % clusterdir)
-        copy2('%s/99-operatorhub.yaml' % plandir, "%s/openshift" % clusterdir)
+        if os.path.exists(f'{clusterdir}/imageContentSourcePolicy.yaml'):
+            copy2(f'{clusterdir}/imageContentSourcePolicy.yaml', f"{clusterdir}/openshift")
+        if os.path.exists(f'{clusterdir}/catalogsource.yaml'):
+            copy2(f'{clusterdir}/catalogsource.yaml', f"{clusterdir}/openshift")
+        copy2(f'{plandir}/99-operatorhub.yaml', f"{clusterdir}/openshift")
     if 'sslip' in domain:
         ingress_sslip_data = config.process_inputfile(cluster, f"{plandir}/99-ingress-sslip.yaml",
                                                       overrides={'cluster': cluster, 'domain': domain})
         with open(f"{clusterdir}/openshift/99-ingress-sslip.yaml", 'w') as f:
             f.write(ingress_sslip_data)
     if ipi:
-        run = call('openshift-install --dir=%s --log-level=%s create cluster' % (clusterdir, log_level), shell=True)
+        run = call(f'openshift-install --dir={clusterdir} --log-level={log_level} create cluster', shell=True)
         if run != 0:
             error("Leaving environment for debugging purposes")
         process_apps(config, clusterdir, apps, overrides)
         process_postscripts(clusterdir, postscripts)
         sys.exit(run)
-    autoapprover = config.process_inputfile(cluster, "%s/autoapprovercron.yml" % plandir, overrides=data)
-    with open("%s/autoapprovercron.yml" % clusterdir, 'w') as f:
+    autoapprover = config.process_inputfile(cluster, f"{plandir}/autoapprovercron.yml", overrides=data)
+    with open(f"{clusterdir}/autoapprovercron.yml", 'w') as f:
         f.write(autoapprover)
-    for f in glob("%s/customisation/*.yaml" % plandir):
+    for f in glob(f"{plandir}/customisation/*.yaml"):
         if '99-ingress-controller.yaml' in f:
             ingressrole = 'master' if workers == 0 or not mdns or kubevirt_api_service else 'worker'
             replicas = masters if workers == 0 or not mdns or kubevirt_api_service else workers
