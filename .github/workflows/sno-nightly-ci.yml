@@ -8,6 +8,7 @@ env:
  PYTHONUNBUFFERED: true
  PLAN: ci-sno
  PULLSECRET: /root/openshift_pull.json
+ PARAMFILE: openshift-ci-paramfiles/sno.yml
 
 jobs:
  requirements:
