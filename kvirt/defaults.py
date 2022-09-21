@@ -40,6 +40,7 @@ FEDORA = "http://mirror.uv.es/mirror/fedora/linux/releases/"
 FEDORA_ARCHIVE = "https://archives.fedoraproject.org/pub/archive/fedora/linux/releases/"
 ROCKY = 'https://dl.rockylinux.org/pub/rocky/'
 ROCKYVAULT = 'https://dl.rockylinux.org/vault/rocky'
+UBUNTU = 'https://cloud-images.ubuntu.com/'
 IMAGES = {'almalinux9': 'http://repo.ifca.es/almalinux/9.0/cloud/x86_64/images/'
           'AlmaLinux-9-GenericCloud-latest.x86_64.qcow2',
           'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-image-bootstrap.qcow2',
@@ -109,16 +110,15 @@ IMAGES = {'almalinux9': 'http://repo.ifca.es/almalinux/9.0/cloud/x86_64/images/'
           'rhel7': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7',
           'rhel8': 'https://access.redhat.com/downloads/content/479/ver=/rhel---8',
           'rhel9': 'https://access.redhat.com/downloads/content/479/ver=/rhel---9',
-          'ubuntu1804': 'https://cloud-images.ubuntu.com/bionic/current/bionic-server-cloudimg-amd64.img',
-          'ubuntu1810': 'https://cloud-images.ubuntu.com/releases/cosmic/release-20190628/'
-          'ubuntu-18.10-server-cloudimg-amd64.img',
-          'ubuntu1904': 'https://cloud-images.ubuntu.com/releases/disco/release/ubuntu-19.04-server-cloudimg-amd64.img',
-          'ubuntu1910': 'https://cloud-images.ubuntu.com/releases/eoan/release/ubuntu-19.10-server-cloudimg-amd64.img',
-          'ubuntu2004': 'https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64.img',
-          'ubuntu2010': 'https://cloud-images.ubuntu.com/groovy/current/groovy-server-cloudimg-amd64.img',
-          'ubuntu2104': 'https://cloud-images.ubuntu.com/hirsute/current/hirsute-server-cloudimg-amd64.img',
-          'ubuntu2110': 'https://cloud-images.ubuntu.com/impish/current/impish-server-cloudimg-amd64.img',
-          'ubuntu2204': 'https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img',
+          'ubuntu1804': UBUNTU + 'releases/bionic/release/ubuntu-18.04-server-cloudimg-amd64.img',
+          'ubuntu1810': UBUNTU + 'releases/cosmic/release/ubuntu-18.10-server-cloudimg-amd64.img',
+          'ubuntu1904': UBUNTU + 'releases/19.04/release/ubuntu-19.04-server-cloudimg-amd64.img',
+          'ubuntu1910': UBUNTU + 'releases/19.10/release/ubuntu-19.10-server-cloudimg-amd64.img',
+          'ubuntu2004': UBUNTU + 'releases/20.04/release/ubuntu-20.04-server-cloudimg-amd64.img',
+          'ubuntu2010': UBUNTU + 'releases/20.10/release/ubuntu-20.10-server-cloudimg-amd64.img',
+          'ubuntu2104': UBUNTU + 'releases/21.04/release/ubuntu-21.04-server-cloudimg-amd64.img',
+          'ubuntu2110': UBUNTU + 'releases/21.10/release/ubuntu-21.10-server-cloudimg-amd64.img',
+          'ubuntu2204': UBUNTU + 'releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img',
           'rockylinux84': ROCKYVAULT + '8.4/images/Rocky-8-GenericCloud-8.4-20210620.0.x86_64.qcow2',
           'rockylinux85': ROCKYVAULT + '8.5/images/Rocky-8-GenericCloud-8.5-20211114.2.x86_64.qcow2',
           'rockylinux86': ROCKY + '8.6/images/Rocky-8-GenericCloud.latest.x86_64.qcow2',
