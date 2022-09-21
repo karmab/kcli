@@ -63,7 +63,12 @@ class Kbaseconfig:
         if os.path.isdir(cmdir) and not os.path.isdir(kclidir):
             copytree(cmdir, kclidir)
         inifile = None
-        if os.path.exists(f"{kclidir}/config.yml"):
+        if 'KCLI_CONFIG' in os.environ:
+            inifile = os.path.expanduser(os.environ['KCLI_CONFIG'])
+            if not os.path.exists(inifile):
+                error(f"Config file {inifile} not found. Leaving...")
+                sys.exit(1)
+        elif os.path.exists(f"{kclidir}/config.yml"):
             inifile = f"{kclidir}/config.yml"
         elif os.path.exists(f"{kclidir}/config.yaml"):
             inifile = f"{kclidir}/config.yaml"
