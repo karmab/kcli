@@ -9,6 +9,8 @@ env:
  PLAN: ci-sno
  PULLSECRET: /root/openshift_pull.json
  PARAMFILE: openshift-ci-paramfiles/sno.yml
+ VERSION: stable
+ TAG: "4.11"
 
 jobs:
  requirements:
@@ -27,7 +29,7 @@ jobs:
    steps:
    - name: Deploy SNO
      run: |
-       kcli create cluster openshift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET -P version=$VERSION -P tag="$TAG" $EXTRAPARAMS $PLAN
+       kcli create cluster openshift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET -P version=$VERSION -P tag="$TAG" $PLAN
 
  clean-up:
    needs: deploy-openshift
