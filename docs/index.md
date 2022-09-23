@@ -111,18 +111,18 @@ Note that
 - The container image contains dependencies for all the providers.
 - The console/serial console functionality works better with the package version. In container mode, it only outputs the command to launch manually to get to the console.
 
-In the commands below, use either docker or podman 
+In the commands below, use either podman or docker
 
 Pull the latest image:
 
 ```Shell
-docker pull quay.io/karmab/kcli
+podman pull quay.io/karmab/kcli
 ```
 
 To run it
 
 ```Shell
-docker run --rm karmab/kcli
+podman run --rm karmab/kcli
 ```
 
 There are several recommended flags:
@@ -142,9 +142,9 @@ For web access, you can switch with `-p 9000:9000 --entrypoint=/usr/bin/kweb` an
 As a bonus, you can use the following aliases:
 
 ```Shell
-alias kcli='docker run --net host -it --rm --security-opt label=disable -v $HOME/.ssh:/root/.ssh -v $HOME/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir quay.io/karmab/kcli'
-alias kclishell='docker run --net host -it --rm --security-opt label=disable -v $HOME/.ssh:/root/.ssh -v $HOME/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir --entrypoint=/bin/bash quay.io/karmab/kcli'
-alias kweb='docker run -p 9000:9000 --net host -it --rm --security-opt label=disable -v $HOME/.ssh:/root/.ssh -v $HOME/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir --entrypoint=/usr/bin/kweb quay.io/karmab/kcli'
+alias kcli='podman run --net host -it --rm --security-opt label=disable -v $HOME/.ssh:/root/.ssh -v $HOME/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir quay.io/karmab/kcli'
+alias kclishell='podman run --net host -it --rm --security-opt label=disable -v $HOME/.ssh:/root/.ssh -v $HOME/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir --entrypoint=/bin/bash quay.io/karmab/kcli'
+alias kweb='podman run -p 9000:9000 --net host -it --rm --security-opt label=disable -v $HOME/.ssh:/root/.ssh -v $HOME/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir --entrypoint=/usr/bin/kweb quay.io/karmab/kcli'
 ```
 
 ## Dev installation
@@ -1076,9 +1076,9 @@ If you dont want to be asked for your sudo password each time, here are the comm
  - sed -i '/.... # KVIRT/d' /etc/hosts
 ```
 
-## Docker/Podman support in plans
+## Podman/Docker support in plans
 
-Docker/Podman support is mainly enabled as a commodity to launch some containers along vms in plan files. Of course, you will need docker or podman installed on the client. So the following can be used in a plan file to launch a container:
+Podman/Docker support is mainly enabled as a commodity to launch some containers along vms in plan files. Of course, you will need podman or docker installed on the client. So the following can be used in a plan file to launch a container:
 
 ```YAML
 centos:
@@ -1106,12 +1106,6 @@ volumes:
 ```
 
 Additionally, basic commands ( start, stop, console, plan, list) accept a *--container* flag.
-
-Also note that while python sdk is used when connecting locally, commands are rather proxied other ssh when using a remote hypervisor ( reasons beeing to prevent mismatch of version between local and remote docker and because enabling remote access for docker is considered insecure and needs some uncommon additional steps ).
-
-Finally, note that if using the docker version of kcli against your local hypervisor , you'll need to pass a docker socket:
-
-`docker run --rm -v /var/run/libvirt:/var/run/libvirt -v ~/.ssh:/root/.ssh -v /var/run/docker.sock:/var/run/docker.sock karmab/kcli`
 
 ## Exposing a plan
 
@@ -1364,7 +1358,7 @@ If you're using kcli as a container, you will have to create a script such as th
 
 ```
 #!/bin/bash
-docker run -it --security-opt label:disable -v ~/.kcli:/root/.kcli -v /var/run/libvirt:/var/run/libvirt --entrypoint=/usr/bin/klist.py karmab/kcli $@
+podman run -it --security-opt label:disable -v ~/.kcli:/root/.kcli -v /var/run/libvirt:/var/run/libvirt --entrypoint=/usr/bin/klist.py karmab/kcli $@
 ```
 
 Additionally, there are ansible kcli modules in [ansible-kcli-modules](https://github.com/karmab/ansible-kcli-modules) repository, with sample playbooks:
@@ -1385,7 +1379,6 @@ Both kvirt_vm, kvirt_plan and kvirt_product support overriding parameters:
     product: fission
     parameters:
      fission_type: all
-     docker_disk_size: 10
 ```
 
 Finally, you can use the key ansible within a profile:
