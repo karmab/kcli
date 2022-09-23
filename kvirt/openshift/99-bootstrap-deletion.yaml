@@ -16,15 +16,6 @@ spec:
       operator: Exists
     serviceAccountName: autoapprover
     restartPolicy: OnFailure
-    securityContext:
-      allowPrivilegeEscalation: false
-      capabilities:
-       drop:
-       - ALL
-      runAsNonRoot: true
-      runAsUser: 1024
-      seccompProfile:
-        type: RuntimeDefault
     initContainers:
     - name: wait-for-boostrap-cm
       image: {{ registry }}/karmab/kubectl:{{ arch_tag }}
