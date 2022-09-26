@@ -1730,6 +1730,8 @@ class Kvirt(object):
                             ip = entry['addr']
                             ips.append(ip)
                 if ips:
+                    if len(ips) > 1:
+                        yamlinfo['ips'] = ips
                     ip4s = [i for i in ips if ':' not in i]
                     ip6s = [i for i in ips if i not in ip4s]
                     ip = ip4s[0] if ip4s else ip6s[0]
@@ -1738,9 +1740,10 @@ class Kvirt(object):
         hostdevs = list(root.iter('hostdev'))
         for index, element in enumerate(hostdevs):
             address = element.find('source').find('address')
-            bus, slot, function = address.get('bus'), address.get('slot'), address.get('function')
-            address = f'{bus}:{slot}.{function}'.replace('0x', '')
-            pcidevices.append(address)
+            if address is not None:
+                bus, slot, function = address.get('bus'), address.get('slot'), address.get('function')
+                address = f'{bus}:{slot}.{function}'.replace('0x', '')
+                pcidevices.append(address)
         if pcidevices:
             yamlinfo['pcidevices'] = pcidevices
         if ip is not None:
