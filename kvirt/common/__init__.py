@@ -460,7 +460,7 @@ def process_files(files=[], overrides={}, remediate=False):
                     content = base64.b64encode(open(origin, "rb").read())
             else:
                 try:
-                    fileentries = open(origin, 'r').readlines()
+                    content = [line.rstrip() for line in open(origin, 'r').readlines()]
                 except UnicodeDecodeError:
                     warning(f"Interpreting file {origin} as binary")
                     binary = True

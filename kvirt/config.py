@@ -2925,7 +2925,7 @@ class Kconfig(Kbaseconfig):
                 path = fil.get('path')
                 if path is None and origin is not None:
                     files[index]['path'] = f"/root/{origin}"
-                elif path.startswith('/'):
+                elif not path.startswith('/'):
                     error(f"Incorrect path {path}.Leaving...")
                     sys.exit(1)
             else:
