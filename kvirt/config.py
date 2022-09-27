@@ -2920,12 +2920,14 @@ class Kconfig(Kbaseconfig):
                 content = None
                 files[index] = {'path': path, 'origin': origin}
             elif isinstance(fil, dict):
-                path = fil.get('path')
-                if path is None or not path.startswith('/'):
-                    error(f"Incorrect path {path}.Leaving...")
-                    sys.exit(1)
                 origin = fil.get('origin')
                 content = fil.get('content')
+                path = fil.get('path')
+                if path is None and origin is not None:
+                    files[index]['path'] = f"/root/{origin}"
+                elif path.startswith('/'):
+                    error(f"Incorrect path {path}.Leaving...")
+                    sys.exit(1)
             else:
                 return {'result': 'failure', 'reason': "Incorrect file entry"}
             if origin is not None:
