@@ -1546,10 +1546,10 @@ class Kvirt(object):
             host = self.host
             for element in list(root.iter('graphics')):
                 attributes = element.attrib
-                if attributes['listen'] == '127.0.0.1':
-                    if not os.path.exists("i_am_a_container") or self.host not in ['127.0.0.1', 'localhost']:
-                        tunnel = True
-                        host = '127.0.0.1'
+                if attributes['listen'] == '127.0.0.1' and not os.path.exists("i_am_a_container")\
+                   and self.host not in ['127.0.0.1', 'localhost']:
+                    tunnel = True
+                    host = '127.0.0.1'
                 protocol = attributes['type']
                 port = attributes['port']
                 passwd = attributes.get('passwd')
