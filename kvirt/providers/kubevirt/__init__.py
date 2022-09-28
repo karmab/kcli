@@ -717,6 +717,8 @@ class Kubevirt(Kubecommon):
         else:
             state = 'down'
         if ips:
+            if len(ips) > 1:
+                yamlinfo['ips'] = ips
             ip4s = [i for i in ips if ':' not in i]
             ip6s = [i for i in ips if i not in ip4s]
             ip = ip4s[0] if ip4s else ip6s[0]

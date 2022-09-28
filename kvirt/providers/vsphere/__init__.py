@@ -625,11 +625,17 @@ class Ksphere:
         yamlinfo['status'] = translation[runtime.powerState]
         yamlinfo['nets'] = []
         yamlinfo['disks'] = []
+        ips = []
         if runtime.powerState == "poweredOn":
             yamlinfo['host'] = runtime.host.name
             for nic in guest.net:
-                if 'ip' not in yamlinfo and nic.ipAddress:
-                    yamlinfo['ip'] = nic.ipAddress[0]
+                if nic.ipAddress:
+                    ip = nic.ipAddress[0]
+                    ips.append(ip)
+                    if 'ip' not in yamlinfo:
+                        yamlinfo['ip'] = ip
+        if len(ips) > 1:
+            yamlinfo['ips'] = ips
         for entry in config.extraConfig:
             if entry.key in METADATA_FIELDS:
                 yamlinfo[entry.key] = entry.value

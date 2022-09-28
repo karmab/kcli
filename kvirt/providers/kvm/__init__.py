@@ -1710,18 +1710,23 @@ class Kvirt(object):
                     pass
             ifaces = {**agentfaces, **leasefaces}
         interfaces = list(root.iter('interface'))
+        macs = []
         for index, element in enumerate(interfaces):
             networktype = element.get('type').replace('network', 'routed')
             device = f"eth{index}"
             mac = element.find('mac').get('address')
+            macs.append(mac)
             if networktype == 'user':
                 network = 'user'
             elif networktype == 'bridge':
                 network = element.find('source').get('bridge')
             else:
                 network = element.find('source').get('network')
-            if vm.isActive() and ip is None and ifaces:
-                ips = []
+            yamlinfo['nets'].append({'device': device, 'mac': mac, 'net': network, 'type': networktype})
+        all_ips = []
+        if vm.isActive() and ifaces:
+            ips = []
+            for mac in macs:
                 for x in ifaces:
                     if ifaces[x]['hwaddr'] == mac and ifaces[x]['addrs'] is not None:
                         for entry in ifaces[x]['addrs']:
@@ -1729,13 +1734,13 @@ class Kvirt(object):
                                 continue
                             ip = entry['addr']
                             ips.append(ip)
-                if ips:
-                    if len(ips) > 1:
-                        yamlinfo['ips'] = ips
+                            all_ips.append(ip)
+                if ips and 'ip' not in yamlinfo:
                     ip4s = [i for i in ips if ':' not in i]
                     ip6s = [i for i in ips if i not in ip4s]
-                    ip = ip4s[0] if ip4s else ip6s[0]
-            yamlinfo['nets'].append({'device': device, 'mac': mac, 'net': network, 'type': networktype})
+                    yamlinfo['ip'] = ip4s[0] if ip4s else ip6s[0]
+        if len(all_ips) > 1:
+            yamlinfo['ips'] = all_ips
         pcidevices = []
         hostdevs = list(root.iter('hostdev'))
         for index, element in enumerate(hostdevs):

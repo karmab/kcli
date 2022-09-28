@@ -618,6 +618,8 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         profiles_service = self.conn.system_service().vnic_profiles_service()
         if ips:
             yamlinfo['ip'] = ips[0]
+            if len(ips) > 1:
+                yamlinfo['ips'] = ips
         if minimal:
             return yamlinfo
         if not self.netprofiles:

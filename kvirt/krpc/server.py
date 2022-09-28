@@ -665,9 +665,10 @@ def main():
             kcli_pb2.DESCRIPTOR.services_by_name['Kconfig'].full_name,
             reflection.SERVICE_NAME,
         )
-    except:
+        reflection.enable_server_reflection(SERVICE_NAMES, server)
+    except Exception as e:
+        print(f"Hit {e} when enabling reflection")
         pass
-    reflection.enable_server_reflection(SERVICE_NAMES, server)
     server.add_insecure_port('[::]:50051')
     server.start()
     try:
