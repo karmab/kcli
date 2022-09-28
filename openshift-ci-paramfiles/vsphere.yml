@@ -4,6 +4,7 @@ domain: karmalabs.local
 masters: 3
 workers: 0
 numcpus: 16
+sslip: true
 api_ip: 10.19.135.229
 # network: ovirtmgmt
 master_memory: 28672
