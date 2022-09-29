@@ -827,11 +827,17 @@ def list_flavor(args):
 
 def list_available_images(args):
     """List images"""
-    images = IMAGES.keys()
-    imagestable = PrettyTable(["Images"])
+    full = args.full
+    headers = ["Images"]
+    if full:
+        headers.append("URL")
+    imagestable = PrettyTable(headers)
     imagestable.align["Images"] = "l"
-    for image in images:
-        imagestable.add_row([image])
+    for key in IMAGES:
+        data = [key]
+        if full:
+            data.append(IMAGES[key])
+        imagestable.add_row(data)
     print(imagestable)
     return
 
@@ -3721,6 +3727,7 @@ def cli():
     imagelist_desc = 'List Available Images'
     imagelist_parser = list_subparsers.add_parser('available-images', description=imagelist_desc, help=imagelist_desc,
                                                   aliases=['available-image'])
+    imagelist_parser.add_argument('-f', '--full', action='store_true', help='Provide URLS too')
     imagelist_parser.set_defaults(func=list_available_images)
 
     bucketcreate_desc = 'Create Bucket'
