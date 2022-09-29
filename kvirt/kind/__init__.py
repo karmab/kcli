@@ -12,7 +12,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     data = {'kubetype': 'kind'}
     data.update(overrides)
     if 'keys' not in overrides and get_ssh_pub_key() is None:
-        error("No usable public key found, which is required for the deployment")
+        error("No usable public key found, which is required for the deployment. Create one using ssh-keygen")
         sys.exit(1)
     data['cluster'] = overrides.get('cluster', cluster if cluster is not None else 'testk')
     plan = cluster if cluster is not None else data['cluster']

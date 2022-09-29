@@ -572,7 +572,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if os.path.exists(os.path.expanduser('~/.kcli/id_rsa.pub')):
             pub_key = os.path.expanduser('~/.kcli/id_rsa.pub')
         else:
-            error("Missing public key file %s" % pub_key)
+            error("No usable public key found, which is required for the deployment. Create one using ssh-keygen")
             sys.exit(1)
     clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
     if os.path.exists(clusterdir):
