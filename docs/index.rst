@@ -637,6 +637,8 @@ You can then access the vm using *kcli ssh*.
 
 Kcli uses the default ssh_user according to the `cloud image <http://docs.openstack.org/image-guide/obtain-images.html>`__. To guess it, kcli checks the image name. So for example, your centos image must contain the term “centos” in the file name, otherwise “root” is used.
 
+If you are not able to ssh into the vm, Note you can always ``kcli console`` or ``kcli console --serial`` to access the VM
+
 Using parameters, you can tweak the vm creation. All keywords can be used. For instance:
 
 .. code:: shell
