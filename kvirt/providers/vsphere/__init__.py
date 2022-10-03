@@ -1323,3 +1323,40 @@ class Ksphere:
     def update_network(self, name, dhcp=None, nat=None, domain=None, plan=None, overrides={}):
         print("not implemented")
         return {'result': 'success'}
+
+    def clone(self, old, new, full=False, start=False):
+        dc = self.dc
+        si = self.si
+        basefolder = self.basefolder
+        rootFolder = self.rootFolder
+        if basefolder is not None:
+            createfolder(si, dc.vmFolder, basefolder)
+            basefolder = find(si, dc.vmFolder, vim.Folder, basefolder)
+        else:
+            basefolder = dc.vmFolder
+        vmfolder = basefolder
+        old_info = self.info(old)
+        plan, cluster = old_info.get('plan'), old_info.get('cluster')
+        if cluster is not None:
+            createfolder(si, basefolder, cluster)
+            vmfolder = find(si, basefolder, vim.Folder, cluster)
+        elif plan != 'kvirt':
+            createfolder(si, basefolder, plan)
+            vmfolder = find(si, basefolder, vim.Folder, plan)
+        else:
+            vmfolder = basefolder
+        si = self.si
+        clu = find(si, rootFolder, vim.ComputeResource, self.clu)
+        resourcepool = clu.resourcePool
+        imageobj = findvm(si, rootFolder, old)
+        if imageobj is None:
+            return {'result': 'failure', 'reason': f"VM {old} not found"}
+        clonespec = createclonespec(resourcepool)
+        confspec = vim.vm.ConfigSpec()
+        confspec.annotation = new
+        extraconfig = []
+        clonespec.powerOn = start
+        confspec.extraConfig = extraconfig
+        t = imageobj.CloneVM_Task(folder=vmfolder, name=new, spec=clonespec)
+        waitForMe(t)
+        return {'result': 'success'}
