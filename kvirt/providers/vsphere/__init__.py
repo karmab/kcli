@@ -523,7 +523,10 @@ class Ksphere:
         if image is not None and 'coreos' not in image and 'rhcos' not in image and\
                 'fcos' not in image and vmpath.endswith(name):
             isopath = f"{self.isofolder}/{name}.ISO" if self.isofolder is not None else vmpath
-            deletedirectory(si, dc, isopath)
+            try:
+                deletedirectory(si, dc, isopath)
+            except:
+                pass
         if kube is not None:
             clusterfolder = find(si, vmFolder, vim.Folder, kube)
             if clusterfolder is not None and len(clusterfolder.childEntity) == 0:
