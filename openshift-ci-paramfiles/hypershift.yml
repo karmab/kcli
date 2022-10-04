@@ -1,0 +1,20 @@
+#cluster: cnf10
+#domain: kni.lab.eng.bos.redhat.com
+version: stable
+tag: '4.11'
+network: baremetal
+ingress_ip: 10.19.135.130
+workers: 2
+pool: images3
+numcpus: 16
+memory: 32768
+#memory: 46080
+disk_size: 80
+#vmrules:
+#- cnf10-worker-0:
+#   client: local
+#- cnf10-worker-1:
+#   client: ovirt_karim
+#   nets: [ovirtmgmt]
+#- cnf10-worker-2:
+#   client: kubevirt_karim

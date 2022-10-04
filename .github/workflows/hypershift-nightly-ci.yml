@@ -1,0 +1,48 @@
+name: HYPERSHIFT-NIGHTLY-CI
+
+on:
+   schedule:
+    - cron: '10 5 * * *'
+
+env:
+ HOME: /root
+ PYTHONUNBUFFERED: true
+ PLAN: ci-hypershift
+ PULLSECRET: /root/openshift_pull.json
+ KUBECONFIG: /root/.kcli/clusters/ci-libvirt/auth/kubeconfig
+
+jobs:
+    requirements:
+      runs-on: libvirt
+      steps:
+       - uses: actions/checkout@v2
+       - run: git pull origin ${GITHUB_REF##*/}
+       - name: Install kcli
+         run: |
+           curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | bash
+       - name: Install hypershift
+         run: |
+           cd /root/
+           git clone https://github.com/openshift/hypershift.git
+           cd hypershift
+           make build
+           bin/hypershift install
+           sleep 120
+       - name: Make sc default one
+         run: |
+           oc patch storageclass ocs-storagecluster-ceph-rbd -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+
+    deploy-hypershift-cluster:
+      needs: requirements
+      runs-on: libvirt
+      steps:
+      - name: Deploy hypershift cluster
+        run: kcli create cluster hypershift --paramfile openshift-ci-paramfiles/hypershift.yml -P pull_secret=$PULLSECRET $PLAN --force
+
+    clean-up:
+      needs: deploy-hypershift-cluster
+      runs-on: libvirt
+      steps:
+      - name: Clean everything after success
+        run: |
+          kcli delete plan --yes $CLUSTER
