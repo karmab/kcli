@@ -494,6 +494,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             sys.exit(1)
         if platform == 'kvm' and networkinfo['type'] == 'routed':
             cidr = networkinfo['cidr']
+            if cidr == 'N/A':
+                error("Couldnt gather an api_ip from your specified network")
+                sys.exit(1)
             api_index = 2 if ':' in cidr else -3
             api_ip = str(ip_network(cidr)[api_index])
             warning("Using %s as api_ip" % api_ip)
@@ -506,7 +509,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             api_ip = k.create_service("%s-api" % cluster, k.namespace, selector, _type=service_type,
                                       ports=[6443, 22623, 22624, 80, 443], openshift_hack=True)
             if api_ip is None:
-                error("Couldnt gather an api_ip from your cluster")
+                error("Couldnt gather an api_ip from your specified network")
                 sys.exit(1)
             else:
                 pprint("Using api_ip %s" % api_ip)
