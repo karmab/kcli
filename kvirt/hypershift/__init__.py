@@ -240,6 +240,8 @@ def create(config, plandir, cluster, overrides):
     cmcmd = f"oc create -f {clusterdir}/assets.yaml"
     call(cmcmd, shell=True)
     assetsdata['clusterdir'] = clusterdir
+    console_url = os.popen("oc get route -n openshift-console console -o jsonpath='{.status.ingress[0].host}'").read()
+    assetsdata['base_domain'] = console_url.replace('console-openshift-console.apps.', '')
     ignitionscript = config.process_inputfile(cluster, f"{plandir}/ignition.sh", overrides=assetsdata)
     with open(f"{clusterdir}/ignition.sh", 'w') as f:
         f.write(ignitionscript)
