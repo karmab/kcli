@@ -1166,7 +1166,7 @@ class Kvirt(object):
         osfirmware = ""
         if uefi or uefi_legacy or secureboot or aarch64:
             if uefi_legacy:
-                ramxml = "<loader readonly='yes' type='pflash'>/usr/share/OVMF/OVMF_CODE.secboot.fd</loader>"
+                ramxml = "<loader type='pflash'>/usr/share/OVMF/OVMF_CODE.secboot.fd</loader>"
                 if secureboot:
                     smmxml = "<smm state='on'/>"
                     sectemplate = '/usr/share/OVMF/OVMF_VARS.secboot.fd'
@@ -1179,7 +1179,7 @@ class Kvirt(object):
                 if secureboot:
                     smmxml = "<smm state='on'/>"
                     secure = 'yes'
-                ramxml = "<loader readonly='yes' secure='%s'/>" % secure
+                ramxml = "<loader secure='%s'/>" % secure
         arch = 'aarch64' if aarch64 else 'x86_64'
         if not aarch64:
             acpixml = '<acpi/>\n<apic/>'
