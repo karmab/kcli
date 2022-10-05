@@ -1335,6 +1335,27 @@ class Kconfig(Kbaseconfig):
                     if cluster is not None:
                         clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
                         if os.path.exists(clusterdir):
+                            ipi = False
+                            parametersfile = f"{clusterdir}/kcli_parameters.yml"
+                            if os.path.exists(parametersfile):
+                                with open(parametersfile) as f:
+                                    clusterdata = yaml.safe_load(f)
+                                    kubetype = clusterdata.get('kubetype', 'generic')
+                                    if kubetype == 'openshift' and 'ipi' in clusterdata and clusterdata['ipi']:
+                                        ipi = True
+                                    elif kubetype == 'hypershift':
+                                        hypershift = True
+                                    domain = clusterdata.get('domain', domain)
+                                    dnsclient = clusterdata.get('dnsclient')
+                                if ipi:
+                                    os.environ["PATH"] += ":%s" % os.getcwd()
+                                    call(f'openshift-install --dir={clusterdir} destroy cluster', shell=True)
+                                if hypershift:
+                                    if 'KUBECONFIG' not in os.environ:
+                                        error("Missing KUBECONFIG for hypershift...")
+                                        sys.exit(1)
+                                    call(f'oc delete -f {clusterdir}/autoapprovercron.yml', shell=True)
+                                    call(f'oc delete -f {clusterdir}/assets.yaml', shell=True)
                             pprint(f"Deleting directory {clusterdir}")
                             rmtree(clusterdir, ignore_errors=True)
         if container:
