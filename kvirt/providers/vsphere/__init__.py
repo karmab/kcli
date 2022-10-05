@@ -785,8 +785,8 @@ class Ksphere:
         vmlist = o.view
         o.Destroy()
         return [v.name for v
-                in vmlist if v.config.template and v.summary is not
-                None and v.summary.runtime.connectionState != 'orphaned']
+                in vmlist if v.config.template and
+                (v.summary is None or (v.summary is not None and v.summary.runtime.connectionState != 'orphaned'))]
 
     def update_metadata(self, name, metatype, metavalue, append=False):
         si = self.si
