@@ -1,15 +1,42 @@
-name: HYPERSHIFT-NIGHTLY-CI
+name: HYPERSHIFT-CI
 
 on:
-   schedule:
-    - cron: '10 5 * * *'
+  workflow_dispatch:
+    inputs:
+      PLAN:
+        description: 'Plan Name'
+        required: true
+        default: ci-hypershift
+      PARAMFILE:
+        description: 'paramfile'
+        required: false
+        default: openshift-ci-paramfiles/hypershift.yml
+      EXTRAPARAMS:
+        description: 'Extra params'
+        default: ''
+      PULLSECRET:
+        description: 'Pull Secret'
+        required: false
+        default: /root/openshift_pull.json
+      VERSION:
+        description: 'version'
+        required: false
+        default: stable
+      TAG:
+        description: 'tag'
+        required: false
+        default: "4.11"
 
 env:
  HOME: /root
  PYTHONUNBUFFERED: true
- PLAN: ci-hypershift
- PULLSECRET: /root/openshift_pull.json
  KUBECONFIG: /root/.kcli/clusters/ci-libvirt/auth/kubeconfig
+ PLAN: ${{github.event.inputs.PLAN}}
+ PARAMFILE: ${{github.event.inputs.PARAMFILE}}
+ EXTRAPARAMS: ${{github.event.inputs.EXTRAPARAMS}}
+ PULLSECRET: ${{github.event.inputs.PULLSECRET}}
+ VERSION: ${{github.event.inputs.VERSION}}
+ TAG: ${{github.event.inputs.TAG}}
 
 jobs:
     requirements:
@@ -39,12 +66,4 @@ jobs:
       runs-on: libvirt
       steps:
       - name: Deploy hypershift cluster
-        run: kcli create cluster hypershift --paramfile openshift-ci-paramfiles/hypershift.yml -P pull_secret=$PULLSECRET $PLAN --force
-
-    clean-up:
-      needs: deploy-hypershift-cluster
-      runs-on: libvirt
-      steps:
-      - name: Clean everything after success
-        run: |
-          kcli delete plan --yes $CLUSTER
+        run: kcli create cluster hypershift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET $PLAN --force
