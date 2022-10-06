@@ -1336,6 +1336,7 @@ class Kconfig(Kbaseconfig):
                         clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
                         if os.path.exists(clusterdir):
                             ipi = False
+                            hypershift = False
                             parametersfile = f"{clusterdir}/kcli_parameters.yml"
                             if os.path.exists(parametersfile):
                                 with open(parametersfile) as f:
@@ -2575,7 +2576,6 @@ class Kconfig(Kbaseconfig):
             cluster = 'testk'
         clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
         if os.path.exists(clusterdir):
-            ipi = False
             parametersfile = f"{clusterdir}/kcli_parameters.yml"
             if os.path.exists(parametersfile):
                 with open(parametersfile) as f:
