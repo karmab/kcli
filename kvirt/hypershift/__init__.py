@@ -248,7 +248,7 @@ def create(config, plandir, cluster, overrides):
     pprint("Waiting before ignition server is usable")
     call(f"until oc -n {namespace}-{cluster} get secret | grep user-data-{cluster} >/dev/null 2>&1 ; do sleep 1 ; done",
          shell=True)
-    time.sleep(45)
+    time.sleep(60)
     call(f'bash {clusterdir}/ignition.sh', shell=True)
     pprint("Deploying workers")
     if 'name' in data:
