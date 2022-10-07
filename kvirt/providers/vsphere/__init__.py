@@ -681,6 +681,8 @@ class Ksphere:
                 disk = {'device': device, 'size': int(disksize), 'format': diskformat, 'type': drivertype,
                         'path': path}
                 yamlinfo['disks'].append(disk)
+        if obj.snapshot is not None and obj.snapshot.currentSnapshot is not None:
+            yamlinfo['snapshot'] = obj.snapshot.rootSnapshotList[0].name
         return yamlinfo
 
     def list(self):
@@ -1365,17 +1367,55 @@ class Ksphere:
         return {'result': 'success'}
 
     def create_snapshot(self, name, base):
-        print("not implemented")
+        si = self.si
+        dc = self.dc
+        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vm, info = findvm2(si, vmFolder, base)
+        if vm is None:
+            return {'result': 'failure', 'reason': f"VM {base} not found"}
+        description = f"Snapshot {name}"
+        dump_memory = False
+        quiesce = False
+        t = vm.CreateSnapshot(name, description, dump_memory, quiesce)
+        waitForMe(t)
         return {'result': 'success'}
 
     def delete_snapshot(self, name, base):
-        print("not implemented")
-        return {'result': 'success'}
+        si = self.si
+        dc = self.dc
+        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vm, info = findvm2(si, vmFolder, base)
+        if vm is None:
+            return {'result': 'failure', 'reason': f"VM {base} not found"}
+        snapshots = vm.snapshot.rootSnapshotList if vm.snapshot is not None else []
+        for snapshot in snapshots:
+            if snapshot.name == name:
+                t = snapshot.snapshot.RemoveSnapshot_Task(True)
+                waitForMe(t)
+                return {'result': 'success'}
+        return {'result': 'failure', 'reason': f'Snapshot {name} not found'}
 
     def list_snapshots(self, base):
-        print("not implemented")
-        return []
+        si = self.si
+        dc = self.dc
+        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vm, info = findvm2(si, vmFolder, base)
+        if vm is None:
+            return {'result': 'failure', 'reason': f"VM {base} not found"}
+        snapshots = vm.snapshot.rootSnapshotList if vm.snapshot is not None else []
+        return [snapshot.name for snapshot in snapshots]
 
     def revert_snapshot(self, name, base):
-        print("not implemented")
-        return {'result': 'success'}
+        si = self.si
+        dc = self.dc
+        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vm, info = findvm2(si, vmFolder, base)
+        if vm is None:
+            return {'result': 'failure', 'reason': f"VM {base} not found"}
+        snapshots = vm.snapshot.rootSnapshotList if vm.snapshot is not None else []
+        for snapshot in snapshots:
+            if snapshot.name == name:
+                t = snapshot.snapshot.RevertToSnapshot_Task()
+                waitForMe(t)
+                return {'result': 'success'}
+        return {'result': 'failure', 'reason': f'Snapshot {name} not found'}
