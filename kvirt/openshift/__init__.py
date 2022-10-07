@@ -994,8 +994,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                     orissh = f"{tmpdir}/.ssh"
                     os.mkdir(oriconf)
                     os.mkdir(orissh)
+                    kvm_overrides = {'network': network, 'user': getuser(), 'client': config.client}
                     kcliconf = config.process_inputfile(cluster, f"{plandir}/local_kcli_conf.j2",
-                                                        overrides={'network': network, 'user': getuser()})
+                                                        overrides=kvm_overrides)
                     with open(f"{oriconf}/config.yml", 'w') as _f:
                         _f.write(kcliconf)
                     sshcmd = f"ssh-keygen -t rsa -N '' -f {orissh}/id_rsa > /dev/null"
@@ -1012,7 +1013,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                         copy2(destkubeconfig, f"{oriconf}/kubeconfig")
                     oriconf = f"{tmpdir}/.kcli"
                     os.mkdir(oriconf)
-                    kubeconfig_overrides = {'kubeconfig': True if destkubeconfig is not None else False}
+                    kubeconfig_overrides = {'kubeconfig': True if destkubeconfig is not None else False,
+                                            'client': config.client}
                     kcliconf = config.process_inputfile(cluster, f"{plandir}/kubevirt_kcli_conf.j2",
                                                         overrides=kubeconfig_overrides)
                     with open(f"{oriconf}/config.yml", 'w') as _f:
@@ -1028,7 +1030,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 call(cmcmd, shell=True)
             deletionfile2 = f"{plandir}/99-bootstrap-deletion-2.yaml"
             deletionfile2 = config.process_inputfile(cluster, deletionfile2, overrides={'registry': registry,
-                                                                                        'arch_tag': arch_tag})
+                                                                                        'arch_tag': arch_tag,
+                                                                                        'client': config.client})
             with open(f"{clusterdir}/openshift/99-bootstrap-deletion-2.yaml", 'w') as _f:
                 _f.write(deletionfile2)
         if notify:

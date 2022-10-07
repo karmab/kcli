@@ -22,7 +22,7 @@ spec:
       command: ['sh', '-c', 'kubectl get cm -n kube-system bootstrap']
     - name: delete-bootstrap-vm
       image: {{ registry }}/karmab/kcli:{{ arch_tag }}
-      command: ['sh', '-c', 'kcli delete vm --yes {{ cluster }}-bootstrap']
+      command: ['sh', '-c', 'kcli -C {{ client }} delete vm --yes {{ cluster }}-bootstrap']
       volumeMounts:
       - mountPath: /root/.kcli
         name: kcli-conf
