@@ -371,7 +371,7 @@ class KOvirt(object):
             vm.stop()
         return {'result': 'success'}
 
-    def snapshot(self, name, base, revert=False, delete=False, listing=False):
+    def create_snapshot(self, name, base):
         vmsearch = self.vms_service.list(search=f'name={base}')
         if not vmsearch:
             error(f"VM {base} not found")
@@ -379,6 +379,18 @@ class KOvirt(object):
         vm = vmsearch[0]
         snapshots_service = self.vms_service.vm_service(vm.id).snapshots_service()
         snapshots_service.add(types.Snapshot(description=name))
+        return
+
+    def delete_snapshot(self, name, base):
+        print("not implemented")
+        return
+
+    def list_snapshots(self, base):
+        print("not implemented")
+        return []
+
+    def revert_snapshot(self, name, base):
+        print("not implemented")
         return
 
     def restart(self, name):

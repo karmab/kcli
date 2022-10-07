@@ -1363,3 +1363,19 @@ class Ksphere:
         t = imageobj.CloneVM_Task(folder=vmfolder, name=new, spec=clonespec)
         waitForMe(t)
         return {'result': 'success'}
+
+    def create_snapshot(self, name, base):
+        print("not implemented")
+        return {'result': 'success'}
+
+    def delete_snapshot(self, name, base):
+        print("not implemented")
+        return {'result': 'success'}
+
+    def list_snapshots(self, base):
+        print("not implemented")
+        return []
+
+    def revert_snapshot(self, name, base):
+        print("not implemented")
+        return {'result': 'success'}

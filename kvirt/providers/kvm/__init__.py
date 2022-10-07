@@ -1367,29 +1367,15 @@ class Kvirt(object):
                 vm.destroy()
         return {'result': 'success'}
 
-    def snapshot(self, name, base, revert=False, delete=False, listing=False):
+    def create_snapshot(self, name, base):
         conn = self.conn
         try:
             vm = conn.lookupByName(base)
             vmxml = vm.XMLDesc(0)
         except:
             return {'result': 'failure', 'reason': f"VM {base} not found"}
-        if listing:
-            return vm.snapshotListNames()
-        if revert and name not in vm.snapshotListNames():
-            return {'result': 'failure', 'reason': f"Snapshot {name} doesn't exist"}
-        if delete and name not in vm.snapshotListNames():
-            return {'result': 'failure', 'reason': f"Snapshot {name} doesn't exist"}
-        if delete:
-            snap = vm.snapshotLookupByName(name)
-            snap.delete()
-            return {'result': 'success'}
-        if not revert and name in vm.snapshotListNames():
+        if name in vm.snapshotListNames():
             return {'result': 'failure', 'reason': f"Snapshot {name} already exists"}
-        if revert:
-            snap = vm.snapshotLookupByName(name)
-            vm.revertToSnapshot(snap)
-            return {'result': 'success'}
         if vm.isActive() == 0:
             memoryxml = ''
         else:
@@ -1402,8 +1388,39 @@ class Kvirt(object):
           </disks>
           %s
           </domainsnapshot>""" % (name, memoryxml, vmxml)
-        # <disk name='hdc' snapshot='no'/>
         vm.snapshotCreateXML(snapxml)
+        return {'result': 'success'}
+
+    def delete_snapshot(self, name, base):
+        conn = self.conn
+        try:
+            vm = conn.lookupByName(base)
+        except:
+            return {'result': 'failure', 'reason': f"VM {base} not found"}
+        if name not in vm.snapshotListNames():
+            return {'result': 'failure', 'reason': f"Snapshot {name} doesn't exist"}
+        snap = vm.snapshotLookupByName(name)
+        snap.delete()
+        return {'result': 'success'}
+
+    def list_snapshots(self, base):
+        conn = self.conn
+        try:
+            vm = conn.lookupByName(base)
+        except:
+            return {'result': 'failure', 'reason': f"VM {base} not found"}
+        return vm.snapshotListNames()
+
+    def revert_snapshot(self, name, base):
+        conn = self.conn
+        try:
+            vm = conn.lookupByName(base)
+        except:
+            return {'result': 'failure', 'reason': f"VM {base} not found"}
+        if name not in vm.snapshotListNames():
+            return {'result': 'failure', 'reason': f"Snapshot {name} doesn't exist"}
+        snap = vm.snapshotLookupByName(name)
+        vm.revertToSnapshot(snap)
         return {'result': 'success'}
 
     def restart(self, name):

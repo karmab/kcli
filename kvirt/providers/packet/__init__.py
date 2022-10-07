@@ -336,18 +336,21 @@ class Kpacket(object):
         else:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
 
-    def snapshot(self, name, base, revert=False, delete=False, listing=False):
-        """
-
-        :param name:
-        :param base:
-        :param revert:
-        :param delete:
-        :param listing:
-        :return:
-        """
+    def create_snapshot(self, name, base):
         print("not implemented")
-        return
+        return {'result': 'success'}
+
+    def delete_snapshot(self, name, base):
+        print("not implemented")
+        return {'result': 'success'}
+
+    def list_snapshots(self, base):
+        print("not implemented")
+        return []
+
+    def revert_snapshot(self, name, base):
+        print("not implemented")
+        return {'result': 'success'}
 
     def restart(self, name):
         """

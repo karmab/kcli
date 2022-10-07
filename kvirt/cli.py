@@ -2744,7 +2744,7 @@ def delete_snapshot_plan(args):
         name = vm['name']
         if vm['plan'] == plan:
             pprint(f"Deleting snapshot {snapshot} of vm {name}...")
-            k.snapshot(snapshot, name, delete=True)
+            k.delete_snapshot(snapshot, name)
     return 0
 
 
@@ -3238,7 +3238,7 @@ def snapshotcreate_vm(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     pprint(f"Creating snapshot of {name} named {snapshot}...")
-    result = k.snapshot(snapshot, name)
+    result = k.create_snapshot(snapshot, name)
     code = common.handle_response(result, name, element='', action='snapshotted')
     return code
 
@@ -3250,7 +3250,7 @@ def snapshotdelete_vm(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     pprint(f"Deleting snapshot {snapshot} of vm {name}...")
-    result = k.snapshot(snapshot, name, delete=True)
+    result = k.delete_snapshot(snapshot, name)
     code = common.handle_response(result, name, element='', action='snapshot deleted')
     return code
 
@@ -3262,7 +3262,7 @@ def snapshotrevert_vm(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     pprint(f"Reverting snapshot {snapshot} of vm {name}...")
-    result = k.snapshot(snapshot, name, revert=True)
+    result = k.revert_snapshot(snapshot, name)
     code = common.handle_response(result, name, element='', action='snapshot reverted')
     return code
 
@@ -3273,7 +3273,7 @@ def snapshotlist_vm(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     pprint(f"Listing snapshots of {name}...")
-    snapshots = k.snapshot('', name, listing=True)
+    snapshots = k.list_snapshots(name)
     if isinstance(snapshots, dict):
         error(f"Vm {name} not found")
         return
@@ -5004,7 +5004,7 @@ def cli():
     vmsnapshotlist_desc = 'List Snapshots Of Vm'
     vmsnapshotlist_parser = list_subparsers.add_parser('vm-snapshot', description=vmsnapshotlist_desc,
                                                        help=vmsnapshotlist_desc, aliases=['vm-snapshots'])
-    vmsnapshotlist_parser.add_argument('-n', '--name', help='vm name', required=True, metavar='VMNAME')
+    vmsnapshotlist_parser.add_argument('name', metavar='VMNAME')
     vmsnapshotlist_parser.set_defaults(func=snapshotlist_vm)
 
     vmsnapshotrevert_desc = 'Revert Snapshot Of Vm'

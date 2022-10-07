@@ -298,7 +298,7 @@ class Kgcp(object):
         else:
             return {'result': 'success'}
 
-    def snapshot(self, name, base, revert=False, delete=False, listing=False):
+    def create_snapshot(self, name, base):
         conn = self.conn
         project = self.project
         zone = self.zone
@@ -312,9 +312,20 @@ class Kgcp(object):
                 body['sourceImage'] = disk['selfLink']
             except:
                 return {'result': 'failure', 'reason': f"VM/disk {name} not found"}
-        if revert:
-            body['licenses'] = ["projects/vm-options/global/licenses/enable-vmx"]
+        body['licenses'] = ["projects/vm-options/global/licenses/enable-vmx"]
         conn.images().insert(project=project, body=body).execute()
+        return {'result': 'success'}
+
+    def delete_snapshot(self, name, base):
+        print("not implemented")
+        return {'result': 'success'}
+
+    def list_snapshots(self, base):
+        print("not implemented")
+        return []
+
+    def revert_snapshot(self, name, base):
+        print("not implemented")
         return {'result': 'success'}
 
     def restart(self, name):

@@ -1411,7 +1411,7 @@ class Kconfig(Kbaseconfig):
             description = vm['plan']
             if description == plan:
                 snapshotfound = True
-                k.snapshot(snapshotname, name)
+                k.create_snapshot(snapshotname, name)
                 success(f"{name} snapshotted!")
         if snapshotfound:
             success(f"Plan {plan} snapshotted!")
@@ -1431,7 +1431,7 @@ class Kconfig(Kbaseconfig):
             description = vm['plan']
             if description == plan:
                 revertfound = True
-                k.snapshot(snapshotname, name, revert=True)
+                k.revert_snapshot(snapshotname, name)
                 success(f"snapshot of {name} reverted!")
         if revertfound:
             success(f"Plan {plan} reverted with snapshot {snapshotname}!")
