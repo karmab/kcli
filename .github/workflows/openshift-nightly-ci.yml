@@ -1,7 +1,7 @@
 name: OPENSHIFT-NIGHTLY-CI
 on:
   schedule:
-    - cron: '15 23 * * *'
+    - cron: '01 0 * * *'
 
 env:
  HOME: /root

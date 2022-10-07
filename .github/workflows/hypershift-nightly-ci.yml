@@ -2,7 +2,7 @@ name: HYPERSHIFT-NIGHTLY-CI
 
 on:
    schedule:
-    - cron: '10 5 * * *'
+    - cron: '31 01 * * *'
 
 env:
  HOME: /root
@@ -47,4 +47,4 @@ jobs:
       steps:
       - name: Clean everything after success
         run: |
-          kcli delete plan --yes $CLUSTER
+          kcli delete plan --yes $PLAN
