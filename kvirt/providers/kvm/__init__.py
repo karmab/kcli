@@ -1751,8 +1751,8 @@ class Kvirt(object):
                 pcidevices.append(address)
         if pcidevices:
             yamlinfo['pcidevices'] = pcidevices
-        if ip is not None:
-            yamlinfo['ip'] = ip
+        if 'ip' in yamlinfo:
+            ip = yamlinfo['ip']
             # better filter to detect user nets needed here
             if '.' not in ip and ':' not in ip:
                 usernetinfo = {'device': 'eth%s' % len(yamlinfo['nets']), 'mac': 'N/A', 'net': 'user', 'type': 'user'}
