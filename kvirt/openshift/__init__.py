@@ -50,13 +50,12 @@ def update_etc_hosts(cluster, domain, host_ip, ingress_ip=None):
             wrongingresses = [e for e in hosts if not e.startswith('#') and o in e and ingress_ip not in e]
             wronglines.extend(wrongingresses)
         for wrong in wronglines:
-            warning("Cleaning wrong entry %s in /etc/hosts" % wrong)
-            call("sudo sed -i '/%s/d' /etc/hosts" % wrong.strip(), shell=True)
+            warning(f"Cleaning wrong entry {wrong} in /etc/hosts")
+            call(f"sudo sed -i '/{wrong.strip()}/d' /etc/hosts", shell=True)
         hosts = open("/etc/hosts").readlines()
-        correct = [e for e in hosts if not e.startswith('#') and "api.%s.%s" % (cluster, domain) in e and
-                   host_ip in e]
+        correct = [e for e in hosts if not e.startswith('#') and f"api.{cluster}.{domain}" in e and host_ip in e]
         if not correct:
-            entries = ["api.%s.%s" % (cluster, domain)]
+            entries = [f"api.{cluster}.{domain}"]
             ingress_entries = [f"{x}.{cluster}.{domain}" for x in ['console-openshift-console.apps',
                                'oauth-openshift.apps', 'prometheus-k8s-openshift-monitoring.apps']]
             if ingress_ip is None:
@@ -102,10 +101,10 @@ def get_rhcos_openstack_url():
         if 'built from commit' in line:
             commit_id = line.replace('built from commit ', '').strip()
             break
-    r = urlopen("https://raw.githubusercontent.com/openshift/installer/%s/data/data/rhcos.json" % commit_id)
+    r = urlopen(f"https://raw.githubusercontent.com/openshift/installer/{commit_id}/data/data/rhcos.json")
     r = str(r.read(), 'utf-8').strip()
     data = json.loads(r)
-    return "%s%s" % (data['baseURI'], data['images']['openstack']['path'])
+    return f"{data['baseURI']}{data['images']['openstack']['path']}"
 
 
 def get_minimal_rhcos():
@@ -113,7 +112,7 @@ def get_minimal_rhcos():
         if 'built from commit' in line:
             commit_id = line.replace('built from commit ', '').strip()
             break
-    r = urlopen("https://raw.githubusercontent.com/openshift/installer/%s/data/data/rhcos.json" % commit_id)
+    r = urlopen(f"https://raw.githubusercontent.com/openshift/installer/{commit_id}/data/data/rhcos.json")
     r = str(r.read(), 'utf-8').strip()
     data = json.loads(r)
     ver = os.path.basename(data['images']['qemu']['path']).replace('-0-qemu.x86_64.qcow2.gz', '').replace('rhcos-', '')
@@ -160,8 +159,7 @@ def get_downstream_installer(nightly=False, macosx=False, tag=None, debug=False,
                 openshift_image = line.decode().replace('Pull From: ', '').strip()
                 break
         target = 'openshift-baremetal-install'
-        cmd = "oc adm release extract --registry-config %s --command=%s --to . %s" % (pull_secret, target,
-                                                                                      openshift_image)
+        cmd = f"oc adm release extract --registry-config {pull_secret} --command={target} --to . {openshift_image}"
         cmd += f"; mv {target} openshift-install ; chmod 700 openshift-install"
         return call(cmd, shell=True)
     if arch == 'arm64':
@@ -181,28 +179,28 @@ def get_ci_installer(pull_secret, tag=None, macosx=False, upstream=False, debug=
     base = 'openshift' if not upstream else 'origin'
     if tag is None:
         tags = []
-        r = urlopen("https://%s-release.ci.openshift.org/graph?format=dot" % base).readlines()
+        r = urlopen(f"https://{base}-release.ci.openshift.org/graph?format=dot").readlines()
         for line in r:
             tag_match = re.match('.*label="(.*.)", shape=.*', str(line))
             if tag_match is not None:
                 tags.append(tag_match.group(1))
         tag = sorted(tags)[-1]
     elif str(tag).startswith('ci-ln'):
-        tag = 'registry.build01.ci.openshift.org/%s' % tag
+        tag = f'registry.build01.ci.openshift.org/{tag}'
     elif '/' not in str(tag):
         if arch == 'arm64':
-            tag = 'registry.ci.openshift.org/ocp-arm64/release-arm64:%s' % tag
+            tag = f'registry.ci.openshift.org/ocp-arm64/release-arm64:{tag}'
         else:
             basetag = 'ocp' if not upstream else 'origin'
-            tag = 'registry.ci.openshift.org/%s/release:%s' % (basetag, tag)
+            tag = f'registry.ci.openshift.org/{basetag}/release:{tag}'
     os.environ['OPENSHIFT_RELEASE_IMAGE'] = tag
-    msg = 'Downloading openshift-install %s in current directory' % tag
+    msg = f'Downloading openshift-install {tag} in current directory'
     pprint(msg)
     target = 'openshift-baremetal-install' if baremetal else 'openshift-install'
     if upstream:
-        cmd = "oc adm release extract --command=%s --to . %s" % (target, tag)
+        cmd = f"oc adm release extract --command={target} --to . {tag}"
     else:
-        cmd = "oc adm release extract --registry-config %s --command=%s --to . %s" % (pull_secret, target, tag)
+        cmd = f"oc adm release extract --registry-config {pull_secret} --command={target} --to . {tag}"
     cmd += "; chmod 700 openshift-install"
     if debug:
         pprint(cmd)
@@ -217,7 +215,7 @@ def get_upstream_installer(macosx=False, tag=None, debug=False):
     data = json.loads(r.read())
     version = sorted([x['tag_name'] for x in data])[-1]
     cmd = "curl -Ls https://github.com/openshift/okd/releases/download/"
-    cmd += "%s/openshift-install-%s-%s.tar.gz" % (version, INSTALLSYSTEM, version)
+    cmd += f"{version}/openshift-install-{INSTALLSYSTEM}-{version}.tar.gz"
     cmd += "| tar zxf - openshift-install"
     cmd += "; chmod 700 openshift-install"
     if debug:
@@ -226,7 +224,7 @@ def get_upstream_installer(macosx=False, tag=None, debug=False):
 
 
 def baremetal_stop(cluster):
-    installfile = "%s/install-config.yaml" % os.path.expanduser("~/.kcli/clusters/%s" % cluster)
+    installfile = "%s/install-config.yaml" % os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     with open(installfile) as f:
         data = yaml.safe_load(f)
         hosts = data['platform']['baremetal']['hosts']
@@ -235,7 +233,7 @@ def baremetal_stop(cluster):
             user, password = host['bmc'].get('username'), host['bmc'].get('password')
             match = re.match(".*(http.*|idrac-virtualmedia.*|redfish-virtualmedia.*)", address)
             address = match.group(1).replace('idrac-virtualmedia', 'https').replace('redfish-virtualmedia', 'https')
-            actionaddress = "%s/Actions/ComputerSystem.Reset/" % address
+            actionaddress = f"{address}/Actions/ComputerSystem.Reset/"
             headers = {'Content-type': 'application/json'}
             post(actionaddress, json={"ResetType": 'ForceOff'}, headers=headers, auth=(user, password), verify=False)
 
@@ -243,7 +241,7 @@ def baremetal_stop(cluster):
 def process_apps(config, clusterdir, apps, overrides):
     if not apps:
         return
-    os.environ['KUBECONFIG'] = "%s/auth/kubeconfig" % clusterdir
+    os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
     for app in apps:
         base_data = overrides.copy()
         if isinstance(app, str):
@@ -273,27 +271,27 @@ def process_apps(config, clusterdir, apps, overrides):
 def process_postscripts(clusterdir, postscripts):
     if not postscripts:
         return
-    os.environ['KUBECONFIG'] = "%s/auth/kubeconfig" % clusterdir
+    os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
     currentdir = pwd_path(".")
     for script in postscripts:
-        script_path = os.path.expanduser(script) if script.startswith('/') else '%s/%s' % (currentdir, script)
-        pprint("Running script %s" % os.path.basename(script))
+        script_path = os.path.expanduser(script) if script.startswith('/') else f'{currentdir}/{script}'
+        pprint(f"Running script {os.path.basename(script)}")
         call(script_path, shell=True)
 
 
 def wait_for_ignition(cluster, domain, role='worker'):
-    clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
-    ignitionfile = "%s/%s.ign" % (clusterdir, role)
+    clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
+    ignitionfile = f"{clusterdir}/{role}.ign"
     os.remove(ignitionfile)
     while not os.path.exists(ignitionfile) or os.stat(ignitionfile).st_size == 0:
         try:
             with open(ignitionfile, 'w') as dest:
-                req = Request("http://api.%s.%s:22624/config/%s" % (cluster, domain, role))
+                req = Request(f"http://api.{cluster}.{domain}:22624/config/{role}")
                 req.add_header("Accept", "application/vnd.coreos.ignition+json; version=3.1.0")
                 data = urlopen(req).read()
                 dest.write(data.decode("utf-8"))
         except:
-            pprint("Waiting 10s before retrieving %s ignition data" % role)
+            pprint(f"Waiting 10s before retrieving {role} ignition data")
             sleep(10)
 
 
@@ -303,25 +301,25 @@ def scale(config, plandir, cluster, overrides):
     platform = config.type
     k = config.k
     data = {}
-    pprint("Scaling on client %s" % client)
-    clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
-    if os.path.exists("%s/kcli_parameters.yml" % clusterdir):
-        with open("%s/kcli_parameters.yml" % clusterdir, 'r') as install:
+    pprint(f"Scaling on client {client}")
+    clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
+    if os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
+        with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
             installparam = yaml.safe_load(install)
             data.update(installparam)
             plan = installparam.get('plan', plan)
     data.update(overrides)
     if os.path.exists(clusterdir):
-        with open("%s/kcli_parameters.yml" % clusterdir, 'w') as paramfile:
+        with open(f"{clusterdir}/kcli_parameters.yml", 'w') as paramfile:
             yaml.safe_dump(data, paramfile)
     image = data.get('image')
     if image is None:
-        cluster_image = k.info("%s-master-0" % cluster).get('image')
+        cluster_image = k.info(f"{cluster}-master-0").get('image')
         if cluster_image is None:
             error("Missing image...")
             sys.exit(1)
         else:
-            pprint("Using image %s" % cluster_image)
+            pprint(f"Using image {cluster_image}")
             image = cluster_image
     data['image'] = image
     for role in ['masters', 'workers']:
@@ -331,10 +329,9 @@ def scale(config, plandir, cluster, overrides):
             continue
         if platform in virtplatforms:
             os.chdir(os.path.expanduser("~/.kcli"))
-            result = config.plan(plan, inputfile='%s/%s.yml' % (plandir, role), overrides=overrides, threaded=threaded)
+            result = config.plan(plan, inputfile=f'{plandir}/{role}.yml', overrides=overrides, threaded=threaded)
         elif platform in cloudplatforms:
-            result = config.plan(plan, inputfile='%s/cloud_%s.yml' % (plandir, role), overrides=overrides,
-                                 threaded=threaded)
+            result = config.plan(plan, inputfile=f'{plandir}/cloud_{role}.yml', overrides=overrides, threaded=threaded)
         if result['result'] != 'success':
             sys.exit(1)
 
@@ -347,7 +344,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     arch = k.get_capabilities()['arch'] if platform == 'kvm' else 'x86_64'
     arch_tag = 'arm64' if arch in ['aarch64', 'arm64'] else 'latest'
     overrides['arch_tag'] = arch_tag
-    pprint("Deploying on client %s" % client)
+    pprint(f"Deploying on client {client}")
     data = {'domain': 'karmalabs.local',
             'network': 'default',
             'masters': 1,
@@ -403,7 +400,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     baremetal_iso_all = baremetal_iso_bootstrap and baremetal_iso_master and baremetal_iso_worker
     notify = data.get('notify')
     postscripts = data.get('postscripts', [])
-    pprint("Deploying cluster %s" % clustervalue)
+    pprint(f"Deploying cluster {clustervalue}")
     plan = cluster if cluster is not None else clustervalue
     overrides['kubetype'] = 'openshift'
     apps = overrides.get('apps', [])
@@ -481,7 +478,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         error(f"Incorrect version {version}")
         sys.exit(1)
     else:
-        pprint("Using %s version" % version)
+        pprint(f"Using {version} version")
     cluster = data.get('cluster')
     image = data.get('image')
     ipi = data.get('ipi', False)
@@ -499,20 +496,20 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 sys.exit(1)
             api_index = 2 if ':' in cidr else -3
             api_ip = str(ip_network(cidr)[api_index])
-            warning("Using %s as api_ip" % api_ip)
+            warning(f"Using {api_ip} as api_ip")
             overrides['api_ip'] = api_ip
         elif platform == 'kubevirt':
             selector = {'kcli/plan': plan, 'kcli/role': 'master'}
             service_type = "LoadBalancer" if k.access_mode == 'LoadBalancer' else 'NodePort'
             if service_type == 'NodePort':
                 kubevirt_api_service_node_port = True
-            api_ip = k.create_service("%s-api" % cluster, k.namespace, selector, _type=service_type,
+            api_ip = k.create_service(f"{cluster}-api", k.namespace, selector, _type=service_type,
                                       ports=[6443, 22623, 22624, 80, 443], openshift_hack=True)
             if api_ip is None:
                 error("Couldnt gather an api_ip from your specified network")
                 sys.exit(1)
             else:
-                pprint("Using api_ip %s" % api_ip)
+                pprint(f"Using api_ip {api_ip}")
                 overrides['api_ip'] = api_ip
                 overrides['kubevirt_api_service'] = True
                 kubevirt_api_service = True
@@ -551,7 +548,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     workers = data.get('workers')
     tag = data.get('tag')
     pub_key = data.get('pub_key')
-    pull_secret = pwd_path(data.get('pull_secret')) if not upstream else "%s/fake_pull.json" % plandir
+    pull_secret = pwd_path(data.get('pull_secret')) if not upstream else f"{plandir}/fake_pull.json"
     pull_secret = os.path.expanduser(pull_secret)
     macosx = data.get('macosx')
     if macosx and not os.path.exists('/i_am_a_container'):
@@ -564,12 +561,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             cidr = k.info_network(network)['cidr']
             api_ip = str(ip_network(cidr)[-3])
             data['api_ip'] = api_ip
-            warning("Using %s as api_ip" % api_ip)
+            warning(f"Using {api_ip} as api_ip")
         if public_api_ip is None:
-            public_api_ip = config.k.create_network_port("%s-vip" % cluster, network, ip=api_ip,
+            public_api_ip = config.k.create_network_port(f"{cluster}-vip", network, ip=api_ip,
                                                          floating=True)['floating']
     if not os.path.exists(pull_secret):
-        error("Missing pull secret file %s" % pull_secret)
+        error(f"Missing pull secret file {pull_secret}")
         sys.exit(1)
     if not os.path.exists(pub_key):
         if os.path.exists(os.path.expanduser('~/.kcli/id_rsa.pub')):
@@ -577,27 +574,27 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         else:
             error("No usable public key found, which is required for the deployment. Create one using ssh-keygen")
             sys.exit(1)
-    clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
+    clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if os.path.exists(clusterdir):
         if [v for v in config.k.list() if v.get('plan', 'kvirt') == cluster]:
-            error("Please remove existing directory %s first..." % clusterdir)
+            error(f"Please remove existing directory {clusterdir} first...")
             sys.exit(1)
         else:
-            pprint("Removing directory %s" % clusterdir)
+            pprint(f"Removing directory {clusterdir}")
             rmtree(clusterdir)
     orikubeconfig = os.environ.get('KUBECONFIG')
-    os.environ['KUBECONFIG'] = "%s/auth/kubeconfig" % clusterdir
+    os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
     if which('oc') is None:
         get_oc(macosx=macosx)
     if version == 'ci':
         if '/' not in str(tag):
             if arch in ['aarch64', 'arm64']:
-                tag = 'registry.ci.openshift.org/ocp-arm64/release-arm64:%s' % tag
+                tag = f'registry.ci.openshift.org/ocp-arm64/release-arm64:{tag}'
             else:
                 basetag = 'ocp' if not upstream else 'origin'
-                tag = 'registry.ci.openshift.org/%s/release:%s' % (basetag, tag)
+                tag = f'registry.ci.openshift.org/{basetag}/release:{tag}'
         os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = tag
-        pprint("Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to %s" % tag)
+        pprint(f"Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to {tag}")
     if which('openshift-install') is None:
         if data.get('ipi', False) and data.get('ipi_platform', platform) in ['kvm', 'libvirt', 'baremetal']:
             baremetal = True
@@ -617,7 +614,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         pprint("Move downloaded openshift-install somewhere in your PATH if you want to reuse it")
     else:
         warning("Using existing openshift-install found in your PATH")
-    os.environ["PATH"] += ":%s" % os.getcwd()
+    os.environ["PATH"] += f":{os.getcwd()}"
     if disconnected_url is not None:
         if '/' not in str(tag):
             tag = f'{disconnected_url}/{disconnected_prefix}:{tag}'
@@ -633,7 +630,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         region = config.k.region if config.type == 'aws' else None
         if upstream:
             fcos_base = 'stable' if version == 'stable' else 'testing'
-            fcos_url = "https://builds.coreos.fedoraproject.org/streams/%s.json" % fcos_base
+            fcos_url = f"https://builds.coreos.fedoraproject.org/streams/{fcos_base}.json"
             image_url = get_latest_fcos(fcos_url, _type=image_type, region=region)
         else:
             try:
@@ -642,7 +639,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 try:
                     image_url = get_commit_rhcos(COMMIT_ID, _type=image_type, region=region)
                 except:
-                    error("Couldn't gather the %s image associated to commit %s" % (config.type, COMMIT_ID))
+                    error(f"Couldn't gather the {config.type} image associated to commit {COMMIT_ID}")
                     error("Force an image in your parameter file")
                     sys.exit(1)
         if platform in ['aws', 'gcp']:
@@ -659,12 +656,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                                             url=image_url, size=data.get('kubevirt_disk_size'))
                 if result['result'] != 'success':
                     sys.exit(1)
-        pprint("Using image %s" % image)
+        pprint(f"Using image {image}")
     else:
-        pprint("Checking if image %s is available" % image)
+        pprint(f"Checking if image {image} is available")
         images = [v for v in k.volumes() if image in v]
         if not images:
-            error("Missing %s. Indicate correct image in your parameters file..." % image)
+            error(f"Missing {image}. Indicate correct image in your parameters file...")
             sys.exit(1)
     overrides['image'] = image
     static_networking_master, static_networking_worker = False, False
@@ -682,10 +679,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                         netmask, gateway = netrule['netmask'], netrule['gateway']
                         nameserver = netrule.get('dns', gateway)
                         if mac is not None:
-                            macentries.append("%s;%s;%s;%s;%s;%s" % (mac, hostname, ip, netmask, gateway, nameserver))
-                        if hostname.startswith("%s-master" % cluster):
+                            macentries.append(f"{mac};{hostname};{ip};{netmask};{gateway};{nameserver}")
+                        if hostname.startswith(f"{cluster}-master"):
                             static_networking_master = True
-                        elif hostname.startswith("%s-worker" % cluster):
+                        elif hostname.startswith(f"{cluster}-worker"):
                             static_networking_worker = True
     if macentries and (baremetal_iso_master or baremetal_iso_worker):
         pprint("Creating a macs.txt to include in isos for static networking")
@@ -699,7 +696,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         error(f"File {pub_key} doesnt seem to contain a valid public key")
         sys.exit(1)
     if platform in virtplatforms and disconnected_deploy:
-        disconnected_vm = "%s-disconnected" % data.get('disconnected_reuse_name', cluster)
+        disconnected_vm = f"{data.get('disconnected_reuse_name', cluster)}-disconnected"
         pprint(f"Deploying disconnected vm {disconnected_vm}")
         data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
         disconnected_plan = f"{plan}-reuse" if disconnected_reuse else plan
@@ -788,9 +785,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                          vmport=disconnected_vmport)
             os.system(scpcmd)
         os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = disconnected_version
-        pprint("Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to %s" % disconnected_version)
+        pprint(f"Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to {disconnected_version}")
     if disconnected_url is not None and disconnected_user is not None and disconnected_password is not None:
-        key = "%s:%s" % (disconnected_user, disconnected_password)
+        key = f"{disconnected_user}:{disconnected_password}"
         key = str(b64encode(key.encode('utf-8')), 'utf-8')
         auths = {'auths': {disconnected_url: {'auth': key, 'email': 'jhendrix@karmalabs.local'}}}
         data['pull_secret'] = json.dumps(auths)
@@ -853,8 +850,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             workermanifest = f"{clusterdir}/openshift/99_openshift-cluster-api_worker-machineset-0.yaml"
             master_memory = data.get('master_memory') if data.get('master_memory') is not None else data['memory']
             worker_memory = data.get('worker_memory') if data.get('worker_memory') is not None else data['memory']
-            call('sed -i "s/domainMemory: .*/domainMemory: %s/" %s' % (master_memory, mastermanifest), shell=True)
-            call('sed -i "s/domainMemory: .*/domainMemory: %s/" %s' % (worker_memory, workermanifest), shell=True)
+            call(f'sed -i "s/domainMemory: .*/domainMemory: {master_memory}/" {mastermanifest}', shell=True)
+            call(f'sed -i "s/domainMemory: .*/domainMemory: {worker_memory}/" {workermanifest}', shell=True)
             master_numcpus = data.get('master_numcpus') if data.get('master_numcpus') is not None else data['numcpus']
             worker_numcpus = data.get('worker_numcpus') if data.get('worker_numcpus') is not None else data['numcpus']
             call(f'sed -i "s/domainVcpu: .*/domainVcpu: {master_numcpus}/" {mastermanifest}', shell=True)
@@ -865,7 +862,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 warning("Put a valid private key in /tmp/id_rsa in the machine-api-controllers pod")
                 new_libvirt_url = old_libvirt_url
                 if new_libvirt_url == 'qemu:///system':
-                    new_libvirt_url = 'qemu+ssh://%s@192.168.122.1/system?no_verify=1&keyfile=/tmp/id_rsa' % getuser()
+                    new_libvirt_url = f'qemu+ssh://{getuser()}@192.168.122.1/system?no_verify=1&keyfile=/tmp/id_rsa'
                     new_libvirt_url += "&known_hosts_verify=1"
                 elif 'no_verify' not in new_libvirt_url:
                     if '?' in new_libvirt_url:
@@ -881,7 +878,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                     else:
                         new_libvirt_url += '?keyfile=/tmp/id_rsa'
                 new_libvirt_url = new_libvirt_url.replace('&', '\\&')
-                call('sed -i "s#uri:.*#uri: %s#" %s' % (new_libvirt_url, workermanifest), shell=True)
+                call(f'sed -i "s#uri:.*#uri: {new_libvirt_url}#" {workermanifest}', shell=True)
             dnsmasqfile = f"/etc/NetworkManager/dnsmasq.d/{cluster}.{domain}.conf"
             dnscmd = 'echo -e "[main]\ndns=dnsmasq" > /etc/NetworkManager/conf.d/dnsmasq.conf'
             dnscmd += f"; echo server=/{cluster}.{domain}/192.168.126.1 > {dnsmasqfile}"
@@ -961,31 +958,31 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             replicas = masters if workers == 0 or not mdns or kubevirt_api_service else workers
             ingressconfig = config.process_inputfile(cluster, f, overrides={'replicas': replicas, 'role': ingressrole,
                                                                             'cluster': cluster, 'domain': domain})
-            with open("%s/openshift/99-ingress-controller.yaml" % clusterdir, 'w') as _f:
+            with open(f"{clusterdir}/openshift/99-ingress-controller.yaml", 'w') as _f:
                 _f.write(ingressconfig)
             continue
         if '99-autoapprovercron-cronjob.yaml' in f:
             registry = disconnected_url if disconnected_url is not None else 'quay.io'
             cronfile = config.process_inputfile(cluster, f, overrides={'registry': registry, 'arch_tag': arch_tag})
-            with open("%s/openshift/99-autoapprovercron-cronjob.yaml" % clusterdir, 'w') as _f:
+            with open(f"{clusterdir}/openshift/99-autoapprovercron-cronjob.yaml", 'w') as _f:
                 _f.write(cronfile)
             continue
         if '99-monitoring.yaml' in f:
             monitoring_retention = data['monitoring_retention']
             monitoringfile = config.process_inputfile(cluster, f, overrides={'retention': monitoring_retention})
-            with open("%s/openshift/99-monitoring.yaml" % clusterdir, 'w') as _f:
+            with open(f"{clusterdir}/openshift/99-monitoring.yaml", 'w') as _f:
                 _f.write(monitoringfile)
             continue
-        copy2(f, "%s/openshift" % clusterdir)
+        copy2(f, f"{clusterdir}/openshift")
     if async_install:
         registry = disconnected_url if disconnected_url is not None else 'quay.io'
         if not baremetal_iso_bootstrap:
-            deletionfile = "%s/99-bootstrap-deletion.yaml" % plandir
+            deletionfile = f"{plandir}/99-bootstrap-deletion.yaml"
             deletionfile = config.process_inputfile(cluster, deletionfile, overrides={'cluster': cluster,
                                                                                       'registry': registry,
                                                                                       'arch_tag': arch_tag,
                                                                                       'client': config.client})
-            with open("%s/openshift/99-bootstrap-deletion.yaml" % clusterdir, 'w') as _f:
+            with open(f"{clusterdir}/openshift/99-bootstrap-deletion.yaml", 'w') as _f:
                 _f.write(deletionfile)
             oriconf = os.path.expanduser('~/.kcli')
             orissh = os.path.expanduser('~/.ssh')
@@ -1081,7 +1078,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                                                                'arch_tag': arch_tag,
                                                                'app': appname,
                                                                'cr_content': cr_content})
-                with open("%s/openshift/99-apps-%s.yaml" % (clusterdir, appname), 'w') as g:
+                with open(f"{clusterdir}/openshift/99-apps-{appname}.yaml", 'w') as g:
                     g.write(rendered)
     if metal3:
         copy2(f"{plandir}/99-metal3-provisioning.yaml", f"{clusterdir}/openshift")
@@ -1164,18 +1161,17 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             with open(f"{clusterdir}/openshift/99-ingress-controller.yaml", 'w') as _f:
                 _f.write(ingress)
         pprint("Generating bootstrap-in-place ignition")
-        run = call('openshift-install --dir=%s --log-level=%s create single-node-ignition-config' % (clusterdir,
-                                                                                                     log_level),
+        run = call(f'openshift-install --dir={clusterdir} --log-level={log_level} create single-node-ignition-config',
                    shell=True)
         if run != 0:
             error("Hit issue.Leaving")
             sys.exit(run)
-        move("%s/bootstrap-in-place-for-live-iso.ign" % clusterdir, "./%s.ign" % sno_name)
+        move(f"{clusterdir}/bootstrap-in-place-for-live-iso.ign", f"./{sno_name}.ign")
         with open("iso.ign", 'w') as f:
             iso_overrides = {}
             extra_args = overrides.get('extra_args')
             if sno_disk is None or extra_args is not None:
-                _files = [{"path": "/root/sno-finish.service", "origin": "%s/sno-finish.service" % plandir},
+                _files = [{"path": "/root/sno-finish.service", "origin": f"{plandir}/sno-finish.service"},
                           {"path": "/usr/local/bin/sno-finish.sh", "origin": "%s/sno-finish.sh" % plandir, "mode": 700}]
                 iso_overrides['files'] = _files
             iso_overrides.update(data)
@@ -1186,7 +1182,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             pprint("Storing generated iso in current dir")
             generate_rhcos_iso(k, f"{cluster}-sno", 'default', installer=True, extra_args=extra_args)
         elif config.type not in ['kvm', 'kubevirt']:
-            pprint("Additional workflow not available on %s" % config.type)
+            pprint(f"Additional workflow not available on {config.type}")
             pprint("Embed iso.ign in rhcos live iso")
             sys.exit(0)
         else:
@@ -1196,7 +1192,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             if sno_virtual:
                 warning("Note that you can also get a sno by setting masters to 1")
                 pprint("Deploying sno vm")
-                result = config.plan(plan, inputfile='%s/sno.yml' % plandir, overrides=data)
+                result = config.plan(plan, inputfile=f'{plandir}/sno.yml', overrides=data)
                 if result['result'] != 'success':
                     sys.exit(1)
                 if api_ip is None:
@@ -1246,10 +1242,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 pprint(f"Plug {cluster}-worker.iso to get additional workers")
         backup_paramfile(installparam, clusterdir, cluster, plan, image, dnsconfig)
         sys.exit(0)
-    call('openshift-install --dir=%s --log-level=%s create ignition-configs' % (clusterdir, log_level), shell=True)
+    call(f'openshift-install --dir={clusterdir} --log-level={log_level} create ignition-configs', shell=True)
     for role in ['master', 'worker']:
-        ori = "%s/%s.ign" % (clusterdir, role)
-        copy2(ori, "%s.ori" % ori)
+        ori = f"{clusterdir}/{role}.ign"
+        copy2(ori, f"{ori}.ori")
     if platform in virtplatforms:
         overrides['virtual_router_id'] = data.get('virtual_router_id') or hash(cluster) % 254 + 1
         virtual_router_id = overrides['virtual_router_id']
@@ -1276,14 +1272,14 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         bucket = "%s-%s" % (cluster, domain.replace('.', '-'))
         if bucket not in config.k.list_buckets():
             config.k.create_bucket(bucket)
-        config.k.upload_to_bucket(bucket, "%s/bootstrap.ign" % clusterdir, public=True)
+        config.k.upload_to_bucket(bucket, f"{clusterdir}/bootstrap.ign", public=True)
         bucket_url = config.k.public_bucketfile_url(bucket, "bootstrap.ign")
         if platform == 'openstack':
-            ori_url = "http://%s:22624" % api_ip
+            ori_url = f"http://{api_ip}:22624"
         else:
-            ori_url = "https://api-int.%s.%s:22623" % (cluster, domain)
-        sedcmd = 'sed "s@%s/config/master@%s@" ' % (ori_url, bucket_url)
-        sedcmd += '%s/master.ign > %s/bootstrap.ign' % (clusterdir, clusterdir)
+            ori_url = f"https://api-int.{cluster}.{domain}:22623"
+        sedcmd = f'sed "s@{ori_url}/config/master@{bucket_url}@" '
+        sedcmd += f'{clusterdir}/master.ign > {clusterdir}/bootstrap.ign'
         call(sedcmd, shell=True)
     if baremetal_iso_any:
         baremetal_iso_overrides = overrides.copy()
@@ -1297,28 +1293,28 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if baremetal_iso_bootstrap:
             bootstrap_iso_overrides = baremetal_iso_overrides.copy()
             bootstrap_iso_overrides['noname'] = False
-            result = config.plan(plan, inputfile='%s/bootstrap.yml' % plandir, overrides=bootstrap_iso_overrides,
+            result = config.plan(plan, inputfile=f'{plandir}/bootstrap.yml', overrides=bootstrap_iso_overrides,
                                  onlyassets=True)
             iso_data = result['assets'][0]
             with open('iso.ign', 'w') as f:
                 f.write(iso_data)
-            ignitionfile = '%s-bootstrap.ign' % cluster
+            ignitionfile = f'{cluster}-bootstrap.ign'
             with open(ignitionfile, 'w') as f:
                 f.write(iso_data)
             iso_pool = data['pool'] or config.pool
             generate_rhcos_iso(k, cluster + '-bootstrap', iso_pool, installer=True)
         else:
-            result = config.plan(plan, inputfile='%s/bootstrap.yml' % plandir, overrides=overrides)
+            result = config.plan(plan, inputfile=f'{plandir}/bootstrap.yml', overrides=overrides)
             if result['result'] != 'success':
                 sys.exit(1)
         if static_networking_master and not baremetal_iso_master:
             wait_for_ignition(cluster, domain, role='master')
         pprint("Deploying masters")
         if baremetal_iso_master:
-            result = config.plan(plan, inputfile='%s/masters.yml' % plandir, overrides=baremetal_iso_overrides,
+            result = config.plan(plan, inputfile=f'{plandir}/masters.yml', overrides=baremetal_iso_overrides,
                                  onlyassets=True)
             iso_data = result['assets'][0]
-            ignitionfile = '%s-master.ign' % cluster
+            ignitionfile = f'{cluster}-master.ign'
             with open(ignitionfile, 'w') as f:
                 f.write(iso_data)
             baremetal_iso_overrides['role'] = 'master'
@@ -1327,59 +1323,59 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             os.remove(ignitionfile)
         else:
             threaded = data.get('threaded', False) or data.get('masters_threaded', False)
-            result = config.plan(plan, inputfile='%s/masters.yml' % plandir, overrides=overrides, threaded=threaded)
+            result = config.plan(plan, inputfile=f'{plandir}/masters.yml', overrides=overrides, threaded=threaded)
         if result['result'] != 'success':
             sys.exit(1)
-        todelete = ["%s-bootstrap" % cluster]
+        todelete = [f"{cluster}-bootstrap"]
         if dnsconfig is not None:
             dns_overrides = {'api_ip': api_ip, 'ingress_ip': ingress_ip, 'cluster': cluster, 'domain': domain}
-            result = dnsconfig.plan(plan, inputfile='%s/cloud_dns.yml' % plandir, overrides=dns_overrides)
+            result = dnsconfig.plan(plan, inputfile=f'{plandir}/cloud_dns.yml', overrides=dns_overrides)
             if result['result'] != 'success':
                 sys.exit(1)
     else:
         pprint("Deploying bootstrap")
-        result = config.plan(plan, inputfile='%s/cloud_bootstrap.yml' % plandir, overrides=overrides)
+        result = config.plan(plan, inputfile=f'{plandir}/cloud_bootstrap.yml', overrides=overrides)
         if result['result'] != 'success':
             sys.exit(1)
         sedcmd = 'sed -i "s@https://api-int.%s.%s:22623/config@http://api-int.%s.%s:22624/config@"' % (cluster, domain,
                                                                                                        cluster, domain)
-        sedcmd += ' %s/master.ign %s/worker.ign' % (clusterdir, clusterdir)
+        sedcmd += f' {clusterdir}/master.ign {clusterdir}/worker.ign'
         call(sedcmd, shell=True)
         if platform == 'ibm':
             while api_ip is None:
-                api_ip = k.info("%s-bootstrap" % cluster).get('private_ip')
+                api_ip = k.info(f"{cluster}-bootstrap").get('private_ip')
                 pprint("Gathering bootstrap private ip")
                 sleep(10)
-            sedcmd = 'sed -i "s@api-int.%s.%s@%s@" %s/master.ign' % (cluster, domain, api_ip, clusterdir)
+            sedcmd = f'sed -i "s@api-int.{cluster}.{domain}@{api_ip}@" {clusterdir}/master.ign'
             call(sedcmd, shell=True)
         pprint("Deploying masters")
         threaded = data.get('threaded', False) or data.get('masters_threaded', False)
-        result = config.plan(plan, inputfile='%s/cloud_masters.yml' % plandir, overrides=overrides, threaded=threaded)
+        result = config.plan(plan, inputfile=f'{plandir}/cloud_masters.yml', overrides=overrides, threaded=threaded)
         if result['result'] != 'success':
             sys.exit(1)
         if platform == 'ibm':
             first_master_ip = None
             while first_master_ip is None:
-                first_master_ip = k.info("%s-master-0" % cluster).get('private_ip')
+                first_master_ip = k.info(f"{cluster}-master-0").get('private_ip')
                 pprint("Gathering first master bootstrap ip")
                 sleep(10)
-            sedcmd = 'sed -i "s@api-int.%s.%s@%s@" %s/worker.ign' % (cluster, domain, first_master_ip, clusterdir)
+            sedcmd = f'sed -i "s@api-int.{cluster}.{domain}@{first_master_ip}@" {clusterdir}/worker.ign'
             call(sedcmd, shell=True)
-        result = config.plan(plan, inputfile='%s/cloud_lb_api.yml' % plandir, overrides=overrides)
+        result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_api.yml', overrides=overrides)
         if result['result'] != 'success':
             sys.exit(1)
         lb_overrides = {'cluster': cluster, 'domain': domain, 'members': masters, 'role': 'master'}
         if 'dnsclient' in overrides:
             lb_overrides['dnsclient'] = overrides['dnsclient']
         if workers == 0:
-            result = config.plan(plan, inputfile='%s/cloud_lb_apps.yml' % plandir, overrides=lb_overrides)
+            result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_apps.yml', overrides=lb_overrides)
             if result['result'] != 'success':
                 sys.exit(1)
-        todelete = ["%s-bootstrap" % cluster]
+        todelete = [f"{cluster}-bootstrap"]
     if not kubevirt_ignore_node_port and kubevirt_api_service and kubevirt_api_service_node_port:
-        nodeport = k.get_node_ports('%s-api-svc' % cluster, k.namespace)[6443]
+        nodeport = k.get_node_ports(f'{cluster}-api-svc', k.namespace)[6443]
         while True:
-            nodehost = k.info("%s-bootstrap" % cluster).get('host')
+            nodehost = k.info(f"{cluster}-bootstrap").get('host')
             if nodehost is not None:
                 break
             else:
@@ -1387,16 +1383,15 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 sleep(5)
         nodehostip = gethostbyname(nodehost)
         update_etc_hosts(cluster, domain, nodehostip)
-        sedcmd = 'sed -i "s@:6443@:%s@" %s/auth/kubeconfig' % (nodeport, clusterdir)
+        sedcmd = f'sed -i "s@:6443@:{nodeport}@" {clusterdir}/auth/kubeconfig'
         call(sedcmd, shell=True)
     if not async_install:
-        bootstrapcommand = 'openshift-install --dir=%s --log-level=%s wait-for bootstrap-complete' % (clusterdir,
-                                                                                                      log_level)
+        bootstrapcommand = f'openshift-install --dir={clusterdir} --log-level={log_level} wait-for bootstrap-complete'
         bootstrapcommand = ' || '.join([bootstrapcommand for x in range(retries)])
         run = call(bootstrapcommand, shell=True)
         if run != 0:
             error("Leaving environment for debugging purposes")
-            error("You can delete it with kcli delete cluster --yes %s" % cluster)
+            error(f"You can delete it with kcli delete cluster --yes {cluster}")
             sys.exit(run)
     if workers > 0:
         if static_networking_worker and not baremetal_iso_worker:
@@ -1406,10 +1401,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             del overrides['name']
         if platform in virtplatforms:
             if baremetal_iso_worker:
-                result = config.plan(plan, inputfile='%s/workers.yml' % plandir, overrides=baremetal_iso_overrides,
+                result = config.plan(plan, inputfile=f'{plandir}/workers.yml', overrides=baremetal_iso_overrides,
                                      onlyassets=True)
                 iso_data = result['assets'][0]
-                ignitionfile = '%s-worker' % cluster
+                ignitionfile = f'{cluster}-worker'
                 with open(ignitionfile, 'w') as f:
                     f.write(iso_data)
                 baremetal_iso_overrides['role'] = 'worker'
@@ -1418,42 +1413,42 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 os.remove(ignitionfile)
             else:
                 threaded = data.get('threaded', False) or data.get('workers_threaded', False)
-                result = config.plan(plan, inputfile='%s/workers.yml' % plandir, overrides=overrides, threaded=threaded)
+                result = config.plan(plan, inputfile=f'{plandir}/workers.yml', overrides=overrides, threaded=threaded)
             if result['result'] != 'success':
                 sys.exit(1)
         elif platform in cloudplatforms:
-            result = config.plan(plan, inputfile='%s/cloud_workers.yml' % plandir, overrides=overrides)
+            result = config.plan(plan, inputfile=f'{plandir}/cloud_workers.yml', overrides=overrides)
             if result['result'] != 'success':
                 sys.exit(1)
             lb_overrides['role'] = 'worker'
             lb_overrides['members'] = workers
-            result = config.plan(plan, inputfile='%s/cloud_lb_apps.yml' % plandir, overrides=lb_overrides)
+            result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_apps.yml', overrides=lb_overrides)
             if result['result'] != 'success':
                 sys.exit(1)
     if minimal or async_install:
         kubeconf = os.environ['KUBECONFIG']
-        kubepassword = open("%s/auth/kubeadmin-password" % clusterdir).read()
+        kubepassword = open(f"{clusterdir}/auth/kubeadmin-password").read()
         if minimal:
             success("Minimal Cluster ready to be used")
             success("INFO Install Complete")
         if async_install:
             success("Async Cluster created")
             info2("You will need to wait before it is fully available")
-        info2("To access the cluster as the system:admin user when running 'oc', run export KUBECONFIG=%s" % kubeconf)
-        info2("Access the Openshift web-console here: https://console-openshift-console.apps.%s.%s" % (cluster, domain))
-        info2("Login to the console with user: kubeadmin, password: %s" % kubepassword)
+        info2(f"To access the cluster as the system:admin user when running 'oc', run export KUBECONFIG={kubeconf}")
+        info2(f"Access the Openshift web-console here: https://console-openshift-console.apps.{cluster}.{domain}")
+        info2(f"Login to the console with user: kubeadmin, password: {kubepassword}")
         if async_install:
             return
     else:
-        installcommand = 'openshift-install --dir=%s --log-level=%s wait-for install-complete' % (clusterdir, log_level)
-        installcommand += " || %s" % installcommand
+        installcommand = f'openshift-install --dir={clusterdir} --log-level={log_level} wait-for install-complete'
+        installcommand += f" || {installcommand}"
         pprint("Launching install-complete step. It will be retried one extra time in case of timeouts")
         call(installcommand, shell=True)
     for vm in todelete:
-        pprint("Deleting %s" % vm)
+        pprint(f"Deleting {vm}")
         k.delete(vm)
         if dnsconfig is not None:
-            pprint("Deleting Dns entry for %s in %s" % (vm, domain))
+            pprint(f"Deleting Dns entry for {vm} in {domain}")
             z = dnsconfig.k
             z.delete_dns(vm, domain)
     if sushy and config.type == 'kvm':
@@ -1461,17 +1456,17 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if platform in cloudplatforms:
         bucket = "%s-%s" % (cluster, domain.replace('.', '-'))
         config.k.delete_bucket(bucket)
-    os.environ['KUBECONFIG'] = "%s/auth/kubeconfig" % clusterdir
+    os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
     process_apps(config, clusterdir, apps, overrides)
     process_postscripts(clusterdir, postscripts)
     if platform in cloudplatforms and masters == 1 and workers == 0 and data.get('sno_cloud_remove_lb', True):
         pprint("Removing loadbalancers as there is a single master")
-        k.delete_loadbalancer("api.%s" % cluster)
-        k.delete_loadbalancer("apps.%s" % cluster)
-        api_ip = k.info("%s-master-0" % cluster).get('ip')
-        k.delete_dns('api.%s' % cluster, domain=domain)
-        k.reserve_dns('api.%s' % cluster, domain=domain, ip=api_ip)
-        k.delete_dns('apps.%s' % cluster, domain=domain)
-        k.reserve_dns('apps.%s' % cluster, domain=domain, ip=api_ip, alias=['*'])
+        k.delete_loadbalancer(f"api.{cluster}")
+        k.delete_loadbalancer(f"apps.{cluster}")
+        api_ip = k.info(f"{cluster}-master-0").get('ip')
+        k.delete_dns(f'api.{cluster}', domain=domain)
+        k.reserve_dns(f'api.{cluster}', domain=domain, ip=api_ip)
+        k.delete_dns(f'apps.{cluster}', domain=domain)
+        k.reserve_dns(f'apps.{cluster}', domain=domain, ip=api_ip, alias=['*'])
         if platform == 'ibm':
             k._add_sno_security_group(cluster)
