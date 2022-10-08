@@ -1,7 +1,7 @@
 name: SNO-NIGHTLY-CI
 on:
   schedule:
-    - cron: '01 3 * * *'
+    - cron: '01 1 * * *'
 
 env:
  HOME: /root
