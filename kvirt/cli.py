@@ -4859,7 +4859,7 @@ def cli():
 
     imagelist_desc = 'List Images'
     imagelist_parser = list_subparsers.add_parser('image', description=imagelist_desc, help=imagelist_desc,
-                                                  aliases=['images'])
+                                                  aliases=['images', 'template', 'templates'])
     imagelist_parser.set_defaults(func=list_image)
 
     vmcreate_desc = 'Create Vm'
