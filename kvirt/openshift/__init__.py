@@ -983,7 +983,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             deletionfile = "%s/99-bootstrap-deletion.yaml" % plandir
             deletionfile = config.process_inputfile(cluster, deletionfile, overrides={'cluster': cluster,
                                                                                       'registry': registry,
-                                                                                      'arch_tag': arch_tag})
+                                                                                      'arch_tag': arch_tag,
+                                                                                      'client': config.client})
             with open("%s/openshift/99-bootstrap-deletion.yaml" % clusterdir, 'w') as _f:
                 _f.write(deletionfile)
             oriconf = os.path.expanduser('~/.kcli')
@@ -1030,8 +1031,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 call(cmcmd, shell=True)
             deletionfile2 = f"{plandir}/99-bootstrap-deletion-2.yaml"
             deletionfile2 = config.process_inputfile(cluster, deletionfile2, overrides={'registry': registry,
-                                                                                        'arch_tag': arch_tag,
-                                                                                        'client': config.client})
+                                                                                        'arch_tag': arch_tag})
             with open(f"{clusterdir}/openshift/99-bootstrap-deletion-2.yaml", 'w') as _f:
                 _f.write(deletionfile2)
         if notify:
