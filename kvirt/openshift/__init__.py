@@ -568,8 +568,13 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if not os.path.exists(pull_secret):
         error(f"Missing pull secret file {pull_secret}")
         sys.exit(1)
+    no_pub_key = False
     if not os.path.exists(pub_key):
-        if os.path.exists(os.path.expanduser('~/.kcli/id_rsa.pub')):
+        keys = data.get('keys', [])
+        if keys:
+            warning("Using first key from your keys array")
+            no_pub_key = True
+        elif os.path.exists(os.path.expanduser('~/.kcli/id_rsa.pub')):
             pub_key = os.path.expanduser('~/.kcli/id_rsa.pub')
         else:
             error("No usable public key found, which is required for the deployment. Create one using ssh-keygen")
@@ -691,7 +696,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     overrides['cluster'] = cluster
     if not os.path.exists(clusterdir):
         os.makedirs(clusterdir)
-    data['pub_key'] = open(pub_key).read().strip()
+    data['pub_key'] = keys[0] if no_pub_key else open(pub_key).read().strip()
     if not data['pub_key'].startswith('ssh-'):
         error(f"File {pub_key} doesnt seem to contain a valid public key")
         sys.exit(1)
