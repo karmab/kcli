@@ -938,9 +938,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             copy2(f'{clusterdir}/catalogsource.yaml', f"{clusterdir}/openshift")
         copy2(f'{plandir}/99-operatorhub.yaml', f"{clusterdir}/openshift")
     if 'sslip' in domain:
-        ingress_sslip_data = config.process_inputfile(cluster, f"{plandir}/99-ingress-sslip.yaml",
+        ingress_sslip_data = config.process_inputfile(cluster, f"{plandir}/cluster-ingress-02-config.yml",
                                                       overrides={'cluster': cluster, 'domain': domain})
-        with open(f"{clusterdir}/openshift/99-ingress-sslip.yaml", 'w') as f:
+        with open(f"{clusterdir}/manifests/cluster-ingress-02-config.yml", 'w') as f:
             f.write(ingress_sslip_data)
     if ipi:
         run = call(f'openshift-install --dir={clusterdir} --log-level={log_level} create cluster', shell=True)
