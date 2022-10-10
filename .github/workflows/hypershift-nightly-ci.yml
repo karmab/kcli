@@ -2,7 +2,7 @@ name: HYPERSHIFT-NIGHTLY-CI
 
 on:
    schedule:
-    - cron: '31 23 * * *'
+    - cron: '31 22 * * *'
 
 env:
  HOME: /root
