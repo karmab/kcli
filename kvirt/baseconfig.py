@@ -968,12 +968,12 @@ class Kbaseconfig:
         return results
 
     def delete_profile(self, profile, quiet=False):
-        if profile not in self.profiles:
-            if quiet:
-                error(f"Profile {profile} not found")
-            return {'result': 'failure', 'reason': f'Profile {profile} not found'}
-        else:
-            del self.profiles[profile]
+        found = False
+        for prof in [profile, f'{self.client}_{profile}']:
+            if prof in self.profiles:
+                del self.profiles[prof]
+                found = True
+        if found:
             path = os.path.expanduser('~/.kcli/profiles.yml')
             if not self.profiles:
                 os.remove(path)
@@ -986,6 +986,10 @@ class Kbaseconfig:
                         yaml.safe_dump(self.profiles, profile_file, default_flow_style=False, encoding='utf-8',
                                        allow_unicode=True)
             return {'result': 'success'}
+        else:
+            if not quiet:
+                error(f"Profile {profile} not found")
+            return {'result': 'failure', 'reason': f'Profile {profile} not found'}
 
     def create_profile(self, profile, overrides={}, quiet=False):
         if profile in self.profiles:
