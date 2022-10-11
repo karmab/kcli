@@ -1599,7 +1599,8 @@ class Kconfig(Kbaseconfig):
                 if key_value is not None and overrides[key] is not None and key_type != override_key_type:
                     error(f"The provided parameter {key} has a wrong type {override_key_type}, it should be {key_type}")
                     sys.exit(1)
-                setattr(self, key, overrides[key])
+                elif overrides[key] is not None:
+                    setattr(self, key, overrides[key])
         vmentries = [entry for entry in entries if 'type' not in entries[entry] or entries[entry]['type'] == 'vm']
         diskentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'disk']
         networkentries = [entry for entry in entries
