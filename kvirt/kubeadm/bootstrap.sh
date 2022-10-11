@@ -4,7 +4,9 @@ CIDR="10.244.0.0/16"
 API_IP={{ "api.%s.%s" % (cluster, domain) if config_type in ['aws', 'gcp', 'ibm'] else api_ip }}
 
 # initialize cluster
-kubeadm init --control-plane-endpoint "${API_IP}:6443" --pod-network-cidr $CIDR --upload-certs {{ '--image-repository public.ecr.aws/eks-distro/kubernetes --kubernetes-version $EKSD_API_VERSION' if eksd else '' }}
+kubeadm certs certificate-key > /root/certificate-key.txt
+CERTKEY=$(cat /root/certificate-key.txt)
+kubeadm init --control-plane-endpoint "${API_IP}:6443" --pod-network-cidr $CIDR --certificate-key $CERTKEY --upload-certs {{ '--image-repository public.ecr.aws/eks-distro/kubernetes --kubernetes-version $EKSD_API_VERSION' if eksd else '' }}
 
 # config cluster credentials
 cp /etc/kubernetes/admin.conf /root/
@@ -49,8 +51,7 @@ CMD="kubeadm join ${API_IP}:6443 --token $TOKEN --discovery-token-ca-cert-hash s
 
 sleep 60
 
-LOGFILE="{{ '/var/log/cloud-init-output.log' if ubuntu else '/var/log/messages' }}"
-CERTKEY=$(grep certificate-key $LOGFILE | head -1 | sed 's/.*certificate-key \(.*\)/\1/')
+CERTKEY=$(cat /root/certificate-key.txt)
 MASTERCMD="$CMD --control-plane --certificate-key $CERTKEY"
 echo $MASTERCMD > /root/mastercmd.sh
 
