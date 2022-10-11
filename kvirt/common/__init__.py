@@ -1448,6 +1448,11 @@ def get_latest_rhcos_metal(url):
             return kernel, initrd, metal
 
 
+def get_latest_fedora(url='https://alt.fedoraproject.org/cloud'):
+    LINE = os.popen(f'curl -sLk {url} | grep download | grep cow | head -1').read()
+    return re.sub('.*href="(.*)">Download.*', r'\1', LINE).strip()
+
+
 def find_ignition_files(role, cluster):
     clusterpath = os.path.expanduser(f"~/.kcli/clusters/{cluster}/{role}.ign")
     if container_mode():

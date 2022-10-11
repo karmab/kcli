@@ -2261,6 +2261,8 @@ class Kconfig(Kbaseconfig):
                             url = common.get_latest_rhcos(url, _type=image_type, arch=arch)
                     if 'fcos' in image:
                         url = common.get_latest_fcos(url, _type=image_type)
+                    if image == 'fedoralatest':
+                        url = common.get_latest_fedora(url)
                     image = os.path.basename(image)
                     if image.startswith('rhel'):
                         if 'web' in sys.argv[0]:
