@@ -390,6 +390,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     retries = data.get('retries')
     data['cluster'] = clustervalue
     domain = data.get('domain')
+    original_domain = None
     async_install = data.get('async')
     sslip = data.get('sslip')
     baremetal_iso = data.get('baremetal')
@@ -538,6 +539,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         ingress_ip = None
         overrides['ingress_ip'] = None
     if sslip and platform in virtplatforms:
+        original_domain = domain
         domain = '%s.sslip.io' % api_ip.replace('.', '-').replace(':', '-')
         data['domain'] = domain
         pprint(f"Setting domain to {domain}")
@@ -1077,6 +1079,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             app_data = data.copy()
             if data.get('apps_install_cr') and os.path.exists(f"{appdir}/{appname}/cr.yml"):
                 app_data['namespace'] = apps_namespace[appname]
+                if original_domain is not None:
+                    app_data['domain'] = original_domain
                 cr_content = config.process_inputfile(cluster, f"{appdir}/{appname}/cr.yml", overrides=app_data)
                 rendered = config.process_inputfile(cluster, f"{plandir}/99-apps-cr.yaml",
                                                     overrides={'registry': registry,
@@ -1461,6 +1465,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if platform in cloudplatforms:
         bucket = "%s-%s" % (cluster, domain.replace('.', '-'))
         config.k.delete_bucket(bucket)
+    if original_domain is not None:
+        overrides['domain'] = original_domain
     os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
     process_apps(config, clusterdir, apps, overrides)
     process_postscripts(clusterdir, postscripts)
