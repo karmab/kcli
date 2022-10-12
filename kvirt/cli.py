@@ -30,7 +30,7 @@ import os
 import random
 import re
 import requests
-from shutil import which
+from shutil import which, copy2
 from subprocess import call
 import sys
 from tempfile import TemporaryDirectory
@@ -3400,9 +3400,19 @@ def switch_host(args):
 
 
 def switch_kubeconfig(args):
-    clusterdir = os.path.expanduser(f"~/.kcli/clusters/{args.name}")
+    homedir = os.path.expanduser("~")
+    clusterdir = os.path.expanduser(f"{homedir}/.kcli/clusters/{args.name}")
     kubeconfig = f'{clusterdir}/auth/kubeconfig'
-    pprint(f"export KUBECONFIG={kubeconfig}")
+    if not os.path.exists(kubeconfig):
+        error(f"{kubeconfig} not found")
+        sys.exit(0)
+    if not os.path.exists(f"{homedir}/.kube"):
+        os.mkdir(f"{homedir}/.kube")
+    if os.path.exists(f"{homedir}/.kube/config"):
+        pprint(f"Backing up old {homedir}/.kube/config")
+        copy2(f"{homedir}/.kube/config", f"{homedir}/.kube/config.old")
+    pprint(f"Moving {kubeconfig} to {homedir}/.kube/config")
+    copy2(kubeconfig, f"{homedir}/.kube/config")
 
 
 def list_keyword(args):
