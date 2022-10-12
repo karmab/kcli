@@ -720,6 +720,17 @@ def list_host(args):
     return
 
 
+def list_kubeconfig(args):
+    clustersdir = os.path.expanduser("~/.kcli/clusters")
+    kubeconfigstable = PrettyTable(["Kubeconfig"])
+    for entry in glob(f'{clustersdir}/*/auth/kubeconfig'):
+        cluster = entry.replace(f'{clustersdir}/', '').replace('/auth/kubeconfig', '')
+        kubeconfigstable.add_row([cluster])
+    kubeconfigstable.align["Kubeconfig"] = "l"
+    print(kubeconfigstable)
+    return
+
+
 def list_lb(args):
     """List lbs"""
     short = args.short
@@ -3388,6 +3399,12 @@ def switch_host(args):
         sys.exit(1)
 
 
+def switch_kubeconfig(args):
+    clusterdir = os.path.expanduser(f"~/.kcli/clusters/{args.name}")
+    kubeconfig = f'{clusterdir}/auth/kubeconfig'
+    pprint(f"export KUBECONFIG={kubeconfig}")
+
+
 def list_keyword(args):
     """List keywords"""
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
@@ -3708,28 +3725,6 @@ def cli():
                                                                            'openshift-registry'])
     openshiftdisconnectedinfo_parser.set_defaults(func=info_openshift_disconnected)
 
-    listapp_desc = 'List Available Kube Apps'
-    listapp_parser = list_subparsers.add_parser('app', description=listapp_desc,
-                                                help=listapp_desc, aliases=['apps', 'operator', 'operators'])
-    listapp_subparsers = listapp_parser.add_subparsers(metavar='', dest='subcommand_list_app')
-
-    appgenericlist_desc = 'List Available Kube Apps Generic'
-    appgenericlist_parser = listapp_subparsers.add_parser('generic', description=appgenericlist_desc,
-                                                          help=appgenericlist_desc)
-    appgenericlist_parser.set_defaults(func=list_apps_generic)
-
-    appopenshiftlist_desc = 'List Available Kube Components Openshift'
-    appopenshiftlist_parser = listapp_subparsers.add_parser('openshift', description=appopenshiftlist_desc,
-                                                            help=appopenshiftlist_desc)
-    appopenshiftlist_parser.add_argument('-i', '--installed', action='store_true', help='Show installed apps')
-    appopenshiftlist_parser.set_defaults(func=list_apps_openshift)
-
-    imagelist_desc = 'List Available Images'
-    imagelist_parser = list_subparsers.add_parser('available-images', description=imagelist_desc, help=imagelist_desc,
-                                                  aliases=['available-image'])
-    imagelist_parser.add_argument('-f', '--full', action='store_true', help='Provide URLS too')
-    imagelist_parser.set_defaults(func=list_available_images)
-
     bucketcreate_desc = 'Create Bucket'
     bucketcreate_epilog = None
     bucketcreate_parser = create_subparsers.add_parser('bucket', description=bucketcreate_desc,
@@ -3776,17 +3771,6 @@ def cli():
     bucketdelete_parser.add_argument('buckets', metavar='BUCKETS', nargs='+')
     bucketdelete_parser.set_defaults(func=delete_bucket)
 
-    bucketlist_desc = 'List Buckets'
-    bucketlist_parser = list_subparsers.add_parser('bucket', description=bucketlist_desc, help=bucketlist_desc,
-                                                   aliases=['buckets'])
-    bucketlist_parser.set_defaults(func=list_bucket)
-
-    bucketfileslist_desc = 'List Bucket files'
-    bucketfileslist_parser = list_subparsers.add_parser('bucket-file', description=bucketfileslist_desc,
-                                                        help=bucketfileslist_desc, aliases=['bucket-files'])
-    bucketfileslist_parser.add_argument('bucket', metavar='BUCKET')
-    bucketfileslist_parser.set_defaults(func=list_bucketfiles)
-
     cachedelete_desc = 'Delete Cache'
     cachedelete_parser = delete_subparsers.add_parser('cache', description=cachedelete_desc, help=cachedelete_desc)
     cachedelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
@@ -3813,25 +3797,6 @@ def cli():
     containerdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     containerdelete_parser.add_argument('names', metavar='CONTAINERIMAGES', nargs='+')
     containerdelete_parser.set_defaults(func=delete_container)
-
-    containerimagelist_desc = 'List Container Images'
-    containerimagelist_parser = list_subparsers.add_parser('container-image', description=containerimagelist_desc,
-                                                           help=containerimagelist_desc,
-                                                           aliases=['container-images'])
-    containerimagelist_parser.set_defaults(func=list_containerimage)
-
-    containerlist_desc = 'List Containers'
-    containerlist_parser = list_subparsers.add_parser('container', description=containerlist_desc,
-                                                      help=containerlist_desc, aliases=['containers'])
-    containerlist_parser.add_argument('--filters', choices=('up', 'down'))
-    containerlist_parser.set_defaults(func=list_container)
-
-    containerprofilelist_desc = 'List Container Profiles'
-    containerprofilelist_parser = list_subparsers.add_parser('container-profile', description=containerprofilelist_desc,
-                                                             help=containerprofilelist_desc,
-                                                             aliases=['container-profiles'])
-    containerprofilelist_parser.add_argument('--short', action='store_true')
-    containerprofilelist_parser.set_defaults(func=profilelist_container)
 
     containerrestart_desc = 'Restart Containers'
     containerrestart_parser = restart_subparsers.add_parser('container', description=containerrestart_desc,
@@ -3874,13 +3839,6 @@ def cli():
     dnsdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     dnsdelete_parser.add_argument('names', metavar='NAMES', nargs='*')
     dnsdelete_parser.set_defaults(func=delete_dns)
-
-    dnslist_desc = 'List Dns Entries'
-    dnslist_parser = argparse.ArgumentParser(add_help=False)
-    dnslist_parser.add_argument('--short', action='store_true')
-    dnslist_parser.add_argument('domain', metavar='DOMAIN', help='Domain where to list entry (network for libvirt)')
-    dnslist_parser.set_defaults(func=list_dns)
-    list_subparsers.add_parser('dns', parents=[dnslist_parser], description=dnslist_desc, help=dnslist_desc)
 
     hostcreate_desc = 'Create Host'
     hostcreate_epilog = "examples:\n%s" % hostcreate
@@ -4016,10 +3974,6 @@ def cli():
                                                      aliases=['client'])
     hostenable_parser.add_argument('name', metavar='NAME')
     hostenable_parser.set_defaults(func=enable_host)
-
-    hostlist_parser = list_subparsers.add_parser('host', description=hostlist_desc, help=hostlist_desc,
-                                                 aliases=['hosts', 'client', 'clients'])
-    hostlist_parser.set_defaults(func=list_host)
 
     hostreport_desc = 'Report Info About Host'
     hostreport_parser = argparse.ArgumentParser(add_help=False)
@@ -4201,11 +4155,6 @@ def cli():
     kubeopenshiftinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubeopenshiftinfo_parser.set_defaults(func=info_openshift_kube)
 
-    kubelist_desc = 'List Kubes'
-    kubelist_parser = list_subparsers.add_parser('kube', description=kubelist_desc, help=kubelist_desc,
-                                                 aliases=['kubes', 'cluster', 'clusters'])
-    kubelist_parser.set_defaults(func=list_kube)
-
     kubescale_desc = 'Scale Kube'
     kubescale_parser = scale_subparsers.add_parser('kube', description=kubescale_desc, help=kubescale_desc,
                                                    aliases=['cluster'])
@@ -4325,12 +4274,6 @@ def cli():
     lbdelete_parser.add_argument('name', metavar='NAME')
     lbdelete_parser.set_defaults(func=delete_lb)
 
-    lblist_desc = 'List Load Balancers'
-    lblist_parser = list_subparsers.add_parser('lb', description=lblist_desc, help=lblist_desc,
-                                               aliases=['loadbalancers', 'lbs'])
-    lblist_parser.add_argument('--short', action='store_true')
-    lblist_parser.set_defaults(func=list_lb)
-
     keywordinfo_desc = 'Info Keyword'
     keywordinfo_parser = info_subparsers.add_parser('keyword', description=keywordinfo_desc, help=keywordinfo_desc,
                                                     aliases=['parameter'])
@@ -4352,12 +4295,6 @@ def cli():
     profileinfo_parser.add_argument('profile', metavar='PROFILE')
     profileinfo_parser.set_defaults(func=info_profile)
 
-    profilelist_desc = 'List Profiles'
-    profilelist_parser = list_subparsers.add_parser('profile', description=profilelist_desc, help=profilelist_desc,
-                                                    aliases=['profiles'])
-    profilelist_parser.add_argument('--short', action='store_true')
-    profilelist_parser.set_defaults(func=list_profile)
-
     profileupdate_desc = 'Update Profile'
     profileupdate_parser = update_subparsers.add_parser('profile', description=profileupdate_desc,
                                                         help=profileupdate_desc)
@@ -4366,11 +4303,85 @@ def cli():
     profileupdate_parser.add_argument('profile', metavar='PROFILE', nargs='?')
     profileupdate_parser.set_defaults(func=update_profile)
 
+    listapp_desc = 'List Available Kube Apps'
+    listapp_parser = list_subparsers.add_parser('app', description=listapp_desc,
+                                                help=listapp_desc, aliases=['apps', 'operator', 'operators'])
+    listapp_subparsers = listapp_parser.add_subparsers(metavar='', dest='subcommand_list_app')
+
+    appgenericlist_desc = 'List Available Kube Apps Generic'
+    appgenericlist_parser = listapp_subparsers.add_parser('generic', description=appgenericlist_desc,
+                                                          help=appgenericlist_desc)
+    appgenericlist_parser.set_defaults(func=list_apps_generic)
+
+    appopenshiftlist_desc = 'List Available Kube Components Openshift'
+    appopenshiftlist_parser = listapp_subparsers.add_parser('openshift', description=appopenshiftlist_desc,
+                                                            help=appopenshiftlist_desc)
+    appopenshiftlist_parser.add_argument('-i', '--installed', action='store_true', help='Show installed apps')
+    appopenshiftlist_parser.set_defaults(func=list_apps_openshift)
+
+    imagelist_desc = 'List Available Images'
+    imagelist_parser = list_subparsers.add_parser('available-images', description=imagelist_desc, help=imagelist_desc,
+                                                  aliases=['available-image'])
+    imagelist_parser.add_argument('-f', '--full', action='store_true', help='Provide URLS too')
+    imagelist_parser.set_defaults(func=list_available_images)
+
+    bucketlist_desc = 'List Buckets'
+    bucketlist_parser = list_subparsers.add_parser('bucket', description=bucketlist_desc, help=bucketlist_desc,
+                                                   aliases=['buckets'])
+    bucketlist_parser.set_defaults(func=list_bucket)
+
+    bucketfileslist_desc = 'List Bucket files'
+    bucketfileslist_parser = list_subparsers.add_parser('bucket-file', description=bucketfileslist_desc,
+                                                        help=bucketfileslist_desc, aliases=['bucket-files'])
+    bucketfileslist_parser.add_argument('bucket', metavar='BUCKET')
+    bucketfileslist_parser.set_defaults(func=list_bucketfiles)
+
+    containerimagelist_desc = 'List Container Images'
+    containerimagelist_parser = list_subparsers.add_parser('container-image', description=containerimagelist_desc,
+                                                           help=containerimagelist_desc,
+                                                           aliases=['container-images'])
+    containerimagelist_parser.set_defaults(func=list_containerimage)
+
+    containerlist_desc = 'List Containers'
+    containerlist_parser = list_subparsers.add_parser('container', description=containerlist_desc,
+                                                      help=containerlist_desc, aliases=['containers'])
+    containerlist_parser.add_argument('--filters', choices=('up', 'down'))
+    containerlist_parser.set_defaults(func=list_container)
+
+    containerprofilelist_desc = 'List Container Profiles'
+    containerprofilelist_parser = list_subparsers.add_parser('container-profile', description=containerprofilelist_desc,
+                                                             help=containerprofilelist_desc,
+                                                             aliases=['container-profiles'])
+    containerprofilelist_parser.add_argument('--short', action='store_true')
+    containerprofilelist_parser.set_defaults(func=profilelist_container)
+
+    vmdisklist_desc = 'List All Vm Disks'
+    vmdisklist_parser = argparse.ArgumentParser(add_help=False)
+    vmdisklist_parser.set_defaults(func=list_vmdisk)
+    list_subparsers.add_parser('disk', parents=[vmdisklist_parser], description=vmdisklist_desc,
+                               help=vmdisklist_desc, aliases=['disks'])
+
+    dnslist_desc = 'List Dns Entries'
+    dnslist_parser = argparse.ArgumentParser(add_help=False)
+    dnslist_parser.add_argument('--short', action='store_true')
+    dnslist_parser.add_argument('domain', metavar='DOMAIN', help='Domain where to list entry (network for libvirt)')
+    dnslist_parser.set_defaults(func=list_dns)
+    list_subparsers.add_parser('dns', parents=[dnslist_parser], description=dnslist_desc, help=dnslist_desc)
+
     flavorlist_desc = 'List Flavors'
     flavorlist_parser = list_subparsers.add_parser('flavor', description=flavorlist_desc, help=flavorlist_desc,
                                                    aliases=['flavors'])
     flavorlist_parser.add_argument('--short', action='store_true')
     flavorlist_parser.set_defaults(func=list_flavor)
+
+    hostlist_parser = list_subparsers.add_parser('host', description=hostlist_desc, help=hostlist_desc,
+                                                 aliases=['hosts', 'client', 'clients'])
+    hostlist_parser.set_defaults(func=list_host)
+
+    imagelist_desc = 'List Images'
+    imagelist_parser = list_subparsers.add_parser('image', description=imagelist_desc, help=imagelist_desc,
+                                                  aliases=['images', 'template', 'templates'])
+    imagelist_parser.set_defaults(func=list_image)
 
     isolist_desc = 'List Isos'
     isolist_parser = list_subparsers.add_parser('iso', description=isolist_desc, help=isolist_desc, aliases=['isos'])
@@ -4381,10 +4392,21 @@ def cli():
                                                     aliases=['keywords', 'parameter', 'parameters'])
     keywordlist_parser.set_defaults(func=list_keyword)
 
-    networkinfo_desc = 'Info Network'
-    networkinfo_parser = info_subparsers.add_parser('network', description=networkinfo_desc, help=networkinfo_desc)
-    networkinfo_parser.add_argument('name', metavar='NETWORK')
-    networkinfo_parser.set_defaults(func=info_network)
+    kubelist_desc = 'List Kubes'
+    kubelist_parser = list_subparsers.add_parser('kube', description=kubelist_desc, help=kubelist_desc,
+                                                 aliases=['kubes', 'cluster', 'clusters'])
+    kubelist_parser.set_defaults(func=list_kube)
+
+    kubeconfiglist_desc = 'List Kubeconfigs'
+    kubeconfiglist_parser = list_subparsers.add_parser('kubeconfig', description=kubeconfiglist_desc,
+                                                       help=kubeconfiglist_desc, aliases=['kubeconfigs'])
+    kubeconfiglist_parser.set_defaults(func=list_kubeconfig)
+
+    lblist_desc = 'List Load Balancers'
+    lblist_parser = list_subparsers.add_parser('lb', description=lblist_desc, help=lblist_desc,
+                                               aliases=['loadbalancers', 'lbs'])
+    lblist_parser.add_argument('--short', action='store_true')
+    lblist_parser.set_defaults(func=list_lb)
 
     networklist_desc = 'List Networks'
     networklist_parser = list_subparsers.add_parser('network', description=networklist_desc, help=networklist_desc,
@@ -4393,6 +4415,51 @@ def cli():
     networklist_parser.add_argument('--short', action='store_true')
     networklist_parser.add_argument('-s', '--subnets', action='store_true')
     networklist_parser.set_defaults(func=list_network)
+
+    planlist_desc = 'List Plans'
+    planlist_parser = list_subparsers.add_parser('plan', description=planlist_desc, help=planlist_desc,
+                                                 aliases=['plans'])
+    planlist_parser.set_defaults(func=list_plan)
+
+    poollist_desc = 'List Pools'
+    poollist_parser = list_subparsers.add_parser('pool', description=poollist_desc, help=poollist_desc,
+                                                 aliases=['pools'])
+    poollist_parser.add_argument('--short', action='store_true')
+    poollist_parser.set_defaults(func=list_pool)
+
+    productlist_desc = 'List Products'
+    productlist_parser = list_subparsers.add_parser('product', description=productlist_desc, help=productlist_desc,
+                                                    aliases=['products'])
+    productlist_parser.add_argument('-g', '--group', help='Only Display products of the indicated group',
+                                    metavar='GROUP')
+    productlist_parser.add_argument('-r', '--repo', help='Only Display products of the indicated repository',
+                                    metavar='REPO')
+    productlist_parser.add_argument('-s', '--search', help='Search matching products')
+    productlist_parser.set_defaults(func=list_product)
+
+    profilelist_desc = 'List Profiles'
+    profilelist_parser = list_subparsers.add_parser('profile', description=profilelist_desc, help=profilelist_desc,
+                                                    aliases=['profiles'])
+    profilelist_parser.add_argument('--short', action='store_true')
+    profilelist_parser.set_defaults(func=list_profile)
+
+    repolist_desc = 'List Repos'
+    repolist_parser = list_subparsers.add_parser('repo', description=repolist_desc, help=repolist_desc,
+                                                 aliases=['repos'])
+    repolist_parser.set_defaults(func=list_repo)
+
+    vmlist_desc = 'List Vms'
+    vmlist_parser = argparse.ArgumentParser(add_help=False)
+    vmlist_parser.add_argument('--filters', choices=('up', 'down'))
+    vmlist_parser.add_argument('-o', '--output', choices=['json', 'name', 'yaml'], help='Format of the output')
+    vmlist_parser.set_defaults(func=list_vm)
+    list_subparsers.add_parser('vm', parents=[vmlist_parser], description=vmlist_desc, help=vmlist_desc,
+                               aliases=['vms'])
+
+    networkinfo_desc = 'Info Network'
+    networkinfo_parser = info_subparsers.add_parser('network', description=networkinfo_desc, help=networkinfo_desc)
+    networkinfo_parser.add_argument('name', metavar='NETWORK')
+    networkinfo_parser.set_defaults(func=info_network)
 
     networkcreate_desc = 'Create Network'
     networkcreate_parser = create_subparsers.add_parser('network', description=networkcreate_desc,
@@ -4564,11 +4631,6 @@ def cli():
     planinfo_parser.add_argument('plan', metavar='PLAN', nargs='?')
     planinfo_parser.set_defaults(func=info_plan)
 
-    planlist_desc = 'List Plans'
-    planlist_parser = list_subparsers.add_parser('plan', description=planlist_desc, help=planlist_desc,
-                                                 aliases=['plans'])
-    planlist_parser.set_defaults(func=list_plan)
-
     planrestart_desc = 'Restart Plan'
     planrestart_parser = restart_subparsers.add_parser('plan', description=planrestart_desc, help=planrestart_desc)
     planrestart_parser.add_argument('-s', '--soft', action='store_true', help='Do a soft stop')
@@ -4675,12 +4737,6 @@ def cli():
     pooldelete_parser.add_argument('pool')
     pooldelete_parser.set_defaults(func=delete_pool)
 
-    poollist_desc = 'List Pools'
-    poollist_parser = list_subparsers.add_parser('pool', description=poollist_desc, help=poollist_desc,
-                                                 aliases=['pools'])
-    poollist_parser.add_argument('--short', action='store_true')
-    poollist_parser.set_defaults(func=list_pool)
-
     profiledelete_desc = 'Delete Profile'
     profiledelete_help = "Profile to delete"
     profiledelete_parser = argparse.ArgumentParser(add_help=False)
@@ -4718,16 +4774,6 @@ def cli():
                                help=productinfo_desc,
                                epilog=productinfo_epilog, formatter_class=rawhelp)
 
-    productlist_desc = 'List Products'
-    productlist_parser = list_subparsers.add_parser('product', description=productlist_desc, help=productlist_desc,
-                                                    aliases=['products'])
-    productlist_parser.add_argument('-g', '--group', help='Only Display products of the indicated group',
-                                    metavar='GROUP')
-    productlist_parser.add_argument('-r', '--repo', help='Only Display products of the indicated repository',
-                                    metavar='REPO')
-    productlist_parser.add_argument('-s', '--search', help='Search matching products')
-    productlist_parser.set_defaults(func=list_product)
-
     repocreate_desc = 'Create Repo'
     repocreate_epilog = "examples:\n%s" % repocreate
     repocreate_parser = create_subparsers.add_parser('repo', description=repocreate_desc, help=repocreate_desc,
@@ -4742,11 +4788,6 @@ def cli():
     repodelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     repodelete_parser.add_argument('repo')
     repodelete_parser.set_defaults(func=delete_repo)
-
-    repolist_desc = 'List Repos'
-    repolist_parser = list_subparsers.add_parser('repo', description=repolist_desc, help=repolist_desc,
-                                                 aliases=['repos'])
-    repolist_parser.set_defaults(func=list_repo)
 
     repoupdate_desc = 'Update Repo'
     repoupdate_parser = update_subparsers.add_parser('repo', description=repoupdate_desc, help=repoupdate_desc)
@@ -4857,11 +4898,6 @@ def cli():
     download_subparsers.add_parser('tasty', parents=[tastydownload_parser], description=tastydownload_desc,
                                    help=tastydownload_desc)
 
-    imagelist_desc = 'List Images'
-    imagelist_parser = list_subparsers.add_parser('image', description=imagelist_desc, help=imagelist_desc,
-                                                  aliases=['images', 'template', 'templates'])
-    imagelist_parser.set_defaults(func=list_image)
-
     vmcreate_desc = 'Create Vm'
     vmcreate_epilog = "examples:\n%s" % vmcreate
     vmcreate_parser = argparse.ArgumentParser(add_help=False)
@@ -4936,12 +4972,6 @@ def cli():
                                  aliases=['disk'], help=vmdiskdelete_desc, epilog=diskdelete_epilog,
                                  formatter_class=rawhelp)
 
-    vmdisklist_desc = 'List All Vm Disks'
-    vmdisklist_parser = argparse.ArgumentParser(add_help=False)
-    vmdisklist_parser.set_defaults(func=list_vmdisk)
-    list_subparsers.add_parser('disk', parents=[vmdisklist_parser], description=vmdisklist_desc,
-                               help=vmdisklist_desc, aliases=['disks'])
-
     vminfo_desc = 'Info Of Vms'
     vminfo_parser = argparse.ArgumentParser(add_help=False)
     vminfo_parser.add_argument('-f', '--fields', help='Display Corresponding list of fields,'
@@ -4951,14 +4981,6 @@ def cli():
     vminfo_parser.add_argument('names', help='VMNAMES', nargs='*')
     vminfo_parser.set_defaults(func=info_vm)
     info_subparsers.add_parser('vm', parents=[vminfo_parser], description=vminfo_desc, help=vminfo_desc)
-
-    vmlist_desc = 'List Vms'
-    vmlist_parser = argparse.ArgumentParser(add_help=False)
-    vmlist_parser.add_argument('--filters', choices=('up', 'down'))
-    vmlist_parser.add_argument('-o', '--output', choices=['json', 'name', 'yaml'], help='Format of the output')
-    vmlist_parser.set_defaults(func=list_vm)
-    list_subparsers.add_parser('vm', parents=[vmlist_parser], description=vmlist_desc, help=vmlist_desc,
-                               aliases=['vms'])
 
     create_vmnic_desc = 'Add Nic To Vm'
     create_vmnic_epilog = "examples:\n%s" % niccreate
@@ -5034,6 +5056,13 @@ def cli():
     vmupdate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     vmupdate_parser.add_argument('names', help='VMNAMES', nargs='*')
     vmupdate_parser.set_defaults(func=update_vm)
+
+    kubeconfigswitch_desc = 'Switch Kubeconfig'
+    kubeconfigswitch_parser = argparse.ArgumentParser(add_help=False)
+    kubeconfigswitch_parser.add_argument('name', help='NAME')
+    kubeconfigswitch_parser.set_defaults(func=switch_kubeconfig)
+    switch_subparsers.add_parser('kubeconfig', parents=[kubeconfigswitch_parser], description=kubeconfigswitch_desc,
+                                 help=kubeconfigswitch_desc)
 
     workflowcreate_desc = 'Create Workflow'
     workflowcreate_epilog = "examples:\n%s" % workflowcreate
