@@ -1,10 +1,10 @@
 client: sphere_karim
 cluster: ci-vsphere
 domain: karmalabs.local
+sslip: true
 masters: 3
 workers: 0
 numcpus: 16
-sslip: true
 api_ip: 10.19.135.229
 # network: ovirtmgmt
 master_memory: 28672

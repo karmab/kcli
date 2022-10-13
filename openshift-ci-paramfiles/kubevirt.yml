@@ -1,5 +1,6 @@
 cluster: ci-kubevirt
 domain: karmalabs.local
+sslip: true
 masters: 3
 workers: 2
 version: ci
