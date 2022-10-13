@@ -3,6 +3,7 @@
 # coding=utf-8
 
 from copy import deepcopy
+from filecmp import cmp
 from getpass import getuser
 from kvirt.config import Kconfig
 from kvirt.examples import plandatacreate, vmdatacreate, hostcreate, _list, plancreate, planinfo, productinfo, start
@@ -721,11 +722,14 @@ def list_host(args):
 
 
 def list_kubeconfig(args):
-    clustersdir = os.path.expanduser("~/.kcli/clusters")
-    kubeconfigstable = PrettyTable(["Kubeconfig"])
+    homedir = os.path.expanduser("~")
+    clustersdir = f"{homedir}/.kcli/clusters"
+    kubeconfigstable = PrettyTable(["Kubeconfig", "Current"])
+    existing = os.path.exists(f"{homedir}/.kube/config")
     for entry in glob(f'{clustersdir}/*/auth/kubeconfig'):
         cluster = entry.replace(f'{clustersdir}/', '').replace('/auth/kubeconfig', '')
-        kubeconfigstable.add_row([cluster])
+        same = 'X' if existing and cmp(entry, f"{homedir}/.kube/config") else ''
+        kubeconfigstable.add_row([cluster, same])
     kubeconfigstable.align["Kubeconfig"] = "l"
     print(kubeconfigstable)
     return
@@ -3408,7 +3412,7 @@ def switch_kubeconfig(args):
         sys.exit(0)
     if not os.path.exists(f"{homedir}/.kube"):
         os.mkdir(f"{homedir}/.kube")
-    if os.path.exists(f"{homedir}/.kube/config"):
+    if os.path.exists(f"{homedir}/.kube/config") and not os.path.exists(f"{homedir}/.kube/config.old"):
         pprint(f"Backing up old {homedir}/.kube/config")
         copy2(f"{homedir}/.kube/config", f"{homedir}/.kube/config.old")
     pprint(f"Moving {kubeconfig} to {homedir}/.kube/config")
