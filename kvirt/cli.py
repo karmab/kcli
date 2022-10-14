@@ -3415,6 +3415,9 @@ def switch_kubeconfig(args):
     if os.path.exists(f"{homedir}/.kube/config") and not os.path.exists(f"{homedir}/.kube/config.old"):
         pprint(f"Backing up old {homedir}/.kube/config")
         copy2(f"{homedir}/.kube/config", f"{homedir}/.kube/config.old")
+        if not os.path.exists(f"{homedir}/.kcli/clusters/old/auth"):
+            os.makedirs(f"{homedir}/.kcli/clusters/old/auth")
+            copy2(f"{homedir}/.kube/config", f"{homedir}/.kcli/clusters/old/auth/kubeconfig")
     pprint(f"Moving {kubeconfig} to {homedir}/.kube/config")
     copy2(kubeconfig, f"{homedir}/.kube/config")
 
