@@ -3420,6 +3420,11 @@ def switch_kubeconfig(args):
             copy2(f"{homedir}/.kube/config", f"{homedir}/.kcli/clusters/old/auth/kubeconfig")
     pprint(f"Moving {kubeconfig} to {homedir}/.kube/config")
     copy2(kubeconfig, f"{homedir}/.kube/config")
+    if args.name == 'old':
+        pprint("Removing old backup")
+        os.remove(clusterdir)
+        if os.path.exists(f"{homedir}/.kube/config.old"):
+            os.remove(f"{homedir}/.kube/config.old")
 
 
 def list_keyword(args):
