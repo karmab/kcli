@@ -298,7 +298,11 @@ def create(config, plandir, cluster, overrides):
         installcommand = f'openshift-install --dir={clusterdir} --log-level={log_level} wait-for install-complete'
         installcommand += f" || {installcommand}"
         pprint("Launching install-complete step. It will be retried one extra time in case of timeouts")
-        call(installcommand, shell=True)
+        run = call(installcommand, shell=True)
+        if run != 0:
+            error("Leaving environment for debugging purposes")
+            error(f"You can delete it with kcli delete kube --yes {cluster}")
+            sys.exit(run)
     os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
     apps = overrides.get('apps', [])
     process_apps(config, clusterdir, apps, overrides)
