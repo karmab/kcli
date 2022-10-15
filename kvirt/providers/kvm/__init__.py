@@ -1180,7 +1180,7 @@ class Kvirt(object):
                     smmxml = "<smm state='on'/>"
                     secure = 'yes'
                 ramxml = "<loader secure='%s'/>" % secure
-        arch = 'aarch64' if aarch64 else 'x86_64'
+        arch = 'aarch64' if aarch64 else overrides.get('arch', 'x86_64')
         if not aarch64:
             acpixml = '<acpi/>\n<apic/>'
         elif aarch64_full:
