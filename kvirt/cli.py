@@ -3410,6 +3410,8 @@ def switch_kubeconfig(args):
     if not os.path.exists(kubeconfig):
         error(f"{kubeconfig} not found")
         sys.exit(0)
+    if 'KUBECONFIG' in os.environ:
+        warning("run the following command for this to apply\nunset KUBECONFIG")
     if not os.path.exists(f"{homedir}/.kube"):
         os.mkdir(f"{homedir}/.kube")
     if os.path.exists(f"{homedir}/.kube/config") and not os.path.exists(f"{homedir}/.kube/config.old"):
