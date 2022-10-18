@@ -2155,7 +2155,7 @@ class Kconfig(Kbaseconfig):
                         vms.append(name)
                 ansibleutils.make_plan_inventory(vms_to_host, plan, vms, yamlinventory=self.yamlinventory,
                                                  insecure=self.insecure)
-                return
+                return {'result': 'success', 'plan': plan}
         if lbs and not onlyassets:
             dnsclients = {}
             pprint("Deploying Loadbalancers...")
