@@ -96,7 +96,7 @@ class Kbaseconfig:
                 if os.path.exists('/i_am_a_container') and os.environ.get('KUBERNETES_SERVICE_HOST') is not None:
                     _type = 'kubevirt'
                 else:
-                    error("No configuration found nor local hypervisor")
+                    error("No configuration found nor local hypervisor. Is libvirt running?")
                     sys.exit(1)
             self.ini = {'default': {'client': defaultclient}, defaultclient:
                         {'pool': 'default', 'type': _type}}
