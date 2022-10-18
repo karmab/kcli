@@ -1419,3 +1419,21 @@ class Ksphere:
                 waitForMe(t)
                 return {'result': 'success'}
         return {'result': 'failure', 'reason': f'Snapshot {name} not found'}
+
+    def ip(self, name):
+        result = None
+        si = self.si
+        dc = self.dc
+        basefolder = self.basefolder
+        vmFolder = find(si, dc.vmFolder, vim.Folder, basefolder) if basefolder is not None else dc.vmFolder
+        obj, vm = findvm2(si, vmFolder, name)
+        guest = vm['guest']
+        if vm is not None:
+            runtime = vm['runtime']
+            guest = vm['guest']
+            if runtime.powerState == "poweredOn":
+                for nic in guest.net:
+                    if nic.ipAddress:
+                        result = nic.ipAddress[0]
+                        break
+        return result
