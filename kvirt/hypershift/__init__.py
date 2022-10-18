@@ -248,9 +248,12 @@ def create(config, plandir, cluster, overrides):
     pprint("Waiting before ignition server is usable")
     call(f"until oc -n {namespace}-{cluster} get secret | grep user-data-{cluster} >/dev/null 2>&1 ; do sleep 1 ; done",
          shell=True)
-    open(f"{clusterdir}/worker.ign", 'a').close()
+    ignition_worker = f"{clusterdir}/worker.ign"
+    open(ignition_worker, 'a').close()
     timeout = 0
-    while os.path.getsize(f"{clusterdir}/worker.ign") == 0:
+    while True:
+        if os.path.getsize(ignition_worker) != 0 and 'Token not found' not in open(ignition_worker).read():
+            break
         time.sleep(30)
         timeout += 30
         if timeout > 300:
