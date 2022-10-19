@@ -30,6 +30,8 @@ def scale(config, plandir, cluster, overrides):
     if os.path.exists(clusterdir):
         with open(f"{clusterdir}/kcli_parameters.yml", 'w') as paramfile:
             yaml.safe_dump(data, paramfile)
+    auth_pass = ''.join(choice(ascii_letters + digits) for i in range(5))
+    data['auth_pass'] = auth_pass
     vmrules_all_names = []
     if data.get('vmrules', config.vmrules) and data.get('vmrules_strict', config.vmrules_strict):
         vmrules_all_names = [list(entry.keys())[0] for entry in data.get('vmrules', config.vmrules)]
