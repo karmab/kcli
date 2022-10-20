@@ -3912,6 +3912,9 @@ class Kvirt(object):
             reason = f"Pool {pool} not found"
             error(reason)
             return {'result': 'failure', 'reason': reason}
+        status = {0: 'down', 1: 'up'}
+        if status[vm.isActive()] != "down":
+            vm.destroy()
         xml = vm.XMLDesc(0)
         root = ET.fromstring(xml)
         for element in list(root.iter('disk')):
