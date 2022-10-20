@@ -6,12 +6,13 @@ from kvirt.common import get_oc, pwd_path, get_installer_rhcos, generate_rhcos_i
 from kvirt.defaults import OPENSHIFT_TAG
 from kvirt.openshift import process_apps, update_etc_hosts
 from kvirt.openshift import get_ci_installer, get_downstream_installer, get_installer_version
+from kvirt.redfish import Redfish
 from ipaddress import ip_network
 import json
 import os
 import re
 import sys
-from shutil import which
+from shutil import which, copy2
 from subprocess import call
 import time
 import yaml
@@ -79,6 +80,8 @@ def create(config, plandir, cluster, overrides):
     data['kube'] = data['cluster']
     pprint(f"Deploying cluster {clustervalue}")
     plan = cluster if cluster is not None else clustervalue
+    baremetal_iso = data.get('baremetal_iso', False)
+    baremetal_hosts = data.get('baremetal_hosts', [])
     domain = data.get('domain')
     version = data.get('version')
     tag = data.get('tag')
@@ -273,7 +276,7 @@ def create(config, plandir, cluster, overrides):
     pprint("Deploying workers")
     if 'name' in data:
         del data['name']
-    if data.get('baremetal_iso', False):
+    if baremetal_iso or baremetal_hosts:
         result = config.plan(plan, inputfile=f'{plandir}/kcli_plan.yml', overrides=data, onlyassets=True)
         iso_data = result['assets'][0]
         with open('iso.ign', 'w') as f:
@@ -283,8 +286,29 @@ def create(config, plandir, cluster, overrides):
             f.write(iso_data)
         iso_pool = data['pool'] or config.pool
         generate_rhcos_iso(k, f"{cluster}-worker", iso_pool, installer=True)
-    worker_threaded = data.get('threaded', False) or data.get('workers_threaded', False)
-    config.plan(plan, inputfile=f'{plandir}/kcli_plan.yml', overrides=data, threaded=worker_threaded)
+        if baremetal_hosts:
+            iso_pool_path = k.get_pool_path(iso_pool)
+            copy2(f'{iso_pool_path}/{cluster}-worker.iso', '/var/www/html')
+            nic = os.popen('ip r | grep default | cut -d" " -f5').read().strip()
+            host_ip = os.popen("ip -o addr show %s | awk '{print $4}' | cut -d '/' -f 1 | head -1" % nic).read().strip()
+            iso_url = f'http://{host_ip}/{cluster}-worker.iso'
+            for host in baremetal_hosts:
+                bmc_url = host.get('bmc_url')
+                bmc_user = host.get('bmc_user') or overrides.get('bmc_user')
+                bmc_password = host.get('bmc_password') or overrides.get('bmc_password')
+                bmc_model = host.get('bmc_model') or overrides.get('bmc_model', 'dell')
+                if bmc_url is not None and bmc_user is not None and bmc_password is not None:
+                    msg = host['name'] if 'name' in host else f"with url {bmc_url}"
+                    pprint(f"Booting Host {msg}")
+                    red = Redfish(bmc_url, bmc_user, bmc_password, model=bmc_model)
+                    try:
+                        red.set_iso(iso_url)
+                    except Exception as e:
+                        warning(f"Hit {e} when plugging iso to host {msg}")
+            data['workers'] = data['workers'] - len(baremetal_hosts)
+    if data['workers'] > 0:
+        worker_threaded = data.get('threaded', False) or data.get('workers_threaded', False)
+        config.plan(plan, inputfile=f'{plandir}/kcli_plan.yml', overrides=data, threaded=worker_threaded)
     if data.get('ignore_hosts', False):
         warning("Not updating /etc/hosts as per your request")
     else:
