@@ -95,6 +95,18 @@ def create(config, plandir, cluster, overrides):
     if not default_sc:
         error("Default Storage class not found. Leaving...")
         sys.exit(1)
+    if yaml.safe_load(os.popen('oc get crd hostedclusters.hypershift.openshift.io -o yaml 2>/dev/null').read()) is None:
+        warning("Hypershift not installed. Installing it for you")
+        if 'KUBECONFIG' in os.environ:
+            kubeconfig = os.path.basename(os.environ['KUBECONFIG'])
+            kubeconfigdir = os.path.dirname(os.environ['KUBECONFIG'])
+        else:
+            kubeconfig = 'config'
+            kubeconfigdir = os.path.expanduser("~/.kube")
+        hypercmd = f"podman run -it --rm --entrypoint=/usr/bin/hypershift -e KUBECONFIG=/k/{kubeconfig}"
+        hypercmd += f" -v {kubeconfigdir}:/k quay.io/hypershift/hypershift-operator:latest install"
+        call(hypercmd, shell=True)
+        time.sleep(120)
     data['basedir'] = '/workdir' if container_mode() else '.'
     api_ip = os.popen("oc get node -o wide | grep master | head -1 | awk '{print $6}'").read().strip()
     data['api_ip'] = api_ip
