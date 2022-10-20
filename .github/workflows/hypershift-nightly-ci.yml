@@ -22,13 +22,7 @@ jobs:
            curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | bash
        - name: Install hypershift
          run: |
-           export PATH=/usr/local/go/bin:$PATH
-           cd /root
-           [ -d hypershift ] && rm -rf hypershift
-           git clone https://github.com/openshift/hypershift.git
-           cd hypershift
-           make build
-           bin/hypershift install
+           podman run -it --rm --entrypoint=/usr/bin/hypershift -e KUBECONFIG=/prout/kubeconfig -v $(dirname $KUBECONFIG):/prout quay.io/hypershift/hypershift-operator:latest install
            sleep 120
        - name: Make sc default one
          run: |
