@@ -141,7 +141,6 @@ def create(config, plandir, cluster, overrides):
             virtual_router_id = hash(cluster) % 254 + 1
             data['virtual_router_id'] = virtual_router_id
             pprint(f"Using keepalived virtual_router_id {virtual_router_id}")
-        pprint(f"Using {ingress_ip} for ingress vip....")
         ipv6 = True if ':' in cidr else False
         data['ipv6'] = ipv6
     assetsdata = data.copy()
