@@ -51,8 +51,7 @@ def create(config, plandir, cluster, overrides):
     arch_tag = 'arm64' if arch in ['aarch64', 'arm64'] else 'latest'
     overrides['arch_tag'] = arch_tag
     if 'KUBECONFIG' not in os.environ:
-        error("Missing KUBECONFIG...")
-        sys.exit(1)
+        warning("KUBECONFIG not set...Using .kube/config instead")
     elif not os.path.isabs(os.environ['KUBECONFIG']):
         os.environ['KUBECONFIG'] = f"{os.getcwd()}/{os.environ['KUBECONFIG']}"
     data = {'kubetype': 'hypershift',

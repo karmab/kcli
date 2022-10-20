@@ -1353,8 +1353,7 @@ class Kconfig(Kbaseconfig):
                                     call(f'openshift-install --dir={clusterdir} destroy cluster', shell=True)
                                 if hypershift:
                                     if 'KUBECONFIG' not in os.environ:
-                                        error("Missing KUBECONFIG for hypershift...")
-                                        sys.exit(1)
+                                        warning("KUBECONFIG not set...Using .kube/config instead")
                                     call(f'oc delete -f {clusterdir}/autoapprovercron.yml', shell=True)
                                     call(f'oc delete -f {clusterdir}/assets.yaml', shell=True)
                             pprint(f"Deleting directory {clusterdir}")
@@ -2595,8 +2594,7 @@ class Kconfig(Kbaseconfig):
                     call(f'openshift-install --dir={clusterdir} destroy cluster', shell=True)
                 if hypershift:
                     if 'KUBECONFIG' not in os.environ:
-                        error("Missing KUBECONFIG for hypershift...")
-                        sys.exit(1)
+                        warning("KUBECONFIG not set...Using .kube/config instead")
                     call(f'oc delete -f {clusterdir}/autoapprovercron.yml', shell=True)
                     call(f'oc delete -f {clusterdir}/assets.yaml', shell=True)
             pprint(f"Deleting directory {clusterdir}")
