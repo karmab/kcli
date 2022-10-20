@@ -1567,6 +1567,9 @@ def update_vm(args):
             newfiles = overrides['files']
             pprint(f"Remediating files of {name}")
             config.remediate_files(name, newfiles, overrides)
+        pool = overrides.get('pool')
+        if config.type == 'kvm' and pool is not None:
+            k.update_pool(name, pool)
         if config.type == 'vsphere' and template is not None and isinstance(template, bool):
             target = 'template' if template else 'vm'
             pprint(f"Updating vm {name} to {target}...")
