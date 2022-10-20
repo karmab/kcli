@@ -3896,3 +3896,51 @@ class Kvirt(object):
             conn.networkDefineXML(newxml.decode("utf-8"))
             network.create()
         return {'result': 'success'}
+
+    def update_pool(self, name, pool):
+        conn = self.conn
+        try:
+            vm = conn.lookupByName(name)
+        except:
+            reason = f"VM {name} not found"
+            error(reason)
+            return {'result': 'failure', 'reason': reason}
+        try:
+            poolname = pool
+            pool = conn.storagePoolLookupByName(pool)
+        except:
+            reason = f"Pool {pool} not found"
+            error(reason)
+            return {'result': 'failure', 'reason': reason}
+        xml = vm.XMLDesc(0)
+        root = ET.fromstring(xml)
+        for element in list(root.iter('disk')):
+            disktype = element.get('device')
+            if disktype == 'cdrom':
+                continue
+            imagefiles = [element.find('source').get('file'), element.find('source').get('dev'),
+                          element.find('source').get('volume')]
+            path = next(item for item in imagefiles if item is not None)
+            volume = conn.storageVolLookupByPath(path)
+            old_pool = volume.storagePoolLookupByVolume()
+            old_poolname = old_pool.name()
+            if poolname == old_poolname:
+                reason = "Target pool is identical to Origin one"
+                error(reason)
+                return {'result': 'failure', 'reason': reason}
+            else:
+                pprint(f"Migrating {path} to {poolname}")
+            old_poolpath = self.get_pool_path(old_poolname)
+            new_poolpath = self.get_pool_path(poolname)
+            new_path = path.replace(old_poolpath, new_poolpath)
+            old_xml = volume.XMLDesc(0)
+            new_xml = old_xml.replace(path, new_path)
+            pool.createXMLFrom(new_xml, volume, 0)
+            volume.delete()
+            for _type in ['file', 'dev', 'volume']:
+                if element.find('source').get(_type) is not None:
+                    element.find('source').set(_type, new_path)
+                    break
+        newxml = ET.tostring(root)
+        conn.defineXML(newxml.decode("utf-8"))
+        return {'result': 'success'}
