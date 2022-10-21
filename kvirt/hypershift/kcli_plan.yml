@@ -18,6 +18,7 @@
 {{ cluster }}-worker-{{ num }}:
  domain: {{ domain }} 
  image: {{ image }}
+ noname: {{ noname|default(False) }}
  pool: {{ pool or config_pool }}
  keys: {{ keys }}
  flavor: {{ flavor }}

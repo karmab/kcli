@@ -301,6 +301,8 @@ def create(config, plandir, cluster, overrides):
         generate_rhcos_iso(k, f"{cluster}-worker", iso_pool, installer=True)
         if baremetal_hosts:
             iso_pool_path = k.get_pool_path(iso_pool)
+            chmodcmd = f"chmod 666 {iso_pool_path}/{cluster}-worker.iso"
+            call(chmodcmd, shell=True)
             httpdcmd = f"oc create -f {plandir}/httpd.yaml"
             call(httpdcmd, shell=True)
             pprint("Waiting 30s for httpd deployment to be ready")
