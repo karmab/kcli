@@ -2225,7 +2225,7 @@ class Kconfig(Kbaseconfig):
 
     def handle_host(self, pool=None, image=None, switch=None, download=False,
                     url=None, cmd=None, sync=False, update_profile=False, commit=None, size=None, arch='x86_64',
-                    kvm_openstack=False):
+                    kvm_openstack=True):
         """
 
         :param pool:
