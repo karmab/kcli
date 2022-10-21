@@ -1356,6 +1356,9 @@ class Kconfig(Kbaseconfig):
                                         warning("KUBECONFIG not set...Using .kube/config instead")
                                     call(f'oc delete -f {clusterdir}/autoapprovercron.yml', shell=True)
                                     call(f'oc delete -f {clusterdir}/assets.yaml', shell=True)
+                                    if 'baremetal_iso' in clusterdata or 'baremetal_hosts' in clusterdata:
+                                        call('oc -n default delete all -l app=httpd-kcli', shell=True)
+                                        call('oc -n default delete pvc httpd-kcli-pvc', shell=True)
                             pprint(f"Deleting directory {clusterdir}")
                             rmtree(clusterdir, ignore_errors=True)
         if container:
@@ -2597,6 +2600,9 @@ class Kconfig(Kbaseconfig):
                         warning("KUBECONFIG not set...Using .kube/config instead")
                     call(f'oc delete -f {clusterdir}/autoapprovercron.yml', shell=True)
                     call(f'oc delete -f {clusterdir}/assets.yaml', shell=True)
+                    if 'baremetal_iso' in clusterdata or 'baremetal_hosts' in clusterdata:
+                        call('oc -n default delete all -l app=httpd-kcli', shell=True)
+                        call('oc -n default delete pvc httpd-kcli-pvc', shell=True)
             pprint(f"Deleting directory {clusterdir}")
             rmtree(clusterdir)
             if ipi:

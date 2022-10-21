@@ -39,6 +39,8 @@ kind: Service
 metadata:
   name: httpd-kcli-svc
   namespace: default
+  labels:
+    app: httpd-kcli
 spec:
   type: NodePort
   selector:

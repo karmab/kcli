@@ -309,7 +309,7 @@ def create(config, plandir, cluster, overrides):
             svc_port_cmd = 'oc get svc -n default httpd-kcli-svc -o yaml'
             svc_port = yaml.safe_load(os.popen(svc_port_cmd).read())['spec']['ports'][0]['nodePort']
             podname = os.popen('oc -n default get pod -l app=httpd-kcli -o name').read().split('/')[1].strip()
-            copycmd = f"oc -n default cp {iso_pool_path}/{cluster}-worker.iso {podname}/var/www/html"
+            copycmd = f"oc -n default cp {iso_pool_path}/{cluster}-worker.iso {podname}:/var/www/html"
             call(copycmd, shell=True)
             iso_url = f'http://{svc_ip}:{svc_port}/{cluster}-worker.iso'
             for host in baremetal_hosts:
