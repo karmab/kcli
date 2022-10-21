@@ -67,6 +67,7 @@ def create(config, plandir, cluster, overrides):
             'network_type': 'OVNKubernetes',
             'fips': False,
             'namespace': 'clusters',
+            'disconnected_url': None,
             'pull_secret': 'openshift_pull.json'}
     data.update(overrides)
     if 'cluster' in overrides:
