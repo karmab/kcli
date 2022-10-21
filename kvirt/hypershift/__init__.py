@@ -2,7 +2,7 @@
 
 from glob import glob
 from kvirt.common import success, error, pprint, info2, container_mode, warning
-from kvirt.common import get_oc, pwd_path, get_installer_rhcos, generate_rhcos_iso
+from kvirt.common import get_oc, pwd_path, get_installer_rhcos, generate_rhcos_iso, get_ssh_pub_key
 from kvirt.defaults import OPENSHIFT_TAG
 from kvirt.openshift import process_apps, update_etc_hosts
 from kvirt.openshift import get_ci_installer, get_downstream_installer, get_installer_version
@@ -67,7 +67,6 @@ def create(config, plandir, cluster, overrides):
             'network_type': 'OVNKubernetes',
             'fips': False,
             'namespace': 'clusters',
-            'pub_key': os.path.expanduser('~/.ssh/id_rsa.pub'),
             'pull_secret': 'openshift_pull.json'}
     data.update(overrides)
     if 'cluster' in overrides:
@@ -128,13 +127,23 @@ def create(config, plandir, cluster, overrides):
         error(f"Missing pull secret file {pull_secret}")
         sys.exit(1)
     data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
-    if not os.path.exists(pub_key):
-        if os.path.exists(os.path.expanduser('~/.kcli/id_rsa.pub')):
-            pub_key = os.path.expanduser('~/.kcli/id_rsa.pub')
+    pub_key = data.get('pub_key') or get_ssh_pub_key()
+    keys = data.get('keys', [])
+    if pub_key is None:
+        if keys:
+            warning("Using first key from your keys array")
+            pub_key = keys[0]
         else:
-            error(f"Missing public key file {pub_key}")
+            error("No usable public key found, which is required for the deployment. Create one using ssh-keygen")
             sys.exit(1)
-    data['pub_key'] = open(pub_key).read().strip()
+    pub_key = os.path.expanduser(pub_key)
+    if pub_key.startswith('ssh-'):
+        data['pub_key'] = pub_key
+    elif os.path.exists(pub_key):
+        data['pub_key'] = open(pub_key).read().strip()
+    else:
+        error(f"File {pub_key} not found")
+        sys.exit(1)
     ingress_ip = data.get('ingress_ip')
     cidr = '192.168.122.0/24'
     if config.type in virtplatforms:

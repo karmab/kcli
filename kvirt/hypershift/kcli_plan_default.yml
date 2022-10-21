@@ -46,3 +46,4 @@ etcd_size: 4
 baremetal_iso: false
 baremetal_hosts: []
 virtual_router_id:
+pub_key:
