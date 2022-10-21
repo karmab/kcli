@@ -289,6 +289,7 @@ def create(config, plandir, cluster, overrides):
     if baremetal_iso or baremetal_hosts:
         baremetal_iso_overrides = data.copy()
         baremetal_iso_overrides['noname'] = True
+        baremetal_iso_overrides['workers'] = 1
         result = config.plan(plan, inputfile=f'{plandir}/kcli_plan.yml', overrides=baremetal_iso_overrides,
                              onlyassets=True)
         iso_data = result['assets'][0]
