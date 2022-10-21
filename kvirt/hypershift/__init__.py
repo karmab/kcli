@@ -333,8 +333,8 @@ def create(config, plandir, cluster, overrides):
         info2("export PATH=$PWD:$PATH")
     else:
         installcommand = f'openshift-install --dir={clusterdir} --log-level={log_level} wait-for install-complete'
-        installcommand += f" || {installcommand}"
-        pprint("Launching install-complete step. It will be retried one extra time in case of timeouts")
+        installcommand += f" || {installcommand} || {installcommand}"
+        pprint("Launching install-complete step. It will be retried two times to handle timeouts")
         run = call(installcommand, shell=True)
         if run != 0:
             error("Leaving environment for debugging purposes")
