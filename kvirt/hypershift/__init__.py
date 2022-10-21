@@ -277,7 +277,10 @@ def create(config, plandir, cluster, overrides):
     if 'name' in data:
         del data['name']
     if baremetal_iso or baremetal_hosts:
-        result = config.plan(plan, inputfile=f'{plandir}/kcli_plan.yml', overrides=data, onlyassets=True)
+        baremetal_iso_overrides = data.copy()
+        baremetal_iso_overrides['noname'] = True
+        result = config.plan(plan, inputfile=f'{plandir}/kcli_plan.yml', overrides=baremetal_iso_overrides,
+                             onlyassets=True)
         iso_data = result['assets'][0]
         with open('iso.ign', 'w') as f:
             f.write(iso_data)
@@ -289,6 +292,7 @@ def create(config, plandir, cluster, overrides):
         if baremetal_hosts:
             iso_pool_path = k.get_pool_path(iso_pool)
             copy2(f'{iso_pool_path}/{cluster}-worker.iso', '/var/www/html')
+            call(f"sudo chown apache.apache /var/www/html/{cluster}-worker.iso", shell=True)
             nic = os.popen('ip r | grep default | cut -d" " -f5').read().strip()
             host_ip = os.popen("ip -o addr show %s | awk '{print $4}' | cut -d '/' -f 1 | head -1" % nic).read().strip()
             iso_url = f'http://{host_ip}/{cluster}-worker.iso'
