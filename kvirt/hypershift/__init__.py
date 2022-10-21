@@ -12,7 +12,7 @@ import json
 import os
 import re
 import sys
-from shutil import which, copy2
+from shutil import which
 from subprocess import call
 import time
 import yaml
@@ -291,11 +291,18 @@ def create(config, plandir, cluster, overrides):
         generate_rhcos_iso(k, f"{cluster}-worker", iso_pool, installer=True)
         if baremetal_hosts:
             iso_pool_path = k.get_pool_path(iso_pool)
-            copy2(f'{iso_pool_path}/{cluster}-worker.iso', '/var/www/html')
-            call(f"sudo chown apache.apache /var/www/html/{cluster}-worker.iso", shell=True)
-            nic = os.popen('ip r | grep default | cut -d" " -f5').read().strip()
-            host_ip = os.popen("ip -o addr show %s | awk '{print $4}' | cut -d '/' -f 1 | head -1" % nic).read().strip()
-            iso_url = f'http://{host_ip}/{cluster}-worker.iso'
+            httpdcmd = f"oc create -f {plandir}/httpd.yaml"
+            call(httpdcmd, shell=True)
+            pprint("Waiting 30s for httpd deployment to be ready")
+            time.sleep(30)
+            svc_ip_cmd = 'oc get node -o yaml'
+            svc_ip = yaml.safe_load(os.popen(svc_ip_cmd).read())['items'][0]['status']['addresses'][0]['address']
+            svc_port_cmd = 'oc get svc -n default httpd-kcli-svc -o yaml'
+            svc_port = yaml.safe_load(os.popen(svc_port_cmd).read())['spec']['ports'][0]['nodePort']
+            podname = os.popen('oc -n default get pod -l app=httpd-kcli -o name').read().split('/')[1].strip()
+            copycmd = f"oc -n default cp {iso_pool_path}/{cluster}-worker.iso {podname}/var/www/html"
+            call(copycmd, shell=True)
+            iso_url = f'http://{svc_ip}:{svc_port}/{cluster}-worker.iso'
             for host in baremetal_hosts:
                 bmc_url = host.get('bmc_url')
                 bmc_user = host.get('bmc_user') or overrides.get('bmc_user')
