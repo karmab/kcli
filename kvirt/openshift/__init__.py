@@ -351,7 +351,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'workers': 0,
             'tag': OPENSHIFT_TAG,
             'ipv6': False,
-            'pub_key': os.path.expanduser('~/.ssh/id_rsa.pub'),
             'pull_secret': 'openshift_pull.json',
             'version': 'stable',
             'macosx': False,
@@ -549,7 +548,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     masters = data.get('masters')
     workers = data.get('workers')
     tag = data.get('tag')
-    pub_key = data.get('pub_key')
     pull_secret = pwd_path(data.get('pull_secret')) if not upstream else f"{plandir}/fake_pull.json"
     pull_secret = os.path.expanduser(pull_secret)
     macosx = data.get('macosx')
@@ -570,17 +568,23 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if not os.path.exists(pull_secret):
         error(f"Missing pull secret file {pull_secret}")
         sys.exit(1)
-    no_pub_key = False
-    if not os.path.exists(pub_key):
-        keys = data.get('keys', [])
+    pub_key = data.get('pub_key') or get_ssh_pub_key()
+    keys = data.get('keys', [])
+    if pub_key is None:
         if keys:
             warning("Using first key from your keys array")
-            no_pub_key = True
-        elif os.path.exists(os.path.expanduser('~/.kcli/id_rsa.pub')):
-            pub_key = os.path.expanduser('~/.kcli/id_rsa.pub')
+            pub_key = keys[0]
         else:
             error("No usable public key found, which is required for the deployment. Create one using ssh-keygen")
             sys.exit(1)
+    pub_key = os.path.expanduser(pub_key)
+    if pub_key.startswith('ssh-'):
+        data['pub_key'] = pub_key
+    elif os.path.exists(pub_key):
+        data['pub_key'] = open(pub_key).read().strip()
+    else:
+        error(f"File {pub_key} not found")
+        sys.exit(1)
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if os.path.exists(clusterdir):
         if [v for v in config.k.list() if v.get('plan', 'kvirt') == cluster]:
@@ -698,10 +702,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     overrides['cluster'] = cluster
     if not os.path.exists(clusterdir):
         os.makedirs(clusterdir)
-    data['pub_key'] = keys[0] if no_pub_key else open(pub_key).read().strip()
-    if not data['pub_key'].startswith('ssh-'):
-        error(f"File {pub_key} doesnt seem to contain a valid public key")
-        sys.exit(1)
     if platform in virtplatforms and disconnected_deploy:
         disconnected_vm = f"{data.get('disconnected_reuse_name', cluster)}-disconnected"
         pprint(f"Deploying disconnected vm {disconnected_vm}")
