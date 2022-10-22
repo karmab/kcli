@@ -1,5 +1,5 @@
 cluster: ci-libvirt
-domain: karmalabs.local
+domain: karmalabs.corp
 masters: 3
 workers: 0
 version: stable

@@ -13,13 +13,13 @@ $ kcli delete disk --vm vm1 vm1_2.img
 """
 
 dnscreate = """# Create a dns entry
-$ kcli create dns -d karmalabs.local -i 192.168.122.253 api.jhendrix
+$ kcli create dns -d karmalabs.corp -i 192.168.122.253 api.jhendrix
 
 # Do the same for a different network
-$ kcli create dns -n network2 -d karmalabs.local -i 192.168.122.253 api.jhendrix
+$ kcli create dns -n network2 -d karmalabs.corp -i 192.168.122.253 api.jhendrix
 
 # Do the same with an extra wildcard alias
-$ kcli create dns -d karmalabs.local -i 104.197.157.226 -a '*' api.jhendrix
+$ kcli create dns -d karmalabs.corp -i 104.197.157.226 -a '*' api.jhendrix
 """
 
 hostcreate = """# Add a kvm host
@@ -228,28 +228,28 @@ $ kcli create plantemplate mydir
 """
 
 isocreate = """# Generate an openshift iso
-$ kcli create openshift-iso testk.karmalabs.local
+$ kcli create openshift-iso testk.karmalabs.corp
 
 # Do the same for a 4.5 install
-$ kcli create openshift-iso -P version=4.5 testk.karmalabs.local
+$ kcli create openshift-iso -P version=4.5 testk.karmalabs.corp
 
 # Embed a local target ignition in the iso
 $ kcli create openshift-iso -f my_ignition.ign testk
 
 # Only creates the ignition for the iso
-$ kcli create openshift-iso -P iso=false testk.karmalabs.local
+$ kcli create openshift-iso -P iso=false testk.karmalabs.corp
 
 # Force the ip to use in /etc/hosts of the machine at first boot
-$ kcli create openshift-iso -P api_ip=192.168.1.20 testk.karmalabs.local
+$ kcli create openshift-iso -P api_ip=192.168.1.20 testk.karmalabs.corp
 
 # Disable ens4 in the iso
-$ kcli create openshift-iso -P disable_nics=[ens4] testk.karmalabs.local
+$ kcli create openshift-iso -P disable_nics=[ens4] testk.karmalabs.corp
 
 # Inject static ip for ens3
-$ kcli create openshift-iso -P nic=ens3 -P ip=192.168.122.8 -P netmask=24 -P gateway=192.168.122.1 testk.karmalabs.local
+$ kcli create openshift-iso -P nic=ens3 -P ip=192.168.122.8 -P netmask=24 -P gateway=192.168.122.1 testk.karmalabs.corp
 
 # Provide extra args for first boot of the node
-$ kcli create openshift-iso -P extra_args="super_string_of_args" testk.karmalabs.local
+$ kcli create openshift-iso -P extra_args="super_string_of_args" testk.karmalabs.corp
 """
 
 disconnectedcreate = """# Generate an openshift disconnected vm for 4.9

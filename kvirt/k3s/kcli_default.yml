@@ -12,7 +12,7 @@ pool:
 image: ubuntu2004
 network: default
 cluster: testk
-domain: karmalabs.local
+domain: karmalabs.corp
 token: supersecret
 numcpus: 2
 worker_numcpus:

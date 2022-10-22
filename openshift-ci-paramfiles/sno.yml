@@ -1,5 +1,5 @@
 cluster: ci-sno
-domain: karmalabs.local
+domain: karmalabs.corp
 sno: true
 sno_virtual: true
 version: stable

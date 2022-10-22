@@ -47,7 +47,7 @@ def scale(config, plandir, cluster, overrides):
 def create(config, plandir, cluster, overrides):
     platform = config.type
     k = config.k
-    data = {'kubetype': 'generic', 'nip': False, 'domain': 'karmalabs.local', 'wait_ready': False}
+    data = {'kubetype': 'generic', 'nip': False, 'domain': 'karmalabs.corp', 'wait_ready': False}
     data.update(overrides)
     if 'keys' not in overrides and get_ssh_pub_key() is None:
         error("No usable public key found, which is required for the deployment. Create one using ssh-keygen")
@@ -67,7 +67,7 @@ def create(config, plandir, cluster, overrides):
     nip = data['nip']
     api_ip = data.get('api_ip')
     if platform in cloudplatforms:
-        domain = data.get('domain', 'karmalabs.local')
+        domain = data.get('domain', 'karmalabs.corp')
         api_ip = f"{cluster}-master.{domain}"
     elif api_ip is None:
         if network == 'default' and platform == 'kvm':

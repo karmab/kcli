@@ -7,7 +7,7 @@ echo Giving sometime for ingress controller to get ready...
 sleep 30
 kubectl apply -f ingress.yml
 sleep 30
-HOST=argocd.{{ cluster | default('testk') }}.{{ domain | default('karmalabs.local') }}
+HOST=argocd.{{ cluster | default('testk') }}.{{ domain | default('karmalabs.corp') }}
 IP=$(kubectl get ingress -n argocd argocd-server-ingress -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 echo You will need to create the following /etc/hosts entry
 echo $IP $HOST

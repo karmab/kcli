@@ -1,5 +1,5 @@
 cluster: ci-ovirt
-domain: karmalabs.local
+domain: karmalabs.corp
 masters: 3
 workers: 0
 numcpus: 16

@@ -56,7 +56,7 @@ def create(config, plandir, cluster, overrides):
     elif not os.path.isabs(os.environ['KUBECONFIG']):
         os.environ['KUBECONFIG'] = f"{os.getcwd()}/{os.environ['KUBECONFIG']}"
     data = {'kubetype': 'hypershift',
-            'domain': 'karmalabs.local',
+            'domain': 'karmalabs.corp',
             'baremetal_iso': False,
             'network': 'default',
             'etcd_size': 4,

@@ -75,7 +75,7 @@ def create(config, plandir, cluster, overrides):
     api_ip = data.get('api_ip')
     if masters > 1:
         if platform in cloudplatforms:
-            domain = data.get('domain', 'karmalabs.local')
+            domain = data.get('domain', 'karmalabs.corp')
             api_ip = f"{cluster}-master.{domain}"
         elif api_ip is None:
             if network == 'default' and platform == 'kvm':

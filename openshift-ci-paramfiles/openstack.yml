@@ -1,5 +1,5 @@
 cluster: ci-openstack
-domain: karmalabs.local
+domain: karmalabs.corp
 masters: 3
 workers: 0
 api_ip: 11.0.0.253

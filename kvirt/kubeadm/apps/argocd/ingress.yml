@@ -9,7 +9,7 @@ metadata:
     nginx.ingress.kubernetes.io/ssl-passthrough: "true"
 spec:
   rules:
-  - host: argocd.{{ cluster | default('testk') }}.{{ domain | default('karmalabs.local') }}
+  - host: argocd.{{ cluster | default('testk') }}.{{ domain | default('karmalabs.corp') }}
     http:
       paths:
       - backend:

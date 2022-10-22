@@ -24,7 +24,7 @@ masters: 3
 workers: 0
 fips: false
 cluster: testk
-domain: karmalabs.local
+domain: karmalabs.corp
 network_type: OpenShiftSDN
 cluster_network_ipv4: "10.132.0.0/14"
 cluster_network_ipv6: "fd01::/48"

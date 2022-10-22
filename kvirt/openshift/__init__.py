@@ -345,7 +345,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     arch_tag = 'arm64' if arch in ['aarch64', 'arm64'] else 'latest'
     overrides['arch_tag'] = arch_tag
     pprint(f"Deploying on client {client}")
-    data = {'domain': 'karmalabs.local',
+    data = {'domain': 'karmalabs.corp',
             'network': 'default',
             'masters': 1,
             'workers': 0,
@@ -796,7 +796,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if disconnected_url is not None and disconnected_user is not None and disconnected_password is not None:
         key = f"{disconnected_user}:{disconnected_password}"
         key = str(b64encode(key.encode('utf-8')), 'utf-8')
-        auths = {'auths': {disconnected_url: {'auth': key, 'email': 'jhendrix@karmalabs.local'}}}
+        auths = {'auths': {disconnected_url: {'auth': key, 'email': 'jhendrix@karmalabs.corp'}}}
         data['pull_secret'] = json.dumps(auths)
     else:
         data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())

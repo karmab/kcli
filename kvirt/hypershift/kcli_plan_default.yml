@@ -14,7 +14,7 @@ network_type: OVNKubernetes
 worker_network:
 workers: 2
 cluster: testk
-domain: karmalabs.local
+domain: karmalabs.corp
 pool:
 flavor:
 flavor_worker:

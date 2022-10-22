@@ -31,8 +31,8 @@ export OCP_RELEASE=$(grep 'Name:' /tmp/release.txt | awk -F ' ' '{print $2}')-x8
 
 export LOCAL_REG="$REGISTRY_NAME:5000"
 KEY=$( echo -n $REGISTRY_USER:$REGISTRY_PASSWORD | base64)
-jq ".auths += {\"$REGISTRY_NAME:5000\": {\"auth\": \"$KEY\",\"email\": \"jhendrix@karmalabs.local\"}}" < $PULL_SECRET > /root/temp.json
+jq ".auths += {\"$REGISTRY_NAME:5000\": {\"auth\": \"$KEY\",\"email\": \"jhendrix@karmalabs.corp\"}}" < $PULL_SECRET > /root/temp.json
 cat /root/temp.json | tr -d [:space:] > $PULL_SECRET
 oc adm release mirror -a $PULL_SECRET --from=$OPENSHIFT_RELEASE_IMAGE  --to-release-image=${LOCAL_REG}/ocp4:${OCP_RELEASE} --to=${LOCAL_REG}/ocp4
-echo "{\"auths\": {\"$REGISTRY_NAME:5000\": {\"auth\": \"$KEY\", \"email\": \"jhendrix@karmalabs.local\"}}}" > /root/temp.json
+echo "{\"auths\": {\"$REGISTRY_NAME:5000\": {\"auth\": \"$KEY\", \"email\": \"jhendrix@karmalabs.corp\"}}}" > /root/temp.json
 echo $REGISTRY_NAME:5000/ocp4:$OCP_RELEASE > /root/version.txt

@@ -1,6 +1,6 @@
 client: sphere_karim
 cluster: ci-vsphere
-domain: karmalabs.local
+domain: karmalabs.corp
 sslip: true
 masters: 3
 workers: 0
