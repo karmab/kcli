@@ -303,8 +303,8 @@ def create(config, plandir, cluster, overrides):
             call(chmodcmd, shell=True)
             httpdcmd = f"oc create -f {plandir}/httpd.yaml"
             call(httpdcmd, shell=True)
-            pprint("Waiting 30s for httpd deployment to be ready")
-            time.sleep(30)
+            pprint("Waiting 45s for httpd deployment to be ready")
+            time.sleep(45)
             svc_ip_cmd = 'oc get node -o yaml'
             svc_ip = yaml.safe_load(os.popen(svc_ip_cmd).read())['items'][0]['status']['addresses'][0]['address']
             svc_port_cmd = 'oc get svc -n default httpd-kcli-svc -o yaml'
