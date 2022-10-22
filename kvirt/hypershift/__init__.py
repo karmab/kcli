@@ -2,7 +2,7 @@
 
 from glob import glob
 from kvirt.common import success, error, pprint, info2, container_mode, warning
-from kvirt.common import get_oc, pwd_path, get_installer_rhcos, generate_rhcos_iso, get_ssh_pub_key
+from kvirt.common import get_oc, pwd_path, get_installer_rhcos, get_ssh_pub_key
 from kvirt.defaults import OPENSHIFT_TAG
 from kvirt.openshift import process_apps, update_etc_hosts
 from kvirt.openshift import get_ci_installer, get_downstream_installer, get_installer_version
@@ -295,11 +295,8 @@ def create(config, plandir, cluster, overrides):
         iso_data = result['assets'][0]
         with open('iso.ign', 'w') as f:
             f.write(iso_data)
-        ignitionfile = f'{cluster}-worker.ign'
-        with open(ignitionfile, 'w') as f:
-            f.write(iso_data)
         iso_pool = data['pool'] or config.pool
-        generate_rhcos_iso(k, f"{cluster}-worker", iso_pool, installer=True)
+        config.create_openshift_iso(cluster, ignitionfile='iso.ign', installer=True)
         if baremetal_hosts:
             iso_pool_path = k.get_pool_path(iso_pool)
             chmodcmd = f"chmod 666 {iso_pool_path}/{cluster}-worker.iso"
