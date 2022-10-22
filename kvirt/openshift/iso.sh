@@ -46,6 +46,12 @@ cmd="coreos-installer install --firstboot-args=\"${firstboot_args}\" --ignition=
 bash -c "$cmd"
 if [ "$?" == "0" ] ; then
   echo "Install Succeeded!"
+  {% if uefi|default(False) %}
+  if [[ "$install_device" =~ /dev/vd.* ]] ; then
+    NUM=$(efibootmgr -v | grep DVD | cut -f1 -d' ' | sed 's/Boot000\([0-9]\)\*/\1/')
+    efibootmgr -b 000$NUM -B $NUM
+  fi
+  {% endif %}
   reboot
 else
   echo "Install Failed!"

@@ -296,7 +296,7 @@ def create(config, plandir, cluster, overrides):
         with open('iso.ign', 'w') as f:
             f.write(iso_data)
         iso_pool = data['pool'] or config.pool
-        config.create_openshift_iso(cluster, ignitionfile='iso.ign', installer=True)
+        config.create_openshift_iso(cluster, ignitionfile='iso.ign', installer=True, uefi=True)
         if baremetal_hosts:
             iso_pool_path = k.get_pool_path(iso_pool)
             chmodcmd = f"chmod 666 {iso_pool_path}/{cluster}-worker.iso"

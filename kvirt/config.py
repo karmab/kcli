@@ -2703,7 +2703,7 @@ class Kconfig(Kbaseconfig):
         kexposer.run()
 
     def create_openshift_iso(self, cluster, overrides={}, ignitionfile=None, podman=False, installer=False,
-                             direct=False):
+                             direct=False, uefi=False):
         metal_url = None
         iso_version = str(overrides.get('version', 'latest'))
         if not installer:
@@ -2780,7 +2780,8 @@ class Kconfig(Kbaseconfig):
                     isoscript = f'{plandir}/iso.sh'
                 if os.path.exists('macs.txt'):
                     _files.append({"path": "/root/macs.txt", "origin": 'macs.txt'})
-                iso_overrides = {'scripts': [isoscript], 'files': _files, 'metal_url': metal_url, 'noname': True}
+                iso_overrides = {'scripts': [isoscript], 'files': _files, 'metal_url': metal_url, 'noname': True,
+                                 'uefi': uefi}
                 if metal_url is not None:
                     iso_overrides['need_network'] = True
                 iso_overrides.update(overrides)
