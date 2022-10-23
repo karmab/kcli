@@ -1075,10 +1075,10 @@ class Kconfig(Kbaseconfig):
                     identityfile = f"{overrides['tempkeydir'].name}/id_rsa"
                     tempkey_clean = True
                 self.wait_finish(name, image=image, waitcommand=waitcommand, waittimeout=waittimeout,
-                                 identityfile=identityfile)
+                                 identityfile=identityfile, vmclient=client)
                 finishfiles = profile.get('finishfiles', [])
                 if finishfiles:
-                    self.handle_finishfiles(name, finishfiles, identityfile=identityfile)
+                    self.handle_finishfiles(name, finishfiles, identityfile=identityfile, vmclient=client)
                 if tempkey_clean:
                     self.clean_tempkey(name, identityfile=identityfile)
             if unplugcd:
@@ -2004,7 +2004,8 @@ class Kconfig(Kbaseconfig):
                     if not onlyassets:
                         common.handle_response(result, name, client=vmclient)
                     self.handle_vm_result(name, profile, result=result, newvms=newvms, failedvms=failedvms,
-                                          asyncwaitvms=asyncwaitvms, onlyassets=onlyassets, newassets=newassets)
+                                          asyncwaitvms=asyncwaitvms, onlyassets=onlyassets, newassets=newassets,
+                                          vmclient=vmclient)
         if vmentries and threaded:
             while True:
                 for index, t in enumerate(threads):
@@ -2204,9 +2205,10 @@ class Kconfig(Kbaseconfig):
         for entry in asyncwaitvms:
             name, finishfiles = entry['name'], entry['finishfiles']
             waitcommand, waittimeout = entry['waitcommand'], entry['waittimeout']
-            self.wait_finish(name, waitcommand=waitcommand, waittimeout=waittimeout)
+            vmclient = entry['vmclient']
+            self.wait_finish(name, waitcommand=waitcommand, waittimeout=waittimeout, vmclient=vmclient)
             if finishfiles:
-                self.handle_finishfiles(name, finishfiles)
+                self.handle_finishfiles(name, finishfiles, vmclient=vmclient)
         post_script = f'{inputdir}/kcli_post.sh'
         if os.path.exists(post_script):
             if post:
@@ -2424,8 +2426,10 @@ class Kconfig(Kbaseconfig):
         else:
             return k.list_loadbalancers()
 
-    def wait_finish(self, name, image=None, quiet=False, waitcommand=None, waittimeout=0, identityfile=None):
-        k = self.k
+    def wait_finish(self, name, image=None, quiet=False, waitcommand=None, waittimeout=0, identityfile=None,
+                    vmclient=None):
+        config = Kconfig(client=vmclient) if vmclient is not None else self
+        k = config.k
         if image is None:
             image = k.info(name)['image']
         pprint(f"Waiting for vm {name} to finish customisation")
@@ -2441,12 +2445,12 @@ class Kconfig(Kbaseconfig):
         timeout = 0
         while ip is None:
             info = k.info(name)
-            if self.type == 'packet' and info.get('status') != 'active':
+            if config.type == 'packet' and info.get('status') != 'active':
                 warning("Waiting for node to be active")
                 ip = None
             else:
-                user, ip = self.vmuser or info.get('user'), info.get('ip')
-                if self.type == 'kubevirt':
+                user, ip = config.vmuser or info.get('user'), info.get('ip')
+                if config.type == 'kubevirt':
                     if k.access_mode == 'NodePort':
                         vmport = info.get('nodeport')
                         if hostip is None:
@@ -2455,14 +2459,14 @@ class Kconfig(Kbaseconfig):
                     elif k.access_mode == 'LoadBalancer':
                         ip = info.get('loadbalancerip')
                 if user is not None and ip is not None:
-                    if self.type == 'openstack' and info.get('privateip') == ip and self.k.external_network is not None\
-                            and info.get('nets')[0]['net'] != self.k.external_network:
+                    if config.type == 'openstack' and info.get('privateip') == ip and k.external_network is not None\
+                            and info.get('nets')[0]['net'] != k.external_network:
                         warning("Waiting for floating ip instead of a private ip...")
                         ip = None
                     else:
-                        testcmd = common.ssh(name, user=user, ip=ip, tunnel=self.tunnel, tunnelhost=self.tunnelhost,
-                                             tunnelport=self.tunnelport, tunneluser=self.tunneluser,
-                                             insecure=self.insecure, cmd='id -un', vmport=vmport,
+                        testcmd = common.ssh(name, user=user, ip=ip, tunnel=config.tunnel, tunnelhost=config.tunnelhost,
+                                             tunnelport=config.tunnelport, tunneluser=config.tunneluser,
+                                             insecure=config.insecure, cmd='id -un', vmport=vmport,
                                              identityfile=identityfile, password=False)
                         if os.popen(testcmd).read().strip() != user:
                             warning("Gathered ip not functional yet...")
@@ -2477,9 +2481,9 @@ class Kconfig(Kbaseconfig):
         oldoutput = ''
         timeout = 0
         while True:
-            sshcmd = common.ssh(name, user='root', ip=ip, tunnel=self.tunnel, tunnelhost=self.tunnelhost, vmport=vmport,
-                                tunnelport=self.tunnelport, tunneluser=self.tunneluser, insecure=self.insecure, cmd=cmd,
-                                identityfile=identityfile, password=False)
+            sshcmd = common.ssh(name, user='root', ip=ip, tunnel=config.tunnel, tunnelhost=config.tunnelhost,
+                                vmport=vmport, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
+                                insecure=config.insecure, cmd=cmd, identityfile=identityfile, password=False)
             output = os.popen(sshcmd).read()
             if waitcommand is not None:
                 if output != '':
@@ -2830,8 +2834,10 @@ class Kconfig(Kbaseconfig):
             sys.exit(1)
         return
 
-    def handle_finishfiles(self, name, finishfiles, identityfile=None):
-        current_ip = common._ssh_credentials(self.k, name)[1]
+    def handle_finishfiles(self, name, finishfiles, identityfile=None, vmclient=None):
+        config = Kconfig(client=vmclient) if vmclient is not None else self
+        k = config.k
+        current_ip = common._ssh_credentials(k, name)[1]
         for finishfile in finishfiles:
             if isinstance(finishfile, str):
                 destination = '.'
@@ -2842,7 +2848,7 @@ class Kconfig(Kbaseconfig):
                 warning(f"Incorrect finishfile entry {finishfile}. Skipping")
                 continue
             scpcmd = common.scp(name, ip=current_ip, user='root', source=source, destination=destination,
-                                tunnel=self.tunnel, tunnelhost=self.tunnelhost, tunnelport=self.tunnelport,
+                                tunnel=config.tunnel, tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
                                 tunneluser=self.tunneluser, download=True, insecure=True, identityfile=identityfile)
             os.system(scpcmd)
 
@@ -2907,7 +2913,8 @@ class Kconfig(Kbaseconfig):
                 error(f"Invalid method {notifymethod}")
         return cmds, mailcontent
 
-    def handle_vm_result(self, name, profile, result, newvms, failedvms, asyncwaitvms, onlyassets=False, newassets=[]):
+    def handle_vm_result(self, name, profile, result, newvms, failedvms, asyncwaitvms, onlyassets=False, newassets=[],
+                         vmclient=None):
         if 'result' in result and result['result'] == 'success':
             newvms.append(name)
         else:
@@ -2926,7 +2933,7 @@ class Kconfig(Kbaseconfig):
             waitcommand = profile.get('waitcommand')
             waittimeout = profile.get('waittimeout', 0)
             asyncwaitvm = {'name': name, 'finishfiles': finishfiles, 'waitcommand': waitcommand,
-                           'waittimeout': waittimeout}
+                           'waittimeout': waittimeout, 'vmclient': vmclient}
             asyncwaitvms.append(asyncwaitvm)
 
     def threaded_create_vm(self, name, profilename, currentoverrides, profile, z, plan, currentplandir, vmclient,
@@ -2937,7 +2944,7 @@ class Kconfig(Kbaseconfig):
         if not onlyassets:
             common.handle_response(result, name, client=vmclient)
         self.handle_vm_result(name, profile, result=result, newvms=newvms, failedvms=failedvms,
-                              asyncwaitvms=asyncwaitvms, onlyassets=onlyassets, newassets=newassets)
+                              asyncwaitvms=asyncwaitvms, onlyassets=onlyassets, newassets=newassets, vmclient=vmclient)
 
     def parse_files(self, name, files, basedir='.', onfly=None):
         if not files:
