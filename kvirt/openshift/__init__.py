@@ -1333,6 +1333,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             os.remove(ignitionfile)
         else:
             threaded = data.get('threaded', False) or data.get('masters_threaded', False)
+            if baremetal_hosts:
+                overrides['workers'] = overrides['workers'] - len(baremetal_hosts)
             result = config.plan(plan, inputfile=f'{plandir}/masters.yml', overrides=overrides, threaded=threaded)
         if result['result'] != 'success':
             sys.exit(1)
@@ -1434,7 +1436,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                     host_ip = os.popen(ip_cmd).read().strip()
                     iso_url = f'http://{host_ip}/{cluster}-worker.iso'
                     boot_hosts(baremetal_hosts, iso_url, overrides=overrides)
-                    overrides['workers'] = overrides['workers'] - len(baremetal_hosts)
             if overrides['workers'] > 0:
                 threaded = data.get('threaded', False) or data.get('workers_threaded', False)
                 result = config.plan(plan, inputfile=f'{plandir}/workers.yml', overrides=overrides, threaded=threaded)
