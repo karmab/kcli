@@ -304,14 +304,14 @@ def create(config, plandir, cluster, overrides):
             call(httpdcmd, shell=True)
             pprint("Waiting 45s for httpd deployment to be ready")
             sleep(45)
-            svc_ip_cmd = 'oc get node -o yaml'
-            svc_ip = yaml.safe_load(os.popen(svc_ip_cmd).read())['items'][0]['status']['addresses'][0]['address']
-            svc_port_cmd = 'oc get svc -n default httpd-kcli-svc -o yaml'
-            svc_port = yaml.safe_load(os.popen(svc_port_cmd).read())['spec']['ports'][0]['nodePort']
+            svcip_cmd = 'oc get node -o yaml'
+            svcip = yaml.safe_load(os.popen(svcip_cmd).read())['items'][0]['status']['addresses'][0]['address']
+            svcport_cmd = 'oc get svc -n default httpd-kcli-svc -o yaml'
+            svcport = yaml.safe_load(os.popen(svcport_cmd).read())['spec']['ports'][0]['nodePort']
             podname = os.popen('oc -n default get pod -l app=httpd-kcli -o name').read().split('/')[1].strip()
             copycmd = f"oc -n default cp {iso_pool_path}/{cluster}-worker.iso {podname}:/var/www/html"
             call(copycmd, shell=True)
-            iso_url = f'http://{svc_ip}:{svc_port}/{cluster}-worker.iso'
+            iso_url = f'http://{svcip}:{svcport}/{cluster}-worker.iso'
             boot_hosts(baremetal_hosts, iso_url, overrides=overrides)
             data['workers'] = data['workers'] - len(baremetal_hosts)
     if data['workers'] > 0:

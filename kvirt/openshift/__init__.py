@@ -1429,12 +1429,20 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 if baremetal_hosts:
                     iso_pool = data['pool'] or config.pool
                     iso_pool_path = k.get_pool_path(iso_pool)
-                    copy2(f'{iso_pool_path}/{cluster}-worker.iso', '/var/www/html')
-                    call(f"sudo chown apache.apache /var/www/html/{cluster}-worker.iso", shell=True)
-                    nic = os.popen('ip r | grep default | cut -d" " -f5').read().strip()
-                    ip_cmd = f"ip -o addr show {nic} | awk '{{print $4}}' | cut -d '/' -f 1 | head -1"
-                    host_ip = os.popen(ip_cmd).read().strip()
-                    iso_url = f'http://{host_ip}/{cluster}-worker.iso'
+                    chmodcmd = f"chmod 666 {iso_pool_path}/{cluster}-worker.iso"
+                    call(chmodcmd, shell=True)
+                    httpdcmd = f"oc create -f {plandir}/httpd.yaml"
+                    call(httpdcmd, shell=True)
+                    pprint("Waiting 45s for httpd deployment to be ready")
+                    sleep(45)
+                    svcip_cmd = 'oc get node -o yaml'
+                    svcip = yaml.safe_load(os.popen(svcip_cmd).read())['items'][0]['status']['addresses'][0]['address']
+                    svcport_cmd = 'oc get svc -n default httpd-kcli-svc -o yaml'
+                    svcport = yaml.safe_load(os.popen(svcport_cmd).read())['spec']['ports'][0]['nodePort']
+                    podname = os.popen('oc -n default get pod -l app=httpd-kcli -o name').read().split('/')[1].strip()
+                    copycmd = f"oc -n default cp {iso_pool_path}/{cluster}-worker.iso {podname}:/var/www/html"
+                    call(copycmd, shell=True)
+                    iso_url = f'http://{svcip}:{svcport}/{cluster}-worker.iso'
                     boot_hosts(baremetal_hosts, iso_url, overrides=overrides)
             if overrides['workers'] > 0:
                 threaded = data.get('threaded', False) or data.get('workers_threaded', False)
