@@ -7,6 +7,7 @@ import glob
 from hashlib import sha256
 from kvirt.jinjafilters import jinjafilters
 from kvirt.defaults import UBUNTUS, SSH_PUB_LOCATIONS
+from kvirt.redfish import Redfish
 from kvirt import version
 from ipaddress import ip_address
 from random import randint
@@ -2260,3 +2261,19 @@ def get_rhcos_url_from_file(filename, _type='kvm'):
     url = "https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/"
     url += f"{openshift_version}/{minor_version}/{arch}/{filename}.gz"
     return url
+
+
+def boot_hosts(baremetal_hosts, iso_url, overrides={}):
+    for host in baremetal_hosts:
+        bmc_url = host.get('bmc_url')
+        bmc_user = host.get('bmc_user') or overrides.get('bmc_user')
+        bmc_password = host.get('bmc_password') or overrides.get('bmc_password')
+        bmc_model = host.get('bmc_model') or overrides.get('bmc_model', 'dell')
+        if bmc_url is not None and bmc_user is not None and bmc_password is not None:
+            msg = host['name'] if 'name' in host else f"with url {bmc_url}"
+            pprint(f"Booting Host {msg}")
+            red = Redfish(bmc_url, bmc_user, bmc_password, model=bmc_model)
+            try:
+                red.set_iso(iso_url)
+            except Exception as e:
+                warning(f"Hit {e} when plugging iso to host {msg}")

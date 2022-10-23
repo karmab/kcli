@@ -2,11 +2,10 @@
 
 from glob import glob
 from kvirt.common import success, error, pprint, info2, container_mode, warning
-from kvirt.common import get_oc, pwd_path, get_installer_rhcos, get_ssh_pub_key
+from kvirt.common import get_oc, pwd_path, get_installer_rhcos, get_ssh_pub_key, boot_hosts
 from kvirt.defaults import OPENSHIFT_TAG
 from kvirt.openshift import process_apps, update_etc_hosts
 from kvirt.openshift import get_ci_installer, get_downstream_installer, get_installer_version
-from kvirt.redfish import Redfish
 from ipaddress import ip_network
 import json
 import os
@@ -14,7 +13,7 @@ import re
 import sys
 from shutil import which
 from subprocess import call
-import time
+from time import sleep
 import yaml
 
 virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere']
@@ -109,7 +108,7 @@ def create(config, plandir, cluster, overrides):
         hypercmd = f"podman run -it --rm --entrypoint=/usr/bin/hypershift -e KUBECONFIG=/k/{kubeconfig}"
         hypercmd += f" -v {kubeconfigdir}:/k quay.io/hypershift/hypershift-operator:latest install"
         call(hypercmd, shell=True)
-        time.sleep(120)
+        sleep(120)
     data['basedir'] = '/workdir' if container_mode() else '.'
     api_ip = os.popen("oc get node -o wide | grep master | head -1 | awk '{print $6}'").read().strip()
     data['api_ip'] = api_ip
@@ -277,7 +276,7 @@ def create(config, plandir, cluster, overrides):
     while True:
         if os.path.getsize(ignition_worker) != 0 and 'Token not found' not in open(ignition_worker).read():
             break
-        time.sleep(30)
+        sleep(30)
         timeout += 30
         if timeout > 300:
             error("Timeout trying to retrieve worker ignition")
@@ -304,7 +303,7 @@ def create(config, plandir, cluster, overrides):
             httpdcmd = f"oc create -f {plandir}/httpd.yaml"
             call(httpdcmd, shell=True)
             pprint("Waiting 45s for httpd deployment to be ready")
-            time.sleep(45)
+            sleep(45)
             svc_ip_cmd = 'oc get node -o yaml'
             svc_ip = yaml.safe_load(os.popen(svc_ip_cmd).read())['items'][0]['status']['addresses'][0]['address']
             svc_port_cmd = 'oc get svc -n default httpd-kcli-svc -o yaml'
@@ -313,19 +312,7 @@ def create(config, plandir, cluster, overrides):
             copycmd = f"oc -n default cp {iso_pool_path}/{cluster}-worker.iso {podname}:/var/www/html"
             call(copycmd, shell=True)
             iso_url = f'http://{svc_ip}:{svc_port}/{cluster}-worker.iso'
-            for host in baremetal_hosts:
-                bmc_url = host.get('bmc_url')
-                bmc_user = host.get('bmc_user') or overrides.get('bmc_user')
-                bmc_password = host.get('bmc_password') or overrides.get('bmc_password')
-                bmc_model = host.get('bmc_model') or overrides.get('bmc_model', 'dell')
-                if bmc_url is not None and bmc_user is not None and bmc_password is not None:
-                    msg = host['name'] if 'name' in host else f"with url {bmc_url}"
-                    pprint(f"Booting Host {msg}")
-                    red = Redfish(bmc_url, bmc_user, bmc_password, model=bmc_model)
-                    try:
-                        red.set_iso(iso_url)
-                    except Exception as e:
-                        warning(f"Hit {e} when plugging iso to host {msg}")
+            boot_hosts(baremetal_hosts, iso_url, overrides=overrides)
             data['workers'] = data['workers'] - len(baremetal_hosts)
     if data['workers'] > 0:
         worker_threaded = data.get('threaded', False) or data.get('workers_threaded', False)

@@ -119,10 +119,10 @@ ipsec: false
 async: false
 notify: false
 monitoring_retention: 24h
-baremetal: false
-baremetal_bootstrap: false
-baremetal_master: false
-baremetal_worker: false
+baremetal_iso: false
+baremetal_iso_bootstrap: false
+baremetal_iso_master: false
+baremetal_iso_worker: false
 threaded: false
 masters_threaded: false
 workers_threaded: false

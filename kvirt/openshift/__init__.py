@@ -12,7 +12,7 @@ from kvirt.common import error, pprint, success, warning, info2
 from kvirt.common import get_oc, pwd_path
 from kvirt.common import get_commit_rhcos, get_latest_fcos, generate_rhcos_iso, olm_app
 from kvirt.common import get_installer_rhcos
-from kvirt.common import ssh, scp, _ssh_credentials, copy_ipi_credentials, get_ssh_pub_key
+from kvirt.common import ssh, scp, _ssh_credentials, copy_ipi_credentials, get_ssh_pub_key, boot_hosts
 from kvirt.defaults import LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG
 import re
 from shutil import copy2, move, rmtree, which
@@ -392,10 +392,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     original_domain = None
     async_install = data.get('async')
     sslip = data.get('sslip')
-    baremetal_iso = data.get('baremetal')
-    baremetal_iso_bootstrap = data.get('baremetal_bootstrap', baremetal_iso)
-    baremetal_iso_master = data.get('baremetal_master', baremetal_iso)
-    baremetal_iso_worker = data.get('baremetal_worker', baremetal_iso)
+    baremetal_iso = data.get('baremetal_iso', False)
+    baremetal_hosts = data.get('baremetal_hosts', [])
+    baremetal_iso_bootstrap = data.get('baremetal_iso_bootstrap', baremetal_iso)
+    baremetal_iso_master = data.get('baremetal_iso_master', baremetal_iso)
+    baremetal_iso_worker = data.get('baremetal_iso_worker', baremetal_iso)
     baremetal_iso_any = baremetal_iso_bootstrap or baremetal_iso_master or baremetal_iso_worker
     baremetal_iso_all = baremetal_iso_bootstrap and baremetal_iso_master and baremetal_iso_worker
     notify = data.get('notify')
@@ -1409,22 +1410,36 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if 'name' in overrides:
             del overrides['name']
         if platform in virtplatforms:
-            if baremetal_iso_worker:
+            if baremetal_iso_worker or baremetal_hosts:
+                baremetal_iso_overrides = data.copy()
+                baremetal_iso_overrides['noname'] = True
+                baremetal_iso_overrides['workers'] = 1
+                baremetal_iso_overrides['role'] = 'worker'
                 result = config.plan(plan, inputfile=f'{plandir}/workers.yml', overrides=baremetal_iso_overrides,
                                      onlyassets=True)
                 iso_data = result['assets'][0]
                 ignitionfile = f'{cluster}-worker'
                 with open(ignitionfile, 'w') as f:
                     f.write(iso_data)
-                baremetal_iso_overrides['role'] = 'worker'
                 config.create_openshift_iso(cluster, overrides=baremetal_iso_overrides, ignitionfile=ignitionfile,
                                             podman=True, installer=True)
                 os.remove(ignitionfile)
-            else:
+                if baremetal_hosts:
+                    iso_pool = data['pool'] or config.pool
+                    iso_pool_path = k.get_pool_path(iso_pool)
+                    copy2(f'{iso_pool_path}/{cluster}-worker.iso', '/var/www/html')
+                    call(f"sudo chown apache.apache /var/www/html/{cluster}-worker.iso", shell=True)
+                    nic = os.popen('ip r | grep default | cut -d" " -f5').read().strip()
+                    ip_cmd = f"ip -o addr show {nic} | awk '{{print $4}}' | cut -d '/' -f 1 | head -1"
+                    host_ip = os.popen(ip_cmd).read().strip()
+                    iso_url = f'http://{host_ip}/{cluster}-worker.iso'
+                    boot_hosts(baremetal_hosts, iso_url, overrides=overrides)
+                    overrides['workers'] = overrides['workers'] - len(baremetal_hosts)
+            if overrides['workers'] > 0:
                 threaded = data.get('threaded', False) or data.get('workers_threaded', False)
                 result = config.plan(plan, inputfile=f'{plandir}/workers.yml', overrides=overrides, threaded=threaded)
-            if result['result'] != 'success':
-                sys.exit(1)
+                if result['result'] != 'success':
+                    sys.exit(1)
         elif platform in cloudplatforms:
             result = config.plan(plan, inputfile=f'{plandir}/cloud_workers.yml', overrides=overrides)
             if result['result'] != 'success':
