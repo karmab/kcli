@@ -1413,7 +1413,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             del overrides['name']
         if platform in virtplatforms:
             if baremetal_iso_worker or baremetal_hosts:
-                baremetal_iso_overrides = data.copy()
+                baremetal_iso_overrides = overrides.copy()
                 baremetal_iso_overrides['noname'] = True
                 baremetal_iso_overrides['workers'] = 1
                 baremetal_iso_overrides['role'] = 'worker'
