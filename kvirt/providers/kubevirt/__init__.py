@@ -866,7 +866,8 @@ class Kubevirt(Kubecommon):
             allimages = [os.path.basename(image['spec']['url']) for image in virtualimages]
         elif cdi:
             pvc = core.list_namespaced_persistent_volume_claim(namespace)
-            allimages = [self.get_image_name(p.metadata.annotations['cdi.kubevirt.io/storage.import.endpoint'])
+            allimages = [self.get_image_name(p.metadata.annotations['cdi.kubevirt.io/storage.import.endpoint'],
+                                             pvcname=p.metadata.name)
                          for p in pvc.items if p.metadata.annotations is not None and
                          'cdi.kubevirt.io/storage.import.endpoint' in p.metadata.annotations and
                          'cdi.kubevirt.io/storage.condition.running.reason' in p.metadata.annotations and
@@ -969,16 +970,32 @@ class Kubevirt(Kubecommon):
         except:
             error(f"VM {name} not found")
             return {'result': 'failure', 'reason': f"VM {name} not found"}
+        if iso is not None:
+            if iso not in self.volumes(iso=True):
+                return {'result': 'failure', 'reason': f"you don't have iso {iso}"}
+            good_iso = iso.replace('_', '-').replace('.', '-').lower()
+        found = False
+        diskname = f'{name}-iso'
         for diskindex, disk in enumerate(vm['spec']['template']['spec']['domain']['devices']['disks']):
-            diskname = vm['spec']['template']['spec']['domain']['devices']['disks'][diskindex]['name']
-            if iso is None and diskname.endswith('-iso'):
-                del vm['spec']['template']['spec']['domain']['devices']['disks'][diskindex]
-                for volindex, vol in enumerate(vm['spec']['template']['spec']['volumes']):
-                    if vol['name'] == diskname:
-                        del vm['spec']['template']['spec']['volumes'][volindex]
-                crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
-                return
-        return
+            currentdiskname = vm['spec']['template']['spec']['domain']['devices']['disks'][diskindex]['name']
+            if currentdiskname == diskname:
+                found = True
+                if iso is None:
+                    del vm['spec']['template']['spec']['domain']['devices']['disks'][diskindex]
+        for volindex, vol in enumerate(vm['spec']['template']['spec']['volumes']):
+            if vol['name'] == diskname:
+                if iso is None:
+                    del vm['spec']['template']['spec']['volumes'][volindex]
+                elif vol['persistentVolumeClaim']['claimName'] != good_iso:
+                    vm['spec']['template']['spec']['volumes'][volindex]['persistentVolumeClaim']['claimName'] = good_iso
+                else:
+                    return
+        if iso is not None and not found:
+            newdisk = {'bootOrder': 2, 'cdrom': {'readOnly': False, 'bus': 'sata'}, 'name': diskname}
+            myvolume = {'name': diskname, 'persistentVolumeClaim': {'claimName': good_iso}}
+            vm['spec']['template']['spec']['domain']['devices']['disks'].append(newdisk)
+            vm['spec']['template']['spec']['volumes'].append(myvolume)
+        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
 
     def update_flavor(self, name, flavor):
         print("Not implemented")
@@ -1540,9 +1557,11 @@ class Kubevirt(Kubecommon):
     def flavors(self):
         return []
 
-    def get_image_name(self, name):
+    def get_image_name(self, name, pvcname=None):
         if name.endswith('.gz'):
             name = name.replace('.gz', '')
+        if 'api.openshift.com' in name and pvcname is not None:
+            return pvcname.replace('-iso', '.iso')
         if '?' in name:
             return os.path.basename(name).split('?')[0]
         else:
