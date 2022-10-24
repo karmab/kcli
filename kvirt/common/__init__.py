@@ -1164,7 +1164,8 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
                 if not newkey.startswith('ssh-'):
                     warning(f"Skipping invalid key {key}")
                     continue
-                publickeys.append(newkey)
+                if newkey not in publickeys:
+                    publickeys.append(newkey)
         elif not publickeys and which('ssh-add') is not None:
             agent_keys = os.popen('ssh-add -L 2>/dev/null | head -1').readlines()
             if agent_keys:
