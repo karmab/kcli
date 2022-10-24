@@ -964,6 +964,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if '99-ingress-controller.yaml' in f:
             ingressrole = 'master' if workers == 0 or not mdns or kubevirt_api_service else 'worker'
             replicas = masters if workers == 0 or not mdns or kubevirt_api_service else workers
+            if platform in virtplatforms and sslip and ingress_ip is None:
+                replicas = masters
+                ingressrole = 'master'
+                warning("Forcing router pods to land on masters since sslip is set and api_ip will be used for ingress")
+                copy2(f'{plandir}/cluster-scheduler-02-config.yml', f"{clusterdir}/openshift")
             ingressconfig = config.process_inputfile(cluster, f, overrides={'replicas': replicas, 'role': ingressrole,
                                                                             'cluster': cluster, 'domain': domain})
             with open(f"{clusterdir}/openshift/99-ingress-controller.yaml", 'w') as _f:
