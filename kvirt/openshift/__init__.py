@@ -1424,22 +1424,35 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 with open(ignitionfile, 'w') as f:
                     f.write(iso_data)
                 config.create_openshift_iso(cluster, overrides=baremetal_iso_overrides, ignitionfile=ignitionfile,
-                                            podman=True, installer=True)
+                                            podman=True, installer=True, uefi=True)
                 os.remove(ignitionfile)
                 if baremetal_hosts:
                     iso_pool = data['pool'] or config.pool
                     iso_pool_path = k.get_pool_path(iso_pool)
                     chmodcmd = f"chmod 666 {iso_pool_path}/{cluster}-worker.iso"
                     call(chmodcmd, shell=True)
-                    httpdcmd = f"oc create -f {plandir}/httpd.yaml"
-                    call(httpdcmd, shell=True)
-                    pprint("Waiting 45s for httpd deployment to be ready")
-                    sleep(45)
+                    pprint("Creating httpd deployment to host iso for baremetal workers")
+                    timeout = 0
+                    while True:
+                        if os.popen('oc -n default get pod -l app=httpd-kcli -o name').read() != "":
+                            break
+                        if timeout > 60:
+                            error("Timeout waiting for httpd deployment to be up")
+                            sys.exit(1)
+                        httpdcmd = f"oc create -f {plandir}/httpd.yaml"
+                        call(httpdcmd, shell=True)
+                        timeout += 5
+                        sleep(5)
                     svcip_cmd = 'oc get node -o yaml'
                     svcip = yaml.safe_load(os.popen(svcip_cmd).read())['items'][0]['status']['addresses'][0]['address']
                     svcport_cmd = 'oc get svc -n default httpd-kcli-svc -o yaml'
                     svcport = yaml.safe_load(os.popen(svcport_cmd).read())['spec']['ports'][0]['nodePort']
                     podname = os.popen('oc -n default get pod -l app=httpd-kcli -o name').read().split('/')[1].strip()
+                    try:
+                        call(f"oc wait -n default --for=condition=Ready pod/{podname}", shell=True)
+                    except Exception as e:
+                        error(f"Hit {e}")
+                        sys.exit(1)
                     copycmd = f"oc -n default cp {iso_pool_path}/{cluster}-worker.iso {podname}:/var/www/html"
                     call(copycmd, shell=True)
                     iso_url = f'http://{svcip}:{svcport}/{cluster}-worker.iso'
