@@ -936,6 +936,7 @@ class Kubevirt(Kubecommon):
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         t = 'Template' if 'Template' in vm['spec'] else 'template'
         vm['spec'][t]['spec']['domain']['resources']['requests']['memory'] = f"{memory}M"
+        vm['spec'][t]['spec']['domain']['resources']['limits']['memory'] = f"{memory}M"
         crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
         warning("Change will only appear next full lifeclyclereboot")
         return
