@@ -938,7 +938,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if ipsec:
         copy2(f"{plandir}/99-ipsec.yaml", f"{clusterdir}/openshift")
     if workers == 0 or not mdns or kubevirt_api_service:
-        copy2(f'{plandir}/cluster-scheduler-02-config.yml', f"{clusterdir}/openshift")
+        copy2(f'{plandir}/cluster-scheduler-02-config.yml', f"{clusterdir}/manifests")
     if disconnected_operators:
         if os.path.exists(f'{clusterdir}/imageContentSourcePolicy.yaml'):
             copy2(f'{clusterdir}/imageContentSourcePolicy.yaml', f"{clusterdir}/openshift")
@@ -968,7 +968,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 replicas = masters
                 ingressrole = 'master'
                 warning("Forcing router pods to land on masters since sslip is set and api_ip will be used for ingress")
-                copy2(f'{plandir}/cluster-scheduler-02-config.yml', f"{clusterdir}/openshift")
+                copy2(f'{plandir}/cluster-scheduler-02-config.yml', f"{clusterdir}/manifests")
             ingressconfig = config.process_inputfile(cluster, f, overrides={'replicas': replicas, 'role': ingressrole,
                                                                             'cluster': cluster, 'domain': domain})
             with open(f"{clusterdir}/openshift/99-ingress-controller.yaml", 'w') as _f:
