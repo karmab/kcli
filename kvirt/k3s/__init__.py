@@ -98,8 +98,9 @@ def create(config, plandir, cluster, overrides):
             data['virtual_router_id'] = hash(data['cluster']) % 254 + 1
             pprint(f"Using keepalived virtual_router_id {data['virtual_router_id']}")
     virtual_router_id = data.get('virtual_router_id')
-    auth_pass = ''.join(choice(ascii_letters + digits) for i in range(5))
-    data['auth_pass'] = auth_pass
+    if data.get('auth_pass') is None:
+        auth_pass = ''.join(choice(ascii_letters + digits) for i in range(5))
+        data['auth_pass'] = auth_pass
     install_k3s_args = []
     for arg in data:
         if arg.startswith('install_k3s'):

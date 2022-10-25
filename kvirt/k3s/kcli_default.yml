@@ -39,3 +39,5 @@ masters_threaded: false
 workers_threaded: false
 keys: []
 tempkey: false
+auth_pass:
+virtual_router_id:
