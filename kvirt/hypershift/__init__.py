@@ -106,7 +106,7 @@ def create(config, plandir, cluster, overrides):
             kubeconfig = 'config'
             kubeconfigdir = os.path.expanduser("~/.kube")
         hypercmd = f"podman run -it --rm --entrypoint=/usr/bin/hypershift -e KUBECONFIG=/k/{kubeconfig}"
-        hypercmd += f" -v {kubeconfigdir}:/k quay.io/hypershift/hypershift-operator:latest install"
+        hypercmd += f" -v {kubeconfigdir}:/k {data['hypershift_image']} install"
         call(hypercmd, shell=True)
         sleep(120)
     data['basedir'] = '/workdir' if container_mode() else '.'
