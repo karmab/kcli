@@ -292,8 +292,8 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             privatekeyfile = f"{tempkeydir.name}/id_rsa"
             publickeyfile = f"{privatekeyfile}.pub"
             if not os.path.exists(privatekeyfile):
-                tempkeycmd = f"yes '' | ssh-keygen -q -t rsa -N '' -C 'temp-kcli-key' -f {privatekeyfile} > /dev/null"
-                tempkeycmd += " 2>&1"
+                tempkeycmd = f"yes '' | ssh-keygen -q -t rsa -N '' -C 'temp-kcli-key' -f {privatekeyfile} || yes"
+                tempkeycmd += " >/dev/null 2>&1 || yes"
                 os.system(tempkeycmd)
         userdata = '#cloud-config\n'
         userdata += 'final_message: kcli boot finished, up $UPTIME seconds\n'
