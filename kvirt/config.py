@@ -2722,15 +2722,18 @@ class Kconfig(Kbaseconfig):
                     warning("Embedding metal url in iso for target version and installing with a more recent iso")
                 iso_version = 'latest'
         api_ip = overrides.get('api_ip')
-        domain = overrides.get('domain')
         ignition_version = overrides.get('ignition_version',
                                          common.ignition_version("rhcos-%s" % iso_version.replace('.', '')))
         role = overrides.get('role', 'worker')
         iso = overrides.get('iso', True)
+        domain = overrides.get('domain')
         if '.' in cluster:
             domain = '.'.join(cluster.split('.')[1:])
             pprint(f"Using domain {domain}")
             cluster = cluster.replace(f".{domain}", '')
+        if domain is None:
+            error("Missing domain")
+            sys.exit(1)
         hosts_content = None
         finaldata = None
         if ignitionfile is not None:
