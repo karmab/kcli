@@ -65,6 +65,7 @@ def create(config, plandir, cluster, overrides):
             'version': 'stable',
             'network_type': 'OVNKubernetes',
             'fips': False,
+            'hypershift_image': 'quay.io/hypershift/hypershift-operator:latest',
             'namespace': 'clusters',
             'disconnected_url': None,
             'pull_secret': 'openshift_pull.json'}
