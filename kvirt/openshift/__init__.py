@@ -1018,14 +1018,14 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                         publickey = open(f"{orissh}/id_rsa.pub").read().strip()
                         f.write(f"\n{publickey}")
                 elif config.type == 'kubevirt':
+                    oriconf = f"{tmpdir}/.kcli"
+                    os.mkdir(oriconf)
+                    kubeconfig_overrides = {'kubeconfig': False, 'client': config.client}
                     destkubeconfig = config.options.get('kubeconfig', orikubeconfig)
                     if destkubeconfig is not None:
                         destkubeconfig = os.path.expanduser(destkubeconfig)
                         copy2(destkubeconfig, f"{oriconf}/kubeconfig")
-                    oriconf = f"{tmpdir}/.kcli"
-                    os.mkdir(oriconf)
-                    kubeconfig_overrides = {'kubeconfig': True if destkubeconfig is not None else False,
-                                            'client': config.client}
+                        kubeconfig_overrides['kubeconfig'] = True
                     kcliconf = config.process_inputfile(cluster, f"{plandir}/kubevirt_kcli_conf.j2",
                                                         overrides=kubeconfig_overrides)
                     with open(f"{oriconf}/config.yml", 'w') as _f:
