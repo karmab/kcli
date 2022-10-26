@@ -277,7 +277,6 @@ def console_container(args):
     name = common.get_lastvm(config.client) if not args.name else args.name
     cont = Kcontainerconfig(config, client=args.containerclient).cont
     cont.console_container(name)
-    return
 
 
 def delete_vm(args):
@@ -467,7 +466,7 @@ def create_profile(args):
                          namespace=args.namespace)
     result = baseconfig.create_profile(profile, overrides=overrides)
     code = common.handle_response(result, profile, element='Profile', action='created', client=baseconfig.client)
-    return code
+    sys.exit(code)
 
 
 def delete_profile(args):
@@ -482,8 +481,7 @@ def delete_profile(args):
     pprint(f"Deleting on {baseconfig.client}")
     result = baseconfig.delete_profile(profile)
     code = common.handle_response(result, profile, element='Profile', action='deleted', client=baseconfig.client)
-    return code
-    # sys.exit(0) if result['result'] == 'success' else sys.exit(1)
+    sys.exit(code)
 
 
 def update_profile(args):
@@ -494,7 +492,7 @@ def update_profile(args):
                          namespace=args.namespace)
     result = baseconfig.update_profile(profile, overrides=overrides)
     code = common.handle_response(result, profile, element='Profile', action='updated', client=baseconfig.client)
-    return code
+    sys.exit(code)
 
 
 def info_vm(args):
@@ -650,7 +648,6 @@ def list_vm(args):
             else:
                 vms.add_row(vminfo)
         print(vms)
-    return
 
 
 def list_container(args):
@@ -668,7 +665,6 @@ def list_container(args):
         else:
             containers.add_row(container)
     print(containers)
-    return
 
 
 def profilelist_container(args):
@@ -687,7 +683,6 @@ def profilelist_container(args):
             profilestable.add_row(profile)
     profilestable.align["Profile"] = "l"
     print(profilestable)
-    return
 
 
 def list_containerimage(args):
@@ -702,7 +697,6 @@ def list_containerimage(args):
     for image in cont.list_images():
         images.add_row([image])
     print(images)
-    return
 
 
 def list_host(args):
@@ -718,7 +712,6 @@ def list_host(args):
         else:
             clientstable.add_row([client, _type, enabled, ''])
     print(clientstable)
-    return
 
 
 def list_kubeconfig(args):
@@ -732,7 +725,6 @@ def list_kubeconfig(args):
         kubeconfigstable.add_row([cluster, same])
     kubeconfigstable.align["Kubeconfig"] = "l"
     print(kubeconfigstable)
-    return
 
 
 def list_lb(args):
@@ -750,7 +742,6 @@ def list_lb(args):
             loadbalancerstable.add_row(lb)
     loadbalancerstable.align["Loadbalancer"] = "l"
     print(loadbalancerstable)
-    return
 
 
 def info_profile(args):
@@ -796,7 +787,6 @@ def list_profile(args):
             profilestable.add_row(profile)
     profilestable.align["Profile"] = "l"
     print(profilestable)
-    return
 
 
 def list_dns(args):
@@ -817,7 +807,6 @@ def list_dns(args):
             dnstable.add_row(entry)
     dnstable.align["Flavor"] = "l"
     print(dnstable)
-    return
 
 
 def list_flavor(args):
@@ -837,7 +826,6 @@ def list_flavor(args):
             flavorstable.add_row(flavor)
     flavorstable.align["Flavor"] = "l"
     print(flavorstable)
-    return
 
 
 def list_available_images(args):
@@ -854,7 +842,6 @@ def list_available_images(args):
             data.append(IMAGES[key])
         imagestable.add_row(data)
     print(imagestable)
-    return
 
 
 def list_image(args):
@@ -867,7 +854,6 @@ def list_image(args):
     for image in k.volumes():
         imagestable.add_row([image])
     print(imagestable)
-    return
 
 
 def list_iso(args):
@@ -880,7 +866,6 @@ def list_iso(args):
     for iso in k.volumes(iso=True):
         isostable.add_row([iso])
     print(isostable)
-    return
 
 
 def list_network(args):
@@ -914,7 +899,6 @@ def list_network(args):
                 networkstable.add_row([network, networktype, cidr, dhcp, domain, mode])
         networkstable.align["Network"] = "l"
         print(networkstable)
-        return
     else:
         subnets = k.list_subnets()
         pprint("Listing Subnets...")
@@ -934,7 +918,6 @@ def list_network(args):
                 subnetstable.add_row([subnet, az, cidr, network])
         subnetstable.align["Network"] = "l"
         print(subnetstable)
-        return
 
 
 def list_plan(args):
@@ -958,7 +941,6 @@ def list_plan(args):
             planvms = plan[1]
             plans.add_row([planname, planvms])
     print(plans)
-    return
 
 
 def choose_parameter_file(paramfile):
@@ -1177,7 +1159,6 @@ def list_kube(args):
             kubeplan = kube['plan']
             kubestable.add_row([kubename, kubetype, kubeplan, kubevms])
     print(kubestable)
-    return
 
 
 def list_pool(args):
@@ -1197,7 +1178,6 @@ def list_pool(args):
             poolstable.add_row([pool, poolpath])
     poolstable.align["Pool"] = "l"
     print(poolstable)
-    return
 
 
 def list_product(args):
@@ -1237,7 +1217,6 @@ def list_product(args):
             group = product.get('group', 'N/A')
             products.add_row([repo, name, group, description, numvms, memory])
     print(products)
-    return
 
 
 def list_repo(args):
@@ -1250,7 +1229,6 @@ def list_repo(args):
         url = reposinfo[repo]
         repos.add_row([repo, url])
     print(repos)
-    return
 
 
 def list_vmdisk(args):
@@ -1266,7 +1244,6 @@ def list_vmdisk(args):
         pool = disks[disk]['pool']
         diskstable.add_row([disk, pool, path])
     print(diskstable)
-    return
 
 
 def create_openshift_iso(args):
@@ -1365,7 +1342,7 @@ def create_vm(args):
                 config.k.serialconsole(name)
             else:
                 code = common.handle_response(result, name, element='', action='created', client=config.client)
-                return code
+                sys.exit(code)
         elif 'reason' in result:
             error(result['reason'])
         else:
@@ -1405,7 +1382,7 @@ def create_vm(args):
             if not onlyassets:
                 codes.append(common.handle_response(result, currentname, element='', action='created',
                                                     client=config.client))
-        return max(codes)
+        sys.exit(max(codes))
 
 
 def clone_vm(args):
@@ -1622,7 +1599,6 @@ def delete_vmdisk(args):
     for diskname in disknames:
         pprint(f"Deleting disk {diskname}")
         k.delete_disk(name=name, diskname=diskname, pool=pool, novm=novm)
-    return
 
 
 def create_dns(args):
@@ -1699,7 +1675,6 @@ def create_lb(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     config.create_loadbalancer(name, ports=ports, checkpath=checkpath, vms=vms, domain=domain, checkport=checkport,
                                internal=internal, subnetid=subnetid)
-    return 0
 
 
 def delete_lb(args):
@@ -1710,7 +1685,6 @@ def delete_lb(args):
         common.confirm("Are you sure?")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     config.delete_loadbalancer(args.name)
-    return 0
 
 
 def create_generic_kube(args):
@@ -2050,7 +2024,6 @@ def delete_vmnic(args):
     k = config.k
     pprint(f"Deleting nic from vm {name}...")
     k.delete_nic(name, interface)
-    return
 
 
 def create_pool(args):
@@ -2115,7 +2088,7 @@ def create_plan(args):
         if current_version != 'N/A':
             if not compare_git_versions(minimum_version, current_version):
                 error(f"Current kcli version {current_version} lower than plan minimum version {minimum_version}")
-                return 1
+                sys.exit(1)
             else:
                 pprint("Current kcli version compatible with this plan")
     client = overrides.get('client', args.client)
@@ -2129,7 +2102,7 @@ def create_plan(args):
     if overrides.get('force', args.force):
         if plan is None:
             error("Force requires specifying a plan name")
-            return 1
+            sys.exit(1)
         else:
             config.delete_plan(plan, unregister=config.rhnunregister)
     result = config.plan(plan, ansible=ansible, url=url, path=path, container=container, inputfile=inputfile,
@@ -2164,7 +2137,6 @@ def create_playbook(args):
     _type = baseconfig.ini[baseconfig.client].get('type', 'kvm')
     overrides.update({'type': _type})
     baseconfig.create_playbook(inputfile, overrides=overrides, store=store)
-    return 0
 
 
 def update_plan(args):
@@ -2185,12 +2157,11 @@ def update_plan(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if autostart:
         config.autostart_plan(plan)
-        return 0
+        return
     elif noautostart:
         config.noautostart_plan(plan)
-        return 0
+        return
     config.plan(plan, url=url, path=path, container=container, inputfile=inputfile, overrides=overrides, update=True)
-    return 0
 
 
 def delete_plan(args):
@@ -2225,7 +2196,6 @@ def expose_plan(args):
     overrides = common.get_overrides(param=args.param)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     config.expose_plan(plan, inputfile=inputfile, overrides=overrides, port=port)
-    return 0
 
 
 def start_plan(args):
@@ -2310,7 +2280,6 @@ def info_plan(args):
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
         config.plan('info', url=url, path=path, inputfile=inputfile, info=True, quiet=quiet, doc=doc)
-    return 0
 
 
 def info_generic_kube(args):
@@ -2393,6 +2362,8 @@ def info_network(args):
     networkinfo = config.k.info_network(name)
     if networkinfo:
         common.pretty_print(networkinfo)
+    else:
+        sys.exit(1)
 
 
 def info_keyword(args):
@@ -2412,7 +2383,6 @@ def download_plan(args):
         pprint(f"Using {plan} as name of the plan")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     config.plan(plan, url=url, download=True)
-    return 0
 
 
 def download_coreos_installer(args):
@@ -2552,7 +2522,6 @@ def create_pipeline_github(args):
     renderfile = baseconfig.create_github_pipeline(plan, inputfile, paramfile=paramfile, overrides=overrides,
                                                    kube=kube, script=script)
     print(renderfile)
-    return 0
 
 
 def create_pipeline_jenkins(args):
@@ -2574,11 +2543,10 @@ def create_pipeline_jenkins(args):
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     if not kube and not os.path.exists(inputfile):
         error(f"File {inputfile} not found")
-        return 0
+        sys.exit(1)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     renderfile = baseconfig.create_jenkins_pipeline(plan, inputfile, overrides=overrides, kube=kube)
     print(renderfile)
-    return 0
 
 
 def create_pipeline_tekton(args):
@@ -2601,7 +2569,6 @@ def create_pipeline_tekton(args):
     overrides = common.get_overrides(param=args.param)
     renderfile = baseconfig.create_tekton_pipeline(plan, inputfile, paramfile=paramfile, overrides=overrides, kube=kube)
     print(renderfile)
-    return 0
 
 
 def render_file(args):
@@ -2638,10 +2605,9 @@ def render_file(args):
     overrides.update(config_data)
     if not os.path.exists(inputfile):
         error(f"File {inputfile} not found")
-        return 0
+        sys.exit(1)
     renderfile = baseconfig.process_inputfile(plan, inputfile, overrides=overrides, ignore=ignore)
     print(renderfile)
-    return 0
 
 
 def create_vmdata(args):
@@ -2654,7 +2620,6 @@ def create_vmdata(args):
     args.serial = None
     args.count = 1
     create_vm(args)
-    return 0
 
 
 def create_plandata(args):
@@ -2684,7 +2649,7 @@ def create_plandata(args):
     overrides.update(config_data)
     if not os.path.exists(inputfile):
         error(f"File {inputfile} not found")
-        return 0
+        sys.exit(1)
     results = config.plan(plan, inputfile=inputfile, overrides=overrides, onlyassets=True, pre=pre)
     if results.get('assets'):
         for num, asset in enumerate(results['assets']):
@@ -2726,7 +2691,6 @@ def create_plandata(args):
             renderplan = config.process_inputfile(plan, inputfile, overrides=overrides)
             with open("%s/kcli_plan.yml" % outputdir, 'w') as f:
                 f.write(renderplan)
-    return 0
 
 
 def create_plantemplate(args):
@@ -2746,7 +2710,6 @@ def create_snapshot_plan(args):
     snapshot = args.snapshot
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     config.snapshot_plan(plan, snapshotname=snapshot)
-    return 0
 
 
 def delete_snapshot_plan(args):
@@ -2764,7 +2727,6 @@ def delete_snapshot_plan(args):
         if vm['plan'] == plan:
             pprint(f"Deleting snapshot {snapshot} of vm {name}...")
             k.delete_snapshot(snapshot, name)
-    return 0
 
 
 def revert_snapshot_plan(args):
@@ -2773,7 +2735,6 @@ def revert_snapshot_plan(args):
     snapshot = args.snapshot
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     config.revert_plan(plan, snapshotname=snapshot)
-    return 0
 
 
 def create_repo(args):
@@ -2789,7 +2750,6 @@ def create_repo(args):
         sys.exit(1)
     pprint(f"Adding repo {repo}...")
     baseconfig.create_repo(repo, url)
-    return 0
 
 
 def delete_repo(args):
@@ -2805,7 +2765,6 @@ def delete_repo(args):
         sys.exit(1)
     pprint(f"Deleting repo {repo}...")
     baseconfig.delete_repo(repo)
-    return
 
 
 def update_repo(args):
@@ -2821,7 +2780,6 @@ def update_repo(args):
     else:
         pprint(f"Updating repo {repo}...")
         baseconfig.update_repo(repo)
-    return
 
 
 def info_product(args):
@@ -2845,7 +2803,6 @@ def create_product(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     pprint(f"Creating product {product}...")
     config.create_product(product, repo=repo, group=group, plan=plan, latest=latest, overrides=overrides)
-    return 0
 
 
 def ssh_vm(args):
@@ -2955,7 +2912,7 @@ def scp_vm(args):
         download = False
     else:
         error("Couldn't run scp")
-        return
+        sys.exit(1)
     if '@' in name and len(name.split('@')) == 2:
         user, name = name.split('@')
     if download:
@@ -3247,7 +3204,6 @@ def create_container(args):
         params['cmds'] = [cmd]
     cont.create_container(**params)
     success(f"container {name} created")
-    return
 
 
 def snapshotcreate_vm(args):
@@ -3259,7 +3215,7 @@ def snapshotcreate_vm(args):
     pprint(f"Creating snapshot of {name} named {snapshot}...")
     result = k.create_snapshot(snapshot, name)
     code = common.handle_response(result, name, element='', action='snapshotted')
-    return code
+    sys.exit(code)
 
 
 def snapshotdelete_vm(args):
@@ -3271,7 +3227,7 @@ def snapshotdelete_vm(args):
     pprint(f"Deleting snapshot {snapshot} of vm {name}...")
     result = k.delete_snapshot(snapshot, name)
     code = common.handle_response(result, name, element='', action='snapshot deleted')
-    return code
+    sys.exit(code)
 
 
 def snapshotrevert_vm(args):
@@ -3283,7 +3239,7 @@ def snapshotrevert_vm(args):
     pprint(f"Reverting snapshot {snapshot} of vm {name}...")
     result = k.revert_snapshot(snapshot, name)
     code = common.handle_response(result, name, element='', action='snapshot reverted')
-    return code
+    sys.exit(code)
 
 
 def snapshotlist_vm(args):
@@ -3295,11 +3251,10 @@ def snapshotlist_vm(args):
     snapshots = k.list_snapshots(name)
     if isinstance(snapshots, dict):
         error(f"Vm {name} not found")
-        return
+        sys.exit(1)
     else:
         for snapshot in snapshots:
             print(snapshot)
-    return
 
 
 def create_bucket(args):
@@ -3445,7 +3400,6 @@ def list_keyword(args):
         default_value = default[keyword]
         keywordstable.add_row([keyword, default_value, value])
     print(keywordstable)
-    return
 
 
 def create_workflow(args):
