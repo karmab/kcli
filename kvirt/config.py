@@ -856,7 +856,7 @@ class Kconfig(Kbaseconfig):
                                    % (rhnserver, rhnak, rhnorg))
                 if image.startswith('rhel-8'):
                     rhncommands.append('subscription-manager repos --enable=rhel-8-for-x86_64-baseos-rpms')
-                else:
+                elif not image.startswith('rhel-baseos-9') and not image.startswith('rhel9'):
                     rhncommands.append('subscription-manager repos --enable=rhel-7-server-rpms')
             elif rhnuser is not None and rhnpassword is not None:
                 rhncommands.append('subscription-manager register --serverurl=%s --force --username=%s --password=%s'
