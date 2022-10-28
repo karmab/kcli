@@ -1523,3 +1523,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         k.reserve_dns(f'apps.{cluster}', domain=domain, ip=api_ip, alias=['*'])
         if platform == 'ibm':
             k._add_sno_security_group(cluster)
+    if metal3:
+        labelcmd = "oc label nodes --selector='node-role.kubernetes.io/master'"
+        labelcmd += " machine.openshift.io/cluster-api-machine-role=master"
+        call(labelcmd, shell=True)
