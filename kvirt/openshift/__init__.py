@@ -1097,6 +1097,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                     g.write(rendered)
     if metal3:
         copy2(f"{plandir}/99-metal3-provisioning.yaml", f"{clusterdir}/openshift")
+        copy2(f"{plandir}/99-metal3-fake-machine.yaml", f"{clusterdir}/openshift")
     if sushy:
         if config.type != 'kvm':
             warning(f"Ignoring sushy request as platform is {config.type}")
@@ -1523,7 +1524,3 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         k.reserve_dns(f'apps.{cluster}', domain=domain, ip=api_ip, alias=['*'])
         if platform == 'ibm':
             k._add_sno_security_group(cluster)
-    if metal3:
-        labelcmd = "oc label nodes --selector='node-role.kubernetes.io/master'"
-        labelcmd += " machine.openshift.io/cluster-api-machine-role=master"
-        call(labelcmd, shell=True)

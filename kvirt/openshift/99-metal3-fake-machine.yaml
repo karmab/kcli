@@ -1,0 +1,8 @@
+apiVersion: machine.openshift.io/v1beta1
+kind: Machine
+metadata:
+  labels:
+    machine.openshift.io/cluster-api-machine-role: master
+    machine.openshift.io/cluster-api-machine-type: master
+  name: fake-master-0
+  namespace: openshift-machine-api
