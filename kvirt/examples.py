@@ -377,3 +377,10 @@ $ kcli update network mynetwork --domain superdomain.com
 # Update plan
 $ kcli update network mynetwork -P plan=newplan
 """
+
+boothosts = """# Boot hosts declared in a parameter file from specific ISO url
+$ kcli boot --pf baremetal_hosts.yml -P iso_url=http://192.168.122.1/my.iso
+
+# Do the same specifying hosts on the command line
+$ kcli boot -P baremetal_hosts=['{"bmc_url":"http://192.168.122.1:8000/xxx"}'] -P bmc_user=admin -P bmc_password=admin
+"""

@@ -12,7 +12,7 @@ from kvirt.examples import kubegenericcreate, kubek3screate, kubeopenshiftcreate
 from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsole, vmexport, niccreate, nicdelete
 from kvirt.examples import disconnectedcreate, appopenshiftcreate, plantemplatecreate, kubehypershiftcreate
 from kvirt.examples import workflowcreate, kubegenericscale, kubek3sscale, kubeopenshiftscale
-from kvirt.examples import changelog
+from kvirt.examples import changelog, boothosts
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
 from kvirt.defaults import IMAGES, VERSION, LOCAL_OPENSHIFT_APPS, SSH_PUB_LOCATIONS
@@ -170,6 +170,19 @@ def delete_cache(args):
         os.remove(cache_file)
     else:
         warning(f"No cache file found for {baseconfig.client}")
+
+
+def boot_hosts(args):
+    overrides = common.get_overrides(param=args.param)
+    iso_url = overrides.get('iso_url')
+    baremetal_hosts = overrides.get('baremetal_hosts', [])
+    if 'iso_url' not in overrides:
+        error("Iso url needs to be set in order to boot host")
+        sys.exit(1)
+    if not baremetal_hosts:
+        error("Baremetal hosts need to be defined")
+        sys.exit(1)
+    common.boot_hosts(baremetal_hosts, iso_url, overrides=overrides)
 
 
 def start_vm(args):
@@ -3493,6 +3506,15 @@ def cli():
     vmconsole_parser.set_defaults(func=console_vm)
     subparsers.add_parser('console', parents=[vmconsole_parser], description=vmconsole_desc, help=vmconsole_desc,
                           epilog=vmconsole_epilog, formatter_class=rawhelp)
+
+    boothosts_desc = 'Boot Hosts'
+    boothosts_epilog = f"examples:\n{boothosts}"
+    boothosts_parser = subparsers.add_parser('boot', description=boothosts_desc, help=boothosts_desc,
+                                             epilog=boothosts_epilog, formatter_class=rawhelp)
+    boothosts_parser.add_argument('-P', '--param', action='append',
+                                  help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    boothosts_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE', action='append')
+    boothosts_parser.set_defaults(func=boot_hosts)
 
     delete_desc = 'Delete Object'
     delete_parser = subparsers.add_parser('delete', description=delete_desc, help=delete_desc, aliases=['remove'])
