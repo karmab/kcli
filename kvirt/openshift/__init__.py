@@ -632,6 +632,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             tag = f'{disconnected_url}/{disconnected_prefix}:{tag}'
             os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = tag
         pprint(f"Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to {tag}")
+        data['openshift_release_image'] = {tag}
     INSTALLER_VERSION = get_installer_version()
     COMMIT_ID = os.popen('openshift-install version').readlines()[1].replace('built from commit', '').strip()
     pprint(f"Using installer version {INSTALLER_VERSION}")
