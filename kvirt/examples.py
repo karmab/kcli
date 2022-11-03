@@ -97,7 +97,7 @@ $ kcli create repo -u https://github.com/karmab/kcli-plans karmab
 """
 
 start = """# Start vms named vm1 and vm2
-$ kcli start vm1 vm2
+$ kcli start vm vm1 vm2
 
 # Start all vms of plan X
 $ kcli start plan X
@@ -378,9 +378,17 @@ $ kcli update network mynetwork --domain superdomain.com
 $ kcli update network mynetwork -P plan=newplan
 """
 
-boothosts = """# Boot hosts declared in a parameter file from specific ISO url
-$ kcli boot --pf baremetal_hosts.yml -P iso_url=http://192.168.122.1/my.iso
+starthosts = """# Start Baremetal hosts declared in a parameter file from specific ISO url
+
+$ kcli start hosts --pf baremetal_hosts.yml -P iso_url=http://192.168.122.1/my.iso
+
+baremetal_hosts.yml contains
+bmc_user: xx
+bmc_password: xx
+baremetal_hosts:
+- bmc_url: http://192.168.122.1:8000/h1
+- bmc_url: http://192.168.122.1:8000/h2
 
 # Do the same specifying hosts on the command line
-$ kcli boot -P baremetal_hosts=['{"bmc_url":"http://192.168.122.1:8000/xxx"}'] -P bmc_user=admin -P bmc_password=admin
+$ kcli start hosts -P baremetal_hosts=['{"bmc_url":"http://192.168.122.1:8000/h1"}'] -P bmc_user=xx -P bmc_password=xx
 """

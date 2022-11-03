@@ -12,7 +12,7 @@ from kvirt.examples import kubegenericcreate, kubek3screate, kubeopenshiftcreate
 from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsole, vmexport, niccreate, nicdelete
 from kvirt.examples import disconnectedcreate, appopenshiftcreate, plantemplatecreate, kubehypershiftcreate
 from kvirt.examples import workflowcreate, kubegenericscale, kubek3sscale, kubeopenshiftscale
-from kvirt.examples import changelog, boothosts
+from kvirt.examples import changelog, starthosts
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
 from kvirt.defaults import IMAGES, VERSION, LOCAL_OPENSHIFT_APPS, SSH_PUB_LOCATIONS
@@ -172,7 +172,7 @@ def delete_cache(args):
         warning(f"No cache file found for {baseconfig.client}")
 
 
-def boot_hosts(args):
+def start_baremetal_hosts(args):
     overrides = common.get_overrides(param=args.param)
     iso_url = overrides.get('iso_url')
     baremetal_hosts = overrides.get('baremetal_hosts', [])
@@ -3507,15 +3507,6 @@ def cli():
     subparsers.add_parser('console', parents=[vmconsole_parser], description=vmconsole_desc, help=vmconsole_desc,
                           epilog=vmconsole_epilog, formatter_class=rawhelp)
 
-    boothosts_desc = 'Boot Hosts'
-    boothosts_epilog = f"examples:\n{boothosts}"
-    boothosts_parser = subparsers.add_parser('boot', description=boothosts_desc, help=boothosts_desc,
-                                             epilog=boothosts_epilog, formatter_class=rawhelp)
-    boothosts_parser.add_argument('-P', '--param', action='append',
-                                  help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    boothosts_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE', action='append')
-    boothosts_parser.set_defaults(func=boot_hosts)
-
     delete_desc = 'Delete Object'
     delete_parser = subparsers.add_parser('delete', description=delete_desc, help=delete_desc, aliases=['remove'])
     delete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation', dest="yes_top")
@@ -5042,18 +5033,31 @@ def cli():
     vmsnapshotrevert_parser.add_argument('snapshot')
     vmsnapshotrevert_parser.set_defaults(func=snapshotrevert_vm)
 
+    starthosts_desc = 'Start Baremetal Hosts'
+    starthosts_epilog = f"examples:\n{starthosts}"
+    starthosts_parser = argparse.ArgumentParser(add_help=False)
+    starthosts_parser.add_argument('-P', '--param', action='append',
+                                   help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    starthosts_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE', action='append')
+    starthosts_parser.set_defaults(func=start_baremetal_hosts)
+    start_subparsers.add_parser('host', description=starthosts_desc, help=starthosts_desc,
+                                epilog=starthosts_epilog, formatter_class=rawhelp,
+                                aliases=['hosts', 'baremetal-host', 'baremetal-hosts'])
+
     vmstart_desc = 'Start Vms'
     vmstart_parser = argparse.ArgumentParser(add_help=False)
     vmstart_parser.add_argument('names', metavar='VMNAMES', nargs='*')
     vmstart_parser.set_defaults(func=start_vm)
-    start_subparsers.add_parser('vm', parents=[vmstart_parser], description=vmstart_desc, help=vmstart_desc)
+    start_subparsers.add_parser('vm', parents=[vmstart_parser], description=vmstart_desc, help=vmstart_desc,
+                                aliases=['vms'])
 
     vmstop_desc = 'Stop Vms'
     vmstop_parser = argparse.ArgumentParser(add_help=False)
     vmstop_parser.add_argument('-s', '--soft', action='store_true', help='Do a soft stop')
     vmstop_parser.add_argument('names', metavar='VMNAMES', nargs='*')
     vmstop_parser.set_defaults(func=stop_vm)
-    stop_subparsers.add_parser('vm', parents=[vmstop_parser], description=vmstop_desc, help=vmstop_desc)
+    stop_subparsers.add_parser('vm', parents=[vmstop_parser], description=vmstop_desc, help=vmstop_desc,
+                               aliases=['vms'])
 
     vmupdate_desc = 'Update Vm\'s Ip, Memory Or Numcpus'
     vmupdate_parser = update_subparsers.add_parser('vm', description=vmupdate_desc, help=vmupdate_desc)
