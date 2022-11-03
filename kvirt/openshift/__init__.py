@@ -628,6 +628,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         warning("Using existing openshift-install found in your PATH")
     os.environ["PATH"] += f":{os.getcwd()}"
     if disconnected_url is not None:
+        if disconnected_url.startswith('http'):
+            warning(f"Removing scheme from {disconnected_url}")
+            disconnected_url = disconnected_url.replace('http://', '').replace('https://', '')
         if '/' not in str(tag):
             tag = f'{disconnected_url}/{disconnected_prefix}:{tag}'
             os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = tag
