@@ -628,6 +628,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         warning("Using existing openshift-install found in your PATH")
     os.environ["PATH"] += f":{os.getcwd()}"
     if disconnected_url is not None:
+        if disconnected_user is None:
+            error("disconnected_user needs to be set")
+            sys.exit(1)
+        if disconnected_password is None:
+            error("disconnected_password needs to be set")
+            sys.exit(1)
         if disconnected_url.startswith('http'):
             warning(f"Removing scheme from {disconnected_url}")
             disconnected_url = disconnected_url.replace('http://', '').replace('https://', '')
@@ -636,6 +642,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = tag
         pprint(f"Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to {tag}")
         data['openshift_release_image'] = {tag}
+        if 'ca' not in data and 'quay.io' not in disconnected_url:
+            pprint(f"Trying to gather registry ca cert from {disconnected_url}")
+            cacmd = f"openssl s_client -showcerts -connect {disconnected_url} </dev/null 2>/dev/null|"
+            cacmd += "openssl x509 -outform PEM"
+            data['ca'] = os.popen(cacmd).read()
     INSTALLER_VERSION = get_installer_version()
     COMMIT_ID = os.popen('openshift-install version').readlines()[1].replace('built from commit', '').strip()
     pprint(f"Using installer version {INSTALLER_VERSION}")
@@ -798,7 +809,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             os.system(scpcmd)
         os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = disconnected_version
         pprint(f"Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to {disconnected_version}")
-    if disconnected_url is not None and disconnected_user is not None and disconnected_password is not None:
+    if disconnected_url is not None:
         key = f"{disconnected_user}:{disconnected_password}"
         key = str(b64encode(key.encode('utf-8')), 'utf-8')
         auths = {'auths': {disconnected_url: {'auth': key, 'email': 'jhendrix@karmalabs.corp'}}}
