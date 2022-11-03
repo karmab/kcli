@@ -1,6 +1,6 @@
 # coding=utf-8
 UBUNTUS = ['utopic', 'vivid', 'wily', 'xenial', 'yakkety', 'zesty', 'artful', 'bionic', 'cosmic', 'eoan', 'focal',
-           'groovy', 'hirsute', 'impish', 'jammy']
+           'groovy', 'hirsute', 'impish', 'jammy', 'kinetic']
 VERSION = "99.0"
 NETS = ['default']
 POOL = 'default'
@@ -120,6 +120,7 @@ IMAGES = {'almalinux9': 'http://repo.ifca.es/almalinux/9.0/cloud/x86_64/images/'
           'ubuntu2104': UBUNTU + 'releases/21.04/release/ubuntu-21.04-server-cloudimg-amd64.img',
           'ubuntu2110': UBUNTU + 'releases/21.10/release/ubuntu-21.10-server-cloudimg-amd64.img',
           'ubuntu2204': UBUNTU + 'releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img',
+          'ubuntu2210': UBUNTU + 'releases/22.10/release/ubuntu-22.10-server-cloudimg-amd64.img',
           'rockylinux84': ROCKYVAULT + '8.4/images/Rocky-8-GenericCloud-8.4-20210620.0.x86_64.qcow2',
           'rockylinux85': ROCKYVAULT + '8.5/images/Rocky-8-GenericCloud-8.5-20211114.2.x86_64.qcow2',
           'rockylinux86': ROCKY + '8.6/images/Rocky-8-GenericCloud.latest.x86_64.qcow2',
