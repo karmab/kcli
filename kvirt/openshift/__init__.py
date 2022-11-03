@@ -715,7 +715,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         disconnected_overrides['disconnected_operators_version'] = '.'.join(INSTALLER_VERSION.split('.')[:-1])
         disconnected_overrides['openshift_release_image'] = get_release_image()
         data['openshift_release_image'] = disconnected_overrides['openshift_release_image']
-        x_apps = ['users', 'autolabeller']
+        x_apps = ['users', 'autolabeller', 'metal3']
         for app in apps:
             if app not in x_apps and app not in disconnected_operators:
                 warning(f"Adding app {app} to disconnected_operators array")
@@ -1063,7 +1063,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if apps and (async_install or sno):
         final_apps = []
         for a in apps:
-            if isinstance(a, str) and a not in ['users', 'autolabellers']:
+            if isinstance(a, str) and a not in ['users', 'autolabellers', 'metal3']:
                 final_apps.append(a)
             elif isinstance(a, dict) and 'name' in a:
                 final_apps.append(a['name'])
@@ -1080,7 +1080,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                           'kubevirt-hyperconverged': 'openshift-cnv',
                           'local-storage-operator': 'openshift-local-storage',
                           'ocs-operator': 'openshift-storage', 'autolabeller': 'autorules'}
-        apps = [a for a in apps if a not in ['users']]
+        apps = [a for a in apps if a not in ['users', 'metal3']]
         for appname in apps:
             app_data = data.copy()
             if data.get('apps_install_cr') and os.path.exists(f"{appdir}/{appname}/cr.yml"):
