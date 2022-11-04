@@ -1254,6 +1254,16 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                           'prometheus-k8s-openshift-monitoring.apps']
             dnsentry = ' '.join([f"{entry}.{cluster}.{domain}" for entry in dnsentries])
             warning(f"$your_node_ip {dnsentry}")
+        if baremetal_hosts:
+            iso_pool = data['pool'] or config.pool
+            iso_pool_path = k.get_pool_path(iso_pool)
+            copy2(f'{iso_pool_path}/{cluster}-worker.iso', '/var/www/html')
+            call(f"sudo chown apache.apache /var/www/html/{cluster}-worker.iso", shell=True)
+            nic = os.popen('ip r | grep default | cut -d" " -f5').read().strip()
+            ip_cmd = f"ip -o addr show {nic} | awk '{{print $4}}' | cut -d '/' -f 1 | head -1"
+            host_ip = os.popen(ip_cmd).read().strip()
+            iso_url = f'http://{host_ip}/{cluster}-worker.iso'
+            boot_hosts(baremetal_hosts, iso_url, overrides=overrides)
         if sno_wait:
             installcommand = f'openshift-install --dir={clusterdir} --log-level={log_level} wait-for install-complete'
             installcommand = ' || '.join([installcommand for x in range(retries)])
