@@ -68,8 +68,10 @@ def create(config, plandir, cluster, overrides):
             'hypershift_image': 'quay.io/hypershift/hypershift-operator:latest',
             'namespace': 'clusters',
             'disconnected_url': None,
-            'pull_secret': 'openshift_pull.json'}
+            'pull_secret': 'openshift_pull.json',
+            'retries': 3}
     data.update(overrides)
+    retries = data.get('retries')
     if 'cluster' in overrides:
         clustervalue = overrides.get('cluster')
     elif cluster is not None:
@@ -346,8 +348,8 @@ def create(config, plandir, cluster, overrides):
         info2("export PATH=$PWD:$PATH")
     else:
         installcommand = f'openshift-install --dir={clusterdir} --log-level={log_level} wait-for install-complete'
-        installcommand += f" || {installcommand} || {installcommand}"
-        pprint("Launching install-complete step. It will be retried two times to handle timeouts")
+        installcommand = ' || '.join([installcommand for x in range(retries)])
+        pprint("Launching install-complete step. It will be retried extra times to handle timeouts")
         run = call(installcommand, shell=True)
         if run != 0:
             error("Leaving environment for debugging purposes")
