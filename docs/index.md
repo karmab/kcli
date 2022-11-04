@@ -1455,28 +1455,28 @@ kcli create product YOUR_PRODUCT
 
 # Deploying kubernetes/openshift clusters (and applications on top!)
 
-You can deploy generic kubernetes (based on kubeadm), k3s or openshift/okd on any platform and on an arbitrary number of masters and workers.
-The cluster can be scaled aferwards too.
+You can deploy generic kubernetes (based on kubeadm), k3s, kind, openshift/okd, hypershift and microshift  on any platform and on an arbitrary number of control plane nodes and workers.
+The cluster can be scaled afterwards if needed.
 
 ## Getting information on available parameters
 
-For each supported platform, you can use `kcli info kube`
+For each supported platform, you can use `kcli info cluster`
 
-For instance, `kcli info kube generic` will provide you all the parameters available for customization for generic kubernetes clusters.
+For instance, `kcli info cluster generic` will provide you all the parameters available for customization for generic kubernetes clusters.
 
 ## Deploying generic kubernetes clusters
 
 ```
-kcli create kube generic -P masters=X -P workers=Y $cluster
+kcli create cluster generic -P masters=X -P workers=Y $cluster
 ```
 
 ## Deploying openshift/okd clusters
 
 *DISCLAIMER*: This is not supported in anyway by Red Hat (although the end result cluster would be).
 
-for Openshift, the official installer is leveraged with kcli creating the vms instead of Terraform, and injecting some extra pods to provide a vip and self contained dns.
+for Openshift, the official installer is leveraged with kcli creating the vms, and injecting some extra pods to provide api/ingress vip and self contained dns.
 
-The main benefits of deploying Openshift with kcli are:
+The benefits of deploying Openshift with this workflow are:
 
 - Auto download openshift-install binary specified version.
 - Easy vms tuning.
@@ -1662,6 +1662,73 @@ The procedure is the same independently of the type of cluster used.
 ```
 kcli delete kube $cluster
 ```
+
+### Baremetal hosts support
+
+You can deploy baremetal workers in different way through this workflow.
+
+The boolean baremetal_iso can be set to generate isos that you manually plug to the corresponding node (one iso per role).
+
+You can also create isos only for a given role using the boolean baremetal_iso_bootstrap, baremetal_iso_master and baremetal_iso_worker
+
+Alternatively, you can use the array baremetal_hosts to plug the worker iso to a list of baremetal hosts. The iso will be served from a deployment running in the control plane in that case.
+
+For each entry you would specify:
+
+- bmc_url
+- bmc_user. This can also be set outside the array if you use the same user for all of your baremetal workers
+- bmc_password. This can also be set outside the array if you use the same password for all of your baremetal workers
+- Optionally a model (either dell,hp, supermicro) to have the bmc_url evaluated for you (Only specify its ip in this case)
+
+As an example, the following array will boot 3 workers (based on kvm vms with sushy tool)
+
+```
+
+bmc_user: root
+bmc_password: calvin
+baremetal_hosts:
+- bmc_url: http://192.168.122.1:8000/redfish/v1/Systems/11111111-1111-1111-1111-111111111181
+- bmc_url: http://192.168.122.1:8000/redfish/v1/Systems/11111111-1111-1111-1111-111111111182
+- bmc_url: http://192.168.122.1:8000/redfish/v1/Systems/11111111-1111-1111-1111-111111111183
+```
+
+### Disconnected support
+
+To deploy with a disconnected registry, you can set the `disconnected_deploy` boolean or specify a `disconnected_url`
+
+#### disconnected_deploy
+
+In the first case, an helper vm will be deployed to host your disconnected registry and content will be synced for you
+
+You can fine tweak this registry with several parameters:
+
+- disconnected_disk_size
+- disconnected_user
+- disconnected_password
+- disconnected_operators
+- ...
+
+Note that this disconnected registry can also be deployed on its own using `kcli create openshift-registry` subcommand
+
+#### disconnected_url
+
+In this case, you can specify the url of the registry where you have synced content by yourself. The `disconnected_url` typically is specified as `$host:$port`
+
+You will also need to set disconnected_user and disconnected_password
+
+You can specify disconnected_ca content, or let it undefined for the CA content to be fetched on the fly
+
+The default prefix where the ocp content is expected to be synced is ocp4, but you can use the parameter `disconnected_prefix`to specify a different one
+
+Note that you will also need to sync the following images on the registry:
+
+- quay.io/karmab/curl:latest
+- quay.io/karmab/origin-coredns:latest
+- quay.io/karmab/haproxy:latest
+- quay.io/karmab/origin-keepalived-ipfailover:latest
+- quay.io/karmab/mdns-publisher:latest
+- quay.io/karmab/kubectl:latest 
+- quay.io/karmab/kcli:latest
 
 # Deploying applications on top of kubernetes/openshift
 
