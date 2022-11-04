@@ -231,10 +231,10 @@ sshKey: |
 {% if disconnected_url != None %}
 imageContentSources:
 - mirrors:
-  - {{ disconnected_url }}/{{ disconnected_prefix or "ocp4") }}
+  - {{ disconnected_url }}/{{ disconnected_prefix or "ocp4" }}
   source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
 - mirrors:
-  - {{ disconnected_url }}/{{ disconnected_prefix or "ocp4") }}
+  - {{ disconnected_url }}/{{ disconnected_prefix or "ocp4" }}
 {% if 'registry.build01.ci' in openshift_release_image %}
   source: registry.build01.ci.openshift.org/{{ (tag|string).split('/')[0] }}/stable
 {% elif ':' in tag|string %}
