@@ -252,14 +252,14 @@ $ kcli create openshift-iso -P nic=ens3 -P ip=192.168.122.8 -P netmask=24 -P gat
 $ kcli create openshift-iso -P extra_args="super_string_of_args" testk.karmalabs.corp
 """
 
-disconnectedcreate = """# Generate an openshift disconnected vm for 4.9
-$ kcli create openshift-registry -P version=stable -P tag=4.9
+disconnectedcreate = """# Generate an openshift disconnected vm for 4.11
+$ kcli create openshift-registry -P version=stable -P tag='4.11'
 
 # Do the same over an ipv4 network
-$ kcli create openshift-registry -P version=nightly -P tag=4.9 -P disconnected_ipv6_network=false
+$ kcli create openshift-registry -P version=nightly -P tag='4.11' -P disconnected_ipv6_network=false
 
-# Use specific version and add extra operators (from 4.8)
-$ kcli create openshift-registry -P version=nightly -P tag=4.8.0-fc.5 -P disconnected_operators=[sriov-network-operator]
+# Use specific version and add extra operators (from 4.12)
+$ kcli create openshift-registry -P version=nightly -P tag=4.12 -P disconnected_operators=[sriov-network-operator]
 
 # Deploy registry without content
 $ kcli create openshift-registry -P disconnected_sync=false
