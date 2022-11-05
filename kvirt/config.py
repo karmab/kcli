@@ -2835,7 +2835,7 @@ class Kconfig(Kbaseconfig):
         result = self.plan(disconnected_plan, inputfile=f'{plandir}/disconnected.yml', overrides=data)
         if result['result'] != 'success':
             sys.exit(1)
-        else:
+        elif disconnected_sync:
             pprint("Use the following OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE")
             name = data.get('disconnected_reuse_name') or cluster
             ip, vmport = _ssh_credentials(self.k, f'{name}-disconnected')[1:]
