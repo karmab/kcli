@@ -61,8 +61,8 @@ class Redfish(object):
             self.eject_iso_supermicro()
             return
         manager_url = self.get_manager_url()
-        request = Request(f"{manager_url}/VirtualMedia/{self.cdpath}/Actions/VirtualMedia.EjectMedia",
-                          headers=self.headers, method='POST')
+        iso_url = f"{manager_url}/VirtualMedia/{self.cdpath}/Actions/VirtualMedia.EjectMedia"
+        request = Request(iso_url, headers=self.headers, method='POST', data=json.dumps({}).encode('utf-8'))
         urlopen(request, context=self.context)
 
     def eject_iso_supermicro(self):
