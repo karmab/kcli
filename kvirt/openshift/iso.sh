@@ -47,10 +47,8 @@ bash -c "$cmd"
 if [ "$?" == "0" ] ; then
   echo "Install Succeeded!"
   {% if uefi|default(False) %}
-  if [[ "$install_device" =~ /dev/vd.* ]] ; then
-    NUM=$(efibootmgr -v | grep DVD | cut -f1 -d' ' | sed 's/Boot000\([0-9]\)\*/\1/')
-    efibootmgr -b 000$NUM -B $NUM
-  fi
+  NUM=$(efibootmgr -v | grep 'DVD\|CD' | cut -f1 -d' ' | sed 's/Boot000\([0-9]\)\*/\1/')
+  efibootmgr -b 000$NUM -B $NUM
   {% endif %}
   reboot
 else
