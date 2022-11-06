@@ -2266,10 +2266,10 @@ def get_rhcos_url_from_file(filename, _type='kvm'):
 
 def boot_hosts(baremetal_hosts, iso_url, overrides={}):
     for host in baremetal_hosts:
-        bmc_url = host.get('bmc_url')
-        bmc_user = host.get('bmc_user') or overrides.get('bmc_user')
-        bmc_password = host.get('bmc_password') or overrides.get('bmc_password')
-        bmc_model = host.get('bmc_model') or overrides.get('bmc_model', 'dell')
+        bmc_url = host.get('url') or host.get('bmc_url')
+        bmc_user = host.get('user') or host.get('bmc_user') or overrides.get('bmc_user')
+        bmc_password = host.get('password') or host.get('bmc_password') or overrides.get('bmc_password')
+        bmc_model = host.get('model') or host.get('bmc_model') or overrides.get('bmc_model', 'dell')
         if bmc_url is not None and bmc_user is not None and bmc_password is not None:
             msg = host['name'] if 'name' in host else f"with url {bmc_url}"
             pprint(f"Booting Host {msg}")
