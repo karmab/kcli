@@ -1633,7 +1633,14 @@ The following extra parameters are available with this workflow:
 - extra_args: You can use this variable to specify as a string any extra args to add to the generated iso. A common use case for this is to set static networking for the node, for instanc with something like `ip=192.168.1.200::192.168.1.1:255.255.255.0:mysupersno.dev.local:enp1s0:none nameserver=192.168.1.1`
 - api_ip: This is normally not needed but if you already have some DNS records in place pointing to a given api vip or you don't know your baremetal ip, you can specify the vip so that an extra keepalived static pod is injected.
 
-Note that in the baremetal context, you are responsible for attaching the generated iso to your target node.
+In the baremetal context, you are responsible for attaching the generated iso to your target node.
+
+You can also use the `baremetal_hosts` feature described below, but you will need to have apache running on the hypervisor and give write access to /var/www/html for the user launching the command, using something like the following
+
+```
+sudo setfacl -m u:$(id -un):rwx /var/www/html
+```
+
 
 ### Adding more workers
 
