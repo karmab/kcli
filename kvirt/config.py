@@ -2794,7 +2794,12 @@ class Kconfig(Kbaseconfig):
                 if metal_url is not None:
                     iso_overrides['need_network'] = True
                 iso_overrides.update(overrides)
-                result = self.create_vm('autoinstaller', 'rhcos46', overrides=iso_overrides, onlyassets=True)
+                if 'name' in overrides:
+                    iso_name = overrides['name']
+                    iso_overrides['noname'] = False
+                else:
+                    iso_name = 'autoinstaller'
+                result = self.create_vm(iso_name, 'rhcos46', overrides=iso_overrides, onlyassets=True)
                 if 'reason' in result:
                     error(result['reason'])
                 else:
