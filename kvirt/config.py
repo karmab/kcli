@@ -987,6 +987,8 @@ class Kconfig(Kbaseconfig):
                 reservedns = False
         if image is not None:
             metadata['image'] = image
+        elif [n for n in nets if isinstance(n, dict) and 'nic' in n]:
+            warning("Your nets definition contains nic key which won't be used")
         if 'owner' in profile or 'owner' in overrides:
             metadata['owner'] = profile.get('owner') or overrides.get('owner')
         if 'user' in profile or 'user' in overrides:
