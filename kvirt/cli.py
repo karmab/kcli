@@ -1419,7 +1419,6 @@ def update_vm(args):
     flavor = overrides.get('flavor')
     numcpus = overrides.get('numcpus')
     memory = overrides.get('memory')
-    plan = overrides.get('plan')
     autostart = overrides.get('autostart')
     dns = overrides.get('dns')
     host = overrides.get('host')
@@ -1452,9 +1451,6 @@ def update_vm(args):
         if cloudinit:
             pprint(f"Removing cloudinit information of vm {name}")
             k.remove_cloudinit(name)
-        if plan is not None:
-            pprint(f"Updating plan of vm {name} to {plan}...")
-            k.update_metadata(name, 'plan', plan)
         if image is not None:
             pprint(f"Updating image of vm {name} to {image}...")
             k.update_metadata(name, 'image', image)
@@ -1551,9 +1547,10 @@ def update_vm(args):
                     pprint(f"Updating nic {index} to network {targetnetname}")
                     k.update_nic(name, index, targetnetname)
         if extra_metadata:
-            print(extra_metadata)
             for key in extra_metadata:
-                k.update_metadata(name, key, extra_metadata[key])
+                value = extra_metadata[key]
+                pprint(f"Updating {key} of vm {name} to {value}...")
+                k.update_metadata(name, key, value)
         if overrides.get('files', []):
             newfiles = overrides['files']
             pprint(f"Remediating files of {name}")
