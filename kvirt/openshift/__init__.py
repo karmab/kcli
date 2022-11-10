@@ -374,6 +374,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'kubevirt_api_service': False,
             'kubevirt_ignore_node_port': False,
             'baremetal': False,
+            'baremetal_web': True,
+            'baremetal_web_dir': '/var/www/html',
+            'baremetal_web_port': 80,
             'sushy': False,
             'coredns': True,
             'mdns': True,
@@ -393,6 +396,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     async_install = data.get('async')
     sslip = data.get('sslip')
     baremetal_iso = data.get('baremetal_iso', False)
+    baremetal_web = data.get('baremetal_web', False)
+    baremetal_web_dir = data.get('baremetal_web_dir', '/var/www/html')
+    baremetal_web_port = data.get('baremetal_web_port', 80)
     baremetal_hosts = data.get('baremetal_hosts', [])
     baremetal_iso_bootstrap = data.get('baremetal_iso_bootstrap', baremetal_iso)
     baremetal_iso_master = data.get('baremetal_iso_master', baremetal_iso)
@@ -1257,13 +1263,17 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if baremetal_hosts:
             iso_pool = data['pool'] or config.pool
             iso_pool_path = k.get_pool_path(iso_pool)
-            if os.path.exists(f"/var/www/html/{cluster}-sno.iso"):
-                call(f"sudo rm /var/www/html/{cluster}-sno.iso", shell=True)
-            copy2(f'{iso_pool_path}/{cluster}-sno.iso', '/var/www/html')
-            call(f"sudo chown apache.apache /var/www/html/{cluster}-sno.iso", shell=True)
+            if baremetal_web:
+                if os.path.exists(f"{baremetal_web_dir}/{cluster}-sno.iso"):
+                    call(f"sudo rm {baremetal_web_dir}/{cluster}-sno.iso", shell=True)
+                copy2(f'{iso_pool_path}/{cluster}-sno.iso', baremetal_web_dir)
+                if baremetal_web_dir == '/var/www/html':
+                    call(f"sudo chown apache.apache {baremetal_web_dir}/{cluster}-sno.iso", shell=True)
             nic = os.popen('ip r | grep default | cut -d" " -f5').read().strip()
             ip_cmd = f"ip -o addr show {nic} | awk '{{print $4}}' | cut -d '/' -f 1 | head -1"
             host_ip = os.popen(ip_cmd).read().strip()
+            if baremetal_web_port != 80:
+                host_ip += f":{baremetal_web_port}"
             iso_url = f'http://{host_ip}/{cluster}-sno.iso'
             boot_hosts(baremetal_hosts, iso_url, overrides=overrides)
         if sno_wait:

@@ -124,6 +124,10 @@ baremetal_iso: false
 baremetal_iso_bootstrap: false
 baremetal_iso_master: false
 baremetal_iso_worker: false
+baremetal_hosts: []
+baremetal_web: true
+baremetal_web_port: 80
+baremetal_web_dir: /var/www/html
 threaded: false
 masters_threaded: false
 workers_threaded: false
