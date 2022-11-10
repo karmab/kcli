@@ -223,7 +223,7 @@ def get_upstream_installer(macosx=False, tag=None, debug=False):
     return call(cmd, shell=True)
 
 
-def baremetal_stop(cluster):
+def ipi_baremetal_stop(cluster):
     installfile = "%s/install-config.yaml" % os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     with open(installfile) as f:
         data = yaml.safe_load(f)
@@ -919,7 +919,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 pprint(dnscmd)
         if ipi_platform == 'baremetal':
             pprint("Stopping nodes through redfish")
-            baremetal_stop(cluster)
+            ipi_baremetal_stop(cluster)
     run = call(f'openshift-install --dir={clusterdir} --log-level={log_level} create manifests', shell=True)
     if run != 0:
         error("Leaving environment for debugging purposes")
@@ -1269,6 +1269,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 copy2(f'{iso_pool_path}/{cluster}-sno.iso', baremetal_web_dir)
                 if baremetal_web_dir == '/var/www/html':
                     call(f"sudo chown apache.apache {baremetal_web_dir}/{cluster}-sno.iso", shell=True)
+            else:
+                call(f"sudo chmod a+r {iso_pool_path}/{cluster}-sno.iso", shell=True)
             nic = os.popen('ip r | grep default | cut -d" " -f5').read().strip()
             ip_cmd = f"ip -o addr show {nic} | awk '{{print $4}}' | cut -d '/' -f 1 | head -1"
             host_ip = os.popen(ip_cmd).read().strip()
