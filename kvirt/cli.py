@@ -179,6 +179,13 @@ def start_baremetal_hosts(args):
     if 'iso_url' not in overrides:
         error("Iso url needs to be set in order to boot host")
         sys.exit(1)
+    bmc_url = overrides.get('bmc_url') or overrides.get('url')
+    bmc_user = overrides.get('bmc_user') or overrides.get('user')
+    bmc_password = overrides.get('bmc_password') or overrides.get('password')
+    if not baremetal_hosts and bmc_url is not None and bmc_user is not None and bmc_password is not None:
+        bmc_model = overrides.get('bmc_model') or overrides.get('model')
+        baremetal_hosts = [{'bmc_url': bmc_url, 'bmc_user': bmc_user, 'bmc_password': bmc_password,
+                            'bmc_model': bmc_model}]
     if not baremetal_hosts:
         error("Baremetal hosts need to be defined")
         sys.exit(1)
