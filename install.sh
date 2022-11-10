@@ -10,6 +10,7 @@ shell=$(basename $SHELL)
 packagefound=false
 if [ "$(which dnf)" != "" ] ; then
   packagefound=true
+  echo -e "${BLUE}Installing using copr package(${NC}"
   sudo dnf -y copr enable karmab/kcli
   sudo dnf -y install kcli
   if [ "$?" != "0" ] ; then
@@ -18,6 +19,7 @@ if [ "$(which dnf)" != "" ] ; then
   fi
 elif [ "$(which apt-get)" != "" ] ; then
   packagefound=true
+  echo -e "${BLUE}Installing using deb package(${NC}"
   curl -1sLf https://dl.cloudsmith.io/public/karmab/kcli/cfg/setup/bash.deb.sh | sudo -E bash
   sudo apt-get update 
   sudo apt-get -y install python3-kcli
@@ -39,13 +41,15 @@ which podman >/dev/null 2>&1 && engine="podman"
 if [ "$engine" == "" ] ; then
   echo -e "${BLUE}No container engine found nor compatible package manager. Install podman or docker first${NC}"
   exit 1
+else
+  echo -e "${BLUE}Using engine $engine ${NC}"
 fi
 
 alias kcli >/dev/null 2>&1
 ALIAS="$?"
 
 if [ "$ALIAS" != "0" ]; then
-  echo -e "${BLUE}Installing as alias for $engine${NC}"
+  echo -e "${BLUE}Installing container alias ${NC}"
   $engine pull quay.io/karmab/kcli:latest
   SSHVOLUME="-v $(realpath $HOME/.ssh):/root/.ssh"
   if [ -d /var/lib/libvirt/images ] && [ -d /var/run/libvirt ]; then
