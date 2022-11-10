@@ -1196,7 +1196,7 @@ class Ksphere:
         while True:
             if lease.state == vim.HttpNfcLease.State.ready:
                 pprint("Uploading vmdk")
-                host = self._getfirshost()
+                host = self._getfirsthost()
                 url = lease.info.deviceUrl[0].url.replace('*', host.name)
                 keepalive_thread = Thread(target=keep_lease_alive, args=(lease,))
                 keepalive_thread.start()
@@ -1215,7 +1215,7 @@ class Ksphere:
             os.remove(f'/tmp/{shortimage}')
         return {'result': 'success'}
 
-    def _getfirshost(self):
+    def _getfirsthost(self):
         si = self.si
         rootFolder = self.rootFolder
         o = si.content.viewManager.CreateContainerView(rootFolder, [vim.HostSystem], True)
