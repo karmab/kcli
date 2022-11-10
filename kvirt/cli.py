@@ -5040,14 +5040,13 @@ def cli():
 
     starthosts_desc = 'Start Baremetal Hosts'
     starthosts_epilog = f"examples:\n{starthosts}"
-    starthosts_parser = argparse.ArgumentParser(add_help=False)
+    starthosts_parser = start_subparsers.add_parser('host', description=starthosts_desc, help=starthosts_desc,
+                                                    epilog=starthosts_epilog, formatter_class=rawhelp,
+                                                    aliases=['hosts', 'baremetal-host', 'baremetal-hosts'])
     starthosts_parser.add_argument('-P', '--param', action='append',
                                    help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
     starthosts_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE', action='append')
     starthosts_parser.set_defaults(func=start_baremetal_hosts)
-    start_subparsers.add_parser('host', description=starthosts_desc, help=starthosts_desc,
-                                epilog=starthosts_epilog, formatter_class=rawhelp,
-                                aliases=['hosts', 'baremetal-host', 'baremetal-hosts'])
 
     vmstart_desc = 'Start Vms'
     vmstart_parser = argparse.ArgumentParser(add_help=False)
