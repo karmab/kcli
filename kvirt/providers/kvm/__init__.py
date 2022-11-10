@@ -3201,6 +3201,18 @@ class Kvirt(object):
             new_net.setAutostart(True)
             new_net.create()
             return {'result': 'success'}
+        if 'bridge' in overrides and overrides['bridge']:
+            networkxml = """<network>
+                            <name>{name}</name>
+                            <bridge name='{name}'/>
+                            <forward mode="bridge"/>
+                            </network>""".format(name=name)
+            if self.debug:
+                print(networkxml)
+            new_net = conn.networkDefineXML(networkxml)
+            new_net.setAutostart(True)
+            new_net.create()
+            return {'result': 'success'}
         if cidr is None:
             return {'result': 'failure', 'reason': "Missing Cidr"}
         cidrs = [networks[n]['cidr'] for n in networks]
