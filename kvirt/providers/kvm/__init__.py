@@ -3065,7 +3065,7 @@ class Kvirt(object):
                     continue
         return {'result': 'failure', 'reason': 'Image %s not found' % image}
 
-    def add_image(self, url, pool, cmd=None, name=None, size=None):
+    def add_image(self, url, pool, cmd=None, name=None, size=None, network=None):
         poolname = pool
         shortimage = os.path.basename(url).split('?')[0]
         if name is not None and name.endswith('iso'):

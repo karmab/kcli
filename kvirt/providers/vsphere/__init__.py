@@ -1096,7 +1096,8 @@ class Ksphere:
     def vm_ports(self, name):
         return []
 
-    def add_image(self, url, pool, short=None, cmd=None, name=None, size=None):
+    def add_image(self, url, pool, short=None, cmd=None, name=None, size=None, network=None):
+        vmnetwork = network or 'VM Network'
         downloaded = False
         si = self.si
         rootFolder = self.rootFolder
@@ -1185,9 +1186,9 @@ class Ksphere:
         ovfd = open(ovf_path).read()
         ovfd = re.sub('<Name>.*</Name>', f'<Name>{name}</Name>', ovfd)
         datastore = find(si, rootFolder, vim.Datastore, pool)
-        network = find(si, rootFolder, vim.Network, 'VM Network')
+        network = find(si, rootFolder, vim.Network, vmnetwork)
         networkmapping = vim.OvfManager.NetworkMapping.Array()
-        nm = vim.OvfManager.NetworkMapping(name="VM Network", network=network)
+        nm = vim.OvfManager.NetworkMapping(name=vmnetwork, network=network)
         networkmapping.append(nm)
         spec_params = vim.OvfManager.CreateImportSpecParams(diskProvisioning="thin", networkMapping=networkmapping)
         import_spec = manager.CreateImportSpec(ovfd, resourcepool, datastore, spec_params)

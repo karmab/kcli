@@ -2230,7 +2230,7 @@ class Kconfig(Kbaseconfig):
 
     def handle_host(self, pool=None, image=None, switch=None, download=False,
                     url=None, cmd=None, sync=False, update_profile=False, commit=None, size=None, arch='x86_64',
-                    kvm_openstack=True):
+                    kvm_openstack=True, network=None):
         """
 
         :param pool:
@@ -2286,7 +2286,7 @@ class Kconfig(Kbaseconfig):
                 pprint(f"Grabbing image {image}...")
                 shortname = os.path.basename(url).split('?')[0]
                 try:
-                    result = k.add_image(url, pool, cmd=cmd, name=image, size=size)
+                    result = k.add_image(url, pool, cmd=cmd, name=image, size=size, network=network)
                 except Exception as e:
                     error(f"Got {e}")
                     error(f"Please run kcli delete image --yes {shortname}")

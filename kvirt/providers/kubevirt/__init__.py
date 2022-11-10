@@ -1206,7 +1206,7 @@ class Kubevirt(Kubecommon):
                 return {'result': 'success'}
         return {'result': 'failure', 'reason': f'image {image} not found'}
 
-    def add_image(self, url, pool, short=None, cmd=None, name=None, size=None):
+    def add_image(self, url, pool, short=None, cmd=None, name=None, size=None, network=None):
         if size is None:
             size = _base_image_size(url)
             if self.cdi:
