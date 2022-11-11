@@ -1230,7 +1230,7 @@ class Kvirt(object):
 {firmwarexml}
 {bootdev}
 {kernelxml}
-<bootmenu enable="yes" timeout="3000"/>
+<bootmenu enable="yes" timeout="60"/>
 </os>
 <features>
 {smmxml}
