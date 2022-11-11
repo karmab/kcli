@@ -747,7 +747,7 @@ class Kibm(object):
             return {'result': 'failure', 'reason': 'Unable to delete image. %s' % exc}
         return {'result': 'success'}
 
-    def add_image(self, url, pool, short=None, cmd=None, name=None, size=None, network=None):
+    def add_image(self, url, pool, short=None, cmd=None, name=None, size=None):
         cos_id = self.cos_resource_instance_id.split(':')[7]
         identity_client = IamIdentityV1(authenticator=self.authenticator)
         api_key_detail = identity_client.get_api_keys_details(iam_api_key=self.iam_api_key).get_result()

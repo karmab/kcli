@@ -33,7 +33,8 @@ from uuid import UUID
 
 class Ksphere:
     def __init__(self, host, user, password, datacenter, cluster, debug=False, isofolder=None,
-                 filtervms=False, filteruser=False, filtertag=None, category='kcli', basefolder=None, dvs=True):
+                 filtervms=False, filteruser=False, filtertag=None, category='kcli', basefolder=None, dvs=True,
+                 import_network='VM Network'):
         si = connect.SmartConnectNoSSL(host=host, port=443, user=user, pwd=password)
         self.conn = si
         self.si = si
@@ -56,6 +57,7 @@ class Ksphere:
         self.dvs = dvs
         self.portgs = {}
         self.basefolder = basefolder
+        self.import_network = import_network
         return
 
     def set_networks(self):
@@ -1096,8 +1098,8 @@ class Ksphere:
     def vm_ports(self, name):
         return []
 
-    def add_image(self, url, pool, short=None, cmd=None, name=None, size=None, network=None):
-        vmnetwork = network or 'VM Network'
+    def add_image(self, url, pool, short=None, cmd=None, name=None, size=None):
+        vmnetwork = self.import_network
         downloaded = False
         si = self.si
         rootFolder = self.rootFolder

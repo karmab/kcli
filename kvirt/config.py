@@ -360,10 +360,11 @@ class Kconfig(Kbaseconfig):
                 category = self.options.get('category', 'kcli')
                 basefolder = self.options.get('basefolder')
                 dvs = self.options.get('dvs', True)
+                import_network = self.options.get('import_network', 'VM Network')
                 from kvirt.providers.vsphere import Ksphere
                 k = Ksphere(self.host, user, password, datacenter, cluster, isofolder=isofolder, debug=debug,
                             filtervms=filtervms, filteruser=filteruser, filtertag=filtertag, category=category,
-                            basefolder=basefolder, dvs=dvs)
+                            basefolder=basefolder, dvs=dvs, import_network=import_network)
             elif self.type == 'packet':
                 auth_token = self.options.get('auth_token')
                 if auth_token is None:
@@ -2230,7 +2231,7 @@ class Kconfig(Kbaseconfig):
 
     def handle_host(self, pool=None, image=None, switch=None, download=False,
                     url=None, cmd=None, sync=False, update_profile=False, commit=None, size=None, arch='x86_64',
-                    kvm_openstack=True, network=None):
+                    kvm_openstack=True):
         """
 
         :param pool:
@@ -2286,7 +2287,7 @@ class Kconfig(Kbaseconfig):
                 pprint(f"Grabbing image {image}...")
                 shortname = os.path.basename(url).split('?')[0]
                 try:
-                    result = k.add_image(url, pool, cmd=cmd, name=image, size=size, network=network)
+                    result = k.add_image(url, pool, cmd=cmd, name=image, size=size)
                 except Exception as e:
                     error(f"Got {e}")
                     error(f"Please run kcli delete image --yes {shortname}")

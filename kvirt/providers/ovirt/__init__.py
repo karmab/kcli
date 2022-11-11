@@ -998,7 +998,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                 return {'result': 'success'}
         return {'result': 'failure', 'reason': f"Image {image} not found"}
 
-    def add_image(self, url, pool, short=None, cmd=None, name=None, size=None, network=None):
+    def add_image(self, url, pool, short=None, cmd=None, name=None, size=None):
         downloaded = False
         shortimage = os.path.basename(url).split('?')[0]
         iso = True if shortimage.endswith('.iso') or name.endswith('.iso') else False

@@ -416,7 +416,7 @@ def download_image(args):
     update_profile = not args.skip_profile
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     result = config.handle_host(pool=pool, image=image, download=True, cmd=cmd, url=url, update_profile=update_profile,
-                                size=size, arch=arch, kvm_openstack=kvm_openstack, network=args.network)
+                                size=size, arch=arch, kvm_openstack=kvm_openstack)
     if result['result'] == 'success':
         sys.exit(0)
     else:
@@ -4813,7 +4813,6 @@ def cli():
                                       default='x86_64')
     imagedownload_parser.add_argument('-c', '--cmd', help='Extra command to launch after downloading', metavar='CMD')
     imagedownload_parser.add_argument('-q', '--qemu', help='Use qemu variant (kvm specific)', action='store_true')
-    imagedownload_parser.add_argument('-n', '--network', help='Target network (vsphere specific)')
     imagedownload_parser.add_argument('-p', '--pool', help='Pool to use. Defaults to default', metavar='POOL')
     imagedownload_parser.add_argument('-u', '--url', help='Url to use', metavar='URL', type=valid_url)
     imagedownload_parser.add_argument('--size', help='Disk size (kubevirt specific)', type=int, metavar='SIZE')

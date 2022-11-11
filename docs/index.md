@@ -506,13 +506,14 @@ myvsphere:
 
 The following parameters are specific to vsphere:
 
-- cluster. 
-- datacenter Defaults to Default
+- cluster
+- datacenter: Defaults to Default
 - filtervms Defaults to True. Only list vms created by kcli. Useful for environments when you are superadmin and have a ton of vms!!!
 - category: Defaults to kcli. Category where to create tags in order to apply them to vms. If tags are requested for a given vm, they will be created on the fly along with the category, if missing
 - basefolder: Optional base folder where to create all vms
 - isofolder: Optional folder where to keep ISOs
 - dvs: Whether to gather DVS networks. Enabled by default, but can be set to False to speed up operations if you don't have dvs networks
+- import_network: Defaults to 'VM Network'. Network to use as part of the template created when downloading image
 
 Note that pool in Vsphere context refers to datastore.
 
