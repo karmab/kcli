@@ -1165,21 +1165,21 @@ class Kvirt(object):
         smmxml = ""
         osfirmware = ""
         if uefi or uefi_legacy or secureboot or aarch64:
+            secure = 'yes' if secureboot else 'no'
             if uefi_legacy:
-                ramxml = "<loader readonly='yes' type='pflash'>/usr/share/OVMF/OVMF_CODE.secboot.fd</loader>"
+                firmware = '/usr/share/OVMF/OVMF_CODE.secboot.fd'
+                ramxml = f"<loader secure='{secure}' readonly='yes' type='pflash'>{firmware}</loader>"
                 if secureboot:
                     smmxml = "<smm state='on'/>"
                     sectemplate = '/usr/share/OVMF/OVMF_VARS.secboot.fd'
-                    ramxml += '<nvram template="%s">/var/lib/libvirt/qemu/nvram/%s.fd</nvram>' % (sectemplate, name)
+                    ramxml += f'<nvram template="{sectemplate}">/var/lib/libvirt/qemu/nvram/{name}.fd</nvram>'
                 else:
-                    ramxml += '<nvram>/var/lib/libvirt/qemu/nvram/%s.fd</nvram>' % name
+                    ramxml += f'<nvram>/var/lib/libvirt/qemu/nvram/{name}.fd</nvram>'
             else:
                 osfirmware = "firmware='efi'"
-                secure = 'no'
                 if secureboot:
                     smmxml = "<smm state='on'/>"
-                    secure = 'yes'
-                ramxml = "<loader secure='%s'/>" % secure
+                ramxml = f"<loader secure='{secure}'/>"
         arch = 'aarch64' if aarch64 else overrides.get('arch', 'x86_64')
         if not aarch64:
             acpixml = '<acpi/>\n<apic/>'
