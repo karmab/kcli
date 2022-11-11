@@ -1297,7 +1297,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 pprint(f"Plug {cluster}-worker.iso to get additional workers")
         backup_paramfile(installparam, clusterdir, cluster, plan, image, dnsconfig)
         sys.exit(0)
-    call(f'openshift-install --dir={clusterdir} --log-level={log_level} create ignition-configs', shell=True)
+    run = call(f'openshift-install --dir={clusterdir} --log-level={log_level} create ignition-configs', shell=True)
+    if run != 0:
+        error("Hit issues when generating ignition-config files")
+        error("Leaving environment for debugging purposes")
+        error(f"You can delete it with kcli delete kube --yes {cluster}")
+        sys.exit(run)
     for role in ['master', 'worker']:
         ori = f"{clusterdir}/{role}.ign"
         copy2(ori, f"{ori}.ori")
