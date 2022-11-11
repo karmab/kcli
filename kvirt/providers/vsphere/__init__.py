@@ -1099,7 +1099,6 @@ class Ksphere:
         return []
 
     def add_image(self, url, pool, short=None, cmd=None, name=None, size=None):
-        vmnetwork = self.import_network
         downloaded = False
         si = self.si
         rootFolder = self.rootFolder
@@ -1107,6 +1106,9 @@ class Ksphere:
         resourcepool = clu.resourcePool
         vmFolder = self.dc.vmFolder
         manager = si.content.ovfManager
+        network = find(si, rootFolder, vim.Network, self.import_network)
+        if network is None:
+            return {'result': 'failure', 'reason': f"Import network {self.import_network} not found"}
         shortimage = os.path.basename(url).split('?')[0]
         name = name.replace('.ova', '').replace('.x86_64', '') if name is not None else shortimage
         iso = True if shortimage.endswith('.iso') or name.endswith('.iso') else False
@@ -1188,9 +1190,8 @@ class Ksphere:
         ovfd = open(ovf_path).read()
         ovfd = re.sub('<Name>.*</Name>', f'<Name>{name}</Name>', ovfd)
         datastore = find(si, rootFolder, vim.Datastore, pool)
-        network = find(si, rootFolder, vim.Network, vmnetwork)
         networkmapping = vim.OvfManager.NetworkMapping.Array()
-        nm = vim.OvfManager.NetworkMapping(name=vmnetwork, network=network)
+        nm = vim.OvfManager.NetworkMapping(name=self.import_network, network=network)
         networkmapping.append(nm)
         spec_params = vim.OvfManager.CreateImportSpecParams(diskProvisioning="thin", networkMapping=networkmapping)
         import_spec = manager.CreateImportSpec(ovfd, resourcepool, datastore, spec_params)
