@@ -83,6 +83,7 @@ class Kexposer():
             """
             create plan
             """
+            update = False
             currentconfig = self.config
             if 'plan' in request.forms:
                 plan = request.forms['plan']
@@ -98,6 +99,8 @@ class Kexposer():
                             value = value.lower() == "true"
                         key = p.replace('parameter_', '')
                         parameters[key] = value
+                    elif p == 'update':
+                        update = True
                 try:
                     overrides = self.get_client(plan, currentconfig, overrides=parameters)
                     if 'mail' in currentconfig.notifymethods and 'mail_to' in overrides and overrides['mail_to'] != "":
@@ -108,8 +111,11 @@ class Kexposer():
                             currentconfig.mailto = newmails
                     if 'owner' in overrides and overrides['owner'] == '':
                         del overrides['owner']
-                    currentconfig.delete_plan(plan)
-                    result = currentconfig.plan(plan, inputfile=inputfile, overrides=overrides)
+                    if update:
+                        result = currentconfig.plan(plan, inputfile=inputfile, overrides=overrides, update=True)
+                    else:
+                        currentconfig.delete_plan(plan)
+                        result = currentconfig.plan(plan, inputfile=inputfile, overrides=overrides)
                 except Exception as e:
                     error = f'Hit issue when running plan: {str(e)}'
                     result = {'result': 'failure', 'error': error}
