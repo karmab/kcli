@@ -145,7 +145,8 @@ class Redfish(object):
     def reset(self):
         manager_url = self.get_manager_url()
         reset_url = f"{manager_url}/Actions/Manager.Reset"
-        request = Request(reset_url, headers=self.headers, method='POST', data=json.dumps({}).encode('utf-8'))
+        request = Request(reset_url, headers=self.headers, method='POST',
+                          data=json.dumps({"ResetType": "GracefulRestart"}).encode('utf-8'))
         urlopen(request, context=self.context)
 
     def set_iso(self, iso_url):
