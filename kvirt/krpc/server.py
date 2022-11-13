@@ -145,8 +145,8 @@ class KcliServicer(kcli_pb2_grpc.KcliServicer):
         config = Kconfig()
         k = config.k
         name = request.name
-        l = request.l if request.l != '' else None
-        r = request.r if request.r != '' else None
+        local = request.l if request.l != '' else None
+        remote = request.r if request.r != '' else None
         X = request.X
         Y = request.Y
         D = request.D if request.D != '' else None
@@ -173,7 +173,7 @@ class KcliServicer(kcli_pb2_grpc.KcliServicer):
             user = config.vmuser if config.vmuser is not None else u
         if vmport is None and config.vmport is not None:
             vmport = config.vmport
-        sshcmd = common.ssh(name, ip=ip, user=user, local=l, remote=r, tunnel=tunnel, tunnelhost=tunnelhost,
+        sshcmd = common.ssh(name, ip=ip, user=user, local=local, remote=remote, tunnel=tunnel, tunnelhost=tunnelhost,
                             tunnelport=tunnelport, tunneluser=tunneluser, insecure=insecure, cmd=cmd, X=X, Y=Y, D=D,
                             vmport=vmport)
         response = kcli_pb2.sshcmd(sshcmd=sshcmd)

@@ -1649,8 +1649,8 @@ def create_product(args):
 
 def ssh_vm(args):
     """Ssh into vm"""
-    l = args.L
-    r = args.R
+    local = args.L
+    remote = args.R
     D = args.D
     X = args.X
     Y = args.Y
@@ -1667,7 +1667,7 @@ def ssh_vm(args):
         pprint("Using %s from %s as vm" % (name, config.client))
     else:
         name = args.name[0]
-    sshcommand = k.ssh(kcli_pb2.vm(name=name, user=user, l=l, r=r, X=X, Y=Y, D=D, cmd=cmd)).sshcmd
+    sshcommand = k.ssh(kcli_pb2.vm(name=name, user=user, l=local, r=remote, X=X, Y=Y, D=D, cmd=cmd)).sshcmd
     if sshcommand != '':
         if args.debug:
             print(sshcommand)

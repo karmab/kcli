@@ -330,7 +330,7 @@ def deletedirectory(si, dc, path):
 
 
 def keep_lease_alive(lease):
-    while(True):
+    while True:
         time.sleep(5)
         try:
             lease.HttpNfcLeaseProgress(50)

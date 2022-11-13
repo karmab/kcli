@@ -1506,7 +1506,7 @@ class Kvirt(object):
             if 'this function is not supported by the connection driver: virConnectNumOfInterfaces' in str(e):
                 warning("Network: system interfaces are unavailable")
             else:
-                raise(e)
+                raise e
         for network in conn.listAllNetworks():
             networkname = network.name()
             netxml = network.XMLDesc(0)
