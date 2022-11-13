@@ -1229,7 +1229,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                     call(f"sudo chown apache.apache {baremetal_web_dir}/{cluster}-sno.iso", shell=True)
             else:
                 call(f"sudo chmod a+r {iso_pool_path}/{cluster}-sno.iso", shell=True)
-            nic = os.popen('ip r | grep default | cut -d" " -f5').read().strip()
+            nic = os.popen('ip r | grep default | cut -d" " -f5 | head -1').read().strip()
             ip_cmd = f"ip -o addr show {nic} | awk '{{print $4}}' | cut -d '/' -f 1 | head -1"
             host_ip = os.popen(ip_cmd).read().strip()
             if baremetal_web_port != 80:
