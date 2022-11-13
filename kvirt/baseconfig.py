@@ -31,7 +31,7 @@ from kvirt import kubeadm
 from kvirt import hypershift
 from kvirt import openshift
 import os
-from shutil import copytree, rmtree, which
+from shutil import copytree, rmtree, which, copy2
 import yaml
 from jinja2 import Environment, FileSystemLoader
 from jinja2 import StrictUndefined as strictundefined
@@ -1650,3 +1650,54 @@ class Kbaseconfig:
                     pprint("Detailed information:")
                     pprint(keywords_info[keyword].strip())
         return 0
+
+    def import_in_kube(self, cluster, network='default', dest=None):
+        plandir = os.path.dirname(openshift.create.__code__.co_filename)
+        oriconf = os.path.expanduser('~/.kcli')
+        orissh = os.path.expanduser('~/.ssh')
+        with TemporaryDirectory() as tmpdir:
+            if self.type == 'kvm' and self.k.host in ['localhost', '127.0.0.1']:
+                oriconf = f"{tmpdir}/.kcli"
+                orissh = f"{tmpdir}/.ssh"
+                os.mkdir(oriconf)
+                os.mkdir(orissh)
+                kvm_overrides = {'network': network, 'user': getuser(), 'client': self.client}
+                kcliconf = self.process_inputfile(cluster, f"{plandir}/local_kcli_conf.j2", overrides=kvm_overrides)
+                with open(f"{oriconf}/config.yml", 'w') as _f:
+                    _f.write(kcliconf)
+                sshcmd = f"ssh-keygen -t rsa -N '' -f {orissh}/id_rsa > /dev/null"
+                call(sshcmd, shell=True)
+                authorized_keys_file = os.path.expanduser('~/.ssh/authorized_keys')
+                file_mode = 'a' if os.path.exists(authorized_keys_file) else 'w'
+                with open(authorized_keys_file, file_mode) as f:
+                    publickey = open(f"{orissh}/id_rsa.pub").read().strip()
+                    f.write(f"\n{publickey}")
+            elif self.type == 'kubevirt':
+                oriconf = f"{tmpdir}/.kcli"
+                os.mkdir(oriconf)
+                kubeconfig_overrides = {'kubeconfig': False, 'client': self.client}
+                destkubeconfig = self.options.get('kubeconfig', os.environ.get('KUBECONFIG'))
+                if destkubeconfig is not None:
+                    destkubeconfig = os.path.expanduser(destkubeconfig)
+                    copy2(destkubeconfig, f"{oriconf}/kubeconfig")
+                    kubeconfig_overrides['kubeconfig'] = True
+                kcliconf = self.process_inputfile(cluster, f"{plandir}/kubevirt_kcli_conf.j2",
+                                                  overrides=kubeconfig_overrides)
+                with open(f"{oriconf}/config.yml", 'w') as _f:
+                    _f.write(kcliconf)
+            if dest is not None:
+                desx = f"{dest}/99-kcli-conf-cm.yaml"
+                cmcmd = f'KUBECONFIG={plandir}/fake_kubeconfig.json '
+                cmcmd += f"oc create cm -n kcli-infra kcli-conf --from-file={oriconf} --dry-run=client -o yaml > {desx}"
+                call(cmcmd, shell=True)
+                desx = f"{dest}/99-kcli-ssh-cm.yaml"
+                cmcmd = f'KUBECONFIG={plandir}/fake_kubeconfig.json  '
+                cmcmd += f"oc create cm -n kcli-infra kcli-ssh --from-file={orissh} --dry-run=client -o yaml > {desx}"
+                call(cmcmd, shell=True)
+            else:
+                cmcmd = "oc create ns kcli-infra"
+                call(cmcmd, shell=True)
+                cmcmd = f"oc create cm -n kcli-infra kcli-conf --from-file={oriconf}"
+                call(cmcmd, shell=True)
+                cmcmd = f"oc create cm -n kcli-infra kcli-ssh --from-file={orissh}"
+                call(cmcmd, shell=True)

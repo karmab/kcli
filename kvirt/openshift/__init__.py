@@ -600,7 +600,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         else:
             pprint(f"Removing directory {clusterdir}")
             rmtree(clusterdir)
-    orikubeconfig = os.environ.get('KUBECONFIG')
     os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
     if which('oc') is None:
         get_oc(macosx=macosx)
@@ -1018,48 +1017,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                                                                                       'client': config.client})
             with open(f"{clusterdir}/openshift/99-bootstrap-deletion.yaml", 'w') as _f:
                 _f.write(deletionfile)
-            oriconf = os.path.expanduser('~/.kcli')
-            orissh = os.path.expanduser('~/.ssh')
-            with TemporaryDirectory() as tmpdir:
-                if config.type == 'kvm' and config.k.host in ['localhost', '127.0.0.1']:
-                    oriconf = f"{tmpdir}/.kcli"
-                    orissh = f"{tmpdir}/.ssh"
-                    os.mkdir(oriconf)
-                    os.mkdir(orissh)
-                    kvm_overrides = {'network': network, 'user': getuser(), 'client': config.client}
-                    kcliconf = config.process_inputfile(cluster, f"{plandir}/local_kcli_conf.j2",
-                                                        overrides=kvm_overrides)
-                    with open(f"{oriconf}/config.yml", 'w') as _f:
-                        _f.write(kcliconf)
-                    sshcmd = f"ssh-keygen -t rsa -N '' -f {orissh}/id_rsa > /dev/null"
-                    call(sshcmd, shell=True)
-                    authorized_keys_file = os.path.expanduser('~/.ssh/authorized_keys')
-                    file_mode = 'a' if os.path.exists(authorized_keys_file) else 'w'
-                    with open(authorized_keys_file, file_mode) as f:
-                        publickey = open(f"{orissh}/id_rsa.pub").read().strip()
-                        f.write(f"\n{publickey}")
-                elif config.type == 'kubevirt':
-                    oriconf = f"{tmpdir}/.kcli"
-                    os.mkdir(oriconf)
-                    kubeconfig_overrides = {'kubeconfig': False, 'client': config.client}
-                    destkubeconfig = config.options.get('kubeconfig', orikubeconfig)
-                    if destkubeconfig is not None:
-                        destkubeconfig = os.path.expanduser(destkubeconfig)
-                        copy2(destkubeconfig, f"{oriconf}/kubeconfig")
-                        kubeconfig_overrides['kubeconfig'] = True
-                    kcliconf = config.process_inputfile(cluster, f"{plandir}/kubevirt_kcli_conf.j2",
-                                                        overrides=kubeconfig_overrides)
-                    with open(f"{oriconf}/config.yml", 'w') as _f:
-                        _f.write(kcliconf)
-                ns = "kcli-infra"
-                dest = f"{clusterdir}/openshift/99-kcli-conf-cm.yaml"
-                cmcmd = f'KUBECONFIG={plandir}/fake_kubeconfig.json '
-                cmcmd += f"oc create cm -n {ns} kcli-conf --from-file={oriconf} --dry-run=client -o yaml > {dest}"
-                call(cmcmd, shell=True)
-                dest = f"{clusterdir}/openshift/99-kcli-ssh-cm.yaml"
-                cmcmd = f'KUBECONFIG={plandir}/fake_kubeconfig.json  '
-                cmcmd += f"oc create cm -n {ns} kcli-ssh --from-file={orissh} --dry-run=client -o yaml > {dest}"
-                call(cmcmd, shell=True)
+            config.import_in_kube(cluster, network=network, dest=f"{clusterdir}/openshift")
             deletionfile2 = f"{plandir}/99-bootstrap-deletion-2.yaml"
             deletionfile2 = config.process_inputfile(cluster, deletionfile2, overrides={'registry': registry,
                                                                                         'arch_tag': arch_tag})
