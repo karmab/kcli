@@ -5,7 +5,6 @@ tag: '4.11'
 network: baremetal
 ingress_ip: 10.19.135.130
 workers: 2
-pool: images3
 numcpus: 16
 #memory: 32768
 memory: 46080
