@@ -108,6 +108,9 @@ def create(config, plandir, cluster, overrides):
         else:
             kubeconfig = 'config'
             kubeconfigdir = os.path.expanduser("~/.kube")
+        if which('podman') is None:
+            error("Please install podman first in order to install hypershift")
+            sys.exit(1)
         hypercmd = f"podman run -it --rm --entrypoint=/usr/bin/hypershift -e KUBECONFIG=/k/{kubeconfig}"
         hypercmd += f" -v {kubeconfigdir}:/k {data['hypershift_image']} install"
         call(hypercmd, shell=True)
