@@ -20,9 +20,16 @@ fi
 
 firstboot_args='console=tty0 rd.neednet=1 {{ nics | join(" ") }} {{ extra_args|default("") }}'
 
+{% for net in nets|default([]) %}
+{% set nic = net.get('nic', 'ens' + (3 + loop.index0)|string) %}
+{{ loop.index0 }}
+{% set ip = net.get('ip') %}
+{% set netmask = net.get('netmask') or net.get('prefix') %}
+{% set gateway = net.get('gateway') %}
 {% if ip is defined and netmask is defined and gateway is defined %}
-firstboot_args="$firstboot_args ip={{ "[" + ip + "]" if ':' in ip else ip }}::{{ "[" + gateway + "]" if ':' in gateway else gateway }}:{{ netmask }}:{{ hostname|default("") }}:{{ nic|default("ens3") }}:none nameserver={{ "[" + dns|default(gateway) + "]" if ':' in dns|default(gateway) else dns|default(gateway) }}"
+firstboot_args="$firstboot_args ip={{ "[" + ip + "]" if ':' in ip else ip }}::{{ "[" + gateway + "]" if ':' in gateway else gateway }}:{{ netmask }}:{{ hostname|default("") }}:{{ nic }}:none nameserver={{ "[" + dns|default(gateway) + "]" if ':' in dns|default(gateway) else dns|default(gateway) }}"
 {% endif %}
+{% endfor %}
 
 if [ -f /root/macs.txt ] ; then
     for dev in $(ls -1 /sys/class/net) ; do

@@ -246,7 +246,7 @@ $ kcli create openshift-iso -P api_ip=192.168.1.20 testk.karmalabs.corp
 $ kcli create openshift-iso -P disable_nics=[ens4] testk.karmalabs.corp
 
 # Inject static ip for ens3
-$ kcli create openshift-iso -P nic=ens3 -P ip=192.168.122.8 -P netmask=24 -P gateway=192.168.122.1 testk.karmalabs.corp
+$ kcli create openshift-iso -P nets=['{"ip":"192.168.0.8","netmask":"24","gateway":"192.168.0.1"}'] testk.karmalabs.corp
 
 # Provide extra args for first boot of the node
 $ kcli create openshift-iso -P extra_args="super_string_of_args" testk.karmalabs.corp
