@@ -21,7 +21,7 @@ fi
 firstboot_args='console=tty0 rd.neednet=1 {{ nics | join(" ") }} {{ extra_args|default("") }}'
 
 {% for net in nets|default([]) %}
-{% set nic = net.get('nic', 'ens' + (3 + loop.index0)|string) %}
+{% set nic = nic if nic is defined else net.get('nic', 'ens' + (3 + loop.index0)|string) %}
 {{ loop.index0 }}
 {% set ip = net.get('ip') %}
 {% set netmask = net.get('netmask') or net.get('prefix') %}
