@@ -57,5 +57,6 @@ setup(
         kbmc=kvirt.kbmc:main
         krpc=kvirt.krpc.server:main
         kclirpc=kvirt.krpc.cli:cli
+        ignitionmerger=kvirt.ignitionmerger:cli
     ''',
 )
