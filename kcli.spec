@@ -59,6 +59,7 @@ rm -rf %{buildroot}
 %attr(0755,root,root) %{_bindir}/kbmc
 %attr(0755,root,root) %{_bindir}/kclirpc
 %attr(0755,root,root) %{_bindir}/krpc
+%attr(0755,root,root) %{_bindir}/ignitionmerger
 
 %changelog
 {{{ git_dir_changelog }}}
