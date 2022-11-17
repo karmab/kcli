@@ -393,5 +393,5 @@ baremetal_hosts:
 $ kcli start hosts -P baremetal_hosts=['{"bmc_url":"http://192.168.122.1:8000/h1"}'] -P bmc_user=xx -P bmc_password=xx
 
 # Start single host
-$ kcli start host -P url=http://192.168.122.1:8000/h1 -P user=xx -P password=xx
+$ kcli start host -P url=http://192.168.122.1:8000/h1 -P user=xx -P password=xx -P iso_url=http://192.168.122.1/my.iso
 """
