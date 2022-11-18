@@ -2021,6 +2021,7 @@ def make_iso(name, tmpdir, userdata, metadata, netdata, openstack=False):
             move(f"{tmpdir}/network-config", f"{tmpdir}/root/openstack/latest/network_config.json")
         else:
             isocmd += f" {tmpdir}/network-config"
+    isocmd += " >/dev/null 2>&1"
     os.system(isocmd)
 
 
