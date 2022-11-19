@@ -186,7 +186,7 @@ def start_baremetal_hosts(args):
     if not baremetal_hosts:
         error("Baremetal hosts need to be defined")
         sys.exit(1)
-    common.boot_hosts(baremetal_hosts, iso_url, overrides=overrides)
+    common.boot_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=args.debug)
 
 
 def stop_baremetal_hosts(args):
@@ -202,7 +202,7 @@ def stop_baremetal_hosts(args):
     if not baremetal_hosts:
         error("Baremetal hosts need to be defined")
         sys.exit(1)
-    common.stop_hosts(baremetal_hosts, overrides=overrides)
+    common.stop_hosts(baremetal_hosts, overrides=overrides, debug=args.debug)
 
 
 def start_vm(args):

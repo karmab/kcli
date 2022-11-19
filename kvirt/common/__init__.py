@@ -2266,7 +2266,7 @@ def get_rhcos_url_from_file(filename, _type='kvm'):
     return url
 
 
-def boot_hosts(baremetal_hosts, iso_url, overrides={}):
+def boot_hosts(baremetal_hosts, iso_url, overrides={}, debug=False):
     for host in baremetal_hosts:
         bmc_url = host.get('url') or host.get('bmc_url')
         bmc_user = host.get('user') or host.get('bmc_user') or overrides.get('bmc_user')
@@ -2274,7 +2274,7 @@ def boot_hosts(baremetal_hosts, iso_url, overrides={}):
         bmc_model = host.get('model') or host.get('bmc_model') or overrides.get('bmc_model', 'dell')
         bmc_reset = host.get('reset') or host.get('bmc_reset') or overrides.get('bmc_reset', False)
         if bmc_url is not None and bmc_user is not None and bmc_password is not None:
-            red = Redfish(bmc_url, bmc_user, bmc_password, model=bmc_model)
+            red = Redfish(bmc_url, bmc_user, bmc_password, model=bmc_model, debug=debug)
             if bmc_reset:
                 red.reset()
                 sleep(240)
@@ -2289,14 +2289,14 @@ def boot_hosts(baremetal_hosts, iso_url, overrides={}):
                 red.start()
 
 
-def stop_hosts(baremetal_hosts, overrides={}):
+def stop_hosts(baremetal_hosts, overrides={}, debug=False):
     for host in baremetal_hosts:
         bmc_url = host.get('url') or host.get('bmc_url')
         bmc_user = host.get('user') or host.get('bmc_user') or overrides.get('bmc_user')
         bmc_password = host.get('password') or host.get('bmc_password') or overrides.get('bmc_password')
         bmc_model = host.get('model') or host.get('bmc_model') or overrides.get('bmc_model', 'dell')
         if bmc_url is not None and bmc_user is not None and bmc_password is not None:
-            red = Redfish(bmc_url, bmc_user, bmc_password, model=bmc_model)
+            red = Redfish(bmc_url, bmc_user, bmc_password, model=bmc_model, debug=debug)
             msg = host['name'] if 'name' in host else f"with url {bmc_url}"
             pprint(f"Stopping Host {msg}")
             red.stop()

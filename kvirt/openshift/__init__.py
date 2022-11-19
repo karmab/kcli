@@ -1235,7 +1235,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             if baremetal_web_port != 80:
                 host_ip += f":{baremetal_web_port}"
             iso_url = f'http://{host_ip}/{cluster}-sno.iso'
-            boot_hosts(baremetal_hosts, iso_url, overrides=overrides)
+            boot_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
         if sno_wait:
             installcommand = f'openshift-install --dir={clusterdir} --log-level={log_level} wait-for install-complete'
             installcommand = ' || '.join([installcommand for x in range(retries)])
@@ -1464,7 +1464,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                     copycmd = f"oc -n default cp {iso_pool_path}/{cluster}-worker.iso {podname}:/var/www/html"
                     call(copycmd, shell=True)
                     iso_url = f'http://{svcip}:{svcport}/{cluster}-worker.iso'
-                    boot_hosts(baremetal_hosts, iso_url, overrides=overrides)
+                    boot_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
             if overrides['workers'] > 0:
                 threaded = data.get('threaded', False) or data.get('workers_threaded', False)
                 result = config.plan(plan, inputfile=f'{plandir}/workers.yml', overrides=overrides, threaded=threaded)

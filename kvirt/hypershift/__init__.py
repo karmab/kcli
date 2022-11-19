@@ -322,7 +322,7 @@ def create(config, plandir, cluster, overrides):
             copycmd = f"oc -n default cp {iso_pool_path}/{cluster}-worker.iso {podname}:/var/www/html"
             call(copycmd, shell=True)
             iso_url = f'http://{svcip}:{svcport}/{cluster}-worker.iso'
-            boot_hosts(baremetal_hosts, iso_url, overrides=overrides)
+            boot_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
             data['workers'] = data['workers'] - len(baremetal_hosts)
     if data['workers'] > 0:
         worker_threaded = data.get('threaded', False) or data.get('workers_threaded', False)

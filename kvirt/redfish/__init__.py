@@ -9,7 +9,8 @@ from uuid import UUID
 
 
 class Redfish(object):
-    def __init__(self, url, user='root', password='calvin', insecure=True, model='dell'):
+    def __init__(self, url, user='root', password='calvin', insecure=True, model='dell', debug=False):
+        self.debug = debug
         self.model = model.lower()
         try:
             UUID(os.path.basename(url))
@@ -32,6 +33,8 @@ class Redfish(object):
                 sys.exit(0)
         else:
             self.url = url
+        if self.debug:
+            print(f"Using base url {self.url}")
         self.user = user
         self.password = password
         self.headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
@@ -52,7 +55,10 @@ class Redfish(object):
 
     def get_iso_status(self):
         manager_url = self.get_manager_url()
-        request = Request(f"{manager_url}/VirtualMedia/{self.cdpath}", headers=self.headers)
+        iso_url = f"{manager_url}/VirtualMedia/{self.cdpath}"
+        if self.debug:
+            print(f"Getting {iso_url}")
+        request = Request(iso_url, headers=self.headers)
         response = json.loads(urlopen(request, context=self.context).read())
         return f"{response['Inserted']}"
 
@@ -61,15 +67,21 @@ class Redfish(object):
             self.eject_iso_supermicro()
             return
         manager_url = self.get_manager_url()
-        iso_url = f"{manager_url}/VirtualMedia/{self.cdpath}/Actions/VirtualMedia.EjectMedia"
-        request = Request(iso_url, headers=self.headers, method='POST', data=json.dumps({}).encode('utf-8'))
+        eject_url = f"{manager_url}/VirtualMedia/{self.cdpath}/Actions/VirtualMedia.EjectMedia"
+        if self.debug:
+            print(f"Sending POST to {eject_url} with empty data")
+        data = json.dumps({}).encode('utf-8')
+        request = Request(eject_url, headers=self.headers, method='POST', data=data)
         urlopen(request, context=self.context)
 
     def eject_iso_supermicro(self):
         manager_url = self.get_manager_url()
         headers = self.headers.copy()
         headers['Content-Length'] = 0
-        request = Request(f"{manager_url}/VM1/CfgCD/Actions/IsoConfig.UnMount", data={}, headers=headers)
+        eject_url = f"{manager_url}/VM1/CfgCD/Actions/IsoConfig.UnMount"
+        if self.debug:
+            print(f"Sending POST to {eject_url} with empty data")
+        request = Request(eject_url, data={}, headers=headers)
         urlopen(request, context=self.context)
 
     def insert_iso(self, iso_url):
@@ -77,22 +89,30 @@ class Redfish(object):
             self.insert_iso_supermicro(iso_url)
             return
         data = {"Image": iso_url, "Inserted": True}
-        data = json.dumps(data).encode('utf-8')
         manager_url = self.get_manager_url()
-        request = Request(f"{manager_url}/VirtualMedia/{self.cdpath}/Actions/VirtualMedia.InsertMedia", data=data,
-                          headers=self.headers)
+        insert_url = f"{manager_url}/VirtualMedia/{self.cdpath}/Actions/VirtualMedia.InsertMedia"
+        if self.debug:
+            print(f"Sending POST to {insert_url} with data {data}")
+        data = json.dumps(data).encode('utf-8')
+        request = Request(insert_url, data=data, headers=self.headers)
         urlopen(request, context=self.context)
 
     def insert_iso_supermicro(self, iso_url):
         p = urlparse(iso_url)
         data = {"Host": f"{p.scheme}://{p.netloc}", "Path": p.path}
-        data = json.dumps(data).encode('utf-8')
         manager_url = self.get_manager_url()
-        request = Request(f"{manager_url}/VM1/CfgCD", data=data, headers=self.headers, method='PATCH')
+        cd_url = f"{manager_url}/VM1/CfgCD"
+        if self.debug:
+            print(f"Sending PATCH to {cd_url} with data {data}")
+        data = json.dumps(data).encode('utf-8')
+        request = Request(cd_url, data=data, headers=self.headers, method='PATCH')
         urlopen(request, context=self.context)
         headers = self.headers.copy()
         headers['Content-Length'] = 0
-        request = Request(f"{manager_url}/VM1/CfgCD/Actions/IsoConfig.Mount", data={}, headers=headers)
+        insert_url = f"{manager_url}/VM1/CfgCD/Actions/IsoConfig.Mount"
+        if self.debug:
+            print(f"Sending POST to {insert_url} with empty data")
+        request = Request(insert_url, data={}, headers=headers)
         urlopen(request, context=self.context)
 
     def set_iso_once(self):
@@ -107,6 +127,8 @@ class Redfish(object):
         if 'BootSourceOverrideMode' not in currentboot or currentboot['BootSourceOverrideMode'] != 'UEFI':
             newboot['BootSourceOverrideMode'] = 'UEFI'
         data = {"Boot": newboot}
+        if self.debug:
+            print(f"Sending PATCH to {self.url} with data {data}")
         data = json.dumps(data).encode('utf-8')
         request = Request(self.url, data=data, headers=self.headers, method='PATCH')
         urlopen(request, context=self.context)
@@ -116,20 +138,29 @@ class Redfish(object):
         response = json.loads(urlopen(request, context=self.context).read())
         reset_type = 'On' if response['PowerState'] == 'Off' else 'ForceRestart'
         data = {"ResetType": reset_type}
+        reset_url = f"{self.url}/Actions/ComputerSystem.Reset"
+        if self.debug:
+            print(f"Sending POST to {reset_url} with data {data}")
         data = json.dumps(data).encode('utf-8')
-        request = Request(f"{self.url}/Actions/ComputerSystem.Reset", data=data, headers=self.headers)
+        request = Request(reset_url, data=data, headers=self.headers)
         urlopen(request, context=self.context)
 
     def stop(self):
         data = {"ResetType": "ForceOff"}
+        reset_url = f"{self.url}/Actions/ComputerSystem.Reset"
+        if self.debug:
+            print(f"Sending POST to {reset_url} with data {data}")
         data = json.dumps(data).encode('utf-8')
-        request = Request(f"{self.url}/Actions/ComputerSystem.Reset", data=data, headers=self.headers)
+        request = Request(reset_url, data=data, headers=self.headers)
         urlopen(request, context=self.context)
 
     def start(self):
         data = {"ResetType": "On"}
+        reset_url = f"{self.url}/Actions/ComputerSystem.Reset"
+        if self.debug:
+            print(f"Sending POST to {reset_url} with {data}")
         data = json.dumps(data).encode('utf-8')
-        request = Request(f"{self.url}/Actions/ComputerSystem.Reset", data=data, headers=self.headers)
+        request = Request(reset_url, data=data, headers=self.headers)
         urlopen(request, context=self.context)
 
     def status(self):
@@ -145,8 +176,11 @@ class Redfish(object):
     def reset(self):
         manager_url = self.get_manager_url()
         reset_url = f"{manager_url}/Actions/Manager.Reset"
-        request = Request(reset_url, headers=self.headers, method='POST',
-                          data=json.dumps({"ResetType": "GracefulRestart"}).encode('utf-8'))
+        data = {"ResetType": "GracefulRestart"}
+        if self.debug:
+            print(f"Sending POST to {reset_url} with data {data}")
+        data = json.dumps(data).encode('utf-8')
+        request = Request(reset_url, headers=self.headers, method='POST', data=data)
         urlopen(request, context=self.context)
 
     def set_iso(self, iso_url):
