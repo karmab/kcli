@@ -25,7 +25,7 @@ from glob import glob
 import json
 from kvirt import common
 from kvirt.common import error, pprint, success, warning, ssh, _ssh_credentials, container_mode
-from kvirt.common import get_git_version, compare_git_versions
+from kvirt.common import get_git_version, compare_git_versions, valid_uuid
 from kvirt import nameutils
 import os
 import random
@@ -195,6 +195,8 @@ def stop_baremetal_hosts(args):
     bmc_url = overrides.get('bmc_url') or overrides.get('url')
     bmc_user = overrides.get('bmc_user') or overrides.get('user')
     bmc_password = overrides.get('bmc_password') or overrides.get('password')
+    if bmc_url is not None and 'redfish/v1/Systems/' in bmc_url and valid_uuid(os.path.basename(bmc_url)):
+        bmc_user, bmc_password = 'fake', 'fake'
     if not baremetal_hosts and bmc_url is not None and bmc_user is not None and bmc_password is not None:
         bmc_model = overrides.get('bmc_model') or overrides.get('model')
         baremetal_hosts = [{'bmc_url': bmc_url, 'bmc_user': bmc_user, 'bmc_password': bmc_password,

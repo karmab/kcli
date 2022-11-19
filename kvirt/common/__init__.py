@@ -27,6 +27,7 @@ from subprocess import call
 from shutil import copy2, move, which
 from tempfile import TemporaryDirectory
 from time import sleep
+from uuid import UUID
 import yaml
 
 ceo_yaml = """apiVersion: operator.openshift.io/v1
@@ -2300,3 +2301,11 @@ def stop_hosts(baremetal_hosts, overrides={}, debug=False):
             msg = host['name'] if 'name' in host else f"with url {bmc_url}"
             pprint(f"Stopping Host {msg}")
             red.stop()
+
+
+def valid_uuid(uuid):
+    try:
+        UUID(uuid)
+        return True
+    except:
+        return False
