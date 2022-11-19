@@ -389,9 +389,27 @@ baremetal_hosts:
 - bmc_url: http://192.168.122.1:8000/h1
 - bmc_url: http://192.168.122.1:8000/h2
 
-# Do the same specifying hosts on the command line
+# Do the same specifying hosts on the command line and without iso
 $ kcli start hosts -P baremetal_hosts=['{"bmc_url":"http://192.168.122.1:8000/h1"}'] -P bmc_user=xx -P bmc_password=xx
 
 # Start single host
 $ kcli start host -P url=http://192.168.122.1:8000/h1 -P user=xx -P password=xx -P iso_url=http://192.168.122.1/my.iso
+"""
+
+stophosts = """# Stop Baremetal hosts declared in a parameter file
+
+$ kcli stop hosts --pf baremetal_hosts.yml
+
+baremetal_hosts.yml contains
+bmc_user: xx
+bmc_password: xx
+baremetal_hosts:
+- bmc_url: http://192.168.122.1:8000/h1
+- bmc_url: http://192.168.122.1:8000/h2
+
+# Do the same specifying hosts on the command line
+$ kcli stop hosts -P baremetal_hosts=['{"bmc_url":"http://192.168.122.1:8000/h1"}'] -P bmc_user=xx -P bmc_password=xx
+
+# Stop single host
+$ kcli stop host -P url=http://192.168.122.1:8000/h1 -P user=xx -P password=xx
 """

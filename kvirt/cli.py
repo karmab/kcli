@@ -12,7 +12,7 @@ from kvirt.examples import kubegenericcreate, kubek3screate, kubeopenshiftcreate
 from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsole, vmexport, niccreate, nicdelete
 from kvirt.examples import disconnectedcreate, appopenshiftcreate, plantemplatecreate, kubehypershiftcreate
 from kvirt.examples import workflowcreate, kubegenericscale, kubek3sscale, kubeopenshiftscale
-from kvirt.examples import changelog, starthosts
+from kvirt.examples import changelog, starthosts, stophosts
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
 from kvirt.defaults import IMAGES, VERSION, LOCAL_OPENSHIFT_APPS, SSH_PUB_LOCATIONS
@@ -176,9 +176,6 @@ def start_baremetal_hosts(args):
     overrides = common.get_overrides(param=args.param)
     iso_url = overrides.get('iso_url')
     baremetal_hosts = overrides.get('baremetal_hosts', [])
-    if 'iso_url' not in overrides:
-        error("Iso url needs to be set in order to boot host")
-        sys.exit(1)
     bmc_url = overrides.get('bmc_url') or overrides.get('url')
     bmc_user = overrides.get('bmc_user') or overrides.get('user')
     bmc_password = overrides.get('bmc_password') or overrides.get('password')
@@ -190,6 +187,22 @@ def start_baremetal_hosts(args):
         error("Baremetal hosts need to be defined")
         sys.exit(1)
     common.boot_hosts(baremetal_hosts, iso_url, overrides=overrides)
+
+
+def stop_baremetal_hosts(args):
+    overrides = common.get_overrides(param=args.param)
+    baremetal_hosts = overrides.get('baremetal_hosts', [])
+    bmc_url = overrides.get('bmc_url') or overrides.get('url')
+    bmc_user = overrides.get('bmc_user') or overrides.get('user')
+    bmc_password = overrides.get('bmc_password') or overrides.get('password')
+    if not baremetal_hosts and bmc_url is not None and bmc_user is not None and bmc_password is not None:
+        bmc_model = overrides.get('bmc_model') or overrides.get('model')
+        baremetal_hosts = [{'bmc_url': bmc_url, 'bmc_user': bmc_user, 'bmc_password': bmc_password,
+                            'bmc_model': bmc_model}]
+    if not baremetal_hosts:
+        error("Baremetal hosts need to be defined")
+        sys.exit(1)
+    common.stop_hosts(baremetal_hosts, overrides=overrides)
 
 
 def start_vm(args):
@@ -5053,6 +5066,16 @@ def cli():
     vmstart_parser.set_defaults(func=start_vm)
     start_subparsers.add_parser('vm', parents=[vmstart_parser], description=vmstart_desc, help=vmstart_desc,
                                 aliases=['vms'])
+
+    stophosts_desc = 'Stop Baremetal Hosts'
+    stophosts_epilog = f"examples:\n{stophosts}"
+    stophosts_parser = stop_subparsers.add_parser('host', description=stophosts_desc, help=stophosts_desc,
+                                                  epilog=stophosts_epilog, formatter_class=rawhelp,
+                                                  aliases=['hosts', 'baremetal-host', 'baremetal-hosts'])
+    stophosts_parser.add_argument('-P', '--param', action='append',
+                                  help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    stophosts_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE', action='append')
+    stophosts_parser.set_defaults(func=stop_baremetal_hosts)
 
     vmstop_desc = 'Stop Vms'
     vmstop_parser = argparse.ArgumentParser(add_help=False)
