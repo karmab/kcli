@@ -585,14 +585,19 @@ def delete_host(args):
 
 
 def sync_host(args):
-    """Handle host"""
+    """Sync host"""
     hosts = args.names
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     result = config.handle_host(sync=hosts)
-    if result['result'] == 'success':
-        sys.exit(0)
-    else:
-        sys.exit(1)
+    sys.exit(0 if result['result'] == 'success' else 1)
+
+
+def sync_config(args):
+    """Sync config"""
+    network = args.net
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    result = baseconfig.import_in_kube(network=network)
+    sys.exit(0 if result['result'] == 'success' else 1)
 
 
 def _list_output(_list, output):
@@ -4001,6 +4006,13 @@ def cli():
     hostswitch_parser.set_defaults(func=switch_host)
     switch_subparsers.add_parser('host', parents=[hostswitch_parser], description=hostswitch_desc, help=hostswitch_desc,
                                  aliases=['client'])
+
+    configsync_desc = 'Sync Local config to Kube cluster'
+    configsync_parser = sync_subparsers.add_parser('config', description=configsync_desc, help=configsync_desc,
+                                                   aliases=['kube', 'cluster'])
+    configsync_parser.add_argument('-n', '--net', help='Network where to create entry. Defaults to default',
+                                   default='default', metavar='NET')
+    configsync_parser.set_defaults(func=sync_config)
 
     hostsync_desc = 'Sync Host'
     hostsync_parser = sync_subparsers.add_parser('host', description=hostsync_desc, help=hostsync_desc,

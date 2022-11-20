@@ -1651,18 +1651,21 @@ class Kbaseconfig:
                     pprint(keywords_info[keyword].strip())
         return 0
 
-    def import_in_kube(self, cluster, network='default', dest=None):
-        plandir = os.path.dirname(openshift.create.__code__.co_filename)
+    def import_in_kube(self, network='default', dest=None):
+        kubectl = 'oc' if which('oc') is not None else 'kubectl'
+        kubectl += ' -n kcli-infra'
+        plandir = os.path.dirname(common.get_kubectl.__code__.co_filename)
         oriconf = os.path.expanduser('~/.kcli')
         orissh = os.path.expanduser('~/.ssh')
+        self.ini[self.client]
         with TemporaryDirectory() as tmpdir:
-            if self.type == 'kvm' and self.k.host in ['localhost', '127.0.0.1']:
+            if self.type == 'kvm' and self.ini[self.client]['host'] in ['localhost', '127.0.0.1']:
                 oriconf = f"{tmpdir}/.kcli"
                 orissh = f"{tmpdir}/.ssh"
                 os.mkdir(oriconf)
                 os.mkdir(orissh)
                 kvm_overrides = {'network': network, 'user': getuser(), 'client': self.client}
-                kcliconf = self.process_inputfile(cluster, f"{plandir}/local_kcli_conf.j2", overrides=kvm_overrides)
+                kcliconf = self.process_inputfile('xxx', f"{plandir}/local_kcli_conf.j2", overrides=kvm_overrides)
                 with open(f"{oriconf}/config.yml", 'w') as _f:
                     _f.write(kcliconf)
                 sshcmd = f"ssh-keygen -t rsa -N '' -f {orissh}/id_rsa > /dev/null"
@@ -1681,23 +1684,26 @@ class Kbaseconfig:
                     destkubeconfig = os.path.expanduser(destkubeconfig)
                     copy2(destkubeconfig, f"{oriconf}/kubeconfig")
                     kubeconfig_overrides['kubeconfig'] = True
-                kcliconf = self.process_inputfile(cluster, f"{plandir}/kubevirt_kcli_conf.j2",
+                kcliconf = self.process_inputfile('xxx', f"{plandir}/kubevirt_kcli_conf.j2",
                                                   overrides=kubeconfig_overrides)
                 with open(f"{oriconf}/config.yml", 'w') as _f:
                     _f.write(kcliconf)
             if dest is not None:
                 desx = f"{dest}/99-kcli-conf-cm.yaml"
                 cmcmd = f'KUBECONFIG={plandir}/fake_kubeconfig.json '
-                cmcmd += f"oc create cm -n kcli-infra kcli-conf --from-file={oriconf} --dry-run=client -o yaml > {desx}"
+                cmcmd += f"{kubectl} create cm kcli-conf --from-file={oriconf} --dry-run=client -o yaml > {desx}"
                 call(cmcmd, shell=True)
                 desx = f"{dest}/99-kcli-ssh-cm.yaml"
                 cmcmd = f'KUBECONFIG={plandir}/fake_kubeconfig.json  '
-                cmcmd += f"oc create cm -n kcli-infra kcli-ssh --from-file={orissh} --dry-run=client -o yaml > {desx}"
+                cmcmd += f"{kubectl} create cm kcli-ssh --from-file={orissh} --dry-run=client -o yaml > {desx}"
                 call(cmcmd, shell=True)
             else:
-                cmcmd = "oc create ns kcli-infra"
+                cmcmd = f"{kubectl} create ns kcli-infra --dry-run=client -o yaml | {kubectl} apply -f -"
                 call(cmcmd, shell=True)
-                cmcmd = f"oc create cm -n kcli-infra kcli-conf --from-file={oriconf}"
+                cmcmd = f"{kubectl} get cm kcli-conf >/dev/null 2>&1 && {kubectl} delete cm kcli-conf ; "
+                cmcmd += f"{kubectl} create cm kcli-conf --from-file={oriconf}"
                 call(cmcmd, shell=True)
-                cmcmd = f"oc create cm -n kcli-infra kcli-ssh --from-file={orissh}"
+                cmcmd = f"{kubectl} get cm kcli-ssh >/dev/null 2>&1 && {kubectl} delete cm kcli-ssh ; "
+                cmcmd += f"{kubectl} create cm kcli-ssh --from-file={orissh}"
                 call(cmcmd, shell=True)
+        return {'result': 'success'}
