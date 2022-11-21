@@ -1659,7 +1659,7 @@ class Kbaseconfig:
         orissh = os.path.expanduser('~/.ssh')
         self.ini[self.client]
         with TemporaryDirectory() as tmpdir:
-            if self.type == 'kvm' and self.ini[self.client]['host'] in ['localhost', '127.0.0.1']:
+            if self.type == 'kvm' and self.ini[self.client].get('host', 'localhost') in ['localhost', '127.0.0.1']:
                 oriconf = f"{tmpdir}/.kcli"
                 orissh = f"{tmpdir}/.ssh"
                 os.mkdir(oriconf)
