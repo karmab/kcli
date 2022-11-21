@@ -1,63 +1,60 @@
-apiVersion: apiextensions.k8s.io/v1beta1
+apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   name: vms.kcli.karmalabs.local
 spec:
   group: kcli.karmalabs.local
-  version: v1
   scope: Namespaced
   names:
     plural: vms
     singular: vm
     kind: Vm
-  validation:
-      openAPIV3Schema:
-        type: object
-        properties:
-          spec:
-            type: object
-            properties:
-              Running:
-                type: string
-              ip:
-                type: string
-              source:
-                type: string
-              plan:
-                type: string
-              profile:
-                type: string
-  additionalPrinterColumns:
-  - name: Status
-    type: string
-    description: Status
-    JSONPath: .spec.info.status
-  - name: Ip
-    type: string
-    description: Ip
-    JSONPath: .spec.info.ip
-  - name: Source
-    type: string
-    description: Source
-    JSONPath: .spec.info.template
-  - name: Plan
-    description: Plan
-    type: string
-    JSONPath: .spec.info.plan
-  - name: Profile
-    description: Profile
-    type: string
-    JSONPath: .spec.info.profile
+  versions:
+  - name: v1
+    served: true
+    storage: true
+    schema:
+        openAPIV3Schema:
+          type: object
+          x-kubernetes-preserve-unknown-fields: true
+    additionalPrinterColumns:
+    - name: Status
+      type: string
+      description: Status
+      jsonPath: .spec.info.status
+    - name: Ip
+      type: string
+      description: Ip
+      jsonPath: .spec.info.ip
+    - name: Profile
+      type: string
+      description: Profile
+      jsonPath: .spec.info.profile
+    - name: Source
+      type: string
+      description: Source
+      jsonPath: .spec.info.source
+    - name: Plan
+      type: string
+      description: Plan
+      jsonPath: .spec.info.plan
 ---
-apiVersion: apiextensions.k8s.io/v1beta1
+apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   name: plans.kcli.karmalabs.local
 spec:
   group: kcli.karmalabs.local
-  version: v1
   scope: Namespaced
   names:
     plural: plans
     singular: plan
     kind: Plan
+  versions:
+  - name: v1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        x-kubernetes-preserve-unknown-fields: true

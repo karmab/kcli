@@ -36,8 +36,9 @@ def process_vm(name, namespace, spec, operation='create', timeout=60):
                     profile = name
             print("Creating vm %s" % name)
             if profile is not None:
-                result = config.create_vm(name, profile, overrides=spec)
+                result = config.create_vm(name, profile, overrides=dict(spec))
                 if result['result'] != 'success':
+                    print(result)
                     return result
         info = config.k.info(name)
         image = info.get('image')
