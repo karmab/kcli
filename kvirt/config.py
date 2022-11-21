@@ -1335,7 +1335,7 @@ class Kconfig(Kbaseconfig):
                     deletedvms.append(name)
                     found = True
                     cluster = vm.get('kube')
-                    if cluster is not None:
+                    if cluster is not None and cluster != '':
                         clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
                         if os.path.exists(clusterdir):
                             ipi = False
@@ -2585,7 +2585,7 @@ class Kconfig(Kbaseconfig):
         dnsclient = None
         k = self.k
         cluster = overrides.get('cluster', cluster)
-        if cluster is None:
+        if cluster is None or cluster == '':
             cluster = 'testk'
         clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
         if os.path.exists(clusterdir):
