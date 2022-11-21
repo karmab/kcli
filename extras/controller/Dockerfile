@@ -1,4 +1,4 @@
-FROM karmab/kcli
+FROM quay.io/karmab/kcli
 MAINTAINER Karim Boumedhel <karimboumedhel@gmail.com>
 ADD . /kopf
 RUN pip3 install kopf 
