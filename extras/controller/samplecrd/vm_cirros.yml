@@ -1,0 +1,8 @@
+apiVersion: "kcli.karmalabs.local/v1"
+kind: Vm
+metadata:
+  name: cirros
+spec:
+  template: cirros-0.4.0-x86_64-disk.img
+  memory: 512
+  numcpus: 2

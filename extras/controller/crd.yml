@@ -1,0 +1,63 @@
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: vms.kcli.karmalabs.local
+spec:
+  group: kcli.karmalabs.local
+  version: v1
+  scope: Namespaced
+  names:
+    plural: vms
+    singular: vm
+    kind: Vm
+  validation:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              Running:
+                type: string
+              ip:
+                type: string
+              source:
+                type: string
+              plan:
+                type: string
+              profile:
+                type: string
+  additionalPrinterColumns:
+  - name: Status
+    type: string
+    description: Status
+    JSONPath: .spec.info.status
+  - name: Ip
+    type: string
+    description: Ip
+    JSONPath: .spec.info.ip
+  - name: Source
+    type: string
+    description: Source
+    JSONPath: .spec.info.template
+  - name: Plan
+    description: Plan
+    type: string
+    JSONPath: .spec.info.plan
+  - name: Profile
+    description: Profile
+    type: string
+    JSONPath: .spec.info.profile
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: plans.kcli.karmalabs.local
+spec:
+  group: kcli.karmalabs.local
+  version: v1
+  scope: Namespaced
+  names:
+    plural: plans
+    singular: plan
+    kind: Plan

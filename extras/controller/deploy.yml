@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kcli-controller
+  labels:
+    app: kcli-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kcli-controller
+  template:
+    metadata:
+      labels:
+        app: kcli-controller
+    spec:
+      containers:
+      - name: kcli-controller
+        image: karmab/kcli-controller:latest
+        volumeMounts:
+        - mountPath: /root/.kcli_cm
+          name: kcli-config
+        - mountPath: /root/.ssh
+          name: ssh-config
+      volumes:
+      - configMap:
+          defaultMode: 0700
+          name: kcli-config
+        name: kcli-config
+      - configMap:
+          defaultMode: 0700
+          name: ssh-config
+        name: ssh-config

@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kcli-workdir
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kcli-controller
+  labels:
+    app: kcli-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kcli-controller
+  template:
+    metadata:
+      labels:
+        app: kcli-controller
+    spec:
+      containers:
+      - name: kcli-controller
+        image: karmab/kcli-controller:latest
+        volumeMounts:
+        - mountPath: /root/.kcli_cm
+          name: kcli-config
+        - mountPath: /root/.ssh
+          name: ssh-config
+        - mountPath: /workdir
+          name: kcli-workdir
+      volumes:
+      - name: kcli-config
+        configMap:
+          defaultMode: 0700
+          name: kcli-config
+      - name: ssh-config
+        configMap:
+          defaultMode: 0700
+          name: ssh-config
+      - name: kcli-workdir
+        persistentVolumeClaim:
+          claimName: kcli-workdir
