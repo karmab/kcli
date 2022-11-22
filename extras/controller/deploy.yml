@@ -35,7 +35,7 @@ spec:
     spec:
       containers:
       - name: kcli-controller
-        image: karmab/kcli-controller:latest
+        image: quay.io/karmab/kcli-controller:latest
         volumeMounts:
         - mountPath: /root/.kcli
           name: kcli-conf
