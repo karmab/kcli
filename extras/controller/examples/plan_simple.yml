@@ -9,7 +9,7 @@ spec:
       numcpus: 2
       nets:
        - default
-      image: cirros-0.4.0-x86_64-disk.img
+      image: cirros
     vm22:
       memory: 1024
       numcpus: 4
@@ -18,6 +18,6 @@ spec:
       disks:
        - 20
       pool: default
-      image: cirros-0.4.0-x86_64-disk.img
+      image: cirros
       cmds:
        - echo this stuff works > /tmp/result.txt
