@@ -1,12 +1,30 @@
 #!/usr/bin/env python3
 
+from kubernetes import client, watch
 import kopf
 from kvirt.config import Kconfig
 from kvirt.common import pprint, error
+import os
 from re import sub
+import threading
 
 DOMAIN = "kcli.karmalabs.local"
 VERSION = "v1"
+
+
+def watch_configmaps():
+    v1 = client.CoreV1Api()
+    namespace = 'kcli-infra'
+    config_maps = ['kcli-conf', 'kcli-ssh']
+    while True:
+        stream = watch.Watch().stream(v1.list_namespaced_config_map, namespace, timeout_seconds=10)
+        for event in stream:
+            obj = event["object"]
+            obj_dict = obj.to_dict()
+            current_config_map_name = obj_dict['metadata']['name']
+            if current_config_map_name in config_maps and event["type"] == 'MODIFIED':
+                print("Exiting as configmap was changed")
+                os._exit(1)
 
 
 def process_vm(name, namespace, spec, operation='create', timeout=60):
@@ -99,6 +117,11 @@ def update(name, namespace, diff):
                 k.stop(name)
         info = config.k.info(name)
         return info
+
+
+@kopf.on.resume(DOMAIN, VERSION, 'vms')
+def handle_configmaps(spec, **_):
+    threading.Thread(target=watch_configmaps).start()
 
 
 @kopf.on.create(DOMAIN, VERSION, 'vms')
