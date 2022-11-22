@@ -21,23 +21,23 @@ spec:
     - name: Status
       type: string
       description: Status
-      jsonPath: .spec.info.status
+      jsonPath: .status.create_vm.status
     - name: Ip
       type: string
       description: Ip
-      jsonPath: .spec.info.ip
+      jsonPath: .status.create_vm.ip
     - name: Profile
       type: string
       description: Profile
-      jsonPath: .spec.info.profile
+      jsonPath: .status.create_vm.profile
     - name: Source
       type: string
       description: Source
-      jsonPath: .spec.info.source
+      jsonPath: .status.create_vm.image
     - name: Plan
       type: string
       description: Plan
-      jsonPath: .spec.info.plan
+      jsonPath: .status.create_vm.plan
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition

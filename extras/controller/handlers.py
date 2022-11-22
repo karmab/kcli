@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import kopf
-from kubernetes import client
 from kvirt.config import Kconfig
 from kvirt import common
 import os
@@ -9,15 +8,6 @@ from re import sub
 
 DOMAIN = "kcli.karmalabs.local"
 VERSION = "v1"
-
-
-def update_vm_cr(name, namespace, newspec):
-    configuration = client.Configuration()
-    configuration.assert_hostname = False
-    api_client = client.api_client.ApiClient(configuration=configuration)
-    crds = client.CustomObjectsApi(api_client)
-    crds.patch_namespaced_custom_object(DOMAIN, VERSION, namespace, "vms", name, newspec)
-    return {'result': 'success'}
 
 
 def process_vm(name, namespace, spec, operation='create', timeout=60):
@@ -44,8 +34,7 @@ def process_vm(name, namespace, spec, operation='create', timeout=60):
         image = info.get('image')
         if image is not None and 'ip' not in info:
             raise kopf.TemporaryError("Waiting to populate ip", delay=10)
-        newspec = {'spec': {'info': info}}
-        return update_vm_cr(name, namespace, newspec)
+        return info
 
 
 def process_plan(plan, spec, operation='create'):
@@ -111,8 +100,7 @@ def update(name, namespace, diff):
                 common.pprint("Stopping vm %s..." % name)
                 k.stop(name)
         info = config.k.info(name)
-        newspec = {'spec': {'info': info}}
-        return update_vm_cr(name, namespace, newspec)
+        return info
 
 
 @kopf.on.create(DOMAIN, VERSION, 'vms')
