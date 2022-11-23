@@ -5066,9 +5066,9 @@ def cli():
 
     starthosts_desc = 'Start Baremetal Hosts'
     starthosts_epilog = f"examples:\n{starthosts}"
-    starthosts_parser = start_subparsers.add_parser('host', description=starthosts_desc, help=starthosts_desc,
+    starthosts_parser = start_subparsers.add_parser('baremetal-host', description=starthosts_desc, help=starthosts_desc,
                                                     epilog=starthosts_epilog, formatter_class=rawhelp,
-                                                    aliases=['hosts', 'baremetal-host', 'baremetal-hosts'])
+                                                    aliases=['baremetal-hosts'])
     starthosts_parser.add_argument('-P', '--param', action='append',
                                    help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
     starthosts_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE', action='append')
@@ -5083,9 +5083,9 @@ def cli():
 
     stophosts_desc = 'Stop Baremetal Hosts'
     stophosts_epilog = f"examples:\n{stophosts}"
-    stophosts_parser = stop_subparsers.add_parser('host', description=stophosts_desc, help=stophosts_desc,
+    stophosts_parser = stop_subparsers.add_parser('baremetal-host', description=stophosts_desc, help=stophosts_desc,
                                                   epilog=stophosts_epilog, formatter_class=rawhelp,
-                                                  aliases=['hosts', 'baremetal-host', 'baremetal-hosts'])
+                                                  aliases=['baremetal-hosts'])
     stophosts_parser.add_argument('-P', '--param', action='append',
                                   help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
     stophosts_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE', action='append')

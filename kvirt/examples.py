@@ -380,7 +380,7 @@ $ kcli update network mynetwork -P plan=newplan
 
 starthosts = """# Start Baremetal hosts declared in a parameter file from specific ISO url
 
-$ kcli start hosts --pf baremetal_hosts.yml -P iso_url=http://192.168.122.1/my.iso
+$ kcli start baremetal-hosts --pf baremetal_hosts.yml -P iso_url=http://192.168.122.1/my.iso
 
 baremetal_hosts.yml contains
 bmc_user: xx
@@ -389,16 +389,14 @@ baremetal_hosts:
 - bmc_url: http://192.168.122.1:8000/h1
 - bmc_url: http://192.168.122.1:8000/h2
 
-# Do the same specifying hosts on the command line and without iso
-$ kcli start hosts -P baremetal_hosts=['{"bmc_url":"http://192.168.122.1:8000/h1"}'] -P bmc_user=xx -P bmc_password=xx
-
 # Start single host
-$ kcli start host -P url=http://192.168.122.1:8000/h1 -P user=xx -P password=xx -P iso_url=http://192.168.122.1/my.iso
+$ iso_url=http://192.168.122.1/my.iso
+$ kcli start baremetal-host -P url=http://192.168.122.1:8000/h1 -P user=xx -P password=xx -P iso_url=$iso_url
 """
 
 stophosts = """# Stop Baremetal hosts declared in a parameter file
 
-$ kcli stop hosts --pf baremetal_hosts.yml
+$ kcli stop baremetalhosts --pf baremetal_hosts.yml
 
 baremetal_hosts.yml contains
 bmc_user: xx
@@ -407,9 +405,6 @@ baremetal_hosts:
 - bmc_url: http://192.168.122.1:8000/h1
 - bmc_url: http://192.168.122.1:8000/h2
 
-# Do the same specifying hosts on the command line
-$ kcli stop hosts -P baremetal_hosts=['{"bmc_url":"http://192.168.122.1:8000/h1"}'] -P bmc_user=xx -P bmc_password=xx
-
 # Stop single host
-$ kcli stop host -P url=http://192.168.122.1:8000/h1 -P user=xx -P password=xx
+$ kcli stop baremetal-host -P url=http://192.168.122.1:8000/h1 -P user=xx -P password=xx
 """
