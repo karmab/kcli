@@ -53,6 +53,29 @@ def process_vm(name, namespace, spec, operation='create', timeout=60):
         return info
 
 
+def process_cluster(cluster, spec, operation='create'):
+    config = Kconfig(quiet=True)
+    if operation == "delete":
+        pprint(f"Deleting cluster {cluster}")
+        return config.delete_cluster(cluster)
+    else:
+        pprint(f"Creating/Updating cluster {cluster}")
+        overrides = dict(spec)
+        kubetype = overrides.get('kubetype', 'generic')
+        if kubetype == 'openshift':
+            return config.create_kube_openshift(cluster, overrides=overrides)
+        elif kubetype == 'hypershift':
+            return config.create_kube_hypershift(cluster, overrides=overrides)
+        elif kubetype == 'microshift':
+            return config.create_kube_microshift(cluster, overrides=overrides)
+        elif kubetype == 'kind':
+            return config.create_kube_kind(cluster, overrides=overrides)
+        elif kubetype == 'k3s':
+            return config.create_kube_k3s(cluster, overrides=overrides)
+        else:
+            return config.create_kube_generic(cluster, overrides=overrides)
+
+
 def process_plan(plan, spec, operation='create'):
     config = Kconfig(quiet=True)
     if operation == "delete":
@@ -173,3 +196,28 @@ def update_plan(meta, spec, status, namespace, logger, **kwargs):
     name = meta.get('name')
     pprint(f"Handling {operation} on vm {name}")
     return process_plan(name, spec, operation=operation)
+
+
+@kopf.on.create(DOMAIN, VERSION, 'clusters')
+def create_cluster(meta, spec, status, namespace, logger, **kwargs):
+    operation = 'create'
+    name = meta.get('name')
+    pprint(f"Handling {operation} on cluster {name}")
+    return process_cluster(name, spec, operation=operation)
+
+
+@kopf.on.delete(DOMAIN, VERSION, 'clusters')
+def delete_cluster(meta, spec, namespace, logger, **kwargs):
+    operation = 'delete'
+    name = meta.get('name')
+    if spec.get('cluster') is not None:
+        pprint(f"Handling {operation} on cluster {name}")
+        process_cluster(name, spec, operation=operation)
+
+
+@kopf.on.update(DOMAIN, VERSION, 'clusters')
+def update_cluster(meta, spec, status, namespace, logger, **kwargs):
+    operation = 'update'
+    name = meta.get('name')
+    pprint(f"Handling {operation} on vm {name}")
+    return process_cluster(name, spec, operation=operation)
