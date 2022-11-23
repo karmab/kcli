@@ -3512,6 +3512,599 @@ def cli():
     create_parser = subparsers.add_parser('create', description=create_desc, help=create_desc, aliases=['add', 'run'])
     create_subparsers = create_parser.add_subparsers(metavar='', dest='subcommand_create')
 
+    createapp_desc = 'Create Kube Apps'
+    createapp_parser = create_subparsers.add_parser('app', description=createapp_desc,
+                                                    help=createapp_desc, aliases=['apps', 'operator', 'operators'])
+    createapp_subparsers = createapp_parser.add_subparsers(metavar='', dest='subcommand_create_app')
+
+    appgenericcreate_desc = 'Create Kube App Generic'
+    appgenericcreate_epilog = None
+    appgenericcreate_parser = createapp_subparsers.add_parser('generic', description=appgenericcreate_desc,
+                                                              help=appgenericcreate_desc,
+                                                              epilog=appgenericcreate_epilog, formatter_class=rawhelp)
+    appgenericcreate_parser.add_argument('--outputdir', '-o', help='Output directory', metavar='OUTPUTDIR')
+    appgenericcreate_parser.add_argument('-P', '--param', action='append',
+                                         help='specify parameter or keyword for rendering (multiple can be specified)',
+                                         metavar='PARAM')
+    appgenericcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    appgenericcreate_parser.add_argument('apps', metavar='APPS', nargs='*')
+    appgenericcreate_parser.set_defaults(func=create_app_generic)
+
+    appopenshiftcreate_desc = 'Create Kube App Openshift'
+    appopenshiftcreate_epilog = "examples:\n%s" % appopenshiftcreate
+    appopenshiftcreate_parser = createapp_subparsers.add_parser('openshift', description=appopenshiftcreate_desc,
+                                                                help=appopenshiftcreate_desc,
+                                                                epilog=appopenshiftcreate_epilog,
+                                                                formatter_class=rawhelp)
+    appopenshiftcreate_parser.add_argument('--outputdir', '-o', help='Output directory', metavar='OUTPUTDIR')
+    appopenshiftcreate_parser.add_argument('-P', '--param', action='append',
+                                           help=PARAMETERS_HELP, metavar='PARAM')
+    appopenshiftcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    appopenshiftcreate_parser.add_argument('apps', metavar='APPS', nargs='*')
+    appopenshiftcreate_parser.set_defaults(func=create_app_openshift)
+
+    bucketcreate_desc = 'Create Bucket'
+    bucketcreate_epilog = None
+    bucketcreate_parser = create_subparsers.add_parser('bucket', description=bucketcreate_desc,
+                                                       help=bucketcreate_desc, epilog=bucketcreate_epilog,
+                                                       formatter_class=rawhelp)
+    bucketcreate_parser.add_argument('-p', '--public', action='store_true', help='Make the bucket public')
+    bucketcreate_parser.add_argument('-P', '--param', action='append',
+                                     help='specify parameter or keyword for rendering (multiple can be specified)',
+                                     metavar='PARAM')
+    bucketcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    bucketcreate_parser.add_argument('buckets', metavar='BUCKETS', nargs='+')
+    bucketcreate_parser.set_defaults(func=create_bucket)
+
+    bucketfilecreate_desc = 'Create Bucket file'
+    bucketfilecreate_parser = argparse.ArgumentParser(add_help=False)
+    bucketfilecreate_parser.add_argument('-p', '--public', action='store_true', help='Make the file public')
+    bucketfilecreate_parser.add_argument('-t', '--temp', action='store_true', help='Get temp url')
+    bucketfilecreate_parser.add_argument('bucket', metavar='BUCKET')
+    bucketfilecreate_parser.add_argument('path', metavar='PATH')
+    bucketfilecreate_parser.set_defaults(func=create_bucketfile)
+    create_subparsers.add_parser('bucket-file', parents=[bucketfilecreate_parser],
+                                 description=bucketfilecreate_desc, help=bucketfilecreate_desc)
+
+    containercreate_desc = 'Create Container'
+    containercreate_epilog = None
+    containercreate_parser = create_subparsers.add_parser('container', description=containercreate_desc,
+                                                          help=containercreate_desc, epilog=containercreate_epilog,
+                                                          formatter_class=rawhelp)
+    containercreate_parser_group = containercreate_parser.add_mutually_exclusive_group(required=True)
+    containercreate_parser_group.add_argument('-i', '--image', help='Image to use', metavar='Image')
+    containercreate_parser_group.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
+    containercreate_parser.add_argument('-P', '--param', action='append',
+                                        help='specify parameter or keyword for rendering (multiple can be specified)',
+                                        metavar='PARAM')
+    containercreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    containercreate_parser.add_argument('name', metavar='NAME', nargs='?')
+    containercreate_parser.set_defaults(func=create_container)
+
+    dnscreate_desc = 'Create Dns Entries'
+    dnscreate_epilog = "examples:\n%s" % dnscreate
+    dnscreate_parser = create_subparsers.add_parser('dns', description=dnscreate_desc, help=dnscreate_desc,
+                                                    epilog=dnscreate_epilog,
+                                                    formatter_class=rawhelp)
+    dnscreate_parser.add_argument('-a', '--alias', action='append', help='specify alias (can specify multiple)',
+                                  metavar='ALIAS')
+    dnscreate_parser.add_argument('-d', '--domain', help='Domain where to create entry', metavar='DOMAIN')
+    dnscreate_parser.add_argument('-n', '--net', help='Network where to create entry. Defaults to default',
+                                  default='default', metavar='NET')
+    dnscreate_parser.add_argument('-i', '--ip', help='Ip', metavar='IP')
+    dnscreate_parser.add_argument('names', metavar='NAMES', nargs='*')
+    dnscreate_parser.set_defaults(func=create_dns)
+
+    hostcreate_desc = 'Create Host'
+    hostcreate_epilog = "examples:\n%s" % hostcreate
+    hostcreate_parser = create_subparsers.add_parser('host', help=hostcreate_desc, description=hostcreate_desc,
+                                                     aliases=['client'], epilog=hostcreate_epilog,
+                                                     formatter_class=rawhelp)
+    hostcreate_subparsers = hostcreate_parser.add_subparsers(metavar='', dest='subcommand_create_host')
+
+    awshostcreate_desc = 'Create Aws Host'
+    awshostcreate_parser = hostcreate_subparsers.add_parser('aws', help=awshostcreate_desc,
+                                                            description=awshostcreate_desc)
+    awshostcreate_parser.add_argument('--access_key_id', help='Access Key Id', metavar='ACCESS_KEY_ID', required=True)
+    awshostcreate_parser.add_argument('--access_key_secret', help='Access Key Secret', metavar='ACCESS_KEY_SECRET',
+                                      required=True)
+    awshostcreate_parser.add_argument('-k', '--keypair', help='Keypair', metavar='KEYPAIR', required=True)
+    awshostcreate_parser.add_argument('-r', '--region', help='Region', metavar='REGION', required=True)
+    awshostcreate_parser.add_argument('name', metavar='NAME')
+    awshostcreate_parser.set_defaults(func=create_host_aws)
+
+    ibmhostcreate_desc = 'Create IBM Cloud Host'
+    ibmhostcreate_parser = hostcreate_subparsers.add_parser('ibm', help=ibmhostcreate_desc,
+                                                            description=ibmhostcreate_desc)
+    ibmhostcreate_parser.add_argument('--iam_api_key', help='IAM API Key', metavar='IAM_API_KEY', required=True)
+    ibmhostcreate_parser.add_argument('--access_key_id', help='Access Key Id', metavar='ACCESS_KEY_ID')
+    ibmhostcreate_parser.add_argument('--access_key_secret', help='Access Key Secret', metavar='ACCESS_KEY_SECRET')
+    ibmhostcreate_parser.add_argument('--vpc', help='VPC name', metavar='VPC')
+    ibmhostcreate_parser.add_argument('--zone', help='Zone within the region', metavar='ZONE')
+    ibmhostcreate_parser.add_argument('-r', '--region', help='Region', metavar='REGION', required=True)
+    ibmhostcreate_parser.add_argument('name', metavar='NAME')
+    ibmhostcreate_parser.set_defaults(func=create_host_ibm)
+
+    gcphostcreate_desc = 'Create Gcp Host'
+    gcphostcreate_parser = hostcreate_subparsers.add_parser('gcp', help=gcphostcreate_desc,
+                                                            description=gcphostcreate_desc)
+    gcphostcreate_parser.add_argument('--credentials', help='Path to credentials file', metavar='credentials')
+    gcphostcreate_parser.add_argument('--project', help='Project', metavar='project', required=True)
+    gcphostcreate_parser.add_argument('--zone', help='Zone', metavar='zone', required=True)
+    gcphostcreate_parser.add_argument('name', metavar='NAME')
+    gcphostcreate_parser.set_defaults(func=create_host_gcp)
+
+    grouphostcreate_desc = 'Create Group Host'
+    grouphostcreate_parser = hostcreate_subparsers.add_parser('group', help=grouphostcreate_desc,
+                                                              description=grouphostcreate_desc)
+    grouphostcreate_parser.add_argument('-a', '--algorithm', help='Algorithm. Defaults to random',
+                                        metavar='ALGORITHM', default='random')
+    grouphostcreate_parser.add_argument('-m', '--members', help='Members', metavar='MEMBERS', type=valid_members)
+    grouphostcreate_parser.add_argument('name', metavar='NAME')
+    grouphostcreate_parser.set_defaults(func=create_host_group)
+
+    kvmhostcreate_desc = 'Create Kvm Host'
+    kvmhostcreate_parser = hostcreate_subparsers.add_parser('kvm', help=kvmhostcreate_desc,
+                                                            description=kvmhostcreate_desc)
+    kvmhostcreate_parser_group = kvmhostcreate_parser.add_mutually_exclusive_group(required=True)
+    kvmhostcreate_parser_group.add_argument('-H', '--host', help='Host. Defaults to localhost', metavar='HOST',
+                                            default='localhost')
+    kvmhostcreate_parser.add_argument('--pool', help='Pool. Defaults to default', metavar='POOL', default='default')
+    kvmhostcreate_parser.add_argument('-p', '--port', help='Port', metavar='PORT')
+    kvmhostcreate_parser.add_argument('-P', '--protocol', help='Protocol to use', default='ssh', metavar='PROTOCOL')
+    kvmhostcreate_parser_group.add_argument('-U', '--url', help='URL to use', metavar='URL')
+    kvmhostcreate_parser.add_argument('-u', '--user', help='User. Defaults to root', default='root', metavar='USER')
+    kvmhostcreate_parser.add_argument('name', metavar='NAME')
+    kvmhostcreate_parser.set_defaults(func=create_host_kvm)
+
+    kubevirthostcreate_desc = 'Create Kubevirt Host'
+    kubevirthostcreate_parser = hostcreate_subparsers.add_parser('kubevirt', help=kubevirthostcreate_desc,
+                                                                 description=kubevirthostcreate_desc)
+    kubevirthostcreate_parser.add_argument('--ca', help='Ca file', metavar='CA')
+    kubevirthostcreate_parser.add_argument('--cdi', help='Cdi Support', action='store_true', default=True)
+    kubevirthostcreate_parser.add_argument('-c', '--context', help='Context', metavar='CONTEXT')
+    kubevirthostcreate_parser.add_argument('-H', '--host', help='Api Host', metavar='HOST')
+    kubevirthostcreate_parser.add_argument('-p', '--pool', help='Storage Class', metavar='POOL')
+    kubevirthostcreate_parser.add_argument('--port', help='Api Port', metavar='HOST')
+    kubevirthostcreate_parser.add_argument('--token', help='Token', metavar='TOKEN')
+    kubevirthostcreate_parser.add_argument('--multus', help='Multus Support', action='store_true', default=True)
+    kubevirthostcreate_parser.add_argument('name', metavar='NAME')
+    kubevirthostcreate_parser.set_defaults(func=create_host_kubevirt)
+
+    openstackhostcreate_desc = 'Create Openstack Host'
+    openstackhostcreate_parser = hostcreate_subparsers.add_parser('openstack', help=openstackhostcreate_desc,
+                                                                  description=openstackhostcreate_desc)
+    openstackhostcreate_parser.add_argument('--auth-url', help='Auth url', metavar='AUTH_URL', required=True)
+    openstackhostcreate_parser.add_argument('--domain', help='Domain', metavar='DOMAIN', default='Default')
+    openstackhostcreate_parser.add_argument('-p', '--password', help='Password', metavar='PASSWORD', required=True)
+    openstackhostcreate_parser.add_argument('--project', help='Project', metavar='PROJECT', required=True)
+    openstackhostcreate_parser.add_argument('-u', '--user', help='User', metavar='USER', required=True)
+    openstackhostcreate_parser.add_argument('name', metavar='NAME')
+    openstackhostcreate_parser.set_defaults(func=create_host_openstack)
+
+    ovirthostcreate_desc = 'Create Ovirt Host'
+    ovirthostcreate_parser = hostcreate_subparsers.add_parser('ovirt', help=ovirthostcreate_desc,
+                                                              description=ovirthostcreate_desc)
+    ovirthostcreate_parser.add_argument('--ca', help='Path to certificate file', metavar='CA')
+    ovirthostcreate_parser.add_argument('-c', '--cluster', help='Cluster. Defaults to Default', default='Default',
+                                        metavar='CLUSTER')
+    ovirthostcreate_parser.add_argument('-d', '--datacenter', help='Datacenter. Defaults to Default', default='Default',
+                                        metavar='DATACENTER')
+    ovirthostcreate_parser.add_argument('-H', '--host', help='Host to use', metavar='HOST', required=True)
+    ovirthostcreate_parser.add_argument('-o', '--org', help='Organization', metavar='ORGANIZATION', required=True)
+    ovirthostcreate_parser.add_argument('-p', '--password', help='Password to use', metavar='PASSWORD', required=True)
+    ovirthostcreate_parser.add_argument('--pool', help='Storage Domain', metavar='POOL')
+    ovirthostcreate_parser.add_argument('-u', '--user', help='User. Defaults to admin@internal',
+                                        metavar='USER', default='admin@internal')
+    ovirthostcreate_parser.add_argument('name', metavar='NAME')
+    ovirthostcreate_parser.set_defaults(func=create_host_ovirt)
+
+    vspherehostcreate_desc = 'Create Vsphere Host'
+    vspherehostcreate_parser = hostcreate_subparsers.add_parser('vsphere', help=vspherehostcreate_desc,
+                                                                description=vspherehostcreate_desc)
+    vspherehostcreate_parser.add_argument('-c', '--cluster', help='Cluster', metavar='CLUSTER', required=True)
+    vspherehostcreate_parser.add_argument('-d', '--datacenter', help='Datacenter', metavar='DATACENTER', required=True)
+    vspherehostcreate_parser.add_argument('-H', '--host', help='Vcenter Host', metavar='HOST', required=True)
+    vspherehostcreate_parser.add_argument('-p', '--password', help='Password', metavar='PASSWORD', required=True)
+    vspherehostcreate_parser.add_argument('-u', '--user', help='User', metavar='USER', required=True)
+    vspherehostcreate_parser.add_argument('--pool', help='Pool', metavar='POOL')
+    vspherehostcreate_parser.add_argument('name', metavar='NAME')
+    vspherehostcreate_parser.set_defaults(func=create_host_vsphere)
+
+    kubecreate_desc = 'Create Kube'
+    kubecreate_parser = create_subparsers.add_parser('kube', description=kubecreate_desc, help=kubecreate_desc,
+                                                     aliases=['cluster'])
+    kubecreate_subparsers = kubecreate_parser.add_subparsers(metavar='', dest='subcommand_create_kube')
+
+    kubegenericcreate_desc = 'Create Generic Kube'
+    kubegenericcreate_epilog = "examples:\n%s" % kubegenericcreate
+    kubegenericcreate_parser = argparse.ArgumentParser(add_help=False)
+    kubegenericcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
+    kubegenericcreate_parser.add_argument('-P', '--param', action='append',
+                                          help='specify parameter or keyword for rendering (multiple can be specified)',
+                                          metavar='PARAM')
+    kubegenericcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    kubegenericcreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
+    kubegenericcreate_parser.set_defaults(func=create_generic_kube)
+    kubecreate_subparsers.add_parser('generic', parents=[kubegenericcreate_parser],
+                                     description=kubegenericcreate_desc,
+                                     help=kubegenericcreate_desc,
+                                     epilog=kubegenericcreate_epilog,
+                                     formatter_class=rawhelp, aliases=['kubeadm'])
+
+    kubekindcreate_desc = 'Create Kind Kube'
+    kubekindcreate_epilog = "examples:\n%s" % kubekindcreate
+    kubekindcreate_parser = argparse.ArgumentParser(add_help=False)
+    kubekindcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
+    kubekindcreate_parser.add_argument('-P', '--param', action='append',
+                                       help='specify parameter or keyword for rendering (multiple can be specified)',
+                                       metavar='PARAM')
+    kubekindcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    kubekindcreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
+    kubekindcreate_parser.set_defaults(func=create_kind_kube)
+    kubecreate_subparsers.add_parser('kind', parents=[kubekindcreate_parser],
+                                     description=kubekindcreate_desc,
+                                     help=kubekindcreate_desc,
+                                     epilog=kubekindcreate_epilog,
+                                     formatter_class=rawhelp)
+
+    parameterhelp = "specify parameter or keyword for rendering (multiple can be specified)"
+    kubemicroshiftcreate_desc = 'Create Microshift Kube'
+    kubemicroshiftcreate_epilog = "examples:\n%s" % kubemicroshiftcreate
+    kubemicroshiftcreate_parser = argparse.ArgumentParser(add_help=False)
+    kubemicroshiftcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
+    kubemicroshiftcreate_parser.add_argument('-P', '--param', action='append', help=parameterhelp, metavar='PARAM')
+    kubemicroshiftcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    kubemicroshiftcreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
+    kubemicroshiftcreate_parser.set_defaults(func=create_microshift_kube)
+    kubecreate_subparsers.add_parser('microshift', parents=[kubemicroshiftcreate_parser],
+                                     description=kubemicroshiftcreate_desc,
+                                     help=kubemicroshiftcreate_desc,
+                                     epilog=kubemicroshiftcreate_epilog,
+                                     formatter_class=rawhelp)
+
+    kubek3screate_desc = 'Create K3s Kube'
+    kubek3screate_epilog = "examples:\n%s" % kubek3screate
+    kubek3screate_parser = argparse.ArgumentParser(add_help=False)
+    kubek3screate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
+    kubek3screate_parser.add_argument('-P', '--param', action='append',
+                                      help='specify parameter or keyword for rendering (multiple can be specified)',
+                                      metavar='PARAM')
+    kubek3screate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    kubek3screate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
+    kubek3screate_parser.set_defaults(func=create_k3s_kube)
+    kubecreate_subparsers.add_parser('k3s', parents=[kubek3screate_parser],
+                                     description=kubek3screate_desc,
+                                     help=kubek3screate_desc,
+                                     epilog=kubek3screate_epilog,
+                                     formatter_class=rawhelp)
+
+    parameterhelp = "specify parameter or keyword for rendering (multiple can be specified)"
+    kubehypershiftcreate_desc = 'Create Hypershift Kube'
+    kubehypershiftcreate_epilog = "examples:\n%s" % kubehypershiftcreate
+    kubehypershiftcreate_parser = argparse.ArgumentParser(add_help=False)
+    kubehypershiftcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
+    kubehypershiftcreate_parser.add_argument('-P', '--param', action='append', help=parameterhelp, metavar='PARAM')
+    kubehypershiftcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    kubehypershiftcreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
+    kubehypershiftcreate_parser.set_defaults(func=create_hypershift_kube)
+    kubecreate_subparsers.add_parser('hypershift', parents=[kubehypershiftcreate_parser],
+                                     description=kubehypershiftcreate_desc,
+                                     help=kubehypershiftcreate_desc,
+                                     epilog=kubehypershiftcreate_epilog,
+                                     formatter_class=rawhelp)
+
+    parameterhelp = "specify parameter or keyword for rendering (multiple can be specified)"
+    kubeopenshiftcreate_desc = 'Create Openshift Kube'
+    kubeopenshiftcreate_epilog = "examples:\n%s" % kubeopenshiftcreate
+    kubeopenshiftcreate_parser = argparse.ArgumentParser(add_help=False)
+    kubeopenshiftcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
+    kubeopenshiftcreate_parser.add_argument('-P', '--param', action='append', help=parameterhelp, metavar='PARAM')
+    kubeopenshiftcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    kubeopenshiftcreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
+    kubeopenshiftcreate_parser.set_defaults(func=create_openshift_kube)
+    kubecreate_subparsers.add_parser('openshift', parents=[kubeopenshiftcreate_parser],
+                                     description=kubeopenshiftcreate_desc,
+                                     help=kubeopenshiftcreate_desc,
+                                     epilog=kubeopenshiftcreate_epilog,
+                                     formatter_class=rawhelp, aliases=['okd'])
+
+    lbcreate_desc = 'Create Load Balancer'
+    lbcreate_parser = create_subparsers.add_parser('lb', description=lbcreate_desc, help=lbcreate_desc,
+                                                   aliases=['loadbalancer'])
+    lbcreate_parser.add_argument('--checkpath', default='/index.html', help="Path to check. Defaults to /index.html")
+    lbcreate_parser.add_argument('--checkport', default=80, help="Port to check. Defaults to 80")
+    lbcreate_parser.add_argument('--domain', help='Domain to create a dns entry associated to the load balancer')
+    lbcreate_parser.add_argument('-i', '--internal', action='store_true')
+    lbcreate_parser.add_argument('-p', '--ports', default='443', help='Load Balancer Ports. Defaults to 443')
+    lbcreate_parser.add_argument('-v', '--vms', help='Vms to add to the pool. Can also be a list of ips')
+    lbcreate_parser.add_argument('--subnetid', help='Subnet id. Specific to AWS')
+    lbcreate_parser.add_argument('name', metavar='NAME', nargs='?')
+    lbcreate_parser.set_defaults(func=create_lb)
+
+    profilecreate_desc = 'Create Profile'
+    profilecreate_parser = argparse.ArgumentParser(add_help=False)
+    profilecreate_parser.add_argument('-P', '--param', action='append',
+                                      help='specify parameter or keyword for rendering (can specify multiple)',
+                                      metavar='PARAM')
+    profilecreate_parser.add_argument('profile', metavar='PROFILE')
+    profilecreate_parser.set_defaults(func=create_profile)
+    create_subparsers.add_parser('profile', parents=[profilecreate_parser], description=profilecreate_desc,
+                                 help=profilecreate_desc)
+
+    networkcreate_desc = 'Create Network'
+    networkcreate_parser = create_subparsers.add_parser('network', description=networkcreate_desc,
+                                                        help=networkcreate_desc)
+    networkcreate_parser.add_argument('-i', '--isolated', action='store_true', help='Isolated Network')
+    networkcreate_parser.add_argument('-c', '--cidr', help='Cidr of the net', metavar='CIDR')
+    networkcreate_parser.add_argument('-d', '--dual', help='Cidr of dual net', metavar='DUAL')
+    networkcreate_parser.add_argument('--nodhcp', action='store_true', help='Disable dhcp on the net')
+    networkcreate_parser.add_argument('--domain', help='DNS domain. Defaults to network name')
+    networkcreate_parser.add_argument('-P', '--param', action='append',
+                                      help='specify parameter or keyword for rendering (can specify multiple)',
+                                      metavar='PARAM')
+    networkcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    networkcreate_parser.add_argument('name', metavar='NETWORK')
+    networkcreate_parser.set_defaults(func=create_network)
+
+    disconnectedcreate_desc = 'Create a disconnected registry vm for openshift'
+    disconnectedcreate_epilog = "examples:\n%s" % disconnectedcreate
+    disconnectedcreate_parser = argparse.ArgumentParser(add_help=False)
+    disconnectedcreate_parser.add_argument('-P', '--param', action='append',
+                                           help='specify parameter or keyword for rendering (can specify multiple)',
+                                           metavar='PARAM')
+    disconnectedcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    disconnectedcreate_parser.add_argument('plan', metavar='PLAN', help='Plan', nargs='?')
+    disconnectedcreate_parser.set_defaults(func=create_openshift_disconnected)
+    create_subparsers.add_parser('openshift-registry', parents=[disconnectedcreate_parser],
+                                 description=disconnectedcreate_desc, help=disconnectedcreate_desc,
+                                 epilog=disconnectedcreate_epilog, formatter_class=rawhelp,
+                                 aliases=['openshift-disconnected'])
+
+    isocreate_desc = 'Create an iso ignition for baremetal install'
+    isocreate_epilog = "examples:\n%s" % isocreate
+    isocreate_parser = argparse.ArgumentParser(add_help=False)
+    isocreate_parser.add_argument('-d', '--direct', action='store_true', help='Embed directly target ignition in iso')
+    isocreate_parser.add_argument('-f', '--ignitionfile', help='Ignition file')
+    isocreate_parser.add_argument('-P', '--param', action='append',
+                                  help='specify parameter or keyword for rendering (can specify multiple)',
+                                  metavar='PARAM')
+    isocreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    isocreate_parser.add_argument('-u', '--uefi', action='store_true',
+                                  help='Remove iso entry from uefi after install (only applies to vms)')
+    isocreate_parser.add_argument('cluster', metavar='CLUSTER', help='Cluster')
+    isocreate_parser.set_defaults(func=create_openshift_iso)
+    create_subparsers.add_parser('openshift-iso', parents=[isocreate_parser], description=isocreate_desc,
+                                 help=isocreate_desc, epilog=isocreate_epilog, formatter_class=rawhelp)
+
+    pipelinecreate_desc = 'Create Pipeline'
+    pipelinecreate_parser = create_subparsers.add_parser('pipeline', description=pipelinecreate_desc,
+                                                         help=pipelinecreate_desc)
+    pipelinecreate_subparsers = pipelinecreate_parser.add_subparsers(metavar='', dest='subcommand_create_pipeline')
+
+    githubpipelinecreate_desc = 'Create Github Pipeline'
+    githubpipelinecreate_parser = pipelinecreate_subparsers.add_parser('github', description=githubpipelinecreate_desc,
+                                                                       help=githubpipelinecreate_desc, aliases=['gha'])
+    githubpipelinecreate_parser.add_argument('-f', '--inputfile', help='Input Plan (or script) file')
+    githubpipelinecreate_parser.add_argument('-k', '--kube', action='store_true', help='Create kube pipeline')
+    githubpipelinecreate_parser.add_argument('-s', '--script', action='store_true', help='Create script pipeline')
+    githubpipelinecreate_parser.add_argument('-P', '--param', action='append',
+                                             help='Define parameter for rendering (can specify multiple)',
+                                             metavar='PARAM')
+    githubpipelinecreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    githubpipelinecreate_parser.add_argument('plan', metavar='PLAN', nargs='?')
+    githubpipelinecreate_parser.set_defaults(func=create_pipeline_github)
+
+    jenkinspipelinecreate_desc = 'Create Jenkins Pipeline'
+    jenkinspipelinecreate_parser = pipelinecreate_subparsers.add_parser('jenkins',
+                                                                        description=jenkinspipelinecreate_desc,
+                                                                        help=jenkinspipelinecreate_desc)
+    jenkinspipelinecreate_parser.add_argument('-f', '--inputfile', help='Input Plan file')
+    jenkinspipelinecreate_parser.add_argument('-k', '--kube', action='store_true', help='Create kube pipeline')
+    jenkinspipelinecreate_parser.add_argument('-P', '--param', action='append',
+                                              help='Define parameter for rendering (can specify multiple)',
+                                              metavar='PARAM')
+    jenkinspipelinecreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    jenkinspipelinecreate_parser.add_argument('plan', metavar='PLAN', nargs='?')
+    jenkinspipelinecreate_parser.set_defaults(func=create_pipeline_jenkins)
+
+    tektonpipelinecreate_desc = 'Create Tekton Pipeline'
+    tektonpipelinecreate_parser = pipelinecreate_subparsers.add_parser('tekton',
+                                                                       description=tektonpipelinecreate_desc,
+                                                                       help=tektonpipelinecreate_desc)
+    tektonpipelinecreate_parser.add_argument('-f', '--inputfile', help='Input Plan file')
+    tektonpipelinecreate_parser.add_argument('-k', '--kube', action='store_true', help='Create kube pipeline')
+    tektonpipelinecreate_parser.add_argument('-P', '--param', action='append',
+                                             help='Define parameter for rendering (can specify multiple)',
+                                             metavar='PARAM')
+    tektonpipelinecreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    tektonpipelinecreate_parser.add_argument('plan', metavar='PLAN', nargs='?')
+    tektonpipelinecreate_parser.set_defaults(func=create_pipeline_tekton)
+
+    plancreate_desc = 'Create Plan'
+    plancreate_epilog = "examples:\n%s" % plancreate
+    plancreate_parser = create_subparsers.add_parser('plan', description=plancreate_desc, help=plancreate_desc,
+                                                     epilog=plancreate_epilog,
+                                                     formatter_class=rawhelp)
+    plancreate_parser.add_argument('-A', '--ansible', help='Generate ansible inventory', action='store_true')
+    plancreate_parser.add_argument('-u', '--url', help='Url for plan', metavar='URL', type=valid_url)
+    plancreate_parser.add_argument('-p', '--path', help='Path where to download plans. Defaults to plan',
+                                   metavar='PATH')
+    plancreate_parser.add_argument('-c', '--container', action='store_true', help='Handle container')
+    plancreate_parser.add_argument('--force', action='store_true', help='Delete existing vms first')
+    plancreate_parser.add_argument('-f', '--inputfile', help='Input Plan file')
+    plancreate_parser.add_argument('-k', '--skippre', action='store_true', help='Skip pre script')
+    plancreate_parser.add_argument('-z', '--skippost', action='store_true', help='Skip post script')
+    plancreate_parser.add_argument('-P', '--param', action='append',
+                                   help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    plancreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE', action='append')
+    plancreate_parser.add_argument('-t', '--threaded', help='Run threaded', action='store_true')
+    plancreate_parser.add_argument('plan', metavar='PLAN', nargs='?')
+    plancreate_parser.set_defaults(func=create_plan)
+
+    plandatacreate_desc = 'Create Cloudinit/Ignition from plan file'
+    plandatacreate_epilog = "examples:\n%s" % plandatacreate
+    plandatacreate_parser = create_subparsers.add_parser('plan-data', description=plandatacreate_desc,
+                                                         help=plandatacreate_desc, epilog=plandatacreate_epilog,
+                                                         formatter_class=rawhelp)
+    plandatacreate_parser.add_argument('-f', '--inputfile', help='Input Plan file', default='kcli_plan.yml')
+    plandatacreate_parser.add_argument('-k', '--skippre', action='store_true', help='Skip pre script')
+    plandatacreate_parser.add_argument('--outputdir', '-o', help='Output directory', metavar='OUTPUTDIR')
+    plandatacreate_parser.add_argument('-P', '--param', action='append',
+                                       help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    plandatacreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE',
+                                       action='append')
+    plandatacreate_parser.add_argument('name', metavar='VMNAME', nargs='?', type=valid_fqdn)
+    plandatacreate_parser.set_defaults(func=create_plandata)
+
+    plantemplatecreate_desc = 'Create plan template'
+    plantemplatecreate_epilog = "examples:\n%s" % plantemplatecreate
+    plantemplatecreate_parser = create_subparsers.add_parser('plan-template', description=plantemplatecreate_desc,
+                                                             help=plantemplatecreate_desc,
+                                                             epilog=plantemplatecreate_epilog, formatter_class=rawhelp)
+    plantemplatecreate_parser.add_argument('-P', '--param', action='append',
+                                           help='Define parameter for rendering (can specify multiple)',
+                                           metavar='PARAM')
+    plantemplatecreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    plantemplatecreate_parser.add_argument('-x', '--skipfiles', action='store_true', help='Skip files in assets')
+    plantemplatecreate_parser.add_argument('-y', '--skipscripts', action='store_true', help='Skip scripts in assets')
+    plantemplatecreate_parser.add_argument('directory', metavar='DIR')
+    plantemplatecreate_parser.set_defaults(func=create_plantemplate)
+
+    plansnapshotcreate_desc = 'Create Plan Snapshot'
+    plansnapshotcreate_parser = create_subparsers.add_parser('plan-snapshot', description=plansnapshotcreate_desc,
+                                                             help=plansnapshotcreate_desc)
+
+    plansnapshotcreate_parser.add_argument('-p', '--plan', help='plan name', required=True, metavar='PLAN')
+    plansnapshotcreate_parser.add_argument('snapshot', metavar='SNAPSHOT')
+    plansnapshotcreate_parser.set_defaults(func=create_snapshot_plan)
+
+    playbookcreate_desc = 'Create playbook from plan'
+    playbookcreate_parser = create_subparsers.add_parser('playbook', description=playbookcreate_desc,
+                                                         help=playbookcreate_desc)
+    playbookcreate_parser.add_argument('-f', '--inputfile', help='Input Plan/File', default='kcli_plan.yml')
+    playbookcreate_parser.add_argument('-P', '--param', action='append',
+                                       help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    playbookcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    playbookcreate_parser.add_argument('-s', '--store', action='store_true', help="Store results in files")
+    playbookcreate_parser.set_defaults(func=create_playbook)
+
+    poolcreate_desc = 'Create Pool'
+    poolcreate_parser = create_subparsers.add_parser('pool', description=poolcreate_desc, help=poolcreate_desc)
+    poolcreate_parser.add_argument('-f', '--full', action='store_true')
+    poolcreate_parser.add_argument('-t', '--pooltype', help='Type of the pool', choices=('dir', 'lvm', 'zfs'),
+                                   default='dir')
+    poolcreate_parser.add_argument('-p', '--path', help='Path of the pool', metavar='PATH')
+    poolcreate_parser.add_argument('--thinpool', help='Existing thin pool to use with lvm', metavar='THINPOOL')
+    poolcreate_parser.add_argument('pool')
+    poolcreate_parser.set_defaults(func=create_pool)
+
+    productcreate_desc = 'Create Product'
+    productcreate_parser = create_subparsers.add_parser('product', description=productcreate_desc,
+                                                        help=productcreate_desc)
+    productcreate_parser.add_argument('-g', '--group', help='Group to use as a name during deployment', metavar='GROUP')
+    productcreate_parser.add_argument('-l', '--latest', action='store_true', help='Grab latest version of the plans')
+    productcreate_parser.add_argument('-P', '--param', action='append',
+                                      help='Define parameter for rendering within scripts.'
+                                      'Can be repeated several times', metavar='PARAM')
+    productcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    productcreate_parser.add_argument('-r', '--repo',
+                                      help='Repo to use, if deploying a product present in several repos',
+                                      metavar='REPO')
+    productcreate_parser.add_argument('product', metavar='PRODUCT')
+    productcreate_parser.set_defaults(func=create_product)
+
+    repocreate_desc = 'Create Repo'
+    repocreate_epilog = "examples:\n%s" % repocreate
+    repocreate_parser = create_subparsers.add_parser('repo', description=repocreate_desc, help=repocreate_desc,
+                                                     epilog=repocreate_epilog,
+                                                     formatter_class=rawhelp)
+    repocreate_parser.add_argument('-u', '--url', help='URL of the repo', metavar='URL', type=valid_url)
+    repocreate_parser.add_argument('repo')
+    repocreate_parser.set_defaults(func=create_repo)
+
+    vmcreate_desc = 'Create Vm'
+    vmcreate_epilog = "examples:\n%s" % vmcreate
+    vmcreate_parser = argparse.ArgumentParser(add_help=False)
+    vmcreate_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
+    vmcreate_parser.add_argument('--console', help='Directly switch to console after creation', action='store_true')
+    vmcreate_parser.add_argument('-c', '--count', help='How many vms to create', type=int, default=1, metavar='COUNT')
+    vmcreate_parser.add_argument('-i', '--image', help='Image to use', metavar='IMAGE')
+    vmcreate_parser.add_argument('--profilefile', help='File to load profiles from', metavar='PROFILEFILE')
+    vmcreate_parser.add_argument('-P', '--param', action='append',
+                                 help='specify parameter or keyword for rendering (multiple can be specified)',
+                                 metavar='PARAM')
+    vmcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    vmcreate_parser.add_argument('-s', '--serial', help='Directly switch to serial console after creation',
+                                 action='store_true')
+    vmcreate_parser.add_argument('-w', '--wait', action='store_true', help='Wait for cloudinit to finish')
+    vmcreate_parser.add_argument('name', metavar='VMNAME', nargs='?', type=valid_fqdn)
+    vmcreate_parser.set_defaults(func=create_vm)
+    create_subparsers.add_parser('vm', parents=[vmcreate_parser], description=vmcreate_desc, help=vmcreate_desc,
+                                 epilog=vmcreate_epilog, formatter_class=rawhelp)
+
+    vmdatacreate_desc = 'Create Cloudinit/Ignition for a single vm'
+    vmdatacreate_epilog = "examples:\n%s" % vmdatacreate
+    vmdatacreate_parser = create_subparsers.add_parser('vm-data', description=vmdatacreate_desc,
+                                                       help=vmdatacreate_desc, epilog=vmdatacreate_epilog,
+                                                       formatter_class=rawhelp)
+    vmdatacreate_parser.add_argument('-i', '--image', help='Image to use', metavar='IMAGE')
+    vmdatacreate_parser.add_argument('-P', '--param', action='append',
+                                     help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    vmdatacreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    vmdatacreate_parser.add_argument('name', metavar='VMNAME', nargs='?', type=valid_fqdn)
+    vmdatacreate_parser.set_defaults(func=create_vmdata)
+
+    vmdiskadd_desc = 'Add Disk To Vm'
+    diskcreate_epilog = "examples:\n%s" % diskcreate
+    vmdiskadd_parser = argparse.ArgumentParser(add_help=False)
+    vmdiskadd_parser.add_argument('-s', '--size', type=int, help='Size of the disk to add, in GB', metavar='SIZE',
+                                  default=10)
+    vmdiskadd_parser.add_argument('-i', '--image', help='Name or Path of a Image', metavar='IMAGE')
+    vmdiskadd_parser.add_argument('--interface', default='virtio', help='Disk Interface. Defaults to virtio',
+                                  metavar='INTERFACE')
+    vmdiskadd_parser.add_argument('-n', '--novm', action='store_true', help='Dont attach to any vm')
+    vmdiskadd_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
+    vmdiskadd_parser.add_argument('-P', '--param', action='append',
+                                  help='specify parameter or keyword for rendering (can specify multiple)',
+                                  metavar='PARAM')
+    vmdiskadd_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    vmdiskadd_parser.add_argument('name', metavar='VMNAME')
+    vmdiskadd_parser.set_defaults(func=create_vmdisk)
+    create_subparsers.add_parser('vm-disk', parents=[vmdiskadd_parser], description=vmdiskadd_desc, help=vmdiskadd_desc,
+                                 aliases=['disk'], epilog=diskcreate_epilog,
+                                 formatter_class=rawhelp)
+
+    create_vmnic_desc = 'Add Nic To Vm'
+    create_vmnic_epilog = "examples:\n%s" % niccreate
+    create_vmnic_parser = argparse.ArgumentParser(add_help=False)
+    create_vmnic_parser.add_argument('-n', '--network', help='Network', metavar='NETWORK')
+    create_vmnic_parser.add_argument('name', metavar='VMNAME')
+    create_vmnic_parser.set_defaults(func=create_vmnic)
+    create_subparsers.add_parser('vm-nic', parents=[create_vmnic_parser], description=create_vmnic_desc,
+                                 help=create_vmnic_desc, aliases=['nic'],
+                                 epilog=create_vmnic_epilog, formatter_class=rawhelp)
+
+    vmsnapshotcreate_desc = 'Create Snapshot Of Vm'
+    vmsnapshotcreate_parser = create_subparsers.add_parser('vm-snapshot', description=vmsnapshotcreate_desc,
+                                                           help=vmsnapshotcreate_desc, aliases=['snapshot'])
+    vmsnapshotcreate_parser.add_argument('-n', '--name', help='vm name', required=True, metavar='VMNAME')
+    vmsnapshotcreate_parser.add_argument('snapshot')
+    vmsnapshotcreate_parser.set_defaults(func=snapshotcreate_vm)
+
+    workflowcreate_desc = 'Create Workflow'
+    workflowcreate_epilog = "examples:\n%s" % workflowcreate
+    workflowcreate_parser = create_subparsers.add_parser('workflow', description=workflowcreate_desc,
+                                                         help=workflowcreate_desc, epilog=workflowcreate_epilog,
+                                                         formatter_class=rawhelp)
+    workflowcreate_parser.add_argument('--outputdir', '-o', help='Output directory', metavar='OUTPUTDIR')
+    workflowcreate_parser.add_argument('-P', '--param', action='append',
+                                       help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    workflowcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    workflowcreate_parser.add_argument('-d', '--dry', help='Dry run. Only render', action='store_true')
+    workflowcreate_parser.add_argument('workflow', metavar='WORKFLOW', nargs='?')
+    workflowcreate_parser.set_defaults(func=create_workflow)
+
     vmclone_desc = 'Clone Vm'
     vmclone_epilog = None
     vmclone_parser = subparsers.add_parser('clone', description=vmclone_desc, help=vmclone_desc, epilog=vmclone_epilog,
@@ -3536,6 +4129,200 @@ def cli():
     delete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation', dest="yes_top")
     delete_subparsers = delete_parser.add_subparsers(metavar='', dest='subcommand_delete')
 
+    deleteapp_desc = 'Delete Kube App'
+    deleteapp_parser = delete_subparsers.add_parser('app', description=deleteapp_desc,
+                                                    help=deleteapp_desc, aliases=['apps', 'operator', 'operators'])
+    deleteapp_subparsers = deleteapp_parser.add_subparsers(metavar='', dest='subcommand_delete_app')
+
+    appgenericdelete_desc = 'Delete Kube App Generic'
+    appgenericdelete_epilog = None
+    appgenericdelete_parser = deleteapp_subparsers.add_parser('generic', description=appgenericdelete_desc,
+                                                              help=appgenericdelete_desc,
+                                                              epilog=appgenericdelete_epilog, formatter_class=rawhelp)
+    appgenericdelete_parser.add_argument('-P', '--param', action='append',
+                                         help=PARAMETERS_HELP,
+                                         metavar='PARAM')
+    appgenericdelete_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    appgenericdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    appgenericdelete_parser.add_argument('apps', metavar='APPS', nargs='*')
+    appgenericdelete_parser.set_defaults(func=delete_app_generic)
+
+    appopenshiftdelete_desc = 'Delete Kube App Openshift'
+    appopenshiftdelete_epilog = None
+    appopenshiftdelete_parser = deleteapp_subparsers.add_parser('openshift', description=appopenshiftdelete_desc,
+                                                                help=appopenshiftdelete_desc,
+                                                                epilog=appopenshiftdelete_epilog,
+                                                                formatter_class=rawhelp)
+    appopenshiftdelete_parser.add_argument('-P', '--param', action='append',
+                                           help=PARAMETERS_HELP,
+                                           metavar='PARAM')
+    appopenshiftdelete_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    appopenshiftdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    appopenshiftdelete_parser.add_argument('apps', metavar='APPS', nargs='*')
+    appopenshiftdelete_parser.set_defaults(func=delete_app_openshift)
+
+    bucketfiledelete_desc = 'Delete Bucket file'
+    bucketfiledelete_parser = argparse.ArgumentParser(add_help=False)
+    bucketfiledelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    bucketfiledelete_parser.add_argument('bucket', metavar='BUCKET')
+    bucketfiledelete_parser.add_argument('path', metavar='PATH')
+    bucketfiledelete_parser.set_defaults(func=delete_bucketfile)
+    delete_subparsers.add_parser('bucket-file', parents=[bucketfiledelete_parser],
+                                 description=bucketfiledelete_desc, help=bucketfiledelete_desc)
+
+    bucketdelete_desc = 'Delete Bucket'
+    bucketdelete_parser = delete_subparsers.add_parser('bucket', description=bucketdelete_desc, help=bucketdelete_desc)
+    bucketdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    bucketdelete_parser.add_argument('buckets', metavar='BUCKETS', nargs='+')
+    bucketdelete_parser.set_defaults(func=delete_bucket)
+
+    cachedelete_desc = 'Delete Cache'
+    cachedelete_parser = delete_subparsers.add_parser('cache', description=cachedelete_desc, help=cachedelete_desc)
+    cachedelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    cachedelete_parser.set_defaults(func=delete_cache)
+
+    containerdelete_desc = 'Delete Container'
+    containerdelete_parser = delete_subparsers.add_parser('container', description=containerdelete_desc,
+                                                          help=containerdelete_desc)
+    containerdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    containerdelete_parser.add_argument('names', metavar='CONTAINERIMAGES', nargs='+')
+    containerdelete_parser.set_defaults(func=delete_container)
+
+    dnsdelete_desc = 'Delete Dns Entries'
+    dnsdelete_parser = delete_subparsers.add_parser('dns', description=dnsdelete_desc, help=dnsdelete_desc)
+    dnsdelete_parser.add_argument('-a', '--all', action='store_true',
+                                  help='Whether to delete the entire host block. Libvirt specific')
+    dnsdelete_parser.add_argument('-d', '--domain', help='Domain of the entry', metavar='DOMAIN')
+    dnsdelete_parser.add_argument('-n', '--net', help='Network where to delete entry', metavar='NET')
+    dnsdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    dnsdelete_parser.add_argument('names', metavar='NAMES', nargs='*')
+    dnsdelete_parser.set_defaults(func=delete_dns)
+
+    hostdelete_desc = 'Delete Host'
+    hostdelete_parser = delete_subparsers.add_parser('host', description=hostdelete_desc, help=hostdelete_desc,
+                                                     aliases=['client'])
+    hostdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    hostdelete_parser.add_argument('name', metavar='NAME')
+    hostdelete_parser.set_defaults(func=delete_host)
+
+    imagedelete_desc = 'Delete Image'
+    imagedelete_help = "Image to delete"
+    imagedelete_parser = argparse.ArgumentParser(add_help=False)
+    imagedelete_parser.add_argument('-p', '--pool', help='Pool to use', metavar='POOL')
+    imagedelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    imagedelete_parser.add_argument('images', help=imagedelete_help, metavar='IMAGES', nargs='*')
+    imagedelete_parser.set_defaults(func=delete_image)
+    delete_subparsers.add_parser('image', parents=[imagedelete_parser], description=imagedelete_desc,
+                                 help=imagedelete_desc)
+    delete_subparsers.add_parser('iso', parents=[imagedelete_parser], description=imagedelete_desc,
+                                 help=imagedelete_desc)
+
+    kubedelete_desc = 'Delete Kube'
+    kubedelete_parser = argparse.ArgumentParser(add_help=False)
+    kubedelete_parser.add_argument('-P', '--param', action='append',
+                                   help='specify parameter or keyword for rendering (multiple can be specified)',
+                                   metavar='PARAM')
+    kubedelete_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    kubedelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    kubedelete_parser.add_argument('cluster', metavar='CLUSTER', nargs='*')
+    kubedelete_parser.set_defaults(func=delete_kube)
+    delete_subparsers.add_parser('kube', parents=[kubedelete_parser], description=kubedelete_desc, help=kubedelete_desc,
+                                 aliases=['cluster'])
+
+    lbdelete_desc = 'Delete Load Balancer'
+    lbdelete_parser = delete_subparsers.add_parser('lb', description=lbdelete_desc, help=lbdelete_desc,
+                                                   aliases=['loadbalancer'])
+    lbdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    lbdelete_parser.add_argument('name', metavar='NAME')
+    lbdelete_parser.set_defaults(func=delete_lb)
+
+    networkdelete_desc = 'Delete Network'
+    networkdelete_parser = delete_subparsers.add_parser('network', description=networkdelete_desc,
+                                                        help=networkdelete_desc)
+    networkdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    networkdelete_parser.add_argument('names', metavar='NETWORKS', nargs='+')
+    networkdelete_parser.set_defaults(func=delete_network)
+
+    plandelete_desc = 'Delete Plan'
+    plandelete_parser = delete_subparsers.add_parser('plan', description=plandelete_desc, help=plandelete_desc)
+    plandelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    plandelete_parser.add_argument('plans', metavar='PLAN', nargs='*')
+    plandelete_parser.set_defaults(func=delete_plan)
+
+    plansnapshotdelete_desc = 'Delete Plan Snapshot'
+    plansnapshotdelete_parser = delete_subparsers.add_parser('plan-snapshot', description=plansnapshotdelete_desc,
+                                                             help=plansnapshotdelete_desc)
+    plansnapshotdelete_parser.add_argument('-p', '--plan', help='plan name', required=True, metavar='PLAN')
+    plansnapshotdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    plansnapshotdelete_parser.add_argument('snapshot', metavar='SNAPSHOT')
+    plansnapshotdelete_parser.set_defaults(func=delete_snapshot_plan)
+
+    pooldelete_desc = 'Delete Pool'
+    pooldelete_parser = delete_subparsers.add_parser('pool', description=pooldelete_desc, help=pooldelete_desc)
+    pooldelete_parser.add_argument('-d', '--delete', action='store_true')
+    pooldelete_parser.add_argument('-f', '--full', action='store_true')
+    pooldelete_parser.add_argument('-p', '--path', help='Path of the pool', metavar='PATH')
+    pooldelete_parser.add_argument('--thinpool', help='Existing thin pool to use with lvm', metavar='THINPOOL')
+    pooldelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    pooldelete_parser.add_argument('pool')
+    pooldelete_parser.set_defaults(func=delete_pool)
+
+    profiledelete_desc = 'Delete Profile'
+    profiledelete_help = "Profile to delete"
+    profiledelete_parser = argparse.ArgumentParser(add_help=False)
+    profiledelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    profiledelete_parser.add_argument('profile', help=profiledelete_help, metavar='PROFILE')
+    profiledelete_parser.set_defaults(func=delete_profile)
+    delete_subparsers.add_parser('profile', parents=[profiledelete_parser], description=profiledelete_desc,
+                                 help=profiledelete_desc)
+
+    repodelete_desc = 'Delete Repo'
+    repodelete_parser = delete_subparsers.add_parser('repo', description=repodelete_desc, help=repodelete_desc)
+    repodelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    repodelete_parser.add_argument('repo')
+    repodelete_parser.set_defaults(func=delete_repo)
+
+    vmdelete_desc = 'Delete Vm'
+    vmdelete_parser = argparse.ArgumentParser(add_help=False)
+    vmdelete_parser.add_argument('-c', '--count', help='How many vms to delete', type=int, default=1, metavar='COUNT')
+    vmdelete_parser.add_argument('-s', '--snapshots', action='store_true', help='Remove snapshots if needed')
+    vmdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    vmdelete_parser.add_argument('names', metavar='VMNAMES', nargs='*')
+    vmdelete_parser.set_defaults(func=delete_vm)
+    delete_subparsers.add_parser('vm', parents=[vmdelete_parser], description=vmdelete_desc, help=vmdelete_desc)
+
+    vmdiskdelete_desc = 'Delete Vm Disk'
+    diskdelete_epilog = "examples:\n%s" % diskdelete
+    vmdiskdelete_parser = argparse.ArgumentParser(add_help=False)
+    vmdiskdelete_parser.add_argument('-n', '--novm', action='store_true', help='Dont try to locate vm')
+    vmdiskdelete_parser.add_argument('--vm', help='Name of the vm', metavar='VMNAME')
+    vmdiskdelete_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
+    vmdiskdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    vmdiskdelete_parser.add_argument('disknames', metavar='DISKNAMES', nargs='*')
+    vmdiskdelete_parser.set_defaults(func=delete_vmdisk)
+    delete_subparsers.add_parser('vm-disk', parents=[vmdiskdelete_parser], description=vmdiskdelete_desc,
+                                 aliases=['disk'], help=vmdiskdelete_desc, epilog=diskdelete_epilog,
+                                 formatter_class=rawhelp)
+
+    delete_vmnic_desc = 'Delete Nic From vm'
+    delete_vmnic_epilog = "examples:\n%s" % nicdelete
+    delete_vmnic_parser = argparse.ArgumentParser(add_help=False)
+    delete_vmnic_parser.add_argument('-i', '--interface', help='Interface name', metavar='INTERFACE')
+    delete_vmnic_parser.add_argument('-n', '--network', help='Network', metavar='NETWORK')
+    delete_vmnic_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    delete_vmnic_parser.add_argument('name', metavar='VMNAME')
+    delete_vmnic_parser.set_defaults(func=delete_vmnic)
+    delete_subparsers.add_parser('vm-nic', parents=[delete_vmnic_parser], description=delete_vmnic_desc,
+                                 help=delete_vmnic_desc, aliases=['nic'],
+                                 epilog=delete_vmnic_epilog, formatter_class=rawhelp)
+
+    vmsnapshotdelete_desc = 'Delete Snapshot Of Vm'
+    vmsnapshotdelete_parser = delete_subparsers.add_parser('vm-snapshot', description=vmsnapshotdelete_desc,
+                                                           help=vmsnapshotdelete_desc)
+    vmsnapshotdelete_parser.add_argument('-n', '--name', help='vm name', required=True, metavar='VMNAME')
+    vmsnapshotdelete_parser.add_argument('snapshot')
+    vmsnapshotdelete_parser.set_defaults(func=snapshotdelete_vm)
+
     disable_desc = 'Disable Host'
     disable_parser = subparsers.add_parser('disable', description=disable_desc, help=disable_desc)
     disable_subparsers = disable_parser.add_subparsers(metavar='', dest='subcommand_disable')
@@ -3549,6 +4336,118 @@ def cli():
     download_desc = 'Download Assets like Image, plans or binaries'
     download_parser = subparsers.add_parser('download', description=download_desc, help=download_desc)
     download_subparsers = download_parser.add_subparsers(metavar='', dest='subcommand_download')
+
+    bucketfiledownload_desc = 'Download Bucket file'
+    bucketfiledownload_parser = argparse.ArgumentParser(add_help=False)
+    bucketfiledownload_parser.add_argument('bucket', metavar='BUCKET')
+    bucketfiledownload_parser.add_argument('path', metavar='PATH')
+    bucketfiledownload_parser.set_defaults(func=download_bucketfile)
+    download_subparsers.add_parser('bucket-file', parents=[bucketfiledownload_parser],
+                                   description=bucketfiledownload_desc, help=bucketfiledownload_desc)
+
+    coreosinstallerdownload_desc = 'Download Coreos Installer'
+    coreosinstallerdownload_parser = argparse.ArgumentParser(add_help=False)
+    coreosinstallerdownload_parser.add_argument('-P', '--param', action='append',
+                                                help='Define parameter for rendering (can specify multiple)',
+                                                metavar='PARAM')
+    coreosinstallerdownload_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    coreosinstallerdownload_parser.set_defaults(func=download_coreos_installer)
+    download_subparsers.add_parser('coreos-installer', parents=[coreosinstallerdownload_parser],
+                                   description=coreosinstallerdownload_desc,
+                                   help=coreosinstallerdownload_desc)
+
+    imagedownload_desc = 'Download Cloud Image'
+    imagedownload_help = "Image to download. Choose between \n%s" % '\n'.join(IMAGES.keys())
+    imagedownload_parser = argparse.ArgumentParser(add_help=False)
+    imagedownload_parser.add_argument('-a', '--arch', help='Target arch', choices=['x86_64', 'aarch64'],
+                                      default='x86_64')
+    imagedownload_parser.add_argument('-c', '--cmd', help='Extra command to launch after downloading', metavar='CMD')
+    imagedownload_parser.add_argument('-q', '--qemu', help='Use qemu variant (kvm specific)', action='store_true')
+    imagedownload_parser.add_argument('-p', '--pool', help='Pool to use. Defaults to default', metavar='POOL')
+    imagedownload_parser.add_argument('-u', '--url', help='Url to use', metavar='URL', type=valid_url)
+    imagedownload_parser.add_argument('--size', help='Disk size (kubevirt specific)', type=int, metavar='SIZE')
+    imagedownload_parser.add_argument('-s', '--skip-profile', help='Skip Profile update', action='store_true')
+    imagedownload_parser.add_argument('image', help=imagedownload_help, metavar='IMAGE')
+    imagedownload_parser.set_defaults(func=download_image)
+    download_subparsers.add_parser('image', parents=[imagedownload_parser], description=imagedownload_desc,
+                                   help=imagedownload_desc)
+
+    isodownload_desc = 'Download Iso'
+    isodownload_help = "Iso name"
+    isodownload_parser = argparse.ArgumentParser(add_help=False)
+    isodownload_parser.add_argument('-p', '--pool', help='Pool to use. Defaults to default', metavar='POOL')
+    isodownload_parser.add_argument('-u', '--url', help='Url to use', metavar='URL', required=True, type=valid_url)
+    isodownload_parser.add_argument('iso', help=isodownload_help, metavar='ISO', nargs='?')
+    isodownload_parser.set_defaults(func=download_iso)
+    download_subparsers.add_parser('iso', parents=[isodownload_parser], description=isodownload_desc,
+                                   help=isodownload_desc)
+
+    okddownload_desc = 'Download Okd Installer'
+    okddownload_parser = argparse.ArgumentParser(add_help=False)
+    okddownload_parser.add_argument('-P', '--param', action='append',
+                                          help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    okddownload_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    okddownload_parser.set_defaults(func=download_okd_installer)
+    download_subparsers.add_parser('okd-installer', parents=[okddownload_parser],
+                                   description=okddownload_desc,
+                                   help=okddownload_desc, aliases=['okd-install'])
+
+    openshiftdownload_desc = 'Download Openshift Installer'
+    openshiftdownload_parser = argparse.ArgumentParser(add_help=False)
+    openshiftdownload_parser.add_argument('-P', '--param', action='append',
+                                          help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    openshiftdownload_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    openshiftdownload_parser.set_defaults(func=download_openshift_installer)
+    download_subparsers.add_parser('openshift-installer', parents=[openshiftdownload_parser],
+                                   description=openshiftdownload_desc,
+                                   help=openshiftdownload_desc, aliases=['openshift-install'])
+
+    helmdownload_desc = 'Download Helm'
+    helmdownload_parser = argparse.ArgumentParser(add_help=False)
+    helmdownload_parser.add_argument('-P', '--param', action='append',
+                                     help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    helmdownload_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    helmdownload_parser.set_defaults(func=download_helm)
+    download_subparsers.add_parser('helm', parents=[helmdownload_parser],
+                                   description=helmdownload_desc,
+                                   help=helmdownload_desc)
+
+    kubectldownload_desc = 'Download Kubectl'
+    kubectldownload_parser = argparse.ArgumentParser(add_help=False)
+    kubectldownload_parser.add_argument('-P', '--param', action='append',
+                                        help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    kubectldownload_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    kubectldownload_parser.set_defaults(func=download_kubectl)
+    download_subparsers.add_parser('kubectl', parents=[kubectldownload_parser],
+                                   description=kubectldownload_desc,
+                                   help=kubectldownload_desc)
+
+    ocdownload_desc = 'Download Oc'
+    ocdownload_parser = argparse.ArgumentParser(add_help=False)
+    ocdownload_parser.add_argument('-P', '--param', action='append',
+                                   help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    ocdownload_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    ocdownload_parser.set_defaults(func=download_oc)
+    download_subparsers.add_parser('oc', parents=[ocdownload_parser],
+                                   description=ocdownload_desc,
+                                   help=ocdownload_desc)
+
+    plandownload_desc = 'Download Plan'
+    plandownload_parser = argparse.ArgumentParser(add_help=False)
+    plandownload_parser.add_argument('-u', '--url', help='Url to use', metavar='URL', required=True, type=valid_url)
+    plandownload_parser.add_argument('plan', metavar='PLAN', nargs='?')
+    plandownload_parser.set_defaults(func=download_plan)
+    download_subparsers.add_parser('plan', parents=[plandownload_parser], description=plandownload_desc,
+                                   help=plandownload_desc)
+
+    tastydownload_desc = 'Download Tasty'
+    tastydownload_parser = argparse.ArgumentParser(add_help=False)
+    tastydownload_parser.add_argument('-P', '--param', action='append',
+                                      help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    tastydownload_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    tastydownload_parser.set_defaults(func=download_tasty)
+    download_subparsers.add_parser('tasty', parents=[tastydownload_parser], description=tastydownload_desc,
+                                   help=tastydownload_desc)
 
     enable_desc = 'Enable Host'
     enable_parser = subparsers.add_parser('enable', description=enable_desc, help=enable_desc)
@@ -3720,693 +4619,6 @@ def cli():
                                         formatter_class=rawhelp)
     list_subparsers = list_parser.add_subparsers(metavar='', dest='subcommand_list')
 
-    render_desc = 'Render file'
-    render_parser = subparsers.add_parser('render', description=render_desc, help=render_desc)
-    render_parser.add_argument('-f', '--inputfile', help='Input Plan/File', default='kcli_plan.yml')
-    render_parser.add_argument('-i', '--ignore', action='store_true', help='Ignore missing variables')
-    render_parser.add_argument('-P', '--param', action='append',
-                               help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    render_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE', action='append')
-    render_parser.set_defaults(func=render_file)
-
-    restart_desc = 'Restart Vm/Plan/Container'
-    restart_parser = subparsers.add_parser('restart', description=restart_desc, help=restart_desc)
-    restart_subparsers = restart_parser.add_subparsers(metavar='', dest='subcommand_restart')
-
-    containerrestart_desc = 'Restart Containers'
-    containerrestart_parser = restart_subparsers.add_parser('container', description=containerrestart_desc,
-                                                            help=containerrestart_desc)
-    containerrestart_parser.add_argument('names', metavar='CONTAINERNAMES', nargs='*')
-    containerrestart_parser.set_defaults(func=restart_container)
-
-    planrestart_desc = 'Restart Plan'
-    planrestart_parser = restart_subparsers.add_parser('plan', description=planrestart_desc, help=planrestart_desc)
-    planrestart_parser.add_argument('-s', '--soft', action='store_true', help='Do a soft stop')
-    planrestart_parser.add_argument('plans', metavar='PLAN', nargs='*')
-    planrestart_parser.set_defaults(func=restart_plan)
-
-    vmrestart_desc = 'Restart Vms'
-    vmrestart_parser = restart_subparsers.add_parser('vm', description=vmrestart_desc, help=vmrestart_desc)
-    vmrestart_parser.add_argument('names', metavar='VMNAMES', nargs='*')
-    vmrestart_parser.set_defaults(func=restart_vm)
-
-    vmsnapshotcreate_desc = 'Create Snapshot Of Vm'
-
-    revert_desc = 'Revert Vm/Plan Snapshot'
-    revert_parser = subparsers.add_parser('revert', description=revert_desc, help=revert_desc)
-    revert_subparsers = revert_parser.add_subparsers(metavar='', dest='subcommand_revert')
-
-    planrevert_desc = 'Revert Snapshot Of Plan'
-    planrevert_parser = revert_subparsers.add_parser('plan-snapshot', description=planrevert_desc, help=planrevert_desc,
-                                                     aliases=['plan'])
-    planrevert_parser.add_argument('-p', '--plan', help='Plan name', required=True, metavar='PLANNAME')
-    planrevert_parser.add_argument('snapshot', metavar='SNAPSHOT')
-    planrevert_parser.set_defaults(func=revert_snapshot_plan)
-
-    vmsnapshotrevert_desc = 'Revert Snapshot Of Vm'
-    vmsnapshotrevert_parser = revert_subparsers.add_parser('vm-snapshot', description=vmsnapshotrevert_desc,
-                                                           help=vmsnapshotrevert_desc, aliases=['vm'])
-    vmsnapshotrevert_parser.add_argument('-n', '--name', help='vm name', required=True, metavar='VMNAME')
-    vmsnapshotrevert_parser.add_argument('snapshot')
-    vmsnapshotrevert_parser.set_defaults(func=snapshotrevert_vm)
-
-    scale_desc = 'Scale Kube'
-    scale_parser = subparsers.add_parser('scale', description=scale_desc, help=scale_desc)
-    scale_subparsers = scale_parser.add_subparsers(metavar='', dest='subcommand_scale')
-
-    kubescale_desc = 'Scale Kube'
-    kubescale_parser = scale_subparsers.add_parser('kube', description=kubescale_desc, help=kubescale_desc,
-                                                   aliases=['cluster'])
-    kubescale_subparsers = kubescale_parser.add_subparsers(metavar='', dest='subcommand_scale_kube')
-
-    kubegenericscale_desc = 'Scale Generic Kube'
-    kubegenericscale_epilog = "examples:\n%s" % kubegenericscale
-    kubegenericscale_parser = argparse.ArgumentParser(add_help=False)
-    kubegenericscale_parser.add_argument('-P', '--param', action='append',
-                                         help='specify parameter or keyword for rendering (multiple can be specified)',
-                                         metavar='PARAM')
-    kubegenericscale_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    kubegenericscale_parser.add_argument('-m', '--masters', help='Total number of masters', type=int)
-    kubegenericscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
-    kubegenericscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
-    kubegenericscale_parser.set_defaults(func=scale_generic_kube)
-    kubescale_subparsers.add_parser('generic', parents=[kubegenericscale_parser], description=kubegenericscale_desc,
-                                    help=kubegenericscale_desc, aliases=['kubeadm'], epilog=kubegenericscale_epilog,
-                                    formatter_class=rawhelp)
-
-    kubek3sscale_desc = 'Scale K3s Kube'
-    kubek3sscale_epilog = "examples:\n%s" % kubek3sscale
-    kubek3sscale_parser = argparse.ArgumentParser(add_help=False)
-    kubek3sscale_parser.add_argument('-P', '--param', action='append',
-                                     help='specify parameter or keyword for rendering (multiple can be specified)',
-                                     metavar='PARAM')
-    kubek3sscale_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    kubek3sscale_parser.add_argument('-m', '--masters', help='Total number of masters', type=int)
-    kubek3sscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
-    kubek3sscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
-    kubek3sscale_parser.set_defaults(func=scale_k3s_kube)
-    kubescale_subparsers.add_parser('k3s', parents=[kubek3sscale_parser], description=kubek3sscale_desc,
-                                    help=kubek3sscale_desc, epilog=kubek3sscale_epilog, formatter_class=rawhelp)
-
-    parameterhelp = "specify parameter or keyword for rendering (multiple can be specified)"
-    kubehypershiftscale_desc = 'Scale Hypershift Kube'
-    kubehypershiftscale_parser = argparse.ArgumentParser(add_help=False)
-    kubehypershiftscale_parser.add_argument('-P', '--param', action='append', help=parameterhelp, metavar='PARAM')
-    kubehypershiftscale_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    kubehypershiftscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
-    kubehypershiftscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
-    kubehypershiftscale_parser.set_defaults(func=scale_hypershift_kube)
-    kubescale_subparsers.add_parser('hypershift', parents=[kubehypershiftscale_parser],
-                                    description=kubehypershiftscale_desc,
-                                    help=kubehypershiftscale_desc)
-
-    parameterhelp = "specify parameter or keyword for rendering (multiple can be specified)"
-    kubeopenshiftscale_desc = 'Scale Openshift Kube'
-    kubeopenshiftscale_epilog = "examples:\n%s" % kubeopenshiftscale
-    kubeopenshiftscale_parser = argparse.ArgumentParser(add_help=False)
-    kubeopenshiftscale_parser.add_argument('-P', '--param', action='append', help=parameterhelp, metavar='PARAM')
-    kubeopenshiftscale_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    kubeopenshiftscale_parser.add_argument('-m', '--masters', help='Total number of masters', type=int)
-    kubeopenshiftscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
-    kubeopenshiftscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
-    kubeopenshiftscale_parser.set_defaults(func=scale_openshift_kube)
-    kubescale_subparsers.add_parser('openshift', parents=[kubeopenshiftscale_parser],
-                                    description=kubeopenshiftscale_desc,
-                                    help=kubeopenshiftscale_desc, aliases=['okd'],
-                                    epilog=kubeopenshiftscale_epilog, formatter_class=rawhelp)
-
-    vmscp_desc = 'Scp Into Vm'
-    vmscp_epilog = None
-    vmscp_parser = argparse.ArgumentParser(add_help=False)
-    vmscp_parser.add_argument('-i', '--identityfile', help='Identity file')
-    vmscp_parser.add_argument('-r', '--recursive', help='Recursive', action='store_true')
-    vmscp_parser.add_argument('-u', '-l', '--user', help='User for ssh')
-    vmscp_parser.add_argument('-p', '-P', '--port', help='Port for ssh')
-    vmscp_parser.add_argument('source', nargs=1)
-    vmscp_parser.add_argument('destination', nargs=1)
-    vmscp_parser.set_defaults(func=scp_vm)
-    subparsers.add_parser('scp', parents=[vmscp_parser], description=vmscp_desc, help=vmscp_desc, epilog=vmscp_epilog,
-                          formatter_class=rawhelp)
-
-    vmssh_desc = 'Ssh Into Vm'
-    vmssh_epilog = None
-    vmssh_parser = argparse.ArgumentParser(add_help=False)
-    vmssh_parser.add_argument('-D', help='Dynamic Forwarding', metavar='LOCAL')
-    vmssh_parser.add_argument('-L', help='Local Forwarding', metavar='LOCAL')
-    vmssh_parser.add_argument('-R', help='Remote Forwarding', metavar='REMOTE')
-    vmssh_parser.add_argument('-X', action='store_true', help='Enable X11 Forwarding')
-    vmssh_parser.add_argument('-Y', action='store_true', help='Enable X11 Forwarding(Insecure)')
-    vmssh_parser.add_argument('-i', '--identityfile', help='Identity file')
-    vmssh_parser.add_argument('-p', '--port', '--port', help='Port for ssh')
-    vmssh_parser.add_argument('-u', '-l', '--user', help='User for ssh')
-    vmssh_parser.add_argument('name', metavar='VMNAME', nargs='*')
-    vmssh_parser.set_defaults(func=ssh_vm)
-    subparsers.add_parser('ssh', parents=[vmssh_parser], description=vmssh_desc, help=vmssh_desc, epilog=vmssh_epilog,
-                          formatter_class=rawhelp)
-
-    start_desc = 'Start Vm/Plan/Container'
-    start_epilog = "examples:\n%s" % start
-    start_parser = subparsers.add_parser('start', description=start_desc, help=start_desc, epilog=start_epilog,
-                                         formatter_class=rawhelp)
-    start_subparsers = start_parser.add_subparsers(metavar='', dest='subcommand_start')
-
-    stop_desc = 'Stop Vm/Plan/Container'
-    stop_parser = subparsers.add_parser('stop', description=stop_desc, help=stop_desc)
-    stop_subparsers = stop_parser.add_subparsers(metavar='', dest='subcommand_stop')
-
-    switch_desc = 'Switch Host'
-    switch_parser = subparsers.add_parser('switch', description=switch_desc, help=switch_desc)
-    switch_subparsers = switch_parser.add_subparsers(metavar='', dest='subcommand_switch')
-
-    hostswitch_desc = 'Switch Host'
-    hostswitch_parser = argparse.ArgumentParser(add_help=False)
-    hostswitch_parser.add_argument('name', help='NAME')
-    hostswitch_parser.set_defaults(func=switch_host)
-    switch_subparsers.add_parser('host', parents=[hostswitch_parser], description=hostswitch_desc, help=hostswitch_desc,
-                                 aliases=['client'])
-
-    sync_desc = 'Sync Host'
-    sync_parser = subparsers.add_parser('sync', description=sync_desc, help=sync_desc)
-    sync_subparsers = sync_parser.add_subparsers(metavar='', dest='subcommand_sync')
-
-    configsync_desc = 'Sync Local config to Kube cluster'
-    configsync_parser = sync_subparsers.add_parser('config', description=configsync_desc, help=configsync_desc,
-                                                   aliases=['kube', 'cluster'])
-    configsync_parser.add_argument('-n', '--net', help='Network where to create entry. Defaults to default',
-                                   default='default', metavar='NET')
-    configsync_parser.set_defaults(func=sync_config)
-
-    hostsync_desc = 'Sync Host'
-    hostsync_parser = sync_subparsers.add_parser('host', description=hostsync_desc, help=hostsync_desc,
-                                                 aliases=['client'])
-    hostsync_parser.add_argument('names', help='NAMES', nargs='*')
-    hostsync_parser.set_defaults(func=sync_host)
-
-    update_desc = 'Update Vm/Plan/Repo'
-    update_parser = subparsers.add_parser('update', description=update_desc, help=update_desc)
-    update_subparsers = update_parser.add_subparsers(metavar='', dest='subcommand_update')
-
-    version_desc = 'Version'
-    version_epilog = None
-    version_parser = argparse.ArgumentParser(add_help=False)
-    version_parser.set_defaults(func=get_version)
-    subparsers.add_parser('version', parents=[version_parser], description=version_desc, help=version_desc,
-                          epilog=version_epilog, formatter_class=rawhelp)
-
-    # sub subcommands
-    createapp_desc = 'Create Kube Apps'
-    createapp_parser = create_subparsers.add_parser('app', description=createapp_desc,
-                                                    help=createapp_desc, aliases=['apps', 'operator', 'operators'])
-    createapp_subparsers = createapp_parser.add_subparsers(metavar='', dest='subcommand_create_app')
-
-    appgenericcreate_desc = 'Create Kube App Generic'
-    appgenericcreate_epilog = None
-    appgenericcreate_parser = createapp_subparsers.add_parser('generic', description=appgenericcreate_desc,
-                                                              help=appgenericcreate_desc,
-                                                              epilog=appgenericcreate_epilog, formatter_class=rawhelp)
-    appgenericcreate_parser.add_argument('--outputdir', '-o', help='Output directory', metavar='OUTPUTDIR')
-    appgenericcreate_parser.add_argument('-P', '--param', action='append',
-                                         help='specify parameter or keyword for rendering (multiple can be specified)',
-                                         metavar='PARAM')
-    appgenericcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    appgenericcreate_parser.add_argument('apps', metavar='APPS', nargs='*')
-    appgenericcreate_parser.set_defaults(func=create_app_generic)
-
-    appopenshiftcreate_desc = 'Create Kube App Openshift'
-    appopenshiftcreate_epilog = "examples:\n%s" % appopenshiftcreate
-    appopenshiftcreate_parser = createapp_subparsers.add_parser('openshift', description=appopenshiftcreate_desc,
-                                                                help=appopenshiftcreate_desc,
-                                                                epilog=appopenshiftcreate_epilog,
-                                                                formatter_class=rawhelp)
-    appopenshiftcreate_parser.add_argument('--outputdir', '-o', help='Output directory', metavar='OUTPUTDIR')
-    appopenshiftcreate_parser.add_argument('-P', '--param', action='append',
-                                           help=PARAMETERS_HELP, metavar='PARAM')
-    appopenshiftcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    appopenshiftcreate_parser.add_argument('apps', metavar='APPS', nargs='*')
-    appopenshiftcreate_parser.set_defaults(func=create_app_openshift)
-
-    deleteapp_desc = 'Delete Kube App'
-    deleteapp_parser = delete_subparsers.add_parser('app', description=deleteapp_desc,
-                                                    help=deleteapp_desc, aliases=['apps', 'operator', 'operators'])
-    deleteapp_subparsers = deleteapp_parser.add_subparsers(metavar='', dest='subcommand_delete_app')
-
-    appgenericdelete_desc = 'Delete Kube App Generic'
-    appgenericdelete_epilog = None
-    appgenericdelete_parser = deleteapp_subparsers.add_parser('generic', description=appgenericdelete_desc,
-                                                              help=appgenericdelete_desc,
-                                                              epilog=appgenericdelete_epilog, formatter_class=rawhelp)
-    appgenericdelete_parser.add_argument('-P', '--param', action='append',
-                                         help=PARAMETERS_HELP,
-                                         metavar='PARAM')
-    appgenericdelete_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    appgenericdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    appgenericdelete_parser.add_argument('apps', metavar='APPS', nargs='*')
-    appgenericdelete_parser.set_defaults(func=delete_app_generic)
-
-    appopenshiftdelete_desc = 'Delete Kube App Openshift'
-    appopenshiftdelete_epilog = None
-    appopenshiftdelete_parser = deleteapp_subparsers.add_parser('openshift', description=appopenshiftdelete_desc,
-                                                                help=appopenshiftdelete_desc,
-                                                                epilog=appopenshiftdelete_epilog,
-                                                                formatter_class=rawhelp)
-    appopenshiftdelete_parser.add_argument('-P', '--param', action='append',
-                                           help=PARAMETERS_HELP,
-                                           metavar='PARAM')
-    appopenshiftdelete_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    appopenshiftdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    appopenshiftdelete_parser.add_argument('apps', metavar='APPS', nargs='*')
-    appopenshiftdelete_parser.set_defaults(func=delete_app_openshift)
-
-    bucketcreate_desc = 'Create Bucket'
-    bucketcreate_epilog = None
-    bucketcreate_parser = create_subparsers.add_parser('bucket', description=bucketcreate_desc,
-                                                       help=bucketcreate_desc, epilog=bucketcreate_epilog,
-                                                       formatter_class=rawhelp)
-    bucketcreate_parser.add_argument('-p', '--public', action='store_true', help='Make the bucket public')
-    bucketcreate_parser.add_argument('-P', '--param', action='append',
-                                     help='specify parameter or keyword for rendering (multiple can be specified)',
-                                     metavar='PARAM')
-    bucketcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    bucketcreate_parser.add_argument('buckets', metavar='BUCKETS', nargs='+')
-    bucketcreate_parser.set_defaults(func=create_bucket)
-
-    bucketfilecreate_desc = 'Create Bucket file'
-    bucketfilecreate_parser = argparse.ArgumentParser(add_help=False)
-    bucketfilecreate_parser.add_argument('-p', '--public', action='store_true', help='Make the file public')
-    bucketfilecreate_parser.add_argument('-t', '--temp', action='store_true', help='Get temp url')
-    bucketfilecreate_parser.add_argument('bucket', metavar='BUCKET')
-    bucketfilecreate_parser.add_argument('path', metavar='PATH')
-    bucketfilecreate_parser.set_defaults(func=create_bucketfile)
-    create_subparsers.add_parser('bucket-file', parents=[bucketfilecreate_parser],
-                                 description=bucketfilecreate_desc, help=bucketfilecreate_desc)
-
-    bucketfiledelete_desc = 'Delete Bucket file'
-    bucketfiledelete_parser = argparse.ArgumentParser(add_help=False)
-    bucketfiledelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    bucketfiledelete_parser.add_argument('bucket', metavar='BUCKET')
-    bucketfiledelete_parser.add_argument('path', metavar='PATH')
-    bucketfiledelete_parser.set_defaults(func=delete_bucketfile)
-    delete_subparsers.add_parser('bucket-file', parents=[bucketfiledelete_parser],
-                                 description=bucketfiledelete_desc, help=bucketfiledelete_desc)
-
-    bucketfiledownload_desc = 'Download Bucket file'
-    bucketfiledownload_parser = argparse.ArgumentParser(add_help=False)
-    bucketfiledownload_parser.add_argument('bucket', metavar='BUCKET')
-    bucketfiledownload_parser.add_argument('path', metavar='PATH')
-    bucketfiledownload_parser.set_defaults(func=download_bucketfile)
-    download_subparsers.add_parser('bucket-file', parents=[bucketfiledownload_parser],
-                                   description=bucketfiledownload_desc, help=bucketfiledownload_desc)
-
-    bucketdelete_desc = 'Delete Bucket'
-    bucketdelete_parser = delete_subparsers.add_parser('bucket', description=bucketdelete_desc, help=bucketdelete_desc)
-    bucketdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    bucketdelete_parser.add_argument('buckets', metavar='BUCKETS', nargs='+')
-    bucketdelete_parser.set_defaults(func=delete_bucket)
-
-    cachedelete_desc = 'Delete Cache'
-    cachedelete_parser = delete_subparsers.add_parser('cache', description=cachedelete_desc, help=cachedelete_desc)
-    cachedelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    cachedelete_parser.set_defaults(func=delete_cache)
-
-    containercreate_desc = 'Create Container'
-    containercreate_epilog = None
-    containercreate_parser = create_subparsers.add_parser('container', description=containercreate_desc,
-                                                          help=containercreate_desc, epilog=containercreate_epilog,
-                                                          formatter_class=rawhelp)
-    containercreate_parser_group = containercreate_parser.add_mutually_exclusive_group(required=True)
-    containercreate_parser_group.add_argument('-i', '--image', help='Image to use', metavar='Image')
-    containercreate_parser_group.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
-    containercreate_parser.add_argument('-P', '--param', action='append',
-                                        help='specify parameter or keyword for rendering (multiple can be specified)',
-                                        metavar='PARAM')
-    containercreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    containercreate_parser.add_argument('name', metavar='NAME', nargs='?')
-    containercreate_parser.set_defaults(func=create_container)
-
-    containerdelete_desc = 'Delete Container'
-    containerdelete_parser = delete_subparsers.add_parser('container', description=containerdelete_desc,
-                                                          help=containerdelete_desc)
-    containerdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    containerdelete_parser.add_argument('names', metavar='CONTAINERIMAGES', nargs='+')
-    containerdelete_parser.set_defaults(func=delete_container)
-
-    containerstart_desc = 'Start Containers'
-    containerstart_parser = start_subparsers.add_parser('container', description=containerstart_desc,
-                                                        help=containerstart_desc)
-    containerstart_parser.add_argument('names', metavar='VMNAMES', nargs='*')
-    containerstart_parser.set_defaults(func=start_container)
-
-    containerstop_desc = 'Stop Containers'
-    containerstop_parser = stop_subparsers.add_parser('container', description=containerstop_desc,
-                                                      help=containerstop_desc)
-    containerstop_parser.add_argument('names', metavar='CONTAINERNAMES', nargs='*')
-    containerstop_parser.set_defaults(func=stop_container)
-
-    dnscreate_desc = 'Create Dns Entries'
-    dnscreate_epilog = "examples:\n%s" % dnscreate
-    dnscreate_parser = create_subparsers.add_parser('dns', description=dnscreate_desc, help=dnscreate_desc,
-                                                    epilog=dnscreate_epilog,
-                                                    formatter_class=rawhelp)
-    dnscreate_parser.add_argument('-a', '--alias', action='append', help='specify alias (can specify multiple)',
-                                  metavar='ALIAS')
-    dnscreate_parser.add_argument('-d', '--domain', help='Domain where to create entry', metavar='DOMAIN')
-    dnscreate_parser.add_argument('-n', '--net', help='Network where to create entry. Defaults to default',
-                                  default='default', metavar='NET')
-    dnscreate_parser.add_argument('-i', '--ip', help='Ip', metavar='IP')
-    dnscreate_parser.add_argument('names', metavar='NAMES', nargs='*')
-    dnscreate_parser.set_defaults(func=create_dns)
-
-    dnsdelete_desc = 'Delete Dns Entries'
-    dnsdelete_parser = delete_subparsers.add_parser('dns', description=dnsdelete_desc, help=dnsdelete_desc)
-    dnsdelete_parser.add_argument('-a', '--all', action='store_true',
-                                  help='Whether to delete the entire host block. Libvirt specific')
-    dnsdelete_parser.add_argument('-d', '--domain', help='Domain of the entry', metavar='DOMAIN')
-    dnsdelete_parser.add_argument('-n', '--net', help='Network where to delete entry', metavar='NET')
-    dnsdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    dnsdelete_parser.add_argument('names', metavar='NAMES', nargs='*')
-    dnsdelete_parser.set_defaults(func=delete_dns)
-
-    hostcreate_desc = 'Create Host'
-    hostcreate_epilog = "examples:\n%s" % hostcreate
-    hostcreate_parser = create_subparsers.add_parser('host', help=hostcreate_desc, description=hostcreate_desc,
-                                                     aliases=['client'], epilog=hostcreate_epilog,
-                                                     formatter_class=rawhelp)
-    hostcreate_subparsers = hostcreate_parser.add_subparsers(metavar='', dest='subcommand_create_host')
-
-    awshostcreate_desc = 'Create Aws Host'
-    awshostcreate_parser = hostcreate_subparsers.add_parser('aws', help=awshostcreate_desc,
-                                                            description=awshostcreate_desc)
-    awshostcreate_parser.add_argument('--access_key_id', help='Access Key Id', metavar='ACCESS_KEY_ID', required=True)
-    awshostcreate_parser.add_argument('--access_key_secret', help='Access Key Secret', metavar='ACCESS_KEY_SECRET',
-                                      required=True)
-    awshostcreate_parser.add_argument('-k', '--keypair', help='Keypair', metavar='KEYPAIR', required=True)
-    awshostcreate_parser.add_argument('-r', '--region', help='Region', metavar='REGION', required=True)
-    awshostcreate_parser.add_argument('name', metavar='NAME')
-    awshostcreate_parser.set_defaults(func=create_host_aws)
-
-    ibmhostcreate_desc = 'Create IBM Cloud Host'
-    ibmhostcreate_parser = hostcreate_subparsers.add_parser('ibm', help=ibmhostcreate_desc,
-                                                            description=ibmhostcreate_desc)
-    ibmhostcreate_parser.add_argument('--iam_api_key', help='IAM API Key', metavar='IAM_API_KEY', required=True)
-    ibmhostcreate_parser.add_argument('--access_key_id', help='Access Key Id', metavar='ACCESS_KEY_ID')
-    ibmhostcreate_parser.add_argument('--access_key_secret', help='Access Key Secret', metavar='ACCESS_KEY_SECRET')
-    ibmhostcreate_parser.add_argument('--vpc', help='VPC name', metavar='VPC')
-    ibmhostcreate_parser.add_argument('--zone', help='Zone within the region', metavar='ZONE')
-    ibmhostcreate_parser.add_argument('-r', '--region', help='Region', metavar='REGION', required=True)
-    ibmhostcreate_parser.add_argument('name', metavar='NAME')
-    ibmhostcreate_parser.set_defaults(func=create_host_ibm)
-
-    gcphostcreate_desc = 'Create Gcp Host'
-    gcphostcreate_parser = hostcreate_subparsers.add_parser('gcp', help=gcphostcreate_desc,
-                                                            description=gcphostcreate_desc)
-    gcphostcreate_parser.add_argument('--credentials', help='Path to credentials file', metavar='credentials')
-    gcphostcreate_parser.add_argument('--project', help='Project', metavar='project', required=True)
-    gcphostcreate_parser.add_argument('--zone', help='Zone', metavar='zone', required=True)
-    gcphostcreate_parser.add_argument('name', metavar='NAME')
-    gcphostcreate_parser.set_defaults(func=create_host_gcp)
-
-    grouphostcreate_desc = 'Create Group Host'
-    grouphostcreate_parser = hostcreate_subparsers.add_parser('group', help=grouphostcreate_desc,
-                                                              description=grouphostcreate_desc)
-    grouphostcreate_parser.add_argument('-a', '--algorithm', help='Algorithm. Defaults to random',
-                                        metavar='ALGORITHM', default='random')
-    grouphostcreate_parser.add_argument('-m', '--members', help='Members', metavar='MEMBERS', type=valid_members)
-    grouphostcreate_parser.add_argument('name', metavar='NAME')
-    grouphostcreate_parser.set_defaults(func=create_host_group)
-
-    kvmhostcreate_desc = 'Create Kvm Host'
-    kvmhostcreate_parser = hostcreate_subparsers.add_parser('kvm', help=kvmhostcreate_desc,
-                                                            description=kvmhostcreate_desc)
-    kvmhostcreate_parser_group = kvmhostcreate_parser.add_mutually_exclusive_group(required=True)
-    kvmhostcreate_parser_group.add_argument('-H', '--host', help='Host. Defaults to localhost', metavar='HOST',
-                                            default='localhost')
-    kvmhostcreate_parser.add_argument('--pool', help='Pool. Defaults to default', metavar='POOL', default='default')
-    kvmhostcreate_parser.add_argument('-p', '--port', help='Port', metavar='PORT')
-    kvmhostcreate_parser.add_argument('-P', '--protocol', help='Protocol to use', default='ssh', metavar='PROTOCOL')
-    kvmhostcreate_parser_group.add_argument('-U', '--url', help='URL to use', metavar='URL')
-    kvmhostcreate_parser.add_argument('-u', '--user', help='User. Defaults to root', default='root', metavar='USER')
-    kvmhostcreate_parser.add_argument('name', metavar='NAME')
-    kvmhostcreate_parser.set_defaults(func=create_host_kvm)
-
-    kubevirthostcreate_desc = 'Create Kubevirt Host'
-    kubevirthostcreate_parser = hostcreate_subparsers.add_parser('kubevirt', help=kubevirthostcreate_desc,
-                                                                 description=kubevirthostcreate_desc)
-    kubevirthostcreate_parser.add_argument('--ca', help='Ca file', metavar='CA')
-    kubevirthostcreate_parser.add_argument('--cdi', help='Cdi Support', action='store_true', default=True)
-    kubevirthostcreate_parser.add_argument('-c', '--context', help='Context', metavar='CONTEXT')
-    kubevirthostcreate_parser.add_argument('-H', '--host', help='Api Host', metavar='HOST')
-    kubevirthostcreate_parser.add_argument('-p', '--pool', help='Storage Class', metavar='POOL')
-    kubevirthostcreate_parser.add_argument('--port', help='Api Port', metavar='HOST')
-    kubevirthostcreate_parser.add_argument('--token', help='Token', metavar='TOKEN')
-    kubevirthostcreate_parser.add_argument('--multus', help='Multus Support', action='store_true', default=True)
-    kubevirthostcreate_parser.add_argument('name', metavar='NAME')
-    kubevirthostcreate_parser.set_defaults(func=create_host_kubevirt)
-
-    openstackhostcreate_desc = 'Create Openstack Host'
-    openstackhostcreate_parser = hostcreate_subparsers.add_parser('openstack', help=openstackhostcreate_desc,
-                                                                  description=openstackhostcreate_desc)
-    openstackhostcreate_parser.add_argument('--auth-url', help='Auth url', metavar='AUTH_URL', required=True)
-    openstackhostcreate_parser.add_argument('--domain', help='Domain', metavar='DOMAIN', default='Default')
-    openstackhostcreate_parser.add_argument('-p', '--password', help='Password', metavar='PASSWORD', required=True)
-    openstackhostcreate_parser.add_argument('--project', help='Project', metavar='PROJECT', required=True)
-    openstackhostcreate_parser.add_argument('-u', '--user', help='User', metavar='USER', required=True)
-    openstackhostcreate_parser.add_argument('name', metavar='NAME')
-    openstackhostcreate_parser.set_defaults(func=create_host_openstack)
-
-    ovirthostcreate_desc = 'Create Ovirt Host'
-    ovirthostcreate_parser = hostcreate_subparsers.add_parser('ovirt', help=ovirthostcreate_desc,
-                                                              description=ovirthostcreate_desc)
-    ovirthostcreate_parser.add_argument('--ca', help='Path to certificate file', metavar='CA')
-    ovirthostcreate_parser.add_argument('-c', '--cluster', help='Cluster. Defaults to Default', default='Default',
-                                        metavar='CLUSTER')
-    ovirthostcreate_parser.add_argument('-d', '--datacenter', help='Datacenter. Defaults to Default', default='Default',
-                                        metavar='DATACENTER')
-    ovirthostcreate_parser.add_argument('-H', '--host', help='Host to use', metavar='HOST', required=True)
-    ovirthostcreate_parser.add_argument('-o', '--org', help='Organization', metavar='ORGANIZATION', required=True)
-    ovirthostcreate_parser.add_argument('-p', '--password', help='Password to use', metavar='PASSWORD', required=True)
-    ovirthostcreate_parser.add_argument('--pool', help='Storage Domain', metavar='POOL')
-    ovirthostcreate_parser.add_argument('-u', '--user', help='User. Defaults to admin@internal',
-                                        metavar='USER', default='admin@internal')
-    ovirthostcreate_parser.add_argument('name', metavar='NAME')
-    ovirthostcreate_parser.set_defaults(func=create_host_ovirt)
-
-    vspherehostcreate_desc = 'Create Vsphere Host'
-    vspherehostcreate_parser = hostcreate_subparsers.add_parser('vsphere', help=vspherehostcreate_desc,
-                                                                description=vspherehostcreate_desc)
-    vspherehostcreate_parser.add_argument('-c', '--cluster', help='Cluster', metavar='CLUSTER', required=True)
-    vspherehostcreate_parser.add_argument('-d', '--datacenter', help='Datacenter', metavar='DATACENTER', required=True)
-    vspherehostcreate_parser.add_argument('-H', '--host', help='Vcenter Host', metavar='HOST', required=True)
-    vspherehostcreate_parser.add_argument('-p', '--password', help='Password', metavar='PASSWORD', required=True)
-    vspherehostcreate_parser.add_argument('-u', '--user', help='User', metavar='USER', required=True)
-    vspherehostcreate_parser.add_argument('--pool', help='Pool', metavar='POOL')
-    vspherehostcreate_parser.add_argument('name', metavar='NAME')
-    vspherehostcreate_parser.set_defaults(func=create_host_vsphere)
-
-    hostdelete_desc = 'Delete Host'
-    hostdelete_parser = delete_subparsers.add_parser('host', description=hostdelete_desc, help=hostdelete_desc,
-                                                     aliases=['client'])
-    hostdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    hostdelete_parser.add_argument('name', metavar='NAME')
-    hostdelete_parser.set_defaults(func=delete_host)
-
-    imagedelete_desc = 'Delete Image'
-    imagedelete_help = "Image to delete"
-    imagedelete_parser = argparse.ArgumentParser(add_help=False)
-    imagedelete_parser.add_argument('-p', '--pool', help='Pool to use', metavar='POOL')
-    imagedelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    imagedelete_parser.add_argument('images', help=imagedelete_help, metavar='IMAGES', nargs='*')
-    imagedelete_parser.set_defaults(func=delete_image)
-    delete_subparsers.add_parser('image', parents=[imagedelete_parser], description=imagedelete_desc,
-                                 help=imagedelete_desc)
-    delete_subparsers.add_parser('iso', parents=[imagedelete_parser], description=imagedelete_desc,
-                                 help=imagedelete_desc)
-
-    kubecreate_desc = 'Create Kube'
-    kubecreate_parser = create_subparsers.add_parser('kube', description=kubecreate_desc, help=kubecreate_desc,
-                                                     aliases=['cluster'])
-    kubecreate_subparsers = kubecreate_parser.add_subparsers(metavar='', dest='subcommand_create_kube')
-
-    kubegenericcreate_desc = 'Create Generic Kube'
-    kubegenericcreate_epilog = "examples:\n%s" % kubegenericcreate
-    kubegenericcreate_parser = argparse.ArgumentParser(add_help=False)
-    kubegenericcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
-    kubegenericcreate_parser.add_argument('-P', '--param', action='append',
-                                          help='specify parameter or keyword for rendering (multiple can be specified)',
-                                          metavar='PARAM')
-    kubegenericcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    kubegenericcreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
-    kubegenericcreate_parser.set_defaults(func=create_generic_kube)
-    kubecreate_subparsers.add_parser('generic', parents=[kubegenericcreate_parser],
-                                     description=kubegenericcreate_desc,
-                                     help=kubegenericcreate_desc,
-                                     epilog=kubegenericcreate_epilog,
-                                     formatter_class=rawhelp, aliases=['kubeadm'])
-
-    kubekindcreate_desc = 'Create Kind Kube'
-    kubekindcreate_epilog = "examples:\n%s" % kubekindcreate
-    kubekindcreate_parser = argparse.ArgumentParser(add_help=False)
-    kubekindcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
-    kubekindcreate_parser.add_argument('-P', '--param', action='append',
-                                       help='specify parameter or keyword for rendering (multiple can be specified)',
-                                       metavar='PARAM')
-    kubekindcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    kubekindcreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
-    kubekindcreate_parser.set_defaults(func=create_kind_kube)
-    kubecreate_subparsers.add_parser('kind', parents=[kubekindcreate_parser],
-                                     description=kubekindcreate_desc,
-                                     help=kubekindcreate_desc,
-                                     epilog=kubekindcreate_epilog,
-                                     formatter_class=rawhelp)
-
-    parameterhelp = "specify parameter or keyword for rendering (multiple can be specified)"
-    kubemicroshiftcreate_desc = 'Create Microshift Kube'
-    kubemicroshiftcreate_epilog = "examples:\n%s" % kubemicroshiftcreate
-    kubemicroshiftcreate_parser = argparse.ArgumentParser(add_help=False)
-    kubemicroshiftcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
-    kubemicroshiftcreate_parser.add_argument('-P', '--param', action='append', help=parameterhelp, metavar='PARAM')
-    kubemicroshiftcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    kubemicroshiftcreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
-    kubemicroshiftcreate_parser.set_defaults(func=create_microshift_kube)
-    kubecreate_subparsers.add_parser('microshift', parents=[kubemicroshiftcreate_parser],
-                                     description=kubemicroshiftcreate_desc,
-                                     help=kubemicroshiftcreate_desc,
-                                     epilog=kubemicroshiftcreate_epilog,
-                                     formatter_class=rawhelp)
-
-    kubek3screate_desc = 'Create K3s Kube'
-    kubek3screate_epilog = "examples:\n%s" % kubek3screate
-    kubek3screate_parser = argparse.ArgumentParser(add_help=False)
-    kubek3screate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
-    kubek3screate_parser.add_argument('-P', '--param', action='append',
-                                      help='specify parameter or keyword for rendering (multiple can be specified)',
-                                      metavar='PARAM')
-    kubek3screate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    kubek3screate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
-    kubek3screate_parser.set_defaults(func=create_k3s_kube)
-    kubecreate_subparsers.add_parser('k3s', parents=[kubek3screate_parser],
-                                     description=kubek3screate_desc,
-                                     help=kubek3screate_desc,
-                                     epilog=kubek3screate_epilog,
-                                     formatter_class=rawhelp)
-
-    parameterhelp = "specify parameter or keyword for rendering (multiple can be specified)"
-    kubehypershiftcreate_desc = 'Create Hypershift Kube'
-    kubehypershiftcreate_epilog = "examples:\n%s" % kubehypershiftcreate
-    kubehypershiftcreate_parser = argparse.ArgumentParser(add_help=False)
-    kubehypershiftcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
-    kubehypershiftcreate_parser.add_argument('-P', '--param', action='append', help=parameterhelp, metavar='PARAM')
-    kubehypershiftcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    kubehypershiftcreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
-    kubehypershiftcreate_parser.set_defaults(func=create_hypershift_kube)
-    kubecreate_subparsers.add_parser('hypershift', parents=[kubehypershiftcreate_parser],
-                                     description=kubehypershiftcreate_desc,
-                                     help=kubehypershiftcreate_desc,
-                                     epilog=kubehypershiftcreate_epilog,
-                                     formatter_class=rawhelp)
-
-    parameterhelp = "specify parameter or keyword for rendering (multiple can be specified)"
-    kubeopenshiftcreate_desc = 'Create Openshift Kube'
-    kubeopenshiftcreate_epilog = "examples:\n%s" % kubeopenshiftcreate
-    kubeopenshiftcreate_parser = argparse.ArgumentParser(add_help=False)
-    kubeopenshiftcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
-    kubeopenshiftcreate_parser.add_argument('-P', '--param', action='append', help=parameterhelp, metavar='PARAM')
-    kubeopenshiftcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    kubeopenshiftcreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
-    kubeopenshiftcreate_parser.set_defaults(func=create_openshift_kube)
-    kubecreate_subparsers.add_parser('openshift', parents=[kubeopenshiftcreate_parser],
-                                     description=kubeopenshiftcreate_desc,
-                                     help=kubeopenshiftcreate_desc,
-                                     epilog=kubeopenshiftcreate_epilog,
-                                     formatter_class=rawhelp, aliases=['okd'])
-
-    kubedelete_desc = 'Delete Kube'
-    kubedelete_parser = argparse.ArgumentParser(add_help=False)
-    kubedelete_parser.add_argument('-P', '--param', action='append',
-                                   help='specify parameter or keyword for rendering (multiple can be specified)',
-                                   metavar='PARAM')
-    kubedelete_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    kubedelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    kubedelete_parser.add_argument('cluster', metavar='CLUSTER', nargs='*')
-    kubedelete_parser.set_defaults(func=delete_kube)
-    delete_subparsers.add_parser('kube', parents=[kubedelete_parser], description=kubedelete_desc, help=kubedelete_desc,
-                                 aliases=['cluster'])
-
-    kubeupdate_desc = 'Update Kube'
-    kubeupdate_parser = update_subparsers.add_parser('kube', description=kubeupdate_desc, help=kubeupdate_desc,
-                                                     aliases=['cluster'])
-    kubeupdate_subparsers = kubeupdate_parser.add_subparsers(metavar='', dest='subcommand_update_kube')
-
-    kubegenericupdate_desc = 'Update Generic Kube'
-    kubegenericupdate_parser = argparse.ArgumentParser(add_help=False)
-    kubegenericupdate_parser.add_argument('-P', '--param', action='append',
-                                          help='specify parameter or keyword for rendering (multiple can be specified)',
-                                          metavar='PARAM')
-    kubegenericupdate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    kubegenericupdate_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
-    kubegenericupdate_parser.set_defaults(func=update_generic_kube)
-    kubeupdate_subparsers.add_parser('generic', parents=[kubegenericupdate_parser], description=kubegenericupdate_desc,
-                                     help=kubegenericupdate_desc, aliases=['kubeadm'])
-
-    kubek3supdate_desc = 'Update K3s Kube'
-    kubek3supdate_parser = argparse.ArgumentParser(add_help=False)
-    kubek3supdate_parser.add_argument('-P', '--param', action='append',
-                                      help='specify parameter or keyword for rendering (multiple can be specified)',
-                                      metavar='PARAM')
-    kubek3supdate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    kubek3supdate_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
-    kubek3supdate_parser.set_defaults(func=update_k3s_kube)
-    kubeupdate_subparsers.add_parser('k3s', parents=[kubek3supdate_parser], description=kubek3supdate_desc,
-                                     help=kubek3supdate_desc)
-
-    parameterhelp = "specify parameter or keyword for rendering (multiple can be specified)"
-    kubeopenshiftupdate_desc = 'Update Openshift Kube'
-    kubeopenshiftupdate_parser = argparse.ArgumentParser(add_help=False)
-    kubeopenshiftupdate_parser.add_argument('-P', '--param', action='append', help=parameterhelp, metavar='PARAM')
-    kubeopenshiftupdate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    kubeopenshiftupdate_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
-    kubeopenshiftupdate_parser.set_defaults(func=update_openshift_kube)
-    kubeupdate_subparsers.add_parser('openshift', parents=[kubeopenshiftupdate_parser],
-                                     description=kubeopenshiftupdate_desc,
-                                     help=kubeopenshiftupdate_desc, aliases=['okd'])
-
-    lbcreate_desc = 'Create Load Balancer'
-    lbcreate_parser = create_subparsers.add_parser('lb', description=lbcreate_desc, help=lbcreate_desc,
-                                                   aliases=['loadbalancer'])
-    lbcreate_parser.add_argument('--checkpath', default='/index.html', help="Path to check. Defaults to /index.html")
-    lbcreate_parser.add_argument('--checkport', default=80, help="Port to check. Defaults to 80")
-    lbcreate_parser.add_argument('--domain', help='Domain to create a dns entry associated to the load balancer')
-    lbcreate_parser.add_argument('-i', '--internal', action='store_true')
-    lbcreate_parser.add_argument('-p', '--ports', default='443', help='Load Balancer Ports. Defaults to 443')
-    lbcreate_parser.add_argument('-v', '--vms', help='Vms to add to the pool. Can also be a list of ips')
-    lbcreate_parser.add_argument('--subnetid', help='Subnet id. Specific to AWS')
-    lbcreate_parser.add_argument('name', metavar='NAME', nargs='?')
-    lbcreate_parser.set_defaults(func=create_lb)
-
-    lbdelete_desc = 'Delete Load Balancer'
-    lbdelete_parser = delete_subparsers.add_parser('lb', description=lbdelete_desc, help=lbdelete_desc,
-                                                   aliases=['loadbalancer'])
-    lbdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    lbdelete_parser.add_argument('name', metavar='NAME')
-    lbdelete_parser.set_defaults(func=delete_lb)
-
-    profilecreate_desc = 'Create Profile'
-    profilecreate_parser = argparse.ArgumentParser(add_help=False)
-    profilecreate_parser.add_argument('-P', '--param', action='append',
-                                      help='specify parameter or keyword for rendering (can specify multiple)',
-                                      metavar='PARAM')
-    profilecreate_parser.add_argument('profile', metavar='PROFILE')
-    profilecreate_parser.set_defaults(func=create_profile)
-    create_subparsers.add_parser('profile', parents=[profilecreate_parser], description=profilecreate_desc,
-                                 help=profilecreate_desc)
-
-    profileupdate_desc = 'Update Profile'
-    profileupdate_parser = update_subparsers.add_parser('profile', description=profileupdate_desc,
-                                                        help=profileupdate_desc)
-    profileupdate_parser.add_argument('-P', '--param', action='append',
-                                      help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    profileupdate_parser.add_argument('profile', metavar='PROFILE', nargs='?')
-    profileupdate_parser.set_defaults(func=update_profile)
-
     listapp_desc = 'List Available Kube Apps'
     listapp_parser = list_subparsers.add_parser('app', description=listapp_desc,
                                                 help=listapp_desc, aliases=['apps', 'operator', 'operators'])
@@ -4561,508 +4773,170 @@ def cli():
     list_subparsers.add_parser('vm', parents=[vmlist_parser], description=vmlist_desc, help=vmlist_desc,
                                aliases=['vms'])
 
-    networkcreate_desc = 'Create Network'
-    networkcreate_parser = create_subparsers.add_parser('network', description=networkcreate_desc,
-                                                        help=networkcreate_desc)
-    networkcreate_parser.add_argument('-i', '--isolated', action='store_true', help='Isolated Network')
-    networkcreate_parser.add_argument('-c', '--cidr', help='Cidr of the net', metavar='CIDR')
-    networkcreate_parser.add_argument('-d', '--dual', help='Cidr of dual net', metavar='DUAL')
-    networkcreate_parser.add_argument('--nodhcp', action='store_true', help='Disable dhcp on the net')
-    networkcreate_parser.add_argument('--domain', help='DNS domain. Defaults to network name')
-    networkcreate_parser.add_argument('-P', '--param', action='append',
-                                      help='specify parameter or keyword for rendering (can specify multiple)',
-                                      metavar='PARAM')
-    networkcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    networkcreate_parser.add_argument('name', metavar='NETWORK')
-    networkcreate_parser.set_defaults(func=create_network)
-
-    networkdelete_desc = 'Delete Network'
-    networkdelete_parser = delete_subparsers.add_parser('network', description=networkdelete_desc,
-                                                        help=networkdelete_desc)
-    networkdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    networkdelete_parser.add_argument('names', metavar='NETWORKS', nargs='+')
-    networkdelete_parser.set_defaults(func=delete_network)
-
-    networkupdate_desc = 'Update Network'
-    networkupdate_epilog = f"examples:\n{networkupdate}"
-    networkupdate_parser = update_subparsers.add_parser('network', description=networkupdate_desc,
-                                                        epilog=networkupdate_epilog, formatter_class=rawhelp,
-                                                        help=networkupdate_desc)
-    networkupdate_parser.add_argument('-i', '--isolated', action='store_true', help='Isolated Network',
-                                      default=argparse.SUPPRESS)
-    networkupdate_parser.add_argument('--nodhcp', action='store_true', help='Disable dhcp on the net',
-                                      default=argparse.SUPPRESS)
-    networkupdate_parser.add_argument('--domain', help='DNS domain. Defaults to network name')
-    networkupdate_parser.add_argument('-P', '--param', action='append',
-                                      help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    networkupdate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    networkupdate_parser.add_argument('name', metavar='NETWORK')
-    networkupdate_parser.set_defaults(func=update_network)
-
-    disconnectedcreate_desc = 'Create a disconnected registry vm for openshift'
-    disconnectedcreate_epilog = "examples:\n%s" % disconnectedcreate
-    disconnectedcreate_parser = argparse.ArgumentParser(add_help=False)
-    disconnectedcreate_parser.add_argument('-P', '--param', action='append',
-                                           help='specify parameter or keyword for rendering (can specify multiple)',
-                                           metavar='PARAM')
-    disconnectedcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    disconnectedcreate_parser.add_argument('plan', metavar='PLAN', help='Plan', nargs='?')
-    disconnectedcreate_parser.set_defaults(func=create_openshift_disconnected)
-    create_subparsers.add_parser('openshift-registry', parents=[disconnectedcreate_parser],
-                                 description=disconnectedcreate_desc, help=disconnectedcreate_desc,
-                                 epilog=disconnectedcreate_epilog, formatter_class=rawhelp,
-                                 aliases=['openshift-disconnected'])
-
-    isocreate_desc = 'Create an iso ignition for baremetal install'
-    isocreate_epilog = "examples:\n%s" % isocreate
-    isocreate_parser = argparse.ArgumentParser(add_help=False)
-    isocreate_parser.add_argument('-d', '--direct', action='store_true', help='Embed directly target ignition in iso')
-    isocreate_parser.add_argument('-f', '--ignitionfile', help='Ignition file')
-    isocreate_parser.add_argument('-P', '--param', action='append',
-                                  help='specify parameter or keyword for rendering (can specify multiple)',
-                                  metavar='PARAM')
-    isocreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    isocreate_parser.add_argument('-u', '--uefi', action='store_true',
-                                  help='Remove iso entry from uefi after install (only applies to vms)')
-    isocreate_parser.add_argument('cluster', metavar='CLUSTER', help='Cluster')
-    isocreate_parser.set_defaults(func=create_openshift_iso)
-    create_subparsers.add_parser('openshift-iso', parents=[isocreate_parser], description=isocreate_desc,
-                                 help=isocreate_desc, epilog=isocreate_epilog, formatter_class=rawhelp)
-
-    pipelinecreate_desc = 'Create Pipeline'
-    pipelinecreate_parser = create_subparsers.add_parser('pipeline', description=pipelinecreate_desc,
-                                                         help=pipelinecreate_desc)
-    pipelinecreate_subparsers = pipelinecreate_parser.add_subparsers(metavar='', dest='subcommand_create_pipeline')
-
-    githubpipelinecreate_desc = 'Create Github Pipeline'
-    githubpipelinecreate_parser = pipelinecreate_subparsers.add_parser('github', description=githubpipelinecreate_desc,
-                                                                       help=githubpipelinecreate_desc, aliases=['gha'])
-    githubpipelinecreate_parser.add_argument('-f', '--inputfile', help='Input Plan (or script) file')
-    githubpipelinecreate_parser.add_argument('-k', '--kube', action='store_true', help='Create kube pipeline')
-    githubpipelinecreate_parser.add_argument('-s', '--script', action='store_true', help='Create script pipeline')
-    githubpipelinecreate_parser.add_argument('-P', '--param', action='append',
-                                             help='Define parameter for rendering (can specify multiple)',
-                                             metavar='PARAM')
-    githubpipelinecreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    githubpipelinecreate_parser.add_argument('plan', metavar='PLAN', nargs='?')
-    githubpipelinecreate_parser.set_defaults(func=create_pipeline_github)
-
-    jenkinspipelinecreate_desc = 'Create Jenkins Pipeline'
-    jenkinspipelinecreate_parser = pipelinecreate_subparsers.add_parser('jenkins',
-                                                                        description=jenkinspipelinecreate_desc,
-                                                                        help=jenkinspipelinecreate_desc)
-    jenkinspipelinecreate_parser.add_argument('-f', '--inputfile', help='Input Plan file')
-    jenkinspipelinecreate_parser.add_argument('-k', '--kube', action='store_true', help='Create kube pipeline')
-    jenkinspipelinecreate_parser.add_argument('-P', '--param', action='append',
-                                              help='Define parameter for rendering (can specify multiple)',
-                                              metavar='PARAM')
-    jenkinspipelinecreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    jenkinspipelinecreate_parser.add_argument('plan', metavar='PLAN', nargs='?')
-    jenkinspipelinecreate_parser.set_defaults(func=create_pipeline_jenkins)
-
-    tektonpipelinecreate_desc = 'Create Tekton Pipeline'
-    tektonpipelinecreate_parser = pipelinecreate_subparsers.add_parser('tekton',
-                                                                       description=tektonpipelinecreate_desc,
-                                                                       help=tektonpipelinecreate_desc)
-    tektonpipelinecreate_parser.add_argument('-f', '--inputfile', help='Input Plan file')
-    tektonpipelinecreate_parser.add_argument('-k', '--kube', action='store_true', help='Create kube pipeline')
-    tektonpipelinecreate_parser.add_argument('-P', '--param', action='append',
-                                             help='Define parameter for rendering (can specify multiple)',
-                                             metavar='PARAM')
-    tektonpipelinecreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    tektonpipelinecreate_parser.add_argument('plan', metavar='PLAN', nargs='?')
-    tektonpipelinecreate_parser.set_defaults(func=create_pipeline_tekton)
-
-    plancreate_desc = 'Create Plan'
-    plancreate_epilog = "examples:\n%s" % plancreate
-    plancreate_parser = create_subparsers.add_parser('plan', description=plancreate_desc, help=plancreate_desc,
-                                                     epilog=plancreate_epilog,
-                                                     formatter_class=rawhelp)
-    plancreate_parser.add_argument('-A', '--ansible', help='Generate ansible inventory', action='store_true')
-    plancreate_parser.add_argument('-u', '--url', help='Url for plan', metavar='URL', type=valid_url)
-    plancreate_parser.add_argument('-p', '--path', help='Path where to download plans. Defaults to plan',
-                                   metavar='PATH')
-    plancreate_parser.add_argument('-c', '--container', action='store_true', help='Handle container')
-    plancreate_parser.add_argument('--force', action='store_true', help='Delete existing vms first')
-    plancreate_parser.add_argument('-f', '--inputfile', help='Input Plan file')
-    plancreate_parser.add_argument('-k', '--skippre', action='store_true', help='Skip pre script')
-    plancreate_parser.add_argument('-z', '--skippost', action='store_true', help='Skip post script')
-    plancreate_parser.add_argument('-P', '--param', action='append',
-                                   help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    plancreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE', action='append')
-    plancreate_parser.add_argument('-t', '--threaded', help='Run threaded', action='store_true')
-    plancreate_parser.add_argument('plan', metavar='PLAN', nargs='?')
-    plancreate_parser.set_defaults(func=create_plan)
-
-    plandelete_desc = 'Delete Plan'
-    plandelete_parser = delete_subparsers.add_parser('plan', description=plandelete_desc, help=plandelete_desc)
-    plandelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    plandelete_parser.add_argument('plans', metavar='PLAN', nargs='*')
-    plandelete_parser.set_defaults(func=delete_plan)
-
-    plansnapshotdelete_desc = 'Delete Plan Snapshot'
-    plansnapshotdelete_parser = delete_subparsers.add_parser('plan-snapshot', description=plansnapshotdelete_desc,
-                                                             help=plansnapshotdelete_desc)
-    plansnapshotdelete_parser.add_argument('-p', '--plan', help='plan name', required=True, metavar='PLAN')
-    plansnapshotdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    plansnapshotdelete_parser.add_argument('snapshot', metavar='SNAPSHOT')
-    plansnapshotdelete_parser.set_defaults(func=delete_snapshot_plan)
-
-    plandatacreate_desc = 'Create Cloudinit/Ignition from plan file'
-    plandatacreate_epilog = "examples:\n%s" % plandatacreate
-    plandatacreate_parser = create_subparsers.add_parser('plan-data', description=plandatacreate_desc,
-                                                         help=plandatacreate_desc, epilog=plandatacreate_epilog,
-                                                         formatter_class=rawhelp)
-    plandatacreate_parser.add_argument('-f', '--inputfile', help='Input Plan file', default='kcli_plan.yml')
-    plandatacreate_parser.add_argument('-k', '--skippre', action='store_true', help='Skip pre script')
-    plandatacreate_parser.add_argument('--outputdir', '-o', help='Output directory', metavar='OUTPUTDIR')
-    plandatacreate_parser.add_argument('-P', '--param', action='append',
-                                       help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    plandatacreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE',
-                                       action='append')
-    plandatacreate_parser.add_argument('name', metavar='VMNAME', nargs='?', type=valid_fqdn)
-    plandatacreate_parser.set_defaults(func=create_plandata)
-
-    plantemplatecreate_desc = 'Create plan template'
-    plantemplatecreate_epilog = "examples:\n%s" % plantemplatecreate
-    plantemplatecreate_parser = create_subparsers.add_parser('plan-template', description=plantemplatecreate_desc,
-                                                             help=plantemplatecreate_desc,
-                                                             epilog=plantemplatecreate_epilog, formatter_class=rawhelp)
-    plantemplatecreate_parser.add_argument('-P', '--param', action='append',
-                                           help='Define parameter for rendering (can specify multiple)',
-                                           metavar='PARAM')
-    plantemplatecreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    plantemplatecreate_parser.add_argument('-x', '--skipfiles', action='store_true', help='Skip files in assets')
-    plantemplatecreate_parser.add_argument('-y', '--skipscripts', action='store_true', help='Skip scripts in assets')
-    plantemplatecreate_parser.add_argument('directory', metavar='DIR')
-    plantemplatecreate_parser.set_defaults(func=create_plantemplate)
-
-    plansnapshotcreate_desc = 'Create Plan Snapshot'
-    plansnapshotcreate_parser = create_subparsers.add_parser('plan-snapshot', description=plansnapshotcreate_desc,
-                                                             help=plansnapshotcreate_desc)
-
-    plansnapshotcreate_parser.add_argument('-p', '--plan', help='plan name', required=True, metavar='PLAN')
-    plansnapshotcreate_parser.add_argument('snapshot', metavar='SNAPSHOT')
-    plansnapshotcreate_parser.set_defaults(func=create_snapshot_plan)
-
-    planstart_desc = 'Start Plan'
-    planstart_parser = start_subparsers.add_parser('plan', description=planstart_desc, help=planstart_desc)
-    planstart_parser.add_argument('plans', metavar='PLAN', nargs='*')
-    planstart_parser.set_defaults(func=start_plan)
-
-    planstop_desc = 'Stop Plan'
-    planstop_parser = stop_subparsers.add_parser('plan', description=planstop_desc, help=planstop_desc)
-    planstop_parser.add_argument('-s', '--soft', action='store_true', help='Do a soft stop')
-    planstop_parser.add_argument('plans', metavar='PLAN', nargs='*')
-    planstop_parser.set_defaults(func=stop_plan)
-
-    planupdate_desc = 'Update Plan'
-    planupdate_parser = update_subparsers.add_parser('plan', description=planupdate_desc, help=planupdate_desc)
-    planupdate_parser.add_argument('--autostart', action='store_true', help='Set autostart for vms of the plan')
-    planupdate_parser.add_argument('--noautostart', action='store_true', help='Remove autostart for vms of the plan')
-    planupdate_parser.add_argument('-u', '--url', help='Url for plan', metavar='URL', type=valid_url)
-    planupdate_parser.add_argument('-p', '--path', help='Path where to download plans. Defaults to plan',
-                                   metavar='PATH')
-    planupdate_parser.add_argument('-c', '--container', action='store_true', help='Handle container')
-    planupdate_parser.add_argument('-f', '--inputfile', help='Input Plan file')
-    planupdate_parser.add_argument('-P', '--param', action='append',
-                                   help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    planupdate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    planupdate_parser.add_argument('plan', metavar='PLAN')
-    planupdate_parser.set_defaults(func=update_plan)
-
-    playbookcreate_desc = 'Create playbook from plan'
-    playbookcreate_parser = create_subparsers.add_parser('playbook', description=playbookcreate_desc,
-                                                         help=playbookcreate_desc)
-    playbookcreate_parser.add_argument('-f', '--inputfile', help='Input Plan/File', default='kcli_plan.yml')
-    playbookcreate_parser.add_argument('-P', '--param', action='append',
-                                       help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    playbookcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    playbookcreate_parser.add_argument('-s', '--store', action='store_true', help="Store results in files")
-    playbookcreate_parser.set_defaults(func=create_playbook)
-
-    poolcreate_desc = 'Create Pool'
-    poolcreate_parser = create_subparsers.add_parser('pool', description=poolcreate_desc, help=poolcreate_desc)
-    poolcreate_parser.add_argument('-f', '--full', action='store_true')
-    poolcreate_parser.add_argument('-t', '--pooltype', help='Type of the pool', choices=('dir', 'lvm', 'zfs'),
-                                   default='dir')
-    poolcreate_parser.add_argument('-p', '--path', help='Path of the pool', metavar='PATH')
-    poolcreate_parser.add_argument('--thinpool', help='Existing thin pool to use with lvm', metavar='THINPOOL')
-    poolcreate_parser.add_argument('pool')
-    poolcreate_parser.set_defaults(func=create_pool)
-
-    pooldelete_desc = 'Delete Pool'
-    pooldelete_parser = delete_subparsers.add_parser('pool', description=pooldelete_desc, help=pooldelete_desc)
-    pooldelete_parser.add_argument('-d', '--delete', action='store_true')
-    pooldelete_parser.add_argument('-f', '--full', action='store_true')
-    pooldelete_parser.add_argument('-p', '--path', help='Path of the pool', metavar='PATH')
-    pooldelete_parser.add_argument('--thinpool', help='Existing thin pool to use with lvm', metavar='THINPOOL')
-    pooldelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    pooldelete_parser.add_argument('pool')
-    pooldelete_parser.set_defaults(func=delete_pool)
-
-    profiledelete_desc = 'Delete Profile'
-    profiledelete_help = "Profile to delete"
-    profiledelete_parser = argparse.ArgumentParser(add_help=False)
-    profiledelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    profiledelete_parser.add_argument('profile', help=profiledelete_help, metavar='PROFILE')
-    profiledelete_parser.set_defaults(func=delete_profile)
-    delete_subparsers.add_parser('profile', parents=[profiledelete_parser], description=profiledelete_desc,
-                                 help=profiledelete_desc)
-
-    productcreate_desc = 'Create Product'
-    productcreate_parser = create_subparsers.add_parser('product', description=productcreate_desc,
-                                                        help=productcreate_desc)
-    productcreate_parser.add_argument('-g', '--group', help='Group to use as a name during deployment', metavar='GROUP')
-    productcreate_parser.add_argument('-l', '--latest', action='store_true', help='Grab latest version of the plans')
-    productcreate_parser.add_argument('-P', '--param', action='append',
-                                      help='Define parameter for rendering within scripts.'
-                                      'Can be repeated several times', metavar='PARAM')
-    productcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    productcreate_parser.add_argument('-r', '--repo',
-                                      help='Repo to use, if deploying a product present in several repos',
-                                      metavar='REPO')
-    productcreate_parser.add_argument('product', metavar='PRODUCT')
-    productcreate_parser.set_defaults(func=create_product)
-
-    repocreate_desc = 'Create Repo'
-    repocreate_epilog = "examples:\n%s" % repocreate
-    repocreate_parser = create_subparsers.add_parser('repo', description=repocreate_desc, help=repocreate_desc,
-                                                     epilog=repocreate_epilog,
-                                                     formatter_class=rawhelp)
-    repocreate_parser.add_argument('-u', '--url', help='URL of the repo', metavar='URL', type=valid_url)
-    repocreate_parser.add_argument('repo')
-    repocreate_parser.set_defaults(func=create_repo)
-
-    repodelete_desc = 'Delete Repo'
-    repodelete_parser = delete_subparsers.add_parser('repo', description=repodelete_desc, help=repodelete_desc)
-    repodelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    repodelete_parser.add_argument('repo')
-    repodelete_parser.set_defaults(func=delete_repo)
-
-    repoupdate_desc = 'Update Repo'
-    repoupdate_parser = update_subparsers.add_parser('repo', description=repoupdate_desc, help=repoupdate_desc)
-    repoupdate_parser.add_argument('repo')
-    repoupdate_parser.set_defaults(func=update_repo)
-
-    coreosinstallerdownload_desc = 'Download Coreos Installer'
-    coreosinstallerdownload_parser = argparse.ArgumentParser(add_help=False)
-    coreosinstallerdownload_parser.add_argument('-P', '--param', action='append',
-                                                help='Define parameter for rendering (can specify multiple)',
-                                                metavar='PARAM')
-    coreosinstallerdownload_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    coreosinstallerdownload_parser.set_defaults(func=download_coreos_installer)
-    download_subparsers.add_parser('coreos-installer', parents=[coreosinstallerdownload_parser],
-                                   description=coreosinstallerdownload_desc,
-                                   help=coreosinstallerdownload_desc)
-
-    imagedownload_desc = 'Download Cloud Image'
-    imagedownload_help = "Image to download. Choose between \n%s" % '\n'.join(IMAGES.keys())
-    imagedownload_parser = argparse.ArgumentParser(add_help=False)
-    imagedownload_parser.add_argument('-a', '--arch', help='Target arch', choices=['x86_64', 'aarch64'],
-                                      default='x86_64')
-    imagedownload_parser.add_argument('-c', '--cmd', help='Extra command to launch after downloading', metavar='CMD')
-    imagedownload_parser.add_argument('-q', '--qemu', help='Use qemu variant (kvm specific)', action='store_true')
-    imagedownload_parser.add_argument('-p', '--pool', help='Pool to use. Defaults to default', metavar='POOL')
-    imagedownload_parser.add_argument('-u', '--url', help='Url to use', metavar='URL', type=valid_url)
-    imagedownload_parser.add_argument('--size', help='Disk size (kubevirt specific)', type=int, metavar='SIZE')
-    imagedownload_parser.add_argument('-s', '--skip-profile', help='Skip Profile update', action='store_true')
-    imagedownload_parser.add_argument('image', help=imagedownload_help, metavar='IMAGE')
-    imagedownload_parser.set_defaults(func=download_image)
-    download_subparsers.add_parser('image', parents=[imagedownload_parser], description=imagedownload_desc,
-                                   help=imagedownload_desc)
-
-    isodownload_desc = 'Download Iso'
-    isodownload_help = "Iso name"
-    isodownload_parser = argparse.ArgumentParser(add_help=False)
-    isodownload_parser.add_argument('-p', '--pool', help='Pool to use. Defaults to default', metavar='POOL')
-    isodownload_parser.add_argument('-u', '--url', help='Url to use', metavar='URL', required=True, type=valid_url)
-    isodownload_parser.add_argument('iso', help=isodownload_help, metavar='ISO', nargs='?')
-    isodownload_parser.set_defaults(func=download_iso)
-    download_subparsers.add_parser('iso', parents=[isodownload_parser], description=isodownload_desc,
-                                   help=isodownload_desc)
-
-    okddownload_desc = 'Download Okd Installer'
-    okddownload_parser = argparse.ArgumentParser(add_help=False)
-    okddownload_parser.add_argument('-P', '--param', action='append',
-                                          help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    okddownload_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    okddownload_parser.set_defaults(func=download_okd_installer)
-    download_subparsers.add_parser('okd-installer', parents=[okddownload_parser],
-                                   description=okddownload_desc,
-                                   help=okddownload_desc, aliases=['okd-install'])
-
-    openshiftdownload_desc = 'Download Openshift Installer'
-    openshiftdownload_parser = argparse.ArgumentParser(add_help=False)
-    openshiftdownload_parser.add_argument('-P', '--param', action='append',
-                                          help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    openshiftdownload_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    openshiftdownload_parser.set_defaults(func=download_openshift_installer)
-    download_subparsers.add_parser('openshift-installer', parents=[openshiftdownload_parser],
-                                   description=openshiftdownload_desc,
-                                   help=openshiftdownload_desc, aliases=['openshift-install'])
-
-    helmdownload_desc = 'Download Helm'
-    helmdownload_parser = argparse.ArgumentParser(add_help=False)
-    helmdownload_parser.add_argument('-P', '--param', action='append',
-                                     help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    helmdownload_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    helmdownload_parser.set_defaults(func=download_helm)
-    download_subparsers.add_parser('helm', parents=[helmdownload_parser],
-                                   description=helmdownload_desc,
-                                   help=helmdownload_desc)
-
-    kubectldownload_desc = 'Download Kubectl'
-    kubectldownload_parser = argparse.ArgumentParser(add_help=False)
-    kubectldownload_parser.add_argument('-P', '--param', action='append',
-                                        help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    kubectldownload_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    kubectldownload_parser.set_defaults(func=download_kubectl)
-    download_subparsers.add_parser('kubectl', parents=[kubectldownload_parser],
-                                   description=kubectldownload_desc,
-                                   help=kubectldownload_desc)
-
-    ocdownload_desc = 'Download Oc'
-    ocdownload_parser = argparse.ArgumentParser(add_help=False)
-    ocdownload_parser.add_argument('-P', '--param', action='append',
-                                   help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    ocdownload_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    ocdownload_parser.set_defaults(func=download_oc)
-    download_subparsers.add_parser('oc', parents=[ocdownload_parser],
-                                   description=ocdownload_desc,
-                                   help=ocdownload_desc)
-
-    plandownload_desc = 'Download Plan'
-    plandownload_parser = argparse.ArgumentParser(add_help=False)
-    plandownload_parser.add_argument('-u', '--url', help='Url to use', metavar='URL', required=True, type=valid_url)
-    plandownload_parser.add_argument('plan', metavar='PLAN', nargs='?')
-    plandownload_parser.set_defaults(func=download_plan)
-    download_subparsers.add_parser('plan', parents=[plandownload_parser], description=plandownload_desc,
-                                   help=plandownload_desc)
-
-    tastydownload_desc = 'Download Tasty'
-    tastydownload_parser = argparse.ArgumentParser(add_help=False)
-    tastydownload_parser.add_argument('-P', '--param', action='append',
-                                      help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    tastydownload_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    tastydownload_parser.set_defaults(func=download_tasty)
-    download_subparsers.add_parser('tasty', parents=[tastydownload_parser], description=tastydownload_desc,
-                                   help=tastydownload_desc)
-
-    vmcreate_desc = 'Create Vm'
-    vmcreate_epilog = "examples:\n%s" % vmcreate
-    vmcreate_parser = argparse.ArgumentParser(add_help=False)
-    vmcreate_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
-    vmcreate_parser.add_argument('--console', help='Directly switch to console after creation', action='store_true')
-    vmcreate_parser.add_argument('-c', '--count', help='How many vms to create', type=int, default=1, metavar='COUNT')
-    vmcreate_parser.add_argument('-i', '--image', help='Image to use', metavar='IMAGE')
-    vmcreate_parser.add_argument('--profilefile', help='File to load profiles from', metavar='PROFILEFILE')
-    vmcreate_parser.add_argument('-P', '--param', action='append',
-                                 help='specify parameter or keyword for rendering (multiple can be specified)',
-                                 metavar='PARAM')
-    vmcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    vmcreate_parser.add_argument('-s', '--serial', help='Directly switch to serial console after creation',
-                                 action='store_true')
-    vmcreate_parser.add_argument('-w', '--wait', action='store_true', help='Wait for cloudinit to finish')
-    vmcreate_parser.add_argument('name', metavar='VMNAME', nargs='?', type=valid_fqdn)
-    vmcreate_parser.set_defaults(func=create_vm)
-    create_subparsers.add_parser('vm', parents=[vmcreate_parser], description=vmcreate_desc, help=vmcreate_desc,
-                                 epilog=vmcreate_epilog, formatter_class=rawhelp)
-
-    vmdelete_desc = 'Delete Vm'
-    vmdelete_parser = argparse.ArgumentParser(add_help=False)
-    vmdelete_parser.add_argument('-c', '--count', help='How many vms to delete', type=int, default=1, metavar='COUNT')
-    vmdelete_parser.add_argument('-s', '--snapshots', action='store_true', help='Remove snapshots if needed')
-    vmdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    vmdelete_parser.add_argument('names', metavar='VMNAMES', nargs='*')
-    vmdelete_parser.set_defaults(func=delete_vm)
-    delete_subparsers.add_parser('vm', parents=[vmdelete_parser], description=vmdelete_desc, help=vmdelete_desc)
-
-    vmdatacreate_desc = 'Create Cloudinit/Ignition for a single vm'
-    vmdatacreate_epilog = "examples:\n%s" % vmdatacreate
-    vmdatacreate_parser = create_subparsers.add_parser('vm-data', description=vmdatacreate_desc,
-                                                       help=vmdatacreate_desc, epilog=vmdatacreate_epilog,
-                                                       formatter_class=rawhelp)
-    vmdatacreate_parser.add_argument('-i', '--image', help='Image to use', metavar='IMAGE')
-    vmdatacreate_parser.add_argument('-P', '--param', action='append',
-                                     help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    vmdatacreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    vmdatacreate_parser.add_argument('name', metavar='VMNAME', nargs='?', type=valid_fqdn)
-    vmdatacreate_parser.set_defaults(func=create_vmdata)
-
-    vmdiskadd_desc = 'Add Disk To Vm'
-    diskcreate_epilog = "examples:\n%s" % diskcreate
-    vmdiskadd_parser = argparse.ArgumentParser(add_help=False)
-    vmdiskadd_parser.add_argument('-s', '--size', type=int, help='Size of the disk to add, in GB', metavar='SIZE',
-                                  default=10)
-    vmdiskadd_parser.add_argument('-i', '--image', help='Name or Path of a Image', metavar='IMAGE')
-    vmdiskadd_parser.add_argument('--interface', default='virtio', help='Disk Interface. Defaults to virtio',
-                                  metavar='INTERFACE')
-    vmdiskadd_parser.add_argument('-n', '--novm', action='store_true', help='Dont attach to any vm')
-    vmdiskadd_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
-    vmdiskadd_parser.add_argument('-P', '--param', action='append',
-                                  help='specify parameter or keyword for rendering (can specify multiple)',
-                                  metavar='PARAM')
-    vmdiskadd_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    vmdiskadd_parser.add_argument('name', metavar='VMNAME')
-    vmdiskadd_parser.set_defaults(func=create_vmdisk)
-    create_subparsers.add_parser('vm-disk', parents=[vmdiskadd_parser], description=vmdiskadd_desc, help=vmdiskadd_desc,
-                                 aliases=['disk'], epilog=diskcreate_epilog,
-                                 formatter_class=rawhelp)
-
-    vmdiskdelete_desc = 'Delete Vm Disk'
-    diskdelete_epilog = "examples:\n%s" % diskdelete
-    vmdiskdelete_parser = argparse.ArgumentParser(add_help=False)
-    vmdiskdelete_parser.add_argument('-n', '--novm', action='store_true', help='Dont try to locate vm')
-    vmdiskdelete_parser.add_argument('--vm', help='Name of the vm', metavar='VMNAME')
-    vmdiskdelete_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
-    vmdiskdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    vmdiskdelete_parser.add_argument('disknames', metavar='DISKNAMES', nargs='*')
-    vmdiskdelete_parser.set_defaults(func=delete_vmdisk)
-    delete_subparsers.add_parser('vm-disk', parents=[vmdiskdelete_parser], description=vmdiskdelete_desc,
-                                 aliases=['disk'], help=vmdiskdelete_desc, epilog=diskdelete_epilog,
-                                 formatter_class=rawhelp)
-
-    create_vmnic_desc = 'Add Nic To Vm'
-    create_vmnic_epilog = "examples:\n%s" % niccreate
-    create_vmnic_parser = argparse.ArgumentParser(add_help=False)
-    create_vmnic_parser.add_argument('-n', '--network', help='Network', metavar='NETWORK')
-    create_vmnic_parser.add_argument('name', metavar='VMNAME')
-    create_vmnic_parser.set_defaults(func=create_vmnic)
-    create_subparsers.add_parser('vm-nic', parents=[create_vmnic_parser], description=create_vmnic_desc,
-                                 help=create_vmnic_desc, aliases=['nic'],
-                                 epilog=create_vmnic_epilog, formatter_class=rawhelp)
-
-    delete_vmnic_desc = 'Delete Nic From vm'
-    delete_vmnic_epilog = "examples:\n%s" % nicdelete
-    delete_vmnic_parser = argparse.ArgumentParser(add_help=False)
-    delete_vmnic_parser.add_argument('-i', '--interface', help='Interface name', metavar='INTERFACE')
-    delete_vmnic_parser.add_argument('-n', '--network', help='Network', metavar='NETWORK')
-    delete_vmnic_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    delete_vmnic_parser.add_argument('name', metavar='VMNAME')
-    delete_vmnic_parser.set_defaults(func=delete_vmnic)
-    delete_subparsers.add_parser('vm-nic', parents=[delete_vmnic_parser], description=delete_vmnic_desc,
-                                 help=delete_vmnic_desc, aliases=['nic'],
-                                 epilog=delete_vmnic_epilog, formatter_class=rawhelp)
-
-    vmsnapshotcreate_parser = create_subparsers.add_parser('vm-snapshot', description=vmsnapshotcreate_desc,
-                                                           help=vmsnapshotcreate_desc, aliases=['snapshot'])
-    vmsnapshotcreate_parser.add_argument('-n', '--name', help='vm name', required=True, metavar='VMNAME')
-    vmsnapshotcreate_parser.add_argument('snapshot')
-    vmsnapshotcreate_parser.set_defaults(func=snapshotcreate_vm)
-
-    vmsnapshotdelete_desc = 'Delete Snapshot Of Vm'
-    vmsnapshotdelete_parser = delete_subparsers.add_parser('vm-snapshot', description=vmsnapshotdelete_desc,
-                                                           help=vmsnapshotdelete_desc)
-    vmsnapshotdelete_parser.add_argument('-n', '--name', help='vm name', required=True, metavar='VMNAME')
-    vmsnapshotdelete_parser.add_argument('snapshot')
-    vmsnapshotdelete_parser.set_defaults(func=snapshotdelete_vm)
-
     vmsnapshotlist_desc = 'List Snapshots Of Vm'
     vmsnapshotlist_parser = list_subparsers.add_parser('vm-snapshot', description=vmsnapshotlist_desc,
                                                        help=vmsnapshotlist_desc, aliases=['vm-snapshots'])
     vmsnapshotlist_parser.add_argument('name', metavar='VMNAME')
     vmsnapshotlist_parser.set_defaults(func=snapshotlist_vm)
+
+    render_desc = 'Render file'
+    render_parser = subparsers.add_parser('render', description=render_desc, help=render_desc)
+    render_parser.add_argument('-f', '--inputfile', help='Input Plan/File', default='kcli_plan.yml')
+    render_parser.add_argument('-i', '--ignore', action='store_true', help='Ignore missing variables')
+    render_parser.add_argument('-P', '--param', action='append',
+                               help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    render_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE', action='append')
+    render_parser.set_defaults(func=render_file)
+
+    restart_desc = 'Restart Vm/Plan/Container'
+    restart_parser = subparsers.add_parser('restart', description=restart_desc, help=restart_desc)
+    restart_subparsers = restart_parser.add_subparsers(metavar='', dest='subcommand_restart')
+
+    containerrestart_desc = 'Restart Containers'
+    containerrestart_parser = restart_subparsers.add_parser('container', description=containerrestart_desc,
+                                                            help=containerrestart_desc)
+    containerrestart_parser.add_argument('names', metavar='CONTAINERNAMES', nargs='*')
+    containerrestart_parser.set_defaults(func=restart_container)
+
+    planrestart_desc = 'Restart Plan'
+    planrestart_parser = restart_subparsers.add_parser('plan', description=planrestart_desc, help=planrestart_desc)
+    planrestart_parser.add_argument('-s', '--soft', action='store_true', help='Do a soft stop')
+    planrestart_parser.add_argument('plans', metavar='PLAN', nargs='*')
+    planrestart_parser.set_defaults(func=restart_plan)
+
+    vmrestart_desc = 'Restart Vms'
+    vmrestart_parser = restart_subparsers.add_parser('vm', description=vmrestart_desc, help=vmrestart_desc)
+    vmrestart_parser.add_argument('names', metavar='VMNAMES', nargs='*')
+    vmrestart_parser.set_defaults(func=restart_vm)
+
+    revert_desc = 'Revert Vm/Plan Snapshot'
+    revert_parser = subparsers.add_parser('revert', description=revert_desc, help=revert_desc)
+    revert_subparsers = revert_parser.add_subparsers(metavar='', dest='subcommand_revert')
+
+    planrevert_desc = 'Revert Snapshot Of Plan'
+    planrevert_parser = revert_subparsers.add_parser('plan-snapshot', description=planrevert_desc, help=planrevert_desc,
+                                                     aliases=['plan'])
+    planrevert_parser.add_argument('-p', '--plan', help='Plan name', required=True, metavar='PLANNAME')
+    planrevert_parser.add_argument('snapshot', metavar='SNAPSHOT')
+    planrevert_parser.set_defaults(func=revert_snapshot_plan)
+
+    vmsnapshotrevert_desc = 'Revert Snapshot Of Vm'
+    vmsnapshotrevert_parser = revert_subparsers.add_parser('vm-snapshot', description=vmsnapshotrevert_desc,
+                                                           help=vmsnapshotrevert_desc, aliases=['vm'])
+    vmsnapshotrevert_parser.add_argument('-n', '--name', help='vm name', required=True, metavar='VMNAME')
+    vmsnapshotrevert_parser.add_argument('snapshot')
+    vmsnapshotrevert_parser.set_defaults(func=snapshotrevert_vm)
+
+    scale_desc = 'Scale Kube'
+    scale_parser = subparsers.add_parser('scale', description=scale_desc, help=scale_desc)
+    scale_subparsers = scale_parser.add_subparsers(metavar='', dest='subcommand_scale')
+
+    kubescale_desc = 'Scale Kube'
+    kubescale_parser = scale_subparsers.add_parser('kube', description=kubescale_desc, help=kubescale_desc,
+                                                   aliases=['cluster'])
+    kubescale_subparsers = kubescale_parser.add_subparsers(metavar='', dest='subcommand_scale_kube')
+
+    kubegenericscale_desc = 'Scale Generic Kube'
+    kubegenericscale_epilog = "examples:\n%s" % kubegenericscale
+    kubegenericscale_parser = argparse.ArgumentParser(add_help=False)
+    kubegenericscale_parser.add_argument('-P', '--param', action='append',
+                                         help='specify parameter or keyword for rendering (multiple can be specified)',
+                                         metavar='PARAM')
+    kubegenericscale_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    kubegenericscale_parser.add_argument('-m', '--masters', help='Total number of masters', type=int)
+    kubegenericscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
+    kubegenericscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
+    kubegenericscale_parser.set_defaults(func=scale_generic_kube)
+    kubescale_subparsers.add_parser('generic', parents=[kubegenericscale_parser], description=kubegenericscale_desc,
+                                    help=kubegenericscale_desc, aliases=['kubeadm'], epilog=kubegenericscale_epilog,
+                                    formatter_class=rawhelp)
+
+    kubek3sscale_desc = 'Scale K3s Kube'
+    kubek3sscale_epilog = "examples:\n%s" % kubek3sscale
+    kubek3sscale_parser = argparse.ArgumentParser(add_help=False)
+    kubek3sscale_parser.add_argument('-P', '--param', action='append',
+                                     help='specify parameter or keyword for rendering (multiple can be specified)',
+                                     metavar='PARAM')
+    kubek3sscale_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    kubek3sscale_parser.add_argument('-m', '--masters', help='Total number of masters', type=int)
+    kubek3sscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
+    kubek3sscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
+    kubek3sscale_parser.set_defaults(func=scale_k3s_kube)
+    kubescale_subparsers.add_parser('k3s', parents=[kubek3sscale_parser], description=kubek3sscale_desc,
+                                    help=kubek3sscale_desc, epilog=kubek3sscale_epilog, formatter_class=rawhelp)
+
+    parameterhelp = "specify parameter or keyword for rendering (multiple can be specified)"
+    kubehypershiftscale_desc = 'Scale Hypershift Kube'
+    kubehypershiftscale_parser = argparse.ArgumentParser(add_help=False)
+    kubehypershiftscale_parser.add_argument('-P', '--param', action='append', help=parameterhelp, metavar='PARAM')
+    kubehypershiftscale_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    kubehypershiftscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
+    kubehypershiftscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
+    kubehypershiftscale_parser.set_defaults(func=scale_hypershift_kube)
+    kubescale_subparsers.add_parser('hypershift', parents=[kubehypershiftscale_parser],
+                                    description=kubehypershiftscale_desc,
+                                    help=kubehypershiftscale_desc)
+
+    parameterhelp = "specify parameter or keyword for rendering (multiple can be specified)"
+    kubeopenshiftscale_desc = 'Scale Openshift Kube'
+    kubeopenshiftscale_epilog = "examples:\n%s" % kubeopenshiftscale
+    kubeopenshiftscale_parser = argparse.ArgumentParser(add_help=False)
+    kubeopenshiftscale_parser.add_argument('-P', '--param', action='append', help=parameterhelp, metavar='PARAM')
+    kubeopenshiftscale_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    kubeopenshiftscale_parser.add_argument('-m', '--masters', help='Total number of masters', type=int)
+    kubeopenshiftscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
+    kubeopenshiftscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
+    kubeopenshiftscale_parser.set_defaults(func=scale_openshift_kube)
+    kubescale_subparsers.add_parser('openshift', parents=[kubeopenshiftscale_parser],
+                                    description=kubeopenshiftscale_desc,
+                                    help=kubeopenshiftscale_desc, aliases=['okd'],
+                                    epilog=kubeopenshiftscale_epilog, formatter_class=rawhelp)
+
+    vmscp_desc = 'Scp Into Vm'
+    vmscp_epilog = None
+    vmscp_parser = argparse.ArgumentParser(add_help=False)
+    vmscp_parser.add_argument('-i', '--identityfile', help='Identity file')
+    vmscp_parser.add_argument('-r', '--recursive', help='Recursive', action='store_true')
+    vmscp_parser.add_argument('-u', '-l', '--user', help='User for ssh')
+    vmscp_parser.add_argument('-p', '-P', '--port', help='Port for ssh')
+    vmscp_parser.add_argument('source', nargs=1)
+    vmscp_parser.add_argument('destination', nargs=1)
+    vmscp_parser.set_defaults(func=scp_vm)
+    subparsers.add_parser('scp', parents=[vmscp_parser], description=vmscp_desc, help=vmscp_desc, epilog=vmscp_epilog,
+                          formatter_class=rawhelp)
+
+    vmssh_desc = 'Ssh Into Vm'
+    vmssh_epilog = None
+    vmssh_parser = argparse.ArgumentParser(add_help=False)
+    vmssh_parser.add_argument('-D', help='Dynamic Forwarding', metavar='LOCAL')
+    vmssh_parser.add_argument('-L', help='Local Forwarding', metavar='LOCAL')
+    vmssh_parser.add_argument('-R', help='Remote Forwarding', metavar='REMOTE')
+    vmssh_parser.add_argument('-X', action='store_true', help='Enable X11 Forwarding')
+    vmssh_parser.add_argument('-Y', action='store_true', help='Enable X11 Forwarding(Insecure)')
+    vmssh_parser.add_argument('-i', '--identityfile', help='Identity file')
+    vmssh_parser.add_argument('-p', '--port', '--port', help='Port for ssh')
+    vmssh_parser.add_argument('-u', '-l', '--user', help='User for ssh')
+    vmssh_parser.add_argument('name', metavar='VMNAME', nargs='*')
+    vmssh_parser.set_defaults(func=ssh_vm)
+    subparsers.add_parser('ssh', parents=[vmssh_parser], description=vmssh_desc, help=vmssh_desc, epilog=vmssh_epilog,
+                          formatter_class=rawhelp)
+
+    start_desc = 'Start Vm/Plan/Container'
+    start_epilog = "examples:\n%s" % start
+    start_parser = subparsers.add_parser('start', description=start_desc, help=start_desc, epilog=start_epilog,
+                                         formatter_class=rawhelp)
+    start_subparsers = start_parser.add_subparsers(metavar='', dest='subcommand_start')
+
+    containerstart_desc = 'Start Containers'
+    containerstart_parser = start_subparsers.add_parser('container', description=containerstart_desc,
+                                                        help=containerstart_desc)
+    containerstart_parser.add_argument('names', metavar='VMNAMES', nargs='*')
+    containerstart_parser.set_defaults(func=start_container)
+
+    planstart_desc = 'Start Plan'
+    planstart_parser = start_subparsers.add_parser('plan', description=planstart_desc, help=planstart_desc)
+    planstart_parser.add_argument('plans', metavar='PLAN', nargs='*')
+    planstart_parser.set_defaults(func=start_plan)
 
     starthosts_desc = 'Start Baremetal Hosts'
     starthosts_epilog = f"examples:\n{starthosts}"
@@ -5080,6 +4954,22 @@ def cli():
     vmstart_parser.set_defaults(func=start_vm)
     start_subparsers.add_parser('vm', parents=[vmstart_parser], description=vmstart_desc, help=vmstart_desc,
                                 aliases=['vms'])
+
+    stop_desc = 'Stop Vm/Plan/Container'
+    stop_parser = subparsers.add_parser('stop', description=stop_desc, help=stop_desc)
+    stop_subparsers = stop_parser.add_subparsers(metavar='', dest='subcommand_stop')
+
+    containerstop_desc = 'Stop Containers'
+    containerstop_parser = stop_subparsers.add_parser('container', description=containerstop_desc,
+                                                      help=containerstop_desc)
+    containerstop_parser.add_argument('names', metavar='CONTAINERNAMES', nargs='*')
+    containerstop_parser.set_defaults(func=stop_container)
+
+    planstop_desc = 'Stop Plan'
+    planstop_parser = stop_subparsers.add_parser('plan', description=planstop_desc, help=planstop_desc)
+    planstop_parser.add_argument('-s', '--soft', action='store_true', help='Do a soft stop')
+    planstop_parser.add_argument('plans', metavar='PLAN', nargs='*')
+    planstop_parser.set_defaults(func=stop_plan)
 
     stophosts_desc = 'Stop Baremetal Hosts'
     stophosts_epilog = f"examples:\n{stophosts}"
@@ -5099,13 +4989,16 @@ def cli():
     stop_subparsers.add_parser('vm', parents=[vmstop_parser], description=vmstop_desc, help=vmstop_desc,
                                aliases=['vms'])
 
-    vmupdate_desc = 'Update Vm\'s Ip, Memory Or Numcpus'
-    vmupdate_parser = update_subparsers.add_parser('vm', description=vmupdate_desc, help=vmupdate_desc)
-    vmupdate_parser.add_argument('-P', '--param', action='append',
-                                 help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    vmupdate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    vmupdate_parser.add_argument('names', help='VMNAMES', nargs='*')
-    vmupdate_parser.set_defaults(func=update_vm)
+    switch_desc = 'Switch Host'
+    switch_parser = subparsers.add_parser('switch', description=switch_desc, help=switch_desc)
+    switch_subparsers = switch_parser.add_subparsers(metavar='', dest='subcommand_switch')
+
+    hostswitch_desc = 'Switch Host'
+    hostswitch_parser = argparse.ArgumentParser(add_help=False)
+    hostswitch_parser.add_argument('name', help='NAME')
+    hostswitch_parser.set_defaults(func=switch_host)
+    switch_subparsers.add_parser('host', parents=[hostswitch_parser], description=hostswitch_desc, help=hostswitch_desc,
+                                 aliases=['client'])
 
     kubeconfigswitch_desc = 'Switch Kubeconfig'
     kubeconfigswitch_parser = argparse.ArgumentParser(add_help=False)
@@ -5114,18 +5007,123 @@ def cli():
     switch_subparsers.add_parser('kubeconfig', parents=[kubeconfigswitch_parser], description=kubeconfigswitch_desc,
                                  help=kubeconfigswitch_desc)
 
-    workflowcreate_desc = 'Create Workflow'
-    workflowcreate_epilog = "examples:\n%s" % workflowcreate
-    workflowcreate_parser = create_subparsers.add_parser('workflow', description=workflowcreate_desc,
-                                                         help=workflowcreate_desc, epilog=workflowcreate_epilog,
-                                                         formatter_class=rawhelp)
-    workflowcreate_parser.add_argument('--outputdir', '-o', help='Output directory', metavar='OUTPUTDIR')
-    workflowcreate_parser.add_argument('-P', '--param', action='append',
-                                       help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    workflowcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    workflowcreate_parser.add_argument('-d', '--dry', help='Dry run. Only render', action='store_true')
-    workflowcreate_parser.add_argument('workflow', metavar='WORKFLOW', nargs='?')
-    workflowcreate_parser.set_defaults(func=create_workflow)
+    sync_desc = 'Sync Host'
+    sync_parser = subparsers.add_parser('sync', description=sync_desc, help=sync_desc)
+    sync_subparsers = sync_parser.add_subparsers(metavar='', dest='subcommand_sync')
+
+    configsync_desc = 'Sync Local config to Kube cluster'
+    configsync_parser = sync_subparsers.add_parser('config', description=configsync_desc, help=configsync_desc,
+                                                   aliases=['kube', 'cluster'])
+    configsync_parser.add_argument('-n', '--net', help='Network where to create entry. Defaults to default',
+                                   default='default', metavar='NET')
+    configsync_parser.set_defaults(func=sync_config)
+
+    hostsync_desc = 'Sync Host'
+    hostsync_parser = sync_subparsers.add_parser('host', description=hostsync_desc, help=hostsync_desc,
+                                                 aliases=['client'])
+    hostsync_parser.add_argument('names', help='NAMES', nargs='*')
+    hostsync_parser.set_defaults(func=sync_host)
+
+    update_desc = 'Update Vm/Plan/Repo'
+    update_parser = subparsers.add_parser('update', description=update_desc, help=update_desc)
+    update_subparsers = update_parser.add_subparsers(metavar='', dest='subcommand_update')
+
+    kubeupdate_desc = 'Update Kube'
+    kubeupdate_parser = update_subparsers.add_parser('kube', description=kubeupdate_desc, help=kubeupdate_desc,
+                                                     aliases=['cluster'])
+    kubeupdate_subparsers = kubeupdate_parser.add_subparsers(metavar='', dest='subcommand_update_kube')
+
+    kubegenericupdate_desc = 'Update Generic Kube'
+    kubegenericupdate_parser = argparse.ArgumentParser(add_help=False)
+    kubegenericupdate_parser.add_argument('-P', '--param', action='append',
+                                          help='specify parameter or keyword for rendering (multiple can be specified)',
+                                          metavar='PARAM')
+    kubegenericupdate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    kubegenericupdate_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
+    kubegenericupdate_parser.set_defaults(func=update_generic_kube)
+    kubeupdate_subparsers.add_parser('generic', parents=[kubegenericupdate_parser], description=kubegenericupdate_desc,
+                                     help=kubegenericupdate_desc, aliases=['kubeadm'])
+
+    kubek3supdate_desc = 'Update K3s Kube'
+    kubek3supdate_parser = argparse.ArgumentParser(add_help=False)
+    kubek3supdate_parser.add_argument('-P', '--param', action='append',
+                                      help='specify parameter or keyword for rendering (multiple can be specified)',
+                                      metavar='PARAM')
+    kubek3supdate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    kubek3supdate_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
+    kubek3supdate_parser.set_defaults(func=update_k3s_kube)
+    kubeupdate_subparsers.add_parser('k3s', parents=[kubek3supdate_parser], description=kubek3supdate_desc,
+                                     help=kubek3supdate_desc)
+
+    parameterhelp = "specify parameter or keyword for rendering (multiple can be specified)"
+    kubeopenshiftupdate_desc = 'Update Openshift Kube'
+    kubeopenshiftupdate_parser = argparse.ArgumentParser(add_help=False)
+    kubeopenshiftupdate_parser.add_argument('-P', '--param', action='append', help=parameterhelp, metavar='PARAM')
+    kubeopenshiftupdate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    kubeopenshiftupdate_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
+    kubeopenshiftupdate_parser.set_defaults(func=update_openshift_kube)
+    kubeupdate_subparsers.add_parser('openshift', parents=[kubeopenshiftupdate_parser],
+                                     description=kubeopenshiftupdate_desc,
+                                     help=kubeopenshiftupdate_desc, aliases=['okd'])
+
+    profileupdate_desc = 'Update Profile'
+    profileupdate_parser = update_subparsers.add_parser('profile', description=profileupdate_desc,
+                                                        help=profileupdate_desc)
+    profileupdate_parser.add_argument('-P', '--param', action='append',
+                                      help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    profileupdate_parser.add_argument('profile', metavar='PROFILE', nargs='?')
+    profileupdate_parser.set_defaults(func=update_profile)
+
+    networkupdate_desc = 'Update Network'
+    networkupdate_epilog = f"examples:\n{networkupdate}"
+    networkupdate_parser = update_subparsers.add_parser('network', description=networkupdate_desc,
+                                                        epilog=networkupdate_epilog, formatter_class=rawhelp,
+                                                        help=networkupdate_desc)
+    networkupdate_parser.add_argument('-i', '--isolated', action='store_true', help='Isolated Network',
+                                      default=argparse.SUPPRESS)
+    networkupdate_parser.add_argument('--nodhcp', action='store_true', help='Disable dhcp on the net',
+                                      default=argparse.SUPPRESS)
+    networkupdate_parser.add_argument('--domain', help='DNS domain. Defaults to network name')
+    networkupdate_parser.add_argument('-P', '--param', action='append',
+                                      help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    networkupdate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    networkupdate_parser.add_argument('name', metavar='NETWORK')
+    networkupdate_parser.set_defaults(func=update_network)
+
+    planupdate_desc = 'Update Plan'
+    planupdate_parser = update_subparsers.add_parser('plan', description=planupdate_desc, help=planupdate_desc)
+    planupdate_parser.add_argument('--autostart', action='store_true', help='Set autostart for vms of the plan')
+    planupdate_parser.add_argument('--noautostart', action='store_true', help='Remove autostart for vms of the plan')
+    planupdate_parser.add_argument('-u', '--url', help='Url for plan', metavar='URL', type=valid_url)
+    planupdate_parser.add_argument('-p', '--path', help='Path where to download plans. Defaults to plan',
+                                   metavar='PATH')
+    planupdate_parser.add_argument('-c', '--container', action='store_true', help='Handle container')
+    planupdate_parser.add_argument('-f', '--inputfile', help='Input Plan file')
+    planupdate_parser.add_argument('-P', '--param', action='append',
+                                   help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    planupdate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    planupdate_parser.add_argument('plan', metavar='PLAN')
+    planupdate_parser.set_defaults(func=update_plan)
+
+    repoupdate_desc = 'Update Repo'
+    repoupdate_parser = update_subparsers.add_parser('repo', description=repoupdate_desc, help=repoupdate_desc)
+    repoupdate_parser.add_argument('repo')
+    repoupdate_parser.set_defaults(func=update_repo)
+
+    vmupdate_desc = 'Update Vm\'s Ip, Memory Or Numcpus'
+    vmupdate_parser = update_subparsers.add_parser('vm', description=vmupdate_desc, help=vmupdate_desc)
+    vmupdate_parser.add_argument('-P', '--param', action='append',
+                                 help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    vmupdate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    vmupdate_parser.add_argument('names', help='VMNAMES', nargs='*')
+    vmupdate_parser.set_defaults(func=update_vm)
+
+    version_desc = 'Version'
+    version_epilog = None
+    version_parser = argparse.ArgumentParser(add_help=False)
+    version_parser.set_defaults(func=get_version)
+    subparsers.add_parser('version', parents=[version_parser], description=version_desc, help=version_desc,
+                          epilog=version_epilog, formatter_class=rawhelp)
 
     argcomplete.autocomplete(parser)
     if len(sys.argv) == 1 or (len(sys.argv) == 3 and sys.argv[1] == '-C'):
