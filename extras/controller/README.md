@@ -91,8 +91,14 @@ kubectl cp samplecrd/frout.txt $KCLIPOD:/workdir
 apiVersion: kcli.karmalabs.local/v1
 kind: Cluster
 metadata:
-  name: fede
+  name: hendrix
 spec:
-  masters: 3
+  masters: 1
   api_ip: 192.168.122.252
+```
+
+Once a cluster is deployed successfully, you can retrieve its kubeconfig from it status
+
+```
+kubectl get cluster $CLUSTER -o jsonpath='{.status.create_cluster.kubeconfig}' | base64 -d
 ```

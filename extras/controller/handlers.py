@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import base64
 from kubernetes import client, watch
 import kopf
 from kvirt.config import Kconfig
@@ -7,6 +8,7 @@ from kvirt.common import pprint, error
 import os
 from re import sub
 import threading
+import yaml
 
 DOMAIN = "kcli.karmalabs.local"
 VERSION = "v1"
@@ -57,25 +59,40 @@ def process_cluster(cluster, spec, operation='create'):
     config = Kconfig(quiet=True)
     if operation == "delete":
         pprint(f"Deleting cluster {cluster}")
-        return config.delete_cluster(cluster)
+        return config.delete_kube(cluster)
     else:
         if operation == 'create':
-            config.delete_cluster(cluster)
+            config.delete_kube(cluster)
         pprint(f"Creating/Updating cluster {cluster}")
         overrides = dict(spec)
         kubetype = overrides.get('kubetype', 'generic')
         if kubetype == 'openshift':
-            return config.create_kube_openshift(cluster, overrides=overrides)
+            result = config.create_kube_openshift(cluster, overrides=overrides)
         elif kubetype == 'hypershift':
-            return config.create_kube_hypershift(cluster, overrides=overrides)
+            result = config.create_kube_hypershift(cluster, overrides=overrides)
         elif kubetype == 'microshift':
-            return config.create_kube_microshift(cluster, overrides=overrides)
+            result = config.create_kube_microshift(cluster, overrides=overrides)
         elif kubetype == 'kind':
-            return config.create_kube_kind(cluster, overrides=overrides)
+            result = config.create_kube_kind(cluster, overrides=overrides)
         elif kubetype == 'k3s':
-            return config.create_kube_k3s(cluster, overrides=overrides)
+            result = config.create_kube_k3s(cluster, overrides=overrides)
         else:
-            return config.create_kube_generic(cluster, overrides=overrides)
+            result = config.create_kube_generic(cluster, overrides=overrides)
+        clusterdir = f"{os.environ['HOME']}/.kcli/clusters/{cluster}"
+        kubeconfig = open(f"{clusterdir}/auth/kubeconfig").read()
+        kubeconfig = base64.b64encode(kubeconfig.encode()).decode("UTF-8")
+        result = {'kubeconfig': kubeconfig}
+        if os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
+            with open(f"{clusterdir}/kcli_parameters.yml") as install:
+                installparam = yaml.safe_load(install)
+                if 'auth_pass' in installparam:
+                    auth_pass = installparam['auth_pass']
+                    result['auth_pass'] = base64.b64encode(auth_pass.encode()).decode("UTF-8")
+                if 'virtual_router_id' in installparam:
+                    result['virtual_router_id'] = installparam['virtual_router_id']
+                if 'plan' in installparam:
+                    result['plan'] = installparam['plan']
+        return result
 
 
 def process_plan(plan, spec, operation='create'):
@@ -212,9 +229,8 @@ def create_cluster(meta, spec, status, namespace, logger, **kwargs):
 def delete_cluster(meta, spec, namespace, logger, **kwargs):
     operation = 'delete'
     name = meta.get('name')
-    if spec.get('cluster') is not None:
-        pprint(f"Handling {operation} on cluster {name}")
-        process_cluster(name, spec, operation=operation)
+    pprint(f"Handling {operation} on cluster {name}")
+    process_cluster(name, spec, operation=operation)
 
 
 @kopf.on.update(DOMAIN, VERSION, 'clusters')
