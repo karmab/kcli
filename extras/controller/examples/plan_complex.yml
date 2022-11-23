@@ -1,4 +1,4 @@
-apiVersion: "kcli.karmalabs.local/v1"
+apiVersion: kcli.karmalabs.local/v1
 kind: Plan
 metadata:
   name: complex

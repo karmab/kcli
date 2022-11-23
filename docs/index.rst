@@ -521,13 +521,14 @@ Vsphere
 
 The following parameters are specific to vsphere:
 
--  cluster.
--  datacenter Defaults to Default
+-  cluster
+-  datacenter: Defaults to Default
 -  filtervms Defaults to True. Only list vms created by kcli. Useful for environments when you are superadmin and have a ton of vms!!!
 -  category: Defaults to kcli. Category where to create tags in order to apply them to vms. If tags are requested for a given vm, they will be created on the fly along with the category, if missing
 -  basefolder: Optional base folder where to create all vms
 -  isofolder: Optional folder where to keep ISOs
 -  dvs: Whether to gather DVS networks. Enabled by default, but can be set to False to speed up operations if you don’t have dvs networks
+-  import_network: Defaults to ‘VM Network’. Network to use as part of the template created when downloading image
 
 Note that pool in Vsphere context refers to datastore.
 
@@ -1970,10 +1971,124 @@ Then:
    kubectl create configmap ssh-config --from-file=~/.ssh
    kubectl create -f https://raw.githubusercontent.com/karmab/kcli/master/extras/k8sdeploy.yml
 
-Alternatively, look at https://github.com/karmab/kcli-controller for a controller/operator handling vms and plans as crds and creating the corresponding assets with kcli/kvirt library.
+kcli-controller
+===============
+
+There is a controller leveraging kcli and using vm, plan and clusters crds to create vms the corresponding objects, regardless of the infrastructure.
+
+Requisites
+----------
+
+-  a running kubernetes/openshift cluster and KUBECONFIG env variable pointing to it (or simply .kube/config)
+-  some infrastructure supported by kcli running somewhere and the corresponding credentials.
+
+.. _deploying-1:
+
+Deploying
+---------
+
+If you’re running kcli locally, use the following to create the proper configmaps to share your credentials and ssh keys:
+
+::
+
+   kcli sync kube
+
+To do the same manually, run instead:
+
+::
+
+   kubectl create configmap kcli-config --from-file=$HOME/.kcli
+   kubectl create configmap ssh-config --from-file=$HOME/.ssh
+
+Then deploy the crds and the controller:
+
+::
+
+   kubectl create -f crd.yml
+   kubectl create -f deploy.yml
+
+.. _how-to-use-1:
+
+How to use
+----------
+
+The directory `extras/controller/examples <https://github.com/karmab/kcli/tree/master/extras/controller/examples>`__ contains different examples of vm, plan an cluster crs.
+
+Here are some sample ones for each type to get you started
+
+.. _vms-1:
+
+vms
+~~~
+
+::
+
+   apiVersion: kcli.karmalabs.local/v1
+   kind: Vm
+   metadata:
+     name: cirros
+   spec:
+     image: cirros
+     memory: 512
+     numcpus: 2
+
+Note that when a vm is created, the controller waits before it gets an ip and populate it status with its complete information, which is then formatted when running ``kubectl get vms``
+
+.. _plans-1:
+
+plans
+~~~~~
+
+::
+
+   apiVersion: kcli.karmalabs.local/v1
+   kind: Plan
+   metadata:
+     name: simpleplan2
+   spec:
+     plan: |
+       vm11:
+         memory: 512
+         numcpus: 2
+         nets:
+          - default
+         image: cirros
+       vm22:
+         memory: 1024
+         numcpus: 4
+         nets:
+          - default
+         disks:
+          - 20
+         pool: default
+         image: cirros
+         cmds:
+          - echo this stuff works > /tmp/result.txt
+
+To run plans which contain scripts or files, you ll need to copy those assets in the /workdir of the kcli pod
+
+::
+
+   KCLIPOD=$(kubectl get pod -o name -n kcli | sed 's@pod/@@')
+   kubectl cp samplecrd/frout.txt $KCLIPOD:/workdir
+
+clusters
+~~~~~~~~
+
+::
+
+   apiVersion: kcli.karmalabs.local/v1
+   kind: Cluster
+   metadata:
+     name: fede
+   spec:
+     masters: 3
+     api_ip: 192.168.122.252
 
 Using Jenkins
 =============
+
+.. _requisites-1:
 
 Requisites
 ----------
