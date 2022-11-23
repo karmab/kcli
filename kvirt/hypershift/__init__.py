@@ -2,7 +2,7 @@
 
 from glob import glob
 from kvirt.common import success, error, pprint, info2, container_mode, warning
-from kvirt.common import get_oc, pwd_path, get_installer_rhcos, get_ssh_pub_key, boot_hosts
+from kvirt.common import get_oc, pwd_path, get_installer_rhcos, get_ssh_pub_key, boot_baremetal_hosts
 from kvirt.defaults import OPENSHIFT_TAG
 from kvirt.openshift import process_apps, update_etc_hosts
 from kvirt.openshift import get_ci_installer, get_downstream_installer, get_installer_version
@@ -322,7 +322,7 @@ def create(config, plandir, cluster, overrides):
             copycmd = f"oc -n default cp {iso_pool_path}/{cluster}-worker.iso {podname}:/var/www/html"
             call(copycmd, shell=True)
             iso_url = f'http://{svcip}:{svcport}/{cluster}-worker.iso'
-            boot_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
+            boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
             data['workers'] = data['workers'] - len(baremetal_hosts)
     if data['workers'] > 0:
         worker_threaded = data.get('threaded', False) or data.get('workers_threaded', False)

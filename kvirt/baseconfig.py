@@ -18,7 +18,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             CPUFLAGS, CPUPINNING, NUMAMODE, NUMA, PCIDEVICES, VIRTTYPE, MAILSERVER, MAILFROM, MAILTO,
                             TPM, JENKINSMODE, RNG, ZEROTIER_NETS, ZEROTIER_KUBELET, VMPORT, VMUSER, VMRULES,
                             VMRULES_STRICT, CACHE, SECURITYGROUPS, LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG, ROOTPASSWORD,
-                            WAIT, WAITCOMMAND, WAITTIMEOUT, TEMPKEY)
+                            WAIT, WAITCOMMAND, WAITTIMEOUT, TEMPKEY, BMC_USER, BMC_PASSWORD, BMC_MODEL)
 from ipaddress import ip_address
 from random import choice
 from kvirt import common
@@ -221,6 +221,9 @@ class Kbaseconfig:
         defaults['waitcommand'] = default.get('waitcommand', WAITCOMMAND)
         defaults['waittimeout'] = default.get('waittimeout', WAITTIMEOUT)
         defaults['tempkey'] = default.get('tempkey', TEMPKEY)
+        defaults['bmc_user'] = default.get('bmc_user', BMC_USER)
+        defaults['bmc_password'] = default.get('bmc_password', BMC_PASSWORD)
+        defaults['bmc_model'] = default.get('bmc_model', BMC_MODEL)
         currentplanfile = "%s/.kcli/plan" % os.environ.get('HOME')
         if os.path.exists(currentplanfile):
             self.currentplan = open(currentplanfile).read().strip()
@@ -422,6 +425,9 @@ class Kbaseconfig:
         self.waitcommand = options.get('waitcommand', self.default['waitcommand'])
         self.waittimeout = options.get('waittimeout', self.default['waittimeout'])
         self.tempkey = options.get('tempkey', self.default['tempkey'])
+        self.bmc_user = options.get('bmc_user', self.default['bmc_user'])
+        self.bmc_password = options.get('bmc_password', self.default['bmc_password'])
+        self.bmc_model = options.get('bmc_model', self.default['bmc_model'])
         self.overrides = {}
 
     def switch_host(self, client):

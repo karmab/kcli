@@ -12,7 +12,7 @@ from kvirt.common import error, pprint, success, warning, info2
 from kvirt.common import get_oc, pwd_path
 from kvirt.common import get_commit_rhcos, get_latest_fcos, generate_rhcos_iso, olm_app
 from kvirt.common import get_installer_rhcos
-from kvirt.common import ssh, scp, _ssh_credentials, copy_ipi_credentials, get_ssh_pub_key, boot_hosts
+from kvirt.common import ssh, scp, _ssh_credentials, copy_ipi_credentials, get_ssh_pub_key, boot_baremetal_hosts
 from kvirt.defaults import LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG
 import re
 from shutil import copy2, move, rmtree, which
@@ -1235,7 +1235,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             if baremetal_web_port != 80:
                 host_ip += f":{baremetal_web_port}"
             iso_url = f'http://{host_ip}/{cluster}-sno.iso'
-            boot_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
+            boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
         if sno_wait:
             installcommand = f'openshift-install --dir={clusterdir} --log-level={log_level} wait-for install-complete'
             installcommand = ' || '.join([installcommand for x in range(retries)])
@@ -1464,7 +1464,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                     copycmd = f"oc -n default cp {iso_pool_path}/{cluster}-worker.iso {podname}:/var/www/html"
                     call(copycmd, shell=True)
                     iso_url = f'http://{svcip}:{svcport}/{cluster}-worker.iso'
-                    boot_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
+                    boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
             if overrides['workers'] > 0:
                 threaded = data.get('threaded', False) or data.get('workers_threaded', False)
                 result = config.plan(plan, inputfile=f'{plandir}/workers.yml', overrides=overrides, threaded=threaded)

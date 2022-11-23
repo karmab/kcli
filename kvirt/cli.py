@@ -12,7 +12,7 @@ from kvirt.examples import kubegenericcreate, kubek3screate, kubeopenshiftcreate
 from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsole, vmexport, niccreate, nicdelete
 from kvirt.examples import disconnectedcreate, appopenshiftcreate, plantemplatecreate, kubehypershiftcreate
 from kvirt.examples import workflowcreate, kubegenericscale, kubek3sscale, kubeopenshiftscale
-from kvirt.examples import changelog, starthosts, stophosts
+from kvirt.examples import changelog, starthosts, stophosts, infohosts
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
 from kvirt.defaults import IMAGES, VERSION, LOCAL_OPENSHIFT_APPS, SSH_PUB_LOCATIONS
@@ -174,37 +174,39 @@ def delete_cache(args):
 
 def start_baremetal_hosts(args):
     overrides = common.get_overrides(param=args.param)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     iso_url = overrides.get('iso_url')
     baremetal_hosts = overrides.get('baremetal_hosts', [])
     bmc_url = overrides.get('bmc_url') or overrides.get('url')
-    bmc_user = overrides.get('bmc_user') or overrides.get('user')
-    bmc_password = overrides.get('bmc_password') or overrides.get('password')
+    bmc_user = overrides.get('bmc_user') or overrides.get('user') or baseconfig.bmc_user
+    bmc_password = overrides.get('bmc_password') or overrides.get('password') or baseconfig.bmc_password
     if not baremetal_hosts and bmc_url is not None and bmc_user is not None and bmc_password is not None:
-        bmc_model = overrides.get('bmc_model') or overrides.get('model')
+        bmc_model = overrides.get('bmc_model') or overrides.get('model') or baseconfig.bmc_model
         baremetal_hosts = [{'bmc_url': bmc_url, 'bmc_user': bmc_user, 'bmc_password': bmc_password,
                             'bmc_model': bmc_model}]
     if not baremetal_hosts:
         error("Baremetal hosts need to be defined")
         sys.exit(1)
-    common.boot_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=args.debug)
+    common.boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=args.debug)
 
 
 def stop_baremetal_hosts(args):
     overrides = common.get_overrides(param=args.param)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     baremetal_hosts = overrides.get('baremetal_hosts', [])
     bmc_url = overrides.get('bmc_url') or overrides.get('url')
-    bmc_user = overrides.get('bmc_user') or overrides.get('user')
-    bmc_password = overrides.get('bmc_password') or overrides.get('password')
+    bmc_user = overrides.get('bmc_user') or overrides.get('user') or baseconfig.bmc_user
+    bmc_password = overrides.get('bmc_password') or overrides.get('password') or baseconfig.bmc_password
     if bmc_url is not None and 'redfish/v1/Systems/' in bmc_url and valid_uuid(os.path.basename(bmc_url)):
         bmc_user, bmc_password = 'fake', 'fake'
     if not baremetal_hosts and bmc_url is not None and bmc_user is not None and bmc_password is not None:
-        bmc_model = overrides.get('bmc_model') or overrides.get('model')
+        bmc_model = overrides.get('bmc_model') or overrides.get('model') or baseconfig.bmc_model
         baremetal_hosts = [{'bmc_url': bmc_url, 'bmc_user': bmc_user, 'bmc_password': bmc_password,
                             'bmc_model': bmc_model}]
     if not baremetal_hosts:
         error("Baremetal hosts need to be defined")
         sys.exit(1)
-    common.stop_hosts(baremetal_hosts, overrides=overrides, debug=args.debug)
+    common.stop_baremetal_hosts(baremetal_hosts, overrides=overrides, debug=args.debug)
 
 
 def start_vm(args):
@@ -3381,7 +3383,25 @@ def download_bucketfile(args):
     k.download_from_bucket(bucket, path)
 
 
-def report_host(args):
+def info_baremetal_host(args):
+    """Report info about host"""
+    overrides = common.get_overrides(param=args.param)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
+    baremetal_hosts = overrides.get('baremetal_hosts', [])
+    bmc_url = overrides.get('bmc_url') or overrides.get('url')
+    bmc_user = overrides.get('bmc_user') or overrides.get('user') or baseconfig.bmc_user
+    bmc_password = overrides.get('bmc_password') or overrides.get('password') or baseconfig.bmc_password
+    if not baremetal_hosts and bmc_url is not None and bmc_user is not None and bmc_password is not None:
+        bmc_model = overrides.get('bmc_model') or overrides.get('model') or baseconfig.bmc_model
+        baremetal_hosts = [{'bmc_url': bmc_url, 'bmc_user': bmc_user, 'bmc_password': bmc_password,
+                            'bmc_model': bmc_model}]
+    if not baremetal_hosts:
+        error("Baremetal hosts need to be defined")
+        sys.exit(1)
+    common.info_baremetal_hosts(baremetal_hosts, overrides=overrides, debug=args.debug)
+
+
+def info_host(args):
     """Report info about host"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
@@ -4507,6 +4527,18 @@ def cli():
     appopenshiftinfo_parser.add_argument('app', metavar='APP')
     appopenshiftinfo_parser.set_defaults(func=info_openshift_app)
 
+    baremetalhostinfo_desc = 'Report info about Baremetal Host'
+    baremetalhostinfo_epilog = f"examples:\n{infohosts}"
+    baremetalhostinfo_parser = info_subparsers.add_parser('baremetal-host', description=baremetalhostinfo_desc,
+                                                          help=baremetalhostinfo_desc,
+                                                          epilog=baremetalhostinfo_epilog, formatter_class=rawhelp)
+    baremetalhostinfo_parser.add_argument('-P', '--param', action='append',
+                                          help='Define parameter for rendering (can specify multiple)',
+                                          metavar='PARAM')
+    baremetalhostinfo_parser.add_argument('--paramfile', '--pf', help='Parameters file',
+                                          metavar='PARAMFILE', action='append')
+    baremetalhostinfo_parser.set_defaults(func=info_baremetal_host)
+
     openshiftdisconnectedinfo_desc = 'Info Openshift Disconnected registry vm'
     openshiftdisconnectedinfo_parser = info_subparsers.add_parser('disconnected',
                                                                   description=openshiftdisconnectedinfo_desc,
@@ -4515,10 +4547,10 @@ def cli():
                                                                            'openshift-registry'])
     openshiftdisconnectedinfo_parser.set_defaults(func=info_openshift_disconnected)
 
-    hostreport_desc = 'Report Info About Host'
-    hostreport_parser = argparse.ArgumentParser(add_help=False)
-    hostreport_parser.set_defaults(func=report_host)
-    info_subparsers.add_parser('host', parents=[hostreport_parser], description=hostreport_desc, help=hostreport_desc,
+    hostinfo_desc = 'Report Info About Host'
+    hostinfo_parser = argparse.ArgumentParser(add_help=False)
+    hostinfo_parser.set_defaults(func=info_host)
+    info_subparsers.add_parser('host', parents=[hostinfo_parser], description=hostinfo_desc, help=hostinfo_desc,
                                aliases=['client'])
 
     keywordinfo_desc = 'Info Keyword'

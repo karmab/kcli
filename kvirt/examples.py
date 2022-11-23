@@ -408,3 +408,18 @@ baremetal_hosts:
 # Stop single host
 $ kcli stop baremetal-host -P url=http://192.168.122.1:8000/h1 -P user=xx -P password=xx
 """
+
+infohosts = """# Report info on Baremetal hosts declared in a parameter file
+
+$ kcli info baremetalhosts --pf baremetal_hosts.yml
+
+baremetal_hosts.yml contains
+bmc_user: xx
+bmc_password: xx
+baremetal_hosts:
+- bmc_url: http://192.168.122.1:8000/h1
+- bmc_url: http://192.168.122.1:8000/h2
+
+# Report info on a single host
+$ kcli info baremetal-host -P url=http://192.168.122.1:8000/h1 -P user=xx -P password=xx
+"""

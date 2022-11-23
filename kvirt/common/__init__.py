@@ -2267,7 +2267,7 @@ def get_rhcos_url_from_file(filename, _type='kvm'):
     return url
 
 
-def boot_hosts(baremetal_hosts, iso_url, overrides={}, debug=False):
+def boot_baremetal_hosts(baremetal_hosts, iso_url, overrides={}, debug=False):
     for host in baremetal_hosts:
         bmc_url = host.get('url') or host.get('bmc_url')
         bmc_user = host.get('user') or host.get('bmc_user') or overrides.get('bmc_user')
@@ -2290,7 +2290,21 @@ def boot_hosts(baremetal_hosts, iso_url, overrides={}, debug=False):
                 red.start()
 
 
-def stop_hosts(baremetal_hosts, overrides={}, debug=False):
+def info_baremetal_hosts(baremetal_hosts, overrides={}, debug=False):
+    for host in baremetal_hosts:
+        bmc_url = host.get('url') or host.get('bmc_url')
+        bmc_user = host.get('user') or host.get('bmc_user') or overrides.get('bmc_user')
+        bmc_password = host.get('password') or host.get('bmc_password') or overrides.get('bmc_password')
+        bmc_model = host.get('model') or host.get('bmc_model') or overrides.get('bmc_model', 'dell')
+        if bmc_url is not None and bmc_user is not None and bmc_password is not None:
+            red = Redfish(bmc_url, bmc_user, bmc_password, model=bmc_model, debug=debug)
+            msg = host['name'] if 'name' in host else f"with url {bmc_url}"
+            pprint(f"Reporting info on Host {msg}")
+            # pretty_print(json.loads(red.info()))
+            pretty_print(red.info())
+
+
+def stop_baremetal_hosts(baremetal_hosts, overrides={}, debug=False):
     for host in baremetal_hosts:
         bmc_url = host.get('url') or host.get('bmc_url')
         bmc_user = host.get('user') or host.get('bmc_user') or overrides.get('bmc_user')
