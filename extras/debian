@@ -15,6 +15,7 @@ EXPOSE 9000
 RUN mkdir /root/kcli
 ADD kvirt /root/kcli/kvirt
 COPY setup.py /root/kcli
+COPY MANIFEST.in /root/kcli
 ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
 RUN echo 'APT::Install-Recommends "0";' >> /etc/apt/apt.conf && echo 'APT::Install-Suggests "0";' >> /etc/apt/apt.conf && apt-get update && apt-get -y install gcc libvirt0 libvirt-dev genisoimage openssh-client libcurl4-openssl-dev curl libssl-dev libxml2-dev libffi-dev pkg-config xz-utils && pip3 install --no-cache /root/kcli[all] && apt-get -y remove gcc libvirt-dev libcurl4-openssl-dev libssl-dev libxml2-dev libffi-dev pkg-config && apt -y autoremove && apt-get clean all
 ADD extras/i_am_a_container /i_am_a_container
