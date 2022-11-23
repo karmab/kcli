@@ -59,6 +59,8 @@ def process_cluster(cluster, spec, operation='create'):
         pprint(f"Deleting cluster {cluster}")
         return config.delete_cluster(cluster)
     else:
+        if operation == 'create':
+            config.delete_cluster(cluster)
         pprint(f"Creating/Updating cluster {cluster}")
         overrides = dict(spec)
         kubetype = overrides.get('kubetype', 'generic')
