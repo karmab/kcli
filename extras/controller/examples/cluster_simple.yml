@@ -3,5 +3,5 @@ kind: Cluster
 metadata:
   name: hendrix
 spec:
-  masters: 3
+  masters: 1
   api_ip: 192.168.122.252

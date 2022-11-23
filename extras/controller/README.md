@@ -27,6 +27,8 @@ kubectl create -f crd.yml
 kubectl create -f deploy.yml
 ```
 
+Two variants `deploy_with_clusters_pvc.yml` and `deploy_with_workdir_pvc.yml` can be used to deploy additional pvcs for storing cluster deployment content or plan data
+
 ## How to use
 
 The directory [extras/controller/examples](https://github.com/karmab/kcli/tree/master/extras/controller/examples) contains different examples of vm, plan an cluster crs.

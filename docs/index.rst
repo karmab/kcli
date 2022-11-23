@@ -2007,6 +2007,8 @@ Then deploy the crds and the controller:
    kubectl create -f crd.yml
    kubectl create -f deploy.yml
 
+Two variants ``deploy_with_clusters_pvc.yml`` and ``deploy_with_workdir_pvc.yml`` can be used to deploy additional pvcs for storing cluster deployment content or plan data
+
 .. _how-to-use-1:
 
 How to use
