@@ -3540,6 +3540,12 @@ def cli():
     disable_parser = subparsers.add_parser('disable', description=disable_desc, help=disable_desc)
     disable_subparsers = disable_parser.add_subparsers(metavar='', dest='subcommand_disable')
 
+    hostdisable_desc = 'Disable Host'
+    hostdisable_parser = disable_subparsers.add_parser('host', description=hostdisable_desc, help=hostdisable_desc,
+                                                       aliases=['client'])
+    hostdisable_parser.add_argument('name', metavar='NAME')
+    hostdisable_parser.set_defaults(func=disable_host)
+
     download_desc = 'Download Assets like Image, plans or binaries'
     download_parser = subparsers.add_parser('download', description=download_desc, help=download_desc)
     download_subparsers = download_parser.add_subparsers(metavar='', dest='subcommand_download')
@@ -3547,6 +3553,12 @@ def cli():
     enable_desc = 'Enable Host'
     enable_parser = subparsers.add_parser('enable', description=enable_desc, help=enable_desc)
     enable_subparsers = enable_parser.add_subparsers(metavar='', dest='subcommand_enable')
+
+    hostenable_desc = 'Enable Host'
+    hostenable_parser = enable_subparsers.add_parser('host', description=hostenable_desc, help=hostenable_desc,
+                                                     aliases=['client'])
+    hostenable_parser.add_argument('name', metavar='NAME')
+    hostenable_parser.set_defaults(func=enable_host)
 
     vmexport_desc = 'Export Vm'
     vmexport_epilog = "examples:\n%s" % vmexport
@@ -3562,11 +3574,144 @@ def cli():
     expose_parser = subparsers.add_parser('expose', description=expose_desc, help=expose_desc)
     expose_subparsers = expose_parser.add_subparsers(metavar='', dest='subcommand_expose')
 
-    hostlist_desc = 'List Hosts'
+    planexpose_desc = 'Expose plan'
+    planexpose_epilog = None
+    planexpose_parser = argparse.ArgumentParser(add_help=False)
+    planexpose_parser.add_argument('-f', '--inputfile', help='Input Plan file')
+    planexpose_parser.add_argument('-P', '--param', action='append',
+                                   help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    planexpose_parser.add_argument('--port', help='Port where to listen', type=int, default=9000, metavar='PORT')
+    planexpose_parser.add_argument('plan', metavar='PLAN', nargs='?')
+    planexpose_parser.set_defaults(func=expose_plan)
+    expose_subparsers.add_parser('plan', parents=[planexpose_parser], description=planexpose_desc, help=planexpose_desc,
+                                 epilog=planexpose_epilog, formatter_class=rawhelp)
 
     info_desc = 'Info Host/Kube/Plan/Vm'
     info_parser = subparsers.add_parser('info', description=info_desc, help=info_desc, aliases=['show'])
     info_subparsers = info_parser.add_subparsers(metavar='', dest='subcommand_info')
+
+    appinfo_desc = 'Info App'
+    appinfo_parser = info_subparsers.add_parser('app', description=appinfo_desc, help=appinfo_desc,
+                                                aliases=['operator'])
+    appinfo_subparsers = appinfo_parser.add_subparsers(metavar='', dest='subcommand_info_app')
+
+    appgenericinfo_desc = 'Info Generic App'
+    appgenericinfo_parser = appinfo_subparsers.add_parser('generic', description=appgenericinfo_desc,
+                                                          help=appgenericinfo_desc)
+
+    appgenericinfo_parser.add_argument('app', metavar='APP')
+    appgenericinfo_parser.set_defaults(func=info_generic_app)
+
+    appopenshiftinfo_desc = 'Info Openshift App'
+    appopenshiftinfo_parser = appinfo_subparsers.add_parser('openshift', description=appopenshiftinfo_desc,
+                                                            help=appopenshiftinfo_desc)
+    appopenshiftinfo_parser.add_argument('app', metavar='APP')
+    appopenshiftinfo_parser.set_defaults(func=info_openshift_app)
+
+    openshiftdisconnectedinfo_desc = 'Info Openshift Disconnected registry vm'
+    openshiftdisconnectedinfo_parser = info_subparsers.add_parser('disconnected',
+                                                                  description=openshiftdisconnectedinfo_desc,
+                                                                  help=openshiftdisconnectedinfo_desc,
+                                                                  aliases=['openshift-disconnected',
+                                                                           'openshift-registry'])
+    openshiftdisconnectedinfo_parser.set_defaults(func=info_openshift_disconnected)
+
+    hostreport_desc = 'Report Info About Host'
+    hostreport_parser = argparse.ArgumentParser(add_help=False)
+    hostreport_parser.set_defaults(func=report_host)
+    info_subparsers.add_parser('host', parents=[hostreport_parser], description=hostreport_desc, help=hostreport_desc,
+                               aliases=['client'])
+
+    keywordinfo_desc = 'Info Keyword'
+    keywordinfo_parser = info_subparsers.add_parser('keyword', description=keywordinfo_desc, help=keywordinfo_desc,
+                                                    aliases=['parameter'])
+    keywordinfo_parser.add_argument('keyword', metavar='KEYWORD')
+    keywordinfo_parser.set_defaults(func=info_keyword)
+
+    kubeinfo_desc = 'Info Kube'
+    kubeinfo_parser = info_subparsers.add_parser('kube', description=kubeinfo_desc, help=kubeinfo_desc,
+                                                 aliases=['cluster'])
+    kubeinfo_subparsers = kubeinfo_parser.add_subparsers(metavar='', dest='subcommand_info_kube')
+
+    kubegenericinfo_desc = 'Info Generic Kube'
+    kubegenericinfo_parser = kubeinfo_subparsers.add_parser('generic', description=kubegenericinfo_desc,
+                                                            help=kubegenericinfo_desc, aliases=['kubeadm'])
+    kubegenericinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
+    kubegenericinfo_parser.set_defaults(func=info_generic_kube)
+
+    kubekindinfo_desc = 'Info Kind Kube'
+    kubekindinfo_parser = kubeinfo_subparsers.add_parser('kind', description=kubekindinfo_desc, help=kubekindinfo_desc)
+    kubekindinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
+    kubekindinfo_parser.set_defaults(func=info_kind_kube)
+
+    kubemicroshiftinfo_desc = 'Info Microshift Kube'
+    kubemicroshiftinfo_parser = kubeinfo_subparsers.add_parser('microshift', description=kubemicroshiftinfo_desc,
+                                                               help=kubemicroshiftinfo_desc)
+    kubemicroshiftinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
+    kubemicroshiftinfo_parser.set_defaults(func=info_microshift_kube)
+
+    kubek3sinfo_desc = 'Info K3s Kube'
+    kubek3sinfo_parser = kubeinfo_subparsers.add_parser('k3s', description=kubek3sinfo_desc, help=kubek3sinfo_desc)
+    kubek3sinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
+    kubek3sinfo_parser.set_defaults(func=info_k3s_kube)
+
+    kubehypershiftinfo_desc = 'Info Hypershift Kube'
+    kubehypershiftinfo_parser = kubeinfo_subparsers.add_parser('hypershift', description=kubehypershiftinfo_desc,
+                                                               help=kubehypershiftinfo_desc)
+    kubehypershiftinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
+    kubehypershiftinfo_parser.set_defaults(func=info_hypershift_kube)
+
+    kubeopenshiftinfo_desc = 'Info Openshift Kube'
+    kubeopenshiftinfo_parser = kubeinfo_subparsers.add_parser('openshift', description=kubeopenshiftinfo_desc,
+                                                              help=kubeopenshiftinfo_desc, aliases=['okd'])
+    kubeopenshiftinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
+    kubeopenshiftinfo_parser.set_defaults(func=info_openshift_kube)
+
+    networkinfo_desc = 'Info Network'
+    networkinfo_parser = info_subparsers.add_parser('network', description=networkinfo_desc, help=networkinfo_desc)
+    networkinfo_parser.add_argument('name', metavar='NETWORK')
+    networkinfo_parser.set_defaults(func=info_network)
+
+    profileinfo_desc = 'Info Profile'
+    profileinfo_parser = info_subparsers.add_parser('profile', description=profileinfo_desc, help=profileinfo_desc)
+    profileinfo_parser.add_argument('profile', metavar='PROFILE')
+    profileinfo_parser.set_defaults(func=info_profile)
+
+    planinfo_desc = 'Info Plan'
+    planinfo_epilog = "examples:\n%s" % planinfo
+    planinfo_parser = info_subparsers.add_parser('plan', description=planinfo_desc, help=planinfo_desc,
+                                                 epilog=planinfo_epilog,
+                                                 formatter_class=rawhelp)
+    planinfo_parser.add_argument('--doc', action='store_true', help='Render info as markdown table')
+    planinfo_parser.add_argument('-f', '--inputfile', help='Input Plan file')
+    planinfo_parser.add_argument('-p', '--path', help='Path where to download plans. Defaults to plan', metavar='PATH')
+    planinfo_parser.add_argument('-q', '--quiet', action='store_true', help='Provide parameter file output')
+    planinfo_parser.add_argument('-u', '--url', help='Url for plan', metavar='URL', type=valid_url)
+    planinfo_parser.add_argument('plan', metavar='PLAN', nargs='?')
+    planinfo_parser.set_defaults(func=info_plan)
+
+    productinfo_desc = 'Info Of Product'
+    productinfo_epilog = "examples:\n%s" % productinfo
+    productinfo_parser = argparse.ArgumentParser(add_help=False)
+    productinfo_parser.set_defaults(func=info_product)
+    productinfo_parser.add_argument('-g', '--group', help='Only Display products of the indicated group',
+                                    metavar='GROUP')
+    productinfo_parser.add_argument('-r', '--repo', help='Only Display products of the indicated repository',
+                                    metavar='REPO')
+    productinfo_parser.add_argument('product', metavar='PRODUCT')
+    info_subparsers.add_parser('product', parents=[productinfo_parser], description=productinfo_desc,
+                               help=productinfo_desc,
+                               epilog=productinfo_epilog, formatter_class=rawhelp)
+
+    vminfo_desc = 'Info Of Vms'
+    vminfo_parser = argparse.ArgumentParser(add_help=False)
+    vminfo_parser.add_argument('-f', '--fields', help='Display Corresponding list of fields,'
+                               'separated by a comma', metavar='FIELDS')
+    vminfo_parser.add_argument('-o', '--output', choices=['plain', 'json', 'yaml'], help='Format of the output')
+    vminfo_parser.add_argument('-v', '--values', action='store_true', help='Only report values')
+    vminfo_parser.add_argument('names', help='VMNAMES', nargs='*')
+    vminfo_parser.set_defaults(func=info_vm)
+    info_subparsers.add_parser('vm', parents=[vminfo_parser], description=vminfo_desc, help=vminfo_desc)
 
     list_desc = 'List Object'
     list_epilog = "examples:\n%s" % _list
@@ -3588,13 +3733,107 @@ def cli():
     restart_parser = subparsers.add_parser('restart', description=restart_desc, help=restart_desc)
     restart_subparsers = restart_parser.add_subparsers(metavar='', dest='subcommand_restart')
 
+    containerrestart_desc = 'Restart Containers'
+    containerrestart_parser = restart_subparsers.add_parser('container', description=containerrestart_desc,
+                                                            help=containerrestart_desc)
+    containerrestart_parser.add_argument('names', metavar='CONTAINERNAMES', nargs='*')
+    containerrestart_parser.set_defaults(func=restart_container)
+
+    planrestart_desc = 'Restart Plan'
+    planrestart_parser = restart_subparsers.add_parser('plan', description=planrestart_desc, help=planrestart_desc)
+    planrestart_parser.add_argument('-s', '--soft', action='store_true', help='Do a soft stop')
+    planrestart_parser.add_argument('plans', metavar='PLAN', nargs='*')
+    planrestart_parser.set_defaults(func=restart_plan)
+
+    vmrestart_desc = 'Restart Vms'
+    vmrestart_parser = restart_subparsers.add_parser('vm', description=vmrestart_desc, help=vmrestart_desc)
+    vmrestart_parser.add_argument('names', metavar='VMNAMES', nargs='*')
+    vmrestart_parser.set_defaults(func=restart_vm)
+
+    vmsnapshotcreate_desc = 'Create Snapshot Of Vm'
+
     revert_desc = 'Revert Vm/Plan Snapshot'
     revert_parser = subparsers.add_parser('revert', description=revert_desc, help=revert_desc)
     revert_subparsers = revert_parser.add_subparsers(metavar='', dest='subcommand_revert')
 
+    planrevert_desc = 'Revert Snapshot Of Plan'
+    planrevert_parser = revert_subparsers.add_parser('plan-snapshot', description=planrevert_desc, help=planrevert_desc,
+                                                     aliases=['plan'])
+    planrevert_parser.add_argument('-p', '--plan', help='Plan name', required=True, metavar='PLANNAME')
+    planrevert_parser.add_argument('snapshot', metavar='SNAPSHOT')
+    planrevert_parser.set_defaults(func=revert_snapshot_plan)
+
+    vmsnapshotrevert_desc = 'Revert Snapshot Of Vm'
+    vmsnapshotrevert_parser = revert_subparsers.add_parser('vm-snapshot', description=vmsnapshotrevert_desc,
+                                                           help=vmsnapshotrevert_desc, aliases=['vm'])
+    vmsnapshotrevert_parser.add_argument('-n', '--name', help='vm name', required=True, metavar='VMNAME')
+    vmsnapshotrevert_parser.add_argument('snapshot')
+    vmsnapshotrevert_parser.set_defaults(func=snapshotrevert_vm)
+
     scale_desc = 'Scale Kube'
     scale_parser = subparsers.add_parser('scale', description=scale_desc, help=scale_desc)
     scale_subparsers = scale_parser.add_subparsers(metavar='', dest='subcommand_scale')
+
+    kubescale_desc = 'Scale Kube'
+    kubescale_parser = scale_subparsers.add_parser('kube', description=kubescale_desc, help=kubescale_desc,
+                                                   aliases=['cluster'])
+    kubescale_subparsers = kubescale_parser.add_subparsers(metavar='', dest='subcommand_scale_kube')
+
+    kubegenericscale_desc = 'Scale Generic Kube'
+    kubegenericscale_epilog = "examples:\n%s" % kubegenericscale
+    kubegenericscale_parser = argparse.ArgumentParser(add_help=False)
+    kubegenericscale_parser.add_argument('-P', '--param', action='append',
+                                         help='specify parameter or keyword for rendering (multiple can be specified)',
+                                         metavar='PARAM')
+    kubegenericscale_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    kubegenericscale_parser.add_argument('-m', '--masters', help='Total number of masters', type=int)
+    kubegenericscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
+    kubegenericscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
+    kubegenericscale_parser.set_defaults(func=scale_generic_kube)
+    kubescale_subparsers.add_parser('generic', parents=[kubegenericscale_parser], description=kubegenericscale_desc,
+                                    help=kubegenericscale_desc, aliases=['kubeadm'], epilog=kubegenericscale_epilog,
+                                    formatter_class=rawhelp)
+
+    kubek3sscale_desc = 'Scale K3s Kube'
+    kubek3sscale_epilog = "examples:\n%s" % kubek3sscale
+    kubek3sscale_parser = argparse.ArgumentParser(add_help=False)
+    kubek3sscale_parser.add_argument('-P', '--param', action='append',
+                                     help='specify parameter or keyword for rendering (multiple can be specified)',
+                                     metavar='PARAM')
+    kubek3sscale_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    kubek3sscale_parser.add_argument('-m', '--masters', help='Total number of masters', type=int)
+    kubek3sscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
+    kubek3sscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
+    kubek3sscale_parser.set_defaults(func=scale_k3s_kube)
+    kubescale_subparsers.add_parser('k3s', parents=[kubek3sscale_parser], description=kubek3sscale_desc,
+                                    help=kubek3sscale_desc, epilog=kubek3sscale_epilog, formatter_class=rawhelp)
+
+    parameterhelp = "specify parameter or keyword for rendering (multiple can be specified)"
+    kubehypershiftscale_desc = 'Scale Hypershift Kube'
+    kubehypershiftscale_parser = argparse.ArgumentParser(add_help=False)
+    kubehypershiftscale_parser.add_argument('-P', '--param', action='append', help=parameterhelp, metavar='PARAM')
+    kubehypershiftscale_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    kubehypershiftscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
+    kubehypershiftscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
+    kubehypershiftscale_parser.set_defaults(func=scale_hypershift_kube)
+    kubescale_subparsers.add_parser('hypershift', parents=[kubehypershiftscale_parser],
+                                    description=kubehypershiftscale_desc,
+                                    help=kubehypershiftscale_desc)
+
+    parameterhelp = "specify parameter or keyword for rendering (multiple can be specified)"
+    kubeopenshiftscale_desc = 'Scale Openshift Kube'
+    kubeopenshiftscale_epilog = "examples:\n%s" % kubeopenshiftscale
+    kubeopenshiftscale_parser = argparse.ArgumentParser(add_help=False)
+    kubeopenshiftscale_parser.add_argument('-P', '--param', action='append', help=parameterhelp, metavar='PARAM')
+    kubeopenshiftscale_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    kubeopenshiftscale_parser.add_argument('-m', '--masters', help='Total number of masters', type=int)
+    kubeopenshiftscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
+    kubeopenshiftscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
+    kubeopenshiftscale_parser.set_defaults(func=scale_openshift_kube)
+    kubescale_subparsers.add_parser('openshift', parents=[kubeopenshiftscale_parser],
+                                    description=kubeopenshiftscale_desc,
+                                    help=kubeopenshiftscale_desc, aliases=['okd'],
+                                    epilog=kubeopenshiftscale_epilog, formatter_class=rawhelp)
 
     vmscp_desc = 'Scp Into Vm'
     vmscp_epilog = None
@@ -3639,9 +3878,29 @@ def cli():
     switch_parser = subparsers.add_parser('switch', description=switch_desc, help=switch_desc)
     switch_subparsers = switch_parser.add_subparsers(metavar='', dest='subcommand_switch')
 
+    hostswitch_desc = 'Switch Host'
+    hostswitch_parser = argparse.ArgumentParser(add_help=False)
+    hostswitch_parser.add_argument('name', help='NAME')
+    hostswitch_parser.set_defaults(func=switch_host)
+    switch_subparsers.add_parser('host', parents=[hostswitch_parser], description=hostswitch_desc, help=hostswitch_desc,
+                                 aliases=['client'])
+
     sync_desc = 'Sync Host'
     sync_parser = subparsers.add_parser('sync', description=sync_desc, help=sync_desc)
     sync_subparsers = sync_parser.add_subparsers(metavar='', dest='subcommand_sync')
+
+    configsync_desc = 'Sync Local config to Kube cluster'
+    configsync_parser = sync_subparsers.add_parser('config', description=configsync_desc, help=configsync_desc,
+                                                   aliases=['kube', 'cluster'])
+    configsync_parser.add_argument('-n', '--net', help='Network where to create entry. Defaults to default',
+                                   default='default', metavar='NET')
+    configsync_parser.set_defaults(func=sync_config)
+
+    hostsync_desc = 'Sync Host'
+    hostsync_parser = sync_subparsers.add_parser('host', description=hostsync_desc, help=hostsync_desc,
+                                                 aliases=['client'])
+    hostsync_parser.add_argument('names', help='NAMES', nargs='*')
+    hostsync_parser.set_defaults(func=sync_host)
 
     update_desc = 'Update Vm/Plan/Repo'
     update_parser = subparsers.add_parser('update', description=update_desc, help=update_desc)
@@ -3718,32 +3977,6 @@ def cli():
     appopenshiftdelete_parser.add_argument('apps', metavar='APPS', nargs='*')
     appopenshiftdelete_parser.set_defaults(func=delete_app_openshift)
 
-    appinfo_desc = 'Info App'
-    appinfo_parser = info_subparsers.add_parser('app', description=appinfo_desc, help=appinfo_desc,
-                                                aliases=['operator'])
-    appinfo_subparsers = appinfo_parser.add_subparsers(metavar='', dest='subcommand_info_app')
-
-    appgenericinfo_desc = 'Info Generic App'
-    appgenericinfo_parser = appinfo_subparsers.add_parser('generic', description=appgenericinfo_desc,
-                                                          help=appgenericinfo_desc)
-
-    appgenericinfo_parser.add_argument('app', metavar='APP')
-    appgenericinfo_parser.set_defaults(func=info_generic_app)
-
-    appopenshiftinfo_desc = 'Info Openshift App'
-    appopenshiftinfo_parser = appinfo_subparsers.add_parser('openshift', description=appopenshiftinfo_desc,
-                                                            help=appopenshiftinfo_desc)
-    appopenshiftinfo_parser.add_argument('app', metavar='APP')
-    appopenshiftinfo_parser.set_defaults(func=info_openshift_app)
-
-    openshiftdisconnectedinfo_desc = 'Info Openshift Disconnected registry vm'
-    openshiftdisconnectedinfo_parser = info_subparsers.add_parser('disconnected',
-                                                                  description=openshiftdisconnectedinfo_desc,
-                                                                  help=openshiftdisconnectedinfo_desc,
-                                                                  aliases=['openshift-disconnected',
-                                                                           'openshift-registry'])
-    openshiftdisconnectedinfo_parser.set_defaults(func=info_openshift_disconnected)
-
     bucketcreate_desc = 'Create Bucket'
     bucketcreate_epilog = None
     bucketcreate_parser = create_subparsers.add_parser('bucket', description=bucketcreate_desc,
@@ -3816,12 +4049,6 @@ def cli():
     containerdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     containerdelete_parser.add_argument('names', metavar='CONTAINERIMAGES', nargs='+')
     containerdelete_parser.set_defaults(func=delete_container)
-
-    containerrestart_desc = 'Restart Containers'
-    containerrestart_parser = restart_subparsers.add_parser('container', description=containerrestart_desc,
-                                                            help=containerrestart_desc)
-    containerrestart_parser.add_argument('names', metavar='CONTAINERNAMES', nargs='*')
-    containerrestart_parser.set_defaults(func=restart_container)
 
     containerstart_desc = 'Start Containers'
     containerstart_parser = start_subparsers.add_parser('container', description=containerstart_desc,
@@ -3982,44 +4209,6 @@ def cli():
     hostdelete_parser.add_argument('name', metavar='NAME')
     hostdelete_parser.set_defaults(func=delete_host)
 
-    hostdisable_desc = 'Disable Host'
-    hostdisable_parser = disable_subparsers.add_parser('host', description=hostdisable_desc, help=hostdisable_desc,
-                                                       aliases=['client'])
-    hostdisable_parser.add_argument('name', metavar='NAME')
-    hostdisable_parser.set_defaults(func=disable_host)
-
-    hostenable_desc = 'Enable Host'
-    hostenable_parser = enable_subparsers.add_parser('host', description=hostenable_desc, help=hostenable_desc,
-                                                     aliases=['client'])
-    hostenable_parser.add_argument('name', metavar='NAME')
-    hostenable_parser.set_defaults(func=enable_host)
-
-    hostreport_desc = 'Report Info About Host'
-    hostreport_parser = argparse.ArgumentParser(add_help=False)
-    hostreport_parser.set_defaults(func=report_host)
-    info_subparsers.add_parser('host', parents=[hostreport_parser], description=hostreport_desc, help=hostreport_desc,
-                               aliases=['client'])
-
-    hostswitch_desc = 'Switch Host'
-    hostswitch_parser = argparse.ArgumentParser(add_help=False)
-    hostswitch_parser.add_argument('name', help='NAME')
-    hostswitch_parser.set_defaults(func=switch_host)
-    switch_subparsers.add_parser('host', parents=[hostswitch_parser], description=hostswitch_desc, help=hostswitch_desc,
-                                 aliases=['client'])
-
-    configsync_desc = 'Sync Local config to Kube cluster'
-    configsync_parser = sync_subparsers.add_parser('config', description=configsync_desc, help=configsync_desc,
-                                                   aliases=['kube', 'cluster'])
-    configsync_parser.add_argument('-n', '--net', help='Network where to create entry. Defaults to default',
-                                   default='default', metavar='NET')
-    configsync_parser.set_defaults(func=sync_config)
-
-    hostsync_desc = 'Sync Host'
-    hostsync_parser = sync_subparsers.add_parser('host', description=hostsync_desc, help=hostsync_desc,
-                                                 aliases=['client'])
-    hostsync_parser.add_argument('names', help='NAMES', nargs='*')
-    hostsync_parser.set_defaults(func=sync_host)
-
     imagedelete_desc = 'Delete Image'
     imagedelete_help = "Image to delete"
     imagedelete_parser = argparse.ArgumentParser(add_help=False)
@@ -4142,106 +4331,6 @@ def cli():
     delete_subparsers.add_parser('kube', parents=[kubedelete_parser], description=kubedelete_desc, help=kubedelete_desc,
                                  aliases=['cluster'])
 
-    kubeinfo_desc = 'Info Kube'
-    kubeinfo_parser = info_subparsers.add_parser('kube', description=kubeinfo_desc, help=kubeinfo_desc,
-                                                 aliases=['cluster'])
-    kubeinfo_subparsers = kubeinfo_parser.add_subparsers(metavar='', dest='subcommand_info_kube')
-
-    kubegenericinfo_desc = 'Info Generic Kube'
-    kubegenericinfo_parser = kubeinfo_subparsers.add_parser('generic', description=kubegenericinfo_desc,
-                                                            help=kubegenericinfo_desc, aliases=['kubeadm'])
-    kubegenericinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
-    kubegenericinfo_parser.set_defaults(func=info_generic_kube)
-
-    kubekindinfo_desc = 'Info Kind Kube'
-    kubekindinfo_parser = kubeinfo_subparsers.add_parser('kind', description=kubekindinfo_desc, help=kubekindinfo_desc)
-    kubekindinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
-    kubekindinfo_parser.set_defaults(func=info_kind_kube)
-
-    kubemicroshiftinfo_desc = 'Info Microshift Kube'
-    kubemicroshiftinfo_parser = kubeinfo_subparsers.add_parser('microshift', description=kubemicroshiftinfo_desc,
-                                                               help=kubemicroshiftinfo_desc)
-    kubemicroshiftinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
-    kubemicroshiftinfo_parser.set_defaults(func=info_microshift_kube)
-
-    kubek3sinfo_desc = 'Info K3s Kube'
-    kubek3sinfo_parser = kubeinfo_subparsers.add_parser('k3s', description=kubek3sinfo_desc, help=kubek3sinfo_desc)
-    kubek3sinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
-    kubek3sinfo_parser.set_defaults(func=info_k3s_kube)
-
-    kubehypershiftinfo_desc = 'Info Hypershift Kube'
-    kubehypershiftinfo_parser = kubeinfo_subparsers.add_parser('hypershift', description=kubehypershiftinfo_desc,
-                                                               help=kubehypershiftinfo_desc)
-    kubehypershiftinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
-    kubehypershiftinfo_parser.set_defaults(func=info_hypershift_kube)
-
-    kubeopenshiftinfo_desc = 'Info Openshift Kube'
-    kubeopenshiftinfo_parser = kubeinfo_subparsers.add_parser('openshift', description=kubeopenshiftinfo_desc,
-                                                              help=kubeopenshiftinfo_desc, aliases=['okd'])
-    kubeopenshiftinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
-    kubeopenshiftinfo_parser.set_defaults(func=info_openshift_kube)
-
-    kubescale_desc = 'Scale Kube'
-    kubescale_parser = scale_subparsers.add_parser('kube', description=kubescale_desc, help=kubescale_desc,
-                                                   aliases=['cluster'])
-    kubescale_subparsers = kubescale_parser.add_subparsers(metavar='', dest='subcommand_scale_kube')
-
-    kubegenericscale_desc = 'Scale Generic Kube'
-    kubegenericscale_epilog = "examples:\n%s" % kubegenericscale
-    kubegenericscale_parser = argparse.ArgumentParser(add_help=False)
-    kubegenericscale_parser.add_argument('-P', '--param', action='append',
-                                         help='specify parameter or keyword for rendering (multiple can be specified)',
-                                         metavar='PARAM')
-    kubegenericscale_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    kubegenericscale_parser.add_argument('-m', '--masters', help='Total number of masters', type=int)
-    kubegenericscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
-    kubegenericscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
-    kubegenericscale_parser.set_defaults(func=scale_generic_kube)
-    kubescale_subparsers.add_parser('generic', parents=[kubegenericscale_parser], description=kubegenericscale_desc,
-                                    help=kubegenericscale_desc, aliases=['kubeadm'], epilog=kubegenericscale_epilog,
-                                    formatter_class=rawhelp)
-
-    kubek3sscale_desc = 'Scale K3s Kube'
-    kubek3sscale_epilog = "examples:\n%s" % kubek3sscale
-    kubek3sscale_parser = argparse.ArgumentParser(add_help=False)
-    kubek3sscale_parser.add_argument('-P', '--param', action='append',
-                                     help='specify parameter or keyword for rendering (multiple can be specified)',
-                                     metavar='PARAM')
-    kubek3sscale_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    kubek3sscale_parser.add_argument('-m', '--masters', help='Total number of masters', type=int)
-    kubek3sscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
-    kubek3sscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
-    kubek3sscale_parser.set_defaults(func=scale_k3s_kube)
-    kubescale_subparsers.add_parser('k3s', parents=[kubek3sscale_parser], description=kubek3sscale_desc,
-                                    help=kubek3sscale_desc, epilog=kubek3sscale_epilog, formatter_class=rawhelp)
-
-    parameterhelp = "specify parameter or keyword for rendering (multiple can be specified)"
-    kubehypershiftscale_desc = 'Scale Hypershift Kube'
-    kubehypershiftscale_parser = argparse.ArgumentParser(add_help=False)
-    kubehypershiftscale_parser.add_argument('-P', '--param', action='append', help=parameterhelp, metavar='PARAM')
-    kubehypershiftscale_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    kubehypershiftscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
-    kubehypershiftscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
-    kubehypershiftscale_parser.set_defaults(func=scale_hypershift_kube)
-    kubescale_subparsers.add_parser('hypershift', parents=[kubehypershiftscale_parser],
-                                    description=kubehypershiftscale_desc,
-                                    help=kubehypershiftscale_desc)
-
-    parameterhelp = "specify parameter or keyword for rendering (multiple can be specified)"
-    kubeopenshiftscale_desc = 'Scale Openshift Kube'
-    kubeopenshiftscale_epilog = "examples:\n%s" % kubeopenshiftscale
-    kubeopenshiftscale_parser = argparse.ArgumentParser(add_help=False)
-    kubeopenshiftscale_parser.add_argument('-P', '--param', action='append', help=parameterhelp, metavar='PARAM')
-    kubeopenshiftscale_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    kubeopenshiftscale_parser.add_argument('-m', '--masters', help='Total number of masters', type=int)
-    kubeopenshiftscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
-    kubeopenshiftscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
-    kubeopenshiftscale_parser.set_defaults(func=scale_openshift_kube)
-    kubescale_subparsers.add_parser('openshift', parents=[kubeopenshiftscale_parser],
-                                    description=kubeopenshiftscale_desc,
-                                    help=kubeopenshiftscale_desc, aliases=['okd'],
-                                    epilog=kubeopenshiftscale_epilog, formatter_class=rawhelp)
-
     kubeupdate_desc = 'Update Kube'
     kubeupdate_parser = update_subparsers.add_parser('kube', description=kubeupdate_desc, help=kubeupdate_desc,
                                                      aliases=['cluster'])
@@ -4300,12 +4389,6 @@ def cli():
     lbdelete_parser.add_argument('name', metavar='NAME')
     lbdelete_parser.set_defaults(func=delete_lb)
 
-    keywordinfo_desc = 'Info Keyword'
-    keywordinfo_parser = info_subparsers.add_parser('keyword', description=keywordinfo_desc, help=keywordinfo_desc,
-                                                    aliases=['parameter'])
-    keywordinfo_parser.add_argument('keyword', metavar='KEYWORD')
-    keywordinfo_parser.set_defaults(func=info_keyword)
-
     profilecreate_desc = 'Create Profile'
     profilecreate_parser = argparse.ArgumentParser(add_help=False)
     profilecreate_parser.add_argument('-P', '--param', action='append',
@@ -4315,11 +4398,6 @@ def cli():
     profilecreate_parser.set_defaults(func=create_profile)
     create_subparsers.add_parser('profile', parents=[profilecreate_parser], description=profilecreate_desc,
                                  help=profilecreate_desc)
-
-    profileinfo_desc = 'Info Profile'
-    profileinfo_parser = info_subparsers.add_parser('profile', description=profileinfo_desc, help=profileinfo_desc)
-    profileinfo_parser.add_argument('profile', metavar='PROFILE')
-    profileinfo_parser.set_defaults(func=info_profile)
 
     profileupdate_desc = 'Update Profile'
     profileupdate_parser = update_subparsers.add_parser('profile', description=profileupdate_desc,
@@ -4400,6 +4478,7 @@ def cli():
     flavorlist_parser.add_argument('--short', action='store_true')
     flavorlist_parser.set_defaults(func=list_flavor)
 
+    hostlist_desc = 'List Hosts'
     hostlist_parser = list_subparsers.add_parser('host', description=hostlist_desc, help=hostlist_desc,
                                                  aliases=['hosts', 'client', 'clients'])
     hostlist_parser.set_defaults(func=list_host)
@@ -4481,11 +4560,6 @@ def cli():
     vmlist_parser.set_defaults(func=list_vm)
     list_subparsers.add_parser('vm', parents=[vmlist_parser], description=vmlist_desc, help=vmlist_desc,
                                aliases=['vms'])
-
-    networkinfo_desc = 'Info Network'
-    networkinfo_parser = info_subparsers.add_parser('network', description=networkinfo_desc, help=networkinfo_desc)
-    networkinfo_parser.add_argument('name', metavar='NETWORK')
-    networkinfo_parser.set_defaults(func=info_network)
 
     networkcreate_desc = 'Create Network'
     networkcreate_parser = create_subparsers.add_parser('network', description=networkcreate_desc,
@@ -4634,37 +4708,6 @@ def cli():
     plansnapshotdelete_parser.add_argument('snapshot', metavar='SNAPSHOT')
     plansnapshotdelete_parser.set_defaults(func=delete_snapshot_plan)
 
-    planexpose_desc = 'Expose plan'
-    planexpose_epilog = None
-    planexpose_parser = argparse.ArgumentParser(add_help=False)
-    planexpose_parser.add_argument('-f', '--inputfile', help='Input Plan file')
-    planexpose_parser.add_argument('-P', '--param', action='append',
-                                   help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    planexpose_parser.add_argument('--port', help='Port where to listen', type=int, default=9000, metavar='PORT')
-    planexpose_parser.add_argument('plan', metavar='PLAN', nargs='?')
-    planexpose_parser.set_defaults(func=expose_plan)
-    expose_subparsers.add_parser('plan', parents=[planexpose_parser], description=planexpose_desc, help=planexpose_desc,
-                                 epilog=planexpose_epilog, formatter_class=rawhelp)
-
-    planinfo_desc = 'Info Plan'
-    planinfo_epilog = "examples:\n%s" % planinfo
-    planinfo_parser = info_subparsers.add_parser('plan', description=planinfo_desc, help=planinfo_desc,
-                                                 epilog=planinfo_epilog,
-                                                 formatter_class=rawhelp)
-    planinfo_parser.add_argument('--doc', action='store_true', help='Render info as markdown table')
-    planinfo_parser.add_argument('-f', '--inputfile', help='Input Plan file')
-    planinfo_parser.add_argument('-p', '--path', help='Path where to download plans. Defaults to plan', metavar='PATH')
-    planinfo_parser.add_argument('-q', '--quiet', action='store_true', help='Provide parameter file output')
-    planinfo_parser.add_argument('-u', '--url', help='Url for plan', metavar='URL', type=valid_url)
-    planinfo_parser.add_argument('plan', metavar='PLAN', nargs='?')
-    planinfo_parser.set_defaults(func=info_plan)
-
-    planrestart_desc = 'Restart Plan'
-    planrestart_parser = restart_subparsers.add_parser('plan', description=planrestart_desc, help=planrestart_desc)
-    planrestart_parser.add_argument('-s', '--soft', action='store_true', help='Do a soft stop')
-    planrestart_parser.add_argument('plans', metavar='PLAN', nargs='*')
-    planrestart_parser.set_defaults(func=restart_plan)
-
     plandatacreate_desc = 'Create Cloudinit/Ignition from plan file'
     plandatacreate_epilog = "examples:\n%s" % plandatacreate
     plandatacreate_parser = create_subparsers.add_parser('plan-data', description=plandatacreate_desc,
@@ -4693,13 +4736,6 @@ def cli():
     plantemplatecreate_parser.add_argument('-y', '--skipscripts', action='store_true', help='Skip scripts in assets')
     plantemplatecreate_parser.add_argument('directory', metavar='DIR')
     plantemplatecreate_parser.set_defaults(func=create_plantemplate)
-
-    planrevert_desc = 'Revert Snapshot Of Plan'
-    planrevert_parser = revert_subparsers.add_parser('plan-snapshot', description=planrevert_desc, help=planrevert_desc,
-                                                     aliases=['plan'])
-    planrevert_parser.add_argument('-p', '--plan', help='Plan name', required=True, metavar='PLANNAME')
-    planrevert_parser.add_argument('snapshot', metavar='SNAPSHOT')
-    planrevert_parser.set_defaults(func=revert_snapshot_plan)
 
     plansnapshotcreate_desc = 'Create Plan Snapshot'
     plansnapshotcreate_parser = create_subparsers.add_parser('plan-snapshot', description=plansnapshotcreate_desc,
@@ -4788,19 +4824,6 @@ def cli():
                                       metavar='REPO')
     productcreate_parser.add_argument('product', metavar='PRODUCT')
     productcreate_parser.set_defaults(func=create_product)
-
-    productinfo_desc = 'Info Of Product'
-    productinfo_epilog = "examples:\n%s" % productinfo
-    productinfo_parser = argparse.ArgumentParser(add_help=False)
-    productinfo_parser.set_defaults(func=info_product)
-    productinfo_parser.add_argument('-g', '--group', help='Only Display products of the indicated group',
-                                    metavar='GROUP')
-    productinfo_parser.add_argument('-r', '--repo', help='Only Display products of the indicated repository',
-                                    metavar='REPO')
-    productinfo_parser.add_argument('product', metavar='PRODUCT')
-    info_subparsers.add_parser('product', parents=[productinfo_parser], description=productinfo_desc,
-                               help=productinfo_desc,
-                               epilog=productinfo_epilog, formatter_class=rawhelp)
 
     repocreate_desc = 'Create Repo'
     repocreate_epilog = "examples:\n%s" % repocreate
@@ -5000,16 +5023,6 @@ def cli():
                                  aliases=['disk'], help=vmdiskdelete_desc, epilog=diskdelete_epilog,
                                  formatter_class=rawhelp)
 
-    vminfo_desc = 'Info Of Vms'
-    vminfo_parser = argparse.ArgumentParser(add_help=False)
-    vminfo_parser.add_argument('-f', '--fields', help='Display Corresponding list of fields,'
-                               'separated by a comma', metavar='FIELDS')
-    vminfo_parser.add_argument('-o', '--output', choices=['plain', 'json', 'yaml'], help='Format of the output')
-    vminfo_parser.add_argument('-v', '--values', action='store_true', help='Only report values')
-    vminfo_parser.add_argument('names', help='VMNAMES', nargs='*')
-    vminfo_parser.set_defaults(func=info_vm)
-    info_subparsers.add_parser('vm', parents=[vminfo_parser], description=vminfo_desc, help=vminfo_desc)
-
     create_vmnic_desc = 'Add Nic To Vm'
     create_vmnic_epilog = "examples:\n%s" % niccreate
     create_vmnic_parser = argparse.ArgumentParser(add_help=False)
@@ -5032,12 +5045,6 @@ def cli():
                                  help=delete_vmnic_desc, aliases=['nic'],
                                  epilog=delete_vmnic_epilog, formatter_class=rawhelp)
 
-    vmrestart_desc = 'Restart Vms'
-    vmrestart_parser = restart_subparsers.add_parser('vm', description=vmrestart_desc, help=vmrestart_desc)
-    vmrestart_parser.add_argument('names', metavar='VMNAMES', nargs='*')
-    vmrestart_parser.set_defaults(func=restart_vm)
-
-    vmsnapshotcreate_desc = 'Create Snapshot Of Vm'
     vmsnapshotcreate_parser = create_subparsers.add_parser('vm-snapshot', description=vmsnapshotcreate_desc,
                                                            help=vmsnapshotcreate_desc, aliases=['snapshot'])
     vmsnapshotcreate_parser.add_argument('-n', '--name', help='vm name', required=True, metavar='VMNAME')
@@ -5056,13 +5063,6 @@ def cli():
                                                        help=vmsnapshotlist_desc, aliases=['vm-snapshots'])
     vmsnapshotlist_parser.add_argument('name', metavar='VMNAME')
     vmsnapshotlist_parser.set_defaults(func=snapshotlist_vm)
-
-    vmsnapshotrevert_desc = 'Revert Snapshot Of Vm'
-    vmsnapshotrevert_parser = revert_subparsers.add_parser('vm-snapshot', description=vmsnapshotrevert_desc,
-                                                           help=vmsnapshotrevert_desc, aliases=['vm'])
-    vmsnapshotrevert_parser.add_argument('-n', '--name', help='vm name', required=True, metavar='VMNAME')
-    vmsnapshotrevert_parser.add_argument('snapshot')
-    vmsnapshotrevert_parser.set_defaults(func=snapshotrevert_vm)
 
     starthosts_desc = 'Start Baremetal Hosts'
     starthosts_epilog = f"examples:\n{starthosts}"
