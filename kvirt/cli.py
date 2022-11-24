@@ -180,6 +180,8 @@ def start_baremetal_hosts(args):
     bmc_url = overrides.get('bmc_url') or overrides.get('url')
     bmc_user = overrides.get('bmc_user') or overrides.get('user') or baseconfig.bmc_user
     bmc_password = overrides.get('bmc_password') or overrides.get('password') or baseconfig.bmc_password
+    if bmc_url is not None and 'redfish/v1/Systems/' in bmc_url and valid_uuid(os.path.basename(bmc_url)):
+        bmc_user, bmc_password = 'fake', 'fake'
     if not baremetal_hosts and bmc_url is not None and bmc_user is not None and bmc_password is not None:
         bmc_model = overrides.get('bmc_model') or overrides.get('model') or baseconfig.bmc_model
         baremetal_hosts = [{'bmc_url': bmc_url, 'bmc_user': bmc_user, 'bmc_password': bmc_password,
@@ -3391,6 +3393,8 @@ def info_baremetal_host(args):
     bmc_url = overrides.get('bmc_url') or overrides.get('url')
     bmc_user = overrides.get('bmc_user') or overrides.get('user') or baseconfig.bmc_user
     bmc_password = overrides.get('bmc_password') or overrides.get('password') or baseconfig.bmc_password
+    if bmc_url is not None and 'redfish/v1/Systems/' in bmc_url and valid_uuid(os.path.basename(bmc_url)):
+        bmc_user, bmc_password = 'fake', 'fake'
     if not baremetal_hosts and bmc_url is not None and bmc_user is not None and bmc_password is not None:
         bmc_model = overrides.get('bmc_model') or overrides.get('model') or baseconfig.bmc_model
         baremetal_hosts = [{'bmc_url': bmc_url, 'bmc_user': bmc_user, 'bmc_password': bmc_password,

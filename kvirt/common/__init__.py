@@ -2300,7 +2300,6 @@ def info_baremetal_hosts(baremetal_hosts, overrides={}, debug=False):
             red = Redfish(bmc_url, bmc_user, bmc_password, model=bmc_model, debug=debug)
             msg = host['name'] if 'name' in host else f"with url {bmc_url}"
             pprint(f"Reporting info on Host {msg}")
-            # pretty_print(json.loads(red.info()))
             pretty_print(red.info())
 
 
