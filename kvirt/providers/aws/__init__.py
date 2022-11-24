@@ -199,7 +199,7 @@ class Kaws(object):
                     pprint(f"Adding vm to security group {kube}")
                     kubesgid = self.get_security_group_id(kube, vpcid)
                     if kubesgid is None:
-                        sg = self.resource.create_security_group(GroupId=kubesgid, Description=kube, VpcId=vpcid)
+                        sg = self.resource.create_security_group(GroupName=kube, Description=kube, VpcId=vpcid)
                         sgtags = [{"Key": "Name", "Value": kube}]
                         sg.create_tags(Tags=sgtags)
                         kubesgid = sg.id
