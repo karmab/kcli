@@ -3388,6 +3388,7 @@ def download_bucketfile(args):
 def info_baremetal_host(args):
     """Report info about host"""
     overrides = common.get_overrides(param=args.param)
+    full = overrides.get('full', args.full)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     baremetal_hosts = overrides.get('baremetal_hosts', [])
     bmc_url = overrides.get('bmc_url') or overrides.get('url')
@@ -3402,7 +3403,7 @@ def info_baremetal_host(args):
     if not baremetal_hosts:
         error("Baremetal hosts need to be defined")
         sys.exit(1)
-    common.info_baremetal_hosts(baremetal_hosts, overrides=overrides, debug=args.debug)
+    common.info_baremetal_hosts(baremetal_hosts, overrides=overrides, debug=args.debug, full=full)
 
 
 def info_host(args):
@@ -4536,6 +4537,7 @@ def cli():
     baremetalhostinfo_parser = info_subparsers.add_parser('baremetal-host', description=baremetalhostinfo_desc,
                                                           help=baremetalhostinfo_desc,
                                                           epilog=baremetalhostinfo_epilog, formatter_class=rawhelp)
+    baremetalhostinfo_parser.add_argument('-f', '--full', action='store_true', help='Provide entire output')
     baremetalhostinfo_parser.add_argument('-P', '--param', action='append',
                                           help='Define parameter for rendering (can specify multiple)',
                                           metavar='PARAM')

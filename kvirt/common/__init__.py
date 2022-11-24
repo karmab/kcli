@@ -2290,7 +2290,7 @@ def boot_baremetal_hosts(baremetal_hosts, iso_url, overrides={}, debug=False):
                 red.start()
 
 
-def info_baremetal_hosts(baremetal_hosts, overrides={}, debug=False):
+def info_baremetal_hosts(baremetal_hosts, overrides={}, debug=False, full=False):
     for host in baremetal_hosts:
         bmc_url = host.get('url') or host.get('bmc_url')
         bmc_user = host.get('user') or host.get('bmc_user') or overrides.get('bmc_user')
@@ -2300,7 +2300,14 @@ def info_baremetal_hosts(baremetal_hosts, overrides={}, debug=False):
             red = Redfish(bmc_url, bmc_user, bmc_password, model=bmc_model, debug=debug)
             msg = host['name'] if 'name' in host else f"with url {bmc_url}"
             pprint(f"Reporting info on Host {msg}")
-            pretty_print(red.info())
+            info = red.info()
+            if full:
+                pretty_print(info)
+            else:
+                keys = ['UUID', 'SERIAL', 'BOOT', 'HostName', 'IndicatorLED', 'Manufacturer', 'Model', 'MemorySummary',
+                        'PowerState', 'PartNumber', 'SKU', 'SystemType']
+                data = {key: info[key] for key in keys if key in info}
+                pretty_print(data)
 
 
 def stop_baremetal_hosts(baremetal_hosts, overrides={}, debug=False):
