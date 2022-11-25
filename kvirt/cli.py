@@ -1446,156 +1446,11 @@ def clone_vm(args):
 def update_vm(args):
     """Update ip, memory or numcpus"""
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
-    ip = overrides.get('ip')
-    flavor = overrides.get('flavor')
-    numcpus = overrides.get('numcpus')
-    memory = overrides.get('memory')
-    autostart = overrides.get('autostart')
-    dns = overrides.get('dns')
-    host = overrides.get('host')
-    domain = overrides.get('domain')
-    cloudinit = overrides.get('cloudinit')
-    image = overrides.get('image')
-    nets = overrides.get('nets')
-    disks = overrides.get('disks')
-    information = overrides.get('information')
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    extra_metadata = {k: overrides[k] for k in overrides if k not in config.list_keywords()}
-    template = overrides.get('template')
-    if template is not None:
-        del extra_metadata['template']
     k = config.k
     names = [common.get_lastvm(config.client)] if not args.names else args.names
     for name in names:
-        if dns:
-            pprint(f"Creating Dns entry for {name}...")
-            networks = k.vm_ports(name)
-            if networks and domain is None:
-                domain = networks[0]
-            if not nets:
-                return
-            else:
-                k.reserve_dns(name=name, nets=networks, domain=domain, ip=ip)
-        if ip is not None:
-            pprint(f"Updating ip of vm {name} to {ip}...")
-            k.update_metadata(name, 'ip', ip)
-        if cloudinit:
-            pprint(f"Removing cloudinit information of vm {name}")
-            k.remove_cloudinit(name)
-        if image is not None:
-            pprint(f"Updating image of vm {name} to {image}...")
-            k.update_metadata(name, 'image', image)
-        if memory is not None:
-            pprint(f"Updating memory of vm {name} to {memory}...")
-            k.update_memory(name, memory)
-        if numcpus is not None:
-            pprint(f"Updating numcpus of vm {name} to {numcpus}...")
-            k.update_cpus(name, numcpus)
-        if autostart is not None:
-            pprint(f"Setting autostart to {autostart} for vm {name}...")
-            k.update_start(name, start=autostart)
-        if information:
-            pprint(f"Setting information for vm {name}...")
-            k.update_information(name, information)
-        if 'iso' in overrides:
-            iso = overrides['iso']
-            pprint(f"Switching iso for vm {name} to {iso}...")
-            if iso == 'None' or iso == '':
-                iso = None
-            k.update_iso(name, iso)
-        if flavor is not None:
-            pprint(f"Updating flavor of vm {name} to {flavor}...")
-            k.update_flavor(name, flavor)
-        if host:
-            pprint(f"Creating Host entry for vm {name}...")
-            networks = k.vm_ports(name)
-            if networks:
-                if domain is None:
-                    domain = networks[0]
-                k.reserve_host(name, networks, domain)
-        currentvm = k.info(name)
-        currentnets = currentvm.get('nets', [])
-        currentdisks = currentvm.get('disks', [])
-        if disks:
-            pprint(f"Updating disks of vm {name}")
-            for index, currentdisk in enumerate(currentdisks):
-                if index < len(disks):
-                    disk = disks[index]
-                    currentdisksize = currentdisk['size']
-                    disksize = disk.get('size', 10) if isinstance(disk, dict) else int(disk)
-                    if disksize > currentdisksize:
-                        if currentvm.get('status') != 'down':
-                            warning(f"Cant resize Disk {index} in {name} while VM is up")
-                            break
-                        pprint(f"Resizing Disk {index} in {name}")
-                        diskpath = currentdisk['path']
-                        k.resize_disk(diskpath, disksize)
-            if len(currentdisks) < len(disks):
-                pprint(f"Adding Disks to {name}")
-                for disk in disks[len(currentdisks):]:
-                    if isinstance(disk, int):
-                        size = disk
-                        pool = config.pool
-                    elif isinstance(disk, str) and disk.isdigit():
-                        size = int(disk)
-                        pool = config.pool
-                    elif isinstance(disk, dict):
-                        size = disk.get('size', config.disksize)
-                        pool = disk.get('pool', config.pool)
-                    else:
-                        continue
-                    k.add_disk(name=name, size=size, pool=pool)
-            if len(currentdisks) > len(disks):
-                pprint(f"Removing Disks of {name}")
-                for disk in currentdisks[len(currentdisks) - len(disks):]:
-                    diskname = os.path.basename(disk['path'])
-                    diskpool = os.path.dirname(disk['path'])
-                    k.delete_disk(name=name, diskname=diskname, pool=diskpool)
-        if nets:
-            pprint(f"Updating nets of vm {name}")
-            if len(currentnets) < len(nets):
-                pprint(f"Adding Nics to {name}")
-                for net in nets[len(currentnets):]:
-                    if isinstance(net, str):
-                        network = net
-                    elif isinstance(net, dict) and 'name' in net:
-                        network = net['name']
-                    else:
-                        error(f"Skipping wrong nic spec for {name}")
-                        continue
-                    k.add_nic(name, network)
-            if len(currentnets) > len(nets):
-                pprint(f"Removing Nics of {name}")
-                for net in range(len(currentnets), len(nets), -1):
-                    interface = "eth%s" % (net - 1)
-                    k.delete_nic(name, interface)
-            for index, currentnet in enumerate(currentnets):
-                if index > len(nets):
-                    break
-                netname = currentnet['net']
-                targetnetname = nets[index]['name'] if isinstance(nets[index], dict) else nets[index]
-                if targetnetname != netname:
-                    pprint(f"Updating nic {index} to network {targetnetname}")
-                    k.update_nic(name, index, targetnetname)
-        if extra_metadata:
-            for key in extra_metadata:
-                value = extra_metadata[key]
-                pprint(f"Updating {key} of vm {name} to {value}...")
-                k.update_metadata(name, key, value)
-        if overrides.get('files', []):
-            newfiles = overrides['files']
-            pprint(f"Remediating files of {name}")
-            config.remediate_files(name, newfiles, overrides)
-        pool = overrides.get('pool')
-        if config.type == 'kvm' and pool is not None:
-            k.update_pool(name, pool)
-        if config.type == 'vsphere' and template is not None and isinstance(template, bool):
-            target = 'template' if template else 'vm'
-            pprint(f"Updating vm {name} to {target}...")
-            if template:
-                k.convert_to_template(name)
-            else:
-                k.convert_to_vm(name)
+        k.update_vm(name, overrides)
 
 
 def create_vmdisk(args):
@@ -1728,10 +1583,11 @@ def delete_lb(args):
     config.delete_loadbalancer(args.name)
 
 
-def create_generic_kube(args):
-    """Create Generic kube"""
+def create_kube(args):
+    """Create kube"""
     paramfile = args.paramfile
     cluster = args.cluster
+    kubetype = args.type
     if container_mode():
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
@@ -1746,114 +1602,43 @@ def create_generic_kube(args):
     config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if overrides.get('force', args.force):
         config.delete_kube(cluster, overrides=overrides)
-    config.create_kube_generic(cluster, overrides=overrides)
+    config.create_kube(cluster, kubetype, overrides=overrides)
+
+
+def create_generic_kube(args):
+    """Create Generic kube"""
+    args.type = 'generic'
+    create_kube(args)
 
 
 def create_kind_kube(args):
-    """Create K3s kube"""
-    paramfile = args.paramfile
-    cluster = args.cluster
-    if container_mode():
-        if paramfile is not None:
-            paramfile = "/workdir/%s" % paramfile
-        elif os.path.exists("/workdir/kcli_parameters.yml"):
-            paramfile = "/workdir/kcli_parameters.yml"
-            pprint("Using default parameter file kcli_parameters.yml")
-    elif paramfile is None and os.path.exists("kcli_parameters.yml"):
-        paramfile = "kcli_parameters.yml"
-        pprint("Using default parameter file kcli_parameters.yml")
-    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
-    client = overrides.get('client', args.client)
-    config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    if overrides.get('force', args.force):
-        config.delete_kube(cluster, overrides=overrides)
-    config.create_kube_kind(cluster, overrides=overrides)
+    """Create Kind kube"""
+    args.type = 'kind'
+    create_kube(args)
 
 
 def create_microshift_kube(args):
     """Create Microshift kube"""
-    paramfile = args.paramfile
-    cluster = args.cluster
-    if container_mode():
-        if paramfile is not None:
-            paramfile = "/workdir/%s" % paramfile
-        elif os.path.exists("/workdir/kcli_parameters.yml"):
-            paramfile = "/workdir/kcli_parameters.yml"
-            pprint("Using default parameter file kcli_parameters.yml")
-    elif paramfile is None and os.path.exists("kcli_parameters.yml"):
-        paramfile = "kcli_parameters.yml"
-        pprint("Using default parameter file kcli_parameters.yml")
-    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
-    client = overrides.get('client', args.client)
-    config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    if overrides.get('force', args.force):
-        config.delete_kube(cluster, overrides=overrides)
-    config.create_kube_microshift(cluster, overrides=overrides)
+    args.type = 'microshift'
+    create_kube(args)
 
 
 def create_k3s_kube(args):
     """Create K3s kube"""
-    paramfile = args.paramfile
-    cluster = args.cluster
-    if container_mode():
-        if paramfile is not None:
-            paramfile = "/workdir/%s" % paramfile
-        elif os.path.exists("/workdir/kcli_parameters.yml"):
-            paramfile = "/workdir/kcli_parameters.yml"
-            pprint("Using default parameter file kcli_parameters.yml")
-    elif paramfile is None and os.path.exists("kcli_parameters.yml"):
-        paramfile = "kcli_parameters.yml"
-        pprint("Using default parameter file kcli_parameters.yml")
-    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
-    client = overrides.get('client', args.client)
-    config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    if overrides.get('force', args.force):
-        config.delete_kube(cluster, overrides=overrides)
-    config.create_kube_k3s(cluster, overrides=overrides)
+    args.type = 'k3s'
+    create_kube(args)
 
 
 def create_hypershift_kube(args):
     """Create Hypershift kube"""
-    paramfile = args.paramfile
-    cluster = args.cluster
-    if container_mode():
-        if paramfile is not None:
-            paramfile = "/workdir/%s" % paramfile
-        elif os.path.exists("/workdir/kcli_parameters.yml"):
-            paramfile = "/workdir/kcli_parameters.yml"
-            pprint("Using default parameter file kcli_parameters.yml")
-    elif paramfile is None and os.path.exists("kcli_parameters.yml"):
-        paramfile = "kcli_parameters.yml"
-        pprint("Using default parameter file kcli_parameters.yml")
-    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
-    client = overrides.get('client', args.client)
-    config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    if overrides.get('force', args.force):
-        config.delete_kube(cluster, overrides=overrides)
-    config.create_kube_hypershift(cluster, overrides=overrides)
+    args.type = 'hypershift'
+    create_kube(args)
 
 
 def create_openshift_kube(args):
     """Create Openshift kube"""
-    paramfile = args.paramfile
-    cluster = args.cluster
-    if container_mode():
-        if paramfile is not None:
-            paramfile = "/workdir/%s" % paramfile
-        elif os.path.exists("/workdir/kcli_parameters.yml"):
-            paramfile = "/workdir/kcli_parameters.yml"
-            pprint("Using default parameter file kcli_parameters.yml")
-    elif paramfile is None and os.path.exists("kcli_parameters.yml"):
-        paramfile = "kcli_parameters.yml"
-        pprint("Using default parameter file kcli_parameters.yml")
-    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
-    client = overrides.get('client', 'fake' if common.need_fake() else args.client)
-    config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    if args.subcommand_create_kube == 'okd':
-        overrides['upstream'] = True
-    if overrides.get('force', args.force):
-        config.delete_kube(cluster, overrides=overrides)
-    config.create_kube_openshift(cluster, overrides=overrides)
+    args.type = 'openshift'
+    create_kube(args)
 
 
 def delete_kube(args):
@@ -1869,8 +1654,9 @@ def delete_kube(args):
         config.delete_kube(cluster, overrides=overrides)
 
 
-def scale_generic_kube(args):
-    """Scale generic kube"""
+def scale_kube(args):
+    """Scale kube"""
+    kubetype = args.type
     paramfile = args.paramfile
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     cluster = overrides.get('cluster', args.cluster)
@@ -1892,83 +1678,31 @@ def scale_generic_kube(args):
         overrides['masters'] = args.masters
     if args.workers is not None:
         overrides['workers'] = args.workers
-    config.scale_kube_generic(cluster, overrides=overrides)
+    config.scale_kube(cluster, kubetype, overrides=overrides)
+
+
+def scale_generic_kube(args):
+    """Scale generic kube"""
+    args.type = 'generic'
+    scale_kube(args)
 
 
 def scale_k3s_kube(args):
     """Scale k3s kube"""
-    paramfile = args.paramfile
-    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
-    cluster = overrides.get('cluster', args.cluster)
-    clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
-    if not os.path.exists(clusterdir):
-        warning(f"Cluster directory {clusterdir} not found...")
-    if container_mode():
-        if paramfile is not None:
-            paramfile = "/workdir/%s" % paramfile
-        elif os.path.exists("/workdir/kcli_parameters.yml"):
-            paramfile = "/workdir/kcli_parameters.yml"
-            pprint("Using default parameter file kcli_parameters.yml")
-    elif paramfile is None and os.path.exists("kcli_parameters.yml"):
-        paramfile = "kcli_parameters.yml"
-        pprint("Using default parameter file kcli_parameters.yml")
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
-    if args.masters is not None:
-        overrides['masters'] = args.masters
-    if args.workers is not None:
-        overrides['workers'] = args.workers
-    config.scale_kube_k3s(cluster, overrides=overrides)
+    args.type = 'k3s'
+    scale_kube(args)
 
 
 def scale_hypershift_kube(args):
     """Scale hypershift kube"""
-    paramfile = args.paramfile
-    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
-    cluster = overrides.get('cluster', args.cluster)
-    clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
-    if not os.path.exists(clusterdir):
-        error(f"Cluster directory {clusterdir} not found...")
-        sys.exit(1)
-    if container_mode():
-        if paramfile is not None:
-            paramfile = "/workdir/%s" % paramfile
-        elif os.path.exists("/workdir/kcli_parameters.yml"):
-            paramfile = "/workdir/kcli_parameters.yml"
-            pprint("Using default parameter file kcli_parameters.yml")
-    elif paramfile is None and os.path.exists("kcli_parameters.yml"):
-        paramfile = "kcli_parameters.yml"
-        pprint("Using default parameter file kcli_parameters.yml")
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    if args.workers is not None:
-        overrides['workers'] = args.workers
-    config.scale_kube_hypershift(cluster, overrides=overrides)
+    args.type = 'hypershift'
+    scale_kube(args)
 
 
 def scale_openshift_kube(args):
     """Scale openshift kube"""
-    paramfile = args.paramfile
-    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
-    cluster = overrides.get('cluster', args.cluster)
-    clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
-    if not os.path.exists(clusterdir):
-        error(f"Cluster directory {clusterdir} not found...")
-        sys.exit(1)
-    if container_mode():
-        if paramfile is not None:
-            paramfile = "/workdir/%s" % paramfile
-        elif os.path.exists("/workdir/kcli_parameters.yml"):
-            paramfile = "/workdir/kcli_parameters.yml"
-            pprint("Using default parameter file kcli_parameters.yml")
-    elif paramfile is None and os.path.exists("kcli_parameters.yml"):
-        paramfile = "kcli_parameters.yml"
-        pprint("Using default parameter file kcli_parameters.yml")
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    if args.masters is not None:
-        overrides['masters'] = args.masters
-    if args.workers is not None:
-        overrides['workers'] = args.workers
-    config.scale_kube_openshift(cluster, overrides=overrides)
+    args.type = 'openshift'
+    scale_kube(args)
 
 
 def update_generic_kube(args):
@@ -1978,7 +1712,7 @@ def update_generic_kube(args):
 
 def update_hypershift_kube(args):
     args.type = 'hypershift'
-    update_kube(args)
+    scale_kube(args)
 
 
 def update_openshift_kube(args):

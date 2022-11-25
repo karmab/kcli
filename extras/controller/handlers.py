@@ -29,138 +29,6 @@ def watch_configmaps():
                 os._exit(1)
 
 
-def process_vm(name, namespace, spec, operation='create', timeout=60):
-    config = Kconfig(quiet=True)
-    exists = config.k.exists(name)
-    if operation == "delete" and exists:
-        pprint(f"Deleting vm {name}")
-        return config.k.delete(name)
-    if operation == "create":
-        if not exists:
-            profile = spec.get("profile")
-            if profile is None:
-                if 'image' in spec:
-                    profile = spec['image']
-                else:
-                    profile = name
-            pprint(f"Creating vm {name}")
-            if profile is not None:
-                result = config.create_vm(name, profile, overrides=dict(spec))
-                if result['result'] != 'success':
-                    return result
-        info = config.k.info(name)
-        image = info.get('image')
-        if image is not None and 'ip' not in info:
-            raise kopf.TemporaryError("Waiting to populate ip", delay=10)
-        return info
-
-
-def process_cluster(cluster, spec, operation='create'):
-    config = Kconfig(quiet=True)
-    if operation == "delete":
-        pprint(f"Deleting cluster {cluster}")
-        return config.delete_kube(cluster)
-    else:
-        if operation == 'create':
-            config.delete_kube(cluster)
-        pprint(f"Creating/Updating cluster {cluster}")
-        overrides = dict(spec)
-        kubetype = overrides.get('kubetype', 'generic')
-        if kubetype == 'openshift':
-            result = config.create_kube_openshift(cluster, overrides=overrides)
-        elif kubetype == 'hypershift':
-            result = config.create_kube_hypershift(cluster, overrides=overrides)
-        elif kubetype == 'microshift':
-            result = config.create_kube_microshift(cluster, overrides=overrides)
-        elif kubetype == 'kind':
-            result = config.create_kube_kind(cluster, overrides=overrides)
-        elif kubetype == 'k3s':
-            result = config.create_kube_k3s(cluster, overrides=overrides)
-        else:
-            result = config.create_kube_generic(cluster, overrides=overrides)
-        clusterdir = f"{os.environ['HOME']}/.kcli/clusters/{cluster}"
-        kubeconfig = open(f"{clusterdir}/auth/kubeconfig").read()
-        kubeconfig = base64.b64encode(kubeconfig.encode()).decode("UTF-8")
-        result = {'kubeconfig': kubeconfig}
-        if os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
-            with open(f"{clusterdir}/kcli_parameters.yml") as install:
-                installparam = yaml.safe_load(install)
-                if 'auth_pass' in installparam:
-                    auth_pass = installparam['auth_pass']
-                    result['auth_pass'] = base64.b64encode(auth_pass.encode()).decode("UTF-8")
-                if 'virtual_router_id' in installparam:
-                    result['virtual_router_id'] = installparam['virtual_router_id']
-                if 'plan' in installparam:
-                    result['plan'] = installparam['plan']
-        return result
-
-
-def process_plan(plan, spec, operation='create'):
-    config = Kconfig(quiet=True)
-    if operation == "delete":
-        pprint(f"Deleting plan {plan}")
-        return config.delete_plan(plan)
-    else:
-        pprint(f"Creating/Updating plan {plan}")
-        overrides = spec.get('parameters', {})
-        workdir = spec.get('workdir', '/workdir')
-        inputstring = spec.get('plan')
-        if inputstring is None:
-            error("Plan %s not created because of missing plan spec" % plan)
-            return {'result': 'failure', 'reason': 'missing plan spec'}
-        else:
-            inputstring = sub(r"origin:( *)", r"origin:\1%s/" % workdir, inputstring)
-            return config.plan(plan, inputstring=inputstring, overrides=overrides)
-
-
-def update(name, namespace, diff):
-    config = Kconfig(quiet=True)
-    k = config.k
-    for entry in diff:
-        if entry[0] not in ['add', 'change']:
-            continue
-        arg = entry[1][1]
-        value = entry[3]
-        if arg == 'plan':
-            plan = value
-            pprint(f"Updating plan of vm {name} to {plan}...")
-            k.update_metadata(name, 'plan', plan)
-        if arg == 'memory':
-            memory = value
-            pprint(f"Updating memory of vm {name} to {memory}...")
-            k.update_memory(name, memory)
-        if arg == 'numcpus':
-            numcpus = value
-            pprint(f"Updating numcpus of vm {name} to {numcpus}...")
-            k.update_cpus(name, numcpus)
-        if arg == 'autostart':
-            autostart = value
-            pprint(f"Setting autostart for vm {name} to {autostart}...")
-            k.update_start(name, start=autostart)
-        if arg == 'information':
-            information = value
-            pprint(f"Setting information for vm {name}...")
-            k.update_information(name, information)
-        if arg == 'iso':
-            iso = value
-            pprint(f"Switching iso for vm {name} to {iso}...")
-            k.update_iso(name, iso)
-        if arg == 'flavor':
-            flavor = value
-            pprint(f"Updating flavor of vm {name} to {flavor}...")
-            k.update_flavor(name, flavor)
-        if arg == 'start':
-            start = value
-            if start:
-                pprint(f"Starting vm {name}...")
-                k.start(name)
-            else:
-                pprint(f"Stopping vm {name}...")
-                k.stop(name)
-        info = config.k.info(name)
-        return info
-
-
 @kopf.on.resume(DOMAIN, VERSION, 'vms')
 def handle_configmaps(spec, **_):
     threading.Thread(target=watch_configmaps).start()
@@ -168,74 +36,158 @@ def handle_configmaps(spec, **_):
 
 @kopf.on.create(DOMAIN, VERSION, 'vms')
 def create_vm(meta, spec, status, namespace, logger, **kwargs):
-    operation = 'create'
     name = meta.get('name')
-    pprint(f"Handling {operation} on vm {name}")
-    return process_vm(name, namespace, spec, operation=operation)
+    pprint(f"Handling create on vm {name}")
+    config = Kconfig(quiet=True)
+    exists = config.k.exists(name)
+    if not exists:
+        profile = spec.get("profile")
+        if profile is None:
+            if 'image' in spec:
+                profile = spec['image']
+            else:
+                profile = name
+        pprint(f"Creating vm {name}")
+        if profile is not None:
+            result = config.create_vm(name, profile, overrides=dict(spec))
+            if result['result'] != 'success':
+                return result
+    info = config.k.info(name)
+    image = info.get('image')
+    if image is not None and 'ip' not in info:
+        raise kopf.TemporaryError("Waiting to populate ip", delay=10)
+    return info
 
 
 @kopf.on.delete(DOMAIN, VERSION, 'vms')
 def delete_vm(meta, spec, namespace, logger, **kwargs):
-    operation = 'delete'
     name = meta.get('name')
-    pprint(f"Handling {operation} on vm {name}")
+    pprint(f"Handling delete on vm {name}")
     keep = spec.get("keep", False)
     if not keep:
-        process_vm(name, namespace, spec, operation=operation)
+        config = Kconfig(quiet=True)
+        exists = config.k.exists(name)
+        if exists:
+            pprint(f"Deleting vm {name}")
+            return config.k.delete(name)
 
 
 @kopf.on.update(DOMAIN, VERSION, 'vms')
 def update_vm(meta, spec, namespace, old, new, diff, **kwargs):
-    operation = 'update'
     name = meta.get('name')
-    pprint(f"Handling {operation} on vm {name}")
-    return update(name, namespace, diff)
+    pprint(f"Handling update on vm {name}")
+    config = Kconfig(quiet=True)
+    for entry in diff:
+        if entry[0] not in ['add', 'change']:
+            continue
+        arg = entry[1][1]
+        value = entry[3]
+        overrides = {arg: value}
+        config.update_vm(name, overrides)
+        info = config.k.info(name)
+        return info
 
 
 @kopf.on.create(DOMAIN, VERSION, 'plans')
 def create_plan(meta, spec, status, namespace, logger, **kwargs):
-    operation = 'create'
-    name = meta.get('name')
-    pprint(f"Handling {operation} on plan {name}")
-    return process_plan(name, spec, operation=operation)
+    plan = meta.get('name')
+    pprint(f"Handling create on plan {plan}")
+    pprint(f"Creating/Updating plan {plan}")
+    overrides = spec.get('parameters', {})
+    workdir = spec.get('workdir', '/workdir')
+    inputstring = spec.get('plan')
+    if inputstring is None:
+        error("Plan %s not created because of missing plan spec" % plan)
+        return {'result': 'failure', 'reason': 'missing plan spec'}
+    else:
+        inputstring = sub(r"origin:( *)", r"origin:\1%s/" % workdir, inputstring)
+        config = Kconfig(quiet=True)
+        return config.plan(plan, inputstring=inputstring, overrides=overrides)
 
 
 @kopf.on.delete(DOMAIN, VERSION, 'plans')
 def delete_plan(meta, spec, namespace, logger, **kwargs):
-    operation = 'delete'
-    name = meta.get('name')
+    plan = meta.get('name')
     if spec.get('plan') is not None:
-        pprint(f"Handling {operation} on plan {name}")
-        process_plan(name, spec, operation=operation)
+        pprint(f"Handling delete on plan {plan}")
+        config = Kconfig(quiet=True)
+        return config.delete_plan(plan)
 
 
 @kopf.on.update(DOMAIN, VERSION, 'plans')
 def update_plan(meta, spec, status, namespace, logger, **kwargs):
-    operation = 'update'
-    name = meta.get('name')
-    pprint(f"Handling {operation} on vm {name}")
-    return process_plan(name, spec, operation=operation)
+    plan = meta.get('name')
+    pprint(f"Handling update on plan {plan}")
+    overrides = spec.get('parameters', {})
+    workdir = spec.get('workdir', '/workdir')
+    inputstring = spec.get('plan')
+    if inputstring is None:
+        error("Plan %s not updated because of missing plan spec" % plan)
+        return {'result': 'failure', 'reason': 'missing plan spec'}
+    else:
+        inputstring = sub(r"origin:( *)", r"origin:\1%s/" % workdir, inputstring)
+        config = Kconfig(quiet=True)
+        return config.plan(plan, inputstring=inputstring, overrides=overrides, update=True)
 
 
 @kopf.on.create(DOMAIN, VERSION, 'clusters')
 def create_cluster(meta, spec, status, namespace, logger, **kwargs):
-    operation = 'create'
-    name = meta.get('name')
-    pprint(f"Handling {operation} on cluster {name}")
-    return process_cluster(name, spec, operation=operation)
+    cluster = meta.get('name')
+    pprint(f"Handling create on cluster {cluster}")
+    config = Kconfig(quiet=True)
+    pprint(f"Creating cluster {cluster}")
+    overrides = dict(spec)
+    kubetype = overrides.get('kubetype', 'generic')
+    result = config.create_kube(cluster, kubetype, overrides=overrides)
+    clusterdir = f"{os.environ['HOME']}/.kcli/clusters/{cluster}"
+    kubeconfig = open(f"{clusterdir}/auth/kubeconfig").read()
+    kubeconfig = base64.b64encode(kubeconfig.encode()).decode("UTF-8")
+    result = {'kubeconfig': kubeconfig}
+    if os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
+        with open(f"{clusterdir}/kcli_parameters.yml") as install:
+            installparam = yaml.safe_load(install)
+            if 'auth_pass' in installparam:
+                auth_pass = installparam['auth_pass']
+                result['auth_pass'] = base64.b64encode(auth_pass.encode()).decode("UTF-8")
+            if 'virtual_router_id' in installparam:
+                result['virtual_router_id'] = installparam['virtual_router_id']
+            if 'plan' in installparam:
+                result['plan'] = installparam['plan']
+    return result
 
 
 @kopf.on.delete(DOMAIN, VERSION, 'clusters')
 def delete_cluster(meta, spec, namespace, logger, **kwargs):
-    operation = 'delete'
-    name = meta.get('name')
-    pprint(f"Handling {operation} on cluster {name}")
-    process_cluster(name, spec, operation=operation)
+    cluster = meta.get('name')
+    pprint(f"Handling delete on cluster {cluster}")
+    config = Kconfig(quiet=True)
+    pprint(f"Deleting cluster {cluster}")
+    return config.delete_kube(cluster)
 
 
 @kopf.on.update(DOMAIN, VERSION, 'clusters')
 def update_cluster(meta, spec, status, namespace, logger, **kwargs):
-    operation = 'update'
-    name = meta.get('name')
-    pprint(f"Handling {operation} on vm {name}")
-    return process_cluster(name, spec, operation=operation)
+    cluster = meta.get('name')
+    pprint(f"Handling update on cluster {cluster}")
+    overrides = dict(spec)
+    kubetype = overrides.get('kubetype', 'generic')
+    data = {'kube': cluster, 'kubetype': kubetype}
+    plan = None
+    if 'ipi' in overrides and overrides['ipi']:
+        msg = "Update cluster workflow not available when using ipi"
+        error(msg)
+        return {'result': 'failure', 'reason': msg}
+    clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
+    if not os.path.exists(clusterdir):
+        msg = f"Cluster directory {clusterdir} not found..."
+        error(msg)
+        return {'result': 'failure', 'reason': msg}
+    if os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
+        with open(f"{clusterdir}/kcli_parameters.yml") as install:
+            installparam = yaml.safe_load(install)
+            data.update(installparam)
+            plan = installparam.get('plan', plan)
+    data.update(overrides)
+    overrides['plan'] = plan or cluster
+    config = Kconfig(quiet=True)
+    config.update_kube(cluster, kubetype, overrides=data)
