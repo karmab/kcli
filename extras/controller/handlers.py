@@ -41,12 +41,7 @@ def create_vm(meta, spec, status, namespace, logger, **kwargs):
     config = Kconfig(quiet=True)
     exists = config.k.exists(name)
     if not exists:
-        profile = spec.get("profile")
-        if profile is None:
-            if 'image' in spec:
-                profile = spec['image']
-            else:
-                profile = name
+        profile = spec.get("profile") or spec.get('image') or name
         pprint(f"Creating vm {name}")
         if profile is not None:
             result = config.create_vm(name, profile, overrides=dict(spec))
@@ -133,13 +128,15 @@ def update_plan(meta, spec, status, namespace, logger, **kwargs):
 @kopf.on.create(DOMAIN, VERSION, 'clusters')
 def create_cluster(meta, spec, status, namespace, logger, **kwargs):
     cluster = meta.get('name')
+    clusterdir = f"{os.environ['HOME']}/.kcli/clusters/{cluster}"
     pprint(f"Handling create on cluster {cluster}")
     config = Kconfig(quiet=True)
+    if os.path.exists(clusterdir):
+        return {'importedcluster': True}
     pprint(f"Creating cluster {cluster}")
     overrides = dict(spec)
     kubetype = overrides.get('kubetype', 'generic')
     result = config.create_kube(cluster, kubetype, overrides=overrides)
-    clusterdir = f"{os.environ['HOME']}/.kcli/clusters/{cluster}"
     kubeconfig = open(f"{clusterdir}/auth/kubeconfig").read()
     kubeconfig = base64.b64encode(kubeconfig.encode()).decode("UTF-8")
     result = {'kubeconfig': kubeconfig}
