@@ -185,6 +185,6 @@ def update_cluster(meta, spec, status, namespace, logger, **kwargs):
             data.update(installparam)
             plan = installparam.get('plan', plan)
     data.update(overrides)
-    overrides['plan'] = plan or cluster
+    data['plan'] = plan or cluster
     config = Kconfig(quiet=True)
     config.update_kube(cluster, kubetype, overrides=data)

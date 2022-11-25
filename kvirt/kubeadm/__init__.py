@@ -34,7 +34,7 @@ def scale(config, plandir, cluster, overrides):
     pprint(f"Scaling on client {client}")
     image = data.get('image')
     if 'ubuntu' not in data:
-        data['ubuntu'] = 'ubuntu' in image.lower() or [entry for entry in UBUNTUS if entry in image]
+        data['ubuntu'] = 'ubuntu' in image.lower() or len([u for u in UBUNTUS if u in image]) > 0
     os.chdir(os.path.expanduser("~/.kcli"))
     for role in ['masters', 'workers']:
         overrides = data.copy()
@@ -107,7 +107,7 @@ def create(config, plandir, cluster, overrides):
     data['basedir'] = '/workdir' if container_mode() else '.'
     cluster = data.get('cluster')
     image = data.get('image', 'centos8stream')
-    data['ubuntu'] = True if 'ubuntu' in image.lower() or [entry for entry in UBUNTUS if entry in image] else False
+    data['ubuntu'] = 'ubuntu' in image.lower() or len([u for u in UBUNTUS if u in image]) > 0
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if os.path.exists(clusterdir):
         error(f"Please remove existing directory {clusterdir} first")
@@ -128,7 +128,7 @@ def create(config, plandir, cluster, overrides):
             installparam['cluster'] = cluster
             installparam['kubetype'] = 'generic'
             installparam['image'] = image
-            installparam['ubuntu'] = 'ubuntu' in image.lower() or [entry for entry in UBUNTUS if entry in image]
+            installparam['ubuntu'] = 'ubuntu' in image.lower() or len([u for u in UBUNTUS if u in image]) > 1
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     result = config.plan(plan, inputfile=f'{plandir}/bootstrap.yml', overrides=data)
     if result['result'] != "success":

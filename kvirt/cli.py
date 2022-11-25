@@ -1712,7 +1712,7 @@ def update_generic_kube(args):
 
 def update_hypershift_kube(args):
     args.type = 'hypershift'
-    scale_kube(args)
+    update_kube(args)
 
 
 def update_openshift_kube(args):
