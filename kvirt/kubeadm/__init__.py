@@ -125,6 +125,7 @@ def create(config, plandir, cluster, overrides):
             if 'auth_pass' in data:
                 installparam['auth_pass'] = auth_pass
             installparam['plan'] = plan
+            installparam['cluster'] = cluster
             installparam['kubetype'] = 'generic'
             installparam['image'] = image
             installparam['ubuntu'] = 'ubuntu' in image.lower() or [entry for entry in UBUNTUS if entry in image]

@@ -231,6 +231,7 @@ def create(config, plandir, cluster, overrides):
         with open(f"{clusterdir}/kcli_parameters.yml", 'w') as p:
             installparam = overrides.copy()
             installparam['plan'] = plan
+            installparam['cluster'] = cluster
             installparam['kubetype'] = 'hypershift'
             installparam['api_ip'] = api_ip
             installparam['ingress_ip'] = ingress_ip

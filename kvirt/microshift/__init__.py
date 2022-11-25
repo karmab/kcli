@@ -54,6 +54,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         with open(f"{clusterdir}/kcli_parameters.yml", 'w') as p:
             installparam = overrides.copy()
             installparam['plan'] = plan
+            installparam['cluster'] = cluster
             installparam['kubetype'] = 'microshift'
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     threaded = data.get('threaded', False)

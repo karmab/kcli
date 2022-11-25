@@ -123,6 +123,7 @@ def create(config, plandir, cluster, overrides):
             installparam['image'] = image
             installparam['auth_pass'] = auth_pass
             installparam['virtual_router_id'] = virtual_router_id
+            installparam['cluster'] = cluster
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     for arg in data.get('extra_master_args', []):
         if arg.startswith('--data-dir='):

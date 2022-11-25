@@ -31,6 +31,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         with open("%s/kcli_parameters.yml" % clusterdir, 'w') as p:
             installparam = overrides.copy()
             installparam['plan'] = plan
+            installparam['cluster'] = cluster
             installparam['kubetype'] = 'kind'
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     if os.path.exists(CNI_DIR) and os.path.isdir(CNI_DIR):

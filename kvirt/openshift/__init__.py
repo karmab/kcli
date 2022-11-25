@@ -416,6 +416,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         warning("Storage apps require extra disks to be set")
     overrides['kube'] = data['cluster']
     installparam = overrides.copy()
+    installparam['cluster'] = clustervalue
     sno = data.get('sno', False)
     ignore_hosts = data.get('ignore_hosts', False)
     if sno:
