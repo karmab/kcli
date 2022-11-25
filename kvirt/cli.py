@@ -2317,7 +2317,7 @@ def create_pipeline_jenkins(args):
         paramfile = "kcli_parameters.yml"
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     if not kube and not os.path.exists(inputfile):
-        error(f"File {inputfile} not found")
+        error(f"Input file {inputfile} not found")
         sys.exit(1)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     renderfile = baseconfig.create_jenkins_pipeline(plan, inputfile, overrides=overrides, kube=kube)
@@ -2379,7 +2379,7 @@ def render_file(args):
     config_data.update(client_data)
     overrides.update(config_data)
     if not os.path.exists(inputfile):
-        error(f"File {inputfile} not found")
+        error(f"Input file {inputfile} not found")
         sys.exit(1)
     renderfile = baseconfig.process_inputfile(plan, inputfile, overrides=overrides, ignore=ignore)
     print(renderfile)
@@ -2423,7 +2423,7 @@ def create_plandata(args):
     config_data['config_type'] = config_data.get('config_type', 'kvm')
     overrides.update(config_data)
     if not os.path.exists(inputfile):
-        error(f"File {inputfile} not found")
+        error(f"Input file {inputfile} not found")
         sys.exit(1)
     results = config.plan(plan, inputfile=inputfile, overrides=overrides, onlyassets=True, pre=pre)
     if results.get('assets'):

@@ -148,7 +148,7 @@ def create(config, plandir, cluster, overrides):
     elif os.path.exists(pub_key):
         data['pub_key'] = open(pub_key).read().strip()
     else:
-        error(f"File {pub_key} not found")
+        error(f"Publickey file {pub_key} not found")
         sys.exit(1)
     ingress_ip = data.get('ingress_ip')
     cidr = '192.168.122.0/24'

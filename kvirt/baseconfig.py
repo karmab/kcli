@@ -776,16 +776,16 @@ class Kbaseconfig:
         try:
             templ = env.get_template(os.path.basename(inputfile))
         except TemplateNotFound:
-            error("File %s not found" % os.path.basename(inputfile))
+            error(f"Input file {os.path.basename(inputfile)} not found")
             sys.exit(1)
         except TemplateSyntaxError as e:
-            error(f"Error rendering line {e.lineno} of file {e.filename}. Got: {e.message}")
+            error(f"Error rendering line {e.lineno} of input file {e.filename}. Got: {e.message}")
             sys.exit(1)
         except TemplateError as e:
-            error(f"Error rendering file {inputfile}. Got: {e.message}")
+            error(f"Error rendering input file {inputfile}. Got: {e.message}")
             sys.exit(1)
         except UnicodeDecodeError as e:
-            error(f"Error rendering file {inputfile}. Got: {e}")
+            error(f"Error rendering input file {inputfile}. Got: {e}")
             sys.exit(1)
         parameters = {}
         if os.path.exists(f"{basedir}/{plan}_default.yml"):
@@ -1579,7 +1579,7 @@ class Kbaseconfig:
                 if origin in directories:
                     continue
                 elif not os.path.exists(origin):
-                    msg = f"File {origin} not found"
+                    msg = f"Origin file {origin} not found"
                     error(msg)
                     return {'result': 'failure', 'reason': msg}
                 elif os.path.isdir(origin):

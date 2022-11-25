@@ -835,13 +835,13 @@ class Kconfig(Kbaseconfig):
                         templ = env.get_template(os.path.basename(script))
                         scriptentries = templ.render(overrides)
                     except TemplateNotFound:
-                        error("File %s not found" % os.path.basename(script))
+                        error(f"Script file {os.path.basename(script)} not found")
                         sys.exit(1)
                     except TemplateSyntaxError as e:
-                        msg = "Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message)
+                        msg = f"Error rendering line {e.lineno} of script file {e.filename}. Got: {e.message}"
                         return {'result': 'failure', 'reason': msg}
                     except TemplateError as e:
-                        msg = "Error rendering script %s. Got: %s" % (script, e.message)
+                        msg = f"Error rendering script file {script}. Got: {e.message}"
                         return {'result': 'failure', 'reason': msg}
                     scriptlines = [line.strip() for line in scriptentries.split('\n') if line.strip() != '']
                     if scriptlines:

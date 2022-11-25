@@ -591,7 +591,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     elif os.path.exists(pub_key):
         data['pub_key'] = open(pub_key).read().strip()
     else:
-        error(f"File {pub_key} not found")
+        error(f"Publickey file {pub_key} not found")
         sys.exit(1)
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if os.path.exists(clusterdir):

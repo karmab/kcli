@@ -450,13 +450,13 @@ def process_files(files=[], overrides={}, remediate=False):
                     fileentries = templ.render(file_overrides)
                     content = [line.rstrip() for line in fileentries.split('\n')]
                 except TemplateNotFound:
-                    error(f"File {os.path.basename(origin)} not found")
+                    error(f"Origin file {os.path.basename(origin)} not found")
                     sys.exit(1)
                 except TemplateSyntaxError as e:
-                    error(f"Error rendering line {e.lineno} of file {e.filename}. Got: {e.message}")
+                    error(f"Error rendering line {e.lineno} of origin file {e.filename}. Got: {e.message}")
                     sys.exit(1)
                 except TemplateError as e:
-                    error(f"Error rendering file {origin}. Got: {e.message}")
+                    error(f"Error rendering origin file {origin}. Got: {e.message}")
                     sys.exit(1)
                 except UnicodeDecodeError:
                     warning(f"Interpreting file {origin} as binary")
@@ -534,13 +534,13 @@ def process_ignition_files(files=[], overrides={}):
                     fileentries = templ.render(overrides)
                     content = [line for line in fileentries.split('\n')]
                 except TemplateNotFound:
-                    error(f"File {os.path.basename(origin)} not found")
+                    error(f"Origin file {os.path.basename(origin)} not found")
                     sys.exit(1)
                 except TemplateSyntaxError as e:
-                    error(f"Error rendering line {e.lineno} of file {e.filename}. Got: {e.message}")
+                    error(f"Error rendering line {e.lineno} of origin file {e.filename}. Got: {e.message}")
                     sys.exit(1)
                 except TemplateError as e:
-                    error(f"Error rendering file {origin}. Got: {e.message}")
+                    error(f"Error rendering origin file {origin}. Got: {e.message}")
                     sys.exit(1)
                 except UnicodeDecodeError:
                     warning(f"Interpreting file {origin} as binary")

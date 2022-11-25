@@ -1529,7 +1529,7 @@ def create_pipeline(args):
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     baseconfig = Kconfig(client=args.client, debug=args.debug).baseconfig
     if not kube and not os.path.exists(inputfile):
-        error("File %s not found" % inputfile)
+        error(f"Input file {inputfile} not found")
         return 0
     renderfile = baseconfig.create_pipeline(inputfile, overrides=overrides, kube=kube)
     print(renderfile)
@@ -1556,7 +1556,7 @@ def render_file(args):
     config_data['config_type'] = config_data.get('config_type', 'kvm')
     overrides.update(config_data)
     if not os.path.exists(inputfile):
-        error("File %s not found" % inputfile)
+        error(f"Input file {inputfile} not found")
         return 0
     renderfile = baseconfig.process_inputfile(plan, inputfile, overrides=overrides, onfly=False, ignore=ignore)
     print(renderfile)
