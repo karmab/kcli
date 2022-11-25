@@ -33,7 +33,8 @@ def scale(config, plandir, cluster, overrides):
     client = config.client
     pprint(f"Scaling on client {client}")
     image = data.get('image')
-    data['ubuntu'] = True if 'ubuntu' in image.lower() or [entry for entry in UBUNTUS if entry in image] else False
+    if 'ubuntu' not in data:
+        data['ubuntu'] = 'ubuntu' in image.lower() or [entry for entry in UBUNTUS if entry in image]
     os.chdir(os.path.expanduser("~/.kcli"))
     for role in ['masters', 'workers']:
         overrides = data.copy()
@@ -126,6 +127,7 @@ def create(config, plandir, cluster, overrides):
             installparam['plan'] = plan
             installparam['kubetype'] = 'generic'
             installparam['image'] = image
+            installparam['ubuntu'] = 'ubuntu' in image.lower() or [entry for entry in UBUNTUS if entry in image]
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     result = config.plan(plan, inputfile=f'{plandir}/bootstrap.yml', overrides=data)
     if result['result'] != "success":
