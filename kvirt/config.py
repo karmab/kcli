@@ -2884,12 +2884,21 @@ class Kconfig(Kbaseconfig):
             pprint(f"Updating vms with {role} role")
             plandata = self.plan(plan, inputfile=f'{plandir}/{role}.yml', overrides=overrides, update=True)
             planvms.extend(plandata['newvms'] + plandata['existingvms'])
+        os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
+        binary = 'oc' if _type == 'openshift' else 'kubectl'
+        nodescmd = f'{binary} get node -o name'
+        nodes = [n.strip().replace('node/', '') for n in os.popen(nodescmd).readlines()]
         for vm in self.k.list():
             vmname = vm['name']
             vmplan = vm.get('plan', 'kvirt')
             if vmplan == plan and vmname not in planvms:
                 pprint(f"Deleting vm {vmname}")
                 self.k.delete(vmname)
+                for node in nodes:
+                    if node.split('.')[0] == vmname:
+                        pprint(f"Deleting node {node} from your cluster")
+                        call(f'{binary} delete node {node}', shell=True)
+                        break
 
     def expose_plan(self, plan, inputfile=None, overrides={}, port=9000):
         inputfile = os.path.expanduser(inputfile)
