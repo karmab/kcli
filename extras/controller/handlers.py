@@ -192,14 +192,18 @@ def update_cluster(meta, spec, status, namespace, logger, **kwargs):
     config.update_kube(cluster, kubetype, overrides=data)
 
 
-@kopf.timer(DOMAIN, VERSION, 'clusters', interval=60, field='spec.noautoscale', value=kopf.ABSENT)
+@kopf.timer(DOMAIN, VERSION, 'clusters', interval=60, field='spec.autoscale', value=kopf.PRESENT)
 def autoscale_cluster(meta, spec, patch, status, namespace, logger, **kwargs):
     cluster = meta['name']
     os.environ['PATH'] += ":/"
     kubeconfig = f"{os.environ['HOME']}/.kcli/clusters/{cluster}/auth/kubeconfig"
-    threshold = int(os.environ.get('THRESHOLD', 10000))
+    threshold = int(os.environ.get('AUTOSCALE_MAXIMUM', 10000))
     if threshold > 9999:
-        pprint(f"Skipping autoscaling checks for cluster {cluster} as per threshold {threshold}")
+        pprint(f"Skipping autoscaling up checks for cluster {cluster} as per threshold {threshold}")
+        return
+    idle = int(os.environ.get('AUTOSCALE_MINIMUM', 9))
+    if idle < 10:
+        pprint(f"Skipping autoscaling down checks for cluster {cluster} as per idle {idle}")
         return
     workers = spec.get('workers', 0)
     if which('kubectl') is None:
@@ -224,3 +228,23 @@ def autoscale_cluster(meta, spec, patch, status, namespace, logger, **kwargs):
         data['workers'] = workers
         patch.spec['workers'] = workers
         return f"Scaling cluster {cluster} to {workers} workers"
+    nodes = {}
+    currentcmd = "kubectl get pod -A -o yaml"
+    allpods = yaml.safe_load(os.popen(currentcmd).read())['items']
+    for pod in allpods:
+        nodename = pod['spec']['nodeName']
+        status = pod['status']['phase']
+        if status != 'Running':
+            continue
+        if nodename not in nodes:
+            nodes[nodename] = 1
+        else:
+            nodes[nodename] += 1
+    todelete = []
+    for node in nodes:
+        if nodes[node] < idle:
+            todelete.append(node)
+    if todelete:
+        config = Kconfig(quiet=True)
+        for node in todelete:
+            config.k.delete(node)

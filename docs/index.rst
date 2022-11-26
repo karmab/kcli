@@ -2096,15 +2096,25 @@ Once a cluster is deployed successfully, you can retrieve its kubeconfig from it
 autoscaling
 ^^^^^^^^^^^
 
-Clusters are configured for autoscaling out of the box.
+You can enable autoscaling for a given cluster by setting ``autoscale`` to any value in its spec.
+
+Scaling up
+''''''''''
 
 When more than a given threshold of pods can’t be scheduled, one more worker will be added to the cluster and the autoscaling will pause until it appears as a new ready node.
 
-the threshold is configured as an env variable THRESHOLD provided during the deployment of the controller.
+This threshold is configured as an env variable AUTOSCALE_MAXIMUM provided during the deployment of the controller, which defaults to 20
 
-Its default value is 20. Setting the threshold to any value higher than 9999 effectively disables the feature.
+Setting the threshold to any value higher than 9999 effectively disables the feature.
 
-If you don’t want a given cluster to autoscale, set ``noautoscale`` to anything in its spec.
+Scaling down
+''''''''''''
+
+If the number of running pods for a given worker node goes below a minimum value, the node will be removed.
+
+The minimum is configured as an env variable AUTOSCALE_MINIMUM provided during the deployment of the controller, which defaults to 20
+
+Setting the minimum to any value below 10 effectively disables the feature.
 
 Using Jenkins
 =============

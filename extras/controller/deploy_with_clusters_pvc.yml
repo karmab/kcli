@@ -49,8 +49,10 @@ spec:
       - name: kcli-controller
         image: quay.io/karmab/kcli-controller:latest
         env:
-        - name: THRESHOLD
+        - name: AUTOSCALE_MAXIMUM
           value: "9999"
+        - name: AUTOSCALE_MINIMUM
+          value: "9"
         volumeMounts:
         - mountPath: /root/.kcli
           name: kcli-conf
