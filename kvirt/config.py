@@ -1448,6 +1448,7 @@ class Kconfig(Kbaseconfig):
             deleteclients.update(self.extraclients)
         elif vmclients:
             deleteclients.update({cli: Kconfig(client=cli).k for cli in vmclients if cli != self.client})
+        hypershift = False
         for hypervisor in deleteclients:
             c = deleteclients[hypervisor]
             for vm in sorted(c.list(), key=lambda x: x['name']):
@@ -1491,7 +1492,6 @@ class Kconfig(Kbaseconfig):
                         clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
                         if os.path.exists(clusterdir):
                             ipi = False
-                            hypershift = False
                             parametersfile = f"{clusterdir}/kcli_parameters.yml"
                             if os.path.exists(parametersfile):
                                 with open(parametersfile) as f:
@@ -1506,17 +1506,20 @@ class Kconfig(Kbaseconfig):
                                 if ipi:
                                     os.environ["PATH"] += ":%s" % os.getcwd()
                                     call(f'openshift-install --dir={clusterdir} destroy cluster', shell=True)
-                                if hypershift:
-                                    if 'KUBECONFIG' not in os.environ:
-                                        warning("KUBECONFIG not set...Using .kube/config instead")
-                                    call(f'oc delete -f {clusterdir}/autoapprovercron.yml', shell=True)
-                                    call(f'oc delete -f {clusterdir}/assets.yaml', shell=True)
-                                    if 'baremetal_iso' in clusterdata or 'baremetal_hosts' in clusterdata:
-                                        call('oc -n default delete all -l app=httpd-kcli', shell=True)
-                                        call('oc -n default delete svc httpd-kcli-svc', shell=True)
-                                        call('oc -n default delete pvc httpd-kcli-pvc', shell=True)
-                            pprint(f"Deleting directory {clusterdir}")
-                            rmtree(clusterdir, ignore_errors=True)
+                            if not hypershift:
+                                pprint(f"Deleting directory {clusterdir}")
+                                rmtree(clusterdir, ignore_errors=True)
+        if hypershift:
+            if 'KUBECONFIG' not in os.environ:
+                warning("KUBECONFIG not set...Using .kube/config instead")
+            call(f'oc delete -f {clusterdir}/autoapprovercron.yml', shell=True)
+            call(f'oc delete -f {clusterdir}/assets.yaml', shell=True)
+            if 'baremetal_iso' in clusterdata or 'baremetal_hosts' in clusterdata:
+                call('oc -n default delete all -l app=httpd-kcli', shell=True)
+                call('oc -n default delete svc httpd-kcli-svc', shell=True)
+                call('oc -n default delete pvc httpd-kcli-pvc', shell=True)
+            pprint(f"Deleting directory {clusterdir}")
+            rmtree(clusterdir, ignore_errors=True)
         if container:
             cont = Kcontainerconfig(self, client=self.containerclient).cont
             for conta in sorted(cont.list_containers(k)):
