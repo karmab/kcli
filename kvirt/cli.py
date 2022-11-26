@@ -600,7 +600,7 @@ def sync_config(args):
     """Sync config"""
     network = args.net
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-    result = baseconfig.import_in_kube(network=network)
+    result = baseconfig.import_in_kube(network=network, secure=args.secure)
     sys.exit(0 if result['result'] == 'success' else 1)
 
 
@@ -4787,6 +4787,7 @@ def cli():
                                                    aliases=['kube', 'cluster'])
     configsync_parser.add_argument('-n', '--net', help='Network where to create entry. Defaults to default',
                                    default='default', metavar='NET')
+    configsync_parser.add_argument('-s', '--secure', action='store_true', help='Generate dedicated ssh keypair')
     configsync_parser.set_defaults(func=sync_config)
 
     hostsync_desc = 'Sync Host'

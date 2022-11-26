@@ -1661,7 +1661,7 @@ class Kbaseconfig:
                     pprint(keywords_info[keyword].strip())
         return 0
 
-    def import_in_kube(self, network='default', dest=None):
+    def import_in_kube(self, network='default', dest=None, secure=False):
         kubectl = 'oc' if which('oc') is not None else 'kubectl'
         kubectl += ' -n kcli-infra'
         plandir = os.path.dirname(common.get_kubectl.__code__.co_filename)
@@ -1678,13 +1678,22 @@ class Kbaseconfig:
                 kcliconf = self.process_inputfile('xxx', f"{plandir}/local_kcli_conf.j2", overrides=kvm_overrides)
                 with open(f"{oriconf}/config.yml", 'w') as _f:
                     _f.write(kcliconf)
-                sshcmd = f"ssh-keygen -t rsa -N '' -f {orissh}/id_rsa > /dev/null"
-                call(sshcmd, shell=True)
-                authorized_keys_file = os.path.expanduser('~/.ssh/authorized_keys')
-                file_mode = 'a' if os.path.exists(authorized_keys_file) else 'w'
-                with open(authorized_keys_file, file_mode) as f:
-                    publickey = open(f"{orissh}/id_rsa.pub").read().strip()
-                    f.write(f"\n{publickey}")
+                if secure:
+                    sshcmd = f"ssh-keygen -t rsa -N '' -f {orissh}/id_rsa > /dev/null"
+                    call(sshcmd, shell=True)
+                    authorized_keys_file = os.path.expanduser('~/.ssh/authorized_keys')
+                    file_mode = 'a' if os.path.exists(authorized_keys_file) else 'w'
+                    with open(authorized_keys_file, file_mode) as f:
+                        publickey = open(f"{orissh}/id_rsa.pub").read().strip()
+                        f.write(f"\n{publickey}")
+                else:
+                    publickeyfile = common.get_ssh_pub_key()
+                    if publickeyfile is not None:
+                        identityfile = publickeyfile.replace('.pub', '')
+                        copy2(publickeyfile, orissh)
+                        copy2(identityfile, orissh)
+                    else:
+                        warning("No public key was found")
             elif self.type == 'kubevirt':
                 oriconf = f"{tmpdir}/.kcli"
                 os.mkdir(oriconf)

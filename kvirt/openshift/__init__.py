@@ -1018,7 +1018,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                                                                                       'client': config.client})
             with open(f"{clusterdir}/openshift/99-bootstrap-deletion.yaml", 'w') as _f:
                 _f.write(deletionfile)
-            config.import_in_kube(network=network, dest=f"{clusterdir}/openshift")
+            config.import_in_kube(network=network, dest=f"{clusterdir}/openshift", secure=True)
             deletionfile2 = f"{plandir}/99-bootstrap-deletion-2.yaml"
             deletionfile2 = config.process_inputfile(cluster, deletionfile2, overrides={'registry': registry,
                                                                                         'arch_tag': arch_tag})
