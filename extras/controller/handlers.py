@@ -198,8 +198,8 @@ def autoscale_cluster(meta, spec, patch, status, namespace, logger, **kwargs):
     if threshold > 9999:
         pprint(f"Skipping autoscaling up checks for cluster {cluster} as per threshold {threshold}")
         return
-    idle = int(os.environ.get('AUTOSCALE_MINIMUM', 9))
-    if idle < 10:
+    idle = int(os.environ.get('AUTOSCALE_MINIMUM', 2))
+    if idle < 1:
         pprint(f"Skipping autoscaling down checks for cluster {cluster} as per idle {idle}")
         return
     workers = spec.get('workers', 0)

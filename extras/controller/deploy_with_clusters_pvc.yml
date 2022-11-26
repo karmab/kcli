@@ -52,7 +52,7 @@ spec:
         - name: AUTOSCALE_MAXIMUM
           value: "9999"
         - name: AUTOSCALE_MINIMUM
-          value: "9"
+          value: "2"
         volumeMounts:
         - mountPath: /root/.kcli
           name: kcli-conf
