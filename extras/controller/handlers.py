@@ -195,6 +195,12 @@ def update_cluster(meta, spec, status, namespace, logger, **kwargs):
 def autoscale(meta, spec, status, namespace, logger, **kwargs):
     threshold = int(os.environ.get('THRESHOLD', 20))
     cluster = meta['name']
+    workers = spec.get('workers', 0)
+    currentcmd = "kubectl get node --selector='!node-role.kubernetes.io/master,node-role.kubernetes.io/worker' -o yaml"
+    currentnodes = yaml.safe_load(os.popen(currentcmd).read())['items']
+    if len(currentnodes) > threshold:
+        pprint(f"Ongoing scaling operation on cluster {cluster}")
+        return
     pprint(f"Checking non scheduled pods count on cluster {cluster}")
     if which('kubectl') is None:
         get_kubectl()
@@ -203,9 +209,11 @@ def autoscale(meta, spec, status, namespace, logger, **kwargs):
     pendingcmd = "kubectl get pods --field-selector=status.phase=Pending -o yaml"
     pending_pods = yaml.safe_load(os.popen(pendingcmd).read())['items']
     if len(pending_pods) > threshold:
-        pprint(f"Triggering scale up of cluster {cluster}")
+        pprint(f"Triggering scaling up for cluster {cluster}")
         data = dict(spec)
-        data['workers'] = spec.get('workers', 0) + 1
+        workers += 1
+        data['workers'] = workers
         kubetype = spec.get('type', 'generic')
         config = Kconfig(quiet=True)
         config.scale_kube(cluster, kubetype, overrides=data)
+        return "Scaling cluster to {workers} workers"
