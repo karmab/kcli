@@ -191,8 +191,9 @@ def update_cluster(meta, spec, status, namespace, logger, **kwargs):
     config.update_kube(cluster, kubetype, overrides=data)
 
 
-@kopf.timer(DOMAIN, VERSION, 'clusters', interval=30)
+@kopf.timer(DOMAIN, VERSION, 'clusters', interval=60)
 def autoscale_cluster(meta, spec, patch, status, namespace, logger, **kwargs):
+    os.chdir(os.path.expanduser("~"))
     cluster = meta['name']
     kubeconfig = f"{os.environ['HOME']}/.kcli/clusters/{cluster}/auth/kubeconfig"
     threshold = int(os.environ.get('THRESHOLD', 10000))
@@ -200,9 +201,9 @@ def autoscale_cluster(meta, spec, patch, status, namespace, logger, **kwargs):
         pprint(f"Skipping autoscaling checks for cluster {cluster} as per threshold {threshold}")
         return
     workers = spec.get('workers', 0)
-    if which('kubectl') is None:
+    if which('kubectl') is None and not os.path.exists('kubectl'):
         get_kubectl()
-        os.environ['PATH'] += ":."
+    os.environ['PATH'] += ":."
     if not os.path.exists(kubeconfig):
         pprint(f"Skipping autoscaling checks on {cluster} as kubeconfig is missing")
         return
@@ -210,10 +211,10 @@ def autoscale_cluster(meta, spec, patch, status, namespace, logger, **kwargs):
     os.environ['KUBECONFIG'] = kubeconfig
     currentcmd = "kubectl get node --selector='!node-role.kubernetes.io/master,node-role.kubernetes.io/worker' -o yaml"
     currentnodes = yaml.safe_load(os.popen(currentcmd).read())['items']
-    if len(currentnodes) > threshold:
+    if len(currentnodes) != workers:
         pprint(f"Ongoing scaling operation on cluster {cluster}")
         return
-    pendingcmd = "kubectl get pods --field-selector=status.phase=Pending -o yaml"
+    pendingcmd = "kubectl get pods -A --field-selector=status.phase=Pending -o yaml"
     pending_pods = yaml.safe_load(os.popen(pendingcmd).read())['items']
     if len(pending_pods) > threshold:
         pprint(f"Triggering scaling up for cluster {cluster} as there are {pending_pods} pending pods")
@@ -221,4 +222,4 @@ def autoscale_cluster(meta, spec, patch, status, namespace, logger, **kwargs):
         workers += 1
         data['workers'] = workers
         patch.spec['workers'] = workers
-        return "Scaling cluster {cluster} to {workers} workers"
+        return f"Scaling cluster {cluster} to {workers} workers"

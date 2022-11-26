@@ -100,5 +100,6 @@ spec:
 Once a cluster is deployed successfully, you can retrieve its kubeconfig from it status
 
 ```
-kubectl get cluster $CLUSTER -o jsonpath='{.status.create_cluster.kubeconfig}' | base64 -d
+CLUSTER=hendrix
+kubectl get cluster $CLUSTER -o jsonpath='{.status.create_cluster.kubeconfig}' | base64 -d > kubeconfig.$CLUSTER
 ```

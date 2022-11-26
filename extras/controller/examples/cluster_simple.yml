@@ -4,4 +4,5 @@ metadata:
   name: hendrix
 spec:
   masters: 1
+  workers: 0
   api_ip: 192.168.122.252
