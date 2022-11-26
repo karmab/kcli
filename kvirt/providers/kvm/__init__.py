@@ -2452,8 +2452,8 @@ class Kvirt(object):
         xml = vm.XMLDesc(0)
         root = ET.fromstring(xml)
         if not vm:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         if vm.isActive() == 1:
             warning("Machine up. Change will only appear upon next reboot")
         metadata = root.find('metadata')
@@ -2482,9 +2482,9 @@ class Kvirt(object):
             kmeta = ET.Element("kvirt:%s" % metatype)
             kroot.append(kmeta)
         if append and kmeta.text is not None:
-            kmeta.text += ",%s" % metavalue
+            kmeta.text += f",{str(metavalue)}"
         else:
-            kmeta.text = metavalue
+            kmeta.text = str(metavalue)
         newxml = ET.tostring(root)
         conn.defineXML(newxml.decode("utf-8"))
         return {'result': 'success'}
