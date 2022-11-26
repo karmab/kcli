@@ -1958,7 +1958,7 @@ Setting the threshold to any value higher than 9999 effectively disables the fea
 
 ##### Scaling down
 
-If the number of running pods for a given worker node goes below a minimum value, the node will be removed.
+If the number of running pods for a given worker node goes below a minimum value, the cluster will be scaled down by one worker.
 
 The minimum is configured as an env variable AUTOSCALE_MINIMUM provided during the deployment of the controller, which defaults to 2
 

@@ -222,7 +222,7 @@ def autoscale_cluster(meta, spec, patch, status, namespace, logger, **kwargs):
         workers += 1
         data['workers'] = workers
         patch.spec['workers'] = workers
-        return f"Scaling cluster {cluster} to {workers} workers"
+        return f"Scaling up cluster {cluster} to {workers} workers"
     nodes = {}
     currentcmd = "kubectl get pod -A -o yaml"
     allpods = yaml.safe_load(os.popen(currentcmd).read())['items']
@@ -235,11 +235,12 @@ def autoscale_cluster(meta, spec, patch, status, namespace, logger, **kwargs):
             nodes[nodename] = 1
         else:
             nodes[nodename] += 1
-    todelete = []
+    todelete = 0
     for node in nodes:
         if nodes[node] < idle:
-            todelete.append(node)
-    if todelete:
-        config = Kconfig(quiet=True)
-        for node in todelete:
-            config.k.delete(node)
+            todelete += 1
+    if todelete > 0:
+        pprint(f"Triggering scaling down for cluster {cluster} as there are {todelete} idle nodes")
+        data = dict(spec)
+        patch.spec['workers'] = workers - todelete
+        return f"Scaling down cluster {cluster} to {workers} workers"
