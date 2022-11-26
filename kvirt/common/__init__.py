@@ -1762,6 +1762,7 @@ def ignition_version(image):
 
 
 def get_coreos_installer(version='latest', arch=None):
+    pprint("Downloading coreos-installer in current directory")
     if arch is None and os.path.exists('/Users'):
         error("coreos-installer isn't available on Mac")
         sys.exit(1)
@@ -1779,6 +1780,7 @@ def get_coreos_installer(version='latest', arch=None):
 
 def get_kubectl(version='latest'):
     SYSTEM = 'darwin' if os.path.exists('/Users') else 'linux'
+    pprint("Downloading kubectl in current directory")
     if version == 'latest':
         r = urlopen("https://storage.googleapis.com/kubernetes-release/release/stable.txt")
         version = str(r.read(), 'utf-8').strip()
@@ -1815,6 +1817,7 @@ def get_oc(version='latest', macosx=False):
 
 def get_helm(version='latest'):
     SYSTEM = 'darwin' if os.path.exists('/Users') else 'linux'
+    pprint("Downloading helm in current directory")
     if version == 'latest':
         version = jinjafilters.github_version('helm/helm')
     elif not version.startswith('v'):
@@ -1827,6 +1830,7 @@ def get_helm(version='latest'):
 
 def get_tasty(version='latest'):
     SYSTEM = 'darwin' if os.path.exists('/Users') else 'linux'
+    pprint("Downloading tasty in current directory")
     if version == 'latest':
         version = jinjafilters.github_version('karmab/tasty')
     elif not version.startswith('v'):
