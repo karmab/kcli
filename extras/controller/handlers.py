@@ -193,7 +193,10 @@ def update_cluster(meta, spec, status, namespace, logger, **kwargs):
 
 @kopf.timer(DOMAIN, VERSION, 'clusters', interval=30)
 def autoscale(meta, spec, status, namespace, logger, **kwargs):
-    threshold = int(os.environ.get('THRESHOLD', 20))
+    threshold = int(os.environ.get('THRESHOLD', 10000))
+    if threshold > 9999:
+        pprint("Skipping autoscaling checks")
+        return
     cluster = meta['name']
     workers = spec.get('workers', 0)
     currentcmd = "kubectl get node --selector='!node-role.kubernetes.io/master,node-role.kubernetes.io/worker' -o yaml"
