@@ -4,9 +4,10 @@ import base64
 from kubernetes import client, watch
 import kopf
 from kvirt.config import Kconfig
-from kvirt.common import pprint, error
+from kvirt.common import pprint, error, get_kubectl
 import os
 from re import sub
+from shutil import which
 import threading
 import yaml
 
@@ -188,3 +189,23 @@ def update_cluster(meta, spec, status, namespace, logger, **kwargs):
     data['plan'] = plan or cluster
     config = Kconfig(quiet=True)
     config.update_kube(cluster, kubetype, overrides=data)
+
+
+@kopf.timer(DOMAIN, VERSION, 'clusters', interval=30)
+def autoscale(meta, spec, status, namespace, logger, **kwargs):
+    threshold = int(os.environ.get('THRESHOLD', 20))
+    cluster = meta['name']
+    pprint(f"Checking non scheduled pods count on cluster {cluster}")
+    if which('kubectl') is None:
+        get_kubectl()
+        os.environ['PATH'] += ":."
+    os.environ['KUBECONFIG'] = f"{os.environ['HOME']}/.kcli/clusters/{cluster}/auth/kubeconfig"
+    pendingcmd = "kubectl get pods --field-selector=status.phase=Pending -o yaml"
+    pending_pods = yaml.safe_load(os.popen(pendingcmd).read())['items']
+    if len(pending_pods) > threshold:
+        pprint(f"Triggering scale up of cluster {cluster}")
+        data = dict(spec)
+        data['workers'] = spec.get('workers', 0) + 1
+        kubetype = spec.get('type', 'generic')
+        config = Kconfig(quiet=True)
+        config.scale_kube(cluster, kubetype, overrides=data)
