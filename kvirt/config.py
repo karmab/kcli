@@ -2853,6 +2853,7 @@ class Kconfig(Kbaseconfig):
 
     def update_kube(self, cluster, _type, overrides={}, plan=None):
         overrides['skip_files_remediation'] = True
+        overrides['scale'] = True
         clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
         planvms = []
         if plan is None:
