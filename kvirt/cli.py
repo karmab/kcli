@@ -1739,7 +1739,7 @@ def update_kube(args):
     """Update kube"""
     cluster = args.cluster
     _type = args.type
-    data = {'kube': cluster, 'kubetype': _type}
+    data = {'kube': cluster, 'kubetype': _type, 'scale': True}
     plan = None
     paramfile = args.paramfile
     if container_mode():

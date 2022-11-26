@@ -1225,9 +1225,12 @@ class Kconfig(Kbaseconfig):
                 pprint(f"Updating {key} of vm {name} to {value}...")
                 k.update_metadata(name, key, value)
         if overrides.get('files', []):
-            newfiles = overrides['files']
-            pprint(f"Remediating files of {name}")
-            self.remediate_files(name, newfiles, overrides)
+            if overrides.get('skip_files_remediation', False):
+                pprint(f"Skipping Remediation files of {name}")
+            else:
+                newfiles = overrides['files']
+                pprint(f"Remediating files of {name}")
+                self.remediate_files(name, newfiles, overrides)
         pool = overrides.get('pool')
         if self.type == 'kvm' and pool is not None:
             k.update_pool(name, pool)
@@ -2100,14 +2103,14 @@ class Kconfig(Kbaseconfig):
                                 for net in range(len(currentnets), len(profile['nets']), -1):
                                     interface = f"eth{net -1}"
                                     z.delete_nic(name, interface)
-                        if self.remediate_files(name, profile.get('files', []), overrides):
+                        if overrides.get('skip_files_remediation', False):
+                            pprint(f"Skipping Remediation files of {name}")
+                        elif self.remediate_files(name, profile.get('files', []), overrides, inputdir=inputdir):
                             updated = True
                         if not updated:
                             pprint(f"{name} skipped on {vmclient}!")
                     existingvms.append(name)
                     continue
-                # cmds = default_cmds + customprofile.get('cmds', []) + profile.get('cmds', [])
-                # ips = profile.get('ips')
                 sharedkey = profile.get('sharedkey', self.sharedkey)
                 if sharedkey:
                     vmcounter += 1
@@ -2843,6 +2846,8 @@ class Kconfig(Kbaseconfig):
         openshift.scale(self, plandir, cluster, overrides)
 
     def update_kube(self, cluster, _type, overrides={}, plan=None):
+        overrides['skip_files_remediation'] = True
+        clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
         planvms = []
         if plan is None:
             plan = cluster
@@ -2855,12 +2860,18 @@ class Kconfig(Kbaseconfig):
                                                                                        'workers']
         else:
             plandir = os.path.dirname(openshift.create.__code__.co_filename)
-            if self.type in ['aws', 'gcp']:
-                roles = ['cloud_masters', 'cloud_workers']
-            else:
-                roles = ['masters', 'workers']
+            roles = ['cloud_masters', 'cloud_workers'] if self.type in ['aws', 'gcp'] else ['masters', 'workers']
         if overrides.get('workers', 0) == 0:
             del roles[-1]
+        if os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
+            data = {'cluster': cluster, 'kube': cluster, 'kubetype': _type}
+            with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
+                installparam = yaml.safe_load(install)
+                data.update(installparam)
+                plan = installparam.get('plan', plan)
+            data.update(overrides)
+            with open(f"{clusterdir}/kcli_parameters.yml", 'w') as paramfile:
+                yaml.safe_dump(data, paramfile)
         os.chdir(os.path.expanduser("~/.kcli"))
         for role in roles:
             pprint(f"Updating vms with {role} role")
@@ -3180,11 +3191,28 @@ class Kconfig(Kbaseconfig):
             elif content is None:
                 return {'result': 'failure', 'reason': f"Content of file {path} not found for {name}"}
 
-    def remediate_files(self, name, newfiles, overrides={}):
+    def prepend_input_dir(self, newfiles, inputdir):
+        results = []
+        for fic in newfiles:
+            if isinstance(fic, str) and not os.path.isabs(fic):
+                new_fic = f"{inputdir}/{fic}"
+            elif isinstance(fic, dict) and 'origin' in fic and not os.path.isabs(os.path.expanduser(fic['origin'])):
+                new_fic = fic.copy()
+                new_fic['origin'] = f"{inputdir}/{fic['origin']}"
+            else:
+                new_fic = fic
+            results.append(new_fic)
+        return results
+
+    def remediate_files(self, name, newfiles, overrides={}, inputdir='.'):
         updated_files = []
         ip, vmport = _ssh_credentials(self.k, name)[1:]
+        if inputdir != '.':
+            newfiles = self.prepend_input_dir(newfiles, inputdir)
         self.parse_files(name, newfiles)
-        data = process_files(files=newfiles, overrides=overrides, remediate=True)
+        overrides_files = overrides.copy()
+        overrides_files['name'] = name
+        data = process_files(files=newfiles, overrides=overrides_files, remediate=True)
         datadirs = {}
         with TemporaryDirectory() as tmpdir:
             for index, entry in enumerate(data):
