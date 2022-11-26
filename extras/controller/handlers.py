@@ -193,28 +193,32 @@ def update_cluster(meta, spec, status, namespace, logger, **kwargs):
 
 @kopf.timer(DOMAIN, VERSION, 'clusters', interval=30)
 def autoscale(meta, spec, patch, status, namespace, logger, **kwargs):
+    cluster = meta['name']
+    kubeconfig = f"{os.environ['HOME']}/.kcli/clusters/{cluster}/auth/kubeconfig"
     threshold = int(os.environ.get('THRESHOLD', 10000))
     if threshold > 9999:
-        pprint("Skipping autoscaling checks")
+        pprint(f"Skipping autoscaling checks for cluster {cluster} as per threshold {threshold}")
         return
-    cluster = meta['name']
     workers = spec.get('workers', 0)
+    if which('kubectl') is None:
+        get_kubectl()
+        os.environ['PATH'] += ":."
+    if not os.path.exists(kubeconfig):
+        pprint(f"Skipping autoscaling checks on {cluster} as kubeconfig is missing")
+        return
+    pprint(f"Checking non scheduled pods count on cluster {cluster}")
+    os.environ['KUBECONFIG'] = kubeconfig
     currentcmd = "kubectl get node --selector='!node-role.kubernetes.io/master,node-role.kubernetes.io/worker' -o yaml"
     currentnodes = yaml.safe_load(os.popen(currentcmd).read())['items']
     if len(currentnodes) > threshold:
         pprint(f"Ongoing scaling operation on cluster {cluster}")
         return
-    pprint(f"Checking non scheduled pods count on cluster {cluster}")
-    if which('kubectl') is None:
-        get_kubectl()
-        os.environ['PATH'] += ":."
-    os.environ['KUBECONFIG'] = f"{os.environ['HOME']}/.kcli/clusters/{cluster}/auth/kubeconfig"
     pendingcmd = "kubectl get pods --field-selector=status.phase=Pending -o yaml"
     pending_pods = yaml.safe_load(os.popen(pendingcmd).read())['items']
     if len(pending_pods) > threshold:
-        pprint(f"Triggering scaling up for cluster {cluster}")
+        pprint(f"Triggering scaling up for cluster {cluster} as there are {pending_pods} pending pods")
         data = dict(spec)
         workers += 1
         data['workers'] = workers
         patch.spec['workers'] = workers
-        return "Scaling cluster to {workers} workers"
+        return "Scaling cluster {cluster} to {workers} workers"
