@@ -2769,17 +2769,9 @@ class Kconfig(Kbaseconfig):
                 if ipi:
                     os.environ["PATH"] += ":%s" % os.getcwd()
                     call(f'openshift-install --dir={clusterdir} destroy cluster', shell=True)
-                if hypershift:
-                    if 'KUBECONFIG' not in os.environ:
-                        warning("KUBECONFIG not set...Using .kube/config instead")
-                    call(f'oc delete -f {clusterdir}/autoapprovercron.yml', shell=True)
-                    call(f'oc delete -f {clusterdir}/assets.yaml', shell=True)
-                    if 'baremetal_iso' in clusterdata or 'baremetal_hosts' in clusterdata:
-                        call('oc -n default delete all -l app=httpd-kcli', shell=True)
-                        call('oc -n default delete svc httpd-kcli-svc', shell=True)
-                        call('oc -n default delete pvc httpd-kcli-pvc', shell=True)
-            pprint(f"Deleting directory {clusterdir}")
-            rmtree(clusterdir)
+            if not hypershift:
+                pprint(f"Deleting directory {clusterdir}")
+                rmtree(clusterdir)
             if ipi:
                 return
         deleteclients = {self.client: k}
@@ -2818,6 +2810,17 @@ class Kconfig(Kbaseconfig):
             z = Kconfig(client=dnsclient).k
             z.delete_dns(f"api.{cluster}", domain)
             z.delete_dns(f"apps.{cluster}", domain)
+        if hypershift:
+            if 'KUBECONFIG' not in os.environ:
+                warning("KUBECONFIG not set...Using .kube/config instead")
+            call(f'oc delete -f {clusterdir}/autoapprovercron.yml', shell=True)
+            call(f'oc delete -f {clusterdir}/assets.yaml', shell=True)
+            if 'baremetal_iso' in clusterdata or 'baremetal_hosts' in clusterdata:
+                call('oc -n default delete all -l app=httpd-kcli', shell=True)
+                call('oc -n default delete svc httpd-kcli-svc', shell=True)
+                call('oc -n default delete pvc httpd-kcli-pvc', shell=True)
+            pprint(f"Deleting directory {clusterdir}")
+            rmtree(clusterdir)
 
     def scale_kube(self, cluster, kubetype, overrides={}):
         if kubetype == 'generic':
