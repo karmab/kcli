@@ -192,10 +192,10 @@ def update_cluster(meta, spec, status, namespace, logger, **kwargs):
     config.update_kube(cluster, kubetype, overrides=data)
 
 
-@kopf.timer(DOMAIN, VERSION, 'clusters', interval=60)
+@kopf.timer(DOMAIN, VERSION, 'clusters', interval=60, field='spec.noautoscale', value=kopf.ABSENT)
 def autoscale_cluster(meta, spec, patch, status, namespace, logger, **kwargs):
-    os.environ['PATH'] += ":/"
     cluster = meta['name']
+    os.environ['PATH'] += ":/"
     kubeconfig = f"{os.environ['HOME']}/.kcli/clusters/{cluster}/auth/kubeconfig"
     threshold = int(os.environ.get('THRESHOLD', 10000))
     if threshold > 9999:

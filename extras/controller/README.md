@@ -103,3 +103,15 @@ Once a cluster is deployed successfully, you can retrieve its kubeconfig from it
 CLUSTER=hendrix
 kubectl get cluster $CLUSTER -o jsonpath='{.status.create_cluster.kubeconfig}' | base64 -d > kubeconfig.$CLUSTER
 ```
+
+#### autoscaling
+
+Clusters are configured for autoscaling out of the box.
+
+When more than a given threshold of pods can't be scheduled, one more worker will be added to the cluster and the autoscaling will pause until it appears as a new ready node.
+
+the threshold is configured as an env variable THRESHOLD provided during the deployment of the controller.
+
+Its default value is 20. Setting the threshold to any value higher than 9999 effectively disables the feature.
+
+If you don't want a given cluster to autoscale, set `noautoscale` to anything in its spec.
