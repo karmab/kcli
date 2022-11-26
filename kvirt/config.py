@@ -2885,7 +2885,7 @@ class Kconfig(Kbaseconfig):
             plandata = self.plan(plan, inputfile=f'{plandir}/{role}.yml', overrides=overrides, update=True)
             planvms.extend(plandata['newvms'] + plandata['existingvms'])
         os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
-        binary = 'oc' if _type == 'openshift' else 'kubectl'
+        binary = 'oc' if which('oc') is None else 'kubectl'
         nodescmd = f'{binary} get node -o name'
         nodes = [n.strip().replace('node/', '') for n in os.popen(nodescmd).readlines()]
         for vm in self.k.list():

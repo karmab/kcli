@@ -32,6 +32,13 @@ def watch_configmaps():
 
 
 @kopf.on.resume(DOMAIN, VERSION, 'vms')
+def prepare_environment(spec, **_):
+    os.environ['PATH'] += ":/"
+    if which('kubectl') is None:
+        get_kubectl()
+
+
+@kopf.on.resume(DOMAIN, VERSION, 'vms')
 def handle_configmaps(spec, **_):
     threading.Thread(target=watch_configmaps).start()
 
@@ -166,7 +173,6 @@ def delete_cluster(meta, spec, namespace, logger, **kwargs):
 
 @kopf.on.update(DOMAIN, VERSION, 'clusters')
 def update_cluster(meta, spec, status, namespace, logger, **kwargs):
-    os.environ['PATH'] += ":/"
     cluster = meta.get('name')
     pprint(f"Handling update on cluster {cluster}")
     overrides = dict(spec)
@@ -196,7 +202,6 @@ def update_cluster(meta, spec, status, namespace, logger, **kwargs):
 @kopf.timer(DOMAIN, VERSION, 'clusters', interval=60, field='spec.autoscale', value=kopf.PRESENT)
 def autoscale_cluster(meta, spec, patch, status, namespace, logger, **kwargs):
     cluster = meta['name']
-    os.environ['PATH'] += ":/"
     kubeconfig = f"{os.environ['HOME']}/.kcli/clusters/{cluster}/auth/kubeconfig"
     threshold = int(os.environ.get('AUTOSCALE_MAXIMUM', 10000))
     if threshold > 9999:
@@ -207,8 +212,6 @@ def autoscale_cluster(meta, spec, patch, status, namespace, logger, **kwargs):
         pprint(f"Skipping autoscaling down checks for cluster {cluster} as per idle {idle}")
         return
     workers = spec.get('workers', 0)
-    if which('kubectl') is None:
-        get_kubectl()
     if not os.path.exists(kubeconfig):
         pprint(f"Skipping autoscaling checks on {cluster} as kubeconfig is missing")
         return
