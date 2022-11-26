@@ -1447,10 +1447,9 @@ def update_vm(args):
     """Update ip, memory or numcpus"""
     overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    k = config.k
     names = [common.get_lastvm(config.client)] if not args.names else args.names
     for name in names:
-        k.update_vm(name, overrides)
+        config.update_vm(name, overrides)
 
 
 def create_vmdisk(args):
