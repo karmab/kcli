@@ -1011,6 +1011,10 @@ class Kbaseconfig:
         self.profiles[profile] = overrides
         if not os.path.exists(rootdir):
             os.makedirs(rootdir)
+        if not os.access(rootdir, os.W_OK):
+            msg = f"Can't write in {rootdir}"
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
         if os.path.exists(path) and not os.access(path, os.W_OK):
             msg = f"Can't write in {path}"
             error(msg)
