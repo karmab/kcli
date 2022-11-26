@@ -217,7 +217,7 @@ def autoscale_cluster(meta, spec, patch, status, namespace, logger, **kwargs):
     pendingcmd = "kubectl get pods -A --field-selector=status.phase=Pending -o yaml"
     pending_pods = yaml.safe_load(os.popen(pendingcmd).read())['items']
     if len(pending_pods) > threshold:
-        pprint(f"Triggering scaling up for cluster {cluster} as there are {pending_pods} pending pods")
+        pprint(f"Triggering scaling up for cluster {cluster} as there are {len(pending_pods)} pending pods")
         data = dict(spec)
         workers += 1
         data['workers'] = workers
