@@ -192,7 +192,7 @@ def update_cluster(meta, spec, status, namespace, logger, **kwargs):
 
 
 @kopf.timer(DOMAIN, VERSION, 'clusters', interval=30)
-def autoscale(meta, spec, status, namespace, logger, **kwargs):
+def autoscale(meta, spec, patch, status, namespace, logger, **kwargs):
     threshold = int(os.environ.get('THRESHOLD', 10000))
     if threshold > 9999:
         pprint("Skipping autoscaling checks")
@@ -216,7 +216,5 @@ def autoscale(meta, spec, status, namespace, logger, **kwargs):
         data = dict(spec)
         workers += 1
         data['workers'] = workers
-        kubetype = spec.get('type', 'generic')
-        config = Kconfig(quiet=True)
-        config.scale_kube(cluster, kubetype, overrides=data)
+        patch.spec['workers'] = workers
         return "Scaling cluster to {workers} workers"
