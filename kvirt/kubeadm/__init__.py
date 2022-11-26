@@ -17,7 +17,7 @@ cloudplatforms = ['aws', 'gcp', 'ibm']
 
 def scale(config, plandir, cluster, overrides):
     plan = cluster
-    data = {'cluster': cluster, 'nip': False, 'kube': cluster, 'kubetype': 'generic', 'image': 'centos8stream'}
+    data = {'cluster': cluster, 'sslip': False, 'kube': cluster, 'kubetype': 'generic', 'image': 'centos8stream'}
     data['basedir'] = '/workdir' if container_mode() else '.'
     cluster = data.get('cluster')
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
@@ -48,7 +48,7 @@ def scale(config, plandir, cluster, overrides):
 def create(config, plandir, cluster, overrides):
     platform = config.type
     k = config.k
-    data = {'kubetype': 'generic', 'nip': False, 'domain': 'karmalabs.corp', 'wait_ready': False}
+    data = {'kubetype': 'generic', 'sslip': False, 'domain': 'karmalabs.corp', 'wait_ready': False}
     data.update(overrides)
     if 'keys' not in overrides and get_ssh_pub_key() is None:
         error("No usable public key found, which is required for the deployment. Create one using ssh-keygen")
@@ -65,7 +65,7 @@ def create(config, plandir, cluster, overrides):
         error("multiple masters require cloud_lb to be set to True")
         sys.exit(1)
     network = data.get('network', 'default')
-    nip = data['nip']
+    sslip = data['sslip']
     api_ip = data.get('api_ip')
     if platform in cloudplatforms:
         domain = data.get('domain', 'karmalabs.corp')
@@ -89,8 +89,8 @@ def create(config, plandir, cluster, overrides):
             error("You need to define api_ip in your parameters file")
             sys.exit(1)
     if platform not in cloudplatforms:
-        if nip:
-            data['domain'] = f"{api_ip}.nip.io"
+        if sslip:
+            data['domain'] = '%s.sslip.io' % api_ip.replace('.', '-').replace(':', '-')
         if data.get('virtual_router_id') is None:
             data['virtual_router_id'] = hash(data['cluster']) % 254 + 1
         virtual_router_id = data['virtual_router_id']

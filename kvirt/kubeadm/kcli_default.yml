@@ -7,7 +7,7 @@ info: |
     nfs can be set to deploy an initial set of pvcs on the first master node.
     You can deploy extra apps with the apps array and for each of the supported apps, indicate with the variable
     ${app}_version which version to target.
-    You can set nip to true to use $api_ip.nip.io as base domain.
+    You can set sslip to true to use $api_ip.sslip.io as base domain.
     container engine defaults to containerd, but crio or docker can be specified instead.
     for crio, engine_version can be indicated to force a specific version.
 image: centos8stream
@@ -49,7 +49,7 @@ extra_worker_disks: []
 extra_networks: []
 extra_master_networks: []
 extra_worker_networks: []
-nip: false
+sslip: false
 autolabel: true
 virtual_router_id:
 registry: false
