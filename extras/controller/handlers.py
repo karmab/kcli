@@ -209,8 +209,9 @@ def autoscale_cluster(meta, spec, patch, status, namespace, logger, **kwargs):
         return
     pprint(f"Checking non scheduled pods count on cluster {cluster}")
     os.environ['KUBECONFIG'] = kubeconfig
-    currentcmd = "kubectl get node --selector='!node-role.kubernetes.io/master,node-role.kubernetes.io/worker' -o yaml"
-    currentnodes = yaml.safe_load(os.popen(currentcmd).read())['items']
+    currentcmd = "kubectl get node --selector='!node-role.kubernetes.io/master,node-role.kubernetes.io/worker'"
+    currentcmd += " | grep ' Ready'"
+    currentnodes = os.popen(currentcmd).readlines()
     if len(currentnodes) != workers:
         pprint(f"Ongoing scaling operation on cluster {cluster}")
         return
