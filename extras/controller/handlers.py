@@ -166,6 +166,7 @@ def delete_cluster(meta, spec, namespace, logger, **kwargs):
 
 @kopf.on.update(DOMAIN, VERSION, 'clusters')
 def update_cluster(meta, spec, status, namespace, logger, **kwargs):
+    os.environ['PATH'] += ":/"
     cluster = meta.get('name')
     pprint(f"Handling update on cluster {cluster}")
     overrides = dict(spec)
