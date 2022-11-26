@@ -4,7 +4,8 @@ import base64
 from kubernetes import client, watch
 import kopf
 from kvirt.config import Kconfig
-from kvirt.common import pprint, error, get_kubectl
+from kvirt.common import get_kubectl
+from logging import info as pprint, error
 import os
 from re import sub
 from shutil import which
@@ -193,7 +194,7 @@ def update_cluster(meta, spec, status, namespace, logger, **kwargs):
 
 @kopf.timer(DOMAIN, VERSION, 'clusters', interval=60)
 def autoscale_cluster(meta, spec, patch, status, namespace, logger, **kwargs):
-    os.chdir(os.path.expanduser("~"))
+    os.environ['PATH'] += ":/"
     cluster = meta['name']
     kubeconfig = f"{os.environ['HOME']}/.kcli/clusters/{cluster}/auth/kubeconfig"
     threshold = int(os.environ.get('THRESHOLD', 10000))
@@ -201,9 +202,8 @@ def autoscale_cluster(meta, spec, patch, status, namespace, logger, **kwargs):
         pprint(f"Skipping autoscaling checks for cluster {cluster} as per threshold {threshold}")
         return
     workers = spec.get('workers', 0)
-    if which('kubectl') is None and not os.path.exists('kubectl'):
+    if which('kubectl') is None:
         get_kubectl()
-    os.environ['PATH'] += ":."
     if not os.path.exists(kubeconfig):
         pprint(f"Skipping autoscaling checks on {cluster} as kubeconfig is missing")
         return
