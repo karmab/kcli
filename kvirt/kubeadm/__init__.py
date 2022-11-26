@@ -65,7 +65,6 @@ def create(config, plandir, cluster, overrides):
         error("multiple masters require cloud_lb to be set to True")
         sys.exit(1)
     network = data.get('network', 'default')
-    sslip = data['sslip']
     api_ip = data.get('api_ip')
     if platform in cloudplatforms:
         domain = data.get('domain', 'karmalabs.corp')
@@ -89,8 +88,6 @@ def create(config, plandir, cluster, overrides):
             error("You need to define api_ip in your parameters file")
             sys.exit(1)
     if platform not in cloudplatforms:
-        if sslip:
-            data['domain'] = '%s.sslip.io' % api_ip.replace('.', '-').replace(':', '-')
         if data.get('virtual_router_id') is None:
             data['virtual_router_id'] = hash(data['cluster']) % 254 + 1
         virtual_router_id = data['virtual_router_id']

@@ -1,7 +1,13 @@
 # set global variable
 CIDR="10.244.0.0/16"
 
-API_IP={{ "api.%s.%s" % (cluster, domain) if config_type in ['aws', 'gcp', 'ibm'] else api_ip }}
+{% if config_type in ['aws', 'gcp', 'ibm'] %}
+API_IP={{ "api.%s.%s" % (cluster, domain) }}
+{% elif sslip|default(False) %}
+API_IP={{ "api.%s.sslip.io" % api_ip.replace('.', '-').replace(':', '-') }}
+{% else %}
+API_IP={{ api_ip }}
+{% endif %}
 
 # initialize cluster
 kubeadm certs certificate-key > /root/certificate-key.txt
