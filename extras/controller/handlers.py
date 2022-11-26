@@ -4,11 +4,9 @@ import base64
 from kubernetes import client, watch
 import kopf
 from kvirt.config import Kconfig
-from kvirt.common import get_kubectl
 from logging import info as pprint, error
 import os
 from re import sub
-from shutil import which
 import threading
 import yaml
 
@@ -29,13 +27,6 @@ def watch_configmaps():
             if current_config_map_name in config_maps and event["type"] == 'MODIFIED':
                 print("Exiting as configmap was changed")
                 os._exit(1)
-
-
-@kopf.on.resume(DOMAIN, VERSION, 'vms')
-def prepare_environment(spec, **_):
-    os.environ['PATH'] += ":/"
-    if which('kubectl') is None:
-        get_kubectl()
 
 
 @kopf.on.resume(DOMAIN, VERSION, 'vms')
