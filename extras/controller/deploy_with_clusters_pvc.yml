@@ -50,7 +50,7 @@ spec:
         image: quay.io/karmab/kcli-controller:latest
         env:
         - name: THRESHOLD
-          value: 9999
+          value: "9999"
         volumeMounts:
         - mountPath: /root/.kcli
           name: kcli-conf

@@ -23,8 +23,8 @@ kubectl create configmap ssh-config --from-file=$HOME/.ssh
 Then deploy the crds and the controller:
 
 ```
-kubectl create -f crd.yml
-kubectl create -f deploy.yml
+kubectl create -f https://raw.githubusercontent.com/karmab/kcli/master/extras/controller/crd.yml
+kubectl create -f https://raw.githubusercontent.com/karmab/kcli/master/extras/controller/deploy.yml
 ```
 
 Two variants `deploy_with_clusters_pvc.yml` and `deploy_with_workdir_pvc.yml` can be used to deploy additional pvcs for storing cluster deployment content or plan data
