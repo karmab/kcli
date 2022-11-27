@@ -377,6 +377,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'baremetal_web': True,
             'baremetal_web_dir': '/var/www/html',
             'baremetal_web_port': 80,
+            'baremetal_cidr': None,
             'sushy': False,
             'coredns': True,
             'mdns': True,
@@ -939,6 +940,14 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                                            overrides={'role': role, 'ntp_data': ntp_data})
             with open(f"{clusterdir}/manifests/99-chrony-{role}.yaml", 'w') as f:
                 f.write(ntp)
+    baremetal_cidr = data.get('baremetal_cidr')
+    if not ipi and baremetal_cidr is not None:
+        node_ip_hint = f"KUBELET_NODEIP_HINT={baremetal_cidr.split('/')[0]}"
+        for role in ['master', 'worker']:
+            hint = config.process_inputfile(cluster, f"{plandir}/10-node-ip-hint.yaml",
+                                            overrides={'role': role, 'node_ip_hint': node_ip_hint})
+            with open(f"{clusterdir}/manifests/99-chrony-{role}.yaml", 'w') as f:
+                f.write(hint)
     manifestsdir = pwd_path("manifests")
     if os.path.exists(manifestsdir) and os.path.isdir(manifestsdir):
         for f in glob(f"{manifestsdir}/*.y*ml"):

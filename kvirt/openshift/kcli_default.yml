@@ -11,6 +11,7 @@ info: |
     You can deploy extra apps with the apps array and for each of the supported app, indicate with the variable
     ${app}_version which version to target (instead of latest).
     You can also define a list of scripts to launch at the end with the postscripts array.
+    You can force the kubernetes ip of the nodes (and the vips allocation) to use a specific network by setting baremetal_cidr
 ipi: false
 version: stable
 tag: '4.11'
@@ -136,3 +137,4 @@ kubeadmin_password:
 retries: 2
 sslip: false
 pub_key:
+baremetal_cidr:

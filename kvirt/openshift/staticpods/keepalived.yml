@@ -36,7 +36,7 @@ spec:
         NIC=br-ex
         {% endif %}
         {% else %}
-        NIC=$(ip r | grep default | head -1 | sed 's/.*dev \(.*\) \(proto\|metric\).*/\1/')
+        NIC=$(ip r | grep {{ baremetal_cidr or 'default' }} | head -1 | sed 's/.*dev \(.*\) \(proto\|metric\).*/\1/')
         NETMASK=$(ip -o -f inet addr show | awk '/scope global/ {print $4}' | head -1 | cut -d'/' -f2)
         {% endif %}
         sed -i "s@NIC@$NIC@" /etc/keepalived/keepalived.conf

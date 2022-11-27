@@ -33,7 +33,7 @@ spec:
       NIC=$(ip -6 r | grep -v lo | head -1 | awk '{print $3}')
       IP=$(ip -6 -o addr show $NIC | awk '{print $4}' | cut -d "/" -f 1 | head -1)
       {% else %}
-      NIC=$(ip r | grep default | head -1 | awk '{print $5}')
+      NIC=$(ip r | grep {{ baremetal_cidr or 'default' }} | head -1 | awk '{print $5}')
       IP=$(ip -o addr show $NIC | awk '{print $4}' | cut -d "/" -f 1 | head -1)
       {% endif %}
       sed -i "s@None@$IP@" /etc/coredns/Corefile
