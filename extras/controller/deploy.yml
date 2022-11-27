@@ -1,4 +1,16 @@
 apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kcli-clusters
+  namespace: kcli-infra
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Mi
+---
+apiVersion: v1
 kind: Namespace
 metadata:
   name: kcli-infra
@@ -36,11 +48,22 @@ spec:
       containers:
       - name: kcli-controller
         image: quay.io/karmab/kcli-controller:latest
+        env:
+        - name: AUTOSCALE_MAXIMUM
+          value: "9999"
+        - name: AUTOSCALE_MINIMUM
+          value: "2"
+        - name: PYTHONUNBUFFERED
+          value: "true"
         volumeMounts:
         - mountPath: /root/.kcli
           name: kcli-conf
+        - mountPath: /root/.kcli/clusters
+          name: kcli-clusters
         - mountPath: /root/.ssh
           name: kcli-ssh
+        - name: kcli-workdir
+          mountPath: /workdir
       volumes:
       - configMap:
           defaultMode: 0700
@@ -50,3 +73,9 @@ spec:
           defaultMode: 0700
           name: kcli-ssh
         name: kcli-ssh
+      - name: kcli-clusters
+        persistentVolumeClaim:
+          claimName: kcli-clusters
+      - name: kcli-workdir
+        persistentVolumeClaim:
+          claimName: kcli-workdir

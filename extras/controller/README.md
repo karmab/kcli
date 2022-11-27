@@ -4,6 +4,7 @@ There is a controller leveraging kcli and using vm, plan and clusters crds to cr
 
 - a running kubernetes/openshift cluster and KUBECONFIG env variable pointing to it (or simply .kube/config)
 - some infrastructure supported by kcli running somewhere and the corresponding credentials.
+- storage to hold two pvcs (one from plan files data and the other for clusters data)
 
 ## Deploying
 
@@ -20,18 +21,15 @@ kubectl create configmap kcli-config --from-file=$HOME/.kcli
 kubectl create configmap ssh-config --from-file=$HOME/.ssh
 ```
 
-Then deploy the crds and the controller:
+Then deploy the controller:
 
 ```
-kubectl create -f https://raw.githubusercontent.com/karmab/kcli/master/extras/controller/crd.yml
 kubectl create -f https://raw.githubusercontent.com/karmab/kcli/master/extras/controller/deploy.yml
 ```
 
-Two variants `deploy_with_clusters_pvc.yml` and `deploy_with_workdir_pvc.yml` can be used to deploy additional pvcs for storing cluster deployment content or plan data
-
 ## How to use
 
-The directory [extras/controller/examples](https://github.com/karmab/kcli/tree/master/extras/controller/examples) contains different examples of vm, plan an cluster crs.
+The directory [extras/controller/examples](https://github.com/karmab/kcli/tree/master/extras/controller/examples) contains different examples of vm, plan and cluster CRs.
 
 Here are some sample ones for each type to get you started
 

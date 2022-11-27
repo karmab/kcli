@@ -30,7 +30,8 @@ def watch_configmaps():
 
 
 @kopf.on.resume(DOMAIN, VERSION, 'vms')
-def handle_configmaps(spec, **_):
+def startup(spec, **_):
+    os.popen("kubectl apply -f /crd.yml").read()
     threading.Thread(target=watch_configmaps).start()
 
 
