@@ -38,7 +38,7 @@ def handle_configmaps(spec, **_):
 def create_vm(meta, spec, status, namespace, logger, **kwargs):
     name = meta.get('name')
     pprint(f"Handling create on vm {name}")
-    config = Kconfig(quiet=True)
+    config = Kconfig(client=spec.get('client'), quiet=True)
     exists = config.k.exists(name)
     if not exists:
         profile = spec.get("profile") or spec.get('image') or name
@@ -60,7 +60,7 @@ def delete_vm(meta, spec, namespace, logger, **kwargs):
     pprint(f"Handling delete on vm {name}")
     keep = spec.get("keep", False)
     if not keep:
-        config = Kconfig(quiet=True)
+        config = Kconfig(client=spec.get('client'), quiet=True)
         exists = config.k.exists(name)
         if exists:
             pprint(f"Deleting vm {name}")
@@ -71,7 +71,7 @@ def delete_vm(meta, spec, namespace, logger, **kwargs):
 def update_vm(meta, spec, namespace, old, new, diff, **kwargs):
     name = meta.get('name')
     pprint(f"Handling update on vm {name}")
-    config = Kconfig(quiet=True)
+    config = Kconfig(client=spec.get('client'), quiet=True)
     for entry in diff:
         if entry[0] not in ['add', 'change']:
             continue
@@ -96,7 +96,7 @@ def create_plan(meta, spec, status, namespace, logger, **kwargs):
         return {'result': 'failure', 'reason': 'missing plan spec'}
     else:
         inputstring = sub(r"origin:( *)", r"origin:\1%s/" % workdir, inputstring)
-        config = Kconfig(quiet=True)
+        config = Kconfig(client=spec.get('client'), quiet=True)
         return config.plan(plan, inputstring=inputstring, overrides=overrides)
 
 
@@ -105,7 +105,7 @@ def delete_plan(meta, spec, namespace, logger, **kwargs):
     plan = meta.get('name')
     if spec.get('plan') is not None:
         pprint(f"Handling delete on plan {plan}")
-        config = Kconfig(quiet=True)
+        config = Kconfig(client=spec.get('client'), quiet=True)
         return config.delete_plan(plan)
 
 
@@ -121,7 +121,7 @@ def update_plan(meta, spec, status, namespace, logger, **kwargs):
         return {'result': 'failure', 'reason': 'missing plan spec'}
     else:
         inputstring = sub(r"origin:( *)", r"origin:\1%s/" % workdir, inputstring)
-        config = Kconfig(quiet=True)
+        config = Kconfig(client=spec.get('client'), quiet=True)
         return config.plan(plan, inputstring=inputstring, overrides=overrides, update=True)
 
 
@@ -130,7 +130,7 @@ def create_cluster(meta, spec, status, namespace, logger, **kwargs):
     cluster = meta.get('name')
     clusterdir = f"{os.environ['HOME']}/.kcli/clusters/{cluster}"
     pprint(f"Handling create on cluster {cluster}")
-    config = Kconfig(quiet=True)
+    config = Kconfig(client=spec.get('client'), quiet=True)
     if os.path.exists(clusterdir):
         return {'importedcluster': True}
     pprint(f"Creating cluster {cluster}")
@@ -157,7 +157,7 @@ def create_cluster(meta, spec, status, namespace, logger, **kwargs):
 def delete_cluster(meta, spec, namespace, logger, **kwargs):
     cluster = meta.get('name')
     pprint(f"Handling delete on cluster {cluster}")
-    config = Kconfig(quiet=True)
+    config = Kconfig(client=spec.get('client'), quiet=True)
     pprint(f"Deleting cluster {cluster}")
     return config.delete_kube(cluster)
 
@@ -186,7 +186,7 @@ def update_cluster(meta, spec, status, namespace, logger, **kwargs):
             plan = installparam.get('plan', plan)
     data.update(overrides)
     data['plan'] = plan or cluster
-    config = Kconfig(quiet=True)
+    config = Kconfig(client=spec.get('client'), quiet=True)
     config.update_kube(cluster, kubetype, overrides=data)
 
 
