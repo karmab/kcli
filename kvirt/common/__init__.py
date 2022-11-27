@@ -1228,7 +1228,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
             nicpath = f"/etc/sysconfig/network-scripts/ifcfg-{nicname}"
             if noconf is not None:
                 netdata = f"DEVICE={nicname}\nNAME={nicname}\nONBOOT=no"
-            elif ip is not None and netmask is not None and gateway is not None:
+            elif ip is not None and netmask is not None:
                 if index == 0 and default_gateway is not None:
                     gateway = default_gateway
                 if str(netmask).isnumeric():
@@ -1236,21 +1236,28 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
                 else:
                     cidr = netmask_to_prefix(netmask)
                 netdata = f"DEVICE={nicname}\nNAME={nicname}\nONBOOT=yes\nNM_CONTROLLED=yes\n"
-                netdata += f"BOOTPROTO=static\nIPADDR={ip}\nPREFIX={cidr}\nGATEWAY={gateway}\n"
+                netdata += f"BOOTPROTO=static\nIPADDR={ip}\nPREFIX={cidr}"
+                if gateway is not None:
+                    netdata += f"GATEWAY={gateway}\n"
                 dns = net.get('dns', gateway)
-                if isinstance(dns, str):
-                    dns = dns.split(',')
-                for index, dnsentry in enumerate(dns):
-                    netdata += f"DNS{index +1 }={dnsentry}\n"
+                if dns is not None:
+                    if isinstance(dns, str):
+                        dns = dns.split(',')
+                    for index, dnsentry in enumerate(dns):
+                        netdata += f"DNS{index +1 }={dnsentry}\n"
                 if vlan is not None:
                     netdata += "VLAN=yes\n"
                 if isinstance(vips, list) and vips:
                     for vip in vips:
-                        netdata += f"[Network]\nAddress={vip}/{netmask}\nGateway={gateway}\n"
+                        netdata += f"[Network]\nAddress={vip}/{netmask}\n"
+                        if gateway is not None:
+                            netdata += f"GATEWAY={gateway}\n"
                 if image is not None and ('fcos' in image or 'fedora-coreos' in image):
                     netdata = f"[connection]\ntype=ethernet\ninterface-name={nicname}\n"
                     netdata += f"match-device=interface-name:{nicname}\n\n"
-                    netdata += f"[ipv4]\nmethod=manual\naddresses={ip}/{netmask}\ngateway={gateway}\n"
+                    netdata += f"[ipv4]\nmethod=manual\naddresses={ip}/{netmask}\n"
+                    if gateway is not None:
+                        netdata += f"gateway={gateway}\n"
                     nicpath = f"/etc/NetworkManager/system-connections/{nicname}.nmconnection"
                     static_nic_file_mode = '0600'
             if netdata != '':
