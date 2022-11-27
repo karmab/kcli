@@ -8,7 +8,19 @@ spec:
   - ReadWriteOnce
   resources:
     requests:
-      storage: 10Mi
+      storage: 5Mi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kcli-workdir
+  namespace: kcli-infra
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Mi
 ---
 apiVersion: v1
 kind: Namespace

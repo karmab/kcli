@@ -29,9 +29,15 @@ def watch_configmaps():
                 os._exit(1)
 
 
-@kopf.on.resume(DOMAIN, VERSION, 'vms')
-def startup(spec, **_):
+@kopf.on.startup()
+def startup(logger, **kwargs):
+    pprint("Injecting crds if needed")
     os.popen("kubectl apply -f /crd.yml").read()
+
+
+@kopf.on.resume(DOMAIN, VERSION, 'vms')
+def handle_configmaps(spec, **_):
+    pprint("Starting configmap watches in the background")
     threading.Thread(target=watch_configmaps).start()
 
 
