@@ -55,3 +55,6 @@
     origin: config.hcl.templ
 {% endif %}
 {% endfor %}
+{% if files %}
+ extra_files: {{ files }}
+{% endif %}

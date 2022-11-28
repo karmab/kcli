@@ -743,6 +743,8 @@ class Kconfig(Kbaseconfig):
         dnsclient = profile.get('dnsclient', overrides.get('dnsclient', default_dnsclient))
         scripts = common.remove_duplicates(default_scripts + profile.get('scripts', []))
         files = profile.get('files', default_files)
+        extra_files = profile.get('extra_files') or overrides.get('extra_files') or []
+        files.extend(extra_files)
         result = self.parse_files(name, files, basedir, onfly)
         if result is not None:
             return result
@@ -934,12 +936,8 @@ class Kconfig(Kbaseconfig):
                 privatekey = open(privatekeyfile).read().strip()
                 publickey = open(publickeyfile).read().strip()
                 warning(f"Injecting private key for {name}")
-                if files:
-                    files.append({'path': '/root/.ssh/id_rsa', 'content': privatekey})
-                    files.append({'path': '/root/.ssh/id_rsa.pub', 'content': publickey})
-                else:
-                    files = [{'path': '/root/.ssh/id_rsa', 'content': privatekey},
-                             {'path': '/root/.ssh/id_rsa.pub', 'content': publickey}]
+                files.append({'path': '/root/.ssh/id_rsa', 'content': privatekey})
+                files.append({'path': '/root/.ssh/id_rsa.pub', 'content': publickey})
                 if self.host in ['127.0.0.1', 'localhost']:
                     authorized_keys_file = os.path.expanduser('~/.ssh/authorized_keys')
                     found = False

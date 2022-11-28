@@ -355,6 +355,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'version': 'stable',
             'macosx': False,
             'upstream': False,
+            'files': [],
             'fips': False,
             'apps': [],
             'minimal': False,

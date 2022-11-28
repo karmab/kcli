@@ -139,3 +139,4 @@ sslip: false
 pub_key:
 baremetal_cidr:
 manifests: manifests
+files: []
