@@ -710,7 +710,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                     netrule = rule['nets'][0]
                     if isinstance(netrule, dict) and 'ip' in netrule and 'netmask' in netrule:
                         mac, ip = netrule.get('mac'), netrule['ip']
-                        netmask, gateway = netrule['netmask'], netrule['gateway']
+                        netmask, gateway = netrule['netmask'], netrule.get('gateway')
                         nameserver = netrule.get('dns', gateway)
                         if mac is not None and gateway is not None:
                             macentries.append(f"{mac};{hostname};{ip};{netmask};{gateway};{nameserver}")
