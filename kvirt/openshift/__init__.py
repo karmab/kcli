@@ -362,6 +362,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'kvm_forcestack': False,
             'kvm_openstack': True,
             'ipsec': False,
+            'manifests': 'manifests',
             'sno': False,
             'sno_virtual': False,
             'sno_masters': False,
@@ -948,7 +949,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                                             overrides={'role': role, 'node_ip_hint': node_ip_hint})
             with open(f"{clusterdir}/manifests/99-chrony-{role}.yaml", 'w') as f:
                 f.write(hint)
-    manifestsdir = pwd_path("manifests")
+    manifestsdir = data.get('manifests')
+    manifestsdir = pwd_path(manifestsdir)
     if os.path.exists(manifestsdir) and os.path.isdir(manifestsdir):
         for f in glob(f"{manifestsdir}/*.y*ml"):
             pprint(f"Injecting manifest {f}")
