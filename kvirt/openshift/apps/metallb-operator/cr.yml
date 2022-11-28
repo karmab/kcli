@@ -15,3 +15,12 @@ spec:
   autoAssign: {{ metallb_autoassign }}
   addresses:
     - {{ metallb_range }}
+---
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: {{ metallb_pool }}
+  namespace: openshift-operators
+spec:
+  ipAddressPools:
+  - {{ metallb_pool }}
