@@ -342,8 +342,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     client = config.client
     platform = config.type
     arch = k.get_capabilities()['arch'] if platform == 'kvm' else 'x86_64'
-    arch_tag = 'arm64' if arch in ['aarch64', 'arm64'] else 'latest'
-    overrides['arch_tag'] = arch_tag
     pprint(f"Deploying on client {client}")
     data = {'domain': 'karmalabs.corp',
             'network': 'default',
@@ -733,7 +731,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
         disconnected_plan = f"{plan}-reuse" if disconnected_reuse else plan
         disconnected_overrides = data.copy()
-        disconnected_overrides['arch_tag'] = arch_tag
         disconnected_overrides['kube'] = f"{cluster}-reuse" if disconnected_reuse else cluster
         disconnected_overrides['openshift_version'] = INSTALLER_VERSION
         disconnected_overrides['disconnected_operators_version'] = '.'.join(INSTALLER_VERSION.split('.')[:-1])
@@ -1009,7 +1006,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             continue
         if '99-autoapprovercron-cronjob.yaml' in f:
             registry = disconnected_url if disconnected_url is not None else 'quay.io'
-            cronfile = config.process_inputfile(cluster, f, overrides={'registry': registry, 'arch_tag': arch_tag})
+            cronfile = config.process_inputfile(cluster, f, overrides={'registry': registry})
             with open(f"{clusterdir}/openshift/99-autoapprovercron-cronjob.yaml", 'w') as _f:
                 _f.write(cronfile)
             continue
@@ -1026,14 +1023,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             deletionfile = f"{plandir}/99-bootstrap-deletion.yaml"
             deletionfile = config.process_inputfile(cluster, deletionfile, overrides={'cluster': cluster,
                                                                                       'registry': registry,
-                                                                                      'arch_tag': arch_tag,
                                                                                       'client': config.client})
             with open(f"{clusterdir}/openshift/99-bootstrap-deletion.yaml", 'w') as _f:
                 _f.write(deletionfile)
             config.import_in_kube(network=network, dest=f"{clusterdir}/openshift", secure=True)
             deletionfile2 = f"{plandir}/99-bootstrap-deletion-2.yaml"
-            deletionfile2 = config.process_inputfile(cluster, deletionfile2, overrides={'registry': registry,
-                                                                                        'arch_tag': arch_tag})
+            deletionfile2 = config.process_inputfile(cluster, deletionfile2, overrides={'registry': registry})
             with open(f"{clusterdir}/openshift/99-bootstrap-deletion-2.yaml", 'w') as _f:
                 _f.write(deletionfile2)
         if notify:
@@ -1047,7 +1042,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                                                                   cluster=True)
             notifyfile = f"{plandir}/99-notifications.yaml"
             notifyfile = config.process_inputfile(cluster, notifyfile, overrides={'registry': registry,
-                                                                                  'arch_tag': arch_tag,
                                                                                   'cmds': notifycmds,
                                                                                   'mailcontent': mailcontent})
             with open(f"{clusterdir}/openshift/99-notifications.yaml", 'w') as _f:
@@ -1062,9 +1056,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             else:
                 error(f"Invalid app {a}. Skipping")
         appsfile = f"{plandir}/99-apps.yaml"
-        appsfile = config.process_inputfile(cluster, appsfile, overrides={'registry': registry,
-                                                                          'arch_tag': arch_tag,
-                                                                          'apps': final_apps})
+        appsfile = config.process_inputfile(cluster, appsfile, overrides={'registry': registry, 'apps': final_apps})
         with open(f"{clusterdir}/openshift/99-apps.yaml", 'w') as _f:
             _f.write(appsfile)
         appdir = f"{plandir}/apps"
@@ -1082,7 +1074,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 cr_content = config.process_inputfile(cluster, f"{appdir}/{appname}/cr.yml", overrides=app_data)
                 rendered = config.process_inputfile(cluster, f"{plandir}/99-apps-cr.yaml",
                                                     overrides={'registry': registry,
-                                                               'arch_tag': arch_tag,
                                                                'app': appname,
                                                                'cr_content': cr_content})
                 with open(f"{clusterdir}/openshift/99-apps-{appname}.yaml", 'w') as g:

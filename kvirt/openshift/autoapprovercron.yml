@@ -45,7 +45,7 @@ spec:
               for cert in $(kubectl get csr -o name) ; do
                 kubectl certificate approve $cert
               done
-            image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/karmab/kubectl:{{ arch_tag }}
+            image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/karmab/kubectl:latest
             imagePullPolicy: IfNotPresent
             name: autoapprover
           restartPolicy: OnFailure

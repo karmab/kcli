@@ -41,7 +41,7 @@ spec:
     imagePullPolicy: IfNotPresent
   containers:
   - name: mdns-publish
-    image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/karmab/mdns-publisher:{{ arch_tag }}
+    image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/karmab/mdns-publisher:latest
     args:
     - "--debug"
     resources:
