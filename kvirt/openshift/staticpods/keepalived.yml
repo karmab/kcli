@@ -17,7 +17,7 @@ spec:
   - name: fix-keepalived-conf
     securityContext:
       privileged: true
-    image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/karmab/curl:{{ arch_tag }}
+    image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/karmab/curl:latest
     command:
     - "/bin/sh"
     - "-c"
