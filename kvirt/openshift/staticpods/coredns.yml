@@ -30,11 +30,11 @@ spec:
       sed -i "s@NAMESERVER@$NAMESERVER@" /etc/coredns/Corefile
       {% if sno_dns %}
       {% if ipv6 %}
-      NIC=$(ip -6 r | grep -v lo | head -1 | awk '{print $3}')
-      IP=$(ip -6 -o addr show $NIC | awk '{print $4}' | cut -d "/" -f 1 | head -1)
+      NIC=$(ip -6 r | grep -v lo | head -1 | grep -oP '(?<=dev )[^ ]*')
+      IP=$(ip -o -f inet6 addr show $NIC | head -1 | grep -oP '(?<=inet6 )[^ ]*' | cut -d "/" -f 1)
       {% else %}
-      NIC=$(ip r | grep {{ baremetal_cidr or 'default' }} | head -1 | awk '{print $5}')
-      IP=$(ip -o addr show $NIC | awk '{print $4}' | cut -d "/" -f 1 | head -1)
+      NIC=$(ip r | grep {{ baremetal_cidr or 'default' }} | head -1 | grep -oP '(?<=dev )[^ ]*')
+      IP=$(ip -o -f inet addr show $NIC | head -1 | grep -oP '(?<=inet )[^ ]*' | cut -d "/" -f 1)
       {% endif %}
       sed -i "s@None@$IP@" /etc/coredns/Corefile
       {% endif %}
