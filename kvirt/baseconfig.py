@@ -1278,7 +1278,7 @@ class Kbaseconfig:
             manifestsdata = os.popen(manifestscmd).read().split('\n')
         else:
             header = 'packagemanifest.packages.operators.coreos.com/'
-            results = ['autolabeller', 'users', 'metal3']
+            results = ['autolabeller', 'users', 'metal3', 'nfs']
             manifestscmd = "oc get packagemanifest -n openshift-marketplace -o name"
             manifestsdata = os.popen(manifestscmd).read().split('\n')
         results.extend([entry.replace(header, '') for entry in manifestsdata])
