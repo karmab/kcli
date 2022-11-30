@@ -35,7 +35,10 @@ class Ksphere:
     def __init__(self, host, user, password, datacenter, cluster, debug=False, isofolder=None,
                  filtervms=False, filteruser=False, filtertag=None, category='kcli', basefolder=None, dvs=True,
                  import_network='VM Network'):
-        si = connect.SmartConnect(host=host, port=443, user=user, pwd=password, disableSslCertValidation=True)
+        if hasattr(connect, 'SmartConnectNoSSL'):
+            si = connect.SmartConnectNoSSL(host=host, port=443, user=user, pwd=password)
+        else:
+            si = connect.SmartConnect(host=host, port=443, user=user, pwd=password, disableSslCertValidation=True)
         self.conn = si
         self.si = si
         self.vcip = host
