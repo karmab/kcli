@@ -23,16 +23,18 @@ class Redfish(object):
             self.cdpath = 'CD'
         else:
             self.cdpath = 'Cd'
-        if not url.startswith('http'):
+        try:
+            p = urlparse(url)
+        except:
             if self.model in ['hp', 'hpe', 'supermicro']:
-                self.url = f"https://{url}/redfish/v1/Systems/1"
+                url = f"https://{url}/redfish/v1/Systems/1"
             elif self.model == 'dell':
-                self.url = f"https://{url}/redfish/v1/Systems/System.Embedded.1"
+                url = f"https://{url}/redfish/v1/Systems/System.Embedded.1"
             else:
                 print(f"Invalid url {url}")
                 sys.exit(0)
-        else:
-            self.url = url
+            p = urlparse(url)
+        self.url = url
         if self.debug:
             print(f"Using base url {self.url}")
         self.user = user
@@ -40,7 +42,6 @@ class Redfish(object):
         self.headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
         credentials = base64.b64encode(bytes(f'{user}:{password}', 'ascii')).decode('utf-8')
         self.headers["Authorization"] = f"Basic {credentials}"
-        p = urlparse(self.url)
         self.baseurl = f"{p.scheme}://{p.netloc}"
         self.manager_url = None
         self.context = ssl.create_default_context()
