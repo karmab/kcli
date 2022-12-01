@@ -3141,7 +3141,10 @@ class Kconfig(Kbaseconfig):
         asyncwait = profile.get('asyncwait', False)
         finishfiles = profile.get('finishfiles', [])
         if onlyassets:
-            newassets.append(result['data'])
+            if 'data' in result:
+                newassets.append(result['data'])
+            else:
+                error(result['reason'])
         if not asyncwait:
             return
         elif not start or not cloudinit or profile.get('image') is None:
