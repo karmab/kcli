@@ -12,7 +12,7 @@ from kvirt.examples import kubegenericcreate, kubek3screate, kubeopenshiftcreate
 from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsole, vmexport, niccreate, nicdelete
 from kvirt.examples import disconnectedcreate, appopenshiftcreate, plantemplatecreate, kubehypershiftcreate
 from kvirt.examples import workflowcreate, kubegenericscale, kubek3sscale, kubeopenshiftscale
-from kvirt.examples import changelog, starthosts, stophosts, infohosts
+from kvirt.examples import changelog, starthosts, stophosts, infohosts, ocdownload, openshiftdownload
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
 from kvirt.defaults import IMAGES, VERSION, LOCAL_OPENSHIFT_APPS, SSH_PUB_LOCATIONS
@@ -4140,26 +4140,6 @@ def cli():
     download_subparsers.add_parser('iso', parents=[isodownload_parser], description=isodownload_desc,
                                    help=isodownload_desc)
 
-    okddownload_desc = 'Download Okd Installer'
-    okddownload_parser = argparse.ArgumentParser(add_help=False)
-    okddownload_parser.add_argument('-P', '--param', action='append',
-                                          help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    okddownload_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    okddownload_parser.set_defaults(func=download_okd_installer)
-    download_subparsers.add_parser('okd-installer', parents=[okddownload_parser],
-                                   description=okddownload_desc,
-                                   help=okddownload_desc, aliases=['okd-install'])
-
-    openshiftdownload_desc = 'Download Openshift Installer'
-    openshiftdownload_parser = argparse.ArgumentParser(add_help=False)
-    openshiftdownload_parser.add_argument('-P', '--param', action='append',
-                                          help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    openshiftdownload_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
-    openshiftdownload_parser.set_defaults(func=download_openshift_installer)
-    download_subparsers.add_parser('openshift-installer', parents=[openshiftdownload_parser],
-                                   description=openshiftdownload_desc,
-                                   help=openshiftdownload_desc, aliases=['openshift-install'])
-
     helmdownload_desc = 'Download Helm'
     helmdownload_parser = argparse.ArgumentParser(add_help=False)
     helmdownload_parser.add_argument('-P', '--param', action='append',
@@ -4181,6 +4161,7 @@ def cli():
                                    help=kubectldownload_desc)
 
     ocdownload_desc = 'Download Oc'
+    ocdownload_epilog = f"examples:\n{ocdownload}"
     ocdownload_parser = argparse.ArgumentParser(add_help=False)
     ocdownload_parser.add_argument('-P', '--param', action='append',
                                    help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
@@ -4188,7 +4169,29 @@ def cli():
     ocdownload_parser.set_defaults(func=download_oc)
     download_subparsers.add_parser('oc', parents=[ocdownload_parser],
                                    description=ocdownload_desc,
-                                   help=ocdownload_desc)
+                                   help=ocdownload_desc, epilog=ocdownload_epilog, formatter_class=rawhelp)
+
+    okddownload_desc = 'Download Okd Installer'
+    okddownload_parser = argparse.ArgumentParser(add_help=False)
+    okddownload_parser.add_argument('-P', '--param', action='append',
+                                          help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    okddownload_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    okddownload_parser.set_defaults(func=download_okd_installer)
+    download_subparsers.add_parser('okd-installer', parents=[okddownload_parser],
+                                   description=okddownload_desc,
+                                   help=okddownload_desc, aliases=['okd-install'])
+
+    openshiftdownload_desc = 'Download Openshift Installer'
+    openshiftdownload_epilog = f"examples:\n{openshiftdownload}"
+    openshiftdownload_parser = argparse.ArgumentParser(add_help=False)
+    openshiftdownload_parser.add_argument('-P', '--param', action='append',
+                                          help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    openshiftdownload_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    openshiftdownload_parser.set_defaults(func=download_openshift_installer)
+    download_subparsers.add_parser('openshift-installer', parents=[openshiftdownload_parser],
+                                   description=openshiftdownload_desc,
+                                   help=openshiftdownload_desc, aliases=['openshift-install'],
+                                   epilog=openshiftdownload_epilog, formatter_class=rawhelp)
 
     plandownload_desc = 'Download Plan'
     plandownload_parser = argparse.ArgumentParser(add_help=False)

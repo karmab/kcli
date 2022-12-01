@@ -423,3 +423,29 @@ baremetal_hosts:
 # Report info on a single host
 $ kcli info baremetal-host -P url=http://192.168.122.1:8000/h1 -P user=xx -P password=xx
 """
+
+ocdownload = """# Download 4.11 stable
+$ kcli download oc -P version=stable -P tag=4.11
+
+# Download specific tag
+$ kcli download oc -P version=tag -P tag=4.11.16
+
+# Download nightly
+$ kcli download oc -P version=nightly -P tag=4.12
+
+# Download older version from CI
+$ kcli download oc -P version=ci -P tag=4.10
+"""
+
+openshiftdownload = """# Download 4.11 stable
+$ kcli download openshift-install -P version=stable -P tag=4.11
+
+# Download specific tag
+$ kcli download openshift-install -P version=tag -P tag=4.11.16
+
+# Download nightly
+$ kcli download openshift-install -P version=nightly -P tag=4.12
+
+# Download older version from CI
+$ kcli download openshift-install -P version=ci -P tag=4.10
+"""
