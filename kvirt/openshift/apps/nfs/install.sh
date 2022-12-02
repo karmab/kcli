@@ -8,11 +8,13 @@ export IP={{ nfs_network|local_ip }}
 rpm -qi nfs-utils >/dev/null 2>&1 || dnf -y install nfs-utils
 test ! -f /usr/lib/systemd/system/firewalld.service || systemctl disable --now firewalld
 systemctl enable --now nfs-server
-mkdir $SHARE
-chcon -t svirt_sandbox_file_t $SHARE
-chmod 777 $SHARE
-echo "$SHARE *(rw,no_root_squash)"  >>  /etc/exports
+if [ ! -d $SHARE ] ; then
+ mkdir $SHARE
+ chcon -t svirt_sandbox_file_t $SHARE
+ chmod 777 $SHARE
+ echo "$SHARE *(rw,no_root_squash)"  >>  /etc/exports
 exportfs -r
+fi
 {% else %}
 IP={{ nfs_ip }}
 {% endif %}
