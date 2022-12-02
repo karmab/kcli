@@ -993,7 +993,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         process_postscripts(clusterdir, postscripts)
         sys.exit(run)
     cron_overrides = {'registry': disconnected_url or 'quay.io'}
-    cron_overrides['version'] = 'v1beta' if get_installer_number(INSTALLER_VERSION) < 408 else 'v1'
+    cron_overrides['version'] = 'v1beta1' if get_installer_number(INSTALLER_VERSION) < 408 else 'v1'
     autoapproverdata = config.process_inputfile(cluster, f"{plandir}/autoapprovercron.yml", overrides=cron_overrides)
     with open(f"{clusterdir}/autoapprovercron.yml", 'w') as f:
         f.write(autoapproverdata)
