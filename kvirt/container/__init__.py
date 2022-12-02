@@ -21,8 +21,8 @@ class Kcontainer():
         self.containermode = False
         self.engine = engine
         self.insecure = insecure
-        if self.host == '127.0.0.1' and not which(engine):
-            reason = "executable %s not found in path" % engine
+        if self.host == '127.0.0.1' and which(engine) is None:
+            reason = f"executable {engine} not found in path"
             return {'result': 'failure', 'reason': reason}
         self.engine = engine
         if self.host == '127.0.0.1' and os.path.exists("/i_am_a_container"):
