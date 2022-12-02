@@ -91,6 +91,11 @@ def get_installer_version():
     return INSTALLER_VERSION
 
 
+def get_installer_number(INSTALLER_VERSION):
+    INSTALLER_SPLIT = INSTALLER_VERSION.split('.')[:2]
+    return int(INSTALLER_SPLIT[0]) * 100 + int(INSTALLER_SPLIT[1])
+
+
 def get_release_image():
     RELEASE_IMAGE = os.popen('openshift-install version').readlines()[2].split(" ")[2].strip()
     return RELEASE_IMAGE
@@ -987,9 +992,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         process_apps(config, clusterdir, apps, overrides)
         process_postscripts(clusterdir, postscripts)
         sys.exit(run)
-    autoapprover = config.process_inputfile(cluster, f"{plandir}/autoapprovercron.yml", overrides=data)
+    cron_overrides = {'registry': disconnected_url or 'quay.io'}
+    cron_overrides['version'] = 'v1beta' if get_installer_number(INSTALLER_VERSION) < 408 else 'v1'
+    autoapproverdata = config.process_inputfile(cluster, f"{plandir}/autoapprovercron.yml", overrides=cron_overrides)
     with open(f"{clusterdir}/autoapprovercron.yml", 'w') as f:
-        f.write(autoapprover)
+        f.write(autoapproverdata)
     for f in glob(f"{plandir}/customisation/*.yaml"):
         if '99-ingress-controller.yaml' in f:
             ingressrole = 'master' if workers == 0 or not mdns or kubevirt_api_service else 'worker'
@@ -1005,13 +1012,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 _f.write(ingressconfig)
             continue
         if '99-autoapprovercron-cronjob.yaml' in f:
-            registry = disconnected_url if disconnected_url is not None else 'quay.io'
-            cron_overrides = {'registry': registry}
-            if int(INSTALLER_VERSION[:3].replace('.', '')) < 48:
-                cron_overrides['version'] = 'v1beta'
-            cronfile = config.process_inputfile(cluster, f, overrides=cron_overrides)
             with open(f"{clusterdir}/openshift/99-autoapprovercron-cronjob.yaml", 'w') as _f:
-                _f.write(cronfile)
+                _f.write(autoapproverdata)
             continue
         if '99-monitoring.yaml' in f:
             monitoring_retention = data['monitoring_retention']

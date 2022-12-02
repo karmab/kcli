@@ -17,7 +17,7 @@ subjects:
   name: autoapprover
   namespace: kcli-infra
 ---
-apiVersion: batch/{{ version|default('v1') }}
+apiVersion: batch/{{ version }}
 kind: CronJob
 metadata:
   name: autoapprover
