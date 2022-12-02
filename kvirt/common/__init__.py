@@ -1236,7 +1236,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
                 else:
                     cidr = netmask_to_prefix(netmask)
                 netdata = f"DEVICE={nicname}\nNAME={nicname}\nONBOOT=yes\nNM_CONTROLLED=yes\n"
-                netdata += f"BOOTPROTO=static\nIPADDR={ip}\nPREFIX={cidr}"
+                netdata += f"BOOTPROTO=static\nIPADDR={ip}\nPREFIX={cidr}\n"
                 if gateway is not None:
                     netdata += f"GATEWAY={gateway}\n"
                 dns = net.get('dns', gateway)
