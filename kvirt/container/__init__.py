@@ -292,7 +292,7 @@ class Kcontainer():
                 containers.append([name, state, source, plan, command, portinfo, ''])
         else:
             containers = []
-            lscommand = "%s ps -a --format \"'{{.Names}}?{{.Status}}?{{.Image}}?{{.Command}}?{{.Ports}}?" % engine
+            lscommand = "%s ps -a --format \"{{.Names}}?{{.Status}}?{{.Image}}?{{.Command}}?{{.Ports}}?" % engine
             lscommand += "{{.Labels}}'\""
             if self.debug:
                 print(lscommand)
