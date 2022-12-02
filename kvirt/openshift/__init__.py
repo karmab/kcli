@@ -1006,7 +1006,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             continue
         if '99-autoapprovercron-cronjob.yaml' in f:
             registry = disconnected_url if disconnected_url is not None else 'quay.io'
-            cronfile = config.process_inputfile(cluster, f, overrides={'registry': registry})
+            cron_overrides = {'registry': registry}
+            if int(INSTALLER_VERSION[:3].replace('.', '')) < 48:
+                cron_overrides['version'] = 'v1beta'
+            cronfile = config.process_inputfile(cluster, f, overrides=cron_overrides)
             with open(f"{clusterdir}/openshift/99-autoapprovercron-cronjob.yaml", 'w') as _f:
                 _f.write(cronfile)
             continue

@@ -2365,6 +2365,6 @@ def get_changelog(diff, data=False):
         if data:
             cmd += f"> {tmpdir}/results.txt"
             call(cmd, shell=True)
-            return(open(f"{tmpdir}/results.txt").read())
+            return open(f"{tmpdir}/results.txt").read()
         else:
             call(cmd, shell=True)
