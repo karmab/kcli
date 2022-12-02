@@ -91,9 +91,8 @@ def get_installer_version():
     return INSTALLER_VERSION
 
 
-def get_installer_number(INSTALLER_VERSION):
-    INSTALLER_SPLIT = INSTALLER_VERSION.split('.')[:2]
-    return int(INSTALLER_SPLIT[0]) * 100 + int(INSTALLER_SPLIT[1])
+def get_installer_minor(INSTALLER_VERSION):
+    return int(INSTALLER_VERSION.split('.')[1])
 
 
 def get_release_image():
@@ -993,7 +992,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         process_postscripts(clusterdir, postscripts)
         sys.exit(run)
     cron_overrides = {'registry': disconnected_url or 'quay.io'}
-    cron_overrides['version'] = 'v1beta1' if get_installer_number(INSTALLER_VERSION) < 408 else 'v1'
+    cron_overrides['version'] = 'v1beta1' if get_installer_minor(INSTALLER_VERSION) < 8 else 'v1'
     autoapproverdata = config.process_inputfile(cluster, f"{plandir}/autoapprovercron.yml", overrides=cron_overrides)
     with open(f"{clusterdir}/autoapprovercron.yml", 'w') as f:
         f.write(autoapproverdata)
