@@ -1011,8 +1011,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 _f.write(ingressconfig)
             continue
         if '99-autoapprovercron-cronjob.yaml' in f:
+            crondata = config.process_inputfile(cluster, f, overrides=cron_overrides)
             with open(f"{clusterdir}/openshift/99-autoapprovercron-cronjob.yaml", 'w') as _f:
-                _f.write(autoapproverdata)
+                _f.write(crondata)
             continue
         if '99-monitoring.yaml' in f:
             monitoring_retention = data['monitoring_retention']
