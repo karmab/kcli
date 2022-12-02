@@ -2340,3 +2340,31 @@ def valid_uuid(uuid):
         return True
     except:
         return False
+
+
+def get_changelog(diff, data=False):
+    if which('git') is None:
+        error("git needed for this functionality")
+        sys.exit(1)
+    if not diff:
+        diff = ['master']
+    if len(diff) > 1:
+        ori, dest = diff[:2]
+    else:
+        git_version = get_git_version()[0]
+        if git_version != 'N/A':
+            ori, dest = git_version, diff[0]
+        else:
+            error("No source commit available. Use kcli changelog diff1 diff2")
+            sys.exit(1)
+    with TemporaryDirectory() as tmpdir:
+        cmd = f"git clone -q https://github.com/karmab/kcli {tmpdir}"
+        call(cmd, shell=True)
+        os.chdir(tmpdir)
+        cmd = f"git --no-pager log --decorate=no --oneline {ori}..{dest}"
+        if data:
+            cmd += f"> {tmpdir}/results.txt"
+            call(cmd, shell=True)
+            return(open(f"{tmpdir}/results.txt").read())
+        else:
+            call(cmd, shell=True)

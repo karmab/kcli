@@ -34,7 +34,6 @@ import requests
 from shutil import which, copy2
 from subprocess import call
 import sys
-from tempfile import TemporaryDirectory
 from urllib.parse import urlparse
 import yaml
 
@@ -135,27 +134,7 @@ def get_version(args):
 
 
 def get_changelog(args):
-    if which('git') is None:
-        error("git needed for this functionality")
-        sys.exit(1)
-    diff = args.diff
-    if not diff:
-        diff = ['master']
-    if len(diff) > 1:
-        ori, dest = diff[:2]
-    else:
-        git_version = get_git_version()[0]
-        if git_version != 'N/A':
-            ori, dest = git_version, diff[0]
-        else:
-            error("No source commit available. Use kcli changelog diff1 diff2")
-            sys.exit(1)
-    with TemporaryDirectory() as tmpdir:
-        cmd = f"git clone -q https://github.com/karmab/kcli {tmpdir}"
-        call(cmd, shell=True)
-        os.chdir(tmpdir)
-        cmd = f"git log --decorate=no --oneline {ori}..{dest}"
-        call(cmd, shell=True)
+    common.get_changelog(args.diff)
 
 
 def delete_cache(args):
