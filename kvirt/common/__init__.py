@@ -7,7 +7,7 @@ import glob
 from hashlib import sha256
 from kvirt.jinjafilters import jinjafilters
 from kvirt.defaults import UBUNTUS, SSH_PUB_LOCATIONS
-from kvirt.redfish import Redfish
+from kvirt.kfish import Redfish
 from kvirt import version
 from ipaddress import ip_address
 from random import randint
