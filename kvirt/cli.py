@@ -869,12 +869,17 @@ def list_available_images(args):
 
 def list_image(args):
     """List images"""
+    output = args.output
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.client != 'all':
         k = config.k
+    _list = k.volumes()
+    if output is not None:
+        _list_output(_list, output)
+        return
     imagestable = PrettyTable(["Images"])
     imagestable.align["Images"] = "l"
-    for image in k.volumes():
+    for image in _list:
         imagestable.add_row([image])
     print(imagestable)
 
@@ -4451,6 +4456,7 @@ def cli():
     imagelist_desc = 'List Images'
     imagelist_parser = list_subparsers.add_parser('image', description=imagelist_desc, help=imagelist_desc,
                                                   aliases=['images', 'template', 'templates'])
+    imagelist_parser.add_argument('-o', '--output', choices=['json', 'yaml'], help='Format of the output')
     imagelist_parser.set_defaults(func=list_image)
 
     isolist_desc = 'List Isos'
