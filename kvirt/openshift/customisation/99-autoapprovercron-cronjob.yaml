@@ -1,4 +1,4 @@
-apiVersion: batch/v1
+apiVersion: batch/{{ version }}
 kind: CronJob
 metadata:
   name: autoapprover
