@@ -15,7 +15,9 @@ if [ "$2" = "dhcp4-change" ] || [ "$2" = "dhcp6-change" ] || [ "$2" = "up" ] || 
       sed -i 's/search /search {{ cluster }}.{{ domain }} /' /etc/resolv.conf
       sed -i "/nameserver.* # coredns/d" /etc/resolv.conf
       sed -i "0,/nameserver/s/nameserver/nameserver $IP #coredns\n&/" /etc/resolv.conf
+      {% if mdns_chattr|default(False) %}
       chattr +i /etc/resolv.conf
+      {% endif %}
     fi
   fi
 fi

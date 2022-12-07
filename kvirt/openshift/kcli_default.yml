@@ -48,6 +48,7 @@ master_memory:
 worker_memory:
 coredns: true
 mdns: true
+mdns_chattr: False
 ignore_hosts: false
 disk_size: 30
 autostart: false
