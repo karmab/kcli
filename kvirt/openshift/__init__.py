@@ -1032,7 +1032,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             continue
         copy2(f, f"{clusterdir}/openshift")
     if async_install:
-        registry = disconnected_url if disconnected_url is not None else 'quay.io'
+        registry = disconnected_url or 'quay.io'
         if not baremetal_iso_bootstrap:
             deletionfile = f"{plandir}/99-bootstrap-deletion.yaml"
             deletionfile = config.process_inputfile(cluster, deletionfile, overrides={'cluster': cluster,
@@ -1061,6 +1061,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             with open(f"{clusterdir}/openshift/99-notifications.yaml", 'w') as _f:
                 _f.write(notifyfile)
     if apps and (async_install or sno):
+        registry = disconnected_url or 'quay.io'
         final_apps = []
         for a in apps:
             if isinstance(a, str) and a not in ['users', 'autolabellers', 'metal3', 'nfs']:
