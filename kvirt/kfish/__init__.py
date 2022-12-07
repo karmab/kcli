@@ -23,9 +23,8 @@ class Redfish(object):
             self.cdpath = 'CD'
         else:
             self.cdpath = 'Cd'
-        try:
-            p = urlparse(url)
-        except:
+        url = url.replace('idrac-virtualmedia', 'https').replace('ilo5-virtualmedia', 'https')
+        if '://' not in url:
             if self.model in ['hp', 'hpe', 'supermicro']:
                 url = f"https://{url}/redfish/v1/Systems/1"
             elif self.model == 'dell':
@@ -33,7 +32,7 @@ class Redfish(object):
             else:
                 print(f"Invalid url {url}")
                 sys.exit(0)
-            p = urlparse(url)
+        p = urlparse(url)
         self.url = url
         if self.debug:
             print(f"Using base url {self.url}")
