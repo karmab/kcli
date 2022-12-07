@@ -432,12 +432,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if sno_virtual:
             sno_memory = data.get('master_memory', data.get('memory', 8192))
             if sno_memory < 20480:
-                error("Sno won't deploy with less than 20gb of RAM")
-                sys.exit(1)
+                error("Sno won't deploy with less than 20gb of RAM.Forcing to that")
+                data['master_memory'] = 20480
             sno_cpus = data.get('master_numcpus', data.get('numcpus', 4))
             if sno_cpus < 8:
-                error("Sno won't deploy with less than 8 cpus")
-                sys.exit(1)
+                error("Sno won't deploy with less than 8 cpus.Forcing to that")
+                data['master_numcpus'] = 8
         sno_disk = data.get('sno_disk')
         if sno_disk is None:
             warning("sno_disk will be discovered")
