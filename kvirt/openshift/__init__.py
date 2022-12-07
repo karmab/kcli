@@ -1516,7 +1516,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         installcommand = f'openshift-install --dir={clusterdir} --log-level={log_level} wait-for install-complete'
         installcommand += f" || {installcommand}"
         pprint("Launching install-complete step. It will be retried one extra time in case of timeouts")
-        call(installcommand, shell=True)
+        run = call(installcommand, shell=True)
+        if run != 0:
+            error("Leaving environment for debugging purposes")
+            error(f"You can delete it with kcli delete cluster --yes {cluster}")
+            sys.exit(run)
     for vm in todelete:
         pprint(f"Deleting {vm}")
         k.delete(vm)
