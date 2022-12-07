@@ -957,6 +957,15 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         for f in glob(f"{manifestsdir}/*.y*ml"):
             pprint(f"Injecting manifest {f}")
             copy2(f, f"{clusterdir}/openshift")
+    elif isinstance(manifestsdir, list):
+        for manifest in manifestsdir:
+            f, content = list(manifest.keys())[0], list(manifest.values())[0]
+            if not f.endswith('.yml') and not f.endswith('.yaml'):
+                warning(f"Skipping manifest {f}")
+                continue
+            pprint(f"Injecting manifest {f}")
+            with open(f'{clusterdir}/openshift/{f}', 'w') as f:
+                f.write(content)
     for yamlfile in glob(f"{clusterdir}/*.yaml"):
         if os.stat(yamlfile).st_size == 0:
             warning(f"Skipping empty file {yamlfile}")
