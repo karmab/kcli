@@ -1186,7 +1186,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             extra_args = overrides.get('extra_args')
             if sno_disk is None or extra_args is not None:
                 _files = [{"path": "/root/sno-finish.service", "origin": f"{plandir}/sno-finish.service"},
-                          {"path": "/usr/local/bin/sno-finish.sh", "origin": "%s/sno-finish.sh" % plandir, "mode": 700}]
+                          {"path": "/usr/local/bin/sno-finish.sh", "origin": f"{plandir}/sno-finish.sh", "mode": 700}]
                 iso_overrides['files'] = _files
             iso_overrides.update(data)
             result = config.create_vm(sno_name, 'rhcos46', overrides=iso_overrides, onlyassets=True)

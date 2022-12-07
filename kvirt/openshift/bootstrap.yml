@@ -47,6 +47,6 @@
   - path: /etc/kubernetes/keepalived.conf
     origin: keepalived.conf
 {% endif %}
-{% if files %}
+{% if files|default([]) %}
  extra_files: {{ files }}
 {% endif %}
