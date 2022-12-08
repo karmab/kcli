@@ -127,6 +127,7 @@ IMAGES = {'almalinux9': 'http://repo.ifca.es/almalinux/9.0/cloud/x86_64/images/'
           'rockylinux86': ROCKY + '8.6/images/Rocky-8-GenericCloud.latest.x86_64.qcow2',
           'rockylinux8': ROCKY + '8/images/Rocky-8-GenericCloud.latest.x86_64.qcow2',
           'rockylinux90': ROCKY + '9.0/images/x86_64/Rocky-9-GenericCloud.latest.x86_64.qcow2',
+          'rockylinux91': ROCKY + '9.1/images/x86_64/Rocky-9-GenericCloud.latest.x86_64.qcow2',
           'rockylinux9': ROCKY + '9/images/x86_64/Rocky-9-GenericCloud.latest.x86_64.qcow2'}
 
 IMAGESCOMMANDS = {'debian8': 'echo datasource_list: [NoCloud, ConfigDrive, Openstack, Ec2] > /etc/cloud/cloud.cfg.d/'
