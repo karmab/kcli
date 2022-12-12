@@ -2567,7 +2567,14 @@ class Kconfig(Kbaseconfig):
                     else:
                         break
                 vminfo.append({'name': vm, 'ip': ip})
-            overrides = {'name': name, 'vms': vminfo, 'nets': nets, 'ports': ports, 'checkpath': checkpath}
+            overrides = {
+                "name": name,
+                "vms": vminfo,
+                "nets": nets,
+                "ports": ports,
+                "checkpath": checkpath,
+                "domain": domain,
+            }
             self.plan(plan, inputstring=haproxyplan, overrides=overrides)
 
     def list_loadbalancers(self):
