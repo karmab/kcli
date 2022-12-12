@@ -4,6 +4,7 @@ from glob import glob
 from kvirt.common import get_overrides, pprint
 import os
 import re
+import yaml
 
 basedir = f"{os.path.dirname(Bottle.run.__code__.co_filename)}/expose"
 view = functools.partial(jinja2_view, template_lookup=[f"{basedir}/templates"])
@@ -42,11 +43,12 @@ class Kexposer():
                     overrides = fileoverrides
         return overrides
 
-    def __init__(self, config, plan, inputfile, overrides={}, port=9000):
+    def __init__(self, config, plan, inputfile, overrides={}, port=9000, pfmode=False):
         app = Bottle()
         self.basedir = os.path.dirname(inputfile) if '/' in inputfile else '.'
         self.plan = plan
         self.overrides = overrides
+        self.pfmode = pfmode
         self.refresh_plans(verbose=True)
 
         @app.route('/static/<filename:path>')
@@ -89,6 +91,7 @@ class Kexposer():
                 plan = request.forms['plan']
                 if plan not in self.plans:
                     return f'Invalid plan name {plan}'
+                pfdata = None
                 parameters = {}
                 for p in request.forms:
                     if p.startswith('parameter'):
@@ -101,6 +104,12 @@ class Kexposer():
                         parameters[key] = value
                     elif p == 'update':
                         update = True
+                    elif p == 'pf':
+                        pfdata = request.forms[p]
+                if pfdata is not None:
+                    new_parameters = yaml.safe_load(pfdata)
+                    new_parameters.update(parameters)
+                    parameters = new_parameters
                 try:
                     overrides = self.get_client(plan, currentconfig, overrides=parameters)
                     if 'mail' in currentconfig.notifymethods and 'mail_to' in overrides and overrides['mail_to'] != "":
@@ -132,7 +141,7 @@ class Kexposer():
             parameters = self.overrides
             if plan not in self.plans:
                 return f'Invalid plan name {plan}'
-            return {'parameters': parameters, 'plan': plan}
+            return {'parameters': parameters, 'plan': plan, 'pfmode': self.pfmode}
 
         @app.route("/infoplan/<plan>")
         @view('infoplan.html')

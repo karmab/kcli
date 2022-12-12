@@ -24,6 +24,12 @@
         <input required="true" class="form-control" name="parameter_{{ parameter }}" id="{{ parameter }}" value="{{ parameters[parameter] }}">
     </div>
     {% endfor %}
+    {% if pfmode|default(False) %}
+    <div class="form-group">
+        <label for="inputName">Parameter file</label><p>
+    <textarea id="pf" name="pf" rows="4" cols="50"></textarea>
+    </div>
+    {% endif %}
     <button type="submit" class="btn btn-success">Create</button>
 </form>
 </body>
