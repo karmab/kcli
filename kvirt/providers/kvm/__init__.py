@@ -1213,6 +1213,10 @@ class Kvirt(object):
         iommumemxml = "<memtune><hard_limit unit='KiB'>104857600</hard_limit></memtune>" if enableiommu else ''
         iommufeaturesxml = "<acpi/><apic/><pae/><apic/><pae/><ioapic driver='qemu'/>" if enableiommu else ''
         iommudevicexml = "<iommu model='intel'><driver intremap='on' caching_mode='on'/></iommu>" if enableiommu else ''
+        controllerxml = ''
+        if uefi or uefi_legacy:
+            controllerxml = "<controller type='pci' model='pcie-root'/>"
+            controllerxml += ''.join(["<controller type='pci' model='pcie-root-port'/>" for i in range(20)])
         vmxml = """<domain type='{virttype}' {namespace}>
 <name>{name}</name>
 {uuidxml}
@@ -1246,6 +1250,7 @@ class Kvirt(object):
 <devices>
 {emulatorxml}
 {disksxml}
+{controllerxml}
 {busxml}
 {netxml}
 {isoxml}
@@ -1271,7 +1276,8 @@ class Kvirt(object):
                     isoxml=isoxml, floppyxml=floppyxml, displayxml=displayxml, serialxml=serialxml, sharedxml=sharedxml,
                     guestxml=guestxml, videoxml=videoxml, hostdevxml=hostdevxml, rngxml=rngxml, tpmxml=tpmxml,
                     cpuxml=cpuxml, qemuextraxml=qemuextraxml, ioapicxml=ioapicxml, acpixml=acpixml, iommuxml=iommuxml,
-                    iommumemxml=iommumemxml, iommufeaturesxml=iommufeaturesxml, iommudevicexml=iommudevicexml)
+                    iommumemxml=iommumemxml, iommufeaturesxml=iommufeaturesxml, iommudevicexml=iommudevicexml,
+                    controllerxml=controllerxml)
         if self.debug:
             print(vmxml.replace('\n\n', ''))
         conn.defineXML(vmxml)
