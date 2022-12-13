@@ -1111,7 +1111,7 @@ You can use the following command to execute a plan from a remote url:
 
 .. code:: yaml
 
-   kcli create plan --url https://raw.githubusercontent.com/karmab/kcli-plans/master/ovirt/upstream.yml
+   kcli create plan --url https://raw.githubusercontent.com/karmab/kcli-plan-samples/master/simpleplan.yml
 
 Disk parameters
 ---------------
@@ -1122,15 +1122,15 @@ You can add disk this way in your profile or plan files:
 
    disks:
     - size: 20
-      pool: vms
+      pool: default
     - size: 10
       thin: False
-      interface: ide
+      interface: scsi
 
 Within a disk section, you can use the word size, thin and format as keys.
 
 -  *thin* Value used when not specified in the disk entry. Defaults to true
--  *interface* Value used when not specified in the disk entry. Defaults to virtio. Could also be ide, if vm lacks virtio drivers
+-  *interface* Value used when not specified in the disk entry. Defaults to virtio. Could also be scsi, sata or ide, if vm lacks virtio drivers
 
 Network parameters
 ------------------
@@ -1924,13 +1924,13 @@ To list applications available on generic kubernetes, run:
 
 ::
 
-   kcli list kube generic
+   kcli list app generic
 
 To list applications available on generic openshift, run:
 
 ::
 
-   kcli list kube openshift
+   kcli list app openshift
 
 For any of the supported applications, you can get information on the supported parameters with:
 
