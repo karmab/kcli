@@ -39,9 +39,13 @@ spec:
     name: {{ cluster }}-ssh-key
   fips: {{ fips }}
   networking:
-    serviceCIDR: "172.31.0.0/16"
-    podCIDR: "10.132.0.0/14"
-    machineCIDR: {{ cidr|default('') }}
+    clusterNetwork:
+    - cidr: 10.132.0.0/14
+      hostPrefix: 23
+    serviceNetwork:
+    - cidr: 172.31.0.0/16
+    machineNetwork:
+    - cidr: {{ cidr|default('') }}
     networkType: {{ network_type }}
   platform:
     type: None
