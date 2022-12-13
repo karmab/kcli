@@ -1,8 +1,10 @@
 #cluster: cnf10
 #domain: kni.lab.eng.bos.redhat.com
+hypershift_image: quay.io/hypershift/hypershift-operator:4.12
 version: stable
 tag: '4.11'
 network: baremetal
+network_type: OVNKubernetes
 ingress_ip: 10.19.135.130
 workers: 2
 numcpus: 16
