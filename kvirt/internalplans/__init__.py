@@ -5,6 +5,7 @@ parameters:
  nets:
  - default
  vms: []
+ domain:
 
 {{ image }}:
  type: image
@@ -16,6 +17,9 @@ loadbalancer-{{ ports | join('+') }}:
 
 {{ name }}:
  profile: loadbalancer-{{ ports | join('+') }}
+ {% if domain != None %}
+ domain: {{ domain }}
+ {% endif %}
  files:
   - path: /root/haproxy.cfg
     content:   |
