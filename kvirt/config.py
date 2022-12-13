@@ -361,10 +361,11 @@ class Kconfig(Kbaseconfig):
                 basefolder = self.options.get('basefolder')
                 dvs = self.options.get('dvs', True)
                 import_network = self.options.get('import_network', 'VM Network')
+                timeout = self.options.get('timeout', 1800)
                 from kvirt.providers.vsphere import Ksphere
                 k = Ksphere(self.host, user, password, datacenter, cluster, isofolder=isofolder, debug=debug,
                             filtervms=filtervms, filteruser=filteruser, filtertag=filtertag, category=category,
-                            basefolder=basefolder, dvs=dvs, import_network=import_network)
+                            basefolder=basefolder, dvs=dvs, import_network=import_network, timeout=timeout)
             elif self.type == 'packet':
                 auth_token = self.options.get('auth_token')
                 if auth_token is None:
