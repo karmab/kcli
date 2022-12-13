@@ -1,6 +1,6 @@
 #cluster: cnf10
 #domain: kni.lab.eng.bos.redhat.com
-hypershift_image: quay.io/hypershift/hypershift-operator:4.12
+#hypershift_image: quay.io/hypershift/hypershift-operator:4.12
 version: stable
 tag: '4.11'
 network: baremetal
