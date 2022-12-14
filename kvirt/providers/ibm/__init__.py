@@ -25,15 +25,11 @@ import webbrowser
 
 
 def get_zone_href(region, zone):
-    return "{}/regions/{}/zones/{}".format(
-        "https://%s.iaas.cloud.ibm.com/v1" % region,
-        region,
-        zone
-    )
+    return f"https://{region}.iaas.cloud.ibm.com/v1/regions/{region}/zones/{zone}"
 
 
 def get_s3_endpoint(region):
-    return 'https://s3.{}.cloud-object-storage.appdomain.cloud'.format(region)
+    return f'https://s3.{region}.cloud-object-storage.appdomain.cloud'
 
 
 def get_service_instance_id(iam_api_key, name):
@@ -45,7 +41,7 @@ def get_service_instance_id(iam_api_key, name):
     req = post("https://iam.cloud.ibm.com/identity/token", data=data, headers=headers)
     token = req.json()['access_token']
     req = get("https://resource-controller.cloud.ibm.com/v2/resource_instances", headers=headers)
-    headers = {'Authorization': 'Bearer %s' % token}
+    headers = {'Authorization': f'Bearer {token}'}
     req = get("https://resource-controller.cloud.ibm.com/v2/resource_instances", headers=headers)
     for entry in req.json()['resources']:
         if entry['name'] == name:
@@ -64,7 +60,7 @@ class Kibm(object):
         self.authenticator = IAMAuthenticator(iam_api_key)
         self.iam_api_key = iam_api_key
         self.conn = VpcV1(authenticator=self.authenticator)
-        self.conn.set_service_url("https://%s.iaas.cloud.ibm.com/v1" % region)
+        self.conn.set_service_url(f"https://{region}.iaas.cloud.ibm.com/v1")
         if cos_api_key is not None and cos_resource_instance_id is not None:
             cos_resource_instance_id = get_service_instance_id(iam_api_key, cos_resource_instance_id)
             self.s3 = ibm_boto3.client(
@@ -87,7 +83,7 @@ class Kibm(object):
         self.resources.set_service_url('https://resource-controller.cloud.ibm.com')
         self.iam_api_key = iam_api_key
         self.region = region
-        self.zone = zone if region in zone else "%s-2" % region
+        self.zone = zone if region in zone else f"{region}-2"
         self.vpc = vpc
 
     def close(self):
@@ -96,15 +92,15 @@ class Kibm(object):
     def exists(self, name):
         try:
             return self._get_vm(name) is not None
-        except ApiException as exc:
-            error("Unable to retrieve VM. %s" % exc)
+        except ApiException as e:
+            error(f"Unable to retrieve VM. Hit {e}")
             return False
 
     def net_exists(self, name):
         try:
             return self._get_subnet(name) is not None
-        except ApiException as exc:
-            error("Unable to retrieve available subnets. %s" % (exc))
+        except ApiException as e:
+            error(f"Unable to retrieve available subnets. Hit {e}")
             return False
 
     def disk_exists(self, pool, name):
@@ -130,20 +126,20 @@ class Kibm(object):
                     resource_group_id = vpc['resource_group']['id']
                     break
             else:
-                return {'result': 'failure', 'reason': 'VPC %s does not exist' % self.vpc}
-        except ApiException as exc:
-            return {'result': 'failure', 'reason': 'Unable to retrieve vpc information. %s' % exc}
+                return {'result': 'failure', 'reason': f'VPC {self.vpc} does not exist'}
+        except ApiException as e:
+            return {'result': 'failure', 'reason': f'Unable to retrieve vpc information. Hit {e}'}
         if self.exists(name):
-            return {'result': 'failure', 'reason': "VM %s already exists" % name}
+            return {'result': 'failure', 'reason': f"VM {name} already exists"}
         key_list = []
         try:
             ssh_keys = {x['name']: x for x in self.conn.list_keys().result['keys']}
             for key in keys:
                 if key not in ssh_keys:
-                    return {'result': 'failure', 'reason': 'Key %s not found' % key}
+                    return {'result': 'failure', 'reason': f'Key {key} not found'}
                 key_list.append(ssh_keys[key]['id'])
-        except ApiException as exc:
-            return {'result': 'failure', 'reason': 'Unable to check keys. %s' % exc}
+        except ApiException as e:
+            return {'result': 'failure', 'reason': f'Unable to check keys. Hit {e}'}
         if cloudinit:
             if image is not None and common.needs_ignition(image):
                 version = common.ignition_version(image)
@@ -178,44 +174,38 @@ class Kibm(object):
                 if netname == 'default' or netname == self.vpc:
                     netname = default_subnet
                 elif netname not in subnets:
-                    return {'result': 'failure', 'reason': 'Network %s not found' % netname}
+                    return {'result': 'failure', 'reason': f'Network {netname} not found'}
                 subnet = subnets[netname]
                 if subnet['zone']['name'] != self.zone:
-                    return {'result': 'failure', 'reason': 'Network %s is not in zone %s' % (netname, self.zone)}
-                net_list.append(
-                    vpc_v1.NetworkInterfacePrototype(
-                        subnet=vpc_v1.SubnetIdentityById(id=subnet['id']),
-                        allow_ip_spoofing=False,
-                        name="eth{}".format(index)
-                        # TODO: security groups, ip address
-                    )
-                )
-        except ApiException as exc:
-            return {'result': 'failure', 'reason': 'Unable to check networks. %s' % exc}
+                    return {'result': 'failure', 'reason': f'Network {netname} is not in zone {self.zone}'}
+                net_list.append(vpc_v1.NetworkInterfacePrototype(subnet=vpc_v1.SubnetIdentityById(id=subnet['id']),
+                                                                 allow_ip_spoofing=False, name=f"eth{index}"))
+        except ApiException as e:
+            return {'result': 'failure', 'reason': f'Unable to check networks. Hit {e}'}
         if flavor is None:
             flavors = [f for f in self.flavors() if f[1] >= numcpus and f[2] * 1024 >= memory]
             if flavors:
                 flavor = min(flavors, key=lambda f: f[2])[0]
-                pprint("Using flavor %s" % flavor)
+                pprint(f"Using flavor {flavor}")
             else:
                 return {'result': 'failure', 'reason': "Couldn't find a flavor matching cpu/memory requirements"}
         try:
             provisioned_profiles = self._get_profiles()
-        except ApiException as exc:
-            return {'result': 'failure', 'reason': 'Unable to check flavors. %s' % exc}
+        except ApiException as e:
+            return {'result': 'failure', 'reason': f'Unable to check flavors. Hit {e}'}
         if flavor not in provisioned_profiles:
-            return {'result': 'failure', 'reason': 'Flavor %s not found' % flavor}
+            return {'result': 'failure', 'reason': f'Flavor {flavor} not found'}
         try:
             image = self._get_image(image)
             if image is None:
-                return {'result': 'failure', 'reason': 'Image %s not found' % image}
+                return {'result': 'failure', 'reason': f'Image {image} not found'}
             image_id = image['id']
-        except ApiException as exc:
-            return {'result': 'failure', 'reason': 'Unable to check provisioned images. %s' % exc}
+        except ApiException as e:
+            return {'result': 'failure', 'reason': f'Unable to check provisioned images. Hit {e}'}
         volume_attachments = []
         for index, disk in enumerate(disks[1:]):
             disksize = int(disk.get('size')) if isinstance(disk, dict) and 'size' in disk else int(disk)
-            diskname = "%s-disk%s" % (name, index + 1)
+            diskname = f"{name}-disk{index + 1}"
             volume_by_capacity = {'capacity': disksize, 'name': diskname, 'profile': {'name': 'general-purpose'}}
             volume_attachment = {'delete_volume_on_instance_delete': True, 'volume': volume_by_capacity}
             volume_attachments.append(vpc_v1.VolumeAttachmentPrototypeInstanceContext.from_dict(volume_attachment))
@@ -236,18 +226,18 @@ class Kibm(object):
                     user_data=userdata
                 )
             ).result
-        except ApiException as exc:
-            return {'result': 'failure', 'reason': 'Unable to create VM %s. %s' % (name, exc)}
+        except ApiException as e:
+            return {'result': 'failure', 'reason': f'Unable to create VM {name}. Hit {e}'}
 
         tag_names = []
         for entry in [field for field in metadata if field in METADATA_FIELDS]:
-            tag_names.append('%s:%s' % (entry, metadata[entry]))
+            tag_names.append(f'{entry}:{metadata[entry]}')
         resource_model = {'resource_id': result_create['crn']}
         try:
             self.global_tagging_service.attach_tag(resources=[resource_model],
                                                    tag_names=tag_names, tag_type='user').get_result()
-        except ApiException as exc:
-            return {'result': 'failure', 'reason': 'Unable to attach tags. %s' % exc}
+        except ApiException as e:
+            return {'result': 'failure', 'reason': f'Unable to attach tags. Hit {e}'}
         try:
             result_ip = self.conn.create_floating_ip(vpc_v1.FloatingIPPrototypeFloatingIPByTarget(
                 target=vpc_v1.FloatingIPByTargetNetworkInterfaceIdentityNetworkInterfaceIdentityById(
@@ -257,16 +247,16 @@ class Kibm(object):
                 resource_group=vpc_v1.ResourceGroupIdentityById(
                     id=resource_group_id),
             )).result
-        except ApiException as exc:
-            return {'result': 'failure', 'reason': 'Unable to create floating ip. %s' % exc}
+        except ApiException as e:
+            return {'result': 'failure', 'reason': f'Unable to create floating ip. Hit {e}'}
         try:
             self.conn.add_instance_network_interface_floating_ip(
                 instance_id=result_create['id'],
                 network_interface_id=result_create['network_interfaces'][0]['id'],
                 id=result_ip['id']
             )
-        except ApiException as exc:
-            return {'result': 'failure', 'reason': 'Unable to add floating ip. %s' % exc}
+        except ApiException as e:
+            return {'result': 'failure', 'reason': f'Unable to add floating ip. Hit {e}'}
         if reservedns and domain is not None:
             self.reserve_dns(name, nets=nets, domain=domain, alias=alias, instanceid=name)
         return {'result': 'success'}
@@ -275,29 +265,29 @@ class Kibm(object):
         try:
             vm = self._get_vm(name)
             if vm is None:
-                return {'result': 'failure', 'reason': 'VM %s not found' % name}
+                return {'result': 'failure', 'reason': f'VM {name} not found'}
             vm_id = vm['id']
-        except ApiException as exc:
-            return {'result': 'failure', 'reason': 'Unable to retrieve VM %s. %s' % (name, exc)}
+        except ApiException as e:
+            return {'result': 'failure', 'reason': f'Unable to retrieve VM {name}. Hit {e}'}
 
         try:
             self.conn.create_instance_action(instance_id=vm_id, type='start')
-        except ApiException as exc:
-            return {'result': 'failure', 'reason': 'Unable to start VM %s. %s' % (name, exc)}
+        except ApiException as e:
+            return {'result': 'failure', 'reason': f'Unable to start VM {name}. Hit {e}'}
         return {'result': 'success'}
 
     def stop(self, name, soft=False):
         try:
             vm = self._get_vm(name)
             if vm is None:
-                return {'result': 'failure', 'reason': 'VM %s not found' % name}
+                return {'result': 'failure', 'reason': f'VM {name} not found'}
             vm_id = vm['id']
-        except ApiException as exc:
-            return {'result': 'failure', 'reason': 'Unable to retrieve VM %s. %s' % (name, exc)}
+        except ApiException as e:
+            return {'result': 'failure', 'reason': f'Unable to retrieve VM {name}. Hit {e}'}
         try:
             self.conn.create_instance_action(instance_id=vm_id, type='stop')
-        except ApiException as exc:
-            return {'result': 'failure', 'reason': 'Unable to stop VM %s. %s' % (name, exc)}
+        except ApiException as e:
+            return {'result': 'failure', 'reason': f'Unable to stop VM {name}. Hit {e}'}
         return {'result': 'success'}
 
     def create_snapshot(self, name, base):
@@ -320,14 +310,14 @@ class Kibm(object):
         try:
             vm = self._get_vm(name)
             if vm is None:
-                return {'result': 'failure', 'reason': 'VM %s not found' % name}
+                return {'result': 'failure', 'reason': f'VM {name} not found'}
             vm_id = vm['id']
-        except ApiException as exc:
-            return {'result': 'failure', 'reason': 'Unable to retrieve VM %s. %s' % (name, exc)}
+        except ApiException as e:
+            return {'result': 'failure', 'reason': f'Unable to retrieve VM {name}. Hit {e}'}
         try:
             self.conn.create_instance_action(instance_id=vm_id, type='reboot')
-        except ApiException as exc:
-            return {'result': 'failure', 'reason': 'Unable to restart VM %s. %s' % (name, exc)}
+        except ApiException as e:
+            return {'result': 'failure', 'reason': f'Unable to restart VM {name}. Hit {e}'}
         return {'result': 'success'}
 
     def report(self):
@@ -340,23 +330,23 @@ class Kibm(object):
         try:
             vm = self._get_vm(name)
             if vm is None:
-                return {'result': 'failure', 'reason': 'VM %s not found' % name}
+                return {'result': 'failure', 'reason': f'VM {name} not found'}
             return vm['status']
-        except ApiException as exc:
-            return {'result': 'failure', 'reason': 'Unable to retrieve VM %s. %s' % (name, exc)}
+        except ApiException as e:
+            return {'result': 'failure', 'reason': f'Unable to retrieve VM {name}. Hit {e}'}
 
     def list(self):
         vms = []
         try:
             provisioned_vms = self._get_vms()
-        except ApiException as exc:
-            error('Unable to retrieve VMs. %s' % exc)
+        except ApiException as e:
+            error(f'Unable to retrieve VMs. Hit {e}')
             return vms
         try:
             floating_ips = {x['target']['id']: x for x in self.conn.list_floating_ips(
             ).result['floating_ips'] if x['status'] == 'available' and 'target' in x}
-        except ApiException as exc:
-            error('Unable to retrieve floating ips. %s' % exc)
+        except ApiException as e:
+            error(f'Unable to retrieve floating ips. Hit {e}')
             return vms
         for vm in provisioned_vms:
             vms.append(self.info(vm['name'], vm=vm, ignore_volumes=True, floating_ips=floating_ips))
@@ -366,25 +356,23 @@ class Kibm(object):
         try:
             vm = self._get_vm(name)
             if vm is None:
-                error("VM %s not found" % name)
+                error(f"VM {name} not found")
                 return None
-        except ApiException as exc:
-            error("Unable to retrieve VM %s. %s" % (name, exc))
+        except ApiException as e:
+            error(f"Unable to retrieve VM {name}. Hit {e}")
             return None
         try:
-            # url = self.conn.create_instance_console_access_token(
-            #    instance_id=vm['id'], console_type='serial').result['href']
-            url = "https://cloud.ibm.com/vpc-ext/compute/vs/%s~%s/vnc" % (self.region, vm['id'])
-        except ApiException as exc:
-            error("Unable to retrieve console access. %s" % exc)
+            url = f"https://cloud.ibm.com/vpc-ext/compute/vs/{self.region}~{vm['id']}/vnc"
+        except ApiException as e:
+            error(f"Unable to retrieve console access. Hit {e}")
             return None
         if web:
             return url
         if self.debug or os.path.exists("/i_am_a_container"):
-            msg = "Open the following url:\n%s" % url if os.path.exists("/i_am_a_container") else url
+            msg = f"Open the following url:\n{url}" if os.path.exists("/i_am_a_container") else url
             pprint(msg)
         else:
-            pprint("Opening url: %s" % url)
+            pprint(f"Opening url: {url}")
             webbrowser.open(url, new=2, autoraise=True)
         return None
 
@@ -392,23 +380,23 @@ class Kibm(object):
         try:
             vm = self._get_vm(name)
             if vm is None:
-                error("VM %s not found" % name)
+                error(f"VM {name} not found")
                 return None
-        except ApiException as exc:
-            error("Unable to retrieve VM %s. %s" % (name, exc))
+        except ApiException as e:
+            error(f"Unable to retrieve VM {name}. Hit {e}")
             return None
         try:
-            url = "https://cloud.ibm.com/vpc-ext/compute/vs/%s~%s/serial" % (self.region, vm['id'])
-        except ApiException as exc:
-            error("Unable to retrieve console access. %s" % exc)
+            url = f"https://cloud.ibm.com/vpc-ext/compute/vs/{self.region}~{vm['id']}/serial"
+        except ApiException as e:
+            error(f"Unable to retrieve console access. Hit {e}")
             return None
         if web:
             return url
         if self.debug or os.path.exists("/i_am_a_container"):
-            msg = "Open the following url:\n%s" % url if os.path.exists("/i_am_a_container") else url
+            msg = f"Open the following url:\n{url}" if os.path.exists("/i_am_a_container") else url
             pprint(msg)
         else:
-            pprint("Opening url: %s" % url)
+            pprint(f"Opening url: {url}")
             webbrowser.open(url, new=2, autoraise=True)
         return None
 
@@ -419,18 +407,18 @@ class Kibm(object):
             try:
                 vm = self._get_vm(name)
                 if vm is None:
-                    error('VM %s not found' % name)
+                    error(f'VM {name} not found')
                     return yamlinfo
-            except ApiException as exc:
-                error('Unable to retrieve VM %s. %s' % (name, exc))
+            except ApiException as e:
+                error(f'Unable to retrieve VM {name}. Hit {e}')
                 return yamlinfo
         state = vm['status']
         if floating_ips is None:
             try:
                 floating_ips = {x['target']['id']: x for x in
                                 self.conn.list_floating_ips().result['floating_ips'] if x['status'] == 'available'}
-            except ApiException as exc:
-                error('Unable to retrieve floating ips. %s' % exc)
+            except ApiException as e:
+                error(f'Unable to retrieve floating ips. Hit {e}')
                 return yamlinfo
         ips = []
         for network in vm['network_interfaces']:
@@ -486,8 +474,8 @@ class Kibm(object):
         if ignore_volumes is False:
             try:
                 volumes = self._get_volumes()
-            except ApiException as exc:
-                error("Unable to retrieve volume information. %s" % exc)
+            except ApiException as e:
+                error(f"Unable to retrieve volume information. Hit {e}")
                 return yamlinfo
             for attachment in vm['volume_attachments']:
                 devname = attachment['volume']['name']
@@ -510,13 +498,13 @@ class Kibm(object):
         try:
             vm = self._get_vm(name)
             if vm is None:
-                error('VM %s not found' % name)
+                error(f'VM {name} not found')
                 return ""
             for network in vm['network_interfaces']:
                 response = self.conn.list_instance_network_interface_floating_ips(vm['id'], network['id'])
                 ips.extend([x['address'] for x in response.result['floating_ips'] if x['status'] == 'available'])
-        except ApiException as exc:
-            error("Unable to retrieve IP for %s. %s" % (name, exc))
+        except ApiException as e:
+            error(f"Unable to retrieve IP for {name}. Hit {e}")
         return ','.join(ips)
 
     def internalip(self, name):
@@ -537,8 +525,8 @@ class Kibm(object):
                         image['operating_system']['name'].startswith('windows'):
                     continue
                 image_list.append(image['name'])
-        except ApiException as exc:
-            error("Unable to retrieve volume information. %s" % exc)
+        except ApiException as e:
+            error(f"Unable to retrieve volume information. Hit {e}")
             return image_list
         return sorted(image_list, key=str.lower)
 
@@ -547,14 +535,14 @@ class Kibm(object):
         try:
             vm = self._get_vm(name)
             if vm is None:
-                return {'result': 'failure', 'reason': 'VM %s not found' % name}
-        except ApiException as exc:
-            return {'result': 'failure', 'reason': 'Unable to retrieve VM %s. %s' % (name, exc)}
+                return {'result': 'failure', 'reason': f'VM {name} not found'}
+        except ApiException as e:
+            return {'result': 'failure', 'reason': f'Unable to retrieve VM {name}. Hit {e}'}
         tags = []
         try:
             tags = self.global_tagging_service.list_tags(attached_to=vm['crn']).result['items']
-        except Exception as exc:
-            error('Unable to retrieve tags. %s' % exc)
+        except Exception as e:
+            error(f'Unable to retrieve tags. Hit {e}')
         dnsclient, domain = None, None
         for tag in tags:
             tagname = tag['name']
@@ -575,13 +563,13 @@ class Kibm(object):
                                                                        instance_id=vm['id'],
                                                                        network_interface_id=network['id'])
                     conn.delete_floating_ip(id=floating_ip['id'])
-        except ApiException as exc:
+        except ApiException as e:
             return {'result': 'failure',
-                    'reason': 'Unable to remove floating IPs for VM %s. %s' % (name, exc)}
+                    'reason': f'Unable to remove floating IPs for VM {name}. Hit {e}'}
         try:
             conn.delete_instance(id=vm['id'])
-        except ApiException as exc:
-            return {'result': 'failure', 'reason': 'Unable to delete VM. %s' % exc}
+        except ApiException as e:
+            return {'result': 'failure', 'reason': f'Unable to delete VM. Hit {e}'}
         if domain is not None and dnsclient is None:
             self.delete_dns(name, domain, name)
         return {'result': 'success'}
@@ -591,15 +579,15 @@ class Kibm(object):
         try:
             vm = self._get_vm(name)
             if vm is None:
-                error('VM %s not found' % name)
+                error(f'VM {name} not found')
                 return dnsclient, domain
-        except ApiException as exc:
-            error('Unable to retrieve VM. %s' % exc)
+        except ApiException as e:
+            error(f'Unable to retrieve VM. Hit {e}')
             return dnsclient, domain
         try:
             tags = self.global_tagging_service.list_tags(attached_to=vm['crn']).result['items']
-        except ApiException as exc:
-            error('Unable to retrieve tags. %s' % exc)
+        except ApiException as e:
+            error(f'Unable to retrieve tags. Hit {e}')
             return None, None
         for tag in tags:
             tagname = tag['name']
@@ -618,18 +606,18 @@ class Kibm(object):
         try:
             vm = self._get_vm(name)
             if vm is None:
-                error('VM %s not found' % name)
+                error(f'VM {name} not found')
                 return
-        except ApiException as exc:
-            error('Unable to retrieve VM %s. %s' % (name, exc))
+        except ApiException as e:
+            error(f'Unable to retrieve VM {name}. Hit {e}')
             return
         resource_model = {'resource_id': vm['crn']}
-        tag_names = ["%s:%s" % (metatype, metavalue)]
+        tag_names = [f"{metatype}:{metavalue}"]
         try:
             self.global_tagging_service.attach_tag(resources=[resource_model],
                                                    tag_names=tag_names, tag_type='user').get_result()
-        except ApiException as exc:
-            return {'result': 'failure', 'reason': 'Unable to attach tags. %s' % exc}
+        except ApiException as e:
+            return {'result': 'failure', 'reason': f'Unable to attach tags. Hit {e}'}
 
     def update_memory(self, name, memory):
         print("not implemented")
@@ -650,22 +638,22 @@ class Kibm(object):
         try:
             vm = self._get_vm(name)
             if vm is None:
-                return {'result': 'failure', 'reason': 'VM %s not found' % name}
-        except ApiException as exc:
-            return {'result': 'failure', 'reason': 'Unable to retrieve VM %s. %s' % (name, exc)}
+                return {'result': 'failure', 'reason': f'VM {name} not found'}
+        except ApiException as e:
+            return {'result': 'failure', 'reason': f'Unable to retrieve VM {name}. Hit {e}'}
         if vm['status'] != 'stopped':
-            return {'result': 'failure', 'reason': 'VM %s must be stopped' % name}
+            return {'result': 'failure', 'reason': f'VM {name} must be stopped'}
         try:
             provisioned_profiles = self._get_profiles()
-        except ApiException as exc:
-            return {'result': 'failure', 'reason': 'Unable to retrieve flavors. %s' % exc}
+        except ApiException as e:
+            return {'result': 'failure', 'reason': f'Unable to retrieve flavors. Hit {e}'}
         if flavor not in provisioned_profiles:
-            return {'result': 'failure', 'reason': 'Flavor %s not found' % flavor}
+            return {'result': 'failure', 'reason': f'Flavor {flavor} not found'}
         try:
             self.conn.update_instance(id=vm['id'], instance_patch=vpc_v1.InstancePatch(
                 profile=vpc_v1.InstancePatchProfileInstanceProfileIdentityByName(name=flavor)))
-        except ApiException as exc:
-            return {'result': 'failure', 'reason': 'Unable to update instance. %s' % exc}
+        except ApiException as e:
+            return {'result': 'failure', 'reason': f'Unable to update instance. Hit {e}'}
         return {'result': 'success'}
 
     def create_disk(self, name, size, pool=None, thin=True, image=None):
@@ -686,46 +674,45 @@ class Kibm(object):
         try:
             vm = self._get_vm(name)
             if vm is None:
-                error('VM %s not found' % name)
+                error(f'VM {name} not found')
                 return
-        except ApiException as exc:
-            error('Unable to retrieve VM %s. %s' % (name, exc))
+        except ApiException as e:
+            error(f'Unable to retrieve VM {name}. Hit {e}')
             return
         try:
             subnet = self._get_subnet(network)
             if subnet is None:
-                error('Network %s not found' % network)
+                error(f'Network {network} not found')
                 return
-        except ApiException as exc:
-            error('Unable to retrieve network information. %s' % exc)
+        except ApiException as e:
+            error(f'Unable to retrieve network information. Hit {e}')
             return
         try:
-            # TODO: better name. Follow ethX scheme.
             self.conn.create_instance_network_interface(
                 instance_id=vm['id'],
                 subnet=vpc_v1.SubnetIdentityById(id=subnet['id']),
                 allow_ip_spoofing=False
             )
-        except ApiException as exc:
-            error('Unable to create NIC. %s' % exc)
+        except ApiException as e:
+            error(f'Unable to create NIC. Hit {e}')
 
     def delete_nic(self, name, interface):
         try:
             vm = self._get_vm(name)
             if vm is None:
-                error('VM %s not found' % name)
+                error(f'VM {name} not found')
                 return
-        except ApiException as exc:
-            error('Unable to retrieve VM %s. %s' % (name, exc))
+        except ApiException as e:
+            error(f'Unable to retrieve VM {name}. Hit {e}')
         try:
             for network in vm['network_interfaces']:
                 if network['name'] == interface:
                     response = self.conn.delete_instance_network_interface(instance_id=vm['id'],
                                                                            id=network['id'])
                     if response.status_code != 204:
-                        error('Unexpected status code received: %d' % response.status_code)
-        except ApiException as exc:
-            error('Unable to delete NIC. %s' % exc)
+                        error(f'Unexpected status code received: {response.status_code}')
+        except ApiException as e:
+            error(f'Unable to delete NIC. Hit {e}')
 
     def create_pool(self, name, poolpath, pooltype='dir', user='qemu', thinpool=None):
         print("not implemented")
@@ -734,15 +721,15 @@ class Kibm(object):
         try:
             image = self._get_image(image)
             if image is None:
-                return {'result': 'failure', 'reason': 'Image %s not found' % image}
-        except ApiException as exc:
-            return {'result': 'failure', 'reason': 'Unable to retrieve images. %s' % exc}
+                return {'result': 'failure', 'reason': f'Image {image} not found'}
+        except ApiException as e:
+            return {'result': 'failure', 'reason': f'Unable to retrieve images. Hit {e}'}
         try:
             result = self.conn.delete_image(id=image['id'])
             if result.status_code != 202:
-                return {'result': 'failure', 'reason': 'Unexpected status code received: %d' % result.status_code}
-        except ApiException as exc:
-            return {'result': 'failure', 'reason': 'Unable to delete image. %s' % exc}
+                return {'result': 'failure', 'reason': f'Unexpected status code received: {result.status_code}'}
+        except ApiException as e:
+            return {'result': 'failure', 'reason': f'Unable to delete image. Hit {e}'}
         return {'result': 'success'}
 
     def add_image(self, url, pool, short=None, cmd=None, name=None, size=None):
@@ -773,33 +760,33 @@ class Kibm(object):
             iam_policy_management_service.create_policy(type='authorization', subjects=[subject],
                                                         roles=roles, resources=[resources]).get_result()
         if pool not in self.list_buckets():
-            return {'result': 'failure', 'reason': "Bucket %s doesn't exist" % pool}
+            return {'result': 'failure', 'reason': f"Bucket {pool} doesn't exist"}
         shortimage = os.path.basename(url).split('?')[0]
         shortimage_unzipped = shortimage.replace('.gz', '')
         if shortimage_unzipped in self.volumes():
             return {'result': 'success'}
         delete_cos_image = False
         if shortimage_unzipped not in self.list_bucketfiles(pool):
-            if not os.path.exists('/tmp/%s' % shortimage):
-                downloadcmd = "curl -Lko /tmp/%s -f '%s'" % (shortimage, url)
+            if not os.path.exists(f'/tmp/{shortimage}'):
+                downloadcmd = f"curl -Lko /tmp/{shortimage} -f '{url}'"
                 code = os.system(downloadcmd)
                 if code != 0:
                     return {'result': 'failure', 'reason': "Unable to download indicated image"}
             if shortimage.endswith('gz'):
                 if which('gunzip') is not None:
-                    uncompresscmd = "gunzip /tmp/%s" % (shortimage)
+                    uncompresscmd = f"gunzip /tmp/{shortimage}"
                     os.system(uncompresscmd)
                 else:
                     error("gunzip not found. Can't uncompress image")
                     return {'result': 'failure', 'reason': "gunzip not found. Can't uncompress image"}
                 shortimage = shortimage_unzipped
             pprint("Uploading image to bucket")
-            self.upload_to_bucket(pool, '/tmp/%s' % shortimage)
-            os.remove('/tmp/%s' % shortimage)
+            self.upload_to_bucket(pool, f'/tmp/{shortimage}')
+            os.remove(f'/tmp/{shortimage}')
             delete_cos_image = True
         pprint("Importing image as template")
         image_file_prototype_model = {}
-        image_file_prototype_model['href'] = "cos://%s/%s/%s" % (self.region, pool, shortimage_unzipped)
+        image_file_prototype_model['href'] = f"cos://{self.region}/{pool}/{shortimage_unzipped}"
         operating_system_identity_model = {}
         operating_system_identity_model['name'] = 'centos-8-amd64'
         image_prototype_model = {}
@@ -814,9 +801,9 @@ class Kibm(object):
             if image['status'] == 'available':
                 break
             else:
-                pprint("Waiting for image %s to be available" % clean_image_name)
+                pprint(f"Waiting for image {clean_image_name} to be available")
                 sleep(10)
-        tag_names = ["image:%s" % shortimage_unzipped]
+        tag_names = [f"image:{shortimage_unzipped}"]
         resource_model = {'resource_id': result_create['crn']}
         self.global_tagging_service.attach_tag(resources=[resource_model],
                                                tag_names=tag_names, tag_type='user').get_result()
@@ -829,7 +816,7 @@ class Kibm(object):
             try:
                 network = ip_network(cidr)
             except:
-                return {'result': 'failure', 'reason': "Invalid Cidr %s" % cidr}
+                return {'result': 'failure', 'reason': f"Invalid Cidr {cidr}"}
             if str(network.version) == "6":
                 return {'result': 'failure', 'reason': 'IPv6 is not allowed'}
         try:
@@ -840,9 +827,9 @@ class Kibm(object):
                     resource_group_id = vpc['resource_group']['id']
                     break
             else:
-                return {'result': 'failure', 'reason': 'vpc %s does not exist' % self.vpc}
-        except ApiException as exc:
-            return {'result': 'failure', 'reason': 'Unable to retrieve vpc information. %s' % exc}
+                return {'result': 'failure', 'reason': f'vpc {self.vpc} does not exist'}
+        except ApiException as e:
+            return {'result': 'failure', 'reason': f'Unable to retrieve vpc information. Hit {e}'}
         try:
             self.conn.create_subnet(vpc_v1.SubnetPrototypeSubnetByCIDR(
                 name=name,
@@ -853,8 +840,8 @@ class Kibm(object):
                     href=get_zone_href(self.region, self.zone)
                 ),
             ))
-        except ApiException as exc:
-            return {'result': 'failure', 'reason': 'Unable to create network. %s' % exc}
+        except ApiException as e:
+            return {'result': 'failure', 'reason': f'Unable to create network. Hit {e}'}
         return {'result': 'success'}
 
     def delete_network(self, name=None, cidr=None):
@@ -865,13 +852,13 @@ class Kibm(object):
                     subnet_id = subnet['id']
                     break
             else:
-                return {'result': 'failure', 'reason': 'Subnet %s not found' % name}
-        except ApiException as exc:
-            return {'result': 'failure', 'reason': 'Unable to retrieve subnet %s information. %s' % (name, exc)}
+                return {'result': 'failure', 'reason': f'Subnet {name} not found'}
+        except ApiException as e:
+            return {'result': 'failure', 'reason': f'Unable to retrieve subnet {name} information. Hit {e}'}
         try:
             self.conn.delete_subnet(id=subnet_id)
-        except ApiException as exc:
-            return {'result': 'failure', 'reason': 'Unable to delete subnet %s. %s' % (name, exc)}
+        except ApiException as e:
+            return {'result': 'failure', 'reason': f'Unable to delete subnet {name}. Hit {e}'}
         return {'result': 'success'}
 
     def list_pools(self):
@@ -909,8 +896,8 @@ class Kibm(object):
         subnets = {}
         try:
             provisioned_subnets = self._get_subnets()
-        except ApiException as exc:
-            error('Unable to retrieve subnets. %s' % exc)
+        except ApiException as e:
+            error(f'Unable to retrieve subnets. Hit {e}')
             return subnets
         for subnet in provisioned_subnets:
             subnets[subnet['name']] = {
@@ -937,8 +924,8 @@ class Kibm(object):
         try:
             for profile in self.conn.list_instance_profiles().result['profiles']:
                 flavor_list.append([profile['name'], profile['vcpu_count']['value'], profile['memory']['value']])
-        except ApiException as exc:
-            error("Unable to retrieve available flavors. %s" % exc)
+        except ApiException as e:
+            error(f"Unable to retrieve available flavors. Hit {e}")
             return []
         return flavor_list
 
@@ -968,7 +955,7 @@ class Kibm(object):
         ports = [int(port) for port in ports]
         internal = False if internal is None else internal
         clean_name = name.replace('.', '-')
-        pprint("Creating Security Group %s" % clean_name)
+        pprint(f"Creating Security Group {clean_name}")
         security_group_ports = ports + [int(checkport)] if int(checkport) not in ports else ports
         security_group_id = self.create_security_group(clean_name, security_group_ports)
         subnets = set()
@@ -978,8 +965,8 @@ class Kibm(object):
             for vm in vms:
                 try:
                     virtual_machine = self._get_vm(vm)
-                except ApiException as exc:
-                    return {'result': 'failure', 'reason': 'Unable to retrieve VM %s. %s' % (vm, exc)}
+                except ApiException as e:
+                    return {'result': 'failure', 'reason': f'Unable to retrieve VM {vm}. Hit {e}'}
                 member_list.append(virtual_machine['primary_network_interface']['primary_ipv4_address'])
                 if 'primary_network_interface' in virtual_machine:
                     subnets.add(virtual_machine['primary_network_interface']['subnet']['id'])
@@ -1009,16 +996,16 @@ class Kibm(object):
                         port=port,
                         target=vpc_v1.LoadBalancerPoolMemberTargetPrototypeIP(address=m)
                     ) for m in member_list],
-                    name="%s-%s" % (clean_name, port),
+                    name=f"{clean_name}-{port}",
                 ) for port in ports],
                 subnets=[vpc_v1.SubnetIdentityById(id=x) for x in subnets],
                 resource_group_id=vpc_v1.ResourceGroupIdentityById(id=resource_group_id),
                 security_groups=[vpc_v1.SecurityGroupIdentityById(id=security_group_id)],
             ).result
             self._wait_lb_active(id=lb['id'])
-        except ApiException as exc:
-            error('Unable to create load balancer. %s' % exc)
-            return {'result': 'failure', 'reason': 'Unable to create load balancer. %s' % exc}
+        except ApiException as e:
+            error(f'Unable to create load balancer. Hit {e}')
+            return {'result': 'failure', 'reason': f'Unable to create load balancer. Hit {e}'}
         pprint("Creating listeners...")
         for index, port in enumerate(ports):
             try:
@@ -1030,33 +1017,33 @@ class Kibm(object):
                 )
                 try:
                     self._wait_lb_active(id=lb['id'])
-                except ApiException as exc:
-                    error('Unable to create load balancer. %s' % exc)
-                    return {'result': 'failure', 'reason': 'Unable to create load balancer. %s' % exc}
-            except ApiException as exc:
-                error('Unable to create load balancer listener. %s' % exc)
-                return {'result': 'failure', 'reason': 'Unable to create load balancer listener. %s' % exc}
-        pprint("Load balancer DNS name %s" % lb['hostname'])
+                except ApiException as e:
+                    error(f'Unable to create load balancer. Hit {e}')
+                    return {'result': 'failure', 'reason': f'Unable to create load balancer. Hit {e}'}
+            except ApiException as e:
+                error(f'Unable to create load balancer listener. Hit {e}')
+                return {'result': 'failure', 'reason': f'Unable to create load balancer listener. Hit {e}'}
+        pprint(f"Load balancer DNS name {lb['hostname']}")
         resource_model = {'resource_id': lb['crn']}
         try:
-            tag_names = ['realname:%s' % name]
+            tag_names = [f'realname:{name}']
             if domain is not None:
-                tag_names.append('domain:%s' % domain)
+                tag_names.append(f'domain:{domain}')
             if dnsclient is not None:
-                tag_names.append('dnsclient:%s' % dnsclient)
+                tag_names.append(f'dnsclient:{dnsclient}')
             self.global_tagging_service.attach_tag(resources=[resource_model],
                                                    tag_names=tag_names,
                                                    tag_type='user')
-        except ApiException as exc:
-            error('Unable to attach tags. %s' % exc)
-            return {'result': 'failure', 'reason': 'Unable to attach tags. %s' % exc}
+        except ApiException as e:
+            error(f'Unable to attach tags. Hit {e}')
+            return {'result': 'failure', 'reason': f'Unable to attach tags. Hit {e}'}
         if domain is not None:
             while True:
                 try:
                     result = self.conn.get_load_balancer(id=lb['id']).result
-                except ApiException as exc:
-                    pprint('Unable to check load balancer ip. %s' % exc)
-                    return {'result': 'failure', 'reason': 'Unable to check load balancer ip. %s' % exc}
+                except ApiException as e:
+                    pprint(f'Unable to check load balancer ip. Hit {e}')
+                    return {'result': 'failure', 'reason': f'Unable to check load balancer ip. Hit {e}'}
                 if len(result['private_ips']) == 0:
                     pprint("Waiting 10s to get private ips assigned")
                     sleep(10)
@@ -1075,16 +1062,16 @@ class Kibm(object):
         try:
             lbs = {x['name']: x for x in self.conn.list_load_balancers().result['load_balancers']}
             if clean_name not in lbs:
-                error('Load balancer %s not found' % name)
+                error(f'Load balancer {name} not found')
                 return
             lb = lbs[clean_name]
-        except ApiException as exc:
-            error('Unable to retrieve load balancers. %s' % exc)
+        except ApiException as e:
+            error(f'Unable to retrieve load balancers. Hit {e}')
             return
         try:
             tags = self.global_tagging_service.list_tags(attached_to=lb['crn']).result['items']
-        except ApiException as exc:
-            error('Unable to retrieve tags. %s' % exc)
+        except ApiException as e:
+            error(f'Unable to retrieve tags. Hit {e}')
             return
         realname = name
         for tag in tags:
@@ -1099,18 +1086,18 @@ class Kibm(object):
                     realname = value
         try:
             self.conn.delete_load_balancer(id=lb['id'])
-        except ApiException as exc:
-            error('Unable to delete load balancer. %s' % exc)
+        except ApiException as e:
+            error(f'Unable to delete load balancer. Hit {e}')
             return
         if domain is not None and dnsclient is None:
-            pprint("Deleting DNS %s.%s" % (realname, domain))
+            pprint(f"Deleting DNS {realname}.{domain}")
             self.delete_dns(realname, domain, name)
         self._wait_lb_dead(id=lb['id'])
         try:
-            pprint("Deleting Security Group %s" % clean_name)
+            pprint(f"Deleting Security Group {clean_name}")
             self.delete_security_group(clean_name)
-        except Exception as exc:
-            error('Unable to delete security group. %s' % exc)
+        except Exception as e:
+            error(f'Unable to delete security group. Hit {e}')
         if dnsclient is not None:
             return dnsclient
 
@@ -1118,8 +1105,8 @@ class Kibm(object):
         results = []
         try:
             lbs = self.conn.list_load_balancers().result['load_balancers']
-        except ApiException as exc:
-            error('Unable to retrieve LoadBalancers. %s' % exc)
+        except ApiException as e:
+            error(f'Unable to retrieve LoadBalancers. Hit {e}')
             return results
         if lbs:
             vms_by_addresses = {}
@@ -1133,8 +1120,8 @@ class Kibm(object):
             ip = lb['hostname']
             try:
                 listeners = self.conn.list_load_balancer_listeners(load_balancer_id=lb_id).result['listeners']
-            except ApiException as exc:
-                error('Unable to retrieve listeners for load balancer %s. %s' % (name, exc))
+            except ApiException as e:
+                error(f'Unable to retrieve listeners for load balancer {name}. Hit {e}')
                 continue
             for listener in listeners:
                 protocols.add(listener['protocol'])
@@ -1154,7 +1141,7 @@ class Kibm(object):
 
     def create_bucket(self, bucket, public=False):
         if bucket in self.list_buckets():
-            error("Bucket %s already there" % bucket)
+            error(f"Bucket {bucket} already there")
             return
         # location = {'LocationConstraint': self.region}
         args = {'Bucket': bucket}  # , "CreateBucketConfiguration": location} #TODO: fix this.
@@ -1164,17 +1151,17 @@ class Kibm(object):
 
     def delete_bucket(self, bucket):
         if bucket not in self.list_buckets():
-            error("Inexistent bucket %s" % bucket)
+            error(f"Inexistent bucket {bucket}")
             return
         for obj in self.s3.list_objects(Bucket=bucket).get('Contents', []):
             key = obj['Key']
-            pprint("Deleting object %s from bucket %s" % (key, bucket))
+            pprint(f"Deleting object {key} from bucket {bucket}")
             self.s3.delete_object(Bucket=bucket, Key=key)
         self.s3.delete_bucket(Bucket=bucket)
 
     def delete_from_bucket(self, bucket, path):
         if bucket not in self.list_buckets():
-            error("Inexistent bucket %s" % bucket)
+            error(f"Inexistent bucket {bucket}")
             return
         self.s3.delete_object(Bucket=bucket, Key=path)
 
@@ -1183,10 +1170,10 @@ class Kibm(object):
 
     def upload_to_bucket(self, bucket, path, overrides={}, temp_url=False, public=False):
         if not os.path.exists(path):
-            error("Invalid path %s" % path)
+            error(f"Invalid path {path}")
             return None
         if bucket not in self.list_buckets():
-            error("Bucket %s doesn't exist" % bucket)
+            error(f"Bucket {bucket} doesn't exist")
             return None
         extra_args = {'Metadata': overrides} if overrides else {}
         if public:
@@ -1215,23 +1202,23 @@ class Kibm(object):
 
     def list_bucketfiles(self, bucket):
         if bucket not in self.list_buckets():
-            error("Inexistent bucket %s" % bucket)
+            error(f"Inexistent bucket {bucket}")
             return []
         return [obj['Key'] for obj in self.s3.list_objects(Bucket=bucket).get('Contents', [])]
 
     def public_bucketfile_url(self, bucket, path):
-        return "https://s3.direct.%s.cloud-object-storage.appdomain.cloud/%s/%s" % (self.region, bucket, path)
+        return f"https://s3.direct.{self.region}.cloud-object-storage.appdomain.cloud/{bucket}/{path}"
 
     def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False, instanceid=None):
         if domain is None:
             domain = nets[0]
-        pprint("Using domain %s..." % domain)
+        pprint(f"Using domain {domain}...")
         cluster = None
-        fqdn = "%s.%s" % (name, domain)
+        fqdn = f"{name}.{domain}"
         if fqdn.split('-')[0] == fqdn.split('.')[1]:
             cluster = fqdn.split('-')[0]
             name = '.'.join(fqdn.split('.')[:1])
-            domain = fqdn.replace("%s." % name, '').replace("%s." % cluster, '')
+            domain = fqdn.replace(f"{name}.", '').replace(f"{cluster}.", '')
         dnszone = self._get_dns_zone(domain)
         if dnszone is None:
             return
@@ -1241,18 +1228,17 @@ class Kibm(object):
                 ip = self.internalip(name)
                 if ip is None:
                     sleep(5)
-                    pprint(
-                        "Waiting 5 seconds to grab internal ip and create DNS record for %s..." % name)
+                    pprint(f"Waiting 5 seconds to grab internal ip and create DNS record for {name}...")
                     counter += 10
                 else:
                     break
         if ip is None:
-            error('Unable to find an IP for %s' % name)
+            error(f'Unable to find an IP for {name}')
             return
         try:
             dnszone.create_dns_record(name=name, type='A', ttl=60, content=ip)
-        except ApiException as exc:
-            error('Unable to create DNS entry. %s' % exc)
+        except ApiException as e:
+            error(f'Unable to create DNS entry. Hit {e}')
             return
         if alias:
             for a in alias:
@@ -1260,17 +1246,17 @@ class Kibm(object):
                     record_type = 'A'
                     content = ip
                     if cluster is not None and ('master' in name or 'worker' in name):
-                        dnsname = '*.apps.%s.%s' % (cluster, domain)
+                        dnsname = f'*.apps.{cluster}.{domain}'
                     else:
-                        dnsname = '*.%s.%s' % (name, domain)
+                        dnsname = f'*.{name}.{domain}'
                 else:
                     record_type = 'CNAME'
-                    content = "%s.%s" % (name, domain)
-                    dnsname = '%s.%s' % (a, domain) if '.' not in a else a
+                    content = f"{name}.{domain}"
+                    dnsname = f'{a}.{domain}' if '.' not in a else a
                 try:
                     dnszone.create_dns_record(name=dnsname, type=record_type, ttl=60, content=content)
-                except ApiException as exc:
-                    error('Unable to create DNS entry. %s' % exc)
+                except ApiException as e:
+                    error(f'Unable to create DNS entry. Hit {e}')
                     return
 
     def create_dns(self):
@@ -1281,18 +1267,18 @@ class Kibm(object):
         if dnszone is None:
             return
         cluster = None
-        fqdn = "%s.%s" % (name, domain)
+        fqdn = f"{name}.{domain}"
         if fqdn.split('-')[0] == fqdn.split('.')[1]:
             cluster = fqdn.split('-')[0]
             name = '.'.join(fqdn.split('.')[:1])
-            domain = fqdn.replace("%s." % name, '').replace("%s." % cluster, '')
-        dnsentry = name if cluster is None else "%s.%s" % (name, cluster)
-        entry = "%s.%s" % (dnsentry, domain)
-        clusterdomain = "%s.%s" % (cluster, domain)
+            domain = fqdn.replace(f"{name}.", '').replace(f"{cluster}.", '')
+        dnsentry = name if cluster is None else f"{name}.{cluster}"
+        entry = f"{dnsentry}.{domain}"
+        clusterdomain = f"{cluster}.{domain}"
         try:
             records = dnszone.list_all_dns_records().get_result()['result']
-        except ApiException as exc:
-            error('Unable to check DNS %s records. %s' % (dnszone['name'], exc))
+        except ApiException as e:
+            error(f"Unable to check DNS {dnszone['name']} records. Hit {e}")
             return
         recordsfound = False
         for record in records:
@@ -1302,10 +1288,10 @@ class Kibm(object):
                 try:
                     dnszone.delete_dns_record(dnsrecord_identifier=record_identifier)
                     recordsfound = True
-                except ApiException as exc:
-                    error('Unable to delete record %s. %s' % (record['name'], exc))
+                except ApiException as e:
+                    error(f"Unable to delete record {record['name']}. Hit {e}")
         if not recordsfound:
-            error("No records found for %s" % entry)
+            error(f"No records found for {entry}")
         return {'result': 'success'}
 
     def list_dns(self, domain):
@@ -1315,8 +1301,8 @@ class Kibm(object):
             return []
         try:
             records = dnszone.list_all_dns_records().get_result()['result']
-        except ApiException as exc:
-            error('Unable to check DNS %s records. %s' % (dnszone['name'], exc))
+        except ApiException as e:
+            error(f"Unable to check DNS {dnszone['name']} records. Hit {e}")
             return results
         for record in records:
             ip = record['content']
@@ -1360,8 +1346,8 @@ class Kibm(object):
     def _get_dns_zone(self, domain):
         try:
             dnslist = self.dns.list_zones().get_result()['result']
-        except ApiException as exc:
-            error('Unable to check DNS resources. %s' % exc)
+        except ApiException as e:
+            error(f'Unable to check DNS resources. Hit {e}')
             return None
         dnsfound = False
         for dnsresource in dnslist:
@@ -1371,13 +1357,13 @@ class Kibm(object):
                 dnsfound = True
                 break
         if not dnsfound:
-            error('Domain %s not found' % domain)
+            error(f'Domain {domain} not found')
             return None
         try:
             dnszone = DnsRecordsV1(authenticator=self.authenticator, crn=self.cis_resource_instance_id,
                                    zone_identifier=dnsid)
-        except ApiException as exc:
-            error('Unable to check DNS zones for DNS %s. %s' % (domain, exc))
+        except ApiException as e:
+            error(f'Unable to check DNS zones for DNS {domain}. Hit {e}')
             return None
         return dnszone
 
@@ -1414,8 +1400,8 @@ class Kibm(object):
             self.conn.delete_security_group(security_group_id)
 
     def _add_sno_security_group(self, cluster):
-        security_group_id = self.create_security_group("%s-sno" % cluster, [80, 443, 6443])
-        vm = self._get_vm("%s-master-0" % cluster)
+        security_group_id = self.create_security_group(f"{cluster}-sno", [80, 443, 6443])
+        vm = self._get_vm(f"{cluster}-master-0")
         nic_id = vm['primary_network_interface']['id']
         self.conn.add_security_group_network_interface(security_group_id, nic_id)
 
