@@ -135,8 +135,6 @@ class Kibm(object):
             return {'result': 'failure', 'reason': 'Unable to retrieve vpc information. %s' % exc}
         if self.exists(name):
             return {'result': 'failure', 'reason': "VM %s already exists" % name}
-        if not keys:
-            return {'result': 'failure', 'reason': 'SSH Keys not found in configuration'}
         key_list = []
         try:
             ssh_keys = {x['name']: x for x in self.conn.list_keys().result['keys']}
