@@ -326,7 +326,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 else:
                     newkey = key.rstrip()
                 if not newkey.startswith('ssh-'):
-                    warning(f"Skipping invalid key {key}")
+                    warning(f"Skipping invalid ssh key {key}")
                     continue
                 else:
                     good_keys.append(newkey)
