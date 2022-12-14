@@ -6,7 +6,7 @@ IBM Cloud provider class
 
 from ipaddress import ip_network
 from kvirt import common
-from kvirt.common import pprint, error
+from kvirt.common import pprint, error, get_ssh_pub_key
 from kvirt.defaults import METADATA_FIELDS
 from ibm_vpc import VpcV1, vpc_v1
 import ibm_boto3
@@ -133,11 +133,20 @@ class Kibm(object):
             return {'result': 'failure', 'reason': f"VM {name} already exists"}
         key_list = []
         try:
-            ssh_keys = {x['name']: x for x in self.conn.list_keys().result['keys']}
-            for key in keys:
-                if key not in ssh_keys:
-                    return {'result': 'failure', 'reason': f'Key {key} not found'}
-                key_list.append(ssh_keys[key]['id'])
+            pub_ssh_keys = [x['id'] for x in self.conn.list_keys().result['keys']]
+            if not pub_ssh_keys:
+                resource_group = {'id': resource_group_id}
+                publickeyfile = get_ssh_pub_key()
+                if publickeyfile is None:
+                    return {'result': 'failure', 'reason': 'Unable to use a valid public ssh key'}
+                pprint("Adding a default ssh public key named kvirt")
+                identityfile = publickeyfile.replace('.pub', '')
+                _type = identityfile.split('_')[-1]
+                public_key = open(publickeyfile).read()
+                new_key = self.conn.create_key(public_key, name='kvirt', resource_group=resource_group, type=_type)
+                pub_ssh_keys.append(new_key.result['id'])
+            for key in pub_ssh_keys:
+                key_list.append(key)
         except ApiException as e:
             return {'result': 'failure', 'reason': f'Unable to check keys. Hit {e}'}
         if cloudinit:
