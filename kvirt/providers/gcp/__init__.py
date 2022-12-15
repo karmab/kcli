@@ -270,6 +270,10 @@ class Kgcp(object):
                 if key not in existingkeys:
                     newval = {'key': key, 'value': overrides[key]}
                     body['metadata']['items'].append(newval)
+        tpm, secureboot = overrides.get('tpm', False), overrides.get('secureboot', False)
+        if tpm or secureboot:
+            body['shielded_instance_config'] = {'enable_integrity_monitoring': False, 'enable_vtpm': tpm,
+                                                'enable_secure_boot': secureboot}
         try:
             conn.instances().insert(project=project, zone=zone, body=body).execute()
         except Exception as e:
