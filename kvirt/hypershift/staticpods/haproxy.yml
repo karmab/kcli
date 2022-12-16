@@ -1,0 +1,44 @@
+---
+kind: Pod
+apiVersion: v1
+metadata:
+  name: haproxy
+  namespace: kcli-infra
+  creationTimestamp:
+  deletionGracePeriodSeconds: 65
+  labels:
+    app: kcli-haproxy
+spec:
+  volumes:
+  - name: conf-dir
+    hostPath:
+      path: "/etc/kubernetes"
+  - name: run-dir
+    empty-dir: {}
+  containers:
+  - name: haproxy
+    image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/karmab/haproxy:latest
+    args:
+    - "-W"
+    - "-f"
+    - "/etc/haproxy/haproxy.cfg"
+    - "-db"
+    - "-S"
+    - "/var/run/haproxy/haproxy-master.sock,level,admin"
+    resources:
+      requests:
+        cpu: 150m
+        memory: 512Mi
+    volumeMounts:
+    - name: conf-dir
+      mountPath: "/etc/haproxy"
+    - name: run-dir
+      mountPath: "/var/run/haproxy"
+    terminationMessagePolicy: FallbackToLogsOnError
+    imagePullPolicy: IfNotPresent
+  hostNetwork: true
+  dnsPolicy: ClusterFirstWithHostNet
+  tolerations:
+  - operator: Exists
+  priorityClassName: system-node-critical
+status: {}

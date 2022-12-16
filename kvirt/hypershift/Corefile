@@ -1,6 +1,9 @@
 . {
     errors
     health :18080
+{% if mdns %}
+    mdns {{ cluster }}.{{ domain }} 0 {{ cluster }}
+{% endif %}
     forward . NAMESERVER
     cache 30
     reload

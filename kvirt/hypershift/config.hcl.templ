@@ -1,0 +1,11 @@
+bind_address = "IP"
+collision_avoidance = "hostname"
+
+service {
+    name = "{{ cluster }} Workstation"
+    host_name = "HOSTNAME.local."
+    type = "_workstation._tcp"
+    domain = "local."
+    port = 42424
+    ttl = 3200
+}
