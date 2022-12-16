@@ -40,21 +40,21 @@
  - path: /etc/kubernetes/keepalived.conf
    origin: keepalived.conf
 {% if coredns %}
-  - path: /etc/NetworkManager/dispatcher.d/99-forcedns
-    origin: 99-forcedns
-    mode: 755
-  - path: /etc/kubernetes/manifests/coredns.yml
-    origin: staticpods/coredns.yml
-  - path: /etc/kubernetes/Corefile
-    origin: Corefile
+ - path: /etc/NetworkManager/dispatcher.d/99-forcedns
+   origin: 99-forcedns
+   mode: 755
+ - path: /etc/kubernetes/manifests/coredns.yml
+   origin: staticpods/coredns.yml
+ - path: /etc/kubernetes/Corefile
+   origin: Corefile
 {% endif %}
 {% if mdns %}
-  - path: /etc/kubernetes/manifests/haproxy.yml
-    origin: staticpods/haproxy.yml
-  - path: /etc/kubernetes/haproxy.cfg
-    origin: haproxy.cfg
-  - path: /etc/sysctl.d/nonlocalbind.conf
-    origin: nonlocalbind.conf
+ - path: /etc/kubernetes/manifests/haproxy.yml
+   origin: staticpods/haproxy.yml
+ - path: /etc/kubernetes/haproxy.cfg
+   origin: haproxy.cfg
+ - path: /etc/sysctl.d/nonlocalbind.conf
+   origin: nonlocalbind.conf
 {% endif %}
 {% endif %}
 {% endfor %}
