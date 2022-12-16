@@ -27,13 +27,6 @@
  nets: {{ [net0] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
  files:
- - path: /etc/NetworkManager/dispatcher.d/99-forcedns
-   origin: 99-forcedns
-   mode: 755
- - path: /etc/kubernetes/manifests/coredns.yml
-   origin: staticpods/coredns.yml
- - path: /etc/kubernetes/Corefile
-   origin: Corefile
 {% if config_type in ['kvm', 'vsphere', 'ovirt'] %}
  - path: /etc/kubernetes/manifests/keepalived.yml
    origin: staticpods/keepalived.yml
@@ -47,14 +40,6 @@
    origin: staticpods/coredns.yml
  - path: /etc/kubernetes/Corefile
    origin: Corefile
-{% endif %}
-{% if mdns %}
- - path: /etc/kubernetes/manifests/haproxy.yml
-   origin: staticpods/haproxy.yml
- - path: /etc/kubernetes/haproxy.cfg
-   origin: haproxy.cfg
- - path: /etc/sysctl.d/nonlocalbind.conf
-   origin: nonlocalbind.conf
 {% endif %}
 {% endif %}
 {% endfor %}
