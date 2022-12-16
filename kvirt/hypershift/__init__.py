@@ -120,10 +120,6 @@ def create(config, plandir, cluster, overrides):
         call(hypercmd, shell=True)
         sleep(120)
     data['basedir'] = '/workdir' if container_mode() else '.'
-    api_url = os.popen("oc whoami --show-server").read()
-    api_domain = urlparse(api_url).hostname
-    api_ip = socket.getaddrinfo(api_domain, 6443, proto=socket.IPPROTO_TCP)[0][4][0]
-    data['api_ip'] = api_ip
     cluster = data.get('cluster')
     namespace = data.get('namespace')
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
@@ -132,6 +128,10 @@ def create(config, plandir, cluster, overrides):
         sys.exit(1)
     if which('oc') is None:
         get_oc()
+    api_url = os.popen("oc whoami --show-server").read()
+    api_domain = urlparse(api_url).hostname
+    api_ip = socket.getaddrinfo(api_domain, 6443, proto=socket.IPPROTO_TCP)[0][4][0]
+    data['api_ip'] = api_ip
     pub_key = data.get('pub_key')
     pull_secret = pwd_path(data.get('pull_secret'))
     pull_secret = os.path.expanduser(pull_secret)
