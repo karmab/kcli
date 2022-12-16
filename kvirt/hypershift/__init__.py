@@ -73,6 +73,7 @@ def create(config, plandir, cluster, overrides):
             'namespace': 'clusters',
             'disconnected_url': None,
             'pull_secret': 'openshift_pull.json',
+            'sslip': False,
             'retries': 3}
     data.update(overrides)
     retries = data.get('retries')
@@ -84,11 +85,14 @@ def create(config, plandir, cluster, overrides):
         clustervalue = 'testk'
     data['cluster'] = clustervalue
     data['kube'] = data['cluster']
+    ignore_hosts = data.get('ignore_hosts', False)
     pprint(f"Deploying cluster {clustervalue}")
     plan = cluster if cluster is not None else clustervalue
     baremetal_iso = data.get('baremetal_iso', False)
     baremetal_hosts = data.get('baremetal_hosts', [])
+    sslip = data.get('sslip')
     domain = data.get('domain')
+    data['original_domain'] = domain
     version = data.get('version')
     tag = data.get('tag')
     if str(tag) == '4.1':
@@ -180,6 +184,10 @@ def create(config, plandir, cluster, overrides):
             pprint(f"Using keepalived virtual_router_id {virtual_router_id}")
         ipv6 = True if ':' in cidr else False
         data['ipv6'] = ipv6
+    if sslip and config.type in virtplatforms:
+        data['domain'] = '%s.sslip.io' % ingress_ip.replace('.', '-').replace(':', '-')
+        pprint(f"Setting domain to {domain}")
+        ignore_hosts = False
     assetsdata = data.copy()
     if version == 'cluster':
         release_image = os.popen("oc get clusterversion version -o jsonpath={'.status.history[-1].image'}").read()
@@ -336,7 +344,7 @@ def create(config, plandir, cluster, overrides):
     if data['workers'] > 0:
         worker_threaded = data.get('threaded', False) or data.get('workers_threaded', False)
         config.plan(plan, inputfile=f'{plandir}/kcli_plan.yml', overrides=data, threaded=worker_threaded)
-    if data.get('ignore_hosts', False):
+    if ignore_hosts:
         warning("Not updating /etc/hosts as per your request")
     else:
         update_etc_hosts(cluster, domain, api_ip, ingress_ip)

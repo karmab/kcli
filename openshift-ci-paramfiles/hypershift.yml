@@ -1,7 +1,7 @@
 #cluster: cnf10
 #hypershift_image: quay.io/hypershift/hypershift-operator:4.12
 version: nightly
-tag: '4.12'
+tag: '4.13'
 network: default
 ingress_ip: 192.168.122.249
 workers: 2

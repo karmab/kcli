@@ -16,7 +16,7 @@
 {% endif %}
 
 {{ cluster }}-worker-{{ num }}:
- domain: {{ domain }} 
+ domain: {{ original_domain }} 
  image: {{ image }}
  pool: {{ pool or config_pool }}
  keys: {{ keys }}
@@ -32,7 +32,7 @@
    origin: staticpods/keepalived.yml
  - path: /etc/kubernetes/keepalived.conf
    origin: keepalived.conf
-{% if coredns %}
+{% if not sslip and coredns %}
  - path: /etc/NetworkManager/dispatcher.d/99-forcedns
    origin: 99-forcedns
    mode: 755

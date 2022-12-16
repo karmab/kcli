@@ -1,3 +1,4 @@
+{% set api_address = api_ip|default("api." + cluster + "." + original_domain) %}
 apiVersion: v1
 data:
  .dockerconfigjson: {{ pull_secret|default('')|base64 }}
@@ -56,33 +57,33 @@ spec:
   - service: APIServer
     servicePublishingStrategy:
       nodePort:
-        address: api.{{ cluster }}.{{ domain }}
+        address: {{ api_address }}
       type: NodePort
   - service: OAuthServer
     servicePublishingStrategy:
       nodePort:
-        address: api.{{ cluster }}.{{ domain }}
+        address: {{ api_address }}
       type: NodePort
   - service: OIDC
     servicePublishingStrategy:
       nodePort:
-        address: api.{{ cluster }}.{{ domain }}
+        address: {{ api_address }}
       type: None
   - service: Konnectivity
     servicePublishingStrategy:
       nodePort:
-        address: api.{{ cluster}}.{{ domain }}
+        address: {{ api_address }}
       type: NodePort
   - service: Ignition
     servicePublishingStrategy:
       nodePort:
-        address: api.{{ cluster }}.{{ domain }}
+        address: {{ api_address }}
       type: NodePort
 {% if network_type == 'OVNKubernetes' %}
   - service: OVNSbDb
     servicePublishingStrategy:
       nodePort:
-        address: api.{{ cluster }}.{{ domain }}
+        address: {{ api_address }}
       type: NodePort
 {% endif %}
 {% if ca is defined %}
