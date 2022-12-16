@@ -10,10 +10,12 @@ from ipaddress import ip_network
 import json
 import os
 import re
+import socket
 import sys
 from shutil import which
 from subprocess import call
 from time import sleep
+from urllib.parse import urlparse
 import yaml
 
 virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere']
@@ -118,7 +120,9 @@ def create(config, plandir, cluster, overrides):
         call(hypercmd, shell=True)
         sleep(120)
     data['basedir'] = '/workdir' if container_mode() else '.'
-    api_ip = os.popen("oc get node -o wide | grep master | head -1 | awk '{print $6}'").read().strip()
+    api_url = os.popen("oc whoami --show-server").read()
+    api_domain = urlparse(api_url).hostname
+    api_ip = socket.getaddrinfo(api_domain, 6443, proto=socket.IPPROTO_TCP)[0][4][0]
     data['api_ip'] = api_ip
     cluster = data.get('cluster')
     namespace = data.get('namespace')
