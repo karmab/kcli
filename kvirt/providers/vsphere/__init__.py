@@ -1446,3 +1446,12 @@ class Ksphere:
                         result = nic.ipAddress[0]
                         break
         return result
+
+    def create_csi_storage_folder(self, cluster):
+        si = self.si
+        dc = self.dc
+        if find(si, dc.vmFolder, vim.Folder, 'vm') is None:
+            createfolder(si, dc.vmFolder, 'vm')
+        vmfolder = find(si, dc.vmFolder, vim.Folder, 'vm')
+        if find(si, dc.vmFolder, vmfolder, cluster) is None:
+            createfolder(si, vmfolder, cluster)

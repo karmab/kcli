@@ -214,7 +214,7 @@ platform:
     password: {{ config_password }}
     datacenter: {{ config_datacenter }}
     defaultDatastore: {{ config_pool }}
-    # folder: /{{ config_datacenter}}/vm/{{ cluster }}
+    folder: /{{ config_datacenter}}/vm/{{ cluster }}
 {% else %} 
   none: {}
 {% endif %}
