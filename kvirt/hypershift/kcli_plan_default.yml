@@ -49,3 +49,5 @@ virtual_router_id:
 pub_key:
 hypershift_image: quay.io/hypershift/hypershift-operator:latest
 retries: 3
+coredns: true
+mdns: false

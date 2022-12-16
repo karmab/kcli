@@ -59,6 +59,8 @@ def create(config, plandir, cluster, overrides):
     data = {'kubetype': 'hypershift',
             'domain': 'karmalabs.corp',
             'baremetal_iso': False,
+            'coredns': True,
+            'mdns': False,
             'network': 'default',
             'etcd_size': 4,
             'workers': 2,
