@@ -6,7 +6,6 @@ masters: 3
 workers: 0
 numcpus: 16
 api_ip: 10.19.135.229
-# network: ovirtmgmt
 master_memory: 28672
 worker_memory: 16384
 bootstrap_memory: 8192
@@ -16,12 +15,4 @@ extra_disks:
 async: true
 notify: true
 apps:
-- autolabeller
-- local-storage-operator
-- ocs-operator
 - kubevirt-hyperconverged
-autolabeller_rules:
-- ci-.*virt-master.*:
-   - cluster.ocs.openshift.io/openshift-storage
-- ci-(kubevirt|libvirt|ovirt)-master-(.):
-  - topology.rook.io/rack: rack\2
