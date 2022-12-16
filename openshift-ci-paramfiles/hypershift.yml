@@ -1,18 +1,8 @@
-#cluster: cnf10
-#hypershift_image: quay.io/hypershift/hypershift-operator:4.12
 version: nightly
 tag: '4.13'
-network: default
-ingress_ip: 192.168.122.249
+network: baremetal
+ingress_ip: 10.19.135.130
 workers: 2
 numcpus: 16
-memory: 32768
+memory: 16384
 disk_size: 80
-#vmrules:
-#- cnf10-worker-0:
-#   client: local
-#- cnf10-worker-1:
-#   client: ovirt_karim
-#   nets: [ovirtmgmt]
-#- cnf10-worker-2:
-#   client: kubevirt_karim

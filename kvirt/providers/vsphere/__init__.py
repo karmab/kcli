@@ -1453,5 +1453,5 @@ class Ksphere:
         if find(si, dc.vmFolder, vim.Folder, 'vm') is None:
             createfolder(si, dc.vmFolder, 'vm')
         vmfolder = find(si, dc.vmFolder, vim.Folder, 'vm')
-        if find(si, dc.vmFolder, vmfolder, cluster) is None:
+        if find(si, vmfolder, vim.Folder, cluster) is None:
             createfolder(si, vmfolder, cluster)
