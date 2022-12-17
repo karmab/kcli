@@ -140,6 +140,8 @@ class Ksphere:
                 return {'result': 'failure', 'reason': f"Image {image} not found"}
             clonespec = createclonespec(resourcepool)
             confspec = vim.vm.ConfigSpec()
+            confspec.flags = vim.vm.FlagInfo()
+            confspec.flags.diskUuidEnabled = True
             confspec.annotation = name
             confspec.memoryMB = memory
             confspec.numCPUs = numcpus
