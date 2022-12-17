@@ -19,6 +19,7 @@ from urllib.parse import urlparse
 import yaml
 
 virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere']
+cloudplatforms = ['aws', 'gcp', 'ibm']
 
 
 def scale(config, plandir, cluster, overrides):
@@ -256,7 +257,8 @@ def create(config, plandir, cluster, overrides):
             installparam['cluster'] = cluster
             installparam['kubetype'] = 'hypershift'
             installparam['api_ip'] = api_ip
-            installparam['ingress_ip'] = ingress_ip
+            if ingress_ip is not None:
+                installparam['ingress_ip'] = ingress_ip
             if virtual_router_id is not None:
                 installparam['virtual_router_id'] = virtual_router_id
             installparam['image'] = image
@@ -367,6 +369,10 @@ def create(config, plandir, cluster, overrides):
     with open(autoapproverpath, 'w') as f:
         f.write(autoapprover)
     call(f"oc apply -f {autoapproverpath}", shell=True)
+    if platform in cloudplatforms:
+        result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_apps.yml', overrides=overrides)
+        if result['result'] != 'success':
+            sys.exit(1)
     async_install = data.get('async')
     if async_install or which('openshift-install') is None:
         success(f"Kubernetes cluster {cluster} deployed!!!")
