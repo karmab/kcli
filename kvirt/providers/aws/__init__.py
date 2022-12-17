@@ -1155,6 +1155,7 @@ class Kaws(object):
                     break
                 except:
                     pprint(f"Waiting 10s for {lb_dns_name} to get an ip resolution")
+                    sleep(10)
             if dnsclient is not None:
                 return ip
             self.reserve_dns(name, ip=ip, domain=domain, alias=alias)
