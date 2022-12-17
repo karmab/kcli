@@ -942,7 +942,7 @@ class Kopenstack(object):
         print("not implemented")
         return
 
-    def flavors(self):
+    def list_flavors(self):
         nova = self.nova
         nova.flavors.list
         flavors = [[flavor.name, flavor.vcpus, flavor.ram] for flavor in nova.flavors.list()]

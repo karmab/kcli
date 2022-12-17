@@ -983,7 +983,7 @@ class Kpacket(object):
         """
         return 'default'
 
-    def flavors(self):
+    def list_flavors(self):
         """
 
         :return:

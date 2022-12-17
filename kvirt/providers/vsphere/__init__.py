@@ -1454,3 +1454,6 @@ class Ksphere:
         dc = self.dc
         if find(si, dc.vmFolder, vim.Folder, name) is None:
             createfolder(si, dc.vmFolder, name)
+
+    def list_flavors(self):
+        return []

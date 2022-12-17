@@ -832,12 +832,12 @@ def list_dns(args):
     print(dnstable)
 
 
-def list_flavor(args):
+def list_flavors(args):
     """List flavors"""
     short = args.short
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
-    flavors = k.flavors()
+    flavors = k.list_flavors()
     if short:
         flavorstable = PrettyTable(["Flavor"])
         for flavor in sorted(flavors):
@@ -4447,7 +4447,7 @@ def cli():
     flavorlist_parser = list_subparsers.add_parser('flavor', description=flavorlist_desc, help=flavorlist_desc,
                                                    aliases=['flavors'])
     flavorlist_parser.add_argument('--short', action='store_true')
-    flavorlist_parser.set_defaults(func=list_flavor)
+    flavorlist_parser.set_defaults(func=list_flavors)
 
     hostlist_desc = 'List Hosts'
     hostlist_parser = list_subparsers.add_parser('host', description=hostlist_desc, help=hostlist_desc,

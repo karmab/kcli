@@ -256,7 +256,7 @@ class KcliServicer(kcli_pb2_grpc.KcliServicer):
         config = Kconfig()
         k = config.k
         flavorslist = []
-        for flavor in k.flavors():
+        for flavor in k.list_flavors():
             flavorname, numcpus, memory = flavor
             flavorslist.append({'flavor': flavorname, 'numcpus': numcpus, 'memory': memory})
         response = kcli_pb2.flavorslist(flavors=[kcli_pb2.flavor(**f) for f in flavorslist])

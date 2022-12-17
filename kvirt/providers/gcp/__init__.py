@@ -1022,7 +1022,7 @@ class Kgcp(object):
                 results.append([record.name, record.record_type, record.ttl, ','.join(record.rrdatas)])
         return results
 
-    def flavors(self):
+    def list_flavors(self):
         conn = self.conn
         project = self.project
         zone = self.zone

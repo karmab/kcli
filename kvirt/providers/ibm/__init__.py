@@ -192,7 +192,7 @@ class Kibm(object):
         except ApiException as e:
             return {'result': 'failure', 'reason': f'Unable to check networks. Hit {e}'}
         if flavor is None:
-            flavors = [f for f in self.flavors() if f[1] >= numcpus and f[2] * 1024 >= memory]
+            flavors = [f for f in self.list_flavors() if f[1] >= numcpus and f[2] * 1024 >= memory]
             if flavors:
                 flavor = min(flavors, key=lambda f: f[2])[0]
                 pprint(f"Using flavor {flavor}")
@@ -928,7 +928,7 @@ class Kibm(object):
     def get_pool_path(self, pool):
         print("not implemented")
 
-    def flavors(self):
+    def list_flavors(self):
         flavor_list = []
         try:
             for profile in self.conn.list_instance_profiles().result['profiles']:

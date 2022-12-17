@@ -1556,7 +1556,7 @@ class Kubevirt(Kubecommon):
                 return pool
         return None
 
-    def flavors(self):
+    def list_flavors(self):
         return []
 
     def get_image_name(self, name, pvcname=None):

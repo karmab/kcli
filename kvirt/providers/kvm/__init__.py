@@ -3566,7 +3566,7 @@ class Kvirt(object):
                 poolpath += " (thinpool:%s)" % thinpool
         return poolpath
 
-    def flavors(self):
+    def list_flavors(self):
         return []
 
     def thinimages(self, path, thinpool):

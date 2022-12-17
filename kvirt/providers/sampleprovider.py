@@ -564,7 +564,7 @@ class Kbase(object):
         return
 
 # return a list of [name, numcpus, memory] for each flavor, if the platform has this concept
-    def flavors(self):
+    def list_flavors(self):
         """
 
         :return:

@@ -1066,14 +1066,16 @@ class Kaws(object):
                 results.append([name, _type, ttl, data])
         return results
 
-    def flavors(self):
+    def list_flavors(self):
         results = []
-        for flavor in staticf:
-            name = flavor
-            numcpus = staticf[flavor]['cpus']
-            memory = staticf[flavor]['memory']
+        flavors = self.conn.describe_instance_types()['InstanceTypes']
+        for flavor in flavors:
+            name = flavor['InstanceType']
+            numcpus = flavor['VCpuInfo']['DefaultVCpus']
+            memory = flavor['MemoryInfo']['SizeInMiB']
+            # disk = flavor['InstanceStorageInfo']['TotalSizeInGB'] if 'InstanceStorageInfo' in flavor else ''
             results.append([name, numcpus, memory])
-        return results
+        return sorted(results)
 
     def export(self, name, image=None):
         conn = self.conn

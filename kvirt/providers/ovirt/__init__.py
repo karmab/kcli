@@ -1222,7 +1222,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         pool = poolsearch[0]
         return pool.storage.path
 
-    def flavors(self):
+    def list_flavors(self):
         return []
 
     def export(self, name, image=None):
