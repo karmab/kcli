@@ -2826,7 +2826,6 @@ class Kconfig(Kbaseconfig):
             call(f'oc delete -f {clusterdir}/assets.yaml', shell=True)
             if 'baremetal_iso' in clusterdata or 'baremetal_hosts' in clusterdata:
                 call('oc -n default delete all -l app=httpd-kcli', shell=True)
-                call('oc -n default delete svc httpd-kcli-svc', shell=True)
                 call('oc -n default delete pvc httpd-kcli-pvc', shell=True)
             pprint(f"Deleting directory {clusterdir}")
             rmtree(clusterdir)
