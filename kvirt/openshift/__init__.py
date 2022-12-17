@@ -364,6 +364,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'kvm_forcestack': False,
             'kvm_openstack': True,
             'ipsec': False,
+            'ovn_hostrouting': False,
             'manifests': 'manifests',
             'sno': False,
             'sno_virtual': False,
@@ -465,6 +466,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     disconnected_password = data.get('disconnected_password')
     disconnected_prefix = data.get('disconnected_prefix', 'ocp4')
     ipsec = data.get('ipsec')
+    ovn_hostrouting = data.get('ovn_hostrouting')
     upstream = data.get('upstream')
     metal3 = data.get('metal3')
     sushy = data.get('sushy')
@@ -977,8 +979,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             with open(f"{tmpdir}/calico.sh", 'w') as f:
                 f.write(calicoscript)
             call(f'bash {tmpdir}/calico.sh', shell=True)
-    if ipsec:
-        copy2(f"{plandir}/99-ipsec.yaml", f"{clusterdir}/openshift")
+    if ipsec or ovn_hostrouting:
+        ovn_data = config.process_inputfile(cluster, f"{plandir}/99-ovn.yaml",
+                                            overrides={'ipsec': ipsec, 'ovn_hostrouting': ovn_hostrouting})
+        with open(f"{clusterdir}/openshift/99-ovn.yaml", 'w') as f:
+            f.write(ovn_data)
     if workers == 0 or not mdns or kubevirt_api_service:
         copy2(f'{plandir}/cluster-scheduler-02-config.yml', f"{clusterdir}/manifests")
     if disconnected_operators:

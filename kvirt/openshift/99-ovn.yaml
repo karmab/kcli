@@ -6,5 +6,11 @@ spec:
   defaultNetwork:
     type: OVNKubernetes
     ovnKubernetesConfig:
-      ipsecConfig: {}
       mtu: 1400
+{% if ipsec %}
+      ipsecConfig: {}
+{% endif %}
+{% if ovn_hostrouting %}
+      gatewayConfig:
+        routingViaHost: true
+{% endif %}
