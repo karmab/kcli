@@ -22,8 +22,8 @@
  - name: {{ network }}
  disks:
  - size: {{ disk_size }}
- files:
 {% if config_type == 'gcp' %}
+ files:
  - path: /usr/local/bin/gcp-hack.sh
    origin: gcp-hack.sh
    mode: 755
@@ -34,6 +34,7 @@
    origin: gcp-hack.preset
    mode: 644
 {% elif config_type == 'ibm' %}
+ files:
   - path: /etc/NetworkManager/dispatcher.d/99-forcedns
     origin: 99-forcedns-ibm
     mode: 755
