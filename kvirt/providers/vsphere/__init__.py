@@ -1447,11 +1447,8 @@ class Ksphere:
                         break
         return result
 
-    def create_csi_storage_folder(self, cluster):
+    def create_vm_folder(self, name):
         si = self.si
         dc = self.dc
-        if find(si, dc.vmFolder, vim.Folder, 'vm') is None:
-            createfolder(si, dc.vmFolder, 'vm')
-        vmfolder = find(si, dc.vmFolder, vim.Folder, 'vm')
-        if find(si, vmfolder, vim.Folder, cluster) is None:
-            createfolder(si, vmfolder, cluster)
+        if find(si, dc.vmFolder, vim.Folder, name) is None:
+            createfolder(si, dc.vmFolder, name)

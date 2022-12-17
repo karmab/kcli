@@ -1326,8 +1326,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     backup_paramfile(installparam, clusterdir, cluster, plan, image, dnsconfig)
     if platform in virtplatforms:
         if platform == 'vsphere':
-            pprint(f"Creating storage folder /vm/{cluster}")
-            k.create_csi_storage_folder(cluster)
+            pprint(f"Creating vm folder /vm/{cluster}")
+            k.create_vm_folder(cluster)
         pprint("Deploying bootstrap")
         if baremetal_iso_bootstrap:
             bootstrap_iso_overrides = baremetal_iso_overrides.copy()
