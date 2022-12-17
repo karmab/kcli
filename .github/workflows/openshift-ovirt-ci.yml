@@ -45,7 +45,5 @@ jobs:
        - run: git pull origin ${GITHUB_REF##*/}
        - name: Install kcli
          run: curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | bash
-       - name: Delete old install
-         run: kcli delete cluster --yes $PLAN
        - name: Deploy Openshift on Ovirt
-         run: kcli create cluster openshift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET -P version=$VERSION -P tag="$TAG" $EXTRAPARAMS $PLAN
+         run: kcli create cluster openshift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET -P version=$VERSION -P tag="$TAG" $EXTRAPARAMS $PLAN --force
