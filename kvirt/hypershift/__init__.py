@@ -134,6 +134,12 @@ def create(config, plandir, cluster, overrides):
         sys.exit(1)
     if which('oc') is None:
         get_oc()
+    supported_data = yaml.safe_load(os.popen("oc get cm/supported-versions -o yaml -n hypershift").read())['data']
+    supported_versions = supported_versions = supported_data['supported-versions']
+    versions = yaml.safe_load(supported_versions)['versions']
+    if str(tag) not in versions:
+        error(f"Invalid tag {tag}. Choose between {','.join(versions)}")
+        sys.exit(1)
     api_url = os.popen("oc whoami --show-server").read()
     api_domain = urlparse(api_url).hostname
     api_ip = socket.getaddrinfo(api_domain, 6443, proto=socket.IPPROTO_TCP)[0][4][0]
