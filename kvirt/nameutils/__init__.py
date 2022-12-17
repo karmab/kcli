@@ -26,11 +26,12 @@ right = ["albattani", "ablonde", "acid", "adark", "almeida", "alknopfler", "amaz
          "pparker", "productionready", "ptolemy", "quartararo", "rosalind", "rgemma", "reinhardt", "rossi", "sammet",
          "sandler", "satriani", "selen", "shockley", "sinoussi", "silversurfer", "snowwhites", "socarrat", "spidey",
          "spitzer", "stallman", "tesla", "timesburg", "thompson", "torvalds", "turing", "wilson", "wozniak", "wright",
-         "yonath", "rulo", "tudela", "tdurdeen", "korsani", "karmab", "gotrunks", "xhamster", "minwii", "djokovic",
+         "yonath", "rulo", "tudela", "tylerdurdeen", "korsani", "karmab", "gotrunks", "xhamster", "minwii", "djokovic",
          "federer", "nadal", "sampras", "tgb", "valadas", "vai", "vegeta", "ivanisevic", "muster", "agassi",
          "targaryen", "lannister", "safin", "stark", "jsnow", "superduper", "telecaster", "tommyemmanuel", "thor",
-         "vario", "walterwhite", "yuval", "5g", "5guys", "180k", "mtravis", "chet", "fusilijerri", "jrobinson", "mog",
-         "unity", "savannah", "soul", "93"]
+         "vario", "walterwhite", "yuval", "5g", "5guys", "180k", "merletravis", "chetatkins", "fusilijerri",
+         "joerobinson", "mog", "unity", "savannah", "soul", "93", "vcossart", "gruson", "patarin", "hichem", "regis",
+         "elisa", "limu", "brais", "duncanmcleod"]
 
 
 def get_random_name(sep='-'):
