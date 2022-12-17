@@ -2940,9 +2940,6 @@ class Kconfig(Kbaseconfig):
             domain = '.'.join(cluster.split('.')[1:])
             pprint(f"Using domain {domain}")
             cluster = cluster.replace(f".{domain}", '')
-        if domain is None:
-            error("Missing domain")
-            sys.exit(1)
         hosts_content = None
         finaldata = None
         if ignitionfile is not None:
@@ -2962,6 +2959,9 @@ class Kconfig(Kbaseconfig):
                     except:
                         pass
                 if api_ip is None:
+                    if domain is None:
+                        error("Couldn't figure out api_ip nor rely on dns since domain is not set")
+                        sys.exit(1)
                     warning("Couldn't figure out api_ip. Relying on dns")
                     api_ip = f"api.{cluster}.{domain}"
                 else:
