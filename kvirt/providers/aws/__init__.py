@@ -267,18 +267,15 @@ class Kaws(object):
         if len(privateips) > 1:
             networkinterface['PrivateIpAddresses'] = privateips
         for index, disk in enumerate(disks):
-            if image is not None and index == 0:
-                continue
-            letter = chr(index + ord('a'))
-            devicename = f'/dev/xvd{letter}'
+            devicename = imageinfo['RootDeviceName'] if index == 0 else f"/dev/xvd{chr(index + ord('a'))}"
             blockdevicemapping = {'DeviceName': devicename, 'Ebs': {'DeleteOnTermination': True,
                                                                     'VolumeType': 'standard'}}
             if isinstance(disk, int):
                 disksize = disk
             elif isinstance(disk, str) and disk.isdigit():
-                disksize = str(disk)
+                disksize = int(disk)
             elif isinstance(disk, dict):
-                disksize = disk.get('size', '10')
+                disksize = int(disk.get('size', 10))
                 blockdevicemapping['Ebs']['VolumeType'] = disk.get('type', 'standard')
             blockdevicemapping['Ebs']['VolumeSize'] = disksize
             blockdevicemappings.append(blockdevicemapping)
