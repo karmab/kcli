@@ -1303,3 +1303,70 @@ class Kaws(object):
     def update_network(self, name, dhcp=None, nat=None, domain=None, plan=None, overrides={}):
         print("not implemented")
         return {'result': 'success'}
+
+    def list_security_groups(self, network=None):
+        vpcid = None
+        vpcs = self.conn.describe_vpcs()
+        if network is not None:
+            vpcid = self.get_vpc_id(vpcs, network) if not network.startswith('vpc-') else network
+        else:
+            vpcid = [vpc['VpcId'] for vpc in vpcs['Vpcs'] if vpc['IsDefault']][0]
+        if vpcid is None:
+            error("Couldn't find vpcid")
+            sys.exit(1)
+        results = []
+        conn = self.conn
+        for sg in conn.describe_security_groups()['SecurityGroups']:
+            if vpcid is not None and sg['VpcId'] != vpcid:
+                continue
+            results.append(sg['GroupName'])
+        return results
+
+    def create_security_group(self, name, overrides={}):
+        ports = overrides.get('ports', [])
+        defaultsubnetid = None
+        vpcs = self.conn.describe_vpcs()
+        subnets = self.conn.describe_subnets()
+        network = overrides.get('network', 'default')
+        if network in [subnet['SubnetId'] for subnet in subnets['Subnets']]:
+            vpcid = [subnet['VpcId'] for subnet in subnets['Subnets'] if subnet['SubnetId'] == network][0]
+        elif network == 'default':
+            if defaultsubnetid is not None:
+                network = defaultsubnetid
+            else:
+                vpcid = [vpc['VpcId'] for vpc in vpcs['Vpcs'] if vpc['IsDefault']][0]
+                subnetid = [subnet['SubnetId'] for subnet in subnets['Subnets']
+                            if subnet['DefaultForAz'] and subnet['VpcId'] == vpcid][0]
+                network = subnetid
+                defaultsubnetid = network
+                pprint(f"Using subnet {defaultsubnetid} as default")
+        else:
+            vpcid = self.get_vpc_id(vpcs, network) if not network .startswith('vpc-') else network
+            if vpcid is None:
+                error(f"Couldn't find vpc {network}")
+                sys.exit(1)
+        sg = self.resource.create_security_group(GroupName=name, Description=name, VpcId=vpcid)
+        sgtags = [{"Key": "Name", "Value": name}]
+        sg.create_tags(Tags=sgtags)
+        sgid = sg.id
+        sg.authorize_ingress(GroupId=sgid, FromPort=-1, ToPort=-1, IpProtocol='icmp',
+                             CidrIp="0.0.0.0/0")
+        for port in ports:
+            if isinstance(port, str) or isinstance(port, int):
+                protocol = 'tcp'
+                fromport, toport = int(port), int(port)
+            elif isinstance(port, dict):
+                protocol = port.get('protocol', 'tcp')
+                fromport = port.get('from')
+                toport = port.get('to') or fromport
+                if fromport is None:
+                    warning(f"Missing from in {ports}. Skipping")
+                    continue
+            pprint(f"Adding rule from {fromport} to {toport} protocol {protocol}")
+            sg.authorize_ingress(GroupId=sgid, FromPort=int(fromport), ToPort=int(toport), IpProtocol=protocol,
+                                 CidrIp="0.0.0.0/0")
+        return {'result': 'success'}
+
+    def delete_security_group(self, name):
+        self.conn.delete_security_group(GroupName=name)
+        return {'result': 'success'}

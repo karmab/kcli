@@ -1767,3 +1767,15 @@ class Kubevirt(Kubecommon):
     def update_network(self, name, dhcp=None, nat=None, domain=None, plan=None, overrides={}):
         print("not implemented")
         return {'result': 'success'}
+
+    def list_security_groups(self, network=None):
+        print("not implemented")
+        return []
+
+    def create_security_group(self, name, overrides={}):
+        print("not implemented")
+        return {'result': 'success'}
+
+    def delete_security_group(self, name):
+        print("not implemented")
+        return {'result': 'success'}

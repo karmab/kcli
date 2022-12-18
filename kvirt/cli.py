@@ -13,6 +13,7 @@ from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsol
 from kvirt.examples import disconnectedcreate, appopenshiftcreate, plantemplatecreate, kubehypershiftcreate
 from kvirt.examples import workflowcreate, kubegenericscale, kubek3sscale, kubeopenshiftscale
 from kvirt.examples import changelog, starthosts, stophosts, infohosts, ocdownload, openshiftdownload
+from kvirt.examples import securitygroupcreate
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
 from kvirt.defaults import IMAGES, VERSION, LOCAL_OPENSHIFT_APPS, SSH_PUB_LOCATIONS
@@ -3220,6 +3221,43 @@ def create_workflow(args):
     sys.exit(0 if result['result'] == 'success' else 1)
 
 
+def create_securitygroup(args):
+    """Create securitygroup"""
+    securitygroup = args.securitygroup
+    overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    k = config.k
+    pprint(f"Creating securitygroup {securitygroup}...")
+    k.create_security_group(securitygroup, overrides)
+
+
+def delete_securitygroup(args):
+    """Delete securitygroup"""
+    yes = args.yes
+    yes_top = args.yes_top
+    if not yes and not yes_top:
+        common.confirm("Are you sure?")
+    securitygroups = args.securitygroups
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    k = config.k
+    for securitygroup in securitygroups:
+        pprint(f"Deleting securitygroup {securitygroup}...")
+        k.delete_security_group(securitygroup)
+
+
+def list_securitygroups(args):
+    """List securitygroup"""
+    pprint("Listing securitygroups...")
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    k = config.k
+    securitygroups = k.list_security_groups(network=args.network)
+    securitygroupstable = PrettyTable(["Securitygroup"])
+    for securitygroup in sorted(securitygroups):
+        securitygroupstable.add_row([securitygroup])
+    securitygroupstable.align["Securitygroup"] = "l"
+    print(securitygroupstable)
+
+
 def cli():
     """
 
@@ -3827,6 +3865,20 @@ def cli():
                                  help=create_vmnic_desc, aliases=['nic'],
                                  epilog=create_vmnic_epilog, formatter_class=rawhelp)
 
+    securitygroupcreate_desc = 'Changelog'
+    securitygroupcreate_epilog = "examples:\n%s" % securitygroupcreate
+    securitygroupcreate_desc = 'Create Security Group'
+    securitygroupcreate_parser = create_subparsers.add_parser('security-group', description=securitygroupcreate_desc,
+                                                              help=securitygroupcreate_desc, aliases=['sg'],
+                                                              epilog=securitygroupcreate_epilog,
+                                                              formatter_class=rawhelp)
+    securitygroupcreate_parser.add_argument('securitygroup')
+    securitygroupcreate_parser.add_argument('-P', '--param', action='append',
+                                            help='Define parameter for rendering (can specify multiple)',
+                                            metavar='PARAM')
+    securitygroupcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    securitygroupcreate_parser.set_defaults(func=create_securitygroup)
+
     vmsnapshotcreate_desc = 'Create Snapshot Of Vm'
     vmsnapshotcreate_parser = create_subparsers.add_parser('vm-snapshot', description=vmsnapshotcreate_desc,
                                                            help=vmsnapshotcreate_desc, aliases=['snapshot'])
@@ -4057,6 +4109,13 @@ def cli():
     delete_subparsers.add_parser('vm-nic', parents=[delete_vmnic_parser], description=delete_vmnic_desc,
                                  help=delete_vmnic_desc, aliases=['nic'],
                                  epilog=delete_vmnic_epilog, formatter_class=rawhelp)
+
+    securitygroupdelete_desc = 'Delete Security Group'
+    securitygroupdelete_parser = delete_subparsers.add_parser('security-group', description=securitygroupdelete_desc,
+                                                              help=securitygroupdelete_desc, aliases=['sg'])
+    securitygroupdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    securitygroupdelete_parser.add_argument('securitygroups', metavar='SECURITYGROUPS', nargs='+')
+    securitygroupdelete_parser.set_defaults(func=delete_securitygroup)
 
     vmsnapshotdelete_desc = 'Delete Snapshot Of Vm'
     vmsnapshotdelete_parser = delete_subparsers.add_parser('vm-snapshot', description=vmsnapshotdelete_desc,
@@ -4524,6 +4583,13 @@ def cli():
     repolist_parser = list_subparsers.add_parser('repo', description=repolist_desc, help=repolist_desc,
                                                  aliases=['repos'])
     repolist_parser.set_defaults(func=list_repo)
+
+    securitygrouplist_desc = 'List Security Groups'
+    securitygrouplist_parser = list_subparsers.add_parser('security-group', description=securitygrouplist_desc,
+                                                          help=securitygrouplist_desc,
+                                                          aliases=['sg', 'sgs', 'security-groups'])
+    securitygrouplist_parser.add_argument('-n', '--network', help='Use the corresponding network', metavar='NETWORK')
+    securitygrouplist_parser.set_defaults(func=list_securitygroups)
 
     vmlist_desc = 'List Vms'
     vmlist_parser = argparse.ArgumentParser(add_help=False)

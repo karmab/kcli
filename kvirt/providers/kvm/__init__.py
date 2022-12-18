@@ -3965,3 +3965,15 @@ class Kvirt(object):
         newxml = ET.tostring(root)
         conn.defineXML(newxml.decode("utf-8"))
         return {'result': 'success'}
+
+    def list_security_groups(self, network=None):
+        print("not implemented")
+        return []
+
+    def create_security_group(self, name, overrides={}):
+        print("not implemented")
+        return {'result': 'success'}
+
+    def delete_security_group(self, name):
+        print("not implemented")
+        return {'result': 'success'}

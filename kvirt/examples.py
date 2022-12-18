@@ -449,3 +449,13 @@ $ kcli download openshift-install -P version=nightly -P tag=4.12
 # Download older version from CI
 $ kcli download openshift-install -P version=ci -P tag=4.10
 """
+
+securitygroupcreate = """# Create a security group named mygroup and opening tcp ports 22 and 25
+$ kcli create security-group -P ports=[22,25] mygroup
+
+# Do the same, but with udp port 53 too
+$ kcli create security-group -P ports=['22,25,{"from": "53", "protocol": "udp"}'] mygroup
+
+# Open a port range
+$ kcli create security-group -P ports=['{"from": "8000", "to": "9000"}'] mygroup
+"""

@@ -1337,3 +1337,24 @@ class Kgcp(object):
     def update_network(self, name, dhcp=None, nat=None, domain=None, plan=None, overrides={}):
         print("not implemented")
         return {'result': 'success'}
+
+    def list_security_groups(self, network=None):
+        return [firewall['name'] for firewall in self.conn.firewalls().list(project=self.project).execute()['items']]
+
+    def create_security_group(self, name, overrides={}):
+        ports = overrides.get('ports', [])
+        sane_name = name.replace('.', '-')
+        firewall_body = {"name": sane_name, "direction": "INGRESS",
+                         "allowed": [{"IPProtocol": "tcp", "ports": ports}]}
+        if sane_name.startswith('api-') or sane_name.startswith('apps-'):
+            kube = '-'.join(sane_name.split('-')[1:])
+            firewall_body["targetTags"] = [kube]
+        pprint(f"Creating firewall rule {sane_name}")
+        operation = self.conn.firewalls().insert(project=self.project, body=firewall_body).execute()
+        self._wait_for_operation(operation)
+        return {'result': 'success'}
+
+    def delete_security_group(self, name):
+        operation = self.conn.firewalls().delete(project=self.project, firewall=name).execute()
+        self._wait_for_operation(operation)
+        return {'result': 'success'}

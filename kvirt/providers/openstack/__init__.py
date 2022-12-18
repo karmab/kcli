@@ -1159,3 +1159,42 @@ class Kopenstack(object):
             if subnet_data:
                 neutron.update_subnet(subnet_id, {'subnet': subnet_data})
         return {'result': 'success'}
+
+    def list_security_groups(self, network=None):
+        neutron = self.neutron
+        return [s['name'] for s in neutron.list_security_groups()['security_groups']]
+
+    def create_security_group(self, name, overrides={}):
+        neutron = self.neutron
+        security_group = {'name': name}
+        sg = neutron.create_security_group({'security_group': security_group})
+        sgid = sg['security_group']['id']
+        icmprule = {'security_group_rule': {'direction': 'ingress', 'security_group_id': sgid,
+                                            'protocol': 'icmp', 'remote_group_id': None,
+                                            'remote_ip_prefix': '0.0.0.0/0'}}
+        neutron.create_security_group_rule(icmprule)
+        ports = overrides.get('ports', [])
+        for port in ports:
+            if isinstance(port, str) or isinstance(port, int):
+                protocol = 'tcp'
+                fromport, toport = port, port
+            elif isinstance(port, dict):
+                protocol = port.get('protocol', 'tcp')
+                fromport = port.get('from')
+                toport = port.get('to') or fromport
+                if fromport is None:
+                    warning(f"Missing from in {ports}. Skipping")
+                    continue
+            pprint(f"Adding rule from {fromport} to {toport} protocol {protocol}")
+            rule = {'security_group_rule': {'direction': 'ingress', 'security_group_id': sgid,
+                                            'port_range_min': str(fromport), 'port_range_max': str(toport),
+                                            'protocol': protocol, 'remote_group_id': None,
+                                            'remote_ip_prefix': '0.0.0.0/0'}}
+            neutron.create_security_group_rule(rule)
+        return {'result': 'success'}
+
+    def delete_security_group(self, name):
+        sgs = [sg for sg in self.neutron.list_security_groups()['security_groups'] if sg['name'] == name]
+        if sgs:
+            sgs[0].delete()
+        return {'result': 'success'}
