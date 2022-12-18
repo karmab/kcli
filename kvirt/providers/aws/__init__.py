@@ -500,10 +500,10 @@ class Kaws(object):
         yamlinfo['az'] = az
         yamlinfo['ip'] = vm.get('PublicIpAddress')
         machinetype = vm['InstanceType']
+        flavor = conn.describe_instance_types(InstanceTypes=[machinetype])['InstanceTypes'][0]
+        yamlinfo['cpus'] = flavor['VCpuInfo']['DefaultVCpus']
+        yamlinfo['memory'] = flavor['MemoryInfo']['SizeInMiB']
         yamlinfo['flavor'] = machinetype
-        if machinetype in staticf:
-            yamlinfo['cpus'] = staticf[machinetype]['cpus']
-            yamlinfo['memory'] = staticf[machinetype]['memory']
         yamlinfo['image'] = source
         yamlinfo['user'] = common.get_user(yamlinfo['image'])
         yamlinfo['instanceid'] = instanceid
