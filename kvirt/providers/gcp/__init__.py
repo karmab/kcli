@@ -1031,6 +1031,8 @@ class Kgcp(object):
         if 'items' not in results:
             return []
         for flavor in results['items']:
+            if self.debug:
+                print(flavor)
             name = flavor['name']
             numcpus = flavor['guestCpus']
             memory = flavor['memoryMb']

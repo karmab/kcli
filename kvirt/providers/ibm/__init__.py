@@ -929,14 +929,16 @@ class Kibm(object):
         print("not implemented")
 
     def list_flavors(self):
-        flavor_list = []
+        flavors = []
         try:
-            for profile in self.conn.list_instance_profiles().result['profiles']:
-                flavor_list.append([profile['name'], profile['vcpu_count']['value'], profile['memory']['value']])
+            for flavor in self.conn.list_instance_profiles().result['profiles']:
+                if self.debug:
+                    print(flavor)
+                flavors.append([flavor['name'], flavor['vcpu_count']['value'], flavor['memory']['value']])
+            return flavors
         except ApiException as e:
             error(f"Unable to retrieve available flavors. Hit {e}")
             return []
-        return flavor_list
 
     def export(self, name, image=None):
         print("not implemented")

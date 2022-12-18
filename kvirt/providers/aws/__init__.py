@@ -1070,10 +1070,11 @@ class Kaws(object):
         results = []
         flavors = self.conn.describe_instance_types()['InstanceTypes']
         for flavor in flavors:
+            if self.debug:
+                print(flavor)
             name = flavor['InstanceType']
             numcpus = flavor['VCpuInfo']['DefaultVCpus']
             memory = flavor['MemoryInfo']['SizeInMiB']
-            # disk = flavor['InstanceStorageInfo']['TotalSizeInGB'] if 'InstanceStorageInfo' in flavor else ''
             results.append([name, numcpus, memory])
         return sorted(results)
 
