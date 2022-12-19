@@ -299,6 +299,73 @@ def wait_for_ignition(cluster, domain, role='worker'):
             sleep(10)
 
 
+def handle_baremetal_iso(config, plandir, cluster, overrides, baremetal_hosts=[], iso_pool=None):
+    baremetal_iso_overrides = overrides.copy()
+    baremetal_iso_overrides['noname'] = True
+    baremetal_iso_overrides['workers'] = 1
+    baremetal_iso_overrides['role'] = 'worker'
+    result = config.plan(cluster, inputfile=f'{plandir}/workers.yml', overrides=baremetal_iso_overrides,
+                         onlyassets=True)
+    iso_data = result['assets'][0]
+    ignitionfile = f'{cluster}-worker'
+    with open(ignitionfile, 'w') as f:
+        f.write(iso_data)
+    config.create_openshift_iso(cluster, overrides=baremetal_iso_overrides, ignitionfile=ignitionfile,
+                                podman=True, installer=True, uefi=True)
+    os.remove(ignitionfile)
+    if baremetal_hosts:
+        iso_pool_path = config.k.get_pool_path(iso_pool)
+        chmodcmd = f"chmod 666 {iso_pool_path}/{cluster}-worker.iso"
+        call(chmodcmd, shell=True)
+        pprint("Creating httpd deployment to host iso for baremetal workers")
+        timeout = 0
+        while True:
+            if os.popen('oc -n default get pod -l app=httpd-kcli -o name').read() != "":
+                break
+            if timeout > 60:
+                error("Timeout waiting for httpd deployment to be up")
+                sys.exit(1)
+            httpdcmd = f"oc create -f {plandir}/httpd.yaml"
+            call(httpdcmd, shell=True)
+            timeout += 5
+            sleep(5)
+        svcip_cmd = 'oc get node -o yaml'
+        svcip = yaml.safe_load(os.popen(svcip_cmd).read())['items'][0]['status']['addresses'][0]['address']
+        svcport_cmd = 'oc get svc -n default httpd-kcli-svc -o yaml'
+        svcport = yaml.safe_load(os.popen(svcport_cmd).read())['spec']['ports'][0]['nodePort']
+        podname = os.popen('oc -n default get pod -l app=httpd-kcli -o name').read().split('/')[1].strip()
+        try:
+            call(f"oc wait -n default --for=condition=Ready pod/{podname}", shell=True)
+        except Exception as e:
+            error(f"Hit {e}")
+            sys.exit(1)
+        copycmd = f"oc -n default cp {iso_pool_path}/{cluster}-worker.iso {podname}:/var/www/html"
+        call(copycmd, shell=True)
+        return f'http://{svcip}:{svcport}/{cluster}-worker.iso'
+
+
+def handle_baremetal_iso_sno(config, plandir, cluster, data, baremetal_hosts=[], iso_pool=None):
+    iso_name = f"{cluster}-sno.iso"
+    baremetal_web = data.get('baremetal_web', True)
+    baremetal_web_dir = data.get('baremetal_web_dir', '/var/www/html')
+    baremetal_web_port = data.get('baremetal_web_port', 80)
+    iso_pool_path = config.k.get_pool_path(iso_pool)
+    if baremetal_web:
+        if os.path.exists(f"{baremetal_web_dir}/{iso_name}"):
+            call(f"sudo rm {baremetal_web_dir}/{iso_name}", shell=True)
+        copy2(f'{iso_pool_path}/{iso_name}', baremetal_web_dir)
+        if baremetal_web_dir == '/var/www/html':
+            call(f"sudo chown apache.apache {baremetal_web_dir}/{iso_name}", shell=True)
+    else:
+        call(f"sudo chmod a+r {iso_pool_path}/{iso_name}", shell=True)
+    nic = os.popen('ip r | grep default | cut -d" " -f5 | head -1').read().strip()
+    ip_cmd = f"ip -o addr show {nic} | awk '{{print $4}}' | cut -d '/' -f 1 | head -1"
+    host_ip = os.popen(ip_cmd).read().strip()
+    if baremetal_web_port != 80:
+        host_ip += f":{baremetal_web_port}"
+    return f'http://{host_ip}/{iso_name}'
+
+
 def scale(config, plandir, cluster, overrides):
     plan = cluster
     client = config.client
@@ -326,10 +393,25 @@ def scale(config, plandir, cluster, overrides):
             pprint(f"Using image {cluster_image}")
             image = cluster_image
     data['image'] = image
+    old_baremetal_hosts = installparam.get('baremetal_hosts', [])
+    new_baremetal_hosts = overrides.get('baremetal_hosts', [])
+    baremetal_hosts = [entry for entry in new_baremetal_hosts if entry not in old_baremetal_hosts]
+    if baremetal_hosts:
+        if not old_baremetal_hosts:
+            iso_pool = data.get('pool') or config.pool
+            iso_url = handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts, iso_pool)
+        else:
+            svcip_cmd = 'oc get node -o yaml'
+            svcip = yaml.safe_load(os.popen(svcip_cmd).read())['items'][0]['status']['addresses'][0]['address']
+            svcport_cmd = 'oc get svc -n default httpd-kcli-svc -o yaml'
+            svcport = yaml.safe_load(os.popen(svcport_cmd).read())['spec']['ports'][0]['nodePort']
+            iso_url = f'http://{svcip}:{svcport}/{cluster}-worker.iso'
+        boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
+        overrides['workers'] = overrides.get('workers', 0) - len(new_baremetal_hosts)
     for role in ['masters', 'workers']:
         overrides = data.copy()
         threaded = data.get('threaded', False) or data.get(f'{role}_threaded', False)
-        if overrides.get(role, 0) == 0:
+        if overrides.get(role, 0) <= 0:
             continue
         if platform in virtplatforms:
             os.chdir(os.path.expanduser("~/.kcli"))
@@ -401,9 +483,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     async_install = data.get('async')
     sslip = data.get('sslip')
     baremetal_iso = data.get('baremetal_iso', False)
-    baremetal_web = data.get('baremetal_web', False)
-    baremetal_web_dir = data.get('baremetal_web_dir', '/var/www/html')
-    baremetal_web_port = data.get('baremetal_web_port', 80)
     baremetal_hosts = data.get('baremetal_hosts', [])
     baremetal_iso_bootstrap = data.get('baremetal_iso_bootstrap', baremetal_iso)
     baremetal_iso_master = data.get('baremetal_iso_master', baremetal_iso)
@@ -1243,21 +1322,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             warning(f"$your_node_ip {dnsentry}")
         if baremetal_hosts:
             iso_pool = data['pool'] or config.pool
-            iso_pool_path = k.get_pool_path(iso_pool)
-            if baremetal_web:
-                if os.path.exists(f"{baremetal_web_dir}/{cluster}-sno.iso"):
-                    call(f"sudo rm {baremetal_web_dir}/{cluster}-sno.iso", shell=True)
-                copy2(f'{iso_pool_path}/{cluster}-sno.iso', baremetal_web_dir)
-                if baremetal_web_dir == '/var/www/html':
-                    call(f"sudo chown apache.apache {baremetal_web_dir}/{cluster}-sno.iso", shell=True)
-            else:
-                call(f"sudo chmod a+r {iso_pool_path}/{cluster}-sno.iso", shell=True)
-            nic = os.popen('ip r | grep default | cut -d" " -f5 | head -1').read().strip()
-            ip_cmd = f"ip -o addr show {nic} | awk '{{print $4}}' | cut -d '/' -f 1 | head -1"
-            host_ip = os.popen(ip_cmd).read().strip()
-            if baremetal_web_port != 80:
-                host_ip += f":{baremetal_web_port}"
-            iso_url = f'http://{host_ip}/{cluster}-sno.iso'
+            iso_url = handle_baremetal_iso_sno(config, plandir, cluster, data, baremetal_hosts, iso_pool)
             boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
         if sno_wait:
             installcommand = f'openshift-install --dir={clusterdir} --log-level={log_level} wait-for install-complete'
@@ -1447,50 +1512,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             del overrides['name']
         if platform in virtplatforms:
             if baremetal_iso_worker or baremetal_hosts:
-                baremetal_iso_overrides = overrides.copy()
-                baremetal_iso_overrides['noname'] = True
-                baremetal_iso_overrides['workers'] = 1
-                baremetal_iso_overrides['role'] = 'worker'
-                result = config.plan(plan, inputfile=f'{plandir}/workers.yml', overrides=baremetal_iso_overrides,
-                                     onlyassets=True)
-                iso_data = result['assets'][0]
-                ignitionfile = f'{cluster}-worker'
-                with open(ignitionfile, 'w') as f:
-                    f.write(iso_data)
-                config.create_openshift_iso(cluster, overrides=baremetal_iso_overrides, ignitionfile=ignitionfile,
-                                            podman=True, installer=True, uefi=True)
-                os.remove(ignitionfile)
-                if baremetal_hosts:
-                    iso_pool = data['pool'] or config.pool
-                    iso_pool_path = k.get_pool_path(iso_pool)
-                    chmodcmd = f"chmod 666 {iso_pool_path}/{cluster}-worker.iso"
-                    call(chmodcmd, shell=True)
-                    pprint("Creating httpd deployment to host iso for baremetal workers")
-                    timeout = 0
-                    while True:
-                        if os.popen('oc -n default get pod -l app=httpd-kcli -o name').read() != "":
-                            break
-                        if timeout > 60:
-                            error("Timeout waiting for httpd deployment to be up")
-                            sys.exit(1)
-                        httpdcmd = f"oc create -f {plandir}/httpd.yaml"
-                        call(httpdcmd, shell=True)
-                        timeout += 5
-                        sleep(5)
-                    svcip_cmd = 'oc get node -o yaml'
-                    svcip = yaml.safe_load(os.popen(svcip_cmd).read())['items'][0]['status']['addresses'][0]['address']
-                    svcport_cmd = 'oc get svc -n default httpd-kcli-svc -o yaml'
-                    svcport = yaml.safe_load(os.popen(svcport_cmd).read())['spec']['ports'][0]['nodePort']
-                    podname = os.popen('oc -n default get pod -l app=httpd-kcli -o name').read().split('/')[1].strip()
-                    try:
-                        call(f"oc wait -n default --for=condition=Ready pod/{podname}", shell=True)
-                    except Exception as e:
-                        error(f"Hit {e}")
-                        sys.exit(1)
-                    copycmd = f"oc -n default cp {iso_pool_path}/{cluster}-worker.iso {podname}:/var/www/html"
-                    call(copycmd, shell=True)
-                    iso_url = f'http://{svcip}:{svcport}/{cluster}-worker.iso'
-                    boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
+                iso_pool = data.get('pool') or config.pool
+                iso_url = handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts, iso_pool)
+                boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
             if overrides['workers'] > 0:
                 threaded = data.get('threaded', False) or data.get('workers_threaded', False)
                 result = config.plan(plan, inputfile=f'{plandir}/workers.yml', overrides=overrides, threaded=threaded)

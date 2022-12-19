@@ -22,6 +22,39 @@ virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere']
 cloudplatforms = ['aws', 'gcp', 'ibm']
 
 
+def handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts=[]):
+    baremetal_iso_overrides = data.copy()
+    baremetal_iso_overrides['noname'] = True
+    baremetal_iso_overrides['workers'] = 1
+    result = config.plan(cluster, inputfile=f'{plandir}/kcli_plan.yml', overrides=baremetal_iso_overrides,
+                         onlyassets=True)
+    iso_data = result['assets'][0]
+    with open('iso.ign', 'w') as f:
+        f.write(iso_data)
+    iso_pool = data.get('pool') or config.pool
+    config.create_openshift_iso(cluster, ignitionfile='iso.ign', installer=True, uefi=True)
+    if baremetal_hosts:
+        iso_pool_path = config.k.get_pool_path(iso_pool)
+        chmodcmd = f"chmod 666 {iso_pool_path}/{cluster}-worker.iso"
+        call(chmodcmd, shell=True)
+        pprint("Creating httpd deployment to host iso for baremetal workers")
+        httpdcmd = f"oc create -f {plandir}/httpd.yaml"
+        call(httpdcmd, shell=True)
+        svcip_cmd = 'oc get node -o yaml'
+        svcip = yaml.safe_load(os.popen(svcip_cmd).read())['items'][0]['status']['addresses'][0]['address']
+        svcport_cmd = 'oc get svc -n default httpd-kcli-svc -o yaml'
+        svcport = yaml.safe_load(os.popen(svcport_cmd).read())['spec']['ports'][0]['nodePort']
+        podname = os.popen('oc -n default get pod -l app=httpd-kcli -o name').read().split('/')[1].strip()
+        try:
+            call(f"oc wait -n default --for=condition=Ready pod/{podname}", shell=True)
+        except Exception as e:
+            error(f"Hit {e}")
+            sys.exit(1)
+        copycmd = f"oc -n default cp {iso_pool_path}/{cluster}-worker.iso {podname}:/var/www/html"
+        call(copycmd, shell=True)
+        return f'http://{svcip}:{svcport}/{cluster}-worker.iso'
+
+
 def scale(config, plandir, cluster, overrides):
     plan = cluster
     data = {'cluster': cluster, 'kube': cluster, 'kubetype': 'hypershift'}
@@ -37,9 +70,23 @@ def scale(config, plandir, cluster, overrides):
     with open(f"{clusterdir}/kcli_parameters.yml", 'w') as paramfile:
         yaml.safe_dump(data, paramfile)
     pprint(f"Scaling on client {config.client}")
-    os.chdir(os.path.expanduser("~/.kcli"))
     worker_overrides = data.copy()
-    if worker_overrides.get('workers', 2) == 0:
+    os.chdir(os.path.expanduser("~/.kcli"))
+    old_baremetal_hosts = installparam.get('baremetal_hosts', [])
+    new_baremetal_hosts = overrides.get('baremetal_hosts', [])
+    baremetal_hosts = [entry for entry in new_baremetal_hosts if entry not in old_baremetal_hosts]
+    if baremetal_hosts:
+        if not old_baremetal_hosts:
+            iso_url = handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts)
+        else:
+            svcip_cmd = 'oc get node -o yaml'
+            svcip = yaml.safe_load(os.popen(svcip_cmd).read())['items'][0]['status']['addresses'][0]['address']
+            svcport_cmd = 'oc get svc -n default httpd-kcli-svc -o yaml'
+            svcport = yaml.safe_load(os.popen(svcport_cmd).read())['spec']['ports'][0]['nodePort']
+            iso_url = f'http://{svcip}:{svcport}/{cluster}-worker.iso'
+        boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
+        worker_overrides['workers'] = worker_overrides.get('workers', 2) - len(new_baremetal_hosts)
+    if worker_overrides.get('workers', 2) <= 0:
         return
     threaded = data.get('threaded', False) or data.get('workers_threaded', False)
     config.plan(plan, inputfile=f'{plandir}/kcli_plan.yml', overrides=worker_overrides, threaded=threaded)
@@ -318,38 +365,9 @@ def create(config, plandir, cluster, overrides):
     if 'name' in data:
         del data['name']
     if baremetal_iso or baremetal_hosts:
-        baremetal_iso_overrides = data.copy()
-        baremetal_iso_overrides['noname'] = True
-        baremetal_iso_overrides['workers'] = 1
-        result = config.plan(plan, inputfile=f'{plandir}/kcli_plan.yml', overrides=baremetal_iso_overrides,
-                             onlyassets=True)
-        iso_data = result['assets'][0]
-        with open('iso.ign', 'w') as f:
-            f.write(iso_data)
-        iso_pool = data.get('pool') or config.pool
-        config.create_openshift_iso(cluster, ignitionfile='iso.ign', installer=True, uefi=True)
-        if baremetal_hosts:
-            iso_pool_path = k.get_pool_path(iso_pool)
-            chmodcmd = f"chmod 666 {iso_pool_path}/{cluster}-worker.iso"
-            call(chmodcmd, shell=True)
-            pprint("Creating httpd deployment to host iso for baremetal workers")
-            httpdcmd = f"oc create -f {plandir}/httpd.yaml"
-            call(httpdcmd, shell=True)
-            svcip_cmd = 'oc get node -o yaml'
-            svcip = yaml.safe_load(os.popen(svcip_cmd).read())['items'][0]['status']['addresses'][0]['address']
-            svcport_cmd = 'oc get svc -n default httpd-kcli-svc -o yaml'
-            svcport = yaml.safe_load(os.popen(svcport_cmd).read())['spec']['ports'][0]['nodePort']
-            podname = os.popen('oc -n default get pod -l app=httpd-kcli -o name').read().split('/')[1].strip()
-            try:
-                call(f"oc wait -n default --for=condition=Ready pod/{podname}", shell=True)
-            except Exception as e:
-                error(f"Hit {e}")
-                sys.exit(1)
-            copycmd = f"oc -n default cp {iso_pool_path}/{cluster}-worker.iso {podname}:/var/www/html"
-            call(copycmd, shell=True)
-            iso_url = f'http://{svcip}:{svcport}/{cluster}-worker.iso'
-            boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
-            data['workers'] = data['workers'] - len(baremetal_hosts)
+        iso_url = handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts)
+        boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
+        data['workers'] = data['workers'] - len(baremetal_hosts)
     if data['workers'] > 0:
         worker_threaded = data.get('threaded', False) or data.get('workers_threaded', False)
         config.plan(plan, inputfile=f'{plandir}/kcli_plan.yml', overrides=data, threaded=worker_threaded)
