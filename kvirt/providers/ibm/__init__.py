@@ -6,7 +6,7 @@ IBM Cloud provider class
 
 from ipaddress import ip_network
 from kvirt import common
-from kvirt.common import pprint, error, get_ssh_pub_key
+from kvirt.common import pprint, error, warning, get_ssh_pub_key
 from kvirt.defaults import METADATA_FIELDS
 from ibm_vpc import VpcV1, vpc_v1
 import ibm_boto3
@@ -968,7 +968,7 @@ class Kibm(object):
         clean_name = name.replace('.', '-')
         pprint(f"Creating Security Group {clean_name}")
         security_group_ports = ports + [int(checkport)] if int(checkport) not in ports else ports
-        security_group_id = self.create_security_group(clean_name, security_group_ports)
+        security_group_id = self.create_security_group(clean_name, {'ports': security_group_ports})
         subnets = set()
         member_list = []
         resource_group_id = None
@@ -1378,7 +1378,8 @@ class Kibm(object):
             return None
         return dnszone
 
-    def create_security_group(self, name, ports):
+    def create_security_group(self, name, overrides={}):
+        ports = overrides.get('ports', [])
         vpc_id = [net['id'] for net in self.conn.list_vpcs().result['vpcs'] if net['name'] == self.vpc][0]
         vpc_identity_model = {'id': vpc_id}
         rules = []
@@ -1389,12 +1390,23 @@ class Kibm(object):
         security_group_rule_prototype_model['remote'] = {'cidr_block': '0.0.0.0/0'}
         rules.append(security_group_rule_prototype_model)
         for port in ports:
+            if isinstance(port, str) or isinstance(port, int):
+                protocol = 'tcp'
+                fromport, toport = int(port), int(port)
+            elif isinstance(port, dict):
+                protocol = port.get('protocol', 'tcp')
+                fromport = port.get('from')
+                toport = port.get('to') or fromport
+                if fromport is None:
+                    warning(f"Missing from in {ports}. Skipping")
+                    continue
+            pprint(f"Adding rule from {fromport} to {toport} protocol {protocol}")
             security_group_rule_prototype_model = {}
             security_group_rule_prototype_model['direction'] = 'inbound'
             security_group_rule_prototype_model['ip_version'] = 'ipv4'
-            security_group_rule_prototype_model['protocol'] = 'tcp'
-            security_group_rule_prototype_model['port_min'] = port
-            security_group_rule_prototype_model['port_max'] = port
+            security_group_rule_prototype_model['protocol'] = protocol
+            security_group_rule_prototype_model['port_min'] = fromport
+            security_group_rule_prototype_model['port_max'] = toport
             security_group_rule_prototype_model['remote'] = {'cidr_block': '0.0.0.0/0'}
             rules.append(security_group_rule_prototype_model)
         response = self.conn.create_security_group(vpc_identity_model, name=name, rules=rules).result
@@ -1411,7 +1423,7 @@ class Kibm(object):
             self.conn.delete_security_group(security_group_id)
 
     def _add_sno_security_group(self, cluster):
-        security_group_id = self.create_security_group(f"{cluster}-sno", [80, 443, 6443])
+        security_group_id = self.create_security_group(f"{cluster}-sno", {'ports': [80, 443, 6443]})
         vm = self._get_vm(f"{cluster}-master-0")
         nic_id = vm['primary_network_interface']['id']
         self.conn.add_security_group_network_interface(security_group_id, nic_id)
@@ -1422,3 +1434,6 @@ class Kibm(object):
     def update_network(self, name, dhcp=None, nat=None, domain=None, plan=None, overrides={}):
         print("not implemented")
         return {'result': 'success'}
+
+    def list_security_groups(self, network=None):
+        return [x['name'] for x in self.conn.list_security_groups().result['security_groups']]
