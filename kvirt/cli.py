@@ -586,9 +586,9 @@ def sync_config(args):
 
 def _list_output(_list, output):
     if output == 'yaml':
-        print(yaml.dump(_list))
+        print(yaml.dump(_list, indent=2))
     elif output == 'json':
-        print(json.dumps(_list))
+        print(json.dumps(_list, indent=2))
     elif output == 'name':
         if isinstance(_list, list):
             for entry in sorted(_list, key=lambda x: x['name']):
