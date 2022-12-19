@@ -1437,6 +1437,10 @@ def get_installer_rhcos_metal():
 
 
 def get_installer_iso():
+    os.environ["PATH"] += f":{os.getcwd()}"
+    if which('openshift-install') is None:
+        error("Couldnt find openshift-install in your path")
+        sys.exit(0)
     INSTALLER_COREOS = os.popen('openshift-install coreos print-stream-json 2>/dev/null').read()
     data = json.loads(INSTALLER_COREOS)
     return data['architectures']['x86_64']['artifacts']['metal']['formats']['iso']['disk']['location']
