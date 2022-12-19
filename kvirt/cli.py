@@ -1680,6 +1680,7 @@ def scale_k3s_kube(args):
 def scale_hypershift_kube(args):
     """Scale hypershift kube"""
     args.type = 'hypershift'
+    args.masters = 0
     scale_kube(args)
 
 

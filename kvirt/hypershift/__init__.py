@@ -263,6 +263,7 @@ def create(config, plandir, cluster, overrides):
                 installparam['virtual_router_id'] = virtual_router_id
             installparam['image'] = image
             installparam['ipv6'] = ipv6
+            installparam['original_domain'] = data['original_domain']
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     assetsdata['cidr'] = cidr
     pprint("Creating control plane assets")
