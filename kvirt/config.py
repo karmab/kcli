@@ -1778,6 +1778,7 @@ class Kconfig(Kbaseconfig):
         dnsentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'dns']
         kubeentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'kube']
         lbs = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'loadbalancer']
+        sgs = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'securitygroup']
         bucketentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'bucket']
         workflowentries = [entry for entry in entries
                            if 'type' in entries[entry] and entries[entry]['type'] == 'workflow']
@@ -2338,6 +2339,16 @@ class Kconfig(Kbaseconfig):
                 self.create_loadbalancer(lbentry, nets=lbnets, ports=ports, checkpath=checkpath, vms=lbvms,
                                          domain=domain, plan=plan, checkport=checkport, alias=alias,
                                          internal=internal, dnsclient=dnsclient, subnetid=subnetid)
+        if sgs and not onlyassets:
+            pprint("Deploying SecurityGroups...")
+            for sg in sgs:
+                details = entries[sg]
+                name
+                ports = details.get('ports', [])
+                if not ports:
+                    error("Missing Ports for sgs. Not creating it...")
+                    return
+                self.create_security_group(sg, {'ports': ports})
         if workflowentries and not onlyassets:
             pprint("Deploying Workflow Entries...")
             for workflow in workflowentries:
