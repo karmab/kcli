@@ -62,7 +62,7 @@ If you don’t have libvirt installed on the target hypervisor, you can use the 
 .. code:: bash
 
    sudo groupadd docker
-   sudo usermod -aG docker YOUR_USER
+   sudo usermod -aG docker $(id -un)
    sudo systemctl restart docker
 
 Supported installation methods
