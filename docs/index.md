@@ -59,7 +59,7 @@ sudo systemctl enable --now libvirtd
 
 ```bash
 sudo groupadd docker
-sudo usermod -aG docker YOUR_USER
+sudo usermod -aG docker $(id -un)
 sudo systemctl restart docker
 ```
 
