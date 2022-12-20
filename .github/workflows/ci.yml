@@ -47,3 +47,7 @@ jobs:
         name: Build And Push Controller Container
         run: .github/container_controller.sh
         shell: bash
+      - if: github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository_owner == 'karmab'
+        name: Build And Push Ksushy Container
+        run: .github/container_ksushy.sh
+        shell: bash
