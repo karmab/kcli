@@ -152,6 +152,17 @@ def delete_cache(args):
         warning(f"No cache file found for {baseconfig.client}")
 
 
+def virtual_baremetal(url, clients=[]):
+    if 'redfish/v1/Systems/' not in url:
+        return False
+    if valid_uuid(os.path.basename(url)):
+        return True
+    for cli in clients:
+        if f'redfish/v1/Systems/{cli}/' in url:
+            return True
+    return False
+
+
 def start_baremetal_hosts(args):
     overrides = common.get_overrides(param=args.param)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
@@ -160,8 +171,9 @@ def start_baremetal_hosts(args):
     bmc_url = overrides.get('bmc_url') or overrides.get('url')
     bmc_user = overrides.get('bmc_user') or overrides.get('user') or baseconfig.bmc_user
     bmc_password = overrides.get('bmc_password') or overrides.get('password') or baseconfig.bmc_password
-    if bmc_url is not None and 'redfish/v1/Systems/' in bmc_url and valid_uuid(os.path.basename(bmc_url)):
+    if bmc_url is not None and virtual_baremetal(bmc_url, clients=baseconfig.clients):
         bmc_user, bmc_password = 'fake', 'fake'
+        overrides['bmc_model'] = 'virtual'
     if not baremetal_hosts and bmc_url is not None and bmc_user is not None and bmc_password is not None:
         bmc_model = overrides.get('bmc_model') or overrides.get('model') or baseconfig.bmc_model
         baremetal_hosts = [{'bmc_url': bmc_url, 'bmc_user': bmc_user, 'bmc_password': bmc_password,

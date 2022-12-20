@@ -56,7 +56,7 @@ rm -rf %{buildroot}
 %attr(0755,root,root) %{_bindir}/kcli
 %attr(0755,root,root) %{_bindir}/kweb
 %attr(0755,root,root) %{_bindir}/klist.py
-%attr(0755,root,root) %{_bindir}/kbmc
+%attr(0755,root,root) %{_bindir}/ksushy
 %attr(0755,root,root) %{_bindir}/kclirpc
 %attr(0755,root,root) %{_bindir}/krpc
 %attr(0755,root,root) %{_bindir}/ignitionmerger
