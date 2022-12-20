@@ -17,12 +17,6 @@ class Redfish(object):
             self.model = 'virtual'
         except:
             pass
-        if self.model in ['hp', 'hpe', 'supermicro']:
-            self.cdpath = '2'
-        elif self.model == 'dell':
-            self.cdpath = 'CD'
-        else:
-            self.cdpath = 'Cd'
         url = url.replace('idrac-virtualmedia', 'https').replace('ilo5-virtualmedia', 'https')
         if '://' not in url:
             if self.model in ['hp', 'hpe', 'supermicro']:
@@ -53,66 +47,80 @@ class Redfish(object):
         response = json.loads(urlopen(request, context=self.context).read())
         return f"{self.baseurl}{response['Links']['ManagedBy'][0]['@odata.id']}"
 
-    def get_iso_status(self):
+    def get_iso_url(self):
         manager_url = self.get_manager_url()
-        iso_url = f"{manager_url}/VirtualMedia/{self.cdpath}"
+        request = Request(f'{manager_url}', headers=self.headers)
+        results = json.loads(urlopen(request, context=self.context).read())
+        if 'VirtualMedia' in results:
+            virtual_media_url = results['VirtualMedia']['@odata.id']
+        else:
+            virtual_media_url = results['Status']['VirtualMedia']['@odata.id']
+        request = Request(f'{self.baseurl}{virtual_media_url}', headers=self.headers)
+        results = json.loads(urlopen(request, context=self.context).read())
+        if 'Oem' in results:
+            odata = results['Oem']['Supermicro']['VirtualMediaConfig']['@odata.id']
+        else:
+            for member in results['Members']:
+                odata = member['@odata.id']
+                if odata.endswith('CD') or odata.endswith('Cd') or odata.endswith('2'):
+                    break
+        return f'{self.baseurl}{odata}'
+
+    def get_iso_status(self):
+        iso_url = self.get_iso_url()
         if self.debug:
             print(f"Getting {iso_url}")
         request = Request(iso_url, headers=self.headers)
         response = json.loads(urlopen(request, context=self.context).read())
-        return f"{response['Inserted']}"
+        return f"{response['Image']}"
+
+    def get_iso_eject_url(self):
+        iso_url = self.get_iso_url()
+        request = Request(iso_url, headers=self.headers)
+        actions = json.loads(urlopen(request, context=self.context).read())['Actions']
+        target = '#IsoConfig.UnMount' if self.model == 'supermicro' else '#VirtualMedia.EjectMedia'
+        t = actions[target]['target']
+        return f"{self.baseurl}{t}"
+
+    def get_iso_insert_url(self):
+        iso_url = self.get_iso_url()
+        request = Request(iso_url, headers=self.headers)
+        actions = json.loads(urlopen(request, context=self.context).read())['Actions']
+        target = '#IsoConfig.Mount' if self.model == 'supermicro' else '#VirtualMedia.InsertMedia'
+        t = actions[target]['target']
+        return f"{self.baseurl}{t}"
 
     def eject_iso(self):
-        if self.model == 'supermicro':
-            self.eject_iso_supermicro()
-            return
-        manager_url = self.get_manager_url()
-        eject_url = f"{manager_url}/VirtualMedia/{self.cdpath}/Actions/VirtualMedia.EjectMedia"
-        if self.debug:
-            print(f"Sending POST to {eject_url} with empty data")
-        data = json.dumps({}).encode('utf-8')
-        request = Request(eject_url, headers=self.headers, method='POST', data=data)
-        urlopen(request, context=self.context)
-
-    def eject_iso_supermicro(self):
-        manager_url = self.get_manager_url()
         headers = self.headers.copy()
-        headers['Content-Length'] = 0
-        eject_url = f"{manager_url}/VM1/CfgCD/Actions/IsoConfig.UnMount"
+        data = json.dumps({}).encode('utf-8')
+        if self.model == 'supermicro':
+            headers['Content-Length'] = 0
+            # data = {}
+        eject_url = self.get_iso_eject_url()
         if self.debug:
             print(f"Sending POST to {eject_url} with empty data")
-        request = Request(eject_url, data={}, headers=headers)
+        request = Request(eject_url, headers=headers, method='POST', data=data)
         urlopen(request, context=self.context)
 
     def insert_iso(self, iso_url):
+        headers = self.headers.copy()
         if self.model == 'supermicro':
-            self.insert_iso_supermicro(iso_url)
-            return
+            p = urlparse(iso_url)
+            data = {"Host": f"{p.scheme}://{p.netloc}", "Path": p.path}
+            manager_url = self.get_manager_url()
+            cd_url = f"{manager_url}/VM1/CfgCD"
+            if self.debug:
+                print(f"Sending PATCH to {cd_url} with data {data}")
+            data = json.dumps(data).encode('utf-8')
+            request = Request(cd_url, data=data, headers=self.headers, method='PATCH')
+            urlopen(request, context=self.context)
+            headers['Content-Length'] = 0
         data = {"Image": iso_url, "Inserted": True}
-        manager_url = self.get_manager_url()
-        insert_url = f"{manager_url}/VirtualMedia/{self.cdpath}/Actions/VirtualMedia.InsertMedia"
+        insert_url = self.get_iso_insert_url()
         if self.debug:
             print(f"Sending POST to {insert_url} with data {data}")
         data = json.dumps(data).encode('utf-8')
-        request = Request(insert_url, data=data, headers=self.headers)
-        urlopen(request, context=self.context)
-
-    def insert_iso_supermicro(self, iso_url):
-        p = urlparse(iso_url)
-        data = {"Host": f"{p.scheme}://{p.netloc}", "Path": p.path}
-        manager_url = self.get_manager_url()
-        cd_url = f"{manager_url}/VM1/CfgCD"
-        if self.debug:
-            print(f"Sending PATCH to {cd_url} with data {data}")
-        data = json.dumps(data).encode('utf-8')
-        request = Request(cd_url, data=data, headers=self.headers, method='PATCH')
-        urlopen(request, context=self.context)
-        headers = self.headers.copy()
-        headers['Content-Length'] = 0
-        insert_url = f"{manager_url}/VM1/CfgCD/Actions/IsoConfig.Mount"
-        if self.debug:
-            print(f"Sending POST to {insert_url} with empty data")
-        request = Request(insert_url, data={}, headers=headers)
+        request = Request(insert_url, data=data, headers=headers)
         urlopen(request, context=self.context)
 
     def set_iso_once(self):
