@@ -1136,6 +1136,7 @@ def delete_app_openshift(args):
     for app in apps:
         if app in LOCAL_OPENSHIFT_APPS:
             name = app
+            app_data = overrides.copy()
         else:
             name, source, channel, csv, description, namespace, channels, crd = common.olm_app(app)
             if name is None:
