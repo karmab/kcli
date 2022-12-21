@@ -103,7 +103,7 @@ def same_release_images(version='stable', tag='4.11', pull_secret='openshift_pul
         return offline == existing
     ocp_repo = 'ocp-dev-preview' if version == 'nightly' else 'ocp'
     if version in ['nightly', 'stable']:
-        target = tag if len(tag.split('.')) > 2 else f'latest-{tag}'
+        target = tag if len(str(tag).split('.')) > 2 else f'latest-{tag}'
         url = f"https://mirror.openshift.com/pub/openshift-v4/clients/{ocp_repo}/{target}/release.txt"
     elif version == 'latest':
         url = f"https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{version}-{tag}/release.txt"
