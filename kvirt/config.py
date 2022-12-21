@@ -1776,7 +1776,8 @@ class Kconfig(Kbaseconfig):
         poolentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'pool']
         planentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'plan']
         dnsentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'dns']
-        kubeentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'kube']
+        kubes = ['kube', 'cluster']
+        kubeentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] in kubes]
         lbs = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'loadbalancer']
         sgs = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'securitygroup']
         bucketentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'bucket']
@@ -1874,6 +1875,9 @@ class Kconfig(Kbaseconfig):
         if kubeentries and not onlyassets:
             pprint("Deploying Kube Entries...")
             dnsclients = {}
+            kubethreaded = True if len(kubeentries) > 1 else False
+            if kubethreaded:
+                warning("Launching each cluster in a thread as there is more than one entry...")
             for cluster in kubeentries:
                 pprint(f"Deploying Cluster {cluster}...")
                 kubeprofile = entries[cluster]
@@ -1885,7 +1889,7 @@ class Kconfig(Kbaseconfig):
                 else:
                     error(f"Client {kubeclient} not found. skipped")
                     continue
-                kubetype = kubeprofile.get('kubetype', 'generic')
+                kubetype = kubeprofile.get('kubetype') or kubeprofile.get('clustertype', 'generic')
                 kube_overrides = overrides.copy()
                 kube_overrides.update(kubeprofile)
                 kube_overrides['cluster'] = cluster
@@ -1893,21 +1897,16 @@ class Kconfig(Kbaseconfig):
                 if existing_masters:
                     pprint(f"Cluster {cluster} found. skipped!")
                     continue
-                if kubetype == 'openshift':
-                    currentconfig.create_kube_openshift(plan, overrides=kube_overrides)
-                elif kubetype == 'hypershift':
-                    currentconfig.create_kube_hypershift(plan, overrides=kube_overrides)
-                elif kubetype == 'kind':
-                    currentconfig.create_kube_kind(plan, overrides=kube_overrides)
-                elif kubetype == 'microshift':
-                    currentconfig.create_kube_microshift(plan, overrides=kube_overrides)
-                elif kubetype == 'k3s':
-                    currentconfig.create_kube_k3s(plan, overrides=kube_overrides)
-                elif kubetype == 'generic':
-                    currentconfig.create_kube_generic(plan, overrides=kube_overrides)
-                else:
+                if kubetype not in ['generic', 'openshift', 'hypershift', 'kind', 'microshift', 'k3s']:
                     warning(f"Incorrect kubetype {kubetype} specified. skipped!")
                     continue
+                if kubethreaded:
+                    new_args = (plan, kubetype, kube_overrides)
+                    t = threading.Thread(target=self.threaded_create_kube, args=new_args)
+                    threads.append(t)
+                    t.start()
+                else:
+                    currentconfig.create_kube(plan, kubetype, overrides=kube_overrides)
         vmclients = []
         if vmentries:
             if not onlyassets:
@@ -2696,6 +2695,9 @@ class Kconfig(Kbaseconfig):
                             tunnelport=self.tunnelport, tunneluser=self.tunneluser, insecure=self.insecure, cmd=cmd,
                             identityfile=identityfile, password=False)
         os.popen(sshcmd).read()
+
+    def threaded_create_kube(self, cluster, kubetype, kube_overrides):
+        self.create_kube(cluster, kubetype, kube_overrides)
 
     def create_kube(self, cluster, kubetype, overrides={}):
         if kubetype == 'openshift':
