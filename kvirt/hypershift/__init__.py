@@ -5,7 +5,7 @@ from kvirt.common import success, error, pprint, info2, container_mode, warning
 from kvirt.common import get_oc, pwd_path, get_installer_rhcos, get_ssh_pub_key, boot_baremetal_hosts
 from kvirt.defaults import OPENSHIFT_TAG
 from kvirt.openshift import process_apps, update_etc_hosts
-from kvirt.openshift import get_ci_installer, get_downstream_installer, get_installer_version
+from kvirt.openshift import get_ci_installer, get_downstream_installer, get_installer_version, same_release_images
 from ipaddress import ip_network
 import json
 import os
@@ -251,8 +251,11 @@ def create(config, plandir, cluster, overrides):
         data['image'] = image
     else:
         if os.path.exists('openshift-install'):
-            pprint("Removing old openshift-install")
-            os.remove('openshift-install')
+            if same_release_images(version=version, tag=tag, pull_secret=pull_secret):
+                pprint("Reusing matching openshift-install")
+            else:
+                pprint("Removing old openshift-install")
+                os.remove('openshift-install')
         if which('openshift-install') is None:
             if version == 'ci':
                 run = get_ci_installer(pull_secret, tag=tag)

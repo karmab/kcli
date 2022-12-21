@@ -85,19 +85,42 @@ def update_etc_hosts(cluster, domain, host_ip, ingress_ip=None):
 
 
 def get_installer_version():
-    INSTALLER_VERSION = os.popen('openshift-install version').readlines()[0].split(" ")[1].strip()
-    if INSTALLER_VERSION.startswith('v'):
-        INSTALLER_VERSION = INSTALLER_VERSION[1:]
-    return INSTALLER_VERSION
+    installer_version = os.popen('openshift-install version').readlines()[0].split(" ")[1].strip()
+    if installer_version.startswith('v'):
+        installer_version = installer_version[1:]
+    return installer_version
 
 
-def get_installer_minor(INSTALLER_VERSION):
-    return int(INSTALLER_VERSION.split('.')[1])
+def same_release_images(version='stable', tag='4.11', pull_secret='openshift_pull.json'):
+    offline = 'xxx'
+    existing = os.popen('./openshift-install version').readlines()[2].split(" ")[2].strip()
+    if version == 'ci':
+        cmd = f"oc adm release info registry.ci.openshift.org/ocp/release:{tag} -a {pull_secret}"
+        for line in os.popen(cmd).readlines():
+            if 'Pull From: ' in str(line):
+                offline = line.replace('Pull From: ', '').strip()
+                break
+        return offline == existing
+    ocp_repo = 'ocp-dev-preview' if version == 'nightly' else 'ocp'
+    if version in ['nightly', 'stable']:
+        target = tag if len(tag.split('.')) > 2 else f'latest-{tag}'
+        url = f"https://mirror.openshift.com/pub/openshift-v4/clients/{ocp_repo}/{target}/release.txt"
+    elif version == 'latest':
+        url = f"https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{version}-{tag}/release.txt"
+    for line in urlopen(url).readlines():
+        if 'Pull From: ' in str(line):
+            offline = line.decode("utf-8").replace('Pull From: ', '').strip()
+            break
+    return offline == existing
+
+
+def get_installer_minor(installer_version):
+    return int(installer_version.split('.')[1])
 
 
 def get_release_image():
-    RELEASE_IMAGE = os.popen('openshift-install version').readlines()[2].split(" ")[2].strip()
-    return RELEASE_IMAGE
+    release_image = os.popen('openshift-install version').readlines()[2].split(" ")[2].strip()
+    return release_image
 
 
 def get_rhcos_openstack_url():
@@ -560,9 +583,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if str(tag) == '4.1':
         tag = '4.10'
         data['tag'] = tag
-    if not overrides.get('use_existing_openshift', False) and os.path.exists('openshift-install'):
-        pprint("Removing old openshift-install")
-        os.remove('openshift-install')
     if os.path.exists('coreos-installer'):
         pprint("Removing old coreos-installer")
         os.remove('coreos-installer')
@@ -661,6 +681,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if not os.path.exists(pull_secret):
         error(f"Missing pull secret file {pull_secret}")
         sys.exit(1)
+    if os.path.exists('openshift-install'):
+        if same_release_images(version=version, tag=tag, pull_secret=pull_secret):
+            pprint("Reusing matching openshift-install")
+        else:
+            pprint("Removing old openshift-install")
+            os.remove('openshift-install')
     pub_key = data.get('pub_key') or get_ssh_pub_key()
     keys = data.get('keys', [])
     if pub_key is None:
