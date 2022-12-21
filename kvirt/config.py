@@ -1901,6 +1901,7 @@ class Kconfig(Kbaseconfig):
                     warning(f"Incorrect kubetype {kubetype} specified. skipped!")
                     continue
                 if kubethreaded:
+                    kube_overrides['use_existing_openshift'] = True
                     new_args = (plan, kubetype, kube_overrides)
                     t = threading.Thread(target=self.threaded_create_kube, args=new_args)
                     threads.append(t)

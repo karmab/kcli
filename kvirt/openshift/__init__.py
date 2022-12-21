@@ -560,7 +560,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if str(tag) == '4.1':
         tag = '4.10'
         data['tag'] = tag
-    if os.path.exists('openshift-install'):
+    if not overrides.get('use_existing_openshift', False) and os.path.exists('openshift-install'):
         pprint("Removing old openshift-install")
         os.remove('openshift-install')
     if os.path.exists('coreos-installer'):
@@ -698,6 +698,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 tag = f'registry.ci.openshift.org/{basetag}/release:{tag}'
         os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = tag
         pprint(f"Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to {tag}")
+    os.environ["PATH"] += f":{os.getcwd()}"
     if which('openshift-install') is None:
         if data.get('ipi', False) and data.get('ipi_platform', platform) in ['kvm', 'libvirt', 'baremetal']:
             baremetal = True
@@ -717,7 +718,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         pprint("Move downloaded openshift-install somewhere in your PATH if you want to reuse it")
     else:
         warning("Using existing openshift-install found in your PATH")
-    os.environ["PATH"] += f":{os.getcwd()}"
     if disconnected_url is not None:
         if disconnected_user is None:
             error("disconnected_user needs to be set")
