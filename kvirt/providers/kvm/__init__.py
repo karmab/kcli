@@ -826,8 +826,7 @@ class Kvirt(object):
             displayxml = ''
             display = 'vnc'
         else:
-            displayxml = """<input type='tablet' bus='usb'/>
-<input type='mouse' bus='ps2'/>"""
+            displayxml = """<input type='mouse' bus='ps2'/>"""
         vncviewerpath = '/Applications/VNC Viewer.app'
         passwd = "passwd='kcli'" if os.path.exists('/Applications') and not os.path.exists(vncviewerpath) else ''
         displayxml += """<graphics type='%s' port='-1' autoport='yes' listen='%s' %s>
