@@ -681,6 +681,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if not os.path.exists(pull_secret):
         error(f"Missing pull secret file {pull_secret}")
         sys.exit(1)
+    if which('oc') is None:
+        get_oc(macosx=macosx)
     if os.path.exists('openshift-install'):
         if same_release_images(version=version, tag=tag, pull_secret=pull_secret):
             pprint("Reusing matching openshift-install")
@@ -713,8 +715,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             pprint(f"Removing directory {clusterdir}")
             rmtree(clusterdir)
     os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
-    if which('oc') is None:
-        get_oc(macosx=macosx)
     if version == 'ci':
         if '/' not in str(tag):
             if arch in ['aarch64', 'arm64']:
@@ -742,7 +742,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             error("Couldn't download openshift-install")
             sys.exit(run)
         pprint("Move downloaded openshift-install somewhere in your PATH if you want to reuse it")
-    else:
+    elif not os.path.exists('openshift-install'):
         warning("Using existing openshift-install found in your PATH")
     if disconnected_url is not None:
         if disconnected_user is None:

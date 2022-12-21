@@ -147,6 +147,8 @@ def create(config, plandir, cluster, overrides):
         tag = '4.10'
         data['tag'] = tag
     default_sc = False
+    if which('oc') is None:
+        get_oc()
     for sc in yaml.safe_load(os.popen('oc get sc -o yaml').read())['items']:
         if 'annotations' in sc['metadata']\
            and 'storageclass.kubernetes.io/is-default-class' in sc['metadata']['annotations']\
@@ -180,8 +182,6 @@ def create(config, plandir, cluster, overrides):
     if os.path.exists(clusterdir):
         error(f"Please remove existing directory {clusterdir} first...")
         sys.exit(1)
-    if which('oc') is None:
-        get_oc()
     supported_data = yaml.safe_load(os.popen("oc get cm/supported-versions -o yaml -n hypershift").read())['data']
     supported_versions = supported_versions = supported_data['supported-versions']
     versions = yaml.safe_load(supported_versions)['versions']
@@ -267,7 +267,7 @@ def create(config, plandir, cluster, overrides):
                 error("Couldn't download openshift-install")
                 sys.exit(run)
             pprint("Move downloaded openshift-install somewhere in your PATH if you want to reuse it")
-        else:
+        elif not os.path.exists('openshift-install'):
             warning("Using existing openshift-install found in your PATH")
         INSTALLER_VERSION = get_installer_version()
         pprint(f"Using installer version {INSTALLER_VERSION}")
