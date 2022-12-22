@@ -487,6 +487,9 @@ $ kcli create network -c 192.168.123.0/24 -P allowed_nets=[default,mynetwork2] m
 # Create a network with a forward bridge
 $ kcli create network -P bridge=true br0
 
+# Create a network with a forward bridge and specifying the target bridge name
+$ kcli create network -P bridge=true -P bridgename=br0 superbr0
+
 # Create a network with an ovs bridge and specific vlans
 $ kcli create network -P ovs=true -P vlans=[10,20] myovsbridge
 

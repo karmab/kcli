@@ -3215,11 +3215,12 @@ class Kvirt(object):
             new_net.create()
             return {'result': 'success'}
         if 'bridge' in overrides and overrides['bridge']:
+            bridgename = overrides.get('bridgename', name)
             networkxml = """<network>
                             <name>{name}</name>
-                            <bridge name='{name}'/>
+                            <bridge name='{bridgename}'/>
                             <forward mode="bridge"/>
-                            </network>""".format(name=name)
+                            </network>""".format(name=name, bridgename=bridgename)
             if self.debug:
                 print(networkxml)
             new_net = conn.networkDefineXML(networkxml)
