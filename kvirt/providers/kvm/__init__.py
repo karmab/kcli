@@ -311,6 +311,7 @@ class Kvirt(object):
                 volumespaths[vol.path()] = {'pool': poo, 'object': vol}
         allnetworks = self.list_networks()
         bridges = []
+        forward_bridges = []
         networks = []
         ovsnetworks = []
         ipv6networks = []
@@ -321,6 +322,8 @@ class Kvirt(object):
                 ovsnetworks.append(n)
             else:
                 networks.append(n)
+                if allnetworks[n]['mode'] == 'bridge':
+                    forward_bridges.append(n)
             if ':' in allnetworks[n]['cidr']:
                 ipv6networks.append(n)
         ipv6 = []
@@ -621,6 +624,8 @@ class Kvirt(object):
             if netname in networks:
                 iftype = 'network'
                 sourcexml = f"<source network='{netname}'/>"
+                if netname in forward_bridges:
+                    guestagent = True
             elif netname in bridges or ovs:
                 if netname in bridges and 'ip' in allnetworks[netname] and 'config_host' not in overrides:
                     overrides['config_host'] = allnetworks[netname]['ip']
