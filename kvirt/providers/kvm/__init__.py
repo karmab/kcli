@@ -275,7 +275,7 @@ class Kvirt(object):
             default_storagepool = conn.storagePoolLookupByName(default_pool)
         except:
             return {'result': 'failure', 'reason': f"Pool {default_pool} not found"}
-        creationdate = time.strftime(f"{time.gmtime()}-%m-%Y %H:%M")
+        creationdate = time.strftime("%d-%m-%Y %H:%M", time.gmtime())
         metadata['creationdate'] = creationdate
         metadataxml = """<metadata>
 <kvirt:info xmlns:kvirt="kvirt">
