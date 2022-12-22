@@ -171,6 +171,11 @@ class Ksushy():
             response.status = 204
             return ''
 
+        @app.route('/redfish/v1/Systems/<client>/<name>/BIOS')
+        @view('bios.json')
+        def bios_resource(client, name):
+            return {'client': client, 'name': name}
+
         self.app = app
         self.port = os.environ.get('PORT', 9000)
         self.debug = 'DEBUG' in os.environ
