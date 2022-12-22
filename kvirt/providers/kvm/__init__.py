@@ -241,7 +241,7 @@ class Kvirt(object):
             userport = common.get_free_port()
             metadata['ip'] = userport
         if self.exists(name):
-            return {'result': 'failure', 'reason': "VM %s already exists" % name}
+            return {'result': 'failure', 'reason': f"VM {name} already exists"}
         # if start and self.no_memory(memory):
         #    return {'result': 'failure', 'reason': "Not enough memory to run this vm"}
         default_diskinterface = diskinterface
@@ -258,7 +258,7 @@ class Kvirt(object):
             emulator = capabilities['emulator']
         if 'machine' in overrides and overrides['machine'] not in capabilities['machines']:
             machines = ','.join(sorted(capabilities['machines']))
-            return {'result': 'failure', 'reason': "Incorrect machine. Choose between %s" % machines}
+            return {'result': 'failure', 'reason': f"Incorrect machine. Choose between {machines}"}
         aarch64 = True if capabilities['arch'] == 'aarch64' else False
         aarch64_full = True if aarch64 and capabilities['kvm'] else False
         if aarch64 and not aarch64_full:
@@ -274,14 +274,14 @@ class Kvirt(object):
         try:
             default_storagepool = conn.storagePoolLookupByName(default_pool)
         except:
-            return {'result': 'failure', 'reason': "Pool %s not found" % default_pool}
-        creationdate = time.strftime("%d-%m-%Y %H:%M", time.gmtime())
+            return {'result': 'failure', 'reason': f"Pool {default_pool} not found"}
+        creationdate = time.strftime(f"{time.gmtime()}-%m-%Y %H:%M")
         metadata['creationdate'] = creationdate
         metadataxml = """<metadata>
 <kvirt:info xmlns:kvirt="kvirt">
 <kvirt:creationdate>%s</kvirt:creationdate>""" % creationdate
         for entry in [field for field in metadata if field in METADATA_FIELDS]:
-            metadataxml += "\n<kvirt:%s>%s</kvirt:%s>" % (entry, metadata[entry], entry)
+            metadataxml += f"\n<kvirt:{entry}>{metadata[entry]}</kvirt:{entry}>"
         default_poolxml = default_storagepool.XMLDesc(0)
         root = ET.fromstring(default_poolxml)
         default_pooltype = list(root.iter('pool'))[0].get('type')
@@ -304,7 +304,7 @@ class Kvirt(object):
             try:
                 poo.refresh(0)
             except Exception as e:
-                warning("Hit %s when refreshing pool %s" % (e, poo.name()))
+                warning(f"Hit {e} when refreshing pool {poo.name()}")
                 pass
             for vol in poo.listAllVolumes():
                 volumes[vol.name()] = {'pool': poo, 'object': vol}
@@ -327,7 +327,7 @@ class Kvirt(object):
         machine = 'pc'
         if 'machine' in overrides:
             machine = overrides['machine']
-            warning("Forcing machine type to %s" % machine)
+            warning(f"Forcing machine type to {machine}")
         uefi = overrides.get('uefi', False)
         uefi_legacy = overrides.get('uefi_legacy', False)
         secureboot = overrides.get('secureboot', False)
@@ -410,7 +410,7 @@ class Kvirt(object):
                 try:
                     storagediskpool = conn.storagePoolLookupByName(diskpool)
                 except:
-                    return {'result': 'failure', 'reason': "Pool %s not found" % diskpool}
+                    return {'result': 'failure', 'reason': f"Pool {diskpool} not found"}
                 diskpoolxml = storagediskpool.XMLDesc(0)
                 root = ET.fromstring(diskpoolxml)
                 diskpooltype = list(root.iter('pool'))[0].get('type')
@@ -427,19 +427,22 @@ class Kvirt(object):
                 return {'result': 'failure', 'reason': "Invalid disk entry"}
             diskbus = diskinterface
             if diskinterface == 'ide':
-                diskdev = 'hd%s' % chr(ide_index + ord('a'))
+                ide_letter = chr(ide_index + ord('a'))
+                diskdev = f'hd{ide_letter}'
                 ide_index += 1
             elif diskinterface in ['scsi', 'sata']:
-                diskdev = 'sd%s' % chr(scsi_index + ord('a'))
+                scsi_letter = chr(scsi_index + ord('a'))
+                diskdev = f'sd{scsi_letter}'
                 scsi_index += 1
             else:
-                diskdev = 'vd%s' % chr(virtio_index + ord('a'))
+                virtio_letter = chr(virtio_index + ord('a'))
+                diskdev = f'vd{virtio_letter}'
                 virtio_index += 1
             diskformat = 'qcow2'
             if not diskthin:
                 diskformat = 'raw'
-            storagename = "%s_%d.img" % (name, index) if diskname is None else diskname
-            diskpath = "%s/%s" % (diskpoolpath, storagename)
+            storagename = f"{name}_{index}.img" if diskname is None else diskname
+            diskpath = f"{diskpoolpath}/{storagename}"
             if image is not None and index == 0:
                 diskimage = image
                 firstdisk = diskpath
@@ -470,9 +473,9 @@ class Kvirt(object):
                     else:
                         shortname = [t for t in IMAGES if IMAGES[t] == diskimage]
                         if shortname:
-                            msg = "you don't have image %s. Use kcli download %s" % (diskimage, shortname[0])
+                            msg = f"you don't have image {diskimage}. Use kcli download {shortname[0]}"
                         else:
-                            msg = "you don't have image %s" % diskimage
+                            msg = f"you don't have image {diskimage}"
                         return {'result': 'failure', 'reason': msg}
                 if diskthinpool is not None:
                     backing = None
@@ -511,16 +514,16 @@ class Kvirt(object):
                 else:
                     volsxml[diskpool] = [volxml]
             else:
-                pprint("Using existing disk %s..." % storagename)
+                pprint(f"Using existing disk {storagename}...")
                 if index == 0 and diskmacosx:
                     macosx = True
                     machine = 'pc-q35-2.11'
             if diskwwn is not None and diskbus == 'ide':
                 diskwwn = '0x%016x' % diskwwn
-                diskwwn = "<wwn>%s</wwn>" % diskwwn
+                diskwwn = f"<wwn>{diskwwn}</wwn>"
             else:
                 diskwwn = ''
-            diskserial = '<serial>%s</serial>' % diskserial if diskserial is not None else ''
+            diskserial = f'<serial>{diskserial}</serial>' if diskserial is not None else ''
             dtype = 'block' if diskpath.startswith('/dev') else 'file'
             dsource = 'dev' if diskpath.startswith('/dev') else 'file'
             if diskpooltype in ['logical', 'zfs'] and (backing is None or backing.startswith('/dev')):
@@ -539,14 +542,14 @@ class Kvirt(object):
         expanderinfo = {}
         for index, cell in enumerate(numa):
             if not isinstance(cell, dict) or 'id' not in cell:
-                msg = "Can't process entry %s in numa block" % index
+                msg = f"Can't process entry {index} in numa block"
                 return {'result': 'failure', 'reason': msg}
             else:
                 _id = cell['id']
                 matchingnics = [nic for nic in nets if isinstance(nic, dict) and 'numa' in nic and nic['numa'] == _id]
                 if 'machine' not in overrides and [nic for nic in matchingnics if 'vfio' in nic and nic['vfio']]:
                     machine = 'q35'
-                    warning("Forcing machine type to %s" % machine)
+                    warning(f"Forcing machine type to {machine}")
                 newindex = 1
                 if expanderinfo:
                     for key in expanderinfo:
@@ -577,7 +580,7 @@ class Kvirt(object):
                 netname = net.get('name', 'default')
                 if 'mac' in nets[index]:
                     mac = nets[index]['mac']
-                    macxml = "<mac address='%s'/>" % mac
+                    macxml = f"<mac address='{mac}'/>"
                 if 'type' in nets[index]:
                     nettype = nets[index]['type']
                 if index == 0 and 'alias' in nets[index] and isinstance(nets[index]['alias'], list):
@@ -586,7 +589,7 @@ class Kvirt(object):
                 if 'ovs' in nets[index] and nets[index]['ovs']:
                     ovs = True
                 if 'ip' in nets[index] and index == 0:
-                    metadataxml += "<kvirt:ip >%s</kvirt:ip>" % nets[index]['ip']
+                    metadataxml += f"<kvirt:ip >{nets[index]['ip']}</kvirt:ip>"
                 if 'numa' in nets[index] and numa:
                     nicnuma = nets[index]['numa']
                 if 'filter' in nets[index]:
@@ -595,7 +598,7 @@ class Kvirt(object):
                 if 'vhost' in nets[index] and nets[index]['vhost']:
                     vhost = True
                 if 'mtu' in nets[index]:
-                    mtuxml = "<mtu size='%s'/>" % nets[index]['mtu']
+                    mtuxml = f"<mtu size='{nets[index]['mtu']}'/>"
                 if 'vfio' in nets[index] and nets[index]['vfio']:
                     iommuxml = "<iommu model='intel'/>"
                     ioapicxml = "<ioapic driver='qemu'/>"
@@ -603,12 +606,12 @@ class Kvirt(object):
                     multiqueues = nets[index]['multiqueues']
                     if not isinstance(multiqueues, int):
                         return {'result': 'failure',
-                                'reason': "Invalid multiqueues value in nic %s. Must be an int" % index}
+                                'reason': f"Invalid multiqueues value in nic {index}. Must be an int"}
                     elif not 0 < multiqueues < 257:
                         return {'result': 'failure',
-                                'reason': "multiqueues value in nic %s not between 0 and 256 " % index}
+                                'reason': f"multiqueues value in nic {index} not between 0 and 256 "}
                     else:
-                        multiqueuexml = "<driver name='vhost' queues='%d'/>" % multiqueues
+                        multiqueuexml = f"<driver name='vhost' queues='{multiqueues}'/>"
             if ips and len(ips) > index and ips[index] is not None and\
                     netmasks and len(netmasks) > index and netmasks[index] is not None and gateway is not None:
                 nets[index]['ip'] = ips[index]
@@ -617,7 +620,7 @@ class Kvirt(object):
                 ovs = True
             if netname in networks:
                 iftype = 'network'
-                sourcexml = "<source network='%s'/>" % netname
+                sourcexml = f"<source network='{netname}'/>"
             elif netname in bridges or ovs:
                 if netname in bridges and 'ip' in allnetworks[netname] and 'config_host' not in overrides:
                     overrides['config_host'] = allnetworks[netname]['ip']
@@ -706,29 +709,29 @@ class Kvirt(object):
                     code = os.system(isocheckcmd)
                     if code != 0:
                         if start:
-                            return {'result': 'failure', 'reason': "Iso %s not found" % iso}
+                            return {'result': 'failure', 'reason': f"Iso {iso} not found"}
                         else:
-                            warning("Iso %s not found. Make sure it's there before booting" % iso)
+                            warning(f"Iso {iso} not found. Make sure it's there before booting")
                 elif not os.path.exists(iso):
                     if start:
-                        return {'result': 'failure', 'reason': "Iso %s not found" % iso}
+                        return {'result': 'failure', 'reason': f"Iso {iso} not found"}
                     else:
-                        warning("Iso %s not found. Make sure it's there before booting" % iso)
+                        warning(f"Iso {iso} not found. Make sure it's there before booting")
             else:
                 if iso not in volumes:
                     if 'http' in iso:
                         if os.path.basename(iso) in volumes:
                             self.delete_image(os.path.basename(iso))
-                        pprint("Trying to gather %s" % iso)
+                        pprint(f"Trying to gather {iso}")
                         self.add_image(iso, pool=default_pool)
                         conn.storagePoolLookupByName(default_pool).refresh()
-                        iso = "%s/%s" % (default_poolpath, os.path.basename(iso))
+                        iso = f"{default_poolpath}/{os.path.basename(iso)}"
                     elif start:
-                        return {'result': 'failure', 'reason': "Iso %s not found" % iso}
+                        return {'result': 'failure', 'reason': f"Iso {iso} not found"}
                     else:
-                        warning("Iso %s not found. Make sure it's there before booting" % iso)
-                        iso = "%s/%s" % (default_poolpath, iso)
-                        warning("Setting iso full path to %s" % iso)
+                        warning(f"Iso {iso} not found. Make sure it's there before booting")
+                        iso = f"{default_poolpath}/{iso}"
+                        warning(f"Setting iso full path to {iso}")
                 else:
                     isovolume = volumes[iso]['object']
                     iso = isovolume.path()
@@ -746,12 +749,12 @@ class Kvirt(object):
                 if 'http' in floppy:
                     if os.path.basename(floppy) in volumes:
                         self.delete_image(os.path.basename(floppy))
-                    pprint("Trying to gather %s" % floppy)
+                    pprint(f"Trying to gather {floppy}")
                     self.add_image(floppy, pool=default_pool)
                     conn.storagePoolLookupByName(default_pool).refresh()
-                    floppy = "%s/%s" % (default_poolpath, os.path.basename(floppy))
+                    floppy = f"{default_poolpath}/{os.path.basename(floppy)}"
                 elif not floppy.startswith('/'):
-                    return {'result': 'failure', 'reason': "Floppy %s not found" % floppy}
+                    return {'result': 'failure', 'reason': f"Floppy {floppy} not found"}
             else:
                 floppyvolume = volumes[floppy]['object']
                 floppy = floppyvolume.path()
@@ -778,14 +781,14 @@ class Kvirt(object):
                                                domain=domain, files=files, enableroot=enableroot,
                                                overrides=overrides, version=version, plan=plan, ipv6=ipv6, image=image,
                                                vmuser=vmuser)
-                with open('%s/%s.ign' % (ignitiondir, name), 'w') as ignitionfile:
+                with open(f'{ignitiondir}/{name}.ign', 'w') as ignitionfile:
                     ignitionfile.write(ignitiondata)
                     identityfile = None
                 if self.protocol == 'ssh' and self.host not in localhosts:
                     publickeyfile = get_ssh_pub_key()
                     if publickeyfile is not None:
                         identityfile = publickeyfile.replace('.pub', '')
-                        identitycommand = "-i %s" % identityfile
+                        identitycommand = f"-i {identityfile}"
                     else:
                         identitycommand = ""
                     ignitioncmd1 = 'scp %s -qP %s %s/%s.ign %s@%s:/var/lib/libvirt/images' % (identitycommand,
@@ -798,7 +801,7 @@ class Kvirt(object):
                         return {'result': 'failure', 'reason': msg}
                     ignitiontmpdir.cleanup()
             if image is not None and not ignition and diskpath is not None:
-                cloudinitiso = "%s/%s.ISO" % (default_poolpath, name)
+                cloudinitiso = f"{default_poolpath}/{name}.ISO"
                 dtype = 'block' if diskpath.startswith('/dev') else 'file'
                 dsource = 'dev' if diskpath.startswith('/dev') else 'file'
                 isobus = 'scsi' if aarch64_full else 'sata'
@@ -852,12 +855,12 @@ class Kvirt(object):
             else:
                 virttype = 'kvm'
         elif virttype not in ['qemu', 'kvm', 'xen', 'lxc']:
-            msg = "Incorrect virttype %s" % virttype
+            msg = f"Incorrect virttype {virttype}"
             return {'result': 'failure', 'reason': msg}
         if nested:
             nestedfeature = capabilities['nestedfeature']
             if nestedfeature is not None:
-                cpuxml += "<feature policy='require' name='%s'/>" % nestedfeature
+                cpuxml += f"<feature policy='require' name='{nestedfeature}'/>"
             else:
                 warning("Hypervisor not compatible with nesting. Skipping")
         if cpuflags:
@@ -865,7 +868,7 @@ class Kvirt(object):
                 if isinstance(flag, str):
                     if flag == 'vmx':
                         continue
-                    cpuxml += "<feature policy='optional' name='%s'/>" % flag
+                    cpuxml += f"<feature policy='optional' name='{flag}'/>"
                 elif isinstance(flag, dict):
                     feature = flag.get('name')
                     policy = flag.get('policy', 'optional')
@@ -874,7 +877,7 @@ class Kvirt(object):
                     elif feature == 'vmx':
                         continue
                     elif policy in ['force', 'require', 'optional', 'disable', 'forbid']:
-                        cpuxml += "<feature policy='%s' name='%s'/>" % (policy, feature)
+                        cpuxml += f"<feature policy='{policy}' name='{feature}'/>"
         sockets, cores, threads = overrides.get('sockets'), overrides.get('cores'), overrides.get('threads', 1)
         if sockets is not None and isinstance(sockets, int) and cores is not None and isinstance(cores, int):
             numcpus = int(sockets) * int(cores) * int(threads)
@@ -892,9 +895,9 @@ class Kvirt(object):
                     cellcpus = cell.get('vcpus')
                     cellmemory = cell.get('memory')
                     if cellcpus is None or cellmemory is None:
-                        msg = "Can't properly use cell %s in numa block" % index
+                        msg = f"Can't properly use cell {index} in numa block"
                         return {'result': 'failure', 'reason': msg}
-                    numaxml += "<cell id='%s' cpus='%s' memory='%s' unit='MiB'/>" % (cellid, cellcpus, cellmemory)
+                    numaxml += f"<cell id='{cellid}' cpus='{cellcpus}' memory='{cellmemory}' unit='MiB'/>"
                     numamemory += int(cellmemory)
                     if "q35" in machine:
                         busindex = expanderinfo[cellid]['index']
@@ -919,25 +922,25 @@ class Kvirt(object):
 <address type='pci' domain='0x0000' bus='0x0%s' slot='0x0%s' function='0x0'/>
 </controller>\n""" % (slotindex, slotindex, slotindex, busindex, slotindex)
                         count += 1
-                cpuxml += '%s</numa>' % numaxml
+                cpuxml += f'{numaxml}</numa>'
                 if numamemory > memory:
                     msg = "Can't use more memory for numa than assigned memory"
                     return {'result': 'failure', 'reason': msg}
             elif memoryhotplug:
                 lastcpu = int(numcpus) - 1
-                cpuxml += "<numa><cell id='0' cpus='0-%s' memory='%d' unit='KiB'/></numa>" % (lastcpu, memory * 1024)
+                cpuxml += f"<numa><cell id='0' cpus='0-{lastcpu}' memory='{memory * 1024}' unit='KiB'/></numa>"
             cpuxml += "</cpu>"
         cpupinningxml = ''
         if cpupinning:
             for entry in cpupinning:
                 if not isinstance(entry, dict):
-                    msg = "Can't process entry %s in numa block" % index
+                    msg = f"Can't process entry {index} in numa block"
                     return {'result': 'failure', 'reason': msg}
                 else:
                     vcpus = entry.get('vcpus')
                     hostcpus = entry.get('hostcpus')
                     if vcpus is None or hostcpus is None:
-                        msg = "Can't process entry %s in cpupinning block" % index
+                        msg = f"Can't process entry {index} in cpupinning block"
                         return {'result': 'failure', 'reason': msg}
                     if '-' in str(vcpus):
                         if len(vcpus.split('-')) != 2:
@@ -956,11 +959,11 @@ class Kvirt(object):
                         msg = "Can't use more cpus for pinning than assigned numcpus"
                         return {'result': 'failure', 'reason': msg}
                     for cpunum in range(idmin, idmax):
-                        cpupinningxml += "<vcpupin vcpu='%s' cpuset='%s'/>\n" % (cpunum, hostcpus)
-            cpupinningxml = "<cputune>%s</cputune>" % cpupinningxml
+                        cpupinningxml += f"<vcpupin vcpu='{cpunum}' cpuset='{hostcpus}'/>\n"
+            cpupinningxml = f"<cputune>{cpupinningxml}</cputune>"
         numatunexml = ''
         if numamode is not None:
-            numatunexml += "<numatune><memory mode='%s' nodeset='0'/></numatune>" % numamode
+            numatunexml += f"<numatune><memory mode='{numamode}' nodeset='0'/></numatune>"
         if macosx:
             cpuxml = ""
         if self.host in ['localhost', '127.0.0.1']:
@@ -983,9 +986,9 @@ class Kvirt(object):
 <target type='virtio' name='org.qemu.guest_agent.0'/>
 </channel>"""
         if cpuhotplug:
-            vcpuxml = "<vcpu  placement='static' current='%d'>64</vcpu>" % (numcpus)
+            vcpuxml = f"<vcpu  placement='static' current='{numcpus}'>64</vcpu>"
         else:
-            vcpuxml = "<vcpu>%d</vcpu>" % numcpus
+            vcpuxml = f"<vcpu>{numcpus}</vcpu>"
         qemuextraxml = ''
         if ignition or usermode or macosx or tpm or qemuextra is not None or nvmedisks or ssddisks:
             namespace = "xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'"
@@ -1004,7 +1007,7 @@ class Kvirt(object):
             if macosx:
                 osk = "ourhardworkbythesewordsguardedpleasedontsteal(c)AppleComputerInc"
                 cpuflags = "+invtsc,vmware-cpuid-freq=on,+pcid,+ssse3,+sse4.2,+popcnt,+avx,+aes,+xsave,+xsaveopt"
-                cpuinfo = "Penryn,kvm=on,vendor=GenuineIntel,%s,check" % cpuflags
+                cpuinfo = f"Penryn,kvm=on,vendor=GenuineIntel,{cpuflags},check"
                 macosxml = """<qemu:arg value='-cpu'/>
 <qemu:arg value='%s'/>
 <qemu:arg value='-device'/>
@@ -1015,7 +1018,7 @@ class Kvirt(object):
                 freeformxml = ""
                 freeform = qemuextra.split(" ")
                 for entry in freeform:
-                    freeformxml += "<qemu:arg value='%s'/>\n" % entry
+                    freeformxml += f"<qemu:arg value='{entry}'/>\n"
             else:
                 freeformxml = ""
             nvmexml = ""
@@ -1044,11 +1047,11 @@ class Kvirt(object):
             for folder in sharedfolders:
                 # accessmode = "passthrough"
                 accessmode = "mapped"
-                sharedxml += "<filesystem type='mount' accessmode='%s'>" % accessmode
-                sharedxml += "<source dir='%s'/><target dir='%s'/>" % (folder, os.path.basename(folder))
+                sharedxml += f"<filesystem type='mount' accessmode='{accessmode}'>"
+                sharedxml += f"<source dir='{folder}'/><target dir='{os.path.basename(folder)}'/>"
                 sharedxml += "<address type='pci' domain='0x0000' bus='0x00' slot='0x09' function='0x0'/>"
                 sharedxml += "</filesystem>"
-                foldercmd = "sudo mkdir %s ; sudo chmod 777 %s" % (folder, folder)
+                foldercmd = f"sudo mkdir {folder} ; sudo chmod 777 {folder}"
                 if self.host == 'localhost' or self.host == '127.0.0.1' and not os.path.exists(folder):
                     oldmask = os.umask(000)
                     os.makedirs(folder)
@@ -1060,7 +1063,7 @@ class Kvirt(object):
         kernelxml = ""
         if kernel is not None:
             locationdir = os.path.basename(kernel)
-            locationdir = "%s/%s" % (default_poolpath, locationdir)
+            locationdir = f"{default_poolpath}/{locationdir}"
             if self.host == 'localhost' or self.host == '127.0.0.1':
                 os.mkdir(locationdir)
             elif self.protocol == 'ssh':
@@ -1072,8 +1075,8 @@ class Kvirt(object):
             if kernel.startswith('http') or kernel.startswith('ftp'):
                 if 'rhcos' in kernel:
                     if self.host == 'localhost' or self.host == '127.0.0.1':
-                        kernelcmd = "curl -Lo %s/vmlinuz -f '%s'" % (locationdir, kernel)
-                        initrdcmd = "curl -Lo %s/initrd.img -f '%s'" % (locationdir, initrd)
+                        kernelcmd = f"curl -Lo {locationdir}/vmlinuz -f '{kernel}'"
+                        initrdcmd = f"curl -Lo {locationdir}/initrd.img -f '{initrd}'"
                     elif self.protocol == 'ssh':
                         kernelcmd = 'ssh %s -p %s %s@%s "curl -Lo %s/vmlinuz -f \'%s\'"' % (self.identitycommand,
                                                                                             self.port, self.user,
@@ -1096,20 +1099,20 @@ class Kvirt(object):
                             m = p.match(str(line))
                             if m is not None and initrd is None:
                                 initrdfile = m.group(1)
-                                initrdurl = "%s/%s" % (kernel, initrdfile)
-                                initrd = "%s/initrd" % locationdir
+                                initrdurl = f"{kernel}/{initrdfile}"
+                                initrd = f"{locationdir}/initrd"
                                 if self.host == 'localhost' or self.host == '127.0.0.1':
-                                    initrdcmd = "curl -Lo %s -f '%s'" % (initrd, initrdurl)
+                                    initrdcmd = f"curl -Lo {initrd} -f '{initrdurl}'"
                                 elif self.protocol == 'ssh':
                                     initrdcmd = 'ssh %s -p %s %s@%s "curl -Lo %s -f \'%s\'"' % (self.identitycommand,
                                                                                                 self.port, self.user,
                                                                                                 self.host, initrd,
                                                                                                 initrdurl)
                                 code = os.system(initrdcmd)
-                    kernelurl = '%s/vmlinuz' % kernel
-                    kernel = "%s/vmlinuz" % locationdir
+                    kernelurl = f'{kernel}/vmlinuz'
+                    kernel = f"{locationdir}/vmlinuz"
                     if self.host == 'localhost' or self.host == '127.0.0.1':
-                        kernelcmd = "curl -Lo %s -f '%s'" % (kernel, kernelurl)
+                        kernelcmd = f"curl -Lo {kernel} -f '{kernelurl}'"
                     elif self.protocol == 'ssh':
                         kernelcmd = 'ssh %s -p %s %s@%s "curl -Lo %s -f \'%s\'"' % (self.identitycommand,
                                                                                     self.port, self.user, self.host,
@@ -1117,11 +1120,11 @@ class Kvirt(object):
                     code = os.system(kernelcmd)
             elif initrd is None:
                 return {'result': 'failure', 'reason': "Missing initrd"}
-            kernel = "%s/vmlinuz" % locationdir
-            initrd = "%s/initrd.img" % locationdir
-            kernelxml = "<kernel>%s</kernel><initrd>%s</initrd>" % (kernel, initrd)
+            kernel = f"{locationdir}/vmlinuz"
+            initrd = f"{locationdir}/initrd.img"
+            kernelxml = f"<kernel>{kernel}</kernel><initrd>{initrd}</initrd>"
             if cmdline is not None:
-                kernelxml += "<cmdline>%s</cmdline>" % cmdline
+                kernelxml += f"<cmdline>{cmdline}</cmdline>"
         bootdev = "<boot dev='hd'/><boot dev='cdrom'/><boot dev='network'/>"
         memoryhotplugxml = "<maxMemory slots='16' unit='MiB'>1524288</maxMemory>" if memoryhotplug else ""
         videoxml = ""
@@ -1137,10 +1140,10 @@ class Kvirt(object):
                 pcidevice = str(pcidevice)
                 newdomain = "0000"
                 if len(pcidevice.split(':')) != 2:
-                    return {'result': 'failure', 'reason': "Incorrect pcidevice entry %s" % index}
+                    return {'result': 'failure', 'reason': f"Incorrect pcidevice entry {index}"}
                 newbus = pcidevice.split(':')[0]
                 if len(pcidevice.split('.')) != 2:
-                    return {'result': 'failure', 'reason': "Incorrect pcidevice entry %s" % index}
+                    return {'result': 'failure', 'reason': "Incorrect pcidevice entry {index}"}
                 newslot = pcidevice.split('.')[0].replace('%s:' % newbus, '')
                 newfunction = pcidevice.split('.')[1]
                 newhostdev = """<hostdev mode='subsystem' type='pci' managed='yes'>
@@ -1198,8 +1201,8 @@ class Kvirt(object):
 </hugepages>
 <locked/>
 </memoryBacking>""" % hugepages
-        machine = "" if aarch64_full else "machine='%s'" % machine
-        emulatorxml = "<emulator>%s</emulator>" % emulator
+        machine = "" if aarch64_full else f"machine='{machine}'"
+        emulatorxml = f"<emulator>{emulator}</emulator>"
         uuidxml = ""
         if 'uuid' in overrides:
             uuid = str(overrides['uuid'])
@@ -1525,7 +1528,7 @@ class Kvirt(object):
                 if netmask is None:
                     netmask = attributes.get('prefix')
                 try:
-                    ip = ip_network('%s/%s' % (firstip, netmask), strict=False)
+                    ip = ip_network(f'{firstip}/{netmask}', strict=False)
                     cidr = str(ip)
                 except:
                     cidr = "N/A"
@@ -1628,7 +1631,7 @@ class Kvirt(object):
                 serialport = element.find('source').get('service')
             if serialport is not None:
                 if self.host in ['localhost', '127.0.0.1']:
-                    serialcommand = "nc 127.0.0.1 %s" % serialport
+                    serialcommand = f"nc 127.0.0.1 {serialport}"
                 elif self.protocol != 'ssh':
                     error("Remote serial Console requires using ssh . Leaving...")
                     return
@@ -1777,7 +1780,7 @@ class Kvirt(object):
             ip = yamlinfo['ip']
             # better filter to detect user nets needed here
             if '.' not in ip and ':' not in ip:
-                usernetinfo = {'device': 'eth%s' % len(yamlinfo['nets']), 'mac': 'N/A', 'net': 'user', 'type': 'user'}
+                usernetinfo = {'device': f"eth{len(yamlinfo['nets'])}", 'mac': 'N/A', 'net': 'user', 'type': 'user'}
                 yamlinfo['nets'].append(usernetinfo)
         if listinfo:
             state = vm.state()[0]
@@ -1793,7 +1796,7 @@ class Kvirt(object):
             disktype = element.get('device')
             if disktype == 'cdrom':
                 iso_file = element.find('source').get('file') if element.find('source') is not None else None
-                if iso_file is not None and not iso_file.endswith('%s.ISO' % name):
+                if iso_file is not None and not iso_file.endswith(f'{name}.ISO'):
                     yamlinfo['iso'] = iso_file
                 continue
             device = element.find('target').get('dev')
@@ -2087,7 +2090,7 @@ class Kvirt(object):
             if remotednsmasq and bridged and self.protocol == 'ssh' and self.host not in ['localhost', '127.0.0.1']:
                 deletecmd = f"sed -i '/{hostentry}/d' /etc/hosts"
                 if self.user != 'root':
-                    deletecmd = "sudo %s" % deletecmd
+                    deletecmd = f"sudo {deletecmd}"
                 deletecmd = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host,
                                                            deletecmd)
                 pprint("Checking if a remote host entry exists. sudo password for remote user %s might be asked"
@@ -2186,11 +2189,11 @@ class Kvirt(object):
         try:
             oldvm = conn.lookupByName(old)
         except:
-            msg = "Base VM %s not found" % old
+            msg = f"Base VM {old} not found"
             error(msg)
             return {'result': 'failure', 'reason': msg}
         if oldvm.isActive() != 0:
-            msg = "Base VM %s needs to be down" % old
+            msg = f"Base VM {old} needs to be down"
             error(msg)
             return {'result': 'failure', 'reason': msg}
         oldautostart = oldvm.autostart()
@@ -2243,7 +2246,7 @@ class Kvirt(object):
         conn = self.conn
         macs = []
         if domain is not None:
-            name += ".%s" % domain
+            name += f".{domain}"
         for element in list(vmxml.iter('interface')):
             mac = element.find('mac').get('address')
             macs.append(mac)
@@ -2256,17 +2259,17 @@ class Kvirt(object):
             if not reserveip or ip is None or netname is None:
                 continue
             if netname not in networks:
-                warning("Skipping incorrect network %s" % netname)
+                warning(f"Skipping incorrect network {netname}")
                 continue
             elif networks[netname]['type'] == 'bridged':
-                warning("Skipping bridge %s" % netname)
+                warning(f"Skipping bridge {netname}")
                 continue
             network = conn.networkLookupByName(netname)
             oldnetxml = network.XMLDesc()
             root = ET.fromstring(oldnetxml)
             dhcplist = list(root.iter('dhcp'))
             if not dhcplist:
-                warning("Skipping network %s as it doesnt have dhcp" % netname)
+                warning(f"Skipping network {netname} as it doesnt have dhcp")
                 continue
             dhcp = dhcplist[0]
             for hostentry in list(dhcp.iter('host')):
@@ -2275,27 +2278,27 @@ class Kvirt(object):
                 currentmac = hostentry.get('mac')
                 if currentip == ip:
                     if currentname == name and currentmac is not None and currentmac == mac:
-                        warning("Skipping reserved ip existing entry for ip %s and mac %s " % (ip, mac))
+                        warning(f"Skipping reserved ip existing entry for ip {ip} and mac {mac}")
                         return
                     else:
-                        warning("Removing old ip entry for ip %s and name %s" % (ip, currentname))
-                        hostentryxml = "<host name='%s' ip='%s'/>" % (currentname, ip)
+                        warning(f"Removing old ip entry for ip {ip} and name {currentname}")
+                        hostentryxml = f"<host name='{currentname}' ip='{ip}'/>"
                         network.update(2, 4, 0, hostentryxml, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
             for ipentry in list(root.iter('ip')):
                 attributes = ipentry.attrib
                 firstip = attributes.get('address')
                 netmask = next(a for a in [attributes.get('netmask'), attributes.get('prefix')] if a is not None)
-                netip = ip_network('%s/%s' % (firstip, netmask), strict=False)
+                netip = ip_network(f'{firstip}/{netmask}', strict=False)
                 dhcp = list(root.iter('dhcp'))
                 if not dhcp:
                     continue
                 if not ip_address(ip) in netip:
                     continue
-                pprint("Adding a reserved ip entry for ip %s and mac %s " % (ip, mac))
+                pprint(f"Adding a reserved ip entry for ip {ip} and mac {mac}")
                 if ':' in ip:
-                    entry = '<host id="00:03:00:01:%s" name="%s" ip="%s" />' % (mac, name, ip)
+                    entry = f'<host id="00:03:00:01:{mac}" name="{name}" ip="{ip}" />'
                 else:
-                    entry = '<host mac="%s" name="%s" ip="%s" />' % (mac, name, ip)
+                    entry = f'<host mac="{mac}" name="{name}" ip="{ip}" />'
                 try:
                     network.update(4, 4, 0, entry, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
                 except Exception as e:
@@ -2314,9 +2317,9 @@ class Kvirt(object):
                 continue
             netname = net.get('name')
             if domain is not None and domain != netname:
-                pprint("Creating dns entry for %s.%s in network %s" % (name, domain, netname))
+                pprint(f"Creating dns entry for {name}.{domain} in network {netname}")
             else:
-                pprint("Creating dns entry for %s in network %s" % (name, netname))
+                pprint(f"Creating dns entry for {name} in network {netname}")
             try:
                 network = conn.networkLookupByName(netname)
             except:
@@ -2339,7 +2342,7 @@ class Kvirt(object):
                         else:
                             break
             if ip is None:
-                error("Couldn't assign dns entry %s in net %s" % (name, netname))
+                error(f"Couldn't assign dns entry {name} in net {netname}")
                 continue
             if bridged:
                 self._create_host_entry(name, ip, netname, domain)
@@ -2353,11 +2356,11 @@ class Kvirt(object):
                     base.append(dns)
                     newxml = ET.tostring(root)
                     conn.networkDefineXML(newxml.decode("utf-8"))
-                fqdn = "%s.%s" % (name, domain) if domain is not None and not name.endswith(domain) else name
-                hostnamexml = '<hostname>%s</hostname>' % fqdn
-                alias = ["%s.%s" % (entry, domain) if domain is not None and
+                fqdn = f"{name}.{domain}" if domain is not None and not name.endswith(domain) else name
+                hostnamexml = f'<hostname>{fqdn}</hostname>'
+                alias = [f"{entry}.{domain}" if domain is not None and
                          not entry.endswith(domain) else entry for entry in alias]
-                aliasxml = ["<hostname>%s</hostname>" % entry for entry in alias]
+                aliasxml = [f"<hostname>{entry}</hostname>" for entry in alias]
                 if dns:
                     for hostentry in list(dns[0].iter('host')):
                         currentip = hostentry.get('ip')
@@ -2370,18 +2373,18 @@ class Kvirt(object):
                                 if fqdn not in currenthostnames:
                                     hostentry.append((ET.fromstring(hostnamexml)))
                                 if newalias:
-                                    newaliasxml = ["<hostname>%s</hostname>" % entry for entry in newalias]
+                                    newaliasxml = [f"<hostname>{entry}</hostname>" for entry in newalias]
                                     for entry in newaliasxml:
                                         hostentry.append((ET.fromstring(entry)))
                                 newhostxml = ET.tostring(hostentry).decode("utf-8")
                                 network.update(2, 10, 0, newhostxml, 0)
                                 network.update(4, 10, 0, newhostxml, 0)
                             else:
-                                pprint("Skipping existing entry for ip %s and name %s" % (ip, fqdn))
+                                pprint(f"Skipping existing entry for ip {ip} and name {fqdn}")
                             return
                 for entry in aliasxml:
                     hostnamexml += entry
-                dnsentry = '<host ip="%s">%s</host>' % (ip, hostnamexml)
+                dnsentry = f'<host ip="{ip}">{hostnamexml}</host>'
                 if force:
                     for host in list(root.iter('host')):
                         iphost = host.get('ip')
@@ -2392,10 +2395,10 @@ class Kvirt(object):
                                 existing.append(hostname.text)
                             if fqdn in existing:
                                 if iphost == ip:
-                                    pprint("Skipping existing dns entry for %s" % fqdn)
+                                    pprint(f"Skipping existing dns entry for {fqdn}")
                                 else:
-                                    oldentry = '<host ip="%s"></host>' % iphost
-                                    pprint("Removing old dns entry for ip %s" % iphost)
+                                    oldentry = f'<host ip="{iphost}"></host>'
+                                    pprint(f"Removing old dns entry for ip {iphost}")
                                     network.update(2, 10, 0, oldentry,
                                                    VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
                 try:
@@ -2430,23 +2433,23 @@ class Kvirt(object):
         return file_.read(data)
 
     def _uploadimage(self, name, pool='default', pooltype='file', origin='/tmp', suffix='.ISO', size=0):
-        name = "%s%s" % (name, suffix)
+        name = f"{name}{suffix}"
         conn = self.conn
         poolxml = pool.XMLDesc(0)
         root = ET.fromstring(poolxml)
         for element in list(root.iter('path')):
             poolpath = element.text
             break
-        imagepath = "%s/%s" % (poolpath, name)
+        imagepath = f"{poolpath}/{name}"
         imagexml = self._xmlvolume(path=imagepath, size=size, diskformat='raw', pooltype=pooltype)
         try:
             pool.createXML(imagexml, 0)
         except libvirtError as e:
-            warning("Got %s when creating iso" % e)
+            warning(f"Got {e} when creating iso")
         imagevolume = conn.storageVolLookupByPath(imagepath)
         stream = conn.newStream(0)
         imagevolume.upload(stream, 0, 0)
-        with open("%s/%s" % (origin, name), 'rb') as ori:
+        with open(f"{origin}/{name}", 'rb') as ori:
             stream.sendAll(self.handler, ori)
             stream.finish()
 
@@ -2473,18 +2476,18 @@ class Kvirt(object):
             metadata = ET.Element("metadata")
             kroot = ET.Element("kvirt:info")
             kroot.set("xmlns:kvirt", "kvirt")
-            kmeta = ET.Element("kvirt:%s" % metatype)
+            kmeta = ET.Element(f"kvirt:{metatype}")
             root.append(metadata)
             metadata.append(kroot)
             kroot.append(kmeta)
         elif kroot is None:
             kroot = ET.Element("kvirt:info")
             kroot.set("xmlns:kvirt", "kvirt")
-            kmeta = ET.Element("kvirt:%s" % metatype)
+            kmeta = ET.Element(f"kvirt:{metatype}")
             metadata.append(kroot)
             kroot.append(kmeta)
         elif kmeta is None:
-            kmeta = ET.Element("kvirt:%s" % metatype)
+            kmeta = ET.Element(f"kvirt:{metatype}")
             kroot.append(kmeta)
         if append and kmeta.text is not None:
             kmeta.text += f",{str(metavalue)}"
@@ -2515,8 +2518,8 @@ class Kvirt(object):
         try:
             vm = conn.lookupByName(name)
         except:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         xml = vm.XMLDesc(0)
         root = ET.fromstring(xml)
         cpunode = list(root.iter('vcpu'))[0]
@@ -2529,7 +2532,7 @@ class Kvirt(object):
         elif 'current' in cpuattributes and cpuattributes['current'] != numcpus:
             if numcpus < int(cpuattributes['current']):
                 error("Can't remove cpus while vm is up")
-                return {'result': 'failure', 'reason': "VM %s not found" % name}
+                return {'result': 'failure', 'reason': f"VM {name} not found"}
             else:
                 vm.setVcpus(numcpus)
                 return {'result': 'success'}
@@ -2546,8 +2549,8 @@ class Kvirt(object):
         try:
             vm = conn.lookupByName(name)
         except:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         xml = vm.XMLDesc(0)
         root = ET.fromstring(xml)
         memorynode = list(root.iter('memory'))[0]
@@ -2557,7 +2560,7 @@ class Kvirt(object):
         if maxmemory:
             diff = int(memory) - int(currentmemory.text)
             if diff > 0:
-                xml = "<memory model='dimm'><target><size unit='KiB'>%s</size><node>0</node></target></memory>" % diff
+                xml = f"<memory model='dimm'><target><size unit='KiB'>{diff}</size><node>0</node></target></memory>"
                 vm.attachDeviceFlags(xml, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
         elif vm.isActive():
             warning("Note it will only be effective upon next start")
@@ -2585,16 +2588,16 @@ class Kvirt(object):
                         isofound = True
                         break
                 if not isofound:
-                    error("Iso %s not found.Leaving..." % iso)
-                    return {'result': 'failure', 'reason': "Iso %s not found" % iso}
+                    error(f"Iso {iso} not found.Leaving...")
+                    return {'result': 'failure', 'reason': f"Iso {iso} not found"}
         conn = self.conn
         try:
             vm = conn.lookupByName(name)
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
         except:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         cdromfound = False
         for element in list(root.iter('disk')):
             disktype = element.get('device')
@@ -2635,8 +2638,8 @@ class Kvirt(object):
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
         except:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         for element in list(root.iter('disk')):
             disktype = element.get('device')
             if disktype == 'cdrom':
@@ -2655,8 +2658,8 @@ class Kvirt(object):
         try:
             vm = conn.lookupByName(name)
         except:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         if start:
             vm.setAutostart(1)
         else:
@@ -2667,17 +2670,17 @@ class Kvirt(object):
         conn = self.conn
         diskformat = 'qcow2'
         if size < 1:
-            error("Incorrect disk size for disk %s" % name)
+            error(f"Incorrect disk size for disk {name}")
             return None
         if not thin:
             diskformat = 'raw'
         if pool is None:
-            error("Missing Pool for disk %s" % name)
+            error(f"Missing Pool for disk {name}")
             return None
         elif '/' in pool:
             pools = [p for p in conn.listStoragePools() if self.get_pool_path(p) == pool]
             if not pools:
-                error("Pool not found for disk %s" % name)
+                error(f"Pool not found for disk {name}")
                 return None
             else:
                 pool = pools[0]
@@ -2685,7 +2688,7 @@ class Kvirt(object):
             try:
                 pool = conn.storagePoolLookupByName(pool)
             except:
-                error("Pool %s not found for disk %s" % (pool, name))
+                error(f"Pool {pool} not found for disk {name}")
                 return None
         poolxml = pool.XMLDesc(0)
         poolroot = ET.fromstring(poolxml)
@@ -2700,12 +2703,12 @@ class Kvirt(object):
                 for vol in poo.listAllVolumes():
                     volumes[vol.name()] = vol.path()
             if image not in volumes and image not in list(volumes.values()):
-                error("Invalid image %s for disk %s" % (image, name))
+                error(f"Invalid image {image} for disk {name}")
                 return None
             if image in volumes:
                 image = volumes[image]
         pool.refresh(0)
-        diskpath = "%s/%s" % (poolpath, name)
+        diskpath = f"{poolpath}/{name}"
         if pooltype == 'logical':
             diskformat = 'raw'
         volxml = self._xmlvolume(path=diskpath, size=size, pooltype=pooltype,
@@ -2728,15 +2731,15 @@ class Kvirt(object):
                 self.create_disk(name=name, size=size, pool=pool, thin=thin, image=image)
                 return {'result': 'success'}
             except Exception as e:
-                error("Couldn't create disk. Hit %s" % e)
-                return {'result': 'failure', 'reason': "Couldn't create disk. Hit %s" % e}
+                error(f"Couldn't create disk. Hit {e}")
+                return {'result': 'failure', 'reason': f"Couldn't create disk. Hit {e}"}
         try:
             vm = conn.lookupByName(name)
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
         except:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         currentdisk = 0
         diskpaths = []
         virtio_index, scsi_index, ide_index = 0, 0, 0
@@ -2758,16 +2761,16 @@ class Kvirt(object):
             currentdisk += 1
         diskindex = currentdisk
         if interface == 'scsi':
-            diskdev = "sd%s" % string.ascii_lowercase[scsi_index]
+            diskdev = f"sd{string.ascii_lowercase[scsi_index]}"
         elif interface == 'ide':
-            diskdev = "hd%s" % string.ascii_lowercase[ide_index]
+            diskdev = f"hd{string.ascii_lowercase[ide_index]}"
         else:
-            diskdev = "vd%s" % string.ascii_lowercase[virtio_index]
+            diskdev = f"vd{string.ascii_lowercase[virtio_index]}"
         if existing is None:
-            storagename = "%s_%d.img" % (name, diskindex)
+            storagename = f"{name}_{diskindex}.img"
             diskpath = self.create_disk(name=storagename, size=size, pool=pool, thin=thin, image=image)
         elif existing in diskpaths:
-            error("Disk %s already in VM %s" % (existing, name))
+            error(f"Disk {existing} already in VM {name}")
             return {'result': 'success'}
         else:
             diskpath = existing
@@ -2788,14 +2791,14 @@ class Kvirt(object):
         try:
             pool = conn.storagePoolLookupByName(pool)
         except:
-            error("Pool %s not found. Leaving..." % poolname)
-            return {'result': 'failure', 'reason': "Pool %s not found" % poolname}
+            error(f"Pool {poolname} not found. Leaving...")
+            return {'result': 'failure', 'reason': f"Pool {poolname} not found"}
         try:
             volume = pool.storageVolLookupByName(name)
             volume.delete()
         except:
-            error("Disk %s not found in pool %s. Leaving..." % (name, poolname))
-            return {'result': 'failure', 'reason': "Disk %s not found in pool %s. Leaving..." % (name, poolname)}
+            error(f"Disk {name} not found in pool {poolname}. Leaving...")
+            return {'result': 'failure', 'reason': f"Disk {name} not found in pool {poolname}. Leaving..."}
 
     def delete_disk(self, name=None, diskname=None, pool=None, novm=False):
         conn = self.conn
@@ -2805,7 +2808,7 @@ class Kvirt(object):
         if name is None:
             if '_' in os.path.basename(diskname) and diskname.endswith('.img'):
                 name = os.path.basename(diskname).split('_')[0]
-                pprint("Using %s as vm associated to this disk" % name)
+                pprint(f"Using {name} as vm associated to this disk")
             else:
                 warning("Couldn't find a vm associated to this disk")
                 result = self.delete_disk_by_name(diskname, pool)
@@ -2815,8 +2818,8 @@ class Kvirt(object):
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
         except:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         found = False
         missing_disks = []
         for element in list(root.iter('disk')):
@@ -2831,7 +2834,7 @@ class Kvirt(object):
                 volume = self.conn.storageVolLookupByPath(diskpath)
                 volume.info()
             except:
-                warning("Disk %s was not found.Removing it from vm's definition" % diskpath)
+                warning(f"Disk {diskpath} was not found.Removing it from vm's definition")
                 diskxml = self._xmldisk(diskpath=diskpath, diskdev=diskdev, diskbus=diskbus, diskformat=diskformat)
                 missing_disks.append(diskxml)
                 found = True
@@ -2857,8 +2860,8 @@ class Kvirt(object):
             vmxml = vm.XMLDesc(0)
             conn.defineXML(vmxml)
         if not found:
-            error("Disk %s not found in %s" % (diskname, name))
-            return {'result': 'failure', 'reason': "Disk %s not found in %s" % (diskname, name)}
+            error(f"Disk {diskname} not found in {name}")
+            return {'result': 'failure', 'reason': f"Disk {diskname} not found in {name}"}
         return {'result': 'success'}
 
     def list_disks(self):
@@ -2881,14 +2884,14 @@ class Kvirt(object):
         try:
             vm = conn.lookupByName(name)
         except:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         if network not in networks:
-            error("Network %s not found" % network)
-            return {'result': 'failure', 'reason': "Network %s not found" % network}
+            error(f"Network {network} not found")
+            return {'result': 'failure', 'reason': f"Network {network} not found"}
         else:
             networktype = networks[network]
-            source = "<source %s='%s'/>" % (networktype, network)
+            source = f"<source {networktype}='{network}'/>"
         nicxml = """<interface type='%s'>
                     %s
                     <model type='virtio'/>
@@ -2915,26 +2918,26 @@ class Kvirt(object):
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
         except:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         networktype, mac, source = None, None, None
         for element in list(root.iter('interface')):
-            device = "eth%s" % nicnumber
+            device = f"eth{nicnumber}"
             if device == interface:
                 mac = element.find('mac').get('address')
                 networktype = element.get('type')
                 if networktype == 'bridge':
                     network = element.find('source').get('bridge')
-                    source = "<source %s='%s'/>" % (networktype, network)
+                    source = f"<source {networktype}='{network}'/>"
                 else:
                     network = element.find('source').get('network')
-                    source = "<source %s='%s'/>" % (networktype, network)
+                    source = f"<source {networktype}='{network}'/>"
                 break
             else:
                 nicnumber += 1
         if networktype is None or mac is None or source is None:
-            error("Interface %s not found" % interface)
-            return {'result': 'failure', 'reason': "Interface %s not found" % interface}
+            error(f"Interface {interface} not found")
+            return {'result': 'failure', 'reason': f"Interface {interface} not found"}
         nicxml = """<interface type='%s'>
                     <mac address='%s'/>
                     %s
@@ -2956,7 +2959,7 @@ class Kvirt(object):
         conn = self.conn
         for pool in conn.listStoragePools():
             if pool == name:
-                pprint("Pool %s already there.Leaving..." % name)
+                pprint(f"Pool {name} already there.Leaving...")
                 return {'result': 'success'}
         if pooltype == 'dir':
             if self.host == 'localhost' or self.host == '127.0.0.1':
@@ -2964,7 +2967,7 @@ class Kvirt(object):
                     try:
                         os.makedirs(poolpath)
                     except OSError:
-                        reason = "Couldn't create directory %s.Leaving..." % poolpath
+                        reason = f"Couldn't create directory {poolpath}.Leaving..."
                         error(reason)
                         return {'result': 'failure', 'reason': reason}
             elif self.protocol == 'ssh':
@@ -2973,28 +2976,28 @@ class Kvirt(object):
                 cmd2 = 'ssh %s -p %s -t %s@%s "sudo chown %s %s"' % (self.identitycommand, self.port, self.user,
                                                                      self.host, user, poolpath)
                 if self.user != 'root':
-                    setfacl = "sudo setfacl -m u:%s:rwx %s" % (self.user, poolpath)
+                    setfacl = f"sudo setfacl -m u:{self.user}:rwx {poolpath}"
                     cmd3 = 'ssh %s -p %s -t %s@%s "%s"' % (self.identitycommand, self.port, self.user, self.host,
                                                            setfacl)
 
                 return1 = os.system(cmd1)
                 if return1 > 0:
-                    reason = "Couldn't create directory %s.Leaving..." % poolpath
+                    reason = f"Couldn't create directory {poolpath}.Leaving..."
                     error(reason)
                     return {'result': 'failure', 'reason': reason}
                 return2 = os.system(cmd2)
                 if return2 > 0:
-                    reason = "Couldn't change permission of directory %s to qemu" % poolpath
+                    reason = f"Couldn't change permission of directory {poolpath} to qemu"
                     error(reason)
                     return {'result': 'failure', 'reason': reason}
                 if self.user != 'root':
                     return3 = os.system(cmd3)
                     if return3 > 0:
-                        reason = "Couldn't run setfacl for user %s in %s" % (self.user, poolpath)
+                        reason = f"Couldn't run setfacl for user {self.user} in {poolpath}"
                         error(reason)
                         return {'result': 'failure', 'reason': reason}
             else:
-                reason = "Make sure %s directory exists on hypervisor" % name
+                reason = f"Make sure {name} directory exists on hypervisor"
                 error(reason)
                 return {'result': 'failure', 'reason': reason}
             poolxml = """<pool type='dir'>
@@ -3006,7 +3009,7 @@ class Kvirt(object):
                          </target>
                          </pool>""" % (name, poolpath)
         elif pooltype == 'lvm':
-            thinpoolxml = "<product name='%s'/>" % thinpool if thinpool is not None else ''
+            thinpoolxml = f"<product name='{thinpool}'/>" if thinpool is not None else ''
             poolxml = """<pool type='logical'>
                          <name>%s</name>
                          <source>
@@ -3026,7 +3029,7 @@ class Kvirt(object):
                          </source>
                          </pool>""" % (name, poolpath)
         else:
-            reason = "Invalid pool type %s.Leaving..." % pooltype
+            reason = f"Invalid pool type {pooltype}.Leaving..."
             error(reason)
             return {'result': 'failure', 'reason': reason}
         try:
@@ -3047,13 +3050,13 @@ class Kvirt(object):
                 pool = conn.storagePoolLookupByName(pool)
                 pool.refresh(0)
             except:
-                return {'result': 'failure', 'reason': 'Pool %s not found' % poolname}
+                return {'result': 'failure', 'reason': f'Pool {poolname} not found'}
             try:
                 volume = pool.storageVolLookupByName(shortname)
                 volume.delete(0)
                 return {'result': 'success'}
             except:
-                return {'result': 'failure', 'reason': 'Image %s not found' % image}
+                return {'result': 'failure', 'reason': f'Image {image} not found'}
         else:
             for poolname in conn.listStoragePools():
                 try:
@@ -3061,14 +3064,14 @@ class Kvirt(object):
                     try:
                         pool.refresh(0)
                     except Exception as e:
-                        warning("Hit %s when refreshing pool %s" % (e, poolname))
+                        warning(f"Hit {e} when refreshing pool {poolname}")
                         continue
                     volume = pool.storageVolLookupByName(shortname)
                     volume.delete(0)
                     return {'result': 'success'}
                 except:
                     continue
-        return {'result': 'failure', 'reason': 'Image %s not found' % image}
+        return {'result': 'failure', 'reason': f'Image {image} not found'}
 
     def add_image(self, url, pool, cmd=None, name=None, size=None):
         poolname = pool
@@ -3083,19 +3086,19 @@ class Kvirt(object):
             for vol in pool.listAllVolumes():
                 volumes.append(vol.name())
         except:
-            return {'result': 'failure', 'reason': "Pool %s not found" % poolname}
+            return {'result': 'failure', 'reason': f"Pool {poolname} not found"}
         poolxml = pool.XMLDesc(0)
         root = ET.fromstring(poolxml)
         pooltype = list(root.iter('pool'))[0].get('type')
         poolpath = list(root.iter('path'))[0].text
         downloadpath = poolpath if pooltype == 'dir' else '/tmp'
         if shortimage_uncompressed in volumes:
-            pprint("Image %s already there.Leaving..." % shortimage_uncompressed)
+            pprint(f"Image {shortimage_uncompressed} already there.Leaving...")
             return {'result': 'success'}
         if name == 'rhcos42':
             shortimage += '.gz'
         if self.host == 'localhost' or self.host == '127.0.0.1':
-            downloadcmd = "curl -Lko %s/%s -f '%s'" % (downloadpath, shortimage, url)
+            downloadcmd = f"curl -Lko {downloadpath}/{shortimage} -f '{url}'"
         elif self.protocol == 'ssh':
             downloadcmd = 'ssh %s -p %s %s@%s "curl -Lko %s/%s -f \'%s\'"' % (self.identitycommand, self.port,
                                                                               self.user, self.host, downloadpath,
@@ -3109,8 +3112,8 @@ class Kvirt(object):
                     setfacluser = getpwuid(os.getuid()).pw_name
                 else:
                     setfacluser = "your_user"
-            pprint("sudo setfacl -m u:%s:rwx %s" % (setfacluser, downloadpath))
-            return {'result': 'failure', 'reason': "of Permission issues"}
+            pprint(f"sudo setfacl -m u:{setfacluser}:rwx {downloadpath}")
+            return {'result': 'failure', 'reason': "Permission issues"}
         elif code != 0:
             return {'result': 'failure', 'reason': "Unable to download indicated image"}
         if shortimage.endswith('xz') or shortimage.endswith('gz') or shortimage.endswith('bz2') or name == 'rhcos42':
@@ -3119,11 +3122,11 @@ class Kvirt(object):
             executable = executable[extension] if name != 'rhcos42' else 'gunzip'
             if self.host == 'localhost' or self.host == '127.0.0.1':
                 if which(executable) is not None:
-                    uncompresscmd = "%s %s/%s" % (executable, poolpath, shortimage)
+                    uncompresscmd = f"{executable} {poolpath}/{shortimage}"
                     os.system(uncompresscmd)
                 else:
-                    error("%s not found. Can't uncompress image" % executable)
-                    return {'result': 'failure', 'reason': "%snot found. Can't uncompress image" % executable}
+                    error(f"{executable} not found. Can't uncompress image")
+                    return {'result': 'failure', 'reason': f"{executable} not found. Can't uncompress image"}
             elif self.protocol == 'ssh':
                 uncompresscmd = 'ssh %s -p %s %s@%s "%s %s/%s"' % (self.identitycommand, self.port, self.user,
                                                                    self.host, executable, poolpath, shortimage)
@@ -3131,7 +3134,7 @@ class Kvirt(object):
         if cmd is not None:
             if self.host == 'localhost' or self.host == '127.0.0.1':
                 if which('virt-customize') is not None:
-                    cmd = "virt-customize -a %s/%s --run-command '%s'" % (poolpath, shortimage_uncompressed, cmd)
+                    cmd = f"virt-customize -a {poolpath}/{shortimage_uncompressed} --run-command '{cmd}'"
                     os.system(cmd)
             elif self.protocol == 'ssh':
                 cmd = 'ssh %s -p %s %s@%s "virt-customize -a %s/%s --run-command \'%s\'"' % (self.identitycommand,
@@ -3245,9 +3248,9 @@ class Kvirt(object):
         else:
             natxml = ''
         if domain is not None:
-            domainxml = "<domain name='%s'/>" % domain
+            domainxml = f"<domain name='{domain}'/>"
         else:
-            domainxml = "<domain name='%s'/>" % name
+            domainxml = f"<domain name='{name}'/>"
         if len(name) < 16:
             bridgename = name if name != 'default' else 'virbr0'
             bridgexml = f"<bridge name='{bridgename}' stp='on' delay='0'/>"
@@ -3355,12 +3358,12 @@ class Kvirt(object):
         try:
             network = conn.networkLookupByName(name)
         except:
-            return {'result': 'failure', 'reason': "Network %s not found" % name}
+            return {'result': 'failure', 'reason': f"Network {name} not found"}
         machines = self.network_ports(name)
         allowed_nets = self._get_allowed_nets(network)
         if machines:
             machines = ','.join(machines)
-            return {'result': 'failure', 'reason': "Network %s is being used by %s" % (name, machines)}
+            return {'result': 'failure', 'reason': f"Network {name} is being used by {machines}"}
         if network.isActive():
             network.destroy()
         network.undefine()
@@ -3393,7 +3396,7 @@ class Kvirt(object):
                 firstip = attributes.get('address')
                 netmask = attributes.get('netmask')
                 netmask = attributes.get('prefix') if netmask is None else netmask
-                ipnet = '%s/%s' % (firstip, netmask) if netmask is not None else firstip
+                ipnet = f'{firstip}/{netmask}' if netmask is not None else firstip
                 ipnet = ip_network(ipnet, strict=False)
                 cidr = str(ipnet)
             dhcp = list(root.iter('dhcp'))
@@ -3451,7 +3454,7 @@ class Kvirt(object):
                 if ip.startswith('fe80'):
                     continue
                 prefix = attributes.get('prefix')
-                ipnet = ip_network('%s/%s' % (ip, prefix), strict=False)
+                ipnet = ip_network(f'{ip}/{prefix}', strict=False)
                 cidr = str(ipnet)
                 if ':' not in ip:
                     break
@@ -3487,7 +3490,7 @@ class Kvirt(object):
         try:
             pool = conn.storagePoolLookupByName(name)
         except:
-            return {'result': 'failure', 'reason': "Pool %s not found" % name}
+            return {'result': 'failure', 'reason': f"Pool {name} not found"}
         if pool.isActive() and full:
             for vol in pool.listAllVolumes():
                 vol.delete(0)
@@ -3518,7 +3521,7 @@ class Kvirt(object):
         try:
             vm = conn.lookupByName(name)
         except:
-            error("VM %s not found" % name)
+            error(f"VM {name} not found")
             return networks
         xml = vm.XMLDesc(0)
         root = ET.fromstring(xml)
@@ -3562,7 +3565,7 @@ class Kvirt(object):
             product = list(root.iter('product'))
             if product:
                 thinpool = list(root.iter('product'))[0].get('name')
-                poolpath += " (thinpool:%s)" % thinpool
+                poolpath += f" (thinpool:{thinpool})"
         return poolpath
 
     def list_flavors(self):
@@ -3580,13 +3583,13 @@ class Kvirt(object):
         return [name.strip() for name in results.split('\n')]
 
     def _fixqcow2(self, path, backing):
-        command = "qemu-img create -q -f qcow2 -b %s -F qcow2 %s" % (backing, path)
+        command = f"qemu-img create -q -f qcow2 -b {backing} -F qcow2 {path}"
         if self.protocol == 'ssh':
             command = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host, command)
         os.system(command)
 
     def add_image_to_deadpool(self, poolname, pooltype, poolpath, shortimage, thinpool=None):
-        sizecommand = "qemu-img info /tmp/%s --output=json" % shortimage
+        sizecommand = f"qemu-img info /tmp/{shortimage} --output=json"
         if self.protocol == 'ssh':
             sizecommand = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host,
                                                          sizecommand)
@@ -3594,34 +3597,34 @@ class Kvirt(object):
         virtualsize = json.loads(size)['virtual-size']
         if pooltype == 'logical':
             if thinpool is not None:
-                command = "lvcreate -qq -V %sb -T %s/%s -n %s" % (virtualsize, poolpath, thinpool, shortimage)
+                command = f"lvcreate -qq -V {virtualsize}b -T {poolpath}/{thinpool} -n {shortimage}"
             else:
-                command = "lvcreate -qq -L %sb -n %s %s" % (virtualsize, shortimage, poolpath)
+                command = f"lvcreate -qq -L {virtualsize}b -n {shortimage} {poolpath}"
         elif pooltype == 'zfs':
-            command = "zfs create -V %s %s/%s" % (virtualsize, poolname, shortimage)
+            command = f"zfs create -V {virtualsize} {poolname}/{shortimage}"
         else:
-            error("Invalid pooltype %s" % pooltype)
+            error(f"Invalid pooltype {pooltype}")
             return
         command += "; qemu-img convert -p -f qcow2 -O raw -t none -T none /tmp/%s %s/%s" % (shortimage, poolpath,
                                                                                             shortimage)
-        command += "; rm -rf /tmp/%s" % shortimage
+        command += f"; rm -rf /tmp/{shortimage}"
         if self.protocol == 'ssh':
-            command = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host, command)
+            command = f"ssh {self.identitycommand} -p {self.port} {self.user}@{self.host} \"{command}\""
         os.system(command)
 
     def _createthinlvm(self, name, path, thinpool, backing=None, size=None):
         if backing is not None:
-            command = "lvcreate -qq -ay -K -s --name %s %s/%s" % (name, path, backing)
+            command = f"lvcreate -qq -ay -K -s --name {name} {path}/{backing}"
         else:
-            command = "lvcreate -qq -V %sG -T %s/%s -n %s" % (size, path, thinpool, name)
+            command = f"lvcreate -qq -V {size}G -T {path}/{thinpool} -n {name}"
         if self.protocol == 'ssh':
-            command = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host, command)
+            command = f"ssh {self.identitycommand} -p {self.port} {self.user}@{self.host} \"{command}\""
         os.system(command)
 
     def _deletelvm(self, disk):
-        command = "lvremove -qqy %s" % disk
+        command = f"lvremove -qqy {disk}"
         if self.protocol == 'ssh':
-            command = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host, command)
+            command = f"ssh {self.identitycommand} -p {self.port} {self.user}@{self.host} \"{command}\""
         os.system(command)
 
     def export(self, name, image=None):
@@ -3653,11 +3656,11 @@ class Kvirt(object):
 
     def _create_host_entry(self, name, ip, netname, domain):
         hostsfile = '/etcdir/hosts' if os.path.exists("/i_am_a_container") else '/etc/hosts'
-        hosts = "%s %s %s.%s" % (ip, name, name, netname)
+        hosts = f"{ip} {name} {name}.{netname}"
         if domain is not None and domain != netname:
-            hosts = "%s %s.%s" % (hosts, name, domain)
-        hosts = '"%s # KVIRT"' % hosts
-        oldentry = "%s %s.* # KVIRT" % (ip, name)
+            hosts = f"{hosts} {name}.{domain}"
+        hosts = f'"{hosts} # KVIRT"'
+        oldentry = f"{ip} {name}.* # KVIRT"
         for line in open(hostsfile):
             if re.findall(oldentry, line):
                 warning("Old entry found.Leaving...")
@@ -3672,11 +3675,11 @@ class Kvirt(object):
             return
         else:
             hostscmd = "sudo sh -c 'echo %s >>%s'" % (hosts.replace('"', '\\"'), hostsfile)
-            hostscmd = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host, hostscmd)
+            hostscmd = f"ssh {self.identitycommand} -p {self.port} {self.user}@{self.host} \"{hostscmd}\""
             call(hostscmd, shell=True)
             dnsmasqcmd = "/usr/bin/systemctl restart dnsmasq"
             if self.user != 'root':
-                dnsmasqcmd = "sudo %s" % dnsmasqcmd
+                dnsmasqcmd = f"sudo {dnsmasqcmd}"
             dnsmasqcmd = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host,
                                                         dnsmasqcmd)
             call(dnsmasqcmd, shell=True)
@@ -3758,7 +3761,7 @@ class Kvirt(object):
                     iphost = host.get('ip')
                     for hostname in list(host.iter('hostname')):
                         if hostname.text.endswith(domain):
-                            results.append([hostname.text, 'A', '0', "%s (%s)" % (iphost, netname)])
+                            results.append([hostname.text, 'A', '0', f"{iphost} ({netname})"])
         return results
 
     def create_bucket(self, bucket, public=False):
@@ -3814,14 +3817,13 @@ class Kvirt(object):
         try:
             vm = conn.lookupByName(name)
         except:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         if network not in networks:
-            error("Network %s not found" % network)
-            return {'result': 'failure', 'reason': "Network %s not found" % network}
+            error(f"Network {network} not found")
+            return {'result': 'failure', 'reason': f"Network {network} not found"}
         else:
             networktype = networks[network]
-            # source = "<source %s='%s'/>" % (networktype, network)
         vm = conn.lookupByName(name)
         vmxml = vm.XMLDesc(0)
         root = ET.fromstring(vmxml)
