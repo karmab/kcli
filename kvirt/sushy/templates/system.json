@@ -9,7 +9,7 @@
         "Health": "OK",
         "HealthRollUp": "OK"
     },
-    "PowerState": {{ status }},
+    "PowerState": "{{ status }}",
     "Boot": {
         "BootSourceOverrideEnabled": "Continuous",
         "BootSourceOverrideTarget": "Hdd",
