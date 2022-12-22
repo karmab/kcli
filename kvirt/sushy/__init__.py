@@ -53,8 +53,10 @@ class Ksushy():
         def system_collection_resource():
             config = Kconfig()
             k = config.k
-            vms = [vm['name'] for vm in k.list()]
-            return {'client': config.client, 'vms': vms, 'count': len(vms)}
+            vms = []
+            for vm in k.list():
+                vms.append({"@odata.id": f"/redfish/v1/Systems/{config.client}/{vm['name']}"})
+            return {'vms': vms, 'count': len(vms)}
 
         @app.route('/redfish/v1/Systems/<client>/<name>')
         @view('system.json')
@@ -83,7 +85,8 @@ class Ksushy():
             info = k.info(name)
             macs = []
             for nic in info.get('nets', []):
-                macs.append(nic['mac'])
+                mac = nic['mac']
+                macs.append({"@odata.id": f"/redfish/v1/Systems/{client}/{name}/EthernetInterfaces/{mac}"})
             return {'client': client, 'name': name, 'macs': macs, 'count': len(macs)}
 
         @app.route('/redfish/v1/Managers/<client>/<name>')
