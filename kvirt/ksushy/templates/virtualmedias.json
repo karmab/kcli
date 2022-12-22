@@ -1,7 +1,7 @@
 {
     "@odata.type": "#VirtualMediaCollection.VirtualMediaCollection",
     "Name": "Virtual Media Services",
-    "Description": "FakeFish Virtual Media Service Settings",
+    "Description": "Ksushy Virtual Media Service Settings",
     "Members@odata.count": 1,
     "Members": [
         

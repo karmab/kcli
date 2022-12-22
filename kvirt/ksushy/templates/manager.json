@@ -3,9 +3,9 @@
   "@odata.context": "/redfish/v1/$metadata#Manager.Manager",
   "@odata.id": "/redfish/v1/Managers/{{ client }}/{{ name }}",
   "@odata.type": "#Manager.v1_3_1.Manager",
-  "DateTime": {{ date_time|string|tojson }},
+  "DateTime": {{ date_time|string }},
   "DateTimeLocalOffset": "+00:00",
-  "Description": "FakeFish BMC",
+  "Description": "Ksushy BMC",
   "FirmwareVersion": "1.00",
   "Id": "1",
   "Links": {
@@ -22,7 +22,7 @@
   },
   "ManagerType": "BMC",
   "Model": "Palc 2000",
-  "Name": "FakeFish Manager",
+  "Name": "Ksushy Manager",
   "PowerState": "On",
   "ServiceEntryPointUUID": null,
   "Status": {

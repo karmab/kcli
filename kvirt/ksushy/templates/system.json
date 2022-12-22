@@ -1,15 +1,15 @@
 {
     "@odata.type": "#ComputerSystem.v1_1_0.ComputerSystem",
     "Id": "1",
-    "Name": "fake-system",
+    "Name": "{{ name }}",
     "UUID": "1",
-    "Manufacturer": "FakeFish",
+    "Manufacturer": "kcli",
     "Status": {
         "State": "Enabled",
         "Health": "OK",
         "HealthRollUp": "OK"
     },
-    "PowerState": {{ power_state|string|tojson }},
+    "PowerState": {{ status }},
     "Boot": {
         "BootSourceOverrideEnabled": "Continuous",
         "BootSourceOverrideTarget": "Hdd",
@@ -22,7 +22,7 @@
         "UefiTargetBootSourceOverride": "/0x31/0x33/0x01/0x01"
     },
     "ProcessorSummary": {
-        "Count": 8,
+        "Count": {{ cpus }},
         "Status": {
             "State": "Enabled",
             "Health": "OK",
@@ -30,7 +30,7 @@
         }
     },
     "MemorySummary": {
-        "TotalSystemMemoryGiB": 15,
+        "TotalSystemMemoryGiB": {{ memory }},
         "Status": {
             "State": "Enabled",
             "Health": "OK",

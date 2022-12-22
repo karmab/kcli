@@ -1,9 +1,9 @@
 {
     "@odata.type": "#ServiceRoot.v1_5_0.ServiceRoot",
-    "Id": "FakeFishService",
-    "Name": "FakeFish Service",
+    "Id": "KsushyService",
+    "Name": "Kushy Service",
     "RedfishVersion": "1.5.0",
-    "UUID": "not-that-production-ready",
+    "UUID": "quite-production-ready",
     "Systems": {
         "@odata.id": "/redfish/v1/Systems"
     },
