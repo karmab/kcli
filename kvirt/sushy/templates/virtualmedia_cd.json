@@ -6,10 +6,10 @@
         "CD",
         "DVD"
         ],
-    "Image": {{ image_url|string|tojson }},
+    "Image": "{{ image_url }}",
     "ImageName": "",
     "ConnectedVia": "URI",
-    "Inserted": {{ inserted|tojson }},
+    "Inserted": {{ inserted|string|tojson }},
     "WriteProtected": false,
     "Actions": {
         "#VirtualMedia.EjectMedia": {

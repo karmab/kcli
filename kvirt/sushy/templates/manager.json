@@ -3,7 +3,7 @@
   "@odata.context": "/redfish/v1/$metadata#Manager.Manager",
   "@odata.id": "/redfish/v1/Managers/{{ client }}/{{ name }}",
   "@odata.type": "#Manager.v1_3_1.Manager",
-  "DateTime": {{ date_time|string }},
+  "DateTime": "{{ date_time|string }}",
   "DateTimeLocalOffset": "+00:00",
   "Description": "Ksushy BMC",
   "FirmwareVersion": "1.00",
