@@ -5,7 +5,7 @@ recursive-include extras *
 recursive-include tests *
 recursive-include kvirt/web/static *
 recursive-include kvirt/web/templates *
-recursive-include kvirt/ksushy/templates *
+recursive-include kvirt/sushy/templates *
 recursive-include kvirt/internalplans *
 recursive-include kvirt/kind *
 recursive-include kvirt/k3s *

@@ -56,7 +56,7 @@ setup(
         klist.py=kvirt.klist:main
         krpc=kvirt.krpc.server:main
         kclirpc=kvirt.krpc.cli:cli
-        ksushy=kvirt.ksushy.main:run
+        ksushy=kvirt.sushy.main:run
         ignitionmerger=kvirt.ignitionmerger:cli
     ''',
 )

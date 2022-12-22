@@ -1177,7 +1177,7 @@ overrides = {'param1': 'jimi_hendrix', 'param2': False}
 config = Kconfig()
 kexposer = Kexposer(config, 'myplan', inputfile, overrides=overrides)
 application = kexposer.app
-application.secret_key = ‘XXX’
+application.secret_key = 'XXX'
 ```
 
 Note that further configuration will tipically be needed for apache user so that kcli can be used with it.

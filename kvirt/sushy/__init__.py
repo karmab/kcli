@@ -9,7 +9,7 @@ import subprocess
 from datetime import datetime
 import functools
 
-basedir = f"{os.path.dirname(Bottle.run.__code__.co_filename)}/ksushy"
+basedir = f"{os.path.dirname(Bottle.run.__code__.co_filename)}/sushy"
 view = functools.partial(jinja2_view, template_lookup=[f"{basedir}/templates"])
 
 
@@ -151,12 +151,3 @@ class Ksushy():
 
     def run(self):
         self.app.run(host=self.host, port=self.port, debug=self.debug)
-
-
-def run():
-    sushy = Ksushy()
-    sushy.run()
-
-
-if __name__ == '__main__':
-    run()
