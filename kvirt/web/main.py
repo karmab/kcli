@@ -7,7 +7,7 @@ from kvirt.config import Kconfig
 from kvirt.common import print_info, get_free_port
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
-from kvirt.defaults import IMAGES, WEBSOCKIFYCERT
+from kvirt.defaults import IMAGES, FAKECERT
 from kvirt import nameutils
 import os
 from shutil import which
@@ -930,7 +930,7 @@ def vmconsole(name):
                 cert = os.path.expanduser('~/.kcli/websockify.pem')
                 if not os.path.exists(cert):
                     with open(cert, 'w') as f:
-                        f.write(WEBSOCKIFYCERT)
+                        f.write(FAKECERT)
                 websocketcommand = "websockify %s -vD --idle-timeout=30 --cert %s --ssl-target %s:%s" % (websocketport,
                                                                                                          cert, host,
                                                                                                          port)

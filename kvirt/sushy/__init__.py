@@ -1,16 +1,36 @@
 #!/usr/bin/env python3
 # coding=utf-8
 
-from kvirt.bottle import Bottle, request, response, jinja2_view
+from kvirt.defaults import FAKECERT
+from kvirt.bottle import Bottle, request, response, jinja2_view, server_names, ServerAdapter
 from kvirt.common import pprint
 from kvirt.config import Kconfig
 import os
 import subprocess
 from datetime import datetime
 import functools
+from tempfile import NamedTemporaryFile
+
 
 basedir = f"{os.path.dirname(Bottle.run.__code__.co_filename)}/sushy"
 view = functools.partial(jinja2_view, template_lookup=[f"{basedir}/templates"])
+
+
+class SSLCherryPy(ServerAdapter):
+    def run(self, handler):
+        cert = NamedTemporaryFile(delete=False)
+        cert.write(FAKECERT.encode())
+        cert.close()
+        from cheroot.ssl.pyopenssl import pyOpenSSLAdapter
+        from cheroot import wsgi
+        server = wsgi.Server((self.host, self.port), handler, request_queue_size=32)
+        self.srv = server
+        server.ssl_adapter = pyOpenSSLAdapter(cert.name, cert.name)
+        try:
+            server.start()
+        finally:
+            server.stop()
+            os.unlink(cert.name)
 
 
 class Ksushy():
@@ -150,4 +170,8 @@ class Ksushy():
         self.host = '::' if self.ipv6 else '0.0.0.0'
 
     def run(self):
-        self.app.run(host=self.host, port=self.port, debug=self.debug)
+        data = {'host': self.host, 'port': self.port, 'debug': self.debug}
+        if 'KSUSHY_SSL' in os.environ:
+            server_names['sslcherrypy'] = SSLCherryPy
+            data['server'] = 'sslcherrypy'
+        self.app.run(**data)
