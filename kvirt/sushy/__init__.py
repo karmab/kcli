@@ -89,6 +89,11 @@ class Ksushy():
                 macs.append({"@odata.id": f"/redfish/v1/Systems/{client}/{name}/EthernetInterfaces/{mac}"})
             return {'client': client, 'name': name, 'macs': macs, 'count': len(macs)}
 
+        @app.route('/redfish/v1/Systems/<client>/<name>/EthernetInterfaces/<mac>')
+        @view('interface.json')
+        def manage_interface(client, name, mac):
+            return {'client': client, 'name': name, 'mac': mac}
+
         @app.route('/redfish/v1/Managers/<client>/<name>')
         @view('manager.json')
         def manager_resource(client, name):
