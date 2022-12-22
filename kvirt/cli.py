@@ -13,7 +13,7 @@ from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsol
 from kvirt.examples import disconnectedcreate, appopenshiftcreate, plantemplatecreate, kubehypershiftcreate
 from kvirt.examples import workflowcreate, kubegenericscale, kubek3sscale, kubeopenshiftscale
 from kvirt.examples import changelog, starthosts, stophosts, infohosts, ocdownload, openshiftdownload
-from kvirt.examples import securitygroupcreate
+from kvirt.examples import networkcreate, securitygroupcreate
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
 from kvirt.defaults import IMAGES, VERSION, LOCAL_OPENSHIFT_APPS, SSH_PUB_LOCATIONS
@@ -3627,8 +3627,10 @@ def cli():
                                  help=profilecreate_desc)
 
     networkcreate_desc = 'Create Network'
+    networkcreate_epilog = f"examples:\n{networkcreate}"
     networkcreate_parser = create_subparsers.add_parser('network', description=networkcreate_desc,
-                                                        help=networkcreate_desc)
+                                                        help=networkcreate_desc, epilog=networkcreate_epilog,
+                                                        formatter_class=rawhelp)
     networkcreate_parser.add_argument('-i', '--isolated', action='store_true', help='Isolated Network')
     networkcreate_parser.add_argument('-c', '--cidr', help='Cidr of the net', metavar='CIDR')
     networkcreate_parser.add_argument('-d', '--dual', help='Cidr of dual net', metavar='DUAL')

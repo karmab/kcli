@@ -459,3 +459,40 @@ $ kcli create security-group -P ports=['22,25,{"from": "53", "protocol": "udp"}'
 # Open a port range
 $ kcli create security-group -P ports=['{"from": "8000", "to": "9000"}'] mygroup
 """
+
+networkcreate = """# Create a network
+$ kcli create network -c 192.168.123.0/24 mynetwork
+
+# Create a network with specific dhcp range
+$ kcli create network -c 192.168.123.0/24 -P dhcp_start=192.168.123.40 -P dhcp_end=192.168.123.60 mynetwork
+
+# Create a network without dhcp
+$ kcli create network -c 192.168.123.0/24 --nodhcp mynetwork
+
+# Create an isolated network
+$ kcli create network -c 192.168.123.0/24 -i mynetwork
+
+# Create a network with a dedicated pxe server
+$ kcli create network -c 192.168.123.0/24 -P pxe=192.168.123.2 mynetwork
+
+# Create an ipv6 network
+$ kcli create -c 2620:52:0:1302::/64 mynetwork
+
+# Create a dual network
+$ kcli create -c 192.168.123.0/24 -d 2620:52:0:1302::/64 mynetwork
+
+# Create a network allowing specific networks communication
+$ kcli create network -c 192.168.123.0/24 -P allowed_nets=[default,mynetwork2] mynetwork
+
+# Create a network with a forward bridge
+$ kcli create network -P bridge=true br0
+
+# Create a network with an ovs bridge and specific vlans
+$ kcli create network -P ovs=true -P vlans=[10,20] myovsbridge
+
+# Create a network using macvtap an a given nic
+$ kcli create network -P macvtap=true -P nic=eno2 mytap
+
+# Create a network with custom dnsmasq options
+$ kcli create network -c 192.168.123.0/24 -P arp-timeout=120 mynetwork
+"""
