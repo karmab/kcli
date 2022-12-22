@@ -3630,7 +3630,7 @@ def cli():
     networkcreate_epilog = f"examples:\n{networkcreate}"
     networkcreate_parser = create_subparsers.add_parser('network', description=networkcreate_desc,
                                                         help=networkcreate_desc, epilog=networkcreate_epilog,
-                                                        formatter_class=rawhelp)
+                                                        formatter_class=rawhelp, aliases=['net'])
     networkcreate_parser.add_argument('-i', '--isolated', action='store_true', help='Isolated Network')
     networkcreate_parser.add_argument('-c', '--cidr', help='Cidr of the net', metavar='CIDR')
     networkcreate_parser.add_argument('-d', '--dual', help='Cidr of dual net', metavar='DUAL')
@@ -4048,7 +4048,7 @@ def cli():
 
     networkdelete_desc = 'Delete Network'
     networkdelete_parser = delete_subparsers.add_parser('network', description=networkdelete_desc,
-                                                        help=networkdelete_desc)
+                                                        help=networkdelete_desc, aliases=['net', 'nets', 'networks'])
     networkdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     networkdelete_parser.add_argument('names', metavar='NETWORKS', nargs='+')
     networkdelete_parser.set_defaults(func=delete_network)
@@ -4401,7 +4401,8 @@ def cli():
     kubeopenshiftinfo_parser.set_defaults(func=info_openshift_kube)
 
     networkinfo_desc = 'Info Network'
-    networkinfo_parser = info_subparsers.add_parser('network', description=networkinfo_desc, help=networkinfo_desc)
+    networkinfo_parser = info_subparsers.add_parser('network', description=networkinfo_desc, help=networkinfo_desc,
+                                                    aliases=['net'])
     networkinfo_parser.add_argument('name', metavar='NETWORK')
     networkinfo_parser.set_defaults(func=info_network)
 
@@ -4562,7 +4563,7 @@ def cli():
 
     networklist_desc = 'List Networks'
     networklist_parser = list_subparsers.add_parser('network', description=networklist_desc, help=networklist_desc,
-                                                    aliases=['networks'])
+                                                    aliases=['net', 'nets', 'networks'])
     networklist_parser.add_argument('-o', '--output', choices=['json', 'name', 'yaml'], help='Format of the output')
     networklist_parser.add_argument('--short', action='store_true')
     networklist_parser.add_argument('-s', '--subnets', action='store_true')
@@ -4921,7 +4922,7 @@ def cli():
     networkupdate_epilog = f"examples:\n{networkupdate}"
     networkupdate_parser = update_subparsers.add_parser('network', description=networkupdate_desc,
                                                         epilog=networkupdate_epilog, formatter_class=rawhelp,
-                                                        help=networkupdate_desc)
+                                                        help=networkupdate_desc, aliases=['net'])
     networkupdate_parser.add_argument('-i', '--isolated', action='store_true', help='Isolated Network',
                                       default=argparse.SUPPRESS)
     networkupdate_parser.add_argument('--nodhcp', action='store_true', help='Disable dhcp on the net',
