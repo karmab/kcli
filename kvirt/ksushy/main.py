@@ -10,9 +10,9 @@ from datetime import datetime
 import functools
 
 app = Bottle()
-config = {'PORT': os.environ.get('PORT', 9000)}
-debug = config['DEBUG'] if 'DEBUG' in list(config) else True
-port = int(config['PORT']) if 'PORT' in list(config) else 9000
+port = os.environ.get('PORT', 9000)
+debug = 'DEBUG' in os.environ
+ipv6 = 'IPV6' in os.environ
 
 basedir = f"{os.path.dirname(Bottle.run.__code__.co_filename)}/ksushy"
 view = functools.partial(jinja2_view, template_lookup=[f"{basedir}/templates"])
@@ -156,7 +156,8 @@ def run():
     """
 
     """
-    app.run(host='0.0.0.0', port=port, debug=debug)
+    host = '::' if ipv6 else '0.0.0.0'
+    app.run(host=host, port=port, debug=debug)
 
 
 if __name__ == '__main__':
