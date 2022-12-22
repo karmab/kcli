@@ -62,8 +62,8 @@ class Ksushy():
             config = Kconfig(client)
             k = config.k
             info = k.info(name)
-            data = {'client': client, 'name': name, 'status': info['status'], 'memory': info['memory'],
-                    'cpus': info['cpus']}
+            status = 'On' if info['status'] == 'up' else 'Off'
+            data = {'client': client, 'name': name, 'status': status, 'memory': info['memory'], 'cpus': info['cpus']}
             return data
 
         @app.route('/redfish/v1/Systems/<client>/<name>', method='PATCH')
