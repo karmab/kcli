@@ -1620,6 +1620,29 @@ If a `manifests` directory exists in the current directory, the *yaml assets fou
 
 ### Architecture
 
+#### On kubeadm
+
+the generic cluster workflow leverages Kubeadm to create a cluster with the specified number of vms running either as masters or workers on any of the supported platforms.
+
+Those vms can either be centos8 or ubuntu based (as per the official Kubeadm doc).
+
+The first node is used for bootstrapping the cluster, through commands that are run by rendering cloudinit data.
+
+Once it is finished, the generated token is retrieved, which allows to add additional controle plane nodes or workers (and later on scale if needed).
+
+for HA and Loadbalancing, Keepalived and Haproxy are leveraged, which involves declaring a vip. With Libvirt and when no vip is provided, an educated guess around the vip is done when using a virtual network.
+
+For the cloud providers (aws, gcp and ibmcloud), loadbalancer along with dns is used instead to achieve the same result. That does require specifying an existing top level domain.
+
+There are a lot of available options in this workflow, whether it's:
+
+- customizing the hardware of the involved vms
+- using a different k8s version, cni or engine
+- deploying nfs, nginx ingress or metallb.
+- etc
+
+All the parameters can be seen with `kcli info cluster generic`
+
 #### On libvirt/ovirt/vsphere/kubevirt/openstack
 
 We deploy :
