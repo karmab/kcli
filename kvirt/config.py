@@ -2450,7 +2450,10 @@ class Kconfig(Kbaseconfig):
                     cmd = IMAGESCOMMANDS[image]
                 pprint(f"Using url {url}...")
                 pprint(f"Grabbing image {image}...")
+                need_iso = 'api/assisted-images/images' in url
                 shortname = os.path.basename(url).split('?')[0]
+                if need_iso:
+                    image = f'boot-{shortname}.iso'
                 try:
                     result = k.add_image(url, pool, cmd=cmd, name=image, size=size)
                 except Exception as e:

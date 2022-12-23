@@ -160,7 +160,11 @@ class Ksushy():
             try:
                 pprint(f"Setting iso of vm {name} to {image}")
                 iso = os.path.basename(image)
-                if iso not in config.k.volumes(iso=True):
+                token_iso = os.path.basename(image).split('?')[0]
+                if token_iso != iso:
+                    iso = f"boot-{token_iso}.iso"
+                isos = [os.path.basename(i) for i in config.k.volumes(iso=True)]
+                if iso not in isos:
                     config.handle_host(pool=config.pool, image=iso, download=True, url=image, update_profile=False)
                 config.update_vm(name, {'iso': iso})
             except subprocess.CalledProcessError:
