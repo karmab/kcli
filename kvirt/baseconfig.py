@@ -1728,6 +1728,9 @@ class Kbaseconfig:
         return {'result': 'success'}
 
     def deploy_sushy(self, ssl=False, ipv6=False):
+        if os.path.exists("/usr/lib/systemd/system/ksushy.service"):
+            call("systemctl restart ksushy", shell=True)
+            return
         home = os.environ.get('HOME', '/root')
         if ssl:
             warning("ssl support requires installing manually pyopenssl and cherrypy")
@@ -1736,5 +1739,4 @@ class Kbaseconfig:
         sushydata = SUSHYSERVICE.format(home=home, ipv6=ipv6, ssl=ssl)
         with open("/usr/lib/systemd/system/ksushy.service", "w") as f:
             f.write(sushydata)
-        servicecmd = "systemctl enable --now ksushy"
-        call(servicecmd, shell=True)
+        call("systemctl enable --now ksushy", shell=True)
