@@ -383,15 +383,16 @@ starthosts = """# Start Baremetal hosts declared in a parameter file from specif
 $ kcli start baremetal-hosts --pf baremetal_hosts.yml -P iso_url=http://192.168.122.1/my.iso
 
 baremetal_hosts.yml contains
-bmc_user: xx
-bmc_password: xx
+bmc_user: admin
+bmc_password: admin
 baremetal_hosts:
-- bmc_url: http://192.168.122.1:8000/h1
-- bmc_url: http://192.168.122.1:8000/h2
+- bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/vm1
+- bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/vm2
 
 # Start single host
 $ iso_url=http://192.168.122.1/my.iso
-$ kcli start baremetal-host -P url=http://192.168.122.1:8000/h1 -P user=xx -P password=xx -P iso_url=$iso_url
+$ bmc_url=http://192.168.122.1:9000/redfish/v1/Systems/local/vm1
+$ kcli start baremetal-host -P url=$bmc_url -P iso_url=$iso_url -P user=admin -P password=admin
 """
 
 stophosts = """# Stop Baremetal hosts declared in a parameter file
@@ -399,14 +400,15 @@ stophosts = """# Stop Baremetal hosts declared in a parameter file
 $ kcli stop baremetalhosts --pf baremetal_hosts.yml
 
 baremetal_hosts.yml contains
-bmc_user: xx
-bmc_password: xx
+bmc_user: admin
+bmc_password: admin
 baremetal_hosts:
-- bmc_url: http://192.168.122.1:8000/h1
-- bmc_url: http://192.168.122.1:8000/h2
+- bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/vm1
+- bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/vm2
 
 # Stop single host
-$ kcli stop baremetal-host -P url=http://192.168.122.1:8000/h1 -P user=xx -P password=xx
+$ bmc_url=http://192.168.122.1:9000/redfish/v1/Systems/local/vm1
+$ kcli stop baremetal-host -P url=$bmc_url -P user=admin -P password=admin
 """
 
 infohosts = """# Report info on Baremetal hosts declared in a parameter file
@@ -414,14 +416,15 @@ infohosts = """# Report info on Baremetal hosts declared in a parameter file
 $ kcli info baremetalhosts --pf baremetal_hosts.yml
 
 baremetal_hosts.yml contains
-bmc_user: xx
-bmc_password: xx
+bmc_user: admin
+bmc_password: admin
 baremetal_hosts:
-- bmc_url: http://192.168.122.1:8000/h1
-- bmc_url: http://192.168.122.1:8000/h2
+- bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/vm1
+- bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/vm2
 
 # Report info on a single host
-$ kcli info baremetal-host -P url=http://192.168.122.1:8000/h1 -P user=xx -P password=xx
+$ bmc_url=http://192.168.122.1:9000/redfish/v1/Systems/local/vm1
+$ kcli info baremetal-host -P url=$bmc_url -P user=admin -P password=admin
 """
 
 ocdownload = """# Download 4.11 stable
