@@ -899,12 +899,17 @@ def list_image(args):
 
 def list_iso(args):
     """List isos"""
+    output = args.output
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.client != 'all':
         k = config.k
+    _list = k.volumes(iso=True)
+    if output is not None:
+        _list_output(_list, output)
+        return
     isostable = PrettyTable(["Iso"])
     isostable.align["Iso"] = "l"
-    for iso in k.volumes(iso=True):
+    for iso in _list:
         isostable.add_row([iso])
     print(isostable)
 
@@ -4550,6 +4555,7 @@ def cli():
 
     isolist_desc = 'List Isos'
     isolist_parser = list_subparsers.add_parser('iso', description=isolist_desc, help=isolist_desc, aliases=['isos'])
+    isolist_parser.add_argument('-o', '--output', choices=['json', 'yaml'], help='Format of the output')
     isolist_parser.set_defaults(func=list_iso)
 
     keywordlist_desc = 'List Keyword'
