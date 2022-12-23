@@ -2283,7 +2283,7 @@ def get_rhcos_url_from_file(filename, _type='kvm'):
 
 
 def boot_baremetal_hosts(baremetal_hosts, iso_url, overrides={}, debug=False):
-    for host in baremetal_hosts:
+    for index, host in enumerate(baremetal_hosts):
         bmc_url = host.get('url') or host.get('bmc_url')
         bmc_user = host.get('user') or host.get('bmc_user') or overrides.get('bmc_user')
         bmc_password = host.get('password') or host.get('bmc_password') or overrides.get('bmc_password')
@@ -2303,6 +2303,8 @@ def boot_baremetal_hosts(baremetal_hosts, iso_url, overrides={}, debug=False):
                     warning(f"Hit {e} when plugging iso to host {msg}")
             else:
                 red.start()
+        else:
+            warning(f"Skipping entry {index} because either bmc_url, bmc_user or bmc_password is not set")
 
 
 def info_baremetal_hosts(baremetal_hosts, overrides={}, debug=False, full=False):
