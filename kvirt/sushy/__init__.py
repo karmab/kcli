@@ -68,7 +68,8 @@ class Ksushy():
                 response.status = 404
                 return f'VM {name} not found'
             status = 'On' if info['status'] == 'up' else 'Off'
-            data = {'client': client, 'name': name, 'status': status, 'memory': info['memory'], 'cpus': info['cpus']}
+            data = {'client': client, 'name': name, 'status': status, 'memory': info['memory'], 'cpus': info['cpus'],
+                    'virt_type': config.type}
             return data
 
         @app.route('/redfish/v1/Systems/<client>/<name>', method='PATCH')

@@ -3,7 +3,7 @@
     "Id": "1",
     "Name": "{{ name }}",
     "UUID": "1",
-    "Manufacturer": "kcli",
+    "Manufacturer": "{{ virt_type }}",
     "Status": {
         "State": "Enabled",
         "Health": "OK",
