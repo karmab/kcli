@@ -2542,7 +2542,8 @@ class Kvirt(object):
                 vm.setVcpus(numcpus)
                 return {'result': 'success'}
         else:
-            warning("Note it will only be effective upon next start")
+            if vm.isActive() != 0:
+                warning("Note it will only be effective upon next start")
             cpunode.text = str(numcpus)
             newxml = ET.tostring(root)
             conn.defineXML(newxml.decode("utf-8"))
@@ -2567,7 +2568,7 @@ class Kvirt(object):
             if diff > 0:
                 xml = f"<memory model='dimm'><target><size unit='KiB'>{diff}</size><node>0</node></target></memory>"
                 vm.attachDeviceFlags(xml, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
-        elif vm.isActive():
+        elif vm.isActive() != 0:
             warning("Note it will only be effective upon next start")
         currentmemory.text = memory
         newxml = ET.tostring(root)
@@ -2575,7 +2576,6 @@ class Kvirt(object):
         return {'result': 'success'}
 
     def update_iso(self, name, iso):
-        warning("Note it will only be effective upon next start")
         source = None
         if iso is not None:
             if self.host in ['localhost', '127.0.0.1'] and os.path.exists(iso):
@@ -2628,6 +2628,8 @@ class Kvirt(object):
 </disk>""" % iso
             base = list(root.iter('devices'))[-1]
             base.append((ET.fromstring(isoxml)))
+        if vm.isActive() != 0:
+            warning("Note it will only be effective upon next start")
         newxml = ET.tostring(root)
         conn.defineXML(newxml.decode("utf-8"))
         return {'result': 'success'}
@@ -3846,7 +3848,8 @@ class Kvirt(object):
                 else:
                     element.find('source').set('network', network)
                 break
-        warning("Note it will only be effective upon next start")
+        if vm.isActive() != 0:
+            warning("Note it will only be effective upon next start")
         newxml = ET.tostring(root)
         conn.defineXML(newxml.decode("utf-8"))
         return {'result': 'success'}
