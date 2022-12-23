@@ -3105,8 +3105,9 @@ class Kvirt(object):
         if self.host == 'localhost' or self.host == '127.0.0.1':
             downloadcmd = f"curl -Lko {downloadpath}/{shortimage} -f '{url}'"
         elif self.protocol == 'ssh':
+            host = self.host.replace('[', '').replace(']', '')
             downloadcmd = 'ssh %s -p %s %s@%s "curl -Lko %s/%s -f \'%s\'"' % (self.identitycommand, self.port,
-                                                                              self.user, self.host, downloadpath,
+                                                                              self.user, host, downloadpath,
                                                                               shortimage, url)
         code = call(downloadcmd, shell=True)
         if code == 23:
