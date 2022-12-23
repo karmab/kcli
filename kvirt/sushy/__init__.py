@@ -64,6 +64,9 @@ class Ksushy():
             config = Kconfig(client)
             k = config.k
             info = k.info(name)
+            if not info:
+                response.status = 404
+                return f'VM {name} not found'
             status = 'On' if info['status'] == 'up' else 'Off'
             data = {'client': client, 'name': name, 'status': status, 'memory': info['memory'], 'cpus': info['cpus']}
             return data
@@ -83,6 +86,9 @@ class Ksushy():
             config = Kconfig(client)
             k = config.k
             info = k.info(name)
+            if not info:
+                response.status = 404
+                return f'VM {name} not found'
             macs = []
             for nic in info.get('nets', []):
                 mac = nic['mac']
@@ -131,6 +137,9 @@ class Ksushy():
         def virtualmedia_cd_resource(client, name):
             config = Kconfig(client)
             info = config.k.info(name)
+            if not info:
+                response.status = 404
+                return f'VM {name} not found'
             inserted, image_url = False, ''
             if 'iso' in info:
                 inserted = True
@@ -141,6 +150,9 @@ class Ksushy():
                    method='POST')
         def virtualmedia_insert(client, name):
             config = Kconfig(client)
+            if not config.k.exists(name):
+                response.status = 404
+                return f'VM {name} not found'
             image = request.json.get('Image')
             if image is None:
                 response.status = 400
@@ -161,6 +173,9 @@ class Ksushy():
                    method='POST')
         def virtualmedia_eject(client, name):
             config = Kconfig(client)
+            if not config.k.exists(name):
+                response.status = 404
+                return f'VM {name} not found'
             try:
                 pprint(f"Setting iso of vm {name} to None")
                 info = config.k.info(name)
