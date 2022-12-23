@@ -1359,7 +1359,7 @@ class Kvirt(object):
                 vm.create()
             except Exception as e:
                 if 'Cannot access storage file' in str(e) and '.iso' in str(e):
-                    warning(f"Handling {e}")
+                    warning(f"Removing attached iso. Hit {e}")
                     self.update_iso(name, None)
                     vm.create()
                 else:
