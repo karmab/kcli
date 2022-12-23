@@ -3273,7 +3273,7 @@ def list_securitygroups(args):
 
 
 def create_sushy(args):
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     baseconfig.deploy_sushy(ipv6=args.ipv6, ssl=args.ssl)
 
 
