@@ -3272,6 +3272,11 @@ def list_securitygroups(args):
     print(securitygroupstable)
 
 
+def create_sushy(args):
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    baseconfig.deploy_sushy(ipv6=args.ipv6, ssl=args.ssl)
+
+
 def cli():
     """
 
@@ -3881,7 +3886,7 @@ def cli():
                                  help=create_vmnic_desc, aliases=['nic'],
                                  epilog=create_vmnic_epilog, formatter_class=rawhelp)
 
-    securitygroupcreate_desc = 'Changelog'
+    securitygroupcreate_desc = 'Create Security Group'
     securitygroupcreate_epilog = "examples:\n%s" % securitygroupcreate
     securitygroupcreate_desc = 'Create Security Group'
     securitygroupcreate_parser = create_subparsers.add_parser('security-group', description=securitygroupcreate_desc,
@@ -3894,6 +3899,13 @@ def cli():
                                             metavar='PARAM')
     securitygroupcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     securitygroupcreate_parser.set_defaults(func=create_securitygroup)
+
+    sushycreate_desc = 'Create Sushy service'
+    sushycreate_parser = create_subparsers.add_parser('sushy', description=sushycreate_desc,
+                                                      help=sushycreate_desc, aliases=['sushy-service'])
+    sushycreate_parser.add_argument('-i', '--ipv6', action='store_true', help='Listen on ipv6')
+    sushycreate_parser.add_argument('-s', '--ssl', action='store_true', help='Enable ssl')
+    sushycreate_parser.set_defaults(func=create_sushy)
 
     vmsnapshotcreate_desc = 'Create Snapshot Of Vm'
     vmsnapshotcreate_parser = create_subparsers.add_parser('vm-snapshot', description=vmsnapshotcreate_desc,

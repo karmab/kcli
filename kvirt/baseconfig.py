@@ -18,7 +18,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             CPUFLAGS, CPUPINNING, NUMAMODE, NUMA, PCIDEVICES, VIRTTYPE, MAILSERVER, MAILFROM, MAILTO,
                             TPM, JENKINSMODE, RNG, ZEROTIER_NETS, ZEROTIER_KUBELET, VMPORT, VMUSER, VMRULES,
                             VMRULES_STRICT, CACHE, SECURITYGROUPS, LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG, ROOTPASSWORD,
-                            WAIT, WAITCOMMAND, WAITTIMEOUT, TEMPKEY, BMC_USER, BMC_PASSWORD, BMC_MODEL)
+                            WAIT, WAITCOMMAND, WAITTIMEOUT, TEMPKEY, BMC_USER, BMC_PASSWORD, BMC_MODEL, SUSHYSERVICE)
 from ipaddress import ip_address
 from random import choice
 from kvirt import common
@@ -1726,3 +1726,15 @@ class Kbaseconfig:
                 cmcmd += f"{kubectl} create cm kcli-ssh --from-file={orissh}"
                 call(cmcmd, shell=True)
         return {'result': 'success'}
+
+    def deploy_sushy(self, ssl=False, ipv6=False):
+        home = os.environ.get('HOME', '/root')
+        if ssl:
+            warning("ssl support requires installing manually pyopenssl and cherrypy")
+        ssl = "Environment=KSUSHY_SSL=true" if ssl else ''
+        ipv6 = "Environment=IPV6=true" if ipv6 else ''
+        sushydata = SUSHYSERVICE.format(home=home, ipv6=ipv6, ssl=ssl)
+        with open("/usr/lib/systemd/system/ksushy.service", "w") as f:
+            f.write(sushydata)
+        servicecmd = "systemctl enable --now ksushy"
+        call(servicecmd, shell=True)

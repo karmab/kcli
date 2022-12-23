@@ -250,3 +250,16 @@ WAITCOMMAND = None
 BMC_USER = None
 BMC_PASSWORD = None
 BMC_MODEL = None
+
+SUSHYSERVICE = """[Unit]
+Description=Ksushy emulator
+After=syslog.target
+[Service]
+Environment=HOME={home}
+Environment=PYTHONUNBUFFERED=true
+{ipv6}
+{ssl}
+Type=simple
+ExecStart=/usr/bin/ksushy
+StandardOutput=syslog
+StandardError=syslog"""
