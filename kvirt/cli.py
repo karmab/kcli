@@ -354,6 +354,11 @@ def delete_vm(args):
                     os.system(sshcmd)
                 else:
                     warning(f"vm {name} doesnt appear as a rhel box. Skipping unregistration")
+            for confpool in config.confpools:
+                vm_reservations = config.confpools[confpool].get('vm_reservations', {})
+                if name in vm_reservations:
+                    del vm_reservations[name]
+                    config.update_confpool(confpool, {'vm_reservations': vm_reservations})
             result = k.delete(name, snapshots=snapshots)
             if result['result'] == 'success':
                 success(f"{name} deleted")
@@ -489,6 +494,16 @@ def delete_image(args):
     sys.exit(1 if 1 in codes else 0)
 
 
+def create_confpool(args):
+    """Create Confpool"""
+    confpool = args.confpool
+    overrides = common.get_overrides(param=args.param)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
+    result = baseconfig.create_confpool(confpool, overrides=overrides)
+    code = common.handle_response(result, confpool, element='Confpool', action='created', client=baseconfig.client)
+    sys.exit(code)
+
+
 def create_profile(args):
     """Create profile"""
     profile = args.profile
@@ -496,6 +511,20 @@ def create_profile(args):
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
     result = baseconfig.create_profile(profile, overrides=overrides)
     code = common.handle_response(result, profile, element='Profile', action='created', client=baseconfig.client)
+    sys.exit(code)
+
+
+def delete_confpool(args):
+    """Delete confpool"""
+    yes = args.yes
+    yes_top = args.yes_top
+    if not yes and not yes_top:
+        common.confirm("Are you sure?")
+    confpool = args.confpool
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
+    pprint(f"Deleting Confpool {confpool} on {baseconfig.client}")
+    result = baseconfig.delete_confpool(confpool)
+    code = common.handle_response(result, confpool, element='Confpool', action='deleted', client=baseconfig.client)
     sys.exit(code)
 
 
@@ -510,6 +539,16 @@ def delete_profile(args):
     pprint(f"Deleting on {baseconfig.client}")
     result = baseconfig.delete_profile(profile)
     code = common.handle_response(result, profile, element='Profile', action='deleted', client=baseconfig.client)
+    sys.exit(code)
+
+
+def update_confpool(args):
+    """Update confpool"""
+    confpool = args.confpool
+    overrides = common.get_overrides(param=args.param)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
+    result = baseconfig.update_confpool(confpool, overrides=overrides)
+    code = common.handle_response(result, confpool, element='Confpool', action='updated', client=baseconfig.client)
     sys.exit(code)
 
 
@@ -680,6 +719,19 @@ def list_vm(args):
         print(vmstable)
 
 
+def list_confpool(args):
+    """List confpools"""
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    confpools = baseconfig.list_confpools()
+    if args.output is not None:
+        _list_output(confpools, args.output)
+    confpoolstable = PrettyTable(["Confpool"])
+    for confpool in sorted(confpools):
+        confpoolstable.add_row([confpool])
+    confpoolstable.align["Confpool"] = "l"
+    print(confpoolstable)
+
+
 def list_container(args):
     """List containers"""
     filters = args.filters
@@ -787,8 +839,19 @@ def list_lb(args):
     print(loadbalancerstable)
 
 
+def info_confpool(args):
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    confpool = args.confpool
+    if confpool not in baseconfig.confpools:
+        error(f"Confpool {confpool} not found")
+        sys.exit(1)
+    data = baseconfig.confpools[confpool]
+    if args.output is not None:
+        _list_output(data, args.output)
+    print(common.print_info(data))
+
+
 def info_profile(args):
-    """List profiles"""
     profile = args.profile
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     profiles = baseconfig.list_profiles()
@@ -807,7 +870,7 @@ def info_profile(args):
             print(f"reservehost: {reservehost}")
             sys.exit(0)
             break
-    error(f"Profile {profile} doesn't exist")
+    error(f"Profile {profile} not found")
     sys.exit(1)
 
 
@@ -3422,6 +3485,16 @@ def cli():
     create_subparsers.add_parser('bucket-file', parents=[bucketfilecreate_parser],
                                  description=bucketfilecreate_desc, help=bucketfilecreate_desc)
 
+    confpoolcreate_desc = 'Create Confpool'
+    confpoolcreate_parser = argparse.ArgumentParser(add_help=False)
+    confpoolcreate_parser.add_argument('-P', '--param', action='append',
+                                       help='specify parameter or keyword for rendering (can specify multiple)',
+                                       metavar='PARAM')
+    confpoolcreate_parser.add_argument('confpool', metavar='CONFPOOL')
+    confpoolcreate_parser.set_defaults(func=create_confpool)
+    create_subparsers.add_parser('confpool', parents=[confpoolcreate_parser], description=confpoolcreate_desc,
+                                 help=confpoolcreate_desc)
+
     containercreate_desc = 'Create Container'
     containercreate_epilog = None
     containercreate_parser = create_subparsers.add_parser('container', description=containercreate_desc,
@@ -4060,6 +4133,15 @@ def cli():
     cachedelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     cachedelete_parser.set_defaults(func=delete_cache)
 
+    confpooldelete_desc = 'Delete Confpool'
+    confpooldelete_help = "Confpool to delete"
+    confpooldelete_parser = argparse.ArgumentParser(add_help=False)
+    confpooldelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    confpooldelete_parser.add_argument('confpool', help=confpooldelete_help, metavar='CONFPOOL')
+    confpooldelete_parser.set_defaults(func=delete_confpool)
+    delete_subparsers.add_parser('profile', parents=[confpooldelete_parser], description=confpooldelete_desc,
+                                 help=confpooldelete_desc)
+
     containerdelete_desc = 'Delete Container'
     containerdelete_parser = delete_subparsers.add_parser('container', description=containerdelete_desc,
                                                           help=containerdelete_desc)
@@ -4410,6 +4492,11 @@ def cli():
                                           metavar='PARAMFILE', action='append')
     baremetalhostinfo_parser.set_defaults(func=info_baremetal_host)
 
+    confpoolinfo_desc = 'Info Confpool'
+    confpoolinfo_parser = info_subparsers.add_parser('confpool', description=confpoolinfo_desc, help=confpoolinfo_desc)
+    confpoolinfo_parser.add_argument('confpool', metavar='PROFILE')
+    confpoolinfo_parser.set_defaults(func=info_confpool)
+
     openshiftdisconnectedinfo_desc = 'Info Openshift Disconnected registry vm'
     openshiftdisconnectedinfo_parser = info_subparsers.add_parser('disconnected',
                                                                   description=openshiftdisconnectedinfo_desc,
@@ -4554,6 +4641,11 @@ def cli():
                                                         help=bucketfileslist_desc, aliases=['bucket-files'])
     bucketfileslist_parser.add_argument('bucket', metavar='BUCKET')
     bucketfileslist_parser.set_defaults(func=list_bucketfiles)
+
+    confpoollist_desc = 'List Confpools'
+    confpoollist_parser = list_subparsers.add_parser('confpool', description=confpoollist_desc, help=confpoollist_desc,
+                                                     aliases=['confpools'])
+    confpoollist_parser.set_defaults(func=list_confpool)
 
     containerimagelist_desc = 'List Container Images'
     containerimagelist_parser = list_subparsers.add_parser('container-image', description=containerimagelist_desc,
@@ -4936,6 +5028,14 @@ def cli():
     update_desc = 'Update Vm/Plan/Repo'
     update_parser = subparsers.add_parser('update', description=update_desc, help=update_desc)
     update_subparsers = update_parser.add_subparsers(metavar='', dest='subcommand_update')
+
+    confpoolupdate_desc = 'Update Confpool'
+    confpoolupdate_parser = update_subparsers.add_parser('confpool', description=confpoolupdate_desc,
+                                                         help=confpoolupdate_desc)
+    confpoolupdate_parser.add_argument('-P', '--param', action='append',
+                                       help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+    confpoolupdate_parser.add_argument('confpool', metavar='PROFILE', nargs='?')
+    confpoolupdate_parser.set_defaults(func=update_confpool)
 
     kubeupdate_desc = 'Update Kube'
     kubeupdate_parser = update_subparsers.add_parser('kube', description=kubeupdate_desc, help=kubeupdate_desc,
