@@ -493,8 +493,7 @@ def create_profile(args):
     """Create profile"""
     profile = args.profile
     overrides = common.get_overrides(param=args.param)
-    baseconfig = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
-                         namespace=args.namespace)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
     result = baseconfig.create_profile(profile, overrides=overrides)
     code = common.handle_response(result, profile, element='Profile', action='created', client=baseconfig.client)
     sys.exit(code)
@@ -507,8 +506,7 @@ def delete_profile(args):
     if not yes and not yes_top:
         common.confirm("Are you sure?")
     profile = args.profile
-    baseconfig = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
-                         namespace=args.namespace)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
     pprint(f"Deleting on {baseconfig.client}")
     result = baseconfig.delete_profile(profile)
     code = common.handle_response(result, profile, element='Profile', action='deleted', client=baseconfig.client)
@@ -519,8 +517,7 @@ def update_profile(args):
     """Update profile"""
     profile = args.profile
     overrides = common.get_overrides(param=args.param)
-    baseconfig = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
-                         namespace=args.namespace)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
     result = baseconfig.update_profile(profile, overrides=overrides)
     code = common.handle_response(result, profile, element='Profile', action='updated', client=baseconfig.client)
     sys.exit(code)

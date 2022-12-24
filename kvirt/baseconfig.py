@@ -973,42 +973,42 @@ class Kbaseconfig:
                 results.append([profile, image, nets, ports, volumes, cmd])
         return results
 
-    def delete_profile(self, profile, quiet=False):
+    def _delete_yaml_object(self, name, selfconf, conf_type, quiet=False):
         found = False
-        for prof in [profile, f'{self.client}_{profile}']:
-            if prof in self.profiles:
-                del self.profiles[prof]
+        for obj in [name, f'{self.client}_{name}']:
+            if obj in selfconf:
+                del self.profiles[obj]
                 found = True
         if found:
-            path = os.path.expanduser('~/.kcli/profiles.yml')
-            if not self.profiles:
+            path = os.path.expanduser('~/.kcli/f{conf_type}s.yml')
+            if not selfconf:
                 os.remove(path)
             else:
-                with open(path, 'w') as profile_file:
+                with open(path, 'w') as dest_file:
                     try:
-                        yaml.safe_dump(self.profiles, profile_file, default_flow_style=False, encoding='utf-8',
+                        yaml.safe_dump(selfconf, dest_file, default_flow_style=False, encoding='utf-8',
                                        allow_unicode=True, sort_keys=False)
                     except:
-                        yaml.safe_dump(self.profiles, profile_file, default_flow_style=False, encoding='utf-8',
+                        yaml.safe_dump(selfconf, dest_file, default_flow_style=False, encoding='utf-8',
                                        allow_unicode=True)
             return {'result': 'success'}
         else:
             if not quiet:
-                error(f"Profile {profile} not found")
-            return {'result': 'failure', 'reason': f'Profile {profile} not found'}
+                error(f"{conf_type.upper()} {name} not found")
+            return {'result': 'failure', 'reason': f'{conf_type.upper()} {name} not found'}
 
-    def create_profile(self, profile, overrides={}, quiet=False):
-        if profile in self.profiles:
+    def _create_yaml_file(self, name, selfconf, conf_type, overrides={}, quiet=False):
+        if name in conf_type:
             if not quiet:
-                pprint(f"Profile {profile} already there")
+                pprint(f"{conf_type.upper()} {name} already there")
             return {'result': 'success'}
         if not overrides:
             return {'result': 'failure', 'reason': "You need to specify at least one parameter"}
         if 'type' in overrides and 'type' not in ['vm', 'container']:
-            return {'result': 'failure', 'reason': f"Invalid type {overrides['type']} for profile {profile}"}
-        path = os.path.expanduser('~/.kcli/profiles.yml')
+            return {'result': 'failure', 'reason': f"Invalid type {overrides['type']} for {conf_type} {name}"}
+        path = os.path.expanduser(f'~/.kcli/{conf_type}s.yml')
         rootdir = os.path.expanduser('~/.kcli')
-        self.profiles[profile] = overrides
+        selfconf[name] = overrides
         if not os.path.exists(rootdir):
             os.makedirs(rootdir)
         if not os.access(rootdir, os.W_OK):
@@ -1019,35 +1019,44 @@ class Kbaseconfig:
             msg = f"Can't write in {path}"
             error(msg)
             return {'result': 'failure', 'reason': msg}
-        with open(path, 'w') as profile_file:
+        with open(path, 'w') as dest_file:
             try:
-                yaml.safe_dump(self.profiles, profile_file, default_flow_style=False, encoding='utf-8',
+                yaml.safe_dump(selfconf, dest_file, default_flow_style=False, encoding='utf-8',
                                allow_unicode=True, sort_keys=False)
             except:
-                yaml.safe_dump(self.profiles, profile_file, default_flow_style=False, encoding='utf-8',
+                yaml.safe_dump(selfconf, dest_file, default_flow_style=False, encoding='utf-8',
                                allow_unicode=True)
         return {'result': 'success'}
 
-    def update_profile(self, profile, overrides={}, quiet=False):
-        mathching_profiles = [p for p in self.profiles if p == profile or p == f'{self.client}_{profile}']
-        if not mathching_profiles:
+    def _update_yaml_file(self, name, selfconf, conf_type, overrides={}, quiet=False):
+        matching_objects = [o for o in selfconf if o == name or o == f'{self.client}_{name}']
+        if not matching_objects:
             if quiet:
-                error(f"Profile {profile} not found")
-            return {'result': 'failure', 'reason': f'Profile {profile} not found'}
+                error(f"{conf_type.upper()} {name} not found")
+            return {'result': 'failure', 'reason': f'{conf_type.upper()} {name} not found'}
         else:
-            profile = mathching_profiles[0]
+            name = matching_objects[0]
         if not overrides:
             return {'result': 'failure', 'reason': "You need to specify at least one parameter"}
-        path = os.path.expanduser('~/.kcli/profiles.yml')
-        self.profiles[profile].update(overrides)
-        with open(path, 'w') as profile_file:
+        path = os.path.expanduser(f'~/.kcli/{conf_type}s.yml')
+        selfconf[name].update(overrides)
+        with open(path, 'w') as dest_file:
             try:
-                yaml.safe_dump(self.profiles, profile_file, default_flow_style=False, encoding='utf-8',
+                yaml.safe_dump(selfconf, dest_file, default_flow_style=False, encoding='utf-8',
                                allow_unicode=True, sort_keys=False)
             except:
-                yaml.safe_dump(self.profiles, profile_file, default_flow_style=False, encoding='utf-8',
+                yaml.safe_dump(selfconf, dest_file, default_flow_style=False, encoding='utf-8',
                                allow_unicode=True)
         return {'result': 'success'}
+
+    def create_profile(self, profile, overrides={}, quiet=False):
+        return self._create_yaml_file(profile, self.profiles, 'profile', overrides=overrides, quiet=quiet)
+
+    def delete_profile(self, profile, quiet=False):
+        return self._delete_yaml_object(profile, self.profiles, 'profile', quiet=quiet)
+
+    def update_profile(self, profile, overrides={}, quiet=False):
+        return self._update_yaml_file(profile, self.profiles, 'profile', overrides=overrides, quiet=quiet)
 
     def create_jenkins_pipeline(self, plan, inputfile, overrides={}, kube=False):
         _type = 'plan'
