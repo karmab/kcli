@@ -224,27 +224,32 @@ class Kbaseconfig:
         defaults['bmc_user'] = default.get('bmc_user', BMC_USER)
         defaults['bmc_password'] = default.get('bmc_password', BMC_PASSWORD)
         defaults['bmc_model'] = default.get('bmc_model', BMC_MODEL)
-        currentplanfile = "%s/.kcli/plan" % os.environ.get('HOME')
+        currentplanfile = f"{os.environ.get('HOME')}/.kcli/plan"
         if os.path.exists(currentplanfile):
             self.currentplan = open(currentplanfile).read().strip()
         else:
             self.currentplan = 'kvirt'
         self.default = defaults
-        profilefile = default.get('profiles', "%s/.kcli/profiles.yml" % os.environ.get('HOME'))
+        profilefile = default.get('profiles', f"{os.environ.get('HOME')}/.kcli/profiles.yml")
         profilefile = os.path.expanduser(profilefile)
         if not os.path.exists(profilefile):
             self.profiles = {}
         else:
             with open(profilefile, 'r') as entries:
-                self.profiles = yaml.safe_load(entries)
+                try:
+                    self.profiles = yaml.safe_load(entries)
+                except yaml.scanner.ScannerError as err:
+                    error("Couldn't parse yaml in .kcli/profiles.yml. Leaving...")
+                    error(err)
+                    sys.exit(1)
                 if self.profiles is None:
                     self.profiles = {}
                 wrongprofiles = [key for key in self.profiles if 'type' in self.profiles[key] and
                                  self.profiles[key]['type'] not in ['vm', 'container']]
                 if wrongprofiles:
-                    error("Incorrect type in profiles %s in .kcli/profiles.yml" % ','.join(wrongprofiles))
+                    error(f"Incorrect type in profiles {','.join(wrongprofiles)} in .kcli/profiles.yml")
                     sys.exit(1)
-        flavorsfile = default.get('flavors', "%s/.kcli/flavors.yml" % os.environ.get('HOME'))
+        flavorsfile = default.get('flavors', f"{os.environ.get('HOME')}/.kcli/flavors.yml")
         flavorsfile = os.path.expanduser(flavorsfile)
         if not os.path.exists(flavorsfile):
             self.flavors = {}
@@ -256,6 +261,20 @@ class Kbaseconfig:
                     error("Couldn't parse yaml in .kcli/flavors.yml. Leaving...")
                     error(err)
                     sys.exit(1)
+        confpoolfile = default.get('confpools', f"{os.environ.get('HOME')}/.kcli/confpools.yml")
+        confpoolfile = os.path.expanduser(confpoolfile)
+        if not os.path.exists(confpoolfile):
+            self.confpools = {}
+        else:
+            with open(confpoolfile, 'r') as entries:
+                try:
+                    self.confpools = yaml.safe_load(entries)
+                except yaml.scanner.ScannerError as err:
+                    error("Couldn't parse yaml in .kcli/confpools.yml. Leaving...")
+                    error(err)
+                    sys.exit(1)
+                if self.confpools is None:
+                    self.confpools = {}
         self.extraclients = {}
         self._extraclients = []
         if client == 'all':
@@ -938,6 +957,9 @@ class Kbaseconfig:
                             reservedns, reservehost])
         return sorted(results, key=lambda x: x[0])
 
+    def list_confpools(self):
+        return self.confpools
+
     def list_flavors(self):
         """
 
@@ -1057,6 +1079,15 @@ class Kbaseconfig:
 
     def update_profile(self, profile, overrides={}, quiet=False):
         return self._update_yaml_file(profile, self.profiles, 'profile', overrides=overrides, quiet=quiet)
+
+    def create_confpool(self, confpool, overrides={}, quiet=False):
+        return self._create_yaml_file(confpool, self.confpools, 'confpool', overrides=overrides, quiet=quiet)
+
+    def delete_confpool(self, confpool, quiet=False):
+        return self._delete_yaml_object(confpool, self.confpools, 'confpool', quiet=quiet)
+
+    def update_confpool(self, confpool, overrides={}, quiet=False):
+        return self._update_yaml_file(confpool, self.confpools, 'confpool', overrides=overrides, quiet=quiet)
 
     def create_jenkins_pipeline(self, plan, inputfile, overrides={}, kube=False):
         _type = 'plan'
