@@ -525,7 +525,6 @@ def update_profile(args):
 
 def info_vm(args):
     """Get info on vm"""
-    output = args.output
     fields = args.fields.split(',') if args.fields is not None else []
     values = args.values
     config = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
@@ -543,7 +542,7 @@ def info_vm(args):
         else:
             data = config.k.info(name, debug=args.debug)
         if data:
-            print(common.print_info(data, output=output, fields=fields, values=values, pretty=True))
+            print(common.print_info(data, output=args.output, fields=fields, values=values, pretty=True))
 
 
 def enable_host(args):
@@ -605,10 +604,11 @@ def _list_output(_list, output):
         else:
             for key in sorted(list(_list.keys())):
                 print(key)
+    sys.exit(0)
 
 
 def _parse_vms_list(_list):
-    vms = PrettyTable(["Name", "Status", "Ips", "Source", "Plan", "Profile"])
+    vmstable = PrettyTable(["Name", "Status", "Ips", "Source", "Plan", "Profile"])
     for vm in _list:
         name = vm.get('name')
         status = vm.get('status')
@@ -617,19 +617,18 @@ def _parse_vms_list(_list):
         plan = vm.get('plan', '')
         profile = vm.get('profile', '')
         vminfo = [name, status, ip, source, plan, profile]
-        vms.add_row(vminfo)
-    print(vms)
+        vmstable.add_row(vminfo)
+    print(vmstable)
 
 
 def list_vm(args):
     """List vms"""
     filters = args.filters
-    output = args.output
     if args.client is not None and args.client == 'all':
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
         args.client = ','.join(baseconfig.clients)
     if args.client is not None and ',' in args.client:
-        vms = PrettyTable(["Name", "Host", "Status", "Ips", "Source", "Plan", "Profile"])
+        vmstable = PrettyTable(["Name", "Host", "Status", "Ips", "Source", "Plan", "Profile"])
         for client in args.client.split(','):
             config = Kbaseconfig(client=client, debug=args.debug, quiet=True)
             if config.cache:
@@ -638,9 +637,8 @@ def list_vm(args):
                 config = Kconfig(client=client, debug=args.debug, region=args.region,
                                  zone=args.zone, namespace=args.namespace)
                 _list = config.k.list()
-            if output is not None:
-                _list_output(_list, output)
-                return
+            if args.output is not None:
+                _list_output(_list, args.output)
             for vm in _list:
                 name = vm.get('name')
                 status = vm.get('status')
@@ -651,12 +649,12 @@ def list_vm(args):
                 vminfo = [name, client, status, ip, source, plan, profile]
                 if filters:
                     if status == filters:
-                        vms.add_row(vminfo)
+                        vmstable.add_row(vminfo)
                 else:
-                    vms.add_row(vminfo)
-        print(vms)
+                    vmstable.add_row(vminfo)
+        print(vmstable)
     else:
-        vms = PrettyTable(["Name", "Status", "Ip", "Source", "Plan", "Profile"])
+        vmstable = PrettyTable(["Name", "Status", "Ip", "Source", "Plan", "Profile"])
         config = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
         if config.cache:
             _list = cache_vms(config, args.region, args.zone, args.namespace)
@@ -664,9 +662,8 @@ def list_vm(args):
             config = Kconfig(client=args.client, debug=args.debug, region=args.region,
                              zone=args.zone, namespace=args.namespace)
             _list = config.k.list()
-        if output is not None:
-            _list_output(_list, output)
-            return
+        if args.output is not None:
+            _list_output(_list, args.output)
         for vm in _list:
             name = vm.get('name')
             status = vm.get('status')
@@ -677,10 +674,10 @@ def list_vm(args):
             vminfo = [name, status, ip, source, plan, profile]
             if filters:
                 if status == filters:
-                    vms.add_row(vminfo)
+                    vmstable.add_row(vminfo)
             else:
-                vms.add_row(vminfo)
-        print(vms)
+                vmstable.add_row(vminfo)
+        print(vmstable)
 
 
 def list_container(args):
@@ -688,16 +685,19 @@ def list_container(args):
     filters = args.filters
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     cont = Kcontainerconfig(config, client=args.containerclient).cont
+    containers = cont.list_containers()
+    if args.output is not None:
+        _list_output(containers, args.output)
     pprint("Listing containers...")
-    containers = PrettyTable(["Name", "Status", "Image", "Plan", "Command", "Ports", "Deploy"])
-    for container in cont.list_containers():
+    containerstable = PrettyTable(["Name", "Status", "Image", "Plan", "Command", "Ports", "Deploy"])
+    for container in containers:
         if filters:
             status = container[1]
             if status == filters:
-                containers.add_row(container)
+                containerstable.add_row(container)
         else:
-            containers.add_row(container)
-    print(containers)
+            containerstable.add_row(container)
+    print(containerstable)
 
 
 def profilelist_container(args):
@@ -705,6 +705,8 @@ def profilelist_container(args):
     short = args.short
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     profiles = baseconfig.list_containerprofiles()
+    if args.output is not None:
+        _list_output(profiles, args.output)
     if short:
         profilestable = PrettyTable(["Profile"])
         for profile in sorted(profiles):
@@ -725,11 +727,14 @@ def list_containerimage(args):
         error("Operation not supported on this kind of client.Leaving...")
         sys.exit(1)
     cont = Kcontainerconfig(config, client=args.containerclient).cont
+    images = cont.list_images()
+    if args.output is not None:
+        _list_output(images, args.output)
     common.pprint("Listing images...")
-    images = PrettyTable(["Name"])
-    for image in cont.list_images():
-        images.add_row([image])
-    print(images)
+    imagestable = PrettyTable(["Name"])
+    for image in images:
+        imagestable.add_row([image])
+    print(imagestable)
 
 
 def list_host(args):
@@ -737,7 +742,10 @@ def list_host(args):
     clientstable = PrettyTable(["Client", "Type", "Enabled", "Current"])
     clientstable.align["Client"] = "l"
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-    for client in sorted(baseconfig.clients):
+    clients = baseconfig.clients
+    if args.output is not None:
+        _list_output(clients, args.output)
+    for client in sorted(clients):
         enabled = baseconfig.ini[client].get('enabled', True)
         _type = baseconfig.ini[client].get('type', 'kvm')
         if client == baseconfig.client:
@@ -764,14 +772,16 @@ def list_lb(args):
     """List lbs"""
     short = args.short
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    loadbalancers = config.list_loadbalancers()
+    lbs = config.list_loadbalancers()
+    if args.output is not None:
+        _list_output(lbs, args.output)
     if short:
         loadbalancerstable = PrettyTable(["Loadbalancer"])
-        for lb in sorted(loadbalancers):
+        for lb in sorted(lbs):
             loadbalancerstable.add_row([lb])
     else:
         loadbalancerstable = PrettyTable(["LoadBalancer", "IPAddress", "IPProtocol", "Ports", "Target"])
-        for lb in sorted(loadbalancers):
+        for lb in sorted(lbs):
             loadbalancerstable.add_row(lb)
     loadbalancerstable.align["Loadbalancer"] = "l"
     print(loadbalancerstable)
@@ -806,6 +816,8 @@ def list_profile(args):
     short = args.short
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     profiles = baseconfig.list_profiles()
+    if args.output is not None:
+        _list_output(profiles, args.output)
     if short:
         profilestable = PrettyTable(["Profile"])
         for profile in sorted(profiles):
@@ -823,12 +835,14 @@ def list_profile(args):
 
 
 def list_dns(args):
-    """List flavors"""
+    """List dns"""
     short = args.short
     domain = args.domain
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     entries = k.list_dns(domain)
+    if args.output is not None:
+        _list_output(entries, args.output)
     if short:
         dnstable = PrettyTable(["Entry"])
         for entry in sorted(entries):
@@ -848,6 +862,8 @@ def list_flavors(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     flavors = k.list_flavors()
+    if args.output is not None:
+        _list_output(flavors, args.output)
     if short:
         flavorstable = PrettyTable(["Flavor"])
         for flavor in sorted(flavors):
@@ -864,6 +880,14 @@ def list_flavors(args):
 def list_available_images(args):
     """List images"""
     full = args.full
+    if args.output is not None:
+        available_images = []
+        for key in IMAGES:
+            if full:
+                available_images.append([{'image': key, 'url': IMAGES[key]}])
+            else:
+                available_images.append(key)
+        _list_output(available_images, args.output)
     headers = ["Images"]
     if full:
         headers.append("URL")
@@ -879,34 +903,30 @@ def list_available_images(args):
 
 def list_image(args):
     """List images"""
-    output = args.output
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.client != 'all':
         k = config.k
-    _list = k.volumes()
-    if output is not None:
-        _list_output(_list, output)
-        return
+    images = k.volumes()
+    if args.output is not None:
+        _list_output(images, args.output)
     imagestable = PrettyTable(["Images"])
     imagestable.align["Images"] = "l"
-    for image in _list:
+    for image in images:
         imagestable.add_row([image])
     print(imagestable)
 
 
 def list_iso(args):
     """List isos"""
-    output = args.output
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.client != 'all':
         k = config.k
-    _list = k.volumes(iso=True)
-    if output is not None:
-        _list_output(_list, output)
-        return
+    isos = k.volumes(iso=True)
+    if args.output is not None:
+        _list_output(isos, args.output)
     isostable = PrettyTable(["Iso"])
     isostable.align["Iso"] = "l"
-    for iso in _list:
+    for iso in isos:
         isostable.add_row([iso])
     print(isostable)
 
@@ -922,7 +942,6 @@ def list_network(args):
         networks = k.list_networks()
         if args.output is not None:
             _list_output(networks, args.output)
-            return
         pprint("Listing Networks...")
         if short:
             networkstable = PrettyTable(["Network"])
@@ -944,6 +963,8 @@ def list_network(args):
         print(networkstable)
     else:
         subnets = k.list_subnets()
+        if args.output is not None:
+            _list_output(subnets, args.output)
         pprint("Listing Subnets...")
         if short:
             subnetstable = PrettyTable(["Subnets"])
@@ -967,23 +988,28 @@ def list_plan(args):
     """List plans"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.extraclients:
-        plans = PrettyTable(["Plan", "Host", "Vms"])
         allclients = config.extraclients.copy()
         allclients.update({config.client: config.k})
+        if args.output is not None:
+            _list_output(allclients, args.output)
+        planstable = PrettyTable(["Plan", "Host", "Vms"])
         for cli in sorted(allclients):
             currentconfig = Kconfig(client=cli, debug=args.debug, region=args.region, zone=args.zone,
                                     namespace=args.namespace)
             for plan in currentconfig.list_plans():
                 planname = plan[0]
                 planvms = plan[1]
-                plans.add_row([planname, cli, planvms])
+                planstable.add_row([planname, cli, planvms])
     else:
-        plans = PrettyTable(["Plan", "Vms"])
-        for plan in config.list_plans():
+        plans = config.list_plans()
+        if args.output is not None:
+            _list_output(plans, args.output)
+        planstable = PrettyTable(["Plan", "Vms"])
+        for plan in plans:
             planname = plan[0]
             planvms = plan[1]
-            plans.add_row([planname, planvms])
-    print(plans)
+            planstable.add_row([planname, planvms])
+    print(planstable)
 
 
 def choose_parameter_file(paramfile):
@@ -1153,10 +1179,13 @@ def delete_app_openshift(args):
 def list_apps_generic(args):
     """List generic kube apps"""
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
-    apps = PrettyTable(["Name"])
-    for app in baseconfig.list_apps_generic(quiet=True):
-        apps.add_row([app])
-    print(apps)
+    apps = baseconfig.list_apps_generic(quiet=True)
+    if args.output is not None:
+        _list_output(apps, args.output)
+    appstable = PrettyTable(["Name"])
+    for app in apps:
+        appstable.add_row([app])
+    print(appstable)
 
 
 def list_apps_openshift(args):
@@ -1170,10 +1199,13 @@ def list_apps_openshift(args):
     elif not os.path.isabs(os.environ['KUBECONFIG']):
         os.environ['KUBECONFIG'] = "%s/%s" % (os.getcwd(), os.environ['KUBECONFIG'])
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
-    apps = PrettyTable(["Name"])
-    for app in baseconfig.list_apps_openshift(quiet=True, installed=args.installed):
-        apps.add_row([app])
-    print(apps)
+    apps = baseconfig.list_apps_openshift(quiet=True, installed=args.installed)
+    if args.output is not None:
+        _list_output(apps, args.output)
+    appstable = PrettyTable(["Name"])
+    for app in apps:
+        appstable.add_row([app])
+    print(appstable)
 
 
 def list_kube(args):
@@ -1187,6 +1219,8 @@ def list_kube(args):
             currentconfig = Kconfig(client=cli, debug=args.debug, region=args.region, zone=args.zone,
                                     namespace=args.namespace)
             kubes = currentconfig.list_kubes()
+            if args.output is not None:
+                _list_output(kubes, args.output)
             for kubename in kubes:
                 kube = kubes[kubename]
                 kubetype = kube['type']
@@ -1196,6 +1230,8 @@ def list_kube(args):
     else:
         kubestable = PrettyTable(["Cluster", "Type", "Plan", "Vms"])
         kubes = config.list_kubes()
+        if args.output is not None:
+            _list_output(kubes, args.output)
         for kubename in kubes:
             kube = kubes[kubename]
             kubetype = kube['type']
@@ -1211,6 +1247,8 @@ def list_pool(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     pools = k.list_pools()
+    if args.output is not None:
+        _list_output(pools, args.output)
     if short:
         poolstable = PrettyTable(["Pool"])
         for pool in sorted(pools):
@@ -1232,9 +1270,11 @@ def list_product(args):
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     if search is not None:
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-        products = PrettyTable(["Repo", "Product", "Group", "Description", "Numvms", "Memory"])
-        products.align["Repo"] = "l"
+        productstable = PrettyTable(["Repo", "Product", "Group", "Description", "Numvms", "Memory"])
+        productstable.align["Repo"] = "l"
         productsinfo = baseconfig.list_products(repo=repo)
+        if args.output is not None:
+            _list_output(productsinfo, args.output)
         for prod in sorted(productsinfo, key=lambda x: (x['repo'], x['group'], x['name'])):
             name = prod['name']
             repo = prod['repo']
@@ -1247,11 +1287,13 @@ def list_product(args):
             numvms = prod.get('numvms', 'N/A')
             memory = prod.get('memory', 'N/A')
             group = prod.get('group', 'N/A')
-            products.add_row([repo, name, group, description, numvms, memory])
+            productstable.add_row([repo, name, group, description, numvms, memory])
     else:
-        products = PrettyTable(["Repo", "Product", "Group", "Description", "Numvms", "Memory"])
-        products.align["Repo"] = "l"
+        productstable = PrettyTable(["Repo", "Product", "Group", "Description", "Numvms", "Memory"])
+        productstable.align["Repo"] = "l"
         productsinfo = baseconfig.list_products(group=group, repo=repo)
+        if args.output is not None:
+            _list_output(productsinfo, args.output)
         for product in sorted(productsinfo, key=lambda x: (x['repo'], x['group'], x['name'])):
             name = product['name']
             repo = product['repo']
@@ -1259,20 +1301,22 @@ def list_product(args):
             numvms = product.get('numvms', 'N/A')
             memory = product.get('memory', 'N/A')
             group = product.get('group', 'N/A')
-            products.add_row([repo, name, group, description, numvms, memory])
-    print(products)
+            productstable.add_row([repo, name, group, description, numvms, memory])
+    print(productstable)
 
 
 def list_repo(args):
     """List repos"""
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-    repos = PrettyTable(["Repo", "Url"])
-    repos.align["Repo"] = "l"
+    repostable = PrettyTable(["Repo", "Url"])
+    repostable.align["Repo"] = "l"
     reposinfo = baseconfig.list_repos()
+    if args.output is not None:
+        _list_output(reposinfo, args.output)
     for repo in sorted(reposinfo):
         url = reposinfo[repo]
-        repos.add_row([repo, url])
-    print(repos)
+        repostable.add_row([repo, url])
+    print(repostable)
 
 
 def list_vmdisk(args):
@@ -1283,6 +1327,8 @@ def list_vmdisk(args):
     diskstable = PrettyTable(["Name", "Pool", "Path"])
     diskstable.align["Name"] = "l"
     disks = k.list_disks()
+    if args.output is not None:
+        _list_output(disks, args.output)
     for disk in sorted(disks):
         path = disks[disk]['path']
         pool = disks[disk]['pool']
@@ -3063,6 +3109,8 @@ def list_bucket(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     buckets = k.list_buckets()
+    if args.output is not None:
+        _list_output(buckets, args.output)
     bucketstable = PrettyTable(["Bucket"])
     for bucket in sorted(buckets):
         bucketstable.add_row([bucket])
@@ -3077,6 +3125,8 @@ def list_bucketfiles(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     bucketfiles = k.list_bucketfiles(bucket)
+    if args.output is not None:
+        _list_output(bucketfiles, args.output)
     bucketfilestable = PrettyTable(["BucketFiles"])
     for bucketfile in sorted(bucketfiles):
         bucketfilestable.add_row([bucketfile])
@@ -3191,6 +3241,8 @@ def list_keyword(args):
     keywordstable = PrettyTable(["Keyword", "Default Value", "Current Value"])
     keywordstable.align["Client"] = "l"
     keywords = baseconfig.list_keywords()
+    if args.output is not None:
+        _list_output(keywords, args.output)
     for keyword in sorted(keywords):
         value = keywords[keyword]
         default_value = default[keyword]
@@ -3267,6 +3319,8 @@ def list_securitygroups(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     securitygroups = k.list_security_groups(network=args.network)
+    if args.output is not None:
+        _list_output(securitygroups, args.output)
     securitygroupstable = PrettyTable(["Securitygroup"])
     for securitygroup in sorted(securitygroups):
         securitygroupstable.add_row([securitygroup])
@@ -3290,6 +3344,7 @@ def cli():
     parser.add_argument('--dnsclient', help='Dnsclient to use')
     parser.add_argument('-d', '--debug', action='store_true')
     parser.add_argument('-n', '--namespace', help='Namespace to use. specific to kubevirt')
+    parser.add_argument('-o', '--output', choices=['json', 'name', 'yaml'], help='Format of the output')
     parser.add_argument('-r', '--region', help='Region to use. specific to aws/gcp/ibm')
     parser.add_argument('-z', '--zone', help='Zone to use. specific to gcp/ibm')
 
@@ -4455,7 +4510,6 @@ def cli():
     vminfo_parser = argparse.ArgumentParser(add_help=False)
     vminfo_parser.add_argument('-f', '--fields', help='Display Corresponding list of fields,'
                                'separated by a comma', metavar='FIELDS')
-    vminfo_parser.add_argument('-o', '--output', choices=['plain', 'json', 'yaml'], help='Format of the output')
     vminfo_parser.add_argument('-v', '--values', action='store_true', help='Only report values')
     vminfo_parser.add_argument('names', help='VMNAMES', nargs='*')
     vminfo_parser.set_defaults(func=info_vm)
@@ -4547,12 +4601,10 @@ def cli():
     imagelist_desc = 'List Images'
     imagelist_parser = list_subparsers.add_parser('image', description=imagelist_desc, help=imagelist_desc,
                                                   aliases=['images', 'template', 'templates'])
-    imagelist_parser.add_argument('-o', '--output', choices=['json', 'yaml'], help='Format of the output')
     imagelist_parser.set_defaults(func=list_image)
 
     isolist_desc = 'List Isos'
     isolist_parser = list_subparsers.add_parser('iso', description=isolist_desc, help=isolist_desc, aliases=['isos'])
-    isolist_parser.add_argument('-o', '--output', choices=['json', 'yaml'], help='Format of the output')
     isolist_parser.set_defaults(func=list_iso)
 
     keywordlist_desc = 'List Keyword'
@@ -4579,7 +4631,6 @@ def cli():
     networklist_desc = 'List Networks'
     networklist_parser = list_subparsers.add_parser('network', description=networklist_desc, help=networklist_desc,
                                                     aliases=['net', 'nets', 'networks'])
-    networklist_parser.add_argument('-o', '--output', choices=['json', 'name', 'yaml'], help='Format of the output')
     networklist_parser.add_argument('--short', action='store_true')
     networklist_parser.add_argument('-s', '--subnets', action='store_true')
     networklist_parser.set_defaults(func=list_network)
@@ -4626,7 +4677,6 @@ def cli():
     vmlist_desc = 'List Vms'
     vmlist_parser = argparse.ArgumentParser(add_help=False)
     vmlist_parser.add_argument('--filters', choices=('up', 'down'))
-    vmlist_parser.add_argument('-o', '--output', choices=['json', 'name', 'yaml'], help='Format of the output')
     vmlist_parser.set_defaults(func=list_vm)
     list_subparsers.add_parser('vm', parents=[vmlist_parser], description=vmlist_desc, help=vmlist_desc,
                                aliases=['vms'])
