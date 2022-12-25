@@ -30,7 +30,7 @@ right = ["albattani", "ablonde", "acid", "adark", "almeida", "alknopfler", "amaz
          "federer", "nadal", "sampras", "tgb", "valadas", "vai", "vegeta", "ivanisevic", "muster", "agassi",
          "targaryen", "lannister", "safin", "stark", "jsnow", "superduper", "telecaster", "tommyemmanuel", "thor",
          "vario", "walterwhite", "yuval", "5g", "5guys", "180k", "merletravis", "chetatkins", "fusilijerri",
-         "joerobinson", "mog", "unity", "savannah", "soul", "93", "vcossart", "gruson", "patarin", "hichem", "regis",
+         "joerobinson", "mog", "unity", "savannah", "soul", "mm93", "vcossart", "gruson", "patarin", "hichem", "regis",
          "elisa", "limu", "brais", "duncanmcleod"]
 
 
