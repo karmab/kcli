@@ -7,6 +7,7 @@ Kvirt config class
 import base64
 from datetime import datetime
 from fnmatch import fnmatch
+from ipaddress import ip_network
 from jinja2 import Environment, FileSystemLoader
 from jinja2 import StrictUndefined as undefined
 from jinja2.exceptions import TemplateSyntaxError, TemplateError, TemplateNotFound
@@ -1014,6 +1015,8 @@ class Kconfig(Kbaseconfig):
             reserved_ips = list(vm_reservations.values()) + list(cluster_reservations.values())
             if 'ips' in currentconfpool:
                 ips = currentconfpool['ips']
+                if '/' in ips:
+                    ips = [str(i) for i in ip_network(ips)[1:.1]]
                 free_ips = [ip for ip in ips if ip not in reserved_ips]
                 if free_ips:
                     free_ip = free_ips[0]
@@ -2737,6 +2740,8 @@ class Kconfig(Kbaseconfig):
                 reserved_ips = list(vm_reservations.values()) + list(cluster_reservations.values())
                 if 'ips' in currentconfpool:
                     ips = currentconfpool['ips']
+                    if '/' in ips:
+                        ips = [str(i) for i in ip_network(ips)[1:.1]]
                     free_ips = [ip for ip in ips if ip not in reserved_ips]
                     if free_ips:
                         free_ip = free_ips[0]
