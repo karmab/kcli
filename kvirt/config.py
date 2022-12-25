@@ -1020,7 +1020,6 @@ class Kconfig(Kbaseconfig):
                 free_ips = [ip for ip in ips if ip not in reserved_ips]
                 if free_ips:
                     free_ip = free_ips[0]
-                    currentconfpool['ip'] = free_ip
                     vm_reservations[name] = free_ip
                     pprint(f"Using ip {free_ip} from {confpool} in net {index}")
                 else:
@@ -2728,7 +2727,7 @@ class Kconfig(Kbaseconfig):
                             identityfile=identityfile, password=False)
         os.popen(sshcmd).read()
 
-    def _get_kube_confpool_vip(self, cluster, overrides):
+    def _parse_confpool_kube(self, cluster, overrides):
         if 'confpool' in overrides and self.type in ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere']:
             confpool = overrides['confpool']
             if confpool not in self.confpools:
@@ -2738,6 +2737,8 @@ class Kconfig(Kbaseconfig):
                 vm_reservations = currentconfpool.get('vm_reservations', {})
                 cluster_reservations = currentconfpool.get('cluster_reservations', {})
                 reserved_ips = list(vm_reservations.values()) + list(cluster_reservations.values())
+                baremetal_cluster_reservations = currentconfpool.get('baremetal_cluster_reservations', {})
+                reserved_hosts = list(baremetal_cluster_reservations.values())
                 if 'ips' in currentconfpool:
                     ips = currentconfpool['ips']
                     if '/' in ips:
@@ -2745,20 +2746,35 @@ class Kconfig(Kbaseconfig):
                     free_ips = [ip for ip in ips if ip not in reserved_ips]
                     if free_ips:
                         free_ip = free_ips[0]
-                        currentconfpool['ip'] = free_ip
                         cluster_reservations[cluster] = free_ip
                         pprint(f"Using ip {free_ip} from {confpool} as api_ip")
                         overrides['api_ip'] = free_ip
                     else:
                         warning(f"No available ip in {confpool}. Skipping")
-                self.update_confpool(confpool, {'cluster_reservations': cluster_reservations})
+                if 'baremetal_hosts' in currentconfpool:
+                    baremetal_hosts = currentconfpool['baremetal_hosts']
+                    baremetal_hosts_number = overrides.get('baremetal_hosts_number', 2)
+                    all_free_hosts = [host for host in baremetal_hosts if host not in reserved_hosts]
+                    if len(all_free_hosts) > baremetal_hosts_number:
+                        free_hosts = all_free_hosts[:baremetal_hosts_number]
+                        baremetal_cluster_reservations[cluster] = free_hosts
+                        pprint(f"Using {baremetal_hosts_number} baremetal hosts from {confpool}")
+                        overrides['baremetal_hosts'] = free_hosts
+                        if 'bmc_user' in currentconfpool:
+                            overrides['bmc_user'] = currentconfpool['bmc_user']
+                        if 'bmc_password' in currentconfpool:
+                            overrides['bmc_password'] = currentconfpool['bmc_password']
+                    else:
+                        warning(f"Not sufficient available hosts in {confpool}. Skipping")
+                self.update_confpool(confpool, {'cluster_reservations': cluster_reservations,
+                                                'baremetal_cluster_reservations': baremetal_cluster_reservations})
 
     def threaded_create_kube(self, cluster, kubetype, kube_overrides):
-        self._get_kube_confpool_vip(cluster, overrides=kube_overrides)
+        self._parse_confpool_kube(cluster, overrides=kube_overrides)
         self.create_kube(cluster, kubetype, kube_overrides)
 
     def create_kube(self, cluster, kubetype, overrides={}):
-        self._get_kube_confpool_vip(cluster, overrides=overrides)
+        self._parse_confpool_kube(cluster, overrides=overrides)
         if kubetype == 'openshift':
             self.create_kube_openshift(cluster, overrides=overrides)
         elif kubetype == 'hypershift':
@@ -2906,6 +2922,10 @@ class Kconfig(Kbaseconfig):
             if cluster in cluster_reservations:
                 del cluster_reservations[cluster]
                 self.update_confpool(confpool, {'cluster_reservations': cluster_reservations})
+            baremetal_cluster_reservations = self.confpools[confpool].get('baremetal_cluster_reservations', {})
+            if cluster in baremetal_cluster_reservations:
+                del baremetal_cluster_reservations[cluster]
+                self.update_confpool(confpool, {'baremetal_cluster_reservations': cluster_reservations})
 
     def scale_kube(self, cluster, kubetype, overrides={}):
         if kubetype == 'generic':
