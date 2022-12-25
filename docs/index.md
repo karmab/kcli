@@ -8,45 +8,46 @@
 This tool is meant to ease interaction with virtualization providers:
 
 * libvirt
-* kubevirt
-* ovirt
 * vsphere
-* openstack
-* gcp
+* kubevirt
 * aws
-* packet
+* gcp
 * ibmcloud
+* packet
+* ovirt
+* openstack
 
 You can: 
 
-- manage those vms:
-   - create
-   - delete
-   - list
-   - info
-   - ssh
-   - start
-   - stop
-   - console
-   - serialconsole,
-   - create/delete disk
-   - create/delete nic
-   - clone
+- manage vms:
+  - create
+  - delete
+  - list
+  - info
+  - ssh
+  - start
+  - stop
+  - console
+  - serialconsole,
+  - create/delete disk
+  - create/delete nic
+  - clone
 - deploy them using profiles
 - define more complex workflows using *plans* and products.
 
-The tool can also deploy kubernetes clusters:
+Kubernetes clusters can also be deployed, either:
 
 - kubernetes generic (kubeadm)
-- openshift
-- okd
+- openshift/okd
 - k3s
+- kind
+- microshift
 
 # Installation
 
 ## Libvirt Hypervisor Requisites
 
-If you don't have libvirt installed on the target hypervisor, you can use the following command to get you going:
+If you don't have libvirt installed on the target hypervisor, you can use the following command:
 
 ```bash
 sudo yum -y install libvirt libvirt-daemon-driver-qemu qemu-kvm 
@@ -65,7 +66,6 @@ sudo systemctl restart docker
 
 ## Supported installation methods
 
-
 The following methods are supported for installation and are all updated automatically when new pushes to kcli are made.
 
 - rpm package
@@ -75,22 +75,28 @@ The following methods are supported for installation and are all updated automat
 
 ## Installing
 
-The script can also be used for installation, which will make a guess on which method to use for deployment based on your OS, and also create the proper aliases if container method is selected, and set bash completion).
-
+A generic script is provided for for installation:
 
 ```Shell
 curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | sudo bash
 ```
 
+It does the following:
+
+- make a guess on which method to use for deployment based on your OS
+- create the proper aliases if container method is selected 
+- set bash completion
+
+
 ## Package install method
 
-If using *fedora* or *rhel/centos8*,  you can run this as root:
+For rhel based OS (*fedora*/*rhel or centos*), you can run this:
 
 ```bash
 sudo dnf -y copr enable karmab/kcli ; sudo dnf -y install kcli
 ```
 
-If using a debian based distribution, you can use this :
+If using a debian based distribution, use this instead:
 
 ```bash
 curl -1sLf https://dl.cloudsmith.io/public/karmab/kcli/cfg/setup/bash.deb.sh | sudo -E bash
@@ -98,7 +104,7 @@ sudo apt-get update
 sudo apt-get -y install python3-kcli
 ```
 
-The package version doesn't bundle the dependencies for anything else than libvirt, so you have to install the extra packages for each additional cloud platforms, which are listed in the *Provider specifics* section.
+The package based version doesn't bundle the dependencies for anything else than libvirt, so you have to install the extra packages for each additional cloud platforms, which are listed in the *Provider specifics* section.
 
 Alternatively, the repo contains a meta package named kcli-all (python3-kcli-all in the debian case) that contains dependencies for all the providers.
 
@@ -106,12 +112,12 @@ Alternatively, the repo contains a meta package named kcli-all (python3-kcli-all
 
 ## Container install method
 
-Note that 
+Note that:
 
 - The container image contains dependencies for all the providers.
 - The console/serial console functionality works better with the package version. In container mode, it only outputs the command to launch manually to get to the console.
 
-In the commands below, use either podman or docker
+In the commands below, feel free to use docker instead
 
 Pull the latest image:
 
@@ -152,13 +158,13 @@ alias kweb='podman run -p 9000:9000 --net host -it --rm --security-opt label=dis
 ### Generic platform
 
 ```Shell
-pip install kcli
+pip3 install kcli
 ```
 
 Or for a full install:
 
 ```
-pip install -e git+https://github.com/karmab/kcli.git#egg=kcli[all]
+pip3 install -e git+https://github.com/karmab/kcli.git#egg=kcli[all]
 ```
 
 # Configuration
@@ -1455,7 +1461,7 @@ And deploy any product. Deletion is handled by deleting the corresponding plan.
 kcli create product YOUR_PRODUCT
 ```
 
-# Deploying kubernetes/openshift clusters (and applications on top!)
+# Deploying kubernetes/openshift clusters
 
 You can deploy generic kubernetes (based on kubeadm), k3s, kind, openshift/okd, hypershift and microshift  on any platform and on an arbitrary number of control plane nodes and workers.
 The cluster can be scaled afterwards if needed.
@@ -1472,7 +1478,7 @@ For instance, `kcli info cluster generic` will provide you all the parameters av
 kcli create cluster generic -P masters=X -P workers=Y $cluster
 ```
 
-## Deploying openshift/okd clusters
+## Deploying openshift clusters
 
 *DISCLAIMER*: This is not supported in anyway by Red Hat (although the end result cluster would be).
 
@@ -1985,6 +1991,62 @@ If the number of running pods for a given worker node goes below a minimum value
 The minimum is configured as an env variable AUTOSCALE_MINIMUM provided during the deployment of the controller, which defaults to 2
 
 Setting the minimum to any value below 1 effectively disables the feature.
+
+# Configuration pools
+
+Configuration pools allow to store a list of ips or baremetal_hosts and make them available to a vm or a cluster upon deployment.
+
+This provides the following features:
+
+- Provide static ip to vms from a self maintained list of ips
+- Provide vip to clusters in the same manner
+- Provide a list of baremetal_hosts to clusters.
+
+Upon creation, the corresponding entry gets reserved to the vm or the cluster and released upon deletion.
+
+## Handling confpools
+
+You can use `kcli create confpool` commands to create a configuration pool and then list, update or delete calls.
+
+Under the hood, all the pools are stored in ~/.kcli/confpools.yml so this file can also be edited manually.
+
+confpool typically contain ips, baremetal information or both.
+
+### confpool with ips information
+
+To create a confpool with 3 ips, use the following
+
+```
+kcli create confpool myconfpool -P ips=[192.168.122.250,192.168.122.251,192.168.122.252 -P netmask=24 -P gateway=192.168.122.1
+```
+
+For ips, note you can also provide a cidr such as 192.168.122.0/24
+
+the pool can also store any value, some of which will be evaluated (in particular any of the network keywords such as netmask,gateway as shown in the example)
+
+### confpool with baremetal_hosts information
+
+To create a confpool with 3 ips, use the following
+
+```
+kcli create myconfpool -P baremetal_hosts=[http://192.168.122.1:9000/redfish/v1/Systems/vm1,http://192.168.122.1:9000/redfish/v1/Systems/local/vm2] -P bmc_user=admin -P bmc_password=admin0
+```
+
+Note that in this case, we also provide bmc credentials, all the hosts in your pool should share the same credentials.
+
+## Using the confpool
+
+### In vms
+
+For vms, the confpool is specified in a nets section. For instance
+
+```
+kcli create vm -i centos8stream -P nets=['{"name": "default", "confpool": "myconfpool"}']
+```
+
+### In clusters
+
+When creating the cluster, specify through a parameter which pool to use (`-P confpool=mypool`)
 
 # Using Jenkins
 
