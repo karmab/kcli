@@ -1021,12 +1021,14 @@ class Kconfig(Kbaseconfig):
                 if free_ips:
                     free_ip = free_ips[0]
                     vm_reservations[name] = free_ip
-                    pprint(f"Using ip {free_ip} from {confpool} in net {index}")
+                    pprint(f"Using ip {free_ip} from confpool {confpool} in net {index}")
+                    new_conf = currentconfpool.copy()
+                    new_conf['ip'] = free_ip
+                    nets[index].update(currentconfpool)
+                    if not onlyassets:
+                        self.update_confpool(confpool, {'vm_reservations': vm_reservations})
                 else:
-                    warning(f"No available ip in {confpool}. Skipping")
-            nets[index].update(currentconfpool)
-            if not onlyassets:
-                self.update_confpool(confpool, {'vm_reservations': vm_reservations})
+                    warning(f"No available ip in confpool {confpool}. Skipping")
         if onlyassets:
             if image is not None and common.needs_ignition(image):
                 version = common.ignition_version(image)
@@ -2747,15 +2749,15 @@ class Kconfig(Kbaseconfig):
                     if free_ips:
                         free_ip = free_ips[0]
                         cluster_reservations[cluster] = free_ip
-                        pprint(f"Using ip {free_ip} from {confpool} as api_ip")
+                        pprint(f"Using ip {free_ip} from confpool {confpool} as api_ip")
                         overrides['api_ip'] = free_ip
                     else:
-                        warning(f"No available ip in {confpool}. Skipping")
+                        warning(f"No available ip in confpool {confpool}. Skipping")
                 if 'baremetal_hosts' in currentconfpool:
                     baremetal_hosts = currentconfpool['baremetal_hosts']
                     baremetal_hosts_number = overrides.get('baremetal_hosts_number', 2)
                     all_free_hosts = [host for host in baremetal_hosts if host not in reserved_hosts]
-                    if len(all_free_hosts) > baremetal_hosts_number:
+                    if len(all_free_hosts) <= baremetal_hosts_number:
                         free_hosts = all_free_hosts[:baremetal_hosts_number]
                         baremetal_cluster_reservations[cluster] = free_hosts
                         pprint(f"Using {baremetal_hosts_number} baremetal hosts from {confpool}")
@@ -2765,7 +2767,7 @@ class Kconfig(Kbaseconfig):
                         if 'bmc_password' in currentconfpool:
                             overrides['bmc_password'] = currentconfpool['bmc_password']
                     else:
-                        warning(f"Not sufficient available hosts in {confpool}. Skipping")
+                        warning(f"Not sufficient available baremetal hosts in confpool {confpool}. Skipping")
                 self.update_confpool(confpool, {'cluster_reservations': cluster_reservations,
                                                 'baremetal_cluster_reservations': baremetal_cluster_reservations})
 
