@@ -2006,11 +2006,27 @@ Upon creation, the corresponding entry gets reserved to the vm or the cluster an
 
 ## Handling confpools
 
-You can use `kcli create confpool` commands to create a configuration pool and then list, update or delete calls.
+You can use `kcli create confpool` commands to create a configuration pool and then use list, update or delete calls.
 
-Under the hood, all the pools are stored in ~/.kcli/confpools.yml so this file can also be edited manually.
+Under the hood, all the pools are stored in `~/.kcli/confpools.yml` so this file can also be edited manually.
 
 confpool typically contain ips, baremetal information or both.
+
+Here's a sample content of this file
+
+```
+myvips:
+  ips:
+  - 192.168.122.250
+  - 192.168.122.251
+  - 192.168.122.252
+  vm_reservations: {}
+  bmc_user: root
+  bmc_password: calvin
+  baremetal_hosts:
+  - http://192.168.122.1:9000/redfish/v1/Systems/local/vm1
+  - http://192.168.122.1:9000/redfish/v1/Systems/local/vm2
+```
 
 ### confpool with ips information
 
@@ -2026,7 +2042,7 @@ the pool can also store any value, some of which will be evaluated (in particula
 
 ### confpool with baremetal_hosts information
 
-To create a confpool with 3 ips, use the following
+To create a confpool with 2 baremetal hosts, use the following
 
 ```
 kcli create myconfpool -P baremetal_hosts=[http://192.168.122.1:9000/redfish/v1/Systems/vm1,http://192.168.122.1:9000/redfish/v1/Systems/local/vm2] -P bmc_user=admin -P bmc_password=admin0
