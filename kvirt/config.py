@@ -1007,8 +1007,8 @@ class Kconfig(Kbaseconfig):
                 continue
             confpool = net['confpool']
             if confpool not in self.confpools:
-                error(f"{confpool} is not a valid confpool. Skipping")
-                continue
+                error(f"{confpool} is not a valid confpool")
+                sys.exit(1)
             currentconfpool = self.confpools[confpool]
             vm_reservations = currentconfpool.get('vm_reservations', {})
             cluster_reservations = currentconfpool.get('cluster_reservations', {})
@@ -1028,7 +1028,8 @@ class Kconfig(Kbaseconfig):
                     if not onlyassets:
                         self.update_confpool(confpool, {'vm_reservations': vm_reservations})
                 else:
-                    warning(f"No available ip in confpool {confpool}. Skipping")
+                    error(f"No available ip in confpool {confpool}")
+                    sys.exit(1)
         if onlyassets:
             if image is not None and common.needs_ignition(image):
                 version = common.ignition_version(image)
@@ -2733,7 +2734,8 @@ class Kconfig(Kbaseconfig):
         if 'confpool' in overrides and self.type in ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere']:
             confpool = overrides['confpool']
             if confpool not in self.confpools:
-                warning("Confpool {confpool} not found. Skipping")
+                error("Confpool {confpool} not found")
+                sys.exit(1)
             else:
                 currentconfpool = self.confpools[confpool]
                 vm_reservations = currentconfpool.get('vm_reservations', {})
@@ -2770,7 +2772,8 @@ class Kconfig(Kbaseconfig):
                         if 'bmc_password' in currentconfpool:
                             overrides['bmc_password'] = currentconfpool['bmc_password']
                     else:
-                        warning(f"Not sufficient available baremetal hosts in confpool {confpool}. Skipping")
+                        error(f"Not sufficient available baremetal hosts in confpool {confpool}")
+                        sys.exit(1)
                 self.update_confpool(confpool, {'cluster_reservations': cluster_reservations,
                                                 'baremetal_cluster_reservations': baremetal_cluster_reservations})
 
