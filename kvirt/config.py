@@ -2755,9 +2755,12 @@ class Kconfig(Kbaseconfig):
                         warning(f"No available ip in confpool {confpool}. Skipping")
                 if 'baremetal_hosts' in currentconfpool:
                     baremetal_hosts = currentconfpool['baremetal_hosts']
-                    baremetal_hosts_number = overrides.get('baremetal_hosts_number', 2)
+                    baremetal_hosts_number = overrides.get('baremetal_hosts_number')
+                    if baremetal_hosts_number is None:
+                        warning("Setting baremetal_hosts_number to 2")
+                        baremetal_hosts_number = 2
                     all_free_hosts = [host for host in baremetal_hosts if host not in reserved_hosts]
-                    if len(all_free_hosts) <= baremetal_hosts_number:
+                    if len(all_free_hosts) >= baremetal_hosts_number:
                         free_hosts = all_free_hosts[:baremetal_hosts_number]
                         baremetal_cluster_reservations[cluster] = free_hosts
                         pprint(f"Using {baremetal_hosts_number} baremetal hosts from {confpool}")

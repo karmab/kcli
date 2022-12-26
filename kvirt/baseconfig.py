@@ -44,6 +44,11 @@ from tempfile import TemporaryDirectory
 from time import sleep
 
 
+class NoAliasDumper(yaml.SafeDumper):
+    def ignore_aliases(self, data):
+        return True
+
+
 def other_client(profile, clients):
     for cli in clients:
         if profile.startswith(f"{cli}_"):
@@ -1050,7 +1055,7 @@ class Kbaseconfig:
                                allow_unicode=True)
         return {'result': 'success'}
 
-    def _update_yaml_file(self, name, selfconf, conf_type, overrides={}, quiet=False):
+    def _update_yaml_file(self, name, selfconf, conf_type, overrides={}, quiet=False, ignore_aliases=False):
         matching_objects = [o for o in selfconf if o == name or o == f'{self.client}_{name}']
         if not matching_objects:
             if quiet:
@@ -1063,12 +1068,12 @@ class Kbaseconfig:
         path = os.path.expanduser(f'~/.kcli/{conf_type}s.yml')
         selfconf[name].update(overrides)
         with open(path, 'w') as dest_file:
-            try:
-                yaml.safe_dump(selfconf, dest_file, default_flow_style=False, encoding='utf-8',
-                               allow_unicode=True, sort_keys=False)
-            except:
-                yaml.safe_dump(selfconf, dest_file, default_flow_style=False, encoding='utf-8',
-                               allow_unicode=True)
+            if ignore_aliases:
+                yaml.safe_dump(selfconf, dest_file, default_flow_style=False, encoding='utf-8', allow_unicode=True,
+                               sort_keys=False, Dumper=NoAliasDumper)
+            else:
+                yaml.safe_dump(selfconf, dest_file, default_flow_style=False, encoding='utf-8', allow_unicode=True,
+                               sort_keys=False)
         return {'result': 'success'}
 
     def create_profile(self, profile, overrides={}, quiet=False):
@@ -1078,7 +1083,8 @@ class Kbaseconfig:
         return self._delete_yaml_object(profile, self.profiles, 'profile', quiet=quiet)
 
     def update_profile(self, profile, overrides={}, quiet=False):
-        return self._update_yaml_file(profile, self.profiles, 'profile', overrides=overrides, quiet=quiet)
+        return self._update_yaml_file(profile, self.profiles, 'profile', overrides=overrides, quiet=quiet,
+                                      ignore_aliases=True)
 
     def create_confpool(self, confpool, overrides={}, quiet=False):
         return self._create_yaml_file(confpool, self.confpools, 'confpool', overrides=overrides, quiet=quiet)
