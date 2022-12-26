@@ -4,11 +4,6 @@
 {% else %}
 {% set default_network = network %}
 {% endif %}
-{% if worker_macs and worker_macs|length >= workers|int %}
-{% set net0 = {"name": default_network, "mac": worker_macs[num]} %}
-{% else %}
-{% set net0 = default_network %}
-{% endif %}
 {% if extra_worker_networks %}
 {% set extra_networks = extra_worker_networks %}
 {% endif %}
@@ -36,7 +31,7 @@
 {% if kubevirt_api_service %}
  reservedns: true
 {% endif %}
- nets: {{ [net0] + extra_networks }}
+ nets: {{ [network] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
  files:
 {% if coredns %}

@@ -64,16 +64,11 @@ extra_worker_disks: []
 extra_networks: []
 extra_master_networks: []
 extra_worker_networks: []
-master_macs: []
-master_ips: []
-bootstrap_mac: 
-bootstrap_ip: 
-worker_macs: []
-worker_ips: []
 disconnected_url:
 disconnected_deploy: false
 disconnected_haproxy: false
 disconnected_reuse: false
+bootstrap_mac:
 disconnected_reuse_name:
 disconnected_disk_size: 100
 disconnected_user:
