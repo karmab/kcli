@@ -2731,7 +2731,7 @@ class Kconfig(Kbaseconfig):
         os.popen(sshcmd).read()
 
     def _parse_confpool_kube(self, cluster, overrides):
-        if 'confpool' in overrides and self.type in ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere']:
+        if 'confpool' in overrides:
             confpool = overrides['confpool']
             if confpool not in self.confpools:
                 error("Confpool {confpool} not found")
@@ -2743,7 +2743,7 @@ class Kconfig(Kbaseconfig):
                 reserved_ips = list(vm_reservations.values()) + list(cluster_reservations.values())
                 baremetal_cluster_reservations = currentconfpool.get('baremetal_cluster_reservations', {})
                 reserved_hosts = list(baremetal_cluster_reservations.values())
-                if 'ips' in currentconfpool:
+                if 'ips' in currentconfpool and self.type in ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere']:
                     ips = currentconfpool['ips']
                     if '/' in ips:
                         ips = [str(i) for i in ip_network(ips)[1:.1]]
@@ -2751,10 +2751,11 @@ class Kconfig(Kbaseconfig):
                     if free_ips:
                         free_ip = free_ips[0]
                         cluster_reservations[cluster] = free_ip
-                        pprint(f"Using ip {free_ip} from confpool {confpool} as api_ip")
+                        pprint(f"Using {free_ip} from confpool {confpool} as api_ip")
                         overrides['api_ip'] = free_ip
                     else:
-                        warning(f"No available ip in confpool {confpool}. Skipping")
+                        error(f"No available ip in confpool {confpool}")
+                        sys.exit(1)
                 if 'baremetal_hosts' in currentconfpool:
                     baremetal_hosts = currentconfpool['baremetal_hosts']
                     baremetal_hosts_number = overrides.get('baremetal_hosts_number')
