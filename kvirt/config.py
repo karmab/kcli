@@ -1010,9 +1010,9 @@ class Kconfig(Kbaseconfig):
                 error(f"{confpool} is not a valid confpool")
                 sys.exit(1)
             currentconfpool = self.confpools[confpool]
-            vm_reservations = currentconfpool.get('vm_reservations', {})
-            cluster_reservations = currentconfpool.get('cluster_reservations', {})
-            reserved_ips = list(vm_reservations.values()) + list(cluster_reservations.values())
+            vm_ip_reservations = currentconfpool.get('vm_ip_reservations', {})
+            cluster_ip_reservations = currentconfpool.get('cluster_ip_reservations', {})
+            reserved_ips = list(vm_ip_reservations.values()) + list(cluster_ip_reservations.values())
             if 'ips' in currentconfpool:
                 ips = currentconfpool['ips']
                 if '/' in ips:
@@ -1020,13 +1020,13 @@ class Kconfig(Kbaseconfig):
                 free_ips = [ip for ip in ips if ip not in reserved_ips]
                 if free_ips:
                     free_ip = free_ips[0]
-                    vm_reservations[name] = free_ip
+                    vm_ip_reservations[name] = free_ip
                     pprint(f"Using ip {free_ip} from confpool {confpool} in net {index}")
                     new_conf = currentconfpool.copy()
                     new_conf['ip'] = free_ip
                     nets[index].update(currentconfpool)
                     if not onlyassets:
-                        self.update_confpool(confpool, {'vm_reservations': vm_reservations})
+                        self.update_confpool(confpool, {'vm_ip_reservations': vm_ip_reservations})
                 else:
                     error(f"No available ip in confpool {confpool}")
                     sys.exit(1)
@@ -2738,11 +2738,11 @@ class Kconfig(Kbaseconfig):
                 sys.exit(1)
             else:
                 currentconfpool = self.confpools[confpool]
-                vm_reservations = currentconfpool.get('vm_reservations', {})
-                cluster_reservations = currentconfpool.get('cluster_reservations', {})
-                reserved_ips = list(vm_reservations.values()) + list(cluster_reservations.values())
-                baremetal_cluster_reservations = currentconfpool.get('baremetal_cluster_reservations', {})
-                reserved_hosts = list(baremetal_cluster_reservations.values())
+                vm_ip_reservations = currentconfpool.get('vm_ip_reservations', {})
+                cluster_ip_reservations = currentconfpool.get('cluster_ip_reservations', {})
+                reserved_ips = list(vm_ip_reservations.values()) + list(cluster_ip_reservations.values())
+                cluster_baremetal_reservations = currentconfpool.get('cluster_baremetal_reservations', {})
+                reserved_hosts = list(cluster_baremetal_reservations.values())
                 if 'ips' in currentconfpool and self.type in ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere']:
                     ips = currentconfpool['ips']
                     if '/' in ips:
@@ -2750,7 +2750,7 @@ class Kconfig(Kbaseconfig):
                     free_ips = [ip for ip in ips if ip not in reserved_ips]
                     if free_ips:
                         free_ip = free_ips[0]
-                        cluster_reservations[cluster] = free_ip
+                        cluster_ip_reservations[cluster] = free_ip
                         pprint(f"Using {free_ip} from confpool {confpool} as api_ip")
                         overrides['api_ip'] = free_ip
                     else:
@@ -2765,7 +2765,7 @@ class Kconfig(Kbaseconfig):
                     all_free_hosts = [host for host in baremetal_hosts if host not in reserved_hosts]
                     if len(all_free_hosts) >= baremetal_hosts_number:
                         free_hosts = all_free_hosts[:baremetal_hosts_number]
-                        baremetal_cluster_reservations[cluster] = free_hosts
+                        cluster_baremetal_reservations[cluster] = free_hosts
                         pprint(f"Using {baremetal_hosts_number} baremetal hosts from {confpool}")
                         overrides['baremetal_hosts'] = free_hosts
                         if 'bmc_user' in currentconfpool:
@@ -2775,8 +2775,8 @@ class Kconfig(Kbaseconfig):
                     else:
                         error(f"Not sufficient available baremetal hosts in confpool {confpool}")
                         sys.exit(1)
-                self.update_confpool(confpool, {'cluster_reservations': cluster_reservations,
-                                                'baremetal_cluster_reservations': baremetal_cluster_reservations})
+                self.update_confpool(confpool, {'cluster_ip_reservations': cluster_ip_reservations,
+                                                'cluster_baremetal_reservations': cluster_baremetal_reservations})
 
     def threaded_create_kube(self, cluster, kubetype, kube_overrides):
         self._parse_confpool_kube(cluster, overrides=kube_overrides)
