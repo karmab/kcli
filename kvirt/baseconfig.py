@@ -19,7 +19,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             TPM, JENKINSMODE, RNG, ZEROTIER_NETS, ZEROTIER_KUBELET, VMPORT, VMUSER, VMRULES,
                             VMRULES_STRICT, CACHE, SECURITYGROUPS, LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG, ROOTPASSWORD,
                             WAIT, WAITCOMMAND, WAITTIMEOUT, TEMPKEY, BMC_USER, BMC_PASSWORD, BMC_MODEL, SUSHYSERVICE)
-from ipaddress import ip_address
+from ipaddress import ip_address, ip_network
 from random import choice
 from kvirt import common
 from kvirt.common import error, pprint, warning, container_mode, ssh, scp
@@ -1786,3 +1786,68 @@ class Kbaseconfig:
         with open("/usr/lib/systemd/system/ksushy.service", "w") as f:
             f.write(sushydata)
         call("systemctl enable --now ksushy", shell=True)
+
+    def parse_confpool_kube(self, cluster, confpool, overrides):
+        if confpool not in self.confpools:
+            error("Confpool {confpool} not found")
+            sys.exit(1)
+        else:
+            currentconfpool = self.confpools[confpool]
+            ip_reservations = currentconfpool.get('ip_reservations', {})
+            reserved_ips = list(ip_reservations.values())
+            cluster_baremetal_reservations = currentconfpool.get('cluster_baremetal_reservations', {})
+            reserved_hosts = list(cluster_baremetal_reservations.values())
+            if 'ips' in currentconfpool and self.type in ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere']:
+                ips = currentconfpool['ips']
+                if '/' in ips:
+                    ips = [str(i) for i in ip_network(ips)[1:.1]]
+                free_ips = [ip for ip in ips if ip not in reserved_ips]
+                if free_ips:
+                    free_ip = free_ips[0]
+                    ip_reservations[cluster] = free_ip
+                    pprint(f"Using {free_ip} from confpool {confpool} as api_ip")
+                    overrides['api_ip'] = free_ip
+                else:
+                    error(f"No available ip in confpool {confpool}")
+                    sys.exit(1)
+            if 'baremetal_hosts' in currentconfpool:
+                baremetal_hosts = currentconfpool['baremetal_hosts']
+                baremetal_hosts_number = overrides.get('baremetal_hosts_number')
+                if baremetal_hosts_number is None:
+                    warning("Setting baremetal_hosts_number to 2")
+                    baremetal_hosts_number = 2
+                all_free_hosts = [host for host in baremetal_hosts if host not in reserved_hosts]
+                if len(all_free_hosts) >= baremetal_hosts_number:
+                    free_hosts = all_free_hosts[:baremetal_hosts_number]
+                    cluster_baremetal_reservations[cluster] = free_hosts
+                    pprint(f"Using {baremetal_hosts_number} baremetal hosts from {confpool}")
+                    overrides['baremetal_hosts'] = free_hosts
+                    if 'bmc_user' in currentconfpool:
+                        overrides['bmc_user'] = currentconfpool['bmc_user']
+                    if 'bmc_password' in currentconfpool:
+                        overrides['bmc_password'] = currentconfpool['bmc_password']
+                else:
+                    error(f"Not sufficient available baremetal hosts in confpool {confpool}")
+                    sys.exit(1)
+            self.update_confpool(confpool, {'ip_reservations': ip_reservations,
+                                            'cluster_baremetal_reservations': cluster_baremetal_reservations})
+
+    def get_name_from_confpool(self, confpool):
+        if confpool not in self.confpools:
+            error("Confpool {confpool} not found")
+            sys.exit(1)
+        else:
+            currentconfpool = self.confpools[confpool]
+            name_reservations = currentconfpool.get('name_reservations', [])
+            if 'names' in currentconfpool:
+                names = currentconfpool['names']
+                free_names = [n for n in names if n not in name_reservations]
+                if free_names:
+                    free_name = free_names[0]
+                    name_reservations.append(free_name)
+                    pprint(f"Using {free_name} from confpool {confpool} as name")
+                else:
+                    error(f"No available name in confpool {confpool}")
+                    sys.exit(1)
+                self.update_confpool(confpool, {'name_reservations': name_reservations})
+                return free_name

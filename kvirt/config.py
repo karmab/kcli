@@ -1010,9 +1010,8 @@ class Kconfig(Kbaseconfig):
                 error(f"{confpool} is not a valid confpool")
                 sys.exit(1)
             currentconfpool = self.confpools[confpool]
-            vm_ip_reservations = currentconfpool.get('vm_ip_reservations', {})
-            cluster_ip_reservations = currentconfpool.get('cluster_ip_reservations', {})
-            reserved_ips = list(vm_ip_reservations.values()) + list(cluster_ip_reservations.values())
+            ip_reservations = currentconfpool.get('ip_reservations', {})
+            reserved_ips = list(ip_reservations.values())
             if 'ips' in currentconfpool:
                 ips = currentconfpool['ips']
                 if '/' in ips:
@@ -1020,13 +1019,13 @@ class Kconfig(Kbaseconfig):
                 free_ips = [ip for ip in ips if ip not in reserved_ips]
                 if free_ips:
                     free_ip = free_ips[0]
-                    vm_ip_reservations[name] = free_ip
+                    ip_reservations[name] = free_ip
                     pprint(f"Using ip {free_ip} from confpool {confpool} in net {index}")
                     new_conf = currentconfpool.copy()
                     new_conf['ip'] = free_ip
                     nets[index].update(currentconfpool)
                     if not onlyassets:
-                        self.update_confpool(confpool, {'vm_ip_reservations': vm_ip_reservations})
+                        self.update_confpool(confpool, {'ip_reservations': ip_reservations})
                 else:
                     error(f"No available ip in confpool {confpool}")
                     sys.exit(1)
@@ -2730,60 +2729,14 @@ class Kconfig(Kbaseconfig):
                             identityfile=identityfile, password=False)
         os.popen(sshcmd).read()
 
-    def _parse_confpool_kube(self, cluster, overrides):
-        if 'confpool' in overrides:
-            confpool = overrides['confpool']
-            if confpool not in self.confpools:
-                error("Confpool {confpool} not found")
-                sys.exit(1)
-            else:
-                currentconfpool = self.confpools[confpool]
-                vm_ip_reservations = currentconfpool.get('vm_ip_reservations', {})
-                cluster_ip_reservations = currentconfpool.get('cluster_ip_reservations', {})
-                reserved_ips = list(vm_ip_reservations.values()) + list(cluster_ip_reservations.values())
-                cluster_baremetal_reservations = currentconfpool.get('cluster_baremetal_reservations', {})
-                reserved_hosts = list(cluster_baremetal_reservations.values())
-                if 'ips' in currentconfpool and self.type in ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere']:
-                    ips = currentconfpool['ips']
-                    if '/' in ips:
-                        ips = [str(i) for i in ip_network(ips)[1:.1]]
-                    free_ips = [ip for ip in ips if ip not in reserved_ips]
-                    if free_ips:
-                        free_ip = free_ips[0]
-                        cluster_ip_reservations[cluster] = free_ip
-                        pprint(f"Using {free_ip} from confpool {confpool} as api_ip")
-                        overrides['api_ip'] = free_ip
-                    else:
-                        error(f"No available ip in confpool {confpool}")
-                        sys.exit(1)
-                if 'baremetal_hosts' in currentconfpool:
-                    baremetal_hosts = currentconfpool['baremetal_hosts']
-                    baremetal_hosts_number = overrides.get('baremetal_hosts_number')
-                    if baremetal_hosts_number is None:
-                        warning("Setting baremetal_hosts_number to 2")
-                        baremetal_hosts_number = 2
-                    all_free_hosts = [host for host in baremetal_hosts if host not in reserved_hosts]
-                    if len(all_free_hosts) >= baremetal_hosts_number:
-                        free_hosts = all_free_hosts[:baremetal_hosts_number]
-                        cluster_baremetal_reservations[cluster] = free_hosts
-                        pprint(f"Using {baremetal_hosts_number} baremetal hosts from {confpool}")
-                        overrides['baremetal_hosts'] = free_hosts
-                        if 'bmc_user' in currentconfpool:
-                            overrides['bmc_user'] = currentconfpool['bmc_user']
-                        if 'bmc_password' in currentconfpool:
-                            overrides['bmc_password'] = currentconfpool['bmc_password']
-                    else:
-                        error(f"Not sufficient available baremetal hosts in confpool {confpool}")
-                        sys.exit(1)
-                self.update_confpool(confpool, {'cluster_ip_reservations': cluster_ip_reservations,
-                                                'cluster_baremetal_reservations': cluster_baremetal_reservations})
-
     def threaded_create_kube(self, cluster, kubetype, kube_overrides):
         self._parse_confpool_kube(cluster, overrides=kube_overrides)
         self.create_kube(cluster, kubetype, kube_overrides)
 
     def create_kube(self, cluster, kubetype, overrides={}):
-        self._parse_confpool_kube(cluster, overrides=overrides)
+        if 'confpool' in overrides:
+            confpool = overrides['confpool']
+            self.parse_confpool_kube(cluster, confpool, overrides)
         if kubetype == 'openshift':
             self.create_kube_openshift(cluster, overrides=overrides)
         elif kubetype == 'hypershift':
@@ -2927,14 +2880,18 @@ class Kconfig(Kbaseconfig):
             pprint(f"Deleting directory {clusterdir}")
             rmtree(clusterdir)
         for confpool in self.confpools:
-            cluster_reservations = self.confpools[confpool].get('cluster_reservations', {})
-            if cluster in cluster_reservations:
-                del cluster_reservations[cluster]
-                self.update_confpool(confpool, {'cluster_reservations': cluster_reservations})
-            baremetal_cluster_reservations = self.confpools[confpool].get('baremetal_cluster_reservations', {})
-            if cluster in baremetal_cluster_reservations:
-                del baremetal_cluster_reservations[cluster]
-                self.update_confpool(confpool, {'baremetal_cluster_reservations': cluster_reservations})
+            ip_reservations = self.confpools[confpool].get('ip_reservations', {})
+            if cluster in ip_reservations:
+                del ip_reservations[cluster]
+                self.update_confpool(confpool, {'ip_reservations': ip_reservations})
+            name_reservations = self.confpools[confpool].get('name_reservations', [])
+            if cluster in name_reservations:
+                name_reservations.remove(cluster)
+                self.update_confpool(confpool, {'name_reservations': name_reservations})
+            cluster_baremetal_reservations = self.confpools[confpool].get('cluster_baremetal_reservations', {})
+            if cluster in cluster_baremetal_reservations:
+                del cluster_baremetal_reservations[cluster]
+                self.update_confpool(confpool, {'cluster_baremetal_reservations': cluster_baremetal_reservations})
 
     def scale_kube(self, cluster, kubetype, overrides={}):
         if kubetype == 'generic':

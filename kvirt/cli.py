@@ -355,10 +355,14 @@ def delete_vm(args):
                 else:
                     warning(f"vm {name} doesnt appear as a rhel box. Skipping unregistration")
             for confpool in config.confpools:
-                vm_reservations = config.confpools[confpool].get('vm_reservations', {})
-                if name in vm_reservations:
-                    del vm_reservations[name]
-                    config.update_confpool(confpool, {'vm_reservations': vm_reservations})
+                ip_reservations = config.confpools[confpool].get('ip_reservations', {})
+                if name in ip_reservations:
+                    del ip_reservations[name]
+                    config.update_confpool(confpool, {'ip_reservations': ip_reservations})
+                name_reservations = config.confpools[confpool].get('name_reservations', [])
+                if name in name_reservations:
+                    name_reservations.remove(name)
+                    config.update_confpool(confpool, {'name_reservations': name_reservations})
             result = k.delete(name, snapshots=snapshots)
             if result['result'] == 'success':
                 success(f"{name} deleted")
@@ -1440,6 +1444,7 @@ def create_vm(args):
         sys.exit(1)
     customprofile = {}
     client = overrides.get('client', args.client)
+    confpool = overrides.get('confpool')
     config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     for key in overrides:
         if key in vars(config) and vars(config)[key] is not None and type(overrides[key]) != type(vars(config)[key]):
@@ -1449,7 +1454,7 @@ def create_vm(args):
     if 'name' in overrides:
         name = overrides['name']
     if name is None:
-        name = nameutils.get_random_name()
+        name = config.get_name_from_confpool(confpool) if confpool is not None else nameutils.get_random_name()
         if config.type in ['gcp', 'kubevirt']:
             name = name.replace('_', '-')
         if config.type != 'aws' and not onlyassets:
@@ -1710,6 +1715,9 @@ def create_kube(args):
     config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if overrides.get('force', args.force):
         config.delete_kube(cluster, overrides=overrides)
+    if cluster is None and 'confpool' in overrides:
+        confpool = overrides['confpool']
+        cluster = config.get_name_from_confpool(confpool)
     config.create_kube(cluster, kubetype, overrides=overrides)
 
 

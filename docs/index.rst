@@ -2149,13 +2149,14 @@ Setting the minimum to any value below 1 effectively disables the feature.
 Configuration pools
 ===================
 
-Configuration pools allow to store a list of ips or baremetal_hosts and make them available to a vm or a cluster upon deployment.
+Configuration pools allow to store a list of ips, names or baremetal_hosts and make them available to a vm or a cluster upon deployment.
 
 This provides the following features:
 
 -  Provide static ip to vms from a self maintained list of ips
 -  Provide vip to clusters in the same manner
 -  Provide a list of baremetal_hosts to clusters.
+-  Provide names to vms or clusters from a specific list
 
 Upon creation, the corresponding entry gets reserved to the vm or the cluster and released upon deletion.
 
@@ -2208,6 +2209,15 @@ To create a confpool with 2 baremetal hosts, use the following
 
 Note that in this case, we also provide bmc credentials, all the hosts in your pool should share the same credentials.
 
+confpool with names information
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To create a confpool with some DBZ names, use the following
+
+::
+
+   kcli create dbzpool -P names=[gohan,goku,vegeta,picolo,raditz,tenchinhan]
+
 Using the confpool
 ------------------
 
@@ -2219,6 +2229,12 @@ For vms, the confpool is specified in a nets section. For instance
 ::
 
    kcli create vm -i centos8stream -P nets=['{"name": "default", "confpool": "myconfpool"}']
+
+You can also create a vm with a name from the previously created dbz name confpool with the following call
+
+::
+
+   kcli create vm -i centos8stream -P confpool=dbzpool
 
 In clusters
 ~~~~~~~~~~~
