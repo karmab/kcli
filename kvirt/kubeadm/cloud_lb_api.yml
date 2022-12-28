@@ -11,6 +11,6 @@ api.{{ cluster }}:
  - 2379
  - 2380
  vms:
-{% for num in range(0, masters|int) %}
- - {{ cluster }}-master-{{ num }}
+{% for num in range(0, ctlplanes|int) %}
+ - {{ cluster }}-ctlplane-{{ num }}
 {% endfor %}

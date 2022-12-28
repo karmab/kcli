@@ -955,7 +955,7 @@ class Kaws(object):
         zoneid = zone[0]
         dnsentry = name if cluster is None else f"{name}.{cluster}"
         entry = f"{dnsentry}.{domain}."
-        if cluster is not None and ('master' in name or 'worker' in name):
+        if cluster is not None and ('ctlplane' in name or 'worker' in name):
             counter = 0
             while counter != 100:
                 internalip = self.internalip(name)
@@ -988,7 +988,7 @@ class Kaws(object):
         if alias:
             for a in alias:
                 if a == '*':
-                    if cluster is not None and ('master' in name or 'worker' in name):
+                    if cluster is not None and ('ctlplane' in name or 'worker' in name):
                         new = f'*.apps.{cluster}.{domain}.'
                     else:
                         new = f'*.{name}.{domain}.'
@@ -1024,7 +1024,7 @@ class Kaws(object):
         recs = []
         clusterdomain = f"{cluster}.{domain}"
         for record in dns.list_resource_record_sets(HostedZoneId=zoneid)['ResourceRecordSets']:
-            if entry in record['Name'] or ('master-0' in name and record['Name'].endswith(f"{clusterdomain}.")):
+            if entry in record['Name'] or ('ctlplane-0' in name and record['Name'].endswith(f"{clusterdomain}.")):
                 recs.append(record)
             else:
                 if 'ResourceRecords' in record:

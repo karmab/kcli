@@ -60,7 +60,7 @@ def github_raw(url):
         branch = decomposed_url[6]
         relativepath = decomposed_url[7:]
     else:
-        branch = 'master'
+        branch = 'main'
         relativepath = decomposed_url[5:]
     relativepath = '/'.join(relativepath)
     url = f'https://raw.githubusercontent.com/{user}/{repo}/{branch}/{relativepath}'
@@ -1289,7 +1289,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
             data['passwd']['users'].append({'name': vmuser, 'sshAuthorizedKeys': publickeys,
                                             'groups': ['sudo', 'wheel']})
     role = None
-    if len(name.split('-')) >= 3 and name.split('-')[-2] in ['master', 'worker']:
+    if len(name.split('-')) >= 3 and name.split('-')[-2] in ['ctlplane', 'worker']:
         role = name.split('-')[-2]
     elif len(name.split('-')) >= 2 and name.split('-')[-1] == 'bootstrap':
         role = name.split('-')[-1]
@@ -1852,7 +1852,7 @@ def get_tasty(version='latest'):
 
 
 def kube_create_app(config, appdir, overrides={}, outputdir=None):
-    appdata = {'cluster': 'testk', 'domain': 'karmalabs.corp', 'masters': 1, 'workers': 0}
+    appdata = {'cluster': 'testk', 'domain': 'karmalabs.corp', 'ctlplanes': 1, 'workers': 0}
     cluster = appdata['cluster']
     cwd = os.getcwd()
     os.environ["PATH"] += f":{cwd}"
@@ -1906,7 +1906,7 @@ def kube_delete_app(config, appdir, overrides={}):
 
 def openshift_create_app(config, appdir, overrides={}, outputdir=None):
     appname = overrides['name']
-    appdata = {'cluster': 'testk', 'domain': 'karmalabs.corp', 'masters': 1, 'workers': 0}
+    appdata = {'cluster': 'testk', 'domain': 'karmalabs.corp', 'ctlplanes': 1, 'workers': 0}
     install_cr = overrides.get('install_cr', True)
     cluster = appdata['cluster']
     cwd = os.getcwd()
@@ -1967,7 +1967,7 @@ def openshift_create_app(config, appdir, overrides={}, outputdir=None):
 
 def openshift_delete_app(config, appdir, overrides={}):
     appname = overrides['name']
-    appdata = {'cluster': 'testk', 'domain': 'karmalabs.corp', 'masters': 1, 'workers': 0}
+    appdata = {'cluster': 'testk', 'domain': 'karmalabs.corp', 'ctlplanes': 1, 'workers': 0}
     cluster = appdata['cluster']
     cwd = os.getcwd()
     os.environ["PATH"] += f":{cwd}"
@@ -2353,7 +2353,7 @@ def get_changelog(diff, data=False):
         error("git needed for this functionality")
         sys.exit(1)
     if not diff:
-        diff = ['master']
+        diff = ['main']
     if len(diff) > 1:
         ori, dest = diff[:2]
     else:

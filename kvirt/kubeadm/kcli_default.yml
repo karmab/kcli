@@ -1,10 +1,10 @@
 info: |
-    Deploys kubernetes using kubeadm on an arbitrary number of masters and workers.
-    when using more than one master, a vip is used with keepalived.
+    Deploys kubernetes using kubeadm on an arbitrary number of ctlplanes and workers.
+    when using more than one ctlplane, a vip is used with keepalived.
     default image is centos8stream, but there's also support for ubuntu based ones and fedora.
     version can be let blank to get latest, or specified as x.yy or x.yy.z .
     sdn can be choosen between flannel, weavenet, calico, canal, romana or cilium.
-    nfs can be set to deploy an initial set of pvcs on the first master node.
+    nfs can be set to deploy an initial set of pvcs on the first ctlplane node.
     You can deploy extra apps with the apps array and for each of the supported apps, indicate with the variable
     ${app}_version which version to target.
     You can set sslip to true to use $api_ip.sslip.io as base domain.
@@ -14,7 +14,7 @@ image: centos8stream
 network: default
 api_ip:
 cloud_lb: true
-masters: 1
+ctlplanes: 1
 workers: 0
 version:
 pool: 
@@ -24,9 +24,9 @@ engine: containerd
 engine_version:
 numcpus: 4
 worker_numcpus:
-master_numcpus:
+ctlplane_numcpus:
 memory: 6144
-master_memory:
+ctlplane_memory:
 worker_memory:
 disk_size: 30
 nfs: true
@@ -44,10 +44,10 @@ notify: false
 apps: []
 kubevirt_disk_size:
 extra_disks: []
-extra_master_disks: []
+extra_ctlplane_disks: []
 extra_worker_disks: []
 extra_networks: []
-extra_master_networks: []
+extra_ctlplane_networks: []
 extra_worker_networks: []
 sslip: false
 autolabel: true
@@ -59,7 +59,7 @@ registry_password: dummy
 eksd: false
 eksd_version: latest
 threaded: false
-masters_threaded: false
+ctlplanes_threaded: false
 workers_threaded: false
 keys: []
 tempkey: false

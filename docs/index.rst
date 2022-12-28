@@ -83,7 +83,7 @@ A generic script is provided for for installation:
 
 .. code:: shell
 
-   curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | sudo bash
+   curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | sudo bash
 
 It does the following:
 
@@ -239,7 +239,7 @@ For instance, here’s a sample ``~/.kcli/config.yml`` with two hypervisors:
 
 Replace with your own client in default section and indicate the relevant parameters in the corresponding client section, depending on your client/host type.
 
-Most of the parameters are actually optional, and can be overridden in the default, client or profile section (or in a plan file). You can find a fully detailed config.yml sample `here <https://github.com/karmab/kcli/tree/master/samples/config.yml>`__
+Most of the parameters are actually optional, and can be overridden in the default, client or profile section (or in a plan file). You can find a fully detailed config.yml sample `here <https://github.com/karmab/kcli/tree/main/samples/config.yml>`__
 
 Storing credentials securely
 ----------------------------
@@ -703,7 +703,7 @@ Cloudinit is enabled by default and handles static networking configuration, hos
 
 For vms based on coreos, ignition is used instead of cloudinit although the syntax is the same. If $name.ign or $plan.ign are found in the current directory, their content will be merged. The extension .cloudinit does the same for cloudinit.
 
-To ease openshift deployment, when a node has a name in the $cluster-role-$num, where role can either be master, worker or bootstrap, additional paths are searched, namely $cluster-$role.ign, clusters/$cluster/$role.ign and $HOME/.kcli/clusters/$cluster/$role.ign
+To ease openshift deployment, when a node has a name in the $cluster-role-$num, where role can either be ctlplane, worker or bootstrap, additional paths are searched, namely $cluster-$role.ign, clusters/$cluster/$role.ign and $HOME/.kcli/clusters/$cluster/$role.ign
 
 For ignition support on ovirt, you will need a version of ovirt >= 4.3.4. Note that this requires to use an openstack based rhcos image.
 
@@ -1019,10 +1019,10 @@ ansible
       nodes:
       - node1
       - node2
-      masters:
-      - master1
-      - master2
-      - master3
+      ctlplanes:
+      - ctlplane1
+      - ctlplane2
+      - ctlplane3
 
 An inventory will be created for you in /tmp and that *group_vars* and *host_vars* directory are taken into account. You can optionally define your own groups, as in this example. The playbooks are launched in alphabetical order
 
@@ -1119,7 +1119,7 @@ You can use the following command to execute a plan from a remote url:
 
 .. code:: yaml
 
-   kcli create plan --url https://raw.githubusercontent.com/karmab/kcli-plan-samples/master/simpleplan.yml
+   kcli create plan --url https://raw.githubusercontent.com/karmab/kcli-plan-samples/main/simpleplan.yml
 
 Disk parameters
 ---------------
@@ -1431,7 +1431,7 @@ Parameter          Default Value                        Comments
 *kernel*           None                                 Kernel location to pass to the vm. Needs to be local to the hypervisor
 *initrd*           None                                 Initrd location to pass to the vm. Needs to be local to the hypervisor
 *cmdline*          None                                 Cmdline to pass to the vm
-*pcidevices*       []                                   array of pcidevices to passthrough to the first worker only. Check `here <https://github.com/karmab/kcli-plan-samples/blob/master/pcipassthrough/pci.yml>`__ for an example
+*pcidevices*       []                                   array of pcidevices to passthrough to the first worker only. Check `here <https://github.com/karmab/kcli-plan-samples/blob/main/pcipassthrough/pci.yml>`__ for an example
 *tpm*              false                                Enables a TPM device in the vm, using emulator mode. Requires swtpm in the host
 *rng*              false                                Enables a RNG device in the vm
 *notify*           false                                Sends result of a command or a script run from the vm to one of the supported notify engines
@@ -1587,7 +1587,7 @@ Deploying generic kubernetes clusters
 
 ::
 
-   kcli create cluster generic -P masters=X -P workers=Y $cluster
+   kcli create cluster generic -P ctlplanes=X -P workers=Y $cluster
 
 Deploying openshift clusters
 ----------------------------
@@ -1646,91 +1646,71 @@ A minimal one could be the following one
    domain: karmalabs.corp
    version: stable
    tag: '4.8'
-   masters: 3 
+   ctlplanes: 3 
    workers: 2
    memory: 16384
    numcpus: 16
 
 Here’s the list of all variables that can be used (you can list them with ``kcli info cluster openshift``)
 
-====================== ================================== ===========================================================================================================================================================================
-Parameter              Default Value                      Comments
-====================== ================================== ===========================================================================================================================================================================
-*version*              nightly                            You can choose between nightly, ci or stable. ci requires specific data in your secret
-tag                    4.5                                
-async                  false                              Exit once vms are created and let job in cluster delete bootstrap
-notify                 false                              Whether to send notifications once cluster is deployed. Mean to be used in async mode
-pull_secret            openshift_pull.json                
-image                  rhcos45                            rhcos image to use (should be qemu for libvirt/kubevirt and openstack one for ovirt/openstack)
-helper_image           CentOS-7-x86_64-GenericCloud.qcow2 which image to use when deploying temporary helper vms
-network                default                            Any existing network can be used
-api_ip                 None                               
-ingress_ip             None                               
-masters                1                                  number of masters
-workers                0                                  number of workers
-fips                   False                              
-cluster                testk                              
-domain                 karmalabs.corp                     
-network_type           OpenShiftSDN                       
-minimal                False                              
-pool                   default                            
-flavor                 None                               
-flavor_bootstrap       None                               
-flavor_master          None                               
-flavor_worker          None                               
-numcpus                4                                  
-bootstrap_numcpus      None                               
-master_numcpus         None                               
-worker_numcpus         None                               
-memory                 8192                               
-bootstrap_memory       None                               
-master_memory          None                               
-worker_memory          None                               
-master_tpm             False                              
-master_rng             False                              
-worker_tpm             False                              
-worker_rng             False                              
-disk_size              30                                 disk size in Gb for final nodes
-autostart              False                              
-keys                   []                                 
-apps                   []                                 
-extra_disks            []                                 
-extra_master_disks     []                                 
-extra_worker_disks     []                                 
-extra_networks         []                                 
-extra_master_networks  []                                 
-extra_worker_networks  []                                 
-master_macs            []                                 
-master_ips             []                                 
-bootstrap_mac          None                               
-bootstrap_ip           None                               
-worker_macs            []                                 
-worker_ips             []                                 
-pcidevices             None                               array of pcidevices to passthrough to the first worker only. Check `here <https://github.com/karmab/kcli-plan-samples/blob/master/pcipassthrough/pci.yml>`__ for an example
-numa                   None                               numa conf dictionary to apply to the workers only. Check `here <https://github.com/karmab/kcli-plan-samples/blob/master/cputuning/numa.yml>`__ for an example
-numa_master            None                               
-numa_worker            None                               
-numamode               None                               
-numamode_master        None                               
-numamode_worker        None                               
-cpupinning             None                               
-cpupinning_master      None                               
-cpupinning_worker      None                               
-disconnected_url       None                               
-disconnected_user      None                               
-disconnected_password  None                               
-imagecontentsources    []                                 
-ca                     None                               optional string of certificates to trust
-ipv6                   False                              
-baremetal              False                              Whether to also deploy the metal3 operator, for provisioning physical workers
-baremetal_machine_cidr None                               
-provisioning_net       provisioning                       
-provisioning_nic       ens4                               
-cloud_tag              None                               
-cloud_scale            False                              
-cloud_api_internal     False                              
-apps                   []                                 Extra applications to deploy on the cluster, available ones are visible with ``kcli list app openshift``
-====================== ================================== ===========================================================================================================================================================================
+======================= ================================== ========================================================================================================
+Parameter               Default Value                      Comments
+======================= ================================== ========================================================================================================
+*version*               nightly                            You can choose between nightly, ci or stable. ci requires specific data in your secret
+tag                     4.5                                
+async                   false                              Exit once vms are created and let job in cluster delete bootstrap
+notify                  false                              Whether to send notifications once cluster is deployed. Mean to be used in async mode
+pull_secret             openshift_pull.json                
+image                   rhcos45                            rhcos image to use (should be qemu for libvirt/kubevirt and openstack one for ovirt/openstack)
+helper_image            CentOS-7-x86_64-GenericCloud.qcow2 which image to use when deploying temporary helper vms
+network                 default                            Any existing network can be used
+api_ip                  None                               
+ingress_ip              None                               
+ctlplanes               1                                  number of ctlplane
+workers                 0                                  number of workers
+fips                    False                              
+cluster                 testk                              
+domain                  karmalabs.corp                     
+network_type            OpenShiftSDN                       
+minimal                 False                              
+pool                    default                            
+flavor                  None                               
+flavor_bootstrap        None                               
+flavor_ctlplane         None                               
+flavor_worker           None                               
+numcpus                 4                                  
+bootstrap_numcpus       None                               
+ctlplane_numcpus        None                               
+worker_numcpus          None                               
+memory                  8192                               
+bootstrap_memory        None                               
+ctlplane_memory         None                               
+worker_memory           None                               
+disk_size               30                                 disk size in Gb for final nodes
+keys                    []                                 
+apps                    []                                 
+extra_disks             []                                 
+extra_ctlplane_disks    []                                 
+extra_worker_disks      []                                 
+extra_networks          []                                 
+extra_ctlplane_networks []                                 
+extra_worker_networks   []                                 
+bootstrap_mac           None                               
+disconnected_url        None                               
+disconnected_user       None                               
+disconnected_password   None                               
+imagecontentsources     []                                 
+ca                      None                               optional string of certificates to trust
+ipv6                    False                              
+baremetal               False                              Whether to also deploy the metal3 operator, for provisioning physical workers
+baremetal_machine_cidr  None                               
+provisioning_net        provisioning                       
+provisioning_nic        ens4                               
+cloud_tag               None                               
+cloud_scale             False                              
+cloud_api_internal      False                              
+apps                    []                                 Extra applications to deploy on the cluster, available ones are visible with ``kcli list app openshift``
+======================= ================================== ========================================================================================================
 
 Deploying
 ^^^^^^^^^
@@ -1754,7 +1734,7 @@ Architecture
 On kubeadm
 ^^^^^^^^^^
 
-the generic cluster workflow leverages Kubeadm to create a cluster with the specified number of vms running either as masters or workers on any of the supported platforms.
+the generic cluster workflow leverages Kubeadm to create a cluster with the specified number of vms running either as ctlplanes or workers on any of the supported platforms.
 
 Those vms can either be centos8 or ubuntu based (as per the official Kubeadm doc).
 
@@ -1781,7 +1761,7 @@ On libvirt/ovirt/vsphere/kubevirt/openstack
 We deploy :
 
 -  a bootstrap node removed at the end of the install.
--  an arbitrary number of masters.
+-  an arbitrary number of ctlplanes.
 -  an arbitrary number of workers.
 
 When oc or openshift-install are missing, they are downloaded on the fly, using public mirrors or registry.ci.openshift.org if ci is specified (the provided pull secret needs an auth for this registry).
@@ -1790,40 +1770,40 @@ rhcos image associated to the specified version is downloaded and the correspond
 
 Ignition files needed for the install are generated using ``openshift-install create ignition-configs``
 
-Also note that for bootstrap, masters and workers nodes, we merge the ignition data generated by the openshift installer with the ones generated by kcli, in particular we prepend dns server on those nodes to point to our keepalived vip, force hostnames and inject static pods.
+Also note that for bootstrap, ctlplanes and workers nodes, we merge the ignition data generated by the openshift installer with the ones generated by kcli, in particular we prepend dns server on those nodes to point to our keepalived vip, force hostnames and inject static pods.
 
-Deployment of bootstrap and masters vms is then launched. Isos are optionally created for baremetal hosts
+Deployment of bootstrap and ctlplanes vms is then launched. Isos are optionally created for baremetal hosts
 
-Keepalived and Coredns with mdns are deployed on the bootstrap and master nodes as static pods. They provide HA access and dns records as needed.
+Keepalived and Coredns with mdns are deployed on the bootstrap and ctlplane nodes as static pods. They provide HA access and dns records as needed.
 
 Initially, the api vip runs on the bootstrap node.
 
-Ignition files are provided over 22624/http using api ip instead of fqdn. The ignition files for both master and worker are patched for it.
+Ignition files are provided over 22624/http using api ip instead of fqdn. The ignition files for both ctlplane and worker are patched for it.
 
-Haproxy is created as static pod on the master nodes to load balance traffic to the routers. When there are no workers, routers are instead scheduled on the master nodes and the haproxy static pod isn’t created, so routers are simply accessed through the vip without load balancing in this case.
+Haproxy is created as static pod on the ctlplane nodes to load balance traffic to the routers. When there are no workers, routers are instead scheduled on the ctlplane nodes and the haproxy static pod isn’t created, so routers are simply accessed through the vip without load balancing in this case.
 
-Once bootstrap steps finished, the vips transitions to one of the masters.
+Once bootstrap steps finished, the vips transitions to one of the ctlplanes.
 
 At this point, workers are created and the installation is monitored until completion. A flag allows to deploy in an async manner
 
-It’s possible to scale masters or workers after the initial installation, using ``kcli scale cluster openshift`` (Instead of scaling machines as done in IPI workflows)
+It’s possible to scale ctlplanes or workers after the initial installation, using ``kcli scale cluster openshift`` (Instead of scaling machines as done in IPI workflows)
 
 On aws/gcp/ibmcloud
 ^^^^^^^^^^^^^^^^^^^
 
 On those platforms, We rely on dns and load balancing services and as such dont need static pods.
 
-In the case of deploying a single master, a flag allows to get rid of the loadbalancer at the end of the install.
+In the case of deploying a single ctlplane, a flag allows to get rid of the loadbalancer at the end of the install.
 
 SNO (single node openshift ) support
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can deploy a single node setting masters to 1 and workers to 0 in your parameter file. On Cloud platforms, you can use an extra parameter, ``sno_cloud_remove_lb``, to remove loadbalancer and point dns directly to the public ip of your node, making the resulting cluster only rely on the corresponding instance.
+You can deploy a single node setting ctlplanes to 1 and workers to 0 in your parameter file. On Cloud platforms, you can use an extra parameter, ``sno_cloud_remove_lb``, to remove loadbalancer and point dns directly to the public ip of your node, making the resulting cluster only rely on the corresponding instance.
 
 Alternatively, you can leverage bootstrap in place (bip) and rhcos live iso with the flag ``sno``, which allows you to provision a baremetal sno by creating a custom iso stored in your specified libvirt pool. The following extra parameters are available with this workflow:
 
 -  sno_disk: You can indicate which disk to use for installing Rhcos operating system in your node. If none is specified, the disk will be autodiscovered
--  sno_dns: Defaults to true. A static pod leveraging coredns and pointing the relevant dns records to the ip of the node is injected after master ignition is generated, removing the need for external dns. Use this if you can’t provide the DNS requirements for the single node
+-  sno_dns: Defaults to true. A static pod leveraging coredns and pointing the relevant dns records to the ip of the node is injected after ctlplane ignition is generated, removing the need for external dns. Use this if you can’t provide the DNS requirements for the single node
 -  sno_virtual: Defaults to false. If you set it to true, a vm leveraging the generated iso will be created and install will be monitored up until the end. This is mostly available for dog fooding the bip approach.
 -  extra_args: You can use this variable to specify as a string any extra args to add to the generated iso. A common use case for this is to set static networking for the node, for instanc with something like ``ip=192.168.1.200::192.168.1.1:255.255.255.0:mysupersno.dev.local:enp1s0:none nameserver=192.168.1.1``
 -  api_ip: This is normally not needed but if you already have some DNS records in place pointing to a given api vip or you don’t know your baremetal ip, you can specify the vip so that an extra keepalived static pod is injected.
@@ -1874,7 +1854,7 @@ You can deploy baremetal workers in different way through this workflow.
 
 The boolean baremetal_iso can be set to generate isos that you manually plug to the corresponding node (one iso per role).
 
-You can also create isos only for a given role using the boolean baremetal_iso_bootstrap, baremetal_iso_master and baremetal_iso_worker
+You can also create isos only for a given role using the boolean baremetal_iso_bootstrap, baremetal_iso_ctlplane and baremetal_iso_worker
 
 Alternatively, you can use the array baremetal_hosts to plug the worker iso to a list of baremetal hosts. The iso will be served from a deployment running in the control plane in that case.
 
@@ -2001,7 +1981,7 @@ Then:
 
    kubectl create configmap kcli-config --from-file=~/.kcli
    kubectl create configmap ssh-config --from-file=~/.ssh
-   kubectl create -f https://raw.githubusercontent.com/karmab/kcli/master/extras/k8sdeploy.yml
+   kubectl create -f https://raw.githubusercontent.com/karmab/kcli/main/extras/k8sdeploy.yml
 
 kcli-controller
 ===============
@@ -2037,14 +2017,14 @@ Then deploy the crds and the controller:
 
 ::
 
-   kubectl create -f https://raw.githubusercontent.com/karmab/kcli/master/extras/controller/crd.yml
+   kubectl create -f https://raw.githubusercontent.com/karmab/kcli/main/extras/controller/crd.yml
 
 .. _how-to-use-1:
 
 How to use
 ----------
 
-The directory `extras/controller/examples <https://github.com/karmab/kcli/tree/master/extras/controller/examples>`__ contains different examples of vm, plan and cluster CRs.
+The directory `extras/controller/examples <https://github.com/karmab/kcli/tree/main/extras/controller/examples>`__ contains different examples of vm, plan and cluster CRs.
 
 Here are some sample ones for each type to get you started
 
@@ -2114,7 +2094,7 @@ clusters
    metadata:
      name: hendrix
    spec:
-     masters: 1
+     ctlplanes: 1
      api_ip: 192.168.122.252
 
 Once a cluster is deployed successfully, you can retrieve its kubeconfig from it status
@@ -2392,7 +2372,7 @@ To make use of it:
 
 -  On the client side, you can then access the api by targetting port 50051 of the server node (in insecure mode)
 
-Note that the server doesn’t implement all the features yet. Most notably, *create_plan* isn’t available at the moment. Check the following `doc <https://github.com/karmab/kcli/blob/master/docs/grpc_methods.md>`__ to see the status of the implementation.
+Note that the server doesn’t implement all the features yet. Most notably, *create_plan* isn’t available at the moment. Check the following `doc <https://github.com/karmab/kcli/blob/main/docs/grpc_methods.md>`__ to see the status of the implementation.
 
 Client side
 ~~~~~~~~~~~
@@ -2404,7 +2384,7 @@ Client side
 API documentation
 =================
 
-.. |Build Status| image:: https://travis-ci.org/karmab/kcli.svg?branch=master
+.. |Build Status| image:: https://travis-ci.org/karmab/kcli.svg?branch=main
    :target: https://travis-ci.org/karmab/kcli
 .. |Pypi| image:: http://img.shields.io/pypi/v/kcli.svg
    :target: https://pypi.python.org/pypi/kcli/

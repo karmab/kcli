@@ -10,4 +10,4 @@ eksd.sh
 {% if config_type not in ['aws', 'gcp', 'ibm'] %}
 keepalived.sh
 {% endif %}
-masters.sh
+ctlplanes.sh

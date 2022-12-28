@@ -31,15 +31,15 @@ jobs:
       - name: Test code
         run: .github/testing.sh
         shell: bash
-      - if: github.ref == 'refs/heads/master' && github.repository_owner == 'karmab'
+      - if: github.ref == 'refs/heads/main' && github.repository_owner == 'karmab'
         name: Snapshot RPM
         run: .github/copr_snapshot.sh
         shell: bash
-      - if: github.ref == 'refs/heads/master' && github.repository_owner == 'karmab'
+      - if: github.ref == 'refs/heads/main' && github.repository_owner == 'karmab'
         name: Snapshot DEB
         run: .github/cloudsmith_snapshot.sh
         shell: bash
-      - if: github.ref == 'refs/heads/master' && github.repository_owner == 'karmab'
+      - if: github.ref == 'refs/heads/main' && github.repository_owner == 'karmab'
         name: Snapshot container
         run: .github/container_snapshot.sh
         shell: bash

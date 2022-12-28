@@ -20,6 +20,6 @@ jobs:
      - uses: actions/checkout@v2
      - run: git pull origin ${GITHUB_REF##*/}
      - name: Install kcli
-       run: curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | bash
+       run: curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
      - name: Deploy Openshift on ${{ matrix.provider }}
        run: kcli create cluster openshift --paramfile openshift-ci-paramfiles/${{ matrix.provider }}.yml -P pull_secret=$PULLSECRET $PLAN-${{ matrix.provider }} --force

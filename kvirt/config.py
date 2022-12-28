@@ -1902,7 +1902,7 @@ class Kconfig(Kbaseconfig):
                     path = '.'
                     inputfile = planentry
                 if no_overrides and parameters:
-                    pprint("Using parameters from master plan in child ones")
+                    pprint("Using parameters from father plan in child ones")
                     for override in overrides:
                         print("Using parameter %s: %s" % (override, overrides[override]))
                 self.plan(plan, ansible=False, url=planurl, path=path, container=False, inputfile=inputfile,
@@ -1928,8 +1928,8 @@ class Kconfig(Kbaseconfig):
                 kube_overrides = overrides.copy()
                 kube_overrides.update(kubeprofile)
                 kube_overrides['cluster'] = cluster
-                existing_masters = [v for v in currentconfig.k.list() if f'{cluster}-master' in v['name']]
-                if existing_masters:
+                existing_ctlplanes = [v for v in currentconfig.k.list() if f'{cluster}-ctlplane' in v['name']]
+                if existing_ctlplanes:
                     pprint(f"Cluster {cluster} found. skipped!")
                     continue
                 if kubetype not in ['generic', 'openshift', 'hypershift', 'kind', 'microshift', 'k3s']:
@@ -2941,15 +2941,15 @@ class Kconfig(Kbaseconfig):
         if plan is None:
             plan = cluster
         if _type == 'generic':
-            roles = ['masters', 'workers']
+            roles = ['ctlplanes', 'workers']
             plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
         elif _type == 'k3s':
             plandir = os.path.dirname(k3s.create.__code__.co_filename)
-            roles = ['bootstrap', 'workers'] if overrides.get('masters', 1) == 1 else ['bootstrap', 'masters',
-                                                                                       'workers']
+            roles = ['bootstrap', 'workers'] if overrides.get('ctlplanes', 1) == 1 else ['bootstrap', 'ctlplanes',
+                                                                                         'workers']
         else:
             plandir = os.path.dirname(openshift.create.__code__.co_filename)
-            roles = ['cloud_masters', 'cloud_workers'] if self.type in ['aws', 'gcp'] else ['masters', 'workers']
+            roles = ['cloud_ctlplanes', 'cloud_workers'] if self.type in ['aws', 'gcp'] else ['ctlplanes', 'workers']
         if overrides.get('workers', 0) == 0:
             del roles[-1]
         if os.path.exists(f"{clusterdir}/kcli_parameters.yml"):

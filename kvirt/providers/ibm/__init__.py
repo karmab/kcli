@@ -1256,7 +1256,7 @@ class Kibm(object):
                 if a == '*':
                     record_type = 'A'
                     content = ip
-                    if cluster is not None and ('master' in name or 'worker' in name):
+                    if cluster is not None and ('ctlplane' in name or 'worker' in name):
                         dnsname = f'*.apps.{cluster}.{domain}'
                     else:
                         dnsname = f'*.{name}.{domain}'
@@ -1293,7 +1293,7 @@ class Kibm(object):
             return
         recordsfound = False
         for record in records:
-            if entry in record['name'] or ('master-0' in name and record['name'].endswith(clusterdomain))\
+            if entry in record['name'] or ('ctlplane-0' in name and record['name'].endswith(clusterdomain))\
                     or (record['type'] == 'CNAME' and record['content'] == entry):
                 record_identifier = record['id']
                 try:
@@ -1424,7 +1424,7 @@ class Kibm(object):
 
     def _add_sno_security_group(self, cluster):
         security_group_id = self.create_security_group(f"{cluster}-sno", {'ports': [80, 443, 6443]})
-        vm = self._get_vm(f"{cluster}-master-0")
+        vm = self._get_vm(f"{cluster}-ctlplane-0")
         nic_id = vm['primary_network_interface']['id']
         self.conn.add_security_group_network_interface(security_group_id, nic_id)
 

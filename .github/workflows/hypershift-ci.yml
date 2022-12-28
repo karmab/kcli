@@ -46,7 +46,7 @@ jobs:
        - run: git pull origin ${GITHUB_REF##*/}
        - name: Install kcli
          run: |
-           curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | bash
+           curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
        - name: Make sc default one
          run: |
            oc patch storageclass ocs-storagecluster-ceph-rbd -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'

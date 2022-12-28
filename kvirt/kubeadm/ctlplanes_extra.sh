@@ -1,6 +1,6 @@
 API_IP={{ "api.%s.%s" % (cluster, domain) if config_type in ['aws', 'gcp', 'ibm'] else api_ip }}
 cp /root/admin.conf /etc/kubernetes/admin.conf 
-bash /root/mastercmd.sh | tee /root/$(hostname).log 2>&1
+bash /root/ctlplanecmd.sh | tee /root/$(hostname).log 2>&1
 mkdir -p /root/.kube
 cp -i /etc/kubernetes/admin.conf /root/.kube/config
 chown root:root /root/.kube/config

@@ -84,7 +84,7 @@ numcpus: Number of vcpus. Allow overcommitting
 placement: Array of Hosts where to allow a vm to run (ovirt)
 pcidevices: |
   Array of pcidevices to passthrough to the first worker only.
-  Check [here](https://github.com/karmab/kcli-plan-samples/blob/master/pcipassthrough/pci.yml) for an example
+  Check [here](https://github.com/karmab/kcli-plan-samples/blob/main/pcipassthrough/pci.yml) for an example
 playbook: |
   Generates a playbook for the vm of the plan instead of creating it.
   Useful to run parts of a plan on baremetal

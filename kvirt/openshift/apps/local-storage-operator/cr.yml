@@ -11,7 +11,7 @@ spec:
           operator: In
           values:
 {% if not localstorage_nodes %}
-{% set localstorage_nodes = 99|defaultnodes(cluster, domain, masters,workers) %}
+{% set localstorage_nodes = 99|defaultnodes(cluster, domain, ctlplanes,workers) %}
 {% endif %}
 {% for node in localstorage_nodes %}
           - {{ node }}

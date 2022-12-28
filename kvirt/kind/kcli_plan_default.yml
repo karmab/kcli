@@ -1,13 +1,13 @@
 info: |
   Deploy kubernetes using kind on a single vm
-  Several masters and workers can be specified
+  Several ctlplanes and workers can be specified
   You can put your cni binaries in a directory called cni_bin to inject them
 image : centos8stream
 numcpus: 4
 memory: 8192
 kind_version:
 cluster: testk
-masters: 1
+ctlplanes: 1
 workers: 0
 network: default
 disk_size: 30

@@ -2,7 +2,7 @@ parameters:
   cluster: marquez
   version: nightly
   tag: '4.11'
-  masters: 3
+  ctlplanes: 3
   workers: 0
   network_type: OVNKubernetes
   memory: 32768
@@ -24,7 +24,7 @@ parameters:
   kubetype: openshift
   cluster: {{ cluster }}
   tag: {{ tag }}
-  masters: {{ masters }}
+  ctlplanes: {{ ctlplanes }}
   workers: {{ workers }}
   version: {{ version }}
   network_type: {{ network_type }}

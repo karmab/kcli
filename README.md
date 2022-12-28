@@ -22,7 +22,7 @@ Refer to the [documentation](https://kcli.readthedocs.io) for more information
 ## Quick Start
 
 ```
-curl -s https://raw.githubusercontent.com/karmab/kcli/master/install.sh | bash
+curl -s https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
 ```
 
 Deploy your first vm with:

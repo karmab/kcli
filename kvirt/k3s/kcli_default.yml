@@ -1,10 +1,10 @@
 info: |
-    Deploys the k3s kubernetes distrobution using an arbitrary number of masters and workers.
+    Deploys the k3s kubernetes distrobution using an arbitrary number of ctlplanes and workers.
     Specific components can be disabled by using the array disabled_components.
     Any install_k3s_* argument can be specified. default channel is stable
     default sdn is flannel, although minimal support for cilium is provided if choosing this sdn
     sdn can be unset to force no installation of any CNI
-masters: 1
+ctlplanes: 1
 workers: 0
 sdn: flannel
 api_ip:
@@ -16,26 +16,26 @@ domain: karmalabs.corp
 token: supersecret
 numcpus: 2
 worker_numcpus:
-master_numcpus:
+ctlplane_numcpus:
 memory: 1024
-master_memory:
+ctlplane_memory:
 worker_memory:
 disk_size: 10
 notifycmd: "kubectl get pod -A"
 notify: false
 kubevirt_disk_size:
 extra_disks: []
-extra_master_disks: []
+extra_ctlplane_disks: []
 extra_worker_disks: []
 extra_networks: []
-extra_master_networks: []
+extra_ctlplane_networks: []
 extra_worker_networks: []
 extra_args: []
-extra_master_args: []
+extra_ctlplane_args: []
 extra_worker_args: []
 extra_worker_disks: []
 threaded: false
-masters_threaded: false
+ctlplanes_threaded: false
 workers_threaded: false
 keys: []
 tempkey: false
