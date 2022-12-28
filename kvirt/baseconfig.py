@@ -1007,7 +1007,7 @@ class Kbaseconfig:
                 del self.profiles[obj]
                 found = True
         if found:
-            path = os.path.expanduser('~/.kcli/f{conf_type}s.yml')
+            path = os.path.expanduser(f'~/.kcli/{conf_type}s.yml')
             if not selfconf:
                 os.remove(path)
             else:
