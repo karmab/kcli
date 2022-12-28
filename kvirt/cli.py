@@ -1444,7 +1444,7 @@ def create_vm(args):
         sys.exit(1)
     customprofile = {}
     client = overrides.get('client', args.client)
-    confpool = overrides.get('confpool')
+    confpool = overrides.get('namepool') or overrides.get('confpool')
     config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     for key in overrides:
         if key in vars(config) and vars(config)[key] is not None and type(overrides[key]) != type(vars(config)[key]):
@@ -1715,8 +1715,8 @@ def create_kube(args):
     config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if overrides.get('force', args.force):
         config.delete_kube(cluster, overrides=overrides)
-    if cluster is None and 'confpool' in overrides:
-        confpool = overrides['confpool']
+    confpool = overrides.get('namepool') or overrides.get('confpool')
+    if cluster is None and confpool is not None:
         cluster = config.get_name_from_confpool(confpool)
     config.create_kube(cluster, kubetype, overrides=overrides)
 

@@ -1003,9 +1003,13 @@ class Kconfig(Kbaseconfig):
                 overrides['tempkeydir'] = tempkeydir
         # confpool handling for network
         for index, net in enumerate(nets):
-            if not isinstance(net, dict) or 'confpool' not in net:
+            confpool = None
+            if isinstance(net, dict):
+                confpool = net.get('ippool') or net.get('confpool')
+            if index == 0 and confpool is None:
+                confpool = overrides.get('ippool') or overrides.get('confpool')
+            if confpool is None:
                 continue
-            confpool = net['confpool']
             if confpool not in self.confpools:
                 error(f"{confpool} is not a valid confpool")
                 sys.exit(1)
@@ -2730,13 +2734,21 @@ class Kconfig(Kbaseconfig):
         os.popen(sshcmd).read()
 
     def threaded_create_kube(self, cluster, kubetype, kube_overrides):
-        self._parse_confpool_kube(cluster, overrides=kube_overrides)
+        ippool = kube_overrides.get('ippool') or kube_overrides.get('confpool')
+        baremetalpool = kube_overrides.get('ippool') or kube_overrides.get('confpool')
+        if ippool is not None:
+            self.get_vip_from_confpool(cluster, ippool, overrides=kube_overrides)
+        if baremetalpool is not None:
+            self.get_baremetal_hosts_from_confpool(cluster, baremetalpool, overrides=kube_overrides)
         self.create_kube(cluster, kubetype, kube_overrides)
 
     def create_kube(self, cluster, kubetype, overrides={}):
-        if 'confpool' in overrides:
-            confpool = overrides['confpool']
-            self.parse_confpool_kube(cluster, confpool, overrides)
+        ippool = overrides.get('ippool') or overrides.get('confpool')
+        baremetalpool = overrides.get('ippool') or overrides.get('confpool')
+        if ippool is not None:
+            self.get_vip_from_confpool(cluster, ippool, overrides=overrides)
+        if baremetalpool is not None:
+            self.get_baremetal_hosts_from_confpool(cluster, baremetalpool, overrides=overrides)
         if kubetype == 'openshift':
             self.create_kube_openshift(cluster, overrides=overrides)
         elif kubetype == 'hypershift':

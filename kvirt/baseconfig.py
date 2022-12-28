@@ -1787,7 +1787,7 @@ class Kbaseconfig:
             f.write(sushydata)
         call("systemctl enable --now ksushy", shell=True)
 
-    def parse_confpool_kube(self, cluster, confpool, overrides):
+    def get_vip_from_confpool(self, cluster, confpool, overrides):
         if confpool not in self.confpools:
             error("Confpool {confpool} not found")
             sys.exit(1)
@@ -1795,8 +1795,6 @@ class Kbaseconfig:
             currentconfpool = self.confpools[confpool]
             ip_reservations = currentconfpool.get('ip_reservations', {})
             reserved_ips = list(ip_reservations.values())
-            cluster_baremetal_reservations = currentconfpool.get('cluster_baremetal_reservations', {})
-            reserved_hosts = list(cluster_baremetal_reservations.values())
             if 'ips' in currentconfpool and self.type in ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere']:
                 ips = currentconfpool['ips']
                 if '/' in ips:
@@ -1807,9 +1805,19 @@ class Kbaseconfig:
                     ip_reservations[cluster] = free_ip
                     pprint(f"Using {free_ip} from confpool {confpool} as api_ip")
                     overrides['api_ip'] = free_ip
+                    self.update_confpool(confpool, {'ip_reservations': ip_reservations})
                 else:
                     error(f"No available ip in confpool {confpool}")
                     sys.exit(1)
+
+    def get_baremetal_hosts_from_confpool(self, cluster, confpool, overrides):
+        if confpool not in self.confpools:
+            error("Confpool {confpool} not found")
+            sys.exit(1)
+        else:
+            currentconfpool = self.confpools[confpool]
+            cluster_baremetal_reservations = currentconfpool.get('cluster_baremetal_reservations', {})
+            reserved_hosts = list(cluster_baremetal_reservations.values())
             if 'baremetal_hosts' in currentconfpool:
                 baremetal_hosts = currentconfpool['baremetal_hosts']
                 baremetal_hosts_number = overrides.get('baremetal_hosts_number')
@@ -1826,11 +1834,10 @@ class Kbaseconfig:
                         overrides['bmc_user'] = currentconfpool['bmc_user']
                     if 'bmc_password' in currentconfpool:
                         overrides['bmc_password'] = currentconfpool['bmc_password']
+                    self.update_confpool(confpool, {'cluster_baremetal_reservations': cluster_baremetal_reservations})
                 else:
                     error(f"Not sufficient available baremetal hosts in confpool {confpool}")
                     sys.exit(1)
-            self.update_confpool(confpool, {'ip_reservations': ip_reservations,
-                                            'cluster_baremetal_reservations': cluster_baremetal_reservations})
 
     def get_name_from_confpool(self, confpool):
         if confpool not in self.confpools:
