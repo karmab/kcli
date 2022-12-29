@@ -1,14 +1,14 @@
-{% if flavor_master != None %}
-{% set flavor = flavor_master %}
+{% if flavor_ctlplane != None %}
+{% set flavor = flavor_ctlplane %}
 {% endif %}
 
-{% for num in range(0, masters) %}
+{% for num in range(0, ctlplanes) %}
 
-{% if flavor_master != None %}
-{% set flavor = flavor_master %}
+{% if flavor_ctlplane != None %}
+{% set flavor = flavor_ctlplane %}
 {% endif %}
 
-{{ cluster }}-master-{{ num }}:
+{{ cluster }}-ctlplane-{{ num }}:
  domain: {{ domain }} 
  image: {{ image }}
  pool: {{ pool or config_pool }}
@@ -16,8 +16,8 @@
  flavor: {{ flavor }}
 {% endif %}
  enableroot: false
- numcpus: {{ master_numcpus | default(numcpus, numcpus) }}
- memory: {{ master_memory | default(memory, memory) }}
+ numcpus: {{ ctlplane_numcpus | default(numcpus, numcpus) }}
+ memory: {{ ctlplane_memory | default(memory, memory) }}
  nets:
  - name: {{ network }}
  disks:

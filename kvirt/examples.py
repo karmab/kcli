@@ -75,17 +75,17 @@ plancreate = """# Create a plan named ocp311 from a file
 $ kcli create plan -f multi.yml ocp311
 
 # Do the same but customize some parameters
-$ kcli create plan -f multi.yml -P masters=1 -P nodes=2 -P crio=true
+$ kcli create plan -f multi.yml -P ctlplanes=1 -P nodes=2 -P crio=true
 
 # Create a plan from a remote url, customizing some parameters
-$ kcli create plan -u https://github.com/karmab/kcli-plans/blob/master/kubernetes/kubernetes.yml -P masters=3
+$ kcli create plan -u https://github.com/karmab/kcli-plans/blob/main/kubernetes/kubernetes.yml -P ctlplanes=3
 """
 
 planinfo = """# Get info from a local plan file
 $ kcli info plan -f multi.yml
 
 # Get info of a plan with a remote url
-$ kcli info plan -u https://github.com/karmab/kcli-plans/blob/master/kubernetes/kubernetes.yml
+$ kcli info plan -u https://github.com/karmab/kcli-plans/blob/main/kubernetes/kubernetes.yml
 """
 
 productinfo = """# Get info from product kubernetes
@@ -150,7 +150,7 @@ kubegenericcreate = """# Create a kube instance named mykube with default values
 $ kcli create kube generic mykube
 
 # Do the same but customize some parameters
-$ kcli create kube generic -P masters=1 -P workers=2 mykube
+$ kcli create kube generic -P ctlplanes=1 -P workers=2 mykube
 
 # Use a parameter file
 $ kcli create kube generic --paramfile=myparameters.yml mykube2
@@ -197,7 +197,7 @@ kubeopenshiftcreate = """# Create a kube openshift instance named mykube with de
 $ kcli create kube openshift mykube
 
 # Do the same but customize some parameters
-$ kcli create kube openshift -P masters=1 -P workers=2 mykube
+$ kcli create kube openshift -P ctlplanes=1 -P workers=2 mykube
 
 # Use a parameter file
 $ kcli create kube openshift --paramfile=myparameters.yml mykube2
@@ -281,7 +281,7 @@ $ kcli create app openshift serverless-operator -P csv=serverless-operator.v1.22
 $ kcli create app openshift serverless-operator -P installplan=manual
 """
 
-changelog = """Get commits between current version and master
+changelog = """Get commits between current version and main
 $ kcli changelog
 
 # Do the same between current version and a given sha
@@ -320,11 +320,11 @@ $ kcli run workflow myscript.sh -do mydir
 kubegenericscale = """# Scale workers from generic cluster myclu
 $ kcli scale cluster generic -P workers=3 myclu
 
-# Scale masters
-$ kcli scale cluster generic -P masters=3 myclu
+# Scale ctlplanes
+$ kcli scale cluster generic -P ctlplanes=3 myclu
 
-# Scale both masters and workers
-$ kcli scale cluster generic -P masters=3 -P workers=2 myclu
+# Scale both ctlplanes and workers
+$ kcli scale cluster generic -P ctlplanes=3 -P workers=2 myclu
 
 # Alternative way to indicate workers
 $ kcli scale cluster generic --workers 3 myclu
@@ -333,33 +333,33 @@ $ kcli scale cluster generic --workers 3 myclu
 kubek3sscale = """# Scale workers from k3s cluster myclu
 $ kcli scale cluster k3s -P workers=3 myclu
 
-# Scale masters
-$ kcli scale cluster k3s -P masters=3 myclu
+# Scale ctlplanes
+$ kcli scale cluster k3s -P ctlplanes=3 myclu
 
-# Scale both masters and workers
-$ kcli scale cluster k3s -P masters=3 -P workers=2 myclu
+# Scale both ctlplanes and workers
+$ kcli scale cluster k3s -P ctlplanes=3 -P workers=2 myclu
 
 # Alternative way to indicate workers
 $ kcli scale cluster k3s --workers 3 myclu
 
-# Alternative way to indicate masters
-$ kcli scale cluster k3s --masters 3 myclu
+# Alternative way to indicate ctlplanes
+$ kcli scale cluster k3s --ctlplanes 3 myclu
 """
 
 kubeopenshiftscale = """# Scale workers from openshift cluster myclu
 $ kcli scale cluster openshift -P workers=3 myclu
 
-# Scale masters
-$ kcli scale cluster openshift -P masters=3 myclu
+# Scale ctlplanes
+$ kcli scale cluster openshift -P ctlplanes=3 myclu
 
-# Scale both masters and workers
-$ kcli scale cluster openshift -P masters=3 -P workers=2 myclu
+# Scale both ctlplanes and workers
+$ kcli scale cluster openshift -P ctlplanes=3 -P workers=2 myclu
 
 # Alternative way to indicate workers
 $ kcli scale cluster openshift --workers 3 myclu
 
-# Alternative way to indicate masters
-$ kcli scale cluster openshift --masters 3 myclu
+# Alternative way to indicate ctlplanes
+$ kcli scale cluster openshift --ctlplanes 3 myclu
 """
 
 networkupdate = """# Change network to isolated

@@ -27,23 +27,23 @@ jobs:
       - name: Test code
         run: .github/testing.sh
         shell: bash
-      - if: github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository_owner == 'karmab'
+      - if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository_owner == 'karmab'
         name: Release RPM
         run: .github/copr.sh
         shell: bash
-      - if: github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository_owner == 'karmab'
+      - if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository_owner == 'karmab'
         name: Release DEB
         run: .github/cloudsmith.sh
         shell: bash
-      - if: github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository_owner == 'karmab'
+      - if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository_owner == 'karmab'
         name: Release PYPI
         run: .github/pypi.sh
         shell: bash
-      - if: github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository_owner == 'karmab'
+      - if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository_owner == 'karmab'
         name: Build And Push Container
         run: .github/container.sh
         shell: bash
-      - if: github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository_owner == 'karmab'
+      - if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository_owner == 'karmab'
         name: Build And Push Controller Container
         run: .github/container_controller.sh
         shell: bash

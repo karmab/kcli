@@ -50,8 +50,8 @@ listen api-7443
     mode tcp
     balance source
     server bootstrap {{ cluster }}-bootstrap.{{ domain }}:6443 check inter 1s
-{% for num in range(0, masters) %}
-    server master{{ num }} {{ cluster }}-master-{{ num }}.{{ domain }}:6443 check inter 1s
+{% for num in range(0, ctlplanes) %}
+    server ctlplane{{ num }} {{ cluster }}-ctlplane-{{ num }}.{{ domain }}:6443 check inter 1s
 {% endfor %}
 
 listen machineconfig-23623
@@ -59,8 +59,8 @@ listen machineconfig-23623
     mode tcp
     balance source
     server bootstrap {{ cluster }}-bootstrap.{{ domain }}:22623 check inter 1s
-{% for num in range(0, masters) %}
-    server master{{ num }} {{ cluster }}-master-{{ num }}.{{ domain }}:22623 check inter 1s
+{% for num in range(0, ctlplanes) %}
+    server ctlplane{{ num }} {{ cluster }}-ctlplane-{{ num }}.{{ domain }}:22623 check inter 1s
 {% endfor %}
 
 listen machineconfig-23624
@@ -68,22 +68,22 @@ listen machineconfig-23624
     mode tcp
     balance source
     server bootstrap {{ cluster }}-bootstrap.{{ domain }}:22624 check inter 1s
-{% for num in range(0, masters) %}
-    server master{{ num }} {{ cluster }}-master-{{ num }}.{{ domain }}:22624 check inter 1s
+{% for num in range(0, ctlplanes) %}
+    server ctlplane{{ num }} {{ cluster }}-ctlplane-{{ num }}.{{ domain }}:22624 check inter 1s
 {% endfor %}
 
 listen ingress-1080
     bind 0.0.0.0:1080
     mode tcp
     balance source
-{% for num in range(0, masters) %}
-    server master{{ num }} {{ cluster }}-master-{{ num }}.{{ domain }}:80 check inter 1s
+{% for num in range(0, ctlplanes) %}
+    server ctlplane{{ num }} {{ cluster }}-ctlplane-{{ num }}.{{ domain }}:80 check inter 1s
 {% endfor %}
 
 listen ingress-1443
     bind 0.0.0.0:1443
     mode tcp
     balance source
-{% for num in range(0, masters) %}
-    server master{{ num }} {{ cluster }}-master-{{ num }}.{{ domain }}:443 check inter 1s
+{% for num in range(0, ctlplanes) %}
+    server ctlplane{{ num }} {{ cluster }}-ctlplane-{{ num }}.{{ domain }}:443 check inter 1s
 {% endfor %}

@@ -20,7 +20,7 @@ chown root:root /root/admin.conf
 export KUBECONFIG=/root/admin.conf
 echo "export KUBECONFIG=/root/admin.conf" >> /root/.bashrc
 
-# untaint master node(s)
+# untaint ctlplane node(s)
 kubectl taint nodes --all node-role.kubernetes.io/master-
 kubectl taint nodes --all node-role.kubernetes.io/control-plane-
 
@@ -59,7 +59,7 @@ sleep 60
 
 CERTKEY=$(cat /root/certificate-key.txt)
 MASTERCMD="$CMD --control-plane --certificate-key $CERTKEY"
-echo $MASTERCMD > /root/mastercmd.sh
+echo $MASTERCMD > /root/ctlplanecmd.sh
 
 echo ${CMD} > /root/join.sh
 
@@ -81,7 +81,7 @@ kubectl apply -f https://raw.githubusercontent.com/kyverno/kyverno/main/definiti
 
 {% if autolabel %}
 # (addon) install Autolabeler
-kubectl apply -f https://raw.githubusercontent.com/karmab/autolabeller/master/autorules.yml
+kubectl apply -f https://raw.githubusercontent.com/karmab/autolabeller/main/autorules.yml
 {% endif %}
 
 {% if registry %}

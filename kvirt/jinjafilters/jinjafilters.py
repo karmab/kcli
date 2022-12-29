@@ -39,13 +39,13 @@ def _type(value):
         return 'list'
 
 
-def ocpnodes(cluster, platform, masters, workers):
-    masters = ['%s-master-%d' % (cluster, num) for num in range(masters)]
+def ocpnodes(cluster, platform, ctlplanes, workers):
+    ctlplanes = ['%s-ctlplane-%d' % (cluster, num) for num in range(ctlplanes)]
     workers = ['%s-worker-%d' % (cluster, num) for num in range(workers)]
     if platform in ['kubevirt', 'openstack', 'vsphere', 'packet']:
-        return ["%s-bootstrap-helper" % cluster] + ["%s-bootstrap" % cluster] + masters + workers
+        return ["%s-bootstrap-helper" % cluster] + ["%s-bootstrap" % cluster] + ctlplanes + workers
     else:
-        return ["%s-bootstrap" % cluster] + masters + workers
+        return ["%s-bootstrap" % cluster] + ctlplanes + workers
 
 
 def certificate(value):
@@ -81,14 +81,14 @@ def github_version(repo, version=None, tag_mode=False):
         return tag
 
 
-def defaultnodes(replicas, cluster, domain, masters, workers):
+def defaultnodes(replicas, cluster, domain, ctlplanes, workers):
     nodes = []
     for num in range(workers):
         if len(nodes) < replicas:
             nodes.append('%s-worker-%d.%s' % (cluster, num, domain))
-    for num in range(masters):
+    for num in range(ctlplanes):
         if len(nodes) < replicas:
-            nodes.append('%s-master-%d.%s' % (cluster, num, domain))
+            nodes.append('%s-ctlplane-%d.%s' % (cluster, num, domain))
     return nodes
 
 

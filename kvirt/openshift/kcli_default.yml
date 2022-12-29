@@ -1,5 +1,5 @@
 info: |
-    Deploys an openshift cluster with an arbitray number of masters or workers using openshift-install
+    Deploys an openshift cluster with an arbitray number of ctlplanes or workers using openshift-install
     and creating the nodes with kcli.
     This allows easily tweaking the hardware caracteristics of those nodes.
     When running on cloud platforms, loadbalancer and dns from the platform are used.
@@ -21,7 +21,7 @@ network: default
 worker_network:
 api_ip: 
 ingress_ip: 
-masters: 3
+ctlplanes: 3
 workers: 0
 fips: false
 cluster: testk
@@ -36,15 +36,15 @@ minimal: false
 pool:
 flavor:
 flavor_bootstrap:
-flavor_master:
+flavor_ctlplane:
 flavor_worker:
 numcpus: 8
 bootstrap_numcpus:
-master_numcpus:
+ctlplane_numcpus:
 worker_numcpus:
 memory: 16384
 bootstrap_memory: 8192
-master_memory:
+ctlplane_memory:
 worker_memory:
 coredns: true
 mdns: true
@@ -59,10 +59,10 @@ kubevirt_api_service: false
 kubevirt_disk_size:
 kubevirt_ignore_node_port: false
 extra_disks: []
-extra_master_disks: []
+extra_ctlplane_disks: []
 extra_worker_disks: []
 extra_networks: []
-extra_master_networks: []
+extra_ctlplane_networks: []
 extra_worker_networks: []
 disconnected_url:
 disconnected_deploy: false
@@ -97,7 +97,7 @@ sno_disk:
 sno_dns: true
 sno_cloud_remove_lb: true
 sno_disable_nics: []
-sno_masters: false
+sno_ctplanes: false
 sno_workers: false
 sno_wait: true
 sno_localhost_fix: false
@@ -119,14 +119,14 @@ notify: false
 monitoring_retention: 24h
 baremetal_iso: false
 baremetal_iso_bootstrap: false
-baremetal_iso_master: false
+baremetal_iso_ctlplane: false
 baremetal_iso_worker: false
 baremetal_hosts: []
 baremetal_web: true
 baremetal_web_port: 80
 baremetal_web_dir: /var/www/html
 threaded: false
-masters_threaded: false
+ctlplanes_threaded: false
 workers_threaded: false
 tempkey: false
 kubeadmin_password:

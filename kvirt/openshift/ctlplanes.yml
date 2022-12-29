@@ -1,15 +1,15 @@
-{% for num in range(0, masters|int) %}
-{% if extra_master_networks %}
-{% set extra_networks = extra_master_networks %}
+{% for num in range(0, ctlplanes|int) %}
+{% if extra_ctlplane_networks %}
+{% set extra_networks = extra_ctlplane_networks %}
 {% endif %}
-{% if extra_master_disks %}
-{% set extra_disks = extra_master_disks %}
+{% if extra_ctlplane_disks %}
+{% set extra_disks = extra_ctlplane_disks %}
 {% endif %}
-{% if flavor_master != None %}
-{% set flavor = flavor_master %}
+{% if flavor_ctlplane != None %}
+{% set flavor = flavor_ctlplane %}
 {% endif %}
 
-{{ cluster }}-master-{{ num }}:
+{{ cluster }}-ctlplane-{{ num }}:
  domain: {{ domain }} 
  image: {{ image }}
  pool: {{ pool or config_pool }}
@@ -17,8 +17,8 @@
  notify: false
  flavor: {{ flavor }}
  keys: {{ keys }}
- numcpus: {{ master_numcpus | default(numcpus, numcpus) }}
- memory: {{ master_memory | default(memory, memory) }}
+ numcpus: {{ ctlplane_numcpus | default(numcpus, numcpus) }}
+ memory: {{ ctlplane_memory | default(memory, memory) }}
  autostart: {{ autostart }}
 {% if kvm_forcestack %}
  cmdline: {{ 'ip=dhcp6' if ':' in api_ip else 'ip=dhcp' }}

@@ -2,11 +2,11 @@ client: sphere_karim
 cluster: ci-vsphere
 domain: karmalabs.corp
 sslip: true
-masters: 3
+ctlplanes: 3
 workers: 0
 numcpus: 16
 api_ip: 10.19.135.229
-master_memory: 28672
+ctlplane_memory: 28672
 worker_memory: 16384
 bootstrap_memory: 8192
 disk_size: 40

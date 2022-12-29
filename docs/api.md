@@ -3882,7 +3882,7 @@ Kvirt containerconfig class
 >         replicas,
 >         cluster,
 >         domain,
->         masters,
+>         ctlplanes,
 >         workers
 >     )
 
@@ -3938,7 +3938,7 @@ Kvirt containerconfig class
 >     def ocpnodes(
 >         cluster,
 >         platform,
->         masters,
+>         ctlplanes,
 >         workers
 >     )
 

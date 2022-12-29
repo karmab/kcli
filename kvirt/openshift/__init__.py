@@ -308,7 +308,7 @@ def process_postscripts(clusterdir, postscripts):
 
 def wait_for_ignition(cluster, domain, role='worker'):
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
-    ignitionfile = f"{clusterdir}/{role}.ign"
+    ignitionfile = "{clusterdir}/ctlplane.ign" if role == 'master' else f"{clusterdir}/worker.ign"
     os.remove(ignitionfile)
     while not os.path.exists(ignitionfile) or os.stat(ignitionfile).st_size == 0:
         try:
@@ -408,7 +408,7 @@ def scale(config, plandir, cluster, overrides):
             yaml.safe_dump(data, paramfile)
     image = data.get('image')
     if image is None:
-        cluster_image = k.info(f"{cluster}-master-0").get('image')
+        cluster_image = k.info(f"{cluster}-ctlplane-0").get('image')
         if cluster_image is None:
             error("Missing image...")
             sys.exit(1)
@@ -431,7 +431,7 @@ def scale(config, plandir, cluster, overrides):
             iso_url = f'http://{svcip}:{svcport}/{cluster}-worker.iso'
         boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
         overrides['workers'] = overrides.get('workers', 0) - len(new_baremetal_hosts)
-    for role in ['masters', 'workers']:
+    for role in ['ctlplanes', 'workers']:
         overrides = data.copy()
         threaded = data.get('threaded', False) or data.get(f'{role}_threaded', False)
         if overrides.get(role, 0) <= 0:
@@ -454,7 +454,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     pprint(f"Deploying on client {client}")
     data = {'domain': 'karmalabs.corp',
             'network': 'default',
-            'masters': 1,
+            'ctlplanes': 1,
             'workers': 0,
             'tag': OPENSHIFT_TAG,
             'ipv6': False,
@@ -473,7 +473,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'manifests': 'manifests',
             'sno': False,
             'sno_virtual': False,
-            'sno_masters': False,
+            'sno_ctlplanes': False,
             'sno_workers': False,
             'sno_wait': True,
             'sno_localhost_fix': False,
@@ -508,10 +508,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     baremetal_iso = data.get('baremetal_iso', False)
     baremetal_hosts = data.get('baremetal_hosts', [])
     baremetal_iso_bootstrap = data.get('baremetal_iso_bootstrap', baremetal_iso)
-    baremetal_iso_master = data.get('baremetal_iso_master', baremetal_iso)
+    baremetal_iso_ctlplane = data.get('baremetal_iso_ctlplane', baremetal_iso)
     baremetal_iso_worker = data.get('baremetal_iso_worker', baremetal_iso)
-    baremetal_iso_any = baremetal_iso_bootstrap or baremetal_iso_master or baremetal_iso_worker
-    baremetal_iso_all = baremetal_iso_bootstrap and baremetal_iso_master and baremetal_iso_worker
+    baremetal_iso_any = baremetal_iso_bootstrap or baremetal_iso_ctlplane or baremetal_iso_worker
+    baremetal_iso_all = baremetal_iso_bootstrap and baremetal_iso_ctlplane and baremetal_iso_worker
     notify = data.get('notify')
     postscripts = data.get('postscripts', [])
     pprint(f"Deploying cluster {clustervalue}")
@@ -519,7 +519,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     overrides['kubetype'] = 'openshift'
     apps = overrides.get('apps', [])
     if ('localstorage' in apps or 'ocs' in apps) and 'extra_disks' not in overrides\
-            and 'extra_master_disks' not in overrides and 'extra_worker_disks' not in overrides:
+            and 'extra_ctlplane_disks' not in overrides and 'extra_worker_disks' not in overrides:
         warning("Storage apps require extra disks to be set")
     overrides['kube'] = data['cluster']
     installparam = overrides.copy()
@@ -528,22 +528,22 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     ignore_hosts = data.get('ignore_hosts', False)
     if sno:
         sno_virtual = data.get('sno_virtual')
-        sno_masters = data.get('sno_masters')
+        sno_ctlplanes = data.get('sno_ctlplanes')
         sno_workers = data.get('sno_workers')
         sno_wait = data.get('sno_wait')
         if sno_virtual:
-            sno_memory = data.get('master_memory', data.get('memory', 8192))
+            sno_memory = data.get('ctlplane_memory', data.get('memory', 8192))
             if sno_memory < 20480:
                 error("Sno won't deploy with less than 20gb of RAM.Forcing to that")
-                data['master_memory'] = 20480
-            sno_cpus = data.get('master_numcpus', data.get('numcpus', 4))
+                data['ctlplane_memory'] = 20480
+            sno_cpus = data.get('ctlplane_numcpus', data.get('numcpus', 4))
             if sno_cpus < 8:
                 error("Sno won't deploy with less than 8 cpus.Forcing to that")
-                data['master_numcpus'] = 8
+                data['ctlplane_numcpus'] = 8
         sno_disk = data.get('sno_disk')
         if sno_disk is None:
             warning("sno_disk will be discovered")
-        masters = 1
+        ctlplanes = 1
         workers = 0
         data['mdns'] = False
         data['kubetype'] = 'openshift'
@@ -551,9 +551,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if data.get('network_type', 'OpenShiftSDN') == 'OpenShiftSDN':
             warning("Forcing network_type to OVNKubernetes")
             data['network_type'] = 'OVNKubernetes'
-    masters = data.get('masters', 1)
-    if masters == 0:
-        error("Invalid number of masters")
+    ctlplanes = data.get('ctlplanes', 1)
+    if ctlplanes == 0:
+        error("Invalid number of ctlplanes")
         sys.exit(1)
     network = data.get('network')
     ipv6 = data['ipv6']
@@ -612,7 +612,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             warning(f"Using {api_ip} as api_ip")
             overrides['api_ip'] = api_ip
         elif platform == 'kubevirt':
-            selector = {'kcli/plan': plan, 'kcli/role': 'master'}
+            selector = {'kcli/plan': plan, 'kcli/role': 'ctlplane'}
             service_type = "LoadBalancer" if k.access_mode == 'LoadBalancer' else 'NodePort'
             if service_type == 'NodePort':
                 kubevirt_api_service_node_port = True
@@ -658,7 +658,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         ignore_hosts = False
     public_api_ip = data.get('public_api_ip')
     network = data.get('network')
-    masters = data.get('masters')
+    ctlplanes = data.get('ctlplanes')
     workers = data.get('workers')
     tag = data.get('tag')
     pull_secret = pwd_path(data.get('pull_secret')) if not upstream else f"{plandir}/fake_pull.json"
@@ -808,7 +808,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             error(f"Missing {image}. Indicate correct image in your parameters file...")
             sys.exit(1)
     overrides['image'] = image
-    static_networking_master, static_networking_worker = False, False
+    static_networking_ctlplane, static_networking_worker = False, False
     macentries = []
     vmrules = overrides.get('vmrules', [])
     for entry in vmrules:
@@ -824,11 +824,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                         nameserver = netrule.get('dns', gateway)
                         if mac is not None and gateway is not None:
                             macentries.append(f"{mac};{hostname};{ip};{netmask};{gateway};{nameserver}")
-                        if hostname.startswith(f"{cluster}-master"):
-                            static_networking_master = True
+                        if hostname.startswith(f"{cluster}-ctlplane"):
+                            static_networking_ctlplane = True
                         elif hostname.startswith(f"{cluster}-worker"):
                             static_networking_worker = True
-    if macentries and (baremetal_iso_master or baremetal_iso_worker):
+    if macentries and (baremetal_iso_ctlplane or baremetal_iso_worker):
         pprint("Creating a macs.txt to include in isos for static networking")
         with open('macs.txt', 'w') as f:
             f.write('\n'.join(macentries))
@@ -955,15 +955,15 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if ipi_platform in ['baremetal', 'libvirt', 'kvm']:
             data['libvirt_url'] = k.url
         if ipi_platform == 'baremetal':
-            baremetal_masters = data.get('baremetal_masters', [])
+            baremetal_ctlplanes = data.get('baremetal_ctlplanes', [])
             baremetal_workers = data.get('baremetal_workers', [])
-            if not baremetal_masters:
-                error("You need to define baremetal_masters in your parameters file")
+            if not baremetal_ctlplanes:
+                error("You need to define baremetal_ctlplanes in your parameters file")
                 sys.exit(1)
-            if len(baremetal_masters) != masters:
-                warning("Forcing masters number to match baremetal_masters length")
-                masters = len(baremetal_masters)
-                data['masters'] = masters
+            if len(baremetal_ctlplanes) != ctlplanes:
+                warning("Forcing ctlplanes number to match baremetal_ctlplanes length")
+                ctlplanes = len(baremetal_ctlplanes)
+                data['ctlplanes'] = ctlplanes
             if len(baremetal_workers) != workers:
                 warning("Forcing worker number to match baremetal_workers length")
                 workers = len(baremetal_workers)
@@ -985,15 +985,16 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             if run != 0:
                 error("Leaving environment for debugging purposes")
                 sys.exit(run)
-            mastermanifest = f"{clusterdir}/openshift/99_openshift-cluster-api_master-machines-0.yaml"
+            ctlplanemanifest = f"{clusterdir}/openshift/99_openshift-cluster-api_master-machines-0.yaml"
             workermanifest = f"{clusterdir}/openshift/99_openshift-cluster-api_worker-machineset-0.yaml"
-            master_memory = data.get('master_memory') if data.get('master_memory') is not None else data['memory']
+            ctlplane_memory = data.get('ctlplane_memory') if data.get('ctlplane_memory') is not None else data['memory']
             worker_memory = data.get('worker_memory') if data.get('worker_memory') is not None else data['memory']
-            call(f'sed -i "s/domainMemory: .*/domainMemory: {master_memory}/" {mastermanifest}', shell=True)
+            call(f'sed -i "s/domainMemory: .*/domainMemory: {ctlplane_memory}/" {ctlplanemanifest}', shell=True)
             call(f'sed -i "s/domainMemory: .*/domainMemory: {worker_memory}/" {workermanifest}', shell=True)
-            master_numcpus = data.get('master_numcpus') if data.get('master_numcpus') is not None else data['numcpus']
+            ctlplane_numcpus = data.get('ctlplane_numcpus') if data.get('ctlplane_numcpus') is not None\
+                else data['numcpus']
             worker_numcpus = data.get('worker_numcpus') if data.get('worker_numcpus') is not None else data['numcpus']
-            call(f'sed -i "s/domainVcpu: .*/domainVcpu: {master_numcpus}/" {mastermanifest}', shell=True)
+            call(f'sed -i "s/domainVcpu: .*/domainVcpu: {ctlplane_numcpus}/" {ctlplanemanifest}', shell=True)
             call(f'sed -i "s/domainVcpu: .*/domainVcpu: {worker_numcpus}/" {workermanifest}', shell=True)
             old_libvirt_url = data['libvirt_url']
             if 'ssh' in old_libvirt_url or old_libvirt_url == 'qemu:///system':
@@ -1117,11 +1118,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     for f in glob(f"{plandir}/customisation/*.yaml"):
         if '99-ingress-controller.yaml' in f:
             ingressrole = 'master' if workers == 0 or not mdns or kubevirt_api_service else 'worker'
-            replicas = masters if workers == 0 or not mdns or kubevirt_api_service else workers
+            replicas = ctlplanes if workers == 0 or not mdns or kubevirt_api_service else workers
             if platform in virtplatforms and sslip and ingress_ip is None:
-                replicas = masters
+                replicas = ctlplanes
                 ingressrole = 'master'
-                warning("Forcing router pods to land on masters since sslip is set and api_ip will be used for ingress")
+                warning("Forcing router pods on ctlplanes since sslip is set and api_ip will be used for ingress")
                 copy2(f'{plandir}/cluster-scheduler-02-config.yml', f"{clusterdir}/manifests")
             ingressconfig = config.process_inputfile(cluster, f, overrides={'replicas': replicas, 'role': ingressrole,
                                                                             'cluster': cluster, 'domain': domain})
@@ -1269,15 +1270,15 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             with open(f"{clusterdir}/openshift/99-sno.yaml", 'w') as f:
                 f.write(rendered)
         if sno_localhost_fix:
-            localmaster = config.process_inputfile(cluster, f"{plandir}/99-localhost-fix.yaml",
-                                                   overrides={'role': 'master'})
-            with open(f"{clusterdir}/openshift/99-localhost-fix-master.yaml", 'w') as _f:
-                _f.write(localmaster)
+            localctlplane = config.process_inputfile(cluster, f"{plandir}/99-localhost-fix.yaml",
+                                                     overrides={'role': 'master'})
+            with open(f"{clusterdir}/openshift/99-localhost-fix-ctlplane.yaml", 'w') as _f:
+                _f.write(localctlplane)
             localworker = config.process_inputfile(cluster, f"{plandir}/99-localhost-fix.yaml",
                                                    overrides={'role': 'worker'})
             with open(f"{clusterdir}/openshift/99-localhost-fix-worker.yaml", 'w') as _f:
                 _f.write(localworker)
-        if sno_masters:
+        if sno_ctlplanes:
             ingress = config.process_inputfile(cluster, f"{plandir}/customisation/99-ingress-controller.yaml",
                                                overrides={'role': 'master', 'cluster': cluster, 'domain': domain,
                                                           'replicas': 3})
@@ -1313,7 +1314,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             pprint(f"Storing generated iso in pool {iso_pool}")
             generate_rhcos_iso(k, f"{cluster}-sno", iso_pool, installer=True, extra_args=extra_args)
             if sno_virtual:
-                warning("Note that you can also get a sno by setting masters to 1")
+                warning("Note that you can also get a sno by setting ctlplanes to 1")
                 pprint("Deploying sno vm")
                 result = config.plan(plan, inputfile=f'{plandir}/sno.yml', overrides=data)
                 if result['result'] != 'success':
@@ -1323,14 +1324,14 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                         api_ip = k.info(sno_name).get('ip')
                         pprint("Waiting 5s to retrieve sno ip...")
                         sleep(5)
-        if sno_masters:
+        if sno_ctlplanes:
             if api_ip is None:
-                warning("sno masters requires api vip to be defined. Skipping")
+                warning("sno ctlplanes requires api vip to be defined. Skipping")
             else:
-                master_overrides = overrides.copy()
-                master_overrides['role'] = 'master'
-                master_overrides['image'] = 'rhcos410'
-                config.create_openshift_iso(cluster, overrides=master_overrides, installer=True)
+                ctlplane_overrides = overrides.copy()
+                ctlplane_overrides['role'] = 'master'
+                ctlplane_overrides['image'] = 'rhcos410'
+                config.create_openshift_iso(cluster, overrides=ctlplane_overrides, installer=True)
         if sno_workers:
             worker_overrides = overrides.copy()
             worker_overrides['role'] = 'worker'
@@ -1363,8 +1364,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             info2(f"Access the Openshift web-console here: {console}")
             info2(f"Login to the console with user: kubeadmin, password: {kubepassword}")
             pprint(f"Plug {cluster}-sno.iso to your SNO node to complete the installation")
-            if sno_masters:
-                pprint(f"Plug {cluster}-master.iso to get additional masters")
+            if sno_ctlplanes:
+                pprint(f"Plug {cluster}-master.iso to get additional ctlplanes")
             if sno_workers:
                 pprint(f"Plug {cluster}-worker.iso to get additional workers")
         backup_paramfile(installparam, clusterdir, cluster, plan, image, dnsconfig)
@@ -1375,9 +1376,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         error("Leaving environment for debugging purposes")
         error(f"You can delete it with kcli delete kube --yes {cluster}")
         sys.exit(run)
-    for role in ['master', 'worker']:
-        ori = f"{clusterdir}/{role}.ign"
-        copy2(ori, f"{ori}.ori")
+    copy2(f"{clusterdir}/master.ign", f"{clusterdir}/ctlplane.ign")
+    move(f"{clusterdir}/master.ign", f"{clusterdir}/master.ign.ori")
+    copy2(f"{clusterdir}/worker.ign", f"{clusterdir}/worker.ign.ori")
     if platform in virtplatforms:
         overrides['virtual_router_id'] = data.get('virtual_router_id') or hash(cluster) % 254 + 1
         virtual_router_id = overrides['virtual_router_id']
@@ -1392,13 +1393,13 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             warning("Ignoring /etc/hosts")
         else:
             update_etc_hosts(cluster, domain, host_ip, ingress_ip)
-        sedcmd = f'sed -i "s@api-int.{cluster}.{domain}@{api_ip}@" {clusterdir}/master.ign {clusterdir}/worker.ign'
+        sedcmd = f'sed -i "s@api-int.{cluster}.{domain}@{api_ip}@" {clusterdir}/ctlplane.ign {clusterdir}/worker.ign'
         call(sedcmd, shell=True)
         sedcmd = f'sed -i "s@https://{api_ip}:22623/config@http://{api_ip}:22624/config@"'
-        sedcmd += f' {clusterdir}/master.ign {clusterdir}/worker.ign'
+        sedcmd += f' {clusterdir}/ctlplane.ign {clusterdir}/worker.ign'
         call(sedcmd, shell=True)
         if ipv6:
-            sedcmd = f'sed -i "s@{api_ip}@[{api_ip}]@" {clusterdir}/master.ign {clusterdir}/worker.ign'
+            sedcmd = f'sed -i "s@{api_ip}@[{api_ip}]@" {clusterdir}/ctlplane.ign {clusterdir}/worker.ign'
             call(sedcmd, shell=True)
     if platform in cloudplatforms + ['openstack']:
         bucket = "%s-%s" % (cluster, domain.replace('.', '-'))
@@ -1411,7 +1412,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         else:
             ori_url = f"https://api-int.{cluster}.{domain}:22623"
         sedcmd = f'sed "s@{ori_url}/config/master@{bucket_url}@" '
-        sedcmd += f'{clusterdir}/master.ign > {clusterdir}/bootstrap.ign'
+        sedcmd += f'{clusterdir}/ctlplane.ign > {clusterdir}/bootstrap.ign'
         call(sedcmd, shell=True)
     if baremetal_iso_any:
         baremetal_iso_overrides = overrides.copy()
@@ -1442,14 +1443,14 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             result = config.plan(plan, inputfile=f'{plandir}/bootstrap.yml', overrides=overrides)
             if result['result'] != 'success':
                 sys.exit(1)
-        if static_networking_master and not baremetal_iso_master:
+        if static_networking_ctlplane and not baremetal_iso_ctlplane:
             wait_for_ignition(cluster, domain, role='master')
-        pprint("Deploying masters")
-        if baremetal_iso_master:
-            result = config.plan(plan, inputfile=f'{plandir}/masters.yml', overrides=baremetal_iso_overrides,
+        pprint("Deploying ctlplanes")
+        if baremetal_iso_ctlplane:
+            result = config.plan(plan, inputfile=f'{plandir}/ctlplanes.yml', overrides=baremetal_iso_overrides,
                                  onlyassets=True)
             iso_data = result['assets'][0]
-            ignitionfile = f'{cluster}-master.ign'
+            ignitionfile = f'{cluster}-ctlplane.ign'
             with open(ignitionfile, 'w') as f:
                 f.write(iso_data)
             baremetal_iso_overrides['role'] = 'master'
@@ -1457,10 +1458,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                                         podman=True, installer=True)
             os.remove(ignitionfile)
         else:
-            threaded = data.get('threaded', False) or data.get('masters_threaded', False)
+            threaded = data.get('threaded', False) or data.get('ctlplanes_threaded', False)
             if baremetal_hosts:
                 overrides['workers'] = overrides['workers'] - len(baremetal_hosts)
-            result = config.plan(plan, inputfile=f'{plandir}/masters.yml', overrides=overrides, threaded=threaded)
+            result = config.plan(plan, inputfile=f'{plandir}/ctlplanes.yml', overrides=overrides, threaded=threaded)
         if result['result'] != 'success':
             sys.exit(1)
         todelete = [f"{cluster}-bootstrap"]
@@ -1476,32 +1477,32 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             sys.exit(1)
         sedcmd = 'sed -i "s@https://api-int.%s.%s:22623/config@http://api-int.%s.%s:22624/config@"' % (cluster, domain,
                                                                                                        cluster, domain)
-        sedcmd += f' {clusterdir}/master.ign {clusterdir}/worker.ign'
+        sedcmd += f' {clusterdir}/ctlplane.ign {clusterdir}/worker.ign'
         call(sedcmd, shell=True)
         if platform == 'ibm':
             while api_ip is None:
                 api_ip = k.info(f"{cluster}-bootstrap").get('private_ip')
                 pprint("Gathering bootstrap private ip")
                 sleep(10)
-            sedcmd = f'sed -i "s@api-int.{cluster}.{domain}@{api_ip}@" {clusterdir}/master.ign'
+            sedcmd = f'sed -i "s@api-int.{cluster}.{domain}@{api_ip}@" {clusterdir}/ctlplane.ign'
             call(sedcmd, shell=True)
-        pprint("Deploying masters")
-        threaded = data.get('threaded', False) or data.get('masters_threaded', False)
-        result = config.plan(plan, inputfile=f'{plandir}/cloud_masters.yml', overrides=overrides, threaded=threaded)
+        pprint("Deploying ctlplanes")
+        threaded = data.get('threaded', False) or data.get('ctlplanes_threaded', False)
+        result = config.plan(plan, inputfile=f'{plandir}/cloud_ctlplanes.yml', overrides=overrides, threaded=threaded)
         if result['result'] != 'success':
             sys.exit(1)
         if platform == 'ibm':
-            first_master_ip = None
-            while first_master_ip is None:
-                first_master_ip = k.info(f"{cluster}-master-0").get('private_ip')
-                pprint("Gathering first master bootstrap ip")
+            first_ctlplane_ip = None
+            while first_ctlplane_ip is None:
+                first_ctlplane_ip = k.info(f"{cluster}-ctlplane-0").get('private_ip')
+                pprint("Gathering first ctlplane bootstrap ip")
                 sleep(10)
-            sedcmd = f'sed -i "s@api-int.{cluster}.{domain}@{first_master_ip}@" {clusterdir}/worker.ign'
+            sedcmd = f'sed -i "s@api-int.{cluster}.{domain}@{first_ctlplane_ip}@" {clusterdir}/worker.ign'
             call(sedcmd, shell=True)
         result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_api.yml', overrides=overrides)
         if result['result'] != 'success':
             sys.exit(1)
-        lb_overrides = {'cluster': cluster, 'domain': domain, 'members': masters, 'role': 'master'}
+        lb_overrides = {'cluster': cluster, 'domain': domain, 'members': ctlplanes, 'role': 'master'}
         if 'dnsclient' in overrides:
             lb_overrides['dnsclient'] = overrides['dnsclient']
         if workers == 0:
@@ -1595,11 +1596,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
     process_apps(config, clusterdir, apps, overrides)
     process_postscripts(clusterdir, postscripts)
-    if platform in cloudplatforms and masters == 1 and workers == 0 and data.get('sno_cloud_remove_lb', True):
-        pprint("Removing loadbalancers as there is a single master")
+    if platform in cloudplatforms and ctlplanes == 1 and workers == 0 and data.get('sno_cloud_remove_lb', True):
+        pprint("Removing loadbalancers as there is a single ctlplane")
         k.delete_loadbalancer(f"api.{cluster}")
         k.delete_loadbalancer(f"apps.{cluster}")
-        api_ip = k.info(f"{cluster}-master-0").get('ip')
+        api_ip = k.info(f"{cluster}-ctlplane-0").get('ip')
         k.delete_dns(f'api.{cluster}', domain=domain)
         k.reserve_dns(f'api.{cluster}', domain=domain, ip=api_ip)
         k.delete_dns(f'apps.{cluster}', domain=domain)

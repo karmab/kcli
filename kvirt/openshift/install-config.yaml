@@ -70,15 +70,15 @@ compute:
 {% endif %}
 controlPlane:
   name: master
-  replicas: {{ 1 if sno else masters }}
+  replicas: {{ 1 if sno else ctlplanes }}
 {% if ipi %}
 {% if ipi_platform == 'ovirt' %}
   platform:
     ovirt:
       cpu:
-        cores: {{ master_numcpus | default(numcpus, numcpus) }}
+        cores: {{ ctlplane_numcpus | default(numcpus, numcpus) }}
         sockets: 1
-      memoryMB: {{ master_memory | default(memory, memory) }}
+      memoryMB: {{ ctlplane_memory | default(memory, memory) }}
       osDisk:
         sizeGB: {{ disk_size }}
       vmType: server
@@ -86,10 +86,10 @@ controlPlane:
   platform:
     vsphere:
       cpu:
-        cpus: {{ master_numcpus | default(numcpus, numcpus) }}
+        cpus: {{ ctlplane_numcpus | default(numcpus, numcpus) }}
         coresPerSocket: 1
         sockets: 1
-      memoryMB: {{ master_memory | default(memory, memory) }}
+      memoryMB: {{ ctlplane_memory | default(memory, memory) }}
       osDisk:
         diskSizeGB: {{ disk_size }}
 {% endif %}
@@ -154,30 +154,30 @@ platform:
     externalBridge: {{ network }}
     libvirtURI: {{ libvirt_url }}
     hosts:
-{% for master in baremetal_masters %}
+{% for ctlplane in baremetal_ctlplanes %}
 {% set num = loop.index0|string %}
-    - name: {{ cluster }}-master-{{ num }}
+    - name: {{ cluster }}-ctlplane-{{ num }}
       role: master
       bmc:
-        {% if 'redfish_address' in master %}
+        {% if 'redfish_address' in ctlplane %}
         disableCertificateVerification: True
-        {% if 'redfish' in master['redfish_address'] or 'idrac' in master['redfish_address'] %}
-        address: {{ master['redfish_address'] }}
-        {% elif master['model']|default('idrac') == 'hpe' %}
-        address: redfish-virtualmedia://{{ master['redfish_address'] }}/redfish/v1/Systems/1
+        {% if 'redfish' in ctlplane['redfish_address'] or 'idrac' in ctlplane['redfish_address'] %}
+        address: {{ ctlplane['redfish_address'] }}
+        {% elif ctlplane['model']|default('idrac') == 'hpe' %}
+        address: redfish-virtualmedia://{{ ctlplane['redfish_address'] }}/redfish/v1/Systems/1
         {% else %}
-        address: idrac-virtualmedia://{{ master['redfish_address'] }}/redfish/v1/Systems/System.Embedded.1
+        address: idrac-virtualmedia://{{ ctlplane['redfish_address'] }}/redfish/v1/Systems/System.Embedded.1
         {% endif %}
         {% endif %}
-        username: {{ master['user']|default(baremetal_user) }}
-        password: {{ master['password']|default(baremetal_password) }}
-{% if 'boot_mode' in master %}
-      bootMode: {{ master['boot_mode'] }}
+        username: {{ ctlplane['user']|default(baremetal_user) }}
+        password: {{ ctlplane['password']|default(baremetal_password) }}
+{% if 'boot_mode' in ctlplane %}
+      bootMode: {{ ctlplane['boot_mode'] }}
 {% endif %}
-      bootMACAddress: {{ master['provisioning_mac'] }}
-      {% if 'disk' in master %}
+      bootMACAddress: {{ ctlplane['provisioning_mac'] }}
+      {% if 'disk' in ctlplane %}
       rootDeviceHints:
-        deviceName: "/dev/{{ master['disk'] | basename }}"
+        deviceName: "/dev/{{ ctlplane['disk'] | basename }}"
       {% endif %}
 {% endfor %}
 {% for worker in baremetal_workers|default([]) %}

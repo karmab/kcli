@@ -23,7 +23,7 @@ def url_exists(url):
 
 def fetch(url, path):
     if 'raw.githubusercontent.com' not in url:
-        url = url.replace('github.com', 'raw.githubusercontent.com').replace('blob/master', 'master')
+        url = url.replace('github.com', 'raw.githubusercontent.com').replace('blob/main', 'main')
     shortname = os.path.basename(url)
     if not os.path.exists(path):
         os.mkdir(path)

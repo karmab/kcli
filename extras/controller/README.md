@@ -24,12 +24,12 @@ kubectl create configmap ssh-config --from-file=$HOME/.ssh
 Then deploy the controller:
 
 ```
-kubectl create -f https://raw.githubusercontent.com/karmab/kcli/master/extras/controller/deploy.yml
+kubectl create -f https://raw.githubusercontent.com/karmab/kcli/main/extras/controller/deploy.yml
 ```
 
 ## How to use
 
-The directory [extras/controller/examples](https://github.com/karmab/kcli/tree/master/extras/controller/examples) contains different examples of vm, plan and cluster CRs.
+The directory [extras/controller/examples](https://github.com/karmab/kcli/tree/main/extras/controller/examples) contains different examples of vm, plan and cluster CRs.
 
 Here are some sample ones for each type to get you started
 
@@ -91,7 +91,7 @@ kind: Cluster
 metadata:
   name: hendrix
 spec:
-  masters: 1
+  ctlplanes: 1
   api_ip: 192.168.122.252
 ```
 

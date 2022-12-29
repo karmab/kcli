@@ -17,9 +17,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     data['cluster'] = overrides.get('cluster', cluster if cluster is not None else 'testk')
     plan = cluster if cluster is not None else data['cluster']
     data['kube'] = data['cluster']
-    masters = data.get('masters', 1)
-    if masters == 0:
-        error("Invalid number of masters")
+    ctlplanes = data.get('ctlplanes', 1)
+    if ctlplanes == 0:
+        error("Invalid number of ctlplanes")
         sys.exit(1)
     clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
     if os.path.exists(clusterdir):

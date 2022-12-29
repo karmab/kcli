@@ -36,7 +36,7 @@ def scale(config, plandir, cluster, overrides):
     if 'ubuntu' not in data:
         data['ubuntu'] = 'ubuntu' in image.lower() or len([u for u in UBUNTUS if u in image]) > 0
     os.chdir(os.path.expanduser("~/.kcli"))
-    for role in ['masters', 'workers']:
+    for role in ['ctlplanes', 'workers']:
         overrides = data.copy()
         overrides['scale'] = True
         if overrides.get(role, 0) == 0:
@@ -57,25 +57,25 @@ def create(config, plandir, cluster, overrides):
     plan = cluster if cluster is not None else data['cluster']
     data['kube'] = data['cluster']
     cloud_lb = data.get('cloud_lb', True)
-    masters = data.get('masters', 1)
-    if masters == 0:
-        error("Invalid number of masters")
+    ctlplanes = data.get('ctlplanes', 1)
+    if ctlplanes == 0:
+        error("Invalid number of ctlplanes")
         sys.exit(1)
-    if masters > 1 and platform in cloudplatforms and not cloud_lb:
-        error("multiple masters require cloud_lb to be set to True")
+    if ctlplanes > 1 and platform in cloudplatforms and not cloud_lb:
+        error("multiple ctlplanes require cloud_lb to be set to True")
         sys.exit(1)
     network = data.get('network', 'default')
     api_ip = data.get('api_ip')
     if platform in cloudplatforms:
         domain = data.get('domain', 'karmalabs.corp')
-        api_ip = f"{cluster}-master.{domain}"
+        api_ip = f"{cluster}-ctlplane.{domain}"
     elif api_ip is None:
         if network == 'default' and platform == 'kvm':
             warning("Using 192.168.122.253 as api_ip")
             data['api_ip'] = "192.168.122.253"
             api_ip = "192.168.122.253"
         elif platform == 'kubevirt':
-            selector = {'kcli/plan': plan, 'kcli/role': 'master'}
+            selector = {'kcli/plan': plan, 'kcli/role': 'ctlplane'}
             service_type = "LoadBalancer" if k.access_mode == 'LoadBalancer' else 'ClusterIP'
             api_ip = config.k.create_service(f"{cluster}-api", config.k.namespace, selector, _type=service_type,
                                              ports=[6443])
@@ -130,15 +130,15 @@ def create(config, plandir, cluster, overrides):
     result = config.plan(plan, inputfile=f'{plandir}/bootstrap.yml', overrides=data)
     if result['result'] != "success":
         sys.exit(1)
-    if masters > 1:
-        master_threaded = data.get('threaded', False) or data.get('masters_threaded', False)
-        result = config.plan(plan, inputfile=f'{plandir}/masters.yml', overrides=data, threaded=master_threaded)
+    if ctlplanes > 1:
+        ctlplane_threaded = data.get('threaded', False) or data.get('ctlplanes_threaded', False)
+        result = config.plan(plan, inputfile=f'{plandir}/ctlplanes.yml', overrides=data, threaded=ctlplane_threaded)
         if result['result'] != "success":
             sys.exit(1)
     if cloud_lb and config.type in cloudplatforms:
         config.k.delete_dns(f'api.{cluster}', domain=domain)
         if config.type == 'aws':
-            data['vpcid'] = config.k.get_vpcid_of_vm(f"{cluster}-master-0")
+            data['vpcid'] = config.k.get_vpcid_of_vm(f"{cluster}-ctlplane-0")
         result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_api.yml', overrides=data)
         if result['result'] != 'success':
             sys.exit(1)
@@ -170,7 +170,7 @@ def create(config, plandir, cluster, overrides):
     if data['wait_ready']:
         pprint("Waiting for all nodes to join cluster")
         while True:
-            if len(os.popen("kubectl get node -o name").readlines()) == masters + workers:
+            if len(os.popen("kubectl get node -o name").readlines()) == ctlplanes + workers:
                 break
             else:
                 sleep(10)

@@ -157,7 +157,7 @@ kubevirt:
  token: XXXXXXXX
  # additional dict of kubernetes tags to put to all created vms in their nodeSelector. Can be further indicated at profile or plan level in which case values are combined. This provides an easy way to force vms to run on specific nodes, by matching labels
  tags:
-   region: master
+   region: ontario
  # whether to create vms on multus backed networks.  true
  multus: True
  # whether to use cdi.  true when cdi is found. A check on whether cdi is actually present will be performed

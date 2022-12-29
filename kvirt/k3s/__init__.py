@@ -33,7 +33,7 @@ def scale(config, plandir, cluster, overrides):
     vmrules_all_names = []
     if data.get('vmrules', config.vmrules) and data.get('vmrules_strict', config.vmrules_strict):
         vmrules_all_names = [list(entry.keys())[0] for entry in data.get('vmrules', config.vmrules)]
-    for role in ['masters', 'workers']:
+    for role in ['ctlplanes', 'workers']:
         install_k3s_args = []
         for arg in data:
             if arg.startswith('install_k3s'):
@@ -41,8 +41,8 @@ def scale(config, plandir, cluster, overrides):
         overrides = data.copy()
         overrides['scale'] = True
         threaded = data.get('threaded', False) or data.get(f'{role}_threaded', False)
-        if role == 'masters':
-            if overrides.get('masters', 1) == 1:
+        if role == 'ctlplanes':
+            if overrides.get('ctlplanes', 1) == 1:
                 continue
             if sdn is None or sdn != 'flannel':
                 install_k3s_args.append("INSTALL_K3S_EXEC='--flannel-backend=none'")
@@ -67,23 +67,23 @@ def create(config, plandir, cluster, overrides):
     data['cluster'] = overrides.get('cluster', cluster if cluster is not None else 'testk')
     plan = cluster if cluster is not None else data['cluster']
     data['kube'] = data['cluster']
-    masters = data.get('masters', 1)
+    ctlplanes = data.get('ctlplanes', 1)
     workers = data.get('workers', 0)
     network = data.get('network', 'default')
     sdn = None if 'sdn' in overrides and overrides['sdn'] is None else data.get('sdn')
     image = data.get('image', 'ubuntu2004')
     api_ip = data.get('api_ip')
-    if masters > 1:
+    if ctlplanes > 1:
         if platform in cloudplatforms:
             domain = data.get('domain', 'karmalabs.corp')
-            api_ip = f"{cluster}-master.{domain}"
+            api_ip = f"{cluster}-ctlplane.{domain}"
         elif api_ip is None:
             if network == 'default' and platform == 'kvm':
                 warning("Using 192.168.122.253 as api_ip")
                 data['api_ip'] = "192.168.122.253"
                 api_ip = "192.168.122.253"
             elif platform == 'kubevirt':
-                selector = {'kcli/plan': plan, 'kcli/role': 'master'}
+                selector = {'kcli/plan': plan, 'kcli/role': 'ctlplane'}
                 api_ip = config.k.create_service(f"{cluster}-api", config.k.namespace, selector,
                                                  _type="LoadBalancer", ports=[6443])
                 if api_ip is None:
@@ -125,7 +125,7 @@ def create(config, plandir, cluster, overrides):
             installparam['virtual_router_id'] = virtual_router_id
             installparam['cluster'] = cluster
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
-    for arg in data.get('extra_master_args', []):
+    for arg in data.get('extra_ctlplane_args', []):
         if arg.startswith('--data-dir='):
             data['data_dir'] = arg.split('=')[1]
     bootstrap_overrides = data.copy()
@@ -139,20 +139,20 @@ def create(config, plandir, cluster, overrides):
     result = config.plan(plan, inputfile=f'{plandir}/bootstrap.yml', overrides=bootstrap_overrides)
     if result['result'] != "success":
         sys.exit(1)
-    for role in ['masters', 'workers']:
-        if (role == 'masters' and masters == 1) or (role == 'workers' and workers == 0):
+    for role in ['ctlplanes', 'workers']:
+        if (role == 'ctlplanes' and ctlplanes == 1) or (role == 'workers' and workers == 0):
             continue
         nodes_overrides = data.copy()
         nodes_install_k3s_args = install_k3s_args.copy()
         nodes_overrides['install_k3s_args'] = nodes_install_k3s_args
-        if role == 'masters':
+        if role == 'ctlplanes':
             if sdn is None or sdn != 'flannel':
                 nodes_install_k3s_args.append("INSTALL_K3S_EXEC='--flannel-backend=none'")
             nodes_install_k3s_args = ' '.join(nodes_install_k3s_args)
             nodes_overrides['install_k3s_args'] = nodes_install_k3s_args
-            pprint("Deploying extra masters")
-            threaded = data.get('threaded', False) or data.get('masters_threaded', False)
-            config.plan(plan, inputfile=f'{plandir}/masters.yml', overrides=nodes_overrides, threaded=threaded)
+            pprint("Deploying extra ctlplanes")
+            threaded = data.get('threaded', False) or data.get('ctlplanes_threaded', False)
+            config.plan(plan, inputfile=f'{plandir}/ctlplanes.yml', overrides=nodes_overrides, threaded=threaded)
         if role == 'workers':
             pprint("Deploying workers")
             os.chdir(os.path.expanduser("~/.kcli"))

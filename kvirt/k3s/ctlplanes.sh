@@ -1,5 +1,5 @@
-{% if extra_master_args %}
-{% set extra_args = extra_master_args %}
+{% if extra_ctlplane_args %}
+{% set extra_args = extra_ctlplane_args %}
 {% endif %}
 
 apt-get -y install curl

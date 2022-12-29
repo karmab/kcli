@@ -921,7 +921,7 @@ class Kgcp(object):
             dnszone = dnszones[0]
         dnsentry = name if cluster is None else f"{name}.{cluster}"
         entry = f"{dnsentry}.{domain}."
-        if cluster is not None and ('master' in name or 'worker' in name):
+        if cluster is not None and ('ctlplane' in name or 'worker' in name):
             counter = 0
             while counter != 100:
                 internalip = self.internalip(name)
@@ -962,7 +962,7 @@ class Kgcp(object):
         if alias:
             for a in alias:
                 if a == '*':
-                    if cluster is not None and ('master' in name or 'worker' in name):
+                    if cluster is not None and ('ctlplane' in name or 'worker' in name):
                         new = f'*.apps.{cluster}.{domain}.'
                     else:
                         new = f'*.{name}.{domain}.'
@@ -994,7 +994,7 @@ class Kgcp(object):
         changes = dnszone.changes()
         records = []
         for record in dnszone.list_resource_record_sets():
-            if entry in record.name or ('master-0' in name and record.name.endswith(f"{cluster}.{domain}.")):
+            if entry in record.name or ('ctlplane-0' in name and record.name.endswith(f"{cluster}.{domain}.")):
                 records.append(record)
             else:
                 for rrdata in record.rrdatas:

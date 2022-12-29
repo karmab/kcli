@@ -60,7 +60,7 @@ jobs:
        - run: git pull origin ${GITHUB_REF##*/}
        - name: Install kcli
          run: |
-           curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | bash
+           curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
            # kcli create pool -p /var/lib/libvirt/images default
            # sudo setfacl -m u:$(id -un):rwx /var/lib/libvirt/images
 
