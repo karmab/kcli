@@ -1008,6 +1008,8 @@ class Kconfig(Kbaseconfig):
                 confpool = net.get('ippool') or net.get('confpool')
             if index == 0 and confpool is None:
                 confpool = overrides.get('ippool') or overrides.get('confpool')
+                if isinstance(net, str):
+                    nets[index] = {'name': net}
             if confpool is None:
                 continue
             if confpool not in self.confpools:
