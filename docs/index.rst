@@ -2204,7 +2204,7 @@ Using the confpool
 In vms
 ~~~~~~
 
-For vms, the confpool is specified in a nets section. For instance
+For vms, the confpool is typically specified in a nets section to consume ips. For instance
 
 ::
 
@@ -2221,137 +2221,126 @@ In clusters
 
 When creating the cluster, specify through a parameter which pool to use (``-P confpool=mypool``)
 
-Using Jenkins
-=============
+::
 
-.. _requisites-1:
+   kcli create cluster generic -P confpool=mypool
 
-Requisites
-----------
+Using several confpools at once
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--  Jenkins running somewhere, either:
+If you need to use several pools when creating a vm/cluster, you can be more specific by using the following aliases:
 
-   -  standalone
-   -  on K8s/Openshift
+-  ippool
+-  namepool
+-  baremetalpool
 
--  Docker running if using this backend
--  Podman installed if using this backend
-
-Credentials
------------
-
-First, create the following credentials in Jenkins as secret files:
-
--  kcli-config with the content of your ~/.kcli/config.yml
--  kcli-id-rsa with your ssh private key
--  kcli-id-rsa-pub with your ssh public key
-
-You can use arbitrary names for those credentials, but you will then have to either edit Jenkinsfile later or specify credentials when running your build.
-
-Kcli configuration
-------------------
-
-Default backend is *podman* . If you want to use Docker or Kubernetes instead, add the corresponding snippet in *~/.kcli/config.yml*.
-
-For instance, for Kubernetes:
+For instance, you could do something like
 
 ::
 
-   jenkinsmode: kubernetes
+   kcli create vm -i centos8stream -P ippool=ippool -P namepool=dbzpool
 
-Create Jenkins file
--------------------
+   # Using Jenkins
 
-Now you can create a Jenkinsfile from your specific, or from default *kcli_plan.yml*
+   ## Requisites
 
-::
+   - Jenkins running somewhere, either:
+      - standalone
+      - on K8s/Openshift
+   - Docker running if using this backend
+   - Podman installed if using this backend
 
-   kcli create pipeline
+   ## Credentials
 
-You can see an example of the generated Jenkinsfile for both targets from the sample plan provided in this directory.
+   First, create the following credentials in Jenkins as secret files:
 
-Parameters from the plan get converted in Jenkins parameters, along with extra parameters: - for needed credentials (kcli config file, public and private ssh key) - a ``wait`` boolean to indicated whether to wait for plan completion upon run. - a ``kcli_client`` parameter that can be used to override the target client where to launch plan at run time.
+   - kcli-config with the content of your ~/.kcli/config.yml
+   - kcli-id-rsa with your ssh private key
+   - kcli-id-rsa-pub with your ssh public key
 
-Your Jenkinsfile is ready for use!
+   You can use arbitrary names for those credentials, but you will then have to either edit Jenkinsfile later or specify credentials when running your build.
 
-Openshift
----------
+   ## Kcli configuration
 
-You can create credentials as secrets and tag them so they get synced to Jenkins:
+   Default backend is *podman* . If you want to use Docker or Kubernetes instead, add the corresponding snippet in *~/.kcli/config.yml*.
 
-::
+   For instance, for Kubernetes:
 
-   oc create secret generic kcli-config-yml --from-file=filename=config.yml
-   oc annotate secret/kcli-config-yml jenkins.openshift.io/secret.name=kcli-config-yml
-   oc label secret/kcli-config-yml credential.sync.jenkins.openshift.io=true
-
-   oc create secret generic kcli-id-rsa --from-file=filename=~/.ssh/id_rsa
-   oc annotate secret/kcli-id-rsa jenkins.openshift.io/secret.name=kcli-id-rsa
-   oc label secret/kcli-id-rsa credential.sync.jenkins.openshift.io=true
-
-   oc create secret generic kcli-id-rsa-pub --from-file=filename=$HOME/.ssh/id_rsa.pub
-   oc annotate secret/kcli-id-rsa-pub jenkins.openshift.io/secret.name=kcli-id-rsa-pub
-   oc label secret/kcli-id-rsa-pub credential.sync.jenkins.openshift.io=true
-
-You will also need to allow *anyuid* scc for kcli pod, which can be done with the following command (adjust to your project):
+jenkinsmode: kubernetes
 
 ::
 
-   PROJECT=kcli
-   oc adm policy add-scc-to-user anyuid system:serviceaccount:$PROJECT:default
 
-Auto Completion
-===============
+   ## Create Jenkins file
 
-You can enable autocompletion if running kcli from package or pip. It’s enabled by default when running kclishell container alias
+   Now you can create a Jenkinsfile from your specific, or from default *kcli_plan.yml*
 
-Bash/Zsh
---------
-
-Add the following line in one of your shell files (.bashrc, .zshrc, …)
+kcli create pipeline
 
 ::
 
-   eval "$(register-python-argcomplete kcli)"
 
-Fish
-----
+   You can see an example of the generated Jenkinsfile for both targets from the sample plan provided in this directory.
 
-Add the following snippet in *.config/fish/config.fish*
+   Parameters from the plan get converted in Jenkins parameters, along with extra parameters:
+   - for needed credentials (kcli config file, public and private ssh key)
+   - a `wait` boolean to indicated whether to wait for plan completion upon run.
+   - a `kcli_client` parameter that can be used to override the target client where to launch plan at run time.
 
-::
+   Your Jenkinsfile is ready for use!
 
-   function __fish_kcli_complete
-       set -x _ARGCOMPLETE 1
-       set -x _ARGCOMPLETE_IFS \n
-       set -x _ARGCOMPLETE_SUPPRESS_SPACE 1
-       set -x _ARGCOMPLETE_SHELL fish
-       set -x COMP_LINE (commandline -p)
-       set -x COMP_POINT (string length (commandline -cp))
-       set -x COMP_TYPE
-       if set -q _ARC_DEBUG
-           kcli 8>&1 9>&2 1>/dev/null 2>&1
-       else
-           kcli 8>&1 9>&2 1>&9 2>&1
-       end
-   end
-   complete -c kcli -f -a '(__fish_kcli_complete)'
+   ## Openshift
 
-Api Usage
-=========
+   You can create credentials as secrets and tag them so they get synced to Jenkins:
 
-Locally
--------
+oc create secret generic kcli-config-yml –from-file=filename=config.yml oc annotate secret/kcli-config-yml jenkins.openshift.io/secret.name=kcli-config-yml oc label secret/kcli-config-yml credential.sync.jenkins.openshift.io=true
 
-You can also use kvirt library directly, without the client or to embed it into your own application.
+oc create secret generic kcli-id-rsa –from-file=filename=~/.ssh/id_rsa oc annotate secret/kcli-id-rsa jenkins.openshift.io/secret.name=kcli-id-rsa oc label secret/kcli-id-rsa credential.sync.jenkins.openshift.io=true
 
-Here’s a sample:
+oc create secret generic kcli-id-rsa-pub –from-file=filename=$HOME/.ssh/id_rsa.pub oc annotate secret/kcli-id-rsa-pub jenkins.openshift.io/secret.name=kcli-id-rsa-pub oc label secret/kcli-id-rsa-pub credential.sync.jenkins.openshift.io=true
 
 ::
 
-   from kvirt.config import Kconfig
-   config = Kconfig()
-   k = config.k
+
+   You will also need to allow *anyuid* scc for kcli pod, which can be done with the following command (adjust to your project):
+
+PROJECT=kcli oc adm policy add-scc-to-user anyuid system:serviceaccount:$PROJECT:default
+
+::
+
+
+   # Auto Completion
+
+   You can enable autocompletion if running kcli from package or pip. It's enabled by default when running kclishell container alias
+
+   ## Bash/Zsh
+
+   Add the following line in one of your shell files (.bashrc, .zshrc, ...)
+
+eval “$(register-python-argcomplete kcli)”
+
+::
+
+
+   ## Fish
+
+   Add the following snippet in *.config/fish/config.fish*
+
+function \__fish_kcli_complete set -x \_ARGCOMPLETE 1 set -x \_ARGCOMPLETE_IFS :raw-latex:`\n` set -x \_ARGCOMPLETE_SUPPRESS_SPACE 1 set -x \_ARGCOMPLETE_SHELL fish set -x COMP_LINE (commandline -p) set -x COMP_POINT (string length (commandline -cp)) set -x COMP_TYPE if set -q \_ARC_DEBUG kcli 8>&1 9>&2 1>/dev/null 2>&1 else kcli 8>&1 9>&2 1>&9 2>&1 end end complete -c kcli -f -a
+’(__fish_kcli_complete)’
+
+::
+
+
+   # Api Usage
+
+   ## Locally
+
+   You can also use kvirt library directly, without the client or to embed it into your own application.
+
+   Here's a sample:
+
+from kvirt.config import Kconfig config = Kconfig() k = config.k \``\`
 
 You can then either use config for high level actions or the more low level *k* object.
 

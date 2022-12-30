@@ -2043,7 +2043,7 @@ kcli create dbzpool -P names=[gohan,goku,vegeta,picolo,raditz,tenchinhan]
 
 ### In vms
 
-For vms, the confpool is specified in a nets section. For instance
+For vms, the confpool is typically specified in a nets section to consume ips. For instance
 
 ```
 kcli create vm -i centos8stream -P nets=['{"name": "default", "confpool": "myconfpool"}']
@@ -2058,6 +2058,23 @@ kcli create vm -i centos8stream -P confpool=dbzpool
 ### In clusters
 
 When creating the cluster, specify through a parameter which pool to use (`-P confpool=mypool`)
+
+```
+kcli create cluster generic -P confpool=mypool
+```
+
+### Using several confpools at once
+
+If you need to use several pools when creating a vm/cluster, you can be more specific by using the following aliases:
+
+- ippool
+- namepool
+- baremetalpool
+
+For instance, you could do something like
+
+```
+kcli create vm -i centos8stream -P ippool=ippool -P namepool=dbzpool
 
 # Using Jenkins
 
