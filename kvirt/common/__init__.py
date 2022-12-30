@@ -2169,29 +2169,6 @@ def olm_app(package):
     return name, source, defaultchannel, csv, description, target_namespace, channels, crd
 
 
-def copy_ipi_credentials(platform, k):
-    home = os.environ['HOME']
-    if platform == 'aws':
-        if not os.path.exists(f"{home}/.aws"):
-            os.mkdir(f"{home}/.aws")
-        if not os.path.exists(f"{home}/.aws/credentials"):
-            with open(f"{home}/.aws/credentials", "w") as f:
-                f.write("[default]\naws_access_key_id=%s\naws_secret_access_key=%s" % (k.access_key_id,
-                                                                                       k.access_key_secret))
-        if not os.path.exists(f"{home}/.aws/config"):
-            with open(f"{home}/.aws/credentials", "w") as f:
-                f.write(f"[default]\region={k.region}")
-    elif platform == 'ovirt':
-        if not os.path.exists(f"{home}/.ovirt"):
-            os.mkdir(f"{home}/.ovirt")
-        if not os.path.exists(f"{home}/.ovirt/ovirt-config.yaml"):
-            with open(f"{home}/.ovirt/ovirt-config.yaml", "w") as f:
-                ovirturl = f"https://{k.host}/ovirt-engine/api"
-                ovirtconf = f"ovirt_url: {ovirturl}\novirt_fqdn: {k.host}\n"
-                ovirtconf += f"ovirt_username: {k.user}\novirt_password: {k.password}\novirt_insecure: true"
-                f.write(ovirtconf)
-
-
 def need_fake():
     kclidir = os.path.expanduser("~/.kcli")
     if not glob.glob(f"{kclidir}/config.y*ml") and not os.path.exists("/var/run/libvirt/libvirt-sock"):

@@ -12,7 +12,6 @@ info: |
     ${app}_version which version to target (instead of latest).
     You can also define a list of scripts to launch at the end with the postscripts array.
     You can force the kubernetes ip of the nodes (and the vips allocation) to use a specific network by setting baremetal_cidr
-ipi: false
 version: stable
 tag: '4.11'
 pull_secret: openshift_pull.json

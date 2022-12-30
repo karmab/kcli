@@ -1871,9 +1871,6 @@ def update_kube(args):
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     if not overrides:
         warning("No parameters provided, using stored one")
-    if 'ipi' in overrides and overrides['ipi']:
-        error("Update cluster workflow not available when using ipi")
-        sys.exit(1)
     clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
     if not os.path.exists(clusterdir):
         error("Cluster directory %s not found..." % clusterdir)

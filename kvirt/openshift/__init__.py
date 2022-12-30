@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 from base64 import b64encode
-from getpass import getuser
 from glob import glob
 import json
 import os
@@ -12,7 +11,7 @@ from kvirt.common import error, pprint, success, warning, info2
 from kvirt.common import get_oc, pwd_path
 from kvirt.common import get_commit_rhcos, get_latest_fcos, generate_rhcos_iso, olm_app
 from kvirt.common import get_installer_rhcos
-from kvirt.common import ssh, scp, _ssh_credentials, copy_ipi_credentials, get_ssh_pub_key, boot_baremetal_hosts
+from kvirt.common import ssh, scp, _ssh_credentials, get_ssh_pub_key, boot_baremetal_hosts
 from kvirt.defaults import LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG
 import re
 from shutil import copy2, move, rmtree, which
@@ -21,7 +20,6 @@ from tempfile import TemporaryDirectory
 from time import sleep
 from urllib.request import urlopen, Request
 from random import choice
-from requests import post
 from string import ascii_letters, digits
 import yaml
 
@@ -248,21 +246,6 @@ def get_upstream_installer(macosx=False, tag=None, debug=False):
     if debug:
         pprint(cmd)
     return call(cmd, shell=True)
-
-
-def ipi_baremetal_stop(cluster):
-    installfile = "%s/install-config.yaml" % os.path.expanduser(f"~/.kcli/clusters/{cluster}")
-    with open(installfile) as f:
-        data = yaml.safe_load(f)
-        hosts = data['platform']['baremetal']['hosts']
-        for host in hosts:
-            address = host['bmc']['address']
-            user, password = host['bmc'].get('username'), host['bmc'].get('password')
-            match = re.match(".*(http.*|idrac-virtualmedia.*|redfish-virtualmedia.*)", address)
-            address = match.group(1).replace('idrac-virtualmedia', 'https').replace('redfish-virtualmedia', 'https')
-            actionaddress = f"{address}/Actions/ComputerSystem.Reset/"
-            headers = {'Content-type': 'application/json'}
-            post(actionaddress, json={"ResetType": 'ForceOff'}, headers=headers, auth=(user, password), verify=False)
 
 
 def process_apps(config, clusterdir, apps, overrides):
@@ -594,10 +577,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         pprint(f"Using {version} version")
     cluster = data.get('cluster')
     image = data.get('image')
-    ipi = data.get('ipi', False)
     api_ip = data.get('api_ip')
     cidr = None
-    if platform in virtplatforms and not sno and not ipi and api_ip is None:
+    if platform in virtplatforms and not sno and api_ip is None:
         network = data.get('network')
         networkinfo = k.info_network(network)
         if not networkinfo:
@@ -630,7 +612,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         else:
             error("You need to define api_ip in your parameters file")
             sys.exit(1)
-    if platform in virtplatforms and not sno and not ipi and ':' in api_ip:
+    if platform in virtplatforms and not sno and ':' in api_ip:
         ipv6 = True
     if ipv6:
         if data.get('network_type', 'OpenShiftSDN') == 'OpenShiftSDN':
@@ -726,10 +708,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         pprint(f"Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to {tag}")
     os.environ["PATH"] += f":{os.getcwd()}"
     if which('openshift-install') is None:
-        if data.get('ipi', False) and data.get('ipi_platform', platform) in ['kvm', 'libvirt', 'baremetal']:
-            baremetal = True
-        else:
-            baremetal = False
+        baremetal = False
         if upstream:
             run = get_upstream_installer(tag=tag)
         elif version == 'ci' or '/' in str(tag):
@@ -767,7 +746,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     INSTALLER_VERSION = get_installer_version()
     COMMIT_ID = os.popen('openshift-install version').readlines()[1].replace('built from commit', '').strip()
     pprint(f"Using installer version {INSTALLER_VERSION}")
-    if sno or ipi or baremetal_iso_all:
+    if sno or baremetal_iso_all:
         pass
     elif image is None:
         image_type = 'openstack' if data.get('kvm_openstack') and config.type == 'kvm' else config.type
@@ -932,105 +911,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         data['pull_secret'] = json.dumps(auths)
     else:
         data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
-    if ipi:
-        ipi_platform = data.get('ipi_platform', platform)
-        if ipi_platform in ['ovirt', 'baremetal', 'vsphere']:
-            if data.get('api_ip') is None:
-                error("You need to define api_ip in your parameters file")
-                sys.exit(1)
-            if data.get('ingress_ip') is None:
-                error("You need to define ingress_ip in your parameters file")
-                sys.exit(1)
-            if ipi_platform == 'baremetal' and data['network_type'] == 'OVNKubernetes'\
-                    and data.get('baremetal_cidr') is None:
-                error("You need to define baremetal_cidr in your parameters file")
-                sys.exit(1)
-        if ipi_platform not in cloudplatforms + virtplatforms + ['baremetal']:
-            warning("Target platform not supported in kcli, you will need to provide credentials on your own")
-        if ipi_platform == 'ovirt':
-            cluster_id, storage_id, vnic_id = k.openshift_installer_data(data['pool'])
-            data['ovirt_cluster_id'] = cluster_id
-            data['ovirt_storage_domain_id'] = storage_id
-            data['ovirt_vnic_profile_id'] = vnic_id
-        if ipi_platform in ['baremetal', 'libvirt', 'kvm']:
-            data['libvirt_url'] = k.url
-        if ipi_platform == 'baremetal':
-            baremetal_ctlplanes = data.get('baremetal_ctlplanes', [])
-            baremetal_workers = data.get('baremetal_workers', [])
-            if not baremetal_ctlplanes:
-                error("You need to define baremetal_ctlplanes in your parameters file")
-                sys.exit(1)
-            if len(baremetal_ctlplanes) != ctlplanes:
-                warning("Forcing ctlplanes number to match baremetal_ctlplanes length")
-                ctlplanes = len(baremetal_ctlplanes)
-                data['ctlplanes'] = ctlplanes
-            if len(baremetal_workers) != workers:
-                warning("Forcing worker number to match baremetal_workers length")
-                workers = len(baremetal_workers)
-                data['workers'] = workers
-        copy_ipi_credentials(platform, k)
     installconfig = config.process_inputfile(cluster, f"{plandir}/install-config.yaml", overrides=data)
     with open(f"{clusterdir}/install-config.yaml", 'w') as f:
         f.write(installconfig)
     with open(f"{clusterdir}/install-config.yaml.bck", 'w') as f:
         f.write(installconfig)
-    if ipi:
-        if ipi_platform in ['baremetal', 'vsphere', 'ovirt']:
-            if ignore_hosts:
-                warning("Ignoring /etc/hosts")
-            else:
-                update_etc_hosts(cluster, domain, data['api_ip'], data['ingress_ip'])
-        if ipi_platform in ['kvm', 'libvirt']:
-            run = call(f'openshift-install --dir={clusterdir} --log-level={log_level} create manifests', shell=True)
-            if run != 0:
-                error("Leaving environment for debugging purposes")
-                sys.exit(run)
-            ctlplanemanifest = f"{clusterdir}/openshift/99_openshift-cluster-api_master-machines-0.yaml"
-            workermanifest = f"{clusterdir}/openshift/99_openshift-cluster-api_worker-machineset-0.yaml"
-            ctlplane_memory = data.get('ctlplane_memory') if data.get('ctlplane_memory') is not None else data['memory']
-            worker_memory = data.get('worker_memory') if data.get('worker_memory') is not None else data['memory']
-            call(f'sed -i "s/domainMemory: .*/domainMemory: {ctlplane_memory}/" {ctlplanemanifest}', shell=True)
-            call(f'sed -i "s/domainMemory: .*/domainMemory: {worker_memory}/" {workermanifest}', shell=True)
-            ctlplane_numcpus = data.get('ctlplane_numcpus') if data.get('ctlplane_numcpus') is not None\
-                else data['numcpus']
-            worker_numcpus = data.get('worker_numcpus') if data.get('worker_numcpus') is not None else data['numcpus']
-            call(f'sed -i "s/domainVcpu: .*/domainVcpu: {ctlplane_numcpus}/" {ctlplanemanifest}', shell=True)
-            call(f'sed -i "s/domainVcpu: .*/domainVcpu: {worker_numcpus}/" {workermanifest}', shell=True)
-            old_libvirt_url = data['libvirt_url']
-            if 'ssh' in old_libvirt_url or old_libvirt_url == 'qemu:///system':
-                warning("Patching machineset providerSpec uri to allow provisioning workers")
-                warning("Put a valid private key in /tmp/id_rsa in the machine-api-controllers pod")
-                new_libvirt_url = old_libvirt_url
-                if new_libvirt_url == 'qemu:///system':
-                    new_libvirt_url = f'qemu+ssh://{getuser()}@192.168.122.1/system?no_verify=1&keyfile=/tmp/id_rsa'
-                    new_libvirt_url += "&known_hosts_verify=1"
-                elif 'no_verify' not in new_libvirt_url:
-                    if '?' in new_libvirt_url:
-                        new_libvirt_url += '&no_verify=1'
-                    else:
-                        new_libvirt_url += '?no_verify=1'
-                elif 'keyfile' in new_libvirt_url:
-                    match = re.match('.*keyfile=(.*)', new_libvirt_url)
-                    old_keyfile = match.group(1)
-                    new_libvirt_url = new_libvirt_url.replace(old_keyfile, '/tmp/id_rsa')
-                    if '?' in new_libvirt_url:
-                        new_libvirt_url += '&keyfile=/tmp/id_rsa'
-                    else:
-                        new_libvirt_url += '?keyfile=/tmp/id_rsa'
-                new_libvirt_url = new_libvirt_url.replace('&', '\\&')
-                call(f'sed -i "s#uri:.*#uri: {new_libvirt_url}#" {workermanifest}', shell=True)
-            dnsmasqfile = f"/etc/NetworkManager/dnsmasq.d/{cluster}.{domain}.conf"
-            dnscmd = 'echo -e "[main]\ndns=dnsmasq" > /etc/NetworkManager/conf.d/dnsmasq.conf'
-            dnscmd += f"; echo server=/{cluster}.{domain}/192.168.126.1 > {dnsmasqfile}"
-            dnscmd += "; systemctl restart NetworkManager"
-            if k.host in ['localhost', '127.0.0.1'] and k.user == 'root':
-                call(dnscmd, shell=True)
-            else:
-                warning(f"Run the following commands on {k.host} as root")
-                pprint(dnscmd)
-        if ipi_platform == 'baremetal':
-            pprint("Stopping nodes through redfish")
-            ipi_baremetal_stop(cluster)
     run = call(f'openshift-install --dir={clusterdir} --log-level={log_level} create manifests', shell=True)
     if run != 0:
         error("Leaving environment for debugging purposes")
@@ -1051,7 +936,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             with open(f"{clusterdir}/manifests/99-chrony-{role}.yaml", 'w') as f:
                 f.write(ntp)
     baremetal_cidr = data.get('baremetal_cidr')
-    if not ipi and baremetal_cidr is not None:
+    if baremetal_cidr is not None:
         node_ip_hint = f"KUBELET_NODEIP_HINT={baremetal_cidr.split('/')[0]}"
         for role in ['master', 'worker']:
             hint = config.process_inputfile(cluster, f"{plandir}/10-node-ip-hint.yaml",
@@ -1103,13 +988,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                                                       overrides={'cluster': cluster, 'domain': domain})
         with open(f"{clusterdir}/manifests/cluster-ingress-02-config.yml", 'w') as f:
             f.write(ingress_sslip_data)
-    if ipi:
-        run = call(f'openshift-install --dir={clusterdir} --log-level={log_level} create cluster', shell=True)
-        if run != 0:
-            error("Leaving environment for debugging purposes")
-        process_apps(config, clusterdir, apps, overrides)
-        process_postscripts(clusterdir, postscripts)
-        sys.exit(run)
     cron_overrides = {'registry': disconnected_url or 'quay.io'}
     cron_overrides['version'] = 'v1beta1' if get_installer_minor(INSTALLER_VERSION) < 8 else 'v1'
     autoapproverdata = config.process_inputfile(cluster, f"{plandir}/autoapprovercron.yml", overrides=cron_overrides)

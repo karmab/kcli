@@ -3,8 +3,8 @@
 {% set cluster_network_ipv6 = {"cidr": cluster_network_ipv6, "hostPrefix": 64} %}
 {% set service_network_ipv4 = [service_network_ipv4] %}
 {% set service_network_ipv6 = [service_network_ipv6] %}
-{% set machine_cidr_ipv4 = [baremetal_cidr if ipi and ipi_platform else "10.0.0.0/16"] %}
-{% set machine_cidr_ipv6 = [baremetal_cidr if ipi and ipi_platform else "fc00::/48"] %}
+{% set machine_cidr_ipv4 = ["10.0.0.0/16"] %}
+{% set machine_cidr_ipv6 = ["fc00::/48"] %}
 {% if dualstack|default(False) %}
 {% set machine_cidrs = machine_cidr_ipv4 + machine_cidr_ipv6 %}
 {% set cluster_networks = [cluster_network_ipv4] + [cluster_network_ipv6] %}
@@ -17,9 +17,6 @@
 {% set machine_cidrs = machine_cidr_ipv4 %}
 {% set cluster_networks = [cluster_network_ipv4] %}
 {% set service_networks = service_network_ipv4 %}
-{% endif %}
-{% if ipi %}
-{% set ipi_platform = ipi_platform|default(config_type) %}
 {% endif %}
 apiVersion: v1
 {% if fips %}
@@ -37,63 +34,9 @@ proxy:
 compute:
 - name: worker
   replicas: {{ 0 if sno else workers }}
-{% if ipi %}
-{% if ipi_platform == 'aws' %}
-  platform:
-   aws:
-    type: {{ flavor if flavor != None else 'm5.xlarge' }}
-{% elif ipi_platform == 'gcp' %}
-  platform:
-   gcp:
-    type: {{ flavor if flavor != None else 'n2-standard-4' }}
-{% elif ipi_platform == 'ovirt' %}
-  platform:
-    ovirt:
-      cpu:
-        cores: {{ worker_numcpus | default(numcpus, numcpus) }}
-        sockets: 1
-      memoryMB: {{ worker_memory | default(memory, memory) }}
-      osDisk:
-        sizeGB: {{ disk_size }}
-      vmType: server
-{% elif ipi_platform == 'vsphere' %}
-  platform:
-    vsphere:
-      cpu:
-        cpus: {{ worker_numcpus | default(numcpus, numcpus) }}
-        coresPerSocket: 1
-        sockets: 1
-      memoryMB: {{ worker_memory | default(memory, memory) }}
-      osDisk:
-        diskSizeGB: {{ disk_size }}
-{% endif %}
-{% endif %}
 controlPlane:
   name: master
   replicas: {{ 1 if sno else ctlplanes }}
-{% if ipi %}
-{% if ipi_platform == 'ovirt' %}
-  platform:
-    ovirt:
-      cpu:
-        cores: {{ ctlplane_numcpus | default(numcpus, numcpus) }}
-        sockets: 1
-      memoryMB: {{ ctlplane_memory | default(memory, memory) }}
-      osDisk:
-        sizeGB: {{ disk_size }}
-      vmType: server
-{% elif ipi_platform == 'vsphere' %}
-  platform:
-    vsphere:
-      cpu:
-        cpus: {{ ctlplane_numcpus | default(numcpus, numcpus) }}
-        coresPerSocket: 1
-        sockets: 1
-      memoryMB: {{ ctlplane_memory | default(memory, memory) }}
-      osDisk:
-        diskSizeGB: {{ disk_size }}
-{% endif %}
-{% endif %}
 metadata:
   name: {{ cluster }}
 networking:
@@ -114,110 +57,6 @@ networking:
   - {{ network }}
 {% endfor %}
 platform:
-{% if ipi %}
-{% if ipi_platform == 'aws' %}
-  aws:
-    region: {{ config_region }}
-    userTags:
-      plan: {{ plan }}
-{% elif ipi_platform == 'gcp' %}
-  gcp:
-    region: {{ config_region|default(config_zone[:-2]) }}
-    projectID: {{ config_project }}
-{% elif ipi_platform == 'vsphere' %}
-  vsphere:
-    apiVIP: {{ api_ip }}
-    ingressVIP: {{ ingress_ip }}
-    vcenter: {{ config_host }}
-    username: {{ config_user }}
-    password: {{ config_password }}
-    datacenter: {{ config_datacenter }}
-    defaultDatastore: {{ config_pool }}
-    cluster: {{ config_cluster }}
-    network: {{ network }}
-{% elif ipi_platform == 'ovirt' %}
-  ovirt:
-    api_vip: {{ api_ip }}
-    ingress_vip: {{ ingress_ip }}
-    ovirt_cluster_id: {{ ovirt_cluster_id }}
-    ovirt_storage_domain_id: {{ ovirt_storage_domain_id }}
-    ovirt_network_name: {{ network }}
-    vnicProfileID: {{ ovirt_vnic_profile_id }}
-{% elif ipi_platform in ['libvirt', 'kvm'] %}
-  libvirt:
-    URI: {{ libvirt_url }}
-{% elif ipi_platform == 'baremetal' %}
-  baremetal:
-    apiVIP: {{ api_ip }}
-    ingressVIP: {{ ingress_ip }}
-    provisioningNetwork: "Disabled"
-    externalBridge: {{ network }}
-    libvirtURI: {{ libvirt_url }}
-    hosts:
-{% for ctlplane in baremetal_ctlplanes %}
-{% set num = loop.index0|string %}
-    - name: {{ cluster }}-ctlplane-{{ num }}
-      role: master
-      bmc:
-        {% if 'redfish_address' in ctlplane %}
-        disableCertificateVerification: True
-        {% if 'redfish' in ctlplane['redfish_address'] or 'idrac' in ctlplane['redfish_address'] %}
-        address: {{ ctlplane['redfish_address'] }}
-        {% elif ctlplane['model']|default('idrac') == 'hpe' %}
-        address: redfish-virtualmedia://{{ ctlplane['redfish_address'] }}/redfish/v1/Systems/1
-        {% else %}
-        address: idrac-virtualmedia://{{ ctlplane['redfish_address'] }}/redfish/v1/Systems/System.Embedded.1
-        {% endif %}
-        {% endif %}
-        username: {{ ctlplane['user']|default(baremetal_user) }}
-        password: {{ ctlplane['password']|default(baremetal_password) }}
-{% if 'boot_mode' in ctlplane %}
-      bootMode: {{ ctlplane['boot_mode'] }}
-{% endif %}
-      bootMACAddress: {{ ctlplane['provisioning_mac'] }}
-      {% if 'disk' in ctlplane %}
-      rootDeviceHints:
-        deviceName: "/dev/{{ ctlplane['disk'] | basename }}"
-      {% endif %}
-{% endfor %}
-{% for worker in baremetal_workers|default([]) %}
-{% set num = loop.index0|string %}
-    - name: {{ cluster }}-worker-{{ num }}
-      role: worker
-      bmc:
-        {% if 'redfish_address' in worker %}
-        disableCertificateVerification: True
-        {% if 'redfish' in worker['redfish_address'] or 'idrac' in worker['redfish_address'] %}
-        address: {{ worker['redfish_address'] }}
-        {% elif worker['model']|default('idrac') == 'hpe' %}
-        address: redfish-virtualmedia://{{ worker['redfish_address'] }}/redfish/v1/Systems/1
-        {% else %}
-        address: idrac-virtualmedia://{{ worker['redfish_address'] }}/redfish/v1/Systems/System.Embedded.1
-        {% endif %}
-        {% endif %}
-        username: {{ worker['user']|default(baremetal_user) }}
-        password: {{ worker['password']|default(baremetal_password) }}
-{% if 'boot_mode' in worker %}
-      bootMode: {{ worker['boot_mode'] }}
-{% endif %}
-      bootMACAddress: {{ worker['provisioning_mac'] }}
-      {% if 'disk' in worker %}
-      rootDeviceHints:
-        deviceName: "/dev/{{ worker['disk'] | basename }}"
-      {% endif %}
-{% endfor %}
-{% endif %}
-{% elif config_type == 'vsphere' %}
-  vsphere:
-    vcenter: {{ config_host }}
-    username: {{ config_user }}
-    password: {{ config_password }}
-    datacenter: {{ config_datacenter }}
-    defaultDatastore: {{ config_pool }}
-    folder: /{{ config_datacenter}}/vm/{{ cluster }}
-{% else %} 
-  none: {}
-{% endif %}
 {% if sno %}
 BootstrapInPlace:
   InstallationDisk: /dev/{{ sno_disk | basename if sno_disk != None else 'sda' }}

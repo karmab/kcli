@@ -1525,21 +1525,15 @@ class Kconfig(Kbaseconfig):
                     if cluster is not None and cluster != '':
                         clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
                         if os.path.exists(clusterdir):
-                            ipi = False
                             parametersfile = f"{clusterdir}/kcli_parameters.yml"
                             if os.path.exists(parametersfile):
                                 with open(parametersfile) as f:
                                     clusterdata = yaml.safe_load(f)
                                     kubetype = clusterdata.get('kubetype', 'generic')
-                                    if kubetype == 'openshift' and 'ipi' in clusterdata and clusterdata['ipi']:
-                                        ipi = True
-                                    elif kubetype == 'hypershift':
+                                    if kubetype == 'hypershift':
                                         hypershift = True
                                     domain = clusterdata.get('domain', domain)
                                     dnsclient = clusterdata.get('dnsclient')
-                                if ipi:
-                                    os.environ["PATH"] += ":%s" % os.getcwd()
-                                    call(f'openshift-install --dir={clusterdir} destroy cluster', shell=True)
                             if not hypershift:
                                 pprint(f"Deleting directory {clusterdir}")
                                 rmtree(clusterdir, ignore_errors=True)
@@ -2817,7 +2811,6 @@ class Kconfig(Kbaseconfig):
         openshift.create(self, plandir, cluster, overrides, dnsconfig=dnsconfig)
 
     def delete_kube(self, cluster, overrides={}):
-        ipi = False
         hypershift = False
         domain = overrides.get('domain', 'karmalabs.corp')
         kubetype = 'generic'
@@ -2833,20 +2826,13 @@ class Kconfig(Kbaseconfig):
                 with open(parametersfile) as f:
                     clusterdata = yaml.safe_load(f)
                     kubetype = clusterdata.get('kubetype', 'generic')
-                    if kubetype == 'openshift' and 'ipi' in clusterdata and clusterdata['ipi']:
-                        ipi = True
-                    elif kubetype == 'hypershift':
+                    if kubetype == 'hypershift':
                         hypershift = True
                     domain = clusterdata.get('domain', domain)
                     dnsclient = clusterdata.get('dnsclient')
-                if ipi:
-                    os.environ["PATH"] += ":%s" % os.getcwd()
-                    call(f'openshift-install --dir={clusterdir} destroy cluster', shell=True)
             if not hypershift:
                 pprint(f"Deleting directory {clusterdir}")
                 rmtree(clusterdir)
-            if ipi:
-                return
         deleteclients = {self.client: k}
         vmclients = []
         vmclients_file = os.path.expanduser(f'~/.kcli/vmclients_{cluster}')
