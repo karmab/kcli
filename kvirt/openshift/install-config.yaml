@@ -57,6 +57,17 @@ networking:
   - {{ network }}
 {% endfor %}
 platform:
+{% if config_type == 'vsphere' %}
+  vsphere:
+    vcenter: {{ config_host }}
+    username: {{ config_user }}
+    password: {{ config_password }}
+    datacenter: {{ config_datacenter }}
+    defaultDatastore: {{ config_pool }}
+    folder: /{{ config_datacenter}}/vm/{{ cluster }}
+{% else %} 
+  none: {}
+{% endif %}
 {% if sno %}
 BootstrapInPlace:
   InstallationDisk: /dev/{{ sno_disk | basename if sno_disk != None else 'sda' }}
