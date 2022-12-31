@@ -6,7 +6,7 @@ on:
 env:
  HOME: /root
  PYTHONUNBUFFERED: true
- PLAN: ci-sno
+ CLUSTER: ci-sno
  PULLSECRET: /root/openshift_pull.json
  PARAMFILE: openshift-ci-paramfiles/sno.yml
  VERSION: stable
@@ -19,9 +19,18 @@ jobs:
     - uses: actions/checkout@v2
     - run: git pull origin ${GITHUB_REF##*/}
     - name: Install kcli
-      run: curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
+      run: |
+        curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
+        kcli create sushy-service
     - name: Delete old install
-      run: kcli delete cluster --yes $PLAN || true
+      run: kcli delete cluster --yes $CLUSTER || true
+
+ deploy-baremetal-like-vm:
+   needs: requirements
+   runs-on: libvirt
+   steps:
+   - name: Deploy Baremetal like vm
+     run: kcli -C local create vm -P uefi=true -P start=false -P memory=20480 -P numcpus=16 -P disks=[50] -P nets=[default] $CLUSTER -P plan=$CLUSTER $EXTRAPARAMS
 
  deploy-openshift:
    needs: requirements
@@ -29,7 +38,7 @@ jobs:
    steps:
    - name: Deploy SNO
      run: |
-       kcli create cluster openshift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET -P version=$VERSION -P tag="$TAG" $PLAN
+       kcli create cluster openshift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET -P version=$VERSION -P tag="$TAG" $CLUSTER
 
  clean-up:
    needs: deploy-openshift
@@ -37,4 +46,4 @@ jobs:
    steps:
    - name: Clean everything after success
      run: |
-       kcli delete plan --yes $PLAN
+       kcli delete plan --yes $CLUSTER

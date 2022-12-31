@@ -12,6 +12,9 @@ info: |
     ${app}_version which version to target (instead of latest).
     You can also define a list of scripts to launch at the end with the postscripts array.
     You can force the kubernetes ip of the nodes (and the vips allocation) to use a specific network by setting baremetal_cidr
+    For deploying a single node cluster, you can simply set ctplanes to 1 and workers to 0, or use the flag sno to leverage
+    bootstrap in place (which removes the need for a bootstrap vm). This approach is suitable for baremetal single node
+    baremetal_hosts can be specified as an array of bmc urls to deploy baremetal workers (or in the case of SNO described before)
 version: stable
 tag: '4.11'
 pull_secret: openshift_pull.json
@@ -91,14 +94,13 @@ virtual_router_id:
 http_proxy:
 no_proxy:
 sno: false
-sno_virtual: false
 sno_disk:
 sno_dns: true
 sno_cloud_remove_lb: true
 sno_disable_nics: []
 sno_ctplanes: false
 sno_workers: false
-sno_wait: true
+sno_wait: false
 sno_localhost_fix: false
 metal3: false
 metal3_provisioning_enable: false

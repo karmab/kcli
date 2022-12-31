@@ -455,10 +455,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'ovn_hostrouting': False,
             'manifests': 'manifests',
             'sno': False,
-            'sno_virtual': False,
             'sno_ctlplanes': False,
             'sno_workers': False,
-            'sno_wait': True,
+            'sno_wait': False,
             'sno_localhost_fix': False,
             'sno_disable_nics': [],
             'notify': False,
@@ -510,19 +509,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     sno = data.get('sno', False)
     ignore_hosts = data.get('ignore_hosts', False)
     if sno:
-        sno_virtual = data.get('sno_virtual')
         sno_ctlplanes = data.get('sno_ctlplanes')
         sno_workers = data.get('sno_workers')
         sno_wait = data.get('sno_wait')
-        if sno_virtual:
-            sno_memory = data.get('ctlplane_memory', data.get('memory', 8192))
-            if sno_memory < 20480:
-                error("Sno won't deploy with less than 20gb of RAM.Forcing to that")
-                data['ctlplane_memory'] = 20480
-            sno_cpus = data.get('ctlplane_numcpus', data.get('numcpus', 4))
-            if sno_cpus < 8:
-                error("Sno won't deploy with less than 8 cpus.Forcing to that")
-                data['ctlplane_numcpus'] = 8
         sno_disk = data.get('sno_disk')
         if sno_disk is None:
             warning("sno_disk will be discovered")
@@ -1191,17 +1180,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             iso_pool = data['pool'] or config.pool
             pprint(f"Storing generated iso in pool {iso_pool}")
             generate_rhcos_iso(k, f"{cluster}-sno", iso_pool, installer=True, extra_args=extra_args)
-            if sno_virtual:
-                warning("Note that you can also get a sno by setting ctlplanes to 1")
-                pprint("Deploying sno vm")
-                result = config.plan(plan, inputfile=f'{plandir}/sno.yml', overrides=data)
-                if result['result'] != 'success':
-                    sys.exit(1)
-                if api_ip is None:
-                    while api_ip is None:
-                        api_ip = k.info(sno_name).get('ip')
-                        pprint("Waiting 5s to retrieve sno ip...")
-                        sleep(5)
         if sno_ctlplanes:
             if api_ip is None:
                 warning("sno ctlplanes requires api vip to be defined. Skipping")

@@ -1676,28 +1676,26 @@ The following extra parameters are available with this workflow:
 
 - sno_disk: You can indicate which disk to use for installing Rhcos operating system in your node. If none is specified, the disk will be autodiscovered
 - sno_dns: Defaults to true. A static pod leveraging coredns and pointing the relevant dns records to the ip of the node is injected after ctlplane ignition is generated, removing the need for external dns. Use this if you can't provide the DNS requirements for the single node
-- sno_virtual: Defaults to false. If you set it to true, a vm leveraging the generated iso will be created and install will be monitored up until the end. This is mostly available for dog fooding the bip approach.
 - extra_args: You can use this variable to specify as a string any extra args to add to the generated iso. A common use case for this is to set static networking for the node, for instanc with something like `ip=192.168.1.200::192.168.1.1:255.255.255.0:mysupersno.dev.local:enp1s0:none nameserver=192.168.1.1`
 - api_ip: This is normally not needed but if you already have some DNS records in place pointing to a given api vip or you don't know your baremetal ip, you can specify the vip so that an extra keepalived static pod is injected.
 
-In the baremetal context, you are responsible for attaching the generated iso to your target node.
-
-You can also use the `baremetal_hosts` feature described below, but you will need to have apache running on the hypervisor and give write access to /var/www/html for the user launching the command, using something like the following
+In the baremetal context, you are normally responsible for attaching the generated iso to your target node but you can also use the `baremetal_hosts` feature described below, you will need to have apache running on the hypervisor and give write access to /var/www/html for the user launching the command, using something like the following
 
 ```
 sudo setfacl -m u:$(id -un):rwx /var/www/html
 ```
-
 
 ### Adding more workers
 
 The procedure is the same independently of the type of cluster used.
 
 ```
-kcli scale kube <generic|openshift|okd|k3s> -w num_of_workers --paramfile parameters.yml $cluster
+kcli scale kube <generic|openshift|okd|k3s> -P workers=num_of_workers --paramfile parameters.yml $cluster
 ```
 
-In openshift case, for baremetal workers you can use the following command:
+### Generating a worker iso
+
+In openshift case, for baremetal workers you can use the following command to generate such an iso
 
 ```
 kcli create openshift-iso --paramfile parameters.yml $cluster
@@ -1741,9 +1739,9 @@ As an example, the following array will boot 3 workers (based on kvm vms with su
 bmc_user: root
 bmc_password: calvin
 baremetal_hosts:
-- bmc_url: http://192.168.122.1:8000/redfish/v1/Systems/11111111-1111-1111-1111-111111111181
-- bmc_url: http://192.168.122.1:8000/redfish/v1/Systems/11111111-1111-1111-1111-111111111182
-- bmc_url: http://192.168.122.1:8000/redfish/v1/Systems/11111111-1111-1111-1111-111111111183
+- bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/vm1
+- bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/vm2
+- bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/bm3
 ```
 
 ### Disconnected support
