@@ -177,10 +177,6 @@ def update_cluster(meta, spec, status, namespace, logger, **kwargs):
     kubetype = overrides.get('kubetype', 'generic')
     data = {'kube': cluster, 'kubetype': kubetype}
     plan = None
-    if 'ipi' in overrides and overrides['ipi']:
-        msg = "Update cluster workflow not available when using ipi"
-        error(msg)
-        return {'result': 'failure', 'reason': msg}
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if not os.path.exists(clusterdir):
         msg = f"Cluster directory {clusterdir} not found..."

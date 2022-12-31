@@ -4144,7 +4144,7 @@ def cli():
     confpooldelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     confpooldelete_parser.add_argument('confpool', help=confpooldelete_help, metavar='CONFPOOL')
     confpooldelete_parser.set_defaults(func=delete_confpool)
-    delete_subparsers.add_parser('profile', parents=[confpooldelete_parser], description=confpooldelete_desc,
+    delete_subparsers.add_parser('confpool', parents=[confpooldelete_parser], description=confpooldelete_desc,
                                  help=confpooldelete_desc)
 
     containerdelete_desc = 'Delete Container'
