@@ -33,7 +33,7 @@ jobs:
      run: kcli -C local create vm -P uefi=true -P start=false -P memory=20480 -P numcpus=16 -P disks=[50] -P nets=[default] $CLUSTER -P plan=$CLUSTER $EXTRAPARAMS
 
  deploy-openshift:
-   needs: requirements
+   needs: deploy-baremetal-like-vm
    runs-on: libvirt
    steps:
    - name: Deploy SNO
