@@ -1304,6 +1304,8 @@ For that, you can pass in kcli vm or kcli plan the following parameters:
 -  -P x=1 -P y=2 and so on .
 -  –paramfile - In this case, you provide a yaml file ( and as such can provide more complex structures ).
 
+Note that parameters provided as uppercase are made environment variables within the target vm by creating ``/etc/profile.d/kcli.sh``
+
 The indicated objects are then rendered using jinja.
 
 ::
@@ -1873,9 +1875,9 @@ As an example, the following array will boot 3 workers (based on kvm vms with su
    bmc_user: root
    bmc_password: calvin
    baremetal_hosts:
-   - bmc_url: http://192.168.122.1:8000/redfish/v1/Systems/11111111-1111-1111-1111-111111111181
-   - bmc_url: http://192.168.122.1:8000/redfish/v1/Systems/11111111-1111-1111-1111-111111111182
-   - bmc_url: http://192.168.122.1:8000/redfish/v1/Systems/11111111-1111-1111-1111-111111111183
+   - bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/vm1
+   - bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/vm2
+   - bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/bm3
 
 Disconnected support
 ~~~~~~~~~~~~~~~~~~~~

@@ -1205,6 +1205,8 @@ For that, you can pass in kcli vm or kcli plan the following parameters:
 - -P x=1 -P y=2 and so on .
 - --paramfile - In this case, you provide a yaml file ( and as such can provide more complex structures ).
 
+Note that parameters provided as uppercase are made environment variables within the target vm by creating `/etc/profile.d/kcli.sh`
+
 The indicated objects are then rendered using jinja.
 
 ```
