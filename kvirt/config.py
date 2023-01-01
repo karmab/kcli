@@ -750,11 +750,13 @@ class Kconfig(Kbaseconfig):
         result = self.parse_files(name, files, basedir, onfly)
         if result is not None:
             return result
-        env_parameters = [key for key in overrides if key.isupper()]
+        profile_env_parameters = [key for key in profile if key.isupper()]
+        overrides_env_parameters = [key for key in overrides if key.isupper()]
+        env_parameters = sorted(list(set(profile_env_parameters + overrides_env_parameters)))
         if env_parameters:
             env_data = ''
             for key in env_parameters:
-                value = overrides[key]
+                value = profile.get(key) or overrides.get(key)
                 env_data += f"export {key}={value}\nexport {key.lower()}={value}\n"
             files.append({'path': '/etc/profile.d/kcli.sh', 'content': env_data, 'mode': 644})
         enableroot = profile.get('enableroot', default_enableroot)
