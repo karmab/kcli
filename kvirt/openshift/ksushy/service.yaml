@@ -3,13 +3,13 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: sushy
-  name: sushy
+    app: ksushy
+  name: ksushy
   namespace: kcli-infra
 spec:
   ports:
-  - port: 8000
+  - port: 9000
     protocol: TCP
-    targetPort: 8000
+    targetPort: 9000
   selector:
-    app: sushy
+    app: ksushy

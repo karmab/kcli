@@ -108,7 +108,7 @@ metal3_provisioning_net: provisioning
 metal3_provisioning_interface: ens3
 metal3_noprovisioning_ip:
 metal3_noprovisioning_bootstrap_ip:
-sushy: false
+ksushy: false
 baremetal_user: root
 baremetal_password: calvin
 kvm_openstack: true

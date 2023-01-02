@@ -469,7 +469,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'baremetal_web_dir': '/var/www/html',
             'baremetal_web_port': 80,
             'baremetal_cidr': None,
-            'sushy': False,
+            'ksushy': False,
             'coredns': True,
             'mdns': True,
             'sslip': False,
@@ -543,7 +543,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     ovn_hostrouting = data.get('ovn_hostrouting')
     upstream = data.get('upstream')
     metal3 = data.get('metal3')
-    sushy = data.get('sushy')
+    ksushy = data.get('ksushy')
     if not data.get('coredns'):
         warning("You will need to provide DNS records for api and ingress on your own")
     mdns = data.get('mdns')
@@ -1011,17 +1011,18 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if async_install:
         registry = disconnected_url or 'quay.io'
         if not baremetal_iso_bootstrap:
+            config.import_in_kube(network=network, dest=f"{clusterdir}/openshift", secure=True)
             deletionfile = f"{plandir}/99-bootstrap-deletion.yaml"
             deletionfile = config.process_inputfile(cluster, deletionfile, overrides={'cluster': cluster,
                                                                                       'registry': registry,
                                                                                       'client': config.client})
             with open(f"{clusterdir}/openshift/99-bootstrap-deletion.yaml", 'w') as _f:
                 _f.write(deletionfile)
-            config.import_in_kube(network=network, dest=f"{clusterdir}/openshift", secure=True)
-            deletionfile2 = f"{plandir}/99-bootstrap-deletion-2.yaml"
-            deletionfile2 = config.process_inputfile(cluster, deletionfile2, overrides={'registry': registry})
-            with open(f"{clusterdir}/openshift/99-bootstrap-deletion-2.yaml", 'w') as _f:
-                _f.write(deletionfile2)
+            if not ksushy:
+                deletionfile2 = f"{plandir}/99-bootstrap-deletion-2.yaml"
+                deletionfile2 = config.process_inputfile(cluster, deletionfile2, overrides={'registry': registry})
+                with open(f"{clusterdir}/openshift/99-bootstrap-deletion-2.yaml", 'w') as _f:
+                    _f.write(deletionfile2)
         if notify:
             notifycmd = "cat /shared/results.txt"
             notifycmds, mailcontent = config.handle_notifications(cluster, notifymethods=config.notifymethods,
@@ -1073,38 +1074,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if metal3:
         copy2(f"{plandir}/99-metal3-provisioning.yaml", f"{clusterdir}/openshift")
         copy2(f"{plandir}/99-metal3-fake-machine.yaml", f"{clusterdir}/openshift")
-    if sushy:
-        if config.type != 'kvm':
-            warning(f"Ignoring sushy request as platform is {config.type}")
-        else:
-            with TemporaryDirectory() as tmpdir:
-                copy2(f"{plandir}/sushy/deployment.yaml", f"{clusterdir}/openshift/99-sushy-deployment.yaml")
-                copy2(f"{plandir}/sushy/service.yaml", f"{clusterdir}/openshift/99-sushy-service.yaml")
-                listen = "::" if ':' in api_ip else "0.0.0.0"
-                sushyconf = config.process_inputfile(cluster, f"{plandir}/sushy/conf.j2",
-                                                     overrides={'network': network, 'listen': listen})
-                with open(f"{tmpdir}/sushy.conf", 'w') as _f:
-                    _f.write(sushyconf)
-                # routedata = config.process_inputfile(cluster, f"{plandir}/sushy/route.yaml",
-                #                                     overrides={'cluster': cluster, 'domain': domain})
-                # with open(f"{clusterdir}/openshift/99-sushy-route.yaml", 'w') as _f:
-                #    _f.write(routedata)
-                if config.k.host in ['localhost', '127.0.0.1']:
-                    sshcmd = f"ssh-keygen -t rsa -N '' -f {tmpdir}/id_rsa > /dev/null"
-                    call(sshcmd, shell=True)
-                    authorized_keys_file = os.path.expanduser('~/.ssh/authorized_keys')
-                    file_mode = 'a' if os.path.exists(authorized_keys_file) else 'w'
-                    with open(authorized_keys_file, file_mode) as f:
-                        publickey = open(f"{tmpdir}/id_rsa.pub").read().strip()
-                        f.write(f"\n{publickey}")
-                else:
-                    privkey = get_ssh_pub_key().replace('.pub', '')
-                    copy2(privkey, f"{tmpdir}/id_rsa")
-                dest = f"{clusterdir}/openshift/99-sushy-cm.yaml"
-                cmcmd = f'KUBECONFIG={plandir}/fake_kubeconfig.json  '
-                cmcmd += f"oc create cm -n kcli-infra sushy-credentials --from-file={tmpdir} --dry-run=client"
-                cmcmd += f" -o yaml > {dest}"
-                call(cmcmd, shell=True)
+    if ksushy:
+        config.import_in_kube(network=network, dest=f"{clusterdir}/openshift", secure=True)
+        copy2(f"{plandir}/ksushy/deployment.yaml", f"{clusterdir}/openshift/99-ksushy-deployment.yaml")
+        copy2(f"{plandir}/ksushy/service.yaml", f"{clusterdir}/openshift/99-ksushy-service.yaml")
     if sno:
         sno_name = f"{cluster}-sno"
         sno_files = []
@@ -1442,8 +1415,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             pprint(f"Deleting Dns entry for {vm} in {domain}")
             z = dnsconfig.k
             z.delete_dns(vm, domain)
-    if sushy and config.type == 'kvm':
-        call("oc expose -n kcli-infra svc/sushy", shell=True)
+    if ksushy:
+        call("oc expose -n kcli-infra svc/ksushy", shell=True)
     if platform in cloudplatforms:
         bucket = "%s-%s" % (cluster, domain.replace('.', '-'))
         config.k.delete_bucket(bucket)
