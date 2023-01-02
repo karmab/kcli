@@ -23,13 +23,13 @@ spec:
       containers:
       - name: ksushy
         image: quay.io/karmab/kcli:latest
-        command: [/usr/bin/ksushy]
+        command: [/usr/local/bin/ksushy]
         ports:
         - containerPort: 9000
         volumeMounts:
-        - mountPath: /root/.kcli
+        - mountPath: /.kcli
           name: kcli-conf
-        - mountPath: /root/.ssh
+        - mountPath: /.ssh
           name: kcli-ssh
       volumes:
       - configMap:
