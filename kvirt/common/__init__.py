@@ -410,7 +410,9 @@ def process_files(files=[], overrides={}, remediate=False):
                                 else:
                                     subpath = f"{path}/{entry}/{subentry}"
                                     subpath = subpath.replace('//', '/')
-                                    files.append({'path': subpath, 'origin': f"{origin}/{entry}/{subentry}"})
+                                    mode = oct(os.stat(f"{origin}/{entry}/{subentry}").st_mode)[-3:]
+                                    files.append({'path': subpath, 'origin': f"{origin}/{entry}/{subentry}",
+                                                  'mode': mode})
                     else:
                         subpath = f"{path}/{entry}"
                         subpath = subpath.replace('//', '/')
@@ -505,7 +507,8 @@ def process_ignition_files(files=[], overrides={}):
             path = directory.get('path')
             for subfil in os.listdir(origin):
                 if os.path.isfile(f"{origin}/{subfil}"):
-                    files.append({'path': f'{path}/{subfil}', 'origin': f"{origin}/{subfil}"})
+                    mode = oct(os.stat(f"{origin}/{subfil}").st_mode)[-3:]
+                    files.append({'path': f'{path}/{subfil}', 'origin': f"{origin}/{subfil}", 'mode': mode})
             files.remove(directory)
     for fil in files:
         if not isinstance(fil, dict):
