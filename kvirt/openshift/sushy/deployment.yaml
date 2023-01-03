@@ -1,0 +1,42 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sushy
+  namespace: kcli-infra
+  labels:
+    app: sushy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sushy
+  template:
+    metadata:
+      labels:
+        app: sushy
+    spec:
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
+        operator: Exists
+      containers:
+      - name: sushy
+        image: quay.io/karmab/kcli:latest
+        command: [/usr/local/bin/ksushy]
+        ports:
+        - containerPort: 9000
+        volumeMounts:
+        - mountPath: /.kcli
+          name: kcli-conf
+        - mountPath: /.ssh
+          name: kcli-ssh
+      volumes:
+      - configMap:
+          defaultMode: 0700
+          name: kcli-conf
+        name: kcli-conf
+      - configMap:
+          defaultMode: 0700
+          name: kcli-ssh
+        name: kcli-ssh
