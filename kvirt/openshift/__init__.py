@@ -1348,10 +1348,13 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             else:
                 pprint("Waiting 5s for bootstrap vm to be up")
                 sleep(5)
-        nodehostip = gethostbyname(nodehost)
-        update_etc_hosts(cluster, domain, nodehostip)
-        sedcmd = f'sed -i "s@:6443@:{nodeport}@" {clusterdir}/auth/kubeconfig'
-        call(sedcmd, shell=True)
+        try:
+            nodehostip = gethostbyname(nodehost)
+            update_etc_hosts(cluster, domain, nodehostip)
+            sedcmd = f'sed -i "s@:6443@:{nodeport}@" {clusterdir}/auth/kubeconfig'
+            call(sedcmd, shell=True)
+        except Exception as e:
+            warning(f"Couldn't set properly kubeconfig.Hit {e}")
     if not async_install:
         bootstrapcommand = f'openshift-install --dir={clusterdir} --log-level={log_level} wait-for bootstrap-complete'
         bootstrapcommand = ' || '.join([bootstrapcommand for x in range(retries)])
