@@ -1,0 +1,56 @@
+name: OPENSHIFT-KUBEVIRT-USERSPACE-CI
+
+on:
+  workflow_dispatch:
+    inputs:
+      PLAN:
+        description: 'Plan Name'
+        required: true
+        default: ci-kubevirt-userspace
+      PARAMFILE:
+        description: 'paramfile'
+        required: false
+        default: openshift-ci-paramfiles/kubevirt_userspace.yml
+      EXTRAPARAMS:
+        description: 'Extra params'
+        default: ''
+      PULLSECRET:
+        description: 'Pull Secret'
+        required: false
+        default: /root/openshift_pull.json
+      VERSION:
+        description: 'version'
+        required: false
+        default: stable
+      TAG:
+        description: 'tag'
+        required: false
+        default: "4.11"
+
+env:
+ HOME: /root
+ PYTHONUNBUFFERED: true
+ KUBECONFIG: /root/.kcli/clusters/ci-kubevirt/auth/kubeconfig
+ PLAN: ${{github.event.inputs.PLAN}}
+ PARAMFILE: ${{github.event.inputs.PARAMFILE}}
+ EXTRAPARAMS: ${{github.event.inputs.EXTRAPARAMS}}
+ PULLSECRET: ${{github.event.inputs.PULLSECRET}}
+ VERSION: ${{github.event.inputs.VERSION}}
+ TAG: ${{github.event.inputs.TAG}}
+
+jobs:
+    requirements:
+      runs-on: kubevirt
+      steps:
+       - uses: actions/checkout@v2
+       - run: git pull origin ${GITHUB_REF##*/}
+       - name: Install kcli
+         run: |
+           curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
+
+    deploy-userspace-cluster:
+      needs: requirements
+      runs-on: kubevirt
+      steps:
+      - name: Deploy kubevirt userspace cluster
+        run: kcli create cluster openshift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET $PLAN --force

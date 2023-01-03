@@ -1,0 +1,37 @@
+name: OPENSHIFT-KUBEVIRT-NIGHTLY-CI
+
+on:
+   schedule:
+    - cron: '31 22 * * *'
+
+env:
+ HOME: /root
+ PYTHONUNBUFFERED: true
+ PLAN: ci-kubevirt-userspace
+ PULLSECRET: /root/openshift_pull.json
+ KUBECONFIG: /root/.kcli/clusters/ci-kubevirt/auth/kubeconfig
+
+jobs:
+    requirements:
+      runs-on: kubevirt
+      steps:
+       - uses: actions/checkout@v2
+       - run: git pull origin ${GITHUB_REF##*/}
+       - name: Install kcli
+         run: |
+           curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
+
+    deploy-userpace-cluster:
+      needs: requirements
+      runs-on: kubevirt
+      steps:
+      - name: Deploy kubevirt userspace cluster
+        run: kcli create cluster openshift --paramfile openshift-ci-paramfiles/kubevirt_userspace.yml -P pull_secret=$PULLSECRET $PLAN --force
+
+    clean-up:
+      needs: deploy-userspace-cluster
+      runs-on: kubevirt
+      steps:
+      - name: Clean everything after success
+        run: |
+          kcli delete plan --yes $PLAN
