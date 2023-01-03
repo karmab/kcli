@@ -4,7 +4,6 @@ from base64 import b64encode
 from glob import glob
 import json
 import os
-from socket import gethostbyname
 import sys
 from ipaddress import ip_network
 from kvirt.common import error, pprint, success, warning, info2
@@ -1341,6 +1340,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         todelete = [f"{cluster}-bootstrap"]
     if not kubevirt_ignore_node_port and kubevirt_api_service and kubevirt_api_service_node_port:
         nodeport = k.get_node_ports(f'{cluster}-api-svc', k.namespace)[6443]
+        sedcmd = f'sed -i "s@:6443@:{nodeport}@" {clusterdir}/auth/kubeconfig'
+        call(sedcmd, shell=True)
         while True:
             nodehost = k.info(f"{cluster}-bootstrap").get('host')
             if nodehost is not None:
@@ -1348,13 +1349,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             else:
                 pprint("Waiting 5s for bootstrap vm to be up")
                 sleep(5)
-        try:
-            nodehostip = gethostbyname(nodehost)
-            update_etc_hosts(cluster, domain, nodehostip)
-            sedcmd = f'sed -i "s@:6443@:{nodeport}@" {clusterdir}/auth/kubeconfig'
-            call(sedcmd, shell=True)
-        except Exception as e:
-            warning(f"Couldn't set properly kubeconfig.Hit {e}")
+        if 'KUBECONFIG' in os.environ or 'kubeconfig' in config.ini[config.client]:
+            kubeconfig = os.environ.get('KUBECONFIG') or config.ini[config.client]['kubeconfig']
+            hostip_cmd = f'KUBECONFIG={kubeconfig} oc get node {nodehost} -o yaml'
+            hostip = yaml.safe_load(os.popen(hostip_cmd).read())['items'][0]['status']['addresses'][0]['address']
+            update_etc_hosts(cluster, domain, hostip)
     if not async_install:
         bootstrapcommand = f'openshift-install --dir={clusterdir} --log-level={log_level} wait-for bootstrap-complete'
         bootstrapcommand = ' || '.join([bootstrapcommand for x in range(retries)])
