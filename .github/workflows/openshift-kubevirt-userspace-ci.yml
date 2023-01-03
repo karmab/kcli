@@ -40,7 +40,7 @@ env:
 
 jobs:
     requirements:
-      runs-on: kubevirt
+      runs-on: vsphere
       steps:
        - uses: actions/checkout@v2
        - run: git pull origin ${GITHUB_REF##*/}
@@ -50,7 +50,7 @@ jobs:
 
     deploy-userspace-cluster:
       needs: requirements
-      runs-on: kubevirt
+      runs-on: vsphere
       steps:
       - name: Deploy kubevirt userspace cluster
         run: kcli create cluster openshift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET $PLAN --force

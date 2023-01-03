@@ -1,4 +1,4 @@
-client: ci-kubevirt
+client: sphere_kubevirt
 cluster: ci-kubevirt-userspace
 domain: karmalabs.corp
 version: stable

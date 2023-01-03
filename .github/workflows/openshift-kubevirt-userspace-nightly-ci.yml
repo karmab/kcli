@@ -13,7 +13,7 @@ env:
 
 jobs:
     requirements:
-      runs-on: kubevirt
+      runs-on: vsphere
       steps:
        - uses: actions/checkout@v2
        - run: git pull origin ${GITHUB_REF##*/}
@@ -23,14 +23,14 @@ jobs:
 
     deploy-userpace-cluster:
       needs: requirements
-      runs-on: kubevirt
+      runs-on: vsphere
       steps:
       - name: Deploy kubevirt userspace cluster
         run: kcli create cluster openshift --paramfile openshift-ci-paramfiles/kubevirt_userspace.yml -P pull_secret=$PULLSECRET $PLAN --force
 
     clean-up:
       needs: deploy-userspace-cluster
-      runs-on: kubevirt
+      runs-on: vsphere
       steps:
       - name: Clean everything after success
         run: |
