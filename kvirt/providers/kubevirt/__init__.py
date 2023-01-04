@@ -184,9 +184,7 @@ class Kubevirt(Kubecommon):
             vm['metadata']['annotations'][f'kcli/{entry}'] = metadata[entry]
             if entry == 'kube':
                 kube = True
-                role = name.split('-')[1]
-                if role == 'bootstrap':
-                    role = 'ctlplane'
+                role = 'ctlplane' if name.endswith('bootstrap') else name.split('-')[-2]
                 vm['spec']['template']['metadata']['labels']['kcli/role'] = role
             if entry == 'plan' and kube:
                 vm['spec']['template']['metadata']['labels']['kcli/plan'] = metadata[entry]
