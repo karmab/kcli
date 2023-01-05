@@ -15,7 +15,6 @@ from kvirt.defaults import LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG
 import re
 from shutil import copy2, move, rmtree, which
 from subprocess import call
-from tempfile import TemporaryDirectory
 from time import sleep
 from urllib.request import urlopen, Request
 from random import choice
@@ -952,12 +951,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         elif 'catalogSource' in yamlfile or 'imageContentSourcePolicy' in yamlfile:
             copy2(yamlfile, f"{clusterdir}/openshift")
     if 'network_type' in data and data['network_type'] == 'Calico':
-        with TemporaryDirectory() as tmpdir:
-            calicodata = {'clusterdir': clusterdir}
-            calicoscript = config.process_inputfile(cluster, f"{plandir}/calico.sh.j2", overrides=calicodata)
-            with open(f"{tmpdir}/calico.sh", 'w') as f:
-                f.write(calicoscript)
-            call(f'bash {tmpdir}/calico.sh', shell=True)
+        calicocmd = "curl https://projectcalico.docs.tigera.io/manifests/ocp.tgz | tar xvz --strip-components=1 "
+        calicocmd += f"-C {clusterdir}/manifests"
+        call(calicocmd, shell=True)
     if ipsec or ovn_hostrouting:
         ovn_data = config.process_inputfile(cluster, f"{plandir}/99-ovn.yaml",
                                             overrides={'ipsec': ipsec, 'ovn_hostrouting': ovn_hostrouting})
