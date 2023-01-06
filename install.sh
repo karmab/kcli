@@ -20,7 +20,8 @@ if [ "$(which dnf)" != "" ] ; then
 elif [ "$(which apt-get)" != "" ] ; then
   packagefound=true
   echo -e "${BLUE}Installing using deb package${NC}"
-  curl -1sLf https://dl.cloudsmith.io/public/karmab/kcli/cfg/setup/bash.deb.sh | sudo -E bash
+  grep -q Pop /etc/lsb-release && EXTRA="distro=ubuntu"
+  curl -1sLf https://dl.cloudsmith.io/public/karmab/kcli/cfg/setup/bash.deb.sh | sudo -E $EXTRA bash
   sudo apt-get update 
   sudo apt-get -y install python3-kcli
   if [ "$?" != "0" ] ; then
