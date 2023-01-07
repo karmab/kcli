@@ -30,11 +30,3 @@ jobs:
       steps:
       - name: Deploy hypershift cluster
         run: kcli create cluster hypershift --paramfile openshift-ci-paramfiles/hypershift.yml -P pull_secret=$PULLSECRET $PLAN --force
-
-    clean-up:
-      needs: deploy-hypershift-cluster
-      runs-on: libvirt
-      steps:
-      - name: Clean everything after success
-        run: |
-          kcli delete plan --yes $PLAN
