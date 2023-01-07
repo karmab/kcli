@@ -12,7 +12,7 @@ import os
 import re
 import socket
 import sys
-from shutil import which
+from shutil import which, copy2
 from subprocess import call
 from time import sleep
 from urllib.parse import urlparse
@@ -158,14 +158,11 @@ def create(config, plandir, cluster, overrides):
     if not default_sc:
         error("Default Storage class not found. Leaving...")
         sys.exit(1)
+    kubeconfig = os.environ.get('KUBECONFIG')
+    kubeconfigdir = os.path.dirname(kubeconfig) if kubeconfig is not None else os.path.expanduser("~/.kube")
+    kubeconfig = os.path.basename(kubeconfig) if kubeconfig is not None else 'config'
     if yaml.safe_load(os.popen('oc get crd hostedclusters.hypershift.openshift.io -o yaml 2>/dev/null').read()) is None:
         warning("Hypershift not installed. Installing it for you")
-        if 'KUBECONFIG' in os.environ:
-            kubeconfig = os.path.basename(os.environ['KUBECONFIG'])
-            kubeconfigdir = os.path.dirname(os.environ['KUBECONFIG'])
-        else:
-            kubeconfig = 'config'
-            kubeconfigdir = os.path.expanduser("~/.kube")
         if which('podman') is None:
             error("Please install podman first in order to install hypershift")
             sys.exit(1)
@@ -315,6 +312,7 @@ def create(config, plandir, cluster, overrides):
             installparam['ipv6'] = ipv6
             installparam['original_domain'] = data['original_domain']
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
+    copy2(f'{kubeconfigdir}/{kubeconfig}', f"{clusterdir}/kubeconfig.base")
     assetsdata['cidr'] = cidr
     pprint("Creating control plane assets")
     cmcmd = f"oc create ns {namespace} -o yaml --dry-run=client | oc apply -f -"
@@ -412,4 +410,5 @@ def create(config, plandir, cluster, overrides):
     os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
     apps = overrides.get('apps', [])
     overrides['hypershift'] = True
+    overrides['cluster'] = cluster
     process_apps(config, clusterdir, apps, overrides)

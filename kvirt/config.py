@@ -2872,13 +2872,11 @@ class Kconfig(Kbaseconfig):
             z.delete_dns(f"api.{cluster}", domain)
             z.delete_dns(f"apps.{cluster}", domain)
         if hypershift:
-            if 'KUBECONFIG' not in os.environ:
-                warning("KUBECONFIG not set...Using .kube/config instead")
-            call(f'oc delete -f {clusterdir}/autoapprovercron.yml', shell=True)
-            call(f'oc delete -f {clusterdir}/assets.yaml', shell=True)
+            call(f'KUBECONFIG={clusterdir}/kubeconfig.base oc delete -f {clusterdir}/autoapprovercron.yml', shell=True)
+            call(f'KUBECONFIG={clusterdir}/kubeconfig.base oc delete -f {clusterdir}/assets.yaml', shell=True)
             if 'baremetal_iso' in clusterdata or 'baremetal_hosts' in clusterdata:
-                call('oc -n default delete all -l app=httpd-kcli', shell=True)
-                call('oc -n default delete pvc httpd-kcli-pvc', shell=True)
+                call(f'KUBECONFIG={clusterdir}/kubeconfig.base oc -n default delete all -l app=httpd-kcli', shell=True)
+                call(f'KUBECONFIG={clusterdir}/kubeconfig.bas eoc -n default delete pvc httpd-kcli-pvc', shell=True)
             pprint(f"Deleting directory {clusterdir}")
             rmtree(clusterdir)
         for confpool in self.confpools:
