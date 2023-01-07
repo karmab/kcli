@@ -1118,10 +1118,9 @@ def create_app_generic(args):
         error("You need kubectl to install apps")
         sys.exit(1)
     if 'KUBECONFIG' not in os.environ:
-        error("KUBECONFIG env variable needs to be set")
-        sys.exit(1)
+        warning("KUBECONFIG not set...Using .kube/config instead")
     elif not os.path.isabs(os.environ['KUBECONFIG']):
-        os.environ['KUBECONFIG'] = "%s/%s" % (os.getcwd(), os.environ['KUBECONFIG'])
+        os.environ['KUBECONFIG'] = f"{os.getcwd()}/{os.environ['KUBECONFIG']}"
     paramfile = get_cluster_parameter_file(paramfile)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
@@ -1151,10 +1150,9 @@ def create_app_openshift(args):
         error("You need oc to install apps")
         sys.exit(1)
     if 'KUBECONFIG' not in os.environ:
-        error("KUBECONFIG env variable needs to be set")
-        sys.exit(1)
+        warning("KUBECONFIG not set...Using .kube/config instead")
     elif not os.path.isabs(os.environ['KUBECONFIG']):
-        os.environ['KUBECONFIG'] = "%s/%s" % (os.getcwd(), os.environ['KUBECONFIG'])
+        os.environ['KUBECONFIG'] = f"{os.getcwd()}/{os.environ['KUBECONFIG']}"
     paramfile = get_cluster_parameter_file(paramfile)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
@@ -1193,10 +1191,9 @@ def delete_app_generic(args):
         error("You need kubectl to install apps")
         sys.exit(1)
     if 'KUBECONFIG' not in os.environ:
-        error("KUBECONFIG env variable needs to be set")
-        sys.exit(1)
+        warning("KUBECONFIG not set...Using .kube/config instead")
     elif not os.path.isabs(os.environ['KUBECONFIG']):
-        os.environ['KUBECONFIG'] = "%s/%s" % (os.getcwd(), os.environ['KUBECONFIG'])
+        os.environ['KUBECONFIG'] = f"{os.getcwd()}/{os.environ['KUBECONFIG']}"
     paramfile = get_cluster_parameter_file(paramfile)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
@@ -1221,10 +1218,9 @@ def delete_app_openshift(args):
         error("You need oc to install apps")
         sys.exit(1)
     if 'KUBECONFIG' not in os.environ:
-        error("KUBECONFIG env variable needs to be set")
-        sys.exit(1)
+        warning("KUBECONFIG not set...Using .kube/config instead")
     elif not os.path.isabs(os.environ['KUBECONFIG']):
-        os.environ['KUBECONFIG'] = "%s/%s" % (os.getcwd(), os.environ['KUBECONFIG'])
+        os.environ['KUBECONFIG'] = f"{os.getcwd()}/{os.environ['KUBECONFIG']}"
     paramfile = get_cluster_parameter_file(paramfile)
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
@@ -1261,10 +1257,9 @@ def list_apps_openshift(args):
         error("You need oc to list apps")
         sys.exit(1)
     if 'KUBECONFIG' not in os.environ:
-        error("KUBECONFIG env variable needs to be set")
-        sys.exit(1)
+        warning("KUBECONFIG not set...Using .kube/config instead")
     elif not os.path.isabs(os.environ['KUBECONFIG']):
-        os.environ['KUBECONFIG'] = "%s/%s" % (os.getcwd(), os.environ['KUBECONFIG'])
+        os.environ['KUBECONFIG'] = f"{os.getcwd()}/{os.environ['KUBECONFIG']}"
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     apps = baseconfig.list_apps_openshift(quiet=True, installed=args.installed)
     if args.output is not None:
