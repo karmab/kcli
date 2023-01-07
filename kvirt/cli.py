@@ -40,7 +40,7 @@ import yaml
 
 
 def cache_vms(baseconfig, region, zone, namespace):
-    cache_file = "%s/.kcli/%s_vms.yml" % (os.environ['HOME'], baseconfig.client)
+    cache_file = f"{os.environ['HOME']}/.kcli/{baseconfig.client}_vms.yml"
     if os.path.exists(cache_file):
         with open(cache_file, 'r') as vms:
             _list = yaml.safe_load(vms)
@@ -95,7 +95,7 @@ def valid_cluster(name):
 
 
 def alias(text):
-    return "Alias for %s" % text
+    return f"Alias for {text}"
 
 
 def get_subparser_print_help(parser, subcommand):
@@ -144,7 +144,7 @@ def delete_cache(args):
     if not yes and not yes_top:
         common.confirm("Are you sure?")
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-    cache_file = "%s/.kcli/%s_vms.yml" % (os.environ['HOME'], baseconfig.client)
+    cache_file = f"{os.environ['HOME']}/.kcli/{baseconfig.client}_vms.yml"
     if os.path.exists(cache_file):
         pprint(f"Deleting cache on {baseconfig.client}")
         os.remove(cache_file)
@@ -329,7 +329,7 @@ def delete_vm(args):
         names = [common.get_lastvm(config.client)] if not args.names else args.names
     if count > 1:
         if len(args.names) == 1:
-            names = ["%s-%d" % (args.names[0], number) for number in range(count)]
+            names = [f"{args.names[0]}-{number}" for number in range(count)]
         else:
             error("Using count when deleting vms requires specifying an unique name")
             sys.exit(1)
@@ -473,10 +473,10 @@ def delete_image(args):
             common.confirm("Are you sure?")
         codes = []
         for image in images:
-            clientprofile = "%s_%s" % (cli, image)
+            clientprofile = f"{cli}_{image}"
             imgprofiles = [p for p in config.profiles if 'image' in config.profiles[p] and
                            config.profiles[p]['image'] == os.path.basename(image) and
-                           p.startswith('%s_' % cli)]
+                           p.startswith(f'{cli}_')]
             pprint(f"Deleting image {image} on {cli}")
             if clientprofile in config.profiles and 'image' in config.profiles[clientprofile]:
                 profileimage = config.profiles[clientprofile]['image']
@@ -1082,7 +1082,7 @@ def list_plan(args):
 def choose_parameter_file(paramfile):
     if container_mode():
         if paramfile is not None:
-            paramfile = "/workdir/%s" % paramfile
+            paramfile = f"/workdir/{paramfile}"
         elif os.path.exists("/workdir/kcli_parameters.yml"):
             paramfile = "/workdir/kcli_parameters.yml"
             pprint("Using default parameter file kcli_parameters.yml")
@@ -1095,8 +1095,8 @@ def choose_parameter_file(paramfile):
 def get_cluster_parameter_file(paramfile):
     clustersdir = os.path.expanduser("~/.kcli/clusters")
     if (paramfile is None or not os.path.exists(paramfile)) and os.environ['KUBECONFIG'].startswith(clustersdir):
-        cluster = os.environ['KUBECONFIG'].replace("%s/" % clustersdir, '').split('/')[0]
-        clusterparamfile = "%s/%s/kcli_parameters.yml" % (clustersdir, cluster)
+        cluster = os.environ['KUBECONFIG'].replace(f"{clustersdir}/", '').split('/')[0]
+        clusterparamfile = f"{clustersdir}/{cluster}/kcli_parameters.yml"
         if os.path.exists(clusterparamfile):
             paramfile = clusterparamfile
     return paramfile
@@ -1107,9 +1107,9 @@ def create_app_generic(args):
     outputdir = args.outputdir
     if outputdir is not None:
         if container_mode() and not outputdir.startswith('/'):
-            outputdir = "/workdir/%s" % outputdir
+            outputdir = f"/workdir/{outputdir}"
         if os.path.exists(outputdir) and os.path.isfile(outputdir):
-            error("Invalid outputdir %s" % outputdir)
+            error(f"Invalid outputdir {outputdir}")
             sys.exit(1)
         elif not os.path.exists(outputdir):
             os.mkdir(outputdir)
@@ -1130,7 +1130,7 @@ def create_app_generic(args):
             error(f"app {app} not available. Skipping...")
             continue
         pprint(f"Adding app {app}")
-        overrides['%s_version' % app] = overrides['%s_version' % app] if '%s_version' % app in overrides else 'latest'
+        overrides[f'{app}_version'] = overrides[f'{app}_version'] if f'{app}_version' in overrides else 'latest'
         baseconfig.create_app_generic(app, overrides, outputdir=outputdir)
 
 
@@ -1139,7 +1139,7 @@ def create_app_openshift(args):
     outputdir = args.outputdir
     if outputdir is not None:
         if container_mode() and not outputdir.startswith('/'):
-            outputdir = "/workdir/%s" % outputdir
+            outputdir = f"/workdir/{outputdir}"
         if os.path.exists(outputdir) and os.path.isfile(outputdir):
             error(f"Invalid outputdir {outputdir}")
             sys.exit(1)
@@ -1505,7 +1505,7 @@ def create_vm(args):
         if 'plan' not in overrides:
             overrides['plan'] = name
         for number in range(count):
-            currentname = "%s-%d" % (name, number)
+            currentname = f"{name}-{number}"
             currentoverrides = deepcopy(overrides)
             if 'nets' in currentoverrides:
                 for index, net in enumerate(currentoverrides['nets']):
@@ -1620,7 +1620,7 @@ def create_dns(args):
     if len(names) > 1:
         alias.extend(names[1:])
     if alias:
-        pprint("Creating alias entries for %s" % ' '.join(alias))
+        pprint(f"Creating alias entries for {' '.join(alias)}")
     k.reserve_dns(name=name, nets=[net], domain=domain, ip=ip, alias=alias, primary=True)
 
 
@@ -1698,7 +1698,7 @@ def create_kube(args):
     kubetype = args.type
     if container_mode():
         if paramfile is not None:
-            paramfile = "/workdir/%s" % paramfile
+            paramfile = f"/workdir/{paramfile}"
         elif os.path.exists("/workdir/kcli_parameters.yml"):
             paramfile = "/workdir/kcli_parameters.yml"
             pprint("Using default parameter file kcli_parameters.yml")
@@ -1771,13 +1771,13 @@ def scale_kube(args):
     paramfile = args.paramfile
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     cluster = overrides.get('cluster', args.cluster)
-    clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
+    clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if not os.path.exists(clusterdir):
         error(f"Cluster directory {clusterdir} not found...")
         sys.exit(1)
     if container_mode():
         if paramfile is not None:
-            paramfile = "/workdir/%s" % paramfile
+            paramfile = f"/workdir/{paramfile}"
         elif os.path.exists("/workdir/kcli_parameters.yml"):
             paramfile = "/workdir/kcli_parameters.yml"
             pprint("Using default parameter file kcli_parameters.yml")
@@ -1856,7 +1856,7 @@ def update_kube(args):
     paramfile = args.paramfile
     if container_mode():
         if paramfile is not None:
-            paramfile = "/workdir/%s" % paramfile
+            paramfile = f"/workdir/{paramfile}"
         elif os.path.exists("/workdir/kcli_parameters.yml"):
             paramfile = "/workdir/kcli_parameters.yml"
             pprint("Using default parameter file kcli_parameters.yml")
@@ -1866,12 +1866,12 @@ def update_kube(args):
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     if not overrides:
         warning("No parameters provided, using stored one")
-    clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
+    clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if not os.path.exists(clusterdir):
-        error("Cluster directory %s not found..." % clusterdir)
+        error(f"Cluster directory {clusterdir} not found...")
         sys.exit(1)
-    if os.path.exists("%s/kcli_parameters.yml" % clusterdir):
-        with open("%s/kcli_parameters.yml" % clusterdir, 'r') as install:
+    if os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
+        with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
             installparam = yaml.safe_load(install)
             data.update(installparam)
             plan = installparam.get('plan', plan)
@@ -2007,9 +2007,9 @@ def create_playbook(args):
     if inputfile is None:
         inputfile = 'kcli_plan.yml'
     if container_mode():
-        inputfile = "/workdir/%s" % inputfile
+        inputfile = f"/workdir/{inputfile}"
         if paramfile is not None:
-            paramfile = "/workdir/%s" % paramfile
+            paramfile = f"/workdir/{paramfile}"
         elif os.path.exists("/workdir/kcli_parameters.yml"):
             paramfile = "/workdir/kcli_parameters.yml"
             pprint("Using default parameter file kcli_parameters.yml")
@@ -2034,9 +2034,9 @@ def update_plan(args):
     inputfile = args.inputfile
     paramfile = args.paramfile
     if container_mode():
-        inputfile = "/workdir/%s" % inputfile if inputfile is not None else "/workdir/kcli_plan.yml"
+        inputfile = f"/workdir/{inputfile}" if inputfile is not None else "/workdir/kcli_plan.yml"
         if paramfile is not None:
-            paramfile = "/workdir/%s" % paramfile
+            paramfile = f"/workdir/{paramfile}"
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if autostart:
@@ -2076,7 +2076,7 @@ def expose_plan(args):
     if inputfile is None:
         inputfile = 'kcli_plan.yml'
     if container_mode():
-        inputfile = "/workdir/%s" % inputfile
+        inputfile = f"/workdir/{inputfile}"
     overrides = common.get_overrides(param=args.param)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     config.expose_plan(plan, inputfile=inputfile, overrides=overrides, port=port, pfmode=args.pfmode)
@@ -2151,7 +2151,7 @@ def info_plan(args):
     path = args.path
     inputfile = args.inputfile
     if container_mode():
-        inputfile = "/workdir/%s" % inputfile if inputfile is not None else "/workdir/kcli_plan.yml"
+        inputfile = f"/workdir/{inputfile}" if inputfile is not None else "/workdir/kcli_plan.yml"
     if args.plan is not None:
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
@@ -2274,7 +2274,7 @@ def download_coreos_installer(args):
     paramfile = args.paramfile
     if container_mode():
         if paramfile is not None:
-            paramfile = "/workdir/%s" % paramfile
+            paramfile = f"/workdir/{paramfile}"
         elif os.path.exists("/workdir/kcli_parameters.yml"):
             paramfile = "/workdir/kcli_parameters.yml"
             pprint("Using default parameter file kcli_parameters.yml")
@@ -2290,7 +2290,7 @@ def download_kubectl(args):
     paramfile = args.paramfile
     if container_mode():
         if paramfile is not None:
-            paramfile = "/workdir/%s" % paramfile
+            paramfile = f"/workdir/{paramfile}"
         elif os.path.exists("/workdir/kcli_parameters.yml"):
             paramfile = "/workdir/kcli_parameters.yml"
             pprint("Using default parameter file kcli_parameters.yml")
@@ -2306,7 +2306,7 @@ def download_helm(args):
     paramfile = args.paramfile
     if container_mode():
         if paramfile is not None:
-            paramfile = "/workdir/%s" % paramfile
+            paramfile = f"/workdir/{paramfile}"
         elif os.path.exists("/workdir/kcli_parameters.yml"):
             paramfile = "/workdir/kcli_parameters.yml"
             pprint("Using default parameter file kcli_parameters.yml")
@@ -2322,7 +2322,7 @@ def download_oc(args):
     paramfile = args.paramfile
     if container_mode():
         if paramfile is not None:
-            paramfile = "/workdir/%s" % paramfile
+            paramfile = f"/workdir/{paramfile}"
         elif os.path.exists("/workdir/kcli_parameters.yml"):
             paramfile = "/workdir/kcli_parameters.yml"
             pprint("Using default parameter file kcli_parameters.yml")
@@ -2338,7 +2338,7 @@ def download_openshift_installer(args):
     paramfile = args.paramfile
     if container_mode():
         if paramfile is not None:
-            paramfile = "/workdir/%s" % paramfile
+            paramfile = f"/workdir/{paramfile}"
         elif os.path.exists("/workdir/kcli_parameters.yml"):
             paramfile = "/workdir/kcli_parameters.yml"
             pprint("Using default parameter file kcli_parameters.yml")
@@ -2355,7 +2355,7 @@ def download_okd_installer(args):
     paramfile = args.paramfile
     if container_mode():
         if paramfile is not None:
-            paramfile = "/workdir/%s" % paramfile
+            paramfile = f"/workdir/{paramfile}"
         elif os.path.exists("/workdir/kcli_parameters.yml"):
             paramfile = "/workdir/kcli_parameters.yml"
             pprint("Using default parameter file kcli_parameters.yml")
@@ -2373,7 +2373,7 @@ def download_tasty(args):
     paramfile = args.paramfile
     if container_mode():
         if paramfile is not None:
-            paramfile = "/workdir/%s" % paramfile
+            paramfile = f"/workdir/{paramfile}"
         elif os.path.exists("/workdir/kcli_parameters.yml"):
             paramfile = "/workdir/kcli_parameters.yml"
             pprint("Using default parameter file kcli_parameters.yml")
@@ -2394,9 +2394,9 @@ def create_pipeline_github(args):
     if inputfile is None:
         inputfile = 'kcli_plan.yml'
     if container_mode():
-        inputfile = "/workdir/%s" % inputfile
+        inputfile = f"/workdir/{inputfile}"
         if paramfile is not None:
-            paramfile = "/workdir/%s" % paramfile
+            paramfile = f"/workdir/{paramfile}"
         elif os.path.exists("/workdir/kcli_parameters.yml"):
             paramfile = "/workdir/kcli_parameters.yml"
     elif paramfile is None and os.path.exists("kcli_parameters.yml"):
@@ -2417,9 +2417,9 @@ def create_pipeline_jenkins(args):
     if inputfile is None:
         inputfile = 'kcli_plan.yml'
     if container_mode():
-        inputfile = "/workdir/%s" % inputfile
+        inputfile = f"/workdir/{inputfile}"
         if paramfile is not None:
-            paramfile = "/workdir/%s" % paramfile
+            paramfile = f"/workdir/{paramfile}"
         elif os.path.exists("/workdir/kcli_parameters.yml"):
             paramfile = "/workdir/kcli_parameters.yml"
     elif paramfile is None and os.path.exists("kcli_parameters.yml"):
@@ -2442,9 +2442,9 @@ def create_pipeline_tekton(args):
     if inputfile is None:
         inputfile = 'kcli_plan.yml'
     if container_mode():
-        inputfile = "/workdir/%s" % inputfile
+        inputfile = f"/workdir/{inputfile}"
         if paramfile is not None:
-            paramfile = "/workdir/%s" % paramfile
+            paramfile = f"/workdir/{paramfile}"
         elif os.path.exists("/workdir/kcli_parameters.yml"):
             paramfile = "/workdir/kcli_parameters.yml"
     elif paramfile is None and os.path.exists("kcli_parameters.yml"):
@@ -2477,8 +2477,8 @@ def render_file(args):
     if container_mode():
         inputfile = f"/workdir/{inputfile}"
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-    default_data = {'config_%s' % k: baseconfig.default[k] for k in baseconfig.default}
-    client_data = {'config_%s' % k: baseconfig.ini[baseconfig.client][k] for k in baseconfig.ini[baseconfig.client]}
+    default_data = {f'config_{k}': baseconfig.default[k] for k in baseconfig.default}
+    client_data = {f'config_{k}': baseconfig.ini[baseconfig.client][k] for k in baseconfig.ini[baseconfig.client]}
     client_data['config_type'] = client_data.get('config_type', 'kvm')
     client_data['config_host'] = client_data.get('config_host', '127.0.0.1')
     default_user = getuser() if client_data['config_type'] == 'kvm'\
@@ -2528,7 +2528,7 @@ def create_plandata(args):
         inputfile = f"/workdir/{inputfile}"
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                      namespace=args.namespace)
-    config_data = {'config_%s' % k: config.ini[config.client][k] for k in config.ini[config.client]}
+    config_data = {f'config_{k}': config.ini[config.client][k] for k in config.ini[config.client]}
     config_data['config_type'] = config_data.get('config_type', 'kvm')
     overrides.update(config_data)
     if not os.path.exists(inputfile):
@@ -2542,38 +2542,35 @@ def create_plandata(args):
             else:
                 if not os.path.exists(outputdir):
                     os.mkdir(outputdir)
-                # if 'ignition' in asset:
-                #    with open("%s/%s.ign" % (outputdir, "%0.2d" % num), 'w') as f:
-                #        f.write(asset)
                 assetdata = yaml.safe_load(asset)
                 hostname = assetdata.get('hostname')
                 if hostname is None:
                     continue
-                pprint("Rendering %s" % hostname)
-                hostnamedir = "%s/%s" % (outputdir, hostname)
+                pprint(f"Rendering {hostname}")
+                hostnamedir = f"{outputdir}/{hostname}"
                 if not os.path.exists(hostnamedir):
                     os.mkdir(hostnamedir)
                 runcmd = assetdata.get('runcmd', [])
                 write_files = assetdata.get('write_files', [])
-                with open("%s/runcmd" % hostnamedir, 'w') as f:
+                with open(f"{hostnamedir}/runcmd", 'w') as f:
                     f.write('\n'.join(runcmd))
                 for _file in write_files:
                     content = _file['content']
                     path = _file['path'].replace('/root/', '')
                     SSH_PRIV_LOCATIONS = [location.replace('.pub', '') for location in SSH_PUB_LOCATIONS]
                     if 'openshift_pull.json' in path or path in SSH_PRIV_LOCATIONS or path in SSH_PUB_LOCATIONS:
-                        warning("Skipping %s" % path)
+                        warning(f"Skipping {path}")
                         continue
-                    if '/' in path and not os.path.exists("%s/%s" % (hostnamedir, os.path.dirname(path))):
-                        os.makedirs("%s/%s" % (hostnamedir, os.path.dirname(path)))
-                        with open("%s/%s/%s" % (hostnamedir, os.path.dirname(path), os.path.basename(path)), 'w') as f:
+                    if '/' in path and not os.path.exists(f"{hostnamedir}/{os.path.dirname(path)}"):
+                        os.makedirs(f"{hostnamedir}/{os.path.dirname(path)}")
+                        with open(f"{hostnamedir}/{os.path.dirname(path)}/{os.path.basename(path)}", 'w') as f:
                             f.write(content)
                     else:
-                        with open("%s/%s" % (hostnamedir, path), 'w') as f:
+                        with open(f"{hostnamedir}/{path}", 'w') as f:
                             f.write(content)
         if outputdir is not None:
             renderplan = config.process_inputfile(plan, inputfile, overrides=overrides)
-            with open("%s/kcli_plan.yml" % outputdir, 'w') as f:
+            with open(f"{outputdir}/kcli_plan.yml", 'w') as f:
                 f.write(renderplan)
 
 
@@ -2775,7 +2772,7 @@ def scp_vm(args):
     identityfile = args.identityfile
     recursive = args.recursive
     source = args.source[0]
-    source = "/workdir/%s" % source if container_mode() else source
+    source = f"/workdir/{source}" if container_mode() else source
     destination = args.destination[0]
     user = args.user
     vmport = args.port
@@ -3318,9 +3315,9 @@ def create_workflow(args):
     outputdir = args.outputdir
     if outputdir is not None:
         if container_mode() and not outputdir.startswith('/'):
-            outputdir = "/workdir/%s" % outputdir
+            outputdir = f"/workdir/{outputdir}"
         if os.path.exists(outputdir) and os.path.isfile(outputdir):
-            error("Invalid outputdir %s" % outputdir)
+            error(f"Invalid outputdir {outputdir}")
             sys.exit(1)
         elif not os.path.exists(outputdir):
             os.mkdir(outputdir)
@@ -3420,7 +3417,7 @@ def cli():
     containerconsole_parser.set_defaults(func=console_container)
 
     changelog_desc = 'Changelog'
-    changelog_epilog = "examples:\n%s" % changelog
+    changelog_epilog = f"examples:\n{changelog}"
     changelog_parser = argparse.ArgumentParser(add_help=False)
     changelog_parser.add_argument('diff', metavar='DIFF', nargs=argparse.REMAINDER)
     changelog_parser.set_defaults(func=get_changelog)
@@ -3450,7 +3447,7 @@ def cli():
     appgenericcreate_parser.set_defaults(func=create_app_generic)
 
     appopenshiftcreate_desc = 'Create Kube App Openshift'
-    appopenshiftcreate_epilog = "examples:\n%s" % appopenshiftcreate
+    appopenshiftcreate_epilog = f"examples:\n{appopenshiftcreate}"
     appopenshiftcreate_parser = createapp_subparsers.add_parser('openshift', description=appopenshiftcreate_desc,
                                                                 help=appopenshiftcreate_desc,
                                                                 epilog=appopenshiftcreate_epilog,
@@ -3511,7 +3508,7 @@ def cli():
     containercreate_parser.set_defaults(func=create_container)
 
     dnscreate_desc = 'Create Dns Entries'
-    dnscreate_epilog = "examples:\n%s" % dnscreate
+    dnscreate_epilog = f"examples:\n{dnscreate}"
     dnscreate_parser = create_subparsers.add_parser('dns', description=dnscreate_desc, help=dnscreate_desc,
                                                     epilog=dnscreate_epilog,
                                                     formatter_class=rawhelp)
@@ -3525,7 +3522,7 @@ def cli():
     dnscreate_parser.set_defaults(func=create_dns)
 
     hostcreate_desc = 'Create Host'
-    hostcreate_epilog = "examples:\n%s" % hostcreate
+    hostcreate_epilog = f"examples:\n{hostcreate}"
     hostcreate_parser = create_subparsers.add_parser('host', help=hostcreate_desc, description=hostcreate_desc,
                                                      aliases=['client'], epilog=hostcreate_epilog,
                                                      formatter_class=rawhelp)
@@ -3646,7 +3643,7 @@ def cli():
     kubecreate_subparsers = kubecreate_parser.add_subparsers(metavar='', dest='subcommand_create_kube')
 
     kubegenericcreate_desc = 'Create Generic Kube'
-    kubegenericcreate_epilog = "examples:\n%s" % kubegenericcreate
+    kubegenericcreate_epilog = f"examples:\n{kubegenericcreate}"
     kubegenericcreate_parser = argparse.ArgumentParser(add_help=False)
     kubegenericcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
     kubegenericcreate_parser.add_argument('-P', '--param', action='append',
@@ -3662,7 +3659,7 @@ def cli():
                                      formatter_class=rawhelp, aliases=['kubeadm'])
 
     kubekindcreate_desc = 'Create Kind Kube'
-    kubekindcreate_epilog = "examples:\n%s" % kubekindcreate
+    kubekindcreate_epilog = f"examples:\n{kubekindcreate}"
     kubekindcreate_parser = argparse.ArgumentParser(add_help=False)
     kubekindcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
     kubekindcreate_parser.add_argument('-P', '--param', action='append',
@@ -3679,7 +3676,7 @@ def cli():
 
     parameterhelp = "specify parameter or keyword for rendering (multiple can be specified)"
     kubemicroshiftcreate_desc = 'Create Microshift Kube'
-    kubemicroshiftcreate_epilog = "examples:\n%s" % kubemicroshiftcreate
+    kubemicroshiftcreate_epilog = f"examples:\n{kubemicroshiftcreate}"
     kubemicroshiftcreate_parser = argparse.ArgumentParser(add_help=False)
     kubemicroshiftcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
     kubemicroshiftcreate_parser.add_argument('-P', '--param', action='append', help=parameterhelp, metavar='PARAM')
@@ -3693,7 +3690,7 @@ def cli():
                                      formatter_class=rawhelp)
 
     kubek3screate_desc = 'Create K3s Kube'
-    kubek3screate_epilog = "examples:\n%s" % kubek3screate
+    kubek3screate_epilog = f"examples:\n{kubek3screate}"
     kubek3screate_parser = argparse.ArgumentParser(add_help=False)
     kubek3screate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
     kubek3screate_parser.add_argument('-P', '--param', action='append',
@@ -3710,7 +3707,7 @@ def cli():
 
     parameterhelp = "specify parameter or keyword for rendering (multiple can be specified)"
     kubehypershiftcreate_desc = 'Create Hypershift Kube'
-    kubehypershiftcreate_epilog = "examples:\n%s" % kubehypershiftcreate
+    kubehypershiftcreate_epilog = f"examples:\n{kubehypershiftcreate}"
     kubehypershiftcreate_parser = argparse.ArgumentParser(add_help=False)
     kubehypershiftcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
     kubehypershiftcreate_parser.add_argument('-P', '--param', action='append', help=parameterhelp, metavar='PARAM')
@@ -3725,7 +3722,7 @@ def cli():
 
     parameterhelp = "specify parameter or keyword for rendering (multiple can be specified)"
     kubeopenshiftcreate_desc = 'Create Openshift Kube'
-    kubeopenshiftcreate_epilog = "examples:\n%s" % kubeopenshiftcreate
+    kubeopenshiftcreate_epilog = f"examples:\n{kubeopenshiftcreate}"
     kubeopenshiftcreate_parser = argparse.ArgumentParser(add_help=False)
     kubeopenshiftcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
     kubeopenshiftcreate_parser.add_argument('-P', '--param', action='append', help=parameterhelp, metavar='PARAM')
@@ -3779,7 +3776,7 @@ def cli():
     networkcreate_parser.set_defaults(func=create_network)
 
     disconnectedcreate_desc = 'Create a disconnected registry vm for openshift'
-    disconnectedcreate_epilog = "examples:\n%s" % disconnectedcreate
+    disconnectedcreate_epilog = f"examples:\n{disconnectedcreate}"
     disconnectedcreate_parser = argparse.ArgumentParser(add_help=False)
     disconnectedcreate_parser.add_argument('-P', '--param', action='append',
                                            help='specify parameter or keyword for rendering (can specify multiple)',
@@ -3793,7 +3790,7 @@ def cli():
                                  aliases=['openshift-disconnected'])
 
     isocreate_desc = 'Create an iso ignition for baremetal install'
-    isocreate_epilog = "examples:\n%s" % isocreate
+    isocreate_epilog = f"examples:\n{isocreate}"
     isocreate_parser = argparse.ArgumentParser(add_help=False)
     isocreate_parser.add_argument('-d', '--direct', action='store_true', help='Embed directly target ignition in iso')
     isocreate_parser.add_argument('-f', '--ignitionfile', help='Ignition file')
@@ -3853,7 +3850,7 @@ def cli():
     tektonpipelinecreate_parser.set_defaults(func=create_pipeline_tekton)
 
     plancreate_desc = 'Create Plan'
-    plancreate_epilog = "examples:\n%s" % plancreate
+    plancreate_epilog = f"examples:\n{plancreate}"
     plancreate_parser = create_subparsers.add_parser('plan', description=plancreate_desc, help=plancreate_desc,
                                                      epilog=plancreate_epilog,
                                                      formatter_class=rawhelp)
@@ -3874,7 +3871,7 @@ def cli():
     plancreate_parser.set_defaults(func=create_plan)
 
     plandatacreate_desc = 'Create Cloudinit/Ignition from plan file'
-    plandatacreate_epilog = "examples:\n%s" % plandatacreate
+    plandatacreate_epilog = f"examples:\n{plandatacreate}"
     plandatacreate_parser = create_subparsers.add_parser('plan-data', description=plandatacreate_desc,
                                                          help=plandatacreate_desc, epilog=plandatacreate_epilog,
                                                          formatter_class=rawhelp)
@@ -3889,7 +3886,7 @@ def cli():
     plandatacreate_parser.set_defaults(func=create_plandata)
 
     plantemplatecreate_desc = 'Create plan template'
-    plantemplatecreate_epilog = "examples:\n%s" % plantemplatecreate
+    plantemplatecreate_epilog = f"examples:\n{plantemplatecreate}"
     plantemplatecreate_parser = create_subparsers.add_parser('plan-template', description=plantemplatecreate_desc,
                                                              help=plantemplatecreate_desc,
                                                              epilog=plantemplatecreate_epilog, formatter_class=rawhelp)
@@ -3946,7 +3943,7 @@ def cli():
     productcreate_parser.set_defaults(func=create_product)
 
     repocreate_desc = 'Create Repo'
-    repocreate_epilog = "examples:\n%s" % repocreate
+    repocreate_epilog = f"examples:\n{repocreate}"
     repocreate_parser = create_subparsers.add_parser('repo', description=repocreate_desc, help=repocreate_desc,
                                                      epilog=repocreate_epilog,
                                                      formatter_class=rawhelp)
@@ -3955,7 +3952,7 @@ def cli():
     repocreate_parser.set_defaults(func=create_repo)
 
     vmcreate_desc = 'Create Vm'
-    vmcreate_epilog = "examples:\n%s" % vmcreate
+    vmcreate_epilog = f"examples:\n{vmcreate}"
     vmcreate_parser = argparse.ArgumentParser(add_help=False)
     vmcreate_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
     vmcreate_parser.add_argument('--console', help='Directly switch to console after creation', action='store_true')
@@ -3975,7 +3972,7 @@ def cli():
                                  epilog=vmcreate_epilog, formatter_class=rawhelp)
 
     vmdatacreate_desc = 'Create Cloudinit/Ignition for a single vm'
-    vmdatacreate_epilog = "examples:\n%s" % vmdatacreate
+    vmdatacreate_epilog = f"examples:\n{vmdatacreate}"
     vmdatacreate_parser = create_subparsers.add_parser('vm-data', description=vmdatacreate_desc,
                                                        help=vmdatacreate_desc, epilog=vmdatacreate_epilog,
                                                        formatter_class=rawhelp)
@@ -3987,7 +3984,7 @@ def cli():
     vmdatacreate_parser.set_defaults(func=create_vmdata)
 
     vmdiskadd_desc = 'Add Disk To Vm'
-    diskcreate_epilog = "examples:\n%s" % diskcreate
+    diskcreate_epilog = f"examples:\n{diskcreate}"
     vmdiskadd_parser = argparse.ArgumentParser(add_help=False)
     vmdiskadd_parser.add_argument('-s', '--size', type=int, help='Size of the disk to add, in GB', metavar='SIZE',
                                   default=10)
@@ -4007,7 +4004,7 @@ def cli():
                                  formatter_class=rawhelp)
 
     create_vmnic_desc = 'Add Nic To Vm'
-    create_vmnic_epilog = "examples:\n%s" % niccreate
+    create_vmnic_epilog = f"examples:\n{niccreate}"
     create_vmnic_parser = argparse.ArgumentParser(add_help=False)
     create_vmnic_parser.add_argument('-n', '--network', help='Network', metavar='NETWORK')
     create_vmnic_parser.add_argument('name', metavar='VMNAME')
@@ -4017,7 +4014,7 @@ def cli():
                                  epilog=create_vmnic_epilog, formatter_class=rawhelp)
 
     securitygroupcreate_desc = 'Create Security Group'
-    securitygroupcreate_epilog = "examples:\n%s" % securitygroupcreate
+    securitygroupcreate_epilog = f"examples:\n{securitygroupcreate}"
     securitygroupcreate_desc = 'Create Security Group'
     securitygroupcreate_parser = create_subparsers.add_parser('security-group', description=securitygroupcreate_desc,
                                                               help=securitygroupcreate_desc, aliases=['sg'],
@@ -4045,7 +4042,7 @@ def cli():
     vmsnapshotcreate_parser.set_defaults(func=snapshotcreate_vm)
 
     workflowcreate_desc = 'Create Workflow'
-    workflowcreate_epilog = "examples:\n%s" % workflowcreate
+    workflowcreate_epilog = f"examples:\n{workflowcreate}"
     workflowcreate_parser = create_subparsers.add_parser('workflow', description=workflowcreate_desc,
                                                          help=workflowcreate_desc, epilog=workflowcreate_epilog,
                                                          formatter_class=rawhelp)
@@ -4068,7 +4065,7 @@ def cli():
     vmclone_parser.set_defaults(func=clone_vm)
 
     vmconsole_desc = 'Vm Console (vnc/spice/serial)'
-    vmconsole_epilog = "examples:\n%s" % vmconsole
+    vmconsole_epilog = f"examples:\n{vmconsole}"
     vmconsole_parser = argparse.ArgumentParser(add_help=False)
     vmconsole_parser.add_argument('-s', '--serial', action='store_true')
     vmconsole_parser.add_argument('name', metavar='VMNAME', nargs='?')
@@ -4253,7 +4250,7 @@ def cli():
     delete_subparsers.add_parser('vm', parents=[vmdelete_parser], description=vmdelete_desc, help=vmdelete_desc)
 
     vmdiskdelete_desc = 'Delete Vm Disk'
-    diskdelete_epilog = "examples:\n%s" % diskdelete
+    diskdelete_epilog = f"examples:\n{diskdelete}"
     vmdiskdelete_parser = argparse.ArgumentParser(add_help=False)
     vmdiskdelete_parser.add_argument('-n', '--novm', action='store_true', help='Dont try to locate vm')
     vmdiskdelete_parser.add_argument('--vm', help='Name of the vm', metavar='VMNAME')
@@ -4266,7 +4263,7 @@ def cli():
                                  formatter_class=rawhelp)
 
     delete_vmnic_desc = 'Delete Nic From vm'
-    delete_vmnic_epilog = "examples:\n%s" % nicdelete
+    delete_vmnic_epilog = f"examples:\n{nicdelete}"
     delete_vmnic_parser = argparse.ArgumentParser(add_help=False)
     delete_vmnic_parser.add_argument('-i', '--interface', help='Interface name', metavar='INTERFACE')
     delete_vmnic_parser.add_argument('-n', '--network', help='Network', metavar='NETWORK')
@@ -4325,7 +4322,7 @@ def cli():
                                    help=coreosinstallerdownload_desc)
 
     imagedownload_desc = 'Download Cloud Image'
-    imagedownload_help = "Image to download. Choose between \n%s" % '\n'.join(IMAGES.keys())
+    imagedownload_help = "Image to download. Choose between \n{'\n'.join(IMAGES.keys()}"
     imagedownload_parser = argparse.ArgumentParser(add_help=False)
     imagedownload_parser.add_argument('-a', '--arch', help='Target arch', choices=['x86_64', 'aarch64'],
                                       default='x86_64')
@@ -4431,7 +4428,7 @@ def cli():
     hostenable_parser.set_defaults(func=enable_host)
 
     vmexport_desc = 'Export Vm'
-    vmexport_epilog = "examples:\n%s" % vmexport
+    vmexport_epilog = f"examples:\n{vmexport}"
     vmexport_parser = subparsers.add_parser('export', description=vmexport_desc, help=vmexport_desc,
                                             epilog=vmexport_epilog,
                                             formatter_class=rawhelp)
@@ -4568,7 +4565,7 @@ def cli():
     profileinfo_parser.set_defaults(func=info_profile)
 
     planinfo_desc = 'Info Plan'
-    planinfo_epilog = "examples:\n%s" % planinfo
+    planinfo_epilog = f"examples:\n{planinfo}"
     planinfo_parser = info_subparsers.add_parser('plan', description=planinfo_desc, help=planinfo_desc,
                                                  epilog=planinfo_epilog,
                                                  formatter_class=rawhelp)
@@ -4581,7 +4578,7 @@ def cli():
     planinfo_parser.set_defaults(func=info_plan)
 
     productinfo_desc = 'Info Of Product'
-    productinfo_epilog = "examples:\n%s" % productinfo
+    productinfo_epilog = f"examples:\n{productinfo}"
     productinfo_parser = argparse.ArgumentParser(add_help=False)
     productinfo_parser.set_defaults(func=info_product)
     productinfo_parser.add_argument('-g', '--group', help='Only Display products of the indicated group',
@@ -4603,7 +4600,7 @@ def cli():
     info_subparsers.add_parser('vm', parents=[vminfo_parser], description=vminfo_desc, help=vminfo_desc)
 
     list_desc = 'List Object'
-    list_epilog = "examples:\n%s" % _list
+    list_epilog = f"examples:\n{_list}"
     list_parser = subparsers.add_parser('list', description=list_desc, help=list_desc, aliases=['get'],
                                         epilog=list_epilog,
                                         formatter_class=rawhelp)
@@ -4837,7 +4834,7 @@ def cli():
     kubescale_subparsers = kubescale_parser.add_subparsers(metavar='', dest='subcommand_scale_kube')
 
     kubegenericscale_desc = 'Scale Generic Kube'
-    kubegenericscale_epilog = "examples:\n%s" % kubegenericscale
+    kubegenericscale_epilog = f"examples:\n{kubegenericscale}"
     kubegenericscale_parser = argparse.ArgumentParser(add_help=False)
     kubegenericscale_parser.add_argument('-c', '--ctlplanes', help='Total number of ctlplanes', type=int)
     kubegenericscale_parser.add_argument('-P', '--param', action='append',
@@ -4852,7 +4849,7 @@ def cli():
                                     formatter_class=rawhelp)
 
     kubek3sscale_desc = 'Scale K3s Kube'
-    kubek3sscale_epilog = "examples:\n%s" % kubek3sscale
+    kubek3sscale_epilog = f"examples:\n{kubek3sscale}"
     kubek3sscale_parser = argparse.ArgumentParser(add_help=False)
     kubek3sscale_parser.add_argument('-c', '--ctlplanes', help='Total number of ctlplanes', type=int)
     kubek3sscale_parser.add_argument('-P', '--param', action='append',
@@ -4879,7 +4876,7 @@ def cli():
 
     parameterhelp = "specify parameter or keyword for rendering (multiple can be specified)"
     kubeopenshiftscale_desc = 'Scale Openshift Kube'
-    kubeopenshiftscale_epilog = "examples:\n%s" % kubeopenshiftscale
+    kubeopenshiftscale_epilog = f"examples:\n{kubeopenshiftscale}"
     kubeopenshiftscale_parser = argparse.ArgumentParser(add_help=False)
     kubeopenshiftscale_parser.add_argument('-c', '--ctlplanes', help='Total number of ctlplanes', type=int)
     kubeopenshiftscale_parser.add_argument('-P', '--param', action='append', help=parameterhelp, metavar='PARAM')
@@ -4922,7 +4919,7 @@ def cli():
                           formatter_class=rawhelp)
 
     start_desc = 'Start Vm/Plan/Container'
-    start_epilog = "examples:\n%s" % start
+    start_epilog = f"examples:\n{start}"
     start_parser = subparsers.add_parser('start', description=start_desc, help=start_desc, epilog=start_epilog,
                                          formatter_class=rawhelp)
     start_subparsers = start_parser.add_subparsers(metavar='', dest='subcommand_start')
