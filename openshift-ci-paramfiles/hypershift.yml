@@ -6,3 +6,6 @@ workers: 2
 numcpus: 16
 memory: 16384
 disk_size: 80
+sslip: true
+apps:
+- users
