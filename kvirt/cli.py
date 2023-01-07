@@ -1094,8 +1094,10 @@ def choose_parameter_file(paramfile):
 
 def get_cluster_parameter_file(paramfile):
     clustersdir = os.path.expanduser("~/.kcli/clusters")
-    if (paramfile is None or not os.path.exists(paramfile)) and os.environ['KUBECONFIG'].startswith(clustersdir):
-        cluster = os.environ['KUBECONFIG'].replace(f"{clustersdir}/", '').split('/')[0]
+    kubeconfig = os.environ.get('KUBECONFIG')
+    if (paramfile is None or not os.path.exists(paramfile)) and kubeconfig is not None\
+       and kubeconfig.startswith(clustersdir):
+        cluster = kubeconfig.replace(f"{clustersdir}/", '').split('/')[0]
         clusterparamfile = f"{clustersdir}/{cluster}/kcli_parameters.yml"
         if os.path.exists(clusterparamfile):
             paramfile = clusterparamfile
@@ -1160,6 +1162,8 @@ def create_app_openshift(args):
         if app in LOCAL_OPENSHIFT_APPS:
             name = app
             app_data = overrides.copy()
+            if app == 'users' and args.subcommand_create_app == 'hypershift':
+                app_data['hypershift'] = True
         else:
             name, source, channel, csv, description, namespace, channels, crd = common.olm_app(app)
             if name is None:
@@ -1228,6 +1232,8 @@ def delete_app_openshift(args):
         if app in LOCAL_OPENSHIFT_APPS:
             name = app
             app_data = overrides.copy()
+            if app == 'users' and args.subcommand_delete_app == 'hypershift':
+                app_data['hypershift'] = True
         else:
             name, source, channel, csv, description, namespace, channels, crd = common.olm_app(app)
             if name is None:

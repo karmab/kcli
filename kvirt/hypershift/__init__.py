@@ -411,4 +411,5 @@ def create(config, plandir, cluster, overrides):
             sys.exit(run)
     os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
     apps = overrides.get('apps', [])
+    overrides['hypershift'] = True
     process_apps(config, clusterdir, apps, overrides)

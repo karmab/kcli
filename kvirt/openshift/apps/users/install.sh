@@ -5,7 +5,13 @@ ADMIN_PASSWORD={{ users_adminpassword }}
 echo "Adding dev user $DEV_USER with password $DEV_PASSWORD"
 echo "Adding admin user $ADMIN_USER with password $ADMIN_PASSWORD"
 printf "$ADMIN_USER:$(openssl passwd -apr1 $ADMIN_PASSWORD )\n$DEV_USER:$(openssl passwd -apr1 $DEV_PASSWORD )\n" > htpasswd
-oc create secret generic htpass-secret --from-file=htpasswd=htpasswd -n openshift-config
+NAMESPACE={{ "clusters" if hypershift|default(False) else 'openshift-config' }}
+oc create secret generic htpass-secret --from-file=htpasswd=htpasswd -n $NAMESPACE
+{% if hypershift|default(False) %}
+CLUSTER={{ cluster }}
+oc patch hc -n $NAMESPACE $CLUSTER --patch-file oauth_hypershift.yml --type merge
+{% else %}
 oc apply -f oauth.yml
+{% endif %}
 echo "Granting cluster-admin role to $ADMIN_USER"
 oc adm policy add-cluster-role-to-user cluster-admin $ADMIN_USER
