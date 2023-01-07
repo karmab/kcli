@@ -3459,7 +3459,7 @@ def cli():
     appopenshiftcreate_parser = createapp_subparsers.add_parser('openshift', description=appopenshiftcreate_desc,
                                                                 help=appopenshiftcreate_desc,
                                                                 epilog=appopenshiftcreate_epilog,
-                                                                formatter_class=rawhelp)
+                                                                formatter_class=rawhelp, aliases=['hypershift'])
     appopenshiftcreate_parser.add_argument('--outputdir', '-o', help='Output directory', metavar='OUTPUTDIR')
     appopenshiftcreate_parser.add_argument('-P', '--param', action='append',
                                            help=PARAMETERS_HELP, metavar='PARAM')
@@ -4109,7 +4109,7 @@ def cli():
     appopenshiftdelete_parser = deleteapp_subparsers.add_parser('openshift', description=appopenshiftdelete_desc,
                                                                 help=appopenshiftdelete_desc,
                                                                 epilog=appopenshiftdelete_epilog,
-                                                                formatter_class=rawhelp)
+                                                                formatter_class=rawhelp, aliases=['hypershift'])
     appopenshiftdelete_parser.add_argument('-P', '--param', action='append',
                                            help=PARAMETERS_HELP,
                                            metavar='PARAM')
@@ -4626,7 +4626,7 @@ def cli():
 
     appopenshiftlist_desc = 'List Available Kube Components Openshift'
     appopenshiftlist_parser = listapp_subparsers.add_parser('openshift', description=appopenshiftlist_desc,
-                                                            help=appopenshiftlist_desc)
+                                                            help=appopenshiftlist_desc, aliases=['hypershift'])
     appopenshiftlist_parser.add_argument('-i', '--installed', action='store_true', help='Show installed apps')
     appopenshiftlist_parser.set_defaults(func=list_apps_openshift)
 
