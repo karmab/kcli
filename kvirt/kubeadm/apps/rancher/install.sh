@@ -1,4 +1,5 @@
-HOSTNAME=rancher-"{{ api_ip.replace('.', '-') }}.sslip.io"
+{% set rancher_default_hostname = "rancher-" + api_ip.replace('.', '-') + ".sslip.io" %}
+HOSTNAME={{ rancher_hostname or rancher_default_hostname }}
 RANCHER_VERSION="{{ rancher_version }}"
 RANCHER_PASSWORD="{{ rancher_password }}"
 RANCHER_OPTS={{ "--devel" if rancher_version == 'alpha' else "" }}

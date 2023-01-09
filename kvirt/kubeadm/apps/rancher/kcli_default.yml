@@ -1,2 +1,3 @@
 rancher_password: admin
 rancher_version: latest
+rancher_hostname:
