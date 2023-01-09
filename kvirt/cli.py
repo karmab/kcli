@@ -4328,7 +4328,8 @@ def cli():
                                    help=coreosinstallerdownload_desc)
 
     imagedownload_desc = 'Download Cloud Image'
-    imagedownload_help = "Image to download. Choose between \n{'\n'.join(IMAGES.keys()}"
+    images_list = '\n'.join(IMAGES.keys())
+    imagedownload_help = f"Image to download. Choose between \n{images_list}"
     imagedownload_parser = argparse.ArgumentParser(add_help=False)
     imagedownload_parser.add_argument('-a', '--arch', help='Target arch', choices=['x86_64', 'aarch64'],
                                       default='x86_64')
