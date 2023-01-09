@@ -405,7 +405,10 @@ class Kpacket(object):
         """
         vms = []
         for vm in self.conn.list_devices(self.project):
-            vms.append(self.info(vm.hostname, vm=vm))
+            try:
+                vms.append(self.info(vm.hostname, vm=vm))
+            except:
+                continue
         return sorted(vms, key=lambda x: x['name'])
 
     def console(self, name, tunnel=False, web=False):

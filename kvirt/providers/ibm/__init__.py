@@ -358,7 +358,10 @@ class Kibm(object):
             error(f'Unable to retrieve floating ips. Hit {e}')
             return vms
         for vm in provisioned_vms:
-            vms.append(self.info(vm['name'], vm=vm, ignore_volumes=True, floating_ips=floating_ips))
+            try:
+                vms.append(self.info(vm['name'], vm=vm, ignore_volumes=True, floating_ips=floating_ips))
+            except:
+                continue
         return sorted(vms, key=lambda x: x['name'])
 
     def console(self, name, tunnel=False, web=False):

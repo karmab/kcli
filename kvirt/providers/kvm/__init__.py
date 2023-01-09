@@ -1557,7 +1557,10 @@ class Kvirt(object):
         vms = []
         conn = self.conn
         for vm in conn.listAllDomains(0):
-            vms.append(self.info(vm.name(), vm=vm))
+            try:
+                vms.append(self.info(vm.name(), vm=vm))
+            except:
+                continue
         return sorted(vms, key=lambda x: x['name'])
 
     def console(self, name, tunnel=False, web=False):

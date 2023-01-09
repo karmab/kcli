@@ -718,7 +718,10 @@ class Ksphere:
             elif summary.runtime.connectionState != 'orphaned' and not config.template:
                 if self.filtervms and 'plan' not in [x.key for x in config.extraConfig]:
                     continue
-                vms.append(self.info(vmname, vm=vm))
+                try:
+                    vms.append(self.info(vmname, vm=vm))
+                except:
+                    continue
         return sorted(vms, key=lambda x: x['name'])
 
     def list_pools(self):

@@ -335,7 +335,10 @@ class Kopenstack(object):
         nova = self.nova
         vmslist = nova.servers.list()
         for vm in vmslist:
-            vms.append(self.info(vm.name, vm=vm))
+            try:
+                vms.append(self.info(vm.name, vm=vm))
+            except:
+                continue
         return sorted(vms, key=lambda x: x['name'])
 
     def console(self, name, tunnel=False, web=False):

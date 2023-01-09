@@ -357,7 +357,10 @@ class Kaws(object):
         for reservation in reservations:
             vm = reservation['Instances'][0]
             name = vm['InstanceId']
-            vms.append(self.info(name))
+            try:
+                vms.append(self.info(name))
+            except:
+                continue
         return sorted(vms, key=lambda x: x['name'])
 
     def console(self, name, tunnel=False, web=False):

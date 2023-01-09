@@ -374,7 +374,10 @@ class Kgcp(object):
         if 'items' not in results:
             return []
         for vm in results['items']:
-            vms.append(self.info(vm['name'], vm=vm))
+            try:
+                vms.append(self.info(vm['name'], vm=vm))
+            except:
+                continue
         return sorted(vms, key=lambda x: x['name'])
 
     def console(self, name, tunnel=False, web=False):

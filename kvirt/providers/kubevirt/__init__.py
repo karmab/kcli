@@ -574,7 +574,10 @@ class Kubevirt(Kubecommon):
         for vm in crds.list_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines')["items"]:
             metadata = vm.get("metadata")
             name = metadata["name"]
-            vms.append(self.info(name, vm=vm))
+            try:
+                vms.append(self.info(name, vm=vm))
+            except:
+                continue
         return sorted(vms, key=lambda x: x['name'])
 
     def console(self, name, tunnel=False, web=False):
