@@ -826,6 +826,7 @@ class Kaws(object):
             if str(network.version) == "6":
                 msg = 'Primary cidr needs to be ipv4 in aws. Use dual to inject ipv6 or set aws_ipv6 parameter'
                 return {'result': 'failure', 'reason': msg}
+        default = 'default' in overrides and overrides['default']
         Tags = [{"Key": "Name", "Value": name}, {"Key": "Plan", "Value": plan}]
         vpcargs = {"CidrBlock": cidr}
         if 'dual_cidr' in overrides:
@@ -833,6 +834,16 @@ class Kaws(object):
             vpcargs["Ipv6Pool"] = overrides['dual_cidr']
         if 'aws_ipv6' in overrides and overrides['aws_ipv6']:
             vpcargs["AmazonProvidedIpv6CidrBlock"] = True
+        if default:
+            networks = self.list_networks()
+            default_network = [n for n in networks if networks[n]['mode'] == 'default']
+            if default_network:
+                msg = f"network {default_network[0]} is already default"
+                return {'result': 'failure', 'reason': msg}
+            vpc = conn.create_default_vpc(**vpcargs)
+            vpcid = vpc['Vpc']['VpcId']
+            conn.create_tags(Resources=[vpcid], Tags=Tags)
+            return {'result': 'success'}
         vpc = conn.create_vpc(**vpcargs)
         vpcid = vpc['Vpc']['VpcId']
         conn.create_tags(Resources=[vpcid], Tags=Tags)
