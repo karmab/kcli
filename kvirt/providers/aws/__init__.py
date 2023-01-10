@@ -162,7 +162,11 @@ class Kaws(object):
                 if defaultsubnetid is not None:
                     netname = defaultsubnetid
                 else:
-                    vpcid = [vpc['VpcId'] for vpc in vpcs['Vpcs'] if vpc['IsDefault']][0]
+                    vpcid = [vpc['VpcId'] for vpc in vpcs['Vpcs'] if vpc['IsDefault']]
+                    if not vpcid:
+                        error("Couldn't find default vpc")
+                        sys.exit(1)
+                    vpcid = vpcid[0]
                     subnetid = [subnet['SubnetId'] for subnet in subnets['Subnets']
                                 if subnet['DefaultForAz'] and subnet['VpcId'] == vpcid][0]
                     netname = subnetid
