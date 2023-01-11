@@ -3259,10 +3259,13 @@ class Kvirt(object):
             natxml = "<forward mode='nat'><nat><port start='1024' end='65535'/></nat></forward>"
         else:
             natxml = ''
+        localdomain = "no"
+        if 'localdomain' in overrides and overrides['localdomain']:
+            localdomain = "yes"
         if domain is not None:
-            domainxml = f"<domain name='{domain}'/>"
+            domainxml = f"<domain name='{domain}' localOnly='{localdomain}'/>"
         else:
-            domainxml = f"<domain name='{name}'/>"
+            domainxml = f"<domain name='{name}' localOnly='{localdomain}'/>"
         if len(name) < 16:
             bridgename = name if name != 'default' else 'virbr0'
             bridgexml = f"<bridge name='{bridgename}' stp='on' delay='0'/>"
