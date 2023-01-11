@@ -947,24 +947,25 @@ class Kvirt(object):
                     if vcpus is None or hostcpus is None:
                         msg = f"Can't process entry {index} in cpupinning block"
                         return {'result': 'failure', 'reason': msg}
-                    if '-' in str(vcpus):
-                        if len(vcpus.split('-')) != 2:
-                            msg = "Can't properly split vcpu in cpupinning block"
-                            return {'result': 'failure', 'reason': msg}
+                    for vcpu in str(vcpus).split(','):
+                        if '-' in vcpu:
+                            if len(vcpu.split('-')) != 2:
+                                msg = "Can't properly split vcpu in cpupinning block"
+                                return {'result': 'failure', 'reason': msg}
+                            else:
+                                idmin, idmax = vcpu.split('-')
                         else:
-                            idmin, idmax = vcpus.split('-')
-                    else:
-                        try:
-                            idmin, idmax = vcpus, vcpus
-                        except ValueError:
-                            msg = "Can't properly use vcpu as integer in cpunning block"
+                            try:
+                                idmin, idmax = vcpu, vcpu
+                            except ValueError:
+                                msg = "Can't properly use vcpu as integer in cpunning block"
+                                return {'result': 'failure', 'reason': msg}
+                        idmin, idmax = int(idmin), int(idmax) + 1
+                        if idmax > numcpus:
+                            msg = "Can't use more cpus for pinning than assigned numcpus"
                             return {'result': 'failure', 'reason': msg}
-                    idmin, idmax = int(idmin), int(idmax) + 1
-                    if idmax > numcpus:
-                        msg = "Can't use more cpus for pinning than assigned numcpus"
-                        return {'result': 'failure', 'reason': msg}
-                    for cpunum in range(idmin, idmax):
-                        cpupinningxml += f"<vcpupin vcpu='{cpunum}' cpuset='{hostcpus}'/>\n"
+                        for cpunum in range(idmin, idmax):
+                            cpupinningxml += f"<vcpupin vcpu='{cpunum}' cpuset='{hostcpus}'/>\n"
             cpupinningxml = f"<cputune>{cpupinningxml}</cputune>"
         numatunexml = ''
         if numamode is not None:
