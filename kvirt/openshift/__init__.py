@@ -142,8 +142,7 @@ def get_minimal_rhcos():
     return int(ver.replace('.', ''))
 
 
-def get_downstream_installer(nightly=False, macosx=False, tag=None, debug=False, baremetal=False,
-                             pull_secret='openshift_pull.json'):
+def get_downstream_installer(nightly=False, macosx=False, tag=None, debug=False, pull_secret='openshift_pull.json'):
     arch = 'arm64' if os.uname().machine == 'aarch64' else None
     repo = 'ocp-dev-preview' if nightly else 'ocp'
     if tag is None:
@@ -169,22 +168,6 @@ def get_downstream_installer(nightly=False, macosx=False, tag=None, debug=False,
     if version is None:
         error("Couldn't find version")
         return 1
-    if baremetal:
-        repo = 'ocp-dev-preview' if nightly else 'ocp'
-        url = f"https://mirror.openshift.com/pub/openshift-v4/clients/{repo}/{version}"
-        try:
-            r = urlopen(f"{url}/release.txt").readlines()
-        except:
-            error(f"Couldn't open url {url}")
-            return 1
-        for line in r:
-            if 'Pull From:' in str(line):
-                openshift_image = line.decode().replace('Pull From: ', '').strip()
-                break
-        target = 'openshift-baremetal-install'
-        cmd = f"oc adm release extract --registry-config {pull_secret} --command={target} --to . {openshift_image}"
-        cmd += f"; mv {target} openshift-install ; chmod 700 openshift-install"
-        return call(cmd, shell=True)
     if arch == 'arm64':
         cmd = f"curl -s https://mirror.openshift.com/pub/openshift-v4/{arch}/clients/{repo}/"
     else:
@@ -197,9 +180,12 @@ def get_downstream_installer(nightly=False, macosx=False, tag=None, debug=False,
     return call(cmd, shell=True)
 
 
-def get_ci_installer(pull_secret, tag=None, macosx=False, upstream=False, debug=False, baremetal=False):
+def get_ci_installer(pull_secret, tag=None, macosx=False, upstream=False, debug=False, nightly=False):
     arch = 'arm64' if os.uname().machine == 'aarch64' else None
     base = 'openshift' if not upstream else 'origin'
+    if tag is not None and nightly:
+        nightly_url = f"https://amd64.ocp.releases.ci.openshift.org/api/v1/releasestream/{tag}.0-0.nightly/latest"
+        tag = json.loads(urlopen(nightly_url).read())['pullSpec']
     if tag is None:
         tags = []
         r = urlopen(f"https://{base}-release.ci.openshift.org/graph?format=dot").readlines()
@@ -219,11 +205,10 @@ def get_ci_installer(pull_secret, tag=None, macosx=False, upstream=False, debug=
     os.environ['OPENSHIFT_RELEASE_IMAGE'] = tag
     msg = f'Downloading openshift-install {tag} in current directory'
     pprint(msg)
-    target = 'openshift-baremetal-install' if baremetal else 'openshift-install'
     if upstream:
-        cmd = f"oc adm release extract --command={target} --to . {tag}"
+        cmd = f"oc adm release extract --command=openshift-install --to . {tag}"
     else:
-        cmd = f"oc adm release extract --registry-config {pull_secret} --command={target} --to . {tag}"
+        cmd = f"oc adm release extract --registry-config {pull_secret} --command=openshift-install --to . {tag}"
     cmd += "; chmod 700 openshift-install"
     if debug:
         pprint(cmd)
@@ -557,7 +542,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         pprint("Removing old coreos-installer")
         os.remove('coreos-installer')
     minimal = data.get('minimal')
-    if version not in ['ci', 'nightly', 'stable']:
+    if version not in ['ci', 'nightly', 'ci-nightly', 'stable']:
         error(f"Incorrect version {version}")
         sys.exit(1)
     else:
@@ -698,8 +683,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         baremetal = False
         if upstream:
             run = get_upstream_installer(tag=tag)
-        elif version == 'ci' or '/' in str(tag):
-            run = get_ci_installer(pull_secret, tag=tag, upstream=upstream, baremetal=baremetal)
+        elif version in ['ci', 'ci-nightly'] or '/' in str(tag):
+            nightly = True if version == 'ci-nigthly' else False
+            run = get_ci_installer(pull_secret, tag=tag, upstream=upstream, nightly=nightly)
         elif version == 'nightly':
             run = get_downstream_installer(nightly=True, tag=tag, baremetal=baremetal, pull_secret=pull_secret)
         else:
