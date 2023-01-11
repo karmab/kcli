@@ -1069,8 +1069,8 @@ class Kbaseconfig:
         selfconf[name].update(overrides)
         with open(path, 'w') as dest_file:
             if ignore_aliases:
-                yaml.safe_dump(selfconf, dest_file, default_flow_style=False, encoding='utf-8', allow_unicode=True,
-                               sort_keys=False, Dumper=NoAliasDumper)
+                yaml.dump(selfconf, dest_file, default_flow_style=False, encoding='utf-8', allow_unicode=True,
+                          sort_keys=False, Dumper=NoAliasDumper)
             else:
                 yaml.safe_dump(selfconf, dest_file, default_flow_style=False, encoding='utf-8', allow_unicode=True,
                                sort_keys=False)
@@ -1083,8 +1083,7 @@ class Kbaseconfig:
         return self._delete_yaml_object(profile, self.profiles, 'profile', quiet=quiet)
 
     def update_profile(self, profile, overrides={}, quiet=False):
-        return self._update_yaml_file(profile, self.profiles, 'profile', overrides=overrides, quiet=quiet,
-                                      ignore_aliases=True)
+        return self._update_yaml_file(profile, self.profiles, 'profile', overrides=overrides, quiet=quiet)
 
     def create_confpool(self, confpool, overrides={}, quiet=False):
         return self._create_yaml_file(confpool, self.confpools, 'confpool', overrides=overrides, quiet=quiet)
@@ -1093,7 +1092,8 @@ class Kbaseconfig:
         return self._delete_yaml_object(confpool, self.confpools, 'confpool', quiet=quiet)
 
     def update_confpool(self, confpool, overrides={}, quiet=False):
-        return self._update_yaml_file(confpool, self.confpools, 'confpool', overrides=overrides, quiet=quiet)
+        return self._update_yaml_file(confpool, self.confpools, 'confpool', overrides=overrides, quiet=quiet,
+                                      ignore_aliases=True)
 
     def create_jenkins_pipeline(self, plan, inputfile, overrides={}, kube=False):
         _type = 'plan'
