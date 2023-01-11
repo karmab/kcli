@@ -1396,13 +1396,13 @@ class Kbaseconfig:
         version = overrides.get('version', 'stable')
         tag = overrides.get('tag', OPENSHIFT_TAG)
         upstream = overrides.get('upstream', False)
-        macosx = True if os.path.exists('/Users') else False
+        macosx = os.path.exists('/Users')
         if version in ['ci', 'ci-nightly']:
-            nightly = True if version == 'ci-nightly' else False
+            nightly = version == 'ci-nightly'
             run = openshift.get_ci_installer(pull_secret, tag=tag, macosx=macosx, upstream=upstream, debug=self.debug,
                                              nightly=nightly)
-        elif version == 'nightly':
-            run = openshift.get_downstream_installer(nightly=True, tag=tag, macosx=macosx, debug=self.debug,
+        elif version == 'dev-preview':
+            run = openshift.get_downstream_installer(devpreview=True, tag=tag, macosx=macosx, debug=self.debug,
                                                      pull_secret=pull_secret)
         elif upstream:
             run = openshift.get_upstream_installer(tag=tag, macosx=macosx, debug=self.debug)

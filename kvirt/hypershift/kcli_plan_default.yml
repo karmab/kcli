@@ -1,7 +1,7 @@
 info: |
     Deploys an hypershift cluster with an arbitray number of workers
     It relies on a valid KUBECONFIG env variable pointing to a cluster where hypershift operator is running
-    version can be stable, nightly, ci or cluster (which means picking the version from top cluster)
+    version can be stable, dev-preview, nightly, ci or cluster (which means picking the version from top cluster)
     autosigning csrs for workers is handled with a cronjob running on the top cluster in the dedicated namespace
     ingress_ip is required for virt platforms to provide a way to access apps from the outside.
     The vip will be running through a dedicated keepalived static pod

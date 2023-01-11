@@ -4,7 +4,7 @@ info: |
     This allows easily tweaking the hardware caracteristics of those nodes.
     When running on cloud platforms, loadbalancer and dns from the platform are used.
     Otherwise, extra static pods (coredns with mdns, keepalived and haproxy) are deployed on the nodes to provide a self contained platform.
-    Default version is latest stable but you can use nightly or ci instead, for which you will need a specific pull secret.
+    Default version is stable but you can use dev-preview, nightly or ci instead, for which you will need a specific pull secret.
     Upstream okd version can be specified with the upstream boolean variable.
     Sdn defaults to OpenShiftSDN but OVNKubernetes or Calico can also be selected.
     To avoid keepalived collision, you can force virtual_router_id. Otherwise, the id is calculated from cluster variable.

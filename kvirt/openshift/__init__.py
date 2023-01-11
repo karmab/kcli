@@ -90,15 +90,18 @@ def get_installer_version():
 def same_release_images(version='stable', tag='4.11', pull_secret='openshift_pull.json'):
     offline = 'xxx'
     existing = os.popen('./openshift-install version').readlines()[2].split(" ")[2].strip()
-    if version == 'ci':
+    if version in ['ci', 'nightly']:
+        if version == "nightly":
+            nightly_url = f"https://amd64.ocp.releases.ci.openshift.org/api/v1/releasestream/{tag}.0-0.nightly/latest"
+            tag = json.loads(urlopen(nightly_url).read())['pullSpec']
         cmd = f"oc adm release info registry.ci.openshift.org/ocp/release:{tag} -a {pull_secret}"
         for line in os.popen(cmd).readlines():
             if 'Pull From: ' in str(line):
                 offline = line.replace('Pull From: ', '').strip()
                 break
         return offline == existing
-    ocp_repo = 'ocp-dev-preview' if version == 'nightly' else 'ocp'
-    if version in ['nightly', 'stable']:
+    ocp_repo = 'ocp-dev-preview' if version == 'dev-preview' else 'ocp'
+    if version in ['dev-preview', 'stable']:
         target = tag if len(str(tag).split('.')) > 2 else f'latest-{tag}'
         url = f"https://mirror.openshift.com/pub/openshift-v4/clients/{ocp_repo}/{target}/release.txt"
     elif version == 'latest':
@@ -142,9 +145,9 @@ def get_minimal_rhcos():
     return int(ver.replace('.', ''))
 
 
-def get_downstream_installer(nightly=False, macosx=False, tag=None, debug=False, pull_secret='openshift_pull.json'):
+def get_downstream_installer(devpreview=False, macosx=False, tag=None, debug=False, pull_secret='openshift_pull.json'):
     arch = 'arm64' if os.uname().machine == 'aarch64' else None
-    repo = 'ocp-dev-preview' if nightly else 'ocp'
+    repo = 'ocp-dev-preview' if devpreview else 'ocp'
     if tag is None:
         repo += '/latest'
     elif str(tag).count('.') == 1:
@@ -542,7 +545,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         pprint("Removing old coreos-installer")
         os.remove('coreos-installer')
     minimal = data.get('minimal')
-    if version not in ['ci', 'nightly', 'ci-nightly', 'stable']:
+    if version not in ['ci', 'dev-preview', 'nightly', 'stable']:
         error(f"Incorrect version {version}")
         sys.exit(1)
     else:
@@ -680,16 +683,15 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         pprint(f"Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to {tag}")
     os.environ["PATH"] += f":{os.getcwd()}"
     if which('openshift-install') is None:
-        baremetal = False
         if upstream:
             run = get_upstream_installer(tag=tag)
-        elif version in ['ci', 'ci-nightly'] or '/' in str(tag):
-            nightly = True if version == 'ci-nigthly' else False
+        elif version in ['ci', 'nightly'] or '/' in str(tag):
+            nightly = version == 'nigthly'
             run = get_ci_installer(pull_secret, tag=tag, upstream=upstream, nightly=nightly)
-        elif version == 'nightly':
-            run = get_downstream_installer(nightly=True, tag=tag, baremetal=baremetal, pull_secret=pull_secret)
+        elif version == 'dev-preview':
+            run = get_downstream_installer(devpreview=True, tag=tag, pull_secret=pull_secret)
         else:
-            run = get_downstream_installer(tag=tag, baremetal=baremetal, pull_secret=pull_secret)
+            run = get_downstream_installer(tag=tag, pull_secret=pull_secret)
         if run != 0:
             error("Couldn't download openshift-install")
             sys.exit(run)

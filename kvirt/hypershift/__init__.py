@@ -254,10 +254,11 @@ def create(config, plandir, cluster, overrides):
                 pprint("Removing old openshift-install")
                 os.remove('openshift-install')
         if which('openshift-install') is None:
-            if version == 'ci':
-                run = get_ci_installer(pull_secret, tag=tag)
-            elif version == 'nightly':
-                run = get_downstream_installer(nightly=True, tag=tag, pull_secret=pull_secret)
+            if version in ['ci', 'nightly']:
+                nightly = version == 'nigthly'
+                run = get_ci_installer(pull_secret, tag=tag, nightly=nightly)
+            elif version == 'dev-preview':
+                run = get_downstream_installer(devpreview=True, tag=tag, pull_secret=pull_secret)
             else:
                 run = get_downstream_installer(tag=tag, pull_secret=pull_secret)
             if run != 0:
