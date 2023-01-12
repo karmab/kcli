@@ -1,5 +1,7 @@
-{% set rancher_default_hostname = "rancher-" + api_ip.replace('.', '-') + ".sslip.io" %}
-HOSTNAME={{ rancher_hostname or rancher_default_hostname }}
+{% if rancher_hostname == None %}
+echo rancher_hostname needs to be set && exit 1
+{% endif %}
+HOSTNAME={{ rancher_hostname }}
 RANCHER_VERSION="{{ rancher_version }}"
 RANCHER_PASSWORD="{{ rancher_password }}"
 RANCHER_OPTS={{ "--devel" if rancher_version == 'alpha' else "" }}
