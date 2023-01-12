@@ -47,6 +47,8 @@
    origin: apps/metallb/install.sh
  - path: /root/metallb_cr.yml
    origin: apps/metallb/metallb_cr.yml
+ - path: /root/metallb_advertisements.yml
+   origin: apps/metallb/metallb_advertisements.yml
 {% endif %}
 {% if nfs %}
  - nfs.yml
