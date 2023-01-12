@@ -1712,6 +1712,11 @@ def create_kube(args):
         paramfile = "kcli_parameters.yml"
         pprint("Using default parameter file kcli_parameters.yml")
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
+    master_parameters = [key for key in overrides if 'master' in key]
+    if master_parameters:
+        master_parameters = ','.join(master_parameters)
+        error(f"parameters that contain master word need to be replaced with ctlplane. Found {master_parameters}")
+        sys.exit(1)
     client = overrides.get('client', args.client)
     config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if overrides.get('force', args.force):
