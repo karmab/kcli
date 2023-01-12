@@ -19,15 +19,13 @@ RANCHER_VERSION="{{ rancher_version }}"
 RANCHER_PASSWORD="{{ rancher_password }}"
 RANCHER_DEV_OPTS={{ "--devel" if rancher_version == 'alpha' else "" }}
 RANCHER_INGRESS_OPTS={{ "--set ingress.tls.source=rancher --set ingress.extraAnnotations.'kubernetes\.io/ingress\.class'=nginx" if rancher_ingress else "--set ingress.enabled false" }}
-NAMESPACE="cattle-system"
 export PATH=$PWD:$PATH
 which helm >/dev/null 2>&1 || kcli download helm
 helm repo add rancher-$RANCHER_VERSION https://releases.rancher.com/server-charts/$RANCHER_VERSION
-kubectl create namespace $NAMESPACE
-helm install rancher rancher-$RANCHER_VERSION/rancher --namespace $NAMESPACE --set hostname=$HOSTNAME --set bootstrapPassword=$RANCHER_PASSWORD $RANCHER_INGRESS_OPTS $RANCHER_DEV_OPTS
+helm install rancher rancher-$RANCHER_VERSION/rancher --namespace cattle-system --create-namespace --set hostname=$HOSTNAME --set bootstrapPassword=$RANCHER_PASSWORD $RANCHER_INGRESS_OPTS $RANCHER_DEV_OPTS
 kubectl wait -n cattle-system $(kubectl get pod -n cattle-system -l app=rancher -o name) --for=condition=Ready
 
 {% if rancher_lb_ip != None %}
-kubectl annotate svc rancher -n $NAMESPACE metallb.universe.tf/address-pool='rancher-ip'
-kubectl patch svc rancher -n $NAMESPACE -p '{"spec":{"type":"LoadBalancer"}}'
+kubectl annotate svc rancher -n cattle-system metallb.universe.tf/address-pool='rancher-ip'
+kubectl patch svc rancher -n cattle-system -p '{"spec":{"type":"LoadBalancer"}}'
 {% endif %}
