@@ -3134,14 +3134,14 @@ class Kvirt(object):
             executable = executable[extension] if name != 'rhcos42' else 'gunzip'
             if self.host == 'localhost' or self.host == '127.0.0.1':
                 if which(executable) is not None:
-                    uncompresscmd = f"{executable} {poolpath}/{shortimage}"
+                    uncompresscmd = f"{executable} -f {poolpath}/{shortimage}"
                     os.system(uncompresscmd)
                 else:
                     error(f"{executable} not found. Can't uncompress image")
                     return {'result': 'failure', 'reason': f"{executable} not found. Can't uncompress image"}
             elif self.protocol == 'ssh':
-                uncompresscmd = 'ssh %s -p %s %s@%s "%s %s/%s"' % (self.identitycommand, self.port, self.user,
-                                                                   self.host, executable, poolpath, shortimage)
+                uncompresscmd = 'ssh %s -p %s %s@%s "%s -f %s/%s"' % (self.identitycommand, self.port, self.user,
+                                                                      self.host, executable, poolpath, shortimage)
                 os.system(uncompresscmd)
         if cmd is not None:
             if self.host == 'localhost' or self.host == '127.0.0.1':
