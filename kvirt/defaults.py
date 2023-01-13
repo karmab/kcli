@@ -37,9 +37,7 @@ BSD += "/bsd-cloud-image.org/images/"
 DEBIAN = "https://cdimage.debian.org/cdimage/"
 RHCOS = "https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/"
 FEDORA = "http://mirror.uv.es/mirror/fedora/linux/releases/"
-FEDORA_ARCHIVE = "https://archives.fedoraproject.org/pub/archive/fedora/linux/releases/"
 ROCKY = 'https://dl.rockylinux.org/pub/rocky/'
-ROCKYVAULT = 'https://dl.rockylinux.org/vault/rocky'
 UBUNTU = 'https://cloud-images.ubuntu.com/'
 IMAGES = {'almalinux9': 'http://repo.ifca.es/almalinux/9.0/cloud/x86_64/images/'
           'AlmaLinux-9-GenericCloud-latest.x86_64.qcow2',
@@ -53,16 +51,11 @@ IMAGES = {'almalinux9': 'http://repo.ifca.es/almalinux/9.0/cloud/x86_64/images/'
           'centos9stream': 'https://cloud.centos.org/centos/9-stream/x86_64/'
           'images/CentOS-Stream-GenericCloud-9-20211203.0.x86_64.qcow2',
           'cirros': 'http://download.cirros-cloud.net/0.5.2/cirros-0.5.2-x86_64-disk.img',
-          'coreos': 'https://stable.release.core-os.net/amd64-usr/current/coreos_production_qemu_image.img.bz2',
           'debian8': DEBIAN + 'openstack/archive/8.11.0/debian-8.11.0-openstack-amd64.qcow2',
           'debian9': DEBIAN + 'openstack/current-9/debian-9-openstack-amd64.qcow2',
           'debian10': DEBIAN + 'openstack/current-10/debian-10-openstack-amd64.qcow2',
           'debian11': DEBIAN + 'cloud/bullseye/latest/debian-11-generic-amd64.qcow2',
           'fcos': 'https://builds.coreos.fedoraproject.org/streams/stable.json',
-          'fedora28': FEDORA_ARCHIVE + '28/Cloud/x86_64/images/Fedora-Cloud-Base-28-1.1.x86_64.qcow2',
-          'fedora29': FEDORA_ARCHIVE + '29/Cloud/x86_64/images/Fedora-Cloud-Base-29-1.2.x86_64.qcow2',
-          'fedora30': FEDORA_ARCHIVE + '30/Cloud/x86_64/images/Fedora-Cloud-Base-30-1.2.x86_64.qcow2',
-          'fedora31': FEDORA_ARCHIVE + '31/Cloud/x86_64/images/Fedora-Cloud-Base-31-1.9.x86_64.qcow2',
           'fedora32': FEDORA + '32/Cloud/x86_64/images/Fedora-Cloud-Base-32-1.6.x86_64.qcow2',
           'fedora33': FEDORA + '33/Cloud/x86_64/images/Fedora-Cloud-Base-33-1.2.x86_64.qcow2',
           'fedora34': FEDORA + '34/Cloud/x86_64/images/Fedora-Cloud-Base-34-1.2.x86_64.qcow2',
@@ -96,11 +89,6 @@ IMAGES = {'almalinux9': 'http://repo.ifca.es/almalinux/9.0/cloud/x86_64/images/'
           'openSUSE-Leap-15.4-JeOS.x86_64-OpenStack-Cloud.qcow2',
           'tumbleweed': 'https://download.opensuse.org/tumbleweed/appliances/'
           'openSUSE-Tumbleweed-JeOS.x86_64-OpenStack-Cloud.qcow2',
-          'rhcos41': RHCOS + 'rhcos-4.1',
-          'rhcos42': RHCOS + 'rhcos-4.2',
-          'rhcos43': RHCOS + 'rhcos-4.3',
-          'rhcos44': RHCOS + 'rhcos-4.4',
-          'rhcos45': RHCOS + 'rhcos-4.5',
           'rhcos46': RHCOS + 'rhcos-4.6',
           'rhcos47': RHCOS + 'rhcos-4.7',
           'rhcos48': RHCOS + 'rhcos-4.8',
@@ -122,12 +110,7 @@ IMAGES = {'almalinux9': 'http://repo.ifca.es/almalinux/9.0/cloud/x86_64/images/'
           'ubuntu2110': UBUNTU + 'releases/21.10/release/ubuntu-21.10-server-cloudimg-amd64.img',
           'ubuntu2204': UBUNTU + 'releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img',
           'ubuntu2210': UBUNTU + 'releases/22.10/release/ubuntu-22.10-server-cloudimg-amd64.img',
-          'rockylinux84': ROCKYVAULT + '8.4/images/Rocky-8-GenericCloud-8.4-20210620.0.x86_64.qcow2',
-          'rockylinux85': ROCKYVAULT + '8.5/images/Rocky-8-GenericCloud-8.5-20211114.2.x86_64.qcow2',
-          'rockylinux86': ROCKY + '8.6/images/Rocky-8-GenericCloud.latest.x86_64.qcow2',
           'rockylinux8': ROCKY + '8/images/Rocky-8-GenericCloud.latest.x86_64.qcow2',
-          'rockylinux90': ROCKY + '9.0/images/x86_64/Rocky-9-GenericCloud.latest.x86_64.qcow2',
-          'rockylinux91': ROCKY + '9.1/images/x86_64/Rocky-9-GenericCloud.latest.x86_64.qcow2',
           'rockylinux9': ROCKY + '9/images/x86_64/Rocky-9-GenericCloud.latest.x86_64.qcow2'}
 
 IMAGESCOMMANDS = {'debian8': 'echo datasource_list: [NoCloud, ConfigDrive, Openstack, Ec2] > /etc/cloud/cloud.cfg.d/'
