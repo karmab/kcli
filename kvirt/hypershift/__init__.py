@@ -122,6 +122,7 @@ def create(config, plandir, cluster, overrides):
             'disconnected_url': None,
             'pull_secret': 'openshift_pull.json',
             'sslip': False,
+            'kubevirt_ingress_service': False,
             'retries': 3}
     data.update(overrides)
     retries = data.get('retries')
@@ -225,6 +226,18 @@ def create(config, plandir, cluster, overrides):
                 ingress_ip = str(ip_network(cidr)[ingress_index])
                 warning(f"Using {ingress_ip} as ingress_ip")
                 data['ingress_ip'] = ingress_ip
+            elif config.type == 'kubevirt':
+                selector = {'kcli/plan': plan, 'kcli/role': 'worker'}
+                service_type = "LoadBalancer" if k.access_mode == 'LoadBalancer' else 'NodePort'
+                ingress_ip = k.create_service(f"{cluster}-ingress", k.namespace, selector, _type=service_type,
+                                              ports=[80, 443], openshift_hack=True)
+                if ingress_ip is None:
+                    error("Couldnt gather an ingress_ip from your specified network")
+                    sys.exit(1)
+                else:
+                    pprint(f"Using api_ip {ingress_ip}")
+                    data['ingress_ip'] = ingress_ip
+                    data['kubevirt_ingress_service'] = True
             else:
                 error("You need to define ingress_ip in your parameters file")
                 sys.exit(1)

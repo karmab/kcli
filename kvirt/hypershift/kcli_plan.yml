@@ -28,10 +28,12 @@
  disks: {{ [disk_size] + extra_disks }}
  files:
 {% if config_type in ['kvm', 'vsphere', 'ovirt'] %}
+{% if not kubevirt_ingress_service %}
  - path: /etc/kubernetes/manifests/keepalived.yml
    origin: staticpods/keepalived.yml
  - path: /etc/kubernetes/keepalived.conf
    origin: keepalived.conf
+{% endif %}
 {% if not sslip and coredns %}
  - path: /etc/NetworkManager/dispatcher.d/99-forcedns
    origin: 99-forcedns

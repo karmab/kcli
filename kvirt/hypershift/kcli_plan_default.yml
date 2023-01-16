@@ -52,3 +52,4 @@ retries: 3
 coredns: true
 sslip: false
 mdns: false
+kubevirt_ingress_service: false
