@@ -2856,9 +2856,9 @@ class Kconfig(Kbaseconfig):
                     common.set_lastvm(name, self.client, delete=True)
                     success(f"{name} deleted on {hypervisor}!")
         if self.type == 'kubevirt':
-            if "{cluster}-api" in k.list_services(k.namespace):
+            if f"{cluster}-api" in k.list_services(k.namespace):
                 k.delete_service(f"{cluster}-api", k.namespace)
-            if "{cluster}-ingress" in k.list_services(k.namespace):
+            if f"{cluster}-ingress" in k.list_services(k.namespace):
                 k.delete_service(f"{cluster}-ingress", k.namespace)
         if self.type in ['aws', 'gcp', 'ibm']:
             lbs = ['api']
