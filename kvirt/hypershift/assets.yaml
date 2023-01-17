@@ -41,10 +41,10 @@ spec:
   fips: {{ fips }}
   networking:
     clusterNetwork:
-    - cidr: 10.132.0.0/14
+    - cidr: {{ cluster_network_ipv4 }}
       hostPrefix: 23
     serviceNetwork:
-    - cidr: 172.31.0.0/16
+    - cidr: {{ service_network_ipv4 }}
     machineNetwork:
     - cidr: {{ cidr|default('') }}
     networkType: {{ network_type }}

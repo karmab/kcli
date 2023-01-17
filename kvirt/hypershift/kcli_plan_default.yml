@@ -54,3 +54,5 @@ coredns: true
 sslip: false
 mdns: false
 kubevirt_ingress_service: false
+cluster_network_ipv4: "10.133.0.0/14"
+service_network_ipv4: "172.31.0.0/16"

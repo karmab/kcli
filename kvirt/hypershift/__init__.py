@@ -123,6 +123,8 @@ def create(config, plandir, cluster, overrides):
             'pull_secret': 'openshift_pull.json',
             'sslip': False,
             'kubevirt_ingress_service': False,
+            'cluster_network_ipv4': '10.133.0.0/14',
+            'service_network_ipv4': '172.31.0.0/16',
             'retries': 3}
     data.update(overrides)
     retries = data.get('retries')
