@@ -501,4 +501,7 @@ $ kcli create network -P macvtap=true -P nic=eno2 mytap
 
 # Create a network with custom dnsmasq options
 $ kcli create network -c 192.168.123.0/24 -P arp-timeout=120 mynetwork
+
+# Create a br-ex network for kubevirt with ovn
+$ kcli create network -P type=ovs br-ex
 """

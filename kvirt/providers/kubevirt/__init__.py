@@ -1377,11 +1377,12 @@ class Kubevirt(Kubecommon):
         else:
             pprint("Using default type bridge for network")
             _type = 'bridge'
-        config = f'{ "cniVersion": "0.3.1", f"type": "{_type}", "bridge": "{name}" {vlanconfig}}'
+        print(_type, name, vlanconfig)
+        config = '{ "cniVersion": "0.3.1", "type": "%s", "bridge": "%s" %s}' % (_type, name, vlanconfig)
         if cidr is not None and dhcp:
-            ipam = f'"ipam": { "type": "host-local", "subnet": "{cidr}" }'
+            ipam = '"ipam": { "type": "host-local", "subnet": "%s" }' % cidr
             details = f'"isDefaultGateway": true, "forceAddress": false, "ipMasq": true, "hairpinMode": true, {ipam}'
-            config = f'{ "type": "bridge", "bridge": "{name}", {details}}'
+            config = '{ "type": "bridge", "bridge": "%s", %s}' % (name, details)
         network = {'kind': 'NetworkAttachmentDefinition', 'spec': {'config': config}, 'apiVersion': apiversion,
                    'metadata': {'name': name}}
         crds.create_namespaced_custom_object(MULTUSDOMAIN, MULTUSVERSION, namespace, 'network-attachment-definitions',
