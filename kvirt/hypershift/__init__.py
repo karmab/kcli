@@ -235,7 +235,7 @@ def create(config, plandir, cluster, overrides):
                     error("Couldnt gather an ingress_ip from your specified network")
                     sys.exit(1)
                 else:
-                    pprint(f"Using api_ip {ingress_ip}")
+                    pprint(f"Using kubernetes service ingress_ip {ingress_ip}")
                     data['ingress_ip'] = ingress_ip
                     data['kubevirt_ingress_service'] = True
             else:

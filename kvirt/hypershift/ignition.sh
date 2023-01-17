@@ -1,6 +1,6 @@
 #!/bin/bash
 
-IP=$(oc get node -o wide | grep ctlplane | head -1 | awk '{print $6}')
+IP=$(oc get node -o wide --selector='node-role.kubernetes.io/master' | grep -v NAME|  head -1 | awk '{print $6}')
 NAMESPACE={{ namespace }}-{{ cluster }}
 CLUSTER={{ cluster }}
 CLUSTERDIR={{ clusterdir }} 

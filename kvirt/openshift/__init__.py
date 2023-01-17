@@ -1324,7 +1324,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 sys.exit(1)
         todelete = [f"{cluster}-bootstrap"]
     if not kubevirt_ignore_node_port and kubevirt_api_service and kubevirt_api_service_node_port:
-        nodeport = k.get_node_ports(f'{cluster}-api-svc', k.namespace)[6443]
+        nodeport = k.get_node_ports(f'{cluster}-api', k.namespace)[6443]
         sedcmd = f'sed -i "s@:6443@:{nodeport}@" {clusterdir}/auth/kubeconfig'
         call(sedcmd, shell=True)
         while True:

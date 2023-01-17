@@ -15,6 +15,22 @@
 {% set flavor = flavor_worker %}
 {% endif %}
 
+{% set files = [] %}
+{% if not kubevirt_ingress_service %}
+{% set new_file = {'path': '/etc/kubernetes/manifests/keepalived.yml', 'origin': 'staticpods/keepalived.yml'} %}
+{% do files.append(new_file) %}
+{% set new_file = {'path': '/etc/kubernetes/keepalived.conf', 'origin': 'keepalived.conf'} %}
+{% do files.append(new_file) %}
+{% endif %}
+{% if not sslip and coredns %}
+{% set new_file = {'path': '/etc/NetworkManager/dispatcher.d/99-forcedns', 'origin': '99-forcedns', 'mode': 755} %}
+{% do files.append(new_file) %}
+{% set new_file = {'path': '/etc/kubernetes/manifests/coredns.yml', 'origin': 'staticpods/coredns.yml'} %}
+{% do files.append(new_file) %}
+{% set new_file = {'path': '/etc/kubernetes/Corefile', 'origin': 'Corefile'} %}
+{% do files.append(new_file) %}
+{% endif %}
+
 {{ cluster }}-worker-{{ num }}:
  domain: {{ original_domain|default('karmalabs.corp') }}
  image: {{ image }}
@@ -26,22 +42,7 @@
  memory: {{ worker_memory | default(memory, memory) }}
  nets: {{ [net0] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
- files:
-{% if config_type in ['kvm', 'vsphere', 'ovirt'] %}
-{% if not kubevirt_ingress_service %}
- - path: /etc/kubernetes/manifests/keepalived.yml
-   origin: staticpods/keepalived.yml
- - path: /etc/kubernetes/keepalived.conf
-   origin: keepalived.conf
-{% endif %}
-{% if not sslip and coredns %}
- - path: /etc/NetworkManager/dispatcher.d/99-forcedns
-   origin: 99-forcedns
-   mode: 755
- - path: /etc/kubernetes/manifests/coredns.yml
-   origin: staticpods/coredns.yml
- - path: /etc/kubernetes/Corefile
-   origin: Corefile
-{% endif %}
+{% if config_type in ['kvm', 'vsphere', 'ovirt', 'kubevirt'] %}
+ files: {{ files }}
 {% endif %}
 {% endfor %}
