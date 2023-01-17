@@ -1573,7 +1573,7 @@ class Kubevirt(Kubecommon):
 
     def ssh_node_port(self, name, namespace):
         try:
-            sshservice = self.core.read_namespaced_service(f'{name}-ssh-svc', namespace)
+            sshservice = self.core.read_namespaced_service(f'{name}-ssh', namespace)
         except:
             return None
         return sshservice.spec.ports[0].node_port
@@ -1598,7 +1598,7 @@ class Kubevirt(Kubecommon):
 
     def create_service(self, name, namespace, selector, _type="NodePort", ports=[], wait=True, reference=None,
                        openshift_hack=False):
-        spec = {'kind': 'Service', 'apiVersion': 'v1', 'metadata': {'namespace': namespace, 'name': f'{name}-svc'},
+        spec = {'kind': 'Service', 'apiVersion': 'v1', 'metadata': {'namespace': namespace, 'name': f'{name}'},
                 'spec': {'sessionAffinity': 'None', 'selector': selector}}
         if reference is not None:
             spec['metadata']['ownerReferences'] = [reference]
@@ -1634,18 +1634,18 @@ class Kubevirt(Kubecommon):
             runtime = 0
             while not ipassigned:
                 if runtime >= timeout:
-                    error(f"Time out waiting for a loadbalancer ip for service {name}-svc")
+                    error(f"Time out waiting for a loadbalancer ip for service {name}")
                     return
                 else:
                     try:
-                        api_service = self.core.read_namespaced_service(f'{name}-svc', namespace)
+                        api_service = self.core.read_namespaced_service(f'{name}', namespace)
                         return api_service.status.load_balancer.ingress[0].ip
                     except:
                         time.sleep(5)
                         pprint(f"Waiting to get a loadbalancer ip for service {name}...")
                         runtime += 5
         else:
-            api_service = self.core.read_namespaced_service(f'{name}-svc', namespace)
+            api_service = self.core.read_namespaced_service(f'{name}', namespace)
             return api_service.spec.cluster_ip
 
     def get_node_ports(self, service, namespace):
@@ -1669,7 +1669,7 @@ class Kubevirt(Kubecommon):
 
     def ssh_loadbalancer_ip(self, name, namespace):
         try:
-            api_service = self.core.read_namespaced_service(f'{name}-ssh-svc', namespace)
+            api_service = self.core.read_namespaced_service(f'{name}-ssh', namespace)
             return api_service.status.load_balancer.ingress[0].ip
         except:
             return None
