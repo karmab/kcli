@@ -186,10 +186,13 @@ def create(config, plandir, cluster, overrides):
     if str(tag) not in versions:
         error(f"Invalid tag {tag}. Choose between {','.join(versions)}")
         sys.exit(1)
-    api_url = os.popen("oc whoami --show-server").read()
-    api_domain = urlparse(api_url).hostname
-    api_ip = socket.getaddrinfo(api_domain, 6443, proto=socket.IPPROTO_TCP)[0][4][0]
-    data['api_ip'] = api_ip
+    api_ip = data.get('api_ip')
+    if api_ip is None:
+        api_url = os.popen("oc whoami --show-server").read()
+        api_domain = urlparse(api_url).hostname
+        api_ip = socket.getaddrinfo(api_domain, 6443, proto=socket.IPPROTO_TCP)[0][4][0]
+        data['api_ip'] = api_ip
+    pprint(f"Using {api_ip} as ip to join management cluster api")
     pub_key = data.get('pub_key')
     pull_secret = pwd_path(data.get('pull_secret'))
     pull_secret = os.path.expanduser(pull_secret)
