@@ -1359,30 +1359,18 @@ def get_latest_fcos_metal(url):
 
 
 def get_latest_rhcos(url, _type='kvm', arch='x86_64'):
-    keys = {'ovirt': 'openstack', 'kubevirt': 'openstack', 'kvm': 'qemu', 'vsphere': 'vmware', 'ibm': 'ibmcloud'}
-    key = keys.get(_type, _type)
-    buildurl = f'{url}/builds.json'
-    with urlopen(buildurl) as b:
-        data = json.loads(b.read().decode())
-        for build in data['builds']:
-            if isinstance(build, dict):
-                build = build['id']
-                if _type in ['openstack', 'ovirt', 'kubevirt']:
-                    return f"{url}/{build}/{arch}/rhcos-{build}-openstack.{arch}.qcow2.gz"
-                elif _type == 'vsphere':
-                    return f"{url}/{build}/{arch}/rhcos-{build}-vmware.{arch}.ova"
-                elif _type == 'gcp':
-                    return f"https://storage.googleapis.com/rhcos/rhcos/{build}.tar.gz"
-                elif _type == 'ibm':
-                    return f"{url}/{build}/{arch}/rhcos-{build}-ibmcloud.{arch}.qcow2.gz"
-                else:
-                    return f"{url}/{build}/{arch}/rhcos-{build}-qemu.{arch}.qcow2.gz"
-            else:
-                metaurl = f'{url}/{build}/meta.json'
-                with urlopen(metaurl) as m:
-                    data = json.loads(m.read().decode())
-                    if key in data['images']:
-                        return f"{url}/{build}/{data['images'][key]['path']}"
+    if _type in ['openstack', 'ovirt', 'kubevirt']:
+        return f"{url}/latest/rhcos-openstack.{arch}.qcow2.gz"
+    elif _type == 'vsphere':
+        return f"{url}/latest/rhcos-vmware.{arch}.ova"
+    elif _type == 'aws':
+        return f"{url}/latest/rhcos-aws.{arch}.vmdk.gz"
+    elif _type == 'gcp':
+        return f"{url}/latest/rhcos-gcp.{arch}.qcow2.gz"
+    elif _type == 'ibm':
+        return f"{url}/latest/rhcos-ibmcloud.{arch}.qcow2.gz"
+    else:
+        return f"{url}/latest/rhcos-qemu.{arch}.qcow2.gz"
 
 
 def get_commit_rhcos(commitid, _type='kvm', region=None):

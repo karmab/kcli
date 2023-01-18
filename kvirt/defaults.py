@@ -35,7 +35,7 @@ OPENSHIFT_TAG = '4.12'
 BSD = "https://object-storage.public.mtl1.vexxhost.net/swift/v1/1dbafeefbd4f4c80864414a441e72dd2"
 BSD += "/bsd-cloud-image.org/images/"
 DEBIAN = "https://cdimage.debian.org/cdimage/"
-RHCOS = "https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/"
+RHCOS = "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/"
 FEDORA = "http://mirror.uv.es/mirror/fedora/linux/releases/"
 ROCKY = 'https://dl.rockylinux.org/pub/rocky/'
 UBUNTU = 'https://cloud-images.ubuntu.com/'
@@ -89,14 +89,14 @@ IMAGES = {'almalinux9': 'http://repo.ifca.es/almalinux/9.0/cloud/x86_64/images/'
           'openSUSE-Leap-15.4-JeOS.x86_64-OpenStack-Cloud.qcow2',
           'tumbleweed': 'https://download.opensuse.org/tumbleweed/appliances/'
           'openSUSE-Tumbleweed-JeOS.x86_64-OpenStack-Cloud.qcow2',
-          'rhcos46': RHCOS + 'rhcos-4.6',
-          'rhcos47': RHCOS + 'rhcos-4.7',
-          'rhcos48': RHCOS + 'rhcos-4.8',
-          'rhcos49': RHCOS + 'rhcos-4.9',
-          'rhcos410': RHCOS + 'rhcos-4.10',
-          'rhcos411': RHCOS + 'rhcos-4.11',
-          'rhcos412': RHCOS + 'rhcos-4.12',
-          'rhcoslatest': RHCOS + 'rhcos-4.12',
+          'rhcos46': RHCOS + '4.6',
+          'rhcos47': RHCOS + '4.7',
+          'rhcos48': RHCOS + '4.8',
+          'rhcos49': RHCOS + '4.9',
+          'rhcos410': RHCOS + '4.10',
+          'rhcos411': RHCOS + '4.11',
+          'rhcos412': RHCOS + '4.12',
+          'rhcoslatest': RHCOS + '4.12',
           'rhel7': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7',
           'rhel8': 'https://access.redhat.com/downloads/content/479/ver=/rhel---8',
           'rhel9': 'https://access.redhat.com/downloads/content/479/ver=/rhel---9',
