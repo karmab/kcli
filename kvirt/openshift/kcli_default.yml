@@ -6,7 +6,7 @@ info: |
     Otherwise, extra static pods (coredns with mdns, keepalived and haproxy) are deployed on the nodes to provide a self contained platform.
     Default version is stable but you can use dev-preview, nightly or ci instead, for which you will need a specific pull secret.
     Upstream okd version can be specified with the upstream boolean variable.
-    Sdn defaults to OpenShiftSDN but OVNKubernetes or Calico can also be selected.
+    Sdn defaults to OVNKubernetes but OpenShiftSDN or Calico can also be selected.
     To avoid keepalived collision, you can force virtual_router_id. Otherwise, the id is calculated from cluster variable.
     You can deploy extra apps with the apps array and for each of the supported app, indicate with the variable
     ${app}_version which version to target (instead of latest).
@@ -28,7 +28,7 @@ workers: 0
 fips: false
 cluster: testk
 domain: karmalabs.corp
-network_type: OpenShiftSDN
+network_type: OVNKubernetes
 cluster_network_ipv4: "10.132.0.0/14"
 cluster_network_ipv6: "fd01::/48"
 service_network_ipv4: "172.30.0.0/16"
