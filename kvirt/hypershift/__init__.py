@@ -266,7 +266,8 @@ def create(config, plandir, cluster, overrides):
         ipv6 = True if ':' in cidr else False
         data['ipv6'] = ipv6
     if sslip and config.type in virtplatforms:
-        data['domain'] = '%s.sslip.io' % ingress_ip.replace('.', '-').replace(':', '-')
+        domain = '%s.sslip.io' % ingress_ip.replace('.', '-').replace(':', '-')
+        data['domain'] = domain
         pprint(f"Setting domain to {domain}")
         ignore_hosts = False
     assetsdata = data.copy()
