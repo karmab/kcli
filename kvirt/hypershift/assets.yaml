@@ -1,4 +1,4 @@
-{% set api_address = api_ip|default("api." + cluster + "." + original_domain) %}
+{% set api_address = management_api_ip|default("api." + cluster + "." + original_domain) %}
 apiVersion: v1
 data:
  .dockerconfigjson: {{ pull_secret|default('')|base64 }}

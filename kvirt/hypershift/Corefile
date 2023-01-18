@@ -8,7 +8,7 @@
     cache 30
     reload
     hosts {{ cluster }}.{{ domain }} {
-        {{ api_ip }} api-int.{{ cluster }}.{{ domain }} api.{{ cluster }}.{{ domain }}
+        {{ management_api_ip }} api-int.{{ cluster }}.{{ domain }} api.{{ cluster }}.{{ domain }}
         fallthrough
     }
     template ANY ANY apps.{{ cluster }}.{{ domain }} {

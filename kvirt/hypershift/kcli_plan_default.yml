@@ -38,7 +38,6 @@ workers_threaded: false
 tempkey: false
 namespace: clusters
 disconnected_url:
-api_ip:
 ingress_ip:
 async: false
 kvm_openstack: true
@@ -56,3 +55,5 @@ mdns: false
 kubevirt_ingress_service: false
 cluster_network_ipv4: "10.129.0.0/14"
 service_network_ipv4: "172.31.0.0/16"
+management_api_ip:
+management_ingress_ip:
