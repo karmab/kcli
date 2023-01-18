@@ -82,9 +82,7 @@ spec:
 {% if network_type == 'OVNKubernetes' %}
   - service: OVNSbDb
     servicePublishingStrategy:
-      nodePort:
-        address: {{ api_address }}
-      type: NodePort
+      type: Route
 {% endif %}
 {% if ca is defined %}
   additionalTrustBundle: disconnected-ca

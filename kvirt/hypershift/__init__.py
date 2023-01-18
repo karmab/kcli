@@ -194,7 +194,13 @@ def create(config, plandir, cluster, overrides):
         api_domain = urlparse(api_url).hostname
         api_ip = socket.getaddrinfo(api_domain, 6443, proto=socket.IPPROTO_TCP)[0][4][0]
         data['api_ip'] = api_ip
-    pprint(f"Using {api_ip} as ip to join management cluster api")
+    pprint(f"Using {api_ip} as management cluster api ip")
+    if data.get('coredns'):
+        management_cmd = "oc get ingresscontroller -n openshift-ingress-operator default -o jsonpath='{.status.domain}'"
+        management_ingress_domain = os.popen(management_cmd).read()
+        management_ingress_ip = socket.getaddrinfo(management_ingress_domain, 80, proto=socket.IPPROTO_TCP)[0][4][0]
+        data['management_ingress_ip'] = management_ingress_ip
+        data['management_ingress_domain'] = management_ingress_domain
     pub_key = data.get('pub_key')
     pull_secret = pwd_path(data.get('pull_secret'))
     pull_secret = os.path.expanduser(pull_secret)
@@ -235,7 +241,7 @@ def create(config, plandir, cluster, overrides):
                 selector = {'kcli/plan': plan, 'kcli/role': 'worker'}
                 service_type = "LoadBalancer" if k.access_mode == 'LoadBalancer' else 'NodePort'
                 ingress_ip = k.create_service(f"{cluster}-ingress", k.namespace, selector, _type=service_type,
-                                              ports=[80, 443], openshift_hack=True)
+                                              ports=[80, 443])
                 if ingress_ip is None:
                     error("Couldnt gather an ingress_ip from your specified network")
                     sys.exit(1)

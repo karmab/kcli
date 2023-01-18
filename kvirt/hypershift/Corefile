@@ -14,4 +14,7 @@
     template ANY ANY apps.{{ cluster }}.{{ domain }} {
        answer "{% raw %}{{ .Name }}{% endraw %} A {{ ingress_ip or 'IP' }}"
     }
+    template ANY ANY {{ management_ingress_domain }} {
+       answer "{% raw %}{{ .Name }}{% endraw %} A {{ management_ingress_ip }}"
+    }
 }
