@@ -1374,10 +1374,11 @@ class Kubevirt(Kubecommon):
         vlanconfig = '"vlan": %s' % overrides['vlan'] if 'vlan' in overrides is not None else ''
         if 'type' in overrides:
             _type = overrides['type']
+        elif 'ovs' in overrides and overrides['ovs']:
+            _type = 'ovs'
         else:
             pprint("Using default type bridge for network")
             _type = 'bridge'
-        print(_type, name, vlanconfig)
         config = '{ "cniVersion": "0.3.1", "type": "%s", "bridge": "%s" %s}' % (_type, name, vlanconfig)
         if cidr is not None and dhcp:
             ipam = '"ipam": { "type": "host-local", "subnet": "%s" }' % cidr
