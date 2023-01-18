@@ -1051,12 +1051,9 @@ def scp(name, ip='', user=None, source=None, destination=None, recursive=None, t
             arguments += " -o LogLevel=quiet -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
         scpcommand = 'scp -q'
         if identityfile is None:
-            if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
-                identityfile = os.path.expanduser("~/.kcli/id_rsa")
-            elif os.path.exists(os.path.expanduser("~/.kcli/id_dsa")):
-                identityfile = os.path.expanduser("~/.kcli/id_dsa")
-            elif os.path.exists(os.path.expanduser("~/.kcli/id_ed25519")):
-                identityfile = os.path.expanduser("~/.kcli/id_ed25519")
+            publickeyfile = get_ssh_pub_key()
+            if publickeyfile is not None:
+                identityfile = publickeyfile.replace('.pub', '')
         if identityfile is not None:
             scpcommand += f" -i {identityfile}"
         if recursive:
