@@ -87,7 +87,7 @@ def get_installer_version():
     return installer_version
 
 
-def same_release_images(version='stable', tag='4.11', pull_secret='openshift_pull.json'):
+def same_release_images(version='stable', tag='4.12', pull_secret='openshift_pull.json'):
     tag = str(tag).split(':')[-1]
     offline = 'xxx'
     existing = os.popen('./openshift-install version').readlines()[2].split(" ")[2].strip()

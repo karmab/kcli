@@ -1,7 +1,7 @@
 parameters:
   cluster: marquez
-  version: nightly
-  tag: '4.11'
+  version: stable
+  tag: '4.12'
   ctlplanes: 3
   workers: 0
   network_type: OVNKubernetes

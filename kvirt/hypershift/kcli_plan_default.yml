@@ -6,7 +6,7 @@ info: |
     ingress_ip is required for virt platforms to provide a way to access apps from the outside.
     The vip will be running through a dedicated keepalived static pod
 version: stable
-tag: '4.11'
+tag: '4.12'
 pull_secret: openshift_pull.json
 image: rhcos48
 network: default

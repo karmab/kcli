@@ -4,7 +4,7 @@ sno: true
 sno_wait: true
 version: stable
 network_type: OVNKubernetes
-tag: "4.11"
+tag: "4.12"
 network: default
 numcpus: 16
 memory: 28672
