@@ -1,4 +1,15 @@
-{% set api_address = management_api_ip|default("api." + cluster + "." + original_domain) %}
+{% set management_address = management_api_ip or "api." + cluster + "." + original_domain %}
+{% if nodeport|default(False) %}
+{% macro service() %}
+      nodePort:
+        address: {{ management_address }}
+      type: NodePort
+{%- endmacro %}
+{% else %}
+{% macro service() %}
+      type: Route
+{%- endmacro %}
+{% endif %}
 apiVersion: v1
 data:
  .dockerconfigjson: {{ pull_secret|default('')|base64 }}
@@ -56,39 +67,29 @@ spec:
   services:
   - service: APIServer
     servicePublishingStrategy:
+{% if api_lb|default(False) %}
+      type: LoadBalancer
+{% else %}
       nodePort:
-        address: {{ api_address }}
+        address: {{ management_address }}
       type: NodePort
+{% endif %}
   - service: OAuthServer
     servicePublishingStrategy:
-      nodePort:
-        address: {{ api_address }}
-      type: NodePort
+{{ service() }}
   - service: OIDC
     servicePublishingStrategy:
-      nodePort:
-        address: {{ api_address }}
-      type: None
+{{ service() }}
   - service: Konnectivity
     servicePublishingStrategy:
-      nodePort:
-        address: {{ api_address }}
-      type: NodePort
+{{ service() }}
   - service: Ignition
     servicePublishingStrategy:
-      nodePort:
-        address: {{ api_address }}
-      type: NodePort
+{{ service() }}
 {% if network_type == 'OVNKubernetes' %}
   - service: OVNSbDb
     servicePublishingStrategy:
-{% if ovn_nodeport|default(False) %}
-      nodePort:
-        address: {{ api_address }}
-      type: NodePort
-{% else %}
-      type: Route
-{% endif %}
+{{ service() }}
 {% endif %}
 {% if ca is defined %}
   additionalTrustBundle: disconnected-ca

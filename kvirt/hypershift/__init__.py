@@ -188,6 +188,18 @@ def create(config, plandir, cluster, overrides):
     if str(tag) not in versions:
         error(f"Invalid tag {tag}. Choose between {','.join(versions)}")
         sys.exit(1)
+    management_cmd = "oc get ingresscontroller -n openshift-ingress-operator default -o jsonpath='{.status.domain}'"
+    management_ingress_domain = os.popen(management_cmd).read()
+    data['management_ingress_domain'] = management_ingress_domain
+    management_ingress_ip = data.get('management_ingress_ip')
+    if management_ingress_ip is None:
+        try:
+            management_ingress_ip = socket.getaddrinfo('xxx.' + management_ingress_domain, 80,
+                                                       proto=socket.IPPROTO_TCP)[0][4][0]
+            data['management_ingress_ip'] = management_ingress_ip
+        except:
+            warning("Couldn't figure out management ingress ip. Using node port instead")
+            data['nodeport'] = True
     management_api_ip = data.get('management_api_ip')
     if management_api_ip is None:
         management_api_url = os.popen("oc whoami --show-server").read()
@@ -195,19 +207,6 @@ def create(config, plandir, cluster, overrides):
         management_api_ip = socket.getaddrinfo(management_api_domain, 6443, proto=socket.IPPROTO_TCP)[0][4][0]
         data['management_api_ip'] = management_api_ip
     pprint(f"Using {management_api_ip} as management api ip")
-    if data.get('coredns'):
-        management_cmd = "oc get ingresscontroller -n openshift-ingress-operator default -o jsonpath='{.status.domain}'"
-        management_ingress_domain = os.popen(management_cmd).read()
-        data['management_ingress_domain'] = management_ingress_domain
-        management_ingress_ip = data.get('management_ingress_ip')
-        if management_ingress_ip is None:
-            try:
-                management_ingress_ip = socket.getaddrinfo('xxx.' + management_ingress_domain, 80,
-                                                           proto=socket.IPPROTO_TCP)[0][4][0]
-                data['management_ingress_ip'] = management_ingress_ip
-            except:
-                warning("Couldn't figure out management ingress domain ip. Using node port instead for ovn")
-                data['ovn_nodeport'] = True
     pub_key = data.get('pub_key')
     pull_secret = pwd_path(data.get('pull_secret'))
     pull_secret = os.path.expanduser(pull_secret)
@@ -253,7 +252,7 @@ def create(config, plandir, cluster, overrides):
                     error("Couldnt gather an ingress_ip from your specified network")
                     sys.exit(1)
                 else:
-                    pprint(f"Using kubernetes service ingress_ip {ingress_ip}")
+                    pprint(f"Using ingress_ip {ingress_ip}")
                     data['ingress_ip'] = ingress_ip
                     data['kubevirt_ingress_service'] = True
             else:
@@ -376,8 +375,6 @@ def create(config, plandir, cluster, overrides):
     cmcmd = f"oc create -f {clusterdir}/assets.yaml"
     call(cmcmd, shell=True)
     assetsdata['clusterdir'] = clusterdir
-    console_url = os.popen("oc get route -n openshift-console console -o jsonpath='{.status.ingress[0].host}'").read()
-    assetsdata['base_domain'] = console_url.replace('console-openshift-console.apps.', '')
     ignitionscript = config.process_inputfile(cluster, f"{plandir}/ignition.sh", overrides=assetsdata)
     with open(f"{clusterdir}/ignition.sh", 'w') as f:
         f.write(ignitionscript)
