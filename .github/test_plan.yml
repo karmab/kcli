@@ -1,6 +1,6 @@
 parameters:
  pool: default
- image: fedora35
+ image: centos9stream
 
 {{ image }}:
  type: image

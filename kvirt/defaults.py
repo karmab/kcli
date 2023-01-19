@@ -37,6 +37,7 @@ BSD += "/bsd-cloud-image.org/images/"
 DEBIAN = "https://cdimage.debian.org/cdimage/"
 RHCOS = "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/"
 FEDORA = "http://mirror.uv.es/mirror/fedora/linux/releases/"
+FEDORA_ARCHIVE = "https://archives.fedoraproject.org/pub/archive/fedora/linux/releases/"
 ROCKY = 'https://dl.rockylinux.org/pub/rocky/'
 UBUNTU = 'https://cloud-images.ubuntu.com/'
 IMAGES = {'almalinux9': 'http://repo.ifca.es/almalinux/9.0/cloud/x86_64/images/'
@@ -56,11 +57,11 @@ IMAGES = {'almalinux9': 'http://repo.ifca.es/almalinux/9.0/cloud/x86_64/images/'
           'debian10': DEBIAN + 'openstack/current-10/debian-10-openstack-amd64.qcow2',
           'debian11': DEBIAN + 'cloud/bullseye/latest/debian-11-generic-amd64.qcow2',
           'fcos': 'https://builds.coreos.fedoraproject.org/streams/stable.json',
-          'fedora32': FEDORA + '32/Cloud/x86_64/images/Fedora-Cloud-Base-32-1.6.x86_64.qcow2',
-          'fedora33': FEDORA + '33/Cloud/x86_64/images/Fedora-Cloud-Base-33-1.2.x86_64.qcow2',
-          'fedora34': FEDORA + '34/Cloud/x86_64/images/Fedora-Cloud-Base-34-1.2.x86_64.qcow2',
-          'fedora35': FEDORA + '35/Cloud/x86_64/images/Fedora-Cloud-Base-35-1.2.x86_64.qcow2',
-          'fedora36': FEDORA + '36/Cloud/x86_64/images/Fedora-Cloud-Base-36-1.5.x86_64.qcow2',
+          'fedora32': FEDORA_ARCHIVE + '32/Cloud/x86_64/images/Fedora-Cloud-Base-32-1.6.x86_64.qcow2',
+          'fedora33': FEDORA_ARCHIVE + '33/Cloud/x86_64/images/Fedora-Cloud-Base-33-1.2.x86_64.qcow2',
+          'fedora34': FEDORA_ARCHIVE + '34/Cloud/x86_64/images/Fedora-Cloud-Base-34-1.2.x86_64.qcow2',
+          'fedora35': FEDORA_ARCHIVE + '35/Cloud/x86_64/images/Fedora-Cloud-Base-35-1.2.x86_64.qcow2',
+          'fedora36': FEDORA_ARCHIVE + '36/Cloud/x86_64/images/Fedora-Cloud-Base-36-1.5.x86_64.qcow2',
           'fedora37': FEDORA + '37/Cloud/x86_64/images/Fedora-Cloud-Base-37-1.7.x86_64.qcow2',
           'fedoralatest': 'https://alt.fedoraproject.org/cloud',
           'freebsd114': BSD + "freebsd/11.4/freebsd-11.4.qcow2",
