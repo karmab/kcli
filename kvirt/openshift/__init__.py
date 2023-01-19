@@ -90,7 +90,10 @@ def get_installer_version():
 def same_release_images(version='stable', tag='4.12', pull_secret='openshift_pull.json'):
     tag = str(tag).split(':')[-1]
     offline = 'xxx'
-    existing = os.popen('./openshift-install version').readlines()[2].split(" ")[2].strip()
+    try:
+        existing = os.popen('./openshift-install version').readlines()[2].split(" ")[2].strip()
+    except:
+        return False
     if version in ['ci', 'nightly']:
         if version == "nightly":
             nightly_url = f"https://amd64.ocp.releases.ci.openshift.org/api/v1/releasestream/{tag}.0-0.nightly/latest"
