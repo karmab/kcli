@@ -2,7 +2,7 @@
 
 from glob import glob
 from kvirt.common import success, error, pprint, info2, container_mode, warning
-from kvirt.common import get_oc, pwd_path, get_installer_rhcos, get_ssh_pub_key, boot_baremetal_hosts
+from kvirt.common import get_oc, pwd_path, get_installer_rhcos, get_ssh_pub_key, boot_baremetal_hosts, olm_app
 from kvirt.defaults import OPENSHIFT_TAG
 from kvirt.openshift import process_apps, update_etc_hosts
 from kvirt.openshift import get_ci_installer, get_downstream_installer, get_installer_version, same_release_images
@@ -118,6 +118,7 @@ def create(config, plandir, cluster, overrides):
             'network_type': 'OVNKubernetes',
             'fips': False,
             'hypershift_image': 'quay.io/hypershift/hypershift-operator:latest',
+            'hypershift_mce': False,
             'namespace': 'clusters',
             'disconnected_url': None,
             'pull_secret': 'openshift_pull.json',
@@ -166,15 +167,21 @@ def create(config, plandir, cluster, overrides):
     kubeconfig = os.path.basename(kubeconfig) if kubeconfig is not None else 'config'
     if yaml.safe_load(os.popen('oc get crd hostedclusters.hypershift.openshift.io -o yaml 2>/dev/null').read()) is None:
         warning("Hypershift not installed. Installing it for you")
-        if which('podman') is None:
+        if data.get('hypershift_mce'):
+            app_name, source, channel, csv, description, namespace, channels, crd = olm_app('multicluster-engine')
+            app_data = {'name': app_name, 'source': source, 'channel': channel, 'namespace': namespace, 'crd': crd,
+                        'mce_hypershift': True}
+            config.create_app_openshift(app_name, app_data)
+        elif which('podman') is None:
             error("Please install podman first in order to install hypershift")
             sys.exit(1)
-        hypercmd = f"podman pull {data['hypershift_image']}"
-        call(hypercmd, shell=True)
-        hypercmd = f"podman run -it --rm --entrypoint=/usr/bin/hypershift -e KUBECONFIG=/k/{kubeconfig}"
-        hypercmd += f" -v {kubeconfigdir}:/k {data['hypershift_image']} install"
-        call(hypercmd, shell=True)
-        sleep(120)
+        else:
+            hypercmd = f"podman pull {data['hypershift_image']}"
+            call(hypercmd, shell=True)
+            hypercmd = f"podman run -it --rm --entrypoint=/usr/bin/hypershift -e KUBECONFIG=/k/{kubeconfig}"
+            hypercmd += f" -v {kubeconfigdir}:/k {data['hypershift_image']} install"
+            call(hypercmd, shell=True)
+            sleep(120)
     data['basedir'] = '/workdir' if container_mode() else '.'
     cluster = data.get('cluster')
     namespace = data.get('namespace')
