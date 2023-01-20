@@ -53,7 +53,7 @@ def update_etc_hosts(cluster, domain, host_ip, ingress_ip=None):
         if not correct:
             entries = [f"api.{cluster}.{domain}"]
             ingress_entries = [f"{x}.{cluster}.{domain}" for x in ['console-openshift-console.apps',
-                               'oauth-openshift.apps', 'prometheus-k8s-openshift-monitoring.apps']]
+                               'oauth-openshift.apps', 'prometheus-k8s-openshift-monitoring.apps', 'canary-openshift-ingress-canary.apps']]
             if ingress_ip is None:
                 entries.extend(ingress_entries)
             entries = ' '.join(entries)
@@ -65,7 +65,8 @@ def update_etc_hosts(cluster, domain, host_ip, ingress_ip=None):
         entries = [f"api.{cluster}.{domain}"]
         ingress_entries = [f"{x}.{cluster}.{domain}" for x in ['console-openshift-console.apps',
                                                                'oauth-openshift.apps',
-                                                               'prometheus-k8s-openshift-monitoring.apps']]
+                                                               'prometheus-k8s-openshift-monitoring.apps',
+                                                               'canary-openshift-ingress-canary.apps']]
         if ingress_ip is None:
             entries.extend(ingress_entries)
         entries = ' '.join(entries)
@@ -1160,7 +1161,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         else:
             warning("Add the following entry in /etc/hosts if needed")
             dnsentries = ['api', 'console-openshift-console.apps', 'oauth-openshift.apps',
-                          'prometheus-k8s-openshift-monitoring.apps']
+                          'prometheus-k8s-openshift-monitoring.apps', 'canary-openshift-ingress-canary.apps']
             dnsentry = ' '.join([f"{entry}.{cluster}.{domain}" for entry in dnsentries])
             warning(f"$your_node_ip {dnsentry}")
         if baremetal_hosts:
