@@ -53,8 +53,8 @@ def update_etc_hosts(cluster, domain, host_ip, ingress_ip=None):
         if not correct:
             entries = [f"api.{cluster}.{domain}"]
             ingress_entries = [f"{x}.{cluster}.{domain}" for x in ['console-openshift-console.apps',
-                                                                   'oauth-openshift.apps', 
-                                                                   'prometheus-k8s-openshift-monitoring.apps', 
+                                                                   'oauth-openshift.apps',
+                                                                   'prometheus-k8s-openshift-monitoring.apps',
                                                                    'canary-openshift-ingress-canary.apps']]
             if ingress_ip is None:
                 entries.extend(ingress_entries)
