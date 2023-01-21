@@ -377,12 +377,18 @@ def create(config, plandir, cluster, overrides):
         f.write(hostedclusterfile)
     cmcmd = f"oc create -f {clusterdir}/hostedcluster.yaml"
     call(cmcmd, shell=True)
+    nodepoolfile = config.process_inputfile(cluster, f"{plandir}/nodepool.yaml", overrides=assetsdata)
+    with open(f"{clusterdir}/nodepool_{nodepool}.yaml", 'w') as f:
+        f.write(nodepoolfile)
+    cmcmd = f"oc create -f {clusterdir}/nodepool_{nodepool}.yaml"
+    call(cmcmd, shell=True)
     assetsdata['clusterdir'] = clusterdir
     ignitionscript = config.process_inputfile(cluster, f"{plandir}/ignition.sh", overrides=assetsdata)
     with open(f"{clusterdir}/ignition.sh", 'w') as f:
         f.write(ignitionscript)
-    pprint("Waiting before ignition server is usable")
-    call(f"until oc -n {namespace}-{cluster} get secret | grep user-data-{cluster} >/dev/null 2>&1 ; do sleep 1 ; done",
+    pprint("Waiting before ignition data is available")
+    user_data = f"user-data-{nodepool}"
+    call(f"until oc -n {namespace}-{cluster} get secret | grep {user_data} >/dev/null 2>&1 ; do sleep 1 ; done",
          shell=True)
     ignition_worker = f"{clusterdir}/worker.ign"
     open(ignition_worker, 'a').close()
@@ -403,11 +409,6 @@ def create(config, plandir, cluster, overrides):
         boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
         data['workers'] = data['workers'] - len(baremetal_hosts)
     if data['workers'] > 0:
-        nodepoolfile = config.process_inputfile(cluster, f"{plandir}/nodepool.yaml", overrides=assetsdata)
-        with open(f"{clusterdir}/nodepool_{nodepool}.yaml", 'w') as f:
-            f.write(nodepoolfile)
-        cmcmd = f"oc create -f {clusterdir}/nodepool_{nodepool}.yaml"
-        call(cmcmd, shell=True)
         pprint("Deploying workers")
         worker_threaded = data.get('threaded', False) or data.get('workers_threaded', False)
         config.plan(plan, inputfile=f'{plandir}/kcli_plan.yml', overrides=data, threaded=worker_threaded)
