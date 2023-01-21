@@ -9,8 +9,8 @@ TOKEN=$(oc -n $NAMESPACE get secret $SECRET -o jsonpath='{.data.value}' | base64
 {% if nodeport|default(False) %}
 IP=$(oc get node -o wide --selector='node-role.kubernetes.io/master' | grep -v NAME|  head -1 | awk '{print $6}')
 PORT=$(oc -n $NAMESPACE get svc ignition-server -o jsonpath={.spec.ports[0].nodePort})
-curl -k -H "Authorization: $TOKEN" https://$IP:$PORT/ignition > $CLUSTERDIR/worker.ign
+curl -k -H "Authorization: $TOKEN" https://$IP:$PORT/ignition > $CLUSTERDIR/$NODEPOOL/worker.ign
 {% else %}
 MANAGEMENT_INGRESS_DOMAIN={{ management_ingress_domain }}
-curl -k -H "Authorization: $TOKEN" https://ignition-server-$NAMESPACE.$MANAGEMENT_INGRESS_DOMAIN/ignition > $CLUSTERDIR/worker.ign
+curl -k -H "Authorization: $TOKEN" https://ignition-server-$NAMESPACE.$MANAGEMENT_INGRESS_DOMAIN/ignition > $CLUSTERDIR/$NODEPOOL/worker.ign
 {% endif %}

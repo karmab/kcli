@@ -106,6 +106,7 @@ def create(config, plandir, cluster, overrides):
         os.environ['KUBECONFIG'] = f"{os.getcwd()}/{os.environ['KUBECONFIG']}"
     data = {'kubetype': 'hypershift',
             'domain': 'karmalabs.corp',
+            'nodepool': 'worker',
             'baremetal_iso': False,
             'coredns': True,
             'mdns': False,
@@ -137,8 +138,7 @@ def create(config, plandir, cluster, overrides):
         clustervalue = 'testk'
     data['cluster'] = clustervalue
     data['kube'] = data['cluster']
-    nodepool = data.get('nodepool') or clustervalue
-    data['nodepool'] = nodepool
+    nodepool = data['nodepool']
     ignore_hosts = data.get('ignore_hosts', False)
     pprint(f"Deploying cluster {clustervalue}")
     plan = cluster if cluster is not None else clustervalue
@@ -189,8 +189,7 @@ def create(config, plandir, cluster, overrides):
     namespace = data.get('namespace')
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if os.path.exists(clusterdir):
-        error(f"Please remove existing directory {clusterdir} first...")
-        sys.exit(1)
+        warning(f"Using existing {clusterdir}")
     supported_data = yaml.safe_load(os.popen("oc get cm/supported-versions -o yaml -n hypershift").read())['data']
     supported_versions = supported_versions = supported_data['supported-versions']
     versions = yaml.safe_load(supported_versions)['versions']
@@ -331,7 +330,6 @@ def create(config, plandir, cluster, overrides):
     assetsdata['nodepool_image'] = nodepool_image
     if not os.path.exists(clusterdir):
         os.makedirs(clusterdir)
-        os.mkdir(f"{clusterdir}/auth")
         with open(f"{clusterdir}/kcli_parameters.yml", 'w') as p:
             installparam = overrides.copy()
             installparam['plan'] = plan
@@ -377,20 +375,23 @@ def create(config, plandir, cluster, overrides):
         f.write(hostedclusterfile)
     cmcmd = f"oc create -f {clusterdir}/hostedcluster.yaml"
     call(cmcmd, shell=True)
+    if not os.path.exists(f"{clusterdir}/{nodepool}"):
+        os.mkdir(f"{clusterdir}/{nodepool}")
+    os.mkdir(f"{clusterdir}/{nodepool}/auth")
     nodepoolfile = config.process_inputfile(cluster, f"{plandir}/nodepool.yaml", overrides=assetsdata)
-    with open(f"{clusterdir}/nodepool_{nodepool}.yaml", 'w') as f:
+    with open(f"{clusterdir}/{nodepool}/nodepool.yaml", 'w') as f:
         f.write(nodepoolfile)
-    cmcmd = f"oc create -f {clusterdir}/nodepool_{nodepool}.yaml"
+    cmcmd = f"oc create -f {clusterdir}/{nodepool}/nodepool.yaml"
     call(cmcmd, shell=True)
     assetsdata['clusterdir'] = clusterdir
     ignitionscript = config.process_inputfile(cluster, f"{plandir}/ignition.sh", overrides=assetsdata)
-    with open(f"{clusterdir}/ignition.sh", 'w') as f:
+    with open(f"{clusterdir}/{nodepool}/ignition.sh", 'w') as f:
         f.write(ignitionscript)
     pprint("Waiting before ignition data is available")
     user_data = f"user-data-{nodepool}"
     call(f"until oc -n {namespace}-{cluster} get secret | grep {user_data} >/dev/null 2>&1 ; do sleep 1 ; done",
          shell=True)
-    ignition_worker = f"{clusterdir}/worker.ign"
+    ignition_worker = f"{clusterdir}/{nodepool}/worker.ign"
     open(ignition_worker, 'a').close()
     timeout = 0
     while True:
@@ -401,7 +402,7 @@ def create(config, plandir, cluster, overrides):
         if timeout > 300:
             error("Timeout trying to retrieve worker ignition")
             sys.exit(1)
-        call(f'bash {clusterdir}/ignition.sh', shell=True)
+        call(f'bash {clusterdir}/{nodepool}/ignition.sh', shell=True)
     if 'name' in data:
         del data['name']
     if baremetal_iso or baremetal_hosts:
@@ -416,15 +417,15 @@ def create(config, plandir, cluster, overrides):
         warning("Not updating /etc/hosts as per your request")
     else:
         update_etc_hosts(cluster, domain, management_api_ip, ingress_ip)
-    kubeconfigpath = f'{clusterdir}/auth/kubeconfig'
+    kubeconfigpath = f'{clusterdir}/{nodepool}/auth/kubeconfig'
     kubeconfig = os.popen(f"oc extract -n {namespace} secret/{cluster}-admin-kubeconfig --to=-").read()
     with open(kubeconfigpath, 'w') as f:
         f.write(kubeconfig)
-    kubeadminpath = f'{clusterdir}/auth/kubeadmin-password'
+    kubeadminpath = f'{clusterdir}/{nodepool}/auth/kubeadmin-password'
     kubeadmin = os.popen(f"oc extract -n {namespace} secret/{cluster}-kubeadmin-password --to=-").read()
     with open(kubeadminpath, 'w') as f:
         f.write(kubeadmin)
-    autoapproverpath = f'{clusterdir}/autoapprovercron.yml'
+    autoapproverpath = f'{clusterdir}/{nodepool}/autoapprovercron.yml'
     autoapprover = config.process_inputfile(cluster, f"{plandir}/autoapprovercron.yml", overrides=data)
     with open(autoapproverpath, 'w') as f:
         f.write(autoapprover)
@@ -436,10 +437,11 @@ def create(config, plandir, cluster, overrides):
     async_install = data.get('async')
     if async_install or which('openshift-install') is None:
         success(f"Kubernetes cluster {cluster} deployed!!!")
-        info2(f"export KUBECONFIG=$HOME/.kcli/clusters/{cluster}/auth/kubeconfig")
+        info2(f"export KUBECONFIG=$HOME/.kcli/clusters/{cluster}/{nodepool}/auth/kubeconfig")
         info2("export PATH=$PWD:$PATH")
     else:
-        installcommand = f'openshift-install --dir={clusterdir} --log-level={log_level} wait-for install-complete'
+        nodepooldir = f'{clusterdir}/{nodepool}'
+        installcommand = f'openshift-install --dir={nodepooldir} --log-level={log_level} wait-for install-complete'
         installcommand = ' || '.join([installcommand for x in range(retries)])
         pprint("Launching install-complete step. It will be retried extra times to handle timeouts")
         run = call(installcommand, shell=True)
@@ -447,7 +449,7 @@ def create(config, plandir, cluster, overrides):
             error("Leaving environment for debugging purposes")
             error(f"You can delete it with kcli delete kube --yes {cluster}")
             sys.exit(run)
-    os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
+    os.environ['KUBECONFIG'] = f"{clusterdir}/{nodepool}/auth/kubeconfig"
     apps = overrides.get('apps', [])
     overrides['hypershift'] = True
     overrides['cluster'] = cluster
