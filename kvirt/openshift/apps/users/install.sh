@@ -8,9 +8,9 @@ printf "$ADMIN_USER:$(openssl passwd -apr1 $ADMIN_PASSWORD )\n$DEV_USER:$(openss
 NAMESPACE={{ "clusters" if hypershift|default(False) else 'openshift-config' }}
 {% if hypershift|default(False) %}
 CLUSTER={{ cluster }}
-KUBECONFIGBASE=$HOME/.kcli/clusters/$CLUSTER/kubeconfig.base
-KUBECONFIG=$KUBECONFIGBASE oc patch hc -n $NAMESPACE $CLUSTER --patch-file oauth_hypershift.yml --type merge
-KUBECONFIG=$KUBECONFIGBASE oc create secret generic htpass-secret --from-file=htpasswd=htpasswd -n $NAMESPACE
+KUBECONFIGMGMT=$HOME/.kcli/clusters/$CLUSTER/kubeconfig.mgmt
+KUBECONFIG=$KUBECONFIGMGMT oc patch hc -n $NAMESPACE $CLUSTER --patch-file oauth_hypershift.yml --type merge
+KUBECONFIG=$KUBECONFIGMGMT oc create secret generic htpass-secret --from-file=htpasswd=htpasswd -n $NAMESPACE
 {% else %}
 oc apply -f oauth.yml
 oc create secret generic htpass-secret --from-file=htpasswd=htpasswd -n $NAMESPACE
