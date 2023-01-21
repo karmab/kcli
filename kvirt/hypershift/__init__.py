@@ -280,62 +280,55 @@ def create(config, plandir, cluster, overrides):
         pprint(f"Setting domain to {domain}")
         ignore_hosts = False
     assetsdata = data.copy()
-    if version == 'cluster':
-        release_image = os.popen("oc get clusterversion version -o jsonpath={'.status.history[-1].image'}").read()
-        version = os.popen("oc get clusterversion version -o jsonpath={'.status.history[-1].version'}").read()
-        minor = version[:3].replace('.', '')
-        image = f'rhcos{minor}'
-        data['image'] = image
-    else:
-        if os.path.exists('openshift-install'):
-            if same_release_images(version=version, tag=tag, pull_secret=pull_secret):
-                pprint("Reusing matching openshift-install")
-            else:
-                pprint("Removing old openshift-install")
-                os.remove('openshift-install')
-        if which('openshift-install') is None:
-            if version in ['ci', 'nightly']:
-                nightly = version == 'nigthly'
-                run = get_ci_installer(pull_secret, tag=tag, nightly=nightly)
-            elif version == 'dev-preview':
-                run = get_downstream_installer(devpreview=True, tag=tag, pull_secret=pull_secret)
-            else:
-                run = get_downstream_installer(tag=tag, pull_secret=pull_secret)
-            if run != 0:
-                error("Couldn't download openshift-install")
-                sys.exit(run)
-            pprint("Move downloaded openshift-install somewhere in your PATH if you want to reuse it")
-        elif not os.path.exists('openshift-install'):
-            warning("Using existing openshift-install found in your PATH")
-        INSTALLER_VERSION = get_installer_version()
-        pprint(f"Using installer version {INSTALLER_VERSION}")
-        release_image = os.popen("openshift-install version | grep 'release image' | cut -f3 -d' '").read().strip()
-        image = data.get('image')
-        if image is None:
-            image_type = 'openstack' if data.get('kvm_openstack', True) and config.type == 'kvm' else config.type
-            region = config.k.region if config.type == 'aws' else None
-            image_url = get_installer_rhcos(_type=image_type, region=region, arch=arch)
-            if platform in ['aws', 'gcp']:
-                image = image_url
-            else:
-                image = os.path.basename(os.path.splitext(image_url)[0])
-                if platform == 'ibm':
-                    image = image.replace('.', '-').replace('_', '-').lower()
-                images = [v for v in k.volumes() if image in v]
-                if not images:
-                    result = config.handle_host(pool=config.pool, image=image, download=True, update_profile=False,
-                                                url=image_url, size=data.get('kubevirt_disk_size'))
-                    if result['result'] != 'success':
-                        sys.exit(1)
-            pprint(f"Using image {image}")
-            data['image'] = image
+    if os.path.exists('openshift-install'):
+        if same_release_images(version=version, tag=tag, pull_secret=pull_secret):
+            pprint("Reusing matching openshift-install")
         else:
-            pprint(f"Checking if image {image} is available")
+            pprint("Removing old openshift-install")
+            os.remove('openshift-install')
+    if which('openshift-install') is None:
+        if version in ['ci', 'nightly']:
+            nightly = version == 'nigthly'
+            run = get_ci_installer(pull_secret, tag=tag, nightly=nightly)
+        elif version == 'dev-preview':
+            run = get_downstream_installer(devpreview=True, tag=tag, pull_secret=pull_secret)
+        else:
+            run = get_downstream_installer(tag=tag, pull_secret=pull_secret)
+        if run != 0:
+            error("Couldn't download openshift-install")
+            sys.exit(run)
+        pprint("Move downloaded openshift-install somewhere in your PATH if you want to reuse it")
+    elif not os.path.exists('openshift-install'):
+        warning("Using existing openshift-install found in your PATH")
+    INSTALLER_VERSION = get_installer_version()
+    pprint(f"Using installer version {INSTALLER_VERSION}")
+    nodepool_image = os.popen("openshift-install version | grep 'release image' | cut -f3 -d' '").read().strip()
+    image = data.get('image')
+    if image is None:
+        image_type = 'openstack' if data.get('kvm_openstack', True) and config.type == 'kvm' else config.type
+        region = config.k.region if config.type == 'aws' else None
+        image_url = get_installer_rhcos(_type=image_type, region=region, arch=arch)
+        if platform in ['aws', 'gcp']:
+            image = image_url
+        else:
+            image = os.path.basename(os.path.splitext(image_url)[0])
+            if platform == 'ibm':
+                image = image.replace('.', '-').replace('_', '-').lower()
             images = [v for v in k.volumes() if image in v]
             if not images:
-                error(f"Missing {image}. Indicate correct image in your parameters file...")
-                sys.exit(1)
-    assetsdata['release_image'] = release_image
+                result = config.handle_host(pool=config.pool, image=image, download=True, update_profile=False,
+                                            url=image_url, size=data.get('kubevirt_disk_size'))
+                if result['result'] != 'success':
+                    sys.exit(1)
+        pprint(f"Using image {image}")
+        data['image'] = image
+    else:
+        pprint(f"Checking if image {image} is available")
+        images = [v for v in k.volumes() if image in v]
+        if not images:
+            error(f"Missing {image}. Indicate correct image in your parameters file...")
+            sys.exit(1)
+    assetsdata['nodepool_image'] = nodepool_image
     if not os.path.exists(clusterdir):
         os.makedirs(clusterdir)
         os.mkdir(f"{clusterdir}/auth")

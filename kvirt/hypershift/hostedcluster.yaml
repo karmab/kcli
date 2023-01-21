@@ -34,7 +34,7 @@ metadata:
   namespace: {{ namespace }}
 spec:
   release:
-    image: "{{ release_image|default('') }}"
+    image: "{{ nodepool_image }}"
   dns:
     baseDomain: {{ domain }}
   etcd:

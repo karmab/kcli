@@ -1,9 +1,9 @@
 #!/bin/bash
 
 NAMESPACE={{ namespace }}-{{ cluster }}
-CLUSTER={{ cluster }}
+NODEPOOL={{ nodepool }}
 CLUSTERDIR={{ clusterdir }} 
-SECRET=$(oc -n $NAMESPACE get secret | grep user-data-$CLUSTER | head -1 | awk '{print $1}')
+SECRET=$(oc -n $NAMESPACE get secret | grep user-data-$NODEPOOL | head -1 | awk '{print $1}')
 TOKEN=$(oc -n $NAMESPACE get secret $SECRET -o jsonpath='{.data.value}' | base64 -d | awk -F "Bearer " '{print $2}' | awk -F "\"" '{print "Bearer " $1}')
 
 {% if nodeport|default(False) %}

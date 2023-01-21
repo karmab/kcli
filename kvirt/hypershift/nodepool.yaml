@@ -25,7 +25,7 @@ spec:
   platform:
     type: None
   release:
-    image: "{{ release_image|default('') }}"
+    image: "{{ nodepool_image }}"
 {% if manifests|default([]) %}
   config:
 {% for entry in manifests %}
