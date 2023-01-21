@@ -4,8 +4,8 @@ from glob import glob
 from kvirt.common import success, error, pprint, info2, container_mode, warning
 from kvirt.common import get_oc, pwd_path, get_installer_rhcos, get_ssh_pub_key, boot_baremetal_hosts, olm_app
 from kvirt.defaults import OPENSHIFT_TAG
-from kvirt.openshift import process_apps, update_etc_hosts
 from kvirt.openshift import get_ci_installer, get_downstream_installer, get_installer_version, same_release_images
+from kvirt.openshift import process_apps, update_etc_hosts, offline_image
 from ipaddress import ip_network
 import json
 import os
@@ -190,6 +190,8 @@ def create(config, plandir, cluster, overrides):
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if os.path.exists(clusterdir):
         warning(f"Using existing {clusterdir}")
+    else:
+        os.makedirs(clusterdir)
     supported_data = yaml.safe_load(os.popen("oc get cm/supported-versions -o yaml -n hypershift").read())['data']
     supported_versions = supported_versions = supported_data['supported-versions']
     versions = yaml.safe_load(supported_versions)['versions']
@@ -279,6 +281,38 @@ def create(config, plandir, cluster, overrides):
         pprint(f"Setting domain to {domain}")
         ignore_hosts = False
     assetsdata = data.copy()
+    copy2(f'{kubeconfigdir}/{kubeconfig}', f"{clusterdir}/kubeconfig.mgmt")
+    assetsdata['cidr'] = cidr
+    pprint("Creating control plane assets")
+    cmcmd = f"oc create ns {namespace} -o yaml --dry-run=client | oc apply -f -"
+    call(cmcmd, shell=True)
+    icsps = yaml.safe_load(os.popen('oc get imagecontentsourcepolicies -o yaml').read())['items']
+    if icsps:
+        imagecontentsources = []
+        for icsp in icsps:
+            for mirror_spec in icsp['spec']['repositoryDigestMirrors']:
+                source, mirror = mirror_spec['source'], mirror_spec['mirrors'][0]
+                imagecontentsources.append({'source': source, 'mirror': mirror})
+        assetsdata['imagecontentsources'] = imagecontentsources
+    manifestsdir = pwd_path("manifests")
+    if os.path.exists(manifestsdir) and os.path.isdir(manifestsdir):
+        manifests = []
+        for f in glob(f"{manifestsdir}/*.y*ml"):
+            mc_name = os.path.basename(f).replace('.yaml', '').replace('.yml', '')
+            mc_data = yaml.safe_load(open(f))
+            if mc_data.get('kind', 'xx') == 'MachineConfig':
+                pprint(f"Injecting manifest {f}")
+                mc_data = json.dumps(mc_data)
+                manifests.append({'name': mc_name, 'data': mc_data})
+        assetsdata['manifests'] = manifests
+    hosted_version = data.get('hosted_version') or version
+    hosted_tag = data.get('hosted_tag') or tag
+    assetsdata['hostedcluster_image'] = offline_image(version=hosted_version, tag=hosted_tag, pull_secret=pull_secret)
+    hostedclusterfile = config.process_inputfile(cluster, f"{plandir}/hostedcluster.yaml", overrides=assetsdata)
+    with open(f"{clusterdir}/hostedcluster.yaml", 'w') as f:
+        f.write(hostedclusterfile)
+    cmcmd = f"oc create -f {clusterdir}/hostedcluster.yaml"
+    call(cmcmd, shell=True)
     if os.path.exists('openshift-install'):
         if same_release_images(version=version, tag=tag, pull_secret=pull_secret):
             pprint("Reusing matching openshift-install")
@@ -328,53 +362,6 @@ def create(config, plandir, cluster, overrides):
             error(f"Missing {image}. Indicate correct image in your parameters file...")
             sys.exit(1)
     assetsdata['nodepool_image'] = nodepool_image
-    if not os.path.exists(clusterdir):
-        os.makedirs(clusterdir)
-        with open(f"{clusterdir}/kcli_parameters.yml", 'w') as p:
-            installparam = overrides.copy()
-            installparam['plan'] = plan
-            installparam['cluster'] = cluster
-            installparam['kubetype'] = 'hypershift'
-            installparam['management_api_ip'] = management_api_ip
-            if management_ingress_ip is not None:
-                installparam['management_ingress_ip'] = management_ingress_ip
-            if ingress_ip is not None:
-                installparam['ingress_ip'] = ingress_ip
-            if virtual_router_id is not None:
-                installparam['virtual_router_id'] = virtual_router_id
-            installparam['image'] = image
-            installparam['ipv6'] = ipv6
-            installparam['original_domain'] = data['original_domain']
-            yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
-    copy2(f'{kubeconfigdir}/{kubeconfig}', f"{clusterdir}/kubeconfig.mgmt")
-    assetsdata['cidr'] = cidr
-    pprint("Creating control plane assets")
-    cmcmd = f"oc create ns {namespace} -o yaml --dry-run=client | oc apply -f -"
-    call(cmcmd, shell=True)
-    icsps = yaml.safe_load(os.popen('oc get imagecontentsourcepolicies -o yaml').read())['items']
-    if icsps:
-        imagecontentsources = []
-        for icsp in icsps:
-            for mirror_spec in icsp['spec']['repositoryDigestMirrors']:
-                source, mirror = mirror_spec['source'], mirror_spec['mirrors'][0]
-                imagecontentsources.append({'source': source, 'mirror': mirror})
-        assetsdata['imagecontentsources'] = imagecontentsources
-    manifestsdir = pwd_path("manifests")
-    if os.path.exists(manifestsdir) and os.path.isdir(manifestsdir):
-        manifests = []
-        for f in glob(f"{manifestsdir}/*.y*ml"):
-            mc_name = os.path.basename(f).replace('.yaml', '').replace('.yml', '')
-            mc_data = yaml.safe_load(open(f))
-            if mc_data.get('kind', 'xx') == 'MachineConfig':
-                pprint(f"Injecting manifest {f}")
-                mc_data = json.dumps(mc_data)
-                manifests.append({'name': mc_name, 'data': mc_data})
-        assetsdata['manifests'] = manifests
-    hostedclusterfile = config.process_inputfile(cluster, f"{plandir}/hostedcluster.yaml", overrides=assetsdata)
-    with open(f"{clusterdir}/hostedcluster.yaml", 'w') as f:
-        f.write(hostedclusterfile)
-    cmcmd = f"oc create -f {clusterdir}/hostedcluster.yaml"
-    call(cmcmd, shell=True)
     if os.path.exists(f"{clusterdir}/{nodepool}"):
         error(f"Please remove existing directory {clusterdir}/{nodepool} first...")
         sys.exit(1)
@@ -451,6 +438,22 @@ def create(config, plandir, cluster, overrides):
             error("Leaving environment for debugging purposes")
             error(f"You can delete it with kcli delete kube --yes {cluster}")
             sys.exit(run)
+    with open(f"{clusterdir}/kcli_parameters.yml", 'w') as p:
+        installparam = overrides.copy()
+        installparam['plan'] = plan
+        installparam['cluster'] = cluster
+        installparam['kubetype'] = 'hypershift'
+        installparam['management_api_ip'] = management_api_ip
+        if management_ingress_ip is not None:
+            installparam['management_ingress_ip'] = management_ingress_ip
+        if ingress_ip is not None:
+            installparam['ingress_ip'] = ingress_ip
+        if virtual_router_id is not None:
+            installparam['virtual_router_id'] = virtual_router_id
+        installparam['image'] = image
+        installparam['ipv6'] = ipv6
+        installparam['original_domain'] = data['original_domain']
+        yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     os.environ['KUBECONFIG'] = f"{clusterdir}/{nodepool}/auth/kubeconfig"
     apps = overrides.get('apps', [])
     overrides['hypershift'] = True

@@ -34,7 +34,7 @@ metadata:
   namespace: {{ namespace }}
 spec:
   release:
-    image: "{{ nodepool_image }}"
+    image: "{{ hostedcluster_image }}"
   dns:
     baseDomain: {{ domain }}
   etcd:

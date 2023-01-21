@@ -87,13 +87,9 @@ def get_installer_version():
     return installer_version
 
 
-def same_release_images(version='stable', tag='4.12', pull_secret='openshift_pull.json'):
+def offline_image(version='stable', tag='4.12', pull_secret='openshift_pull.json'):
     tag = str(tag).split(':')[-1]
     offline = 'xxx'
-    try:
-        existing = os.popen('./openshift-install version').readlines()[2].split(" ")[2].strip()
-    except:
-        return False
     if version in ['ci', 'nightly']:
         if version == "nightly":
             nightly_url = f"https://amd64.ocp.releases.ci.openshift.org/api/v1/releasestream/{tag}.0-0.nightly/latest"
@@ -103,7 +99,7 @@ def same_release_images(version='stable', tag='4.12', pull_secret='openshift_pul
             if 'Pull From: ' in str(line):
                 offline = line.replace('Pull From: ', '').strip()
                 break
-        return offline == existing
+        return offline
     ocp_repo = 'ocp-dev-preview' if version == 'dev-preview' else 'ocp'
     if version in ['dev-preview', 'stable']:
         target = tag if len(str(tag).split('.')) > 2 else f'latest-{tag}'
@@ -114,6 +110,15 @@ def same_release_images(version='stable', tag='4.12', pull_secret='openshift_pul
         if 'Pull From: ' in str(line):
             offline = line.decode("utf-8").replace('Pull From: ', '').strip()
             break
+    return offline
+
+
+def same_release_images(version='stable', tag='4.12', pull_secret='openshift_pull.json'):
+    try:
+        existing = os.popen('./openshift-install version').readlines()[2].split(" ")[2].strip()
+    except:
+        return False
+    offline = offline_image(version=version, tag=tag, pull_secret=pull_secret)
     return offline == existing
 
 
