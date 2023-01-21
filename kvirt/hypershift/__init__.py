@@ -137,6 +137,8 @@ def create(config, plandir, cluster, overrides):
         clustervalue = 'testk'
     data['cluster'] = clustervalue
     data['kube'] = data['cluster']
+    nodepool = data.get('nodepool') or clustervalue
+    data['nodepool'] = nodepool
     ignore_hosts = data.get('ignore_hosts', False)
     pprint(f"Deploying cluster {clustervalue}")
     plan = cluster if cluster is not None else clustervalue
@@ -377,10 +379,10 @@ def create(config, plandir, cluster, overrides):
                 mc_data = json.dumps(mc_data)
                 manifests.append({'name': mc_name, 'data': mc_data})
         assetsdata['manifests'] = manifests
-    assetsfile = config.process_inputfile(cluster, f"{plandir}/assets.yaml", overrides=assetsdata)
-    with open(f"{clusterdir}/assets.yaml", 'w') as f:
-        f.write(assetsfile)
-    cmcmd = f"oc create -f {clusterdir}/assets.yaml"
+    hostedclusterfile = config.process_inputfile(cluster, f"{plandir}/hostedcluster.yaml", overrides=assetsdata)
+    with open(f"{clusterdir}/hostedcluster.yaml", 'w') as f:
+        f.write(hostedclusterfile)
+    cmcmd = f"oc create -f {clusterdir}/hostedcluster.yaml"
     call(cmcmd, shell=True)
     assetsdata['clusterdir'] = clusterdir
     ignitionscript = config.process_inputfile(cluster, f"{plandir}/ignition.sh", overrides=assetsdata)
@@ -401,7 +403,6 @@ def create(config, plandir, cluster, overrides):
             error("Timeout trying to retrieve worker ignition")
             sys.exit(1)
         call(f'bash {clusterdir}/ignition.sh', shell=True)
-    pprint("Deploying workers")
     if 'name' in data:
         del data['name']
     if baremetal_iso or baremetal_hosts:
@@ -409,6 +410,12 @@ def create(config, plandir, cluster, overrides):
         boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
         data['workers'] = data['workers'] - len(baremetal_hosts)
     if data['workers'] > 0:
+        nodepoolfile = config.process_inputfile(cluster, f"{plandir}/nodepool.yaml", overrides=assetsdata)
+        with open(f"{clusterdir}/nodepool_{nodepool}.yaml", 'w') as f:
+            f.write(nodepoolfile)
+        cmcmd = f"oc create -f {clusterdir}/nodepool_{nodepool}.yaml"
+        call(cmcmd, shell=True)
+        pprint("Deploying workers")
         worker_threaded = data.get('threaded', False) or data.get('workers_threaded', False)
         config.plan(plan, inputfile=f'{plandir}/kcli_plan.yml', overrides=data, threaded=worker_threaded)
     if ignore_hosts:
