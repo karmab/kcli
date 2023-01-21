@@ -375,8 +375,10 @@ def create(config, plandir, cluster, overrides):
         f.write(hostedclusterfile)
     cmcmd = f"oc create -f {clusterdir}/hostedcluster.yaml"
     call(cmcmd, shell=True)
-    if not os.path.exists(f"{clusterdir}/{nodepool}"):
-        os.mkdir(f"{clusterdir}/{nodepool}")
+    if os.path.exists(f"{clusterdir}/{nodepool}"):
+        error(f"Please remove existing directory {clusterdir}/{nodepool} first...")
+        sys.exit(1)
+    os.mkdir(f"{clusterdir}/{nodepool}")
     os.mkdir(f"{clusterdir}/{nodepool}/auth")
     nodepoolfile = config.process_inputfile(cluster, f"{plandir}/nodepool.yaml", overrides=assetsdata)
     with open(f"{clusterdir}/{nodepool}/nodepool.yaml", 'w') as f:
