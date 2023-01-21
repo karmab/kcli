@@ -348,7 +348,7 @@ def create(config, plandir, cluster, overrides):
             installparam['ipv6'] = ipv6
             installparam['original_domain'] = data['original_domain']
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
-    copy2(f'{kubeconfigdir}/{kubeconfig}', f"{clusterdir}/kubeconfig.base")
+    copy2(f'{kubeconfigdir}/{kubeconfig}', f"{clusterdir}/kubeconfig.mgmt")
     assetsdata['cidr'] = cidr
     pprint("Creating control plane assets")
     cmcmd = f"oc create ns {namespace} -o yaml --dry-run=client | oc apply -f -"
