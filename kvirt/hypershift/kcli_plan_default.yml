@@ -48,8 +48,8 @@ baremetal_iso: false
 baremetal_hosts: []
 virtual_router_id:
 pub_key:
-hypershift_image: quay.io/hypershift/hypershift-operator:latest
-hypershift_mce: false
+operator_image: quay.io/hypershift/hypershift-operator:latest
+use_mce: false
 retries: 3
 coredns: true
 sslip: false

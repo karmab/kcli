@@ -117,8 +117,8 @@ def create(config, plandir, cluster, overrides):
             'version': 'stable',
             'network_type': 'OVNKubernetes',
             'fips': False,
-            'hypershift_image': 'quay.io/hypershift/hypershift-operator:latest',
-            'hypershift_mce': False,
+            'operator_image': 'quay.io/hypershift/hypershift-operator:latest',
+            'use_mce': False,
             'namespace': 'clusters',
             'disconnected_url': None,
             'pull_secret': 'openshift_pull.json',
@@ -169,7 +169,7 @@ def create(config, plandir, cluster, overrides):
     kubeconfig = os.path.basename(kubeconfig) if kubeconfig is not None else 'config'
     if yaml.safe_load(os.popen('oc get crd hostedclusters.hypershift.openshift.io -o yaml 2>/dev/null').read()) is None:
         warning("Hypershift not installed. Installing it for you")
-        if data.get('hypershift_mce'):
+        if data.get('use_mce'):
             app_name, source, channel, csv, description, namespace, channels, crd = olm_app('multicluster-engine')
             app_data = {'name': app_name, 'source': source, 'channel': channel, 'namespace': namespace, 'crd': crd,
                         'mce_hypershift': True}
@@ -178,10 +178,10 @@ def create(config, plandir, cluster, overrides):
             error("Please install podman first in order to install hypershift")
             sys.exit(1)
         else:
-            hypercmd = f"podman pull {data['hypershift_image']}"
+            hypercmd = f"podman pull {data['operator_image']}"
             call(hypercmd, shell=True)
             hypercmd = f"podman run -it --rm --entrypoint=/usr/bin/hypershift -e KUBECONFIG=/k/{kubeconfig}"
-            hypercmd += f" -v {kubeconfigdir}:/k {data['hypershift_image']} install"
+            hypercmd += f" -v {kubeconfigdir}:/k {data['operator_image']} install"
             call(hypercmd, shell=True)
             sleep(120)
     data['basedir'] = '/workdir' if container_mode() else '.'
