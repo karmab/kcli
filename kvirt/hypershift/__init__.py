@@ -196,6 +196,7 @@ def create(config, plandir, cluster, overrides):
         warning(f"Using existing {clusterdir}")
     else:
         os.makedirs(clusterdir)
+        os.makedirs(f"{clusterdir}/auth")
     supported_data = yaml.safe_load(os.popen("oc get cm/supported-versions -o yaml -n hypershift").read())['data']
     supported_versions = supported_versions = supported_data['supported-versions']
     versions = yaml.safe_load(supported_versions)['versions']
