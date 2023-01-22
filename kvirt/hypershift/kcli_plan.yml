@@ -31,7 +31,7 @@
 {% do files.append(new_file) %}
 {% endif %}
 
-{{ cluster }}-{{ nodepool }}-{{ num }}:
+{{ cluster }}-worker-{{ num }}:
  domain: {{ original_domain|default('karmalabs.corp') }}
  image: {{ image }}
  pool: {{ pool or config_pool }}

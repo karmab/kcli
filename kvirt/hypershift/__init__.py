@@ -57,7 +57,7 @@ def handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts=[]):
 
 def scale(config, plandir, cluster, overrides):
     plan = cluster
-    data = {'cluster': cluster, 'kube': cluster, 'kubetype': 'hypershift', 'nodepool': 'worker'}
+    data = {'cluster': cluster, 'kube': cluster, 'kubetype': 'hypershift'}
     data['basedir'] = '/workdir' if container_mode() else '.'
     cluster = data.get('cluster')
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
@@ -67,6 +67,8 @@ def scale(config, plandir, cluster, overrides):
             data.update(installparam)
             plan = installparam.get('plan', plan)
     data.update(overrides)
+    if 'nodepool' not in data:
+        data['nodepool'] = cluster
     with open(f"{clusterdir}/kcli_parameters.yml", 'w') as paramfile:
         yaml.safe_dump(data, paramfile)
     pprint(f"Scaling on client {config.client}")
@@ -138,6 +140,8 @@ def create(config, plandir, cluster, overrides):
         clustervalue = 'testk'
     data['cluster'] = clustervalue
     data['kube'] = data['cluster']
+    if 'nodepool' not in data:
+        data['nodepool'] = clustervalue
     nodepool = data['nodepool']
     ignore_hosts = data.get('ignore_hosts', False)
     pprint(f"Deploying cluster {clustervalue}")
@@ -364,14 +368,14 @@ def create(config, plandir, cluster, overrides):
     assetsdata['nodepool_image'] = nodepool_image
     if os.path.exists(f"{clusterdir}/{nodepool}.ign"):
         os.remove(f"{clusterdir}/{nodepool}.ign")
-    nodepoolfile = config.process_inputfile(cluster, f"{plandir}/nodepool_{nodepool}.yaml", overrides=assetsdata)
+    nodepoolfile = config.process_inputfile(cluster, f"{plandir}/nodepool.yaml", overrides=assetsdata)
     with open(f"{clusterdir}/nodepool_{nodepool}.yaml", 'w') as f:
         f.write(nodepoolfile)
     cmcmd = f"oc create -f {clusterdir}/nodepool_{nodepool}.yaml"
     call(cmcmd, shell=True)
     assetsdata['clusterdir'] = clusterdir
     ignitionscript = config.process_inputfile(cluster, f"{plandir}/ignition.sh", overrides=assetsdata)
-    with open(f"{clusterdir}/{nodepool}/ignition.sh", 'w') as f:
+    with open(f"{clusterdir}/ignition_{nodepool}.sh", 'w') as f:
         f.write(ignitionscript)
     pprint("Waiting before ignition data is available")
     user_data = f"user-data-{nodepool}"
