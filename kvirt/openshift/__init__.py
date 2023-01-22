@@ -1046,9 +1046,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             _f.write(appsfile)
         appdir = f"{plandir}/apps"
         apps_namespace = {'advanced-cluster-management': 'open-cluster-management',
-                          'kubevirt-hyperconverged': 'openshift-cnv',
+                          'multicluster-engine': 'multicluster-engine', 'kubevirt-hyperconverged': 'openshift-cnv',
                           'local-storage-operator': 'openshift-local-storage',
-                          'ocs-operator': 'openshift-storage', 'autolabeller': 'autorules'}
+                          'ocs-operator': 'openshift-storage', 'odf-lvm-operator': 'openshift-storage',
+                          'metallb-operator': 'openshift-operators', 'autolabeller': 'autorules'}
         apps = [a for a in apps if a not in ['users', 'metal3', 'nfs']]
         for appname in apps:
             app_data = data.copy()
