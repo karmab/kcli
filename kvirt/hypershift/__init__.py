@@ -193,6 +193,10 @@ def create(config, plandir, cluster, overrides):
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if os.path.exists(clusterdir):
         warning(f"Using existing {clusterdir}")
+        if nodepool != clustervalue:
+            existing_workers = [vm for vm in config.k.list() if vm.get('kube', 'xxx') == cluster]
+            if existing_workers:
+                data['workers'] += len(existing_workers)
     else:
         os.makedirs(clusterdir)
         os.makedirs(f"{clusterdir}/auth")
@@ -414,7 +418,7 @@ def create(config, plandir, cluster, overrides):
     if baremetal_iso or baremetal_hosts:
         iso_url = handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts)
         boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
-        data['workers'] = data['workers'] - len(baremetal_hosts)
+        data['workers'] -= len(baremetal_hosts)
     if data['workers'] > 0:
         pprint("Deploying workers")
         worker_threaded = data.get('threaded', False) or data.get('workers_threaded', False)
