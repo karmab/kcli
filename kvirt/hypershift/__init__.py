@@ -108,7 +108,6 @@ def create(config, plandir, cluster, overrides):
         os.environ['KUBECONFIG'] = f"{os.getcwd()}/{os.environ['KUBECONFIG']}"
     data = {'kubetype': 'hypershift',
             'domain': 'karmalabs.corp',
-            'nodepool': 'worker',
             'baremetal_iso': False,
             'coredns': True,
             'mdns': False,
@@ -341,6 +340,7 @@ def create(config, plandir, cluster, overrides):
     INSTALLER_VERSION = get_installer_version()
     pprint(f"Using installer version {INSTALLER_VERSION}")
     nodepool_image = os.popen("openshift-install version | grep 'release image' | cut -f3 -d' '").read().strip()
+    assetsdata['nodepool_image'] = nodepool_image
     image = data.get('image')
     if image is None:
         image_type = 'openstack' if data.get('kvm_openstack', True) and config.type == 'kvm' else config.type
@@ -366,7 +366,22 @@ def create(config, plandir, cluster, overrides):
         if not images:
             error(f"Missing {image}. Indicate correct image in your parameters file...")
             sys.exit(1)
-    assetsdata['nodepool_image'] = nodepool_image
+    with open(f"{clusterdir}/kcli_parameters.yml", 'w') as p:
+        installparam = overrides.copy()
+        installparam['plan'] = plan
+        installparam['cluster'] = cluster
+        installparam['kubetype'] = 'hypershift'
+        installparam['management_api_ip'] = management_api_ip
+        if management_ingress_ip is not None:
+            installparam['management_ingress_ip'] = management_ingress_ip
+        if ingress_ip is not None:
+            installparam['ingress_ip'] = ingress_ip
+        if virtual_router_id is not None:
+            installparam['virtual_router_id'] = virtual_router_id
+        installparam['image'] = image
+        installparam['ipv6'] = ipv6
+        installparam['original_domain'] = data['original_domain']
+        yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     if os.path.exists(f"{clusterdir}/{nodepool}.ign"):
         os.remove(f"{clusterdir}/{nodepool}.ign")
     nodepoolfile = config.process_inputfile(cluster, f"{plandir}/nodepool.yaml", overrides=assetsdata)
@@ -439,22 +454,6 @@ def create(config, plandir, cluster, overrides):
             error("Leaving environment for debugging purposes")
             error(f"You can delete it with kcli delete kube --yes {cluster}")
             sys.exit(run)
-    with open(f"{clusterdir}/kcli_parameters.yml", 'w') as p:
-        installparam = overrides.copy()
-        installparam['plan'] = plan
-        installparam['cluster'] = cluster
-        installparam['kubetype'] = 'hypershift'
-        installparam['management_api_ip'] = management_api_ip
-        if management_ingress_ip is not None:
-            installparam['management_ingress_ip'] = management_ingress_ip
-        if ingress_ip is not None:
-            installparam['ingress_ip'] = ingress_ip
-        if virtual_router_id is not None:
-            installparam['virtual_router_id'] = virtual_router_id
-        installparam['image'] = image
-        installparam['ipv6'] = ipv6
-        installparam['original_domain'] = data['original_domain']
-        yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
     apps = overrides.get('apps', [])
     overrides['hypershift'] = True
