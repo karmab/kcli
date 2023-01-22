@@ -57,7 +57,7 @@ def handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts=[]):
 
 def scale(config, plandir, cluster, overrides):
     plan = cluster
-    data = {'cluster': cluster, 'kube': cluster, 'kubetype': 'hypershift'}
+    data = {'cluster': cluster, 'kube': cluster, 'kubetype': 'hypershift', 'nodepool': 'worker'}
     data['basedir'] = '/workdir' if container_mode() else '.'
     cluster = data.get('cluster')
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
