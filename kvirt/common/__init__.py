@@ -1460,7 +1460,7 @@ def get_latest_fedora(url='https://alt.fedoraproject.org/cloud'):
 
 def find_ignition_files(role, cluster, nodepool=None):
     clusterpath = os.path.expanduser(f"~/.kcli/clusters/{cluster}/{role}.ign")
-    nodepoolpath = os.path.expanduser(f"~/.kcli/clusters/{cluster}/{nodepool}/worker.ign")
+    nodepoolpath = os.path.expanduser(f"~/.kcli/clusters/{cluster}/{nodepool}.ign")
     if os.path.exists(clusterpath):
         return clusterpath
     elif os.path.exists(nodepoolpath):

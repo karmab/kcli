@@ -362,15 +362,12 @@ def create(config, plandir, cluster, overrides):
             error(f"Missing {image}. Indicate correct image in your parameters file...")
             sys.exit(1)
     assetsdata['nodepool_image'] = nodepool_image
-    if os.path.exists(f"{clusterdir}/{nodepool}"):
-        error(f"Please remove existing directory {clusterdir}/{nodepool} first...")
-        sys.exit(1)
-    os.mkdir(f"{clusterdir}/{nodepool}")
-    os.mkdir(f"{clusterdir}/{nodepool}/auth")
-    nodepoolfile = config.process_inputfile(cluster, f"{plandir}/nodepool.yaml", overrides=assetsdata)
-    with open(f"{clusterdir}/{nodepool}/nodepool.yaml", 'w') as f:
+    if os.path.exists(f"{clusterdir}/{nodepool}.ign"):
+        os.remove(f"{clusterdir}/{nodepool}.ign")
+    nodepoolfile = config.process_inputfile(cluster, f"{plandir}/nodepool_{nodepool}.yaml", overrides=assetsdata)
+    with open(f"{clusterdir}/nodepool_{nodepool}.yaml", 'w') as f:
         f.write(nodepoolfile)
-    cmcmd = f"oc create -f {clusterdir}/{nodepool}/nodepool.yaml"
+    cmcmd = f"oc create -f {clusterdir}/nodepool_{nodepool}.yaml"
     call(cmcmd, shell=True)
     assetsdata['clusterdir'] = clusterdir
     ignitionscript = config.process_inputfile(cluster, f"{plandir}/ignition.sh", overrides=assetsdata)
@@ -380,7 +377,7 @@ def create(config, plandir, cluster, overrides):
     user_data = f"user-data-{nodepool}"
     call(f"until oc -n {namespace}-{cluster} get secret | grep {user_data} >/dev/null 2>&1 ; do sleep 1 ; done",
          shell=True)
-    ignition_worker = f"{clusterdir}/{nodepool}/worker.ign"
+    ignition_worker = f"{clusterdir}/{nodepool}.ign"
     open(ignition_worker, 'a').close()
     timeout = 0
     while True:
@@ -391,7 +388,7 @@ def create(config, plandir, cluster, overrides):
         if timeout > 300:
             error("Timeout trying to retrieve worker ignition")
             sys.exit(1)
-        call(f'bash {clusterdir}/{nodepool}/ignition.sh', shell=True)
+        call(f'bash {clusterdir}/ignition_{nodepool}.sh', shell=True)
     if 'name' in data:
         del data['name']
     if baremetal_iso or baremetal_hosts:
@@ -406,15 +403,15 @@ def create(config, plandir, cluster, overrides):
         warning("Not updating /etc/hosts as per your request")
     else:
         update_etc_hosts(cluster, domain, management_api_ip, ingress_ip)
-    kubeconfigpath = f'{clusterdir}/{nodepool}/auth/kubeconfig'
+    kubeconfigpath = f'{clusterdir}/auth/kubeconfig'
     kubeconfig = os.popen(f"oc extract -n {namespace} secret/{cluster}-admin-kubeconfig --to=-").read()
     with open(kubeconfigpath, 'w') as f:
         f.write(kubeconfig)
-    kubeadminpath = f'{clusterdir}/{nodepool}/auth/kubeadmin-password'
+    kubeadminpath = f'{clusterdir}/auth/kubeadmin-password'
     kubeadmin = os.popen(f"oc extract -n {namespace} secret/{cluster}-kubeadmin-password --to=-").read()
     with open(kubeadminpath, 'w') as f:
         f.write(kubeadmin)
-    autoapproverpath = f'{clusterdir}/{nodepool}/autoapprovercron.yml'
+    autoapproverpath = f'{clusterdir}/auth/autoapprovercron.yml'
     autoapprover = config.process_inputfile(cluster, f"{plandir}/autoapprovercron.yml", overrides=data)
     with open(autoapproverpath, 'w') as f:
         f.write(autoapprover)
@@ -426,11 +423,10 @@ def create(config, plandir, cluster, overrides):
     async_install = data.get('async')
     if async_install or which('openshift-install') is None:
         success(f"Kubernetes cluster {cluster} deployed!!!")
-        info2(f"export KUBECONFIG=$HOME/.kcli/clusters/{cluster}/{nodepool}/auth/kubeconfig")
+        info2(f"export KUBECONFIG=$HOME/.kcli/clusters/{cluster}/auth/kubeconfig")
         info2("export PATH=$PWD:$PATH")
     else:
-        nodepooldir = f'{clusterdir}/{nodepool}'
-        installcommand = f'openshift-install --dir={nodepooldir} --log-level={log_level} wait-for install-complete'
+        installcommand = f'openshift-install --dir={clusterdir} --log-level={log_level} wait-for install-complete'
         installcommand = ' || '.join([installcommand for x in range(retries)])
         pprint("Launching install-complete step. It will be retried extra times to handle timeouts")
         run = call(installcommand, shell=True)
@@ -454,7 +450,7 @@ def create(config, plandir, cluster, overrides):
         installparam['ipv6'] = ipv6
         installparam['original_domain'] = data['original_domain']
         yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
-    os.environ['KUBECONFIG'] = f"{clusterdir}/{nodepool}/auth/kubeconfig"
+    os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
     apps = overrides.get('apps', [])
     overrides['hypershift'] = True
     overrides['cluster'] = cluster
