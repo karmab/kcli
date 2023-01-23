@@ -302,16 +302,19 @@ def create(config, plandir, cluster, overrides):
                 source, mirror = mirror_spec['source'], mirror_spec['mirrors'][0]
                 imagecontentsources.append({'source': source, 'mirror': mirror})
         assetsdata['imagecontentsources'] = imagecontentsources
+    manifests = []
     manifestsdir = pwd_path("manifests")
-    if os.path.exists(manifestsdir) and os.path.isdir(manifestsdir):
-        manifests = []
-        for f in glob(f"{manifestsdir}/*.y*ml"):
-            mc_name = os.path.basename(f).replace('.yaml', '').replace('.yml', '')
-            mc_data = yaml.safe_load(open(f))
-            if mc_data.get('kind', 'xx') == 'MachineConfig':
-                pprint(f"Injecting manifest {f}")
-                mc_data = json.dumps(mc_data)
-                manifests.append({'name': mc_name, 'data': mc_data})
+    for manifests in ["manifests", f"manifests_{nodepool}"]:
+        manifestsdir = pwd_path(manifests)
+        if os.path.exists(manifestsdir) and os.path.isdir(manifestsdir):
+            for f in glob(f"{manifestsdir}/*.y*ml"):
+                mc_name = os.path.basename(f).replace('.yaml', '').replace('.yml', '')
+                mc_data = yaml.safe_load(open(f))
+                if mc_data.get('kind', 'xx') == 'MachineConfig':
+                    pprint(f"Injecting manifest {f}")
+                    mc_data = json.dumps(mc_data)
+                    manifests.append({'name': mc_name, 'data': mc_data})
+    if manifests:
         assetsdata['manifests'] = manifests
     hosted_version = data.get('hosted_version') or version
     hosted_tag = data.get('hosted_tag') or tag
