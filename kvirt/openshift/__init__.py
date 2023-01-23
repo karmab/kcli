@@ -1177,7 +1177,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             installcommand = f'openshift-install --dir={clusterdir} --log-level={log_level} wait-for install-complete'
             installcommand = ' || '.join([installcommand for x in range(retries)])
             pprint("Launching install-complete step. It will be retried extra times in case of timeouts")
-            call(installcommand, shell=True)
+            run = call(installcommand, shell=True)
+            if run != 0:
+                error("Leaving environment for debugging purposes")
+                error(f"You can delete it with kcli delete cluster --yes {cluster}")
+                sys.exit(run)
         else:
             c = os.environ['KUBECONFIG']
             kubepassword = open(f"{clusterdir}/auth/kubeadmin-password").read()
