@@ -113,9 +113,9 @@ def offline_image(version='stable', tag='4.12', pull_secret='openshift_pull.json
     return offline
 
 
-def same_release_images(version='stable', tag='4.12', pull_secret='openshift_pull.json'):
+def same_release_images(version='stable', tag='4.12', pull_secret='openshift_pull.json', path='.'):
     try:
-        existing = os.popen('./openshift-install version').readlines()[2].split(" ")[2].strip()
+        existing = os.popen(f'{path}/openshift-install version').readlines()[2].split(" ")[2].strip()
     except:
         return False
     offline = offline_image(version=version, tag=tag, pull_secret=pull_secret)
@@ -691,7 +691,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = tag
         pprint(f"Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to {tag}")
     os.environ["PATH"] += f":{os.getcwd()}"
-    if which('openshift-install') is None:
+    which_openshift = which('openshift-install')
+    if which_openshift is None or\
+       not same_release_images(version=version, tag=tag, pull_secret=pull_secret, path=which_openshift):
         if upstream:
             run = get_upstream_installer(tag=tag)
         elif version in ['ci', 'nightly'] or '/' in str(tag):
