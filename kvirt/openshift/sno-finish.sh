@@ -26,8 +26,8 @@ cat /opt/openshift/master.ign.ori | jq ".storage.files |= . + [{\"mode\": 420, \
 firstboot_args='console=tty0 rd.neednet=1 {{ extra_args|default("") }}'
 echo "Executing coreos-installer with ignition file /opt/openshift/master.ign and device $install_device"
 coreos-installer install --firstboot-args="${firstboot_args}" --ignition=/opt/openshift/master.ign $install_device
-{% if uefi|default(False) %}
+
 NUM=$(efibootmgr -v | grep 'DVD\|CD' | cut -f1 -d' ' | sed 's/Boot000\([0-9]\)\*/\1/')
 efibootmgr -b 000$NUM -B $NUM
-{% endif %}
+
 shutdown -r now "Bootstrap completed, restarting node"
