@@ -304,8 +304,8 @@ def create(config, plandir, cluster, overrides):
         assetsdata['imagecontentsources'] = imagecontentsources
     manifests = []
     manifestsdir = pwd_path("manifests")
-    for manifests in ["manifests", f"manifests_{nodepool}"]:
-        manifestsdir = pwd_path(manifests)
+    for entry in ["manifests", f"manifests_{nodepool}"]:
+        manifestsdir = pwd_path(entry)
         if os.path.exists(manifestsdir) and os.path.isdir(manifestsdir):
             for f in glob(f"{manifestsdir}/*.y*ml"):
                 mc_name = os.path.basename(f).replace('.yaml', '').replace('.yml', '')
