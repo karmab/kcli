@@ -1776,7 +1776,7 @@ class Kvirt(object):
         if len(all_ips) > 1:
             yamlinfo['ips'] = all_ips
         pcidevices = []
-        hostdevs = list(root.iter('hostdev'))
+        hostdevs = list(set(list(root.iter('hostdev'))))
         for index, element in enumerate(hostdevs):
             address = element.find('source').find('address')
             if address is not None:
