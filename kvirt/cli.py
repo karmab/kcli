@@ -3410,14 +3410,14 @@ def cli():
     """
     PARAMETERS_HELP = 'specify parameter or keyword for rendering (multiple can be specified)'
     parser = argparse.ArgumentParser(description='Libvirt/Ovirt/Vsphere/Gcp/Aws/Openstack/Kubevirt Wrapper/Ibm Cloud')
-    parser.add_argument('-C', '--client')
+    parser.add_argument('-C', '-c', '--client')
     parser.add_argument('--containerclient', help='Containerclient to use')
     parser.add_argument('--dnsclient', help='Dnsclient to use')
-    parser.add_argument('-d', '--debug', action='store_true')
-    parser.add_argument('-n', '--namespace', help='Namespace to use. specific to kubevirt')
-    parser.add_argument('-o', '--output', choices=['json', 'name', 'yaml'], help='Format of the output')
-    parser.add_argument('-r', '--region', help='Region to use. specific to aws/gcp/ibm')
-    parser.add_argument('-z', '--zone', help='Zone to use. specific to gcp/ibm')
+    parser.add_argument('-d', '-D', '--debug', action='store_true')
+    parser.add_argument('-n', '-N', '--namespace', help='Namespace to use. specific to kubevirt')
+    parser.add_argument('-o', '-O', '--output', choices=['json', 'name', 'yaml'], help='Format of the output')
+    parser.add_argument('-r', '-R', '--region', help='Region to use. specific to aws/gcp/ibm')
+    parser.add_argument('-z', '-Z', '--zone', help='Zone to use. specific to gcp/ibm')
 
     subparsers = parser.add_subparsers(metavar='', title='Available Commands')
 
