@@ -649,12 +649,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         sys.exit(1)
     if which('oc') is None:
         get_oc(macosx=macosx)
-    if os.path.exists('openshift-install'):
-        if same_release_images(version=version, tag=tag, pull_secret=pull_secret):
-            pprint("Reusing matching openshift-install")
-        else:
-            pprint("Removing old openshift-install")
-            os.remove('openshift-install')
     pub_key = data.get('pub_key') or get_ssh_pub_key()
     keys = data.get('keys', [])
     if pub_key is None:
@@ -709,6 +703,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         pprint("Move downloaded openshift-install somewhere in your PATH if you want to reuse it")
     elif not os.path.exists('openshift-install'):
         warning("Using existing openshift-install found in your PATH")
+    else:
+        pprint("Reusing matching openshift-install")
     if disconnected_url is not None:
         if disconnected_user is None:
             error("disconnected_user needs to be set")
@@ -897,6 +893,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         data['pull_secret'] = json.dumps(auths)
     else:
         data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
+    # if platform == 'gcp':
+    #    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = os.path.expanduser(config.ini[config.client]['credentials'])
+    #    data['region'] = k.region
     installconfig = config.process_inputfile(cluster, f"{plandir}/install-config.yaml", overrides=data)
     with open(f"{clusterdir}/install-config.yaml", 'w') as f:
         f.write(installconfig)
