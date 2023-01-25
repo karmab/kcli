@@ -251,6 +251,8 @@ def create(config, plandir, cluster, overrides):
         sys.exit(1)
     ingress_ip = data.get('ingress_ip')
     cidr = '192.168.122.0/24'
+    ipv6 = False
+    virtual_router_id = None
     if config.type in virtplatforms:
         if ingress_ip is None:
             network = data.get('network')
@@ -276,12 +278,12 @@ def create(config, plandir, cluster, overrides):
             else:
                 error("You need to define ingress_ip in your parameters file")
                 sys.exit(1)
-        virtual_router_id = None
         if data.get('virtual_router_id') is None:
             virtual_router_id = hash(cluster) % 254 + 1
             data['virtual_router_id'] = virtual_router_id
             pprint(f"Using keepalived virtual_router_id {virtual_router_id}")
-        ipv6 = True if ':' in cidr else False
+        if ':' in cidr:
+            ipv6 = True
         data['ipv6'] = ipv6
     if sslip and config.type in virtplatforms:
         domain = '%s.sslip.io' % ingress_ip.replace('.', '-').replace(':', '-')
@@ -418,6 +420,16 @@ def create(config, plandir, cluster, overrides):
         call(f'bash {clusterdir}/ignition_{nodepool}.sh', shell=True)
     if 'name' in data:
         del data['name']
+    if platform in cloudplatforms + ['openstack']:
+        copy2(f"{clusterdir}/{nodepool}.ign", f"{clusterdir}/{nodepool}.ign.ori")
+        bucket = f"{cluster}-{domain.replace('.', '-')}"
+        if bucket not in config.k.list_buckets():
+            config.k.create_bucket(bucket)
+        config.k.upload_to_bucket(bucket, f"{clusterdir}/{nodepool}.ign", public=True)
+        bucket_url = config.k.public_bucketfile_url(bucket, f"{nodepool}.ign")
+        new_ignition = {'ignition': {'config': {'merge': [{'source': bucket_url}]}, 'version': '3.2.0'}}
+        with open(f"{clusterdir}/{nodepool}.ign", 'w') as f:
+            f.write(json.dumps(new_ignition))
     if baremetal_iso or baremetal_hosts:
         iso_url = handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts)
         boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
@@ -444,7 +456,7 @@ def create(config, plandir, cluster, overrides):
         f.write(autoapprover)
     call(f"oc apply -f {autoapproverpath}", shell=True)
     if platform in cloudplatforms:
-        result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_apps.yml', overrides=overrides)
+        result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_apps.yml', overrides=data)
         if result['result'] != 'success':
             sys.exit(1)
     async_install = data.get('async')
@@ -461,6 +473,9 @@ def create(config, plandir, cluster, overrides):
             error("Leaving environment for debugging purposes")
             error(f"You can delete it with kcli delete kube --yes {cluster}")
             sys.exit(run)
+    if platform in cloudplatforms:
+        bucket = f"{cluster}-{domain.replace('.', '-')}"
+        config.k.delete_bucket(bucket)
     os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
     apps = overrides.get('apps', [])
     overrides['hypershift'] = True

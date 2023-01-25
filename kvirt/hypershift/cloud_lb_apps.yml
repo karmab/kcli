@@ -8,5 +8,5 @@ apps.{{ cluster }}:
  - 443
  vms:
 {% for num in range(0, workers) %}
- - {{ cluster }}-{{ role }}-{{ num }}
+ - {{ cluster }}-worker-{{ num }}
 {% endfor %}
