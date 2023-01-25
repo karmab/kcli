@@ -27,7 +27,9 @@ firstboot_args='console=tty0 rd.neednet=1 {{ extra_args|default("") }}'
 echo "Executing coreos-installer with ignition file /opt/openshift/master.ign and device $install_device"
 coreos-installer install --firstboot-args="${firstboot_args}" --ignition=/opt/openshift/master.ign $install_device
 
-NUM=$(efibootmgr -v | grep 'DVD\|CD' | cut -f1 -d' ' | sed 's/Boot000\([0-9]\)\*/\1/')
-efibootmgr -b 000$NUM -B $NUM
+if [ -f /sys/firmware/efi ] ; then
+ NUM=$(efibootmgr -v | grep 'DVD\|CD' | cut -f1 -d' ' | sed 's/Boot000\([0-9]\)\*/\1/')
+ efibootmgr -b 000$NUM -B $NUM
+fi
 
 shutdown -r now "Bootstrap completed, restarting node"
