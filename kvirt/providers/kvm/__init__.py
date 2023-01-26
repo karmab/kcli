@@ -1784,7 +1784,7 @@ class Kvirt(object):
                 address = f'{bus}:{slot}.{function}'.replace('0x', '')
                 pcidevices.append(address)
         if pcidevices:
-            yamlinfo['pcidevices'] = pcidevices
+            yamlinfo['pcidevices'] = list(set(list(pcidevices)))
         if 'ip' in yamlinfo:
             ip = yamlinfo['ip']
             # better filter to detect user nets needed here
