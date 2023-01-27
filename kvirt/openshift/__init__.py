@@ -686,8 +686,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         pprint(f"Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to {tag}")
     os.environ["PATH"] += f":{os.getcwd()}"
     which_openshift = which('openshift-install')
-    if which_openshift is None or\
-       not same_release_images(version=version, tag=tag, pull_secret=pull_secret, path=which_openshift):
+    if which_openshift is None or not same_release_images(version=version, tag=tag, pull_secret=pull_secret,
+                                                          path=os.path.dirname(which_openshift)):
         if upstream:
             run = get_upstream_installer(tag=tag)
         elif version in ['ci', 'nightly'] or '/' in str(tag):

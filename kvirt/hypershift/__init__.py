@@ -326,13 +326,9 @@ def create(config, plandir, cluster, overrides):
         f.write(hostedclusterfile)
     cmcmd = f"oc create -f {clusterdir}/hostedcluster.yaml"
     call(cmcmd, shell=True)
-    if os.path.exists('openshift-install'):
-        if same_release_images(version=version, tag=tag, pull_secret=pull_secret):
-            pprint("Reusing matching openshift-install")
-        else:
-            pprint("Removing old openshift-install")
-            os.remove('openshift-install')
-    if which('openshift-install') is None:
+    which_openshift = which('openshift-install')
+    if which_openshift is None or not same_release_images(version=version, tag=tag, pull_secret=pull_secret,
+                                                          path=os.path.dirname(which_openshift)):
         if version in ['ci', 'nightly']:
             nightly = version == 'nigthly'
             run = get_ci_installer(pull_secret, tag=tag, nightly=nightly)
@@ -346,6 +342,8 @@ def create(config, plandir, cluster, overrides):
         pprint("Move downloaded openshift-install somewhere in your PATH if you want to reuse it")
     elif not os.path.exists('openshift-install'):
         warning("Using existing openshift-install found in your PATH")
+    else:
+        pprint("Reusing matching openshift-install")
     INSTALLER_VERSION = get_installer_version()
     pprint(f"Using installer version {INSTALLER_VERSION}")
     nodepool_image = os.popen("openshift-install version | grep 'release image' | cut -f3 -d' '").read().strip()
