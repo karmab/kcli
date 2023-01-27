@@ -2010,6 +2010,9 @@ class Kconfig(Kbaseconfig):
                                 if key in listkeys and isinstance(current[key], list) and key in profile:
                                     current[key] = profile[key] + current[key]
                             profile.update(entry[rule])
+                            if 'name' in entry[rule]:
+                                warning(f"Renaming {name} to {entry[rule]['name']}")
+                                name = entry[rule]['name']
                 if vmrules_strict and not rulefound:
                     warning(f"No vmrules found for {name}. Skipping...")
                     continue
