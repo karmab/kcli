@@ -3411,7 +3411,11 @@ def cli():
     """
 
     """
-    PARAMETERS_HELP = 'specify parameter or keyword for rendering (multiple can be specified)'
+    parent_parser = argparse.ArgumentParser(add_help=False)
+    parent_parser.add_argument('-P', '--param', action='append',
+                               help='specify parameter or keyword for rendering (multiple can be specified)',
+                               metavar='PARAM')
+    parent_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     parser = argparse.ArgumentParser(description='Libvirt/Ovirt/Vsphere/Gcp/Aws/Openstack/Kubevirt Wrapper/Ibm Cloud')
     parser.add_argument('-C', '-c', '--client')
     parser.add_argument('--containerclient', help='Containerclient to use')
@@ -3450,13 +3454,10 @@ def cli():
     appgenericcreate_desc = 'Create Kube App Generic'
     appgenericcreate_epilog = None
     appgenericcreate_parser = createapp_subparsers.add_parser('generic', description=appgenericcreate_desc,
+                                                              parents=[parent_parser],
                                                               help=appgenericcreate_desc,
                                                               epilog=appgenericcreate_epilog, formatter_class=rawhelp)
     appgenericcreate_parser.add_argument('--outputdir', '-o', help='Output directory', metavar='OUTPUTDIR')
-    appgenericcreate_parser.add_argument('-P', '--param', action='append',
-                                         help='specify parameter or keyword for rendering (multiple can be specified)',
-                                         metavar='PARAM')
-    appgenericcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     appgenericcreate_parser.add_argument('apps', metavar='APPS', nargs='*')
     appgenericcreate_parser.set_defaults(func=create_app_generic)
 
@@ -3464,12 +3465,10 @@ def cli():
     appopenshiftcreate_epilog = f"examples:\n{appopenshiftcreate}"
     appopenshiftcreate_parser = createapp_subparsers.add_parser('openshift', description=appopenshiftcreate_desc,
                                                                 help=appopenshiftcreate_desc,
+                                                                parents=[parent_parser],
                                                                 epilog=appopenshiftcreate_epilog,
                                                                 formatter_class=rawhelp, aliases=['hypershift'])
     appopenshiftcreate_parser.add_argument('--outputdir', '-o', help='Output directory', metavar='OUTPUTDIR')
-    appopenshiftcreate_parser.add_argument('-P', '--param', action='append',
-                                           help=PARAMETERS_HELP, metavar='PARAM')
-    appopenshiftcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     appopenshiftcreate_parser.add_argument('apps', metavar='APPS', nargs='*')
     appopenshiftcreate_parser.set_defaults(func=create_app_openshift)
 
@@ -3477,12 +3476,8 @@ def cli():
     bucketcreate_epilog = None
     bucketcreate_parser = create_subparsers.add_parser('bucket', description=bucketcreate_desc,
                                                        help=bucketcreate_desc, epilog=bucketcreate_epilog,
-                                                       formatter_class=rawhelp)
+                                                       parents=[parent_parser], formatter_class=rawhelp)
     bucketcreate_parser.add_argument('-p', '--public', action='store_true', help='Make the bucket public')
-    bucketcreate_parser.add_argument('-P', '--param', action='append',
-                                     help='specify parameter or keyword for rendering (multiple can be specified)',
-                                     metavar='PARAM')
-    bucketcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     bucketcreate_parser.add_argument('buckets', metavar='BUCKETS', nargs='+')
     bucketcreate_parser.set_defaults(func=create_bucket)
 
@@ -3509,15 +3504,11 @@ def cli():
     containercreate_desc = 'Create Container'
     containercreate_epilog = None
     containercreate_parser = create_subparsers.add_parser('container', description=containercreate_desc,
-                                                          help=containercreate_desc, epilog=containercreate_epilog,
-                                                          formatter_class=rawhelp)
+                                                          help=containercreate_desc, parents=[parent_parser],
+                                                          epilog=containercreate_epilog, formatter_class=rawhelp)
     containercreate_parser_group = containercreate_parser.add_mutually_exclusive_group(required=True)
     containercreate_parser_group.add_argument('-i', '--image', help='Image to use', metavar='Image')
     containercreate_parser_group.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
-    containercreate_parser.add_argument('-P', '--param', action='append',
-                                        help='specify parameter or keyword for rendering (multiple can be specified)',
-                                        metavar='PARAM')
-    containercreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     containercreate_parser.add_argument('name', metavar='NAME', nargs='?')
     containercreate_parser.set_defaults(func=create_container)
 
@@ -3658,12 +3649,8 @@ def cli():
 
     kubegenericcreate_desc = 'Create Generic Kube'
     kubegenericcreate_epilog = f"examples:\n{kubegenericcreate}"
-    kubegenericcreate_parser = argparse.ArgumentParser(add_help=False)
+    kubegenericcreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubegenericcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
-    kubegenericcreate_parser.add_argument('-P', '--param', action='append',
-                                          help='specify parameter or keyword for rendering (multiple can be specified)',
-                                          metavar='PARAM')
-    kubegenericcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     kubegenericcreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubegenericcreate_parser.set_defaults(func=create_generic_kube)
     kubecreate_subparsers.add_parser('generic', parents=[kubegenericcreate_parser],
@@ -3674,12 +3661,8 @@ def cli():
 
     kubekindcreate_desc = 'Create Kind Kube'
     kubekindcreate_epilog = f"examples:\n{kubekindcreate}"
-    kubekindcreate_parser = argparse.ArgumentParser(add_help=False)
+    kubekindcreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubekindcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
-    kubekindcreate_parser.add_argument('-P', '--param', action='append',
-                                       help='specify parameter or keyword for rendering (multiple can be specified)',
-                                       metavar='PARAM')
-    kubekindcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     kubekindcreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubekindcreate_parser.set_defaults(func=create_kind_kube)
     kubecreate_subparsers.add_parser('kind', parents=[kubekindcreate_parser],
@@ -3688,13 +3671,10 @@ def cli():
                                      epilog=kubekindcreate_epilog,
                                      formatter_class=rawhelp)
 
-    parameterhelp = "specify parameter or keyword for rendering (multiple can be specified)"
     kubemicroshiftcreate_desc = 'Create Microshift Kube'
     kubemicroshiftcreate_epilog = f"examples:\n{kubemicroshiftcreate}"
-    kubemicroshiftcreate_parser = argparse.ArgumentParser(add_help=False)
+    kubemicroshiftcreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubemicroshiftcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
-    kubemicroshiftcreate_parser.add_argument('-P', '--param', action='append', help=parameterhelp, metavar='PARAM')
-    kubemicroshiftcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     kubemicroshiftcreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubemicroshiftcreate_parser.set_defaults(func=create_microshift_kube)
     kubecreate_subparsers.add_parser('microshift', parents=[kubemicroshiftcreate_parser],
@@ -3705,12 +3685,8 @@ def cli():
 
     kubek3screate_desc = 'Create K3s Kube'
     kubek3screate_epilog = f"examples:\n{kubek3screate}"
-    kubek3screate_parser = argparse.ArgumentParser(add_help=False)
+    kubek3screate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubek3screate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
-    kubek3screate_parser.add_argument('-P', '--param', action='append',
-                                      help='specify parameter or keyword for rendering (multiple can be specified)',
-                                      metavar='PARAM')
-    kubek3screate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     kubek3screate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubek3screate_parser.set_defaults(func=create_k3s_kube)
     kubecreate_subparsers.add_parser('k3s', parents=[kubek3screate_parser],
@@ -3719,13 +3695,10 @@ def cli():
                                      epilog=kubek3screate_epilog,
                                      formatter_class=rawhelp)
 
-    parameterhelp = "specify parameter or keyword for rendering (multiple can be specified)"
     kubehypershiftcreate_desc = 'Create Hypershift Kube'
     kubehypershiftcreate_epilog = f"examples:\n{kubehypershiftcreate}"
-    kubehypershiftcreate_parser = argparse.ArgumentParser(add_help=False)
+    kubehypershiftcreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubehypershiftcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
-    kubehypershiftcreate_parser.add_argument('-P', '--param', action='append', help=parameterhelp, metavar='PARAM')
-    kubehypershiftcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     kubehypershiftcreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubehypershiftcreate_parser.set_defaults(func=create_hypershift_kube)
     kubecreate_subparsers.add_parser('hypershift', parents=[kubehypershiftcreate_parser],
@@ -3734,13 +3707,10 @@ def cli():
                                      epilog=kubehypershiftcreate_epilog,
                                      formatter_class=rawhelp)
 
-    parameterhelp = "specify parameter or keyword for rendering (multiple can be specified)"
     kubeopenshiftcreate_desc = 'Create Openshift Kube'
     kubeopenshiftcreate_epilog = f"examples:\n{kubeopenshiftcreate}"
-    kubeopenshiftcreate_parser = argparse.ArgumentParser(add_help=False)
+    kubeopenshiftcreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubeopenshiftcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
-    kubeopenshiftcreate_parser.add_argument('-P', '--param', action='append', help=parameterhelp, metavar='PARAM')
-    kubeopenshiftcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     kubeopenshiftcreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubeopenshiftcreate_parser.set_defaults(func=create_openshift_kube)
     kubecreate_subparsers.add_parser('openshift', parents=[kubeopenshiftcreate_parser],
@@ -3776,27 +3746,20 @@ def cli():
     networkcreate_desc = 'Create Network'
     networkcreate_epilog = f"examples:\n{networkcreate}"
     networkcreate_parser = create_subparsers.add_parser('network', description=networkcreate_desc,
-                                                        help=networkcreate_desc, epilog=networkcreate_epilog,
-                                                        formatter_class=rawhelp, aliases=['net'])
+                                                        help=networkcreate_desc, parents=[parent_parser],
+                                                        epilog=networkcreate_epilog, formatter_class=rawhelp,
+                                                        aliases=['net'])
     networkcreate_parser.add_argument('-i', '--isolated', action='store_true', help='Isolated Network')
     networkcreate_parser.add_argument('-c', '--cidr', help='Cidr of the net', metavar='CIDR')
     networkcreate_parser.add_argument('-d', '--dual', help='Cidr of dual net', metavar='DUAL')
     networkcreate_parser.add_argument('--nodhcp', action='store_true', help='Disable dhcp on the net')
     networkcreate_parser.add_argument('--domain', help='DNS domain. Defaults to network name')
-    networkcreate_parser.add_argument('-P', '--param', action='append',
-                                      help='specify parameter or keyword for rendering (can specify multiple)',
-                                      metavar='PARAM')
-    networkcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     networkcreate_parser.add_argument('name', metavar='NETWORK')
     networkcreate_parser.set_defaults(func=create_network)
 
     disconnectedcreate_desc = 'Create a disconnected registry vm for openshift'
     disconnectedcreate_epilog = f"examples:\n{disconnectedcreate}"
-    disconnectedcreate_parser = argparse.ArgumentParser(add_help=False)
-    disconnectedcreate_parser.add_argument('-P', '--param', action='append',
-                                           help='specify parameter or keyword for rendering (can specify multiple)',
-                                           metavar='PARAM')
-    disconnectedcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    disconnectedcreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     disconnectedcreate_parser.add_argument('plan', metavar='PLAN', help='Plan', nargs='?')
     disconnectedcreate_parser.set_defaults(func=create_openshift_disconnected)
     create_subparsers.add_parser('openshift-registry', parents=[disconnectedcreate_parser],
@@ -3806,13 +3769,9 @@ def cli():
 
     isocreate_desc = 'Create an iso ignition for baremetal install'
     isocreate_epilog = f"examples:\n{isocreate}"
-    isocreate_parser = argparse.ArgumentParser(add_help=False)
+    isocreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     isocreate_parser.add_argument('-d', '--direct', action='store_true', help='Embed directly target ignition in iso')
     isocreate_parser.add_argument('-f', '--ignitionfile', help='Ignition file')
-    isocreate_parser.add_argument('-P', '--param', action='append',
-                                  help='specify parameter or keyword for rendering (can specify multiple)',
-                                  metavar='PARAM')
-    isocreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     isocreate_parser.add_argument('-u', '--uefi', action='store_true',
                                   help='Remove iso entry from uefi after install (only applies to vms)')
     isocreate_parser.add_argument('cluster', metavar='CLUSTER', help='Cluster')
@@ -3827,47 +3786,38 @@ def cli():
 
     githubpipelinecreate_desc = 'Create Github Pipeline'
     githubpipelinecreate_parser = pipelinecreate_subparsers.add_parser('github', description=githubpipelinecreate_desc,
+                                                                       parents=[parent_parser],
                                                                        help=githubpipelinecreate_desc, aliases=['gha'])
     githubpipelinecreate_parser.add_argument('-f', '--inputfile', help='Input Plan (or script) file')
     githubpipelinecreate_parser.add_argument('-k', '--kube', action='store_true', help='Create kube pipeline')
     githubpipelinecreate_parser.add_argument('-s', '--script', action='store_true', help='Create script pipeline')
-    githubpipelinecreate_parser.add_argument('-P', '--param', action='append',
-                                             help='Define parameter for rendering (can specify multiple)',
-                                             metavar='PARAM')
-    githubpipelinecreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     githubpipelinecreate_parser.add_argument('plan', metavar='PLAN', nargs='?')
     githubpipelinecreate_parser.set_defaults(func=create_pipeline_github)
 
     jenkinspipelinecreate_desc = 'Create Jenkins Pipeline'
     jenkinspipelinecreate_parser = pipelinecreate_subparsers.add_parser('jenkins',
                                                                         description=jenkinspipelinecreate_desc,
+                                                                        parents=[parent_parser],
                                                                         help=jenkinspipelinecreate_desc)
     jenkinspipelinecreate_parser.add_argument('-f', '--inputfile', help='Input Plan file')
     jenkinspipelinecreate_parser.add_argument('-k', '--kube', action='store_true', help='Create kube pipeline')
-    jenkinspipelinecreate_parser.add_argument('-P', '--param', action='append',
-                                              help='Define parameter for rendering (can specify multiple)',
-                                              metavar='PARAM')
-    jenkinspipelinecreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     jenkinspipelinecreate_parser.add_argument('plan', metavar='PLAN', nargs='?')
     jenkinspipelinecreate_parser.set_defaults(func=create_pipeline_jenkins)
 
     tektonpipelinecreate_desc = 'Create Tekton Pipeline'
     tektonpipelinecreate_parser = pipelinecreate_subparsers.add_parser('tekton',
                                                                        description=tektonpipelinecreate_desc,
+                                                                       parents=[parent_parser],
                                                                        help=tektonpipelinecreate_desc)
     tektonpipelinecreate_parser.add_argument('-f', '--inputfile', help='Input Plan file')
     tektonpipelinecreate_parser.add_argument('-k', '--kube', action='store_true', help='Create kube pipeline')
-    tektonpipelinecreate_parser.add_argument('-P', '--param', action='append',
-                                             help='Define parameter for rendering (can specify multiple)',
-                                             metavar='PARAM')
-    tektonpipelinecreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     tektonpipelinecreate_parser.add_argument('plan', metavar='PLAN', nargs='?')
     tektonpipelinecreate_parser.set_defaults(func=create_pipeline_tekton)
 
     plancreate_desc = 'Create Plan'
     plancreate_epilog = f"examples:\n{plancreate}"
     plancreate_parser = create_subparsers.add_parser('plan', description=plancreate_desc, help=plancreate_desc,
-                                                     epilog=plancreate_epilog,
+                                                     parents=[parent_parser], epilog=plancreate_epilog,
                                                      formatter_class=rawhelp)
     plancreate_parser.add_argument('-A', '--ansible', help='Generate ansible inventory', action='store_true')
     plancreate_parser.add_argument('-u', '--url', help='Url for plan', metavar='URL', type=valid_url)
@@ -3878,9 +3828,6 @@ def cli():
     plancreate_parser.add_argument('-f', '--inputfile', help='Input Plan file')
     plancreate_parser.add_argument('-k', '--skippre', action='store_true', help='Skip pre script')
     plancreate_parser.add_argument('-z', '--skippost', action='store_true', help='Skip post script')
-    plancreate_parser.add_argument('-P', '--param', action='append',
-                                   help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    plancreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE', action='append')
     plancreate_parser.add_argument('-t', '--threaded', help='Run threaded', action='store_true')
     plancreate_parser.add_argument('plan', metavar='PLAN', nargs='?')
     plancreate_parser.set_defaults(func=create_plan)
@@ -3888,27 +3835,19 @@ def cli():
     plandatacreate_desc = 'Create Cloudinit/Ignition from plan file'
     plandatacreate_epilog = f"examples:\n{plandatacreate}"
     plandatacreate_parser = create_subparsers.add_parser('plan-data', description=plandatacreate_desc,
-                                                         help=plandatacreate_desc, epilog=plandatacreate_epilog,
-                                                         formatter_class=rawhelp)
+                                                         help=plandatacreate_desc, parents=[parent_parser],
+                                                         epilog=plandatacreate_epilog, formatter_class=rawhelp)
     plandatacreate_parser.add_argument('-f', '--inputfile', help='Input Plan file', default='kcli_plan.yml')
     plandatacreate_parser.add_argument('-k', '--skippre', action='store_true', help='Skip pre script')
     plandatacreate_parser.add_argument('--outputdir', '-o', help='Output directory', metavar='OUTPUTDIR')
-    plandatacreate_parser.add_argument('-P', '--param', action='append',
-                                       help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    plandatacreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE',
-                                       action='append')
     plandatacreate_parser.add_argument('name', metavar='VMNAME', nargs='?', type=valid_fqdn)
     plandatacreate_parser.set_defaults(func=create_plandata)
 
     plantemplatecreate_desc = 'Create plan template'
     plantemplatecreate_epilog = f"examples:\n{plantemplatecreate}"
     plantemplatecreate_parser = create_subparsers.add_parser('plan-template', description=plantemplatecreate_desc,
-                                                             help=plantemplatecreate_desc,
+                                                             help=plantemplatecreate_desc, parents=[parent_parser],
                                                              epilog=plantemplatecreate_epilog, formatter_class=rawhelp)
-    plantemplatecreate_parser.add_argument('-P', '--param', action='append',
-                                           help='Define parameter for rendering (can specify multiple)',
-                                           metavar='PARAM')
-    plantemplatecreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     plantemplatecreate_parser.add_argument('-x', '--skipfiles', action='store_true', help='Skip files in assets')
     plantemplatecreate_parser.add_argument('-y', '--skipscripts', action='store_true', help='Skip scripts in assets')
     plantemplatecreate_parser.add_argument('directory', metavar='DIR')
@@ -3924,11 +3863,8 @@ def cli():
 
     playbookcreate_desc = 'Create playbook from plan'
     playbookcreate_parser = create_subparsers.add_parser('playbook', description=playbookcreate_desc,
-                                                         help=playbookcreate_desc)
+                                                         help=playbookcreate_desc, parents=[parent_parser])
     playbookcreate_parser.add_argument('-f', '--inputfile', help='Input Plan/File', default='kcli_plan.yml')
-    playbookcreate_parser.add_argument('-P', '--param', action='append',
-                                       help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    playbookcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     playbookcreate_parser.add_argument('-s', '--store', action='store_true', help="Store results in files")
     playbookcreate_parser.set_defaults(func=create_playbook)
 
@@ -3944,13 +3880,9 @@ def cli():
 
     productcreate_desc = 'Create Product'
     productcreate_parser = create_subparsers.add_parser('product', description=productcreate_desc,
-                                                        help=productcreate_desc)
+                                                        help=productcreate_desc, parents=[parent_parser])
     productcreate_parser.add_argument('-g', '--group', help='Group to use as a name during deployment', metavar='GROUP')
     productcreate_parser.add_argument('-l', '--latest', action='store_true', help='Grab latest version of the plans')
-    productcreate_parser.add_argument('-P', '--param', action='append',
-                                      help='Define parameter for rendering within scripts.'
-                                      'Can be repeated several times', metavar='PARAM')
-    productcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     productcreate_parser.add_argument('-r', '--repo',
                                       help='Repo to use, if deploying a product present in several repos',
                                       metavar='REPO')
@@ -3968,16 +3900,12 @@ def cli():
 
     vmcreate_desc = 'Create Vm'
     vmcreate_epilog = f"examples:\n{vmcreate}"
-    vmcreate_parser = argparse.ArgumentParser(add_help=False)
+    vmcreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     vmcreate_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
     vmcreate_parser.add_argument('--console', help='Directly switch to console after creation', action='store_true')
     vmcreate_parser.add_argument('-c', '--count', help='How many vms to create', type=int, default=1, metavar='COUNT')
     vmcreate_parser.add_argument('-i', '--image', help='Image to use', metavar='IMAGE')
     vmcreate_parser.add_argument('--profilefile', help='File to load profiles from', metavar='PROFILEFILE')
-    vmcreate_parser.add_argument('-P', '--param', action='append',
-                                 help='specify parameter or keyword for rendering (multiple can be specified)',
-                                 metavar='PARAM')
-    vmcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     vmcreate_parser.add_argument('-s', '--serial', help='Directly switch to serial console after creation',
                                  action='store_true')
     vmcreate_parser.add_argument('-w', '--wait', action='store_true', help='Wait for cloudinit to finish')
@@ -3989,18 +3917,15 @@ def cli():
     vmdatacreate_desc = 'Create Cloudinit/Ignition for a single vm'
     vmdatacreate_epilog = f"examples:\n{vmdatacreate}"
     vmdatacreate_parser = create_subparsers.add_parser('vm-data', description=vmdatacreate_desc,
-                                                       help=vmdatacreate_desc, epilog=vmdatacreate_epilog,
-                                                       formatter_class=rawhelp)
+                                                       help=vmdatacreate_desc, parents=[parent_parser],
+                                                       epilog=vmdatacreate_epilog, formatter_class=rawhelp)
     vmdatacreate_parser.add_argument('-i', '--image', help='Image to use', metavar='IMAGE')
-    vmdatacreate_parser.add_argument('-P', '--param', action='append',
-                                     help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    vmdatacreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     vmdatacreate_parser.add_argument('name', metavar='VMNAME', nargs='?', type=valid_fqdn)
     vmdatacreate_parser.set_defaults(func=create_vmdata)
 
     vmdiskadd_desc = 'Add Disk To Vm'
     diskcreate_epilog = f"examples:\n{diskcreate}"
-    vmdiskadd_parser = argparse.ArgumentParser(add_help=False)
+    vmdiskadd_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     vmdiskadd_parser.add_argument('-s', '--size', type=int, help='Size of the disk to add, in GB', metavar='SIZE',
                                   default=10)
     vmdiskadd_parser.add_argument('-i', '--image', help='Name or Path of a Image', metavar='IMAGE')
@@ -4008,10 +3933,6 @@ def cli():
                                   metavar='INTERFACE')
     vmdiskadd_parser.add_argument('-n', '--novm', action='store_true', help='Dont attach to any vm')
     vmdiskadd_parser.add_argument('-p', '--pool', default='default', help='Pool', metavar='POOL')
-    vmdiskadd_parser.add_argument('-P', '--param', action='append',
-                                  help='specify parameter or keyword for rendering (can specify multiple)',
-                                  metavar='PARAM')
-    vmdiskadd_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     vmdiskadd_parser.add_argument('name', metavar='VMNAME')
     vmdiskadd_parser.set_defaults(func=create_vmdisk)
     create_subparsers.add_parser('vm-disk', parents=[vmdiskadd_parser], description=vmdiskadd_desc, help=vmdiskadd_desc,
@@ -4032,14 +3953,10 @@ def cli():
     securitygroupcreate_epilog = f"examples:\n{securitygroupcreate}"
     securitygroupcreate_desc = 'Create Security Group'
     securitygroupcreate_parser = create_subparsers.add_parser('security-group', description=securitygroupcreate_desc,
-                                                              help=securitygroupcreate_desc, aliases=['sg'],
-                                                              epilog=securitygroupcreate_epilog,
+                                                              help=securitygroupcreate_desc, parents=[parent_parser],
+                                                              aliases=['sg'], epilog=securitygroupcreate_epilog,
                                                               formatter_class=rawhelp)
     securitygroupcreate_parser.add_argument('securitygroup')
-    securitygroupcreate_parser.add_argument('-P', '--param', action='append',
-                                            help='Define parameter for rendering (can specify multiple)',
-                                            metavar='PARAM')
-    securitygroupcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     securitygroupcreate_parser.set_defaults(func=create_securitygroup)
 
     sushycreate_desc = 'Create Sushy service'
@@ -4059,12 +3976,9 @@ def cli():
     workflowcreate_desc = 'Create Workflow'
     workflowcreate_epilog = f"examples:\n{workflowcreate}"
     workflowcreate_parser = create_subparsers.add_parser('workflow', description=workflowcreate_desc,
-                                                         help=workflowcreate_desc, epilog=workflowcreate_epilog,
-                                                         formatter_class=rawhelp)
+                                                         help=workflowcreate_desc, parents=[parent_parser],
+                                                         epilog=workflowcreate_epilog, formatter_class=rawhelp)
     workflowcreate_parser.add_argument('--outputdir', '-o', help='Output directory', metavar='OUTPUTDIR')
-    workflowcreate_parser.add_argument('-P', '--param', action='append',
-                                       help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    workflowcreate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     workflowcreate_parser.add_argument('-d', '--dry', help='Dry run. Only render', action='store_true')
     workflowcreate_parser.add_argument('workflow', metavar='WORKFLOW', nargs='?')
     workflowcreate_parser.set_defaults(func=create_workflow)
@@ -4101,12 +4015,8 @@ def cli():
     appgenericdelete_desc = 'Delete Kube App Generic'
     appgenericdelete_epilog = None
     appgenericdelete_parser = deleteapp_subparsers.add_parser('generic', description=appgenericdelete_desc,
-                                                              help=appgenericdelete_desc,
+                                                              help=appgenericdelete_desc, parents=[parent_parser],
                                                               epilog=appgenericdelete_epilog, formatter_class=rawhelp)
-    appgenericdelete_parser.add_argument('-P', '--param', action='append',
-                                         help=PARAMETERS_HELP,
-                                         metavar='PARAM')
-    appgenericdelete_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     appgenericdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     appgenericdelete_parser.add_argument('apps', metavar='APPS', nargs='*')
     appgenericdelete_parser.set_defaults(func=delete_app_generic)
@@ -4114,13 +4024,9 @@ def cli():
     appopenshiftdelete_desc = 'Delete Kube App Openshift'
     appopenshiftdelete_epilog = None
     appopenshiftdelete_parser = deleteapp_subparsers.add_parser('openshift', description=appopenshiftdelete_desc,
-                                                                help=appopenshiftdelete_desc,
+                                                                help=appopenshiftdelete_desc, parents=[parent_parser],
                                                                 epilog=appopenshiftdelete_epilog,
                                                                 formatter_class=rawhelp, aliases=['hypershift'])
-    appopenshiftdelete_parser.add_argument('-P', '--param', action='append',
-                                           help=PARAMETERS_HELP,
-                                           metavar='PARAM')
-    appopenshiftdelete_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     appopenshiftdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     appopenshiftdelete_parser.add_argument('apps', metavar='APPS', nargs='*')
     appopenshiftdelete_parser.set_defaults(func=delete_app_openshift)
@@ -4191,11 +4097,7 @@ def cli():
                                  help=imagedelete_desc)
 
     kubedelete_desc = 'Delete Kube'
-    kubedelete_parser = argparse.ArgumentParser(add_help=False)
-    kubedelete_parser.add_argument('-P', '--param', action='append',
-                                   help='specify parameter or keyword for rendering (multiple can be specified)',
-                                   metavar='PARAM')
-    kubedelete_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    kubedelete_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubedelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     kubedelete_parser.add_argument('cluster', metavar='CLUSTER', nargs='*')
     kubedelete_parser.set_defaults(func=delete_kube)
@@ -4326,11 +4228,7 @@ def cli():
                                    description=bucketfiledownload_desc, help=bucketfiledownload_desc)
 
     coreosinstallerdownload_desc = 'Download Coreos Installer'
-    coreosinstallerdownload_parser = argparse.ArgumentParser(add_help=False)
-    coreosinstallerdownload_parser.add_argument('-P', '--param', action='append',
-                                                help='Define parameter for rendering (can specify multiple)',
-                                                metavar='PARAM')
-    coreosinstallerdownload_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    coreosinstallerdownload_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     coreosinstallerdownload_parser.set_defaults(func=download_coreos_installer)
     download_subparsers.add_parser('coreos-installer', parents=[coreosinstallerdownload_parser],
                                    description=coreosinstallerdownload_desc,
@@ -4364,20 +4262,14 @@ def cli():
                                    help=isodownload_desc)
 
     helmdownload_desc = 'Download Helm'
-    helmdownload_parser = argparse.ArgumentParser(add_help=False)
-    helmdownload_parser.add_argument('-P', '--param', action='append',
-                                     help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    helmdownload_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    helmdownload_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     helmdownload_parser.set_defaults(func=download_helm)
     download_subparsers.add_parser('helm', parents=[helmdownload_parser],
                                    description=helmdownload_desc,
                                    help=helmdownload_desc)
 
     kubectldownload_desc = 'Download Kubectl'
-    kubectldownload_parser = argparse.ArgumentParser(add_help=False)
-    kubectldownload_parser.add_argument('-P', '--param', action='append',
-                                        help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    kubectldownload_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    kubectldownload_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubectldownload_parser.set_defaults(func=download_kubectl)
     download_subparsers.add_parser('kubectl', parents=[kubectldownload_parser],
                                    description=kubectldownload_desc,
@@ -4385,20 +4277,14 @@ def cli():
 
     ocdownload_desc = 'Download Oc'
     ocdownload_epilog = f"examples:\n{ocdownload}"
-    ocdownload_parser = argparse.ArgumentParser(add_help=False)
-    ocdownload_parser.add_argument('-P', '--param', action='append',
-                                   help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    ocdownload_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    ocdownload_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     ocdownload_parser.set_defaults(func=download_oc)
     download_subparsers.add_parser('oc', parents=[ocdownload_parser],
                                    description=ocdownload_desc,
                                    help=ocdownload_desc, epilog=ocdownload_epilog, formatter_class=rawhelp)
 
     okddownload_desc = 'Download Okd Installer'
-    okddownload_parser = argparse.ArgumentParser(add_help=False)
-    okddownload_parser.add_argument('-P', '--param', action='append',
-                                          help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    okddownload_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    okddownload_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     okddownload_parser.set_defaults(func=download_okd_installer)
     download_subparsers.add_parser('okd-installer', parents=[okddownload_parser],
                                    description=okddownload_desc,
@@ -4406,10 +4292,7 @@ def cli():
 
     openshiftdownload_desc = 'Download Openshift Installer'
     openshiftdownload_epilog = f"examples:\n{openshiftdownload}"
-    openshiftdownload_parser = argparse.ArgumentParser(add_help=False)
-    openshiftdownload_parser.add_argument('-P', '--param', action='append',
-                                          help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    openshiftdownload_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    openshiftdownload_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     openshiftdownload_parser.set_defaults(func=download_openshift_installer)
     download_subparsers.add_parser('openshift-installer', parents=[openshiftdownload_parser],
                                    description=openshiftdownload_desc,
@@ -4425,10 +4308,7 @@ def cli():
                                    help=plandownload_desc)
 
     tastydownload_desc = 'Download Tasty'
-    tastydownload_parser = argparse.ArgumentParser(add_help=False)
-    tastydownload_parser.add_argument('-P', '--param', action='append',
-                                      help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    tastydownload_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    tastydownload_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     tastydownload_parser.set_defaults(func=download_tasty)
     download_subparsers.add_parser('tasty', parents=[tastydownload_parser], description=tastydownload_desc,
                                    help=tastydownload_desc)
@@ -4495,14 +4375,9 @@ def cli():
     baremetalhostinfo_desc = 'Report info about Baremetal Host'
     baremetalhostinfo_epilog = f"examples:\n{infohosts}"
     baremetalhostinfo_parser = info_subparsers.add_parser('baremetal-host', description=baremetalhostinfo_desc,
-                                                          help=baremetalhostinfo_desc,
+                                                          help=baremetalhostinfo_desc, parents=[parent_parser],
                                                           epilog=baremetalhostinfo_epilog, formatter_class=rawhelp)
     baremetalhostinfo_parser.add_argument('-f', '--full', action='store_true', help='Provide entire output')
-    baremetalhostinfo_parser.add_argument('-P', '--param', action='append',
-                                          help='Define parameter for rendering (can specify multiple)',
-                                          metavar='PARAM')
-    baremetalhostinfo_parser.add_argument('--paramfile', '--pf', help='Parameters file',
-                                          metavar='PARAMFILE', action='append')
     baremetalhostinfo_parser.set_defaults(func=info_baremetal_host)
 
     confpoolinfo_desc = 'Info Confpool'
@@ -4793,12 +4668,9 @@ def cli():
     vmsnapshotlist_parser.set_defaults(func=snapshotlist_vm)
 
     render_desc = 'Render file'
-    render_parser = subparsers.add_parser('render', description=render_desc, help=render_desc)
+    render_parser = subparsers.add_parser('render', description=render_desc, help=render_desc, parents=[parent_parser])
     render_parser.add_argument('-f', '--inputfile', help='Input Plan/File', default='kcli_plan.yml')
     render_parser.add_argument('-i', '--ignore', action='store_true', help='Ignore missing variables')
-    render_parser.add_argument('-P', '--param', action='append',
-                               help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    render_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE', action='append')
     render_parser.set_defaults(func=render_file)
 
     restart_desc = 'Restart Vm/Plan/Container'
@@ -4851,12 +4723,8 @@ def cli():
 
     kubegenericscale_desc = 'Scale Generic Kube'
     kubegenericscale_epilog = f"examples:\n{kubegenericscale}"
-    kubegenericscale_parser = argparse.ArgumentParser(add_help=False)
+    kubegenericscale_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubegenericscale_parser.add_argument('-c', '--ctlplanes', help='Total number of ctlplanes', type=int)
-    kubegenericscale_parser.add_argument('-P', '--param', action='append',
-                                         help='specify parameter or keyword for rendering (multiple can be specified)',
-                                         metavar='PARAM')
-    kubegenericscale_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     kubegenericscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
     kubegenericscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
     kubegenericscale_parser.set_defaults(func=scale_generic_kube)
@@ -4866,23 +4734,16 @@ def cli():
 
     kubek3sscale_desc = 'Scale K3s Kube'
     kubek3sscale_epilog = f"examples:\n{kubek3sscale}"
-    kubek3sscale_parser = argparse.ArgumentParser(add_help=False)
+    kubek3sscale_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubek3sscale_parser.add_argument('-c', '--ctlplanes', help='Total number of ctlplanes', type=int)
-    kubek3sscale_parser.add_argument('-P', '--param', action='append',
-                                     help='specify parameter or keyword for rendering (multiple can be specified)',
-                                     metavar='PARAM')
-    kubek3sscale_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     kubek3sscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
     kubek3sscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
     kubek3sscale_parser.set_defaults(func=scale_k3s_kube)
     kubescale_subparsers.add_parser('k3s', parents=[kubek3sscale_parser], description=kubek3sscale_desc,
                                     help=kubek3sscale_desc, epilog=kubek3sscale_epilog, formatter_class=rawhelp)
 
-    parameterhelp = "specify parameter or keyword for rendering (multiple can be specified)"
     kubehypershiftscale_desc = 'Scale Hypershift Kube'
-    kubehypershiftscale_parser = argparse.ArgumentParser(add_help=False)
-    kubehypershiftscale_parser.add_argument('-P', '--param', action='append', help=parameterhelp, metavar='PARAM')
-    kubehypershiftscale_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    kubehypershiftscale_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubehypershiftscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
     kubehypershiftscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
     kubehypershiftscale_parser.set_defaults(func=scale_hypershift_kube)
@@ -4890,13 +4751,10 @@ def cli():
                                     description=kubehypershiftscale_desc,
                                     help=kubehypershiftscale_desc)
 
-    parameterhelp = "specify parameter or keyword for rendering (multiple can be specified)"
     kubeopenshiftscale_desc = 'Scale Openshift Kube'
     kubeopenshiftscale_epilog = f"examples:\n{kubeopenshiftscale}"
-    kubeopenshiftscale_parser = argparse.ArgumentParser(add_help=False)
+    kubeopenshiftscale_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubeopenshiftscale_parser.add_argument('-c', '--ctlplanes', help='Total number of ctlplanes', type=int)
-    kubeopenshiftscale_parser.add_argument('-P', '--param', action='append', help=parameterhelp, metavar='PARAM')
-    kubeopenshiftscale_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     kubeopenshiftscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
     kubeopenshiftscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
     kubeopenshiftscale_parser.set_defaults(func=scale_openshift_kube)
@@ -4954,11 +4812,8 @@ def cli():
     starthosts_desc = 'Start Baremetal Hosts'
     starthosts_epilog = f"examples:\n{starthosts}"
     starthosts_parser = start_subparsers.add_parser('baremetal-host', description=starthosts_desc, help=starthosts_desc,
-                                                    epilog=starthosts_epilog, formatter_class=rawhelp,
-                                                    aliases=['baremetal-hosts'])
-    starthosts_parser.add_argument('-P', '--param', action='append',
-                                   help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    starthosts_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE', action='append')
+                                                    parents=[parent_parser], epilog=starthosts_epilog,
+                                                    formatter_class=rawhelp, aliases=['baremetal-hosts'])
     starthosts_parser.set_defaults(func=start_baremetal_hosts)
 
     vmstart_desc = 'Start Vms'
@@ -4987,11 +4842,8 @@ def cli():
     stophosts_desc = 'Stop Baremetal Hosts'
     stophosts_epilog = f"examples:\n{stophosts}"
     stophosts_parser = stop_subparsers.add_parser('baremetal-host', description=stophosts_desc, help=stophosts_desc,
-                                                  epilog=stophosts_epilog, formatter_class=rawhelp,
-                                                  aliases=['baremetal-hosts'])
-    stophosts_parser.add_argument('-P', '--param', action='append',
-                                  help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    stophosts_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE', action='append')
+                                                  parents=[parent_parser], epilog=stophosts_epilog,
+                                                  formatter_class=rawhelp, aliases=['baremetal-hosts'])
     stophosts_parser.set_defaults(func=stop_baremetal_hosts)
 
     vmstop_desc = 'Stop Vms'
@@ -5056,32 +4908,21 @@ def cli():
     kubeupdate_subparsers = kubeupdate_parser.add_subparsers(metavar='', dest='subcommand_update_kube')
 
     kubegenericupdate_desc = 'Update Generic Kube'
-    kubegenericupdate_parser = argparse.ArgumentParser(add_help=False)
-    kubegenericupdate_parser.add_argument('-P', '--param', action='append',
-                                          help='specify parameter or keyword for rendering (multiple can be specified)',
-                                          metavar='PARAM')
-    kubegenericupdate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    kubegenericupdate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubegenericupdate_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
     kubegenericupdate_parser.set_defaults(func=update_generic_kube)
     kubeupdate_subparsers.add_parser('generic', parents=[kubegenericupdate_parser], description=kubegenericupdate_desc,
                                      help=kubegenericupdate_desc, aliases=['kubeadm'])
 
     kubek3supdate_desc = 'Update K3s Kube'
-    kubek3supdate_parser = argparse.ArgumentParser(add_help=False)
-    kubek3supdate_parser.add_argument('-P', '--param', action='append',
-                                      help='specify parameter or keyword for rendering (multiple can be specified)',
-                                      metavar='PARAM')
-    kubek3supdate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    kubek3supdate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubek3supdate_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
     kubek3supdate_parser.set_defaults(func=update_k3s_kube)
     kubeupdate_subparsers.add_parser('k3s', parents=[kubek3supdate_parser], description=kubek3supdate_desc,
                                      help=kubek3supdate_desc)
 
-    parameterhelp = "specify parameter or keyword for rendering (multiple can be specified)"
     kubeopenshiftupdate_desc = 'Update Openshift Kube'
-    kubeopenshiftupdate_parser = argparse.ArgumentParser(add_help=False)
-    kubeopenshiftupdate_parser.add_argument('-P', '--param', action='append', help=parameterhelp, metavar='PARAM')
-    kubeopenshiftupdate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    kubeopenshiftupdate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubeopenshiftupdate_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
     kubeopenshiftupdate_parser.set_defaults(func=update_openshift_kube)
     kubeupdate_subparsers.add_parser('openshift', parents=[kubeopenshiftupdate_parser],
@@ -5100,20 +4941,19 @@ def cli():
     networkupdate_epilog = f"examples:\n{networkupdate}"
     networkupdate_parser = update_subparsers.add_parser('network', description=networkupdate_desc,
                                                         epilog=networkupdate_epilog, formatter_class=rawhelp,
-                                                        help=networkupdate_desc, aliases=['net'])
+                                                        help=networkupdate_desc, parents=[parent_parser],
+                                                        aliases=['net'])
     networkupdate_parser.add_argument('-i', '--isolated', action='store_true', help='Isolated Network',
                                       default=argparse.SUPPRESS)
     networkupdate_parser.add_argument('--nodhcp', action='store_true', help='Disable dhcp on the net',
                                       default=argparse.SUPPRESS)
     networkupdate_parser.add_argument('--domain', help='DNS domain. Defaults to network name')
-    networkupdate_parser.add_argument('-P', '--param', action='append',
-                                      help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    networkupdate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     networkupdate_parser.add_argument('name', metavar='NETWORK')
     networkupdate_parser.set_defaults(func=update_network)
 
     planupdate_desc = 'Update Plan'
-    planupdate_parser = update_subparsers.add_parser('plan', description=planupdate_desc, help=planupdate_desc)
+    planupdate_parser = update_subparsers.add_parser('plan', description=planupdate_desc, help=planupdate_desc,
+                                                     parents=[parent_parser])
     planupdate_parser.add_argument('--autostart', action='store_true', help='Set autostart for vms of the plan')
     planupdate_parser.add_argument('--noautostart', action='store_true', help='Remove autostart for vms of the plan')
     planupdate_parser.add_argument('-u', '--url', help='Url for plan', metavar='URL', type=valid_url)
@@ -5121,9 +4961,6 @@ def cli():
                                    metavar='PATH')
     planupdate_parser.add_argument('-c', '--container', action='store_true', help='Handle container')
     planupdate_parser.add_argument('-f', '--inputfile', help='Input Plan file')
-    planupdate_parser.add_argument('-P', '--param', action='append',
-                                   help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    planupdate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
     planupdate_parser.add_argument('plan', metavar='PLAN')
     planupdate_parser.set_defaults(func=update_plan)
 
@@ -5133,10 +4970,8 @@ def cli():
     repoupdate_parser.set_defaults(func=update_repo)
 
     vmupdate_desc = 'Update Vm\'s Ip, Memory Or Numcpus'
-    vmupdate_parser = update_subparsers.add_parser('vm', description=vmupdate_desc, help=vmupdate_desc)
-    vmupdate_parser.add_argument('-P', '--param', action='append',
-                                 help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    vmupdate_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    vmupdate_parser = update_subparsers.add_parser('vm', description=vmupdate_desc, help=vmupdate_desc,
+                                                   parents=[parent_parser])
     vmupdate_parser.add_argument('names', help='VMNAMES', nargs='*')
     vmupdate_parser.set_defaults(func=update_vm)
 
