@@ -13,7 +13,7 @@ from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsol
 from kvirt.examples import disconnectedcreate, appopenshiftcreate, plantemplatecreate, kubehypershiftcreate
 from kvirt.examples import workflowcreate, kubegenericscale, kubek3sscale, kubeopenshiftscale
 from kvirt.examples import changelog, starthosts, stophosts, infohosts, ocdownload, openshiftdownload
-from kvirt.examples import networkcreate, securitygroupcreate
+from kvirt.examples import networkcreate, securitygroupcreate, profilecreate
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
 from kvirt.defaults import IMAGES, VERSION, LOCAL_OPENSHIFT_APPS, SSH_PUB_LOCATIONS
@@ -3733,6 +3733,7 @@ def cli():
     lbcreate_parser.set_defaults(func=create_lb)
 
     profilecreate_desc = 'Create Profile'
+    profilecreate_epilog = f"examples:\n{profilecreate}"
     profilecreate_parser = argparse.ArgumentParser(add_help=False)
     profilecreate_parser.add_argument('-i', '--image', help='Image to use', metavar='IMAGE')
     profilecreate_parser.add_argument('-P', '--param', action='append',
@@ -3741,7 +3742,7 @@ def cli():
     profilecreate_parser.add_argument('profile', metavar='PROFILE')
     profilecreate_parser.set_defaults(func=create_profile)
     create_subparsers.add_parser('profile', parents=[profilecreate_parser], description=profilecreate_desc,
-                                 help=profilecreate_desc)
+                                 help=profilecreate_desc, epilog=profilecreate_epilog, formatter_class=rawhelp)
 
     networkcreate_desc = 'Create Network'
     networkcreate_epilog = f"examples:\n{networkcreate}"

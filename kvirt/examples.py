@@ -512,3 +512,13 @@ $ kcli create network -P ovs=true br-ex
 # Create an ovs bridge br0 network (on libvirt)
 $ kcli create network -P ovs=true br0
 """
+
+profilecreate = """# Create profile with specific image
+$ kcli create profile -i ubuntu-22.10-server-cloudimg-amd64.img -P memory=4096 -P disks=[20,30] myprofile
+
+# Do the same providing everything as parameter
+$ kcli create profile -P image=ubuntu-22.10-server-cloudimg-amd64.img -P memory=4096 -P disks=[20,30] myprofile
+
+# Create a profile without image, with uefi and without startingthe corresponding vm
+$ kcli create profile -P uefi=true -P start=false -P memory=4096 -P disks=[20,30] myprofile
+"""
