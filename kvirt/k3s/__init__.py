@@ -64,7 +64,7 @@ def create(config, plandir, cluster, overrides):
     platform = config.type
     data = {'kubetype': 'k3s', 'sdn': 'flannel'}
     data.update(overrides)
-    data['cluster'] = overrides.get('cluster', cluster if cluster is not None else 'testk')
+    data['cluster'] = overrides.get('cluster', cluster if cluster is not None else 'myk3s')
     plan = cluster if cluster is not None else data['cluster']
     data['kube'] = data['cluster']
     ctlplanes = data.get('ctlplanes', 1)

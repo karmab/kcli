@@ -18,7 +18,7 @@ ctlplanes: 1
 workers: 0
 version:
 pool: 
-cluster: testk
+cluster: mykube
 domain: karmalabs.corp
 engine: containerd
 engine_version:

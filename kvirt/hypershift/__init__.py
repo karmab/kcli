@@ -136,7 +136,7 @@ def create(config, plandir, cluster, overrides):
     elif cluster is not None:
         clustervalue = cluster
     else:
-        clustervalue = 'testk'
+        clustervalue = 'myhypershift'
     data['cluster'] = clustervalue
     data['kube'] = data['cluster']
     if 'nodepool' not in data:

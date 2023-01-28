@@ -153,54 +153,54 @@ $ kcli create kube generic mykube
 $ kcli create kube generic -P ctlplanes=1 -P workers=2 mykube
 
 # Use a parameter file
-$ kcli create kube generic --paramfile=myparameters.yml mykube2
+$ kcli create kube generic --paramfile=myparameters.yml mykube
 """
 
 kubekindcreate = """# Create a kube kind instance named mykube with default values
-$ kcli create kube kind mykube
+$ kcli create kube kind mykind
 
 # Do the same with workers
-$ kcli create kube kind -P workers=2 mykube
+$ kcli create kube kind -P workers=2 mykind
 
 # Use a parameter file
-$ kcli create kube kind --paramfile=myparameters.yml mykube2
+$ kcli create kube kind --paramfile=myparameters.yml mykind
 """
 
 kubemicroshiftcreate = """# Create a kube microshift instance named mykube with default values
-$ kcli create kube microshift mykube
+$ kcli create kube microshift mymicroshift
 
 # Use a parameter file
-$ kcli create kube microshift --paramfile=myparameters.yml mykube2
+$ kcli create kube microshift --paramfile=myparameters.yml mymicroshift
 """
 
 kubek3screate = """# Create a kube k3s instance named mykube with default values
-$ kcli create kube k3s mykube
+$ kcli create kube k3s myk3s
 
 # Do the same with workers
-$ kcli create kube k3s -P workers=2 mykube
+$ kcli create kube k3s -P workers=2 myk3s
 
 # Use a parameter file
-$ kcli create kube k3s --paramfile=myparameters.yml mykube2
+$ kcli create kube k3s --paramfile=myparameters.yml myk3s
 """
 
 kubehypershiftcreate = """# Create a kube hypershift instance named mykube with default values
-$ kcli create kube hypershift mykube
+$ kcli create kube hypershift myhypershift
 
 # Do the same but customize some parameters
-$ kcli create kube hypershift -P workers=3 mykube
+$ kcli create kube hypershift -P workers=3 myhypershift
 
 # Use a parameter file
-$ kcli create kube hypershift --paramfile=myparameters.yml mykube2
+$ kcli create kube hypershift --paramfile=myparameters.yml myhypershift
 """
 
 kubeopenshiftcreate = """# Create a kube openshift instance named mykube with default values
-$ kcli create kube openshift mykube
+$ kcli create kube openshift myopenshift
 
 # Do the same but customize some parameters
-$ kcli create kube openshift -P ctlplanes=1 -P workers=2 mykube
+$ kcli create kube openshift -P ctlplanes=1 -P workers=2 myopenshift
 
 # Use a parameter file
-$ kcli create kube openshift --paramfile=myparameters.yml mykube2
+$ kcli create kube openshift --paramfile=myparameters.yml myopenshift
 """
 
 vmdatacreate = """# Generate a basic ignition file for rhcos4.6
@@ -228,28 +228,29 @@ $ kcli create plantemplate mydir
 """
 
 isocreate = """# Generate an openshift iso
-$ kcli create openshift-iso testk.karmalabs.corp
+$ kcli create openshift-iso myopenshift.karmalabs.corp
 
 # Do the same for a 4.5 install
-$ kcli create openshift-iso -P version=4.5 testk.karmalabs.corp
+$ kcli create openshift-iso -P version=4.5 myopenshift.karmalabs.corp
 
 # Embed a local target ignition in the iso
-$ kcli create openshift-iso -f my_ignition.ign testk
+$ kcli create openshift-iso -f my_ignition.ign myopenshift
 
 # Only creates the ignition for the iso
-$ kcli create openshift-iso -P iso=false testk.karmalabs.corp
+$ kcli create openshift-iso -P iso=false myopenshift.karmalabs.corp
 
 # Force the ip to use in /etc/hosts of the machine at first boot
-$ kcli create openshift-iso -P api_ip=192.168.1.20 testk.karmalabs.corp
+$ kcli create openshift-iso -P api_ip=192.168.1.20 myopenshift.karmalabs.corp
 
 # Disable ens4 in the iso
-$ kcli create openshift-iso -P disable_nics=[ens4] testk.karmalabs.corp
+$ kcli create openshift-iso -P disable_nics=[ens4] myopenshift.karmalabs.corp
 
 # Inject static ip for ens3
-$ kcli create openshift-iso -P nets=['{"ip":"192.168.0.8","netmask":"24","gateway":"192.168.0.1"}'] testk.karmalabs.corp
+$ CLUSTER="myopenshift.karmalabs.corp"
+$ kcli create openshift-iso -P nets=['{"ip":"192.168.0.8","netmask":"24","gateway":"192.168.0.1"}'] $CLUSTER
 
 # Provide extra args for first boot of the node
-$ kcli create openshift-iso -P extra_args="super_string_of_args" testk.karmalabs.corp
+$ kcli create openshift-iso -P extra_args="super_string_of_args" myopenshift.karmalabs.corp
 """
 
 disconnectedcreate = """# Generate an openshift disconnected vm for 4.12

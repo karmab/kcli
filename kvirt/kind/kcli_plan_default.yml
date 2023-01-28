@@ -6,7 +6,7 @@ image : centos8stream
 numcpus: 4
 memory: 8192
 kind_version:
-cluster: testk
+cluster: mykind
 ctlplanes: 1
 workers: 0
 network: default

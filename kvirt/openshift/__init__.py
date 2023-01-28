@@ -475,7 +475,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     elif cluster is not None:
         clustervalue = cluster
     else:
-        clustervalue = 'testk'
+        clustervalue = 'myopenshift'
     retries = data.get('retries')
     data['cluster'] = clustervalue
     domain = data.get('domain')

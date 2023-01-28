@@ -26,7 +26,7 @@ ingress_ip:
 ctlplanes: 3
 workers: 0
 fips: false
-cluster: testk
+cluster: myopenshift
 domain: karmalabs.corp
 network_type: OVNKubernetes
 cluster_network_ipv4: "10.132.0.0/14"

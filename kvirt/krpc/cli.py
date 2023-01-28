@@ -1155,7 +1155,7 @@ def create_generic_kube(args):
     """Create Generic kube"""
     paramfile = args.paramfile
     force = args.force
-    cluster = args.cluster if args.cluster is not None else 'testk'
+    cluster = args.cluster if args.cluster is not None else 'mykube'
     if container_mode():
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
@@ -1176,7 +1176,7 @@ def create_openshift_kube(args):
     """Create Generic kube"""
     paramfile = args.paramfile
     force = args.force
-    cluster = args.cluster if args.cluster is not None else 'testk'
+    cluster = args.cluster if args.cluster is not None else 'myopenshift'
     if container_mode():
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
@@ -1197,7 +1197,7 @@ def delete_kube(args):
     """Delete kube"""
     yes = args.yes
     yes_top = args.yes_top
-    cluster = args.cluster if args.cluster is not None else 'testk'
+    cluster = args.cluster if args.cluster is not None else 'mykube'
     if not yes and not yes_top:
         common.confirm("Are you sure?")
     pprint("Deleting kube %s" % cluster)
@@ -1214,7 +1214,7 @@ def scale_generic_kube(args):
     """Scale kube"""
     workers = args.workers
     paramfile = args.paramfile
-    cluster = args.cluster if args.cluster is not None else 'testk'
+    cluster = args.cluster if args.cluster is not None else 'mykube'
     if container_mode():
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
@@ -1235,7 +1235,7 @@ def scale_openshift_kube(args):
     """Scale openshift kube"""
     workers = args.workers
     paramfile = args.paramfile
-    cluster = args.cluster if args.cluster is not None else 'testk'
+    cluster = args.cluster if args.cluster is not None else 'mykube'
     if container_mode():
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile

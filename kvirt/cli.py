@@ -1768,7 +1768,7 @@ def create_openshift_kube(args):
 
 def delete_kube(args):
     """Delete kube"""
-    clusters = args.cluster if args.cluster else ['testk']
+    clusters = args.cluster if args.cluster else ['mykube']
     yes = args.yes
     yes_top = args.yes_top
     if not yes and not yes_top:
@@ -4726,7 +4726,7 @@ def cli():
     kubegenericscale_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubegenericscale_parser.add_argument('-c', '--ctlplanes', help='Total number of ctlplanes', type=int)
     kubegenericscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
-    kubegenericscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
+    kubegenericscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='mykube')
     kubegenericscale_parser.set_defaults(func=scale_generic_kube)
     kubescale_subparsers.add_parser('generic', parents=[kubegenericscale_parser], description=kubegenericscale_desc,
                                     help=kubegenericscale_desc, aliases=['kubeadm'], epilog=kubegenericscale_epilog,
@@ -4737,7 +4737,7 @@ def cli():
     kubek3sscale_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubek3sscale_parser.add_argument('-c', '--ctlplanes', help='Total number of ctlplanes', type=int)
     kubek3sscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
-    kubek3sscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
+    kubek3sscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='myk3s')
     kubek3sscale_parser.set_defaults(func=scale_k3s_kube)
     kubescale_subparsers.add_parser('k3s', parents=[kubek3sscale_parser], description=kubek3sscale_desc,
                                     help=kubek3sscale_desc, epilog=kubek3sscale_epilog, formatter_class=rawhelp)
@@ -4745,7 +4745,7 @@ def cli():
     kubehypershiftscale_desc = 'Scale Hypershift Kube'
     kubehypershiftscale_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubehypershiftscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
-    kubehypershiftscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
+    kubehypershiftscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='myhypershift')
     kubehypershiftscale_parser.set_defaults(func=scale_hypershift_kube)
     kubescale_subparsers.add_parser('hypershift', parents=[kubehypershiftscale_parser],
                                     description=kubehypershiftscale_desc,
@@ -4756,7 +4756,7 @@ def cli():
     kubeopenshiftscale_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubeopenshiftscale_parser.add_argument('-c', '--ctlplanes', help='Total number of ctlplanes', type=int)
     kubeopenshiftscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
-    kubeopenshiftscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
+    kubeopenshiftscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='myopenshift')
     kubeopenshiftscale_parser.set_defaults(func=scale_openshift_kube)
     kubescale_subparsers.add_parser('openshift', parents=[kubeopenshiftscale_parser],
                                     description=kubeopenshiftscale_desc,
@@ -4909,21 +4909,21 @@ def cli():
 
     kubegenericupdate_desc = 'Update Generic Kube'
     kubegenericupdate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
-    kubegenericupdate_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
+    kubegenericupdate_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='mykube')
     kubegenericupdate_parser.set_defaults(func=update_generic_kube)
     kubeupdate_subparsers.add_parser('generic', parents=[kubegenericupdate_parser], description=kubegenericupdate_desc,
                                      help=kubegenericupdate_desc, aliases=['kubeadm'])
 
     kubek3supdate_desc = 'Update K3s Kube'
     kubek3supdate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
-    kubek3supdate_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
+    kubek3supdate_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='myk3s')
     kubek3supdate_parser.set_defaults(func=update_k3s_kube)
     kubeupdate_subparsers.add_parser('k3s', parents=[kubek3supdate_parser], description=kubek3supdate_desc,
                                      help=kubek3supdate_desc)
 
     kubeopenshiftupdate_desc = 'Update Openshift Kube'
     kubeopenshiftupdate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
-    kubeopenshiftupdate_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='testk')
+    kubeopenshiftupdate_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='myopenshift')
     kubeopenshiftupdate_parser.set_defaults(func=update_openshift_kube)
     kubeupdate_subparsers.add_parser('openshift', parents=[kubeopenshiftupdate_parser],
                                      description=kubeopenshiftupdate_desc,

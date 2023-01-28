@@ -11,7 +11,7 @@ api_ip:
 pool:
 image: ubuntu2004
 network: default
-cluster: testk
+cluster: myk3s
 domain: karmalabs.corp
 token: supersecret
 numcpus: 2

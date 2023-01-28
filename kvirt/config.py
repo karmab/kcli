@@ -2822,7 +2822,7 @@ class Kconfig(Kbaseconfig):
         k = self.k
         cluster = overrides.get('cluster', cluster)
         if cluster is None or cluster == '':
-            cluster = 'testk'
+            cluster = 'mykube'
         clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
         if os.path.exists(clusterdir):
             parametersfile = f"{clusterdir}/kcli_parameters.yml"
@@ -3090,7 +3090,7 @@ class Kconfig(Kbaseconfig):
     def create_openshift_disconnected(self, plan, overrides={}):
         data = overrides
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
-        cluster = data.get('cluster', 'testk')
+        cluster = data.get('cluster', 'myopenshift')
         upstream = data.get('upstream', False)
         version = data.get('version', 'stable')
         tag = data.get('tag', OPENSHIFT_TAG)

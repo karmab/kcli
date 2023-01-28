@@ -13,7 +13,7 @@ network: default
 network_type: OVNKubernetes
 worker_network:
 workers: 2
-cluster: testk
+cluster: myhypershift
 domain: karmalabs.corp
 pool:
 flavor:
