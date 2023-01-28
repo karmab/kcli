@@ -459,7 +459,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'async': False,
             'kubevirt_api_service': False,
             'kubevirt_ignore_node_port': False,
-            'baremetal': False,
             'baremetal_web': True,
             'baremetal_web_dir': '/var/www/html',
             'baremetal_web_port': 80,
@@ -482,13 +481,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     original_domain = None
     async_install = data.get('async')
     sslip = data.get('sslip')
-    baremetal_iso = data.get('baremetal_iso', False)
     baremetal_hosts = data.get('baremetal_hosts', [])
-    baremetal_iso_bootstrap = data.get('baremetal_iso_bootstrap', baremetal_iso)
-    baremetal_iso_ctlplane = data.get('baremetal_iso_ctlplane', baremetal_iso)
-    baremetal_iso_worker = data.get('baremetal_iso_worker', baremetal_iso)
-    baremetal_iso_any = baremetal_iso_bootstrap or baremetal_iso_ctlplane or baremetal_iso_worker
-    baremetal_iso_all = baremetal_iso_bootstrap and baremetal_iso_ctlplane and baremetal_iso_worker
     notify = data.get('notify')
     postscripts = data.get('postscripts', [])
     pprint(f"Deploying cluster {clustervalue}")
@@ -728,7 +721,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     INSTALLER_VERSION = get_installer_version()
     COMMIT_ID = os.popen('openshift-install version').readlines()[1].replace('built from commit', '').strip()
     pprint(f"Using installer version {INSTALLER_VERSION}")
-    if sno or baremetal_iso_all:
+    if sno:
         pass
     elif image is None:
         image_type = 'openstack' if data.get('kvm_openstack') and config.type == 'kvm' else config.type
@@ -789,10 +782,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                             static_networking_ctlplane = True
                         elif hostname.startswith(f"{cluster}-worker"):
                             static_networking_worker = True
-    if macentries and (baremetal_iso_ctlplane or baremetal_iso_worker):
-        pprint("Creating a macs.txt to include in isos for static networking")
-        with open('macs.txt', 'w') as f:
-            f.write('\n'.join(macentries))
     overrides['cluster'] = cluster
     if not os.path.exists(clusterdir):
         os.makedirs(clusterdir)
@@ -1003,19 +992,18 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         copy2(f, f"{clusterdir}/openshift")
     if async_install:
         registry = disconnected_url or 'quay.io'
-        if not baremetal_iso_bootstrap:
-            config.import_in_kube(network=network, dest=f"{clusterdir}/openshift", secure=True)
-            deletionfile = f"{plandir}/99-bootstrap-deletion.yaml"
-            deletionfile = config.process_inputfile(cluster, deletionfile, overrides={'cluster': cluster,
-                                                                                      'registry': registry,
-                                                                                      'client': config.client})
-            with open(f"{clusterdir}/openshift/99-bootstrap-deletion.yaml", 'w') as _f:
-                _f.write(deletionfile)
-            if not sushy:
-                deletionfile2 = f"{plandir}/99-bootstrap-deletion-2.yaml"
-                deletionfile2 = config.process_inputfile(cluster, deletionfile2, overrides={'registry': registry})
-                with open(f"{clusterdir}/openshift/99-bootstrap-deletion-2.yaml", 'w') as _f:
-                    _f.write(deletionfile2)
+        config.import_in_kube(network=network, dest=f"{clusterdir}/openshift", secure=True)
+        deletionfile = f"{plandir}/99-bootstrap-deletion.yaml"
+        deletionfile = config.process_inputfile(cluster, deletionfile, overrides={'cluster': cluster,
+                                                                                  'registry': registry,
+                                                                                  'client': config.client})
+        with open(f"{clusterdir}/openshift/99-bootstrap-deletion.yaml", 'w') as _f:
+            _f.write(deletionfile)
+        if not sushy:
+            deletionfile2 = f"{plandir}/99-bootstrap-deletion-2.yaml"
+            deletionfile2 = config.process_inputfile(cluster, deletionfile2, overrides={'registry': registry})
+            with open(f"{clusterdir}/openshift/99-bootstrap-deletion-2.yaml", 'w') as _f:
+                _f.write(deletionfile2)
         if notify:
             notifycmd = "cat /shared/results.txt"
             notifycmds, mailcontent = config.handle_notifications(cluster, notifymethods=config.notifymethods,
@@ -1241,54 +1229,22 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         sedcmd = f'sed "s@{ori_url}/config/master@{bucket_url}@" '
         sedcmd += f'{clusterdir}/ctlplane.ign > {clusterdir}/bootstrap.ign'
         call(sedcmd, shell=True)
-    if baremetal_iso_any:
-        baremetal_iso_overrides = overrides.copy()
-        baremetal_iso_overrides['image'] = 'rhcos49'
-        baremetal_iso_overrides['noname'] = True
-        baremetal_iso_overrides['compact'] = True
-        baremetal_iso_overrides['version'] = tag
     backup_paramfile(installparam, clusterdir, cluster, plan, image, dnsconfig)
     if platform in virtplatforms:
         if platform == 'vsphere':
             pprint(f"Creating vm folder /vm/{cluster}")
             k.create_vm_folder(cluster)
         pprint("Deploying bootstrap")
-        if baremetal_iso_bootstrap:
-            bootstrap_iso_overrides = baremetal_iso_overrides.copy()
-            bootstrap_iso_overrides['noname'] = False
-            result = config.plan(plan, inputfile=f'{plandir}/bootstrap.yml', overrides=bootstrap_iso_overrides,
-                                 onlyassets=True)
-            iso_data = result['assets'][0]
-            with open('iso.ign', 'w') as f:
-                f.write(iso_data)
-            ignitionfile = f'{cluster}-bootstrap.ign'
-            with open(ignitionfile, 'w') as f:
-                f.write(iso_data)
-            iso_pool = data['pool'] or config.pool
-            generate_rhcos_iso(k, cluster + '-bootstrap', iso_pool, installer=True)
-        else:
-            result = config.plan(plan, inputfile=f'{plandir}/bootstrap.yml', overrides=overrides)
-            if result['result'] != 'success':
-                sys.exit(1)
-        if static_networking_ctlplane and not baremetal_iso_ctlplane:
+        result = config.plan(plan, inputfile=f'{plandir}/bootstrap.yml', overrides=overrides)
+        if result['result'] != 'success':
+            sys.exit(1)
+        if static_networking_ctlplane:
             wait_for_ignition(cluster, domain, role='master')
         pprint("Deploying ctlplanes")
-        if baremetal_iso_ctlplane:
-            result = config.plan(plan, inputfile=f'{plandir}/ctlplanes.yml', overrides=baremetal_iso_overrides,
-                                 onlyassets=True)
-            iso_data = result['assets'][0]
-            ignitionfile = f'{cluster}-ctlplane.ign'
-            with open(ignitionfile, 'w') as f:
-                f.write(iso_data)
-            baremetal_iso_overrides['role'] = 'master'
-            config.create_openshift_iso(cluster, overrides=baremetal_iso_overrides, ignitionfile=ignitionfile,
-                                        podman=True, installer=True)
-            os.remove(ignitionfile)
-        else:
-            threaded = data.get('threaded', False) or data.get('ctlplanes_threaded', False)
-            if baremetal_hosts:
-                overrides['workers'] = overrides['workers'] - len(baremetal_hosts)
-            result = config.plan(plan, inputfile=f'{plandir}/ctlplanes.yml', overrides=overrides, threaded=threaded)
+        threaded = data.get('threaded', False) or data.get('ctlplanes_threaded', False)
+        if baremetal_hosts:
+            overrides['workers'] = overrides['workers'] - len(baremetal_hosts)
+        result = config.plan(plan, inputfile=f'{plandir}/ctlplanes.yml', overrides=overrides, threaded=threaded)
         if result['result'] != 'success':
             sys.exit(1)
         todelete = [f"{cluster}-bootstrap"]
@@ -1362,13 +1318,13 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             error(f"You can delete it with kcli delete cluster --yes {cluster}")
             sys.exit(run)
     if workers > 0:
-        if static_networking_worker and not baremetal_iso_worker:
+        if static_networking_worker:
             wait_for_ignition(cluster, domain, role='worker')
         pprint("Deploying workers")
         if 'name' in overrides:
             del overrides['name']
         if platform in virtplatforms:
-            if baremetal_iso_worker or baremetal_hosts:
+            if baremetal_hosts:
                 iso_pool = data.get('pool') or config.pool
                 iso_url = handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts, iso_pool)
                 boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)

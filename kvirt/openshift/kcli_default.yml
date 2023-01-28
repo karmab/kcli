@@ -118,10 +118,6 @@ ovn_hostrouting: false
 async: false
 notify: false
 monitoring_retention: 24h
-baremetal_iso: false
-baremetal_iso_bootstrap: false
-baremetal_iso_ctlplane: false
-baremetal_iso_worker: false
 baremetal_hosts: []
 baremetal_web: true
 baremetal_web_port: 80
