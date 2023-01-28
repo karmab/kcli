@@ -510,8 +510,11 @@ def create_confpool(args):
 
 def create_profile(args):
     """Create profile"""
+    image = args.image
     profile = args.profile
     overrides = common.get_overrides(param=args.param)
+    if image is not None:
+        overrides['image'] = image
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
     result = baseconfig.create_profile(profile, overrides=overrides)
     code = common.handle_response(result, profile, element='Profile', action='created', client=baseconfig.client)
@@ -3761,6 +3764,7 @@ def cli():
 
     profilecreate_desc = 'Create Profile'
     profilecreate_parser = argparse.ArgumentParser(add_help=False)
+    profilecreate_parser.add_argument('-i', '--image', help='Image to use', metavar='IMAGE')
     profilecreate_parser.add_argument('-P', '--param', action='append',
                                       help='specify parameter or keyword for rendering (can specify multiple)',
                                       metavar='PARAM')
