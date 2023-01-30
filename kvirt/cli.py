@@ -35,6 +35,7 @@ import requests
 from shutil import which, copy2
 from subprocess import call
 import sys
+from tempfile import NamedTemporaryFile
 from urllib.parse import urlparse
 import yaml
 
@@ -2080,6 +2081,23 @@ def delete_plan(args):
     sys.exit(4 if 4 in codes else 0)
 
 
+def expose_cluster(args):
+    plan = args.cluster
+    if plan is None:
+        plan = nameutils.get_random_name()
+        pprint(f"Using {plan} as name of the plan")
+    port = args.port
+    overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
+    with NamedTemporaryFile() as temp:
+        kubetype = overrides.get('type') or overrides.get('kubetype') or 'generic'
+        temp.write(f"{plan}:\n type: cluster\n kubetype: {kubetype}".encode())
+        temp.seek(0)
+        inputfile = temp.name
+        config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
+                         namespace=args.namespace)
+        config.expose_plan(plan, inputfile=inputfile, overrides=overrides, port=port, pfmode=args.pfmode)
+
+
 def expose_plan(args):
     plan = args.plan
     if plan is None:
@@ -2091,7 +2109,7 @@ def expose_plan(args):
         inputfile = 'kcli_plan.yml'
     if container_mode():
         inputfile = f"/workdir/{inputfile}"
-    overrides = common.get_overrides(param=args.param)
+    overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     config.expose_plan(plan, inputfile=inputfile, overrides=overrides, port=port, pfmode=args.pfmode)
 
@@ -4338,18 +4356,26 @@ def cli():
     expose_parser = subparsers.add_parser('expose', description=expose_desc, help=expose_desc)
     expose_subparsers = expose_parser.add_subparsers(metavar='', dest='subcommand_expose')
 
+    clusterexpose_desc = 'Expose cluster'
+    clusterexpose_epilog = None
+    clusterexpose_parser = expose_subparsers.add_parser('cluster', parents=[parent_parser],
+                                                        description=clusterexpose_desc, help=clusterexpose_desc,
+                                                        epilog=clusterexpose_epilog, formatter_class=rawhelp)
+    clusterexpose_parser.add_argument('--pfmode', action='store_true', help='Expose textarea for parameterfile')
+    clusterexpose_parser.add_argument('--port', help='Port where to listen', type=int, default=9000, metavar='PORT')
+    clusterexpose_parser.add_argument('cluster', metavar='CLUSTER', nargs='?')
+    clusterexpose_parser.set_defaults(func=expose_cluster)
+
     planexpose_desc = 'Expose plan'
     planexpose_epilog = None
-    planexpose_parser = argparse.ArgumentParser(add_help=False)
+    planexpose_parser = expose_subparsers.add_parser('plan', parents=[parent_parser], description=planexpose_desc,
+                                                     help=planexpose_desc, epilog=planexpose_epilog,
+                                                     formatter_class=rawhelp)
     planexpose_parser.add_argument('-f', '--inputfile', help='Input Plan file')
-    planexpose_parser.add_argument('-P', '--param', action='append',
-                                   help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
     planexpose_parser.add_argument('--pfmode', action='store_true', help='Expose textarea for parameterfile')
     planexpose_parser.add_argument('--port', help='Port where to listen', type=int, default=9000, metavar='PORT')
     planexpose_parser.add_argument('plan', metavar='PLAN', nargs='?')
     planexpose_parser.set_defaults(func=expose_plan)
-    expose_subparsers.add_parser('plan', parents=[planexpose_parser], description=planexpose_desc, help=planexpose_desc,
-                                 epilog=planexpose_epilog, formatter_class=rawhelp)
 
     info_desc = 'Info Host/Kube/Plan/Vm'
     info_parser = subparsers.add_parser('info', description=info_desc, help=info_desc, aliases=['show'])
