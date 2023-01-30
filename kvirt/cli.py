@@ -1967,11 +1967,9 @@ def create_plan(args):
 
 def create_playbook(args):
     """Create plan"""
-    inputfile = args.inputfile
     store = args.store
     overrides = handle_parameters(args.param, args.paramfile)
-    if inputfile is None:
-        inputfile = 'kcli_plan.yml'
+    inputfile = overrides.get('inputfile') or args.inputfile or 'kcli_plan.yml'
     if container_mode():
         inputfile = f"/workdir/{inputfile}"
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
@@ -1988,10 +1986,10 @@ def update_plan(args):
     url = args.url
     path = args.path
     container = args.container
-    inputfile = args.inputfile
     overrides = handle_parameters(args.param, args.paramfile)
+    inputfile = overrides.get('inputfile') or args.inputfile or 'kcli_plan.yml'
     if container_mode():
-        inputfile = f"/workdir/{inputfile}" if inputfile is not None else "/workdir/kcli_plan.yml"
+        inputfile = f"/workdir/{inputfile}"
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if autostart:
         config.autostart_plan(plan)
@@ -2043,12 +2041,10 @@ def expose_plan(args):
         plan = nameutils.get_random_name()
         pprint(f"Using {plan} as name of the plan")
     port = args.port
-    inputfile = args.inputfile
-    if inputfile is None:
-        inputfile = 'kcli_plan.yml'
+    overrides = handle_parameters(args.param, args.paramfile)
+    inputfile = overrides.get('inputfile') or args.inputfile or 'kcli_plan.yml'
     if container_mode():
         inputfile = f"/workdir/{inputfile}"
-    overrides = handle_parameters(args.param, args.paramfile)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     config.expose_plan(plan, inputfile=inputfile, overrides=overrides, port=port, pfmode=args.pfmode)
 
@@ -2120,9 +2116,9 @@ def info_plan(args):
     quiet = args.quiet
     url = args.url
     path = args.path
-    inputfile = args.inputfile
+    inputfile = args.inputfile or 'kcli_plan.yml'
     if container_mode():
-        inputfile = f"/workdir/{inputfile}" if inputfile is not None else "/workdir/kcli_plan.yml"
+        inputfile = f"/workdir/{inputfile}"
     if args.plan is not None:
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
@@ -2288,15 +2284,13 @@ def download_tasty(args):
 def create_pipeline_github(args):
     """Create Github Pipeline"""
     plan = args.plan
-    inputfile = args.inputfile
     kube = args.kube
     script = args.script
     overrides = handle_parameters(args.param, args.paramfile)
-    paramfile = args.paramfile[0] if args.paramfile else None
-    if inputfile is None:
-        inputfile = 'kcli_plan.yml'
+    inputfile = overrides.get('inputfile') or args.inputfile or 'kcli_plan.yml'
     if container_mode():
         inputfile = f"/workdir/{inputfile}"
+    paramfile = args.paramfile[0] if args.paramfile else None
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     renderfile = baseconfig.create_github_pipeline(plan, inputfile, paramfile=paramfile, overrides=overrides,
                                                    kube=kube, script=script)
@@ -2306,11 +2300,9 @@ def create_pipeline_github(args):
 def create_pipeline_jenkins(args):
     """Create Jenkins Pipeline"""
     plan = args.plan
-    inputfile = args.inputfile
     kube = args.kube
     overrides = handle_parameters(args.param, args.paramfile)
-    if inputfile is None:
-        inputfile = 'kcli_plan.yml'
+    inputfile = overrides.get('inputfile') or args.inputfile or 'kcli_plan.yml'
     if container_mode():
         inputfile = f"/workdir/{inputfile}"
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
@@ -2323,15 +2315,13 @@ def create_pipeline_jenkins(args):
 
 def create_pipeline_tekton(args):
     """Create Tekton Pipeline"""
-    inputfile = args.inputfile
     overrides = handle_parameters(args.param, args.paramfile)
+    inputfile = overrides.get('inputfile') or args.inputfile or 'kcli_plan.yml'
+    if container_mode():
+        inputfile = f"/workdir/{inputfile}"
     paramfile = args.paramfile[0] if args.paramfile else None
     kube = args.kube
     plan = args.plan
-    if inputfile is None:
-        inputfile = 'kcli_plan.yml'
-    if container_mode():
-        inputfile = f"/workdir/{inputfile}"
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     renderfile = baseconfig.create_tekton_pipeline(plan, inputfile, paramfile=paramfile, overrides=overrides, kube=kube)
     print(renderfile)
