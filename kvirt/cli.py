@@ -1119,7 +1119,8 @@ def create_app_generic(args):
             sys.exit(1)
         elif not os.path.exists(outputdir):
             os.mkdir(outputdir)
-    paramfile = choose_parameter_file(args.paramfile)
+    paramfile = args.paramfile[0] if args.paramfile else None
+    paramfile = choose_parameter_file(paramfile)
     if which('kubectl') is None:
         error("You need kubectl to install apps")
         sys.exit(1)
@@ -1151,7 +1152,8 @@ def create_app_openshift(args):
             sys.exit(1)
         elif not os.path.exists(outputdir):
             os.mkdir(outputdir)
-    paramfile = choose_parameter_file(args.paramfile)
+    paramfile = args.paramfile[0] if args.paramfile else None
+    paramfile = choose_parameter_file(paramfile)
     if which('oc') is None:
         error("You need oc to install apps")
         sys.exit(1)
@@ -1194,7 +1196,8 @@ def delete_app_generic(args):
     if not yes and not yes_top:
         common.confirm("Are you sure?")
     apps = args.apps
-    paramfile = choose_parameter_file(args.paramfile)
+    paramfile = args.paramfile[0] if args.paramfile else None
+    paramfile = choose_parameter_file(paramfile)
     if which('kubectl') is None:
         error("You need kubectl to install apps")
         sys.exit(1)
@@ -1221,7 +1224,8 @@ def delete_app_openshift(args):
     if not yes and not yes_top:
         common.confirm("Are you sure?")
     apps = args.apps
-    paramfile = choose_parameter_file(args.paramfile)
+    paramfile = args.paramfile[0] if args.paramfile else None
+    paramfile = choose_parameter_file(paramfile)
     if which('oc') is None:
         error("You need oc to install apps")
         sys.exit(1)
@@ -1413,7 +1417,8 @@ def create_openshift_iso(args):
     ignitionfile = args.ignitionfile
     direct = args.direct
     uefi = args.uefi
-    overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
+    paramfile = args.paramfile[0] if args.paramfile else None
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     client = 'fake' if common.need_fake() else args.client
     config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     config.create_openshift_iso(cluster, overrides=overrides, ignitionfile=ignitionfile, direct=direct, uefi=uefi)
@@ -1424,7 +1429,8 @@ def create_openshift_disconnected(args):
     if plan is None:
         plan = nameutils.get_random_name()
         pprint(f"Using {plan} as name of the plan")
-    overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
+    paramfile = args.paramfile[0] if args.paramfile else None
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     if 'cluster' not in overrides:
         overrides['cluster'] = plan
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -1439,7 +1445,8 @@ def create_vm(args):
     profile = args.profile
     count = args.count
     profilefile = args.profilefile
-    overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
+    paramfile = args.paramfile[0] if args.paramfile else None
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     console = args.console
     serial = args.serial
     if args.wait:
@@ -1564,7 +1571,8 @@ def clone_vm(args):
 
 def update_vm(args):
     """Update ip, memory or numcpus"""
-    overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
+    paramfile = args.paramfile[0] if args.paramfile else None
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     names = [common.get_lastvm(config.client)] if not args.names else args.names
     for name in names:
@@ -1573,7 +1581,8 @@ def update_vm(args):
 
 def create_vmdisk(args):
     """Add disk to vm"""
-    overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
+    paramfile = args.paramfile[0] if args.paramfile else None
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     name = args.name
     novm = args.novm
     size = args.size
@@ -1703,7 +1712,7 @@ def delete_lb(args):
 
 def create_kube(args):
     """Create kube"""
-    paramfile = args.paramfile
+    paramfile = args.paramfile[0] if args.paramfile else None
     cluster = args.cluster
     kubetype = args.type
     if container_mode():
@@ -1774,7 +1783,8 @@ def delete_kube(args):
     yes_top = args.yes_top
     if not yes and not yes_top:
         common.confirm("Are you sure?")
-    overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
+    paramfile = args.paramfile[0] if args.paramfile else None
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     for cluster in clusters:
         config.delete_kube(cluster, overrides=overrides)
@@ -1783,7 +1793,7 @@ def delete_kube(args):
 def scale_kube(args):
     """Scale kube"""
     kubetype = args.type
-    paramfile = args.paramfile
+    paramfile = args.paramfile[0] if args.paramfile else None
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     cluster = overrides.get('cluster', args.cluster)
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
@@ -1868,7 +1878,7 @@ def update_kube(args):
     _type = args.type
     data = {'kube': cluster, 'kubetype': _type}
     plan = None
-    paramfile = args.paramfile
+    paramfile = args.paramfile[0] if args.paramfile else None
     if container_mode():
         if paramfile is not None:
             paramfile = f"/workdir/{paramfile}"
@@ -1963,7 +1973,7 @@ def create_plan(args):
     container = args.container
     pre = not args.skippre
     post = not args.skippost
-    paramfiles = args.paramfile if args.paramfile is not None else []
+    paramfiles = args.paramfile or []
     threaded = args.threaded
     if container_mode():
         if paramfiles:
@@ -2018,7 +2028,7 @@ def create_playbook(args):
     """Create plan"""
     inputfile = args.inputfile
     store = args.store
-    paramfile = args.paramfile
+    paramfile = args.paramfile[0] if args.paramfile else None
     if inputfile is None:
         inputfile = 'kcli_plan.yml'
     if container_mode():
@@ -2047,7 +2057,7 @@ def update_plan(args):
     path = args.path
     container = args.container
     inputfile = args.inputfile
-    paramfile = args.paramfile
+    paramfile = args.paramfile[0] if args.paramfile else None
     if container_mode():
         inputfile = f"/workdir/{inputfile}" if inputfile is not None else "/workdir/kcli_plan.yml"
         if paramfile is not None:
@@ -2087,7 +2097,8 @@ def expose_cluster(args):
         plan = nameutils.get_random_name()
         pprint(f"Using {plan} as name of the plan")
     port = args.port
-    overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
+    paramfile = args.paramfile[0] if args.paramfile else None
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     with NamedTemporaryFile() as temp:
         kubetype = overrides.get('type') or overrides.get('kubetype') or 'generic'
         temp.write(f"{plan}:\n type: cluster\n kubetype: {kubetype}".encode())
@@ -2109,7 +2120,8 @@ def expose_plan(args):
         inputfile = 'kcli_plan.yml'
     if container_mode():
         inputfile = f"/workdir/{inputfile}"
-    overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
+    paramfile = args.paramfile[0] if args.paramfile else None
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     config.expose_plan(plan, inputfile=inputfile, overrides=overrides, port=port, pfmode=args.pfmode)
 
@@ -2303,7 +2315,7 @@ def download_plan(args):
 
 def download_coreos_installer(args):
     """Download Coreos Installer"""
-    paramfile = args.paramfile
+    paramfile = args.paramfile[0] if args.paramfile else None
     if container_mode():
         if paramfile is not None:
             paramfile = f"/workdir/{paramfile}"
@@ -2319,7 +2331,7 @@ def download_coreos_installer(args):
 
 def download_kubectl(args):
     """Download Kubectl"""
-    paramfile = args.paramfile
+    paramfile = args.paramfile[0] if args.paramfile else None
     if container_mode():
         if paramfile is not None:
             paramfile = f"/workdir/{paramfile}"
@@ -2335,7 +2347,7 @@ def download_kubectl(args):
 
 def download_helm(args):
     """Download Helm"""
-    paramfile = args.paramfile
+    paramfile = args.paramfile[0] if args.paramfile else None
     if container_mode():
         if paramfile is not None:
             paramfile = f"/workdir/{paramfile}"
@@ -2351,7 +2363,7 @@ def download_helm(args):
 
 def download_oc(args):
     """Download Oc"""
-    paramfile = args.paramfile
+    paramfile = args.paramfile[0] if args.paramfile else None
     if container_mode():
         if paramfile is not None:
             paramfile = f"/workdir/{paramfile}"
@@ -2367,7 +2379,7 @@ def download_oc(args):
 
 def download_openshift_installer(args):
     """Download Openshift Installer"""
-    paramfile = args.paramfile
+    paramfile = args.paramfile[0] if args.paramfile else None
     if container_mode():
         if paramfile is not None:
             paramfile = f"/workdir/{paramfile}"
@@ -2384,7 +2396,7 @@ def download_openshift_installer(args):
 
 def download_okd_installer(args):
     """Download Okd Installer"""
-    paramfile = args.paramfile
+    paramfile = args.paramfile[0] if args.paramfile else None
     if container_mode():
         if paramfile is not None:
             paramfile = f"/workdir/{paramfile}"
@@ -2402,7 +2414,7 @@ def download_okd_installer(args):
 
 def download_tasty(args):
     """Download Tasty"""
-    paramfile = args.paramfile
+    paramfile = args.paramfile[0] if args.paramfile else None
     if container_mode():
         if paramfile is not None:
             paramfile = f"/workdir/{paramfile}"
@@ -2422,7 +2434,7 @@ def create_pipeline_github(args):
     inputfile = args.inputfile
     kube = args.kube
     script = args.script
-    paramfile = args.paramfile
+    paramfile = args.paramfile[0] if args.paramfile else None
     if inputfile is None:
         inputfile = 'kcli_plan.yml'
     if container_mode():
@@ -2445,7 +2457,7 @@ def create_pipeline_jenkins(args):
     plan = args.plan
     inputfile = args.inputfile
     kube = args.kube
-    paramfile = args.paramfile
+    paramfile = args.paramfile[0] if args.paramfile else None
     if inputfile is None:
         inputfile = 'kcli_plan.yml'
     if container_mode():
@@ -2469,7 +2481,7 @@ def create_pipeline_tekton(args):
     """Create Tekton Pipeline"""
     inputfile = args.inputfile
     kube = args.kube
-    paramfile = args.paramfile
+    paramfile = args.paramfile[0] if args.paramfile else None
     plan = args.plan
     if inputfile is None:
         inputfile = 'kcli_plan.yml'
@@ -2611,7 +2623,7 @@ def create_plantemplate(args):
     skipfiles = args.skipfiles
     skipscripts = args.skipscripts
     directory = args.directory
-    paramfile = args.paramfile
+    paramfile = args.paramfile[0] if args.paramfile else None
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     baseconfig.create_plan_template(directory, overrides=overrides, skipfiles=skipfiles, skipscripts=skipscripts)
@@ -2711,7 +2723,8 @@ def create_product(args):
     product = args.product
     latest = args.latest
     group = args.group
-    overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
+    paramfile = args.paramfile[0] if args.paramfile else None
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     plan = overrides['plan'] if 'plan' in overrides else None
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     pprint(f"Creating product {product}...")
@@ -2880,7 +2893,8 @@ def scp_vm(args):
 def create_network(args):
     """Create Network"""
     name = args.name
-    overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
+    paramfile = args.paramfile[0] if args.paramfile else None
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     isolated = args.isolated
     cidr = args.cidr
     nodhcp = args.nodhcp
@@ -2916,7 +2930,8 @@ def delete_network(args):
 def update_network(args):
     """Update Network"""
     name = args.name
-    overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
+    paramfile = args.paramfile[0] if args.paramfile else None
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     nat = False if 'isolated' in args else overrides.get('nat')
     dhcp = False if 'nodhcp' in args else overrides.get('dhcp')
     domain = overrides.get('domain', args.domain)
@@ -3086,7 +3101,8 @@ def create_container(args):
     name = args.name
     image = args.image
     profile = args.profile
-    overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
+    paramfile = args.paramfile[0] if args.paramfile else None
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     cont = Kcontainerconfig(config, client=args.containerclient).cont
     containerprofiles = {k: v for k, v in config.profiles.items() if 'type' in v and v['type'] == 'container'}
@@ -3358,7 +3374,8 @@ def create_workflow(args):
     if workflow is None:
         workflow = nameutils.get_random_name()
         pprint(f"Using {workflow} as name of the workflow")
-    overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
+    paramfile = args.paramfile[0] if args.paramfile else None
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     config = None
     if 'target' in overrides:
         user = None
@@ -3384,7 +3401,8 @@ def create_workflow(args):
 def create_securitygroup(args):
     """Create securitygroup"""
     securitygroup = args.securitygroup
-    overrides = common.get_overrides(paramfile=args.paramfile, param=args.param)
+    paramfile = args.paramfile[0] if args.paramfile else None
+    overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     pprint(f"Creating securitygroup {securitygroup}...")
@@ -3433,7 +3451,7 @@ def cli():
     parent_parser.add_argument('-P', '--param', action='append',
                                help='specify parameter or keyword for rendering (multiple can be specified)',
                                metavar='PARAM')
-    parent_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE')
+    parent_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE', action='append')
     parser = argparse.ArgumentParser(description='Libvirt/Ovirt/Vsphere/Gcp/Aws/Openstack/Kubevirt Wrapper/Ibm Cloud')
     parser.add_argument('-C', '-c', '--client')
     parser.add_argument('--containerclient', help='Containerclient to use')
