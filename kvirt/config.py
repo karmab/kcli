@@ -3340,7 +3340,7 @@ class Kconfig(Kbaseconfig):
         return updated_files
 
     def info_specific_kube(self, cluster):
-        pprint(f"Providing information about cluster {cluster}")
+        pprint(f"Providing information about running cluster {cluster}")
         k = self.k
         results = []
         for vm in k.list():
@@ -3349,7 +3349,7 @@ class Kconfig(Kbaseconfig):
         return results
 
     def info_specific_plan(self, plan):
-        pprint(f"Providing information about plan {plan}")
+        pprint(f"Providing information about running plan {plan}")
         k = self.k
         results = []
         for vm in k.list():

@@ -2187,7 +2187,7 @@ def info_plan(args):
     if args.plan is not None:
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
-        _list = config.info_plan(args.plan)
+        _list = config.info_specific_plan(args.plan)
         _parse_vms_list(_list)
     elif url is None:
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
