@@ -58,8 +58,9 @@ LIBVIRT_FLAGS_CURRENT = 0
 LIBVIRT_FLAGS_LIVE = 1
 LIBVIRT_FLAGS_CONFIG = 2
 
-KB = 1024 * 1024
-MB = 1024 * KB
+KiB = 1024
+MiB = 1024 * KiB
+GiB = 1024 * MiB
 guestrhel532 = "rhel_5"
 guestrhel564 = "rhel_5x64"
 guestrhel632 = "rhel_6"
@@ -1504,8 +1505,8 @@ class Kvirt(object):
             else:
                 poolpath = list(root.iter('device'))[0].get('path')
             s = pool.info()
-            used = "%.2f" % (float(s[2]) / 1024 / 1024 / 1024)
-            avail = "%.2f" % (float(s[3]) / 1024 / 1024 / 1024)
+            used = "%.2f" % (float(s[2]) / GiB)
+            avail = "%.2f" % (float(s[3]) / GiB)
             # Type,Status, Total space in Gb, Available space in Gb
             used = float(used)
             avail = float(avail)
@@ -1817,7 +1818,7 @@ class Kvirt(object):
             path = next(item for item in imagefiles if item is not None)
             try:
                 volume = conn.storageVolLookupByPath(path)
-                disksize = int(float(volume.info()[1]) / 1024 / 1024 / 1024)
+                disksize = int(float(volume.info()[1]) / GiB)
             except:
                 disksize = 'N/A'
             yamlinfo['disks'].append({'device': device, 'size': disksize, 'format': diskformat, 'type': drivertype,
@@ -2141,9 +2142,9 @@ class Kvirt(object):
     def _xmlvolume(self, path, size, pooltype='file', backing=None, diskformat='qcow2', owner=None):
         ownerxml = f"<owner>{owner}</owner>" if owner is not None else ''
         disktype = 'file' if pooltype == 'file' else 'block'
-        size = int(size) * MB
+        size = int(size) * GiB
         if int(size) == 0:
-            size = 512 * 1024
+            size = 512 * KiB
         name = os.path.basename(path)
         if pooltype == 'zfs':
             volume = """<volume type='block'>
@@ -2220,7 +2221,7 @@ class Kvirt(object):
                 oldvolume = self.conn.storageVolLookupByPath(oldpath)
                 pool = oldvolume.storagePoolLookupByVolume()
                 oldinfo = oldvolume.info()
-                oldvolumesize = (float(oldinfo[1]) / 1024 / 1024 / 1024)
+                oldvolumesize = (float(oldinfo[1]) / GiB)
                 oldvolumexml = oldvolume.XMLDesc(0)
                 backing = None
                 voltree = ET.fromstring(oldvolumexml)
@@ -3655,7 +3656,7 @@ class Kvirt(object):
             oldvolume = self.conn.storageVolLookupByPath(oldpath)
             pool = oldvolume.storagePoolLookupByVolume()
             oldinfo = oldvolume.info()
-            oldvolumesize = (float(oldinfo[1]) / 1024 / 1024 / 1024)
+            oldvolumesize = (float(oldinfo[1]) / GiB)
             oldvolumexml = oldvolume.XMLDesc(0)
             backing = None
             voltree = ET.fromstring(oldvolumexml)
@@ -3820,7 +3821,7 @@ class Kvirt(object):
     def resize_disk(self, path, size):
         conn = self.conn
         volume = conn.storageVolLookupByPath(path)
-        size = int(size) * MB
+        size = int(size) * MiB
         volume.resize(size)
 
     def update_nic(self, name, index, network):
