@@ -6,9 +6,24 @@ import sys
 import yaml
 
 
+def valid_rhn_credentials(config, overrides):
+    rhnuser = config.rhnuser or overrides.get('rhnuser')
+    rhnpassword = config.rhnuser or overrides.get('rhnpassword')
+    if rhnuser is not None and rhnpassword is not None:
+        return True
+    rhnak = config.rhnuser or overrides.get('rhnak')
+    rhnorg = config.rhnuser or overrides.get('rhnorg')
+    if rhnak is not None and rhnorg is not None:
+        return True
+    return False
+
+
 def create(config, plandir, cluster, overrides, dnsconfig=None):
-    data = {'kubetype': 'microshift', 'sslip': True}
+    data = {'kubetype': 'microshift', 'sslip': True, 'image': 'centos8stream', 'pull_secret': 'openshift_pull.json'}
     data.update(overrides)
+    if 'rhel' in data['image'] and not valid_rhn_credentials(config, overrides):
+        error("Using rhel image requires setting rhnuser/rhnpassword or rhnorg/rhnak in your conf or as parameters")
+        sys.exit(1)
     if 'keys' not in overrides and get_ssh_pub_key() is None:
         error("No usable public key found, which is required for the deployment. Create one using ssh-keygen")
         sys.exit(1)
@@ -21,18 +36,16 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         error("Invalid number of nodes")
         sys.exit(1)
     register_acm = data.get('register_acm', False)
-    if register_acm:
-        pull_secret = data.get('pull_secret')
-        if pull_secret is not None:
-            if not os.path.isabs(pull_secret):
-                pull_secret = os.path.abspath(pull_secret)
-                data['pull_secret'] = pull_secret
-            if not os.path.exists(pull_secret):
-                error(f"pull_secret path {pull_secret} not found")
-                sys.exit(1)
-        else:
-            error("pull_secret is required when using register_acm")
+    need_pull_secret = register_acm or 'rhel' in data['image']
+    pull_secret = data.get('pull_secret')
+    if pull_secret is not None:
+        if not os.path.isabs(pull_secret):
+            pull_secret = os.path.abspath(pull_secret)
+            data['pull_secret'] = pull_secret
+        if not os.path.exists(pull_secret) and need_pull_secret:
+            error(f"pull_secret path {pull_secret} not found")
             sys.exit(1)
+    if register_acm:
         kubeconfig_acm = data.get('kubeconfig_acm')
         if kubeconfig_acm is not None:
             if not os.path.isabs(kubeconfig_acm):
@@ -43,6 +56,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 sys.exit(1)
         else:
             error("kubeconfig_acm is required when using register_acm")
+            sys.exit(1)
+        check = f"KUBECONGIG={kubeconfig_acm} oc get secret -n open-cluster-management"
+        check += " open-cluster-management-image-pull-credentials"
+        if os.popen(check).read() == '':
+            error("Missing open-cluster-management-image-pull-credentials secret on acm cluster")
             sys.exit(1)
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if os.path.exists(clusterdir):
@@ -61,7 +79,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     result = config.plan(plan, inputfile=f'{plandir}/kcli_plan.yml', overrides=data, threaded=threaded)
     if result['result'] != 'success':
         sys.exit(1)
-    KUBECONFIG = '/var/lib/microshift/resources/kubeadmin/kubeconfig'
+    KUBECONFIG = '/root/kubeconfig'
     for index in range(nodes):
         name = f"{cluster}-{index}"
         config.wait_finish(name)

@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 KUBECONFIG_MICROSHIFT=kubeconfig
 KUBECONFIG_ACM=kubeconfig.acm
 cd /root

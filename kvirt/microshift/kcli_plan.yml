@@ -2,7 +2,9 @@
 {{ cluster }}-{{ number }}:
  domain: {{ domain }}
  image: {{ image }}
+ rhnregister: {{ 'rhel' in image }}
  noname: {{ noname }}
+ disks: {{ [disk_size] + extra_disks }}
  nets: [{{ network }}] 
  memory: {{ memory }}
  numcpus: {{ numcpus }}
@@ -11,7 +13,7 @@
 {% if 'manifests'|find_manifests %}
  - manifests
 {% endif %}
-{% if pull_secret|exists %}
+{% if pull_secret != None %}
  - path: /root/auth.json
    origin: {{ pull_secret }}
 {% endif %}

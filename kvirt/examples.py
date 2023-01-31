@@ -166,8 +166,14 @@ $ kcli create kube kind -P workers=2 mykind
 $ kcli create kube kind --paramfile=myparameters.yml mykind
 """
 
-kubemicroshiftcreate = """# Create a kube microshift instance named mykube with default values
+kubemicroshiftcreate = """# Create a kube microshift instance named mymicroshift with default values
 $ kcli create kube microshift mymicroshift
+
+# Create a kube microshift instance named mymicroshift providing rhn creds on the commandline
+$ kcli create kube microshift -P rhnuser=xxx@good.es -P rhnpassword=supercool mymicroshift
+
+# Create a kube microshift instance named mymicroshift based on centos8stream
+$ kcli create kube microshift -P image=cento8stream mymicroshift
 
 # Use a parameter file
 $ kcli create kube microshift --paramfile=myparameters.yml mymicroshift

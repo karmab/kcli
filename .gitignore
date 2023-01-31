@@ -17,3 +17,4 @@ prout.yml
 kvirt/static/reports/*
 venv*
 .idea
+openshift_pull.json
