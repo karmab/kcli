@@ -1851,14 +1851,17 @@ class Kconfig(Kbaseconfig):
             images = [os.path.basename(t) for t in k.volumes()]
             for image in imageentries:
                 clientprofile = f"{self.client}_{image}"
-                if image in images or image in self.profiles or clientprofile in self.profiles:
+                imageprofile = entries[image]
+                pool = imageprofile.get('pool', self.pool)
+                imagesize = imageprofile.get('size')
+                imageurl = imageprofile.get('url')
+                filename = os.path.basename(imageurl) if imageurl is not None else 'xxx'
+                clientprofile = "%s_%s" % (self.client, image)
+                if image in images or image in self.profiles or \
+                   (clientprofile in self.profiles and filename == self.profiles[clientprofile]['image']):
                     pprint(f"Image {image} skipped!")
                     continue
                 else:
-                    imageprofile = entries[image]
-                    pool = imageprofile.get('pool', self.pool)
-                    imageurl = imageprofile.get('url')
-                    imagesize = imageprofile.get('size')
                     if isinstance(imageurl, str) and imageurl == "None":
                         imageurl = None
                     cmd = imageprofile.get('cmd')
