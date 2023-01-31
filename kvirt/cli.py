@@ -2331,13 +2331,11 @@ def render_file(args):
     """Render file"""
     plan = None
     ignore = args.ignore
-    overrides = handle_parameters(args.param, args.paramfile)
-    print(overrides)
+    overrides = {}
     allparamfiles = [paramfile for paramfile in glob("*_default.y*ml")]
     for paramfile in allparamfiles:
-        print(paramfile)
         overrides.update(common.get_overrides(paramfile=paramfile))
-    print(overrides)
+    overrides.update(handle_parameters(args.param, args.paramfile))
     inputfile = overrides.get('inputfile') or args.inputfile or 'kcli_plan.yml'
     if container_mode():
         inputfile = f"/workdir/{inputfile}"
