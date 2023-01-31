@@ -1,0 +1,6 @@
+autolabeller_rules:
+ - .*worker.*:
+    - node-role.kubernetes.io/worker
+ - .*ctlplane.*:
+    - node-role.kubernetes.io/master
+    - node-role.kubernetes.io/ctlplane

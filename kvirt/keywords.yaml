@@ -1,0 +1,161 @@
+autostart: Autostart vm (libvirt)
+base: |
+  Allows you to point to a parent profile so that values are taken from parent when not found in the current profile.
+  Scripts and commands are rather concatenated between default, father and children
+cache: |
+  Generates a list of vm and cache it in a file to speed up list and info vms.
+  The cache gets updated if using info vm against a vm not in the cache
+  Call delete cache to explictely clean it
+client: Allows to target a different client/host for the corresponding entry
+cloudinit: |
+  Generate cloudinit data to inject to the vm.
+  On libvirt, the data is provided through a $vm.ISO iso plugged to the node.
+  On other platforms, the corresponding field is used to pass this information
+cmdline: |
+  Cmdline to pass to the vm (libvirt)
+  This is used along with a combination of kernel and initrd parameter to allow kickstarting a node.
+  If doing so, the kernel and initrd will have to be removed from vm domain definition
+  Alternatively, it can be applied by itself to rhcos nodes to force the cmdline through virt-edit.
+  This is useful to force a rhcos node to boot to ipv6 by passing ip=dhcp6 or to specify a static network configuration through dracut arguments
+cmds: Array of commands to run through cloudinit or ignition
+cpuflags: |
+  You can specify a list of strings with features to enable or use dict entries with name of the feature and policy either set to require,disable, optional or force.
+  The value for vmx is ignored, as it's handled by the nested flag
+cpuhotplug: Whether to allow cpu hotplugging(libvirt)
+cpumodel: Specific cpu model to apply to the vm
+cpupinning: Cpupinning configuration
+dnsclient: Dns client to use when reserving dns entries for the vm. Allows to create a libvirt vm but use aws or gcp for DNS, provided they are configured as providers
+diskinterface: You can set it to ide, ssd or nvme instead
+disks: |
+  Array of disks to define.
+  For each of them, you can specify pool, size, thin (as boolean), interface (either ide or virtio) and a wwn.
+  If you omit parameters, default values will be used from config or profile file (You can actually let the entire entry blank or just indicate a size number directly)
+disksize: Disk Size 
+diskthin: Thin disk
+dns: Dns server to use in cloudinit/ignition with static networking
+domain: Domain server to use in cloudinit/ignition with static networking
+enableroot: Allow ssh access as root in cloudinit
+files: |
+  Array of files to inject to the vm. For each of them, you can specify path, owner ( root by default) , permissions (600 by default ) and either origin or content to gather content data directly or from specified origin.
+  When specifying a directory as origin, all the files it contains will be parsed and added
+flavor: Flavor (Specific to gcp, aws, openstack and packet)
+gateway: Gateway server to use in cloudinit/ignition with static networking
+guestid: Guest id (libvirt)
+image: |
+  Image to boot the vm from
+  You can either specify short name or complete path.
+  If you omit the full path and your image lives in several pools, the one from last (alphabetical) pool will be used
+initrd: Initrd location to pass to the vm. Needs to be local to the hypervisor
+insecure: Handles all the ssh option details so you don't get any warnings about man in the middle
+iso: |
+  Iso to plug to the node
+  Can either be 
+    an iso stored in one of the pools
+    a remote url which will get downloaded on the fly
+    a local path to the hypervisor or a non existent one (to allow precreating the vm before ISO is available)
+jenkinsmode: How to format the jenkins pipeline
+keep_networks: Whether to keep networks when deleting a plan which created them
+kernel: Kernel location to pass to the vm. Needs to be local to the hypervisor
+keys: Array of ssh public keys to inject to the vm. Whether the actual content or the public key path
+mailfrom: Mail address to send mail from
+mailserver: Mail server where to send the notification (on port 25)
+mailto: List of mail addresses to send mail to
+memory: |
+  Memory, in Mb
+  Allow overcommitting, but make sure the total memory of all your running VMS doesn't exceed your hypervisor one
+memoryhotplug: Whether to allow Memory hotplugging (libvirt)
+nested: Whether to allow nested
+netmasks: netmasks to use in cloudinit/ignition with static networking
+nets: |
+  Array of networks to define.
+  For each of them, you can specify just a string for the name, or a dict containing name, public and alias and ip, mask and gateway, and bridge.
+  Any visible network is valid, in particular bridge networks can be used on libvirt, beyond regular nat networks
+networkwait: Delay in seconds before attempting to run further commands, to be used in environments where networking takes more time to come up
+notify: Sends result of a command or a script run from the vm to one of the supported notify engines
+notifycmd: |
+  Which command to run for notification.
+  If none is provided and no notifyscript either, defaults to sending last 100 lines of the cloudinit file of the machine, or ignition for coreos based vms
+notifymethods: |
+  Array of notify engines.
+  Other options are slack and mail
+notifyscript: Script to execute on the vm and whose output will be sent to notification engines
+numamode: numamode to apply to the workers only.
+numcpus: Number of vcpus. Allow overcommitting
+placement: Array of Hosts where to allow a vm to run (ovirt)
+pcidevices: |
+  Array of pcidevices to passthrough to the first worker only.
+  Check [here](https://github.com/karmab/kcli-plan-samples/blob/main/pcipassthrough/pci.yml) for an example
+playbook: |
+  Generates a playbook for the vm of the plan instead of creating it.
+  Useful to run parts of a plan on baremetal
+pool: |
+  Storage Pool where to keep vm and iso disks
+  Depending on the platform, it corresponds to a datastore, storage domain, storage class
+privatekey: Inject your private key to the nodes of your plan
+profile: name of a specific profile to use to create the vm
+pushbullettoken: Token to use when notifying through pushbullet
+reservedns: Whether to create a dns entry for the vm
+reservehost: Whether to create a local entry in /etc/hosts for the vm
+reserveip: Whether to create a dhcp reservation associated to the specific provided ip of the vm(libvirt)
+rhnactivationkey: Red Hat Network activation key
+rhnorg: Red Hat Network organization
+rhnpassword: Red Hat Network password
+rhnpool: Red Hat Network pool
+rhnregister: |
+  Auto registers vms whose image starts with rhel
+  Requires to either rhnuser and rhnpassword, or rhnactivationkey and rhnorg, and an optional rhnpool
+rhnunregister: |
+  Auto unregisters vms whose image starts with rhel when deleting them
+rhnserver: Red Hat Network server (for registering to a Satellite server)
+rhnuser: Red Hat Network user
+rng: Enables a RNG device in the vm
+rootpassword: Root password to inject (when beeing to lazy to use a cmd to set it)
+securitygroups: Security Groups to apply to the vm (aws and openstack)
+scripts: |
+  Array of paths of custom script to inject with cloudinit/ignition
+  It will be appended to cmds
+  You can either specify full paths or relative to where you're running kcli
+sharedfolders: |
+  List of paths to share between a kvm hypervisor and vm.
+  You will also need to make sure that the path is accessible as qemu user (typically with id 107) and use an hypervisor and a guest with 9p support (centos/rhel lack it)
+sharedkey: |
+  Share a private/public key between all the nodes of your plan.
+  Additionally, root access will be allowed
+slackchannel: Slack Channel where to send notification
+slacktoken: |
+  Token to use when notifying through slack.
+  Should be the token of an app generated in your workspace
+start: Whether to actually start the vm upon creation
+storemetadata: |
+  Creates a /root/.metadata yaml file whith all the overrides applied.
+  On gcp, those overrides are also stored as extra metadata
+tags: |
+  Array of tags to apply to gcp instances (usefull when matched in a firewall rule).
+  In the case of kubevirt, it s rather a dict of key=value used as node selector (allowing to force vms to be scheduled on a matching node)
+tempkey: |
+  Temporary priv and pub key to use when deploying a plan or a cluster, which gets deleted at the end of the process
+  Used for hardening purposes where the vms are beeing injected additional public keys (or use a base image containing them)
+tpm: Enables a TPM device in the vm, using emulator mode. Requires swtpm in the host
+tunnel: Whether to tunnel console, ssh and scp commands through the hypervisor (libvirt)
+tunneldir: Specific directory on the tunnel host where to store ignition files (packet)
+tunnelhost: Specific host to use for tunneling console, ssh and scp commands
+tunnelport: Specific port to use for tunneling console, ssh and scp commands
+tunneluser: Specific user to use for tunneling console, ssh and scp commands
+virttype: |
+  Only used for libvirt where it evaluates to kvm if acceleration shows in capabilities, or qemu emulation otherwise.
+  If a value is provided, it must be either kvm, qemu, xen or lxc
+vmrules: |
+  List of rules with an associated dict to apply for te corresponding entry, if a regex on the entry name is matched.
+  The profile of the matching vm will be updated with the content of the rule
+vmrules_strict: |
+  A boolean to create vms only if they are associated to a vmrules
+  Note that if no vmrules at all exist, the vm will still get created
+vmport: Custom port to use when sshing into a vm, instead of the evaluated one
+vmuser: Custom user to use when sshing into a vm, instead of the evaluated one
+vnc: when set to true, vnc is used for console. On kvm, spice will be used when this is set to false
+wait: Whether to wait for cloudinit/ignition to fully apply
+waitcommand: a specific command to use to validate that vm is ready
+waittimeout: Timeout when waiting for a vm to be ready. Default zero value means the wait wont timeout
+yamlinventory: Ansible generated inventory for single vms or for plans containing ansible entries will be yaml based.
+zerotier_kubelet: Whether to configure kubelet to use the first zerotier address as node ip
+zerotier_nets: Array of zerotier public networks where to join. Will trigger installation of zerotier on the node

@@ -22,7 +22,7 @@ Refer to the [documentation](https://kcli.readthedocs.io) for more information
 ## Quick Start
 
 ```
-curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | bash
+curl -s https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
 ```
 
 Deploy your first vm with:
@@ -76,7 +76,10 @@ limitations under the License.
 
 ## Problems?
 
-Open an issue or join us on [kcli slack channel](https://app.slack.com/client/T09NY5SBT/CU76B52JE)
+Open an issue or join us on slack
+
+- [k8s slack instance](https://slack.k8s.io)
+- [kcli slack channel](https://app.slack.com/client/T09NY5SBT/CU76B52JE)
 
 Mc Fly!!!
 

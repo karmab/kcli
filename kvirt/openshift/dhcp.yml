@@ -3,7 +3,7 @@ parameters:
  numcpus: 2
  memory: 2048
  prefix: prout
- domain: karmalabs.com
+ domain: karmalabs.corp
  node_macs: []
  node_ips: []
  node_names: []

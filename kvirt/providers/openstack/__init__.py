@@ -4,10 +4,8 @@
 Openstack Provider Class
 """
 
-from distutils.spawn import find_executable
-from netaddr import IPNetwork
 from kvirt import common
-from kvirt.common import pprint, error, warning
+from kvirt.common import pprint, error, warning, get_ssh_pub_key
 from kvirt.defaults import METADATA_FIELDS
 from keystoneauth1 import loading
 from keystoneauth1 import session
@@ -17,6 +15,7 @@ from novaclient import client as novaclient
 from neutronclient.v2_0.client import Client as neutronclient
 import swiftclient.client as swiftclient
 import os
+from shutil import which
 from time import sleep
 import webbrowser
 from ipaddress import ip_address, ip_network
@@ -27,7 +26,8 @@ class Kopenstack(object):
 
     """
     def __init__(self, host='127.0.0.1', version='3', port=None, user='root', password=None, debug=False, project=None,
-                 domain='Default', auth_url=None, ca_file=None, external_network=None, region_name=None):
+                 domain='Default', auth_url=None, ca_file=None, external_network=None, region_name=None,
+                 glance_disk=False):
         self.debug = debug
         self.host = host
         loader = loading.get_plugin_loader('password')
@@ -48,6 +48,7 @@ class Kopenstack(object):
         self.project = project
         self.external_network = external_network
         self.region_name = region_name
+        self.glance_disk = glance_disk
         return
 
 # should cleanly close your connection, if needed
@@ -60,10 +61,8 @@ class Kopenstack(object):
 
     def net_exists(self, name):
         neutron = self.neutron
-        networks = neutron.list_networks(name=name)
-        if not networks:
-            False
-        return True
+        networks = {net['name']: net['id'] for net in neutron.list_networks()['networks']}
+        return name in networks
 
     def disk_exists(self, pool, name):
         print("not implemented")
@@ -72,30 +71,34 @@ class Kopenstack(object):
                cpumodel='Westmere', cpuflags=[], cpupinning=[], numcpus=2, memory=512,
                guestid='guestrhel764', pool='default', image=None,
                disks=[{'size': 10}], disksize=10, diskthin=True,
-               diskinterface='virtio', nets=['default'], iso=None, vnc=False,
+               diskinterface='virtio', nets=['default'], iso=None, vnc=True,
                cloudinit=True, reserveip=False, reservedns=False,
-               reservehost=False, start=True, keys=None, cmds=[], ips=None,
+               reservehost=False, start=True, keys=[], cmds=[], ips=None,
                netmasks=None, gateway=None, nested=True, dns=None, domain=None,
                tunnel=False, files=[], enableroot=True, alias=[], overrides={},
                tags=[], storemetadata=False, sharedfolders=[], kernel=None, initrd=None,
                cmdline=None, placement=[], autostart=False, cpuhotplug=False, memoryhotplug=False, numamode=None,
-               numa=[], pcidevices=[], tpm=False, rng=False, metadata={}, securitygroups=[]):
+               numa=[], pcidevices=[], tpm=False, rng=False, metadata={}, securitygroups=[], vmuser=None):
+        default_diskinterface = diskinterface
         glance = self.glance
         nova = self.nova
         neutron = self.neutron
         try:
             nova.servers.find(name=name)
-            return {'result': 'failure', 'reason': "VM %s already exists" % name}
+            return {'result': 'failure', 'reason': f"VM {name} already exists"}
         except:
             pass
         allflavors = [f for f in nova.flavors.list()]
         allflavornames = [flavor.name for flavor in allflavors]
         if flavor is None:
             flavors = [flavor for flavor in allflavors if flavor.ram >= memory and flavor.vcpus >= numcpus]
-            flavor = flavors[0] if flavors else nova.flavors.find(name="m1.tiny")
-            pprint("Using flavor %s" % flavor.name)
+            if flavors:
+                flavor = flavors[0]
+                pprint(f"Using flavor {flavor.name}")
+            else:
+                return {'result': 'failure', 'reason': "Couldn't find a valid flavor matching your specs"}
         elif flavor not in allflavornames:
-            return {'result': 'failure', 'reason': "Flavor %s not found" % flavor}
+            return {'result': 'failure', 'reason': f"Flavor {flavor} not found"}
         else:
             flavor = nova.flavors.find(name=flavor)
         nics = []
@@ -111,54 +114,81 @@ class Kopenstack(object):
                     need_floating = False
             except Exception as e:
                 error(e)
-                return {'result': 'failure', 'reason': "Network %s not found" % netname}
+                return {'result': 'failure', 'reason': f"Network {netname} not found"}
             nics.append({'net-id': net.id})
-        if image is not None:
-            glanceimages = [img for img in glance.images.list() if img.name == image]
+        target = iso or image
+        if iso is not None and not self.glance_disk and len(disks) in [0, 1]:
+            if len(disks) == 0:
+                return {'result': 'failure', 'reason': "Booting from iso requires to specify at least one extra disk"}
+            else:
+                warning("Adding additional disk for booting from iso")
+                disks.append(10)
+        if target is not None:
+            glanceimages = [img for img in glance.images.list() if img.name == target]
             if glanceimages:
                 glanceimage = glanceimages[0]
             else:
-                msg = "you don't have image %s" % image
+                msg = f"you don't have image {target}"
                 return {'result': 'failure', 'reason': msg}
-        block_dev_mapping = {}
+        else:
+            msg = "a bootable disk is needed"
+            return {'result': 'failure', 'reason': msg}
+        os_index = len(disks) - 1 if disks and iso is not None else 0
+        block_device_mapping_v2 = []
         for index, disk in enumerate(disks):
-            imageref = None
-            diskname = "%s-disk%s" % (name, index)
+            if index == os_index and self.glance_disk:
+                continue
+            diskname = f"{name}-disk{index}"
             letter = chr(index + ord('a'))
+            diskinterface = default_diskinterface
             if isinstance(disk, int):
                 disksize = disk
-                diskthin = True
             elif isinstance(disk, str) and disk.isdigit():
                 disksize = int(disk)
-                diskthin = True
             elif isinstance(disk, dict):
                 disksize = disk.get('size', '10')
-                diskthin = disk.get('thin', True)
-            if index == 0 and image is not None:
-                if not diskthin:
-                    imageref = glanceimage.id
-                else:
-                    continue
+                diskinterface = disk.get('interface', default_diskinterface)
+            imageref = None
+            if index == os_index:
+                imageref = glanceimage.id
+                glanceimage = None
             newvol = self.cinder.volumes.create(name=diskname, size=disksize, imageRef=imageref)
-            block_dev_mapping['vd%s' % letter] = newvol.id
+            if index in [0, os_index]:
+                self.cinder.volumes.set_bootable(newvol.id, True)
+            while True:
+                newvolstatus = self.cinder.volumes.get(newvol.id).status
+                if newvolstatus == 'available':
+                    break
+                elif newvolstatus == 'error':
+                    msg = f"Hit error when waiting for Disk {diskname} to be available"
+                    return {'result': 'failure', 'reason': msg}
+                else:
+                    pprint(f"Waiting 10s for Disk {diskname} to be available")
+                    sleep(10)
+            block_device_mapping = {'device_name': f'vd{letter}', 'device_type': 'disk', 'disk_bus': diskinterface,
+                                    'source_type': 'blank', "destination_type": "volume",
+                                    'volume_size': disksize, "delete_on_termination": True, 'volume_id': newvol.id}
+            if index == 0:
+                block_device_mapping['boot_index'] = 0
+            if iso is not None and index == os_index:
+                block_device_mapping['device_type'] = 'cdrom'
+                del block_device_mapping['disk_bus']
+                block_device_mapping['boot_index'] = 1
+            block_device_mapping_v2.append(block_device_mapping)
         key_name = 'kvirt'
         keypairs = [k.name for k in nova.keypairs.list()]
         if key_name not in keypairs:
-            homekey = None
-            if not os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME'])\
-                    and not os.path.exists("%s/.ssh/id_dsa.pub" % os.environ['HOME']):
-                print("neither id_rsa.pub or id_dsa public keys found in your .ssh directory, you might have trouble "
-                      "accessing the vm")
+            publickeyfile = get_ssh_pub_key()
+            if publickeyfile is None:
+                warning("neither id_rsa, id_dsa nor id_ed25519 public keys found in your .ssh directory, you "
+                        "might have trouble accessing the vm")
             else:
-                if os.path.exists("%s/.ssh/id_rsa.pub" % os.environ['HOME']):
-                    homekey = open("%s/.ssh/id_rsa.pub" % os.environ['HOME']).read()
-                else:
-                    homekey = open("%s/.ssh/id_dsa.pub" % os.environ['HOME']).read()
-                nova.keypairs.create(key_name, homekey)
+                publickeyfile = open(publickeyfile).read()
+                nova.keypairs.create(key_name, publickeyfile)
         elif keypairs:
             key_name = keypairs[0]
             if key_name != 'kvirt':
-                pprint('Using keypair %s' % key_name)
+                pprint(f'Using keypair {key_name}')
         else:
             error("Couldn't locate or create keypair for use. Leaving...")
             return {'result': 'failure', 'reason': "No usable keypair found"}
@@ -167,15 +197,15 @@ class Kopenstack(object):
             if image is not None and common.needs_ignition(image):
                 version = common.ignition_version(image)
                 userdata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
-                                           domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
-                                           overrides=overrides, version=version, plan=plan, image=image)
+                                           domain=domain, files=files, enableroot=enableroot, overrides=overrides,
+                                           version=version, plan=plan, image=image, vmuser=vmuser)
             else:
                 userdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
-                                            domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
-                                            overrides=overrides, storemetadata=storemetadata)[0]
+                                            domain=domain, files=files, enableroot=enableroot, overrides=overrides,
+                                            storemetadata=storemetadata, vmuser=vmuser)[0]
         meta = {x: metadata[x] for x in metadata if x in METADATA_FIELDS}
         instance = nova.servers.create(name=name, image=glanceimage, flavor=flavor, key_name=key_name, nics=nics,
-                                       meta=meta, userdata=userdata, block_device_mapping=block_dev_mapping,
+                                       meta=meta, userdata=userdata, block_device_mapping_v2=block_device_mapping_v2,
                                        security_groups=securitygroups)
         tenant_id = instance.tenant_id
         if need_floating:
@@ -195,7 +225,7 @@ class Kopenstack(object):
                     floating_ip = neutron.create_floatingip(body={'floatingip': args})
                     floatingip_id = floating_ip['floatingip']['id']
                     floatingip_ip = floating_ip['floatingip']['floating_ip_address']
-                    pprint('Assigning new floating ip %s for this vm' % floatingip_ip)
+                    pprint(f'Assigning new floating ip {floatingip_ip} for this vm')
             else:
                 floatingip_id = floating_ips[0]
             fixed_ip = None
@@ -250,32 +280,44 @@ class Kopenstack(object):
         try:
             vm = nova.servers.find(name=name)
         except:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         vm.start()
         return {'result': 'success'}
 
-    def stop(self, name):
+    def stop(self, name, soft=False):
         nova = self.nova
         try:
             vm = nova.servers.find(name=name)
         except:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         vm.stop()
         return {'result': 'success'}
 
-    def snapshot(self, name, base, revert=False, delete=False, listing=False):
+    def create_snapshot(self, name, base):
         print("not implemented")
-        return
+        return {'result': 'success'}
+
+    def delete_snapshot(self, name, base):
+        print("not implemented")
+        return {'result': 'success'}
+
+    def list_snapshots(self, base):
+        print("not implemented")
+        return []
+
+    def revert_snapshot(self, name, base):
+        print("not implemented")
+        return {'result': 'success'}
 
     def restart(self, name):
         nova = self.nova
         try:
             vm = nova.servers.find(name=name)
         except:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         vm.reboot()
         return {'result': 'success'}
 
@@ -293,7 +335,10 @@ class Kopenstack(object):
         nova = self.nova
         vmslist = nova.servers.list()
         for vm in vmslist:
-            vms.append(self.info(vm.name, vm=vm))
+            try:
+                vms.append(self.info(vm.name, vm=vm))
+            except:
+                continue
         return sorted(vms, key=lambda x: x['name'])
 
     def console(self, name, tunnel=False, web=False):
@@ -301,16 +346,16 @@ class Kopenstack(object):
         try:
             vm = nova.servers.find(name=name)
         except:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         url = vm.get_vnc_console('novnc')['console']['url']
         if web:
             return url
         if self.debug or os.path.exists("/i_am_a_container"):
-            msg = "Open the following url:\n%s" % url if os.path.exists("/i_am_a_container") else url
+            msg = f"Open the following url:\n{url}" if os.path.exists("/i_am_a_container") else url
             pprint(msg)
         else:
-            pprint("Opening url: %s" % url)
+            pprint(f"Opening url: {url}")
             webbrowser.open(url, new=2, autoraise=True)
         return
 
@@ -319,8 +364,8 @@ class Kopenstack(object):
         try:
             vm = nova.servers.find(name=name)
         except:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         cmd = vm.get_console_output()
         if web:
             return cmd
@@ -349,9 +394,9 @@ class Kopenstack(object):
             try:
                 vm = nova.servers.find(name=name)
             except:
-                error("VM %s not found" % name)
+                error(f"VM {name} not found")
                 return {}
-        yamlinfo = {'name': vm.name, 'status': vm.status, 'project': self.project}
+        yamlinfo = {'name': vm.name, 'status': vm.status, 'project': self.project, 'id': vm.id}
         if vm.status.lower() == 'error':
             try:
                 yamlinfo['error'] = vm.fault['message']
@@ -365,7 +410,8 @@ class Kopenstack(object):
                 source = self.glance.images.get(vm.image['id']).name
             except:
                 pass
-        yamlinfo['image'] = source
+        yamlinfo['iso' if source.endswith('.iso') else 'image'] = source
+        yamlinfo['creationdate'] = vm.created
         yamlinfo['user'] = common.get_user(source)
         flavor = nova.flavors.get(vm.flavor['id'])
         yamlinfo['flavor'] = flavor.name
@@ -380,7 +426,7 @@ class Kopenstack(object):
                 if entry2['OS-EXT-IPS:type'] == 'floating':
                     yamlinfo['ip'] = entry2['addr']
                 else:
-                    net = {'device': 'eth%s' % index, 'mac': mac, 'net': key, 'type': entry2['addr']}
+                    net = {'device': f'eth{index}', 'mac': mac, 'net': key, 'type': entry2['addr']}
                     if index == 0:
                         yamlinfo['privateip'] = entry2['addr']
                     yamlinfo['nets'].append(net)
@@ -390,10 +436,20 @@ class Kopenstack(object):
         disks = []
         for disk in vm._info['os-extended-volumes:volumes_attached']:
             diskid = disk['id']
-            volume = cinder.volumes.get(diskid)
+            try:
+                volume = cinder.volumes.get(diskid)
+            except cinderclient.exceptions.NotFound:
+                disks.append({'device': 'N/A', 'size': 'N/A', 'format': 'N/A', 'type': 'N/A', 'path': diskid})
+                continue
             disksize = volume.size
             devname = volume.name
-            disks.append({'device': devname, 'size': disksize, 'format': '', 'type': '', 'path': diskid})
+            _type = volume.volume_type
+            _format = volume.availability_zone
+            volinfo = volume.to_dict()
+            if 'volume_image_metadata' in volinfo and 'image_name' in volinfo['volume_image_metadata']:
+                source = volinfo['volume_image_metadata']['image_name']
+                yamlinfo['iso' if source.endswith('.iso') else 'image'] = source
+            disks.append({'device': devname, 'size': disksize, 'format': _format, 'type': _type, 'path': diskid})
         if disks:
             yamlinfo['disks'] = disks
         metadata = vm.metadata
@@ -409,11 +465,19 @@ class Kopenstack(object):
         return None
 
     def volumes(self, iso=False):
-        glanceimages = []
+        images = []
+        isos = []
         glance = self.glance
         for img in glance.images.list():
-            glanceimages.append(img.name)
-        return sorted(glanceimages)
+            imagename = img.name
+            if imagename.endswith('.iso'):
+                isos.append(imagename)
+            else:
+                images.append(imagename)
+        if iso:
+            return sorted(isos)
+        else:
+            return sorted(images)
 
     def delete(self, name, snapshots=False):
         cinder = self.cinder
@@ -421,8 +485,8 @@ class Kopenstack(object):
         try:
             vm = nova.servers.find(name=name)
         except:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         floating_ips = {}
         try:
             fips = self.neutron.list_floatingips()
@@ -444,10 +508,13 @@ class Kopenstack(object):
             try:
                 self.neutron.delete_floatingip(floatingid)
             except Exception as e:
-                error("Hit %s when trying to delete floating %s" % (str(e), floating))
+                error(f"Hit {str(e)} when trying to delete floating {floating}")
         index = 0
         for disk in vm._info['os-extended-volumes:volumes_attached']:
-            volume = cinder.volumes.get(disk['id'])
+            try:
+                volume = cinder.volumes.get(disk['id'])
+            except cinderclient.exceptions.NotFound:
+                continue
             for attachment in volume.attachments:
                 if attachment['server_id'] == vm.id:
                     cinder.volumes.detach(volume, attachment['attachment_id'])
@@ -464,11 +531,11 @@ class Kopenstack(object):
         try:
             vm = nova.servers.find(name=name)
         except:
-            error("VM %s not found" % name)
+            error(f"VM {name} not found")
             return
         metadata = vm.metadata
         if append and metatype in metadata:
-            metadata[metatype] += ",%s" % metavalue
+            metadata[metatype] += f",{metavalue}"
         else:
             metadata[metatype] = metavalue
         nova.servers.set_meta(vm.id, metadata)
@@ -479,8 +546,8 @@ class Kopenstack(object):
         try:
             vm = nova.servers.find(name=name)
         except:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         currentflavor = nova.flavors.get(vm.flavor['id'])
         if currentflavor.ram >= int(memory):
             warning("No need to resize")
@@ -489,7 +556,7 @@ class Kopenstack(object):
         flavors = [flavor for flavor in allflavors if flavor.ram >= int(memory) and flavor.vcpus >= currentflavor.vcpus]
         if flavors:
             flavor = flavors[0]
-            pprint("Using flavor %s" % flavor.name)
+            pprint(f"Using flavor {flavor.name}")
             vm.resize(flavor.id)
             resizetimeout = 40
             resizeruntime = 0
@@ -501,7 +568,7 @@ class Kopenstack(object):
                 vm = nova.servers.find(name=name)
                 vmstatus = vm.status
                 sleep(2)
-                pprint("Waiting for vm %s to be in verify_resize" % name)
+                pprint(f"Waiting for vm {name} to be in verify_resize")
                 resizeruntime += 2
             vm.confirm_resize()
             return {'result': 'success'}
@@ -514,15 +581,15 @@ class Kopenstack(object):
         try:
             vm = nova.servers.find(name=name)
         except:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         currentflavor = nova.flavors.get(vm.flavor['id'])
         if currentflavor == flavor:
             return {'result': 'success'}
         flavors = [f for f in nova.flavors.list() if f.name == flavor]
         if not flavors:
-            error("Flavor %s doesn't exist" % flavor)
-            return {'result': 'failure', 'reason': "Flavor %s doesn't exist" % flavor}
+            error(f"Flavor {flavor} doesn't exist")
+            return {'result': 'failure', 'reason': f"Flavor {flavor} doesn't exist"}
         else:
             flavorid = flavors[0].id
             vm.resize(flavorid)
@@ -536,7 +603,7 @@ class Kopenstack(object):
                 vm = nova.servers.find(name=name)
                 vmstatus = vm.status
                 sleep(2)
-                pprint("Waiting for vm %s to be in verify_resize" % name)
+                pprint(f"Waiting for vm {name} to be in verify_resize")
                 resizeruntime += 2
             vm.confirm_resize()
             return {'result': 'success'}
@@ -546,8 +613,8 @@ class Kopenstack(object):
         try:
             vm = nova.servers.find(name=name)
         except:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         currentflavor = nova.flavors.get(vm.flavor['id'])
         if currentflavor.vcpus >= numcpus:
             warning("No need to resize")
@@ -556,7 +623,7 @@ class Kopenstack(object):
         flavors = [flavor for flavor in allflavors if flavor.ram >= currentflavor.ram and flavor.vcpus >= numcpus]
         if flavors:
             flavor = flavors[0]
-            pprint("Using flavor %s" % flavor.name)
+            pprint(f"Using flavor {flavor.name}")
             vm.resize(flavor.id)
             resizetimeout = 40
             resizeruntime = 0
@@ -568,7 +635,7 @@ class Kopenstack(object):
                 vm = nova.servers.find(name=name)
                 vmstatus = vm.status
                 sleep(2)
-                pprint("Waiting for vm %s to be in verify_resize" % name)
+                pprint(f"Waiting for vm {name} to be in verify_resize")
                 resizeruntime += 2
             vm.confirm_resize()
             return {'result': 'success'}
@@ -591,13 +658,13 @@ class Kopenstack(object):
     def create_disk(self, name, size, pool=None, thin=True, image=None):
         glance = self.glance
         cinder = self.cinder
-        image = None
+        glanceimage = None
         if image is not None:
             glanceimages = [img for img in glance.images.list() if img.name == image]
             if glanceimages:
                 glanceimage = glanceimages[0]
             else:
-                msg = "you don't have image %s" % image
+                msg = f"you don't have image {image}"
                 return {'result': 'failure', 'reason': msg}
         cinder.volumes.create(name=name, size=size, imageRef=glanceimage)
         return {'result': 'success'}
@@ -610,17 +677,21 @@ class Kopenstack(object):
         try:
             vm = nova.servers.find(name=name)
         except:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
+        glanceimage = None
         if image is not None:
             glanceimages = [img for img in glance.images.list() if img.name == image]
             if glanceimages:
                 glanceimage = glanceimages[0]
             else:
-                msg = "you don't have image %s" % image
+                msg = f"you don't have image {image}"
                 return {'result': 'failure', 'reason': msg}
-        volume = cinder.volumes.create(name=name, size=size, imageRef=glanceimage)
-        cinder.volumes.attach(volume, vm.id, '/dev/vdi', mode='rw')
+        index = len(vm._info.get('os-extended-volumes:volumes_attached', []))
+        diskname = f"{name}-disk{index}"
+        letter = chr(index + ord('a'))
+        volume = cinder.volumes.create(name=diskname, size=size, imageRef=glanceimage)
+        cinder.volumes.attach(volume, vm.id, f'/dev/vd{letter}', mode='rw')
         return {'result': 'success'}
 
     def delete_disk(self, name=None, diskname=None, pool=None, novm=False):
@@ -631,15 +702,17 @@ class Kopenstack(object):
             if volumes:
                 volume = volumes[0]
             else:
-                msg = "Disk %s not found" % diskname
+                msg = f"Disk {diskname} not found"
                 return {'result': 'failure', 'reason': msg}
+            if volume.attachments:
+                volume.detach()
             cinder.volumes.delete(volume.id)
             return {'result': 'success'}
         try:
             vm = nova.servers.find(name=name)
         except:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         for disk in vm._info['os-extended-volumes:volumes_attached']:
             volume = cinder.volumes.get(disk['id'])
             if diskname == volume.name:
@@ -647,13 +720,16 @@ class Kopenstack(object):
                     if attachment['server_id'] == vm.id:
                         cinder.volumes.detach(volume, attachment['attachment_id'])
                 cinder.volumes.delete(disk['id'])
-            return {'result': 'success'}
+                return {'result': 'success'}
+        msg = f"Disk {diskname} not found in {name}"
+        error(msg)
+        return {'result': 'failure', 'reason': msg}
 
     def list_disks(self):
         volumes = {}
         cinder = self.cinder
         for volume in cinder.volumes.list():
-            volumes[volume.name] = {'pool': 'default', 'path': volume.id}
+            volumes[volume.name] = {'pool': volume.volume_type, 'path': volume.id}
         return volumes
 
     def add_nic(self, name, network):
@@ -669,34 +745,45 @@ class Kopenstack(object):
         return
 
     def delete_image(self, image, pool=None):
-        pprint("Deleting image %s" % image)
+        pprint(f"Deleting image {image}")
         glance = self.glance
         for img in glance.images.list():
             if img.name == image:
                 glance.images.delete(img.id)
                 return {'result': 'success'}
-        return {'result': 'failure', 'reason': "Image %s not found" % image}
+        return {'result': 'failure', 'reason': f"Image {image} not found"}
 
     def add_image(self, url, pool, short=None, cmd=None, name=None, size=None):
+        downloaded = False
         shortimage = os.path.basename(url).split('?')[0]
+        if name is not None and name.endswith('iso'):
+            shortimage = name
         if [i for i in self.glance.images.list() if i['name'] == shortimage]:
+            pprint(f"Image {shortimage} already there")
             return {'result': 'success'}
-        if not os.path.exists('/tmp/%s' % shortimage):
-            downloadcmd = "curl -Lo /tmp/%s -f '%s'" % (shortimage, url)
+        if os.path.exists(url):
+            pprint(f"Using {url} as path")
+        elif not os.path.exists(f'/tmp/{shortimage}'):
+            downloaded = True
+            downloadcmd = f"curl -Lo /tmp/{shortimage} -f '{url}'"
             code = os.system(downloadcmd)
             if code != 0:
                 return {'result': 'failure', 'reason': "Unable to download indicated image"}
+        image_path = os.path.abspath(url) if os.path.exists(url) else f'/tmp/{shortimage}'
         if shortimage.endswith('gz'):
-            if find_executable('gunzip') is not None:
-                uncompresscmd = "gunzip /tmp/%s" % (shortimage)
+            if which('gunzip') is not None:
+                uncompresscmd = f"gunzip {image_path}"
                 os.system(uncompresscmd)
             else:
                 error("gunzip not found. Can't uncompress image")
                 return {'result': 'failure', 'reason': "gunzip not found. Can't uncompress image"}
             shortimage = shortimage.replace('.gz', '')
-        glanceimage = self.glance.images.create(name=shortimage, disk_format='qcow2', container_format='bare')
-        self.glance.images.upload(glanceimage.id, open('/tmp/%s' % shortimage, 'rb'))
-        os.remove('/tmp/%s' % shortimage)
+            image_path = image_path.replace('.gz', '')
+        disk_format = 'iso' if shortimage.endswith('iso') else 'qcow2'
+        glanceimage = self.glance.images.create(name=shortimage, disk_format=disk_format, container_format='bare')
+        self.glance.images.upload(glanceimage.id, open(image_path, 'rb'))
+        if downloaded:
+            os.remove(f'/tmp/{shortimage}')
         return {'result': 'success'}
 
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
@@ -706,9 +793,9 @@ class Kopenstack(object):
             routers = [router for router in self.neutron.list_routers()['routers'] if router['name'] == 'kvirt']
             router_id = routers[0]['id'] if routers else None
         try:
-            IPNetwork(cidr)
+            ip_network(cidr)
         except:
-            return {'result': 'failure', 'reason': "Invalid Cidr %s" % cidr}
+            return {'result': 'failure', 'reason': f"Invalid Cidr {cidr}"}
         neutron = self.neutron
         network_id = None
         networks = {net['name']: net['id'] for net in neutron.list_networks()['networks']}
@@ -755,7 +842,7 @@ class Kopenstack(object):
             router = routers[0]
         networks = neutron.list_networks(name=name)
         if not networks:
-            return {'result': 'failure', 'reason': 'Network %s not found' % name}
+            return {'result': 'failure', 'reason': f'Network {name} not found'}
         network_id = networks['networks'][0]['id']
         if cidr is None:
             ports = [p for p in neutron.list_ports()['ports']
@@ -823,11 +910,21 @@ class Kopenstack(object):
                     mode = 'nat'
                     break
             if networkname in networks:
-                networks[networkname]['domain'] = "%s, %s" % (networks[networkname]['domain'], subnetname)
+                networks[networkname]['domain'] = f"{networks[networkname]['domain']}, {subnetname}"
             else:
                 networks[networkname] = {'cidr': cidr, 'dhcp': dhcp, 'domain': subnetname, 'type': 'routed',
                                          'mode': mode}
         return networks
+
+    def info_network(self, name):
+        networkinfo = common.info_network(self, name)
+        if self.debug and networkinfo:
+            network = [net for net in self.neutron.list_networks()['networks'] if net['name'] == name][0]
+            print(network)
+            subnets = [sub for sub in self.neutron.list_subnets()['subnets'] if sub['id'] in network['subnets']]
+            for subnet in subnets:
+                print(subnet)
+        return networkinfo
 
     def list_subnets(self):
         print("not implemented")
@@ -848,7 +945,7 @@ class Kopenstack(object):
         print("not implemented")
         return
 
-    def flavors(self):
+    def list_flavors(self):
         nova = self.nova
         nova.flavors.list
         flavors = [[flavor.name, flavor.vcpus, flavor.ram] for flavor in nova.flavors.list()]
@@ -860,8 +957,8 @@ class Kopenstack(object):
         try:
             vm = nova.servers.find(name=name)
         except:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         for disk in vm._info['os-extended-volumes:volumes_attached']:
             volume = cinder.volumes.get(disk['id'])
             for attachment in volume.attachments:
@@ -887,12 +984,12 @@ class Kopenstack(object):
         neutron = self.neutron
         matchingports = [i for i in neutron.list_ports()['ports'] if i['name'] == name]
         if matchingports:
-            msg = "Port %s already exists" % name
+            msg = f"Port {name} already exists"
             pprint(msg)
             return {'result': 'success'}
         networks = [net for net in neutron.list_networks()['networks'] if net['name'] == network]
         if not networks:
-            msg = "Network %s not found" % network
+            msg = f"Network {network} not found"
             error(msg)
             return {'result': 'failure', 'reason': msg}
         else:
@@ -905,7 +1002,7 @@ class Kopenstack(object):
                 subnet_id = subnet['id']
                 cidr = subnet['cidr']
                 if network_id == subnet['network_id'] and ip_address(ip) in ip_network(cidr):
-                    msg = "Using matching subnet %s with cidr %s" % (subnet_name, cidr)
+                    msg = f"Using matching subnet {subnet_name} with cidr {cidr}"
                     pprint(msg)
                     port['fixed_ips'] = [{'ip_address': ip, 'subnet_id': subnet_id}]
         result = neutron.create_port({'port': port})
@@ -928,7 +1025,7 @@ class Kopenstack(object):
             args = dict(floating_network_id=network_id, tenant_id=tenant_id, port_id=port_id)
             floating_ip = neutron.create_floatingip(body={'floatingip': args})
             floatingip_ip = floating_ip['floatingip']['floating_ip_address']
-            pprint('Assigning new floating ip %s for this port' % floatingip_ip)
+            pprint(f'Assigning new floating ip {floatingip_ip} for this port')
             result['floating'] = floatingip_ip
         return result
 
@@ -936,7 +1033,7 @@ class Kopenstack(object):
         neutron = self.neutron
         matchingports = [i for i in neutron.list_ports()['ports'] if i['name'] == name]
         if not matchingports:
-            msg = "Port %s not found" % name
+            msg = f"Port {name} not found"
             error(msg)
             return {'result': 'failure', 'reason': msg}
         self.neutron.delete_port(matchingports[0]['id'])
@@ -944,7 +1041,7 @@ class Kopenstack(object):
     def create_bucket(self, bucket, public=False):
         swift = self.swift
         if bucket in self.list_buckets():
-            error("Bucket %s already exists" % bucket)
+            error(f"Bucket {bucket} already exists")
             return
         headers = {"X-Container-Read": ".r:*"} if public else {}
         swift.put_container(bucket, headers=headers)
@@ -954,11 +1051,11 @@ class Kopenstack(object):
         try:
             containerinfo = swift.get_container(bucket)
         except:
-            error("Inexistent bucket %s" % bucket)
+            error(f"Inexistent bucket {bucket}")
             return
         for obj in containerinfo[1]:
             obj_name = obj['name']
-            pprint("Deleting object %s in bucket %s" % (obj_name, bucket))
+            pprint(f"Deleting object {obj_name} in bucket {bucket}")
             swift.delete_object(bucket, obj_name)
         swift.delete_container(bucket)
 
@@ -967,7 +1064,7 @@ class Kopenstack(object):
         try:
             containerinfo = swift.get_container(bucket)
         except:
-            error("Inexistent bucket %s" % bucket)
+            error(f"Inexistent bucket {bucket}")
             return
         for obj in containerinfo[1]:
             obj_name = obj['name']
@@ -981,7 +1078,7 @@ class Kopenstack(object):
         try:
             resp_headers, obj_contents = swift.get_object(bucket, path)
         except Exception as e:
-            error("Got %s" % e)
+            error(f"Got {e}")
             return
         with open(path, 'wb') as f:
             f.write(obj_contents)
@@ -989,7 +1086,7 @@ class Kopenstack(object):
     def upload_to_bucket(self, bucket, path, overrides={}, temp_url=False, public=False):
         swift = self.swift
         if not os.path.exists(path):
-            error("Invalid path %s" % path)
+            error(f"Invalid path {path}")
             return
         dest = os.path.basename(path)
         with open(path, 'rb') as f:
@@ -1007,10 +1104,100 @@ class Kopenstack(object):
         try:
             containerinfo = swift.get_container(bucket)
         except:
-            error("Inexistent bucket %s" % bucket)
+            error(f"Inexistent bucket {bucket}")
             return []
         return [obj['name'] for obj in containerinfo[1]]
 
     def public_bucketfile_url(self, bucket, path):
         swift_url = self.swift.http_connection()[0].geturl()
-        return "%s/%s/%s" % (swift_url, bucket, path)
+        return f"{swift_url}/{bucket}/{path}"
+
+    def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False):
+        print("not implemented")
+        return
+
+    def update_nic(self, name, index, network):
+        print("not implemented")
+
+    def update_network(self, name, dhcp=None, nat=None, domain=None, plan=None, overrides={}):
+        neutron = self.neutron
+        networks = [net for net in neutron.list_networks()['networks'] if net['name'] == name]
+        if not networks:
+            msg = f"Network {name} not found"
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
+        else:
+            network = networks[0]
+            network_id = network['id']
+        network_data = {}
+        if 'port_security_enabled' in overrides and isinstance(overrides['port_security_enabled'], bool):
+            network_data['port_security_enabled'] = overrides['port_security_enabled']
+        if 'mtu' in overrides and isinstance(overrides['port_security_enabled'], int):
+            network_data['mtu'] = overrides['mtu']
+        if 'description' in overrides:
+            network_data['description'] = str(overrides['description'])
+        if 'tags' in overrides and isinstance(overrides['tags'], list):
+            network_data['tags'] = overrides['tags']
+        if 'availability_zones' in overrides and isinstance(overrides['availability_zones'], list):
+            network_data['availability_zones'] = overrides['availability_zones']
+        if 'availability_zone_hints' in overrides and isinstance(overrides['availability_zone_hints'], list):
+            network_data['availability_zone_hints'] = overrides['availability_zone_hints']
+        if network_data:
+            neutron.update_network(network_id, {'network': network_data})
+        subnets = [sub for sub in self.neutron.list_subnets()['subnets'] if sub['id'] in network['subnets']]
+        if subnets:
+            subnet_data = {}
+            subnet = subnets[0]
+            subnet_id = subnet['id']
+            currentdhcp = subnet['enable_dhcp']
+            if dhcp is not None:
+                if not dhcp and currentdhcp:
+                    subnet_data['enable_dhcp'] = False
+                if dhcp and not currentdhcp:
+                    subnet_data['enable_dhcp'] = True
+            if 'dns_nameservers' in overrides and isinstance(overrides['dns_nameservers'], list):
+                subnet_data['dns_nameservers'] = overrides['dns_nameservers']
+            if 'dns' in overrides and isinstance(overrides['dns'], list):
+                subnet_data['dns_nameservers'] = overrides['dns']
+            if subnet_data:
+                neutron.update_subnet(subnet_id, {'subnet': subnet_data})
+        return {'result': 'success'}
+
+    def list_security_groups(self, network=None):
+        neutron = self.neutron
+        return [s['name'] for s in neutron.list_security_groups()['security_groups']]
+
+    def create_security_group(self, name, overrides={}):
+        neutron = self.neutron
+        security_group = {'name': name}
+        sg = neutron.create_security_group({'security_group': security_group})
+        sgid = sg['security_group']['id']
+        icmprule = {'security_group_rule': {'direction': 'ingress', 'security_group_id': sgid,
+                                            'protocol': 'icmp', 'remote_group_id': None,
+                                            'remote_ip_prefix': '0.0.0.0/0'}}
+        neutron.create_security_group_rule(icmprule)
+        ports = overrides.get('ports', [])
+        for port in ports:
+            if isinstance(port, str) or isinstance(port, int):
+                protocol = 'tcp'
+                fromport, toport = port, port
+            elif isinstance(port, dict):
+                protocol = port.get('protocol', 'tcp')
+                fromport = port.get('from')
+                toport = port.get('to') or fromport
+                if fromport is None:
+                    warning(f"Missing from in {ports}. Skipping")
+                    continue
+            pprint(f"Adding rule from {fromport} to {toport} protocol {protocol}")
+            rule = {'security_group_rule': {'direction': 'ingress', 'security_group_id': sgid,
+                                            'port_range_min': str(fromport), 'port_range_max': str(toport),
+                                            'protocol': protocol, 'remote_group_id': None,
+                                            'remote_ip_prefix': '0.0.0.0/0'}}
+            neutron.create_security_group_rule(rule)
+        return {'result': 'success'}
+
+    def delete_security_group(self, name):
+        sgs = [sg for sg in self.neutron.list_security_groups()['security_groups'] if sg['name'] == name]
+        if sgs:
+            sgs[0].delete()
+        return {'result': 'success'}

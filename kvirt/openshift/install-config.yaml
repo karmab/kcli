@@ -1,19 +1,14 @@
-{% set cluster_network_ipv6 = {"cidr": "fd01::/48", "hostPrefix": 64} %}
 {% set network_type = network_type|default('OpenShiftSDN') %}
-{% set cluster_network_ipv4 = {"cidr": "10.132.0.0/14", "hostPrefix": 23} %}
-{% set service_network_ipv6 = ["fd02::/112"] %}
-{% set service_network_ipv4 = ["172.30.0.0/16"] %}
-{% set machine_cidr_ipv4 = [baremetal_cidr if metal3 or ipi and ipi_platform else "10.0.0.0/16"] %}
-{% set machine_cidr_ipv6 = [baremetal_cidr if metal3 or ipi and ipi_platform else "fc00::/48"] %}
+{% set cluster_network_ipv4 = {"cidr": cluster_network_ipv4, "hostPrefix": 23} %}
+{% set cluster_network_ipv6 = {"cidr": cluster_network_ipv6, "hostPrefix": 64} %}
+{% set service_network_ipv4 = [service_network_ipv4] %}
+{% set service_network_ipv6 = [service_network_ipv6] %}
+{% set machine_cidr_ipv4 = ["10.0.0.0/16"] %}
+{% set machine_cidr_ipv6 = ["fc00::/48"] %}
 {% if dualstack|default(False) %}
 {% set machine_cidrs = machine_cidr_ipv4 + machine_cidr_ipv6 %}
 {% set cluster_networks = [cluster_network_ipv4] + [cluster_network_ipv6] %}
 {% set service_networks = service_network_ipv4 + service_network_ipv6 %}
-{% if ipv6 %}
-{% set machine_cidrs = machine_cidrs|reverse %}
-{% set cluster_networks = cluster_networks|reverse %}
-{% set service_networks = service_networks|reverse %}
-{% endif %}
 {% elif ipv6 %}
 {% set machine_cidrs = machine_cidr_ipv6 %}
 {% set cluster_networks = [cluster_network_ipv6] %}
@@ -22,9 +17,6 @@
 {% set machine_cidrs = machine_cidr_ipv4 %}
 {% set cluster_networks = [cluster_network_ipv4] %}
 {% set service_networks = service_network_ipv4 %}
-{% endif %}
-{% if ipi %}
-{% set ipi_platform = ipi_platform|default(config_type) %}
 {% endif %}
 apiVersion: v1
 {% if fips %}
@@ -41,69 +33,15 @@ proxy:
 {% endif %}
 compute:
 - name: worker
-  replicas: {{ workers }}
-{% if ipi %}
-{% if ipi_platform == 'aws' %}
-  platform:
-   aws:
-    type: {{ flavor if flavor != None else 'm5.xlarge' }}
-{% elif ipi_platform == 'gcp' %}
-  platform:
-   gcp:
-    type: {{ flavor if flavor != None else 'n2-standard-4' }}
-{% elif ipi_platform == 'ovirt' %}
-  platform:
-    ovirt:
-      cpu:
-        cores: {{ worker_numcpus | default(numcpus, numcpus) }}
-        sockets: 1
-      memoryMB: {{ worker_memory | default(memory, memory) }}
-      osDisk:
-        sizeGB: {{ disk_size }}
-      vmType: server
-{% elif ipi_platform == 'vsphere' %}
-  platform:
-    vsphere:
-      cpu:
-        cpus: {{ worker_numcpus | default(numcpus, numcpus) }}
-        coresPerSocket: 1
-        sockets: 1
-      memoryMB: {{ worker_memory | default(memory, memory) }}
-      osDisk:
-        diskSizeGB: {{ disk_size }}
-{% endif %}
-{% endif %}
+  replicas: {{ 0 if sno else workers }}
 controlPlane:
   name: master
-  replicas: {{ masters }}
-{% if ipi %}
-{% if ipi_platform == 'ovirt' %}
-  platform:
-    ovirt:
-      cpu:
-        cores: {{ master_numcpus | default(numcpus, numcpus) }}
-        sockets: 1
-      memoryMB: {{ master_memory | default(memory, memory) }}
-      osDisk:
-        sizeGB: {{ disk_size }}
-      vmType: server
-{% elif ipi_platform == 'vsphere' %}
-  platform:
-    vsphere:
-      cpu:
-        cpus: {{ master_numcpus | default(numcpus, numcpus) }}
-        coresPerSocket: 1
-        sockets: 1
-      memoryMB: {{ master_memory | default(memory, memory) }}
-      osDisk:
-        diskSizeGB: {{ disk_size }}
-{% endif %}
-{% endif %}
+  replicas: {{ 1 if sno else ctlplanes }}
 metadata:
   name: {{ cluster }}
 networking:
   networkType: {{ network_type }}
-{% if network_type == 'OVNKubernetes' or metal3 %}
+{% if network_type == 'OVNKubernetes' %}
   machineNetwork:
 {% for cidr in machine_cidrs %}
   - cidr: {{ cidr }}
@@ -119,144 +57,14 @@ networking:
   - {{ network }}
 {% endfor %}
 platform:
-{% if ipi %}
-{% if ipi_platform == 'aws' %}
-  aws:
-    region: {{ config_region }}
-    userTags:
-      plan: {{ plan }}
-{% elif ipi_platform == 'gcp' %}
-  gcp:
-    region: {{ config_region|default(config_zone[:-2]) }}
-    projectID: {{ config_project }}
-{% elif ipi_platform == 'vsphere' %}
-  vsphere:
-    apiVIP: {{ api_ip }}
-    ingressVIP: {{ ingress_ip }}
-    vcenter: {{ config_host }}
-    username: {{ config_user }}
-    password: {{ config_password }}
-    datacenter: {{ config_datacenter }}
-    defaultDatastore: {{ config_pool }}
-    cluster: {{ config_cluster }}
-    network: {{ network }}
-{% elif ipi_platform == 'ovirt' %}
-  ovirt:
-    api_vip: {{ api_ip }}
-    ingress_vip: {{ ingress_ip }}
-    ovirt_cluster_id: {{ ovirt_cluster_id }}
-    ovirt_storage_domain_id: {{ ovirt_storage_domain_id }}
-    ovirt_network_name: {{ network }}
-    vnicProfileID: {{ ovirt_vnic_profile_id }}
-{% elif ipi_platform in ['libvirt', 'kvm'] %}
-  libvirt:
-    URI: {{ libvirt_url }}
-{% elif ipi_platform == 'baremetal' %}
-  baremetal:
-    apiVIP: {{ api_ip }}
-    ingressVIP: {{ ingress_ip }}
-    provisioningNetwork: "Disabled"
-    externalBridge: {{ network }}
-    libvirtURI: {{ libvirt_url }}
-    hosts:
-{% for master in baremetal_masters %}
-{% set num = loop.index0|string %}
-    - name: {{ cluster }}-master-{{ num }}
-      role: master
-      bmc:
-        {% if 'redfish_address' in master %}
-        disableCertificateVerification: True
-        {% if 'redfish' in master['redfish_address'] or 'idrac' in master['redfish_address'] %}
-        address: {{ master['redfish_address'] }}
-        {% elif master['model']|default('idrac') == 'hpe' %}
-        address: redfish-virtualmedia://{{ master['redfish_address'] }}/redfish/v1/Systems/1
-        {% else %}
-        address: idrac-virtualmedia://{{ master['redfish_address'] }}/redfish/v1/Systems/System.Embedded.1
-        {% endif %}
-        {% endif %}
-        username: {{ master['user']|default(baremetal_user) }}
-        password: {{ master['password']|default(baremetal_password) }}
-{% if 'boot_mode' in master %}
-      bootMode: {{ master['boot_mode'] }}
-{% endif %}
-      bootMACAddress: {{ master['provisioning_mac'] }}
-      {% if 'disk' in master %}
-      rootDeviceHints:
-        deviceName: "/dev/{{ master['disk'] | basename }}"
-      {% endif %}
-{% endfor %}
-{% for worker in baremetal_workers|default([]) %}
-{% set num = loop.index0|string %}
-    - name: {{ cluster }}-worker-{{ num }}
-      role: worker
-      bmc:
-        {% if 'redfish_address' in worker %}
-        disableCertificateVerification: True
-        {% if 'redfish' in worker['redfish_address'] or 'idrac' in worker['redfish_address'] %}
-        address: {{ worker['redfish_address'] }}
-        {% elif worker['model']|default('idrac') == 'hpe' %}
-        address: redfish-virtualmedia://{{ worker['redfish_address'] }}/redfish/v1/Systems/1
-        {% else %}
-        address: idrac-virtualmedia://{{ worker['redfish_address'] }}/redfish/v1/Systems/System.Embedded.1
-        {% endif %}
-        {% endif %}
-        username: {{ worker['user']|default(baremetal_user) }}
-        password: {{ worker['password']|default(baremetal_password) }}
-{% if 'boot_mode' in worker %}
-      bootMode: {{ worker['boot_mode'] }}
-{% endif %}
-      bootMACAddress: {{ worker['provisioning_mac'] }}
-      {% if 'disk' in worker %}
-      rootDeviceHints:
-        deviceName: "/dev/{{ worker['disk'] | basename }}"
-      {% endif %}
-{% endfor %}
-{% endif %}
-{% elif config_type == 'vsphere' %}
+{% if config_type == 'vsphere' %}
   vsphere:
     vcenter: {{ config_host }}
     username: {{ config_user }}
     password: {{ config_password }}
     datacenter: {{ config_datacenter }}
     defaultDatastore: {{ config_pool }}
-{% elif metal3 %}
-  baremetal:
-    apiVIP: {{ api_ip }}
-    ingressVIP: {{ ingress_ip }}
-{% if not metal3_provisioning_enable %}
-    provisioningNetwork: "Disabled"
-{% else %}
-    provisioningBridge: {{ metal3_provisioning_net }}
-    provisioningNetworkInterface: {{ metal3_provisioning_interface }}
-{% endif %}
-{% if metal3_noprovisioning_ip != None %}
-    provisioningHostIP: {{ metal3_noprovisioning_ip }}
-{% endif %}
-{% if metal3_noprovisioning_bootstrap_ip != None %}
-    bootstrapProvisioningIP: {{ metal3_noprovisioning_bootstrap_ip }}
-{% endif %}
-{% if clusterosimage is defined %}
-    clusterOSImage: {{ clusterosimage }}
-{% endif %}
-    hosts:
-{% for num in range(0, masters) %}
-    - name: fake-master-{{ num }}
-      role: master
-      bmc:
-        address: ipmi://192.168.125.{{ 254 - num }}:6230
-        username: xxx
-        password: xxx
-      bootMACAddress: aa:bb:cc:dd:aa:{{ "%02.d"|format(num + 1) }}
-{% endfor %}
-{% for num in range(0, workers) %}
-    - name: fake-worker-{{ num }}
-      role: worker
-      bmc:
-        address: ipmi://192.168.115.{{ 254 - num }}:6230
-        username: xxx
-        password: xxx
-      bootMACAddress: aa:bb:cc:dd:bb:{{ "%02.d"|format(num + 1) }}
-{% endfor %}
+    folder: /{{ config_datacenter}}/vm/{{ cluster }}
 {% else %} 
   none: {}
 {% endif %}
@@ -274,10 +82,10 @@ sshKey: |
 {% if disconnected_url != None %}
 imageContentSources:
 - mirrors:
-  - {{ disconnected_url }}/ocp4
+  - {{ disconnected_url }}/{{ disconnected_prefix or "ocp4" }}
   source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
 - mirrors:
-  - {{ disconnected_url }}/ocp4
+  - {{ disconnected_url }}/{{ disconnected_prefix or "ocp4" }}
 {% if 'registry.build01.ci' in openshift_release_image %}
   source: registry.build01.ci.openshift.org/{{ (tag|string).split('/')[0] }}/stable
 {% elif ':' in tag|string %}

@@ -1,0 +1,37 @@
+{% if manifests|default([]) %}
+{% for entry in manifests %}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ entry['name'] }}
+  namespace: {{ namespace }}
+data:
+  config: '{{ entry["data"] }}'
+---
+{% endfor %}
+{% endif %}
+---
+apiVersion: hypershift.openshift.io/v1beta1
+kind: NodePool
+metadata:
+  name: {{ nodepool }}
+  namespace: {{ namespace }}
+spec:
+  clusterName: {{ cluster }}
+  replicas: 0
+  management:
+    autoRepair: false
+    upgradeType: InPlace
+  platform:
+    type: None
+  release:
+    image: "{{ nodepool_image }}"
+{% if manifests|default([]) %}
+  config:
+{% for entry in manifests %}
+  - name: {{ entry['name'] }}
+{% endfor %}
+{% endif %}
+status:
+  conditions: null
+  replicas: 0

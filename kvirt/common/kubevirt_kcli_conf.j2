@@ -1,0 +1,7 @@
+default:
+ client: {{ client }}
+{{ client }}:
+ type: kubevirt
+{% if kubeconfig %}
+ kubeconfig: ~/.kcli/kubeconfig
+{% endif %}

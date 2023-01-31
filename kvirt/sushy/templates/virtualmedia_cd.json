@@ -1,0 +1,32 @@
+{
+    "@odata.type": "#VirtualMedia.v1_4_0.VirtualMedia",
+    "Id": "Cd",
+    "Name": "Virtual CD",
+    "MediaTypes": [
+        "CD",
+        "DVD"
+        ],
+    "Image": "{{ image_url }}",
+    "ImageName": "",
+    "ConnectedVia": "URI",
+    "Inserted": {{ inserted|tojson }},
+    "WriteProtected": false,
+    "Actions": {
+        "#VirtualMedia.EjectMedia": {
+            "target": "/redfish/v1/Managers/{{ client }}/{{ name }}/VirtualMedia/Cd/Actions/VirtualMedia.EjectMedia"
+        },
+        "#VirtualMedia.InsertMedia": {
+            "target": "/redfish/v1/Managers/{{ client }}/{{ name }}/VirtualMedia/Cd/Actions/VirtualMedia.InsertMedia"
+        },
+        "Oem": {}
+    },
+    "UserName": "",
+    "Password": "",
+    "Certificates": {
+        "@odata.id": "/redfish/v1/Managers/{{ client }}/{{ name }}/VirtualMedia/Cd/Certificates"
+    },
+    "VerifyCertificate": false,
+    "@odata.context": "/redfish/v1/$metadata#VirtualMedia.VirtualMedia",
+    "@odata.id": "/redfish/v1/Managers/{{ client }}/{{ name }}/VirtualMedia/Cd",
+    "@Redfish.Copyright": "Copyright 2014-2017 Distributed Management Task Force, Inc. (DMTF). For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright."
+}

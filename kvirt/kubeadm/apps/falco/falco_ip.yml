@@ -1,0 +1,9 @@
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: falco-ip
+  namespace: metallb-system
+spec:
+  addresses:
+  - {{ falco_lb_ip }}-{{ falco_lb_ip }}
+  autoAssign: false

@@ -9,4 +9,4 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: autoapprover
-  namespace: openshift-infra
+  namespace: kcli-infra

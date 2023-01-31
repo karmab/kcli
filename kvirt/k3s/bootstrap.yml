@@ -4,43 +4,29 @@
   size: {{ kubevirt_disk_size }}
 {% endif %}
 
-{% if extra_master_networks %}
- {% set extra_networks = extra_master_networks %}
+{% if extra_ctlplane_networks %}
+ {% set extra_networks = extra_ctlplane_networks %}
 {% endif %}
-{% if extra_master_disks %}
- {% set extra_disks = extra_master_disks %}
-{% endif %}
-{% if numa_master != None %}
- {% set numa = numa_master %}
-{% endif %}
-{% if numamode_master != None %}
- {% set numa_mode = numamode_master %}
-{% endif %}
-{% if cpupinning_master != None %}
- {% set cpupinning = cpupinning_master %}
+{% if extra_ctlplane_disks %}
+ {% set extra_disks = extra_ctlplane_disks %}
 {% endif %}
 
-{{cluster}}-master-0:
+{{cluster}}-ctlplane-0:
  image: {{ image }}
  wait: true
  enableroot: true
  pool: {{ pool or config_pool }}
- numcpus: {{ master_numcpus | default(numcpus, numcpus) }}
- memory: {{ master_memory | default(memory, memory) }}
+ keys: {{ keys }}
+ numcpus: {{ ctlplane_numcpus | default(numcpus, numcpus) }}
+ memory: {{ ctlplane_memory | default(memory, memory) }}
  nets: {{ [network] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
  files: {{ files + ["keepalived.conf"] if files|default([]) else ["keepalived.conf"] }}
  scripts:
   - bootstrap.sh
-{% if masters > 1 and config_type not in ['aws', 'gcp'] %}
+{% if ctlplanes > 1 and config_type not in ['aws', 'gcp'] %}
   - keepalived.sh
 {% endif %}
-{% if numa != None %}
- numa: {{ numa }}
-{% endif %}
-{% if numamode != None %}
- numamode: {{ numamode }}
-{% endif %}
-{% if cpupinning != None %}
- cpupinning: {{ cpupinning }}
-{% endif %}
+ finishfiles:
+ - origin: /root/kubeconfig
+   path: ~/.kcli/clusters/{{ cluster }}/auth/kubeconfig

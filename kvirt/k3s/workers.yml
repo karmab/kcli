@@ -1,44 +1,28 @@
-{% for number in range(0, workers) %}
+{% for number in range(0, workers|int) %}
 {% if extra_worker_networks %}
  {% set extra_networks = extra_worker_networks %}
 {% endif %}
 {% if extra_worker_disks %}
  {% set extra_disks = extra_worker_disks %}
 {% endif %}
-{% if numa_worker != None %}
- {% set numa = numa_worker %}
-{% endif %}
-{% if numamode_worker != None %}
- {% set numamode = numamode_worker %}
-{% endif %}
-{% if cpupinning_worker != None %}
- {% set cpupinning = cpupinning_worker %}
-{% endif %}
 
-{{cluster }}-worker-{{ number }}:
+{% set default_worker = cluster + '-worker-' + number|string %}
+{% set worker = vmrules_names[number] if vmrules_names is defined else default_worker %}
+
+{{ worker }}:
  image: {{ image }}
  pool: {{ pool or config_pool }}
+ keys: {{ keys }}
  numcpus: {{ worker_numcpus | default(numcpus, numcpus) }}
  memory: {{ worker_memory | default(memory, memory) }}
  nets: {{ [network] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
  files:
-  - path: /root/join.sh
-    origin: {{ basedir }}/clusters/{{ cluster }}/join.sh
+ - join.sh
  cmds:
  - apt-get -y install curl
 {% if sdn != None and sdn == 'cilium' %}
  - mount bpffs -t bpf /sys/fs/bpf
 {% endif %}
  - bash /root/join.sh
- - apt-get -y remove curl
-{% if numa != None %}
- numa: {{ numa }}
-{% endif %}
-{% if numamode != None %}
- numamode: {{ numamode }}
-{% endif %}
-{% if cpupinning != None %}
- cpupinning: {{ cpupinning }}
-{% endif %}
 {% endfor %}

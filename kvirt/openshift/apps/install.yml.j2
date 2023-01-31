@@ -19,10 +19,16 @@ spec:
 apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
 metadata:
-  name: {{ name }}-subscription
+  name: {{ name }}
   namespace: {{ namespace }}
 spec:
   channel: "{{ channel }}"
   name: {{ name }}
   source: {{ source | default('redhat-operators') }}
   sourceNamespace: openshift-marketplace
+{% if csv is defined %}
+  startingCSV: {{ csv }}
+{% endif %}
+{% if installplan is defined %}
+  installPlanApproval: {{ installplan }}
+{% endif %}

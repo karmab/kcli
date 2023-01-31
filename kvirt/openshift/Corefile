@@ -2,7 +2,7 @@
     errors
     health :18080
 {% if mdns %}
-    mdns {{ cluster }}.{{ domain }} {{ masters if 'bootstrap' in name else '0' }} {{ cluster }}
+    mdns {{ cluster }}.{{ domain }} {{ ctlplanes if 'bootstrap' in name else '0' }} {{ cluster }}
 {% endif %}
     forward . NAMESERVER
     cache 30

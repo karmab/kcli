@@ -1,0 +1,89 @@
+global
+    log         127.0.0.1 local2
+    maxconn     4000
+    daemon
+
+defaults
+    mode                    http
+    log                     global
+    option                  httplog
+    option                  dontlognull
+    option http-server-close
+    option forwardfor       except 127.0.0.0/8
+    option                  redispatch
+    retries                 3
+    timeout http-request    10s
+    timeout queue           1m
+    timeout connect         10s
+    timeout client          1m
+    timeout server          1m
+    timeout http-keep-alive 10s
+    timeout check           10s
+    maxconn                 3000
+
+listen stats-50000
+    bind 0.0.0.0:50000
+    mode            http
+    log             global
+    maxconn 10
+    timeout client  100s
+    timeout server  100s
+    timeout connect 100s
+    # timeout queue   100s
+    stats enable
+    stats hide-version
+    stats refresh 30s
+    stats show-node
+    stats auth admin:password
+    stats uri  /haproxy?stats
+
+{% if ingress_ip != None %}
+{% set final_ip = ingress_ip %}
+{% else %}
+{% set final_ip = api_ip %}
+{% endif %}
+
+{% set domain = domain|replace('.', '-') %}
+
+listen api-7443
+    bind 0.0.0.0:7443
+    mode tcp
+    balance source
+    server bootstrap {{ cluster }}-bootstrap.{{ domain }}:6443 check inter 1s
+{% for num in range(0, ctlplanes) %}
+    server ctlplane{{ num }} {{ cluster }}-ctlplane-{{ num }}.{{ domain }}:6443 check inter 1s
+{% endfor %}
+
+listen machineconfig-23623
+    bind 0.0.0.0:23623
+    mode tcp
+    balance source
+    server bootstrap {{ cluster }}-bootstrap.{{ domain }}:22623 check inter 1s
+{% for num in range(0, ctlplanes) %}
+    server ctlplane{{ num }} {{ cluster }}-ctlplane-{{ num }}.{{ domain }}:22623 check inter 1s
+{% endfor %}
+
+listen machineconfig-23624
+    bind 0.0.0.0:23624
+    mode tcp
+    balance source
+    server bootstrap {{ cluster }}-bootstrap.{{ domain }}:22624 check inter 1s
+{% for num in range(0, ctlplanes) %}
+    server ctlplane{{ num }} {{ cluster }}-ctlplane-{{ num }}.{{ domain }}:22624 check inter 1s
+{% endfor %}
+
+listen ingress-1080
+    bind 0.0.0.0:1080
+    mode tcp
+    balance source
+{% for num in range(0, ctlplanes) %}
+    server ctlplane{{ num }} {{ cluster }}-ctlplane-{{ num }}.{{ domain }}:80 check inter 1s
+{% endfor %}
+
+listen ingress-1443
+    bind 0.0.0.0:1443
+    mode tcp
+    balance source
+{% for num in range(0, ctlplanes) %}
+    server ctlplane{{ num }} {{ cluster }}-ctlplane-{{ num }}.{{ domain }}:443 check inter 1s
+{% endfor %}

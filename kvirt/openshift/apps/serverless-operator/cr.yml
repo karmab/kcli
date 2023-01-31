@@ -2,4 +2,10 @@ apiVersion: operator.knative.dev/v1alpha1
 kind: KnativeServing
 metadata:
  name: knative-serving
- namespace: {{ namespace }}
+ namespace: knative-serving
+spec:
+  config:
+    autoscaler:
+      enable-scale-to-zero: "{{ knative_scale_to_zero|lower }}"
+      scale-to-zero-grace-period: "{{ knative_scale_to_zero_grace_period }}s"
+      pod-autoscaler-class: "{{ knative_pod_autoscaler_class }}"

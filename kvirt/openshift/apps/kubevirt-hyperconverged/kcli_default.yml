@@ -2,3 +2,5 @@ kubevirt_infra: master
 kubevirt_workloads: worker
 kubevirt_ovs: false
 kubevirt_featuregates: []
+kubevirt_tekton: false
+kubevirt_tekton_namespace: default

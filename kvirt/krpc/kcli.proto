@@ -111,6 +111,7 @@ message vminfo{
     string domain = 31 ;
     string iso = 32 ;
     string loadbalancerip = 33 ;
+    repeated string ips = 34 ;
 }
 
 message vmlist{

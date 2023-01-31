@@ -1,0 +1,12 @@
+spec:
+  configuration:
+    oauth:
+      identityProviders:
+      - name: htpassidp
+        challenge: true
+        login: true
+        mappingMethod: claim
+        type: HTPasswd
+        htpasswd:
+          fileData:
+            name: htpass-secret

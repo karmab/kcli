@@ -1,0 +1,80 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: vms.kcli.karmalabs.local
+spec:
+  group: kcli.karmalabs.local
+  scope: Namespaced
+  names:
+    plural: vms
+    singular: vm
+    kind: Vm
+  versions:
+  - name: v1
+    served: true
+    storage: true
+    schema:
+        openAPIV3Schema:
+          type: object
+          x-kubernetes-preserve-unknown-fields: true
+    additionalPrinterColumns:
+    - name: Status
+      type: string
+      description: Status
+      jsonPath: .status.create_vm.status
+    - name: Ip
+      type: string
+      description: Ip
+      jsonPath: .status.create_vm.ip
+    - name: Profile
+      type: string
+      description: Profile
+      jsonPath: .status.create_vm.profile
+    - name: Source
+      type: string
+      description: Source
+      jsonPath: .status.create_vm.image
+    - name: Plan
+      type: string
+      description: Plan
+      jsonPath: .status.create_vm.plan
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: plans.kcli.karmalabs.local
+spec:
+  group: kcli.karmalabs.local
+  scope: Namespaced
+  names:
+    plural: plans
+    singular: plan
+    kind: Plan
+  versions:
+  - name: v1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        x-kubernetes-preserve-unknown-fields: true
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: clusters.kcli.karmalabs.local
+spec:
+  group: kcli.karmalabs.local
+  scope: Namespaced
+  names:
+    plural: clusters
+    singular: cluster
+    kind: Cluster
+  versions:
+  - name: v1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        x-kubernetes-preserve-unknown-fields: true

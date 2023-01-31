@@ -1,0 +1,59 @@
+name: HYPERSHIFT-CI
+
+on:
+  workflow_dispatch:
+    inputs:
+      PLAN:
+        description: 'Plan Name'
+        required: true
+        default: ci-hypershift
+      PARAMFILE:
+        description: 'paramfile'
+        required: false
+        default: openshift-ci-paramfiles/hypershift.yml
+      EXTRAPARAMS:
+        description: 'Extra params'
+        default: ''
+      PULLSECRET:
+        description: 'Pull Secret'
+        required: false
+        default: /root/openshift_pull.json
+      VERSION:
+        description: 'version'
+        required: false
+        default: stable
+      TAG:
+        description: 'tag'
+        required: false
+        default: "4.12"
+
+env:
+ HOME: /root
+ PYTHONUNBUFFERED: true
+ KUBECONFIG: /root/.kcli/clusters/ci-libvirt/auth/kubeconfig
+ PLAN: ${{github.event.inputs.PLAN}}
+ PARAMFILE: ${{github.event.inputs.PARAMFILE}}
+ EXTRAPARAMS: ${{github.event.inputs.EXTRAPARAMS}}
+ PULLSECRET: ${{github.event.inputs.PULLSECRET}}
+ VERSION: ${{github.event.inputs.VERSION}}
+ TAG: ${{github.event.inputs.TAG}}
+
+jobs:
+    requirements:
+      runs-on: libvirt
+      steps:
+       - uses: actions/checkout@v2
+       - run: git pull origin ${GITHUB_REF##*/}
+       - name: Install kcli
+         run: |
+           curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
+       - name: Make sc default one
+         run: |
+           oc patch storageclass ocs-storagecluster-ceph-rbd -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+
+    deploy-hypershift-cluster:
+      needs: requirements
+      runs-on: libvirt
+      steps:
+      - name: Deploy hypershift cluster
+        run: kcli create cluster hypershift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET $PLAN --force

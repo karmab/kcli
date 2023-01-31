@@ -4,8 +4,8 @@
 container utilites
 """
 
-from distutils.spawn import find_executable
 import os
+from shutil import which
 
 
 class Kcontainer():
@@ -21,8 +21,8 @@ class Kcontainer():
         self.containermode = False
         self.engine = engine
         self.insecure = insecure
-        if self.host == '127.0.0.1' and not find_executable(engine):
-            reason = "executable %s not found in path" % engine
+        if self.host == '127.0.0.1' and which(engine) is None:
+            reason = f"executable {engine} not found in path"
             return {'result': 'failure', 'reason': reason}
         self.engine = engine
         if self.host == '127.0.0.1' and os.path.exists("/i_am_a_container"):
@@ -292,7 +292,7 @@ class Kcontainer():
                 containers.append([name, state, source, plan, command, portinfo, ''])
         else:
             containers = []
-            lscommand = "%s ps -a --format \"'{{.Names}}?{{.Status}}?{{.Image}}?{{.Command}}?{{.Ports}}?" % engine
+            lscommand = "%s ps -a --format \"{{.Names}}?{{.Status}}?{{.Image}}?{{.Command}}?{{.Ports}}?" % engine
             lscommand += "{{.Labels}}'\""
             if self.debug:
                 print(lscommand)

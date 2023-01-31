@@ -1,0 +1,26 @@
+---
+apiVersion: metallb.io/v1beta1
+kind: MetalLB
+metadata:
+  name: metallb
+  namespace: openshift-operators
+---
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: {{ metallb_pool }}
+  namespace: openshift-operators
+spec:
+  protocol: layer2
+  autoAssign: {{ metallb_autoassign }}
+  addresses:
+    - {{ metallb_range }}
+---
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: {{ metallb_pool }}
+  namespace: openshift-operators
+spec:
+  ipAddressPools:
+  - {{ metallb_pool }}

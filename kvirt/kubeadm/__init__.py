@@ -1,163 +1,179 @@
 #!/usr/bin/env python
 
-from distutils.spawn import find_executable
-from kvirt.common import success, error, pprint, warning, info2
-from kvirt.common import get_kubectl, kube_create_app, scp, _ssh_credentials
+from kvirt.common import success, error, pprint, warning, info2, container_mode
+from kvirt.common import get_kubectl, kube_create_app, get_ssh_pub_key
 from kvirt.defaults import UBUNTUS
 import os
+from random import choice
+from shutil import which
+from string import ascii_letters, digits
 import sys
+from time import sleep
 import yaml
 
-# virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere', 'packet']
-cloudplatforms = ['aws', 'gcp']
+# virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere']
+cloudplatforms = ['aws', 'gcp', 'ibm']
 
 
 def scale(config, plandir, cluster, overrides):
     plan = cluster
-    data = {'cluster': cluster, 'xip': False, 'kube': cluster, 'kubetype': 'generic'}
-    data['basedir'] = '/workdir' if os.path.exists("/i_am_a_container") else '.'
+    data = {'cluster': cluster, 'sslip': False, 'kube': cluster, 'kubetype': 'generic', 'image': 'centos8stream'}
+    data['basedir'] = '/workdir' if container_mode() else '.'
     cluster = data.get('cluster')
-    clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
-    if os.path.exists("%s/kcli_parameters.yml" % clusterdir):
-        with open("%s/kcli_parameters.yml" % clusterdir, 'r') as install:
+    clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
+    if os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
+        with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
             installparam = yaml.safe_load(install)
             data.update(installparam)
             plan = installparam.get('plan', plan)
     data.update(overrides)
-    with open("%s/kcli_parameters.yml" % clusterdir, 'w') as paramfile:
-        yaml.safe_dump(data, paramfile)
+    if os.path.exists(clusterdir):
+        with open(f"{clusterdir}/kcli_parameters.yml", 'w') as paramfile:
+            yaml.safe_dump(data, paramfile)
     client = config.client
-    k = config.k
-    pprint("Scaling on client %s" % client)
-    image = k.info("%s-master-0" % cluster).get('image')
-    if image is None:
-        error("Missing image...")
-        sys.exit(1)
-    else:
-        pprint("Using image %s" % image)
-    data['image'] = image
-    data['ubuntu'] = True if 'ubuntu' in image.lower() or [entry for entry in UBUNTUS if entry in image] else False
+    pprint(f"Scaling on client {client}")
+    image = data.get('image')
+    if 'ubuntu' not in data:
+        data['ubuntu'] = 'ubuntu' in image.lower() or len([u for u in UBUNTUS if u in image]) > 0
     os.chdir(os.path.expanduser("~/.kcli"))
-    for role in ['masters', 'workers']:
+    for role in ['ctlplanes', 'workers']:
         overrides = data.copy()
+        overrides['scale'] = True
         if overrides.get(role, 0) == 0:
             continue
-        config.plan(plan, inputfile='%s/%s.yml' % (plandir, role), overrides=overrides)
+        threaded = data.get('threaded', False) or data.get(f'{role}_threaded', False)
+        config.plan(plan, inputfile=f'{plandir}/{role}.yml', overrides=overrides, threaded=threaded)
 
 
 def create(config, plandir, cluster, overrides):
     platform = config.type
     k = config.k
-    data = {'kubetype': 'generic', 'xip': False, 'domain': 'karmalabs.com'}
+    data = {'kubetype': 'generic', 'sslip': False, 'domain': 'karmalabs.corp', 'wait_ready': False}
     data.update(overrides)
-    if 'keys' not in overrides and not os.path.exists(os.path.expanduser("~/.ssh/id_rsa.pub"))\
-            and not os.path.exists(os.path.expanduser("~/.ssh/id_dsa.pub"))\
-            and not os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub"))\
-            and not os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub")):
-        error("No usable public key found, which is required for the deployment")
+    if 'keys' not in overrides and get_ssh_pub_key() is None:
+        error("No usable public key found, which is required for the deployment. Create one using ssh-keygen")
         sys.exit(1)
-    data['cluster'] = overrides.get('cluster', cluster if cluster is not None else 'testk')
+    data['cluster'] = overrides.get('cluster', cluster if cluster is not None else 'mykube')
     plan = cluster if cluster is not None else data['cluster']
     data['kube'] = data['cluster']
-    masters = data.get('masters', 1)
-    if masters == 0:
-        error("Invalid number of masters")
+    cloud_lb = data.get('cloud_lb', True)
+    ctlplanes = data.get('ctlplanes', 1)
+    if ctlplanes == 0:
+        error("Invalid number of ctlplanes")
+        sys.exit(1)
+    if ctlplanes > 1 and platform in cloudplatforms and not cloud_lb:
+        error("multiple ctlplanes require cloud_lb to be set to True")
         sys.exit(1)
     network = data.get('network', 'default')
-    xip = data['xip']
     api_ip = data.get('api_ip')
     if platform in cloudplatforms:
-        domain = data.get('domain', 'karmalabs.com')
-        api_ip = "%s-master.%s" % (cluster, domain)
+        domain = data.get('domain', 'karmalabs.corp')
+        api_ip = f"{cluster}-ctlplane.{domain}"
     elif api_ip is None:
         if network == 'default' and platform == 'kvm':
             warning("Using 192.168.122.253 as api_ip")
             data['api_ip'] = "192.168.122.253"
             api_ip = "192.168.122.253"
         elif platform == 'kubevirt':
-            selector = {'kcli/plan': plan, 'kcli/role': 'master'}
-            api_ip = config.k.create_service("%s-api" % cluster, config.k.namespace, selector,
-                                             _type="LoadBalancer", ports=[6443])
+            selector = {'kcli/plan': plan, 'kcli/role': 'ctlplane'}
+            service_type = "LoadBalancer" if k.access_mode == 'LoadBalancer' else 'ClusterIP'
+            api_ip = config.k.create_service(f"{cluster}-api", config.k.namespace, selector, _type=service_type,
+                                             ports=[6443])
             if api_ip is None:
                 sys.exit(1)
             else:
-                pprint("Using api_ip %s" % api_ip)
+                pprint(f"Using api_ip {api_ip}")
                 data['api_ip'] = api_ip
         else:
             error("You need to define api_ip in your parameters file")
             sys.exit(1)
-    if xip and platform not in cloudplatforms:
-        data['domain'] = "%s.xip.io" % api_ip
-    if data.get('virtual_router_id') is None:
-        data['virtual_router_id'] = hash(data['cluster']) % 254 + 1
-    pprint("Using keepalived virtual_router_id %s" % data['virtual_router_id'])
+    if platform not in cloudplatforms:
+        if data.get('virtual_router_id') is None:
+            data['virtual_router_id'] = hash(data['cluster']) % 254 + 1
+        virtual_router_id = data['virtual_router_id']
+        pprint(f"Using keepalived virtual_router_id {virtual_router_id}")
+        auth_pass = ''.join(choice(ascii_letters + digits) for i in range(5))
+        data['auth_pass'] = auth_pass
     version = data.get('version')
     if version is not None and not str(version).startswith('1.'):
-        error("Invalid version %s" % version)
+        error(f"Invalid version {version}")
         sys.exit(1)
     if data.get('eksd', False) and data.get('engine', 'containerd') != 'docker':
         warning("Forcing engine to docker for eksd")
         data['engine'] = 'docker'
-    data['basedir'] = '/workdir' if os.path.exists("/i_am_a_container") else '.'
+    data['basedir'] = '/workdir' if container_mode() else '.'
     cluster = data.get('cluster')
-    image = data.get('image', 'centos7')
-    data['ubuntu'] = True if 'ubuntu' in image.lower() or [entry for entry in UBUNTUS if entry in image] else False
-    clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
-    firstmaster = "%s-master-0" % cluster
+    image = data.get('image', 'centos8stream')
+    data['ubuntu'] = 'ubuntu' in image.lower() or len([u for u in UBUNTUS if u in image]) > 0
+    clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if os.path.exists(clusterdir):
-        error("Please remove existing directory %s first..." % clusterdir)
+        error(f"Please remove existing directory {clusterdir} first")
         sys.exit(1)
-    if find_executable('kubectl') is None:
+    if which('kubectl') is None:
         get_kubectl()
     if not os.path.exists(clusterdir):
         os.makedirs(clusterdir)
-        os.mkdir("%s/auth" % clusterdir)
-        with open("%s/kcli_parameters.yml" % clusterdir, 'w') as p:
+        os.mkdir(f"{clusterdir}/auth")
+        with open(f"{clusterdir}/kcli_parameters.yml", 'w') as p:
             installparam = overrides.copy()
             installparam['api_ip'] = api_ip
-            installparam['virtual_router_id'] = data['virtual_router_id']
+            if 'virtual_router_id' in data:
+                installparam['virtual_router_id'] = data['virtual_router_id']
+            if 'auth_pass' in data:
+                installparam['auth_pass'] = auth_pass
             installparam['plan'] = plan
+            installparam['cluster'] = cluster
             installparam['kubetype'] = 'generic'
+            installparam['image'] = image
+            installparam['ubuntu'] = 'ubuntu' in image.lower() or len([u for u in UBUNTUS if u in image]) > 1
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
-    result = config.plan(plan, inputfile='%s/masters.yml' % plandir, overrides=data)
+    result = config.plan(plan, inputfile=f'{plandir}/bootstrap.yml', overrides=data)
     if result['result'] != "success":
         sys.exit(1)
-    source, destination = "/root/join.sh", "%s/join.sh" % clusterdir
-    firstmasterip, firstmastervmport = _ssh_credentials(k, firstmaster)[1:]
-    scpcmd = scp(firstmaster, ip=firstmasterip, user='root', source=source, destination=destination,
-                 tunnel=config.tunnel, tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
-                 tunneluser=config.tunneluser, download=True, insecure=True, vmport=firstmastervmport)
-    os.system(scpcmd)
-    source, destination = "/etc/kubernetes/admin.conf", "%s/auth/kubeconfig" % clusterdir
-    scpcmd = scp(firstmaster, ip=firstmasterip, user='root', source=source, destination=destination,
-                 tunnel=config.tunnel, tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
-                 tunneluser=config.tunneluser, download=True, insecure=True, vmport=firstmastervmport)
-    os.system(scpcmd)
+    if ctlplanes > 1:
+        ctlplane_threaded = data.get('threaded', False) or data.get('ctlplanes_threaded', False)
+        result = config.plan(plan, inputfile=f'{plandir}/ctlplanes.yml', overrides=data, threaded=ctlplane_threaded)
+        if result['result'] != "success":
+            sys.exit(1)
+    if cloud_lb and config.type in cloudplatforms:
+        config.k.delete_dns(f'api.{cluster}', domain=domain)
+        if config.type == 'aws':
+            data['vpcid'] = config.k.get_vpcid_of_vm(f"{cluster}-ctlplane-0")
+        result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_api.yml', overrides=data)
+        if result['result'] != 'success':
+            sys.exit(1)
     workers = data.get('workers', 0)
     if workers > 0:
         pprint("Deploying workers")
         if 'name' in data:
             del data['name']
         os.chdir(os.path.expanduser("~/.kcli"))
-        config.plan(plan, inputfile='%s/workers.yml' % plandir, overrides=data)
-    success("Kubernetes cluster %s deployed!!!" % cluster)
-    masters = data.get('masters', 1)
-    info2("export KUBECONFIG=$HOME/.kcli/clusters/%s/auth/kubeconfig" % cluster)
-    info2("export PATH=$PWD:$PATH")
+        worker_threaded = data.get('threaded', False) or data.get('workers_threaded', False)
+        config.plan(plan, inputfile=f'{plandir}/workers.yml', overrides=data, threaded=worker_threaded)
     prefile = 'pre_ubuntu.sh' if data['ubuntu'] else 'pre_el.sh'
-    predata = config.process_inputfile(plan, "%s/%s" % (plandir, prefile), overrides=data)
-    with open("%s/pre.sh" % clusterdir, 'w') as f:
+    predata = config.process_inputfile(plan, f"{plandir}/{prefile}", overrides=data)
+    with open(f"{clusterdir}/pre.sh", 'w') as f:
         f.write(predata)
-    os.environ['KUBECONFIG'] = "%s/auth/kubeconfig" % clusterdir
+    os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
     apps = data.get('apps', [])
     if apps:
-        os.environ["PATH"] += ":%s" % os.getcwd()
+        os.environ["PATH"] += f":{os.getcwd()}"
         for app in apps:
-            appdir = "%s/apps/%s" % (plandir, app)
+            appdir = f"{plandir}/apps/{app}"
             if not os.path.exists(appdir):
-                warning("Skipping unsupported app %s" % app)
+                warning(f"Skipping unsupported app {app}")
             else:
-                pprint("Adding app %s" % app)
-                if '%s_version' % app not in overrides:
-                    data['%s_version' % app] = 'latest'
+                pprint(f"Adding app {app}")
+                if f'{app}_version' not in overrides:
+                    data[f'{app}_version'] = 'latest'
                 kube_create_app(config, appdir, overrides=data)
+    if data['wait_ready']:
+        pprint("Waiting for all nodes to join cluster")
+        while True:
+            if len(os.popen("kubectl get node -o name").readlines()) == ctlplanes + workers:
+                break
+            else:
+                sleep(10)
+    success(f"Kubernetes cluster {cluster} deployed!!!")
+    info2(f"export KUBECONFIG=$HOME/.kcli/clusters/{cluster}/auth/kubeconfig")
+    info2("export PATH=$PWD:$PATH")

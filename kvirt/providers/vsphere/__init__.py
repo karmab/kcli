@@ -5,11 +5,9 @@ from binascii import hexlify
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
-from distutils.spawn import find_executable
 from kvirt import common
 from kvirt.common import error, pprint, warning
 from kvirt.defaults import UBUNTUS, METADATA_FIELDS
-from math import ceil
 from pyVmomi import vim, vmodl
 from pyVim import connect
 import json
@@ -17,351 +15,37 @@ import os
 import re
 import requests
 import random
-from ssl import _create_unverified_context, get_server_certificate
+from ssl import get_server_certificate
 import sys
 import tarfile
+from shutil import which
 from tempfile import TemporaryDirectory
 from threading import Thread
 import time
-import pyVmomi
 import webbrowser
 from zipfile import ZipFile
-
-
-def waitForMe(t):
-    while t.info.state not in [vim.TaskInfo.State.success, vim.TaskInfo.State.error]:
-        time.sleep(1)
-    if t.info.state == vim.TaskInfo.State.error:
-        error(t.info.description)
-        error(t.info.error)
-        sys.exit(1)
-
-
-def collectproperties(si, view, objtype, pathset=None, includemors=False):
-    collector = si.content.propertyCollector
-    # Create object specification to define the starting point of
-    # inventory navigation
-    objspec = pyVmomi.vmodl.query.PropertyCollector.ObjectSpec()
-    objspec.obj = view
-    objspec.skip = True
-    # Create a traversal specification to identify the path for collection
-    traversalspec = pyVmomi.vmodl.query.PropertyCollector.TraversalSpec()
-    traversalspec.name = 'traverseEntities'
-    traversalspec.path = 'view'
-    traversalspec.skip = False
-    traversalspec.type = view.__class__
-    objspec.selectSet = [traversalspec]
-    # Identify the properties to the retrieved
-    propertyspec = pyVmomi.vmodl.query.PropertyCollector.PropertySpec()
-    propertyspec.type = objtype
-    if not pathset:
-        propertyspec.all = True
-    propertyspec.pathSet = pathset
-    # Add the object and property specification to the
-    # property filter specification
-    filterspec = pyVmomi.vmodl.query.PropertyCollector.FilterSpec()
-    filterspec.objectSet = [objspec]
-    filterspec.propSet = [propertyspec]
-    # Retrieve properties
-    props = collector.RetrieveContents([filterspec])
-    data = []
-    for obj in props:
-        properties = {}
-        for prop in obj.propSet:
-            properties[prop.name] = prop.val
-        if includemors:
-            properties['obj'] = obj.obj
-        data.append(properties)
-    return data
-
-
-def find(si, folder, vimtype, name):
-    o = si.content.viewManager.CreateContainerView(folder, [vimtype], True)
-    view = o.view
-    o.Destroy()
-    element = None
-    for e in view:
-        if e.name == name:
-            element = e
-            break
-    return element
-
-
-def findvm(si, folder, name):
-    view = si.content.viewManager.CreateContainerView(folder, [vim.VirtualMachine], True)
-    vmlist = collectproperties(si, view=view, objtype=vim.VirtualMachine, pathset=['name'], includemors=True)
-    vm = list(filter(lambda v: v['name'] == name, vmlist))
-    if len(vm) >= 1:
-        return vm[-1]['obj']
-    else:
-        return None
-
-
-def convert(octets, GB=True):
-    # return str(float(octets) / 1024 / 1024 / 1024) + "GB"
-    result = str(ceil(float(octets) / 1024 / 1024 / 1024))
-    if GB:
-        result += "GB"
-    return result
-
-
-def dssize(ds):
-    di = ds.summary
-    return convert(di.capacity), convert(di.freeSpace)
-
-
-def makecuspec(name, nets=[], gateway=None, dns=None, domain=None):
-    customspec = vim.vm.customization.Specification()
-    ident = vim.vm.customization.LinuxPrep()
-    ident.hostName = vim.vm.customization.FixedName()
-    ident.hostName.name = name
-    globalip = vim.vm.customization.GlobalIPSettings()
-    if domain:
-        ident.domain = domain
-    customspec.identity = ident
-    if dns is not None or domain is not None:
-        if dns is not None:
-            globalip.dnsServerList = [dns]
-        # if dns2:
-        #    globalip.dnsServerList.append(dns2)
-        if domain is not None:
-            globalip.dnsSuffixList = domain
-    customspec.globalIPSettings = globalip
-    adaptermaps = []
-    for index, net in enumerate(nets):
-        if isinstance(net, str) or (len(net) == 1 and 'name' in net):
-            if index == 0:
-                continue
-            # nicname = "eth%d" % index
-            ip = None
-            netmask = None
-            # noconf = None
-            # vips = []
-        elif isinstance(net, dict):
-            # nicname = net.get('nic', "eth%d" % index)
-            ip = net.get('ip')
-            netmask = next((e for e in [net.get('mask'), net.get('netmask')] if e is not None), None)
-            # noconf = net.get('noconf')
-            # vips = net.get('vips')
-        if ip is not None and netmask is not None and gateway is not None and domain is not None:
-            guestmap = vim.vm.customization.AdapterMapping()
-            guestmap.adapter = vim.vm.customization.IPSettings()
-            guestmap.adapter.ip = vim.vm.customization.FixedIp()
-            guestmap.adapter.ip.ipAddress = ip
-            guestmap.adapter.subnetMask = netmask
-            guestmap.adapter.gateway = gateway
-            guestmap.adapter.dnsDomain = domain
-            adaptermaps.append(guestmap)
-    customspec.nicSettingMap = adaptermaps
-    return customspec
-
-
-def createnicspec(nicname, netname, nictype=None):
-    nicspec = vim.vm.device.VirtualDeviceSpec()
-    nicspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
-    if nictype == 'pcnet32':
-        nic = vim.vm.device.VirtualPCNet32()
-    elif nictype == 'e1000':
-        nic = vim.vm.device.VirtualE1000()
-    elif nictype == 'e1000e':
-        nic = vim.vm.device.VirtualE1000e()
-    else:
-        nic = vim.vm.device.VirtualVmxnet3()
-    desc = vim.Description()
-    desc.label = nicname
-    nicbacking = vim.vm.device.VirtualEthernetCard.NetworkBackingInfo()
-    desc.summary = netname
-    nicbacking.deviceName = netname
-    nic.backing = nicbacking
-    # nic.key = 0
-    nic.deviceInfo = desc
-    nic.addressType = 'generated'
-    nicspec.device = nic
-    return nicspec
-
-
-def createdvsnicspec(nicname, netname, switchuuid, portgroupkey, nictype=None):
-    nicspec = vim.vm.device.VirtualDeviceSpec()
-    nicspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
-    if nictype == 'pcnet32':
-        nic = vim.vm.device.VirtualPCNet32()
-    elif nictype == 'e1000':
-        nic = vim.vm.device.VirtualE1000()
-    elif nictype == 'e1000e':
-        nic = vim.vm.device.VirtualE1000e()
-    else:
-        nic = vim.vm.device.VirtualVmxnet3()
-    dnicbacking = vim.vm.device.VirtualEthernetCard.DistributedVirtualPortBackingInfo()
-    dvconnection = vim.dvs.DistributedVirtualSwitchPortConnection()
-    dvconnection.switchUuid = switchuuid
-    dvconnection.portgroupKey = portgroupkey
-    dnicbacking.port = dvconnection
-    nic.backing = dnicbacking
-    nicspec.device = nic
-    return nicspec
-
-
-def createscsispec():
-    ckey = 1000
-    # SCSISPEC
-    scsispec = vim.vm.device.VirtualDeviceSpec()
-    scsispec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
-    # scsictrl          = vim.vm.device.VirtualLsiLogicController()
-    scsictrl = vim.vm.device.ParaVirtualSCSIController()
-    scsictrl.key = ckey
-    scsictrl.busNumber = 0
-    scsictrl.sharedBus = vim.vm.device.VirtualSCSIController.Sharing.noSharing
-    scsispec.device = scsictrl
-    return scsispec
-
-
-def creatediskspec(number, disksize, ds, diskmode, thin=False):
-    ckey = 1000
-    diskspec = vim.vm.device.VirtualDeviceSpec()
-    diskspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
-    diskspec.fileOperation = vim.vm.device.VirtualDeviceSpec.FileOperation.create
-    vd = vim.vm.device.VirtualDisk()
-    vd.capacityInKB = disksize
-    diskspec.device = vd
-    vd.unitNumber = number
-    vd.controllerKey = ckey
-    diskfilebacking = vim.vm.device.VirtualDisk.FlatVer2BackingInfo()
-    filename = "[" + ds.name + "]"
-    diskfilebacking.fileName = filename
-    diskfilebacking.diskMode = diskmode
-    diskfilebacking.thinProvisioned = True if thin else False
-    vd.backing = diskfilebacking
-    return diskspec
-
-
-def createcdspec():
-    # http://books.google.es/books?id=SdsnGmhF0QEC&pg=PA145&lpg=PA145&dq=VirtualCdrom%2Bspec&source=bl&ots=s8O2mw437-&sig=JpEo-AqmDV42b3fxpTcCt4xknEA&hl=es&sa=X&ei=KgGfT_DqApOy8QOl07X6Dg&redir_esc=y#v=onepage&q=VirtualCdrom%2Bspec&f=false
-    cdspec = vim.vm.device.VirtualDeviceSpec()
-    cdspec.setOperation(vim.vm.device.VirtualDeviceSpec.Operation.add)
-    cd = vim.vm.device.VirtualCdrom()
-    cdbacking = vim.vm.device.VirtualCdrom.AtapiBackingInfo()
-    cd.backing = cdbacking
-    cd.controllerKey = 201
-    cd.unitNumber = 0
-    cd.key = -1
-    cdspec.device = cd
-    return cdspec
-
-
-def createisospec(iso=None):
-    cdspec = vim.vm.device.VirtualDeviceSpec()
-    cdspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
-    connect = vim.vm.device.VirtualDevice.ConnectInfo()
-    connect.startConnected = True
-    connect.allowGuestControl = True
-    connect.connected = False
-    cd = vim.vm.device.VirtualCdrom()
-    cd.connectable = connect
-    cdbacking = vim.vm.device.VirtualCdrom.IsoBackingInfo()
-    if iso is not None:
-        cdbacking.fileName = iso
-    cd.backing = cdbacking
-    cd.controllerKey = 201
-    cd.unitNumber = 0
-    cd.key = -1
-    cdspec.device = cd
-    return cdspec
-
-
-def createclonespec(pool):
-    clonespec = vim.vm.CloneSpec()
-    relocatespec = vim.vm.RelocateSpec()
-    relocatespec.pool = pool
-    clonespec.location = relocatespec
-    clonespec.powerOn = False
-    clonespec.template = False
-    return clonespec
-
-
-def create_filter_spec(pc, vms):
-    objSpecs = []
-    for vm in vms:
-        objSpec = vmodl.query.PropertyCollector.ObjectSpec(obj=vm)
-        objSpecs.append(objSpec)
-    filterSpec = vmodl.query.PropertyCollector.FilterSpec()
-    filterSpec.objectSet = objSpecs
-    propSet = vmodl.query.PropertyCollector.PropertySpec(all=False)
-    propSet.type = vim.VirtualMachine
-    propSet.pathSet = ['config.extraConfig.plan']
-    filterSpec.propSet = [propSet]
-    return filterSpec
-
-
-def filter_results(results):
-    vms = []
-    for o in results.objects:
-        if o.propSet[0].val is not None:
-            vms.append(o.obj)
-    return vms
-
-
-def changecd(si, vm, iso):
-    virtual_cdrom_device = None
-    for dev in vm.config.hardware.device:
-        if isinstance(dev, vim.vm.device.VirtualCdrom):
-            virtual_cdrom_device = dev
-            cdromspec = vim.vm.device.VirtualDeviceSpec()
-            cdromspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
-            cdromspec.device = vim.vm.device.VirtualCdrom()
-            cdromspec.device.controllerKey = virtual_cdrom_device.controllerKey
-            cdromspec.device.key = virtual_cdrom_device.key
-            cdromspec.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
-            cdromspec.device.backing = vim.vm.device.VirtualCdrom.IsoBackingInfo()
-            cdromspec.device.backing.fileName = iso
-            cdromspec.device.connectable.connected = True
-            cdromspec.device.connectable.startConnected = True
-            cdromspec.device.connectable.allowGuestControl = True
-            dev_changes = []
-            dev_changes.append(cdromspec)
-            spec = vim.vm.ConfigSpec()
-            spec.deviceChange = dev_changes
-            task = vm.ReconfigVM_Task(spec=spec)
-            return task
-    raise RuntimeError("No cdrom found")
-
-
-def createfolder(si, parentfolder, folder):
-    if find(si, parentfolder, vim.Folder, folder) is None:
-        parentfolder.CreateFolder(folder)
-    return None
-
-
-def deletefolder(si, parentfolder, folder):
-    folder = find(si, parentfolder, vim.Folder, folder)
-    if folder is not None:
-        folder.Destroy()
-
-
-def deletedirectory(si, dc, path):
-    d = si.content.fileManager.DeleteFile(path, dc)
-    waitForMe(d)
-
-
-def keep_lease_alive(lease):
-    while(True):
-        time.sleep(5)
-        try:
-            lease.HttpNfcLeaseProgress(50)
-            if (lease.state == vim.HttpNfcLease.State.done):
-                return
-        except:
-            return
+from kvirt.providers.vsphere.helpers import find, collectproperties, findvm, createfolder, changecd, convert, waitForMe
+from kvirt.providers.vsphere.helpers import createscsispec, creatediskspec, createdvsnicspec, createclonespec
+from kvirt.providers.vsphere.helpers import createnicspec, createisospec, deletedirectory, dssize, keep_lease_alive
+from kvirt.providers.vsphere.helpers import create_filter_spec, get_all_obj, convert_properties, findvm2
+from uuid import UUID
 
 
 class Ksphere:
     def __init__(self, host, user, password, datacenter, cluster, debug=False, isofolder=None,
-                 filtervms=False, filteruser=False, filtertag=None):
-        # 4-1-CONNECT
-        si = connect.SmartConnect(host=host, port=443, user=user, pwd=password, sslContext=_create_unverified_context())
+                 filtervms=False, filteruser=False, filtertag=None, category='kcli', basefolder=None, dvs=True,
+                 import_network='VM Network', timeout=1800):
+        if hasattr(connect, 'SmartConnectNoSSL'):
+            si = connect.SmartConnectNoSSL(host=host, port=443, user=user, pwd=password,
+                                           connectionPoolTimeout=timeout)
+        else:
+            si = connect.SmartConnect(host=host, port=443, user=user, pwd=password, disableSslCertValidation=True,
+                                      connectionPoolTimeout=timeout)
         self.conn = si
         self.si = si
         self.vcip = host
-        self.url = "https://%s:%s@%s/sdk" % (user, password, host)
+        self.category = category
+        self.url = f"https://{user}:{password}@{host}/sdk"
         self.user = user
         self.password = password
         self.rootFolder = si.content.rootFolder
@@ -375,20 +59,27 @@ class Ksphere:
         self.filtertag = filtertag
         self.debug = debug
         self.networks = []
+        self.dvs = dvs
+        self.portgs = {}
+        self.basefolder = basefolder
+        self.import_network = import_network
+        return
+
+    def set_networks(self):
+        si = self.si
         view = si.content.viewManager.CreateContainerView(self.rootFolder, [vim.Network], True)
         netlist = collectproperties(si, view=view, objtype=vim.Network, pathset=['name'], includemors=True)
-        for o in netlist:
-            self.networks.append(o['obj'].name)
-        portgs = {}
-        o = si.content.viewManager.CreateContainerView(self.rootFolder, [vim.DistributedVirtualSwitch], True)
-        dvnetworks = o.view
-        o.Destroy()
-        for dvnetw in dvnetworks:
-            uuid = dvnetw.uuid
-            for portg in dvnetw.portgroup:
-                portgs[portg.name] = [uuid, portg.key]
-        self.portgs = portgs
-        return
+        self.networks = [o['obj'].name for o in netlist]
+        if self.dvs:
+            portgs = {}
+            o = si.content.viewManager.CreateContainerView(self.rootFolder, [vim.DistributedVirtualSwitch], True)
+            dvnetworks = o.view
+            o.Destroy()
+            for dvnetw in dvnetworks:
+                uuid = dvnetw.uuid
+                for portg in dvnetw.portgroup:
+                    portgs[portg.name] = [uuid, portg.key]
+            self.portgs = portgs
 
     def close(self):
         self.si.content.sessionManager.Logout()
@@ -407,12 +98,12 @@ class Ksphere:
     def create(self, name, virttype=None, profile='kvirt', flavor=None, plan='kvirt', cpumodel='host-model',
                cpuflags=[], cpupinning=[], numcpus=2, memory=512, guestid='centos7_64Guest', pool='default', image=None,
                disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None,
-               vnc=False, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=None,
+               vnc=True, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=[],
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
                files=[], enableroot=True, overrides={}, tags=[], storemetadata=False, sharedfolders=[],
                kernel=None, initrd=None, cmdline=None, placement=[], autostart=False, cpuhotplug=False,
                memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False, metadata={},
-               securitygroups=[]):
+               securitygroups=[], vmuser=None):
         dc = self.dc
         vmFolder = dc.vmFolder
         diskmode = 'persistent'
@@ -423,16 +114,22 @@ class Ksphere:
         memory = int(memory)
         numcpus = int(numcpus)
         si = self.si
+        basefolder = self.basefolder
         rootFolder = self.rootFolder
+        if basefolder is not None:
+            createfolder(si, dc.vmFolder, basefolder)
+            basefolder = find(si, dc.vmFolder, vim.Folder, basefolder)
+        else:
+            basefolder = dc.vmFolder
         cluster = overrides.get('cluster')
         if cluster is not None:
-            createfolder(si, dc.vmFolder, cluster)
-            vmfolder = find(si, dc.vmFolder, vim.Folder, cluster)
+            createfolder(si, basefolder, cluster)
+            vmfolder = find(si, basefolder, vim.Folder, cluster)
         elif plan != 'kvirt':
-            createfolder(si, dc.vmFolder, plan)
-            vmfolder = find(si, dc.vmFolder, vim.Folder, plan)
+            createfolder(si, basefolder, plan)
+            vmfolder = find(si, basefolder, vim.Folder, plan)
         else:
-            vmfolder = dc.vmFolder
+            vmfolder = basefolder
         si = self.si
         clu = find(si, rootFolder, vim.ComputeResource, self.clu)
         resourcepool = clu.resourcePool
@@ -440,9 +137,11 @@ class Ksphere:
             rootFolder = self.rootFolder
             imageobj = findvm(si, rootFolder, image)
             if imageobj is None:
-                return {'result': 'failure', 'reason': "Image %s not found" % image}
+                return {'result': 'failure', 'reason': f"Image {image} not found"}
             clonespec = createclonespec(resourcepool)
             confspec = vim.vm.ConfigSpec()
+            confspec.flags = vim.vm.FlagInfo()
+            confspec.flags.diskUuidEnabled = True
             confspec.annotation = name
             confspec.memoryMB = memory
             confspec.numCPUs = numcpus
@@ -452,6 +151,11 @@ class Ksphere:
                 opt.key = entry
                 opt.value = metadata[entry]
                 extraconfig.append(opt)
+            if tags:
+                opt = vim.option.OptionValue()
+                opt.key = 'tags'
+                opt.value = ','.join(tags)
+                extraconfig.append(opt)
             clonespec.config = confspec
             clonespec.powerOn = False
             cloudinitiso = None
@@ -459,9 +163,9 @@ class Ksphere:
                 if image is not None and common.needs_ignition(image):
                     version = common.ignition_version(image)
                     ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
-                                                   domain=domain, reserveip=reserveip, files=files,
-                                                   enableroot=enableroot, overrides=overrides, version=version,
-                                                   plan=plan, image=image)
+                                                   domain=domain, files=files, enableroot=enableroot,
+                                                   overrides=overrides, version=version, plan=plan, image=image,
+                                                   vmuser=vmuser)
                     ignitionopt = vim.option.OptionValue()
                     ignitionopt.key = 'guestinfo.ignition.config.data'
                     ignitionopt.value = base64.b64encode(ignitiondata.encode()).decode()
@@ -487,14 +191,13 @@ class Ksphere:
                     cmds = cmds[:index] + gcmds + cmds[index:]
                     # customspec = makecuspec(name, nets=nets, gateway=gateway, dns=dns, domain=domain)
                     # clonespec.customization = customspec
-                    isofolder = self.isofolder if self.isofolder is not None else "[%s]/%s" % (default_pool, name)
-                    cloudinitiso = "%s/%s.ISO" % (isofolder, name)
+                    isofolder = self.isofolder if self.isofolder is not None else f"[{default_pool}]/{name}"
+                    cloudinitiso = f"{isofolder}/{name}.ISO"
                     userdata, meta, netdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets,
                                                                gateway=gateway, dns=dns, domain=domain,
-                                                               reserveip=reserveip, files=files,
-                                                               enableroot=enableroot, overrides=overrides,
+                                                               files=files, enableroot=enableroot, overrides=overrides,
                                                                storemetadata=storemetadata, machine='vsphere',
-                                                               image=image)
+                                                               image=image, vmuser=vmuser)
             for key in overrides:
                 if key.startswith('guestinfo.'):
                     guestopt = vim.option.OptionValue()
@@ -508,7 +211,7 @@ class Ksphere:
             if cloudinitiso is not None:
                 with TemporaryDirectory() as tmpdir:
                     common.make_iso(name, tmpdir, userdata, meta, netdata)
-                    cloudinitisofile = "%s/%s.ISO" % (tmpdir, name)
+                    cloudinitisofile = f"{tmpdir}/{name}.ISO"
                     if self.isofolder is not None:
                         isofolder = self.isofolder.split('/')
                         isopool = re.sub(r"[\[\]]", '', isofolder[0])
@@ -526,14 +229,19 @@ class Ksphere:
         confspec.annotation = name
         confspec.memoryMB = memory
         confspec.numCPUs = numcpus
+        if 'uuid' in overrides:
+            uuid = str(overrides['uuid'])
+            try:
+                UUID(uuid)
+                confspec.uuid = uuid
+            except:
+                warning(f"couldn't use {uuid} as uuid")
         confspec.extraConfig = []
         for entry in [field for field in metadata if field in METADATA_FIELDS]:
             opt = vim.option.OptionValue()
             opt.key = entry
             opt.value = metadata[entry]
             confspec.extraConfig.append(opt)
-        if nested:
-            confspec.nestedHVEnabled = True
         confspec.guestId = 'centos7_64Guest'
         vmfi = vim.vm.FileInfo()
         filename = "[" + default_pool + "]"
@@ -557,6 +265,7 @@ class Ksphere:
         currentnics = [d for d in currentdevices if isinstance(d, vim.vm.device.VirtualEthernetCard)]
         confspec = vim.vm.ConfigSpec()
         devconfspec = []
+        unit_number = 1
         for index, disk in enumerate(disks):
             if disk is None:
                 disksize = default_disksize
@@ -582,7 +291,7 @@ class Ksphere:
                 currentdisk = currentdisks[index]
                 currentsize = convert(1000 * currentdisk.capacityInKB, GB=False)
                 if int(currentsize) < disksize:
-                    pprint("Waiting for image disk %s to be resized" % index)
+                    pprint(f"Waiting for image disk {index} to be resized")
                     currentdisk.capacityInKB = disksize * 1048576
                     diskspec = vim.vm.ConfigSpec()
                     diskspec = vim.vm.device.VirtualDeviceSpec(device=currentdisk, operation="edit")
@@ -592,15 +301,20 @@ class Ksphere:
             if diskpool not in datastores:
                 datastore = find(si, rootFolder, vim.Datastore, diskpool)
                 if not datastore:
-                    return {'result': 'failure', 'reason': "Pool %s not found" % diskpool}
+                    return {'result': 'failure', 'reason': f"Pool {diskpool} not found"}
                 else:
                     datastores[diskpool] = datastore
             if index == 0:
                 scsispec = createscsispec()
                 devconfspec.append(scsispec)
-            diskspec = creatediskspec(index, disksize, datastore, diskmode, diskthin)
+            if unit_number == 7:
+                unit_number = 8
+            diskspec = creatediskspec(unit_number, disksize, datastore, diskmode, diskthin)
             devconfspec.append(diskspec)
+            unit_number += 1
         # NICSPEC
+        if not self.networks:
+            self.set_networks()
         for index, net in enumerate(nets):
             netname = net['name'] if isinstance(net, dict) else net
             if netname == 'default':
@@ -609,6 +323,7 @@ class Ksphere:
                 else:
                     netname = 'VM Network'
             if index < len(currentnics):
+                currentnetwork = None
                 currentnic = currentnics[index]
                 try:
                     currentnetwork = currentnic.backing.deviceName
@@ -619,7 +334,9 @@ class Ksphere:
                         if self.portgs[dvsnet][0] == currentswitchuuid and\
                                 self.portgs[dvsnet][1] == currentportgroupkey:
                             currentnetwork = dvsnet
-                if currentnetwork != netname:
+                if currentnetwork is None:
+                    warning(f"Couldn't figure out network associated to nic {index}")
+                elif currentnetwork != netname:
                     if netname in self.portgs:
                         switchuuid = self.portgs[netname][0]
                         portgroupkey = self.portgs[netname][1]
@@ -633,7 +350,7 @@ class Ksphere:
                         nicspec = vim.vm.device.VirtualDeviceSpec(device=currentnic, operation="edit")
                         devconfspec.append(nicspec)
                     else:
-                        return {'result': 'failure', 'reason': "Invalid network %s" % netname}
+                        return {'result': 'failure', 'reason': f"Invalid network {netname}"}
                 continue
             nicname = 'Network Adapter %d' % (index + 1)
             nictype = net['type'] if isinstance(net, dict) and 'type' in net else None
@@ -644,7 +361,7 @@ class Ksphere:
             elif netname in self.networks:
                 nicspec = createnicspec(nicname, netname, nictype=nictype)
             else:
-                return {'result': 'failure', 'reason': "Invalid network %s" % netname}
+                return {'result': 'failure', 'reason': f"Invalid network {netname}"}
             devconfspec.append(nicspec)
         if iso:
             if '/' not in iso:
@@ -652,12 +369,14 @@ class Ksphere:
                 if matchingisos:
                     iso = matchingisos[0]
                 else:
-                    return {'result': 'failure', 'reason': "Iso %s not found" % iso}
+                    return {'result': 'failure', 'reason': f"Iso {iso} not found"}
             cdspec = createisospec(iso)
             devconfspec.append(cdspec)
             # bootoptions = vim.option.OptionValue(key='bios.bootDeviceClasses',value='allow:hd,cd,fd,net')
             # confspec.bootOptions = vim.vm.BootOptions(bootOrder=[vim.vm.BootOptions.BootableCdromDevice()])
         confspec.deviceChange = devconfspec
+        if nested:
+            confspec.nestedHVEnabled = True
         t = vm.Reconfigure(confspec)
         waitForMe(t)
         if 'vmgroup' in overrides:
@@ -686,7 +405,7 @@ class Ksphere:
                 hostgroup = overrides['hostgroup']
                 hostrule = overrides['hostrule']
                 if hostgroup not in hostgroups:
-                    msg = "Hostgroup %s not found. It needs to exist prior to vm's creation" % hostgroup
+                    msg = f"Hostgroup {hostgroup} not found. It needs to exist prior to vm's creation"
                     return {'result': 'failure', 'reason': msg}
                 else:
                     hostgroup = hostgroups[hostgroup]
@@ -696,38 +415,83 @@ class Ksphere:
                             vmhostrulefound = True
                             break
                     if not vmhostrulefound:
-                        pprint("Creating vmhost rule %s" % hostrule)
+                        pprint(f"Creating vmhost rule {hostrule}")
                         rule_obj = vim.cluster.VmHostRuleInfo(vmGroupName=hostrule, affineHostGroupName=hostgroup.name,
                                                               name=vmgroup.name, enabled=True, mandatory=True)
                         rulespec = vim.cluster.RuleSpec(info=rule_obj, operation='add')
                         groups_spec = vim.cluster.ConfigSpecEx(rulesSpec=[rulespec])
                         t = clu.ReconfigureEx(groups_spec, modify=True)
                         waitForMe(t)
+        antipeers = overrides.get('antipeers', [])
+        if antipeers and antipeers[-1] == name:
+            antipeers_rule = '-'.join(antipeers)
+            pprint(f"Creating anti affinity rule {antipeers_rule}")
+            vms = []
+            for member in antipeers:
+                vm = findvm(si, vmFolder, member)
+                if vm is None:
+                    error(f"VM {member} not found")
+                else:
+                    vms.append(vm)
+            if len(vms) > 1:
+                rule_obj = vim.cluster.AntiAffinityRuleSpec(vm=vms, enabled=True, mandatory=True, name=antipeers_rule)
+                rulespec = vim.cluster.RuleSpec(info=rule_obj, operation='add')
+                groups_spec = vim.cluster.ConfigSpecEx(rulesSpec=[rulespec])
+                t = clu.ReconfigureEx(groups_spec, modify=True)
+                waitForMe(t)
         if start:
             t = vm.PowerOnVM_Task(None)
             waitForMe(t)
+        if tags:
+            pprint("Assigning tags")
+            from kvirt.providers.vsphere.tagging import KsphereTag
+            ktag = KsphereTag(self.vcip, self.user, self.password)
+            categories = {}
+            tags_ids = []
+            for entry in tags:
+                if isinstance(entry, str) and '=' in entry:
+                    category, tag = entry.split('=')
+                elif isinstance(entry, dict) and len(list(entry.keys())) == 1:
+                    category, tag = list(entry.keys())[0], list(entry.values())[0]
+                else:
+                    category, tag = self.category, entry
+                if category not in categories:
+                    category_id = ktag.get_category_id(category)
+                    if category_id is None:
+                        category_id = ktag.create_category(category)
+                    categories[category] = category_id
+                category_id = categories[category]
+                tag_id = ktag.get_tag_id(tag)
+                if tag_id is None:
+                    tag_id = ktag.create_tag(category_id, tag)
+                tags_ids.append(tag_id)
+            if tags_ids:
+                vm_id = vm._moId
+                ktag.add_tags(vm_id, tags_ids)
         return {'result': 'success'}
 
     def start(self, name):
         si = self.si
         dc = self.dc
-        vmFolder = dc.vmFolder
-        vm = findvm(si, vmFolder, name)
+        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vm, info = findvm2(si, vmFolder, name)
         if vm is None:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
-        if vm.runtime.powerState == "poweredOff":
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
+        runtime = info['runtime']
+        if runtime.powerState == "poweredOff":
             t = vm.PowerOnVM_Task(None)
             waitForMe(t)
         return {'result': 'success'}
 
-    def stop(self, name):
+    def stop(self, name, soft=False):
         si = self.si
         dc = self.dc
-        vmFolder = dc.vmFolder
-        vm = findvm(si, vmFolder, name)
+        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vm, info = findvm2(si, vmFolder, name)
         if vm is None:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
-        if vm.runtime.powerState == "poweredOn":
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
+        runtime = info['runtime']
+        if runtime.powerState == "poweredOn":
             t = vm.PowerOffVM_Task()
             waitForMe(t)
         return {'result': 'success'}
@@ -735,35 +499,43 @@ class Ksphere:
     def status(self, name):
         si = self.si
         dc = self.dc
-        vmFolder = dc.vmFolder
-        vm = findvm(si, vmFolder, name)
-        return vm.runtime.powerState if vm is not None else ''
+        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vm, info = findvm2(si, vmFolder, name)
+        runtime = info['runtime']
+        return runtime.powerState if vm is not None else ''
 
     def delete(self, name, snapshots=False):
         si = self.si
         dc = self.dc
-        vmFolder = dc.vmFolder
-        vm = findvm(si, vmFolder, name)
+        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vm, info = findvm2(si, vmFolder, name)
         if vm is None:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
+        summary = info['summary']
+        config = info['config']
+        runtime = info['runtime']
         plan, image, kube = 'kvirt', None, None
-        vmpath = vm.summary.config.vmPathName.replace('/%s.vmx' % name, '')
-        for entry in vm.config.extraConfig:
-            if entry.key == 'image':
-                image = entry.value
-            if entry.key == 'plan':
-                plan = entry.value
-            if entry.key == 'kube':
-                kube = entry.value
-        if vm.runtime.powerState == "poweredOn":
+        vmpath = summary.config.vmPathName.replace(f'/{name}.vmx', '')
+        if config is not None:
+            for entry in config.extraConfig:
+                if entry.key == 'image':
+                    image = entry.value
+                if entry.key == 'plan':
+                    plan = entry.value
+                if entry.key == 'kube':
+                    kube = entry.value
+        if runtime.powerState == "poweredOn":
             t = vm.PowerOffVM_Task()
             waitForMe(t)
         t = vm.Destroy_Task()
         waitForMe(t)
         if image is not None and 'coreos' not in image and 'rhcos' not in image and\
                 'fcos' not in image and vmpath.endswith(name):
-            isopath = "%s/%s.ISO" % (self.isofolder, name) if self.isofolder is not None else vmpath
-            deletedirectory(si, dc, isopath)
+            isopath = f"{self.isofolder}/{name}.ISO" if self.isofolder is not None else vmpath
+            try:
+                deletedirectory(si, dc, isopath)
+            except:
+                pass
         if kube is not None:
             clusterfolder = find(si, vmFolder, vim.Folder, kube)
             if clusterfolder is not None and len(clusterfolder.childEntity) == 0:
@@ -771,22 +543,27 @@ class Ksphere:
         elif plan != 'kvirt':
             planfolder = find(si, vmFolder, vim.Folder, plan)
             if planfolder is not None and len(planfolder.childEntity) == 0:
-                planfolder.Destroy()
+                try:
+                    planfolder.Destroy()
+                except Exception as e:
+                    error(f"Couldn't delete plan folder {plan}. Hit {e}")
         return {'result': 'success'}
 
     def console(self, name, tunnel=False, web=False):
         si = self.si
-        dc = self.dc
         vcip = self.vcip
-        vmFolder = dc.vmFolder
-        vm = findvm(si, vmFolder, name)
+        dc = self.dc
+        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vm, info = findvm2(si, vmFolder, name)
         if vm is None:
-            print("VM %s not found" % name)
+            print(f"VM {name} not found")
             return
-        elif vm.runtime.powerState == "poweredOff":
+        runtime = info['runtime']
+        config = info['config']
+        if runtime.powerState == "poweredOff":
             print("VM down")
             return
-        extraconfig = vm.config.extraConfig
+        extraconfig = config.extraConfig
         vncfound = False
         for extra in extraconfig:
             key, value = extra.key, extra.value
@@ -797,9 +574,9 @@ class Ksphere:
             else:
                 continue
         if vncfound:
-            host = vm.runtime.host.name
-            url = "vnc://%s:%s" % (host, vncport)
-            consolecommand = "remote-viewer %s &" % (url)
+            host = runtime.host.name
+            url = f"vnc://{host}:{vncport}"
+            consolecommand = f"remote-viewer {url} &"
             if web:
                 return url
             if self.debug or os.path.exists("/i_am_a_container"):
@@ -812,7 +589,7 @@ class Ksphere:
             cert = get_server_certificate((self.vcip, 443))
             cert_deserialize = x509.load_pem_x509_certificate(cert.encode(), default_backend())
             finger_print = hexlify(cert_deserialize.fingerprint(hashes.SHA1())).decode('utf-8')
-            sha1 = ":".join([finger_print[i: i + 2] for i in range(0, len(finger_print), 2)])
+            sha = ":".join([finger_print[i: i + 2] for i in range(0, len(finger_print), 2)])
             vcenter_data = content.setting
             vcenter_settings = vcenter_data.setting
             for item in vcenter_settings:
@@ -822,55 +599,72 @@ class Ksphere:
             sessionmanager = si.content.sessionManager
             session = sessionmanager.AcquireCloneTicket()
             vmid = vm._moId
-            vmurl = "https://%s/ui/webconsole.html?" % vcip
-            vmurl += "vmId=%s&vmName=%s&serverGuid=%s&host=%s&sessionTicket=%s&thumbprint=%s" % (vmid, name, sgid, fqdn,
-                                                                                                 session, sha1)
+            vmurl = f"https://{vcip}/ui/webconsole.html?"
+            vmurl += f"vmId={vmid}&vmName={name}&serverGuid={sgid}&host={fqdn}&sessionTicket={session}&thumbprint={sha}"
             if web:
                 return vmurl
             if self.debug or os.path.exists("/i_am_a_container"):
-                msg = "Open the following url:\n%s" % vmurl if os.path.exists("/i_am_a_container") else vmurl
+                msg = f"Open the following url:\n{vmurl}" if os.path.exists("/i_am_a_container") else vmurl
                 pprint(msg)
             else:
-                pprint("Opening url %s" % vmurl)
+                pprint(f"Opening url {vmurl}")
                 webbrowser.open(vmurl, new=2, autoraise=True)
 
     def info(self, name, output='plain', fields=[], values=False, vm=None, debug=False):
         translation = {'poweredOff': 'down', 'poweredOn': 'up', 'suspended': 'suspended'}
+        image = None
         yamlinfo = {}
         si = self.si
-        dc = self.dc
-        vmFolder = dc.vmFolder
         if vm is None:
             listinfo = False
-            vm = findvm(si, vmFolder, name)
+            dc = self.dc
+            basefolder = self.basefolder
+            vmFolder = find(si, dc.vmFolder, vim.Folder, basefolder) if basefolder is not None else dc.vmFolder
+            obj, vm = findvm2(si, vmFolder, name)
             if vm is None:
-                error("VM %s not found" % name)
+                error(f"VM {name} not found")
                 return {}
         else:
             listinfo = True
-        summary = vm.summary
+        summary = vm['summary']
+        config = vm['config']
+        runtime = vm['runtime']
+        guest = vm['guest']
         yamlinfo['name'] = name
         yamlinfo['id'] = summary.config.instanceUuid
-        yamlinfo['cpus'] = vm.config.hardware.numCPU
-        yamlinfo['memory'] = vm.config.hardware.memoryMB
-        yamlinfo['status'] = translation[vm.runtime.powerState]
+        yamlinfo['cpus'] = config.hardware.numCPU
+        yamlinfo['memory'] = config.hardware.memoryMB
+        yamlinfo['status'] = translation[runtime.powerState]
         yamlinfo['nets'] = []
         yamlinfo['disks'] = []
-        if vm.runtime.powerState == "poweredOn":
-            yamlinfo['host'] = vm.runtime.host.name
-            for nic in vm.guest.net:
-                if 'ip' not in yamlinfo and nic.ipAddress:
-                    yamlinfo['ip'] = nic.ipAddress[0]
-        for entry in vm.config.extraConfig:
+        ips = []
+        if runtime.powerState == "poweredOn":
+            yamlinfo['host'] = runtime.host.name
+            for nic in guest.net:
+                if nic.ipAddress:
+                    ip = nic.ipAddress[0]
+                    ips.append(ip)
+                    if 'ip' not in yamlinfo:
+                        yamlinfo['ip'] = ip
+        if len(ips) > 1:
+            yamlinfo['ips'] = ips
+        for entry in config.extraConfig:
             if entry.key in METADATA_FIELDS:
                 yamlinfo[entry.key] = entry.value
             if entry.key == 'image':
+                image = entry.value
                 yamlinfo['user'] = common.get_user(entry.value)
+            if entry.key == 'tags':
+                yamlinfo['tags'] = entry.value
         if listinfo:
             return yamlinfo
+        if image is None and 'kubetype' in yamlinfo and yamlinfo['kubetype'] == 'openshift':
+            yamlinfo['user'] = 'core'
         if debug:
-            yamlinfo['debug'] = vm.config.extraConfig
-        devices = vm.config.hardware.device
+            yamlinfo['debug'] = config
+        if not self.networks:
+            self.set_networks()
+        devices = config.hardware.device
         for number, dev in enumerate(devices):
             if "addressType" in dir(dev):
                 try:
@@ -888,7 +682,7 @@ class Ksphere:
                 net = {'device': device, 'mac': mac, 'net': network, 'type': networktype}
                 yamlinfo['nets'].append(net)
             if type(dev).__name__ == 'vim.vm.device.VirtualDisk':
-                device = "disk%s" % dev.unitNumber
+                device = dev.deviceInfo.label
                 disksize = convert(1000 * dev.capacityInKB, GB=False)
                 diskformat = dev.backing.diskMode
                 drivertype = 'thin' if dev.backing.thinProvisioned else 'thick'
@@ -896,20 +690,38 @@ class Ksphere:
                 disk = {'device': device, 'size': int(disksize), 'format': diskformat, 'type': drivertype,
                         'path': path}
                 yamlinfo['disks'].append(disk)
+        if obj.snapshot is not None and obj.snapshot.currentSnapshot is not None:
+            yamlinfo['snapshot'] = obj.snapshot.rootSnapshotList[0].name
         return yamlinfo
 
     def list(self):
-        rootFolder = self.rootFolder
         si = self.si
+        dc = self.dc
+        content = si.content
         vms = []
-        view = si.content.viewManager.CreateContainerView(rootFolder, [vim.VirtualMachine], True)
-        vmlist = collectproperties(si, view=view, objtype=vim.VirtualMachine, pathset=['name'], includemors=True)
-        for o in vmlist:
-            vm = o['obj']
-            if vm.summary.runtime.connectionState != 'orphaned' and not vm.config.template:
-                if self.filtervms and 'plan' not in [x.key for x in vm.config.extraConfig]:
+        folder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        all_vms = get_all_obj(content, [vim.VirtualMachine], folder=folder)
+        if not all_vms:
+            return vms
+        prop_collector = content.propertyCollector
+        props = ['runtime', 'config', 'summary', 'guest']
+        filter_spec = create_filter_spec(all_vms, props)
+        options = vmodl.query.PropertyCollector.RetrieveOptions()
+        vmlist = prop_collector.RetrievePropertiesEx([filter_spec], options)
+        for o in vmlist.objects:
+            obj = o.obj
+            vmname = obj.name
+            vm = convert_properties(o)
+            summary, config = vm.get('summary'), vm.get('config')
+            if summary is None or config is None:
+                continue
+            elif summary.runtime.connectionState != 'orphaned' and not config.template:
+                if self.filtervms and 'plan' not in [x.key for x in config.extraConfig]:
                     continue
-                vms.append(self.info(o['name'], vm=vm))
+                try:
+                    vms.append(self.info(vmname, vm=vm))
+                except:
+                    continue
         return sorted(vms, key=lambda x: x['name'])
 
     def list_pools(self):
@@ -967,16 +779,15 @@ class Ksphere:
             fileinfo = result.file
             for element in fileinfo:
                 folderpath = element.path
-                if not folderpath.endswith('iso') and 'ISO' in folderpath.upper():
-                    t = browser.SearchDatastoreSubFolders_Task("%s%s" % (datastorepath, folderpath), searchspec)
-                    waitForMe(t)
-                    results = t.info.result
-                    for r in results:
-                        fileinfo = r.file
-                        for isofile in fileinfo:
-                            path = isofile.path
-                            if path.endswith('.iso'):
-                                isos.append("%s/%s/%s" % (datastorepath, folderpath, path))
+                t = browser.SearchDatastoreSubFolders_Task(f"{datastorepath}{folderpath}", searchspec)
+                waitForMe(t)
+                results = t.info.result
+                for r in results:
+                    fileinfo = r.file
+                    for isofile in fileinfo:
+                        path = isofile.path
+                        if path.endswith('.iso'):
+                            isos.append(f"{datastorepath}/{folderpath}/{path}")
         return isos
 
     def volumes(self, iso=False):
@@ -988,8 +799,8 @@ class Ksphere:
         vmlist = o.view
         o.Destroy()
         return [v.name for v
-                in vmlist if v.config.template and v.summary is not
-                None and v.summary.runtime.connectionState != 'orphaned']
+                in vmlist if v.config.template and
+                (v.summary is None or (v.summary is not None and v.summary.runtime.connectionState != 'orphaned'))]
 
     def update_metadata(self, name, metatype, metavalue, append=False):
         si = self.si
@@ -997,7 +808,7 @@ class Ksphere:
         vmFolder = dc.vmFolder
         vm = findvm(si, vmFolder, name)
         if vm is None:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         configspec = vim.vm.ConfigSpec()
         opt = vim.option.OptionValue()
         opt.key = metatype
@@ -1027,17 +838,54 @@ class Ksphere:
         dc = self.dc
         vmFolder = dc.vmFolder
         vm = findvm(si, vmFolder, name)
-        isos = [i for i in self._getisos() if i.endswith(iso)]
-        if not isos:
-            error("Iso %s not found.Leaving..." % iso)
-            return {'result': 'failure', 'reason': "Iso %s not found" % iso}
-        else:
-            iso = isos[0]
+        if iso is not None:
+            isos = [i for i in self._getisos() if i.endswith(iso)]
+            if not isos:
+                error(f"Iso {iso} not found.Leaving...")
+                return {'result': 'failure', 'reason': f"Iso {iso} not found"}
+            else:
+                iso = isos[0]
         if vm is None:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         c = changecd(self.si, vm, iso)
+        if iso is None:
+            answered = False
+            timeout = 0
+            while not answered:
+                question = vm.runtime.question
+                if question is not None:
+                    pprint(f"Answering the following question automatically\n{vm.runtime.question.text}")
+                    choice = vm.runtime.question.choice.choiceInfo[0].key
+                    vm.AnswerVM(question.id, choice)
+                    answered = True
+                elif timeout > 20:
+                    break
+                else:
+                    time.sleep(5)
         waitForMe(c)
         return {'result': 'success'}
+
+    def convert_to_template(self, name):
+        si = self.si
+        dc = self.dc
+        vmFolder = dc.vmFolder
+        vm = findvm(si, vmFolder, name)
+        if vm is None:
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
+        else:
+            vm.MarkAsTemplate()
+
+    def convert_to_vm(self, name):
+        si = self.si
+        dc = self.dc
+        vmFolder = dc.vmFolder
+        vm = findvm(si, vmFolder, name)
+        if vm is None:
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
+        else:
+            rootFolder = self.rootFolder
+            clu = find(si, rootFolder, vim.ComputeResource, self.clu)
+            vm.MarkAsVirtualMachine(pool=clu.resourcePool)
 
     def dnsinfo(self, name):
         return None, None
@@ -1047,12 +895,11 @@ class Ksphere:
         rootFolder = self.rootFolder
         datastore = find(si, rootFolder, vim.Datastore, pool)
         if not datastore:
-            return {'result': 'failure', 'reason': "Pool %s not found" % pool}
+            return {'result': 'failure', 'reason': f"Pool {pool} not found"}
         destination = os.path.basename(origin)
         if isofolder is not None:
             directory = isofolder
-        url = "https://%s:443/folder/%s/%s?dcPath=%s&dsName=%s" % (self.vcip, directory, destination, self.dc.name,
-                                                                   pool)
+        url = f"https://{self.vcip}:443/folder/{directory}/{destination}?dcPath={self.dc.name}&dsName={pool}"
         client_cookie = si._stub.cookie
         cookie_name = client_cookie.split("=", 1)[0]
         cookie_value = client_cookie.split("=", 1)[1].split(";", 1)[0]
@@ -1069,7 +916,7 @@ class Ksphere:
                     url = url.replace('/folder', '')
                     r = requests.put(url, data=f, headers=headers, cookies=cookie, verify=False)
                 if r.status_code not in [200, 201]:
-                    error("Got status %s with reason: %s" % (r.status_code, r.reason))
+                    error(f"Got status {r.status_code} with reason: {r.reason}")
 
     def get_pool_path(self, pool):
         return pool
@@ -1078,13 +925,14 @@ class Ksphere:
                  interface='virtio', novm=False, overrides={}):
         si = self.si
         dc = self.dc
-        vmFolder = dc.vmFolder
-        vm = findvm(si, vmFolder, name)
+        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vm, info = findvm2(si, vmFolder, name)
         if vm is None:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
+        config = info['config']
         spec = vim.vm.ConfigSpec()
         unit_number = 0
-        for dev in vm.config.hardware.device:
+        for dev in config.hardware.device:
             if hasattr(dev.backing, 'fileName'):
                 unit_number = int(dev.unitNumber) + 1
                 if unit_number == 7:
@@ -1111,11 +959,14 @@ class Ksphere:
     def delete_disk(self, name=None, diskname=None, pool=None, novm=False):
         si = self.si
         dc = self.dc
-        vmFolder = dc.vmFolder
-        vm = findvm(si, vmFolder, name)
+        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vm, info = findvm2(si, vmFolder, name)
         if vm is None:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
-        for dev in vm.config.hardware.device:
+            msg = f"VM {name} not found"
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
+        config = info['config']
+        for dev in config.hardware.device:
             if isinstance(dev, vim.vm.device.VirtualDisk) and dev.deviceInfo.label == diskname:
                 devspec = vim.vm.device.VirtualDeviceSpec()
                 devspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.remove
@@ -1125,19 +976,22 @@ class Ksphere:
                 t = vm.ReconfigVM_Task(spec=spec)
                 waitForMe(t)
                 return {'result': 'success'}
-        return {'result': 'failure', 'reason': "Disk %s not found in %s" % (diskname, name)}
+        msg = f"Disk {diskname} not found in {name}"
+        error(msg)
+        return {'result': 'failure', 'reason': error}
 
     def add_nic(self, name, network):
         if network == 'default':
             network = 'VM Network'
         si = self.si
         dc = self.dc
-        vmFolder = dc.vmFolder
-        vm = findvm(si, vmFolder, name)
+        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vm, info = findvm2(si, vmFolder, name)
         if vm is None:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
+        config = info['config']
         spec = vim.vm.ConfigSpec()
-        nicnumber = len([dev for dev in vm.config.hardware.device if "addressType" in dir(dev)])
+        nicnumber = len([dev for dev in config.hardware.device if "addressType" in dir(dev)])
         nicname = 'Network adapter %d' % (nicnumber + 1)
         nicspec = createnicspec(nicname, network)
         nic_changes = [nicspec]
@@ -1149,11 +1003,12 @@ class Ksphere:
     def delete_nic(self, name, interface):
         si = self.si
         dc = self.dc
-        vmFolder = dc.vmFolder
-        vm = findvm(si, vmFolder, name)
+        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vm, info = findvm2(si, vmFolder, name)
         if vm is None:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
-        for dev in vm.config.hardware.device:
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
+        config = info['config']
+        for dev in config.hardware.device:
             if isinstance(dev, vim.vm.device.VirtualEthernetCard) and dev.deviceInfo.label == interface:
                 devspec = vim.vm.device.VirtualDeviceSpec()
                 devspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.remove
@@ -1163,15 +1018,12 @@ class Ksphere:
                 t = vm.ReconfigVM_Task(spec=spec)
                 waitForMe(t)
                 return {'result': 'success'}
-        return {'result': 'failure', 'reason': "Nic %s not found in %s" % (interface, name)}
+        return {'result': 'failure', 'reason': f"Nic {interface} not found in {name}"}
 
     def list_networks(self):
         si = self.si
         rootFolder = si.content.rootFolder
         networks = {}
-        view = si.content.viewManager.CreateContainerView(rootFolder, [vim.dvs.DistributedVirtualPortgroup], True)
-        dvslist = collectproperties(si, view=view, objtype=vim.dvs.DistributedVirtualPortgroup, pathset=['name'],
-                                    includemors=True)
         view = si.content.viewManager.CreateContainerView(rootFolder, [vim.Network], True)
         netlist = collectproperties(si, view=view, objtype=vim.Network, pathset=['name'], includemors=True)
         for o in netlist:
@@ -1179,11 +1031,20 @@ class Ksphere:
             cidr, dhcp, domainname = '', '', ''
             mode = 'accessible' if network.summary.accessible else 'notaccessible'
             networks[network.name] = {'cidr': cidr, 'dhcp': dhcp, 'domain': domainname, 'type': 'routed', 'mode': mode}
-        for o in dvslist:
-            network = o['obj']
-            cidr, dhcp, domainname, mode = '', '', '', ''
-            networks[network.name] = {'cidr': cidr, 'dhcp': dhcp, 'domain': domainname, 'type': 'routed', 'mode': mode}
+        if self.dvs:
+            view = si.content.viewManager.CreateContainerView(rootFolder, [vim.dvs.DistributedVirtualPortgroup], True)
+            dvslist = collectproperties(si, view=view, objtype=vim.dvs.DistributedVirtualPortgroup, pathset=['name'],
+                                        includemors=True)
+            for o in dvslist:
+                network = o['obj']
+                cidr, dhcp, domainname, mode = '', '', '', ''
+                networks[network.name] = {'cidr': cidr, 'dhcp': dhcp, 'domain': domainname, 'type': 'routed',
+                                          'mode': mode}
         return networks
+
+    def info_network(self, name):
+        networkinfo = common.info_network(self, name)
+        return networkinfo
 
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
         si = self.si
@@ -1192,14 +1053,14 @@ class Ksphere:
         rootFolder = self.rootFolder
         net = find(si, rootFolder, vim.Network, name)
         if net is not None:
-            return {'result': 'failure', 'reason': "Network %s already there" % name}
+            return {'result': 'failure', 'reason': f"Network {name} already there"}
         o = si.content.viewManager.CreateContainerView(rootFolder, [vim.DistributedVirtualSwitch], True)
         dvnetworks = o.view
         o.Destroy()
         for dvnetw in dvnetworks:
             for portg in dvnetw.portgroup:
                 if portg.name == name:
-                    return {'result': 'failure', 'reason': "Network %s already there" % name}
+                    return {'result': 'failure', 'reason': f"Network {name} already there"}
         if overrides.get('distributed', False):
             pnic_specs = []
             dvs_host_configs = []
@@ -1241,84 +1102,106 @@ class Ksphere:
                 net = find(si, rootFolder, vim.Network, name)
                 net.Destroy()
             except:
-                return {'result': 'failure', 'reason': "Network %s not found" % name}
+                return {'result': 'failure', 'reason': f"Network {name} not found"}
         return {'result': 'success'}
 
     def vm_ports(self, name):
         return []
 
     def add_image(self, url, pool, short=None, cmd=None, name=None, size=None):
+        downloaded = False
         si = self.si
         rootFolder = self.rootFolder
         clu = find(si, rootFolder, vim.ComputeResource, self.clu)
         resourcepool = clu.resourcePool
         vmFolder = self.dc.vmFolder
         manager = si.content.ovfManager
+        network = find(si, rootFolder, vim.Network, self.import_network)
+        if network is None:
+            return {'result': 'failure', 'reason': f"Import network {self.import_network} not found"}
         shortimage = os.path.basename(url).split('?')[0]
-        if not shortimage.endswith('ova') and not shortimage.endswith('zip') and find_executable('qemu-img') is None:
+        name = name.replace('.ova', '').replace('.x86_64', '') if name is not None else shortimage
+        iso = True if shortimage.endswith('.iso') or name.endswith('.iso') else False
+        if not shortimage.endswith('ova') and not shortimage.endswith('zip') and not iso\
+           and which('qemu-img') is None:
             msg = "qemu-img is required for conversion"
             error(msg)
             return {'result': 'failure', 'reason': msg}
-        if name is None:
-            name = name.replace('.ova', '').replace('.x86_64', '')
         if shortimage in self.volumes():
-            pprint("Template %s already there" % shortimage)
+            pprint(f"Template {shortimage} already there")
             return {'result': 'success'}
         if not find(si, rootFolder, vim.Datastore, pool):
-            return {'result': 'failure', 'reason': "Pool %s not found" % pool}
-        if not os.path.exists('/tmp/%s' % shortimage):
-            pprint("Downloading locally %s" % shortimage)
-            downloadcmd = "curl -Lo /tmp/%s -f '%s'" % (shortimage, url)
+            return {'result': 'failure', 'reason': f"Pool {pool} not found"}
+        if os.path.exists(url):
+            pprint(f"Using {url} as path")
+        elif not os.path.exists(f'/tmp/{shortimage}'):
+            downloaded = True
+            pprint(f"Downloading locally {shortimage}")
+            downloadcmd = f"curl -Lo /tmp/{shortimage} -f '{url}'"
             code = os.system(downloadcmd)
             if code != 0:
                 return {'result': 'failure', 'reason': "Unable to download indicated image"}
         else:
-            pprint("Using found /tmp/%s" % shortimage)
+            pprint(f"Using found /tmp/{shortimage}")
+        if iso:
+            isofile = os.path.abspath(url) if os.path.exists(url) else f"/tmp/{shortimage}"
+            if name is not None:
+                new_file = f"{os.path.dirname(isofile)}/{name}"
+                os.rename(isofile, new_file)
+                isofile = new_file
+            if self.isofolder is not None:
+                isofolder = self.isofolder.split('/')
+                isopool = re.sub(r"[\[\]]", '', isofolder[0])
+                isofolder = isofolder[1]
+            else:
+                isopool = pool
+                isofolder = None
+            destination = '' if isofolder is not None else name
+            self._uploadimage(isopool, isofile, destination, isofolder=isofolder)
+            return {'result': 'success'}
         vmdk_path = None
         ovf_path = None
         if url.endswith('zip'):
-            with ZipFile("/tmp/%s" % shortimage) as zipf:
+            with ZipFile(f"/tmp/{shortimage}") as zipf:
                 for _fil in zipf.namelist():
                     if _fil.endswith('vmdk'):
-                        vmdk_path = '/tmp/%s' % _fil
+                        vmdk_path = f'/tmp/{_fil}'
                     elif _fil.endswith('ovf'):
-                        ovf_path = '/tmp/%s' % _fil
+                        ovf_path = f'/tmp/{_fil}'
                 if vmdk_path is None or ovf_path is None:
                     return {'result': 'failure', 'reason': "Incorrect ova file"}
                 zipf.extractall('/tmp')
         elif url.endswith('ova'):
-            with tarfile.open("/tmp/%s" % shortimage) as tar:
+            with tarfile.open(f"/tmp/{shortimage}") as tar:
                 for _fil in [x.name for x in tar.getmembers()]:
                     if _fil.endswith('vmdk'):
-                        vmdk_path = '/tmp/%s' % _fil
+                        vmdk_path = f'/tmp/{_fil}'
                     elif _fil.endswith('ovf'):
-                        ovf_path = '/tmp/%s' % _fil
+                        ovf_path = f'/tmp/{_fil}'
                 if vmdk_path is None or ovf_path is None:
                     return {'result': 'failure', 'reason': "Incorrect ova file"}
                 tar.extractall('/tmp')
         else:
             extension = os.path.splitext(shortimage)[1].replace('.', '')
             vmdk_file = shortimage.replace(extension, 'vmdk')
-            vmdk_path = "/tmp/%s" % vmdk_file
+            vmdk_path = f"/tmp/{vmdk_file}"
             if not os.path.exists(vmdk_path):
                 pprint("Converting qcow2 file to vmdk")
-                os.popen("qemu-img convert -O vmdk -o subformat=streamOptimized /tmp/%s %s" % (shortimage, vmdk_path))
+                os.popen(f"qemu-img convert -O vmdk -o subformat=streamOptimized /tmp/{shortimage} {vmdk_path}").read()
             ovf_path = "/tmp/%s" % shortimage.replace(extension, 'ovf')
             commondir = os.path.dirname(common.pprint.__code__.co_filename)
-            time.sleep(5)
-            vmdk_info = json.loads(os.popen("qemu-img info %s --output json" % vmdk_path).read())
+            vmdk_info = json.loads(os.popen(f"qemu-img info {vmdk_path} --output json").read())
             virtual_size = vmdk_info['virtual-size']
             actual_size = vmdk_info['actual-size']
-            ovfcontent = open("%s/vm.ovf.j2" % commondir).read().format(name=shortimage, virtual_size=virtual_size,
-                                                                        actual_size=actual_size, vmdk_file=vmdk_file)
+            ovfcontent = open(f"{commondir}/vm.ovf.j2").read().format(name=shortimage, virtual_size=virtual_size,
+                                                                      actual_size=actual_size, vmdk_file=vmdk_file)
             with open(ovf_path, 'w') as f:
                 f.write(ovfcontent)
         ovfd = open(ovf_path).read()
-        ovfd = re.sub('<Name>.*</Name>', '<Name>%s</Name>' % name, ovfd)
+        ovfd = re.sub('<Name>.*</Name>', f'<Name>{name}</Name>', ovfd)
         datastore = find(si, rootFolder, vim.Datastore, pool)
-        network = find(si, rootFolder, vim.Network, 'VM Network')
         networkmapping = vim.OvfManager.NetworkMapping.Array()
-        nm = vim.OvfManager.NetworkMapping(name="VM Network", network=network)
+        nm = vim.OvfManager.NetworkMapping(name=self.import_network, network=network)
         networkmapping.append(nm)
         spec_params = vim.OvfManager.CreateImportSpecParams(diskProvisioning="thin", networkMapping=networkmapping)
         import_spec = manager.CreateImportSpec(ovfd, resourcepool, datastore, spec_params)
@@ -1326,8 +1209,7 @@ class Ksphere:
         while True:
             if lease.state == vim.HttpNfcLease.State.ready:
                 pprint("Uploading vmdk")
-                warning("If hitting any issues when uploading image, please upload manually")
-                host = self._getfirshost()
+                host = self._getfirsthost()
                 url = lease.info.deviceUrl[0].url.replace('*', host.name)
                 keepalive_thread = Thread(target=keep_lease_alive, args=(lease,))
                 keepalive_thread.start()
@@ -1335,19 +1217,18 @@ class Ksphere:
                     "curl -sS -X POST --insecure -T %s -H 'Content-Type: \
                     application/x-vnd.vmware-streamVmdk' %s" % (vmdk_path, url))
                 os.system(upload_cmd)
-                # lease.Complete()
                 lease.HttpNfcLeaseComplete()
                 keepalive_thread.join()
-                # self.export(name)
-                # os.remove('/tmp/%s' % shortimage)
-                # os.remove(ovf_path)
-                # os.remove(vmdk_path)
-                return {'result': 'success'}
+                break
             elif lease.state == vim.HttpNfcLease.State.error:
-                error("Lease error: %s" % lease.error)
+                error(f"Lease error: {lease.error}")
                 sys.exit(1)
+        self.convert_to_template(name)
+        if downloaded:
+            os.remove(f'/tmp/{shortimage}')
+        return {'result': 'success'}
 
-    def _getfirshost(self):
+    def _getfirsthost(self):
         si = self.si
         rootFolder = self.rootFolder
         o = si.content.viewManager.CreateContainerView(rootFolder, [vim.HostSystem], True)
@@ -1359,31 +1240,32 @@ class Ksphere:
     def report(self):
         si = self.si
         about = si.content.about
-        print("Host: %s" % self.vcip)
-        print("Datacenter: %s" % self.dc.name)
-        print("Version: %s" % about.version)
-        print("Api Version: %s" % about.apiVersion)
-        print("Datacenter: %s" % self.dc.name)
+        print(f"Host: {self.vcip}")
+        print(f"Datacenter: {self.dc.name}")
+        print(f"Version: {about.version}")
+        print(f"Api Version: {about.apiVersion}")
+        print(f"Datacenter: {self.dc.name}")
         rootFolder = self.rootFolder
         o = si.content.viewManager.CreateContainerView(rootFolder, [vim.HostSystem], True)
         view = o.view
         o.Destroy()
         for h in view:
-            print("Host: %s" % h.name)
+            print(f"Host: {h.name}")
         o = si.content.viewManager.CreateContainerView(rootFolder, [vim.ComputeResource], True)
         view = o.view
         o.Destroy()
         for clu in view:
-            print("Cluster: %s" % clu.name)
+            print(f"Cluster: {clu.name}")
             for dts in clu.datastore:
-                print("Pool: %s" % dts.name)
+                print(f"Pool: {dts.name}")
 
     def delete_image(self, image, pool=None):
         si = self.si
-        vmFolder = self.dc.vmFolder
-        vm = findvm(si, vmFolder, image)
-        if vm is None or not vm.config.template:
-            return {'result': 'failure', 'reason': 'Image %s not found' % image}
+        dc = self.dc
+        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vm, info = findvm2(si, vmFolder, image)
+        if vm is None or not info['config'].template:
+            return {'result': 'failure', 'reason': f'Image {image} not found'}
         else:
             t = vm.Destroy_Task()
             waitForMe(t)
@@ -1392,11 +1274,11 @@ class Ksphere:
     def export(self, name, image=None):
         si = self.si
         dc = self.dc
-        vmFolder = dc.vmFolder
-        vm = findvm(si, vmFolder, name)
+        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vm, info = findvm2(si, vmFolder, name)
         if vm is None:
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
-        if vm.runtime.powerState == "poweredOn":
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
+        if info['runtime'].powerState == "poweredOn":
             t = vm.PowerOffVM_Task()
             waitForMe(t)
         vm.MarkAsTemplate()
@@ -1434,3 +1316,159 @@ class Ksphere:
     def list_bucketfiles(self, bucket):
         print("not implemented")
         return []
+
+    def get_guestid(image):
+        if 'centos' in image.lower():
+            guestid = 'centos8_64Guest'
+        elif 'rhel' in image.lower() or 'rhcos' in image.lower():
+            guestid = 'rhel8_64Guest'
+        elif 'fedora' in image.lower() or 'fos' in image.lower():
+            guestid = 'fedora64Guest'
+        elif 'ubuntu' in image.lower():
+            guestid = 'ubuntu64Guest'
+        elif 'debian' in image.lower():
+            guestid = 'debian10_64Guest'
+        else:
+            guestid = 'rhel7_64Guest'
+        return guestid
+
+    def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False):
+        print("not implemented")
+        return
+
+    def update_nic(self, name, index, network):
+        print("not implemented")
+
+    def update_network(self, name, dhcp=None, nat=None, domain=None, plan=None, overrides={}):
+        print("not implemented")
+        return {'result': 'success'}
+
+    def clone(self, old, new, full=False, start=False):
+        dc = self.dc
+        si = self.si
+        basefolder = self.basefolder
+        rootFolder = self.rootFolder
+        if basefolder is not None:
+            createfolder(si, dc.vmFolder, basefolder)
+            basefolder = find(si, dc.vmFolder, vim.Folder, basefolder)
+        else:
+            basefolder = dc.vmFolder
+        vmfolder = basefolder
+        old_info = self.info(old)
+        plan, cluster = old_info.get('plan'), old_info.get('cluster')
+        if cluster is not None:
+            createfolder(si, basefolder, cluster)
+            vmfolder = find(si, basefolder, vim.Folder, cluster)
+        elif plan != 'kvirt':
+            createfolder(si, basefolder, plan)
+            vmfolder = find(si, basefolder, vim.Folder, plan)
+        else:
+            vmfolder = basefolder
+        si = self.si
+        clu = find(si, rootFolder, vim.ComputeResource, self.clu)
+        resourcepool = clu.resourcePool
+        imageobj = findvm(si, rootFolder, old)
+        if imageobj is None:
+            return {'result': 'failure', 'reason': f"VM {old} not found"}
+        clonespec = createclonespec(resourcepool)
+        confspec = vim.vm.ConfigSpec()
+        confspec.annotation = new
+        extraconfig = []
+        clonespec.powerOn = start
+        confspec.extraConfig = extraconfig
+        t = imageobj.CloneVM_Task(folder=vmfolder, name=new, spec=clonespec)
+        waitForMe(t)
+        return {'result': 'success'}
+
+    def create_snapshot(self, name, base):
+        si = self.si
+        dc = self.dc
+        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vm, info = findvm2(si, vmFolder, base)
+        if vm is None:
+            return {'result': 'failure', 'reason': f"VM {base} not found"}
+        description = f"Snapshot {name}"
+        dump_memory = False
+        quiesce = False
+        t = vm.CreateSnapshot(name, description, dump_memory, quiesce)
+        waitForMe(t)
+        return {'result': 'success'}
+
+    def delete_snapshot(self, name, base):
+        si = self.si
+        dc = self.dc
+        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vm, info = findvm2(si, vmFolder, base)
+        if vm is None:
+            return {'result': 'failure', 'reason': f"VM {base} not found"}
+        snapshots = vm.snapshot.rootSnapshotList if vm.snapshot is not None else []
+        for snapshot in snapshots:
+            if snapshot.name == name:
+                t = snapshot.snapshot.RemoveSnapshot_Task(True)
+                waitForMe(t)
+                return {'result': 'success'}
+        return {'result': 'failure', 'reason': f'Snapshot {name} not found'}
+
+    def list_snapshots(self, base):
+        si = self.si
+        dc = self.dc
+        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vm, info = findvm2(si, vmFolder, base)
+        if vm is None:
+            return {'result': 'failure', 'reason': f"VM {base} not found"}
+        snapshots = vm.snapshot.rootSnapshotList if vm.snapshot is not None else []
+        return [snapshot.name for snapshot in snapshots]
+
+    def revert_snapshot(self, name, base):
+        si = self.si
+        dc = self.dc
+        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vm, info = findvm2(si, vmFolder, base)
+        if vm is None:
+            return {'result': 'failure', 'reason': f"VM {base} not found"}
+        snapshots = vm.snapshot.rootSnapshotList if vm.snapshot is not None else []
+        for snapshot in snapshots:
+            if snapshot.name == name:
+                t = snapshot.snapshot.RevertToSnapshot_Task()
+                waitForMe(t)
+                return {'result': 'success'}
+        return {'result': 'failure', 'reason': f'Snapshot {name} not found'}
+
+    def ip(self, name):
+        result = None
+        si = self.si
+        dc = self.dc
+        basefolder = self.basefolder
+        vmFolder = find(si, dc.vmFolder, vim.Folder, basefolder) if basefolder is not None else dc.vmFolder
+        obj, vm = findvm2(si, vmFolder, name)
+        guest = vm['guest']
+        if vm is not None:
+            runtime = vm['runtime']
+            guest = vm['guest']
+            if runtime.powerState == "poweredOn":
+                for nic in guest.net:
+                    if nic.ipAddress:
+                        result = nic.ipAddress[0]
+                        break
+        return result
+
+    def create_vm_folder(self, name):
+        si = self.si
+        dc = self.dc
+        if find(si, dc.vmFolder, vim.Folder, name) is None:
+            createfolder(si, dc.vmFolder, name)
+
+    def list_flavors(self):
+        return []
+
+    def list_security_groups(self, network=None):
+        print("not implemented")
+        return []
+
+    def create_security_group(self, name, overrides={}):
+        print("not implemented")
+        return {'result': 'success'}
+
+    def delete_security_group(self, name):
+        print("not implemented")
+        return {'result': 'success'}

@@ -1,0 +1,25 @@
+name: OPENSHIFT-NIGHTLY-CI
+on:
+  schedule:
+    - cron: '01 21 * * *'
+
+env:
+ HOME: /root
+ PYTHONUNBUFFERED: true
+ PLAN: ci
+ PULLSECRET: /root/openshift_pull.json
+
+jobs:
+  deploy-openshift:
+    strategy:
+      fail-fast: false
+      matrix:
+        provider: [libvirt, kubevirt, vsphere]
+    runs-on: ${{ matrix.provider }}
+    steps:
+     - uses: actions/checkout@v2
+     - run: git pull origin ${GITHUB_REF##*/}
+     - name: Install kcli
+       run: curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
+     - name: Deploy Openshift on ${{ matrix.provider }}
+       run: kcli create cluster openshift --paramfile openshift-ci-paramfiles/${{ matrix.provider }}.yml -P pull_secret=$PULLSECRET $PLAN-${{ matrix.provider }} --force

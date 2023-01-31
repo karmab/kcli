@@ -1,0 +1,29 @@
+apiVersion: kcli.karmalabs.local/v1
+kind: Plan
+metadata:
+  name: complex
+spec:
+  parameters:
+    memory: 1024
+    numvms: 3
+  plan: |
+    parameters:
+     image: rhcos-42.80.20190925.2-qemu.qcow2
+     memory: 512
+     numvms: 1
+     numcpus: 2
+     network: default
+     disk_size: 20
+    {% for i in range(0, numvms) %}
+    vm{{ i }}:
+      image: {{ template }}
+      memory: {{ memory }}
+      numcpus: {{ numcpus }}
+      nets:
+       - {{ network }}
+      disks:
+      - {{ disk_size }}
+      pool: default
+      cmds:
+      - i am vm vm{{ i }} > /etc/motd
+    {% endfor %}

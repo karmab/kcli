@@ -145,8 +145,8 @@ class KcliServicer(kcli_pb2_grpc.KcliServicer):
         config = Kconfig()
         k = config.k
         name = request.name
-        l = request.l if request.l != '' else None
-        r = request.r if request.r != '' else None
+        local = request.l if request.l != '' else None
+        remote = request.r if request.r != '' else None
         X = request.X
         Y = request.Y
         D = request.D if request.D != '' else None
@@ -173,7 +173,7 @@ class KcliServicer(kcli_pb2_grpc.KcliServicer):
             user = config.vmuser if config.vmuser is not None else u
         if vmport is None and config.vmport is not None:
             vmport = config.vmport
-        sshcmd = common.ssh(name, ip=ip, user=user, local=l, remote=r, tunnel=tunnel, tunnelhost=tunnelhost,
+        sshcmd = common.ssh(name, ip=ip, user=user, local=local, remote=remote, tunnel=tunnel, tunnelhost=tunnelhost,
                             tunnelport=tunnelport, tunneluser=tunneluser, insecure=insecure, cmd=cmd, X=X, Y=Y, D=D,
                             vmport=vmport)
         response = kcli_pb2.sshcmd(sshcmd=sshcmd)
@@ -256,7 +256,7 @@ class KcliServicer(kcli_pb2_grpc.KcliServicer):
         config = Kconfig()
         k = config.k
         flavorslist = []
-        for flavor in k.flavors():
+        for flavor in k.list_flavors():
             flavorname, numcpus, memory = flavor
             flavorslist.append({'flavor': flavorname, 'numcpus': numcpus, 'memory': memory})
         response = kcli_pb2.flavorslist(flavors=[kcli_pb2.flavor(**f) for f in flavorslist])
@@ -665,9 +665,10 @@ def main():
             kcli_pb2.DESCRIPTOR.services_by_name['Kconfig'].full_name,
             reflection.SERVICE_NAME,
         )
-    except:
+        reflection.enable_server_reflection(SERVICE_NAMES, server)
+    except Exception as e:
+        print(f"Hit {e} when enabling reflection")
         pass
-    reflection.enable_server_reflection(SERVICE_NAMES, server)
     server.add_insecure_port('[::]:50051')
     server.start()
     try:

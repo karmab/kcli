@@ -1,0 +1,32 @@
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  name: localhost-{{ role }}-fix
+  labels:
+    machineconfiguration.openshift.io/role: {{ role }}
+spec:
+  config:
+    ignition:
+      version: 3.2.0
+    systemd:
+      units:
+      - name: localhost-fix.service
+        enabled: true
+        contents: |
+          [Unit]
+          Description=Changes hostname based on mac address
+          Wants=network-online.target
+          After=network-online.target ignition-firstboot-complete.service
+          Before=kubelet.service crio.service
+          [Service]
+          Type=oneshot
+          ExecStart=/bin/bash -c "if [[ $(hostname) == *localhost* ]]; then \
+             PRIMARY_NIC=$(ls -1 /sys/class/net | head -1) ;\
+             HOSTNAME=$(ip a l $PRIMARY_NIC | grep link | awk '{print $2}' | sed 's/:/-/g') ;\
+             echo $HOSTNAME > /etc/hostname ;\
+             nmcli general hostname $HOSTNAME ;\
+             systemctl restart systemd-hostnamed ;\
+             else echo Hostname properly set; exit 0 ; fi"
+          [Install]
+          WantedBy=multi-user.target
+

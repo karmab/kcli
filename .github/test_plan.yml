@@ -1,27 +1,30 @@
 parameters:
  pool: default
- image: fedora33
+ image: debian11
+ network: mynetwork
+ profile: myprofile
 
 {{ image }}:
  type: image
  pool: {{ pool }}
 
-mynetwork:
+{{ network }}:
  type: network
- cidr: 10.0.5.0/24
+ cidr: 192.168.125.0/24
  dhcp: true 
  nat: false
 
-myfedora:
-  type: profile
-  image: {{ image }}
-  memory: 2048
-  numcpus: 2
-  disks:
-   - size: 10
-  nets:
-   - mynetwork
+{{ profile }}:
+ type: profile
+ image: {{ image }}
+ memory: 2048
+ numcpus: 2
+ disks:
+ - 11
+ - size: 10
+ nets:
+ - {{ network }}
 
-test_instance:
-  profile: myfedora 
-  pool: {{ pool }}
+myvm:
+ profile: {{ profile }}
+ pool: {{ pool }}

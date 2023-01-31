@@ -1,0 +1,13 @@
+apiVersion: multicluster.openshift.io/v1
+kind: MultiClusterEngine
+metadata:
+  name: multiclusterengine
+{% if mce_hypershift %}
+spec:
+  overrides:
+    components:
+    - name: hypershift-preview
+      enabled: true
+{% else %}
+spec: {}
+{% endif %}

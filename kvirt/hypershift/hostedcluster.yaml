@@ -1,0 +1,117 @@
+{% set management_address = management_api_ip or "api." + cluster + "." + original_domain %}
+{% if nodeport|default(False) %}
+{% macro service() %}
+      nodePort:
+        address: {{ management_address }}
+      type: NodePort
+{%- endmacro %}
+{% else %}
+{% macro service() %}
+      type: Route
+{%- endmacro %}
+{% endif %}
+apiVersion: v1
+data:
+ .dockerconfigjson: {{ pull_secret|default('')|base64 }}
+kind: Secret
+metadata:
+  name: {{ cluster }}-pull-secret
+  namespace: {{ namespace }}
+type: kubernetes.io/dockerconfigjson
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ cluster }}-ssh-key
+  namespace: {{ namespace }}
+stringData:
+  id_rsa.pub: {{ pub_key|default('') }}
+---
+apiVersion: hypershift.openshift.io/v1beta1
+kind: HostedCluster
+metadata:
+  name: {{ cluster }}
+  namespace: {{ namespace }}
+spec:
+  release:
+    image: "{{ hostedcluster_image }}"
+  dns:
+    baseDomain: {{ domain }}
+  etcd:
+    managed:
+      storage:
+        persistentVolume:
+          size: {{ etcd_size }}Gi
+        restoreSnapshotURL: null
+        type: PersistentVolume
+    managementType: Managed
+  pullSecret:
+    name: {{ cluster }}-pull-secret
+  sshKey:
+    name: {{ cluster }}-ssh-key
+  fips: {{ fips }}
+  networking:
+    clusterNetwork:
+    - cidr: {{ cluster_network_ipv4 }}
+      hostPrefix: 23
+    serviceNetwork:
+    - cidr: {{ service_network_ipv4 }}
+    machineNetwork:
+    - cidr: {{ cidr|default('') }}
+    networkType: {{ network_type }}
+  platform:
+    type: None
+  infraID: {{ cluster }}
+  dns:
+    baseDomain: {{ domain }}
+  services:
+  - service: APIServer
+    servicePublishingStrategy:
+{% if api_lb|default(False) %}
+      type: LoadBalancer
+{% else %}
+      nodePort:
+        address: {{ management_address }}
+      type: NodePort
+{% endif %}
+  - service: OAuthServer
+    servicePublishingStrategy:
+{{ service() }}
+  - service: OIDC
+    servicePublishingStrategy:
+{{ service() }}
+  - service: Konnectivity
+    servicePublishingStrategy:
+{{ service() }}
+  - service: Ignition
+    servicePublishingStrategy:
+{{ service() }}
+{% if network_type == 'OVNKubernetes' %}
+  - service: OVNSbDb
+    servicePublishingStrategy:
+{{ service() }}
+{% endif %}
+{% if ca is defined %}
+  additionalTrustBundle: disconnected-ca
+{% endif %}
+{% if imagecontentsources|default([]) %}
+  imageContentSources:
+{% for entry in imagecontentsources %}
+  - mirrors:
+    - {{ entry['mirror'] }}
+    source: {{ entry['source'] }}
+{% endfor %}
+{% endif %}
+---
+{% if ca is defined %}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: disconnected-ca
+  namespace: {{ namespace }}
+data:
+  config: |
+    {{ ca | certificate | replace('\n', '\n ') }}
+---
+{% endif %}

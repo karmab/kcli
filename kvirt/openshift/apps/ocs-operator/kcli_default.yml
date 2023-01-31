@@ -6,3 +6,8 @@ ocs_replicas:
 ocs_accessmode: ReadWriteOnce
 ocs_portable: false
 ocs_deploycluster: true
+ocs_default_storageclass: true
+ocs_public_network:
+ocs_public_interface: ens4
+ocs_cluster_network:
+ocs_cluster_interface: ens5

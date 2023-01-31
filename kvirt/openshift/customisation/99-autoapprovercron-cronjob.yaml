@@ -1,8 +1,8 @@
-apiVersion: batch/v1beta1
+apiVersion: batch/{{ version }}
 kind: CronJob
 metadata:
   name: autoapprover
-  namespace: openshift-infra
+  namespace: kcli-infra
 spec:
   concurrencyPolicy: Replace
   successfulJobsHistoryLimit: 0
@@ -26,8 +26,8 @@ spec:
               for cert in $(kubectl get csr -o name) ; do
                 kubectl certificate approve $cert
               done
-            image: {{ registry }}/karmab/kubectl:{{ arch_tag }}
-            imagePullPolicy: Always
+            image: {{ registry }}/karmab/kubectl:latest
+            imagePullPolicy: IfNotPresent
             name: autoapprover
           restartPolicy: OnFailure
           serviceAccountName: autoapprover

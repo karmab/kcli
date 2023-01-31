@@ -1,7 +1,8 @@
 from base64 import b64encode
+from glob import glob
+from ipaddress import ip_address, ip_network
 import os
 from distutils.version import LooseVersion
-from netaddr import IPNetwork
 import requests
 import sys
 import yaml
@@ -38,13 +39,13 @@ def _type(value):
         return 'list'
 
 
-def ocpnodes(cluster, platform, masters, workers):
-    masters = ['%s-master-%d' % (cluster, num) for num in range(masters)]
+def ocpnodes(cluster, platform, ctlplanes, workers):
+    ctlplanes = ['%s-ctlplane-%d' % (cluster, num) for num in range(ctlplanes)]
     workers = ['%s-worker-%d' % (cluster, num) for num in range(workers)]
     if platform in ['kubevirt', 'openstack', 'vsphere', 'packet']:
-        return ["%s-bootstrap-helper" % cluster] + ["%s-bootstrap" % cluster] + masters + workers
+        return ["%s-bootstrap-helper" % cluster] + ["%s-bootstrap" % cluster] + ctlplanes + workers
     else:
-        return ["%s-bootstrap" % cluster] + masters + workers
+        return ["%s-bootstrap" % cluster] + ctlplanes + workers
 
 
 def certificate(value):
@@ -80,14 +81,14 @@ def github_version(repo, version=None, tag_mode=False):
         return tag
 
 
-def defaultnodes(replicas, cluster, domain, masters, workers):
+def defaultnodes(replicas, cluster, domain, ctlplanes, workers):
     nodes = []
     for num in range(workers):
         if len(nodes) < replicas:
             nodes.append('%s-worker-%d.%s' % (cluster, num, domain))
-    for num in range(masters):
+    for num in range(ctlplanes):
         if len(nodes) < replicas:
-            nodes.append('%s-master-%d.%s' % (cluster, num, domain))
+            nodes.append('%s-ctlplane-%d.%s' % (cluster, num, domain))
     return nodes
 
 
@@ -120,7 +121,7 @@ def local_ip(net, wrap=False):
 
 def network_ip(network, num=0, version=False):
     try:
-        ip = IPNetwork(network)[num]
+        ip = str(ip_network(network)[num])
         if version and ':' in network:
             return "[%s]" % ip
         else:
@@ -140,10 +141,33 @@ def kcli_info(name, key=None):
     return result
 
 
+def find_manifests(directory, suffix='yaml'):
+    results = []
+    for f in glob("%s/*.y*ml" % directory):
+        results.append(os.path.basename(f))
+    return results
+
+
+def exists(name):
+    if name is None:
+        return False
+    return True if os.path.exists(name) else False
+
+
+def ipv6_wrap(name):
+    try:
+        if ip_address(name).version == 6:
+            return f'[{name}]'
+        else:
+            return name
+    except:
+        return name
+
+
 jinjafilters = {'basename': basename, 'dirname': dirname, 'ocpnodes': ocpnodes, 'none': none, 'type': _type,
                 'certificate': certificate, 'base64': base64, 'github_version': github_version,
                 'defaultnodes': defaultnodes, 'waitcrd': waitcrd, 'local_ip': local_ip, 'network_ip': network_ip,
-                'kcli_info': kcli_info}
+                'kcli_info': kcli_info, 'find_manifests': find_manifests, 'exists': exists, 'ipv6_wrap': ipv6_wrap}
 
 
 class FilterModule(object):

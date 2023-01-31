@@ -1,8 +1,10 @@
 # coding=utf-8
 from setuptools import setup, find_packages
+from setuptools.extern.packaging import version
+version.Version = version.LegacyVersion
 
 import os
-INSTALL = ['argcomplete', 'netaddr', 'PyYAML', 'prettytable', 'jinja2', 'flask', 'libvirt-python>=2.0.0', 'requests']
+INSTALL = ['argcomplete', 'PyYAML', 'prettytable', 'jinja2', 'libvirt-python>=2.0.0', 'requests']
 AWS = ['boto3']
 GCP = ['google-api-python-client', 'google-auth-httplib2', 'google-cloud-dns', 'google-cloud-storage']
 KUBEVIRT = ['kubernetes']
@@ -52,8 +54,9 @@ setup(
         kcli=kvirt.cli:cli
         kweb=kvirt.web.main:run
         klist.py=kvirt.klist:main
-        kbmc=kvirt.kbmc:main
         krpc=kvirt.krpc.server:main
         kclirpc=kvirt.krpc.cli:cli
+        ksushy=kvirt.sushy.main:run
+        ignitionmerger=kvirt.ignitionmerger:cli
     ''',
 )

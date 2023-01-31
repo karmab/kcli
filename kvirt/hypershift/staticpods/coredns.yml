@@ -1,0 +1,81 @@
+---
+kind: Pod
+apiVersion: v1
+metadata:
+  name: coredns
+  namespace: openshift-infra
+  creationTimestamp:
+  deletionGracePeriodSeconds: 65
+  labels:
+    app: kcli-coredns
+spec:
+  volumes:
+  - name: conf-dir
+    hostPath:
+      path: "/etc/kubernetes"
+  initContainers:
+  - name: update-coredns-conf
+    securityContext:
+      privileged: true
+    image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/karmab/curl:{{ arch_tag }}
+    command:
+    - "/bin/sh"
+    - "-c"
+    - |
+      #/bin/sh
+      NAMESERVER=$(grep nameserver /etc/resolv.conf | grep -v 'fe80::' | tail -1 | sed 's/nameserver //')
+      if [ "$NAMESERVER" == "" ] ; then
+        exit 1
+      fi
+      grep -q "NAMESERVER" /etc/coredns/Corefile
+      if [ "$?" != "0" ] ; then
+        exit 0
+      else
+        sed -i "s@NAMESERVER@$NAMESERVER@" /etc/coredns/Corefile
+      fi
+    resources: {}
+    volumeMounts:
+    - name: conf-dir
+      mountPath: "/etc/coredns"
+    imagePullPolicy: IfNotPresent
+  containers:
+  - name: coredns
+    securityContext:
+      privileged: true
+    image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/karmab/origin-coredns:{{ arch_tag }}
+    args:
+    - "--conf"
+    - "/etc/coredns/Corefile"
+    resources:
+      requests:
+        cpu: 150m
+        memory: 512Mi
+    volumeMounts:
+    - name: conf-dir
+      mountPath: "/etc/coredns"
+    readinessProbe:
+      httpGet:
+        path: /health
+        port: 18080
+        scheme: HTTP
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      successThreshold: 1
+      failureThreshold: 3
+      timeoutSeconds: 10
+    livenessProbe:
+      httpGet:
+        path: /health
+        port: 18080
+        scheme: HTTP
+      initialDelaySeconds: 60
+      timeoutSeconds: 5
+      successThreshold: 1
+      failureThreshold: 5
+    terminationMessagePolicy: FallbackToLogsOnError
+    imagePullPolicy: IfNotPresent
+  hostNetwork: true
+  tolerations:
+  - operator: Exists
+  priorityClassName: system-node-critical
+status: {}

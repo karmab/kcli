@@ -62,14 +62,14 @@ class Kbase(object):
                cpumodel='Westmere', cpuflags=[], cpupinning=[], numcpus=2, memory=512,
                guestid='guestrhel764', pool='default', image=None,
                disks=[{'size': 10}], disksize=10, diskthin=True,
-               diskinterface='virtio', nets=['default'], iso=None, vnc=False,
+               diskinterface='virtio', nets=['default'], iso=None, vnc=True,
                cloudinit=True, reserveip=False, reservedns=False,
-               reservehost=False, start=True, keys=None, cmds=[], ips=None,
+               reservehost=False, start=True, keys=[], cmds=[], ips=None,
                netmasks=None, gateway=None, nested=True, dns=None, domain=None,
                tunnel=False, files=[], enableroot=True, alias=[], overrides={},
                tags=[], storemetadata=False, sharedfolders=[], kernel=None, initrd=None, cmdline=None,
                cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False,
-               placement=[], autostart=False, rng=False, metadata={}, securitygroups=[]):
+               placement=[], autostart=False, rng=False, metadata={}, securitygroups=[], vmuser=None):
         """
 
         :param name:
@@ -93,7 +93,6 @@ class Kbase(object):
         :param iso:
         :param vnc:
         :param cloudinit:
-        :param reserveip:
         :param reservedns:
         :param reservehost:
         :param start:
@@ -131,7 +130,7 @@ class Kbase(object):
         print("not implemented")
         return {'result': 'success'}
 
-    def stop(self, name):
+    def stop(self, name, soft=False):
         """
 
         :param name:
@@ -140,18 +139,21 @@ class Kbase(object):
         print("not implemented")
         return {'result': 'success'}
 
-    def snapshot(self, name, base, revert=False, delete=False, listing=False):
-        """
-
-        :param name:
-        :param base:
-        :param revert:
-        :param delete:
-        :param listing:
-        :return:
-        """
+    def create_snapshot(self, name, base):
         print("not implemented")
-        return
+        return {'result': 'success'}
+
+    def delete_snapshot(self, name, base):
+        print("not implemented")
+        return {'result': 'success'}
+
+    def list_snapshots(self, base):
+        print("not implemented")
+        return []
+
+    def revert_snapshot(self, name, base):
+        print("not implemented")
+        return {'result': 'success'}
 
     def restart(self, name):
         """
@@ -510,6 +512,11 @@ class Kbase(object):
         print("not implemented")
         return {}
 
+    def info_network(self, name):
+        # networkinfo = common.info_network(self, name)
+        # return networkinfo
+        return {}
+
     def list_subnets(self):
         """
 
@@ -557,7 +564,7 @@ class Kbase(object):
         return
 
 # return a list of [name, numcpus, memory] for each flavor, if the platform has this concept
-    def flavors(self):
+    def list_flavors(self):
         """
 
         :return:
@@ -600,3 +607,26 @@ class Kbase(object):
     def list_bucketfiles(self, bucket):
         print("not implemented")
         return []
+
+    def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False):
+        print("not implemented")
+        return
+
+    def update_nic(self, name, index, network):
+        print("not implemented")
+
+    def update_network(self, name, dhcp=None, nat=None, domain=None, plan=None, overrides={}):
+        print("not implemented")
+        return {'result': 'success'}
+
+    def list_security_groups(self, network=None):
+        print("not implemented")
+        return []
+
+    def create_security_group(self, name, overrides={}):
+        print("not implemented")
+        return {'result': 'success'}
+
+    def delete_security_group(self, name):
+        print("not implemented")
+        return {'result': 'success'}

@@ -1,0 +1,45 @@
+{% if flavor_ctlplane != None %}
+{% set flavor = flavor_ctlplane %}
+{% endif %}
+
+{% for num in range(0, ctlplanes) %}
+
+{% if flavor_ctlplane != None %}
+{% set flavor = flavor_ctlplane %}
+{% endif %}
+
+{{ cluster }}-ctlplane-{{ num }}:
+ domain: {{ domain }} 
+ image: {{ image }}
+ pool: {{ pool or config_pool }}
+{% if flavor != None %}
+ flavor: {{ flavor }}
+{% endif %}
+ enableroot: false
+ numcpus: {{ ctlplane_numcpus | default(numcpus, numcpus) }}
+ memory: {{ ctlplane_memory | default(memory, memory) }}
+ nets:
+ - name: {{ network }}
+ disks:
+ - size: {{ disk_size }}
+{% if config_type == 'gcp' %}
+ files:
+ - path: /usr/local/bin/gcp-hack.sh
+   origin: gcp-hack.sh
+   mode: 755
+ - path: /etc/systemd/system/gcp-hack.service
+   origin: gcp-hack.service
+   mode: 644
+ - path: /etc/systemd/system-preset/00-gcp-hack.preset
+   origin: gcp-hack.preset
+   mode: 644
+{% elif config_type == 'ibm' %}
+ files:
+  - path: /etc/NetworkManager/dispatcher.d/99-forcedns
+    origin: 99-forcedns-ibm
+    mode: 755
+{% endif %}
+{% if cloud_tag != None %}
+ tags: [{{ cloud_tag }}]
+{% endif %}
+{% endfor %}

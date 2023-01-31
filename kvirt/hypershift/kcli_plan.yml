@@ -1,0 +1,48 @@
+{% for num in range(0, workers|int) %}
+{% if worker_network != None %}
+{% set default_network = worker_network %}
+{% else %}
+{% set default_network = network %}
+{% endif %}
+{% set net0 = default_network %}
+{% if extra_worker_networks %}
+{% set extra_networks = extra_worker_networks %}
+{% endif %}
+{% if extra_worker_disks %}
+{% set extra_disks = extra_worker_disks %}
+{% endif %}
+{% if flavor_worker != None %}
+{% set flavor = flavor_worker %}
+{% endif %}
+
+{% set files = [] %}
+{% if not kubevirt_ingress_service %}
+{% set new_file = {'path': '/etc/kubernetes/manifests/keepalived.yml', 'origin': 'staticpods/keepalived.yml'} %}
+{% do files.append(new_file) %}
+{% set new_file = {'path': '/etc/kubernetes/keepalived.conf', 'origin': 'keepalived.conf'} %}
+{% do files.append(new_file) %}
+{% endif %}
+{% if not sslip and coredns %}
+{% set new_file = {'path': '/etc/NetworkManager/dispatcher.d/99-forcedns', 'origin': '99-forcedns', 'mode': 755} %}
+{% do files.append(new_file) %}
+{% set new_file = {'path': '/etc/kubernetes/manifests/coredns.yml', 'origin': 'staticpods/coredns.yml'} %}
+{% do files.append(new_file) %}
+{% set new_file = {'path': '/etc/kubernetes/Corefile', 'origin': 'Corefile'} %}
+{% do files.append(new_file) %}
+{% endif %}
+
+{{ cluster }}-worker-{{ num }}:
+ domain: {{ original_domain|default('karmalabs.corp') }}
+ image: {{ image }}
+ pool: {{ pool or config_pool }}
+ keys: {{ keys }}
+ flavor: {{ flavor }}
+ enableroot: false 
+ numcpus: {{ worker_numcpus | default(numcpus, numcpus) }}
+ memory: {{ worker_memory | default(memory, memory) }}
+ nets: {{ [net0] + extra_networks }}
+ disks: {{ [disk_size] + extra_disks }}
+{% if config_type in ['kvm', 'vsphere', 'ovirt', 'kubevirt'] %}
+ files: {{ files }}
+{% endif %}
+{% endfor %}

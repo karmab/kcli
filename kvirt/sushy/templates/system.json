@@ -1,0 +1,88 @@
+{
+    "@odata.type": "#ComputerSystem.v1_1_0.ComputerSystem",
+    "Id": "1",
+    "Name": "{{ name }}",
+    "UUID": "1",
+    "Manufacturer": "{{ virt_type }}",
+    "Status": {
+        "State": "Enabled",
+        "Health": "OK",
+        "HealthRollUp": "OK"
+    },
+    "PowerState": "{{ status }}",
+    "Boot": {
+        "BootSourceOverrideEnabled": "Continuous",
+        "BootSourceOverrideTarget": "Hdd",
+        "BootSourceOverrideTarget@Redfish.AllowableValues": [
+            "Pxe",
+            "Cd",
+            "Hdd"
+        ],
+        "BootSourceOverrideMode": "UEFI",
+        "UefiTargetBootSourceOverride": "/0x31/0x33/0x01/0x01"
+    },
+    "ProcessorSummary": {
+        "Count": {{ cpus }},
+        "Status": {
+            "State": "Enabled",
+            "Health": "OK",
+            "HealthRollUp": "OK"
+        }
+    },
+    "MemorySummary": {
+        "TotalSystemMemoryGiB": {{ memory }},
+        "Status": {
+            "State": "Enabled",
+            "Health": "OK",
+            "HealthRollUp": "OK"
+        }
+    },
+    "Bios": {
+        "@odata.id": "/redfish/v1/Systems/{{ client }}/{{ name }}/BIOS"
+    },
+    "Processors": {
+        "@odata.id": "/redfish/v1/Systems/{{ client }}/{{ name }}/Processors"
+    },
+    "Memory": {
+        "@odata.id": "/redfish/v1/Systems/{{ client }}/{{ name }}/Memory"
+    },
+    "EthernetInterfaces": {
+        "@odata.id": "/redfish/v1/Systems/{{ client }}/{{ name }}/EthernetInterfaces"
+    },
+    "SimpleStorage": {
+        "@odata.id": "/redfish/v1/Systems/{{ client }}/{{ name }}/SimpleStorage"
+    },
+    "Storage": {
+        "@odata.id": "/redfish/v1/Systems/{{ client }}/{{ name }}/Storage"
+    },
+    "IndicatorLED": "Lit",
+    "Links": {
+        "Chassis": [
+            {
+                "@odata.id": "/redfish/v1/Chassis/fake-chassis"
+            }
+            ],
+        "ManagedBy": [
+            {
+                "@odata.id": "/redfish/v1/Managers/{{ client }}/{{ name }}"
+            }
+            ]
+    },
+    "Actions": {
+        "#ComputerSystem.Reset": {
+            "target": "/redfish/v1/Systems/{{ client }}/{{ name }}/Actions/ComputerSystem.Reset",
+            "ResetType@Redfish.AllowableValues": [
+                "On",
+                "ForceOff",
+                "GracefulShutdown",
+                "GracefulRestart",
+                "ForceRestart",
+                "Nmi",
+                "ForceOn"
+            ]
+        }
+    },
+    "@odata.context": "/redfish/v1/$metadata#ComputerSystem.ComputerSystem",
+    "@odata.id": "/redfish/v1/Systems/{{ client }}/{{ name }}",
+    "@Redfish.Copyright": "Copyright 2014-2016 Distributed Management Task Force, Inc. (DMTF). For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright."
+}

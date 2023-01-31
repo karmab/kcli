@@ -9,7 +9,6 @@ from kvirt.krpc import kcli_pb2_grpc
 from kvirt.krpc.kcli_pb2 import empty
 
 
-from distutils.spawn import find_executable
 from kvirt.examples import hostcreate, _list, plancreate, planinfo, productinfo, repocreate, start
 from kvirt.examples import kubegenericcreate, kubeopenshiftcreate
 from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsole, vmexport, niccreate, nicdelete
@@ -20,8 +19,9 @@ from prettytable import PrettyTable
 import argcomplete
 import argparse
 from kvirt.krpc import commoncli as common
-from kvirt.krpc.commoncli import pprint, error, success
+from kvirt.krpc.commoncli import pprint, error, success, container_mode
 from kvirt import nameutils
+from shutil import which
 import os
 import random
 import requests
@@ -105,7 +105,7 @@ def get_version(args):
     update = 'N/A'
     if git_version != 'N/A':
         try:
-            upstream_version = requests.get("https://api.github.com/repos/karmab/kcli/commits/master").json()['sha'][:7]
+            upstream_version = requests.get("https://api.github.com/repos/karmab/kcli/commits/main").json()['sha'][:7]
             update = True if upstream_version != git_version else False
         except:
             pass
@@ -1155,8 +1155,8 @@ def create_generic_kube(args):
     """Create Generic kube"""
     paramfile = args.paramfile
     force = args.force
-    cluster = args.cluster if args.cluster is not None else 'testk'
-    if os.path.exists("/i_am_a_container"):
+    cluster = args.cluster if args.cluster is not None else 'mykube'
+    if container_mode():
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
         elif os.path.exists("/workdir/kcli_parameters.yml"):
@@ -1176,8 +1176,8 @@ def create_openshift_kube(args):
     """Create Generic kube"""
     paramfile = args.paramfile
     force = args.force
-    cluster = args.cluster if args.cluster is not None else 'testk'
-    if os.path.exists("/i_am_a_container"):
+    cluster = args.cluster if args.cluster is not None else 'myopenshift'
+    if container_mode():
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
         elif os.path.exists("/workdir/kcli_parameters.yml"):
@@ -1197,7 +1197,7 @@ def delete_kube(args):
     """Delete kube"""
     yes = args.yes
     yes_top = args.yes_top
-    cluster = args.cluster if args.cluster is not None else 'testk'
+    cluster = args.cluster if args.cluster is not None else 'mykube'
     if not yes and not yes_top:
         common.confirm("Are you sure?")
     pprint("Deleting kube %s" % cluster)
@@ -1214,8 +1214,8 @@ def scale_generic_kube(args):
     """Scale kube"""
     workers = args.workers
     paramfile = args.paramfile
-    cluster = args.cluster if args.cluster is not None else 'testk'
-    if os.path.exists("/i_am_a_container"):
+    cluster = args.cluster if args.cluster is not None else 'mykube'
+    if container_mode():
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
         elif os.path.exists("/workdir/kcli_parameters.yml"):
@@ -1235,8 +1235,8 @@ def scale_openshift_kube(args):
     """Scale openshift kube"""
     workers = args.workers
     paramfile = args.paramfile
-    cluster = args.cluster if args.cluster is not None else 'testk'
-    if os.path.exists("/i_am_a_container"):
+    cluster = args.cluster if args.cluster is not None else 'mykube'
+    if container_mode():
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
         elif os.path.exists("/workdir/kcli_parameters.yml"):
@@ -1319,7 +1319,7 @@ def create_plan(args):
     wait = args.wait
     if inputfile is None:
         inputfile = 'kcli_plan.yml'
-    if os.path.exists("/i_am_a_container"):
+    if container_mode():
         inputfile = "/workdir/%s" % inputfile
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
@@ -1354,7 +1354,7 @@ def update_plan(args):
     container = args.container
     inputfile = args.inputfile
     paramfile = args.paramfile
-    if os.path.exists("/i_am_a_container"):
+    if container_mode():
         inputfile = "/workdir/%s" % inputfile if inputfile is not None else "/workdir/kcli_plan.yml"
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
@@ -1446,7 +1446,7 @@ def info_plan(args):
     url = args.url
     path = args.path
     inputfile = args.inputfile
-    if os.path.exists("/i_am_a_container"):
+    if container_mode():
         inputfile = "/workdir/%s" % inputfile if inputfile is not None else "/workdir/kcli_plan.yml"
     if url is None:
         inputfile = plan if inputfile is None and plan is not None else inputfile
@@ -1496,7 +1496,7 @@ def download_oc(args):
 def download_openshift_installer(args):
     """Download Openshift Installer"""
     paramfile = args.paramfile
-    if os.path.exists("/i_am_a_container"):
+    if container_mode():
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
         elif os.path.exists("/workdir/kcli_parameters.yml"):
@@ -1518,7 +1518,7 @@ def create_pipeline(args):
     paramfile = args.paramfile
     if inputfile is None:
         inputfile = 'kcli_plan.yml'
-    if os.path.exists("/i_am_a_container"):
+    if container_mode():
         inputfile = "/workdir/%s" % inputfile
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
@@ -1529,7 +1529,7 @@ def create_pipeline(args):
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     baseconfig = Kconfig(client=args.client, debug=args.debug).baseconfig
     if not kube and not os.path.exists(inputfile):
-        error("File %s not found" % inputfile)
+        error(f"Input file {inputfile} not found")
         return 0
     renderfile = baseconfig.create_pipeline(inputfile, overrides=overrides, kube=kube)
     print(renderfile)
@@ -1542,7 +1542,7 @@ def render_file(args):
     inputfile = args.inputfile
     paramfile = args.paramfile
     ignore = args.ignore
-    if os.path.exists("/i_am_a_container"):
+    if container_mode():
         inputfile = "/workdir/%s" % inputfile if inputfile is not None else "/workdir/kcli_plan.yml"
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
@@ -1556,7 +1556,7 @@ def render_file(args):
     config_data['config_type'] = config_data.get('config_type', 'kvm')
     overrides.update(config_data)
     if not os.path.exists(inputfile):
-        error("File %s not found" % inputfile)
+        error(f"Input file {inputfile} not found")
         return 0
     renderfile = baseconfig.process_inputfile(plan, inputfile, overrides=overrides, onfly=False, ignore=ignore)
     print(renderfile)
@@ -1649,8 +1649,8 @@ def create_product(args):
 
 def ssh_vm(args):
     """Ssh into vm"""
-    l = args.L
-    r = args.R
+    local = args.L
+    remote = args.R
     D = args.D
     X = args.X
     Y = args.Y
@@ -1667,11 +1667,11 @@ def ssh_vm(args):
         pprint("Using %s from %s as vm" % (name, config.client))
     else:
         name = args.name[0]
-    sshcommand = k.ssh(kcli_pb2.vm(name=name, user=user, l=l, r=r, X=X, Y=Y, D=D, cmd=cmd)).sshcmd
+    sshcommand = k.ssh(kcli_pb2.vm(name=name, user=user, l=local, r=remote, X=X, Y=Y, D=D, cmd=cmd)).sshcmd
     if sshcommand != '':
         if args.debug:
             print(sshcommand)
-        if find_executable('ssh') is not None:
+        if which('ssh') is not None:
             os.system(sshcommand)
         else:
             print(sshcommand)
@@ -1683,7 +1683,7 @@ def scp_vm(args):
     """Scp into vm"""
     recursive = args.recursive
     source = args.source[0]
-    source = source if not os.path.exists("/i_am_a_container") else "/workdir/%s" % source
+    source = "/workdir/%s" % source if container_mode() else source
     destination = args.destination[0]
     user = args.user
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -1707,7 +1707,7 @@ def scp_vm(args):
                                      recursive=recursive)
     scpcommand = k.scp(scpdetails).sshcmd
     if scpcommand != '':
-        if find_executable('scp') is not None:
+        if which('scp') is not None:
             os.system(scpcommand)
         else:
             print(scpcommand)

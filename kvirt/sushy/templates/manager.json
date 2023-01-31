@@ -1,0 +1,36 @@
+{
+  "@Redfish.Copyright": "Copyright 2014-2017 Distributed Management Task Force, Inc. (DMTF). For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright.",
+  "@odata.context": "/redfish/v1/$metadata#Manager.Manager",
+  "@odata.id": "/redfish/v1/Managers/{{ client }}/{{ name }}",
+  "@odata.type": "#Manager.v1_3_1.Manager",
+  "DateTime": "{{ date_time|string }}",
+  "DateTimeLocalOffset": "+00:00",
+  "Description": "Ksushy BMC",
+  "FirmwareVersion": "1.00",
+  "Id": "1",
+  "Links": {
+    "ManagerForChassis": [
+      {
+        "@odata.id": "/redfish/v1/Chassis/fake-chassis"
+      }
+    ],
+    "ManagerForServers": [
+      {
+        "@odata.id": "/redfish/v1/Systems/{{ client }}/{{ name }}"
+      }
+    ]
+  },
+  "ManagerType": "BMC",
+  "Model": "Palc 2000",
+  "Name": "Ksushy Manager",
+  "PowerState": "On",
+  "ServiceEntryPointUUID": null,
+  "Status": {
+    "Health": "OK",
+    "State": "Enabled"
+  },
+  "UUID": "1",
+  "VirtualMedia": {
+    "@odata.id": "/redfish/v1/Managers/{{ client }}/{{ name }}/VirtualMedia"
+  }
+}

@@ -17,8 +17,7 @@
                 <td>{{ product[3] }}</td>
                 <td>{{ product[4] }}</td>
                 <td>
-                    <!--button type="button" class="btn btn-default" id="create" onclick="productrender('{{ product[2] }}');"><span data-toggle="tooltip" title="Create Product" class="glyphicon glyphicon-shopping-cart"></span></button><p!-->
-                    <a href="{{ url_for('productcreate', prod=product[2]) }}"><span data-toggle="tooltip" title="Create Product" class="glyphicon glyphicon-shopping-cart"></span></a><p>
+                    <a href="/productcreate/{{ product[2]) }}"><span data-toggle="tooltip" title="Create Product" class="glyphicon glyphicon-shopping-cart"></span></a><p>
                 </td>
             </tr>
             {% endfor %} 

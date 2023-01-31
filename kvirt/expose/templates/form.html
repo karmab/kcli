@@ -1,14 +1,18 @@
 {% include "head.html" %}
 <div id="wheel"></div>
 <div class='notifications top-right'></div>
-<form id="exposecreate" action="{{ url_for('exposecreate') }}" method="post">
+<form id="exposecreate" action="/exposecreate" method="post">
     <div class="form-group">
         <label for="inputName">Plan</label>
         <input readonly="readonly" class="form-control" name="plan" id="plan" value="{{ plan }}">
     <div>
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" name="update" id="update" value="update">
+      <label class="form-check-label" for="update">Update</label>
+    </div>
     <div class="form-group">
         <label for="inputName">Mailto</label>
-        <input class="form-control" name="parameter_mailto" id="parameter_mailto" value="{{ mailto }}">
+        <input class="form-control" name="parameter_mail_to" id="parameter_mail_to" value="{{ mail_to }}">
     <div>
     <div class="form-group">
         <label for="inputName">Owner</label>
@@ -20,6 +24,12 @@
         <input required="true" class="form-control" name="parameter_{{ parameter }}" id="{{ parameter }}" value="{{ parameters[parameter] }}">
     </div>
     {% endfor %}
+    {% if pfmode|default(False) %}
+    <div class="form-group">
+        <label for="inputName">Parameter file</label><p>
+    <textarea id="pf" name="pf" rows="4" cols="50"></textarea>
+    </div>
+    {% endif %}
     <button type="submit" class="btn btn-success">Create</button>
 </form>
 </body>

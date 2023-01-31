@@ -1,0 +1,27 @@
+{% set first_ctlplane = 0 if scale|default(False) else 1 %}
+{% for number in range(first_ctlplane, ctlplanes|int) %}
+{% if extra_ctlplane_networks %}
+ {% set extra_networks = extra_ctlplane_networks %}
+{% endif %}
+{% if extra_ctlplane_disks %}
+ {% set extra_disks = extra_ctlplane_disks %}
+{% endif %}
+
+{% set default_ctlplane = cluster + '-ctlplane-' + number|string %}
+{% set ctlplane = vmrules_names[number] if vmrules_names is defined else default_ctlplane %}
+
+{{ ctlplane }}:
+ image: {{ image }}
+ pool: {{ pool or config_pool }}
+ keys: {{ keys }}
+ numcpus: {{ ctlplane_numcpus | default(numcpus, numcpus) }}
+ memory: {{ ctlplane_memory | default(memory, memory) }}
+ nets: {{ [network] + extra_networks }}
+ disks: {{ [disk_size] + extra_disks }}
+ files: {{ files + ["keepalived.conf"] if files|default([]) else ["keepalived.conf"] }}
+ scripts:
+  - ctlplanes.sh
+{% if config_type not in ['aws', 'gcp'] %}
+  - keepalived.sh
+{% endif %}
+{% endfor %}

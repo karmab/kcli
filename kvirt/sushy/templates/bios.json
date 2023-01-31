@@ -1,0 +1,30 @@
+{
+    "@odata.type": "#Bios.v1_0_0.Bios",
+    "Id": "BIOS",
+    "Name": "BIOS Configuration Current Settings",
+    "AttributeRegistry": "BiosAttributeRegistryP89.v1_0_0",
+    "Attributes": {
+      "BootMode": "Uefi",
+      "EmbeddedSata": "Raid",
+      "NicBoot1": "NetworkBoot",
+      "ProcTurboMode": "Enabled",
+      "SecureBootStatus": "Enabled",
+      "SerialNumber": "QPX12345"
+},
+    "@Redfish.Settings": {
+        "@odata.type": "#Settings.v1_0_0.Settings",
+        "SettingsObject": {
+            "@odata.id": "/redfish/v1/Systems/{{ client }}/{{ name }}/BIOS/Settings"
+        }
+    },
+    "Actions": {
+        "#Bios.ResetBios": {
+            "target": "/redfish/v1/Systems/{{ client }}/{{ name }}/BIOS/Actions/Bios.ResetBios"
+        },
+        "#Bios.ChangePassword": {
+            "target": "/redfish/v1/Systems/{{ client }}/{{ name }}/BIOS/Actions/Bios.ChangePassword"
+        }
+    },
+    "@odata.context": "/redfish/v1/$metadata#Bios.Bios",
+    "@odata.id": "/redfish/v1/Systems/{{ client }}/{{ name }}/BIOS"
+}

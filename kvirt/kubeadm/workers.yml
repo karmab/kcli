@@ -1,60 +1,42 @@
-{% if zerotier_nets %}
-{% set ztier = zerotier_nets %}
-{% elif config_zerotier is defined %}
-{% set ztier = config_zerotier %}
-{% else %}
-{% set ztier = [] %}
-{% endif %}
-
-{% for number in range(0, workers) %}
+{% for number in range(0, workers|int) %}
 {% if extra_worker_networks %}
  {% set extra_networks = extra_worker_networks %}
 {% endif %}
 {% if extra_worker_disks %}
  {% set extra_disks = extra_worker_disks %}
 {% endif %}
-{% if numa_worker != None %}
- {% set numa = numa_worker %}
-{% endif %}
-{% if numamode_worker != None %}
- {% set numamode = numamode_worker %}
-{% endif %}
-{% if cpupinning_worker != None %}
- {% set cpupinning = cpupinning_worker %}
-{% endif %}
 
 {{cluster }}-worker-{{ number }}:
  image: {{ image }}
  pool: {{ pool or config_pool }}
+ keys: {{ keys }}
  numcpus: {{ worker_numcpus | default(numcpus, numcpus) }}
  memory: {{ worker_memory | default(memory, memory) }}
  reservedns: false
  domain: {{ domain }}
- zerotier_nets: {{ ztier }}
  nets: {{ [network] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
  files:
-  - path: /root/join.sh
-    origin: {{ basedir }}/clusters/{{ cluster }}/join.sh
-  - path: /root/admin.conf
-    origin: {{ basedir }}/clusters/{{ cluster }}/auth/kubeconfig
+ - path: /root/join.sh
+   origin: ~/.kcli/clusters/{{ cluster }}/join.sh
+ - path: /root/admin.conf
+   origin: ~/.kcli/clusters/{{ cluster }}/auth/kubeconfig
 {% if eksd %}
-  - eksd.sh
+ - eksd.sh
 {% endif %}
-  - path: /root/pre.sh
-    origin: pre_{{ 'ubuntu' if ubuntu|default(False) else 'el' }}.sh
-  - workers.sh
-  - path: /root/deploy.sh
-    origin: deploy.sh_workers
+ - path: /root/pre.sh
+   origin: pre_{{ 'ubuntu' if ubuntu|default(False) else 'el' }}.sh
+ - workers.sh
+ - path: /root/deploy.sh
+   origin: deploy.sh_workers
+{% if config_type == 'gcp' %}
+ - path: /usr/local/bin/gcp-hack.sh
+   origin: gcp-hack.sh
+   mode: 755
+ - path: /usr/lib/systemd/system/gcp-hack.service
+   origin: gcp-hack.service
+   mode: 644
+{% endif %}
  cmds:
-  - bash /root/deploy.sh
-{% if numa != None %}
- numa: {{ numa }}
-{% endif %}
-{% if numamode != None %}
- numamode: {{ numamode }}
-{% endif %}
-{% if cpupinning != None %}
- cpupinning: {{ cpupinning }}
-{% endif %}
+ - bash /root/deploy.sh
 {% endfor %}

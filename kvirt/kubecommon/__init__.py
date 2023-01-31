@@ -5,6 +5,7 @@ Kubecommon Base Class
 """
 
 from kubernetes import client, config
+import os
 
 
 class Kubecommon(object):
@@ -12,7 +13,7 @@ class Kubecommon(object):
 
     """
     def __init__(self, token=None, ca_file=None, context=None, host='127.0.0.1', port=443, user='root', debug=False,
-                 namespace=None, readwritemany=False):
+                 namespace=None, readwritemany=False, kubeconfig_file=None):
         self.host = host
         self.port = port
         self.user = user
@@ -22,9 +23,13 @@ class Kubecommon(object):
         self.accessmode = 'ReadWriteMany' if readwritemany else 'ReadWriteOnce'
         self.conn = 'OK'
         self.namespace = namespace
+        self.contextname = None
         self.token = token
         api_client = None
-        if host is not None and port is not None and token is not None:
+        if kubeconfig_file is not None:
+            kubeconfig_file = os.path.expanduser(kubeconfig_file)
+            config.load_kube_config(config_file=kubeconfig_file, context=context)
+        elif host is not None and port is not None and token is not None:
             configuration = client.Configuration()
             configuration.host = "https://%s:%s" % (host, port)
             configuration.api_key = {"authorization": "Bearer " + token}
@@ -33,6 +38,8 @@ class Kubecommon(object):
             else:
                 configuration.verify_ssl = False
             api_client = client.ApiClient(configuration)
+        elif 'KUBERNETES_PORT' in os.environ and 'KUBECONFIG' not in os.environ:
+            config.load_incluster_config()
         else:
             contexts, current = config.list_kube_config_contexts()
             if context is not None:
@@ -52,8 +59,12 @@ class Kubecommon(object):
             if 'cluster' in context['context'] and ':' in context['context']['cluster']:
                 self.host = context['context']['cluster'].split(':')[0].replace('-', '.')
         self.core = client.CoreV1Api(api_client=api_client)
-        self.v1beta = client.ExtensionsV1beta1Api(api_client=api_client)
+        try:
+            self.appsv1 = client.AppsV1Api(api_client=api_client)
+        except:
+            self.appsv1 = client.ExtensionsV1beta1Api(api_client=api_client)
         self.storageapi = client.StorageV1Api(api_client=api_client)
+        self.batch_v1 = client.BatchV1Api(api_client=api_client)
         self.api_client = api_client
         self.debug = debug
         if self.namespace is None:

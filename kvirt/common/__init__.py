@@ -2,16 +2,19 @@
 # coding=utf-8
 
 from ast import literal_eval
+from datetime import datetime
+import glob
+from hashlib import sha256
 from kvirt.jinjafilters import jinjafilters
-from kvirt.defaults import UBUNTUS
+from kvirt.defaults import UBUNTUS, SSH_PUB_LOCATIONS
+from kvirt.kfish import Redfish
+from kvirt import version
+from ipaddress import ip_address
 from random import randint
 import base64
 from jinja2 import Environment, FileSystemLoader
 from jinja2 import StrictUndefined as undefined
-from jinja2.exceptions import TemplateSyntaxError, TemplateError
-from distutils.spawn import find_executable
-from netaddr import IPAddress
-import random
+from jinja2.exceptions import TemplateSyntaxError, TemplateError, TemplateNotFound
 import re
 import socket
 import ssl
@@ -21,11 +24,11 @@ import json
 import os
 import sys
 from subprocess import call
-from shutil import copy2, move
+from shutil import copy2, move, which
 from tempfile import TemporaryDirectory
+from time import sleep
+from uuid import UUID
 import yaml
-
-binary_types = ['bz2', 'deb', 'jpg', 'gz', 'jpeg', 'iso', 'png', 'rpm', 'tgz', 'zip', 'ks']
 
 ceo_yaml = """apiVersion: operator.openshift.io/v1
 kind: Etcd
@@ -57,10 +60,10 @@ def github_raw(url):
         branch = decomposed_url[6]
         relativepath = decomposed_url[7:]
     else:
-        branch = 'master'
+        branch = 'main'
         relativepath = decomposed_url[5:]
     relativepath = '/'.join(relativepath)
-    url = 'https://raw.githubusercontent.com/%s/%s/%s/%s' % (user, repo, branch, relativepath)
+    url = f'https://raw.githubusercontent.com/{user}/{repo}/{branch}/{relativepath}'
     return url
 
 
@@ -73,18 +76,18 @@ def fetch(url, path):
         os.mkdir(path)
         pathcreated = True
     try:
-        urlretrieve(url, "%s/%s" % (path, shortname))
+        urlretrieve(url, f"{path}/{shortname}")
     except:
         if not url.endswith('_default.yml'):
-            error("Hit issue with url %s" % url)
+            error(f"Hit issue with url {url}")
             if pathcreated:
                 os.rmdir(path)
         sys.exit(1)
 
 
-def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False,
-              files=[], enableroot=True, overrides={}, fqdn=False, storemetadata=True, image=None, ipv6=[],
-              machine='pc'):
+def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, files=[], enableroot=True,
+              overrides={}, fqdn=False, storemetadata=True, image=None, ipv6=[],
+              machine='pc', vmuser=None):
     """
 
     :param name:
@@ -94,7 +97,6 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
     :param gateway:
     :param dns:
     :param domain:
-    :param reserveip:
     :param files:
     :param enableroot:
     :param overrides:
@@ -116,6 +118,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
     dns_hack = True if image is not None and is_debian10(image) else False
     netdata = {} if not legacy else ''
     bridges = {}
+    vlans = {}
     if nets:
         for index, netinfo in enumerate(nets):
             if isinstance(netinfo, str):
@@ -123,10 +126,10 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             elif isinstance(netinfo, dict):
                 net = netinfo.copy()
             else:
-                error("Wrong net entry %s" % index)
+                error(f"Wrong net entry {index}")
                 sys.exit(1)
             if 'name' not in net:
-                error("Missing name in net %s" % index)
+                error(f"Missing name in net {index}")
                 sys.exit(1)
             netname = net['name']
             if index == 0 and 'type' in net and net.get('type') != 'virtio':
@@ -134,70 +137,79 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             nicname = net.get('nic')
             if nicname is None:
                 if prefix.startswith('ens19'):
-                    nicname = "ens%d" % (192 + 32 * index)
+                    nicname = f"ens{192 + 32 * index}"
                 elif prefix.startswith('ens'):
-                    nicname = "%s%d" % (prefix, 3 + index)
+                    nicname = f"{prefix}{index + 3}"
                 else:
-                    nicname = "%s%d" % (prefix, index)
+                    nicname = f"{prefix}{index}"
             ip = net.get('ip')
             netmask = next((e for e in [net.get('mask'), net.get('netmask')] if e is not None), None)
             noconf = net.get('noconf')
             vips = net.get('vips', [])
             enableipv6 = net.get('ipv6', False)
+            vlan = net.get('vlan')
             bridge = net.get('bridge', False)
             bridgename = net.get('bridgename', netname)
             if bridge:
                 if legacy:
-                    netdata += "  auto %s\n" % nicname
-                    netdata += "  iface %s inet manual\n" % nicname
-                    netdata += "  auto %s\n" % bridgename
-                    netdata += "  iface %s inet dhcp\n" % bridgename
-                    netdata += "     bridge_ports %s\n" % nicname
+                    netdata += f"  auto {nicname}\n"
+                    netdata += f"  iface {nicname} inet manual\n"
+                    netdata += f"  auto {bridgename}\n"
+                    netdata += f"  iface {bridgename} inet dhcp\n"
+                    netdata += f"     bridge_ports {nicname}\n"
                 else:
                     bridges[bridgename] = {'interfaces': [nicname]}
                 realnicname = nicname
                 nicname = bridgename
             if legacy:
-                netdata += "  auto %s\n" % nicname
+                if vlan is not None:
+                    nicname += f'.{vlan}'
+                netdata += f"  auto {nicname}\n"
             if noconf is not None:
                 if legacy:
-                    netdata += "  iface %s inet manual\n" % nicname
+                    netdata += f"  iface {nicname} inet manual\n"
                 else:
                     targetfamily = 'dhcp6' if netname in ipv6 else 'dhcp4'
                     netdata[nicname] = {targetfamily: False}
-            elif ip is not None and netmask is not None and not reserveip:
+            elif ip is not None and netmask is not None:
                 if legacy:
-                    netdata += "  iface %s inet static\n" % nicname
-                    netdata += "  address %s\n" % ip
-                    netdata += "  netmask %s\n" % netmask
+                    netdata += f"  iface {nicname} inet static\n"
+                    netdata += f"  address {ip}\n"
+                    netdata += f"  netmask {netmask}\n"
                 else:
-                    if isinstance(netmask, int):
+                    if str(netmask).isnumeric():
                         cidr = netmask
                     else:
-                        cidr = IPAddress(netmask).netmask_bits()
+                        cidr = netmask_to_prefix(netmask)
                     dhcp = 'dhcp6' if ':' in ip else 'dhcp4'
-                    netdata[nicname] = {dhcp: False, 'addresses': ["%s/%s" % (ip, cidr)]}
+                    netdata[nicname] = {dhcp: False, 'addresses': [f"{ip}/{cidr}"]}
                 gateway = net.get('gateway')
                 if index == 0 and default_gateway is not None:
+                    gateway_name = 'gateway6' if ':' in default_gateway else 'gateway4'
                     if legacy:
-                        netdata += "  gateway %s\n" % default_gateway
+                        netdata += f"  gateway {default_gateway}\n"
                     else:
-                        netdata[nicname]['gateway4'] = default_gateway
+                        netdata[nicname][gateway_name] = default_gateway
                 elif gateway is not None:
+                    gateway_name = 'gateway6' if ':' in gateway else 'gateway4'
                     if legacy:
-                        netdata += "  gateway %s\n" % gateway
+                        netdata += f"  gateway {gateway}\n"
                     else:
-                        netdata[nicname]['gateway4'] = gateway
+                        netdata[nicname][gateway_name] = gateway
                 dns = net.get('dns')
                 if not legacy:
                     netdata[nicname]['nameservers'] = {}
                 if dns is not None:
                     if legacy:
-                        netdata += "  dns-nameservers %s\n" % dns
+                        if isinstance(dns, list):
+                            dns = ' '.join(dns)
+                        netdata += f"  dns-nameservers {dns}\n"
                     else:
-                        netdata[nicname]['nameservers']['addresses'] = [dns]
+                        if isinstance(dns, str):
+                            dns = dns.split(',')
+                        netdata[nicname]['nameservers']['addresses'] = dns
                     if dns_hack:
-                        dnscontent = "nameserver %s\n" % dns
+                        dnscontent = f"nameserver {dns}\n"
                         dnsdata = {'path': 'etc/resolvconf/resolv.conf.d/base', 'content': dnscontent}
                         if files:
                             files.append(dnsdata)
@@ -207,7 +219,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 netdomain = net.get('domain')
                 if netdomain is not None:
                     if legacy:
-                        netdata += "  dns-search %s\n" % netdomain
+                        netdata += f"  dns-search {netdomain}\n"
                     else:
                         netdata[nicname]['nameservers']['search'] = [netdomain]
                 if not legacy and not netdata[nicname]['nameservers']:
@@ -218,23 +230,37 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                             netdata += "  auto %s:%s\n  iface %s:%s inet static\n  address %s\n  netmask %s\n"\
                                 % (nicname, index, nicname, index, vip, netmask)
                         else:
-                            netdata[nicname]['addresses'].append("%s/%s" % (vip, netmask))
+                            netdata[nicname]['addresses'].append(f"{vip}/{netmask}")
             else:
                 if legacy:
                     if not bridge:
-                        netdata += "  iface %s inet dhcp\n" % nicname
+                        netdata += f"  iface {nicname} inet dhcp\n"
                 else:
-                    targetfamily = 'dhcp6' if enableipv6 or netname in ipv6 else 'dhcp4'
+                    if enableipv6 or netname in ipv6:
+                        targetfamily = 'dhcp6'
+                        if net.get('ipv6_stateless', False):
+                            nmcontent = "[main]\nrc-manager=file\n[connection]\nipv6.dhcp-duid=ll\nipv6.dhcp-iaid=mac"
+                            files.append({'path': '/etc/NetworkManager/conf.d/ipv6.conf', 'content': nmcontent})
+                            cmds.insert(0, "systemctl restart NetworkManager")
+                    else:
+                        targetfamily = 'dhcp4'
                     netdata[nicname] = {targetfamily: True}
-                    if 'dualstack' in overrides and overrides['dualstack'] and index == 0:
+                    if net.get('dualstack', False) or\
+                       'dualstack' in overrides and overrides['dualstack'] and index == 0:
                         dualfamily = 'dhcp6' if targetfamily == 'dhcp4' else 'dhcp4'
                         netdata[nicname][dualfamily] = True
             if bridge and not legacy:
                 bridges[bridgename].update(netdata[nicname])
                 del netdata[nicname]
                 netdata[realnicname] = {'match': {'name': realnicname}}
+            if vlan is not None and not legacy:
+                vlan_name = f'vlan{vlan}'
+                vlans[vlan_name] = {'id': int(vlan), 'link': nicname}
+                vlans[vlan_name].update(netdata[nicname])
+                targetfamily = 'dhcp6' if netname in ipv6 else 'dhcp4'
+                netdata[nicname] = {targetfamily: False}
     if domain is not None:
-        localhostname = "%s.%s" % (name, domain)
+        localhostname = f"{name}.{domain}"
     else:
         localhostname = name
     metadata = {"instance-id": localhostname, "local-hostname": localhostname} if not noname else {}
@@ -242,56 +268,87 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
         metadata["network-interfaces"] = netdata
     metadata = json.dumps(metadata)
     if not legacy:
-        if netdata or bridges:
+        if netdata or bridges or vlans:
             final_netdata = {'version': 2}
             if netdata:
                 final_netdata['ethernets'] = netdata
             if bridges:
                 final_netdata['bridges'] = bridges
+            if vlans:
+                final_netdata['vlans'] = vlans
             netdata = yaml.safe_dump(final_netdata, default_flow_style=False, encoding='utf-8').decode("utf-8")
         else:
             netdata = ''
     else:
         netdata = None
-    existing = "%s.cloudinit" % name if not os.path.exists('/i_am_a_container') else "/workdir/%s.cloudinit" % name
+    existing = f"/workdir/{name}.cloudinit" if container_mode() else f"{name}.cloudinit"
     if os.path.exists(existing):
-        pprint("using cloudinit from existing %s for %s" % (existing, name))
+        pprint(f"using cloudinit from existing {existing} for {name}")
         userdata = open(existing).read()
     else:
+        publickeyfile = get_ssh_pub_key() if not overrides.get('tempkey', False) else None
+        tempkeydir = overrides.get('tempkeydir')
+        if tempkeydir is not None:
+            if not keys:
+                warning("No extra keys specified along with tempkey one, you might have trouble accessing the vm")
+            privatekeyfile = f"{tempkeydir.name}/id_rsa"
+            publickeyfile = f"{privatekeyfile}.pub"
+            if not os.path.exists(privatekeyfile):
+                tempkeycmd = f"yes '' | ssh-keygen -q -t rsa -N '' -C 'temp-kcli-key' -f {privatekeyfile}"
+                tempkeycmd += " >/dev/null 2>&1 || true"
+                call(tempkeycmd, shell=True)
         userdata = '#cloud-config\n'
-        if not noname:
-            userdata += 'hostname: %s\n' % name
         userdata += 'final_message: kcli boot finished, up $UPTIME seconds\n'
-        if fqdn:
-            fqdn = "%s.%s" % (name, domain) if domain is not None else name
-            userdata += "fqdn: %s\n" % fqdn
+        if not noname:
+            userdata += f'hostname: {name}\n'
+            if fqdn:
+                fqdn = f"{name}.{domain}" if domain is not None else name
+                userdata += f"fqdn: {fqdn}\n"
         if enableroot:
             userdata += "ssh_pwauth: True\ndisable_root: false\n"
-        if domain is not None:
-            userdata += "fqdn: %s.%s\n" % (name, domain)
-        if keys or os.path.exists(os.path.expanduser("~/.ssh/id_rsa.pub"))\
-                or os.path.exists(os.path.expanduser("~/.ssh/id_dsa.pub"))\
-                or os.path.exists(os.path.expanduser("~/.kcli/id_rsa.pub"))\
-                or os.path.exists(os.path.expanduser("~/.kcli/id_dsa.pub")):
+        validkeyfound = False
+        if keys or publickeyfile is not None:
             userdata += "ssh_authorized_keys:\n"
-        elif find_executable('ssh-add') is not None:
-            agent_keys = os.popen('ssh-add -L 2>/dev/null | head -1').readlines()
+            validkeyfound = True
+        elif which('ssh-add') is not None:
+            agent_keys = os.popen('ssh-add -L 2>/dev/null | grep ssh | head -1').readlines()
             if agent_keys:
                 keys = agent_keys
-        else:
-            warning("neither id_rsa or id_dsa public keys found in your .ssh or .kcli directory, you might have "
-                    "trouble accessing the vm")
+                validkeyfound = True
+        if not validkeyfound:
+            warning("no valid public keys found in .ssh/.kcli directories, you might have trouble accessing the vm")
+        good_keys = []
         if keys:
             for key in list(set(keys)):
-                userdata += "- %s\n" % key
-        for path in ["~/.kcli/id_rsa.pub", "~/.kcli/id_dsa.pub", "~/.ssh/id_rsa.pub", "~/.ssh/id_dsa.pub"]:
-            expanded_path = os.path.expanduser(path)
-            if os.path.exists(expanded_path) and os.path.exists(expanded_path.replace('.pub', '')):
-                publickeyfile = expanded_path
-                with open(publickeyfile, 'r') as ssh:
-                    key = ssh.read().rstrip()
-                    userdata += "- %s\n" % key
-                break
+                if os.path.exists(os.path.expanduser(key)):
+                    keypath = os.path.expanduser(key)
+                    newkey = open(keypath, 'r').read().rstrip()
+                else:
+                    newkey = key.rstrip()
+                if not newkey.startswith('ssh-'):
+                    warning(f"Skipping invalid ssh key {key}")
+                    continue
+                else:
+                    good_keys.append(newkey)
+                userdata += f"- {newkey}\n"
+        if publickeyfile is not None:
+            with open(publickeyfile, 'r') as ssh:
+                key = ssh.read().rstrip()
+                if key not in keys:
+                    good_keys.append(key)
+                    userdata += f"- {key}\n"
+        if vmuser is not None:
+            userdata += """users:
+- name: {vmuser}
+  sudo: ALL=(ALL) NOPASSWD:ALL
+  groups: users, admin
+  home: /home/{vmuser}
+  shell: /bin/bash
+  lock_passwd: false\n""".format(vmuser=vmuser)
+            if good_keys:
+                userdata += "  ssh-authorized-keys:\n"
+                for key in good_keys:
+                    userdata += f"  - {key}\n"
         if cmds:
             data = process_cmds(cmds, overrides)
             if data != '':
@@ -299,7 +356,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 userdata += data
         userdata += 'ssh_pwauth: True\n'
         if storemetadata and overrides:
-            storeoverrides = {k: overrides[k] for k in overrides if k not in ['password', 'rhnpassword', 'rhnak']}
+            storeoverrides = {key: overrides[key] for key in overrides if not key.startswith('config_')}
             storedata = {'path': '/root/.metadata', 'content': yaml.dump(storeoverrides, default_flow_style=False,
                                                                          indent=2)}
             if files:
@@ -311,17 +368,22 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             if data != '':
                 userdata += "write_files:\n"
                 userdata += data
+    if os.path.exists(os.path.expanduser('~/.kcli/cloudinit.yml')):
+        with open(os.path.expanduser('~/.kcli/cloudinit.yml')) as f:
+            oridata = yaml.safe_load(f)
+            oridata.update(yaml.safe_load(userdata))
+            userdata = "#cloud-config\n" + yaml.dump(oridata, default_flow_style=False, indent=2)
     return userdata.strip(), metadata, netdata
 
 
-def process_files(files=[], overrides={}):
+def process_files(files=[], overrides={}, remediate=False):
     """
 
     :param files:
     :param overrides:
     :return:
     """
-    data = ''
+    data = [] if remediate else ''
     todelete = []
     for directory in files:
         if not isinstance(directory, dict) or 'origin' not in directory\
@@ -334,46 +396,52 @@ def process_files(files=[], overrides={}):
             path = directory.get('path')
             entries = os.listdir(origin)
             if not entries:
-                files.append({'path': '%s/.k' % path, 'content': ''})
+                files.append({'path': f'{path}/.k', 'content': ''})
             else:
                 for entry in entries:
                     if os.path.isdir(entry):
                         subentries = os.listdir(entry)
                         if not subentries:
-                            files.append({'path': '%s/%s/.k' % (path, entry), 'content': ''})
+                            files.append({'path': f'{path}/{entry}/.k', 'content': ''})
                         else:
                             for subentry in subentries:
                                 if os.path.isdir(subentry):
                                     continue
                                 else:
-                                    subpath = "%s/%s/%s" % (path, entry, subentry)
+                                    subpath = f"{path}/{entry}/{subentry}"
                                     subpath = subpath.replace('//', '/')
-                                    files.append({'path': subpath, 'origin': "%s/%s/%s" % (origin, entry, subentry)})
+                                    mode = oct(os.stat(f"{origin}/{entry}/{subentry}").st_mode)[-3:]
+                                    files.append({'path': subpath, 'origin': f"{origin}/{entry}/{subentry}",
+                                                  'mode': mode})
                     else:
-                        subpath = "%s/%s" % (path, entry)
+                        subpath = f"{path}/{entry}"
                         subpath = subpath.replace('//', '/')
-                        files.append({'path': subpath, 'origin': "%s/%s" % (origin, entry)})
+                        files.append({'path': subpath, 'origin': f"{origin}/{entry}"})
     for directory in todelete:
         files.remove(directory)
+    processed_files = []
     for fil in files:
         if not isinstance(fil, dict):
             continue
         origin = fil.get('origin')
         content = fil.get('content')
         path = fil.get('path')
+        binary = False
+        if path in processed_files:
+            continue
+        else:
+            processed_files.append(path)
         owner = fil.get('owner', 'root')
         mode = fil.get('mode', '0600' if not path.endswith('sh') and not path.endswith('py') else '0700')
         permissions = fil.get('permissions', mode)
         render = fil.get('render', True)
-        binary = False
+        if isinstance(render, str):
+            render = True if render.lower() == 'true' else False
+        file_overrides = overrides.copy()
+        file_overrides.update(fil)
         if origin is not None:
             origin = os.path.expanduser(origin)
-            binary = True if '.' in origin and origin.split('.')[-1].lower() in binary_types else False
-            if binary:
-                with open(origin, "rb") as f:
-                    # content = f.read().encode("base64")
-                    content = base64.b64encode(f.read())
-            elif overrides and render:
+            if overrides and render:
                 basedir = os.path.dirname(origin) if os.path.dirname(origin) != '' else '.'
                 env = Environment(loader=FileSystemLoader(basedir), undefined=undefined, extensions=['jinja2.ext.do'],
                                   trim_blocks=True, lstrip_blocks=True)
@@ -381,28 +449,35 @@ def process_files(files=[], overrides={}):
                     env.filters[jinjafilter] = jinjafilters.jinjafilters[jinjafilter]
                 try:
                     templ = env.get_template(os.path.basename(origin))
-                    fileentries = templ.render(overrides)
+                    fileentries = templ.render(file_overrides)
+                    content = [line.rstrip() for line in fileentries.split('\n')]
+                except TemplateNotFound:
+                    error(f"Origin file {os.path.basename(origin)} not found")
+                    sys.exit(1)
                 except TemplateSyntaxError as e:
-                    error("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message))
+                    error(f"Error rendering line {e.lineno} of origin file {e.filename}. Got: {e.message}")
                     sys.exit(1)
                 except TemplateError as e:
-                    error("Error rendering file %s. Got: %s" % (origin, e.message))
+                    error(f"Error rendering origin file {origin}. Got: {e.message}")
                     sys.exit(1)
-                except UnicodeDecodeError as e:
-                    error("Error rendering file %s. Got: %s" % (origin, e))
-                    sys.exit(1)
-                content = [line.rstrip() for line in fileentries.split('\n')]
-                # with open("/tmp/%s" % os.path.basename(path), 'w') as f:
-                #     for line in fileentries.split('\n'):
-                #         if line.rstrip() == '':
-                #             f.write("\n")
-                #         else:
-                #             f.write("%s\n" % line.rstrip())
+                except UnicodeDecodeError:
+                    warning(f"Interpreting file {origin} as binary")
+                    binary = True
+                    content = base64.b64encode(open(origin, "rb").read())
             else:
-                content = [line.rstrip() for line in open(origin, 'r').readlines()]
-        data += "- owner: %s:%s\n" % (owner, owner)
-        data += "  path: %s\n" % path
-        data += "  permissions: '%s'\n" % permissions
+                try:
+                    content = [line.rstrip() for line in open(origin, 'r').readlines()]
+                except UnicodeDecodeError:
+                    warning(f"Interpreting file {origin} as binary")
+                    binary = True
+                    content = base64.b64encode(open(origin, "rb").read())
+        if remediate:
+            newcontent = "%s\n" % '\n'.join(content) if isinstance(content, list) else content
+            data.append({'owner': owner, 'path': path, 'permissions': permissions, 'content': newcontent})
+            continue
+        data += f"- owner: {owner}:{owner}\n"
+        data += f"  path: {path}\n"
+        data += f"  permissions: '{permissions}'\n"
         if binary:
             data += "  content: !!binary | \n     %s\n" % str(content, "utf-8")
         else:
@@ -410,8 +485,7 @@ def process_files(files=[], overrides={}):
             if isinstance(content, str):
                 content = content.split('\n')
             for line in content:
-                # data += "     %s\n" % line.strip()
-                data += "     %s\n" % line
+                data += f"     {line}\n"
     return data
 
 
@@ -432,8 +506,9 @@ def process_ignition_files(files=[], overrides={}):
             origin = os.path.expanduser(directory.get('origin'))
             path = directory.get('path')
             for subfil in os.listdir(origin):
-                if os.path.isfile("%s/%s" % (origin, subfil)):
-                    files.append({'path': '%s/%s' % (path, subfil), 'origin': "%s/%s" % (origin, subfil)})
+                if os.path.isfile(f"{origin}/{subfil}"):
+                    mode = oct(os.stat(f"{origin}/{subfil}").st_mode)[-3:]
+                    files.append({'path': f'{path}/{subfil}', 'origin': f"{origin}/{subfil}", 'mode': mode})
             files.remove(directory)
     for fil in files:
         if not isinstance(fil, dict):
@@ -443,16 +518,16 @@ def process_ignition_files(files=[], overrides={}):
         path = fil.get('path')
         mode = int(str(fil.get('mode', '644')), 8)
         permissions = fil.get('permissions', mode)
+        render = fil.get('render', True)
+        binary = False
+        if isinstance(render, str):
+            render = True if render.lower() == 'true' else False
         if origin is not None:
             origin = os.path.expanduser(origin)
             if not os.path.exists(origin):
-                print("Skipping file %s as not found" % origin)
+                print(f"Skipping file {origin} as not found")
                 continue
-            binary = True if '.' in origin and origin.split('.')[-1].lower() in binary_types else False
-            if binary:
-                with open(origin, "rb") as f:
-                    content = f.read().encode("base64")
-            elif overrides:
+            elif overrides and render:
                 basedir = os.path.dirname(origin) if os.path.dirname(origin) != '' else '.'
                 env = Environment(loader=FileSystemLoader(basedir), undefined=undefined, extensions=['jinja2.ext.do'])
                 for jinjafilter in jinjafilters.jinjafilters:
@@ -460,29 +535,38 @@ def process_ignition_files(files=[], overrides={}):
                 try:
                     templ = env.get_template(os.path.basename(origin))
                     fileentries = templ.render(overrides)
+                    content = [line for line in fileentries.split('\n')]
+                except TemplateNotFound:
+                    error(f"Origin file {os.path.basename(origin)} not found")
+                    sys.exit(1)
                 except TemplateSyntaxError as e:
-                    error("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message))
+                    error(f"Error rendering line {e.lineno} of origin file {e.filename}. Got: {e.message}")
                     sys.exit(1)
                 except TemplateError as e:
-                    error("Error rendering file %s. Got: %s" % (origin, e.message))
+                    error(f"Error rendering origin file {origin}. Got: {e.message}")
                     sys.exit(1)
-                except UnicodeDecodeError as e:
-                    error("Error rendering file %s. Got: %s" % (origin, e))
-                    sys.exit(1)
-                # content = [line.rstrip() for line in fileentries.split('\n') if line.rstrip() != '']
-                content = [line for line in fileentries.split('\n')]
+                except UnicodeDecodeError:
+                    warning(f"Interpreting file {origin} as binary")
+                    binary = True
+                    content = str(base64.b64encode(open(origin, "rb").read()), "utf-8")
             else:
-                content = open(origin, 'r').readlines()
+                try:
+                    content = open(origin, 'r').readlines()
+                except UnicodeDecodeError:
+                    warning(f"Interpreting file {origin} as binary")
+                    binary = True
+                    content = str(base64.b64encode(open(origin, "rb").read()), "utf-8")
         elif content is None:
             continue
-        if not isinstance(content, str):
+        if not binary and not isinstance(content, str):
             content = '\n'.join(content) + '\n'
         if path.endswith('.service'):
             unitsdata.append({"contents": content, "name": os.path.basename(path), "enabled": True})
         else:
-            content = base64.b64encode(content.encode()).decode("UTF-8")
-            filesdata.append({'filesystem': 'root', 'path': path, 'mode': permissions, 'overwrite': True,
-                              "contents": {"source": "data:text/plain;charset=utf-8;base64,%s" % content,
+            if not binary:
+                content = base64.b64encode(content.encode()).decode("UTF-8")
+            filesdata.append({'path': path, 'mode': permissions, 'overwrite': True,
+                              "contents": {"source": f"data:text/plain;charset=utf-8;base64,{content}",
                                            "verification": {}}})
     return filesdata, unitsdata
 
@@ -503,7 +587,7 @@ def process_cmds(cmds, overrides):
                 newcmd = Environment(undefined=undefined).from_string(cmd).render(overrides)
                 data += "- %s\n" % newcmd.replace(": ", "':' ")
             except TemplateError as e:
-                error("Error rendering cmd %s. Got: %s" % (cmd, e.message))
+                error(f"Error rendering cmd {cmd}. Got: {e.message}")
                 sys.exit(1)
     return data
 
@@ -521,18 +605,18 @@ def process_ignition_cmds(cmds, overrides):
     for cmd in cmds:
         try:
             newcmd = Environment(undefined=undefined).from_string(cmd).render(overrides)
-            content += "%s\n" % newcmd
+            content += f"{newcmd}\n"
         except TemplateError as e:
-            error("Error rendering cmd %s. Got: %s" % (cmd, e.message))
+            error(f"Error rendering cmd {cmd}. Got: {e.message}")
             sys.exit(1)
     if content == '':
         return content
     else:
         if not content.startswith('#!'):
-            content = "#!/bin/sh\n%s" % content
+            content = f"#!/bin/sh\n{content}"
         content = base64.b64encode(content.encode()).decode("UTF-8")
-        data = {'filesystem': 'root', 'path': path, 'mode': int(permissions, 8),
-                "contents": {"source": "data:text/plain;charset=utf-8;base64,%s" % content, "verification": {}}}
+        data = {'path': path, 'mode': int(permissions, 8),
+                "contents": {"source": f"data:text/plain;charset=utf-8;base64,{content}", "verification": {}}}
         return data
 
 
@@ -548,46 +632,29 @@ def get_free_port():
     return port
 
 
-def get_free_nodeport():
-    """
-    :return:
-    """
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    while True:
-        port = random.randint(30000, 32767)
-        try:
-            s.bind(('', port))
-            s.close()
-            return port
-        except Exception:
-            continue
-
-
 def pprint(text):
-    # colors = {'blue': '36', 'red': '31', 'green': '32', 'yellow': '33', 'pink': '35', 'white': '37'}
-    # color = colors[color]
     color = '36'
-    print('\033[%sm%s\033[0m' % (color, text))
+    print(f'\033[{color}m{text}\033[0m')
 
 
 def error(text):
     color = '31'
-    print('\033[%sm%s\033[0m' % (color, text), file=sys.stderr)
+    print(f'\033[{color}m{text}\033[0m', file=sys.stderr)
 
 
 def success(text):
     color = '32'
-    print('\033[%sm%s\033[0m' % (color, text))
+    print(f'\033[{color}m{text}\033[0m')
 
 
 def warning(text):
     color = '33'
-    print('\033[%sm%s\033[0m' % (color, text))
+    print(f'\033[{color}m{text}\033[0m')
 
 
 def info2(text):
     color = '36'
-    print('\033[%smINFO\033[0m %s' % (color, text))
+    print(f'\033[{color}mINFO\033[0m {text}')
 
 
 def handle_response(result, name, quiet=False, element='', action='deployed', client=None):
@@ -606,13 +673,13 @@ def handle_response(result, name, quiet=False, element='', action='deployed', cl
         result = {'result': result.result, 'reason': result.reason}
     if result['result'] == 'success':
         if not quiet:
-            response = "%s %s %s" % (element, name, action)
+            response = f"{element} {name} {action}"
             if client is not None:
-                response += " on %s" % client
+                response += f" on {client}"
             success(response.lstrip())
     elif result['result'] == 'failure':
         if not quiet:
-            response = "%s %s not %s because %s" % (element, name, action, result['reason'])
+            response = f"{element} {name} not {action} because {result['reason']}"
             error(response.lstrip())
         code = 1
     return code
@@ -624,7 +691,7 @@ def confirm(message):
     :param message:
     :return:
     """
-    message = "%s [y/N]: " % message
+    message = f"{message} [y/N]: "
     try:
         _input = input(message)
         if _input.lower() not in ['y', 'yes']:
@@ -644,7 +711,7 @@ def get_lastvm(client):
     if 'HOME' not in os.environ:
         error("HOME variable not set")
         sys.exit(1)
-    lastvm = "%s/.kcli/vm" % os.environ.get('HOME')
+    lastvm = f"{os.environ.get('HOME')}/.kcli/vm"
     if os.path.exists(lastvm) and os.stat(lastvm).st_size > 0:
         for line in open(lastvm).readlines():
             line = line.split(' ')
@@ -653,7 +720,7 @@ def get_lastvm(client):
             cli = line[0].strip()
             vm = line[1].strip()
             if cli == client:
-                pprint("Using %s from %s as vm" % (vm, cli))
+                pprint(f"Using {vm} from {cli} as vm")
                 return vm
     error("Missing Vm's name")
     sys.exit(1)
@@ -669,26 +736,26 @@ def set_lastvm(name, client, delete=False):
     """
     if 'HOME' not in os.environ:
         return
-    configdir = "%s/.kcli" % os.environ.get('HOME')
-    vmfile = "%s/vm" % configdir
+    configdir = f"{os.environ.get('HOME')}/.kcli"
+    vmfile = f"{configdir}/vm"
     if not os.path.exists(configdir):
         os.mkdir(configdir)
     if delete:
         if not os.path.exists(vmfile):
             return
         else:
-            deletecmd = "sed -i ''" if os.path.exists('/Users') and 'gnu' not in find_executable('sed') else "sed -i"
-            deletecmd += " '/%s %s/d' %s/vm" % (client, name, configdir)
+            deletecmd = "sed -i ''" if os.path.exists('/Users') and 'gnu' not in which('sed') else "sed -i"
+            deletecmd += f" '/{client} {name}/d' {configdir}/vm"
             os.system(deletecmd)
         return
     if not os.path.exists(vmfile) or os.stat(vmfile).st_size == 0:
         with open(vmfile, 'w') as f:
-            f.write("%s %s" % (client, name))
+            f.write(f"{client} {name}")
         return
     with open(vmfile, 'r') as original:
         data = original.read()
     with open(vmfile, 'w') as modified:
-        modified.write("%s %s\n%s" % (client, name, data))
+        modified.write(f"{client} {name}\n{data}")
 
 
 def remove_duplicates(oldlist):
@@ -718,13 +785,13 @@ def get_overrides(paramfile=None, param=[]):
                 try:
                     overrides = yaml.safe_load(f)
                 except:
-                    error("Couldn't parse your parameters file %s. Leaving" % paramfile)
+                    error(f"Couldn't parse your parameters file {paramfile}. Leaving")
                     sys.exit(1)
         else:
-            error("Parameter file %s not found. Leaving" % paramfile)
+            error(f"Parameter file {paramfile} not found. Leaving")
             sys.exit(1)
     if not isinstance(overrides, dict):
-        error("Couldn't parse your parameters file %s. Leaving" % paramfile)
+        error(f"Couldn't parse your parameters file {paramfile}. Leaving")
         sys.exit(1)
     if param is not None:
         for x in param:
@@ -736,7 +803,7 @@ def get_overrides(paramfile=None, param=[]):
                 else:
                     split = x.split('=')
                     key = split[0]
-                    value = x.replace("%s=" % key, '')
+                    value = x.replace(f"{key}=", '')
                 if value.isdigit():
                     value = int(value)
                 elif value.lower() == 'true':
@@ -756,6 +823,10 @@ def get_overrides(paramfile=None, param=[]):
                             v = v.strip()
                             value[index] = v
                 overrides[key] = value
+    required = [key for key in overrides if isinstance(overrides[key], str) and overrides[key] == '?required']
+    if required:
+        error("A value needs to be set for the following parameters: %s" % ' '.join(required))
+        sys.exit(1)
     return overrides
 
 
@@ -771,11 +842,11 @@ def get_parameters(inputfile, planfile=False):
             data = yaml.safe_load(entries)
             if not planfile:
                 results = data
-            elif 'parameters' in results:
+            elif 'parameters' in data:
                 results = results['parameters']
         except Exception as e:
             if not planfile:
-                error("Error rendering parameters from file %s. Got %s" % (inputfile, e))
+                error(f"Error rendering parameters from file {inputfile}. Got {e}")
                 sys.exit(1)
             parameters = ""
             found = False
@@ -795,7 +866,11 @@ def get_parameters(inputfile, planfile=False):
                 except:
                     pass
         if not isinstance(results, dict):
-            error("Error rendering parameters from file %s" % inputfile)
+            error(f"Error rendering parameters from file {inputfile}")
+            sys.exit(1)
+        required = [key for key in results if isinstance(results[key], str) and results[key] == '?required']
+        if required:
+            error("A value needs to be set for the following parameters: %s" % ' '.join(required))
             sys.exit(1)
         return results
 
@@ -818,11 +893,13 @@ def print_info(yamlinfo, output='plain', fields=[], values=False, pretty=True):
                              encoding=None).replace("'", '')[:-1]
         else:
             return yamlinfo
+    elif output == 'json':
+        return json.dumps(yamlinfo)
     else:
         result = ''
         orderedfields = ['debug', 'name', 'project', 'namespace', 'id', 'instanceid', 'creationdate', 'owner', 'host',
                          'status', 'description', 'autostart', 'image', 'user', 'plan', 'profile', 'flavor', 'cpus',
-                         'memory', 'nets', 'ip', 'disks', 'snapshots']
+                         'memory', 'nets', 'ip', 'ips', 'disks', 'snapshots']
         otherfields = [key for key in yamlinfo if key not in orderedfields]
         for key in orderedfields + sorted(otherfields):
             if key not in yamlinfo or (fields and key not in fields):
@@ -836,8 +913,7 @@ def print_info(yamlinfo, output='plain', fields=[], values=False, pretty=True):
                         mac = net['mac']
                         network = net['net']
                         network_type = net['type']
-                        nets += "net interface: %s mac: %s net: %s type: %s\n" % (device, mac, network,
-                                                                                  network_type)
+                        nets += f"net interface: {device} mac: {mac} net: {network} type: {network_type}\n"
                     value = nets.rstrip()
                 elif key == 'disks':
                     disks = ''
@@ -860,18 +936,18 @@ def print_info(yamlinfo, output='plain', fields=[], values=False, pretty=True):
                     for snap in value:
                         snapshot = snap['snapshot']
                         current = snap['current']
-                        snaps += "snapshot: %s current: %s\n" % (snapshot, current)
+                        snaps += f"snapshot: {snapshot} current: {current}\n"
                     value = snaps.rstrip()
                 if values or key in ['disks', 'nets']:
-                    result += "%s\n" % value
+                    result += f"{value}\n"
                 else:
-                    result += "%s: %s\n" % (key, value)
+                    result += f"{key}: {value}\n"
         return result.rstrip()
 
 
 def ssh(name, ip='', user=None, local=None, remote=None, tunnel=False, tunnelhost=None, tunnelport=22,
         tunneluser='root', insecure=False, cmd=None, X=False, Y=False, debug=False, D=None, vmport=None,
-        identityfile=None):
+        identityfile=None, password=True):
     """
 
     :param name:
@@ -897,45 +973,46 @@ def ssh(name, ip='', user=None, local=None, remote=None, tunnel=False, tunnelhos
     if ip == '':
         return None
     else:
-        sshcommand = "%s@%s" % (user, ip)
+        sshcommand = f"{user}@{ip}"
         if identityfile is None:
-            if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
-                identityfile = os.path.expanduser("~/.kcli/id_rsa")
-            elif os.path.exists(os.path.expanduser("~/.kcli/id_dsa")):
-                identityfile = os.path.expanduser("~/.kcli/id_dsa")
+            publickeyfile = get_ssh_pub_key()
+            if publickeyfile is not None:
+                identityfile = publickeyfile.replace('.pub', '')
+        if not password:
+            sshcommand = f"-o PasswordAuthentication=no {sshcommand}"
         if identityfile is not None:
-            sshcommand = "-i %s %s" % (identityfile, sshcommand)
+            sshcommand = f"-i {identityfile} {sshcommand}"
         if D:
-            sshcommand = "-D %s %s" % (D, sshcommand)
+            sshcommand = f"-D {D} {sshcommand}"
         if X:
-            sshcommand = "-X %s" % sshcommand
+            sshcommand = f"-X {sshcommand}"
         if Y:
-            sshcommand = "-Y %s" % sshcommand
+            sshcommand = f"-Y {sshcommand}"
         if cmd:
-            sshcommand = '%s "%s"' % (sshcommand, cmd)
+            sshcommand = f'{sshcommand} "{cmd}"'
         if tunnelhost is not None and tunnelhost not in ['localhost', '127.0.0.1'] and tunnel and\
                 tunneluser is not None:
             if insecure:
                 tunnelcommand = "-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o LogLevel=ERROR "
             else:
                 tunnelcommand = ""
-            tunnelcommand += "-qp %s -W %%h:%%p %s@%s" % (tunnelport, tunneluser, tunnelhost)
+            tunnelcommand += f"-qp {tunnelport} -W %h:%p {tunneluser}@{tunnelhost}"
             if identityfile is not None:
-                tunnelcommand = "-i %s %s" % (identityfile, tunnelcommand)
-            sshcommand = "-o ProxyCommand='ssh %s' %s" % (tunnelcommand, sshcommand)
+                tunnelcommand = f"-i {identityfile} {tunnelcommand}"
+            sshcommand = f"-o ProxyCommand='ssh {tunnelcommand}' {sshcommand}"
             if ':' in ip:
-                sshcommand = sshcommand.replace(ip, '[%s]' % ip)
+                sshcommand = sshcommand.replace(ip, f'[{ip}]')
         if local is not None:
-            sshcommand = "-L %s %s" % (local, sshcommand)
+            sshcommand = f"-L {local} {sshcommand}"
         if remote is not None:
-            sshcommand = "-R %s %s" % (remote, sshcommand)
+            sshcommand = f"-R {remote} {sshcommand}"
         if vmport is not None:
-            sshcommand = "-p %s %s" % (vmport, sshcommand)
+            sshcommand = f"-p {vmport} {sshcommand}"
         if insecure:
             sshcommand = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o LogLevel=ERROR %s"\
                 % sshcommand
         else:
-            sshcommand = "ssh %s" % sshcommand
+            sshcommand = f"ssh {sshcommand}"
         if debug:
             pprint(sshcommand)
         return sshcommand
@@ -964,29 +1041,31 @@ def scp(name, ip='', user=None, source=None, destination=None, recursive=None, t
         print("No ip found. Cannot scp...")
     else:
         if ':' in ip:
-            ip = '[%s]' % ip
+            ip = f'[{ip}]'
         arguments = ''
         if tunnelhost is not None and tunnelhost not in ['localhost', '127.0.0.1'] and\
                 tunnel and tunneluser is not None:
-            arguments += "-o ProxyCommand='ssh -qp %s -W %%h:%%p %s@%s'" % (tunnelport, tunneluser, tunnelhost)
+            h = "[%h]" if ':' in ip else "%h"
+            arguments += f"-o ProxyCommand='ssh -qp {tunnelport} -W {h}:%p {tunneluser}@{tunnelhost}'"
         if insecure:
             arguments += " -o LogLevel=quiet -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
         scpcommand = 'scp -q'
         if identityfile is None:
-            if os.path.exists(os.path.expanduser("~/.kcli/id_rsa")):
-                identityfile = os.path.expanduser("~/.kcli/id_rsa")
-            elif os.path.exists(os.path.expanduser("~/.kcli/id_dsa")):
-                identityfile = os.path.expanduser("~/.kcli/id_dsa")
+            publickeyfile = get_ssh_pub_key()
+            if publickeyfile is not None:
+                identityfile = publickeyfile.replace('.pub', '')
         if identityfile is not None:
-            scpcommand = "%s -i %s" % (scpcommand, identityfile)
+            scpcommand += f" -i {identityfile}"
         if recursive:
-            scpcommand = "%s -r" % scpcommand
+            scpcommand = f"{scpcommand} -r"
         if vmport is not None:
-            scpcommand = "%s -P %s" % (scpcommand, vmport)
+            scpcommand = f"{scpcommand} -P {vmport}"
         if download:
-            scpcommand = "%s %s %s@%s:%s %s" % (scpcommand, arguments, user, ip, source, destination)
+            scpcommand += f" {arguments} {user}@{ip}:{source} {destination}"
         else:
-            scpcommand = "%s %s %s %s@%s:%s" % (scpcommand, arguments, source, user, ip, destination)
+            if os.path.isdir(source):
+                arguments += ' -r'
+            scpcommand += f" {arguments} {source} {user}@{ip}:{destination}"
         if debug:
             pprint(scpcommand)
         return scpcommand
@@ -998,7 +1077,9 @@ def get_user(image):
     :param image:
     :return:
     """
-    if 'centos9stream' in image.lower():
+    if 'centos-stream-genericcloud-8' in image.lower():
+        user = 'centos'
+    elif 'centos-stream' in image.lower():
         user = 'cloud-user'
     elif 'centos' in image.lower() and not image.startswith('ibm'):
         user = 'centos'
@@ -1040,9 +1121,9 @@ def get_cloudinitfile(image):
     return cloudinitfile
 
 
-def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, reserveip=False, files=[],
-             enableroot=True, overrides={}, iso=True, fqdn=False, version='3.1.0', plan=None, compact=False,
-             removetls=False, ipv6=[], image=None):
+def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, files=[], enableroot=True,
+             overrides={}, iso=True, fqdn=False, version='3.1.0', plan=None, compact=False, removetls=False, ipv6=[],
+             image=None, vmuser=None):
     """
 
     :param name:
@@ -1052,7 +1133,6 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     :param gateway:
     :param dns:
     :param domain:
-    :param reserveip:
     :param files:
     :param enableroot:
     :param overrides:
@@ -1069,40 +1149,42 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     storage = {"files": []}
     systemd = {"units": []}
     if domain is not None:
-        localhostname = "%s.%s" % (name, domain)
+        localhostname = f"{name}.{domain}"
     else:
         localhostname = name
     if not nokeys:
-        for path in ["~/.kcli/id_rsa.pub", "~/.kcli/id_dsa.pub", "~/.ssh/id_rsa.pub", "~/.ssh/id_dsa.pub"]:
-            expanded_path = os.path.expanduser(path)
-            if os.path.exists(expanded_path) and os.path.exists(expanded_path.replace('.pub', '')):
-                publickeyfile = expanded_path
-                with open(publickeyfile, 'r') as ssh:
-                    publickeys.append(ssh.read().strip())
-                break
+        publickeyfile = get_ssh_pub_key()
+        if publickeyfile is not None:
+            with open(publickeyfile, 'r') as ssh:
+                publickeys.append(ssh.read().strip())
         if keys:
             for key in list(set(keys)):
-                publickeys.append(key)
-        elif not publickeys and find_executable('ssh-add') is not None:
+                newkey = key
+                if os.path.exists(os.path.expanduser(key)):
+                    keypath = os.path.expanduser(key)
+                    newkey = open(keypath, 'r').read().rstrip()
+                if not newkey.startswith('ssh-'):
+                    warning(f"Skipping invalid key {key}")
+                    continue
+                if newkey not in publickeys:
+                    publickeys.append(newkey)
+        elif not publickeys and which('ssh-add') is not None:
             agent_keys = os.popen('ssh-add -L 2>/dev/null | head -1').readlines()
             if agent_keys:
                 publickeys = agent_keys
         if not publickeys:
-            error("neither id_rsa or id_dsa public keys found in your .ssh or .kcli directory, you might have trouble "
-                  "accessing the vm")
+            warning("no valid public keys found in .ssh/.kcli directories, you might have trouble accessing the vm")
     if not noname:
-        hostnameline = quote("%s\n" % localhostname)
-        storage["files"].append({"filesystem": "root", "path": "/etc/hostname", "overwrite": True,
-                                 "contents": {"source": "data:,%s" % hostnameline, "verification": {}}, "mode": 420})
+        hostnameline = quote(f"{localhostname}\n")
+        storage["files"].append({"path": "/etc/hostname", "overwrite": True,
+                                 "contents": {"source": f"data:,{hostnameline}", "verification": {}}, "mode": 420})
     if dns is not None:
         nmline = quote("[main]\ndhcp=dhclient\n")
-        storage["files"].append({"filesystem": "root", "path": "/etc/NetworkManager/conf.d/dhcp-client.conf",
-                                 "overwrite": True,
-                                 "contents": {"source": "data:,%s" % nmline, "verification": {}}, "mode": 420})
-        dnsline = quote("prepend domain-name-servers %s;\nsend dhcp-client-identifier = hardware;\n" % dns)
-        storage["files"].append({"filesystem": "root", "path": "/etc/dhcp/dhclient.conf",
-                                 "overwrite": True,
-                                 "contents": {"source": "data:,%s" % dnsline, "verification": {}}, "mode": 420})
+        storage["files"].append({"path": "/etc/NetworkManager/conf.d/dhcp-client.conf", "overwrite": True,
+                                 "contents": {"source": f"data:,{nmline}", "verification": {}}, "mode": 420})
+        dnsline = quote(f"prepend domain-name-servers {dns};\nsend dhcp-client-identifier = hardware;\n")
+        storage["files"].append({"path": "/etc/dhcp/dhclient.conf", "overwrite": True,
+                                 "contents": {"source": f"data:,{dnsline}", "verification": {}}, "mode": 420})
     if nets:
         enpindex = 255
         for index, net in enumerate(nets):
@@ -1112,21 +1194,21 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
                 if index == 0:
                     continue
                 if image is not None and ('fcos' in image or 'fedora-coreos' in image):
-                    nicname = "eth%d" % index
+                    nicname = f"eth{index}"
                 else:
-                    nicname = "ens%d" % (index + 3)
+                    nicname = f"ens{index + 3}"
                 ip = None
                 netmask = None
                 noconf = None
                 vips = []
             elif isinstance(net, dict):
                 if image is not None and ('fcos' in image or 'fedora-coreos' in image):
-                    default_nicname = "eth%s" % index
+                    default_nicname = f"eth{index}"
                 elif net.get('numa') is not None:
-                    default_nicname = "enp%ds0" % enpindex
+                    default_nicname = f"enp{enpindex}s0"
                     enpindex -= 2
                 else:
-                    default_nicname = "ens%d" % (index + 3)
+                    default_nicname = f"ens{index + 3}"
                 if image == 'custom_ipxe':
                     default_nicname = "ens3f1"
                 nicname = net.get('nic', default_nicname)
@@ -1134,32 +1216,53 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
                 gateway = net.get('gateway')
                 netmask = next((e for e in [net.get('mask'), net.get('netmask')] if e is not None), None)
                 noconf = net.get('noconf')
+                vlan = net.get('vlan')
                 vips = net.get('vips')
-            nicpath = "/etc/sysconfig/network-scripts/ifcfg-%s" % nicname
+            if vlan is not None:
+                nicpath = f"/etc/sysconfig/network-scripts/ifcfg-{nicname}"
+                netdata = f"DEVICE={nicname}\nNAME={nicname}\nONBOOT=no"
+                static = quote(netdata)
+                storage["files"].append({"path": nicpath, "contents": {"source": f"data:,{static}", "verification": {}},
+                                         "mode": int(static_nic_file_mode, 8)})
+                nicname += f'.{vlan}'
+            nicpath = f"/etc/sysconfig/network-scripts/ifcfg-{nicname}"
             if noconf is not None:
-                netdata = "DEVICE=%s\nNAME=%s\nONBOOT=no" % (nicname, nicname)
-            elif ip is not None and netmask is not None and not reserveip and gateway is not None:
+                netdata = f"DEVICE={nicname}\nNAME={nicname}\nONBOOT=no"
+            elif ip is not None and netmask is not None:
                 if index == 0 and default_gateway is not None:
                     gateway = default_gateway
-                netdata = "DEVICE=%s\nNAME=%s\nONBOOT=yes\nNM_CONTROLLED=yes\n" % (nicname, nicname)
-                netdata += "BOOTPROTO=static\nIPADDR=%s\nNETMASK=%s\nGATEWAY=%s" % (ip, netmask, gateway)
-                dns = net.get('dns')
+                if str(netmask).isnumeric():
+                    cidr = netmask
+                else:
+                    cidr = netmask_to_prefix(netmask)
+                netdata = f"DEVICE={nicname}\nNAME={nicname}\nONBOOT=yes\nNM_CONTROLLED=yes\n"
+                netdata += f"BOOTPROTO=static\nIPADDR={ip}\nPREFIX={cidr}\n"
+                if gateway is not None:
+                    netdata += f"GATEWAY={gateway}\n"
+                dns = net.get('dns', gateway)
                 if dns is not None:
-                    netdata += "\nDNS1=%s\n" % dns
+                    if isinstance(dns, str):
+                        dns = dns.split(',')
+                    for index, dnsentry in enumerate(dns):
+                        netdata += f"DNS{index +1 }={dnsentry}\n"
+                if vlan is not None:
+                    netdata += "VLAN=yes\n"
                 if isinstance(vips, list) and vips:
                     for vip in vips:
-                        netdata += "[Network]\nAddress=%s/%s\nGateway=%s\n" % (vip, netmask, gateway)
+                        netdata += f"[Network]\nAddress={vip}/{netmask}\n"
+                        if gateway is not None:
+                            netdata += f"GATEWAY={gateway}\n"
                 if image is not None and ('fcos' in image or 'fedora-coreos' in image):
-                    netdata = "[connection]\ntype=ethernet\ninterface-name=%s\n" % nicname
-                    netdata += "match-device=interface-name:%s\n\n" % nicname
-                    netdata += "[ipv4]\nmethod=manual\naddresses=%s/%s\ngateway=%s\n" % (ip, netmask, gateway)
-                    nicpath = "/etc/NetworkManager/system-connections/%s.nmconnection" % nicname
+                    netdata = f"[connection]\ntype=ethernet\ninterface-name={nicname}\n"
+                    netdata += f"match-device=interface-name:{nicname}\n\n"
+                    netdata += f"[ipv4]\nmethod=manual\naddresses={ip}/{netmask}\n"
+                    if gateway is not None:
+                        netdata += f"gateway={gateway}\n"
+                    nicpath = f"/etc/NetworkManager/system-connections/{nicname}.nmconnection"
                     static_nic_file_mode = '0600'
             if netdata != '':
                 static = quote(netdata)
-                storage["files"].append({"filesystem": "root",
-                                         "path": nicpath,
-                                         "contents": {"source": "data:,%s" % static, "verification": {}},
+                storage["files"].append({"path": nicpath, "contents": {"source": f"data:,{static}", "verification": {}},
                                          "mode": int(static_nic_file_mode, 8)})
     if files:
         filesdata, unitsdata = process_ignition_files(files=files, overrides=overrides)
@@ -1172,7 +1275,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
         cmdsdata = process_ignition_cmds(cmds, overrides)
         storage["files"].append(cmdsdata)
         firstpath = "/usr/local/bin/first.sh"
-        content = "[Service]\nType=oneshot\nExecStart=%s\n[Install]\nWantedBy=multi-user.target\n" % firstpath
+        content = f"[Service]\nType=oneshot\nExecStart={firstpath}\n[Install]\nWantedBy=multi-user.target\n"
         if 'need_network' in overrides:
             content += "[Unit]\nAfter=network-online.target\nWants=network-online.target\n"
         cmdunit = {"contents": content, "name": "first-boot.service", "enabled": True}
@@ -1182,26 +1285,29 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
             'passwd': {'users': []}}
     if publickeys:
         data['passwd']['users'] = [{'name': 'core', 'sshAuthorizedKeys': publickeys}]
+        if vmuser is not None:
+            data['passwd']['users'].append({'name': vmuser, 'sshAuthorizedKeys': publickeys,
+                                            'groups': ['sudo', 'wheel']})
     role = None
-    if len(name.split('-')) >= 3 and name.split('-')[-2] in ['master', 'worker']:
+    if len(name.split('-')) >= 3 and name.split('-')[-2] in ['ctlplane', 'worker']:
         role = name.split('-')[-2]
     elif len(name.split('-')) >= 2 and name.split('-')[-1] == 'bootstrap':
         role = name.split('-')[-1]
     if role is not None:
         cluster = overrides.get('cluster', plan)
-        ignitionclusterpath = find_ignition_files(role, cluster=cluster)
+        nodepool = overrides.get('nodepool')
+        ignitionclusterpath = find_ignition_files(role, cluster=cluster, nodepool=nodepool)
         if ignitionclusterpath is not None:
             data = mergeignition(name, ignitionclusterpath, data)
-        rolepath = "/workdir/%s-%s.ign" % (plan, role) if os.path.exists('/i_am_a_container') else "%s-%s.ign" % (plan,
-                                                                                                                  role)
+        rolepath = f"/workdir/{plan}-{role}.ign" if container_mode() else f"{plan}-{role}.ign"
         if os.path.exists(rolepath):
             ignitionextrapath = rolepath
             data = mergeignition(name, ignitionextrapath, data)
-    planpath = "/workdir/%s.ign" % plan if os.path.exists('/i_am_a_container') else "%s.ign" % plan
+    planpath = f"/workdir/{plan}.ign" if container_mode() else f"{plan}.ign"
     if os.path.exists(planpath):
         ignitionextrapath = planpath
         data = mergeignition(name, ignitionextrapath, data)
-    namepath = "/workdir/%s.ign" % name if os.path.exists('/i_am_a_container') else "%s.ign" % name
+    namepath = f"/workdir/{name}.ign" % name if container_mode() else f"{name}.ign"
     if os.path.exists(namepath):
         ignitionextrapath = namepath
         data = mergeignition(name, ignitionextrapath, data)
@@ -1224,6 +1330,8 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
         result = json.dumps(data, sort_keys=True, indent=indent, separators=separators)
     except:
         result = json.dumps(data, indent=indent, separators=separators)
+    if compact:
+        result = result.replace('\n', '')
     return result
 
 
@@ -1252,36 +1360,24 @@ def get_latest_fcos_metal(url):
 
 
 def get_latest_rhcos(url, _type='kvm', arch='x86_64'):
-    keys = {'ovirt': 'openstack', 'kubevirt': 'openstack', 'kvm': 'qemu', 'vsphere': 'vmware', 'ibm': 'ibmcloud'}
-    key = keys.get(_type, _type)
-    buildurl = '%s/builds.json' % url
-    with urlopen(buildurl) as b:
-        data = json.loads(b.read().decode())
-        for build in data['builds']:
-            if isinstance(build, dict):
-                build = build['id']
-                if _type in ['openstack', 'ovirt', 'kubevirt']:
-                    return "%s/%s/%s/rhcos-%s-openstack.%s.qcow2.gz" % (url, build, arch, build, arch)
-                elif _type == 'vsphere':
-                    return "%s/%s/%s/rhcos-%s-vmware.%s.ova" % (url, build, arch, build, arch)
-                elif _type == 'gcp':
-                    return "https://storage.googleapis.com/rhcos/rhcos/%s.tar.gz" % build
-                elif _type == 'ibm':
-                    return "%s/%s/%s/rhcos-%s-ibmcloud.%s.qcow2.gz" % (url, build, arch, build, arch)
-                else:
-                    return "%s/%s/%s/rhcos-%s-qemu.%s.qcow2.gz" % (url, build, arch, build, arch)
-            else:
-                metaurl = '%s/%s/meta.json' % (url, build)
-                with urlopen(metaurl) as m:
-                    data = json.loads(m.read().decode())
-                    if key in data['images']:
-                        return "%s/%s/%s" % (url, build, data['images'][key]['path'])
+    if _type in ['openstack', 'ovirt', 'kubevirt']:
+        return f"{url}/latest/rhcos-openstack.{arch}.qcow2.gz"
+    elif _type == 'vsphere':
+        return f"{url}/latest/rhcos-vmware.{arch}.ova"
+    elif _type == 'aws':
+        return f"{url}/latest/rhcos-aws.{arch}.vmdk.gz"
+    elif _type == 'gcp':
+        return f"{url}/latest/rhcos-gcp.{arch}.qcow2.gz"
+    elif _type == 'ibm':
+        return f"{url}/latest/rhcos-ibmcloud.{arch}.qcow2.gz"
+    else:
+        return f"{url}/latest/rhcos-qemu.{arch}.qcow2.gz"
 
 
 def get_commit_rhcos(commitid, _type='kvm', region=None):
     keys = {'ovirt': 'openstack', 'kubevirt': 'openstack', 'kvm': 'qemu', 'vsphere': 'vmware', 'ibm': 'ibmcloud'}
     key = keys.get(_type, _type)
-    buildurl = "https://raw.githubusercontent.com/openshift/installer/%s/data/data/rhcos.json" % commitid
+    buildurl = f"https://raw.githubusercontent.com/openshift/installer/{commitid}/data/data/rhcos.json"
     with urlopen(buildurl) as b:
         data = json.loads(b.read().decode())
         if _type == 'aws':
@@ -1290,7 +1386,7 @@ def get_commit_rhcos(commitid, _type='kvm', region=None):
             return data['gcp']['image']
         else:
             baseuri = data['baseURI']
-            path = "%s%s" % (baseuri, data['images'][key]['path'])
+            path = f"{baseuri}{data['images'][key]['path']}"
             return path
 
 
@@ -1309,13 +1405,13 @@ def get_installer_rhcos(_type='kvm', region=None, arch='x86_64'):
 
 
 def get_commit_rhcos_metal(commitid):
-    buildurl = "https://raw.githubusercontent.com/openshift/installer/%s/data/data/rhcos.json" % commitid
+    buildurl = f"https://raw.githubusercontent.com/openshift/installer/{commitid}/data/data/rhcos.json"
     with urlopen(buildurl) as b:
         data = json.loads(b.read().decode())
         baseuri = data['baseURI']
-        kernel = "%s%s" % (baseuri, data['images']['kernel']['path'])
-        initrd = "%s%s" % (baseuri, data['images']['initramfs']['path'])
-        metal = "%s%s" % (baseuri, data['images']['metal']['path'])
+        kernel = f"{baseuri}{data['images']['kernel']['path']}"
+        initrd = f"{baseuri}{data['images']['initramfs']['path']}"
+        metal = f"{baseuri}{data['images']['metal']['path']}"
         return kernel, initrd, metal
 
 
@@ -1330,37 +1426,45 @@ def get_installer_rhcos_metal():
 
 
 def get_installer_iso():
+    os.environ["PATH"] += f":{os.getcwd()}"
+    if which('openshift-install') is None:
+        error("Couldnt find openshift-install in your path")
+        sys.exit(0)
     INSTALLER_COREOS = os.popen('openshift-install coreos print-stream-json 2>/dev/null').read()
     data = json.loads(INSTALLER_COREOS)
     return data['architectures']['x86_64']['artifacts']['metal']['formats']['iso']['disk']['location']
 
 
+def get_installer_iso_sha():
+    INSTALLER_COREOS = os.popen('openshift-install coreos print-stream-json 2>/dev/null').read()
+    data = json.loads(INSTALLER_COREOS)
+    return data['architectures']['x86_64']['artifacts']['metal']['formats']['iso']['disk']['sha256']
+
+
 def get_latest_rhcos_metal(url):
-    buildurl = '%s/builds.json' % url
+    buildurl = f'{url}/builds.json'
     with urlopen(buildurl) as b:
         data = json.loads(b.read().decode())
         for build in data['builds']:
             build = build['id']
-            kernel = "%s/%s/x86_64/rhcos-%s-installer-kernel-x86_64" % (url, build, build)
-            initrd = "%s/%s/x86_64/rhcos-%s-installer-initramfs.x86_64.img" % (url, build, build)
-            metal = "%s/%s/x86_64/rhcos-%s-metal.x86_64.raw.gz" % (url, build, build)
+            kernel = f"{url}/{build}/x86_64/rhcos-{build}-installer-kernel-x86_64"
+            initrd = f"{url}/{build}/x86_64/rhcos-{build}-installer-initramfs.x86_64.img"
+            metal = f"{url}/{build}/x86_64/rhcos-{build}-metal.x86_64.raw.gz"
             return kernel, initrd, metal
 
 
-def find_ignition_files(role, cluster):
-    clusterpath = os.path.expanduser("~/.kcli/clusters/%s/%s.ign" % (cluster, role))
-    if os.path.exists('/i_am_a_container'):
-        oldclusterpath = "/workdir/clusters/%s/%s.ign" % (cluster, role)
-        rolepath = "/workdir/%s/%s.ign" % (cluster, role)
-    else:
-        oldclusterpath = "clusters/%s/%s.ign" % (cluster, role)
-        rolepath = "%s/%s.ign" % (cluster, role)
+def get_latest_fedora(url='https://alt.fedoraproject.org/cloud'):
+    LINE = os.popen(f'curl -sLk {url} | grep download | grep cow | head -1').read()
+    return re.sub('.*href="(.*)">Download.*', r'\1', LINE).strip()
+
+
+def find_ignition_files(role, cluster, nodepool=None):
+    clusterpath = os.path.expanduser(f"~/.kcli/clusters/{cluster}/{role}.ign")
+    nodepoolpath = os.path.expanduser(f"~/.kcli/clusters/{cluster}/{nodepool}.ign")
     if os.path.exists(clusterpath):
         return clusterpath
-    elif os.path.exists(oldclusterpath):
-        return oldclusterpath
-    elif os.path.exists(rolepath):
-        return rolepath
+    elif os.path.exists(nodepoolpath):
+        return nodepoolpath
     else:
         return None
 
@@ -1413,10 +1517,10 @@ def create_host(data):
             try:
                 oldini = yaml.safe_load(entries)
             except yaml.scanner.ScannerError as err:
-                error("Couldn't parse yaml in .kcli/config.yml. Got %s" % err)
+                error(f"Couldn't parse yaml in .kcli/config.yml. Got {err}")
                 sys.exit(1)
         if name in oldini:
-            pprint("Skipping existing Host %s" % name)
+            pprint(f"Skipping existing Host {name}")
             return
         ini = oldini
     ini[name] = {k: data[k] for k in data if data[k] is not None}
@@ -1426,8 +1530,8 @@ def create_host(data):
                            sort_keys=False)
         except:
             yaml.safe_dump(ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True)
-    pprint("Using %s as hostname" % name)
-    pprint("Host %s created" % name)
+    pprint(f"Using {name} as hostname")
+    pprint(f"Host {name} created")
 
 
 def delete_host(name):
@@ -1437,17 +1541,17 @@ def delete_host(name):
     """
     path = os.path.expanduser('~/.kcli/config.yml')
     if not os.path.exists(path):
-        pprint("Skipping non existing Host %s" % name)
+        pprint(f"Skipping non existing Host {name}")
         return
     else:
         with open(path, 'r') as entries:
             try:
                 ini = yaml.safe_load(entries)
             except yaml.scanner.ScannerError as err:
-                error("Couldn't parse yaml in .kcli/config.yml. Got %s" % err)
+                error(f"Couldn't parse yaml in .kcli/config.yml. Got {err}")
                 sys.exit(1)
         if name not in ini:
-            pprint("Skipping non existing Host %s" % name)
+            pprint(f"Skipping non existing Host {name}")
             return
         del ini[name]
         clients = [c for c in ini if c != 'default']
@@ -1460,23 +1564,23 @@ def delete_host(name):
                                    sort_keys=False)
                 except:
                     yaml.safe_dump(ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True)
-        success("Host %s deleted" % name)
+        success(f"Host {name} deleted")
 
 
 def get_binary(name, linuxurl, macosurl, compressed=False):
-    if find_executable(name) is not None:
-        return find_executable(name)
-    binary = '/var/tmp/%s' % name
+    if which(name) is not None:
+        return which(name)
+    binary = f'/var/tmp/{name}'
     if os.path.exists(binary):
-        pprint("Using %s from /var/tmp" % name)
+        pprint(f"Using {name} from /var/tmp")
     else:
-        pprint("Downloading %s in /var/tmp" % name)
+        pprint(f"Downloading {name} in /var/tmp")
         url = macosurl if os.path.exists('/Users') else linuxurl
         if compressed:
-            downloadcmd = "curl -L '%s' | gunzip > %s" % (url, binary)
+            downloadcmd = f"curl -L '{url}' | gunzip > {binary}"
         else:
-            downloadcmd = "curl -L '%s' > %s" % (url, binary)
-        downloadcmd += "; chmod u+x %s" % binary
+            downloadcmd = f"curl -L '{url}' > {binary}"
+        downloadcmd += f"; chmod u+x {binary}"
         os.system(downloadcmd)
     return binary
 
@@ -1488,26 +1592,28 @@ def _ssh_credentials(k, name):
         return None, None, None
     user, ip, status = info.get('user', 'root'), info.get('ip'), info.get('status')
     if status in ['down', 'suspended', 'unknown']:
-        error("%s down" % name)
+        error(f"{name} down")
     if 'nodeport' in info:
         vmport = info['nodeport']
-        ip = k.node_host(name=info.get('host'))
+        nodehost = info.get('host')
+        ip = k.node_host(name=nodehost)
         if ip is None:
-            error("No valid node ip found" % name)
+            warning(f"Connecting to {name} using node fqdn")
+            ip = nodehost
     elif 'loadbalancerip' in info:
         ip = info['loadbalancerip']
     if ip is None:
-        error("No ip found for %s" % name)
+        error(f"No ip found for {name}")
     return user, ip, vmport
 
 
 def mergeignition(name, ignitionextrapath, data):
-    pprint("Merging ignition data from existing %s for %s" % (ignitionextrapath, name))
+    pprint(f"Merging ignition data from existing {ignitionextrapath} for {name}")
     with open(ignitionextrapath, 'r') as extra:
         try:
             ignitionextra = json.load(extra)
         except Exception as e:
-            error("Couldn't process %s. Ignoring" % ignitionextrapath)
+            error(f"Couldn't process {ignitionextrapath}. Ignoring")
             error(e)
             sys.exit(1)
         children = {'storage': 'files', 'passwd': 'users', 'systemd': 'units'}
@@ -1548,7 +1654,7 @@ def mergeignition(name, ignitionextrapath, data):
                     ignitionextra[key][children[key]] = data[key][children[key]]
             elif key in data and key not in ignitionextra:
                 ignitionextra[key] = data[key]
-        if data['ignition']['config']:
+        if 'config' in data['ignition'] and data['ignition']['config']:
             ignitionextra['ignition']['config'] = data['ignition']['config']
     return ignitionextra
 
@@ -1570,7 +1676,7 @@ def gen_mac():
 def pwd_path(x):
     if x is None:
         return None
-    result = '/workdir/%s' % x if os.path.exists('/i_am_a_container') else x
+    result = f'/workdir/{x}' if container_mode() else x
     return result
 
 
@@ -1594,8 +1700,8 @@ def insecure_fetch(url, headers=[]):
 
 def get_values(data, element, field):
     results = []
-    if '%s_%s' % (element, field) in data:
-        new = data['%s_%s' % (element, field)]
+    if f'{element}_{field}' in data:
+        new = data[f'{element}_{field}']
         results.extend(new)
     return results
 
@@ -1638,7 +1744,7 @@ def needs_ignition(image):
 
 def ignition_version(image):
     version = '3.1.0'
-    ignition_versions = {"4%d" % i: '2.2.0' for i in range(6)}
+    ignition_versions = {f"4{i}": '2.2.0' for i in range(6)}
     ignition_versions.update({46: '3.1.0', 47: '3.1.0', 48: '3.2.0'})
     image = os.path.basename(image)
     version_match = re.match('rhcos-*(..).*', image)
@@ -1649,12 +1755,13 @@ def ignition_version(image):
 
 
 def get_coreos_installer(version='latest', arch=None):
+    pprint("Downloading coreos-installer in current directory")
     if arch is None and os.path.exists('/Users'):
         error("coreos-installer isn't available on Mac")
         sys.exit(1)
     if version != 'latest' and not version.startswith('v'):
-        version = "v%s" % version
-    coreoscmd = "curl -LO https://mirror.openshift.com/pub/openshift-v4/clients/coreos-installer/%s/" % version
+        version = f"v{version}"
+    coreoscmd = f"curl -LO https://mirror.openshift.com/pub/openshift-v4/clients/coreos-installer/{version}/"
     arch = arch or os.uname().machine
     if arch == 'aarch64':
         coreoscmd += 'coreos-installer_arm64 ; mv coreos-installer_arm64 coreos-installer'
@@ -1666,6 +1773,7 @@ def get_coreos_installer(version='latest', arch=None):
 
 def get_kubectl(version='latest'):
     SYSTEM = 'darwin' if os.path.exists('/Users') else 'linux'
+    pprint("Downloading kubectl in current directory")
     if version == 'latest':
         r = urlopen("https://storage.googleapis.com/kubernetes-release/release/stable.txt")
         version = str(r.read(), 'utf-8').strip()
@@ -1681,18 +1789,18 @@ def get_oc(version='latest', macosx=False):
     pprint("Downloading oc in current directory")
     occmd = "curl -s "
     if arch == 'arm64':
-        occmd += "https://mirror.openshift.com/pub/openshift-v4/%s/clients/ocp-dev-preview/" % arch
-        occmd += "%s/openshift-client-%s.tar.gz" % (version, SYSTEM)
+        occmd += f"https://mirror.openshift.com/pub/openshift-v4/{arch}/clients/ocp-dev-preview/"
+        occmd += f"{version}/openshift-client-{SYSTEM}.tar.gz"
     else:
         occmd += "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/%s/openshift-client-%s.tar.gz" % (version,
                                                                                                               SYSTEM)
     occmd += "| tar zxf - oc"
     occmd += "; chmod 700 oc"
     call(occmd, shell=True)
-    if os.path.exists('/i_am_a_container'):
+    if container_mode():
         if macosx:
-            occmd += "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/%s/" % version
-            occmd += "openshift-client-%s.tar.gz" % SYSTEM
+            occmd += f"https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{version}/"
+            occmd += f"openshift-client-{SYSTEM}.tar.gz"
             occmd += "| tar zxf -C /workdir - oc"
             occmd += "; chmod 700 /workdir/oc"
             call(occmd, shell=True)
@@ -1702,23 +1810,36 @@ def get_oc(version='latest', macosx=False):
 
 def get_helm(version='latest'):
     SYSTEM = 'darwin' if os.path.exists('/Users') else 'linux'
+    pprint("Downloading helm in current directory")
     if version == 'latest':
         version = jinjafilters.github_version('helm/helm')
     elif not version.startswith('v'):
-        version = "v%s" % version
-    helmcmd = "curl -s https://get.helm.sh/helm-%s-%s-amd64.tar.gz |" % (version, SYSTEM)
-    helmcmd += "tar zxf - --strip-components 1 %s-amd64/helm;" % SYSTEM
+        version = f"v{version}"
+    helmcmd = f"curl -s https://get.helm.sh/helm-{version}-{SYSTEM}-amd64.tar.gz |"
+    helmcmd += f"tar zxf - --strip-components 1 {SYSTEM}-amd64/helm;"
     helmcmd += "chmod 700 helm"
     call(helmcmd, shell=True)
 
 
+def get_tasty(version='latest'):
+    SYSTEM = 'darwin' if os.path.exists('/Users') else 'linux'
+    pprint("Downloading tasty in current directory")
+    if version == 'latest':
+        version = jinjafilters.github_version('karmab/tasty')
+    elif not version.startswith('v'):
+        version = "v%s" % version
+    tastycmd = f"curl -Ls https://github.com/karmab/tasty/releases/download/{version}/tasty-{SYSTEM}-amd64 > tasty"
+    tastycmd += "; chmod 700 tasty"
+    call(tastycmd, shell=True)
+
+
 def kube_create_app(config, appdir, overrides={}, outputdir=None):
-    appdata = {'cluster': 'testk', 'domain': 'karmalabs.com', 'masters': 1, 'workers': 0}
+    appdata = {'cluster': 'mykube', 'domain': 'karmalabs.corp', 'ctlplanes': 1, 'workers': 0}
     cluster = appdata['cluster']
     cwd = os.getcwd()
-    os.environ["PATH"] += ":%s" % cwd
+    os.environ["PATH"] += f":{cwd}"
     overrides['cwd'] = cwd
-    default_parameter_file = "%s/kcli_default.yml" % appdir
+    default_parameter_file = f"{appdir}/kcli_default.yml"
     if os.path.exists(default_parameter_file):
         with open(default_parameter_file, 'r') as entries:
             appdefault = yaml.safe_load(entries)
@@ -1727,15 +1848,15 @@ def kube_create_app(config, appdir, overrides={}, outputdir=None):
     with TemporaryDirectory() as tmpdir:
         for root, dirs, files in os.walk(appdir):
             for name in files:
-                rendered = config.process_inputfile(cluster, "%s/%s" % (appdir, name), overrides=appdata)
-                destfile = "%s/%s" % (outputdir, name) if outputdir is not None else "%s/%s" % (tmpdir, name)
+                rendered = config.process_inputfile(cluster, f"{appdir}/{name}", overrides=appdata)
+                destfile = f"{outputdir}/{name}" if outputdir is not None else f"{tmpdir}/{name}"
                 with open(destfile, 'w') as f:
                     f.write(rendered)
         if outputdir is None:
             os.chdir(tmpdir)
-            result = call('bash %s/install.sh' % tmpdir, shell=True)
+            result = call(f'bash {tmpdir}/install.sh', shell=True)
         else:
-            pprint("Copied artifacts to %s" % outputdir)
+            pprint(f"Copied artifacts to {outputdir}")
             result = 0
     os.chdir(cwd)
     return result
@@ -1745,39 +1866,42 @@ def kube_delete_app(config, appdir, overrides={}):
     found = False
     cluster = 'xxx'
     cwd = os.getcwd()
-    os.environ["PATH"] += ":%s" % cwd
+    os.environ["PATH"] += f":{cwd}"
     overrides['cwd'] = cwd
     with TemporaryDirectory() as tmpdir:
         for root, dirs, files in os.walk(appdir):
             for name in files:
                 if name == 'uninstall.sh':
                     found = True
-                rendered = config.process_inputfile(cluster, "%s/%s" % (appdir, name), overrides=overrides)
-                with open("%s/%s" % (tmpdir, name), 'w') as f:
+                rendered = config.process_inputfile(cluster, f"{appdir}/{name}", overrides=overrides)
+                with open(f"{tmpdir}/{name}", 'w') as f:
                     f.write(rendered)
         os.chdir(tmpdir)
         if not found:
             warning("Uninstall not supported for this app")
             result = 1
         else:
-            result = call('bash %s/uninstall.sh' % tmpdir, shell=True)
+            result = call(f'bash {tmpdir}/uninstall.sh', shell=True)
     os.chdir(cwd)
     return result
 
 
 def openshift_create_app(config, appdir, overrides={}, outputdir=None):
     appname = overrides['name']
-    appdata = {'cluster': 'testk', 'domain': 'karmalabs.com', 'masters': 1, 'workers': 0}
+    appdata = {'cluster': 'myopenshift', 'domain': 'karmalabs.corp', 'ctlplanes': 1, 'workers': 0}
     install_cr = overrides.get('install_cr', True)
     cluster = appdata['cluster']
     cwd = os.getcwd()
-    os.environ["PATH"] += ":%s" % cwd
+    os.environ["PATH"] += f":{cwd}"
     overrides['cwd'] = cwd
-    default_parameter_file = "%s/%s/kcli_default.yml" % (appdir, appname)
+    default_parameter_file = f"{appdir}/{appname}/kcli_default.yml"
     if os.path.exists(default_parameter_file):
         with open(default_parameter_file, 'r') as entries:
             appdefault = yaml.safe_load(entries)
             appdata.update(appdefault)
+            if 'namespace' in appdefault and 'namespace' in overrides:
+                warning(f"Forcing namespace to {appdefault['namespace']}")
+                del overrides['namespace']
     appdata.update(overrides)
     with TemporaryDirectory() as tmpdir:
         env = Environment(loader=FileSystemLoader(appdir), extensions=['jinja2.ext.do'], trim_blocks=True,
@@ -1787,39 +1911,37 @@ def openshift_create_app(config, appdir, overrides={}, outputdir=None):
         try:
             templ = env.get_template(os.path.basename("install.yml.j2"))
         except TemplateSyntaxError as e:
-            error("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message))
+            error(f"Error rendering line {e.lineno} of file {e.filename}. Got: {e.message}")
             sys.exit(1)
         except TemplateError as e:
-            error("Error rendering file %s. Got: %s" % (e.filename, e.message))
+            error(f"Error rendering file {e.filename}. Got: {e.message}")
             sys.exit(1)
-        destfile = "%s/install.yml" % outputdir if outputdir is not None else "%s/install.yml" % tmpdir
+        destfile = f"{outputdir}/install.yml" if outputdir is not None else f"{tmpdir}/install.yml"
         with open(destfile, 'w') as f:
-            olmfile = templ.render(overrides)
+            olmfile = templ.render(appdata)
             f.write(olmfile)
-        destfile = "%s/install.sh" % outputdir if outputdir is not None else "%s/install.sh" % tmpdir
+        destfile = f"{outputdir}/install.sh" if outputdir is not None else f"{tmpdir}/install.sh"
         with open(destfile, 'w') as f:
             f.write("oc create -f install.yml\n")
-            if os.path.exists("%s/%s/pre.sh" % (appdir, appname)):
-                rendered = config.process_inputfile(cluster, "%s/%s/pre.sh" % (appdir, appname),
-                                                    overrides=appdata)
-                f.write("%s\n" % rendered)
-            if install_cr and os.path.exists("%s/%s/cr.yml" % (appdir, appname)):
-                rendered = config.process_inputfile(cluster, "%s/%s/cr.yml" % (appdir, appname), overrides=appdata)
-                destfile = "%s/cr.yml" % outputdir if outputdir is not None else "%s/cr.yml" % tmpdir
+            if os.path.exists(f"{appdir}/{appname}/pre.sh"):
+                rendered = config.process_inputfile(cluster, f"{appdir}/{appname}/pre.sh", overrides=appdata)
+                f.write(f"{rendered}\n")
+            if install_cr and os.path.exists(f"{appdir}/{appname}/cr.yml"):
+                rendered = config.process_inputfile(cluster, f"{appdir}/{appname}/cr.yml", overrides=appdata)
+                destfile = f"{outputdir}/cr.yml" if outputdir is not None else f"{tmpdir}/cr.yml"
                 with open(destfile, 'w') as g:
                     g.write(rendered)
                 crd = overrides.get('crd')
-                rendered = config.process_inputfile(cluster, "%s/cr.sh" % appdir, overrides={'crd': crd})
+                rendered = config.process_inputfile(cluster, f"{appdir}/cr.sh", overrides={'crd': crd})
                 f.write(rendered)
-            if os.path.exists("%s/%s/post.sh" % (appdir, appname)):
-                rendered = config.process_inputfile(cluster, "%s/%s/post.sh" % (appdir, appname),
-                                                    overrides=appdata)
+            if os.path.exists(f"{appdir}/{appname}/post.sh"):
+                rendered = config.process_inputfile(cluster, f"{appdir}/{appname}/post.sh", overrides=appdata)
                 f.write(rendered)
         if outputdir is None:
             os.chdir(tmpdir)
-            result = call('bash %s/install.sh' % tmpdir, shell=True)
+            result = call(f'bash {tmpdir}/install.sh', shell=True)
         else:
-            pprint("Copied artifacts to %s" % outputdir)
+            pprint(f"Copied artifacts to {outputdir}")
             result = 0
     os.chdir(cwd)
     return result
@@ -1827,16 +1949,19 @@ def openshift_create_app(config, appdir, overrides={}, outputdir=None):
 
 def openshift_delete_app(config, appdir, overrides={}):
     appname = overrides['name']
-    appdata = {'cluster': 'testk', 'domain': 'karmalabs.com', 'masters': 1, 'workers': 0}
+    appdata = {'cluster': 'myopenshift', 'domain': 'karmalabs.corp', 'ctlplanes': 1, 'workers': 0}
     cluster = appdata['cluster']
     cwd = os.getcwd()
-    os.environ["PATH"] += ":%s" % cwd
+    os.environ["PATH"] += f":{cwd}"
     overrides['cwd'] = cwd
-    default_parameter_file = "%s/%s/kcli_default.yml" % (appdir, appname)
+    default_parameter_file = f"{appdir}/{appname}/kcli_default.yml"
     if os.path.exists(default_parameter_file):
         with open(default_parameter_file, 'r') as entries:
             appdefault = yaml.safe_load(entries)
             appdata.update(appdefault)
+            if 'namespace' in appdefault and 'namespace' in overrides:
+                warning(f"Forcing namespace to {appdefault['namespace']}")
+                del overrides['namespace']
     appdata.update(overrides)
     with TemporaryDirectory() as tmpdir:
         env = Environment(loader=FileSystemLoader(appdir), extensions=['jinja2.ext.do'], trim_blocks=True,
@@ -1846,69 +1971,70 @@ def openshift_delete_app(config, appdir, overrides={}):
         try:
             templ = env.get_template(os.path.basename("install.yml.j2"))
         except TemplateSyntaxError as e:
-            error("Error rendering line %s of file %s. Got: %s" % (e.lineno, e.filename, e.message))
+            error(f"Error rendering line {e.lineno} of file {e.filename}. Got: {e.message}")
             sys.exit(1)
         except TemplateError as e:
-            error("Error rendering file %s. Got: %s" % (e.filename, e.message))
+            error(f"Error rendering file {e.filename}. Got: {e.message}")
             sys.exit(1)
-        destfile = "%s/install.yml" % tmpdir
+        destfile = f"{tmpdir}/install.yml"
         with open(destfile, 'w') as f:
-            olmfile = templ.render(overrides)
+            olmfile = templ.render(appdata)
             f.write(olmfile)
-        destfile = "%s/uninstall.sh" % tmpdir
+        destfile = f"{tmpdir}/uninstall.sh"
         with open(destfile, 'w') as f:
-            if os.path.exists("%s/%s/cr.yml" % (appdir, appname)):
-                rendered = config.process_inputfile(cluster, "%s/%s/cr.yml" % (appdir, appname), overrides=appdata)
-                destfile = "%s/cr.yml" % tmpdir
+            if os.path.exists(f"{appdir}/{appname}/cr.yml"):
+                rendered = config.process_inputfile(cluster, f"{appdir}/{appname}/cr.yml", overrides=appdata)
+                destfile = f"{tmpdir}/cr.yml"
                 with open(destfile, 'w') as g:
                     g.write(rendered)
                 f.write("oc delete -f cr.yml\n")
             f.write("oc delete -f install.yml")
         os.chdir(tmpdir)
-        result = call('bash %s/uninstall.sh' % tmpdir, shell=True)
+        result = call(f'bash {tmpdir}/uninstall.sh', shell=True)
     os.chdir(cwd)
     return result
 
 
 def make_iso(name, tmpdir, userdata, metadata, netdata, openstack=False):
-    with open("%s/user-data" % tmpdir, 'w') as x:
+    with open(f"{tmpdir}/user-data", 'w') as x:
         x.write(userdata)
-    with open("%s/meta-data" % tmpdir, 'w') as y:
+    with open(f"{tmpdir}/meta-data", 'w') as y:
         y.write(metadata)
-    if find_executable('mkisofs') is None and find_executable('genisoimage') is None:
+    if which('mkisofs') is None and which('genisoimage') is None:
         error("mkisofs or genisoimage are required in order to create cloudinit iso")
         sys.exit(1)
-    isocmd = 'genisoimage' if find_executable('genisoimage') is not None else 'mkisofs'
-    isocmd += " --quiet -o %s/%s.ISO --volid cidata" % (tmpdir, name)
+    isocmd = 'genisoimage' if which('genisoimage') is not None else 'mkisofs'
+    isocmd += f" --quiet -o {tmpdir}/{name}.ISO --volid cidata"
     if openstack:
-        os.makedirs("%s/root/openstack/latest" % tmpdir)
-        move("%s/user-data" % tmpdir, "%s/root/openstack/latest/user_data" % tmpdir)
-        move("%s/meta-data" % tmpdir, "%s/root/openstack/latest/meta_data.json" % tmpdir)
-        isocmd += " -V config-2 --joliet --rock %s/root" % tmpdir
+        os.makedirs(f"{tmpdir}/root/openstack/latest")
+        move(f"{tmpdir}/user-data", f"{tmpdir}/root/openstack/latest/user_data")
+        move(f"{tmpdir}/meta-data", f"{tmpdir}/root/openstack/latest/meta_data.json")
+        isocmd += f" -V config-2 --joliet --rock {tmpdir}/root"
     else:
-        isocmd += " --joliet --rock %s/user-data %s/meta-data" % (tmpdir, tmpdir)
+        isocmd += f" --joliet --rock {tmpdir}/user-data {tmpdir}/meta-data"
     if netdata is not None:
-        with open("%s/network-config" % tmpdir, 'w') as z:
+        with open(f"{tmpdir}/network-config", 'w') as z:
             z.write(netdata)
         if openstack:
-            move("%s/network-config" % tmpdir, "%s/root/openstack/latest/network_config.json" % tmpdir)
+            move(f"{tmpdir}/network-config", f"{tmpdir}/root/openstack/latest/network_config.json")
         else:
-            isocmd += " %s/network-config" % tmpdir
+            isocmd += f" {tmpdir}/network-config"
+    isocmd += " >/dev/null 2>&1"
     os.system(isocmd)
 
 
 def patch_bootstrap(path, script_content, service_content, service_name):
     separators = (',', ':')
     indent = 0
-    warning("Patching bootkube in bootstrap ignition to include %s" % service_name)
+    warning(f"Patching bootkube in bootstrap ignition to include {service_name}")
     with open(path, 'r') as ignition:
         data = json.load(ignition)
     script_base64 = base64.b64encode(script_content.encode()).decode("UTF-8")
-    script_source = "data:text/plain;charset=utf-8;base64,%s" % script_base64
-    script_entry = {"filesystem": "root", "path": "/usr/local/bin/%s.sh" % service_name,
+    script_source = f"data:text/plain;charset=utf-8;base64,{script_base64}"
+    script_entry = {"path": f"/usr/local/bin/{service_name}.sh",
                     "contents": {"source": script_source, "verification": {}}, "mode": 448}
     data['storage']['files'].append(script_entry)
-    data['systemd']['units'].append({"contents": service_content, "name": '%s.service' % service_name,
+    data['systemd']['units'].append({"contents": service_content, "name": f'{service_name}.service',
                                      "enabled": True})
     try:
         result = json.dumps(data, sort_keys=True, indent=indent, separators=separators)
@@ -1923,92 +2049,287 @@ def filter_compression_extension(name):
     return name.replace('.gz', '').replace('.xz', '').replace('.bz2', '')
 
 
-def generate_rhcos_iso(k, cluster, pool, version='latest', force=False):
-    if force:
+def generate_rhcos_iso(k, cluster, pool, version='latest', podman=False, installer=False, arch='x86_64',
+                       extra_args=None):
+    if installer:
         liveiso = get_installer_iso()
         baseiso = os.path.basename(liveiso)
     else:
-        baseiso = 'rhcos-live.x86_64.iso'
-        liveiso = "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/%s/latest/%s" % (version, baseiso)
+        baseiso = f'rhcos-live.{arch}.iso'
+        path = f'{version}/latest' if version != 'latest' else 'latest'
+        liveiso = f"https://mirror.openshift.com/pub/openshift-v4/{arch}/dependencies/rhcos/{path}/{baseiso}"
+    kubevirt = 'kubevirt' in str(type(k))
+    name = f'{cluster}-iso' if kubevirt else f'{cluster}.iso'
+    if name in [os.path.basename(iso) for iso in k.volumes(iso=True)]:
+        warning(f"Deleting old iso {name}")
+        k.delete_image(name)
+    if kubevirt:
+        pprint(f"Creating iso {name}")
+        k.add_image(liveiso, pool, name=name)
+        isocmd = "coreos-installer iso ignition embed -fi /files/iso.ign /storage/disk.img"
+        pvc = name.replace('_', '-').replace('.', '-').lower()
+        k.patch_pvc(pvc, isocmd, image="quay.io/coreos/coreos-installer:release", files=['iso.ign'])
+        k.update_cdi_endpoint(pvc, f'{cluster}.iso')
+        return
     if baseiso not in k.volumes(iso=True):
-        pprint("Downloading %s" % baseiso)
+        pprint(f"Downloading {liveiso}")
         k.add_image(liveiso, pool)
-    if '%s.iso' % cluster in [os.path.basename(iso) for iso in k.volumes(iso=True)]:
-        warning("Deleting old iso %s.iso" % cluster)
-        k.delete_image('%s.iso' % cluster)
-    pprint("Creating iso %s.iso" % cluster)
     poolpath = k.get_pool_path(pool)
-    isocmd = "coreos-installer iso ignition embed -fi %s/iso.ign -o %s/%s.iso %s/%s" % (poolpath, poolpath, cluster,
-                                                                                        poolpath, baseiso)
-    if not os.path.exists('coreos-installer'):
-        arch = os.uname().machine if not os.path.exists('/Users') else 'x86_64'
-        get_coreos_installer(arch=arch)
-    os.environ["PATH"] += ":%s" % os.getcwd()
-    if k.host in ['localhost', '127.0.0.1']:
+    if installer and (k.conn == 'fake' or k.host in ['localhost', '127.0.0.1']):
+        if not correct_sha(f"{poolpath}/{baseiso}", get_installer_iso_sha()):
+            error(f"Corrupted iso {poolpath}/{baseiso}")
+            sys.exit(1)
+    pprint(f"Creating iso {name}")
+    if podman:
+        coreosinstaller = f"podman run --privileged --rm -w /data -v {poolpath}:/data -v /dev:/dev"
+        if not os.path.exists('/Users'):
+            coreosinstaller += " -v /run/udev:/run/udev"
+        coreosinstaller += " quay.io/coreos/coreos-installer:release"
+        isocmd = f"{coreosinstaller} iso ignition embed -fi iso.ign -o {name} {baseiso}"
+    else:
+        coreosinstaller = "coreos-installer"
+        destiso = f"{poolpath}/{name}"
+        isocmd = f"{coreosinstaller} iso ignition embed -fi {poolpath}/iso.ign -o {destiso} {poolpath}/{baseiso}"
+        if not os.path.exists('coreos-installer'):
+            arch = os.uname().machine if not os.path.exists('/Users') else 'x86_64'
+            get_coreos_installer(arch=arch)
+    if extra_args is not None:
+        isocmd += f"; {coreosinstaller} iso kargs modify -a '{extra_args}' {destiso}"
+    os.environ["PATH"] += f":{os.getcwd()}"
+    if k.conn == 'fake':
+        os.system(isocmd)
+    elif k.host in ['localhost', '127.0.0.1']:
+        if podman and which('podman') is None:
+            error("podman is required in order to embed iso ignition")
+            sys.exit(1)
         copy2('iso.ign', poolpath)
         os.system(isocmd)
     elif k.protocol == 'ssh':
-        createbindircmd = 'ssh %s -p %s %s@%s "mkdir bin >/dev/null 2>&1"' % (k.identitycommand, k.port, k.user, k.host)
+        if podman:
+            warning("podman is required in the remote hypervisor in order to embed iso ignition")
+        createbindircmd = f'ssh {k.identitycommand} -p {k.port} {k.user}@{k.host} "mkdir bin >/dev/null 2>&1"'
         os.system(createbindircmd)
-        scpbincmd = 'scp %s -qP %s coreos-installer %s@%s:bin' % (k.identitycommand, k.port, k.user, k.host)
+        scpbincmd = f'scp {k.identitycommand} -qP {k.port} coreos-installer {k.user}@{k.host}:bin'
         os.system(scpbincmd)
-        scpcmd = 'scp %s -qP %s iso.ign %s@%s:%s' % (k.identitycommand, k.port, k.user, k.host, poolpath)
+        scpcmd = f'scp {k.identitycommand} -qP {k.port} iso.ign {k.user}@{k.host}:{poolpath}'
         os.system(scpcmd)
-        isocmd = 'ssh %s -p %s %s@%s "%s"' % (k.identitycommand, k.port, k.user, k.host, isocmd)
+        isocmd = f'ssh {k.identitycommand} -p {k.port} {k.user}@{k.host} "PATH=/root/bin {isocmd}"'
         os.system(isocmd)
 
 
 def olm_app(package):
-    os.environ["PATH"] += ":%s" % os.getcwd()
+    os.environ["PATH"] += f":{os.getcwd()}"
+    own = True
     name, source, defaultchannel, csv, description, installmodes, crd = None, None, None, None, None, None, None
     target_namespace = None
-    manifestscmd = "oc get packagemanifest -n openshift-marketplace -o yaml"
-    for data in yaml.safe_load(os.popen(manifestscmd).read())['items']:
-        if package in data['metadata']['name']:
-            name = data['metadata']['name']
-            target_namespace = name.split('-operator')[0]
-            status = data['status']
-            source = status['catalogSource']
-            defaultchannel = status['defaultChannel']
-            for channel in status['channels']:
-                if channel['name'] == defaultchannel:
-                    csv = channel['currentCSV']
-                    description = channel['currentCSVDesc']['description']
-                    installmodes = channel['currentCSVDesc']['installModes']
-                    for mode in installmodes:
-                        if mode['type'] == 'OwnNamespace' and not mode['supported']:
-                            target_namespace = 'openshift-operators'
-                            break
-                    csvdesc = channel['currentCSVDesc']
-                    csvdescannotations = csvdesc['annotations']
-                    if 'operatorframework.io/suggested-namespace' in csvdescannotations:
-                        target_namespace = csvdescannotations['operatorframework.io/suggested-namespace']
-                    if 'customresourcedefinitions' in csvdesc and csvdesc['customresourcedefinitions']:
-                        crd = csvdesc['customresourcedefinitions']['owned'][0]['name']
-                    break
-            if name == package or data['metadata']['labels']['catalog'] != 'community-operators':
-                break
-    return name, source, defaultchannel, csv, description, target_namespace, crd
+    channels = []
+    manifestscmd = f"oc get packagemanifest -n openshift-marketplace {package} -o yaml 2>/dev/null"
+    data = yaml.safe_load(os.popen(manifestscmd).read())
+    if data is not None:
+        name = data['metadata']['name']
+        target_namespace = name.split('-operator')[0]
+        status = data['status']
+        source = status['catalogSource']
+        defaultchannel = status['defaultChannel']
+        for channel in status['channels']:
+            channels.append(channel['name'])
+            if channel['name'] == defaultchannel:
+                csv = channel['currentCSV']
+                description = channel['currentCSVDesc']['description']
+                installmodes = channel['currentCSVDesc']['installModes']
+                for mode in installmodes:
+                    if mode['type'] == 'OwnNamespace' and not mode['supported']:
+                        target_namespace = 'openshift-operators'
+                        own = False
+                        break
+                csvdesc = channel['currentCSVDesc']
+                csvdescannotations = csvdesc['annotations']
+                if own and 'operatorframework.io/suggested-namespace' in csvdescannotations:
+                    target_namespace = csvdescannotations['operatorframework.io/suggested-namespace']
+                if 'customresourcedefinitions' in csvdesc and 'owned' in csvdesc['customresourcedefinitions']:
+                    crd = csvdesc['customresourcedefinitions']['owned'][0]['name']
+    return name, source, defaultchannel, csv, description, target_namespace, channels, crd
 
 
-def copy_ipi_credentials(platform, k):
-    home = os.environ['HOME']
-    if platform == 'aws':
-        if not os.path.exists("%s/.aws" % home):
-            os.mkdir("%s/.aws" % home)
-        if not os.path.exists("%s/.aws/credentials" % home):
-            with open("%s/.aws/credentials" % home, "w") as f:
-                f.write("[default]\naws_access_key_id=%s\naws_secret_access_key=%s" % (k.access_key_id,
-                                                                                       k.access_key_secret))
-        if not os.path.exists("%s/.aws/config" % home):
-            with open("%s/.aws/credentials" % home, "w") as f:
-                f.write("[default]\region=%s" % k.region)
-    elif platform == 'ovirt':
-        if not os.path.exists("%s/.ovirt" % home):
-            os.mkdir("%s/.ovirt" % home)
-        if not os.path.exists("%s/.ovirt/ovirt-config.yaml" % home):
-            with open("%s/.ovirt/ovirt-config.yaml" % home, "w") as f:
-                ovirturl = "https://%s/ovirt-engine/api" % k.host
-                ovirtconf = "ovirt_url: %s\novirt_fqdn: %s\n" % (ovirturl, k.host)
-                ovirtconf += "ovirt_username: %s\novirt_password: %s\novirt_insecure: true" % (k.user, k.password)
-                f.write(ovirtconf)
+def need_fake():
+    kclidir = os.path.expanduser("~/.kcli")
+    if not glob.glob(f"{kclidir}/config.y*ml") and not os.path.exists("/var/run/libvirt/libvirt-sock"):
+        if os.path.exists('/i_am_a_container') and os.environ.get('KUBERNETES_SERVICE_HOST') is not None:
+            return False
+        else:
+            return True
+    else:
+        return False
+
+
+def info_network(k, name):
+    networks = k.list_networks()
+    if name in networks:
+        networkinfo = networks[name]
+    else:
+        error(f"Network {name} not found")
+        return {}
+    return networkinfo
+
+
+def get_ssh_pub_key():
+    for _dir in ['.kcli', '.ssh']:
+        for path in SSH_PUB_LOCATIONS:
+            pubpath = os.path.expanduser(f"~/{_dir}/{path}")
+            privpath = pubpath.replace('.pub', '')
+            if os.path.exists(pubpath):
+                if not os.path.exists(privpath):
+                    warning(f"private key associated to {pubpath} not found, you might have trouble accessing the vm")
+                return pubpath
+
+
+def container_mode():
+    return True if os.path.exists("/i_am_a_container") and os.path.exists('/workdir') else False
+
+
+def netmask_to_prefix(netmask):
+    return sum(bin(int(x)).count('1') for x in netmask.split('.'))
+
+
+def valid_ip(ip):
+    try:
+        ip_address(ip)
+        return True
+    except:
+        return False
+
+
+def get_git_version():
+    git_version, git_date = 'N/A', 'N/A'
+    versiondir = os.path.dirname(version.__file__)
+    git_file = f'{versiondir}/git'
+    if os.path.exists(git_file) and os.stat(git_file).st_size > 0:
+        git_version, git_date = open(git_file).read().rstrip().split(' ')
+    return git_version, git_date
+
+
+def compare_git_versions(commit1, commit2):
+    date1, date2 = None, None
+    mycwd = os.getcwd()
+    with TemporaryDirectory() as tmpdir:
+        cmd = f"git clone -q https://github.com/karmab/kcli {tmpdir}"
+        call(cmd, shell=True)
+        os.chdir(tmpdir)
+        timestamp1 = os.popen(f"git show -s --format=%ct {commit1}").read().strip()
+        date1 = datetime.fromtimestamp(int(timestamp1))
+        timestamp2 = os.popen(f"git show -s --format=%ct {commit2}").read().strip()
+        date2 = datetime.fromtimestamp(int(timestamp2))
+        os.chdir(mycwd)
+    return True if date1 < date2 else False
+
+
+def correct_sha(_file, sha):
+    sha256_hash = sha256()
+    with open(_file, "rb") as f:
+        for byte_block in iter(lambda: f.read(4096), b""):
+            sha256_hash.update(byte_block)
+    downloaded_sha = sha256_hash.hexdigest()
+    return downloaded_sha == sha
+
+
+def get_rhcos_url_from_file(filename, _type='kvm'):
+    openshift_version = filename.split('.')[0].replace('rhcos-4', 'rhcos-4.')
+    minor_version = f"{filename.split('-')[1]}-{filename.split('-')[2]}"
+    arch = filename.split('.')[3]
+    url = "https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/"
+    url += f"{openshift_version}/{minor_version}/{arch}/{filename}.gz"
+    return url
+
+
+def boot_baremetal_hosts(baremetal_hosts, iso_url, overrides={}, debug=False):
+    for index, host in enumerate(baremetal_hosts):
+        bmc_url = host.get('url') or host.get('bmc_url')
+        bmc_user = host.get('user') or host.get('bmc_user') or overrides.get('bmc_user')
+        bmc_password = host.get('password') or host.get('bmc_password') or overrides.get('bmc_password')
+        bmc_model = host.get('model') or host.get('bmc_model') or overrides.get('bmc_model', 'dell')
+        bmc_reset = host.get('reset') or host.get('bmc_reset') or overrides.get('bmc_reset', False)
+        if bmc_url is not None and bmc_user is not None and bmc_password is not None:
+            red = Redfish(bmc_url, bmc_user, bmc_password, model=bmc_model, debug=debug)
+            if bmc_reset:
+                red.reset()
+                sleep(240)
+            msg = host['name'] if 'name' in host else f"with url {bmc_url}"
+            pprint(f"Booting Host {msg}")
+            if iso_url is not None:
+                try:
+                    red.set_iso(iso_url)
+                except Exception as e:
+                    warning(f"Hit {e} when plugging iso to host {msg}")
+            else:
+                red.start()
+        else:
+            warning(f"Skipping entry {index} because either bmc_url, bmc_user or bmc_password is not set")
+
+
+def info_baremetal_hosts(baremetal_hosts, overrides={}, debug=False, full=False):
+    for host in baremetal_hosts:
+        bmc_url = host.get('url') or host.get('bmc_url')
+        bmc_user = host.get('user') or host.get('bmc_user') or overrides.get('bmc_user')
+        bmc_password = host.get('password') or host.get('bmc_password') or overrides.get('bmc_password')
+        bmc_model = host.get('model') or host.get('bmc_model') or overrides.get('bmc_model', 'dell')
+        if bmc_url is not None and bmc_user is not None and bmc_password is not None:
+            red = Redfish(bmc_url, bmc_user, bmc_password, model=bmc_model, debug=debug)
+            msg = host['name'] if 'name' in host else f"with url {bmc_url}"
+            pprint(f"Reporting info on Host {msg}")
+            info = red.info()
+            if full:
+                pretty_print(info)
+            else:
+                keys = ['UUID', 'SERIAL', 'BOOT', 'HostName', 'IndicatorLED', 'Manufacturer', 'Model', 'MemorySummary',
+                        'PowerState', 'PartNumber', 'SKU', 'SystemType']
+                data = {key: info[key] for key in keys if key in info}
+                pretty_print(data)
+
+
+def stop_baremetal_hosts(baremetal_hosts, overrides={}, debug=False):
+    for host in baremetal_hosts:
+        bmc_url = host.get('url') or host.get('bmc_url')
+        bmc_user = host.get('user') or host.get('bmc_user') or overrides.get('bmc_user')
+        bmc_password = host.get('password') or host.get('bmc_password') or overrides.get('bmc_password')
+        bmc_model = host.get('model') or host.get('bmc_model') or overrides.get('bmc_model', 'dell')
+        if bmc_url is not None and bmc_user is not None and bmc_password is not None:
+            red = Redfish(bmc_url, bmc_user, bmc_password, model=bmc_model, debug=debug)
+            msg = host['name'] if 'name' in host else f"with url {bmc_url}"
+            pprint(f"Stopping Host {msg}")
+            red.stop()
+
+
+def valid_uuid(uuid):
+    try:
+        UUID(uuid)
+        return True
+    except:
+        return False
+
+
+def get_changelog(diff, data=False):
+    if which('git') is None:
+        error("git needed for this functionality")
+        sys.exit(1)
+    if not diff:
+        diff = ['main']
+    if len(diff) > 1:
+        ori, dest = diff[:2]
+    else:
+        git_version = get_git_version()[0]
+        if git_version != 'N/A':
+            ori, dest = git_version, diff[0]
+        else:
+            error("No source commit available. Use kcli changelog diff1 diff2")
+            sys.exit(1)
+    with TemporaryDirectory() as tmpdir:
+        cmd = f"git clone -q https://github.com/karmab/kcli {tmpdir}"
+        call(cmd, shell=True)
+        os.chdir(tmpdir)
+        cmd = f"git --no-pager log --decorate=no --oneline {ori}..{dest}"
+        if data:
+            cmd += f"> {tmpdir}/results.txt"
+            call(cmd, shell=True)
+            return open(f"{tmpdir}/results.txt").read()
+        else:
+            call(cmd, shell=True)

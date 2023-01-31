@@ -1,9 +1,8 @@
-{{ cluster }}-disconnecter:
- image: centos8
+{{ disconnected_reuse_name or cluster }}-disconnected:
+ image: centos8stream
  pool: {{ pool or config_pool }}
  wait: true
  enableroot: true
- reservedns: {{ disconnected_dns|default(False) }}
  domain: {{ domain }}
  numcpus: {{ numcpus }}
  keys: {{ keys }}
@@ -15,43 +14,18 @@
  disks:
  - {{ disconnected_disk_size }}
  files:
- - origin: disconnected/01_get_oc.sh
-   path: /root/01_get_oc.sh
-   mode: 700
-{% if metal3 %}
- - origin: disconnected/02_cache.sh
-   path: /root/02_cache.sh
-   mode: 700
-{% endif %}
- - origin: disconnected/03_registry.sh
-   path: /root/03_registry.sh
-   mode: 700
- - origin: disconnected/04_extras.sh
-   path: /root/04_extras.sh
-   mode: 700
- - origin: disconnected/05_olm.sh
-   path: /root/05_olm.sh
-   mode: 700
- - origin: disconnected/06_web.sh
-   path: /root/06_web.sh
-   mode: 700
- - origin: disconnected/sync_image.sh
-   path: /root/bin/sync_image.sh
-   mode: 700
+ - path: /root/scripts
+   origin: disconnected/scripts
+ - path: /root/bin
+   origin: disconnected/bin
+ - path: /etc/systemd/system/registry.service
+   origin: disconnected/registry.service
+{% if disconnected_sync %}
  - content: |
      {{ pull_secret }}
    path: /root/openshift_pull.json
- - origin: disconnected/haproxy.cfg
-   path: /root/haproxy.cfg
-   mode: 700
+{% endif %}
+ - path: /root/haproxy.cfg
+   origin: disconnected/haproxy.cfg
  cmds:
- - bash /root/01_get_oc.sh
-{% if metal3 %}
- - bash /root/02_cache.sh
-{% endif %}
- - bash /root/03_registry.sh
- - bash /root/04_extras.sh
-{% if disconnected_operators %}
- - bash /root/05_olm.sh
-{% endif %}
- - bash /root/06_web.sh
+ - bash /root/scripts/deploy.sh
