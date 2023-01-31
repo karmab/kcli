@@ -1,0 +1,29 @@
+cluster: ci-kubevirt
+domain: karmalabs.corp
+sslip: true
+ctlplanes: 3
+workers: 2
+version: ci
+sslip: true
+tag: "4.13"
+api_ip: 10.19.135.111
+network: baremetal
+ctlplane_memory: 16384
+worker_memory: 16384
+bootstrap_memory: 8192
+disk_size: 40
+extra_disks:
+- 80
+numcpus: 16
+async: true
+notify: true
+apps:
+- autolabeller
+- local-storage-operator
+- ocs-operator
+- kubevirt-hyperconverged
+autolabeller_rules:
+- ci-.*virt-ctlplane.*:
+   - cluster.ocs.openshift.io/openshift-storage
+- ci-(kubevirt|libvirt|ovirt)-ctlplane-(.):
+  - topology.rook.io/rack: rack\2

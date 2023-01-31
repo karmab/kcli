@@ -1,0 +1,39 @@
+parameters:
+  cluster: marquez
+  version: stable
+  tag: '4.12'
+  ctlplanes: 3
+  workers: 0
+  network_type: OVNKubernetes
+  memory: 32768
+  numcpus: 16
+  cidr: 2620:52:0:1304::/64
+  disconnected: false
+  disconnected_deploy: false
+  disconnected_keep: true
+  pull_secret: openshift_pull.json
+  apps: []
+
+{{ cluster }}-network:
+  type: network
+  cidr: {{ cidr }}
+  nat: true
+
+{{ cluster }}:
+  type: kube
+  kubetype: openshift
+  cluster: {{ cluster }}
+  tag: {{ tag }}
+  ctlplanes: {{ ctlplanes }}
+  workers: {{ workers }}
+  version: {{ version }}
+  network_type: {{ network_type }}
+  memory: {{ memory }}
+  numcpus: {{numcpus }}
+  network: {{ cluster }}-network
+  disconnected: {{ disconnected }}
+  disconnected_deploy: {{ disconnected_deploy }}
+  disconnected_keep: {{ disconnected_keep }}
+  pull_secret: {{ pull_secret }}
+  kvm_openstack: true
+  apps: {{ apps }}

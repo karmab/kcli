@@ -1,19 +1,14 @@
-{% set cluster_network_ipv6 = {"cidr": "fd01::/48", "hostPrefix": 64} %}
 {% set network_type = network_type|default('OpenShiftSDN') %}
-{% set cluster_network_ipv4 = {"cidr": "10.132.0.0/14", "hostPrefix": 23} %}
-{% set service_network_ipv6 = ["fd02::/112"] %}
-{% set service_network_ipv4 = ["172.30.0.0/16"] %}
+{% set cluster_network_ipv4 = {"cidr": cluster_network_ipv4, "hostPrefix": 23} %}
+{% set cluster_network_ipv6 = {"cidr": cluster_network_ipv6, "hostPrefix": 64} %}
+{% set service_network_ipv4 = [service_network_ipv4] %}
+{% set service_network_ipv6 = [service_network_ipv6] %}
 {% set machine_cidr_ipv4 = ["10.0.0.0/16"] %}
 {% set machine_cidr_ipv6 = ["fc00::/48"] %}
 {% if dualstack|default(False) %}
 {% set machine_cidrs = machine_cidr_ipv4 + machine_cidr_ipv6 %}
 {% set cluster_networks = [cluster_network_ipv4] + [cluster_network_ipv6] %}
 {% set service_networks = service_network_ipv4 + service_network_ipv6 %}
-{% if ipv6 %}
-{% set machine_cidrs = machine_cidrs|reverse %}
-{% set cluster_networks = cluster_networks|reverse %}
-{% set service_networks = service_networks|reverse %}
-{% endif %}
 {% elif ipv6 %}
 {% set machine_cidrs = machine_cidr_ipv6 %}
 {% set cluster_networks = [cluster_network_ipv6] %}
@@ -38,10 +33,10 @@ proxy:
 {% endif %}
 compute:
 - name: worker
-  replicas: {{ workers }}
+  replicas: {{ 0 if sno else workers }}
 controlPlane:
   name: master
-  replicas: {{ masters }}
+  replicas: {{ 1 if sno else ctlplanes }}
 metadata:
   name: {{ cluster }}
 networking:
@@ -69,6 +64,7 @@ platform:
     password: {{ config_password }}
     datacenter: {{ config_datacenter }}
     defaultDatastore: {{ config_pool }}
+    folder: /{{ config_datacenter}}/vm/{{ cluster }}
 {% else %} 
   none: {}
 {% endif %}
@@ -86,18 +82,18 @@ sshKey: |
 {% if disconnected_url != None %}
 imageContentSources:
 - mirrors:
-  - {{ disconnected_url }}/{{ disconnected_prefix }}
+  - {{ disconnected_url }}/{{ disconnected_prefix or "ocp4" }}
   source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
 - mirrors:
-  - {{ disconnected_url }}/{{ disconnected_prefix }}
-{% if disconnected_origin == 'registry.build01.ci.openshift.org' %}
-  source: {{ disconnected_origin }}/{{ (tag|string).split('/')[0] }}/stable
+  - {{ disconnected_url }}/{{ disconnected_prefix or "ocp4" }}
+{% if 'registry.build01.ci' in openshift_release_image %}
+  source: registry.build01.ci.openshift.org/{{ (tag|string).split('/')[0] }}/stable
 {% elif ':' in tag|string %}
-  source: {{ disconnected_origin }}/{{ (tag|string).split(':')[0] }}
-{% elif disconnected_origin != 'quay.io' %}
-  source: {{ disconnected_origin }}/ocp/release
+  source: {{ openshift_release_image.split('/')[0] }}/{{ (tag|string).split(':')[0] }}
+{% elif 'registry.ci' in openshift_release_image %}
+  source: registry.ci.openshift.org/ocp/release
 {% else %}
-  source: {{ disconnected_origin }}/ocp-release
+  source: quay.io/ocp-release
 {% endif %}
 {% elif imagecontentsources %}
 imageContentSources:

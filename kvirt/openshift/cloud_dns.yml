@@ -1,0 +1,11 @@
+api.{{ cluster }}:
+ type: dns
+ domain: {{ domain }}
+ alias: ['api-int.{{ cluster }}.{{ domain }}']
+ ip: {{ api_ip }}
+
+apps.{{ cluster }}:
+ type: dns
+ domain: {{ domain }}
+ ip: {{ ingress_ip or api_ip }}
+ alias: ['*']

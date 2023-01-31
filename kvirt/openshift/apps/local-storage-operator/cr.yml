@@ -1,8 +1,8 @@
-apiVersion: "local.storage.openshift.io/v1"
-kind: "LocalVolume"
+apiVersion: local.storage.openshift.io/v1
+kind: LocalVolume
 metadata:
-  name: "{{ localstorage_name }}"
-  namespace: "{{ namespace }}"
+  name: {{ localstorage_name }}
+  namespace: {{ namespace }}
 spec:
   nodeSelector:
     nodeSelectorTerms:
@@ -11,7 +11,7 @@ spec:
           operator: In
           values:
 {% if not localstorage_nodes %}
-{% set localstorage_nodes = 99|defaultnodes(cluster, domain, masters,workers) %}
+{% set localstorage_nodes = 99|defaultnodes(cluster, domain, ctlplanes,workers) %}
 {% endif %}
 {% for node in localstorage_nodes %}
           - {{ node }}
@@ -19,7 +19,7 @@ spec:
   storageClassDevices:
     - storageClassName: {{ localstorage_storageclass }}
       volumeMode: {{ localstorage_volumemode | capitalize }}
-      fsType: xfs
+      fsType: {{ localstorage_fstype }}
       devicePaths:
 {% for disk in localstorage_disks %}
       - /dev/{{ disk | replace('/dev/', '') }}

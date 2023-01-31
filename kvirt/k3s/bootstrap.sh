@@ -1,23 +1,20 @@
-{% set extra_args = [] %}
-{% for component in disabled_components %}
-{% do extra_args.append("--disable " + component) %}
-{% endfor %}
-apt-get -y install curl
-{% if masters > 1 %}
-curl -sfL https://get.k3s.io | {{ "INSTALL_K3S_EXEC='--flannel-backend=none'" if sdn != "flannel" else '' }} INSTALL_K3S_CHANNEL={{ install_k3s_channel }} INSTALL_K3S_VERSION={{ install_k3s_version if install_k3s_version != "latest" else '' }} K3S_TOKEN={{ token }} sh -s - server --cluster-init {{ extra_args|join(" ") }}
-export IP={{ api_ip }}
-{% else %}
-curl -sfL https://get.k3s.io | {{ "INSTALL_K3S_EXEC='--flannel-backend=none'" if sdn != "flannel" else '' }} INSTALL_K3S_CHANNEL={{ install_k3s_channel }} INSTALL_K3S_VERSION={{ install_k3s_version if install_k3s_version != "latest" else '' }} sh -s - server {{ extra_args|join(" ") }}
-export IP=$(hostname -I | cut -f1 -d" ")
+{% if extra_ctlplane_args %}
+{% set extra_args = extra_ctlplane_args %}
 {% endif %}
+
+apt-get -y install curl
+curl -sfL https://get.k3s.io | {{ install_k3s_args }} K3S_TOKEN={{ token }} sh -s - server {{ '--cluster-init' if ctlplanes > 1 else '' }} {{ extra_args|join(" ") }}
+export IP={{ api_ip if ctlplanes > 1 else '$(hostname -I | cut -f1 -d" ")' }}
 export K3S_TOKEN=$(cat /var/lib/rancher/k3s/server/node-token)
 sed "s/127.0.0.1/$IP/" /etc/rancher/k3s/k3s.yaml > /root/kubeconfig
 if [ -d /root/manifests ] ; then
- mkdir -p /var/lib/rancher/k3s/server
- mv /root/manifests /var/lib/rancher/k3s/server
+  mv /root/manifests {{ data_dir|default("/var/lib/rancher/k3s/server") }}
 fi
-{% if sdn == 'cilium' %}
+{% if sdn != None and sdn == 'cilium' %}
 echo bpffs /sys/fs/bpf bpf defaults 0 0 >> /etc/fstab
 mount /sys/fs/bpf
-kubectl create -f https://raw.githubusercontent.com/cilium/cilium/{{ 'cilium/cilium' | githubversion(cilium_version|default('latest')) }}/install/kubernetes/quick-install.yaml
+curl -LO https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz
+tar xzvfC cilium-linux-amd64.tar.gz /usr/local/bin
+rm -f cilium-linux-amd64.tar.gz
+cilium install
 {% endif %}

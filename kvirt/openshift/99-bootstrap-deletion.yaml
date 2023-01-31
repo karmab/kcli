@@ -1,0 +1,43 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kcli-bootstrap-delete
+  namespace: kcli-infra
+  labels:
+    app: kcli
+spec:
+  backoffLimit: 12
+#  ttlSecondsAfterFinished: 100
+  template:
+   spec:
+    tolerations:
+    - effect: NoSchedule
+      key: node-role.kubernetes.io/master
+      operator: Exists
+    serviceAccountName: autoapprover
+    restartPolicy: OnFailure
+    initContainers:
+    - name: wait-for-boostrap-cm
+      image: {{ registry }}/karmab/kubectl:latest
+      command: ['sh', '-c', 'kubectl get cm -n kube-system bootstrap']
+    - name: delete-bootstrap-vm
+      image: {{ registry }}/karmab/kcli:latest
+      command: ['sh', '-c', 'kcli -C {{ client }} delete vm --yes {{ cluster }}-bootstrap']
+      volumeMounts:
+      - mountPath: /root/.kcli
+        name: kcli-conf
+      - mountPath: /root/.ssh
+        name: kcli-ssh
+    containers:
+    - name: create-kcli-bootstrap-cm
+      image: {{ registry }}/karmab/kubectl:latest
+      command: ['sh', '-c', 'kubectl create cm kcli-bootstrap -n kcli-infra --from-literal status=complete']
+    volumes:
+    - configMap:
+        defaultMode: 0700
+        name: kcli-conf
+      name: kcli-conf
+    - configMap:
+        defaultMode: 0700
+        name: kcli-ssh
+      name: kcli-ssh

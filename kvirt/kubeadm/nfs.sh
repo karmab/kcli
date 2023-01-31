@@ -1,7 +1,7 @@
 {% if ubuntu %} 
 apt-get -y install nfs-kernel-server
 {% else %}
-yum -y install nfs-utils
+dnf -y install nfs-utils
 {% endif %}
 for i in `seq -f "%03g" 1 20` ; do
 mkdir /pv${i}
@@ -11,7 +11,7 @@ chmod 777 /pv${i}
 done
 exportfs -r
 systemctl start nfs-server ; systemctl enable nfs-server
-{% if masters > 1 %}
+{% if ctlplanes > 1 %}
 IP="{{ api_ip }}"
 {% else %}
 IP=$(hostname -I | cut -d" " -f1)

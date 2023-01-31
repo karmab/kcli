@@ -1,159 +1,170 @@
-from flask import Flask
-from flask import render_template, request, jsonify
+import functools
+from kvirt.bottle import Bottle, request, static_file, jinja2_view, response
 from glob import glob
-from kvirt.common import get_overrides
+from kvirt.common import get_overrides, pprint
 import os
 import re
+import yaml
+
+basedir = f"{os.path.dirname(Bottle.run.__code__.co_filename)}/expose"
+view = functools.partial(jinja2_view, template_lookup=[f"{basedir}/templates"])
 
 
 class Kexposer():
-    def __init__(self, config, plan, inputfile, overrides={}, port=9000, extraconfigs=[], installermode=False):
-        app = Flask(__name__)
+
+    def refresh_plans(self, verbose=False):
+        plans = []
+        owners = {}
+        for paramfile in glob(f"{self.basedir}/**/parameters_*.y*ml", recursive=True):
+            search = re.match('.*parameters_(.*)\\.ya?ml', paramfile)
+            plan = search.group(1)
+            try:
+                fileoverrides = get_overrides(paramfile=paramfile)
+            except:
+                continue
+            if 'owner' in fileoverrides:
+                owners[plan] = fileoverrides['owner']
+            plans.append(plan)
+            if verbose:
+                pprint(f"Adding parameter file {paramfile}")
+        self.plans = sorted(plans) if plans else [self.plan]
+        self.owners = owners
+
+    def get_client(self, plan, currentconfig, overrides={}):
+        matching = glob(f"{self.basedir}/**/parameters_{plan}.y*ml", recursive=True)
+        if matching:
+            paramfile = matching[0]
+            fileoverrides = get_overrides(paramfile=paramfile)
+            if 'client' in fileoverrides:
+                client = fileoverrides['client']
+                currentconfig.__init__(client=client)
+                if overrides:
+                    fileoverrides.update(overrides)
+                    overrides = fileoverrides
+        return overrides
+
+    def __init__(self, config, plan, inputfile, overrides={}, port=9000, pfmode=False):
+        app = Bottle()
         self.basedir = os.path.dirname(inputfile) if '/' in inputfile else '.'
-        clients = {}
-        plans = {}
-        for parameterfile in glob("%s/parameters_*.y*ml" % self.basedir):
-            search = re.match('.*parameters_(.*)\.(ya?ml)', parameterfile)
-            plan_name = search.group(1)
-            ext = search.group(2)
-            plans[plan_name] = config.client
-            if config.client in clients:
-                clients[config.client][plan_name] = "%s/parameters_%s.%s" % (self.basedir, plan_name, ext)
-            else:
-                clients[config.client] = {plan_name: "%s/parameters_%s.%s" % (self.basedir, plan_name, ext)}
-        for client in [config.client] + list(config.extraclients.keys()):
-            self.parametersfiles = glob("%s/%s/parameters_*.y*ml" % (self.basedir, client))
-            for parameterfile in self.parametersfiles:
-                search = re.match('.*parameters_(.*)\.(ya?ml)', parameterfile)
-                plan_name = search.group(1)
-                ext = search.group(2)
-                plans[plan_name] = client
-                if client in clients:
-                    clients[client][plan_name] = "%s/%s/parameters_%s.%s" % (self.basedir, client, plan_name, ext)
-                else:
-                    clients[client] = {plan_name: "%s/%s/parameters_%s.%s" % (self.basedir, client, plan_name, ext)}
-        self.clients = clients if clients else {config.client: {plan: None}}
-        self.plans = plans if plans else {plan: config.client}
+        self.plan = plan
         self.overrides = overrides
-        self.installermode = installermode
+        self.pfmode = pfmode
+        self.refresh_plans(verbose=True)
+
+        @app.route('/static/<filename:path>')
+        def server_static(filename):
+            return static_file(filename, root=f'{basedir}/static')
 
         @app.route('/')
+        @view('index.html')
         def index():
-            data = {}
-            for client in sorted(self.clients):
-                data[client] = {}
-                for plan_name in sorted(self.clients[client]):
-                    current_data = {'vms': []}
-                    currentk = config.k if client == config.client else config.extraclients[client]
-                    if self.installermode:
-                        current_filtervm = '%s-installer' % plan_name
-                        try:
-                            vm = currentk.info(current_filtervm)
-                            current_data['vms'].append(vm)
-                            if 'creationdate' in vm:
-                                current_data['creationdate'] = vm['creationdate']
-                            if 'owner' in vm:
-                                current_data['owner'] = vm['owner']
-                        except:
-                            pass
-                    else:
-                        for vm in currentk.list():
-                            if vm['plan'] == plan_name:
-                                current_data['vms'].append(vm)
-                                if 'creationdate' not in current_data and 'creationdate' in vm:
-                                    current_data['creationdate'] = vm['creationdate']
-                                if 'owner' not in current_data and 'owner' in vm:
-                                    current_data['owner'] = vm['owner']
-                    data[client][plan_name] = current_data
-            return render_template('index.html', clients=data)
+            self.refresh_plans()
+            return {'plans': self.plans, 'owners': self.owners}
 
-        @app.route("/exposedelete", methods=['POST'])
+        @app.route("/exposedelete", method=['POST'])
         def exposedelete():
             """
             delete plan
             """
-            if 'name' in request.form:
-                plan = request.form['name']
+            currentconfig = self.config
+            if 'plan' in request.forms:
+                plan = request.forms['plan']
                 if plan not in self.plans:
-                    return 'Invalid plan name %s' % plan
-                elif self.plans[plan] == config.client:
-                    currentconfig = self.config
-                else:
-                    currentconfig = self.extraconfigs[self.plans[plan]]
-                result = currentconfig.plan(plan, delete=True)
-                response = jsonify(result)
-                response.status_code = 200
-                return response
+                    return f'Invalid plan name {plan}'
+                self.get_client(plan, currentconfig)
+                result = currentconfig.delete_plan(plan)
+                response.status = 200
             else:
-                result = {'result': 'failure', 'reason': "Invalid Data"}
-                response = jsonify(result)
-                response.status_code = 400
+                result = {'result': 'failure', 'reason': "Missing plan in data"}
+                response.status = 400
+            return result
 
-        @app.route("/exposecreate", methods=['POST'])
+        @app.route("/exposecreate", method='POST')
+        @view('result.html')
         def exposecreate():
             """
             create plan
             """
-            if 'plan' in request.form:
-                plan = request.form['plan']
+            update = False
+            currentconfig = self.config
+            if 'plan' in request.forms:
+                plan = request.forms['plan']
                 if plan not in self.plans:
-                    return 'Invalid plan name %s' % plan
-                elif self.plans[plan] == config.client:
-                    currentconfig = self.config
-                    client = config.client
-                else:
-                    client = self.plans[plan]
-                    currentconfig = self.extraconfigs[client]
+                    return f'Invalid plan name {plan}'
+                pfdata = None
                 parameters = {}
-                for p in request.form:
+                for p in request.forms:
                     if p.startswith('parameter'):
-                        value = request.form[p]
+                        value = request.forms[p]
                         if value.isdigit():
                             value = int(value)
                         elif value.lower() in ['true', 'false']:
                             value = value.lower() == "true"
                         key = p.replace('parameter_', '')
                         parameters[key] = value
+                    elif p == 'update':
+                        update = True
+                    elif p == 'pf':
+                        pfdata = request.forms[p]
+                if pfdata is not None:
+                    new_parameters = yaml.safe_load(pfdata)
+                    new_parameters.update(parameters)
+                    parameters = new_parameters
                 try:
-                    overrides = parameters
-                    paramfile = self.clients[client][plan]
-                    if paramfile is not None:
-                        fileoverrides = get_overrides(paramfile=paramfile)
-                        fileoverrides.update(overrides)
-                        overrides = fileoverrides
-                    if 'mail' in currentconfig.notifymethods and 'mailto' in overrides and overrides['mailto'] != "":
-                        newmails = overrides['mailto'].split(',')
+                    overrides = self.get_client(plan, currentconfig, overrides=parameters)
+                    if 'mail' in currentconfig.notifymethods and 'mail_to' in overrides and overrides['mail_to'] != "":
+                        newmails = overrides['mail_to'].split(',')
                         if currentconfig.mailto:
                             currentconfig.mailto.extend(newmails)
                         else:
                             currentconfig.mailto = newmails
                     if 'owner' in overrides and overrides['owner'] == '':
                         del overrides['owner']
-                    currentconfig.plan(plan, delete=True)
-                    result = currentconfig.plan(plan, inputfile=inputfile, overrides=overrides)
+                    if update:
+                        result = currentconfig.plan(plan, inputfile=inputfile, overrides=overrides, update=True)
+                    else:
+                        currentconfig.delete_plan(plan)
+                        result = currentconfig.plan(plan, inputfile=inputfile, overrides=overrides)
                 except Exception as e:
-                    error = 'Hit issue when running plan: %s' % str(e)
-                    return render_template('error.html', plan=plan, error=error)
-                if result['result'] == 'success':
-                    return render_template('success.html', plan=plan)
-                else:
-                    return render_template('error.html', plan=plan, error=result['reason'])
+                    error = f'Hit issue when running plan: {str(e)}'
+                    result = {'result': 'failure', 'error': error}
+                return {'plan': plan, 'result': result}
             else:
-                return 'Invalid data'
+                return 'Missing plan in data'
 
-        @app.route("/exposeform/<string:plan>", methods=['GET'])
+        @app.route("/exposeform/<plan>")
+        @view('form.html')
         def exposeform(plan):
             """
             form plan
             """
             parameters = self.overrides
             if plan not in self.plans:
-                return 'Invalid plan name %s' % plan
-            return render_template('form.html', parameters=parameters, plan=plan)
+                return f'Invalid plan name {plan}'
+            return {'parameters': parameters, 'plan': plan, 'pfmode': self.pfmode}
+
+        @app.route("/infoplan/<plan>")
+        @view('infoplan.html')
+        def infoplan(plan):
+            """
+            info plan
+            """
+            currentconfig = self.config
+            if plan not in self.plans:
+                return f'Invalid plan name {plan}'
+            self.get_client(plan, currentconfig)
+            vms = currentconfig.info_specific_plan(plan)
+            creationdate = ''
+            owner = self.owners[plan] if plan in self.owners else ''
+            if vms:
+                creationdate = vms[0].get('creationdate', creationdate)
+                if 'owner' in vms[0]:
+                    owner = vms[0]['owner']
+                return {'vms': vms, 'plan': plan, 'client': currentconfig.client, 'creationdate': creationdate,
+                        'owner': owner}
 
         self.app = app
         self.config = config
-        self.extraconfigs = extraconfigs
         self.overrides = overrides
         self.port = port
 

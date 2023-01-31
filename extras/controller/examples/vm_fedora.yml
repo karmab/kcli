@@ -1,0 +1,8 @@
+apiVersion: kcli.karmalabs.local/v1
+kind: Vm
+metadata:
+  name: fedora
+spec:
+  image: Fedora-Cloud-Base-30-1.2.x86_64.qcow2
+  memory: 1024
+  numcpus: 2

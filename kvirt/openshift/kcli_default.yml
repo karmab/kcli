@@ -1,103 +1,134 @@
 info: |
-    Deploys an openshift cluster with an arbitray number of masters or workers using openshift-install
-    and creating the node with kcli instead of terraforms.
+    Deploys an openshift cluster with an arbitray number of ctlplanes or workers using openshift-install
+    and creating the nodes with kcli.
     This allows easily tweaking the hardware caracteristics of those nodes.
-    When running on cloud platforms, loadbalancer and dns from the platform is used.
+    When running on cloud platforms, loadbalancer and dns from the platform are used.
     Otherwise, extra static pods (coredns with mdns, keepalived and haproxy) are deployed on the nodes to provide a self contained platform.
-    Default version is latest stable but you can instead use ci, for which you will need a specific pull secret
-    Upstream okd version can be specified with the upstream flag.
-    Sdn defaults to OpenShiftSDN but OVNKubernetes, Calico or Contrail can be specified instead.
-    To avoid keepalived collision, you can force virtual_router_id. Otherwise, the id is calculated from cluster variable
+    Default version is stable but you can use dev-preview, nightly or ci instead, for which you will need a specific pull secret.
+    Upstream okd version can be specified with the upstream boolean variable.
+    Sdn defaults to OVNKubernetes but OpenShiftSDN or Calico can also be selected.
+    To avoid keepalived collision, you can force virtual_router_id. Otherwise, the id is calculated from cluster variable.
     You can deploy extra apps with the apps array and for each of the supported app, indicate with the variable
-    ${app}_version with version to target (instead of latest)
+    ${app}_version which version to target (instead of latest).
     You can also define a list of scripts to launch at the end with the postscripts array.
-version: nightly
-tag: '4.7'
+    You can force the kubernetes ip of the nodes (and the vips allocation) to use a specific network by setting baremetal_cidr
+    For deploying a single node cluster, you can simply set ctplanes to 1 and workers to 0, or use the flag sno to leverage
+    bootstrap in place (which removes the need for a bootstrap vm). This approach is suitable for baremetal single node
+    baremetal_hosts can be specified as an array of bmc urls to deploy baremetal workers (or in the case of SNO described before)
+version: stable
+tag: '4.12'
 pull_secret: openshift_pull.json
-image: rhcos47
-helper_image: CentOS-7-x86_64-GenericCloud.qcow2
+image: rhcos412
 network: default
 worker_network:
 api_ip: 
 ingress_ip: 
-masters: 1
+ctlplanes: 3
 workers: 0
 fips: false
-cluster: testk
-domain: karmalabs.com
-network_type: OpenShiftSDN
+cluster: myopenshift
+domain: karmalabs.corp
+network_type: OVNKubernetes
+cluster_network_ipv4: "10.132.0.0/14"
+cluster_network_ipv6: "fd01::/48"
+service_network_ipv4: "172.30.0.0/16"
+service_network_ipv6: "fd02::/112"
 ntp_server:
 minimal: false
-pool: default
+pool:
 flavor:
 flavor_bootstrap:
-flavor_master:
+flavor_ctlplane:
 flavor_worker:
-numcpus: 4
+numcpus: 8
 bootstrap_numcpus:
-master_numcpus:
+ctlplane_numcpus:
 worker_numcpus:
-memory: 8192
-bootstrap_memory:
-master_memory:
+memory: 16384
+bootstrap_memory: 8192
+ctlplane_memory:
 worker_memory:
+coredns: true
 mdns: true
-master_tpm: false
-master_rng: false
-worker_tpm: false
-worker_rng: false
+ignore_hosts: false
 disk_size: 30
 autostart: false
 keys: []
 apps: []
+apps_install_cr: true
 postscripts: []
+kubevirt_api_service: false
 kubevirt_disk_size:
+kubevirt_ignore_node_port: false
 extra_disks: []
-extra_master_disks: []
+extra_ctlplane_disks: []
 extra_worker_disks: []
 extra_networks: []
-extra_master_networks: []
+extra_ctlplane_networks: []
 extra_worker_networks: []
-master_macs: []
-master_ips: []
-bootstrap_mac: 
-bootstrap_ip: 
-worker_macs: []
-worker_ips: []
-pcidevices:
-numa:
-numa_master:
-numa_worker:
-numamode:
-numamode_master:
-numamode_worker:
-cpupinning:
-cpupinning_master:
-cpupinning_worker:
 disconnected_url:
-disconnected_deploy: False
-disconnected_haproxy: False
-disconnected_reuse: False
+disconnected_deploy: false
+disconnected_haproxy: false
+disconnected_reuse: false
+bootstrap_mac:
+disconnected_reuse_name:
 disconnected_disk_size: 100
 disconnected_user:
 disconnected_password:
-disconnected_origin: quay.io
-disconnected_prefix: ocp4
 disconnected_operators: []
+disconnected_certified_operators: []
+disconnected_community_operators: []
+disconnected_marketplace_operators: []
+disconnected_ipv6_network: false
+disconnected_sync: true
+disconnected_prefix:
 imagecontentsources: []
 ca:
 ipv6: false
 dualstack: false
+forcestack: false
 cloud_tag:
 cloud_scale: false
 cloud_api_internal: false
 virtual_router_id:
-zerotier_nets: []
-zerotier_ip:
-zerotier_kubelet: false
 http_proxy:
 no_proxy:
 sno: false
-sno_virtual: false
 sno_disk:
 sno_dns: true
+sno_cloud_remove_lb: true
+sno_disable_nics: []
+sno_ctplanes: false
+sno_workers: false
+sno_wait: false
+sno_localhost_fix: false
+metal3: false
+metal3_provisioning_enable: false
+metal3_provisioning_net: provisioning
+metal3_provisioning_interface: ens3
+metal3_noprovisioning_ip:
+metal3_noprovisioning_bootstrap_ip:
+sushy: false
+baremetal_user: root
+baremetal_password: calvin
+kvm_openstack: true
+kvm_forcestack: false
+ipsec: false
+ovn_hostrouting: false
+async: false
+notify: false
+monitoring_retention: 24h
+baremetal_hosts: []
+baremetal_web: true
+baremetal_web_port: 80
+baremetal_web_dir: /var/www/html
+threaded: false
+ctlplanes_threaded: false
+workers_threaded: false
+tempkey: false
+kubeadmin_password:
+retries: 2
+sslip: false
+pub_key:
+baremetal_cidr:
+manifests: manifests

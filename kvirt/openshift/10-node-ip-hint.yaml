@@ -1,0 +1,24 @@
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  labels:
+    machineconfiguration.openshift.io/role: {{ role }}
+  name: 10-{{ role }}-node-ip-hint
+spec:
+  config:
+    ignition:
+      config: {}
+      security:
+        tls: {}
+      timeouts: {}
+      version: 2.2.0
+    networkd: {}
+    passwd: {}
+    storage:
+      files:
+      - contents:
+          source: data:text/plain;charset=utf-8;base64,{{ node_ip_hint|base64 }}
+          verification: {}
+        filesystem: root
+        mode: 420
+        path: /etc/default/nodeip-configuration

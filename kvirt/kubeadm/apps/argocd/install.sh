@@ -1,5 +1,5 @@
 set -euo pipefail
-export ARGOCD_VERSION={{ 'argoproj/argo-cd' | githubversion(argocd_version) }}
+export ARGOCD_VERSION={{ 'argoproj/argo-cd' | github_version(argocd_version) }}
 kubectl create namespace argocd
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/$ARGOCD_VERSION/manifests/install.yaml
 {% if argocd_ingress %}
@@ -7,7 +7,7 @@ echo Giving sometime for ingress controller to get ready...
 sleep 30
 kubectl apply -f ingress.yml
 sleep 30
-HOST=argocd.{{ cluster | default('testk') }}.{{ domain | default('karmalabs.com') }}
+HOST=argocd.{{ cluster | default('mykube') }}.{{ domain | default('karmalabs.corp') }}
 IP=$(kubectl get ingress -n argocd argocd-server-ingress -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 echo You will need to create the following /etc/hosts entry
 echo $IP $HOST

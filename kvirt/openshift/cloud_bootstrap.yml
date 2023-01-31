@@ -1,15 +1,26 @@
+{% if flavor_bootstrap != None %}
+{% set flavor = flavor_bootstrap %}
+{% endif %}
+
 {{ cluster }}-bootstrap:
  image: {{ image }}
- pool: {{ pool }}
+ pool: {{ pool or config_pool }}
+{% if flavor != None %}
  flavor: {{ flavor }}
- enableroot: {{ enableroot }}
+{% endif %}
+ enableroot: false
  numcpus: {{ bootstrap_numcpus | default(numcpus, numcpus) }}
  memory: {{ bootstrap_memory | default(memory, memory) }}
  nets:
  - name: {{ network }}
- reservedns: true
  disks:
  - size: {{ disk_size }}
 {% if cloud_tag != None %}
  tags: [{{ cloud_tag }}]
+{% endif %}
+{% if config_type == 'ibm' %}
+ files:
+ - path: /etc/NetworkManager/dispatcher.d/99-forcedns
+   origin: 99-forcedns-ibm
+   mode: 755
 {% endif %}

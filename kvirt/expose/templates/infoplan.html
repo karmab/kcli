@@ -1,0 +1,32 @@
+{% include "head.html" %}
+<div id="wheel"></div>
+<p>
+<table class="table table-bordered table-hover">
+  <tbody>
+  <tr class="table-primary">
+    <th>Plan name</th>
+    <th>Client</th>
+    <th>Creation Date</th>
+  <tr>
+  <th>{{ plan }}</th>
+  <th>{{ client }}</th>
+  <th>{{ creationdate|default('') }} {{ owner|default('') }}</th>
+  </tr>
+  <tr class="table-info">
+    <th>Vm name</th>
+    <th>Status</th>
+    <th>Ip</th>
+  </tr>
+{% for vm in vms %}
+  <tr>
+    <td>{{ vm['name'] }}</td>
+    <td>{{ vm['status'] }}</td>
+    <td>{{ vm['ip'] }}</td>
+  </tr>
+{% endfor %}
+  </tbody>
+</table>
+<br>
+<p><a href="/">Back to listing</a>
+</body>
+</html>

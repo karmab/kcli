@@ -1,0 +1,78 @@
+name: {{ plan }} 
+on:
+  workflow_dispatch:
+    inputs:
+      RUNNER:
+        description: 'Runner Name'
+        required: true
+        default: '{{ runner }}'
+      CLIENT:
+        description: 'Client name'
+        required: true
+        default: '{{ client }}'
+      SCRIPT:
+        description: 'Run script'
+        required: true
+        default: '{{ gitbase + inputfile }}'
+      RUN_SCRIPT:
+        description: 'Run script'
+        required: true
+        default: '{{ runscript }}'
+{% if paramfile != None %}
+      PARAMFILE:
+        description: 'paramfile'
+        required: false
+        default: {{ gitbase + paramfile }}
+{% endif %}
+{% for parameter in parameters %}
+      {{ parameter|upper }}:
+        description: '{{ parameter }}'
+        required: false
+        default: {{ parameters[parameter] }}
+{% endfor %}
+
+env:
+ HOME: {{ parameters['home']|default('/root') }}
+ CLIENT: {% raw %}${{github.event.inputs.CLIENT}}{% endraw %}
+
+ SCRIPT: {% raw %}${{github.event.inputs.SCRIPT}}{% endraw %}
+
+ RUN_SCRIPT: {% raw %}${{github.event.inputs.RUN_SCRIPT}}{% endraw %}
+
+{% if paramfile != None %}
+ PARAMFILE: {% raw %}${{github.event.inputs.PARAMFILE}}{% endraw %}
+
+{% endif %}
+{% for parameter in parameters %}
+ {{ parameter|upper }}: {% raw %}${{github.event.inputs.{% endraw %}{{ parameter|upper}}{% raw %}}}{% endraw %}
+
+{% endfor %}
+
+jobs:
+    requirements:
+      runs-on: {% raw %}${{github.event.inputs.RUNNER}}{% endraw %}
+
+
+      steps:
+       - uses: actions/checkout@v2
+       - run: git pull origin ${GITHUB_REF##*/}
+       - name: Install kcli
+         run: |
+           curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
+           # kcli create pool -p /var/lib/libvirt/images default
+           # sudo setfacl -m u:$(id -un):rwx /var/lib/libvirt/images
+
+    render-run-script:
+      needs: requirements
+      runs-on: {% raw %}${{github.event.inputs.RUNNER}}{% endraw %}
+  
+      steps:
+       - name: Render script
+         run: kcli -C $CLIENT render -f $SCRIPT {{ paramfileline }} {{ parameterline }} > run.sh
+
+       - name: Display script
+         run: cat run.sh
+
+       - name: Run script
+         run: bash run.sh
+         if: $RUN_SCRIPT == 'true' 

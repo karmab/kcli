@@ -1,0 +1,18 @@
+#!/bin/bash
+
+which crictl >/dev/null 2>&1
+if [ "$?" != "0" ] ; then
+  exit 0
+fi
+
+if [ "$2" = "dhcp4-change" ] || [ "$2" = "dhcp6-change" ] || [ "$2" = "up" ] || [ "$2" = "connectivity-change" ]; then
+  sleep 2
+  IP=8.8.8.8
+  if [ "$IP" != "" ] ; then
+    grep -q $IP /etc/resolv.conf
+    if [ "$?" != "0" ] ; then
+      sed -i "/nameserver.* # kclihack/d" /etc/resolv.conf
+      sed -i "0,/nameserver/s/nameserver/nameserver $IP #kclihack\n&/" /etc/resolv.conf
+    fi
+  fi
+fi

@@ -1,0 +1,8 @@
+apiVersion: kcli.karmalabs.local/v1
+kind: Vm
+metadata:
+  name: centos1
+spec:
+  image: CentOS-Stream-GenericCloud-8-20210603.0.x86_64.qcow2
+  memory: 1024
+  numcpus: 2

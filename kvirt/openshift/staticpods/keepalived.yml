@@ -3,7 +3,7 @@ kind: Pod
 apiVersion: v1
 metadata:
   name: keepalived
-  namespace: openshift-infra
+  namespace: kcli-infra
   creationTimestamp:
   deletionGracePeriodSeconds: 65
   labels:
@@ -17,36 +17,29 @@ spec:
   - name: fix-keepalived-conf
     securityContext:
       privileged: true
-    image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/karmab/curl
+    image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/karmab/curl:latest
     command:
     - "/bin/sh"
     - "-c"
     - |
       #/bin/sh
+      [ ! -f /etc/keepalived/keepalived.conf ] && [ -f /etc/keepalived/keepalived.conf.template ] && cp /etc/keepalived/keepalived.conf.template /etc/keepalived/keepalived.conf
       grep "{{ api_ip }}/" /etc/keepalived/keepalived.conf
       if [ "$?" == "0" ] ; then
         exit 0
       else
         {% if ipv6 %}
-        NIC=$(ip -6 r | grep -v lo | head -1 | sed 's/.*dev \(.*\) \(proto\|metric\).*/\1/' | awk '{print $1}')
-        IP=$(ip -6 -o addr show $NIC | awk '{print $4}' | cut -d "/" -f 1 | head -1)
-        NETMASK=$(ip -o -f inet6 addr show | grep $IP | sed "s@.*$IP/\(.*\) scope.*@\1@")
+        NIC=$(ip -6 r | grep -v lo | head -1 | grep -oP '(?<=dev )[^ ]*')
+        NETMASK=$(ip -o -f inet6 addr show $NIC | head -1 | grep -oP '(?<=inet6 )[^ ]*' | cut -d "/" -f 2)
         {% if name != cluster + '-bootstrap' %}
         NIC=br-ex
         {% endif %}
-        {% elif config_type == 'packet' %}
-        NIC={{ 'eth1' if 'fcos' in image else 'ens3f1' }}
-        NETMASK=32
         {% else %}
-        NIC=$(ip r | grep default | head -1 | sed 's/.*dev \(.*\) \(proto\|metric\).*/\1/')
-        NETMASK=$(ip -o -f inet addr show | awk '/scope global/ {print $4}' | head -1 | cut -d'/' -f2)
+        NIC=$(ip r | grep {{ baremetal_cidr or 'default' }} | head -1 | grep -oP '(?<=dev )[^ ]*')
+        NETMASK=$(ip -o -f inet addr show $NIC | head -1 | grep -oP '(?<=inet )[^ ]*' | cut -d "/" -f 2)
         {% endif %}
         sed -i "s@NIC@$NIC@" /etc/keepalived/keepalived.conf
         if [ "$NETMASK" != "" ] ; then
-          {% if config_type == 'packet' %}
-          NIC_PUBLIC={{ 'eth0' if 'fcos' in image else 'ens3f0' }}
-          sed -i "s@{{ api_ip }}@{{ api_ip }} dev $NIC_PUBLIC@" /etc/keepalived/keepalived.conf
-          {% endif %}
           sed -i "s@{{ api_ip }}@{{ api_ip }}/$NETMASK@" /etc/keepalived/keepalived.conf
           {% if ingress_ip != None %}
           sed -i "s@{{ ingress_ip }}@{{ ingress_ip }}/$NETMASK@" /etc/keepalived/keepalived.conf
@@ -62,7 +55,7 @@ spec:
   - name: keepalived
     securityContext:
       privileged: true
-    image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/openshift/origin-keepalived-ipfailover:latest
+    image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/karmab/origin-keepalived-ipfailover:latest
     command:
     - /usr/sbin/keepalived
     args:

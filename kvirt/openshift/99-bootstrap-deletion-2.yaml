@@ -1,0 +1,22 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kcli-bootstrap-delete-2
+  namespace: kcli-infra
+  labels:
+    app: kcli
+spec:
+  backoffLimit: 12
+#  ttlSecondsAfterFinished: 100
+  template:
+   spec:
+    serviceAccountName: autoapprover
+    restartPolicy: OnFailure
+    initContainers:
+    - name: wait-for-kcli-boostrap-cm
+      image: {{ registry }}/karmab/kubectl:latest
+      command: ['sh', '-c', 'kubectl get cm -n kcli-infra kcli-bootstrap']
+    containers:
+    - name: delete-kcli-cms
+      image: {{ registry }}/karmab/kubectl:latest
+      command: ['sh', '-c', 'kubectl delete cm -n kcli-infra kcli-conf kcli-ssh']

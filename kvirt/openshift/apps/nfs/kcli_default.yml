@@ -1,0 +1,6 @@
+nfs_default_storageclass: true
+nfs_disconnected_registry:
+nfs_ip:
+nfs_share:
+nfs_network: default
+nfs_namespace: nfs

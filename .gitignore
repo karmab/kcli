@@ -16,3 +16,4 @@ prout.yml
 .cache/
 kvirt/static/reports/*
 venv*
+.idea

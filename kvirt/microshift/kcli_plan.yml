@@ -1,0 +1,24 @@
+{% for number in range(0, nodes|int) %}
+{{ cluster }}-{{ number }}:
+ domain: {{ domain }}
+ image: {{ image }}
+ noname: {{ noname }}
+ nets: [{{ network }}] 
+ memory: {{ memory }}
+ numcpus: {{ numcpus }}
+ files:
+ - scripts
+{% if 'manifests'|find_manifests %}
+ - manifests
+{% endif %}
+{% if pull_secret|exists %}
+ - path: /root/auth.json
+   origin: {{ pull_secret }}
+{% endif %}
+{% if kubeconfig_acm != None %}
+ - path: /root/kubeconfig.acm
+   origin: {{ kubeconfig_acm }}
+{% endif %}
+ scripts:
+ - scripts/deploy.sh
+{% endfor %}

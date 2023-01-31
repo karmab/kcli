@@ -9,7 +9,6 @@ from kvirt.krpc import kcli_pb2_grpc
 from kvirt.krpc.kcli_pb2 import empty
 
 
-from distutils.spawn import find_executable
 from kvirt.examples import hostcreate, _list, plancreate, planinfo, productinfo, repocreate, start
 from kvirt.examples import kubegenericcreate, kubeopenshiftcreate
 from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsole, vmexport, niccreate, nicdelete
@@ -20,8 +19,9 @@ from prettytable import PrettyTable
 import argcomplete
 import argparse
 from kvirt.krpc import commoncli as common
-from kvirt.krpc.commoncli import pprint, error, success
+from kvirt.krpc.commoncli import pprint, error, success, container_mode
 from kvirt import nameutils
+from shutil import which
 import os
 import random
 import requests
@@ -41,7 +41,7 @@ class Kconfig():
             result = self.baseconfig.switch_host(kcli_pb2.client(client=client))
             if result.result != 'success':
                 error("Couldn't switch to client %s..." % client)
-                os._exit(1)
+                sys.exit(1)
             self.client = client
             self.extraclients = []
             atexit.register(finalswitch, self.baseconfig, currentclient)
@@ -51,7 +51,7 @@ def finalswitch(baseconfig, client):
     result = baseconfig.switch_host(kcli_pb2.client(client=client))
     if result.result != 'success':
         error("Couldn't switch to client %s..." % client)
-        os._exit(0)
+        sys.exit(0)
 
 
 def valid_fqdn(name):
@@ -105,7 +105,7 @@ def get_version(args):
     update = 'N/A'
     if git_version != 'N/A':
         try:
-            upstream_version = requests.get("https://api.github.com/repos/karmab/kcli/commits/master").json()['sha'][:7]
+            upstream_version = requests.get("https://api.github.com/repos/karmab/kcli/commits/main").json()['sha'][:7]
             update = True if upstream_version != git_version else False
         except:
             pass
@@ -124,7 +124,7 @@ def start_vm(args):
         result = k.start(kcli_pb2.vm(name=name))
         code = common.handle_response(result, name, element='', action='started')
         codes.append(code)
-    os._exit(1 if 1 in codes else 0)
+    sys.exit(1 if 1 in codes else 0)
 
 
 def start_container(args):
@@ -155,7 +155,7 @@ def stop_vm(args):
             result = k.stop(kcli_pb2.vm(name=name))
             code = common.handle_response(result, name, element='', action='stopped')
             codes.append(code)
-    os._exit(1 if 1 in codes else 0)
+    sys.exit(1 if 1 in codes else 0)
 
 
 def stop_container(args):
@@ -185,7 +185,7 @@ def restart_vm(args):
         result = k.restart(kcli_pb2.vm(name=name))
         code = common.handle_response(result, name, element='', action='restarted')
         codes.append(code)
-    os._exit(1 if 1 in codes else 0)
+    sys.exit(1 if 1 in codes else 0)
 
 
 def restart_container(args):
@@ -236,7 +236,7 @@ def delete_vm(args):
         names = args.names
         if not names:
             error("Can't delete vms on multiple hosts without specifying their names")
-            os._exit(1)
+            sys.exit(1)
     else:
         allclients = {config.client: config.k}
         names = [k.get_lastvm(kcli_pb2.client(client=config.client)).name] if not args.names else args.names
@@ -260,7 +260,7 @@ def delete_vm(args):
             if dnsclient is not None and domain is not None:
                 z = Kconfig(client=dnsclient).k
                 z.delete_dns(name, domain)
-    os._exit(1 if 1 in codes else 0)
+    sys.exit(1 if 1 in codes else 0)
 
 
 def delete_container(args):
@@ -282,7 +282,7 @@ def delete_container(args):
         for name in names:
             pprint("Deleting container %s on %s" % (name, cli))
             config.config.delete_container(kcli_pb2.container(container=name))
-    os._exit(1 if 1 in codes else 0)
+    sys.exit(1 if 1 in codes else 0)
 
 
 def download_image(args):
@@ -295,9 +295,9 @@ def download_image(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     result = config.handle_host(pool=pool, image=image, download=True, cmd=cmd, url=url, update_profile=update_profile)
     if result['result'] == 'success':
-        os._exit(0)
+        sys.exit(0)
     else:
-        os._exit(1)
+        sys.exit(1)
 
 
 def delete_image(args):
@@ -332,7 +332,7 @@ def delete_image(args):
                 reason = result.reason
                 error("Could not delete image %s because %s" % (image, reason))
                 codes.append(1)
-    os._exit(1 if 1 in codes else 0)
+    sys.exit(1 if 1 in codes else 0)
 
 
 def create_profile(args):
@@ -355,7 +355,7 @@ def delete_profile(args):
     result = baseconfig.baseconfig.delete_profile(kcli_pb2.profile(name=profile))
     code = common.handle_response(result, profile, element='Profile', action='deleted', client=baseconfig.client)
     return code
-    # os._exit(0) if result['result'] == 'success' else os._exit(1)
+    # sys.exit(0) if result['result'] == 'success' else sys.exit(1)
 
 
 def update_profile(args):
@@ -379,7 +379,7 @@ def info_vm(args):
     names = [k.get_lastvm(kcli_pb2.client(client=config.client)).name] if not args.names else args.names
     if '' in names:
         error("Last vm not found")
-        os._exit(1)
+        sys.exit(1)
     for name in names:
         vm = k.info(kcli_pb2.vm(name=name, debug=args.debug))
         if vm is not None:
@@ -420,9 +420,9 @@ def enable_host(args):
     baseconfig = Kconfig(client=args.client, debug=args.debug).baseconfig
     result = baseconfig.enable_host(host)
     if result['result'] == 'success':
-        os._exit(0)
+        sys.exit(0)
     else:
-        os._exit(1)
+        sys.exit(1)
 
 
 def disable_host(args):
@@ -431,9 +431,9 @@ def disable_host(args):
     baseconfig = Kconfig(client=args.client, debug=args.debug).baseconfig
     result = baseconfig.disable_host(host)
     if result['result'] == 'success':
-        os._exit(0)
+        sys.exit(0)
     else:
-        os._exit(1)
+        sys.exit(1)
 
 
 def delete_host(args):
@@ -449,9 +449,9 @@ def sync_host(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     result = config.handle_host(sync=hosts)
     if result['result'] == 'success':
-        os._exit(0)
+        sys.exit(0)
     else:
-        os._exit(1)
+        sys.exit(1)
 
 
 def list_vm(args):
@@ -908,7 +908,7 @@ def create_vm(args):
         if key in vars(config) and vars(config)[key] is not None and type(overrides[key]) != type(vars(config)[key]):
             key_type = str(type(vars(config)[key]))
             error("The provided parameter %s has a wrong type, it should be %s" % (key, key_type))
-            os._exit(1)
+            sys.exit(1)
     wait = False
     vmfiles = []
     if 'files' in overrides:
@@ -917,7 +917,7 @@ def create_vm(args):
                 origin = _fil.get('origin')
                 if origin is None:
                     error("Missing origin field in files section. Leaving")
-                    os._exit(1)
+                    sys.exit(1)
             else:
                 origin = _fil
             with open(origin) as f:
@@ -1047,19 +1047,19 @@ def create_vmdisk(args):
     interface = args.interface
     if interface not in ['virtio', 'ide', 'scsi']:
         error("Incorrect disk interface. Choose between virtio, scsi or ide...")
-        os._exit(1)
+        sys.exit(1)
     pool = args.pool
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     if size is None:
         error("Missing size. Leaving...")
-        os._exit(1)
+        sys.exit(1)
     if pool is None:
         error("Missing pool. Leaving...")
-        os._exit(1)
+        sys.exit(1)
     if name is None:
         error("Missing name. Leaving...")
-        os._exit(1)
+        sys.exit(1)
     pprint("Adding disk to %s..." % name)
     k.add_disk(name=name, size=size, pool=pool, image=image, interface=interface)
 
@@ -1073,7 +1073,7 @@ def delete_vmdisk(args):
     k = config.k
     if diskname is None:
         error("Missing diskname. Leaving...")
-        os._exit(1)
+        sys.exit(1)
     pprint("Deleting disk %s from vm %s" % (diskname, name))
     k.delete_disk(name=name, diskname=diskname, pool=pool)
     return
@@ -1121,7 +1121,7 @@ def export_vm(args):
             reason = result['reason']
             error("Could not delete vm %s because %s" % (name, reason))
             codes.append(1)
-    os._exit(1 if 1 in codes else 0)
+    sys.exit(1 if 1 in codes else 0)
 
 
 def create_lb(args):
@@ -1155,8 +1155,8 @@ def create_generic_kube(args):
     """Create Generic kube"""
     paramfile = args.paramfile
     force = args.force
-    cluster = args.cluster if args.cluster is not None else 'testk'
-    if os.path.exists("/i_am_a_container"):
+    cluster = args.cluster if args.cluster is not None else 'mykube'
+    if container_mode():
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
         elif os.path.exists("/workdir/kcli_parameters.yml"):
@@ -1176,8 +1176,8 @@ def create_openshift_kube(args):
     """Create Generic kube"""
     paramfile = args.paramfile
     force = args.force
-    cluster = args.cluster if args.cluster is not None else 'testk'
-    if os.path.exists("/i_am_a_container"):
+    cluster = args.cluster if args.cluster is not None else 'myopenshift'
+    if container_mode():
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
         elif os.path.exists("/workdir/kcli_parameters.yml"):
@@ -1197,7 +1197,7 @@ def delete_kube(args):
     """Delete kube"""
     yes = args.yes
     yes_top = args.yes_top
-    cluster = args.cluster if args.cluster is not None else 'testk'
+    cluster = args.cluster if args.cluster is not None else 'mykube'
     if not yes and not yes_top:
         common.confirm("Are you sure?")
     pprint("Deleting kube %s" % cluster)
@@ -1214,8 +1214,8 @@ def scale_generic_kube(args):
     """Scale kube"""
     workers = args.workers
     paramfile = args.paramfile
-    cluster = args.cluster if args.cluster is not None else 'testk'
-    if os.path.exists("/i_am_a_container"):
+    cluster = args.cluster if args.cluster is not None else 'mykube'
+    if container_mode():
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
         elif os.path.exists("/workdir/kcli_parameters.yml"):
@@ -1235,8 +1235,8 @@ def scale_openshift_kube(args):
     """Scale openshift kube"""
     workers = args.workers
     paramfile = args.paramfile
-    cluster = args.cluster if args.cluster is not None else 'testk'
-    if os.path.exists("/i_am_a_container"):
+    cluster = args.cluster if args.cluster is not None else 'mykube'
+    if container_mode():
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
         elif os.path.exists("/workdir/kcli_parameters.yml"):
@@ -1260,7 +1260,7 @@ def create_vmnic(args):
     k = config.k
     if network is None:
         error("Missing network. Leaving...")
-        os._exit(1)
+        sys.exit(1)
     pprint("Adding nic to vm %s..." % name)
     k.add_nic(name=name, network=network)
 
@@ -1286,7 +1286,7 @@ def create_pool(args):
     k = config.k
     if path is None:
         error("Missing path. Leaving...")
-        os._exit(1)
+        sys.exit(1)
     pprint("Creating pool %s..." % pool)
     k.create_pool(kcli_pb2.pool(pool=pool, path=path, type=pooltype, thinpool=thinpool))
 
@@ -1319,7 +1319,7 @@ def create_plan(args):
     wait = args.wait
     if inputfile is None:
         inputfile = 'kcli_plan.yml'
-    if os.path.exists("/i_am_a_container"):
+    if container_mode():
         inputfile = "/workdir/%s" % inputfile
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
@@ -1354,7 +1354,7 @@ def update_plan(args):
     container = args.container
     inputfile = args.inputfile
     paramfile = args.paramfile
-    if os.path.exists("/i_am_a_container"):
+    if container_mode():
         inputfile = "/workdir/%s" % inputfile if inputfile is not None else "/workdir/kcli_plan.yml"
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
@@ -1446,7 +1446,7 @@ def info_plan(args):
     url = args.url
     path = args.path
     inputfile = args.inputfile
-    if os.path.exists("/i_am_a_container"):
+    if container_mode():
         inputfile = "/workdir/%s" % inputfile if inputfile is not None else "/workdir/kcli_plan.yml"
     if url is None:
         inputfile = plan if inputfile is None and plan is not None else inputfile
@@ -1496,7 +1496,7 @@ def download_oc(args):
 def download_openshift_installer(args):
     """Download Openshift Installer"""
     paramfile = args.paramfile
-    if os.path.exists("/i_am_a_container"):
+    if container_mode():
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
         elif os.path.exists("/workdir/kcli_parameters.yml"):
@@ -1518,7 +1518,7 @@ def create_pipeline(args):
     paramfile = args.paramfile
     if inputfile is None:
         inputfile = 'kcli_plan.yml'
-    if os.path.exists("/i_am_a_container"):
+    if container_mode():
         inputfile = "/workdir/%s" % inputfile
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
@@ -1529,7 +1529,7 @@ def create_pipeline(args):
     overrides = common.get_overrides(paramfile=paramfile, param=args.param)
     baseconfig = Kconfig(client=args.client, debug=args.debug).baseconfig
     if not kube and not os.path.exists(inputfile):
-        error("File %s not found" % inputfile)
+        error(f"Input file {inputfile} not found")
         return 0
     renderfile = baseconfig.create_pipeline(inputfile, overrides=overrides, kube=kube)
     print(renderfile)
@@ -1542,7 +1542,7 @@ def render_file(args):
     inputfile = args.inputfile
     paramfile = args.paramfile
     ignore = args.ignore
-    if os.path.exists("/i_am_a_container"):
+    if container_mode():
         inputfile = "/workdir/%s" % inputfile if inputfile is not None else "/workdir/kcli_plan.yml"
         if paramfile is not None:
             paramfile = "/workdir/%s" % paramfile
@@ -1556,7 +1556,7 @@ def render_file(args):
     config_data['config_type'] = config_data.get('config_type', 'kvm')
     overrides.update(config_data)
     if not os.path.exists(inputfile):
-        error("File %s not found" % inputfile)
+        error(f"Input file {inputfile} not found")
         return 0
     renderfile = baseconfig.process_inputfile(plan, inputfile, overrides=overrides, onfly=False, ignore=ignore)
     print(renderfile)
@@ -1586,10 +1586,10 @@ def create_repo(args):
     baseconfig = Kconfig(client=args.client, debug=args.debug).baseconfig
     if repo is None:
         error("Missing repo. Leaving...")
-        os._exit(1)
+        sys.exit(1)
     if url is None:
         error("Missing url. Leaving...")
-        os._exit(1)
+        sys.exit(1)
     pprint("Adding repo %s..." % repo)
     baseconfig.create_repo(repo, url)
     return 0
@@ -1601,7 +1601,7 @@ def delete_repo(args):
     baseconfig = Kconfig(client=args.client, debug=args.debug).baseconfig
     if repo is None:
         error("Missing repo. Leaving...")
-        os._exit(1)
+        sys.exit(1)
     pprint("Deleting repo %s..." % repo)
     baseconfig.delete_repo(kcli_pb2.repo(repo=repo))
     return
@@ -1649,8 +1649,8 @@ def create_product(args):
 
 def ssh_vm(args):
     """Ssh into vm"""
-    l = args.L
-    r = args.R
+    local = args.L
+    remote = args.R
     D = args.D
     X = args.X
     Y = args.Y
@@ -1667,11 +1667,11 @@ def ssh_vm(args):
         pprint("Using %s from %s as vm" % (name, config.client))
     else:
         name = args.name[0]
-    sshcommand = k.ssh(kcli_pb2.vm(name=name, user=user, l=l, r=r, X=X, Y=Y, D=D, cmd=cmd)).sshcmd
+    sshcommand = k.ssh(kcli_pb2.vm(name=name, user=user, l=local, r=remote, X=X, Y=Y, D=D, cmd=cmd)).sshcmd
     if sshcommand != '':
         if args.debug:
             print(sshcommand)
-        if find_executable('ssh') is not None:
+        if which('ssh') is not None:
             os.system(sshcommand)
         else:
             print(sshcommand)
@@ -1683,7 +1683,7 @@ def scp_vm(args):
     """Scp into vm"""
     recursive = args.recursive
     source = args.source[0]
-    source = source if not os.path.exists("/i_am_a_container") else "/workdir/%s" % source
+    source = "/workdir/%s" % source if container_mode() else source
     destination = args.destination[0]
     user = args.user
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -1707,7 +1707,7 @@ def scp_vm(args):
                                      recursive=recursive)
     scpcommand = k.scp(scpdetails).sshcmd
     if scpcommand != '':
-        if find_executable('scp') is not None:
+        if which('scp') is not None:
             os.system(scpcommand)
         else:
             print(scpcommand)
@@ -1727,7 +1727,7 @@ def create_network(args):
     k = config.k
     if name is None:
         error("Missing Network")
-        os._exit(1)
+        sys.exit(1)
     if isolated:
         nat = False
     else:
@@ -1748,7 +1748,7 @@ def delete_network(args):
     k = config.k
     if name is None:
         error("Missing Network")
-        os._exit(1)
+        sys.exit(1)
     if not yes and not yes_top:
         common.confirm("Are you sure?")
     result = k.delete_network(kcli_pb2.network(network=name))
@@ -1819,6 +1819,21 @@ def create_host_aws(args):
     data['access_key_secret'] = args.access_key_secret
     data['region'] = args.region
     data['keypair'] = args.keypair
+    common.create_host(data)
+    baseconfig = Kconfig(client=args.client, debug=args.debug, quiet=True).baseconfig
+    if len(baseconfig.clients) == 1:
+        baseconfig.set_defaults()
+
+
+def create_host_ibm(args):
+    """"Create IBM Cloud host"""
+    data = {}
+    data['name'] = args.name
+    data['_type'] = 'ibm'
+    data['iam_api_key'] = args.iam_api_key
+    data['region'] = args.region
+    data['vpc'] = args.vpc
+    data['zone'] = args.zone
     common.create_host(data)
     baseconfig = Kconfig(client=args.client, debug=args.debug, quiet=True).baseconfig
     if len(baseconfig.clients) == 1:
@@ -1907,7 +1922,7 @@ def create_container(args):
     image = next((e for e in [profile.get('image'), profile.get('image')] if e is not None), None)
     if image is None:
         error("Missing image in profile %s. Leaving..." % profile)
-        os._exit(1)
+        sys.exit(1)
     cmd = profile.get('cmd')
     ports = profile.get('ports')
     environment = profile.get('environment')
@@ -1985,9 +2000,9 @@ def switch_host(args):
     baseconfig = Kconfig(client=args.client, debug=args.debug).baseconfig
     result = baseconfig.switch_host(kcli_pb2.client(client=host))
     if result.result == 'success':
-        os._exit(0)
+        sys.exit(0)
     else:
-        os._exit(1)
+        sys.exit(1)
 
 
 def list_keyword(args):
@@ -2272,6 +2287,13 @@ def cli():
     awshostcreate_parser.add_argument('-r', '--region', help='Region', metavar='REGION', required=True)
     awshostcreate_parser.add_argument('name', metavar='NAME', nargs='?')
     awshostcreate_parser.set_defaults(func=create_host_aws)
+
+    ibmhostcreate_desc = 'Create IBM Cloud Host'
+    ibmhostcreate_parser = hostcreate_subparsers.add_parser('ibm', help=ibmhostcreate_desc,
+                                                            description=ibmhostcreate_desc)
+    ibmhostcreate_parser.add_argument('--iam_api_key', help='IAM API Key', metavar='IAM_API_KEY', required=True)
+    ibmhostcreate_parser.add_argument('name', metavar='NAME')
+    ibmhostcreate_parser.set_defaults(func=create_host_ibm)
 
     gcphostcreate_desc = 'Create Gcp Host'
     gcphostcreate_parser = hostcreate_subparsers.add_parser('gcp', help=gcphostcreate_desc,
@@ -2987,7 +3009,7 @@ def cli():
     argcomplete.autocomplete(parser)
     if len(sys.argv) == 1 or (len(sys.argv) == 3 and sys.argv[1] == '-C'):
         parser.print_help()
-        os._exit(0)
+        sys.exit(0)
     args = parser.parse_args()
     if not hasattr(args, 'func'):
         for attr in dir(args):
@@ -3001,8 +3023,8 @@ def cli():
                     subsubcommand = split[2]
                     subparser = get_subparser(parser, subcommand)
                     get_subparser_print_help(subparser, subsubcommand)
-                os._exit(0)
-        os._exit(0)
+                sys.exit(0)
+        sys.exit(0)
     elif args.func.__name__ == 'vmcreate' and args.client is not None and ',' in args.client:
         args.client = random.choice(args.client.split(','))
         pprint("Selecting %s for creation" % args.client)
@@ -3012,7 +3034,7 @@ def cli():
         grpc.channel_ready_future(channel).result(timeout=2)
     except grpc.FutureTimeoutError:
         error("RPC remote host %s not connected. Leaving" % args.grpcserver)
-        os._exit(1)
+        sys.exit(1)
     args.func(args)
 
 

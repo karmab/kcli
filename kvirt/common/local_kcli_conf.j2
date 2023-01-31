@@ -1,0 +1,5 @@
+default:
+ client: {{ client }}
+{{ client }}:
+ host: {{ network|local_ip(true) }}
+ user: {{ user }}

@@ -85,14 +85,14 @@ class Kpacket(object):
                cpumodel='Westmere', cpuflags=[], cpupinning=[], numcpus=2, memory=512,
                guestid='guestrhel764', pool='default', image=None,
                disks=[{'size': 10}], disksize=10, diskthin=True,
-               diskinterface='virtio', nets=['default'], iso=None, vnc=False,
+               diskinterface='virtio', nets=['default'], iso=None, vnc=True,
                cloudinit=True, reserveip=False, reservedns=False,
-               reservehost=False, start=True, keys=None, cmds=[], ips=None,
+               reservehost=False, start=True, keys=[], cmds=[], ips=None,
                netmasks=None, gateway=None, nested=True, dns=None, domain=None,
                tunnel=False, files=[], enableroot=True, alias=[], overrides={},
                tags=[], storemetadata=False, sharedfolders=[], kernel=None, initrd=None,
                cmdline=None, cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False,
-               placement=[], autostart=False, rng=False, metadata={}, securitygroups=[]):
+               placement=[], autostart=False, rng=False, metadata={}, securitygroups=[], vmuser=None):
         """
 
         :param name:
@@ -116,7 +116,6 @@ class Kpacket(object):
         :param iso:
         :param vnc:
         :param cloudinit:
-        :param reserveip:
         :param reservedns:
         :param reservehost:
         :param start:
@@ -175,7 +174,7 @@ class Kpacket(object):
                     vlan = True
                     networkid = networks[0].id
             else:
-                    networkid = None
+                networkid = None
             networkids.append(networkid)
         if image is not None and not common.needs_ignition(image):
             if '_' not in image and image in ['rhel8', 'rhel7', 'centos7', 'centos8']:
@@ -214,9 +213,8 @@ class Kpacket(object):
             ignitiondir = '/tmp'
             ipv6 = []
             ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
-                                           domain=domain, reserveip=reserveip, files=files,
-                                           enableroot=enableroot, overrides=overrides, version=version, plan=plan,
-                                           ipv6=ipv6, image=image)
+                                           domain=domain, files=files, enableroot=enableroot, overrides=overrides,
+                                           version=version, plan=plan, ipv6=ipv6, image=image, vmuser=vmuser)
             image = 'custom_ipxe'
             with open('%s/%s.ign' % (ignitiondir, name), 'w') as ignitionfile:
                 ignitionfile.write(ignitiondata)
@@ -253,12 +251,12 @@ class Kpacket(object):
         features = ['tpm'] if tpm else []
         if cloudinit and userdata is None:
             userdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
-                                        domain=domain, reserveip=reserveip, files=files, enableroot=enableroot,
-                                        overrides=overrides, fqdn=True, storemetadata=storemetadata)[0]
+                                        domain=domain, files=files, enableroot=enableroot, overrides=overrides,
+                                        fqdn=True, storemetadata=storemetadata, vmuser=vmuser)[0]
         validfacilities = [os.path.basename(e['href']) for e in validfacilities]
         validfacilities = [f.code for f in self.conn.list_facilities() if f.id in validfacilities]
         if not validfacilities:
-                return {'result': 'failure', 'reason': 'no valid facility found for flavor %s' % flavor}
+            return {'result': 'failure', 'reason': 'no valid facility found for flavor %s' % flavor}
         facility = overrides.get('facility')
         if facility is not None:
             matchingfacilities = [f for f in self.conn.list_facilities() if f.slug == facility]
@@ -324,7 +322,7 @@ class Kpacket(object):
         else:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
 
-    def stop(self, name):
+    def stop(self, name, soft=False):
         """
 
         :param name:
@@ -338,18 +336,21 @@ class Kpacket(object):
         else:
             return {'result': 'failure', 'reason': "VM %s not found" % name}
 
-    def snapshot(self, name, base, revert=False, delete=False, listing=False):
-        """
-
-        :param name:
-        :param base:
-        :param revert:
-        :param delete:
-        :param listing:
-        :return:
-        """
+    def create_snapshot(self, name, base):
         print("not implemented")
-        return
+        return {'result': 'success'}
+
+    def delete_snapshot(self, name, base):
+        print("not implemented")
+        return {'result': 'success'}
+
+    def list_snapshots(self, base):
+        print("not implemented")
+        return []
+
+    def revert_snapshot(self, name, base):
+        print("not implemented")
+        return {'result': 'success'}
 
     def restart(self, name):
         """
@@ -404,7 +405,10 @@ class Kpacket(object):
         """
         vms = []
         for vm in self.conn.list_devices(self.project):
-            vms.append(self.info(vm.hostname, vm=vm))
+            try:
+                vms.append(self.info(vm.hostname, vm=vm))
+            except:
+                continue
         return sorted(vms, key=lambda x: x['name'])
 
     def console(self, name, tunnel=False, web=False):
@@ -935,6 +939,10 @@ class Kpacket(object):
                                  'mode': vlan.vxlan}
         return networks
 
+    def info_network(self, name):
+        networkinfo = common.info_network(self, name)
+        return networkinfo
+
     def list_subnets(self):
         """
 
@@ -978,7 +986,7 @@ class Kpacket(object):
         """
         return 'default'
 
-    def flavors(self):
+    def list_flavors(self):
         """
 
         :return:
@@ -1009,3 +1017,54 @@ class Kpacket(object):
 kernel %s %s coreos.inst.image_url=%s coreos.inst.ignition_url=%s
 initrd %s
 boot || reboot""" % (kernel, ipxeparameters, metal, ignition_url, initrd)
+
+    def create_bucket(self, bucket, public=False):
+        print("not implemented")
+        return
+
+    def delete_bucket(self, bucket):
+        print("not implemented")
+        return
+
+    def delete_from_bucket(self, bucket, path):
+        print("not implemented")
+        return
+
+    def download_from_bucket(self, bucket, path):
+        print("not implemented")
+        return
+
+    def upload_to_bucket(self, bucket, path, overrides={}, temp_url=False, public=False):
+        print("not implemented")
+        return
+
+    def list_buckets(self):
+        print("not implemented")
+        return []
+
+    def list_bucketfiles(self, bucket):
+        print("not implemented")
+        return []
+
+    def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False):
+        print("not implemented")
+        return
+
+    def update_nic(self, name, index, network):
+        print("not implemented")
+
+    def update_network(self, name, dhcp=None, nat=None, domain=None, plan=None, overrides={}):
+        print("not implemented")
+        return {'result': 'success'}
+
+    def list_security_groups(self, network=None):
+        print("not implemented")
+        return []
+
+    def create_security_group(self, name, overrides={}):
+        print("not implemented")
+        return {'result': 'success'}
+
+    def delete_security_group(self, name):
+        print("not implemented")
+        return {'result': 'success'}

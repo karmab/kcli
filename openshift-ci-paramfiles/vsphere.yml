@@ -1,0 +1,17 @@
+client: sphere_karim
+cluster: ci-vsphere
+domain: karmalabs.corp
+sslip: true
+ctlplanes: 3
+workers: 0
+numcpus: 16
+api_ip: 10.19.135.229
+ctlplane_memory: 65536
+bootstrap_memory: 8192
+disk_size: 40
+extra_disks:
+- 100
+async: true
+notify: true
+apps:
+- kubevirt-hyperconverged

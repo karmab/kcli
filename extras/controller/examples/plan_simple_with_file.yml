@@ -1,0 +1,26 @@
+apiVersion: kcli.karmalabs.local/v1
+kind: Plan
+metadata:
+  name: proutplan
+spec:
+  plan: |
+    vm3:
+      memory: 512
+      numcpus: 2
+      image: rhcos-42.80.20190925.2-qemu.qcow2
+      nets:
+       - default
+      files:
+        - path: /root/frout.txt
+          origin: frout.txt
+    vm4:
+      memory: 1024
+      numcpus: 4
+      nets:
+       - default
+      disks:
+       - 20
+      pool: default
+      image: cirros-0.4.0-x86_64-disk.img
+      cmds:
+       - echo this stuff works > /tmp/result.txt

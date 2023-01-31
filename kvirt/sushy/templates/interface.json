@@ -1,0 +1,13 @@
+{
+    "@odata.type": "#EthernetInterface.v1_0_2.EthernetInterface",
+    "Id": "{{ mac }}",
+    "Name": "VNIC {{ mac }}",
+    "Status": {
+        "State": "Enabled",
+        "Health": "OK"
+    },
+    "PermanentMACAddress": "{{ mac }}",
+    "MACAddress": "{{ mac }}",
+    "@odata.context": "/redfish/v1/$metadata#EthernetInterface.EthernetInterface",
+    "@odata.id": "/redfish/v1/Systems/{{ client }}/{{ name }}/EthernetInterfaces/{{ mac }}"
+}

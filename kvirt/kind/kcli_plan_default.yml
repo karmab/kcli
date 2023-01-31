@@ -1,0 +1,25 @@
+info: |
+  Deploy kubernetes using kind on a single vm
+  Several ctlplanes and workers can be specified
+  You can put your cni binaries in a directory called cni_bin to inject them
+image : centos8stream
+numcpus: 4
+memory: 8192
+kind_version:
+cluster: mykind
+ctlplanes: 1
+workers: 0
+network: default
+disk_size: 30
+extra_disks: []
+extra_networks: []
+notifycmd: "kubectl get pod -A"
+notify: false
+KUBECONFIG: /root/kubeconfig
+feature_gates: []
+ipv6: false
+dualstack: false
+disable_default_cni: false
+external_api_address: true
+external_ingress: true
+keys: []

@@ -1,0 +1,49 @@
+name: OPENSHIFT-CI-LIBVIRT
+on:
+  workflow_dispatch:
+    inputs:
+      PLAN:
+        description: 'Plan Name'
+        required: true
+        default: ci-libvirt
+      PARAMFILE:
+        description: 'paramfile'
+        required: false
+        default: openshift-ci-paramfiles/libvirt.yml
+      EXTRAPARAMS:
+        description: 'Extra params'
+        default: ''
+      PULLSECRET:
+        description: 'Pull Secret'
+        required: false
+        default: /root/openshift_pull.json
+      VERSION:
+        description: 'version'
+        required: false
+        default: stable
+      TAG:
+        description: 'tag'
+        required: false
+        default: "4.12"
+
+env:
+ HOME: /root
+ PYTHONUNBUFFERED: true
+ PLAN: ${{github.event.inputs.PLAN}}
+ INPUTFILE: ${{github.event.inputs.INPUTFILE}}
+ PARAMFILE: ${{github.event.inputs.PARAMFILE}}
+ EXTRAPARAMS: ${{github.event.inputs.EXTRAPARAMS}}
+ PULLSECRET: ${{github.event.inputs.PULLSECRET}}
+ VERSION: ${{github.event.inputs.VERSION}}
+ TAG: ${{github.event.inputs.TAG}}
+
+jobs:
+    deploy-openshift:
+      runs-on: libvirt
+      steps:
+       - uses: actions/checkout@v2
+       - run: git pull origin ${GITHUB_REF##*/}
+       - name: Install kcli
+         run: curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
+       - name: Deploy Openshift on libvirt
+         run: kcli create cluster openshift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET -P version=$VERSION -P tag="$TAG" $EXTRAPARAMS $PLAN --force

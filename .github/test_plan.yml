@@ -1,0 +1,30 @@
+parameters:
+ pool: default
+ image: debian11
+ network: mynetwork
+ profile: myprofile
+
+{{ image }}:
+ type: image
+ pool: {{ pool }}
+
+{{ network }}:
+ type: network
+ cidr: 192.168.125.0/24
+ dhcp: true 
+ nat: false
+
+{{ profile }}:
+ type: profile
+ image: {{ image }}
+ memory: 2048
+ numcpus: 2
+ disks:
+ - 11
+ - size: 10
+ nets:
+ - {{ network }}
+
+myvm:
+ profile: {{ profile }}
+ pool: {{ pool }}

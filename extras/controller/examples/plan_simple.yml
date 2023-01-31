@@ -1,0 +1,23 @@
+apiVersion: kcli.karmalabs.local/v1
+kind: Plan
+metadata:
+  name: simpleplan2
+spec:
+  plan: |
+    vm11:
+      memory: 512
+      numcpus: 2
+      nets:
+       - default
+      image: cirros
+    vm22:
+      memory: 1024
+      numcpus: 4
+      nets:
+       - default
+      disks:
+       - 20
+      pool: default
+      image: cirros
+      cmds:
+       - echo this stuff works > /tmp/result.txt

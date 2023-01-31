@@ -1,22 +1,26 @@
 # coding=utf-8
 from setuptools import setup, find_packages
+from setuptools.extern.packaging import version
+version.Version = version.LegacyVersion
 
 import os
-INSTALL = ['argcomplete', 'netaddr', 'PyYAML', 'prettytable', 'jinja2', 'flask', 'libvirt-python>=2.0.0', 'requests']
+INSTALL = ['argcomplete', 'PyYAML', 'prettytable', 'jinja2', 'libvirt-python>=2.0.0', 'requests']
 AWS = ['boto3']
-GCP = ['google-api-python-client', 'google-auth-httplib2', 'google-cloud-dns']
+GCP = ['google-api-python-client', 'google-auth-httplib2', 'google-cloud-dns', 'google-cloud-storage']
 KUBEVIRT = ['kubernetes']
 OPENSTACK = ['python-cinderclient', 'python-neutronclient', 'python-glanceclient', 'python-keystoneclient',
-             'python-novaclient']
+             'python-novaclient', 'python-swiftclient']
 OVIRT = ['ovirt-engine-sdk-python']
 PACKET = ['packet-python']
 VSPHERE = ['requests', 'pyvmomi']
+IBMCLOUD = ['google-crc32c==1.1.2', 'ibm_vpc', 'ibm-cos-sdk', 'ibm-platform-services', 'ibm-cloud-networking-services']
+#           'cos-aspera']
 GRPC = ['grpcio', 'grpcio-reflection']
 EXTRAS = ['pyghmi']
 ALL = ['docker>=2.0'] + ['podman'] + ['websockify'] + GRPC + EXTRAS + AWS + GCP + KUBEVIRT + OPENSTACK + OVIRT\
-    + PACKET + VSPHERE
+    + PACKET + VSPHERE + IBMCLOUD
 
-description = 'Provisioner/Manager for Libvirt/Ovirt/Gcp/Aws/Openstack/Kubevirt and containers'
+description = 'Provisioner/Manager for Libvirt/Ovirt/Gcp/Aws/Openstack/Kubevirt/IBM Cloud and containers'
 long_description = description
 if os.path.exists('README.rst'):
     long_description = open('README.rst').read()
@@ -42,6 +46,7 @@ setup(
         'openstack': OPENSTACK,
         'ovirt': OVIRT,
         'vsphere': VSPHERE,
+        'ibm': IBMCLOUD,
         'grpc': GRPC,
     },
     entry_points='''
@@ -49,8 +54,9 @@ setup(
         kcli=kvirt.cli:cli
         kweb=kvirt.web.main:run
         klist.py=kvirt.klist:main
-        kbmc=kvirt.kbmc:main
         krpc=kvirt.krpc.server:main
         kclirpc=kvirt.krpc.cli:cli
+        ksushy=kvirt.sushy.main:run
+        ignitionmerger=kvirt.ignitionmerger:cli
     ''',
 )

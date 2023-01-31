@@ -1,0 +1,134 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+ name: kcli-plan-{{ plan }}
+spec:
+ params:
+ - name: plan
+   description: plan
+   type: string
+   default: "{{ plan }}"
+ - name: inputfile
+   description: inputfile
+   type: string
+   default: "{{ gitbase + inputfile }}"
+ - name: url
+   description: url
+   type: string
+   default: "{{ giturl }}"
+ - name: commit
+   description: commit
+   type: string
+   default: "main"
+{% if paramfile != None %}
+ - name: paramfile
+   type: string
+   default: "{{ paramfile }}"
+{% endif %}
+{% for param in parameters %}
+ - name: {{ param }}
+   description: {{ param }}
+   type: string
+   default: "{{ parameters[param] }}"
+{% endfor %}
+ steps:
+  - name: git-clone
+    image: "gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/git-init:v0.21.0"
+    env:
+    - name: URL
+      value: $(params.url)
+    - name: COMMIT
+      value: $(params.commit)
+    script: |
+     #!/usr/bin/env sh
+     cd /source
+     git clone $URL .
+     git checkout $COMMIT
+    volumeMounts:
+    - mountPath: /source
+      name: git-source
+  - name: deploy
+    image: "quay.io/karmab/kcli:latest"
+    env:
+    - name: PLAN
+      value: $(params.plan)
+    - name: INPUTFILE
+      value: $(params.inputfile)
+{% if paramfile != None %}
+    - name: PARAMFILE
+      value: $(params.paramfile)
+{% endif %}
+{% for param in parameters %}
+    - name: {{ param|upper }}
+      value: $(params.{{ param }})
+{% endfor %}
+    - name: PYTHONUNBUFFERED
+      value: "true"
+    script: |
+     #!/usr/bin/env bash
+     cd /source
+     echo kcli create plan --force $INPUTFILE {{ paramfileline }} {{ parameterline }} $PLAN
+     kcli create plan --force -f $INPUTFILE {{ paramfileline }} {{ parameterline }} $PLAN
+    volumeMounts:
+    - mountPath: /home/tekton/.kcli
+      name: kcli-config
+    - mountPath: /source
+      name: git-source
+ volumes:
+ - configMap:
+     defaultMode: 0700
+     name: kcli-config
+   name: kcli-config
+ - name: git-source
+   emptyDir: {}
+---
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: kcli-plan-{{ plan }}
+spec:
+  description: deploy plan {{ plan }}
+  params:
+  - name: plan
+    type: string
+    default: "{{ plan }}"
+  - name: inputfile
+    type: string
+    default: "{{ gitbase + inputfile }}"
+{% if paramfile != None %}
+  - name: paramfile
+    type: string
+    default: "{{ paramfile }}"
+{% endif %}
+  - name: commit
+    type: string
+    default: "main"
+{% if parameters %}
+{% for param in parameters %}
+  - name: {{ param }}
+    description: {{ param }}
+    type: string
+    default: "{{ parameters[param] }}"
+{% endfor %}
+{% endif %}
+  tasks:
+  - name: kcli-plan-{{ plan }}
+    taskRef:
+      name: kcli-plan-{{ plan }}
+    params:
+    - name: plan
+      value: $(params.plan)
+    - name: inputfile
+      value: $(params.inputfile)
+{% if paramfile != None %}
+    - name: paramfile
+      value: $(params.paramfile)
+{% endif %}
+    - name: url
+      value: {{ giturl }}
+    - name: commit
+      value: $(params.commit)
+{% for param in parameters %}
+    - name: {{ param }}
+      value: $(params.{{ param }})
+{% endfor %}

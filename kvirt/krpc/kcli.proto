@@ -97,7 +97,7 @@ message vminfo{
     string kubetype = 17 ; 
     string instanceid = 18 ;
     string host = 19 ; 
-    string privateip = 20 ; 
+    string private_ip = 20 ;
     string az = 21 ; 
     string flavor = 22 ; 
     string tags = 23 ; 
@@ -111,6 +111,7 @@ message vminfo{
     string domain = 31 ;
     string iso = 32 ;
     string loadbalancerip = 33 ;
+    repeated string ips = 34 ;
 }
 
 message vmlist{

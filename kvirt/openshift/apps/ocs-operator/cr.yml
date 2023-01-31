@@ -4,6 +4,16 @@ metadata:
   name: ocs-storagecluster
   namespace: {{ namespace }}
 spec:
+{% if ocs_public_network != None %}
+  network:
+    ipFamily: IPv4
+    provider: multus
+    selectors:
+      public: openshift-storage/{{ ocs_public_network }}
+{% if ocs_cluster_network != None %}
+      cluster: openshift-storage/{{ ocs_cluster_network }}
+{% endif %}
+{% endif %}
   manageNodes: false
   monDataDirHostPath: /var/lib/rook
   storageDeviceSets:
@@ -18,7 +28,5 @@ spec:
         storageClassName: {{ ocs_storageclass }}
         volumeMode: Block
     name: ocs-deviceset
-    placement: {}
     portable: {{ ocs_portable }}
-    replica: {{ ocs_replicas|default(3) }}
-    resources: {}
+    replica: {{ ocs_replicas or 3 }}

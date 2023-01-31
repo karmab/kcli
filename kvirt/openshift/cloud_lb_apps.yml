@@ -1,0 +1,12 @@
+apps.{{ cluster }}:
+ type: loadbalancer
+ domain: {{ domain }}
+ checkport: 80
+ alias: ['*']
+ ports:
+ - 80
+ - 443
+ vms:
+{% for num in range(0, members) %}
+ - {{ cluster }}-{{ role }}-{{ num }}
+{% endfor %}

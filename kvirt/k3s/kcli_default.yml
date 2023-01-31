@@ -1,48 +1,43 @@
 info: |
-    Deploys the k3s kubernetes distrobution using an arbitrary number of masters and workers.
+    Deploys the k3s kubernetes distrobution using an arbitrary number of ctlplanes and workers.
     Specific components can be disabled by using the array disabled_components.
-    install_k3s_channel defaults to stable, although latest or testing can also be selected.
-    With install_k3s_version you can specify a specific version relative to the install/release
-    k3s channel. Defaults to latest.
-masters: 1
+    Any install_k3s_* argument can be specified. default channel is stable
+    default sdn is flannel, although minimal support for cilium is provided if choosing this sdn
+    sdn can be unset to force no installation of any CNI
+ctlplanes: 1
 workers: 0
 sdn: flannel
 api_ip:
-install_k3s_channel: stable
-install_k3s_version: latest
-pool: default
+pool:
 image: ubuntu2004
 network: default
-cluster: testk
-domain: karmalabs.com
+cluster: myk3s
+domain: karmalabs.corp
 token: supersecret
 numcpus: 2
 worker_numcpus:
-master_numcpus:
+ctlplane_numcpus:
 memory: 1024
-master_memory:
+ctlplane_memory:
 worker_memory:
-master_tpm: false
-master_rng: false
 disk_size: 10
-worker_tpm: false
-worker_rng: false
 notifycmd: "kubectl get pod -A"
 notify: false
-numa:
-numa_master:
-numa_worker:
-numamode:
-numamode_master:
-numamode_worker:
-cpupinning:
-cpupinning_master:
-cpupinning_worker:
 kubevirt_disk_size:
 extra_disks: []
-extra_master_disks: []
+extra_ctlplane_disks: []
 extra_worker_disks: []
 extra_networks: []
-extra_master_networks: []
+extra_ctlplane_networks: []
 extra_worker_networks: []
-disabled_components: []
+extra_args: []
+extra_ctlplane_args: []
+extra_worker_args: []
+extra_worker_disks: []
+threaded: false
+ctlplanes_threaded: false
+workers_threaded: false
+keys: []
+tempkey: false
+auth_pass:
+virtual_router_id:

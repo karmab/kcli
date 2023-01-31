@@ -1,0 +1,52 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kcli-notifications
+  namespace: kcli-infra
+  labels:
+    app: kcli
+spec:
+  backoffLimit: 12
+#  ttlSecondsAfterFinished: 100
+  template:
+   spec:
+    serviceAccountName: autoapprover
+    restartPolicy: OnFailure
+    initContainers:
+    - name: wait-for-cluster-version
+      image: {{ registry }}/karmab/kubectl:latest
+      command:
+      - "/bin/sh"
+      - "-c"
+      - |
+        #!/bin/sh
+        CLUSTER_VERSION=$(kubectl get clusterversion version -o jsonpath='{.status.history[0].state}')
+        [ "$CLUSTER_VERSION" == "Completed" ] || exit 1
+        kubectl get clusterversion > /shared/results.txt
+        kubectl get nodes >> /shared/results.txt
+      volumeMounts:
+      - mountPath: /shared
+        name: shared
+    containers:
+    - name: launch-notify-cmds
+      image: {{ registry }}/karmab/curl:latest
+      command:
+      - "/bin/sh"
+      - "-c"
+      - |
+        #!/bin/sh
+{% if mailcontent != None %}
+{% set mailcontent = mailcontent.split('\n') %}
+{% for line in mailcontent %}
+        echo "{{ line }}" >> /tmp/mail.txt
+{% endfor %}
+{% endif %}
+{% for cmd in cmds %}
+        {{ cmd }}
+{% endfor %}
+      volumeMounts:
+      - mountPath: /shared
+        name: shared
+    volumes:
+    - emptyDir: {}
+      name: shared

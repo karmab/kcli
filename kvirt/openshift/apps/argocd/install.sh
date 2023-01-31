@@ -1,4 +1,4 @@
-export ARGOCD_VERSION={{ 'argoproj/argo-cd' | githubversion(argocd_version| default('latest')) }}
+export ARGOCD_VERSION={{ 'argoproj/argo-cd' | github_version(argocd_version| default('latest')) }}
 oc create namespace argocd
 oc adm policy add-scc-to-user anyuid system:serviceaccount:argocd:default
 oc -n argocd apply -f https://raw.githubusercontent.com/argoproj/argo-cd/$ARGOCD_VERSION/manifests/install.yaml

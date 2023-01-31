@@ -1,13 +1,8 @@
-{% for num in range(0, workers) %}
+{% for num in range(0, workers|int) %}
 {% if worker_network != None %}
 {% set default_network = worker_network %}
 {% else %}
 {% set default_network = network %}
-{% endif %}
-{% if worker_macs and worker_macs|length >= workers %}
-{% set net0 = {"name": default_network, "mac": worker_macs[num]} %}
-{% else %}
-{% set net0 = default_network %}
 {% endif %}
 {% if extra_worker_networks %}
 {% set extra_networks = extra_worker_networks %}
@@ -15,39 +10,31 @@
 {% if extra_worker_disks %}
 {% set extra_disks = extra_worker_disks %}
 {% endif %}
-{% if numa_worker != None %}
-{% set numa = numa_worker %}
-{% endif %}
-{% if numamode_worker != None %}
-{% set numamode = numamode_worker %}
-{% endif %}
-{% if cpupinning_worker != None %}
-{% set cpupinning = cpupinning_worker %}
-{% endif %}
 {% if flavor_worker != None %}
 {% set flavor = flavor_worker %}
-{% endif %}
-{% if config_type == 'packet' %}
-{% set extra_networks = [{"name": network, "ip": "192.168.122.20" + num|string, "mask": "255.255.255.0", "gateway": "192.168.122.1"}] %}
 {% endif %}
 
 {{ cluster }}-worker-{{ num }}:
  domain: {{ domain }} 
  image: {{ image }}
- pool: {{ pool }}
+ pool: {{ pool or config_pool }}
  keys: {{ keys }}
  flavor: {{ flavor }}
  enableroot: false 
+ notify: false
  numcpus: {{ worker_numcpus | default(numcpus, numcpus) }}
  memory: {{ worker_memory | default(memory, memory) }}
- rng: {{ worker_rng }}
- tpm: {{ worker_tpm }}
  autostart: {{ autostart }}
- nets: {{ [net0] + extra_networks }}
- zerotier_nets: {{ zerotier_nets }}
- zerotier_kubelet: {{ zerotier_kubelet }}
+{% if kvm_forcestack %}
+ cmdline: {{ 'ip=dhcp6' if ':' in api_ip else 'ip=dhcp' }}
+{% endif %}
+{% if kubevirt_api_service %}
+ reservedns: true
+{% endif %}
+ nets: {{ [network] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
  files:
+{% if coredns %}
   - path: /etc/NetworkManager/dispatcher.d/99-forcedns
     origin: 99-forcedns
     mode: 755
@@ -55,22 +42,14 @@
     origin: staticpods/coredns.yml
   - path: /etc/kubernetes/Corefile
     origin: Corefile
+{% endif %}
 {% if mdns %}
   - path: /etc/kubernetes/manifests/mdns.yml
     origin: staticpods/mdns.yml
   - path: /etc/kubernetes/config.hcl.templ
     origin: config.hcl.templ
 {% endif %}
-{% if numa != None %}
- numa: {{ numa }}
-{% endif %}
-{% if numamode != None %}
- numamode: {{ numamode }}
-{% endif %}
-{% if cpupinning != None %}
- cpupinning: {{ cpupinning }}
-{% endif %}
-{% if pcidevices != None and num == 0 %}
- pcidevices: {{ pcidevices }}
-{% endif %}
 {% endfor %}
+{% if files|default([]) %}
+ extra_files: {{ files }}
+{% endif %}

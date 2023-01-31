@@ -1,9 +1,7 @@
 # kcli repository
 
-[![](https://dockerbuildbadges.quelltext.eu/status.svg?organization=karmab&repository=kcli)](https://hub.docker.com/r/karmab/kcli/builds/)
-[![Build Status](https://travis-ci.org/karmab/kcli.svg?branch=master)](https://travis-ci.org/karmab/kcli)
+[![ci](https://github.com/karmab/kcli/actions/workflows/ci.yml/badge.svg)](https://github.com/karmab/kcli/actions/workflows/ci.yml)
 [![Copr](https://copr.fedorainfracloud.org/coprs/karmab/kcli/package/kcli/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/karmab/kcli/package/kcli)
-[![](https://images.microbadger.com/badges/image/karmab/kcli.svg)](https://microbadger.com/images/karmab/kcli "Get your own image badge on microbadger.com")
 
 ![Screenshot](kcli.png)
 
@@ -24,7 +22,7 @@ Refer to the [documentation](https://kcli.readthedocs.io) for more information
 ## Quick Start
 
 ```
-curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | sh
+curl -s https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
 ```
 
 Deploy your first vm with:
@@ -78,7 +76,10 @@ limitations under the License.
 
 ## Problems?
 
-Open an issue or join us on [kcli slack channel](https://app.slack.com/client/T09NY5SBT/CU76B52JE)
+Open an issue or join us on slack
+
+- [k8s slack instance](https://slack.k8s.io)
+- [kcli slack channel](https://app.slack.com/client/T09NY5SBT/CU76B52JE)
 
 Mc Fly!!!
 

@@ -1,0 +1,11 @@
+apiVersion: kcli.karmalabs.local/v1
+kind: Vm
+metadata:
+  name: empty
+spec:
+  memory: 512
+  numcpus: 2
+  start: false
+  nets:
+  - name: default
+    mac: 8c:85:90:a6:2a:01

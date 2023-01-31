@@ -1,0 +1,2 @@
+logging_sc: ocs-storagecluster-ceph-rbd
+logging_disk_size: 200

@@ -1,6 +1,8 @@
+PULL_SECRET={{ pull_secret if pull_secret.startswith('/') else cwd + '/' + pull_secret }}
+oc create -n open-cluster-management secret generic open-cluster-management-image-pull-credentials --from-file=.dockerconfigjson=${PULL_SECRET} --type=kubernetes.io/dockerconfigjson
 {% if acm_deploy_baremetal_console %}
 STATUS="Installing"
-while [ "$STATUS" != "Running" ] ; do
+while [ "${STATUS}" != "Running" ] ; do
  STATUS=$(oc -n open-cluster-management get multiclusterhub multiclusterhub -o jsonpath='{.status.phase}')
  sleep 5
 done

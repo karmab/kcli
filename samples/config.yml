@@ -66,11 +66,11 @@ default:
  # Graphical connection to use for libvirt.
  vnc: true
  # Array of ssh public keys to inject to the vm
- keys:
+ keys: []
  # Array of commands to run through cloudinit
- cmds:
+ cmds: []
  # array of paths of custom script to inject with cloudinit. It will be merged with cmds parameter. You can either specify full paths or relative to where you're running kcli. Only checked in profile or plan file
- scripts:
+ scripts: []
  # name of one of your profiles. Only checked in plan file
  profile:
  # Nested virtualization
@@ -157,7 +157,7 @@ kubevirt:
  token: XXXXXXXX
  # additional dict of kubernetes tags to put to all created vms in their nodeSelector. Can be further indicated at profile or plan level in which case values are combined. This provides an easy way to force vms to run on specific nodes, by matching labels
  tags:
-   region: master
+   region: ontario
  # whether to create vms on multus backed networks.  true
  multus: True
  # whether to use cdi.  true when cdi is found. A check on whether cdi is actually present will be performed
@@ -187,7 +187,7 @@ myovirt:
  # Only list vms created by kcli. Useful for environments when you are superadmin and have a ton of vms
  filtervms: True
  # Only list vms created by own user
- filtervms : false
+ filteruser : false
  # Only list vms created by kcli with the corresponding filter=filtertag in their description. Useful for ovirt environments when you share the same user
  filtertags: None
 

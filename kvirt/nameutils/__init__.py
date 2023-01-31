@@ -9,22 +9,29 @@ left = ["astonishing", "happy", "jolly", "dreamy", "sad", "angry", "pensive", "f
         "desperate", "hopeful", "compassionate", "silly", "lonely", "condescending", "naughty", "kickass", "drunk",
         "boring", "nostalgic", "ecstatic", "insane", "cranky", "mad", "jovial", "sick", "hungry", "thirsty",
         "elegant", "backstabbing", "clever", "trusting", "loving", "suspicious", "berserk", "high", "romantic",
-        "prickly", "evil", "magic"]
+        "prickly", "evil", "magic", "vaccinated", "blader", "starving", "dope", "dingo"]
 
-right = ["albattani", "almeida", "amazigh", "archimedes", "ardinghelli", "babbage", "bardeen", "bartik", "bbanks",
+right = ["albattani", "ablonde", "acid", "adark", "almeida", "alknopfler", "amazigh", "amouranth", "afawx",
+         "archimedes", "ardinghelli", "babbage", "bagnaia", "bardeen", "bartik", "benzema", "bingchong", "bbanks",
          "bell", "beyonder", "blackwell", "bohr", "brattain", "briana", "brown", "broza", "bumblefoot", "cantalpino",
-         "carson", "cell", "citellus", "clapton", "colden", "cuqui", "curie", "darwin", "davinci", "django",
-         "einstein", "elion", "engelbart", "euclid", "fermat", "fermi", "feynman", "fiambre", "franklin", "freezer",
-         "galactus", "galileo", "goiko", "gohan", "goku", "goldstine", "goodall", "govan", "hawking", "heisenberg",
-         "hoover", "hopper", "hypatia", "jhendrix", "jmayer", "jones", "kirch", "kendra", "kowalevski", "lalande",
-         "leakey", "lilou", "lomax", "lovelace", "lumiere", "lomax", "macenroe", "manchadinha", "mayer", "mccarthy",
-         "mcclintock", "mclean", "meitner", "mestorf", "mikel", "minwii", "morse", "mirzoyan", "newton", "nobel",
-         "norinradd", "pare", "pasteur", "pepenforce", "perlman", "picolo", "pike", "pinkman", "poincare", "ptolemy",
-         "ritchie", "rosalind", "sammet", "satriani", "selen", "shockley", "sinoussi", "silversurfer", "socarrat",
+         "carson", "cell", "chechik", "clapton", "cobra", "colden", "connors", "conti", "cr7", "curie", "darwin",
+         "davinci", "django", "dolores", "einstein", "elion", "engelbart", "euclid", "fermat", "fermi", "feynman",
+         "fiambre", "franklin", "freezer", "galactus", "galois", "galileo", "ghowe", "giselle", "goiko", "gogetta",
+         "gohan", "goku", "goldstine", "goodall", "govan", "griezmann", "hawking", "heisenberg", "hoover", "hopper",
+         "hypatia", "idir", "jhendrix", "jmayer", "jonas", "jones", "kirch", "kendra", "kheiron", "kowalevski",
+         "krilin", "kylee", "lalande", "leakey", "lendl", "lilou", "lomax", "lovelace", "lumiere", "lomax",
+         "macenroe", "mwilde", "marquez", "chavero", "matoub", "mayer", "mbappe", "mccarthy", "mcclintock", "mclean",
+         "meitner", "messi", "mestorf", "mikel", "vaiana", "morse", "nilibrosh", "newton", "nobel", "norinradd",
+         "obama", "pare", "jparrill", "pasteur", "pepenforce", "perlman", "picolo", "pike", "pinkman", "poincare",
+         "pparker", "productionready", "ptolemy", "quartararo", "rosalind", "rgemma", "reinhardt", "rossi", "sammet",
+         "sandler", "satriani", "selen", "shockley", "sinoussi", "silversurfer", "snowwhites", "socarrat", "spidey",
          "spitzer", "stallman", "tesla", "timesburg", "thompson", "torvalds", "turing", "wilson", "wozniak", "wright",
-         "yonath", "rulo", "tudela", "tdurdeen", "korsani", "karmab", "gotrunks", "xhamster", "minwii", "djokovic",
+         "yonath", "rulo", "tudela", "tylerdurdeen", "korsani", "karmab", "gotrunks", "xhamster", "minwii", "djokovic",
          "federer", "nadal", "sampras", "tgb", "valadas", "vai", "vegeta", "ivanisevic", "muster", "agassi",
-         "targaryen", "lannister", "stark", "jsnow", "superduper", "walterwhite", "chechik"]
+         "targaryen", "lannister", "safin", "stark", "jsnow", "superduper", "telecaster", "tommyemmanuel", "thor",
+         "vario", "walterwhite", "yuval", "5g", "5guys", "180k", "merletravis", "chetatkins", "fusilijerri",
+         "joerobinson", "mog", "unity", "savannah", "soul", "mm93", "vcossart", "gruson", "patarin", "hichem", "regis",
+         "elisa", "limu", "brais", "duncanmcleod"]
 
 
 def get_random_name(sep='-'):

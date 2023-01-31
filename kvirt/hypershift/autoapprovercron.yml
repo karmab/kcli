@@ -1,0 +1,45 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ cluster }}-autoapprover
+  namespace: {{ namespace }}
+spec:
+  concurrencyPolicy: Replace
+  successfulJobsHistoryLimit: 0
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    metadata:
+      creationTimestamp: null
+    spec:
+      template:
+        spec:
+          tolerations:
+          - effect: NoSchedule
+            key: node-role.kubernetes.io/master
+            operator: Exists
+          containers:
+          - command:
+            - "/bin/sh"
+            - "-c"
+            - |
+              #!/bin/sh
+              export KUBECONFIG=/tmp/kubeconfig
+              cp /secret/kubeconfig /tmp
+              sed -i 's/api.{{ cluster }}.{{ domain }}:.*/kube-apiserver.{{ namespace }}-{{ cluster }}.svc.cluster.local:6443/' /tmp/kubeconfig
+              for cert in $(kubectl get csr -o name) ; do
+                echo $cert
+                kubectl certificate approve $cert
+              done
+            image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/karmab/kubectl:{{ arch_tag }}
+            imagePullPolicy: IfNotPresent
+            name: autoapprover
+            volumeMounts:
+            - name: kubeconfig
+              mountPath: "/secret"
+          volumes:
+          - name: kubeconfig
+            secret:
+              secretName: {{ cluster }}-admin-kubeconfig
+          restartPolicy: OnFailure
+  schedule: '*/2 * * * *'

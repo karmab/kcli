@@ -1,0 +1,8 @@
+apiVersion: kcli.karmalabs.local/v1
+kind: Cluster
+metadata:
+  name: hendrix
+spec:
+  ctlplanes: 1
+  workers: 0
+  api_ip: 192.168.122.252

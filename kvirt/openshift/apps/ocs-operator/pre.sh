@@ -1,9 +1,9 @@
 sleep 10
 {% if ocs_replicas == None %}
-{% set ocs_replicas = masters + workers %}
+{% set ocs_replicas = ctlplanes + workers %}
 {% endif %}
 {% if not ocs_nodes %}
-{% set ocs_nodes = ocs_replicas|defaultnodes(cluster, domain, masters,workers) %}
+{% set ocs_nodes = ocs_replicas|defaultnodes(cluster, domain, ctlplanes,workers) %}
 {% endif %}
 {% if ocs_nodes|length < ocs_replicas %}
 echo "Number of available nodes is lower than expected number of replicas"

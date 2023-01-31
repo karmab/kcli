@@ -1,46 +1,78 @@
-name: {{ plan }}
+name: {{ plan }} 
 on:
   workflow_dispatch:
     inputs:
       RUNNER:
-        description: 'Github Action Runner Name'
+        description: 'Runner Name'
         required: true
-        default: 'ubuntu-latest'
+        default: '{{ runner }}'
+      CLIENT:
+        description: 'Client name'
+        required: true
+        default: '{{ client }}'
       PLAN:
-        description: 'Plan Name -> myCluster <-'
+        description: 'Plan Name'
+        required: true
+        default: {{ plan }}
+{% if not kube %}
+      INPUTFILE:
+        description: 'Input file'
+        required: true
+        default: {{ gitbase + inputfile }}
+{% endif %}
+{% if paramfile != None %}
+      PARAMFILE:
+        description: 'paramfile'
         required: false
-        default: 'xxx'
+        default: {{ gitbase + paramfile }}
+{% endif %}
 {% for parameter in parameters %}
       {{ parameter|upper }}:
-        description: '{{ parameter }}: {{ parameters[parameter] }}'
+        description: '{{ parameter }}'
         required: false
         default: {{ parameters[parameter] }}
 {% endfor %}
 
+env:
+ HOME: {{ parameters['home']|default('/root') }}
+ CLIENT: {% raw %}${{github.event.inputs.CLIENT}}{% endraw %}
+
+{% if not kube %}
+ INPUTFILE: {% raw %}${{github.event.inputs.INPUTFILE}}{% endraw %}
+
+{% endif %}
+{% if paramfile != None %}
+ PARAMFILE: {% raw %}${{github.event.inputs.PARAMFILE}}{% endraw %}
+
+{% endif %}
+{% for parameter in parameters %}
+ {{ parameter|upper }}: {% raw %}${{github.event.inputs.{% endraw %}{{ parameter|upper}}{% raw %}}}{% endraw %}
+
+{% endfor %}
+
 jobs:
     requirements:
-    runs-on: {% raw %} ${{github.event.inputs.RUNNER}} {% endraw %}
+      runs-on: {% raw %}${{github.event.inputs.RUNNER}}{% endraw %}
 
-    steps:
-      - name: Install kcli
-        run: |
-          if [ "$(grep -i ubuntu /etc/os-release)" != "" ] ; then
-            curl -1sLf 'https://dl.cloudsmith.io/public/karmab/kcli/setup.deb.sh' | bash
-            apt-get -y install python3-kcli
-          else
-            dnf -y copr enable karmab/kcli
-            dnf -y install kcli
-          fi
-          # kcli create pool -p /var/lib/libvirt/images default
-          # sudo setfacl -m u:$(id -un):rwx /var/lib/libvirt/images
 
-      - uses: actions/checkout@v2
-      - run: git pull origin ${GITHUB_REF##*/}
+      steps:
+       - uses: actions/checkout@v2
+       - run: git pull origin ${GITHUB_REF##*/}
+       - name: Install kcli
+         run: |
+           curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
+           # kcli create pool -p /var/lib/libvirt/images default
+           # sudo setfacl -m u:$(id -un):rwx /var/lib/libvirt/images
 
-  deploy-plan:
-    needs: requirements
-    runs-on: {% raw %} ${{github.event.inputs.RUNNER}} {% endraw %}
-    steps:
-      - name: Deploy kcli plan
-        run: |
-          kcli create plan --force -f {{ inputfile | default('kcli_plan.yml') }} {{ parameterline }} {% raw %} ${{github.event.inputs.PLAN}} {% endraw %}
+    deploy-plan:
+      needs: requirements
+      runs-on: {% raw %}${{github.event.inputs.RUNNER}}{% endraw %}
+  
+      steps:
+{% if kube %}
+       - name: Deploy kcli cluster
+         run: kcli -C $CLIENT create cluster {{ kubetype }} --force {{ paramfileline }} {{ parameterline }} $PLAN
+{% else %}
+       - name: Deploy kcli plan
+         run: kcli -C $CLIENT create plan --force -f $INPUTFILE {{ paramfileline }} {{ parameterline }} $PLAN
+{% endif %}

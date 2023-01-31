@@ -1,47 +1,31 @@
-{{ cluster }}-disconnecter:
- image: centos8
- pool: {{ pool }}
+{{ disconnected_reuse_name or cluster }}-disconnected:
+ image: centos8stream
+ pool: {{ pool or config_pool }}
  wait: true
  enableroot: true
- reservedns: {{ disconnected_dns|default(False) }}
+ domain: {{ domain }}
  numcpus: {{ numcpus }}
  keys: {{ keys }}
  memory: {{ memory }}
  nets:
- - {{ network }}
+ - name: {{ network }}
+   ipv6: {{ disconnected_ipv6_network }}
  - default
  disks:
  - {{ disconnected_disk_size }}
  files:
- - origin: disconnected/web.sh
-   path: /root/web.sh
-   mode: 700
- - origin: disconnected/get_oc.sh
-   path: /root/get_oc.sh
-   mode: 700
- - origin: disconnected/extras.sh
-   path: /root/extras.sh
-   mode: 700
- - origin: disconnected/sync_image.sh
-   path: /root/bin/sync_image.sh
-   mode: 700
+ - path: /root/scripts
+   origin: disconnected/scripts
+ - path: /root/bin
+   origin: disconnected/bin
+ - path: /etc/systemd/system/registry.service
+   origin: disconnected/registry.service
+{% if disconnected_sync %}
  - content: |
      {{ pull_secret }}
    path: /root/openshift_pull.json
- - origin: disconnected/registry.sh
-   path: /root/registry.sh
-   mode: 700
- - origin: disconnected/olm.sh
-   path: /root/olm.sh
-   mode: 700
- - origin: disconnected/haproxy.cfg
-   path: /root/haproxy.cfg
-   mode: 700
- cmds:
- - bash /root/get_oc.sh
- - bash /root/registry.sh
- - bash /root/extras.sh
-{% if disconnected_operators %}
- - bash /root/olm.sh
 {% endif %}
- - bash /root/web.sh
+ - path: /root/haproxy.cfg
+   origin: disconnected/haproxy.cfg
+ cmds:
+ - bash /root/scripts/deploy.sh

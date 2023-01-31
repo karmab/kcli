@@ -1,0 +1,36 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: install-cr-{{ app }}
+  namespace: kcli-infra
+  labels:
+    app: kcli
+spec:
+  backoffLimit: 30
+  template:
+   spec:
+    serviceAccountName: autoapprover
+    restartPolicy: OnFailure
+    initContainers:
+    - name: wait-for-cluster-version
+      image: {{ registry }}/karmab/kubectl:latest
+      command:
+      - "/bin/sh"
+      - "-c"
+      - |
+        #!/bin/sh
+        CLUSTER_VERSION=$(kubectl get clusterversion version -o jsonpath='{.status.history[0].state}')
+        [ "$CLUSTER_VERSION" == "Completed" ] || exit 1
+    containers:
+    - name: install-cr-{{ app }}
+      image: {{ registry }}/karmab/kubectl:latest
+      command:
+      - "/bin/sh"
+      - "-c"
+      - |
+        #!/bin/sh
+        {% if app == 'autolabeller' %}
+        echo {{ cr_content|base64 }} | base64 -d | sed "s@\\\\\\\1@\\\1@g" | sed "s@\\\\\\\2@\\\2@g" | sed "s@\\\\\\\3@\\\3@g" | kubectl apply -f -
+        {% else %}
+        echo {{ cr_content|base64 }} | base64 -d | kubectl apply -f -
+        {% endif %}

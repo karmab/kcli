@@ -1,2 +1,3 @@
-acm_version: release-2.1
 acm_deploy_baremetal_console: false
+acm_disable_hub: false
+pull_secret: openshift_pull.json

@@ -1,0 +1,9 @@
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: rancher-ip
+  namespace: metallb-system
+spec:
+  addresses:
+  - {{ rancher_lb_ip }}-{{ rancher_lb_ip }}
+  autoAssign: false

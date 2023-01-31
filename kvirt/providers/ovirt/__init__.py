@@ -4,16 +4,14 @@
 Ovirt Provider Class
 """
 
-from distutils.spawn import find_executable
 from kvirt import common
-from kvirt.common import error, pprint, warning
+from kvirt.common import error, pprint, warning, get_ssh_pub_key
 from kvirt.defaults import UBUNTUS, METADATA_FIELDS
-from kvirt.providers.ovirt.helpers import IMAGES as oimages
-from kvirt.providers.ovirt.helpers import get_home_ssh_key
 import ovirtsdk4 as sdk
 from ovirtsdk4 import Error as oerror
 import ovirtsdk4.types as types
 import os
+import sys
 from subprocess import call, check_output
 import json
 from time import sleep, time
@@ -23,6 +21,23 @@ import ssl
 from urllib.parse import urlparse
 from random import choice
 from string import ascii_lowercase
+from shutil import which
+
+oimages = {'CentOS-6-x86_64-GenericCloud.qcow2': 'CentOS 6 Generic Cloud Image',
+           'CentOS-Atomic-Host-7-GenericCloud.qcow2': 'CentOS 7 Atomic Host Image',
+           'CentOS-7-x86_64-GenericCloud.qcow2': 'CentOS 7 Generic Cloud Image',
+           'cirros-0.4.0-x86_64-disk.img': 'CirrOS 0.4.0 for x86_64',
+           'Fedora-Cloud-Base-24-1.2.x86_64.qcow2': 'Fedora 24 Cloud Base Image v20160921.0 for x86_64',
+           'Fedora-Cloud-Base-25-1.3.x86_64.qcow2': 'Fedora 25 Cloud Base Image v20170106.0 for x86_64',
+           'Fedora-Cloud-Base-26-1.5.x86_64.qcow2': 'Fedora 26 Cloud Base Image v1.5 for x86_64',
+           'Fedora-Cloud-Base-27-1.6.x86_64.qcow2': 'Fedora 27 Cloud Base Image v1.6 for x86_64',
+           'Fedora-Cloud-Base-28-1.1.x86_64.qcow2': 'Fedora 28 Cloud Base Image v1.1 for x86_64',
+           'trusty-server-cloudimg-amd64-disk1.img':
+           'Ubuntu Server 14.04 LTS (Trusty Tahr) Cloud Image v20170110 for x86_64',
+           'xenial-server-cloudimg-amd64-disk1.img':
+           'Ubuntu Server 16.04 LTS (Xenial Xerus) Cloud Image v20170111 for x86_64',
+           'yakkety-server-cloudimg-amd64-disk1.img':
+           'Ubuntu Server 16.10 (Yakkety Yak) Cloud Image v20170106 for x86_64'}
 
 
 class KOvirt(object):
@@ -31,15 +46,15 @@ class KOvirt(object):
     """
     def __init__(self, host='127.0.0.1', port=22, user='admin@internal',
                  password=None, insecure=True, ca_file=None, org=None, debug=False,
-                 cluster='Default', datacenter='Default', ssh_user='root', imagerepository='ovirt-image-repository',
-                 filtervms=False, filteruser=False, filtertag=None):
+                 cluster='Default', datacenter='Default', ssh_user='root', filtervms=False, filteruser=False,
+                 filtertag=None):
         try:
-            url = "https://%s/ovirt-engine/api" % host
+            url = f"https://{host}/ovirt-engine/api"
             self.conn = sdk.Connection(url=url, username=user,
                                        password=password, insecure=insecure,
                                        ca_file=ca_file)
         except oerror as e:
-            error("Unexpected error: %s" % e)
+            error(f"Unexpected error: {e}")
             return None
         self.debug = debug
         self.vms_service = self.conn.system_service().vms_service()
@@ -53,7 +68,6 @@ class KOvirt(object):
         self.ca_file = ca_file
         self.org = org
         self.ssh_user = ssh_user
-        self.imagerepository = imagerepository
         self.filtervms = filtervms
         self.filteruser = filteruser
         self.filtertag = filtertag
@@ -64,7 +78,7 @@ class KOvirt(object):
         return
 
     def exists(self, name):
-        vmsearch = self.vms_service.list(search='name=%s' % name)
+        vmsearch = self.vms_service.list(search=f'name={name}')
         if vmsearch:
             return True
         return False
@@ -93,19 +107,20 @@ class KOvirt(object):
                cpumodel='Westmere', cpuflags=[], cpupinning=[], numcpus=2, memory=512,
                guestid='guestrhel764', pool='default', image=None,
                disks=[{'size': 10}], disksize=10, diskthin=True,
-               diskinterface='virtio', nets=['default'], iso=None, vnc=False,
+               diskinterface='virtio', nets=['default'], iso=None, vnc=True,
                cloudinit=True, reserveip=False, reservedns=False,
-               reservehost=False, start=True, keys=None, cmds=[], ips=None,
+               reservehost=False, start=True, keys=[], cmds=[], ips=None,
                netmasks=None, gateway=None, nested=True, dns=None, domain=None,
                tunnel=False, files=[], enableroot=True, alias=[], overrides={},
                tags=[], storemetadata=False, sharedfolders=[], kernel=None, initrd=None,
                cmdline=None, placement=[], autostart=False, cpuhotplug=False, memoryhotplug=False, numamode=None,
-               numa=[], pcidevices=[], tpm=False, rng=False, metadata={}, securitygroups=[]):
+               numa=[], pcidevices=[], tpm=False, rng=False, metadata={}, securitygroups=[], vmuser=None):
         ip = None
         initialization = None
         memory = memory * 1024 * 1024
         clone = not diskthin
         custom_properties = []
+        ignition = False
         if image is not None:
             templates_service = self.templates_service
             templateslist = templates_service.list()
@@ -114,27 +129,30 @@ class KOvirt(object):
                 if temp.name == image:
                     if temp.memory > memory:
                         memory = temp.memory
-                        pprint("Using %sMb for memory as defined in template %s" % (memory, image))
+                        pprint(f"Using {memory}Mb for memory as defined in template {image}")
                     _template = types.Template(name=image)
                     found = True
             if not found:
-                return {'result': 'failure', 'reason': "image %s not found" % image}
+                return {'result': 'failure', 'reason': f"image {image} not found"}
             if image is not None and common.needs_ignition(image):
+                ignition = True
+                cloudinit = False
                 ignitiondata = ''
                 version = common.ignition_version(image)
                 ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
-                                               domain=domain, reserveip=reserveip, files=files,
-                                               enableroot=enableroot, overrides=overrides, version=version, plan=plan,
-                                               compact=False, removetls=True, image=image)
+                                               domain=domain, files=files, enableroot=enableroot, overrides=overrides,
+                                               version=version, plan=plan, compact=False, removetls=True, image=image,
+                                               vmuser=vmuser)
                 ignitiondata = ignitiondata.replace('\n', '')
                 initialization = types.Initialization(custom_script=ignitiondata)
         else:
             _template = types.Template(name='Blank')
-        _os = types.OperatingSystem(boot=types.Boot(devices=[types.BootDevice.HD, types.BootDevice.CDROM]))
+        ostype = 'rhcos_x64' if ignition else None
+        _os = types.OperatingSystem(boot=types.Boot(devices=[types.BootDevice.HD, types.BootDevice.CDROM]), type=ostype)
         console = types.Console(enabled=True)
-        description = ["filter=%s" % self.filtertag] if self.filtertag is not None else []
+        description = [f"filter={self.filtertag}"] if self.filtertag is not None else []
         for entry in [field for field in metadata if field in METADATA_FIELDS]:
-            description.append('%s=%s' % (entry, metadata[entry]))
+            description.append(f'{entry}={metadata[entry]}')
         description = ','.join(description)
         profiles_service = self.conn.system_service().vnic_profiles_service()
         if not self.netprofiles:
@@ -146,11 +164,7 @@ class KOvirt(object):
         cpu = types.Cpu(topology=types.CpuTopology(cores=numcpus, sockets=1))
         try:
             if placement:
-                # placement_hosts = [types.Host(name=h) for h in placement]
-                # placement_policy = types.VmPlacementPolicy(hosts=placement_hosts, affinity=types.VmAffinity.PINNED)
-                # placement_policy = types.VmPlacementPolicy(hosts=placement_hosts)
                 placement_policy = None
-                print(choice(placement))
                 vmhost = types.Host(name=choice(placement))
             else:
                 placement_policy = None
@@ -170,15 +184,20 @@ class KOvirt(object):
             graphical_consoles = graphics_console_service
             for gc in graphical_consoles.list():
                 graphics_console_service.console_service(gc.id).remove()
-                graphics_console_service.add(vnc_console)
+            graphics_console_service.add(vnc_console)
         cdroms_service = vm_service.cdroms_service()
         cdrom = cdroms_service.list()[0]
         cdrom_service = cdroms_service.cdrom_service(cdrom.id)
         if iso is not None:
+            iso_id = iso
+            disks_service = self.conn.system_service().disks_service()
+            disksearch = disks_service.list(search=f'name={iso}')
+            if disksearch:
+                iso_id = disksearch[0].id
             try:
-                cdrom_service.update(cdrom=types.Cdrom(file=types.File(id=iso)))
+                cdrom_service.update(cdrom=types.Cdrom(file=types.File(id=iso_id)))
             except:
-                return {'result': 'failure', 'reason': "Iso %s not found" % iso}
+                return {'result': 'failure', 'reason': f"Iso {iso} not found"}
         timeout = 0
         while True:
             vm = vm_service.get()
@@ -187,7 +206,7 @@ class KOvirt(object):
             else:
                 timeout += 5
                 sleep(5)
-                pprint("Waiting for vm %s to be ready" % name)
+                pprint(f"Waiting for vm {name} to be ready")
             if timeout > 80:
                 return {'result': 'failure', 'reason': 'timeout waiting for vm to be ready'}
         if 'default' not in self.netprofiles:
@@ -218,7 +237,7 @@ class KOvirt(object):
                 if not noconf and ips and len(ips) > index and ips[index] is not None:
                     ip = ips[index]
                 if not noconf and ip is not None and netmask is not None and gateway is not None:
-                    nic_configuration = types.NicConfiguration(name='eth%d' % index, on_boot=True,
+                    nic_configuration = types.NicConfiguration(name=f'eth{index}', on_boot=True,
                                                                boot_protocol=types.BootProtocol.STATIC,
                                                                ip=types.Ip(version=types.IpVersion.V4, address=ip,
                                                                            netmask=netmask, gateway=gateway))
@@ -226,7 +245,7 @@ class KOvirt(object):
             if netname is not None and netname in self.netprofiles:
                 profile_id = self.netprofiles[netname]
                 mac = types.Mac(address=mac)
-                nic = types.Nic(name='eth%s' % index, mac=mac, vnic_profile=types.VnicProfile(id=profile_id))
+                nic = types.Nic(name=f'eth{index}', mac=mac, vnic_profile=types.VnicProfile(id=profile_id))
                 if index < currentnics:
                     currentnic = nics_service.list()[index]
                     currentnic_service = nics_service.nic_service(currentnic.id)
@@ -238,7 +257,6 @@ class KOvirt(object):
             diskpool = pool
             diskthin = True
             disksize = 10
-            # diskname = "%s_disk%s" % (name, index)
             if isinstance(disk, int):
                 disksize = disk
             elif isinstance(disk, str) and disk.isdigit():
@@ -273,13 +291,6 @@ class KOvirt(object):
             cmds.insert(1, 'sleep 10')
             ignorednics = "docker0 tun0 tun1 cni0 flannel.1"
             gcmds = []
-            if image is not None and image.lower().startswith('centos'):
-                gcmds.append('yum -y install centos-release-ovirt42')
-            if image is not None and common.need_guest_agent(image):
-                gcmds.append('yum -y install ovirt-guest-agent-common')
-                gcmds.append('sed -i "s/# ignored_nic.*/ignored_nics = %s/" /etc/ovirt-guest-agent.conf' % ignorednics)
-                gcmds.append('systemctl enable ovirt-guest-agent')
-                gcmds.append('systemctl restart ovirt-guest-agent')
             if image is not None and image.lower().startswith('debian'):
                 gcmds.append('echo "deb http://download.opensuse.org/repositories/home:/evilissimo:/deb/Debian_7.0/ ./"'
                              ' >> /etc/apt/sources.list')
@@ -288,7 +299,7 @@ class KOvirt(object):
                 gcmds.append('gpg --export --armor 73A1A299 | apt-key add -')
                 gcmds.append('apt-get update')
                 gcmds.append('apt-get -Y install ovirt-guest-agent')
-                gcmds.append('sed -i "s/# ignored_nics.*/ignored_nics = %s/" /etc/ovirt-guest-agent.conf' % ignorednics)
+                gcmds.append(f'sed -i "s/# ignored_nics.*/ignored_nics = {ignorednics}/" /etc/ovirt-guest-agent.conf')
                 gcmds.append('service ovirt-guest-agent enable')
                 gcmds.append('service ovirt-guest-agent restart')
             if image is not None and [x for x in UBUNTUS if x in image.lower()]:
@@ -311,64 +322,82 @@ class KOvirt(object):
             custom_script += "runcmd:\n"
             custom_script += data
             custom_script = None if custom_script == '' else custom_script
-            user_name = common.get_user(image) if image is not None else 'root'
+            vmuser = vmuser or 'root'
+            user_name = common.get_user(image) if image is not None else vmuser
             root_password = None
             # dns_servers = '8.8.8.8 1.1.1.1'
             # dns_servers = dns if dns is not None else '8.8.8.8 1.1.1.1'
-            userkey = get_home_ssh_key()
-            if keys is None:
-                keys = userkey
-            else:
-                keys.append(userkey)
-                keys = '\n'.join(keys)
-            host_name = "%s.%s" % (name, domain) if domain is not None else name
+            publickeyfile = get_ssh_pub_key()
+            if publickeyfile is not None:
+                publickeyfile = open(publickeyfile).read().rstrip()
+                if not keys:
+                    keys = [publickeyfile]
+                else:
+                    keys.append(publickeyfile)
+            keys = '\n'.join(keys)
+            host_name = f"{name}.{domain}" if domain is not None else name
             initialization = types.Initialization(user_name=user_name, root_password=root_password,
                                                   authorized_ssh_keys=keys, host_name=host_name,
                                                   nic_configurations=nic_configurations, dns_servers=dns,
                                                   dns_search=domain, custom_script=custom_script)
         if start:
-            vm_service.start(use_cloud_init=cloudinit, vm=types.Vm(initialization=initialization, host=vmhost))
+            vm_data = {'use_cloud_init': cloudinit, 'vm': types.Vm(initialization=initialization, host=vmhost)}
+            if ignition:
+                vm_data['use_ignition'] = True
+            vm_service.start(**vm_data)
         if ip is not None:
             self.update_metadata(name, 'ip', ip)
         return {'result': 'success'}
 
     def start(self, name):
-        vmsearch = self.vms_service.list(search='name=%s' % name)
+        vmsearch = self.vms_service.list(search=f'name={name}')
         if not vmsearch:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         vminfo = vmsearch[0]
         if str(vminfo.status) == 'down':
             vm = self.vms_service.vm_service(vmsearch[0].id)
             vm.start()
         return {'result': 'success'}
 
-    def stop(self, name):
-        vmsearch = self.vms_service.list(search='name=%s' % name)
+    def stop(self, name, soft=False):
+        vmsearch = self.vms_service.list(search=f'name={name}')
         if not vmsearch:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         vminfo = vmsearch[0]
         if str(vminfo.status) != 'down':
             vm = self.vms_service.vm_service(vmsearch[0].id)
             vm.stop()
         return {'result': 'success'}
 
-    def snapshot(self, name, base, revert=False, delete=False, listing=False):
-        vmsearch = self.vms_service.list(search='name=%s' % base)
+    def create_snapshot(self, name, base):
+        vmsearch = self.vms_service.list(search=f'name={base}')
         if not vmsearch:
-            error("VM %s not found" % base)
-            return {'result': 'failure', 'reason': "VM %s not found" % base}
+            error(f"VM {base} not found")
+            return {'result': 'failure', 'reason': f"VM {base} not found"}
         vm = vmsearch[0]
         snapshots_service = self.vms_service.vm_service(vm.id).snapshots_service()
         snapshots_service.add(types.Snapshot(description=name))
         return
 
+    def delete_snapshot(self, name, base):
+        print("not implemented")
+        return
+
+    def list_snapshots(self, base):
+        print("not implemented")
+        return []
+
+    def revert_snapshot(self, name, base):
+        print("not implemented")
+        return
+
     def restart(self, name):
-        vmsearch = self.vms_service.list(search='name=%s' % name)
+        vmsearch = self.vms_service.list(search=f'name={name}')
         if not vmsearch:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         vm = vmsearch[0]
         status = str(vm.status)
         vm = self.vms_service.vm_service(vmsearch[0].id)
@@ -381,21 +410,19 @@ class KOvirt(object):
     def report(self):
         api = self.conn.system_service().get()
         system_service = self.conn.system_service()
-        # vmslist = self.vms_service.list()
-        # print("Vms Running: %s" % len(vmslist))
-        print("Version: %s" % api.product_info.version.full_version)
+        print(f"Version: {api.product_info.version.full_version}")
         if api.summary.vms is not None:
-            print("Vms Running: %s" % api.summary.vms.total)
+            print(f"Vms Running: {api.summary.vms.total}")
         if api.summary.hosts is not None:
-            print("Hosts: %d" % api.summary.hosts.total)
+            print(f"Hosts: {api.summary.hosts.total}")
         hosts_service = self.conn.system_service().hosts_service()
         for host in hosts_service.list():
-            print("Host: %s" % host.name)
+            print(f"Host: {host.name}")
         if api.summary.storage_domains is not None:
-            print("Storage Domains: %d" % api.summary.storage_domains.total)
+            print(f"Storage Domains: {api.summary.storage_domains.total}")
         sds_service = system_service.storage_domains_service()
         for sd in sds_service.list():
-            print("Storage Domain: %s" % sd.name)
+            print(f"Storage Domain: {sd.name}")
 
     def status(self, name):
         print("not implemented")
@@ -405,26 +432,29 @@ class KOvirt(object):
         vms = []
         system_service = self.conn.system_service()
         if self.filtertag is not None:
-            vmslist = self.vms_service.list(search='description=plan*,filter=%s*' % self.filtertag)
+            vmslist = self.vms_service.list(search=f'description=plan*,filter={self.filtertag}*')
         elif self.filteruser:
             users_service = system_service.users_service()
-            user_name = '%s-authz' % self.user if '@internal' in self.user else self.user
+            user_name = f'{self.user}-authz' if '@internal' in self.user else self.user
             userid = [u.id for u in users_service.list() if u.user_name == user_name][0]
-            vmslist = self.vms_service.list(search='created_by_user_id=%s' % userid)
+            vmslist = self.vms_service.list(search=f'created_by_user_id={userid}')
         elif self.filtervms:
             vmslist = self.vms_service.list(search='description=plan=*,profile=*')
         else:
             vmslist = self.vms_service.list()
         for vm in vmslist:
-            vms.append(self.info(vm.name, vm=vm))
+            try:
+                vms.append(self.info(vm.name, vm=vm))
+            except:
+                continue
         return sorted(vms, key=lambda x: x['name'])
 
     def console(self, name, tunnel=False, web=False):
         connectiondetails = None
-        vmsearch = self.vms_service.list(search='name=%s' % name)
+        vmsearch = self.vms_service.list(search=f'name={name}')
         if not vmsearch:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         vm = vmsearch[0]
         vm_service = self.vms_service.vm_service(vm.id)
         consoles_service = vm_service.graphics_consoles_service()
@@ -439,7 +469,7 @@ class KOvirt(object):
                     hostname = host.address
                 except:
                     hostname = c.address
-                subject = 'O=%s,CN=%s' % (self.org, hostname)
+                subject = f'O={self.org},CN={hostname}'
                 if tunnel:
                     localport1 = common.get_free_port()
                     localport2 = common.get_free_port()
@@ -493,15 +523,18 @@ delete-this-file=1
 toggle-fullscreen=shift+f11
 release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.value, name=name)
         if connectiondetails is None:
-            error("Couldn't retrieve connection details for %s" % name)
-            os._exit(1)
+            error(f"Couldn't retrieve connection details for {name}")
+            sys.exit(1)
         if web:
             return "%s://%s:%s+%s" % (c.protocol, address, sport if str(c.protocol) == 'spice' else port, ticket.value)
         with open("/tmp/console.vv", "w") as f:
             f.write(connectiondetails)
         if self.debug or os.path.exists("/i_am_a_container"):
-            msg = "Use remote-viewer with this:\n%s" % connectiondetails if not self.debug else connectiondetails
+            msg = f"Use remote-viewer with this:\n{connectiondetails}" if not self.debug else connectiondetails
             pprint(msg)
+        elif os.path.exists('/Users') and str(c.protocol) == 'vnc':
+            pprint(f"Use password {ticket.value}")
+            os.popen(f"open vnc://{address}:{port}")
         else:
             os.popen("remote-viewer /tmp/console.vv &")
         return
@@ -512,38 +545,35 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         :param name:
         :return:
         """
-        # localport1 = common.get_free_port()
-        #    command = "ssh -o LogLevel=QUIET -f -p %s -L %s:127.0.0.1:2222  ovirt-vmconsole@%s sleep 10"\
-        #        % (self.port, localport, self.host)
-        #    os.popen(command)
         system_service = self.conn.system_service()
         users_service = system_service.users_service()
-        user = users_service.list(search='usrname=%s-authz' % self.user)[0]
+        user = users_service.list(search=f'usrname={self.user}-authz')[0]
         user_service = users_service.user_service(user.id)
-        vmsearch = self.vms_service.list(search='name=%s' % name)
+        vmsearch = self.vms_service.list(search=f'name={name}')
         if not vmsearch:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         vm = vmsearch[0]
         permissions_service = self.vms_service.vm_service(vm.id).permissions_service()
         permissions_service.add(types.Permission(user=types.User(id=user.id), role=types.Role(name='UserVmManager')))
         keys_service = user_service.ssh_public_keys_service()
-        key = get_home_ssh_key()
-        if key is None:
-            error("neither id_rsa.pub or id_dsa public keys found in your .ssh directory. This is required")
+        publickeyfile = get_ssh_pub_key()
+        if publickeyfile is None:
+            error("neither id_rsa, id_dsa nor id_ed25519 public keys found in your .ssh directory. This is required")
             return
+        publickeyfile = open(publickeyfile).read().rstrip()
         try:
-            keys_service.add(key=types.SshPublicKey(content=key))
+            keys_service.add(key=types.SshPublicKey(content=publickeyfile))
         except:
             pass
-        command = "ssh -t -p 2222 ovirt-vmconsole@%s connect --vm-name %s" % (self.host, name)
+        command = f"ssh -t -p 2222 ovirt-vmconsole@{self.host} connect --vm-name {name}"
         if web:
             return command
         call(command, shell=True)
         return
 
     def dnsinfo(self, name):
-        vmsearch = self.vms_service.list(search='name=%s' % name)
+        vmsearch = self.vms_service.list(search=f'name={name}')
         if not vmsearch:
             return None, None
         vm = vmsearch[0]
@@ -562,9 +592,9 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         conn = self.conn
         minimal = False
         if vm is None:
-            vmsearch = self.vms_service.list(search='name=%s' % name)
+            vmsearch = self.vms_service.list(search=f'name={name}')
             if not vmsearch:
-                error("VM %s not found" % name)
+                error(f"VM {name} not found")
                 return {}
             vm = vmsearch[0]
         else:
@@ -572,9 +602,9 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         status = str(vm.status)
         yamlinfo = {'name': vm.name, 'disks': [], 'nets': [], 'status': status, 'instanceid': vm.id}
         template = conn.follow_link(vm.template)
-        source = template.name
-        yamlinfo['image'] = source
-        yamlinfo['user'] = common.get_user(source)
+        image = template.name
+        yamlinfo['image'] = image
+        yamlinfo['user'] = common.get_user(image)
         for description in vm.description.split(','):
             desc = description.split('=')
             if len(desc) == 2:
@@ -602,7 +632,9 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         nics = self.vms_service.vm_service(vm.id).nics_service().list()
         profiles_service = self.conn.system_service().vnic_profiles_service()
         if ips:
-            yamlinfo['ip'] = ips[-1]
+            yamlinfo['ip'] = ips[0]
+            if len(ips) > 1:
+                yamlinfo['ips'] = ips
         if minimal:
             return yamlinfo
         if not self.netprofiles:
@@ -612,7 +644,9 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         for nic in nics:
             device = nic.name
             mac = nic.mac.address
-            network = self.netprofiles[nic.vnic_profile.id] if nic.vnic_profile is not None else 'N/A'
+            network = 'N/A'
+            if nic.vnic_profile is not None and nic.vnic_profile.id in self.netprofiles:
+                network = self.netprofiles[nic.vnic_profile.id]
             network_type = str(nic.interface)
             yamlinfo['nets'].append({'device': device, 'mac': mac, 'net': network, 'type': network_type})
         attachments = self.vms_service.vm_service(vm.id).disk_attachments_service().list()
@@ -625,15 +659,27 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             drivertype = str(disk.content_type)
             path = disk.id
             yamlinfo['disks'].append({'device': device, 'size': disksize, 'format': diskformat, 'type': drivertype,
-                                      'path': "%s/%s" % (storagedomain, path)})
+                                      'path': f"{storagedomain}/{path}"})
+        if image is None and 'kubetype' in yamlinfo and yamlinfo['kubetype'] == 'openshift':
+            yamlinfo['user'] = 'core'
+        cdroms_service = self.vms_service.vm_service(vm.id).cdroms_service()
+        cdroms = cdroms_service.list()
+        if cdroms:
+            cdrom = cdroms[0]
+            if cdrom.file is not None:
+                iso = cdrom.file.id
+                disks_service = self.conn.system_service().disks_service()
+                disksearch = disks_service.list(search=f'id={iso}')
+                if disksearch:
+                    yamlinfo['iso'] = disksearch[0].name
         if debug:
             yamlinfo['debug'] = vars(vm)
         return yamlinfo
 
     def ip(self, name):
-        vmsearch = self.vms_service.list(search='name=%s' % name)
+        vmsearch = self.vms_service.list(search=f'name={name}')
         if not vmsearch:
-            error("VM %s not found" % name)
+            error(f"VM {name} not found")
             return None
         vm = vmsearch[0]
         ips = []
@@ -652,11 +698,16 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         if iso:
             isos = []
             for pool in self.conn.system_service().storage_domains_service().list():
+                sd_service = self.sds_service.storage_domain_service(pool.id)
                 if str(pool.type) == 'iso':
-                    sd_service = self.sds_service.storage_domain_service(pool.id)
                     file_service = sd_service.files_service()
                     for isofile in file_service.list():
                         isos.append(isofile._name)
+                else:
+                    disks_service = sd_service.disks_service()
+                    for disk in disks_service.list():
+                        if disk.name.endswith('.iso'):
+                            isos.append(disk.name)
             return isos
         else:
             images = []
@@ -668,10 +719,10 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             return images
 
     def delete(self, name, snapshots=False):
-        vmsearch = self.vms_service.list(search='name=%s' % name)
+        vmsearch = self.vms_service.list(search=f'name={name}')
         if not vmsearch:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         vminfo = vmsearch[0]
         vm = self.vms_service.vm_service(vminfo.id)
         if str(vminfo.status) not in ['down', 'unknown']:
@@ -689,9 +740,9 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         return
 
     def update_metadata(self, name, metatype, metavalue, append=False):
-        vmsearch = self.vms_service.list(search='name=%s' % name)
+        vmsearch = self.vms_service.list(search=f'name={name}')
         if not vmsearch:
-            error("VM %s not found" % name)
+            error(f"VM {name} not found")
             return
         vminfo = vmsearch[0]
         found = False
@@ -703,22 +754,22 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                 found = True
                 if append:
                     oldvalue = desc[1]
-                    metavalue = "%s+%s" % (oldvalue, metavalue)
-                newdescription.append("%s=%s" % (metatype, metavalue))
+                    metavalue = f"{oldvalue}+{metavalue}"
+                newdescription.append(f"{metatype}={metavalue}")
             else:
                 newdescription.append(description)
         if not found:
-            newdescription.append("%s=%s" % (metatype, metavalue))
+            newdescription.append(f"{metatype}={metavalue}")
         description = ','.join(newdescription)
         vm = self.vms_service.vm_service(vmsearch[0].id)
         vm.update(vm=types.Vm(description=description))
         return
 
     def update_memory(self, name, memory):
-        vmsearch = self.vms_service.list(search='name=%s' % name)
+        vmsearch = self.vms_service.list(search=f'name={name}')
         if not vmsearch:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         vminfo = vmsearch[0]
         vm = self.vms_service.vm_service(vminfo.id)
         if str(vminfo.status) == 'up':
@@ -728,10 +779,10 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         return {'result': 'success'}
 
     def update_cpus(self, name, numcpus):
-        vmsearch = self.vms_service.list(search='name=%s' % name)
+        vmsearch = self.vms_service.list(search=f'name={name}')
         if not vmsearch:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         vminfo = vmsearch[0]
         if str(vminfo.status) == 'up':
             warning("Note it will only be effective upon next start")
@@ -749,23 +800,31 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         return
 
     def update_iso(self, name, iso):
-        vmsearch = self.vms_service.list(search='name=%s' % name)
+        vmsearch = self.vms_service.list(search=f'name={name}')
         if not vmsearch:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         vminfo = vmsearch[0]
         vm = self.vms_service.vm_service(vminfo.id)
         cdroms_service = vm.cdroms_service()
         cdrom = cdroms_service.list()[0]
         cdrom_service = cdroms_service.cdrom_service(cdrom.id)
-        if iso == '':
-            cdrom_service.update(cdrom=types.Cdrom(file=types.File()), current=True)
-            return {'result': 'success'}
-        try:
-            cdrom_service.update(cdrom=types.Cdrom(file=types.File(id=iso)), current=True)
-        except:
-            error("Iso %s not found" % iso)
-            return {'result': 'failure', 'reason': "Iso %s not found" % iso}
+        current = False if str(vminfo.status) == 'down' else True
+        if iso is not None and iso != '':
+            disks_service = self.conn.system_service().disks_service()
+            disksearch = disks_service.list(search=f'name={iso}')
+            if disksearch:
+                iso_id = disksearch[0].id
+            else:
+                error(f"Iso {iso} not found")
+                return {'result': 'failure', 'reason': f"Iso {iso} not found"}
+            try:
+                cdrom_service.update(cdrom=types.Cdrom(file=types.File(id=iso_id)), current=current)
+            except Exception as e:
+                error(f"Hit issue {e.fault._detail}")
+                return {'result': 'failure', 'reason': f"Hit issue {e.fault._detail}"}
+        else:
+            cdrom_service.update(cdrom=types.Cdrom(file=types.File(id='')), current=current)
         return {'result': 'success'}
 
     def update_flavor(self, name, flavor):
@@ -781,24 +840,25 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         size *= 2**30
         system_service = self.conn.system_service()
         sds_service = system_service.storage_domains_service()
-        poolcheck = sds_service.list(search='name=%s' % pool)
+        poolcheck = sds_service.list(search=f'name={pool}')
         if not poolcheck:
-            error("Pool %s not found" % pool)
-            return {'result': 'failure', 'reason': "Pool %s not found" % pool}
-        vmsearch = self.vms_service.list(search='name=%s' % name)
+            error(f"Pool {pool} not found")
+            return {'result': 'failure', 'reason': f"Pool {pool} not found"}
+        vmsearch = self.vms_service.list(search=f'name={name}')
         if not vmsearch:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         vm = self.vms_service.vm_service(vmsearch[0].id)
         disk_attachments_service = vm.disk_attachments_service()
         currentdisk = len(disk_attachments_service.list())
-        diskindex = currentdisk + 1
-        diskname = '%s_Disk%s' % (name, diskindex)
+        diskindex = currentdisk + 1 if currentdisk > 0 else 0
+        diskname = f'{name}_Disk{diskindex}'
         _format = types.DiskFormat.COW if thin else types.DiskFormat.RAW
         storagedomain = types.StorageDomain(name=pool)
+        bootable = True if diskindex == 0 else False
         disk_attachment = types.DiskAttachment(disk=types.Disk(name=diskname, format=_format, provisioned_size=size,
                                                                storage_domains=[storagedomain]),
-                                               interface=types.DiskInterface.VIRTIO, bootable=False, active=True)
+                                               interface=types.DiskInterface.VIRTIO, bootable=bootable, active=True)
         disk_attachment = disk_attachments_service.add(disk_attachment)
         disks_service = self.conn.system_service().disks_service()
         disk_service = disks_service.disk_service(disk_attachment.disk.id)
@@ -810,9 +870,9 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             else:
                 timeout += 5
                 sleep(5)
-                pprint("Waiting for disk %s to be ready" % diskname)
+                pprint(f"Waiting for disk {diskname} to be ready")
             if timeout > 40:
-                return {'result': 'failure', 'reason': 'timeout waiting for disk %s to be ready' % diskname}
+                return {'result': 'failure', 'reason': f'timeout waiting for disk {diskname} to be ready'}
         return {'result': 'success'}
 
     def update_image_size(self, vmid, size):
@@ -834,16 +894,16 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             else:
                 timeout += 5
                 sleep(5)
-                pprint("Waiting for image disk %s to be resized" % diskname)
+                pprint(f"Waiting for image disk {diskname} to be resized")
             if timeout > 40:
-                return {'result': 'failure', 'reason': 'timeout waiting for image disk %s to be resized' % diskname}
+                return {'result': 'failure', 'reason': f'timeout waiting for image disk {diskname} to be resized'}
         return {'result': 'success'}
 
     def delete_disk(self, name=None, diskname=None, pool=None, novm=False):
-        vmsearch = self.vms_service.list(search='name=%s' % name)
+        vmsearch = self.vms_service.list(search=f'name={name}')
         if not vmsearch:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         vm = self.vms_service.vm_service(vmsearch[0].id)
         disk_attachments_service = vm.disk_attachments_service()
         for disk in disk_attachments_service.list():
@@ -859,8 +919,8 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                 disk_service = disks_service.disk_service(disk.disk.id)
                 disk_service.remove()
                 return {'result': 'success'}
-        error("Disk %s not found" % diskname)
-        return {'result': 'failure', 'reason': "Disk %s not found" % diskname}
+        error(f"Disk {diskname} not found")
+        return {'result': 'failure', 'reason': f"Disk {diskname} not found"}
 
     def list_disks(self):
         volumes = {}
@@ -874,10 +934,10 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         return volumes
 
     def add_nic(self, name, network):
-        vmsearch = self.vms_service.list(search='name=%s' % name)
+        vmsearch = self.vms_service.list(search=f'name={name}')
         if not vmsearch:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         vm = vmsearch[0]
         nics_service = self.vms_service.vm_service(vm.id).nics_service()
         index = len(nics_service.list())
@@ -895,16 +955,16 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                 netprofiles['default'] = netprofiles['rhevm']
         if network in netprofiles:
             profile_id = netprofiles[network]
-            nics_service.add(types.Nic(name='eth%s' % index, vnic_profile=types.VnicProfile(id=profile_id)))
+            nics_service.add(types.Nic(name=f'eth{index}', vnic_profile=types.VnicProfile(id=profile_id)))
         else:
-            return {'result': 'failure', 'reason': "Network %s not found" % network}
+            return {'result': 'failure', 'reason': f"Network {network} not found"}
         return {'result': 'success'}
 
     def delete_nic(self, name, interface):
-        vmsearch = self.vms_service.list(search='name=%s' % name)
+        vmsearch = self.vms_service.list(search=f'name={name}')
         if not vmsearch:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         vmid = vmsearch[0].id
         for nic in self.vms_service.vm_service(vmid).nics_service().list():
             if nic.name == interface:
@@ -912,15 +972,26 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                 nic_service = nics_service.nic_service(nic.id)
                 nic_service.remove()
                 return {'result': 'success'}
-        error("VM %s not found" % name)
-        return {'result': 'failure', 'reason': "VM %s not found" % name}
+        error(f"VM {name} not found")
+        return {'result': 'failure', 'reason': f"VM {name} not found"}
 
     def create_pool(self, name, poolpath, pooltype='dir', user='qemu', thinpool=None):
         print("not implemented")
         return
 
     def delete_image(self, image, pool=None):
-        pprint("Deleting Template %s" % image)
+        if image.endswith('.iso'):
+            pprint(f"Deleting Iso {image}")
+            disks_service = self.conn.system_service().disks_service()
+            disksearch = disks_service.list(search=f'name={image}')
+            if not disksearch:
+                return {'result': 'failure', 'reason': f"Image {image} not found"}
+            else:
+                disk_id = disksearch[0].id
+                disk_service = disks_service.disk_service(disk_id)
+                disk_service.remove()
+                return {'result': 'success'}
+        pprint("Deleting Template {image}")
         templates_service = self.templates_service
         templateslist = templates_service.list()
         for template in templateslist:
@@ -928,12 +999,14 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                 template_service = templates_service.template_service(template.id)
                 template_service.remove()
                 return {'result': 'success'}
-        return {'result': 'failure', 'reason': "Image %s not found" % image}
+        return {'result': 'failure', 'reason': f"Image {image} not found"}
 
     def add_image(self, url, pool, short=None, cmd=None, name=None, size=None):
+        downloaded = False
         shortimage = os.path.basename(url).split('?')[0]
-        if shortimage in self.volumes():
-            pprint("Template %s already there" % shortimage)
+        iso = True if shortimage.endswith('.iso') or name.endswith('.iso') else False
+        if shortimage in self.volumes(iso=iso):
+            pprint(f"Template {shortimage} already there")
             return {'result': 'success'}
         system_service = self.conn.system_service()
         profiles_service = self.conn.system_service().vnic_profiles_service()
@@ -950,73 +1023,58 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             elif 'rhevm' in self.netprofiles:
                 profile_id = self.netprofiles['rhevm']
         if profile_id is None:
-            return {'result': 'failure', 'reason': "Couldnt find ovirtmgmt nor rhevm network!!!"}
+            return {'result': 'failure', 'reason': "Couldn't find ovirtmgmt nor rhevm network!!!"}
         sds_service = system_service.storage_domains_service()
-        poolcheck = sds_service.list(search='name=%s' % pool)
+        poolcheck = sds_service.list(search=f'name={pool}')
         if not poolcheck:
-            return {'result': 'failure', 'reason': "Pool %s not found" % pool}
-        sd = sds_service.list(search='name=%s' % self.imagerepository)
-        if sd:
-            pprint("Trying to use glance repository %s" % self.imagerepository)
-            sd_service = sds_service.storage_domain_service(sd[0].id)
-            images_service = sd_service.images_service()
-            images = images_service.list()
-            if self.imagerepository != 'ovirt-image-repository':
-                ximages = {i.name: i.name for i in images}
-            else:
-                ximages = oimages
-            if shortimage in ximages:
-                imageobject = next((i for i in images if ximages[shortimage] in i.name), None)
-                if imageobject is None:
-                    error("Unable to locate the image in glance repository")
-                    return {'result': 'failure', 'reason': "Unable to locate the image in glance repository"}
-                image_service = images_service.image_service(imageobject.id)
-                image_service.import_(import_as_template=True, template=types.Template(name=shortimage),
-                                      cluster=types.Cluster(name=self.cluster),
-                                      storage_domain=types.StorageDomain(name=pool))
-                return {'result': 'success'}
-            else:
-                pprint("Image not found in %s. Manually downloading" % self.imagerepository)
-        else:
-            pprint("No glance repository found. Manually downloading")
+            return {'result': 'failure', 'reason': f"Pool {pool} not found"}
         disks_service = self.conn.system_service().disks_service()
-        disksearch = disks_service.list(search='alias=%s' % shortimage)
+        disksearch = disks_service.list(search=f'alias={shortimage}')
         if not disksearch:
-            if not os.path.exists('/tmp/%s' % shortimage):
-                pprint("Downloading locally %s" % shortimage)
-                downloadcmd = "curl -Lo /tmp/%s -f '%s'" % (shortimage, url)
+            if os.path.exists(url):
+                pprint(f"Using {url} as path")
+            elif not os.path.exists(f'/tmp/{shortimage}'):
+                downloaded = True
+                pprint(f"Downloading locally {shortimage}")
+                downloadcmd = f"curl -Lo /tmp/{shortimage} -f '{url}'"
                 code = os.system(downloadcmd)
                 if code != 0:
                     return {'result': 'failure', 'reason': "Unable to download indicated image"}
             else:
-                pprint("Using found /tmp/%s" % shortimage)
+                pprint(f"Using found /tmp/{shortimage}")
             BUF_SIZE = 128 * 1024
-            image_path = '/tmp/%s' % shortimage
+            image_path = os.path.abspath(url) if os.path.exists(url) else f'/tmp/{shortimage}'
             extensions = {'bz2': 'bunzip2', 'gz': 'gunzip', 'xz': 'unxz'}
             for extension in extensions:
                 if shortimage.endswith(extension):
                     executable = extensions[extension]
-                    if find_executable(executable) is None:
-                        pprint("%s not found. Can't uncompress image" % executable)
-                        os._exit(1)
+                    if which(executable) is None:
+                        pprint(f"{executable} not found. Can't uncompress image")
+                        sys.exit(1)
                     else:
-                        uncompresscmd = "%s %s" % (executable, image_path)
+                        uncompresscmd = f"{executable} {image_path}"
                         os.system(uncompresscmd)
-                        shortimage = shortimage.replace(".%s" % extension, '')
-                        image_path = '/tmp/%s' % shortimage
+                        shortimage = shortimage.replace(f".{extension}", '')
+                        image_path = f'/tmp/{shortimage}'
                         break
-            out = check_output(["qemu-img", "info", "--output", "json", image_path])
-            image_info = json.loads(out)
             image_size = os.path.getsize(image_path)
-            virtual_size = image_info["virtual-size"]
-            content_type = types.DiskContentType.DATA
-            disk_format = types.DiskFormat.COW
+            if not iso:
+                out = check_output(["qemu-img", "info", "--output", "json", image_path])
+                image_info = json.loads(out)
+                virtual_size = image_info["virtual-size"]
+                content_type = types.DiskContentType.DATA
+                disk_format = types.DiskFormat.COW
+            else:
+                virtual_size = image_size
+                content_type = types.DiskContentType.ISO
+                disk_format = types.DiskFormat.RAW
+            sparse = True if disk_format == types.DiskFormat.COW else False
             disks_service = self.conn.system_service().disks_service()
             disk = disks_service.add(disk=types.Disk(name=os.path.basename(shortimage), content_type=content_type,
                                                      description='Kcli Uploaded disk', format=disk_format,
                                                      initial_size=image_size,
                                                      provisioned_size=virtual_size,
-                                                     sparse=disk_format == types.DiskFormat.COW,
+                                                     sparse=sparse,
                                                      storage_domains=[types.StorageDomain(name=pool)]))
             disk_service = disks_service.disk_service(disk.id)
             disk_id = disk.id
@@ -1026,21 +1084,19 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                 if disk.status == types.DiskStatus.OK:
                     break
             transfers_service = self.conn.system_service().image_transfers_service()
-            transfer = transfers_service.add(types.ImageTransfer(image=types.Image(id=disk.id)))
+            transfer = transfers_service.add(types.ImageTransfer(image=types.Image(id=disk_id)))
             transfer_service = transfers_service.image_transfer_service(transfer.id)
             while transfer.phase == types.ImageTransferPhase.INITIALIZING:
                 sleep(1)
                 transfer = transfer_service.get()
             destination_url = urlparse(transfer.proxy_url)
-            # context = ssl.create_default_context()
-            # context.load_verify_locations(cafile=self.ca_file)
             context = ssl._create_unverified_context()
             proxy_connection = HTTPSConnection(destination_url.hostname, destination_url.port, context=context)
             proxy_connection.putrequest("PUT", destination_url.path)
-            proxy_connection.putheader('Content-Length', "%d" % (image_size,))
+            proxy_connection.putheader('Content-Length', image_size)
             proxy_connection.endheaders()
             last_progress = time()
-            pprint("Uploading image %s" % shortimage)
+            pprint(f"Uploading image {shortimage}")
             with open(image_path, "rb") as disk:
                 pos = 0
                 while pos < image_size:
@@ -1048,7 +1104,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                     chunk = disk.read(to_read)
                     if not chunk:
                         transfer_service.pause()
-                        raise RuntimeError("Unexpected end of file at pos=%d" % pos)
+                        raise RuntimeError(f"Unexpected end of file at pos={pos}")
                     proxy_connection.send(chunk)
                     pos += len(chunk)
                     now = time()
@@ -1058,12 +1114,14 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             response = proxy_connection.getresponse()
             if response.status != 200:
                 transfer_service.pause()
-                return {'result': 'failure', 'reason': "Upload failed: %s %s" % (response.status, response.reason)}
+                return {'result': 'failure', 'reason': f"Upload failed: {response.status} {response.reason}"}
             transfer_service.finalize()
             proxy_connection.close()
         else:
             disk_id = disksearch[0].id
             disk_service = disks_service.disk_service(disk_id)
+        if iso:
+            return {'result': 'success'}
         _template = types.Template(name='Blank')
         _os = types.OperatingSystem(boot=types.Boot(devices=[types.BootDevice.HD, types.BootDevice.CDROM]))
         console = types.Console(enabled=True)
@@ -1074,7 +1132,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                                                memory=memory, cpu=cpu, template=_template, console=console, os=_os),
                                       clone=False)
         while True:
-            pprint("Preparing temporary vm %s" % tempname)
+            pprint(f"Preparing temporary vm {tempname}")
             sleep(5)
             disk_service = disks_service.disk_service(disk_id)
             disk = disk_service.get()
@@ -1099,11 +1157,12 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             template = template_service.get()
             if template.status == types.TemplateStatus.OK:
                 break
-        tempvmsearch = self.vms_service.list(search='name=%s' % tempname)
+        tempvmsearch = self.vms_service.list(search=f'name={tempname}')
         tempvminfo = tempvmsearch[0]
         tempvm = self.vms_service.vm_service(tempvminfo.id)
         tempvm.remove()
-        os.remove('/tmp/%s' % shortimage)
+        if downloaded:
+            os.remove(f'/tmp/{shortimage}')
         return {'result': 'success'}
 
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
@@ -1130,13 +1189,17 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             cidr = 'N/A'
             vlan = network._vlan
             if vlan is not None:
-                cidr = vlan
+                cidr = f"vlan {vlan.id}"
             dhcp = network._id
             domainname = network._data_center
             domainname = self.conn.follow_link(network._data_center).name
             mode = network._description
             networks[networkname] = {'cidr': cidr, 'dhcp': dhcp, 'domain': domainname, 'type': 'routed', 'mode': mode}
         return networks
+
+    def info_network(self, name):
+        networkinfo = common.info_network(self, name)
+        return networkinfo
 
     def list_subnets(self):
         print("not implemented")
@@ -1155,21 +1218,21 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
 
 # returns the path of the pool, if it makes sense. used by kcli list --pools
     def get_pool_path(self, pool):
-        poolsearch = self.conn.system_service().storage_domains_service().list(search='name=%s' % pool)
+        poolsearch = self.conn.system_service().storage_domains_service().list(search=f'name={pool}')
         if not poolsearch:
-            error("Pool %s not found" % pool)
-            return {'result': 'failure', 'reason': "Pool %s not found" % pool}
+            error(f"Pool {pool} not found")
+            return {'result': 'failure', 'reason': f"Pool {pool} not found"}
         pool = poolsearch[0]
         return pool.storage.path
 
-    def flavors(self):
+    def list_flavors(self):
         return []
 
     def export(self, name, image=None):
-        vmsearch = self.vms_service.list(search='name=%s' % name)
+        vmsearch = self.vms_service.list(search=f'name={name}')
         if not vmsearch:
-            error("VM %s not found" % name)
-            return {'result': 'failure', 'reason': "VM %s not found" % name}
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
         vminfo = vmsearch[0]
         vm = self.vms_service.vm_service(vminfo.id)
         if str(vminfo.status) == 'up':
@@ -1204,3 +1267,70 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
 
     def list_dns(self, domain):
         return []
+
+    def create_bucket(self, bucket, public=False):
+        print("not implemented")
+        return
+
+    def delete_bucket(self, bucket):
+        print("not implemented")
+        return
+
+    def delete_from_bucket(self, bucket, path):
+        print("not implemented")
+        return
+
+    def download_from_bucket(self, bucket, path):
+        print("not implemented")
+        return
+
+    def upload_to_bucket(self, bucket, path, overrides={}, temp_url=False, public=False):
+        print("not implemented")
+        return
+
+    def list_buckets(self):
+        print("not implemented")
+        return []
+
+    def list_bucketfiles(self, bucket):
+        print("not implemented")
+        return []
+
+    def openshift_installer_data(self, pool):
+        clusters = self.conn.system_service().clusters_service().list(search=f'name={self.cluster}')
+        if clusters:
+            clusterid = clusters[0].id
+        pools = self.conn.system_service().storage_domains_service().list(search=f'name={pool}')
+        if pools:
+            poolid = pools[0].id
+        profiles_service = self.conn.system_service().vnic_profiles_service()
+        for prof in profiles_service.list():
+            networkinfo = self.conn.follow_link(prof.network)
+            netdatacenter = self.conn.follow_link(networkinfo.data_center)
+            if netdatacenter.name == self.datacenter:
+                vnicid = prof.id
+                break
+        return clusterid, poolid, vnicid
+
+    def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False):
+        print("not implemented")
+        return
+
+    def update_nic(self, name, index, network):
+        print("not implemented")
+
+    def update_network(self, name, dhcp=None, nat=None, domain=None, plan=None, overrides={}):
+        print("not implemented")
+        return {'result': 'success'}
+
+    def list_security_groups(self, network=None):
+        print("not implemented")
+        return []
+
+    def create_security_group(self, name, overrides={}):
+        print("not implemented")
+        return {'result': 'success'}
+
+    def delete_security_group(self, name):
+        print("not implemented")
+        return {'result': 'success'}

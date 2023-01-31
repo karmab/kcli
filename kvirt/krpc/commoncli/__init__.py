@@ -2,12 +2,12 @@
 # coding=utf-8
 
 from ast import literal_eval
-import random
 import socket
 from urllib.request import urlretrieve, urlopen
 import os
 from subprocess import call
 from shutil import move
+import sys
 import yaml
 
 binary_types = ['bz2', 'deb', 'jpg', 'gz', 'jpeg', 'iso', 'png', 'rpm', 'tgz', 'zip', 'ks']
@@ -23,7 +23,7 @@ def url_exists(url):
 
 def fetch(url, path):
     if 'raw.githubusercontent.com' not in url:
-        url = url.replace('github.com', 'raw.githubusercontent.com').replace('blob/master', 'master')
+        url = url.replace('github.com', 'raw.githubusercontent.com').replace('blob/main', 'main')
     shortname = os.path.basename(url)
     if not os.path.exists(path):
         os.mkdir(path)
@@ -40,21 +40,6 @@ def get_free_port():
     addr, port = s.getsockname()
     s.close()
     return port
-
-
-def get_free_nodeport():
-    """
-    :return:
-    """
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    while True:
-        port = random.randint(30000, 32767)
-        try:
-            s.bind(('', port))
-            s.close()
-            return port
-        except Exception:
-            continue
 
 
 def pprint(text):
@@ -115,7 +100,7 @@ def confirm(message):
     _input = input(message)
     if _input.lower() not in ['y', 'yes']:
         error("Leaving...")
-        os._exit(1)
+        sys.exit(1)
     return
 
 
@@ -133,7 +118,7 @@ def get_overrides(paramfile=None, param=[]):
                 overrides = yaml.safe_load(f)
             except:
                 error("Couldn't parse your parameters file %s. Not using it" % paramfile)
-                os._exit(1)
+                sys.exit(1)
     if param is not None:
         for x in param:
             if len(x.split('=')) < 2:
@@ -163,36 +148,6 @@ def get_overrides(paramfile=None, param=[]):
                             value[index] = v
                 overrides[key] = value
     return overrides
-
-
-def get_parameters(inputfile, raw=False):
-    """
-
-    :param inputfile:
-    :param raw:
-    :return:
-    """
-    if raw:
-        with open(inputfile, 'r') as entries:
-            try:
-                return yaml.safe_load(entries)
-            except:
-                return None
-    else:
-        parameters = ""
-        found = False
-        for line in open(inputfile).readlines():
-            if found and not line.startswith(' '):
-                break
-            elif found:
-                parameters += line
-            elif line != 'parameters:\n' and not found:
-                continue
-            else:
-                parameters += line
-                found = True
-        results = parameters if parameters != '' else None
-        return results
 
 
 def print_info(yamlinfo, output='plain', fields=[], values=False, pretty=True):
@@ -289,3 +244,7 @@ def get_oc(macosx=False):
             call(occmd, shell=True)
         else:
             move('oc', '/workdir/oc')
+
+
+def container_mode():
+    return True if os.path.exists("/i_am_a_container") and os.path.exists('/workdir') else False

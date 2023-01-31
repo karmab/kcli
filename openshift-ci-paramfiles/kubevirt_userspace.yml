@@ -1,0 +1,16 @@
+client: sphere_kubevirt
+cluster: ci-kubevirt-userspace
+domain: karmalabs.corp
+version: stable
+async: true
+notify: true
+tag: 4.11
+numcpus: 16
+memory: 8192
+ctlplanes: 3
+workers: 0
+disk_size: 30
+network_type: OVNKubernetes
+cluster_network_ipv4: 10.116.0.0/14
+service_network_ipv4: 172.16.0.0/16
+# kubevirt_ignore_node_port: true

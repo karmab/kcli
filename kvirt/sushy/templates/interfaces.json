@@ -1,0 +1,10 @@
+{
+    "@odata.type": "#EthernetInterfaceCollection.EthernetInterfaceCollection",
+    "Name": "Ethernet Interface Collection",
+    "Description": "Virtual NICs",
+    "Members@odata.count": {{ count }},
+    "Members": {{ macs|tojson }},
+    "Oem": {},
+    "@odata.context": "/redfish/v1/$metadata#EthernetInterfaceCollection.EthernetInterfaceCollection",
+    "@odata.id": "/redfish/v1/Systems/{{ client }}/{{ name }}"
+}

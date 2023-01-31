@@ -1,10 +1,25 @@
+{% if kubevirt_tekton %}
+{{ kubevirt_featuregates.append("deployTektonTaskResources") }}
+{% endif %}
 apiVersion: hco.kubevirt.io/v1beta1
 kind: HyperConverged
 metadata:
   name: kubevirt-hyperconverged
   namespace: {{ namespace }}
+{% if kubevirt_ovs %}
+  annotations:
+    deployOVS: "true"
+{% endif %}
 spec:
-  BareMetalPlatform: true
+{% if kubevirt_tekton %}
+  tektonPipelinesNamespace: {{ kubevirt_tekton_namespace }}
+{% endif %}
+{% if kubevirt_featuregates %}
+  featureGates:
+  {% for featuregate in kubevirt_featuregates %}
+    {{ featuregate }}: true 
+  {% endfor %}
+{% endif %}
   infra:
     nodePlacement:
       nodeSelector:

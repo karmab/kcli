@@ -1,69 +1,66 @@
 info: |
-    Deploys kubernetes using kubeadm on an arbitrary number of masters and workers.
-    when using more than a master, a vip is used with keepalived
-    default image is centos8, but there's also support for ubuntu based ones
-    version can be let blank to get latest, or specified as x.yy or x.yy.z
-    sdn can be choosen between flannel, weavenet, calico, canal, romana or cilium
-    nfs can be set to deploy an initial set of pvcs on the first master node
-    You can deploy extra apps with the apps array and for each of the supported app, indicate with the variable
-    ${app}_version with version to target (instead of latest)
-    You can set xip to true to use $api_ip.xip.io as base domain
-    Default container engine is containerd, but crio or docker can be specified instead.
-image: centos8
+    Deploys kubernetes using kubeadm on an arbitrary number of ctlplanes and workers.
+    when using more than one ctlplane, a vip is used with keepalived.
+    default image is centos8stream, but there's also support for ubuntu based ones and fedora.
+    version can be let blank to get latest, or specified as x.yy or x.yy.z .
+    sdn can be choosen between flannel, weavenet, calico, canal, romana or cilium.
+    nfs can be set to deploy an initial set of pvcs on the first ctlplane node.
+    You can deploy extra apps with the apps array and for each of the supported apps, indicate with the variable
+    ${app}_version which version to target.
+    You can set sslip to true to use $api_ip.sslip.io as base domain.
+    container engine defaults to containerd, but crio or docker can be specified instead.
+    for crio, engine_version can be indicated to force a specific version.
+image: centos8stream
 network: default
 api_ip:
-masters: 1
+cloud_lb: true
+ctlplanes: 1
 workers: 0
 version:
-pool: default
-cluster: testk
-domain: karmalabs.com
+pool: 
+cluster: mykube
+domain: karmalabs.corp
 engine: containerd
+engine_version:
 numcpus: 4
 worker_numcpus:
-master_numcpus:
+ctlplane_numcpus:
 memory: 6144
-master_memory:
+ctlplane_memory:
 worker_memory:
-master_tpm: false
-master_rng: false
 disk_size: 30
-worker_tpm: false
-worker_rng: false
 nfs: true
 nfs_pv_size: 30
 sdn: flannel
 ingress: true
 ingress_method: nginx
+policy_as_code: false
+policy_as_code_method: gatekeeper
 metallb: false
-metallb_version: v0.9.3
 metallb_range: 192.168.122.240-192.168.122.250
 multus: true
 notifycmd: "kubectl get pod -A"
 notify: false
-numa:
-numa_master:
-numa_worker:
-numamode:
-numamode_master:
-numamode_worker:
-cpupinning:
-cpupinning_master:
-cpupinning_worker:
 apps: []
 kubevirt_disk_size:
 extra_disks: []
-extra_master_disks: []
+extra_ctlplane_disks: []
 extra_worker_disks: []
 extra_networks: []
-extra_master_networks: []
+extra_ctlplane_networks: []
 extra_worker_networks: []
-xip: false
+sslip: false
 autolabel: true
 virtual_router_id:
-zerotier_nets: []
-zerotier_kubelet: false
 registry: false
 registry_pvc: false
 registry_user: dummy
 registry_password: dummy
+eksd: false
+eksd_version: latest
+threaded: false
+ctlplanes_threaded: false
+workers_threaded: false
+keys: []
+tempkey: false
+wait_ready: false

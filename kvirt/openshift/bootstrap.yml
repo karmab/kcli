@@ -3,28 +3,25 @@
 {% endif %}
 {{ cluster }}-bootstrap:
  image: {{ image }}
- pool: {{ pool }}
+ pool: {{ pool or config_pool }}
  enableroot: false 
+ notify: false
  keys: {{ keys }}
  numcpus: {{ bootstrap_numcpus | default(numcpus, numcpus) }}
  flavor: {{ flavor }}
  memory: {{ bootstrap_memory | default(memory, memory) }}
- zerotier_nets: {{ zerotier_nets }}
+{% if kubevirt_api_service %}
+ reservedns: true
+{% endif %}
  nets:
   - name: {{ network }}
 {% if bootstrap_mac != None %}
     mac: {{ bootstrap_mac }}
 {% endif %}
-{% if config_type == 'packet' %}
-  - name: {{ network }}
-    ip: 192.168.122.99
-    mask: 255.255.255.0
-    gateway: 192.168.122.1
-    dns: 8.8.8.8
-{% endif %}
  disks:
   - size: {{ disk_size }}
  files:
+{% if coredns %}
   - path: /etc/NetworkManager/dispatcher.d/99-forcedns
     origin: 99-forcedns
     mode: 755
@@ -32,24 +29,24 @@
     origin: staticpods/coredns.yml
   - path: /etc/kubernetes/Corefile
     origin: Corefile
+{% endif %}
 {% if mdns %}
   - path: /etc/kubernetes/manifests/mdns.yml
     origin: staticpods/mdns.yml
   - path: /etc/kubernetes/config.hcl.templ
     origin: config.hcl.templ
 {% endif %}
+{% if kubevirt_api_service %}
+  - path: /etc/kubernetes/manifests/haproxy.yml
+    origin: staticpods/haproxy.yml
+  - path: /etc/kubernetes/haproxy.cfg
+    origin: haproxy.cfg.kubevirt
+{% else %}
   - path: /etc/kubernetes/manifests/keepalived.yml
     origin: staticpods/keepalived.yml
   - path: /etc/kubernetes/keepalived.conf
     origin: keepalived.conf
-{% if network_type == 'Contrail' %}
-  - path: /etc/kubernetes/manifests/haproxy.yml
-    origin: staticpods/haproxy.yml
-  - path: /etc/kubernetes/haproxy.cfg
-    origin: haproxy.cfg
 {% endif %}
-{% if config_type == 'packet' %}
-  - path: /etc/kubernetes/packet-hack.sh
-    origin: packet-hack.sh
-    mode: 700
+{% if files|default([]) %}
+ extra_files: {{ files }}
 {% endif %}

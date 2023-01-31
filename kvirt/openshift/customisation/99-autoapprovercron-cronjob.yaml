@@ -1,0 +1,34 @@
+apiVersion: batch/{{ version }}
+kind: CronJob
+metadata:
+  name: autoapprover
+  namespace: kcli-infra
+spec:
+  concurrencyPolicy: Replace
+  successfulJobsHistoryLimit: 0
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    metadata:
+      creationTimestamp: null
+    spec:
+      template:
+        spec:
+          tolerations:
+          - effect: NoSchedule
+            key: node-role.kubernetes.io/master
+            operator: Exists
+          containers:
+          - command:
+            - "/bin/sh"
+            - "-c"
+            - |
+              #!/bin/sh
+              for cert in $(kubectl get csr -o name) ; do
+                kubectl certificate approve $cert
+              done
+            image: {{ registry }}/karmab/kubectl:latest
+            imagePullPolicy: IfNotPresent
+            name: autoapprover
+          restartPolicy: OnFailure
+          serviceAccountName: autoapprover
+  schedule: '*/2 * * * *'
