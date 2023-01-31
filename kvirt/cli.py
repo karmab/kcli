@@ -4363,13 +4363,12 @@ def cli():
                                epilog=productinfo_epilog, formatter_class=rawhelp)
 
     vminfo_desc = 'Info Of Vms'
-    vminfo_parser = argparse.ArgumentParser(add_help=False)
+    vminfo_parser = info_subparsers.add_parser('vm', parents=[output_parser], description=vminfo_desc, help=vminfo_desc)
     vminfo_parser.add_argument('-f', '--fields', help='Display Corresponding list of fields,'
                                'separated by a comma', metavar='FIELDS')
     vminfo_parser.add_argument('-v', '--values', action='store_true', help='Only report values')
     vminfo_parser.add_argument('names', help='VMNAMES', nargs='*')
     vminfo_parser.set_defaults(func=info_vm)
-    info_subparsers.add_parser('vm', parents=[vminfo_parser], description=vminfo_desc, help=vminfo_desc)
 
     list_desc = 'List Object'
     list_epilog = f"examples:\n{_list}"
