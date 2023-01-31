@@ -616,7 +616,8 @@ def info_vm(args):
         else:
             data = config.k.info(name, debug=args.debug)
         if data:
-            print(common.print_info(data, output=args.output, fields=fields, values=values, pretty=True))
+            output = args.global_output or args.output
+            print(common.print_info(data, output=output, fields=fields, values=values, pretty=True))
 
 
 def enable_host(args):
@@ -697,6 +698,7 @@ def _parse_vms_list(_list):
 
 def list_vm(args):
     """List vms"""
+    output = args.global_output or args.output
     filters = args.filters
     if args.client is not None and args.client == 'all':
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
@@ -711,8 +713,8 @@ def list_vm(args):
                 config = Kconfig(client=client, debug=args.debug, region=args.region,
                                  zone=args.zone, namespace=args.namespace)
                 _list = config.k.list()
-            if args.output is not None:
-                _list_output(_list, args.output)
+            if output is not None:
+                _list_output(_list, output)
             for vm in _list:
                 name = vm.get('name')
                 status = vm.get('status')
@@ -736,8 +738,8 @@ def list_vm(args):
             config = Kconfig(client=args.client, debug=args.debug, region=args.region,
                              zone=args.zone, namespace=args.namespace)
             _list = config.k.list()
-        if args.output is not None:
-            _list_output(_list, args.output)
+        if output is not None:
+            _list_output(_list, output)
         for vm in _list:
             name = vm.get('name')
             status = vm.get('status')
@@ -758,8 +760,9 @@ def list_confpool(args):
     """List confpools"""
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     confpools = baseconfig.list_confpools()
-    if args.output is not None:
-        _list_output(confpools, args.output)
+    output = args.global_output or args.output
+    if output is not None:
+        _list_output(confpools, output)
     confpoolstable = PrettyTable(["Confpool"])
     for confpool in sorted(confpools):
         confpoolstable.add_row([confpool])
@@ -773,8 +776,9 @@ def list_container(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     cont = Kcontainerconfig(config, client=args.containerclient).cont
     containers = cont.list_containers()
-    if args.output is not None:
-        _list_output(containers, args.output)
+    output = args.global_output or args.output
+    if output is not None:
+        _list_output(containers, output)
     pprint("Listing containers...")
     containerstable = PrettyTable(["Name", "Status", "Image", "Plan", "Command", "Ports", "Deploy"])
     for container in containers:
@@ -792,8 +796,9 @@ def profilelist_container(args):
     short = args.short
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     profiles = baseconfig.list_containerprofiles()
-    if args.output is not None:
-        _list_output(profiles, args.output)
+    output = args.global_output or args.output
+    if output is not None:
+        _list_output(profiles, output)
     if short:
         profilestable = PrettyTable(["Profile"])
         for profile in sorted(profiles):
@@ -815,8 +820,9 @@ def list_containerimage(args):
         sys.exit(1)
     cont = Kcontainerconfig(config, client=args.containerclient).cont
     images = cont.list_images()
-    if args.output is not None:
-        _list_output(images, args.output)
+    output = args.global_output or args.output
+    if output is not None:
+        _list_output(images, output)
     common.pprint("Listing images...")
     imagestable = PrettyTable(["Name"])
     for image in images:
@@ -830,8 +836,9 @@ def list_host(args):
     clientstable.align["Client"] = "l"
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     clients = baseconfig.clients
-    if args.output is not None:
-        _list_output(clients, args.output)
+    output = args.global_output or args.output
+    if output is not None:
+        _list_output(clients, output)
     for client in sorted(clients):
         enabled = baseconfig.ini[client].get('enabled', True)
         _type = baseconfig.ini[client].get('type', 'kvm')
@@ -860,8 +867,9 @@ def list_lb(args):
     short = args.short
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     lbs = config.list_loadbalancers()
-    if args.output is not None:
-        _list_output(lbs, args.output)
+    output = args.global_output or args.output
+    if output is not None:
+        _list_output(lbs, output)
     if short:
         loadbalancerstable = PrettyTable(["Loadbalancer"])
         for lb in sorted(lbs):
@@ -881,8 +889,9 @@ def info_confpool(args):
         error(f"Confpool {confpool} not found")
         sys.exit(1)
     data = baseconfig.confpools[confpool]
-    if args.output is not None:
-        _list_output(data, args.output)
+    output = args.global_output or args.output
+    if output is not None:
+        _list_output(data, output)
     print(common.print_info(data))
 
 
@@ -914,8 +923,9 @@ def list_profile(args):
     short = args.short
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     profiles = baseconfig.list_profiles()
-    if args.output is not None:
-        _list_output(profiles, args.output)
+    output = args.global_output or args.output
+    if output is not None:
+        _list_output(profiles, output)
     if short:
         profilestable = PrettyTable(["Profile"])
         for profile in sorted(profiles):
@@ -939,8 +949,9 @@ def list_dns(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     entries = k.list_dns(domain)
-    if args.output is not None:
-        _list_output(entries, args.output)
+    output = args.global_output or args.output
+    if output is not None:
+        _list_output(entries, output)
     if short:
         dnstable = PrettyTable(["Entry"])
         for entry in sorted(entries):
@@ -960,8 +971,9 @@ def list_flavors(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     flavors = k.list_flavors()
-    if args.output is not None:
-        _list_output(flavors, args.output)
+    output = args.global_output or args.output
+    if output is not None:
+        _list_output(flavors, output)
     if short:
         flavorstable = PrettyTable(["Flavor"])
         for flavor in sorted(flavors):
@@ -978,14 +990,15 @@ def list_flavors(args):
 def list_available_images(args):
     """List images"""
     full = args.full
-    if args.output is not None:
+    output = args.global_output or args.output
+    if output is not None:
         available_images = []
         for key in IMAGES:
             if full:
                 available_images.append([{'image': key, 'url': IMAGES[key]}])
             else:
                 available_images.append(key)
-        _list_output(available_images, args.output)
+        _list_output(available_images, output)
     headers = ["Images"]
     if full:
         headers.append("URL")
@@ -1005,8 +1018,9 @@ def list_image(args):
     if config.client != 'all':
         k = config.k
     images = k.volumes()
-    if args.output is not None:
-        _list_output(images, args.output)
+    output = args.global_output or args.output
+    if output is not None:
+        _list_output(images, output)
     imagestable = PrettyTable(["Images"])
     imagestable.align["Images"] = "l"
     for image in images:
@@ -1020,8 +1034,9 @@ def list_iso(args):
     if config.client != 'all':
         k = config.k
     isos = k.volumes(iso=True)
-    if args.output is not None:
-        _list_output(isos, args.output)
+    output = args.global_output or args.output
+    if output is not None:
+        _list_output(isos, output)
     isostable = PrettyTable(["Iso"])
     isostable.align["Iso"] = "l"
     for iso in isos:
@@ -1038,8 +1053,9 @@ def list_network(args):
         k = config.k
     if not subnets:
         networks = k.list_networks()
-        if args.output is not None:
-            _list_output(networks, args.output)
+        output = args.global_output or args.output
+        if output is not None:
+            _list_output(networks, output)
         pprint("Listing Networks...")
         if short:
             networkstable = PrettyTable(["Network"])
@@ -1061,8 +1077,9 @@ def list_network(args):
         print(networkstable)
     else:
         subnets = k.list_subnets()
-        if args.output is not None:
-            _list_output(subnets, args.output)
+        output = args.global_output or args.output
+        if output is not None:
+            _list_output(subnets, output)
         pprint("Listing Subnets...")
         if short:
             subnetstable = PrettyTable(["Subnets"])
@@ -1088,8 +1105,9 @@ def list_plan(args):
     if config.extraclients:
         allclients = config.extraclients.copy()
         allclients.update({config.client: config.k})
-        if args.output is not None:
-            _list_output(allclients, args.output)
+        output = args.global_output or args.output
+        if output is not None:
+            _list_output(allclients, output)
         planstable = PrettyTable(["Plan", "Host", "Vms"])
         for cli in sorted(allclients):
             currentconfig = Kconfig(client=cli, debug=args.debug, region=args.region, zone=args.zone,
@@ -1100,8 +1118,9 @@ def list_plan(args):
                 planstable.add_row([planname, cli, planvms])
     else:
         plans = config.list_plans()
-        if args.output is not None:
-            _list_output(plans, args.output)
+        output = args.global_output or args.output
+        if output is not None:
+            _list_output(plans, output)
         planstable = PrettyTable(["Plan", "Vms"])
         for plan in plans:
             planname = plan[0]
@@ -1247,8 +1266,9 @@ def list_apps_generic(args):
     """List generic kube apps"""
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     apps = baseconfig.list_apps_generic(quiet=True)
-    if args.output is not None:
-        _list_output(apps, args.output)
+    output = args.global_output or args.output
+    if output is not None:
+        _list_output(apps, output)
     appstable = PrettyTable(["Name"])
     for app in apps:
         appstable.add_row([app])
@@ -1266,8 +1286,9 @@ def list_apps_openshift(args):
         os.environ['KUBECONFIG'] = f"{os.getcwd()}/{os.environ['KUBECONFIG']}"
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     apps = baseconfig.list_apps_openshift(quiet=True, installed=args.installed)
-    if args.output is not None:
-        _list_output(apps, args.output)
+    output = args.global_output or args.output
+    if output is not None:
+        _list_output(apps, output)
     appstable = PrettyTable(["Name"])
     for app in apps:
         appstable.add_row([app])
@@ -1285,8 +1306,9 @@ def list_kube(args):
             currentconfig = Kconfig(client=cli, debug=args.debug, region=args.region, zone=args.zone,
                                     namespace=args.namespace)
             kubes = currentconfig.list_kubes()
-            if args.output is not None:
-                _list_output(kubes, args.output)
+            output = args.global_output or args.output
+            if output is not None:
+                _list_output(kubes, output)
             for kubename in kubes:
                 kube = kubes[kubename]
                 kubetype = kube['type']
@@ -1296,8 +1318,9 @@ def list_kube(args):
     else:
         kubestable = PrettyTable(["Cluster", "Type", "Plan", "Vms"])
         kubes = config.list_kubes()
-        if args.output is not None:
-            _list_output(kubes, args.output)
+        output = args.global_output or args.output
+        if output is not None:
+            _list_output(kubes, output)
         for kubename in kubes:
             kube = kubes[kubename]
             kubetype = kube['type']
@@ -1313,8 +1336,9 @@ def list_pool(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     pools = k.list_pools()
-    if args.output is not None:
-        _list_output(pools, args.output)
+    output = args.global_output or args.output
+    if output is not None:
+        _list_output(pools, output)
     if short:
         poolstable = PrettyTable(["Pool"])
         for pool in sorted(pools):
@@ -1339,8 +1363,9 @@ def list_product(args):
         productstable = PrettyTable(["Repo", "Product", "Group", "Description", "Numvms", "Memory"])
         productstable.align["Repo"] = "l"
         productsinfo = baseconfig.list_products(repo=repo)
-        if args.output is not None:
-            _list_output(productsinfo, args.output)
+        output = args.global_output or args.output
+        if output is not None:
+            _list_output(productsinfo, output)
         for prod in sorted(productsinfo, key=lambda x: (x['repo'], x['group'], x['name'])):
             name = prod['name']
             repo = prod['repo']
@@ -1358,8 +1383,9 @@ def list_product(args):
         productstable = PrettyTable(["Repo", "Product", "Group", "Description", "Numvms", "Memory"])
         productstable.align["Repo"] = "l"
         productsinfo = baseconfig.list_products(group=group, repo=repo)
-        if args.output is not None:
-            _list_output(productsinfo, args.output)
+        output = args.global_output or args.output
+        if output is not None:
+            _list_output(productsinfo, output)
         for product in sorted(productsinfo, key=lambda x: (x['repo'], x['group'], x['name'])):
             name = product['name']
             repo = product['repo']
@@ -1377,8 +1403,9 @@ def list_repo(args):
     repostable = PrettyTable(["Repo", "Url"])
     repostable.align["Repo"] = "l"
     reposinfo = baseconfig.list_repos()
-    if args.output is not None:
-        _list_output(reposinfo, args.output)
+    output = args.global_output or args.output
+    if output is not None:
+        _list_output(reposinfo, output)
     for repo in sorted(reposinfo):
         url = reposinfo[repo]
         repostable.add_row([repo, url])
@@ -1393,8 +1420,9 @@ def list_vmdisk(args):
     diskstable = PrettyTable(["Name", "Pool", "Path"])
     diskstable.align["Name"] = "l"
     disks = k.list_disks()
-    if args.output is not None:
-        _list_output(disks, args.output)
+    output = args.global_output or args.output
+    if output is not None:
+        _list_output(disks, output)
     for disk in sorted(disks):
         path = disks[disk]['path']
         pool = disks[disk]['pool']
@@ -3020,8 +3048,9 @@ def list_bucket(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     buckets = k.list_buckets()
-    if args.output is not None:
-        _list_output(buckets, args.output)
+    output = args.global_output or args.output
+    if output is not None:
+        _list_output(buckets, output)
     bucketstable = PrettyTable(["Bucket"])
     for bucket in sorted(buckets):
         bucketstable.add_row([bucket])
@@ -3036,8 +3065,9 @@ def list_bucketfiles(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     bucketfiles = k.list_bucketfiles(bucket)
-    if args.output is not None:
-        _list_output(bucketfiles, args.output)
+    output = args.global_output or args.output
+    if output is not None:
+        _list_output(bucketfiles, output)
     bucketfilestable = PrettyTable(["BucketFiles"])
     for bucketfile in sorted(bucketfiles):
         bucketfilestable.add_row([bucketfile])
@@ -3152,8 +3182,9 @@ def list_keyword(args):
     keywordstable = PrettyTable(["Keyword", "Default Value", "Current Value"])
     keywordstable.align["Client"] = "l"
     keywords = baseconfig.list_keywords()
-    if args.output is not None:
-        _list_output(keywords, args.output)
+    output = args.global_output or args.output
+    if output is not None:
+        _list_output(keywords, output)
     for keyword in sorted(keywords):
         value = keywords[keyword]
         default_value = default[keyword]
@@ -3230,8 +3261,9 @@ def list_securitygroups(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     securitygroups = k.list_security_groups(network=args.network)
-    if args.output is not None:
-        _list_output(securitygroups, args.output)
+    output = args.global_output or args.output
+    if output is not None:
+        _list_output(securitygroups, output)
     securitygroupstable = PrettyTable(["Securitygroup"])
     for securitygroup in sorted(securitygroups):
         securitygroupstable.add_row([securitygroup])
@@ -3253,13 +3285,16 @@ def cli():
                                help='specify parameter or keyword for rendering (multiple can be specified)',
                                metavar='PARAM')
     parent_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE', action='append')
+    output_parser = argparse.ArgumentParser(add_help=False)
+    output_parser.add_argument('-o', '-O', '--output', choices=['json', 'name', 'yaml'], help='Format of the output')
     parser = argparse.ArgumentParser(description='Libvirt/Ovirt/Vsphere/Gcp/Aws/Openstack/Kubevirt Wrapper/Ibm Cloud')
     parser.add_argument('-C', '-c', '--client')
     parser.add_argument('--containerclient', help='Containerclient to use')
     parser.add_argument('--dnsclient', help='Dnsclient to use')
     parser.add_argument('-d', '-D', '--debug', action='store_true')
     parser.add_argument('-n', '-N', '--namespace', help='Namespace to use. specific to kubevirt')
-    parser.add_argument('-o', '-O', '--output', choices=['json', 'name', 'yaml'], help='Format of the output')
+    parser.add_argument('-o', '-O', '--output', choices=['json', 'name', 'yaml'], help='Format of the output',
+                        dest='global_output')
     parser.add_argument('-r', '-R', '--region', help='Region to use. specific to aws/gcp/ibm')
     parser.add_argument('-z', '-Z', '--zone', help='Zone to use. specific to gcp/ibm')
 
@@ -4350,131 +4385,136 @@ def cli():
 
     appgenericlist_desc = 'List Available Kube Apps Generic'
     appgenericlist_parser = listapp_subparsers.add_parser('generic', description=appgenericlist_desc,
-                                                          help=appgenericlist_desc)
+                                                          help=appgenericlist_desc, parents=[output_parser])
     appgenericlist_parser.set_defaults(func=list_apps_generic)
 
     appopenshiftlist_desc = 'List Available Kube Components Openshift'
     appopenshiftlist_parser = listapp_subparsers.add_parser('openshift', description=appopenshiftlist_desc,
-                                                            help=appopenshiftlist_desc, aliases=['hypershift'])
+                                                            help=appopenshiftlist_desc, aliases=['hypershift'],
+                                                            parents=[output_parser])
     appopenshiftlist_parser.add_argument('-i', '--installed', action='store_true', help='Show installed apps')
     appopenshiftlist_parser.set_defaults(func=list_apps_openshift)
 
     imagelist_desc = 'List Available Images'
     imagelist_parser = list_subparsers.add_parser('available-images', description=imagelist_desc, help=imagelist_desc,
-                                                  aliases=['available-image'])
+                                                  aliases=['available-image'], parents=[output_parser])
     imagelist_parser.add_argument('-f', '--full', action='store_true', help='Provide URLS too')
     imagelist_parser.set_defaults(func=list_available_images)
 
     bucketlist_desc = 'List Buckets'
     bucketlist_parser = list_subparsers.add_parser('bucket', description=bucketlist_desc, help=bucketlist_desc,
-                                                   aliases=['buckets'])
+                                                   aliases=['buckets'], parents=[output_parser])
     bucketlist_parser.set_defaults(func=list_bucket)
 
     bucketfileslist_desc = 'List Bucket files'
     bucketfileslist_parser = list_subparsers.add_parser('bucket-file', description=bucketfileslist_desc,
-                                                        help=bucketfileslist_desc, aliases=['bucket-files'])
+                                                        help=bucketfileslist_desc, aliases=['bucket-files'],
+                                                        parents=[output_parser])
     bucketfileslist_parser.add_argument('bucket', metavar='BUCKET')
     bucketfileslist_parser.set_defaults(func=list_bucketfiles)
 
     confpoollist_desc = 'List Confpools'
     confpoollist_parser = list_subparsers.add_parser('confpool', description=confpoollist_desc, help=confpoollist_desc,
-                                                     aliases=['confpools'])
+                                                     aliases=['confpools'], parents=[output_parser])
     confpoollist_parser.set_defaults(func=list_confpool)
 
     containerimagelist_desc = 'List Container Images'
     containerimagelist_parser = list_subparsers.add_parser('container-image', description=containerimagelist_desc,
                                                            help=containerimagelist_desc,
-                                                           aliases=['container-images'])
+                                                           aliases=['container-images'], parents=[output_parser])
     containerimagelist_parser.set_defaults(func=list_containerimage)
 
     containerlist_desc = 'List Containers'
     containerlist_parser = list_subparsers.add_parser('container', description=containerlist_desc,
-                                                      help=containerlist_desc, aliases=['containers'])
+                                                      help=containerlist_desc, aliases=['containers'],
+                                                      parents=[output_parser])
     containerlist_parser.add_argument('--filters', choices=('up', 'down'))
     containerlist_parser.set_defaults(func=list_container)
 
     containerprofilelist_desc = 'List Container Profiles'
     containerprofilelist_parser = list_subparsers.add_parser('container-profile', description=containerprofilelist_desc,
                                                              help=containerprofilelist_desc,
-                                                             aliases=['container-profiles'])
+                                                             aliases=['container-profiles'], parents=[output_parser])
     containerprofilelist_parser.add_argument('--short', action='store_true')
     containerprofilelist_parser.set_defaults(func=profilelist_container)
 
     vmdisklist_desc = 'List All Vm Disks'
-    vmdisklist_parser = argparse.ArgumentParser(add_help=False)
+    vmdisklist_parser = list_subparsers.add_parser('disk', parents=[output_parser], description=vmdisklist_desc,
+                                                   help=vmdisklist_desc, aliases=['disks'])
     vmdisklist_parser.set_defaults(func=list_vmdisk)
-    list_subparsers.add_parser('disk', parents=[vmdisklist_parser], description=vmdisklist_desc,
-                               help=vmdisklist_desc, aliases=['disks'])
 
     dnslist_desc = 'List Dns Entries'
-    dnslist_parser = argparse.ArgumentParser(add_help=False)
+    dnslist_parser = list_subparsers.add_parser('dns', parents=[output_parser], description=dnslist_desc,
+                                                help=dnslist_desc)
     dnslist_parser.add_argument('--short', action='store_true')
     dnslist_parser.add_argument('domain', metavar='DOMAIN', help='Domain where to list entry (network for libvirt)')
     dnslist_parser.set_defaults(func=list_dns)
-    list_subparsers.add_parser('dns', parents=[dnslist_parser], description=dnslist_desc, help=dnslist_desc)
 
     flavorlist_desc = 'List Flavors'
     flavorlist_parser = list_subparsers.add_parser('flavor', description=flavorlist_desc, help=flavorlist_desc,
-                                                   aliases=['flavors'])
+                                                   aliases=['flavors'], parents=[output_parser])
     flavorlist_parser.add_argument('--short', action='store_true')
     flavorlist_parser.set_defaults(func=list_flavors)
 
     hostlist_desc = 'List Hosts'
     hostlist_parser = list_subparsers.add_parser('host', description=hostlist_desc, help=hostlist_desc,
-                                                 aliases=['hosts', 'client', 'clients'])
+                                                 aliases=['hosts', 'client', 'clients'], parents=[output_parser])
     hostlist_parser.set_defaults(func=list_host)
 
     imagelist_desc = 'List Images'
     imagelist_parser = list_subparsers.add_parser('image', description=imagelist_desc, help=imagelist_desc,
-                                                  aliases=['images', 'template', 'templates'])
+                                                  aliases=['images', 'template', 'templates'], parents=[output_parser])
     imagelist_parser.set_defaults(func=list_image)
 
     isolist_desc = 'List Isos'
-    isolist_parser = list_subparsers.add_parser('iso', description=isolist_desc, help=isolist_desc, aliases=['isos'])
+    isolist_parser = list_subparsers.add_parser('iso', description=isolist_desc, help=isolist_desc, aliases=['isos'],
+                                                parents=[output_parser])
     isolist_parser.set_defaults(func=list_iso)
 
     keywordlist_desc = 'List Keyword'
     keywordlist_parser = list_subparsers.add_parser('keyword', description=keywordlist_desc, help=keywordlist_desc,
-                                                    aliases=['keywords', 'parameter', 'parameters'])
+                                                    aliases=['keywords', 'parameter', 'parameters'],
+                                                    parents=[output_parser])
     keywordlist_parser.set_defaults(func=list_keyword)
 
     kubelist_desc = 'List Kubes'
     kubelist_parser = list_subparsers.add_parser('kube', description=kubelist_desc, help=kubelist_desc,
-                                                 aliases=['kubes', 'cluster', 'clusters'])
+                                                 aliases=['kubes', 'cluster', 'clusters'], parents=[output_parser])
     kubelist_parser.set_defaults(func=list_kube)
 
     kubeconfiglist_desc = 'List Kubeconfigs'
     kubeconfiglist_parser = list_subparsers.add_parser('kubeconfig', description=kubeconfiglist_desc,
-                                                       help=kubeconfiglist_desc, aliases=['kubeconfigs'])
+                                                       help=kubeconfiglist_desc, aliases=['kubeconfigs'],
+                                                       parents=[output_parser])
     kubeconfiglist_parser.set_defaults(func=list_kubeconfig)
 
     lblist_desc = 'List Load Balancers'
     lblist_parser = list_subparsers.add_parser('lb', description=lblist_desc, help=lblist_desc,
-                                               aliases=['loadbalancers', 'lbs'])
+                                               aliases=['loadbalancers', 'lbs'], parents=[output_parser])
     lblist_parser.add_argument('--short', action='store_true')
     lblist_parser.set_defaults(func=list_lb)
 
     networklist_desc = 'List Networks'
     networklist_parser = list_subparsers.add_parser('network', description=networklist_desc, help=networklist_desc,
-                                                    aliases=['net', 'nets', 'networks'])
+                                                    aliases=['net', 'nets', 'networks'], parents=[output_parser])
     networklist_parser.add_argument('--short', action='store_true')
     networklist_parser.add_argument('-s', '--subnets', action='store_true')
     networklist_parser.set_defaults(func=list_network)
 
     planlist_desc = 'List Plans'
     planlist_parser = list_subparsers.add_parser('plan', description=planlist_desc, help=planlist_desc,
-                                                 aliases=['plans'])
+                                                 aliases=['plans'], parents=[output_parser])
     planlist_parser.set_defaults(func=list_plan)
 
     poollist_desc = 'List Pools'
     poollist_parser = list_subparsers.add_parser('pool', description=poollist_desc, help=poollist_desc,
-                                                 aliases=['pools'])
+                                                 aliases=['pools'], parents=[output_parser])
     poollist_parser.add_argument('--short', action='store_true')
     poollist_parser.set_defaults(func=list_pool)
 
     productlist_desc = 'List Products'
     productlist_parser = list_subparsers.add_parser('product', description=productlist_desc, help=productlist_desc,
-                                                    aliases=['products'])
+                                                    aliases=['products'], parents=[output_parser])
     productlist_parser.add_argument('-g', '--group', help='Only Display products of the indicated group',
                                     metavar='GROUP')
     productlist_parser.add_argument('-r', '--repo', help='Only Display products of the indicated repository',
@@ -4484,32 +4524,33 @@ def cli():
 
     profilelist_desc = 'List Profiles'
     profilelist_parser = list_subparsers.add_parser('profile', description=profilelist_desc, help=profilelist_desc,
-                                                    aliases=['profiles'])
+                                                    aliases=['profiles'], parents=[output_parser])
     profilelist_parser.add_argument('--short', action='store_true')
     profilelist_parser.set_defaults(func=list_profile)
 
     repolist_desc = 'List Repos'
     repolist_parser = list_subparsers.add_parser('repo', description=repolist_desc, help=repolist_desc,
-                                                 aliases=['repos'])
+                                                 aliases=['repos'], parents=[output_parser])
     repolist_parser.set_defaults(func=list_repo)
 
     securitygrouplist_desc = 'List Security Groups'
     securitygrouplist_parser = list_subparsers.add_parser('security-group', description=securitygrouplist_desc,
                                                           help=securitygrouplist_desc,
-                                                          aliases=['sg', 'sgs', 'security-groups'])
+                                                          aliases=['sg', 'sgs', 'security-groups'],
+                                                          parents=[output_parser])
     securitygrouplist_parser.add_argument('-n', '--network', help='Use the corresponding network', metavar='NETWORK')
     securitygrouplist_parser.set_defaults(func=list_securitygroups)
 
     vmlist_desc = 'List Vms'
-    vmlist_parser = argparse.ArgumentParser(add_help=False)
+    vmlist_parser = list_subparsers.add_parser('vm', parents=[output_parser], description=vmlist_desc, help=vmlist_desc,
+                                               aliases=['vms'])
     vmlist_parser.add_argument('--filters', choices=('up', 'down'))
     vmlist_parser.set_defaults(func=list_vm)
-    list_subparsers.add_parser('vm', parents=[vmlist_parser], description=vmlist_desc, help=vmlist_desc,
-                               aliases=['vms'])
 
     vmsnapshotlist_desc = 'List Snapshots Of Vm'
     vmsnapshotlist_parser = list_subparsers.add_parser('vm-snapshot', description=vmsnapshotlist_desc,
-                                                       help=vmsnapshotlist_desc, aliases=['vm-snapshots'])
+                                                       help=vmsnapshotlist_desc, aliases=['vm-snapshots'],
+                                                       parents=[output_parser])
     vmsnapshotlist_parser.add_argument('name', metavar='VMNAME')
     vmsnapshotlist_parser.set_defaults(func=snapshotlist_vm)
 
