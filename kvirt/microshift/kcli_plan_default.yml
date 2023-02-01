@@ -1,7 +1,6 @@
 info: |
   Deploy kubernetes using microshift on $nodes vms
   Image defaults to rhel8, which requires valid credentials (rhnuser/rhnpassword or rhnak/rhnorg)
-  Alternatively, centos8stream can be used but this will deploy an older version based on kube1.21 and flannel
   The nodes can also be registered to an ACM instance by stting register_acm to true and providing kubeconfig_acm 
 nodes: 1
 cluster: mymicroshift

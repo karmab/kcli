@@ -19,7 +19,7 @@ def valid_rhn_credentials(config, overrides):
 
 
 def create(config, plandir, cluster, overrides, dnsconfig=None):
-    data = {'kubetype': 'microshift', 'sslip': True, 'image': 'centos8stream', 'pull_secret': 'openshift_pull.json'}
+    data = {'kubetype': 'microshift', 'sslip': True, 'image': 'rhel8', 'pull_secret': 'openshift_pull.json'}
     data.update(overrides)
     if 'rhel' in data['image'] and not valid_rhn_credentials(config, overrides):
         error("Using rhel image requires setting rhnuser/rhnpassword or rhnorg/rhnak in your conf or as parameters")
@@ -36,15 +36,13 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         error("Invalid number of nodes")
         sys.exit(1)
     register_acm = data.get('register_acm', False)
-    need_pull_secret = register_acm or 'rhel' in data['image']
     pull_secret = data.get('pull_secret')
-    if pull_secret is not None:
-        if not os.path.isabs(pull_secret):
-            pull_secret = os.path.abspath(pull_secret)
-            data['pull_secret'] = pull_secret
-        if not os.path.exists(pull_secret) and need_pull_secret:
-            error(f"pull_secret path {pull_secret} not found")
-            sys.exit(1)
+    if not os.path.isabs(pull_secret):
+        pull_secret = os.path.abspath(pull_secret)
+        data['pull_secret'] = pull_secret
+    if not os.path.exists(pull_secret):
+        error(f"pull_secret path {pull_secret} not found")
+        sys.exit(1)
     if register_acm:
         kubeconfig_acm = data.get('kubeconfig_acm')
         if kubeconfig_acm is not None:
