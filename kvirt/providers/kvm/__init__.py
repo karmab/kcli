@@ -1707,6 +1707,7 @@ class Kvirt(object):
             e = element.find('{kvirt}ip')
             if e is not None:
                 ip = e.text
+                yamlinfo['ip'] = ip
             e = element.find('{kvirt}creationdate')
             if e is not None:
                 creationdate = e.text
@@ -1758,7 +1759,7 @@ class Kvirt(object):
             else:
                 network = element.find('source').get('network')
             yamlinfo['nets'].append({'device': device, 'mac': mac, 'net': network, 'type': networktype})
-        all_ips = []
+        all_ips = [ip] if ip is not None else []
         if vm.isActive() and ifaces:
             ips = []
             for mac in macs:
@@ -1770,10 +1771,10 @@ class Kvirt(object):
                             ip = entry['addr']
                             ips.append(ip)
                             all_ips.append(ip)
-                if ips and 'ip' not in yamlinfo:
-                    ip4s = [i for i in ips if ':' not in i]
-                    ip6s = [i for i in ips if i not in ip4s]
-                    yamlinfo['ip'] = ip4s[0] if ip4s else ip6s[0]
+            if ips and 'ip' not in yamlinfo:
+                ip4s = [i for i in ips if ':' not in i]
+                ip6s = [i for i in ips if i not in ip4s]
+                yamlinfo['ip'] = ip4s[0] if ip4s else ip6s[0]
         if len(all_ips) > 1:
             yamlinfo['ips'] = all_ips
         pcidevices = []
