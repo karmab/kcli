@@ -827,12 +827,14 @@ class Kconfig(Kbaseconfig):
                         os.makedirs(destdir, exist_ok=True)
                     common.fetch(f"{onfly}/{script}", destdir)
                 script = os.path.expanduser(script)
-                if os.path.exists(script) or os.path.isabs(script):
-                    script = os.path.abspath(script)
+                if os.path.exists(script):
+                    if not os.path.isabs(script):
+                        script = os.path.abspath(script)
                 elif basedir != '.':
                     script = f'{basedir}/{script}'
                 if not os.path.exists(script):
-                    return {'result': 'failure', 'reason': f"Script {script} not found"}
+                    error(f"Script file {script} not found")
+                    sys.exit(1)
                 else:
                     scriptbasedir = os.path.dirname(script) if os.path.dirname(script) != '' else '.'
                     env = Environment(loader=FileSystemLoader(scriptbasedir), undefined=undefined,
