@@ -1,6 +1,6 @@
 # kcli repository
 
-[![ci](https://github.com/karmab/kcli/actions/workflows/ci.yml/badge.svg)](https://github.com/karmab/kcli/actions/workflows/ci.yml)
+[![CI](https://github.com/karmab/kcli/actions/workflows/ci.yml/badge.svg)](https://github.com/karmab/kcli/actions/workflows/ci.yml)
 [![Copr](https://copr.fedorainfracloud.org/coprs/karmab/kcli/package/kcli/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/karmab/kcli/package/kcli)
 
 ![Screenshot](kcli.png)

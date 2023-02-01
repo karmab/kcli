@@ -11,6 +11,18 @@ spec:
       storage: 5Mi
 ---
 apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kcli-workdir
+  namespace: kcli-infra
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Mi
+---
+apiVersion: v1
 kind: Namespace
 metadata:
   name: kcli-infra
@@ -62,6 +74,8 @@ spec:
           name: kcli-clusters
         - mountPath: /root/.ssh
           name: kcli-ssh
+        - name: kcli-workdir
+          mountPath: /workdir
       volumes:
       - configMap:
           defaultMode: 0700
@@ -74,3 +88,6 @@ spec:
       - name: kcli-clusters
         persistentVolumeClaim:
           claimName: kcli-clusters
+      - name: kcli-workdir
+        persistentVolumeClaim:
+          claimName: kcli-workdir

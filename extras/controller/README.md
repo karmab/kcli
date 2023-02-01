@@ -4,7 +4,7 @@ There is a controller leveraging kcli and using vm, plan and clusters crds to cr
 
 - a running kubernetes/openshift cluster and KUBECONFIG env variable pointing to it (or simply .kube/config)
 - some infrastructure supported by kcli running somewhere and the corresponding credentials.
-- storage to hold two pvcs (one from plan files data and the other for clusters data)
+- storage to hold at least one pvc (for cluster data) and optionally one for plan files data.
 
 ## Deploying
 
@@ -26,6 +26,13 @@ Then deploy the controller:
 ```
 kubectl create -f https://raw.githubusercontent.com/karmab/kcli/main/extras/controller/deploy.yml
 ```
+
+If you want to need a pvc for storing plan data, use the following instead:
+
+```
+kubectl create -f https://raw.githubusercontent.com/karmab/kcli/main/extras/controller/deploy_2pvcs.yml
+```
+
 
 ## How to use
 

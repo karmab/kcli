@@ -1,4 +1,4 @@
-|Build Status| |Pypi| |Copr| |Documentation Status|
+|CI| |Pypi| |Copr| |Documentation Status|
 
 About
 =====
@@ -2375,8 +2375,8 @@ Client side
 API documentation
 =================
 
-.. |Build Status| image:: https://travis-ci.org/karmab/kcli.svg?branch=main
-   :target: https://travis-ci.org/karmab/kcli
+.. |CI| image:: https://github.com/karmab/kcli/actions/workflows/ci.yml/badge.svg
+   :target: https://github.com/karmab/kcli/actions/workflows/ci.yml
 .. |Pypi| image:: http://img.shields.io/pypi/v/kcli.svg
    :target: https://pypi.python.org/pypi/kcli/
 .. |Copr| image:: https://copr.fedorainfracloud.org/coprs/karmab/kcli/package/kcli/status_image/last_build.png

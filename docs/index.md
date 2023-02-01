@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/karmab/kcli.svg?branch=main)](https://travis-ci.org/karmab/kcli)
+[![CI](https://github.com/karmab/kcli/actions/workflows/ci.yml/badge.svg)](https://github.com/karmab/kcli/actions/workflows/ci.yml)
 [![Pypi](http://img.shields.io/pypi/v/kcli.svg)](https://pypi.python.org/pypi/kcli/)
 [![Copr](https://copr.fedorainfracloud.org/coprs/karmab/kcli/package/kcli/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/karmab/kcli/package/kcli)
 [![Documentation Status](https://readthedocs.org/projects/kcli/badge/?version=latest)](https://kcli.readthedocs.io/en/latest/?badge=latest)
