@@ -819,7 +819,6 @@ class Kconfig(Kbaseconfig):
                 warning(f"{name} will require manual subscription to Red Hat Network")
         if scripts:
             for script in scripts:
-                scriptname = os.path.basename(script)
                 if onfly is not None and '~' not in script:
                     destdir = basedir
                     if '/' in script:
@@ -855,7 +854,7 @@ class Kconfig(Kbaseconfig):
                         return {'result': 'failure', 'reason': msg}
                     scriptlines = [line.strip() for line in scriptentries.split('\n') if line.strip() != '']
                     if scriptlines:
-                        scriptlines.insert(0, f"echo Running script {scriptname}")
+                        scriptlines.insert(0, f"echo Running script {script}")
                         scriptcmds.extend(scriptlines)
         if cloudinit and image is not None and 'rhel' in image.lower():
             rhncommands = []
