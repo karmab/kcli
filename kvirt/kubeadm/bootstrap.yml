@@ -1,3 +1,5 @@
+{% set scripts = extra_scripts %}
+{% do scripts.append('deploy.sh') %}
 {% if extra_ctlplane_networks %}
  {% set extra_networks = extra_ctlplane_networks %}
 {% endif %}
@@ -62,6 +64,5 @@
  - path: /root/ctlplanes.sh
    origin: bootstrap.sh
  - path: /root/deploy.sh
-   origin: deploy.sh_ctlplanes
- cmds:
- - bash /root/deploy.sh
+   origin: deploy_ctplanes.sh
+ scripts: {{ scripts }}

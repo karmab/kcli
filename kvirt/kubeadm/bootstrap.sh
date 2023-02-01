@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 # set global variable
 CIDR="10.244.0.0/16"
 

@@ -1,3 +1,5 @@
+{% set scripts = extra_scripts %}
+{% do scripts.append('deploy.sh') %}
 {% for number in range(0, workers|int) %}
 {% if extra_worker_networks %}
  {% set extra_networks = extra_worker_networks %}
@@ -28,7 +30,7 @@
    origin: pre_{{ 'ubuntu' if ubuntu|default(False) else 'el' }}.sh
  - workers.sh
  - path: /root/deploy.sh
-   origin: deploy.sh_workers
+   origin: deploy_workers.sh
 {% if config_type == 'gcp' %}
  - path: /usr/local/bin/gcp-hack.sh
    origin: gcp-hack.sh
@@ -37,6 +39,5 @@
    origin: gcp-hack.service
    mode: 644
 {% endif %}
- cmds:
- - bash /root/deploy.sh
+ scripts: {{ scripts }}
 {% endfor %}

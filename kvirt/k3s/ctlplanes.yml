@@ -1,3 +1,8 @@
+{% set scripts = extra_scripts %}
+{% do scripts.append('ctlplanes.sh') %}
+{% if ctlplanes > 1 and config_type not in ['aws', 'gcp'] %}
+{% do scripts.append('keepalived.sh') %}
+{% endif %}
 {% set first_ctlplane = 0 if scale|default(False) else 1 %}
 {% for number in range(first_ctlplane, ctlplanes|int) %}
 {% if extra_ctlplane_networks %}
@@ -19,9 +24,5 @@
  nets: {{ [network] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
  files: {{ files + ["keepalived.conf"] if files|default([]) else ["keepalived.conf"] }}
- scripts:
-  - ctlplanes.sh
-{% if config_type not in ['aws', 'gcp'] %}
-  - keepalived.sh
-{% endif %}
+ scripts: {{ scripts }}
 {% endfor %}

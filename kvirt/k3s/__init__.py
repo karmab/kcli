@@ -14,7 +14,8 @@ cloudplatforms = ['aws', 'gcp']
 
 def scale(config, plandir, cluster, overrides):
     plan = cluster
-    data = {'cluster': cluster, 'kube': cluster, 'kubetype': 'k3s', 'image': 'ubuntu2004', 'sdn': 'flannel'}
+    data = {'cluster': cluster, 'kube': cluster, 'kubetype': 'k3s', 'image': 'ubuntu2004', 'sdn': 'flannel',
+            'extra_scripts': []}
     data['basedir'] = '/workdir' if container_mode() else '.'
     cluster = data.get('cluster')
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
@@ -62,7 +63,7 @@ def scale(config, plandir, cluster, overrides):
 
 def create(config, plandir, cluster, overrides):
     platform = config.type
-    data = {'kubetype': 'k3s', 'sdn': 'flannel'}
+    data = {'kubetype': 'k3s', 'sdn': 'flannel', 'extra_scripts': []}
     data.update(overrides)
     data['cluster'] = overrides.get('cluster', cluster if cluster is not None else 'myk3s')
     plan = cluster if cluster is not None else data['cluster']

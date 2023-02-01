@@ -1,3 +1,8 @@
+{% set scripts = extra_scripts %}
+{% do scripts.append('bootstrap.sh') %}
+{% if ctlplanes > 1 and config_type not in ['aws', 'gcp'] %}
+{% do scripts.append('keepalived.sh') %}
+{% endif %}
 {{ image }}:
   type: image
 {% if kubevirt_disk_size != None and config_type == 'kubevirt' %}
@@ -10,7 +15,6 @@
 {% if extra_ctlplane_disks %}
  {% set extra_disks = extra_ctlplane_disks %}
 {% endif %}
-
 {{cluster}}-ctlplane-0:
  image: {{ image }}
  wait: true
@@ -22,11 +26,7 @@
  nets: {{ [network] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
  files: {{ files + ["keepalived.conf"] if files|default([]) else ["keepalived.conf"] }}
- scripts:
-  - bootstrap.sh
-{% if ctlplanes > 1 and config_type not in ['aws', 'gcp'] %}
-  - keepalived.sh
-{% endif %}
+ scripts: {{ scripts }}
  finishfiles:
  - origin: /root/kubeconfig
    path: ~/.kcli/clusters/{{ cluster }}/auth/kubeconfig
