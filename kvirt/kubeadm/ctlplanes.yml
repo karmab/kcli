@@ -1,5 +1,3 @@
-{% set scripts = extra_scripts %}
-{% do scripts.append('deploy.sh') %}
 {% set first_ctlplane = 0 if scale|default(False) else 1 %}
 {% for number in range(first_ctlplane, ctlplanes|int) %}
 {% if extra_ctlplane_networks %}
@@ -45,5 +43,6 @@
    origin: ctlplanes_extra.sh
  - path: /root/deploy.sh
    origin: deploy_ctlplanes.sh
- scripts: {{ scripts }}
+ scripts:
+ - deploy.sh
 {% endfor %}

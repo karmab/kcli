@@ -64,4 +64,3 @@ workers_threaded: false
 keys: []
 tempkey: false
 wait_ready: false
-extra_scripts: []

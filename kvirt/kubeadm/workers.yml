@@ -1,5 +1,3 @@
-{% set scripts = extra_scripts %}
-{% do scripts.append('deploy.sh') %}
 {% for number in range(0, workers|int) %}
 {% if extra_worker_networks %}
  {% set extra_networks = extra_worker_networks %}
@@ -39,5 +37,6 @@
    origin: gcp-hack.service
    mode: 644
 {% endif %}
- scripts: {{ scripts }}
+ scripts:
+ - deploy.sh
 {% endfor %}
