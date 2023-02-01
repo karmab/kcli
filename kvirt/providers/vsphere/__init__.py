@@ -549,6 +549,10 @@ class Ksphere:
                     error(f"Couldn't delete plan folder {plan}. Hit {e}")
         return {'result': 'success'}
 
+    def serialconsole(self, name, web=False):
+        print("not implemented")
+        return
+
     def console(self, name, tunnel=False, web=False):
         si = self.si
         vcip = self.vcip
@@ -1472,3 +1476,7 @@ class Ksphere:
     def delete_security_group(self, name):
         print("not implemented")
         return {'result': 'success'}
+
+    def list_disks(self):
+        print("not implemented")
+        return
