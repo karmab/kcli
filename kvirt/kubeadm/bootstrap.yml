@@ -64,5 +64,5 @@
  - path: /root/ctlplanes.sh
    origin: bootstrap.sh
  - path: /root/deploy.sh
-   origin: deploy_ctplanes.sh
+   origin: deploy_ctlplanes.sh
  scripts: {{ scripts }}
