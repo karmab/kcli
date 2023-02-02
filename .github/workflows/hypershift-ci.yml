@@ -49,7 +49,7 @@ jobs:
            curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
        - name: Make sc default one
          run: |
-           oc patch storageclass ocs-storagecluster-ceph-rbd -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+           oc patch storageclass odf-storagecluster-ceph-rbd -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
 
     deploy-hypershift-cluster:
       needs: requirements
