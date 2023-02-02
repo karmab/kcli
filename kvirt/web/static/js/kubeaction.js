@@ -1,15 +1,15 @@
 function kubecreate(){
   $("#wheel").show();
-  var cluster = $("#cluster").val();
   var type = $("#type").val();
   var parameters = {};
   $.each($('#createkube').serializeArray(), function() {
     parameters[this.name] = this.value;
   });
-  data = {'action': 'create', 'type': type, 'cluster': cluster, 'parameters': parameters};
+  data = {'type': type, 'parameters': parameters};
+  cluster = parameters['cluster'];
   $.ajax({
        type: "POST",
-        url: '/kubeaction',
+        url: '/kubecreate',
         data: data,
         success: function(data) {
             $("#wheel").hide();

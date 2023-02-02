@@ -1,7 +1,6 @@
 .navbar-custom {
   background-color: #008092;
-  /* background-color: #263c70; */
-  border-color: #1e664c;
+  border-color: #c8efcb;
   background-image: -webkit-gradient(linear, left 0%, left 100%, from(#30a87c), to(#25805f));
   background-image: -webkit-linear-gradient(top, #30a87c, 0%, #25805f, 100%);
   background-image: -moz-linear-gradient(top, #30a87c 0%, #25805f 100%);

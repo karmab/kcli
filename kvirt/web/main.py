@@ -1,14 +1,21 @@
 #!/usr/bin/python
 # coding=utf-8
 
+from ast import literal_eval
 import functools
 from kvirt.bottle import Bottle, request, static_file, jinja2_view, response, redirect
 from kvirt.config import Kconfig
-from kvirt.common import print_info, get_free_port
+from kvirt.common import print_info, get_free_port, get_parameters
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
 from kvirt.defaults import IMAGES, FAKECERT
 from kvirt import nameutils
+from kvirt import kind
+from kvirt import microshift
+from kvirt import k3s
+from kvirt import kubeadm
+from kvirt import hypershift
+from kvirt import openshift
 import os
 from shutil import which
 from time import sleep
@@ -18,6 +25,7 @@ app = Bottle()
 config = {'PORT': os.environ.get('PORT', 9000)}
 debug = config['DEBUG'] if 'DEBUG' in list(config) else True
 port = int(config['PORT']) if 'PORT' in list(config) else 9000
+global_pull_secret = os.environ.get('PULL_SECRET')
 
 basedir = f"{os.path.dirname(Bottle.run.__code__.co_filename)}/web"
 view = functools.partial(jinja2_view, template_lookup=[f"{basedir}/templates"])
@@ -621,71 +629,90 @@ def productaction():
 
 # KUBE
 
-@app.route('/kubegenericcreate')
+@app.route('/kubecreate/<_type>')
 @view('kubecreate.html')
-def kubegenericcreate():
-    """
-    create generic kube
-    """
+def kubecreateform(_type):
     config = Kconfig()
-    parameters = config.info_kube_generic(quiet=True, web=True)
-    _type = 'generic'
-    return {'title': 'CreateGenericKube', 'client': config.client, 'parameters': parameters, '_type': _type}
-
-
-@app.route('/kubeopenshiftcreate')
-@view('kubecreate.html')
-def kubeopenshiftcreate():
-    """
-    create openshift kube
-    """
-    config = Kconfig()
-    parameters = config.info_kube_openshift(quiet=True, web=True)
-    _type = 'openshift'
-    return {'title': 'CreateOpenshiftKube', 'client': config.client, 'parameters': parameters, '_type': _type}
-
-
-@app.route("/kubeaction", method='POST')
-def kubeaction():
-    """
-    create kube
-    """
-    config = Kconfig()
-    if 'cluster' in request.forms:
-        cluster = request.forms['cluster']
-        _type = request.forms['type']
-        action = request.forms['action']
-        if action == 'create':
-            parameters = {}
-            for p in request.forms:
-                if p.startswith('parameters'):
-                    value = request.forms[p]
-                    if value == 'None':
-                        value = None
-                    elif value.isdigit():
-                        value = int(value)
-                    elif value == 'False':
-                        value = False
-                    elif value == 'True':
-                        value = True
-                    key = p.replace('parameters[', '').replace(']', '')
-                    parameters[key] = value
-            del parameters['cluster']
-            if _type == 'generic':
-                thread = Thread(target=config.create_kube_generic, kwargs={'cluster': cluster,
-                                                                           'overrides': parameters})
-            elif _type == 'openshift':
-                thread = Thread(target=config.create_kube_openshift, kwargs={'cluster': cluster,
-                                                                             'overrides': parameters})
-            thread.start()
-            result = {'result': 'success'}
-            response.status = 200
-        else:
-            result = {'result': 'failure', 'reason': "Invalid Action"}
-            response.status = 400
+    if _type == 'generic':
+        plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
+        inputfile = f'{plandir}/kcli_default.yml'
+    elif _type == 'k3s':
+        plandir = os.path.dirname(k3s.create.__code__.co_filename)
+        inputfile = f'{plandir}/kcli_default.yml'
+    elif _type == 'kind':
+        plandir = os.path.dirname(kind.create.__code__.co_filename)
+        inputfile = f'{plandir}/kcli_plan_defauly.yml'
+    elif _type == 'openshift':
+        plandir = os.path.dirname(openshift.create.__code__.co_filename)
+        inputfile = f'{plandir}/kcli_default.yml'
+    elif _type == 'hypershift':
+        plandir = os.path.dirname(hypershift.create.__code__.co_filename)
+        inputfile = f'{plandir}/kcli_plan_default.yml'
+    elif _type == 'microshift':
+        plandir = os.path.dirname(microshift.create.__code__.co_filename)
+        inputfile = f'{plandir}/kcli_plan_default.yml'
     else:
-        result = {'result': 'failure', 'reason': "Invalid Data"}
+        result = {'result': 'failure', 'reason': f"Invalid kube type {_type}"}
         response.status = 400
+        return result
+    parameters = get_parameters(inputfile)
+    del parameters['info']
+    return {'title': 'CreateCluster{_type.capitalize()}', 'client': config.client, 'parameters': parameters,
+            '_type': _type}
+
+
+@app.route("/kubecreate", method='POST')
+def kubecreate():
+    config = Kconfig()
+    _type = request.forms['type']
+    parameters = {}
+    for p in request.forms:
+        if p.startswith('parameters'):
+            value = request.forms[p]
+            if value.isdigit():
+                value = int(value)
+            elif value.lower() == 'true':
+                value = True
+            elif value.lower() == 'false':
+                value = False
+            elif value == 'None':
+                value = None
+            elif value == '[]':
+                value = []
+            elif value.startswith('[') and value.endswith(']'):
+                if '{' in value:
+                    value = literal_eval(value)
+                else:
+                    value = value[1:-1].split(',')
+                    for index, v in enumerate(value):
+                        v = v.strip()
+                        value[index] = v
+            key = p.replace('parameters[', '').replace(']', '')
+            parameters[key] = value
+    print(parameters)
+    cluster = parameters['cluster']
+    if 'pull_secret' in parameters and parameters['pull_secret'] == 'openshift_pull.json':
+        if global_pull_secret is not None and os.path.exists(global_pull_secret):
+            parameters['pull_secret'] = global_pull_secret
+        else:
+            result = {'result': 'failure', 'reason': "Specify an absolute path to an existing pull secret"}
+            response.status = 400
+            return result
+    if _type == 'generic':
+        thread = Thread(target=config.create_kube_generic, kwargs={'cluster': cluster, 'overrides': parameters})
+    elif _type == 'openshift':
+        thread = Thread(target=config.create_kube_openshift, kwargs={'cluster': cluster, 'overrides': parameters})
+    elif _type == 'k3s':
+        thread = Thread(target=config.create_kube_k3s, kwargs={'cluster': cluster, 'overrides': parameters})
+    elif _type == 'microshift':
+        thread = Thread(target=config.create_kube_microshift, kwargs={'cluster': cluster, 'overrides': parameters})
+    elif _type == 'hypershift':
+        thread = Thread(target=config.create_kube_hypershift, kwargs={'cluster': cluster, 'overrides': parameters})
+    elif _type == 'kind':
+        thread = Thread(target=config.create_kube_kind, kwargs={'cluster': cluster, 'overrides': parameters})
+    thread.start()
+    result = {'result': 'success'}
+    response.status = 200
     return result
 
 
