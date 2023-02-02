@@ -1,7 +1,7 @@
 import functools
 from kvirt.bottle import Bottle, request, static_file, jinja2_view, response
 from glob import glob
-from kvirt.common import get_overrides, pprint
+from kvirt.common import get_overrides, pprint, get_parameters
 import os
 import re
 import yaml
@@ -141,7 +141,9 @@ class Kexposer():
             parameters = self.overrides
             if plan not in self.plans:
                 return f'Invalid plan name {plan}'
-            return {'parameters': parameters, 'plan': plan, 'pfmode': self.pfmode}
+            info = get_parameters(inputfile, planfile=True)
+            info = info.get('info', 'N/A')
+            return {'parameters': parameters, 'plan': plan, 'pfmode': self.pfmode, 'info': info}
 
         @app.route("/infoplan/<plan>")
         @view('infoplan.html')
