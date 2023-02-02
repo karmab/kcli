@@ -16,7 +16,7 @@ notify: true
 apps:
 - autolabeller
 - local-storage-operator
-- ocs-operator
+- odf-operator
 - kubevirt-hyperconverged
 autolabeller_rules:
 - ci-.*virt-ctlplane.*:

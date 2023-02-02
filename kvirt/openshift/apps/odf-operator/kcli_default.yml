@@ -1,0 +1,13 @@
+odf_disksize: 60
+odf_nodes: []
+odf_devicesets: 1
+odf_storageclass: localstorage-sc
+odf_replicas:
+odf_accessmode: ReadWriteOnce
+odf_portable: false
+odf_deploycluster: true
+odf_default_storageclass: true
+odf_public_network:
+odf_public_interface: ens4
+odf_cluster_network:
+odf_cluster_interface: ens5

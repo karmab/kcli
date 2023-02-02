@@ -1,0 +1,32 @@
+apiVersion: ocs.openshift.io/v1
+kind: StorageCluster
+metadata:
+  name: odf-storagecluster
+  namespace: {{ namespace }}
+spec:
+{% if odf_public_network != None %}
+  network:
+    ipFamily: IPv4
+    provider: multus
+    selectors:
+      public: openshift-storage/{{ odf_public_network }}
+{% if odf_cluster_network != None %}
+      cluster: openshift-storage/{{ odf_cluster_network }}
+{% endif %}
+{% endif %}
+  manageNodes: false
+  monDataDirHostPath: /var/lib/rook
+  storageDeviceSets:
+  - count: {{ odf_devicesets }}
+    dataPVCTemplate:
+      spec:
+        accessModes:
+        - {{ odf_accessmode }}
+        resources:
+          requests:
+            storage: {{ odf_disksize }}Gi
+        storageClassName: {{ odf_storageclass }}
+        volumeMode: Block
+    name: odf-deviceset
+    portable: {{ odf_portable }}
+    replica: {{ odf_replicas or 3 }}
