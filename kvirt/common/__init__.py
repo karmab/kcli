@@ -850,7 +850,9 @@ def get_parameters(inputfile, planfile=False):
                 sys.exit(1)
             parameters = ""
             found = False
-            for line in open(inputfile).readlines():
+            with open(inputfile, 'r') as fic:
+                lines = fic.readlines()
+            for line in lines:
                 if found and not line.startswith(' '):
                     break
                 elif found:
