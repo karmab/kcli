@@ -17,10 +17,11 @@ from ibm_platform_services import GlobalTaggingV1, ResourceControllerV2, IamPoli
 from ibm_platform_services.iam_policy_management_v1 import PolicySubject, SubjectAttribute, PolicyResource, PolicyRole
 from ibm_platform_services.iam_policy_management_v1 import ResourceAttribute
 from ibm_cloud_networking_services import DnsRecordsV1, ZonesV1
+import json
 import os
 from shutil import which
 from time import sleep
-from requests import get, post
+from urllib.request import urlopen, Request
 import webbrowser
 
 
@@ -38,12 +39,12 @@ def get_service_instance_id(iam_api_key, name):
     service_id = None
     headers = {'content-type': 'application/x-www-form-urlencoded', 'accept': 'application/json'}
     data = 'grant_type=urn%%3Aibm%%3Aparams%%3Aoauth%%3Agrant-type%%3Aapikey&apikey=%s' % iam_api_key
-    req = post("https://iam.cloud.ibm.com/identity/token", data=data, headers=headers)
-    token = req.json()['access_token']
-    req = get("https://resource-controller.cloud.ibm.com/v2/resource_instances", headers=headers)
+    data = data.encode()
+    req = Request("https://iam.cloud.ibm.com/identity/token", headers=headers, method='POST', data=data)
+    token = json.loads(urlopen(req).read().decode())['access_token']
     headers = {'Authorization': f'Bearer {token}'}
-    req = get("https://resource-controller.cloud.ibm.com/v2/resource_instances", headers=headers)
-    for entry in req.json()['resources']:
+    req = Request("https://resource-controller.cloud.ibm.com/v2/resource_instances", headers=headers)
+    for entry in json.loads(urlopen(req).read())['resources']:
         if entry['name'] == name:
             service_id = entry['id']
             break

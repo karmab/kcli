@@ -598,7 +598,7 @@ The following parameters are specific to ibm cloud:
 To use this provider with kcli rpm, you'll need to install the following packets (from pip):
 
 ```
-pip3 install ibm_vpc ibm-cos-sdk ibm-platform-services ibm-cloud-networking-services requests
+pip3 install ibm_vpc ibm-cos-sdk ibm-platform-services ibm-cloud-networking-services
 # optionally
 pip install cos-aspera
 ```
