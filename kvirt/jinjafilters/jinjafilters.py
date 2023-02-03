@@ -3,8 +3,9 @@ from glob import glob
 from ipaddress import ip_address, ip_network
 import os
 from distutils.version import LooseVersion
-import requests
+import json
 import sys
+from urllib.request import urlopen
 import yaml
 
 
@@ -69,7 +70,7 @@ def github_version(repo, version=None, tag_mode=False):
     if version is None or version == 'latest':
         obj = 'tags' if tag_mode else 'releases'
         tag_name = 'name' if tag_mode else 'tag_name'
-        data = requests.get("https://api.github.com/repos/%s/%s" % (repo, obj)).json()
+        data = json.loads(urlopen(f"https://api.github.com/repos/{repo}/{obj}", timeout=5).read())
         if 'message' in data and data['message'] == 'Not Found':
             return ''
         tags = sorted([x[tag_name] for x in data if stable_release(x, tag_mode)], key=LooseVersion, reverse=True)

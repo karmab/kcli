@@ -4,16 +4,17 @@ from setuptools.extern.packaging import version
 version.Version = version.LegacyVersion
 
 import os
-INSTALL = ['argcomplete', 'PyYAML', 'prettytable', 'jinja2', 'libvirt-python>=2.0.0', 'requests']
+INSTALL = ['argcomplete', 'PyYAML', 'prettytable', 'jinja2', 'libvirt-python>=2.0.0']
 AWS = ['boto3']
 GCP = ['google-api-python-client', 'google-auth-httplib2', 'google-cloud-dns', 'google-cloud-storage']
 KUBEVIRT = ['kubernetes']
 OPENSTACK = ['python-cinderclient', 'python-neutronclient', 'python-glanceclient', 'python-keystoneclient',
              'python-novaclient', 'python-swiftclient']
 OVIRT = ['ovirt-engine-sdk-python']
-PACKET = ['packet-python']
+PACKET = ['packet-python', 'requests']
 VSPHERE = ['requests', 'pyvmomi']
-IBMCLOUD = ['google-crc32c==1.1.2', 'ibm_vpc', 'ibm-cos-sdk', 'ibm-platform-services', 'ibm-cloud-networking-services']
+IBMCLOUD = ['google-crc32c==1.1.2', 'ibm_vpc', 'ibm-cos-sdk', 'ibm-platform-services', 'ibm-cloud-networking-services',
+            'requests']
 #           'cos-aspera']
 GRPC = ['grpcio', 'grpcio-reflection']
 EXTRAS = ['pyghmi']

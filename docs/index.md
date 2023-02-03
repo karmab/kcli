@@ -571,7 +571,7 @@ The following parameters are specific to packet:
 To use this provider with kcli rpm, you'll need to install packet-python (from pip):
 
 ```
-pip3 install packet-python
+pip3 install packet-python requests
 ```
 
 ## IBM Cloud
@@ -598,7 +598,7 @@ The following parameters are specific to ibm cloud:
 To use this provider with kcli rpm, you'll need to install the following packets (from pip):
 
 ```
-pip3 install ibm_vpc ibm-cos-sdk ibm-platform-services ibm-cloud-networking-services
+pip3 install ibm_vpc ibm-cos-sdk ibm-platform-services ibm-cloud-networking-services requests
 # optionally
 pip install cos-aspera
 ```
