@@ -31,12 +31,12 @@ from kvirt import nameutils
 import os
 import random
 import re
-import requests
 from shutil import which, copy2
 from subprocess import call
 import sys
 from tempfile import NamedTemporaryFile
 from urllib.parse import urlparse
+from urllib.request import urlopen
 import yaml
 
 
@@ -154,7 +154,8 @@ def get_version(args):
     update = 'N/A'
     if git_version != 'N/A':
         try:
-            upstream_version = requests.get("https://api.github.com/repos/karmab/kcli/commits/main").json()['sha'][:7]
+            response = json.loads(urlopen("https://api.github.com/repos/karmab/kcli/commits/main", timeout=5).read())
+            upstream_version = response['sha'][:7]
             update = True if upstream_version != git_version else False
         except:
             pass

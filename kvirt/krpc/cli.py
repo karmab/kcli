@@ -7,8 +7,6 @@ import grpc
 from kvirt.krpc import kcli_pb2
 from kvirt.krpc import kcli_pb2_grpc
 from kvirt.krpc.kcli_pb2 import empty
-
-
 from kvirt.examples import hostcreate, _list, plancreate, planinfo, productinfo, repocreate, start
 from kvirt.examples import kubegenericcreate, kubeopenshiftcreate
 from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsole, vmexport, niccreate, nicdelete
@@ -16,15 +14,16 @@ from kvirt.containerconfig import Kcontainerconfig
 from kvirt.defaults import IMAGES, VERSION
 from kvirt import version
 from prettytable import PrettyTable
-import argcomplete
-import argparse
 from kvirt.krpc import commoncli as common
 from kvirt.krpc.commoncli import pprint, error, success, container_mode
 from kvirt import nameutils
-from shutil import which
+import argcomplete
+import argparse
+import json
 import os
 import random
-import requests
+from urllib.request import urlopen
+from shutil import which
 import sys
 
 
@@ -105,7 +104,8 @@ def get_version(args):
     update = 'N/A'
     if git_version != 'N/A':
         try:
-            upstream_version = requests.get("https://api.github.com/repos/karmab/kcli/commits/main").json()['sha'][:7]
+            response = json.loads(urlopen("https://api.github.com/repos/karmab/kcli/commits/main", timeout=5).read())
+            upstream_version = response['sha'][:7]
             update = True if upstream_version != git_version else False
         except:
             pass
