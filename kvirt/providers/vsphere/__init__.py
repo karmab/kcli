@@ -132,7 +132,13 @@ class Ksphere:
             vmfolder = basefolder
         si = self.si
         clu = find(si, rootFolder, vim.ComputeResource, self.clu)
-        resourcepool = clu.resourcePool
+        if 'resourcepool' in overrides:
+            resourcepoolname = overrides['resourcepool']
+            resourcepool = find(si, rootFolder, vim.ResourcePool, resourcepoolname)
+            if resourcepool is None:
+                return {'result': 'failure', 'reason': f"Resourcepool {resourcepoolname} not found"}
+        else:
+            resourcepool = clu.resourcePool
         if image is not None:
             rootFolder = self.rootFolder
             imageobj = findvm(si, rootFolder, image)
