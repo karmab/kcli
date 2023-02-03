@@ -571,7 +571,7 @@ The following parameters are specific to packet:
 To use this provider with kcli rpm, you'll need to install packet-python (from pip):
 
 ```
-pip3 install packet-python requests
+pip3 install packet-python
 ```
 
 ## IBM Cloud

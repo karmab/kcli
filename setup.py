@@ -11,7 +11,7 @@ KUBEVIRT = ['kubernetes']
 OPENSTACK = ['python-cinderclient', 'python-neutronclient', 'python-glanceclient', 'python-keystoneclient',
              'python-novaclient', 'python-swiftclient']
 OVIRT = ['ovirt-engine-sdk-python']
-PACKET = ['packet-python', 'requests']
+PACKET = ['packet-python']
 VSPHERE = ['requests', 'pyvmomi']
 IBMCLOUD = ['google-crc32c==1.1.2', 'ibm_vpc', 'ibm-cos-sdk', 'ibm-platform-services', 'ibm-cloud-networking-services',
             'requests']

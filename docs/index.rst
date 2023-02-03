@@ -618,7 +618,7 @@ To use this provider with kcli rpm, you’ll need to install the following packe
 
 ::
 
-   pip3 install ibm_vpc ibm-cos-sdk ibm-platform-services ibm-cloud-networking-services
+   pip3 install ibm_vpc ibm-cos-sdk ibm-platform-services ibm-cloud-networking-services requests
    # optionally
    pip install cos-aspera
 
