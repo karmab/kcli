@@ -448,7 +448,7 @@ class Kaws(object):
                 Filters = {'Name': "tag:Name", 'Values': [name]}
                 vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
         except:
-            return None
+            return []
         return vm['SecurityGroups']
 
     def get_security_group_id(self, name, vpcid):
