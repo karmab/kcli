@@ -62,6 +62,7 @@ EOF
 systemctl daemon-reload
 rm -f /etc/cni/net.d/100-crio-bridge.conf
 systemctl restart crio
+systemctl enable crio
 {% else %}
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key --keyring /etc/apt/trusted.gpg.d/docker.gpg add -
 add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
