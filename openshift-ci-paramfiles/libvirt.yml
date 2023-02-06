@@ -9,11 +9,11 @@ tag: "4.12"
 api_ip: 10.19.135.112
 sslip: true
 network: baremetal
-numcpus: 16
+numcpus: 32
 memory: 49152
 #memory: 32768
 bootstrap_memory: 8192
-disk_size: 40
+disk_size: 80
 extra_disks:
 - 100
 async: true
