@@ -432,7 +432,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     pprint(f"Deploying on client {client}")
     data = {'domain': 'karmalabs.corp',
             'network': 'default',
-            'ctlplanes': 1,
+            'ctlplanes': 3,
             'workers': 0,
             'tag': OPENSHIFT_TAG,
             'ipv6': False,
