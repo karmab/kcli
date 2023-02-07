@@ -3014,6 +3014,9 @@ class Kconfig(Kbaseconfig):
             domain = '.'.join(cluster.split('.')[1:])
             pprint(f"Using domain {domain}")
             cluster = cluster.replace(f".{domain}", '')
+        if cluster.startswith('api.'):
+            cluster = cluster.replace("api.", '')
+            pprint(f"Using cluster {cluster}")
         hosts_content = None
         finaldata = None
         if ignitionfile is not None:
