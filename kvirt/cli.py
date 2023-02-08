@@ -1799,7 +1799,7 @@ def scale_kube(args):
     overrides = handle_parameters(args.param, args.paramfile)
     cluster = overrides.get('cluster', args.cluster)
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
-    if not os.path.exists(clusterdir):
+    if kubetype != 'k3s' and not os.path.exists(clusterdir):
         error(f"Cluster directory {clusterdir} not found...")
         sys.exit(1)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
