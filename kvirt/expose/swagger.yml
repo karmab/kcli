@@ -1,4 +1,4 @@
-swagger: '2.0'
+openapi: 3.0.0
 info:
   version: 1.0.0
   title: Kcli expose API
@@ -20,17 +20,27 @@ paths:
                 properties:
                   plans:
                     type: array
+                    items:
+                      type: string
                   owners:
-                    type: array
+                    type: object
+                    properties:
+                      owner:
+                        type: string
+                        description: Owner
   /exposedelete:
     delete:
       description: Delete a plan
-      parameters:
-      - in: body
-        name: plan
-        description: Plan name
-        type: string
+      requestBody:
         required: true
+        description: Plan name
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:   
+                plan:
+                  type: string
       responses:
         '200':
           description: Successfully delete plan
@@ -46,15 +56,18 @@ paths:
   /exposecreate:
     post:
       description: Create a plan
-      parameters:
-      - in: body
-        name: plan
-        description: Plan name
-        type: string
+      requestBody:
         required: true
-      - in: body
-        name: parameters
-        description: Extra parameters specific to the plan
+        description: Plan name
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:   
+                plan:
+                  type: string
+                parameters:
+                  type: string
       responses:
         '200':
           description: Successfully created a new plan
