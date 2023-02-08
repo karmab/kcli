@@ -1,0 +1,712 @@
+swagger: '2.0'
+info:
+  version: 1.0.0
+  title: Kcli web API
+  description: Kcli web API
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+paths:
+  /hoststable:
+    get:
+      description: Returns list of hosts
+      responses:
+        '200':
+          description: Successfully returned list of hosts
+          content:
+            application/json:
+              schema:
+                type: object 
+                properties:
+                  clients:
+                    type: array
+  /vmstable:
+    get:
+      description: Returns list of vms
+      responses:
+        '200':
+          description: Successfully returned list of vms
+          content:
+            application/json:
+              schema:
+                type: object 
+                properties:
+                  vms:
+                    type: array
+  /vmprofilestable:
+    get:
+      description: Returns list of profiles
+      responses:
+        '200':
+          description: Successfully returned list of profiles
+          content:
+            application/json:
+              schema:
+                type: object 
+                properties:
+                  profiles:
+                    type: array
+  /containerstable:
+    get:
+      description: Returns list of containers
+      responses:
+        '200':
+          description: Successfully returned list of containers
+          content:
+            application/json:
+              schema:
+                type: object 
+                properties:
+                  containers:
+                    type: array
+  /containerprofilestable:
+    get:
+      description: Returns list of container profiles
+      responses:
+        '200':
+          description: Successfully returned list of containers
+          content:
+            application/json:
+              schema:
+                type: object 
+                properties:
+                  profiles:
+                    type: array
+  /imagestable:
+    get:
+      description: Returns list of images
+      responses:
+        '200':
+          description: Successfully returned list of images
+          content:
+            application/json:
+              schema:
+                type: object 
+                properties:
+                  images:
+                    type: array
+  /isostable:
+    get:
+      description: Returns list of isos
+      responses:
+        '200':
+          description: Successfully returned list of isos
+          content:
+            application/json:
+              schema:
+                type: object 
+                properties:
+                  isos:
+                    type: array
+  /networkstable:
+    get:
+      description: Returns list of networks
+      responses:
+        '200':
+          description: Successfully returned list of networks
+          content:
+            application/json:
+              schema:
+                type: object 
+                properties:
+                  networks:
+                    type: array
+  /plansstable:
+    get:
+      description: Returns list of plans
+      responses:
+        '200':
+          description: Successfully returned list of plans
+          content:
+            application/json:
+              schema:
+                type: object 
+                properties:
+                  plans:
+                    type: array
+  /kubestable:
+    get:
+      description: Returns list of kubes
+      responses:
+        '200':
+          description: Successfully returned list of kubes
+          content:
+            application/json:
+              schema:
+                type: object 
+                properties:
+                  kubes:
+                    type: array
+  /poolstable:
+    get:
+      description: Returns list of pools
+      responses:
+        '200':
+          description: Successfully returned list of pools
+          content:
+            application/json:
+              schema:
+                type: object 
+                properties:
+                  pools:
+                    type: array
+  /repostable:
+    get:
+      description: Returns list of repos
+      responses:
+        '200':
+          description: Successfully returned list of repos
+          content:
+            application/json:
+              schema:
+                type: object 
+                properties:
+                  repos:
+                    type: array
+  /productstable:
+    get:
+      description: Returns list of products
+      responses:
+        '200':
+          description: Successfully returned list of products
+          content:
+            application/json:
+              schema:
+                type: object 
+                properties:
+                  products:
+                    type: array
+  /containeraction:
+    post:
+      description: start/stop/delete/create container
+      parameters:
+      - in: body
+        name: action
+        description: Action
+        enum: [create, delete, start, stop]
+        type: string
+        required: true
+      - in: body
+        name: name
+        description: Name
+        required: true
+      - in: body
+        name: profile
+        description: Profile
+      responses:
+        '200':
+          description: Successfully handled container
+          content:
+            application/json:
+              schema:
+                type: object 
+                properties:
+                  result:
+                    type: string
+                  reason:
+                    type: string
+        '400':
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:   
+                  result:
+                    type: string
+                  reason:
+                    type: string
+  /diskaction:
+    post:
+      description: add/delete disk to vm
+      parameters:
+      - in: body
+        name: action
+        description: Action
+        enum: [create, delete]
+        type: string
+        required: true
+      - in: body
+        name: name
+        description: Name
+        required: true
+      - in: body
+        name: size
+        description: Size
+      - in: body
+        name: pool
+        description: Pool
+      - in: Body
+        name: disk
+        description: Disk
+      responses:
+        '200':
+          description: Successfully handled disk
+          content:
+            application/json:
+              schema:
+                type: object 
+                properties:
+                  result:
+                    type: string
+                  reason:
+                    type: string
+        '400':
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:   
+                  result:
+                    type: string
+                  reason:
+                    type: string
+  /imagesaction:
+    post:
+      description: create/delete image
+      parameters:
+      - in: body
+        name: action
+        description: Action
+        enum: [create]
+        type: string
+        required: true
+      - in: body
+        name: image
+        description: Image
+        required: true
+      - in: body
+        name: pool
+        description: Pool
+      - in: body
+        name: url
+        description: Url
+        required: true
+      - in: body
+        name: cmd
+        description: Command
+        required: true
+      responses:
+        '200':
+          description: Successfully handled container
+          content:
+            application/json:
+              schema:
+                type: object 
+                properties:
+                  result:
+                    type: string
+                  reason:
+                    type: string
+        '400':
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:   
+                  result:
+                    type: string
+                  reason:
+                    type: string
+  /nicaction:
+    post:
+      description: add/delete nic to vm
+      parameters:
+      - in: body
+        name: action
+        description: Action
+        enum: [create, delete]
+        type: string
+        required: true
+      - in: body
+        name: name
+        description: Name
+        required: true
+      - in: body
+        name: network
+        description: Network
+      - in: body
+        name: nic
+        description: Nic
+      responses:
+        '200':
+          description: Successfully handled nic
+          content:
+            application/json:
+              schema:
+                type: object 
+                properties:
+                  result:
+                    type: string
+                  reason:
+                    type: string
+        '400':
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:   
+                  result:
+                    type: string
+                  reason:
+                    type: string
+  /poolaction:
+    post:
+      description: create/delete pool
+      parameters:
+      - in: body
+        name: action
+        description: Action
+        enum: [create, delete]
+        type: string
+        required: true
+      - in: body
+        name: pool
+        description: Pool
+        required: true
+      - in: body
+        name: type
+        description: Type
+      responses:
+        '200':
+          description: Successfully handled pool
+          content:
+            application/json:
+              schema:
+                type: object 
+                properties:
+                  result:
+                    type: string
+                  reason:
+                    type: string
+        '400':
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:   
+                  result:
+                    type: string
+                  reason:
+                    type: string
+  /repoaction:
+    post:
+      description: create/delete/update repo
+      parameters:
+      - in: body
+        name: action
+        description: Action
+        enum: [create, delete, update]
+        type: string
+        required: true
+      - in: body
+        name: repo
+        description: Repo
+        required: true
+      - in: body
+        name: url
+        description: Url
+      responses:
+        '200':
+          description: Successfully handled repo
+          content:
+            application/json:
+              schema:
+                type: object 
+                properties:
+                  result:
+                    type: string
+                  reason:
+                    type: string
+        '400':
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:   
+                  result:
+                    type: string
+                  reason:
+                    type: string
+  /networkaction:
+    post:
+      description: create/delete network
+      parameters:
+      - in: body
+        name: action
+        description: Action
+        enum: [create, delete]
+        type: string
+        required: true
+      - in: body
+        name: network
+        description: Network
+        required: true
+      - in: body
+        name: cidr
+        description: Cidr
+      - in: body
+        name: dhcp
+        description: Dhcp
+      - in: body
+        name: isolated
+        description: Isolated
+      responses:
+        '200':
+          description: Successfully handled pool
+          content:
+            application/json:
+              schema:
+                type: object 
+                properties:
+                  result:
+                    type: string
+                  reason:
+                    type: string
+        '400':
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:   
+                  result:
+                    type: string
+                  reason:
+                    type: string
+  /vmaction:
+    post:
+      description: start/stop/delete/create vm
+      parameters:
+      - in: body
+        name: action
+        description: Action
+        enum: [create, delete, start, stop]
+        type: string
+        required: true
+      - in: body
+        name: name
+        description: Name
+        required: true
+      - in: body
+        name: profile
+        description: Profile
+      - in: body
+        name: parameters
+        description: Parameters
+      responses:
+        '200':
+          description: Successfully handled vm
+          content:
+            application/json:
+              schema:
+                type: object 
+                properties:
+                  result:
+                    type: string
+                  reason:
+                    type: string
+        '400':
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:   
+                  result:
+                    type: string
+                  reason:
+                    type: string
+  /hostaction:
+    post:
+      description: enable/disable/default host
+      parameters:
+      - in: body
+        name: action
+        description: Action
+        enum: [enable, disable, switch]
+        type: string
+        required: true
+      - in: body
+        name: name
+        description: Name
+        required: true
+      responses:
+        '200':
+          description: Successfully handled host
+          content:
+            application/json:
+              schema:
+                type: object 
+                properties:
+                  result:
+                    type: string
+                  reason:
+                    type: string
+        '400':
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:   
+                  result:
+                    type: string
+                  reason:
+                    type: string
+  /snapshotaction:
+    post:
+      description: create/delete/revert snapshot
+      parameters:
+      - in: body
+        name: action
+        description: Action
+        enum: [list, revert, delete, create]
+        type: string
+        required: true
+      - in: body
+        name: name
+        description: Name
+        required: true
+      responses:
+        '200':
+          description: Successfully handled host
+          content:
+            application/json:
+              schema:
+                type: object 
+                properties:
+                  result:
+                    type: string
+                  reason:
+                    type: string
+        '400':
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:   
+                  result:
+                    type: string
+                  reason:
+                    type: string
+  /planaction:
+    post:
+      description: start/stop/delete plan
+      parameters:
+      - in: body
+        name: action
+        description: Action
+        enum: [start, stop, delete, create]
+        type: string
+        required: true
+      - in: body
+        name: name
+        description: Name
+        required: true
+      responses:
+        '200':
+          description: Successfully handled plan
+          content:
+            application/json:
+              schema:
+                type: object 
+                properties:
+                  result:
+                    type: string
+                  reason:
+                    type: string
+        '400':
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:   
+                  result:
+                    type: string
+                  reason:
+                    type: string
+  /productction:
+    post:
+      description: create product
+      parameters:
+      - in: body
+        name: action
+        description: Action
+        enum: [create]
+        type: string
+        required: true
+      - in: body
+        name: product
+        description: Product
+        required: true
+      responses:
+        '200':
+          description: Successfully created product
+          content:
+            application/json:
+              schema:
+                type: object 
+                properties:
+                  result:
+                    type: string
+                  reason:
+                    type: string
+        '400':
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:   
+                  result:
+                    type: string
+                  reason:
+                    type: string
+  /kubecreate:
+    post:
+      description: create kube
+      parameters:
+      - in: body
+        name: cluster
+        description: Cluster
+        required: true
+      - in: body
+        name: type
+        description: Type
+        type: string
+        required: true
+        enum: [generic, openshift, k3s, microshift, hypershift, kind]
+      - in: body
+        name: parameters
+        description: Parameters
+      responses:
+        '200':
+          description: Successfully handled plan
+          content:
+            application/json:
+              schema:
+                type: object 
+                properties:
+                  result:
+                    type: string
+                  reason:
+                    type: string
+        '400':
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:   
+                  result:
+                    type: string
+                  reason:
+                    type: string

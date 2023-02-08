@@ -1,8 +1,11 @@
-openapi: 3.0.0
+swagger: '2.0'
 info:
   version: 1.0.0
   title: Kcli expose API
   description: Kcli expose API
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
 paths:
   /exposeplans:
     get:

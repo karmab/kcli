@@ -836,6 +836,11 @@ Launch the following command and access your machine at port 9000:
 
    kweb
 
+Calling web endpoints through REST
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+you can check the `swagger spec <https://petstore.swagger.io/?url=https://raw.githubusercontent.com/karmab/kcli/main/kvirt/web/swagger.yml>`__ to call the different endpoints using your language of choice.
+
 Multiple clients
 ----------------
 

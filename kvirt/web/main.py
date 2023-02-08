@@ -126,7 +126,7 @@ def diskaction():
             result = {'result': 'failure', 'reason': "Incorrect action"}
             response.status = 400
         else:
-            if action == 'add':
+            if action == 'create':
                 name = request.forms['name']
                 size = int(request.forms['size'])
                 pool = request.forms['pool']
@@ -155,7 +155,7 @@ def nicaction():
             result = {'result': 'failure', 'reason': "Incorrect action"}
             response.status = 400
         else:
-            if action == 'add':
+            if action == 'create':
                 name = request.forms['name']
                 network = request.forms['network']
                 result = k.add_nic(name, network)
@@ -432,7 +432,6 @@ def planaction():
             elif action == 'delete':
                 result = config.delete_plan(plan)
             elif action == 'create':
-                print(request.forms)
                 url = request.forms['url']
                 if plan == '':
                     plan = nameutils.get_random_name()
@@ -689,7 +688,6 @@ def kubecreate():
                         value[index] = v
             key = p.replace('parameters[', '').replace(']', '')
             parameters[key] = value
-    print(parameters)
     cluster = parameters['cluster']
     if 'pull_secret' in parameters and parameters['pull_secret'] == 'openshift_pull.json':
         if global_pull_secret is not None and os.path.exists(global_pull_secret):
@@ -861,7 +859,7 @@ def imagecreate():
 @app.route("/imageaction", method='POST')
 def imageaction():
     """
-    create/delete image
+    create image
     """
     config = Kconfig()
     if 'pool' in request.forms:
