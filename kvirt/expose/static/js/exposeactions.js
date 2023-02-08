@@ -6,7 +6,7 @@ function exposedelete(plan){
     return ;
   }
   $.ajax({
-       type: "POST",
+       type: "DELETE",
         url: '/exposedelete',
         data: data,
         success: function(data) {

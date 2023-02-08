@@ -1,0 +1,75 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: Kcli expose API
+  description: Kcli expose API
+paths:
+  /exposeplans:
+    get:
+      description: Returns list of plans
+      responses:
+        '200':
+          description: Successfully returned list of plans
+          content:
+            application/json:
+              schema:
+                type: object 
+                properties:
+                  plans:
+                    type: array
+                  owners:
+                    type: array
+  /exposedelete:
+    delete:
+      description: Delete a plan
+      parameters:
+      - in: body
+        name: plan
+        description: Plan name
+        type: string
+        required: true
+      responses:
+        '200':
+          description: Successfully delete plan
+        '400':
+          description: Missing plan in data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:   
+                  message:
+                    type: string
+  /exposecreate:
+    post:
+      description: Create a plan
+      parameters:
+      - in: body
+        name: plan
+        description: Plan name
+        type: string
+        required: true
+      - in: body
+        name: parameters
+        description: Extra parameters specific to the plan
+      responses:
+        '200':
+          description: Successfully created a new plan
+          content:
+            application/json:
+              schema:
+                type: object 
+                properties:
+                  plan:
+                    type: string
+                  result:
+                    type: string
+        '400':
+          description: Missing plan in data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:   
+                  message:
+                    type: string

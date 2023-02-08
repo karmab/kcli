@@ -1190,6 +1190,10 @@ Note that further configuration will tipically be needed for apache user so that
 
 An alternative is to create different WSGI applications and tweak the *WSGIScriptAlias* to serve them from different paths.
 
+### Calling expose endpoints through REST
+
+you can check the [swagger spec](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/karmab/kcli/main/kvirt/expose/swagger.yml) to call the different endpoints using your language of choice.
+
 # Overriding parameters
 
 You can override parameters in:

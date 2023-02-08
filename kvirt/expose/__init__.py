@@ -61,7 +61,11 @@ class Kexposer():
             self.refresh_plans()
             return {'plans': self.plans, 'owners': self.owners}
 
-        @app.route("/exposedelete", method=['POST'])
+        @app.route('/exposeplans')
+        def exposeplans():
+            return {'plans': self.plans, 'owners': self.owners}
+
+        @app.route("/exposedelete", method=['DELETE'])
         def exposedelete():
             """
             delete plan
@@ -127,6 +131,7 @@ class Kexposer():
                         result = currentconfig.plan(plan, inputfile=inputfile, overrides=overrides)
                 except Exception as e:
                     error = f'Hit issue when running plan: {str(e)}'
+                    response.status = 400
                     result = {'result': 'failure', 'error': error}
                 return {'plan': plan, 'result': result}
             else:
