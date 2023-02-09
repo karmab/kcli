@@ -61,8 +61,8 @@ class Kexposer():
             self.refresh_plans()
             return {'plans': self.plans, 'owners': self.owners}
 
-        @app.route('/exposeplans')
-        def exposeplans():
+        @app.route('/exposelist')
+        def exposelist():
             return {'plans': self.plans, 'owners': self.owners}
 
         @app.route("/exposedelete", method=['DELETE'])

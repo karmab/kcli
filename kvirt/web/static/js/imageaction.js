@@ -12,10 +12,10 @@ function imagecreate(image, pool, url, cmd){
     cmd = $("#cmd").val();
   }
   $("#wheel").show();
-  data = {'image': image, 'action': 'create', 'pool': pool, 'url': url, 'cmd': cmd};
+  data = {'image': image, 'pool': pool, 'url': url, 'cmd': cmd};
   $.ajax({
        type: "POST",
-        url: '/imageaction',
+        url: '/imagecreate',
         data: data,
         success: function(data) {
             $("#wheel").hide();

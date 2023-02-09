@@ -3,10 +3,10 @@ function poolcreate(){
   var pool = $("#pool").val();
   var path = $("#path").val();
   var type = $("#type").val();
-  data = {'pool': pool, 'path': path, 'type': type, 'action': 'create'};
+  data = {'pool': pool, 'path': path, 'type': type};
   $.ajax({
        type: "POST",
-        url: '/poolaction',
+        url: '/poolcreate',
         data: data,
         success: function(data) {
             $("#wheel").hide();
@@ -21,10 +21,10 @@ function poolcreate(){
 
 function pooldelete(pool){
   $("#wheel").show();
-  data = {'pool': pool, 'action': 'delete'};
+  data = {'pool': pool};
   $.ajax({
-       type: "POST",
-        url: '/poolaction',
+       type: "DELETE",
+        url: '/pooldelete',
         data: data,
         success: function(data) {
             $("#wheel").hide();

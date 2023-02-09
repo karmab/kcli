@@ -4,10 +4,10 @@ function networkcreate(){
   var cidr = $("#cidr").val();
   var isolated = $("#isolated").val();
   var dhcp = $("#dhcp").val();
-  data = {'network': network, 'cidr': cidr, 'dhcp': dhcp, 'isolated': isolated, 'action': 'create'};
+  data = {'network': network, 'cidr': cidr, 'dhcp': dhcp, 'isolated': isolated};
   $.ajax({
        type: "POST",
-        url: '/networkaction',
+        url: '/networkcreate',
         data: data,
         success: function(data) {
             $("#wheel").hide();
@@ -22,10 +22,10 @@ function networkcreate(){
 
 function networkdelete(network){
   $("#wheel").show();
-  data = {'network': network, 'action': 'delete'};
+  data = {'network': network};
   $.ajax({
-       type: "POST",
-        url: '/networkaction',
+       type: "DELETE",
+        url: '/networkdelete',
         data: data,
         success: function(data) {
             $("#wheel").hide();

@@ -4,10 +4,10 @@ function snapshotcreate(name){
      return ;
   }
   $("#wheel").show();
-  data = {'name': name, 'action': 'create', 'snapshot': snapshot};
+  data = {'name': name, 'snapshot': snapshot};
   $.ajax({
        type: "POST",
-        url: '/snapshotaction',
+        url: '/snapshotcreate',
         data: data,
         success: function(data) {
             $("#wheel").hide();
@@ -21,10 +21,10 @@ function snapshotcreate(name){
 }
 
 function snapshotdelete(name){
-  data = {'name': name, 'action': 'list'};
+  data = {'name': name};
   $.ajax({
        type: "POST",
-        url: '/snapshotaction',
+        url: '/snapshotlist',
         data: data,
         success: function(snapshots) {
             if (snapshots.length == 0) {
@@ -36,10 +36,10 @@ function snapshotdelete(name){
                    return ;
                 }
                 $("#wheel").show();
-                data = {'name': name, 'action': 'delete', 'snapshot': snapshot};
+                data = {'name': name, 'snapshot': snapshot};
                 $.ajax({
-                     type: "POST",
-                      url: '/snapshotaction',
+                     type: "DELETE",
+                      url: '/snapshotdelete',
                       data: data,
                       success: function(data) {
                           $("#wheel").hide();
@@ -56,10 +56,10 @@ function snapshotdelete(name){
 }
 
 function snapshotrevert(name){
-  data = {'name': name, 'action': 'list'};
+  data = {'name': name};
   $.ajax({
        type: "POST",
-        url: '/snapshotaction',
+        url: '/snapshotlist',
         data: data,
         success: function(snapshots) {
             if (snapshots.length == 0) {
@@ -71,10 +71,10 @@ function snapshotrevert(name){
                    return ;
                 }
                 $("#wheel").show();
-                data = {'name': name, 'action': 'revert', 'snapshot': snapshot};
+                data = {'name': name, 'snapshot': snapshot};
                 $.ajax({
                      type: "POST",
-                      url: '/snapshotaction',
+                      url: '/snapshotrevert',
                       data: data,
                       success: function(data) {
                           $("#wheel").hide();

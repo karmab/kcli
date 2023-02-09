@@ -7,52 +7,6 @@ info:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
 paths:
-  /exposeplans:
-    get:
-      description: Returns list of plans
-      responses:
-        '200':
-          description: Successfully returned list of plans
-          content:
-            application/json:
-              schema:
-                type: object 
-                properties:
-                  plans:
-                    type: array
-                    items:
-                      type: string
-                  owners:
-                    type: object
-                    properties:
-                      owner:
-                        type: string
-                        description: Owner
-  /exposedelete:
-    delete:
-      description: Delete a plan
-      requestBody:
-        required: true
-        description: Plan name
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:   
-                plan:
-                  type: string
-      responses:
-        '200':
-          description: Successfully delete plan
-        '400':
-          description: Missing plan in data
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:   
-                  message:
-                    type: string
   /exposecreate:
     post:
       description: Create a plan
@@ -89,3 +43,49 @@ paths:
                 properties:   
                   message:
                     type: string
+  /exposedelete:
+    delete:
+      description: Delete a plan
+      requestBody:
+        required: true
+        description: Plan name
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:   
+                plan:
+                  type: string
+      responses:
+        '200':
+          description: Successfully delete plan
+        '400':
+          description: Missing plan in data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:   
+                  message:
+                    type: string
+  /exposelist:
+    get:
+      description: Returns list of plans
+      responses:
+        '200':
+          description: Successfully returned list of plans
+          content:
+            application/json:
+              schema:
+                type: object 
+                properties:
+                  plans:
+                    type: array
+                    items:
+                      type: string
+                  owners:
+                    type: object
+                    properties:
+                      owner:
+                        type: string
+                        description: Owner

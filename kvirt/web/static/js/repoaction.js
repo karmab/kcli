@@ -2,10 +2,10 @@ function repocreate(){
   $("#wheel").show();
   var repo = $("#repo").val();
   var url = $("#URL").val();
-  data = {'repo': repo, 'url': url, 'action': 'create'};
+  data = {'repo': repo, 'url': url};
   $.ajax({
        type: "POST",
-        url: '/repoaction',
+        url: '/repocreate',
         data: data,
         success: function(data) {
             $("#wheel").hide();
@@ -21,10 +21,10 @@ function repocreate(){
 
 function repodelete(repo){
   $("#wheel").show();
-  data = {'repo': repo, 'action': 'delete'};
+  data = {'repo': repo};
   $.ajax({
-       type: "POST",
-        url: '/repoaction',
+       type: "DELETE",
+        url: '/repodelete',
         data: data,
         success: function(data) {
             $("#wheel").hide();
@@ -40,10 +40,10 @@ function repodelete(repo){
 
 function repoupdate(repo){
   $("#wheel").show();
-  data = {'repo': repo, 'action': 'update'};
+  data = {'repo': repo};
   $.ajax({
        type: "POST",
-        url: '/repoaction',
+        url: '/repoupdate',
         data: data,
         success: function(data) {
             $("#wheel").hide();

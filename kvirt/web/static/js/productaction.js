@@ -6,10 +6,10 @@ function productcreate(){
   $.each($('#createproduct').serializeArray(), function() {
     parameters[this.name] = this.value;
   });
-  data = {'action': 'create', 'product': product, 'plan': plan, 'parameters': parameters};
+  data = {'product': product, 'plan': plan, 'parameters': parameters};
   $.ajax({
        type: "POST",
-        url: '/productaction',
+        url: '/productcreate',
         data: data,
         success: function(data) {
             $("#wheel").hide();

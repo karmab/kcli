@@ -1,9 +1,9 @@
 function planstart(plan){
   $("#wheel").show();
-  data = {'name': plan, 'action': 'start'};
+  data = {'name': plan};
   $.ajax({  
        type: "POST",
-        url: '/planaction',
+        url: '/planstart',
         data: data,
         success: function(data) {
             $("#wheel").hide();
@@ -18,10 +18,10 @@ function planstart(plan){
 
 function planstop(plan){
   $("#wheel").show();
-  data = {'name': plan, 'action': 'stop'};
+  data = {'name': plan};
   $.ajax({  
        type: "POST",
-        url: '/planaction',
+        url: '/planstop',
         data: data,
         success: function(data) {
             $("#wheel").hide();
@@ -36,14 +36,14 @@ function planstop(plan){
 
 function plandelete(plan){
   $("#wheel").show();
-  data = {'name': plan, 'action': 'delete'};
+  data = {'name': plan};
   var r = confirm("Are you sure you want to delete this Plan?");
   if (r != true) {
     return ;
   }
   $.ajax({
-       type: "POST",
-        url: '/planaction',
+       type: "DELETE",
+        url: '/plandelete',
         data: data,
         success: function(data) {
             $("#wheel").hide();
@@ -65,10 +65,10 @@ function plancreate(name, url){
   url = $("#planurl").val();
   }
   $("#wheel").show();
-  data = {'action': 'create', 'name': name, 'url': url};
+  data = {'name': name, 'url': url};
   $.ajax({
        type: "POST",
-        url: '/planaction',
+        url: '/plancreate',
         data: data,
         success: function(data) {
             $("#wheel").hide();

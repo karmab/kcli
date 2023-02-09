@@ -1,9 +1,9 @@
 function vmstart(vm){
   $("#wheel").show();
-  data = {'name': vm, 'action': 'start'};
+  data = {'name': vm};
   $.ajax({  
        type: "POST",
-        url: '/vmaction',
+        url: '/vmstart',
         data: data,
         success: function(data) {
             $("#wheel").hide();
@@ -19,10 +19,10 @@ function vmstart(vm){
 
 function vmstop(vm){
   $("#wheel").show();
-  data = {'name': vm, 'action': 'stop'};
+  data = {'name': vm};
   $.ajax({  
        type: "POST",
-        url: '/vmaction',
+        url: '/vmstop',
         data: data,
         success: function(data) {
             $("#wheel").hide();
@@ -38,14 +38,14 @@ function vmstop(vm){
 
 function vmdelete(vm){
   $("#wheel").show();
-  data = {'name': vm, 'action': 'delete'};
+  data = {'name': vm};
   var r = confirm("Are you sure you want to delete this VM?");
   if (r != true) {
     return ;
   }
   $.ajax({
-       type: "POST",
-        url: '/vmaction',
+       type: "DELETE",
+        url: '/vmdelete',
         data: data,
         success: function(data) {
             $("#wheel").hide();
@@ -77,10 +77,10 @@ function vmcreate(name, profile){
     parameters[this.name] = this.value;
  });
   $("#wheel").show();
-  data = {'name': name, 'action': 'create', 'profile': profile, 'parameters': parameters};
+  data = {'name': name, 'profile': profile, 'parameters': parameters};
   $.ajax({
        type: "POST",
-        url: '/vmaction',
+        url: '/vmcreate',
         data: data,
         success: function(data) {
             $("#wheel").hide();

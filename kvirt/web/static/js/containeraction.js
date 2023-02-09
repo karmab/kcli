@@ -1,9 +1,9 @@
 function containerstart(container){
   $("#wheel").show();
-  data = {'name': container, 'action': 'start'};
+  data = {'name': container};
   $.ajax({  
        type: "POST",
-        url: '/containeraction',
+        url: '/containerstart',
         data: data,
         success: function(data) {
             $("#wheel").hide();
@@ -19,10 +19,10 @@ function containerstart(container){
 
 function containerstop(container){
   $("#wheel").show();
-  data = {'name': container, 'action': 'stop'};
+  data = {'name': container};
   $.ajax({  
        type: "POST",
-        url: '/containeraction',
+        url: '/containerstop',
         data: data,
         success: function(data) {
             $("#wheel").hide();
@@ -38,10 +38,10 @@ function containerstop(container){
 
 function containerdelete(container){
   $("#wheel").show();
-  data = {'name': container, 'action': 'delete'};
+  data = {'name': container};
   $.ajax({
-       type: "POST",
-        url: '/containeraction',
+       type: "DELETE",
+        url: '/containerdelete',
         data: data,
         success: function(data) {
             $("#wheel").hide();
@@ -59,10 +59,10 @@ function containercreate(){
   name = $("#name").val();
   profile = $("#profile").val();
   $("#wheel").show();
-  data = {'name': name, 'action': 'create', 'profile': profile};
+  data = {'name': name, 'profile': profile};
   $.ajax({
        type: "POST",
-        url: '/containeraction',
+        url: '/containercreate',
         data: data,
         success: function(data) {
             $("#wheel").hide();
