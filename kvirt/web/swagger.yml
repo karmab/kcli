@@ -1,4 +1,4 @@
-swagger: '2.0'
+openapi: 3.0.0
 info:
   version: 1.0.0
   title: Kcli web API
@@ -6,6 +6,17 @@ info:
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
+components:
+  schemas:
+    Result:
+      type: object
+      properties:
+        result:
+          type: string
+        reason:
+          type: string
+      example:
+          result: success
 paths:
   /hoststable:
     get:
@@ -20,6 +31,8 @@ paths:
                 properties:
                   clients:
                     type: array
+                    items:
+                      type: string
   /vmstable:
     get:
       description: Returns list of vms
@@ -33,6 +46,8 @@ paths:
                 properties:
                   vms:
                     type: array
+                    items:
+                      type: string
   /vmprofilestable:
     get:
       description: Returns list of profiles
@@ -46,6 +61,8 @@ paths:
                 properties:
                   profiles:
                     type: array
+                    items:
+                      type: string
   /containerstable:
     get:
       description: Returns list of containers
@@ -59,6 +76,8 @@ paths:
                 properties:
                   containers:
                     type: array
+                    items:
+                      type: string
   /containerprofilestable:
     get:
       description: Returns list of container profiles
@@ -72,6 +91,8 @@ paths:
                 properties:
                   profiles:
                     type: array
+                    items:
+                      type: string
   /imagestable:
     get:
       description: Returns list of images
@@ -85,6 +106,8 @@ paths:
                 properties:
                   images:
                     type: array
+                    items:
+                      type: string
   /isostable:
     get:
       description: Returns list of isos
@@ -98,6 +121,8 @@ paths:
                 properties:
                   isos:
                     type: array
+                    items:
+                      type: string
   /networkstable:
     get:
       description: Returns list of networks
@@ -111,6 +136,8 @@ paths:
                 properties:
                   networks:
                     type: array
+                    items:
+                      type: string
   /plansstable:
     get:
       description: Returns list of plans
@@ -124,6 +151,8 @@ paths:
                 properties:
                   plans:
                     type: array
+                    items:
+                      type: string
   /kubestable:
     get:
       description: Returns list of kubes
@@ -137,6 +166,8 @@ paths:
                 properties:
                   kubes:
                     type: array
+                    items:
+                      type: string
   /poolstable:
     get:
       description: Returns list of pools
@@ -150,6 +181,8 @@ paths:
                 properties:
                   pools:
                     type: array
+                    items:
+                      type: string
   /repostable:
     get:
       description: Returns list of repos
@@ -163,6 +196,8 @@ paths:
                 properties:
                   repos:
                     type: array
+                    items:
+                      type: string
   /productstable:
     get:
       description: Returns list of products
@@ -176,537 +211,439 @@ paths:
                 properties:
                   products:
                     type: array
+                    items:
+                      type: string
   /containeraction:
     post:
       description: start/stop/delete/create container
-      parameters:
-      - in: body
-        name: action
-        description: Action
-        enum: [create, delete, start, stop]
-        type: string
+      requestBody:
         required: true
-      - in: body
-        name: name
-        description: Name
-        required: true
-      - in: body
-        name: profile
-        description: Profile
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: string
+                  enum: [create, delete, start, stop]
+                name:
+                  type: string
+                profile:
+                  type: string
       responses:
         '200':
           description: Successfully handled container
           content:
             application/json:
               schema:
-                type: object 
-                properties:
-                  result:
-                    type: string
-                  reason:
-                    type: string
+                $ref: '#/components/schemas/Result'
         '400':
           description: Invalid data
           content:
             application/json:
               schema:
-                type: object
-                properties:   
-                  result:
-                    type: string
-                  reason:
-                    type: string
+                $ref: '#/components/schemas/Result'
+              example:
+                result: failure
+                reason: Invalid data
   /diskaction:
     post:
       description: add/delete disk to vm
-      parameters:
-      - in: body
-        name: action
-        description: Action
-        enum: [create, delete]
-        type: string
+      requestBody:
         required: true
-      - in: body
-        name: name
-        description: Name
-        required: true
-      - in: body
-        name: size
-        description: Size
-      - in: body
-        name: pool
-        description: Pool
-      - in: Body
-        name: disk
-        description: Disk
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: string
+                  enum: [create, delete]
+                name:
+                  type: string
+                size:
+                  type: integer
+                pool:
+                  type: string
+                disk:
+                  type: string
       responses:
         '200':
           description: Successfully handled disk
           content:
             application/json:
               schema:
-                type: object 
-                properties:
-                  result:
-                    type: string
-                  reason:
-                    type: string
+                $ref: '#/components/schemas/Result'
         '400':
           description: Invalid data
           content:
             application/json:
               schema:
-                type: object
-                properties:   
-                  result:
-                    type: string
-                  reason:
-                    type: string
+                $ref: '#/components/schemas/Result'
+              example:
+                result: failure
+                reason: Invalid data
   /imagesaction:
     post:
       description: create/delete image
-      parameters:
-      - in: body
-        name: action
-        description: Action
-        enum: [create]
-        type: string
+      requestBody:
         required: true
-      - in: body
-        name: image
-        description: Image
-        required: true
-      - in: body
-        name: pool
-        description: Pool
-      - in: body
-        name: url
-        description: Url
-        required: true
-      - in: body
-        name: cmd
-        description: Command
-        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: string
+                  enum: [create]
+                image:
+                  type: string
+                pool:
+                  type: string
+                url:
+                  type: string
+                cmd:
+                  type: string
       responses:
         '200':
           description: Successfully handled container
           content:
             application/json:
               schema:
-                type: object 
-                properties:
-                  result:
-                    type: string
-                  reason:
-                    type: string
+                $ref: '#/components/schemas/Result'
         '400':
           description: Invalid data
           content:
             application/json:
               schema:
-                type: object
-                properties:   
-                  result:
-                    type: string
-                  reason:
-                    type: string
+                $ref: '#/components/schemas/Result'
+              example:
+                result: failure
+                reason: Invalid data
   /nicaction:
     post:
       description: add/delete nic to vm
-      parameters:
-      - in: body
-        name: action
-        description: Action
-        enum: [create, delete]
-        type: string
+      requestBody:
         required: true
-      - in: body
-        name: name
-        description: Name
-        required: true
-      - in: body
-        name: network
-        description: Network
-      - in: body
-        name: nic
-        description: Nic
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: string
+                  enum: [create, delete]
+                name:
+                  type: string
+                network:
+                  type: string
+                nic:
+                  type: string
       responses:
         '200':
           description: Successfully handled nic
           content:
             application/json:
               schema:
-                type: object 
-                properties:
-                  result:
-                    type: string
-                  reason:
-                    type: string
+                $ref: '#/components/schemas/Result'
         '400':
           description: Invalid data
           content:
             application/json:
               schema:
-                type: object
-                properties:   
-                  result:
-                    type: string
-                  reason:
-                    type: string
+                $ref: '#/components/schemas/Result'
+              example:
+                result: failure
+                reason: Invalid data
   /poolaction:
     post:
       description: create/delete pool
-      parameters:
-      - in: body
-        name: action
-        description: Action
-        enum: [create, delete]
-        type: string
+      requestBody:
         required: true
-      - in: body
-        name: pool
-        description: Pool
-        required: true
-      - in: body
-        name: type
-        description: Type
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: string
+                  enum: [create, delete]
+                pool:
+                  type: string
+                type:
+                  type: string
       responses:
         '200':
           description: Successfully handled pool
           content:
             application/json:
               schema:
-                type: object 
-                properties:
-                  result:
-                    type: string
-                  reason:
-                    type: string
+                $ref: '#/components/schemas/Result'
         '400':
           description: Invalid data
           content:
             application/json:
               schema:
-                type: object
-                properties:   
-                  result:
-                    type: string
-                  reason:
-                    type: string
+                $ref: '#/components/schemas/Result'
+              example:
+                result: failure
+                reason: Invalid data
   /repoaction:
     post:
       description: create/delete/update repo
-      parameters:
-      - in: body
-        name: action
-        description: Action
-        enum: [create, delete, update]
-        type: string
+      requestBody:
         required: true
-      - in: body
-        name: repo
-        description: Repo
-        required: true
-      - in: body
-        name: url
-        description: Url
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: string
+                  enum: [create, delete, update]
+                repo:
+                  type: string
+                url:
+                  type: string
       responses:
         '200':
           description: Successfully handled repo
           content:
             application/json:
               schema:
-                type: object 
-                properties:
-                  result:
-                    type: string
-                  reason:
-                    type: string
+                $ref: '#/components/schemas/Result'
         '400':
           description: Invalid data
           content:
             application/json:
               schema:
-                type: object
-                properties:   
-                  result:
-                    type: string
-                  reason:
-                    type: string
+                $ref: '#/components/schemas/Result'
+              example:
+                result: failure
+                reason: Invalid data
   /networkaction:
     post:
       description: create/delete network
-      parameters:
-      - in: body
-        name: action
-        description: Action
-        enum: [create, delete]
-        type: string
+      requestBody:
         required: true
-      - in: body
-        name: network
-        description: Network
-        required: true
-      - in: body
-        name: cidr
-        description: Cidr
-      - in: body
-        name: dhcp
-        description: Dhcp
-      - in: body
-        name: isolated
-        description: Isolated
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: string
+                  enum: [create, delete]
+                network:
+                  type: string
+                cidr:
+                  type: string
+                dhcp:
+                  type: boolean
+                isolated:
+                  type: boolean
       responses:
         '200':
           description: Successfully handled pool
           content:
             application/json:
               schema:
-                type: object 
-                properties:
-                  result:
-                    type: string
-                  reason:
-                    type: string
+                $ref: '#/components/schemas/Result'
         '400':
           description: Invalid data
           content:
             application/json:
               schema:
-                type: object
-                properties:   
-                  result:
-                    type: string
-                  reason:
-                    type: string
+                $ref: '#/components/schemas/Result'
+              example:
+                result: failure
+                reason: Invalid data
   /vmaction:
     post:
       description: start/stop/delete/create vm
-      parameters:
-      - in: body
-        name: action
-        description: Action
-        enum: [create, delete, start, stop]
-        type: string
+      requestBody:
         required: true
-      - in: body
-        name: name
-        description: Name
-        required: true
-      - in: body
-        name: profile
-        description: Profile
-      - in: body
-        name: parameters
-        description: Parameters
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: string
+                  enum: [create, delete, start, stop]
+                name:
+                  type: string
+                profile:
+                  type: string
+                parameters:
+                  type: object
       responses:
         '200':
           description: Successfully handled vm
           content:
             application/json:
               schema:
-                type: object 
-                properties:
-                  result:
-                    type: string
-                  reason:
-                    type: string
+                $ref: '#/components/schemas/Result'
         '400':
           description: Invalid data
           content:
             application/json:
               schema:
-                type: object
-                properties:   
-                  result:
-                    type: string
-                  reason:
-                    type: string
+                $ref: '#/components/schemas/Result'
+              example:
+                result: failure
+                reason: Invalid data
   /hostaction:
     post:
       description: enable/disable/default host
-      parameters:
-      - in: body
-        name: action
-        description: Action
-        enum: [enable, disable, switch]
-        type: string
+      requestBody:
         required: true
-      - in: body
-        name: name
-        description: Name
-        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: string
+                  enum: [enable, disable, switch]
+                name:
+                  type: string
       responses:
         '200':
           description: Successfully handled host
           content:
             application/json:
               schema:
-                type: object 
-                properties:
-                  result:
-                    type: string
-                  reason:
-                    type: string
+                $ref: '#/components/schemas/Result'
         '400':
           description: Invalid data
           content:
             application/json:
               schema:
-                type: object
-                properties:   
-                  result:
-                    type: string
-                  reason:
-                    type: string
+                $ref: '#/components/schemas/Result'
+              example:
+                result: failure
+                reason: Invalid data
   /snapshotaction:
     post:
       description: create/delete/revert snapshot
-      parameters:
-      - in: body
-        name: action
-        description: Action
-        enum: [list, revert, delete, create]
-        type: string
+      requestBody:
         required: true
-      - in: body
-        name: name
-        description: Name
-        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: string
+                  enum: [list, revert, delete, create]
+                name:
+                  type: string
       responses:
         '200':
           description: Successfully handled host
           content:
             application/json:
               schema:
-                type: object 
-                properties:
-                  result:
-                    type: string
-                  reason:
-                    type: string
+                $ref: '#/components/schemas/Result'
         '400':
           description: Invalid data
           content:
             application/json:
               schema:
-                type: object
-                properties:   
-                  result:
-                    type: string
-                  reason:
-                    type: string
+                $ref: '#/components/schemas/Result'
   /planaction:
     post:
       description: start/stop/delete plan
-      parameters:
-      - in: body
-        name: action
-        description: Action
-        enum: [start, stop, delete, create]
-        type: string
+      requestBody:
         required: true
-      - in: body
-        name: name
-        description: Name
-        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: string
+                  enum: [start, stop, delete, create]
+                name:
+                  type: string
       responses:
         '200':
           description: Successfully handled plan
           content:
             application/json:
               schema:
-                type: object 
-                properties:
-                  result:
-                    type: string
-                  reason:
-                    type: string
+                $ref: '#/components/schemas/Result'
         '400':
           description: Invalid data
           content:
             application/json:
               schema:
-                type: object
-                properties:   
-                  result:
-                    type: string
-                  reason:
-                    type: string
+                $ref: '#/components/schemas/Result'
+              example:
+                result: failure
+                reason: Invalid data
   /productction:
     post:
       description: create product
-      parameters:
-      - in: body
-        name: action
-        description: Action
-        enum: [create]
-        type: string
+      requestBody:
         required: true
-      - in: body
-        name: product
-        description: Product
-        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: string
+                  enum: [create]
+                product:
+                  type: string
       responses:
         '200':
           description: Successfully created product
           content:
             application/json:
               schema:
-                type: object 
-                properties:
-                  result:
-                    type: string
-                  reason:
-                    type: string
+                $ref: '#/components/schemas/Result'
         '400':
           description: Invalid data
           content:
             application/json:
               schema:
-                type: object
-                properties:   
-                  result:
-                    type: string
-                  reason:
-                    type: string
+                $ref: '#/components/schemas/Result'
+              example:
+                result: failure
+                reason: Invalid data
   /kubecreate:
     post:
       description: create kube
-      parameters:
-      - in: body
-        name: cluster
-        description: Cluster
+      requestBody:
         required: true
-      - in: body
-        name: type
-        description: Type
-        type: string
-        required: true
-        enum: [generic, openshift, k3s, microshift, hypershift, kind]
-      - in: body
-        name: parameters
-        description: Parameters
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                cluster:
+                  type: string
+                type:
+                  type: string
+                  enum: [generic, openshift, k3s, microshift, hypershift, kind]
+                parameters:
+                  type: string
       responses:
         '200':
-          description: Successfully handled plan
+          description: Successfully created kube
           content:
             application/json:
               schema:
-                type: object 
-                properties:
-                  result:
-                    type: string
-                  reason:
-                    type: string
+                $ref: '#/components/schemas/Result'
         '400':
           description: Invalid data
           content:
             application/json:
               schema:
-                type: object
-                properties:   
-                  result:
-                    type: string
-                  reason:
-                    type: string
+                $ref: '#/components/schemas/Result'
+              example:
+                result: failure
+                reason: Invalid data
