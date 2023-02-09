@@ -38,6 +38,17 @@ def server_static(filename):
 # VMS
 
 
+@app.route('/vmslist')
+def vmslist():
+    config = Kconfig()
+    k = config.k
+    vms = []
+    for vm in k.list():
+        vm['info'] = print_info(vm, output='plain', pretty=True)
+        vms.append(vm)
+    return {'vms': vms}
+
+
 @app.route('/vmstable')
 @view('vmstable.html')
 def vmstable():
@@ -79,6 +90,13 @@ def vmcreateform():
     nets = ','.join(nets)
     parameters = {'memory': config.memory, 'numcpus': config.numcpus, 'disks': disks, 'nets': nets}
     return {'title': 'CreateVm', 'images': images, 'parameters': parameters, 'client': config.client}
+
+
+@app.route('/vmprofileslist')
+def vmprofileslist():
+    baseconfig = Kbaseconfig()
+    profiles = baseconfig.list_profiles()
+    return {'profiles': profiles}
 
 
 @app.route('/vmprofilestable')
@@ -498,6 +516,14 @@ def plancreate():
     return result
 
 
+@app.route('/containerslist')
+def containerslist():
+    config = Kconfig()
+    cont = Kcontainerconfig(config).cont
+    containers = cont.list_containers()
+    return {'containers': containers}
+
+
 @app.route('/containerstable')
 @view('containerstable.html')
 def containerstable():
@@ -514,6 +540,14 @@ def containers():
     return {'title': 'Containers', 'client': config.client}
 
 
+@app.route('/networkslist')
+def networkslist():
+    config = Kconfig()
+    k = config.k
+    networks = k.list_networks()
+    return {'networks': networks}
+
+
 @app.route('/networkstable')
 @view('networkstable.html')
 def networkstable():
@@ -528,6 +562,17 @@ def networkstable():
 def networks():
     config = Kconfig()
     return {'title': 'Networks', 'client': config.client}
+
+
+@app.route('/poolslist')
+def poolslist():
+    config = Kconfig()
+    k = config.k
+    pools = []
+    for pool in k.list_pools():
+        poolpath = k.get_pool_path(pool)
+        pools.append([pool, poolpath])
+    return {'pools': pools}
 
 
 @app.route('/poolstable')
@@ -550,6 +595,18 @@ def pools():
 
 
 # REPOS
+
+
+@app.route('/reposlist')
+def reposlist():
+    config = Kconfig()
+    repos = []
+    repoinfo = config.list_repos()
+    for repo in repoinfo:
+        url = repoinfo[repo]
+        repos.append([repo, url])
+    return {'repos': repos}
+
 
 @app.route('/repostable')
 @view('repostable.html')
@@ -577,6 +634,20 @@ def repocreateform():
     return {'title': 'CreateRepo', 'client': config.client}
 
 # PRODUCTS
+
+
+@app.route('/productslist')
+def productslist():
+    baseconfig = Kbaseconfig()
+    products = []
+    for product in baseconfig.list_products():
+        repo = product['repo']
+        group = product.get('group', 'None')
+        name = product['name']
+        description = product.get('description', 'N/A')
+        numvms = product.get('numvms', 'N/A')
+        products.append([repo, group, name, description, numvms])
+    return {'products': products}
 
 
 @app.route('/productstable')
@@ -727,6 +798,20 @@ def kubecreate():
     return result
 
 
+@app.route('/hostslist')
+def hostslist():
+    baseconfig = Kbaseconfig()
+    clients = []
+    for client in sorted(baseconfig.clients):
+        enabled = baseconfig.ini[client].get('enabled', True)
+        _type = baseconfig.ini[client].get('type', 'kvm')
+        if client == baseconfig.client:
+            clients.append([client, _type, enabled, 'X'])
+        else:
+            clients.append([client, _type, enabled, ''])
+    return {'clients': clients}
+
+
 @app.route('/hoststable')
 @view('hoststable.html')
 def hoststable():
@@ -749,6 +834,12 @@ def hosts():
     return {'title': 'Hosts', 'client': config.client}
 
 
+@app.route('/planslist')
+def planslist():
+    config = Kconfig()
+    return {'plans': config.list_plans()}
+
+
 @app.route('/planstable')
 @view('planstable.html')
 def planstable():
@@ -761,6 +852,13 @@ def planstable():
 def plans():
     config = Kconfig()
     return {'title': 'Plans', 'client': config.client}
+
+
+@app.route('/kubeslist')
+def kubeslist():
+    config = Kconfig()
+    kubes = config.list_kubes()
+    return {'kubes': kubes}
 
 
 @app.route('/kubestable')
@@ -845,6 +943,14 @@ def containercreate():
     return result
 
 
+@app.route('/imageslist')
+def imageslist():
+    config = Kconfig()
+    k = config.k
+    images = k.volumes()
+    return {'images': images}
+
+
 @app.route('/imagestable')
 @view('imagestable.html')
 def imagestable():
@@ -895,6 +1001,14 @@ def imagecreate():
     return result
 
 
+@app.route('/isoslist')
+def isoslist():
+    config = Kconfig()
+    k = config.k
+    isos = k.volumes(iso=True)
+    return {'isos': isos}
+
+
 @app.route('/isostable')
 @view('isostable.html')
 def isostable():
@@ -909,6 +1023,13 @@ def isostable():
 def isos():
     config = Kconfig()
     return {'title': 'Isos', 'client': config.client}
+
+
+@app.route('/containerprofileslist')
+def containerprofileslist():
+    baseconfig = Kbaseconfig()
+    profiles = baseconfig.list_containerprofiles()
+    return {'profiles': profiles}
 
 
 @app.route('/containerprofilestable')

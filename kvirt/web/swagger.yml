@@ -17,6 +17,41 @@ components:
           type: string
       example:
           result: success
+    Vm:
+      type: object
+      properties:
+        creationdate:
+          type: string
+        id:
+          type: string
+        image:
+          type: string
+        ip:
+          type: string
+        ips:
+          type: array
+          items:
+            type: string
+        info:
+          type: string
+        kube:
+          type: string
+        kubetype:
+          type: string
+        name:
+          type: string
+        nets:
+          type: array
+          items:
+            type: string
+        plan:
+          type: string
+        profile:
+          type: string
+        status:
+          type: string
+        user:
+          type: string
 paths:
   /containercreate:
     post:
@@ -76,22 +111,7 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
-  /containerprofilestable:
-    get:
-      description: Returns list of container profiles
-      responses:
-        '200':
-          description: Successfully returned list of containers
-          content:
-            application/json:
-              schema:
-                type: object 
-                properties:
-                  profiles:
-                    type: array
-                    items:
-                      type: string
-  /containerstable:
+  /containerslist:
     get:
       description: Returns list of containers
       responses:
@@ -103,6 +123,21 @@ paths:
                 type: object 
                 properties:
                   containers:
+                    type: array
+                    items:
+                      type: string
+  /containerprofileslist:
+    get:
+      description: Returns list of container profiles
+      responses:
+        '200':
+          description: Successfully returned list of containers
+          content:
+            application/json:
+              schema:
+                type: object 
+                properties:
+                  profiles:
                     type: array
                     items:
                       type: string
@@ -280,7 +315,7 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
-  /hoststable:
+  /hostslist:
     get:
       description: Returns list of hosts
       responses:
@@ -357,7 +392,7 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
-  /imagestable:
+  /imageslist:
     get:
       description: Returns list of images
       responses:
@@ -372,7 +407,7 @@ paths:
                     type: array
                     items:
                       type: string
-  /isostable:
+  /isoslist:
     get:
       description: Returns list of isos
       responses:
@@ -420,7 +455,7 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
-  /kubestable:
+  /kubeslist:
     get:
       description: Returns list of kubes
       responses:
@@ -497,7 +532,7 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
-  /networkstable:
+  /networkslist:
     get:
       description: Returns list of networks
       responses:
@@ -632,7 +667,7 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
-  /planstable:
+  /planslist:
     get:
       description: Returns list of plans
       responses:
@@ -761,7 +796,7 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
-  /poolstable:
+  /poolslist:
     get:
       description: Returns list of pools
       responses:
@@ -804,7 +839,7 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
-  /productstable:
+  /productslist:
     get:
       description: Returns list of products
       responses:
@@ -877,7 +912,7 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
-  /repostable:
+  /reposlist:
     get:
       description: Returns list of repos
       responses:
@@ -1086,7 +1121,17 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
-  /vmprofilestable:
+  /vmslist:
+    get:
+      description: Returns list of vms
+      responses:
+        '200':
+          description: Successfully returned list of vms
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vm'
+  /vmprofileslist:
     get:
       description: Returns list of profiles
       responses:
@@ -1098,21 +1143,6 @@ paths:
                 type: object 
                 properties:
                   profiles:
-                    type: array
-                    items:
-                      type: string
-  /vmstable:
-    get:
-      description: Returns list of vms
-      responses:
-        '200':
-          description: Successfully returned list of vms
-          content:
-            application/json:
-              schema:
-                type: object 
-                properties:
-                  vms:
                     type: array
                     items:
                       type: string
