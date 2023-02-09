@@ -1706,6 +1706,32 @@ class Kbaseconfig:
                     pprint(keywords_info[keyword].strip())
         return 0
 
+    def info_plantype(self, plantype):
+        vmtype = list(self.list_keywords().keys())
+        plantypes = {'ansible': ['playbook', 'verbose', 'groups', 'user', 'variables', 'vms'],
+                     'bucket': ['files'],
+                     'cluster': ['kubetype'],
+                     'container': ['image', 'nets', 'ports', 'volumes', 'environment', 'cmds'],
+                     'disk': ['pool', 'vms', 'image', 'size'],
+                     'dns': ['domain', 'net', 'ip', 'alias'],
+                     'image': ['pool', 'size', 'url', 'cmd'],
+                     'kube': ['kubetype'],
+                     'loadbalancer': ['checkpath', 'checkport', 'alias', 'domain', 'dnsclient', 'vms', 'internal',
+                                      'subnetid'],
+                     'network': ['cidr', 'nat', 'dhcp', 'domain', 'dual_cidr'],
+                     'plan': ['url', 'file'],
+                     'pool': ['path'],
+                     'profile': vmtype,
+                     'securitygroup': ['ports'],
+                     'vm': vmtype,
+                     'workflow': []}
+        if plantype not in plantypes:
+            error(f"Plan type {plantype} not found")
+            return 1
+        else:
+            for key in sorted(plantypes[plantype]):
+                print(key)
+
     def import_in_kube(self, network='default', dest=None, secure=False):
         kubectl = 'oc' if which('oc') is not None else 'kubectl'
         kubectl += ' -n kcli-infra'

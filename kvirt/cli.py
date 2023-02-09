@@ -16,7 +16,7 @@ from kvirt.examples import changelog, starthosts, stophosts, infohosts, ocdownlo
 from kvirt.examples import networkcreate, securitygroupcreate, profilecreate
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
-from kvirt.defaults import IMAGES, VERSION, LOCAL_OPENSHIFT_APPS, SSH_PUB_LOCATIONS
+from kvirt.defaults import IMAGES, VERSION, LOCAL_OPENSHIFT_APPS, SSH_PUB_LOCATIONS, PLANTYPES
 from prettytable import PrettyTable
 import argcomplete
 import argparse
@@ -119,6 +119,13 @@ def valid_cluster(name):
         if '/' in name:
             msg = "Cluster name can't include /"
             raise argparse.ArgumentTypeError(msg)
+    return name
+
+
+def valid_plantype(name):
+    if name not in PLANTYPES:
+        msg = "Invalid plan type {name}"
+        raise argparse.ArgumentTypeError(msg)
     return name
 
 
@@ -1128,6 +1135,13 @@ def list_plan(args):
             planvms = plan[1]
             planstable.add_row([planname, planvms])
     print(planstable)
+
+
+def list_plantypes(args):
+    plantypestable = PrettyTable(["PlanTypes"])
+    for _type in sorted(PLANTYPES):
+        plantypestable.add_row([_type])
+    print(plantypestable)
 
 
 def create_app_generic(args):
@@ -2252,6 +2266,14 @@ def info_keyword(args):
     pprint(f"Providing information about keyword {keyword}...")
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     return baseconfig.info_keyword(keyword)
+
+
+def info_plantype(args):
+    """Info plantype"""
+    plantype = args.plantype
+    pprint(f"Providing keywords available with plantype {plantype}...")
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
+    return baseconfig.info_plantype(plantype)
 
 
 def download_plan(args):
@@ -4332,6 +4354,12 @@ def cli():
     networkinfo_parser.add_argument('name', metavar='NETWORK')
     networkinfo_parser.set_defaults(func=info_network)
 
+    plantypeinfo_desc = 'Info Plan Type'
+    plantypeinfo_parser = info_subparsers.add_parser('plan-type', description=plantypeinfo_desc, help=plantypeinfo_desc,
+                                                     aliases=['type'])
+    plantypeinfo_parser.add_argument('plantype', metavar='PLANTYPE', type=valid_plantype)
+    plantypeinfo_parser.set_defaults(func=info_plantype)
+
     profileinfo_desc = 'Info Profile'
     profileinfo_parser = info_subparsers.add_parser('profile', description=profileinfo_desc, help=profileinfo_desc)
     profileinfo_parser.add_argument('profile', metavar='PROFILE')
@@ -4505,6 +4533,12 @@ def cli():
     planlist_parser = list_subparsers.add_parser('plan', description=planlist_desc, help=planlist_desc,
                                                  aliases=['plans'], parents=[output_parser])
     planlist_parser.set_defaults(func=list_plan)
+
+    plantypeslist_desc = 'List Plan types'
+    plantypeslist_parser = list_subparsers.add_parser('plan-type', description=plantypeslist_desc,
+                                                      help=plantypeslist_desc, aliases=['plan-types'],
+                                                      parents=[output_parser])
+    plantypeslist_parser.set_defaults(func=list_plantypes)
 
     poollist_desc = 'List Pools'
     poollist_parser = list_subparsers.add_parser('pool', description=poollist_desc, help=poollist_desc,

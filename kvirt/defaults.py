@@ -247,3 +247,5 @@ Type=simple
 ExecStart=/usr/bin/ksushy
 StandardOutput=syslog
 StandardError=syslog"""
+PLANTYPES = ['ansible', 'bucket', 'cluster', 'container', 'disk', 'dns', 'image', 'kube', 'loadbalancer', 'network',
+             'plan', 'pool', 'profile', 'securitygroup', 'vm', 'workflow']
