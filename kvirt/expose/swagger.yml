@@ -6,6 +6,52 @@ info:
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
+components:
+  schemas:
+    Result:
+      type: object
+      properties:
+        result:
+          type: string
+        reason:
+          type: string
+      example:
+          result: success
+    Vm:
+      type: object
+      properties:
+        creationdate:
+          type: string
+        id:
+          type: string
+        image:
+          type: string
+        ip:
+          type: string
+        ips:
+          type: array
+          items:
+            type: string
+        info:
+          type: string
+        kube:
+          type: string
+        kubetype:
+          type: string
+        name:
+          type: string
+        nets:
+          type: array
+          items:
+            type: string
+        plan:
+          type: string
+        profile:
+          type: string
+        status:
+          type: string
+        user:
+          type: string
 paths:
   /expose:
     get:
@@ -25,7 +71,7 @@ paths:
                   owners:
                     type: object
                     properties:
-                      owner:
+                      plan:
                         type: string
                         description: Owner
     post:
@@ -52,7 +98,7 @@ paths:
                 properties:
                   plan:
                     type: string
-                  result:
+                  data:
                     type: string
         '400':
           description: Missing plan in data
@@ -64,12 +110,30 @@ paths:
                   message:
                     type: string
   /expose/{plan}:
+    get:
+      description: Get info on a plan
+      parameters:
+      - name: plan
+        in: path
+        description: Plan name
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Successfully provided info on plan
+        '400':
+          description: Missing plan in data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vm'
     delete:
       description: Delete a plan
       parameters:
-      - name: name
+      - name: plan
         in: path
-        description: Vm name
+        description: Plan name
         required: true
         schema:
           type: string

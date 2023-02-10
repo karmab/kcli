@@ -61,27 +61,9 @@ class Kexposer():
             self.refresh_plans()
             return {'plans': self.plans, 'owners': self.owners}
 
-        @app.route('/expose')
-        def exposelist():
-            return {'plans': self.plans, 'owners': self.owners}
-
-        @app.route("/expose/<plan>", method=['DELETE'])
-        def exposedelete(plan):
-            """
-            delete plan
-            """
-            currentconfig = self.config
-            if plan not in self.plans:
-                response.status = 400
-                return f'Invalid plan name {plan}'
-            self.get_client(plan, currentconfig)
-            result = currentconfig.delete_plan(plan)
-            response.status = 200
-            return result
-
         @app.route("/exposecreate", method='POST')
         @view('result.html')
-        def exposecreate():
+        def exposecreateweb():
             update = False
             currentconfig = self.config
             if 'plan' in request.forms:
@@ -133,9 +115,6 @@ class Kexposer():
         @app.route("/exposeform/<plan>")
         @view('form.html')
         def exposeform(plan):
-            """
-            form plan
-            """
             parameters = self.overrides
             if plan not in self.plans:
                 return f'Invalid plan name {plan}'
@@ -143,9 +122,7 @@ class Kexposer():
             info = info.get('info', 'N/A')
             return {'parameters': parameters, 'plan': plan, 'pfmode': self.pfmode, 'info': info}
 
-        @app.route("/infoplan/<plan>")
-        @view('infoplan.html')
-        def infoplan(plan):
+        def _infoplan(plan):
             currentconfig = self.config
             if plan not in self.plans:
                 return f'Invalid plan name {plan}'
@@ -159,6 +136,84 @@ class Kexposer():
                     owner = vms[0]['owner']
                 return {'vms': vms, 'plan': plan, 'client': currentconfig.client, 'creationdate': creationdate,
                         'owner': owner}
+
+        @app.route("/infoplan/<plan>")
+        @view('infoplan.html')
+        def infoplan(plan):
+            return _infoplan(plan)
+
+        # API
+
+        @app.route('/expose')
+        def exposelist():
+            return {'plans': self.plans, 'owners': self.owners}
+
+        @app.route("/expose", method='POST')
+        def exposeplancreate():
+            update = False
+            currentconfig = self.config
+            json = request.json
+            print(json)
+            if json is None:
+                response.status = 400
+                return 'Invalid json'
+            if 'plan' in json:
+                plan = json['plan']
+                if plan not in self.plans:
+                    response.status = 400
+                    return f'Invalid plan name {plan}'
+                pfdata = None
+                parameters = {}
+                for p in json:
+                    if p not in self.overrides:
+                        print(f"Skipping parameter {p}")
+                    value = request.json[p]
+                    if value.isdigit():
+                        value = int(value)
+                    elif value.lower() in ['true', 'false']:
+                        value = value.lower() == "true"
+                    parameters[p] = value
+                if pfdata is not None:
+                    new_parameters = yaml.safe_load(pfdata)
+                    new_parameters.update(parameters)
+                    parameters = new_parameters
+                try:
+                    overrides = self.get_client(plan, currentconfig, overrides=parameters)
+                    if 'mail' in currentconfig.notifymethods and 'mail_to' in overrides and overrides['mail_to'] != "":
+                        newmails = overrides['mail_to'].split(',')
+                        if currentconfig.mailto:
+                            currentconfig.mailto.extend(newmails)
+                        else:
+                            currentconfig.mailto = newmails
+                    if 'owner' in overrides and overrides['owner'] == '':
+                        del overrides['owner']
+                    if update:
+                        result = currentconfig.plan(plan, inputfile=inputfile, overrides=overrides, update=True)
+                    else:
+                        currentconfig.delete_plan(plan)
+                        result = currentconfig.plan(plan, inputfile=inputfile, overrides=overrides)
+                except Exception as e:
+                    error = f'Hit issue when running plan: {str(e)}'
+                    response.status = 400
+                    result = {'result': 'failure', 'error': error}
+                return {'plan': plan, 'result': result}
+            else:
+                return 'Missing plan in data'
+
+        @app.route("/expose/<plan>")
+        def exposeplaninfo(plan):
+            return _infoplan(plan)
+
+        @app.route("/expose/<plan>", method=['DELETE'])
+        def exposedelete(plan):
+            currentconfig = self.config
+            if plan not in self.plans:
+                response.status = 400
+                return f'Invalid plan name {plan}'
+            self.get_client(plan, currentconfig)
+            result = currentconfig.delete_plan(plan)
+            response.status = 200
+            return result
 
         self.app = app
         self.config = config
