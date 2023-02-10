@@ -967,7 +967,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     for f in glob(f"{plandir}/customisation/*.yaml"):
         if '99-ingress-controller.yaml' in f:
             ingressrole = 'master' if workers == 0 or not mdns or kubevirt_api_service else 'worker'
-            replicas = ctlplanes if workers == 0 or not mdns or kubevirt_api_service else workers
+            replicas = 1 if sno else ctlplanes if workers == 0 or not mdns or kubevirt_api_service else workers
             if platform in virtplatforms and sslip and ingress_ip is None:
                 replicas = ctlplanes
                 ingressrole = 'master'
