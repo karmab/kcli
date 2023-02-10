@@ -7,7 +7,7 @@ function networkcreate(){
   data = {'network': network, 'cidr': cidr, 'dhcp': dhcp, 'isolated': isolated};
   $.ajax({
        type: "POST",
-        url: '/networkcreate',
+        url: '/networks',
         data: data,
         success: function(data) {
             $("#wheel").hide();
@@ -22,10 +22,9 @@ function networkcreate(){
 
 function networkdelete(network){
   $("#wheel").show();
-  data = {'network': network};
   $.ajax({
        type: "DELETE",
-        url: '/networkdelete',
+        url: `/networks/${network}`,
         data: data,
         success: function(data) {
             $("#wheel").hide();

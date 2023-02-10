@@ -9,7 +9,7 @@ function kubecreate(){
   cluster = parameters['cluster'];
   $.ajax({
        type: "POST",
-        url: '/kubecreate',
+        url: '/kubes',
         data: data,
         success: function(data) {
             $("#wheel").hide();

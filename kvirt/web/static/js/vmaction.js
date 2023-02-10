@@ -1,59 +1,53 @@
-function vmstart(vm){
+function vmstart(name){
   $("#wheel").show();
-  data = {'name': vm};
   $.ajax({  
        type: "POST",
-        url: '/vmstart',
-        data: data,
+        url: `/vms/${name}/start`,
         success: function(data) {
             $("#wheel").hide();
             if (data.result == 'success') {
-                $('.top-right').notify({message: { text: "Vm "+vm+" started!!!" }, type: 'success'}).show(); 
+                $('.top-right').notify({message: { text: "Vm "+name+" started!!!" }, type: 'success'}).show(); 
                 vmstable();
             } else {
-                $('.top-right').notify({message: { text: "VM "+vm+" not started" }, type: 'danger'}).show(); 
+                $('.top-right').notify({message: { text: "VM "+name+" not started" }, type: 'danger'}).show(); 
             };
 		}
 	});
 }
 
-function vmstop(vm){
+function vmstop(name){
   $("#wheel").show();
-  data = {'name': vm};
   $.ajax({  
        type: "POST",
-        url: '/vmstop',
-        data: data,
+        url: `/vms/${name}/stop`,
         success: function(data) {
             $("#wheel").hide();
             if (data.result == 'success') {
-                $('.top-right').notify({message: { text: "Vm "+vm+" stopped!!!" }, type: 'success'}).show(); 
+                $('.top-right').notify({message: { text: "Vm "+name+" stopped!!!" }, type: 'success'}).show(); 
                 vmstable();
             } else {
-                $('.top-right').notify({message: { text: "VM "+vm+" not stopped" }, type: 'danger'}).show(); 
+                $('.top-right').notify({message: { text: "VM "+name+" not stopped" }, type: 'danger'}).show(); 
             };
 		}
 	});
 }
 
-function vmdelete(vm){
+function vmdelete(name){
   $("#wheel").show();
-  data = {'name': vm};
   var r = confirm("Are you sure you want to delete this VM?");
   if (r != true) {
     return ;
   }
   $.ajax({
        type: "DELETE",
-        url: '/vmdelete',
-        data: data,
+        url: `/vms/${name}`,
         success: function(data) {
             $("#wheel").hide();
             if (data.result == 'success') {
-                $('.top-right').notify({message: { text: "Vm "+vm+" deleted!!!" }, type: 'success'}).show();
+                $('.top-right').notify({message: { text: "Vm "+name+" deleted!!!" }, type: 'success'}).show();
                 vmstable();
             } else {
-                $('.top-right').notify({message: { text: "VM "+vm+" not deleted because "+data.reason }, type: 'danger'}).show();
+                $('.top-right').notify({message: { text: "VM "+name+" not deleted because "+data.reason }, type: 'danger'}).show();
             };
         }
     });
@@ -80,7 +74,7 @@ function vmcreate(name, profile){
   data = {'name': name, 'profile': profile, 'parameters': parameters};
   $.ajax({
        type: "POST",
-        url: '/vmcreate',
+        url: '/vms',
         data: data,
         success: function(data) {
             $("#wheel").hide();

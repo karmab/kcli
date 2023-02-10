@@ -15,7 +15,7 @@ function imagecreate(image, pool, url, cmd){
   data = {'image': image, 'pool': pool, 'url': url, 'cmd': cmd};
   $.ajax({
        type: "POST",
-        url: '/imagecreate',
+        url: '/images',
         data: data,
         success: function(data) {
             $("#wheel").hide();

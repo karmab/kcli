@@ -4,10 +4,10 @@ function snapshotcreate(name){
      return ;
   }
   $("#wheel").show();
-  data = {'name': name, 'snapshot': snapshot};
+  data = {'snapshot': snapshot};
   $.ajax({
        type: "POST",
-        url: '/snapshotcreate',
+        url: `/snapshots/${name}`,
         data: data,
         success: function(data) {
             $("#wheel").hide();
@@ -21,11 +21,9 @@ function snapshotcreate(name){
 }
 
 function snapshotdelete(name){
-  data = {'name': name};
   $.ajax({
-       type: "POST",
-        url: '/snapshotlist',
-        data: data,
+       type: "GET",
+        url: `/snapshots/${name}`,
         success: function(snapshots) {
             if (snapshots.length == 0) {
                 $('.top-right').notify({message: { text: "No snapshots found for "+name }, type: 'danger'}).show();
@@ -36,10 +34,10 @@ function snapshotdelete(name){
                    return ;
                 }
                 $("#wheel").show();
-                data = {'name': name, 'snapshot': snapshot};
+                data = {'snapshot': snapshot};
                 $.ajax({
                      type: "DELETE",
-                      url: '/snapshotdelete',
+                      url: `/snapshots/${name}`,
                       data: data,
                       success: function(data) {
                           $("#wheel").hide();
@@ -56,11 +54,9 @@ function snapshotdelete(name){
 }
 
 function snapshotrevert(name){
-  data = {'name': name};
   $.ajax({
-       type: "POST",
-        url: '/snapshotlist',
-        data: data,
+       type: "GET",
+        url: `/snapshots/${name}`,
         success: function(snapshots) {
             if (snapshots.length == 0) {
                 $('.top-right').notify({message: { text: "No snapshots found for "+name }, type: 'danger'}).show();
@@ -71,10 +67,10 @@ function snapshotrevert(name){
                    return ;
                 }
                 $("#wheel").show();
-                data = {'name': name, 'snapshot': snapshot};
+                data = {'snapshot': snapshot};
                 $.ajax({
                      type: "POST",
-                      url: '/snapshotrevert',
+                      url: `/snapshots/${name}/revert`,
                       data: data,
                       success: function(data) {
                           $("#wheel").hide();

@@ -22,9 +22,9 @@ from time import sleep
 from threading import Thread
 
 app = Bottle()
-config = {'PORT': os.environ.get('PORT', 9000)}
+config = {'PORT': os.environ.get('PORT', 8000)}
 debug = config['DEBUG'] if 'DEBUG' in list(config) else True
-port = int(config['PORT']) if 'PORT' in list(config) else 9000
+port = int(config['PORT']) if 'PORT' in list(config) else 8000
 global_pull_secret = os.environ.get('PULL_SECRET')
 
 basedir = f"{os.path.dirname(Bottle.run.__code__.co_filename)}/web"
@@ -38,7 +38,7 @@ def server_static(filename):
 # VMS
 
 
-@app.route('/vmslist')
+@app.route('/vms')
 def vmslist():
     config = Kconfig()
     k = config.k
@@ -62,7 +62,7 @@ def vmstable():
 
 
 @app.route("/")
-@app.route('/vms')
+@app.route('/vmsindex')
 @view('vms.html')
 def vms():
     baseconfig = Kbaseconfig()
@@ -92,7 +92,7 @@ def vmcreateform():
     return {'title': 'CreateVm', 'images': images, 'parameters': parameters, 'client': config.client}
 
 
-@app.route('/vmprofileslist')
+@app.route('/vmprofiles')
 def vmprofileslist():
     baseconfig = Kbaseconfig()
     profiles = baseconfig.list_profiles()
@@ -107,29 +107,27 @@ def vmprofilestable():
     return {'profiles': profiles}
 
 
-@app.route('/vmprofiles')
+@app.route('/vmprofilesindex')
 @view('vmprofiles.html')
 def vmprofiles():
     baseconfig = Kbaseconfig()
     return {'title': 'VmProfiles', 'client': baseconfig.client}
 
 
-@app.route("/diskcreate", method='POST')
-def diskcreate():
+@app.route("/disks/<name>", method='POST')
+def diskcreate(name):
     config = Kconfig()
     k = config.k
-    name = request.forms['name']
     size = int(request.forms['size'])
     pool = request.forms['pool']
     result = k.add_disk(name, size, pool)
     return result
 
 
-@app.route("/diskdelete", method='DELETE')
-def diskdelete():
+@app.route("/disks/<name>", method='DELETE')
+def diskdelete(name):
     config = Kconfig()
     k = config.k
-    name = request.forms['name']
     diskname = request.forms['disk']
     result = k.delete_disk(name, diskname)
     response.status = 200
@@ -138,21 +136,19 @@ def diskdelete():
     return result
 
 
-@app.route("/niccreate", method='POST')
-def niccreate():
+@app.route("/nics/<name>", method='POST')
+def niccreate(name):
     config = Kconfig()
     k = config.k
-    name = request.forms['name']
     network = request.forms['network']
     result = k.add_nic(name, network)
     return result
 
 
-@app.route("/nicdelete", method='DELETE')
-def nicdelete():
+@app.route("/nics/<name>", method='DELETE')
+def nicdelete(name):
     config = Kconfig()
     k = config.k
-    name = request.forms['name']
     nicname = request.forms['nic']
     result = k.delete_nic(name, nicname)
     response.status = 200
@@ -180,7 +176,7 @@ def poolcreateform():
     return {'title': 'CreatePool', 'client': config.client}
 
 
-@app.route("/poolcreate", method='POST')
+@app.route("/pools", method='POST')
 def poolcreate():
     config = Kconfig()
     k = config.k
@@ -191,18 +187,17 @@ def poolcreate():
     return result
 
 
-@app.route("/pooldelete", method='DELETE')
-def pooldelete():
+@app.route("/pools/<pool>", method='DELETE')
+def pooldelete(pool):
     config = Kconfig()
     k = config.k
-    pool = request.forms['pool']
     result = k.delete_pool(name=pool)
     return result
 
 # REPOS
 
 
-@app.route("/repocreate", method='POST')
+@app.route("/repos", method='POST')
 def repocreate():
     config = Kconfig()
     if 'repo' in request.forms:
@@ -219,29 +214,19 @@ def repocreate():
     return result
 
 
-@app.route("/repodelete", method='DELETE')
-def repodelete():
+@app.route("/repos/<repo>", method='DELETE')
+def repodelete(repo):
     config = Kconfig()
-    if 'repo' in request.forms:
-        repo = request.forms['repo']
-        result = config.delete_repo(repo)
-        response.status = 200
-    else:
-        result = {'result': 'failure', 'reason': "Invalid Data"}
-        response.status = 400
+    result = config.delete_repo(repo)
+    response.status = 200
     return result
 
 
-@app.route("/repoupdate", method='POST')
-def repoupdate():
+@app.route("/repos/<repo>", method='PATCH')
+def repoupdate(repo):
     config = Kconfig()
-    if 'repo' in request.forms:
-        repo = request.forms['repo']
-        result = config.update_repo(repo)
-        response.status = 200
-    else:
-        result = {'result': 'failure', 'reason': "Invalid Data"}
-        response.status = 400
+    result = config.update_repo(repo)
+    response.status = 200
     return result
 
 # NETWORKS
@@ -254,8 +239,8 @@ def networkcreateform():
     return {'title': 'CreateNetwork', 'client': config.client}
 
 
-@app.route("/networkcreate", method='POST')
-def networkcreate():
+@app.route("/networks", method='POST')
+def networkcreate(network):
     config = Kconfig()
     k = config.k
     if 'network' in request.forms:
@@ -271,17 +256,12 @@ def networkcreate():
     return result
 
 
-@app.route("/networkdelete", method='DELETE')
-def networkdelete():
+@app.route("/networks/<network>", method='DELETE')
+def networkdelete(network):
     config = Kconfig()
     k = config.k
-    if 'network' in request.forms:
-        network = request.forms['network']
-        result = k.delete_network(name=network)
-        response.status = 200
-    else:
-        result = {'result': 'failure', 'reason': "Invalid Data"}
-        response.status = 400
+    result = k.delete_network(name=network)
+    response.status = 200
     return result
 
 
@@ -295,35 +275,25 @@ def plancreateform():
     return {'title': 'CreatePlan', 'client': config.client}
 
 
-@app.route("/vmstart", method='POST')
-def vmstart():
+@app.route("/vms/<name>/start", method='POST')
+def vmstart(name):
     config = Kconfig()
     k = config.k
-    if 'name' in request.forms:
-        name = request.forms['name']
-        result = k.start(name)
-        response.status = 200
-    else:
-        result = {'result': 'failure', 'reason': "Invalid Data"}
-        response.status = 400
+    result = k.start(name)
+    response.status = 200
     return result
 
 
-@app.route("/vmstop", method='POST')
-def vmstop():
+@app.route("/vms/<name>/stop", method='POST')
+def vmstop(name):
     config = Kconfig()
     k = config.k
-    if 'name' in request.forms:
-        name = request.forms['name']
-        result = k.stop(name)
-        response.status = 200
-    else:
-        result = {'result': 'failure', 'reason': "Invalid Data"}
-        response.status = 400
+    result = k.stop(name)
+    response.status = 200
     return result
 
 
-@app.route("/vmcreate", method='POST')
+@app.route("/vms", method='POST')
 def vmcreate():
     config = Kconfig()
     if 'name' in request.forms:
@@ -347,84 +317,59 @@ def vmcreate():
     return result
 
 
-@app.route("/vmdelete", method='DELETE')
-def vmdelete():
+@app.route("/vms/<name>", method='DELETE')
+def vmdelete(name):
     config = Kconfig()
     k = config.k
-    if 'name' in request.forms:
-        name = request.forms['name']
-        result = k.delete(name)
-        response.status = 200
-    else:
-        result = {'result': 'failure', 'reason': "Invalid Data"}
-        response.status = 400
+    result = k.delete(name)
+    response.status = 200
     return result
 
 
 # HOSTS
 
-@app.route("/hostenable", method='POST')
-def hostenable():
+@app.route("/hosts/<name>/enable", method='POST')
+def hostenable(name):
     baseconfig = Kbaseconfig()
-    if 'name' in request.forms:
-        name = request.forms['name']
-        result = baseconfig.enable_host(name)
-        response.status = 200
-    else:
-        result = {'result': 'failure', 'reason': "Invalid Data"}
-        response.status = 400
+    result = baseconfig.enable_host(name)
+    response.status = 200
     return result
 
 
-@app.route("/hostdisable", method='POST')
-def hostdisable():
+@app.route("/hosts/<name>/disable", method='POST')
+def hostdisable(name):
     baseconfig = Kbaseconfig()
-    if 'name' in request.forms:
-        name = request.forms['name']
-        result = baseconfig.disable_host(name)
-        response.status = 200
-    else:
-        result = {'result': 'failure', 'reason': "Invalid Data"}
-        response.status = 400
+    result = baseconfig.disable_host(name)
+    response.status = 200
     return result
 
 
-@app.route("/hostswitch", method='POST')
-def hostswitch():
+@app.route("/hosts/<name>/switch", method='POST')
+def hostswitch(name):
     baseconfig = Kbaseconfig()
-    if 'name' in request.forms:
-        name = request.forms['name']
-        result = baseconfig.switch_host(name)
-        response.status = 200
-    else:
-        result = {'result': 'failure', 'reason': "Invalid Data"}
-        response.status = 400
+    result = baseconfig.switch_host(name)
+    response.status = 200
     return result
 
 
-@app.route("/snapshotlist", method='POST')
-def snapshotlist():
+@app.route("/snapshots/<name>")
+def snapshotlist(name):
     config = Kconfig()
     k = config.k
-    if 'name' in request.forms:
-        name = request.forms['name']
-        result = k.snapshot(None, name, listing=True)
-        response.status = 200
-    else:
-        result = {'result': 'failure', 'reason': "Invalid Data"}
-        response.status = 400
+    snapshots = k.list_snapshots(name)
+    print(snapshots)
+    result = [snapshot for snapshot in snapshots]
+    response.status = 200
     return result
 
 
-@app.route("/snapshotrevert", method='POST')
-def snapshotrevert():
+@app.route("/snapshots/<name>/revert", method='POST')
+def snapshotrevert(name):
     config = Kconfig()
     k = config.k
-    if 'name' in request.forms:
-        name = request.forms['name']
+    if 'snapshot' in request.forms:
         snapshot = request.forms['snapshot']
-        name = request.forms['name']
-        result = k.snapshot(snapshot, name, revert=True)
+        result = k.revert_snapshot(snapshot, name)
         response.status = 200
     else:
         result = {'result': 'failure', 'reason': "Invalid Data"}
@@ -432,29 +377,26 @@ def snapshotrevert():
     return result
 
 
-@app.route("/snapshotdelete", method='DELETE')
-def snapshotdelete():
+@app.route("/snapshots/<name>", method='DELETE')
+def snapshotdelete(name):
     config = Kconfig()
     k = config.k
-    if 'name' in request.forms:
-        name = request.forms['name']
+    if 'snapshot' in request.forms:
         snapshot = request.forms['snapshot']
-        result = k.snapshot(snapshot, name, delete=True)
+        result = k.delete_snapshot(snapshot, name)
     else:
         result = {'result': 'failure', 'reason': "Invalid Data"}
         response.status = 400
     return result
 
 
-@app.route("/snapshotcreate", method='POST')
-def snapshotcreate():
+@app.route("/snapshots/<name>", method='POST')
+def snapshotcreate(name):
     config = Kconfig()
     k = config.k
-    if 'name' in request.forms:
-        name = request.forms['name']
+    if 'snapshot' in request.forms:
         snapshot = request.forms['snapshot']
-        name = request.forms['name']
-        result = k.snapshot(snapshot, name)
+        result = k.create_snapshot(snapshot, name)
         response.status = 200
     else:
         result = {'result': 'failure', 'reason': "Invalid Data"}
@@ -462,46 +404,32 @@ def snapshotcreate():
     return result
 
 
-@app.route("/planstart", method='POST')
-def planstart():
+@app.route("/plan/<plan>/start", method='POST')
+def planstart(plan):
     config = Kconfig()
-    if 'name' in request.forms:
-        plan = request.forms['name']
-        result = config.start_plan(plan)
-        response.status = 200
-    else:
-        result = {'result': 'failure', 'reason': "Invalid Data"}
-        response.status = 400
+    result = config.start_plan(plan)
+    response.status = 200
     return result
 
 
-@app.route("/planstop", method='POST')
-def planstop():
+@app.route("/plan/<plan>/stop", method='POST')
+def planstop(plan):
     config = Kconfig()
-    if 'name' in request.forms:
-        plan = request.forms['name']
-        result = config.stop_plan(plan)
-        response.status = 200
-    else:
-        result = {'result': 'failure', 'reason': "Invalid Data"}
-        response.status = 400
+    plan = request.forms['name']
+    result = config.stop_plan(plan)
+    response.status = 200
     return result
 
 
-@app.route("/plandelete", method='DELETE')
-def plandelete():
+@app.route("/plans/<plan>", method='DELETE')
+def plandelete(plan):
     config = Kconfig()
-    if 'name' in request.forms:
-        plan = request.forms['name']
-        result = config.delete_plan(plan)
-        response.status = 200
-    else:
-        result = {'result': 'failure', 'reason': "Invalid Data"}
-        response.status = 400
+    result = config.delete_plan(plan)
+    response.status = 200
     return result
 
 
-@app.route("/plancreate", method='POST')
+@app.route("/plans", method='POST')
 def plancreate():
     config = Kconfig()
     if 'name' in request.forms:
@@ -516,7 +444,7 @@ def plancreate():
     return result
 
 
-@app.route('/containerslist')
+@app.route('/containers')
 def containerslist():
     config = Kconfig()
     cont = Kcontainerconfig(config).cont
@@ -533,14 +461,14 @@ def containerstable():
     return {'containers': containers}
 
 
-@app.route('/containers')
+@app.route('/containersindex')
 @view('containers.html')
-def containers():
+def containersindex():
     config = Kconfig()
     return {'title': 'Containers', 'client': config.client}
 
 
-@app.route('/networkslist')
+@app.route('/networks')
 def networkslist():
     config = Kconfig()
     k = config.k
@@ -557,14 +485,14 @@ def networkstable():
     return {'networks': networks}
 
 
-@app.route('/networks')
+@app.route('/networksindex')
 @view('networks.html')
 def networks():
     config = Kconfig()
     return {'title': 'Networks', 'client': config.client}
 
 
-@app.route('/poolslist')
+@app.route('/pools')
 def poolslist():
     config = Kconfig()
     k = config.k
@@ -587,7 +515,7 @@ def poolstable():
     return {'pools': pools}
 
 
-@app.route('/pools')
+@app.route('/poolsindex')
 @view('pools.html')
 def pools():
     config = Kconfig()
@@ -636,7 +564,7 @@ def repocreateform():
 # PRODUCTS
 
 
-@app.route('/productslist')
+@app.route('/products')
 def productslist():
     baseconfig = Kbaseconfig()
     products = []
@@ -665,7 +593,7 @@ def productstable():
     return {'products': products}
 
 
-@app.route('/products')
+@app.route('/productsindex')
 @view('products.html')
 def products():
     baseconfig = Kbaseconfig()
@@ -684,7 +612,7 @@ def productcreateform(prod):
             'description': description, 'info': info}
 
 
-@app.route("/productcreate", method='POST')
+@app.route("/products", method='POST')
 def productcreate():
     config = Kconfig()
     if 'product' in request.forms:
@@ -744,7 +672,7 @@ def kubecreateform(_type):
             '_type': _type}
 
 
-@app.route("/kubecreate", method='POST')
+@app.route("/kubes", method='POST')
 def kubecreate():
     config = Kconfig()
     _type = request.forms['type']
@@ -798,7 +726,7 @@ def kubecreate():
     return result
 
 
-@app.route('/hostslist')
+@app.route('/hosts')
 def hostslist():
     baseconfig = Kbaseconfig()
     clients = []
@@ -827,14 +755,14 @@ def hoststable():
     return {'clients': clients}
 
 
-@app.route('/hosts')
+@app.route('/hostsindex')
 @view('hosts.html')
 def hosts():
     config = Kconfig()
     return {'title': 'Hosts', 'client': config.client}
 
 
-@app.route('/planslist')
+@app.route('/plans')
 def planslist():
     config = Kconfig()
     return {'plans': config.list_plans()}
@@ -847,14 +775,14 @@ def planstable():
     return {'plans': config.list_plans()}
 
 
-@app.route('/plans')
+@app.route('/plansindex')
 @view('plans.html')
 def plans():
     config = Kconfig()
     return {'title': 'Plans', 'client': config.client}
 
 
-@app.route('/kubeslist')
+@app.route('/kubes')
 def kubeslist():
     config = Kconfig()
     kubes = config.list_kubes()
@@ -869,56 +797,41 @@ def kubestable():
     return {'kubes': kubes}
 
 
-@app.route('/kubes')
+@app.route('/kubesindex')
 @view('kubes.html')
 def kubes():
     config = Kconfig()
     return {'title': 'Kubes', 'client': config.client}
 
 
-@app.route("/containerstart", method='POST')
-def containerstart():
+@app.route("/container/<name>/start", method='POST')
+def containerstart(name):
     config = Kconfig()
     cont = Kcontainerconfig(config).cont
-    if 'name' in request.forms:
-        name = request.forms['name']
-        result = cont.start_container(name)
-        response.status = 200
-    else:
-        result = {'result': 'failure', 'reason': "Invalid Data"}
-        response.status = 400
+    result = cont.start_container(name)
+    response.status = 200
     return result
 
 
-@app.route("/containerstop", method='POST')
-def containerstop():
+@app.route("/containers/<name>/stop", method='POST')
+def containerstop(name):
     config = Kconfig()
     cont = Kcontainerconfig(config).cont
-    if 'name' in request.forms:
-        name = request.forms['name']
-        result = cont.stop_container(name)
-        response.status = 200
-    else:
-        result = {'result': 'failure', 'reason': "Invalid Data"}
-        response.status = 400
+    result = cont.stop_container(name)
+    response.status = 200
     return result
 
 
-@app.route("/containerdelete", method='DELETE')
-def containerdelete():
+@app.route("/container/<name>/delete", method='DELETE')
+def containerdelete(name):
     config = Kconfig()
     cont = Kcontainerconfig(config).cont
-    if 'name' in request.forms:
-        name = request.forms['name']
-        result = cont.delete_container(name)
-        response.status = 200
-    else:
-        result = {'result': 'failure', 'reason': "Invalid Data"}
-        response.status = 400
+    result = cont.delete_container(name)
+    response.status = 200
     return result
 
 
-@app.route("/containercreate", method='POST')
+@app.route("/containers", method='POST')
 def containercreate():
     config = Kconfig()
     cont = Kcontainerconfig(config).cont
@@ -943,7 +856,7 @@ def containercreate():
     return result
 
 
-@app.route('/imageslist')
+@app.route('/images')
 def imageslist():
     config = Kconfig()
     k = config.k
@@ -960,7 +873,7 @@ def imagestable():
     return {'images': images}
 
 
-@app.route('/images')
+@app.route('/imagesindex')
 @view('images.html')
 def images():
     config = Kconfig()
@@ -976,7 +889,7 @@ def imagecreateform():
     return {'title': 'CreateImage', 'pools': pools, 'images': sorted(IMAGES), 'client': config.client}
 
 
-@app.route("/imagecreate", method='POST')
+@app.route("/images", method='POST')
 def imagecreate():
     config = Kconfig()
     if 'pool' in request.forms:
@@ -1001,7 +914,7 @@ def imagecreate():
     return result
 
 
-@app.route('/isoslist')
+@app.route('/isos')
 def isoslist():
     config = Kconfig()
     k = config.k
@@ -1018,15 +931,15 @@ def isostable():
     return {'isos': isos}
 
 
-@app.route('/isos')
+@app.route('/isosindex')
 @view('isos.html')
 def isos():
     config = Kconfig()
     return {'title': 'Isos', 'client': config.client}
 
 
-@app.route('/containerprofileslist')
-def containerprofileslist():
+@app.route('/containerprofiles')
+def containerprofiles():
     baseconfig = Kbaseconfig()
     profiles = baseconfig.list_containerprofiles()
     return {'profiles': profiles}
@@ -1040,9 +953,9 @@ def containerprofilestable():
     return {'profiles': profiles}
 
 
-@app.route('/containerprofiles')
+@app.route('/containerprofilesindex')
 @view('containerprofiles.html')
-def containerprofiles():
+def containerprofilesindexl():
     baseconfig = Kbaseconfig()
     return {'title': 'ContainerProfiles', 'client': baseconfig.client}
 
