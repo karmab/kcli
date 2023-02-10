@@ -5,7 +5,7 @@ function repocreate(){
   data = {'repo': repo, 'url': url};
   $.ajax({
        type: "POST",
-        url: '/repocreate',
+        url: '/repos',
         data: data,
         success: function(data) {
             $("#wheel").hide();
@@ -24,7 +24,7 @@ function repodelete(repo){
   data = {'repo': repo};
   $.ajax({
        type: "DELETE",
-        url: '/repodelete',
+        url: `/repos/${repo}`,
         data: data,
         success: function(data) {
             $("#wheel").hide();
@@ -42,8 +42,8 @@ function repoupdate(repo){
   $("#wheel").show();
   data = {'repo': repo};
   $.ajax({
-       type: "POST",
-        url: '/repoupdate',
+       type: "PATCH",
+        url: `/repos/${repo}`,
         data: data,
         success: function(data) {
             $("#wheel").hide();

@@ -1,10 +1,8 @@
 function containerstart(container){
   $("#wheel").show();
-  data = {'name': container};
   $.ajax({  
        type: "POST",
-        url: '/containerstart',
-        data: data,
+        url: `/containers/${container}/start`,
         success: function(data) {
             $("#wheel").hide();
             if (data.result == 'success') {
@@ -19,11 +17,9 @@ function containerstart(container){
 
 function containerstop(container){
   $("#wheel").show();
-  data = {'name': container};
   $.ajax({  
        type: "POST",
-        url: '/containerstop',
-        data: data,
+        url: `/containers/${container}/stop`,
         success: function(data) {
             $("#wheel").hide();
             if (data.result == 'success') {
@@ -38,11 +34,9 @@ function containerstop(container){
 
 function containerdelete(container){
   $("#wheel").show();
-  data = {'name': container};
   $.ajax({
        type: "DELETE",
-        url: '/containerdelete',
-        data: data,
+        url: `/containers/${container}`,
         success: function(data) {
             $("#wheel").hide();
             if (data.result == 'success') {
@@ -62,7 +56,7 @@ function containercreate(){
   data = {'name': name, 'profile': profile};
   $.ajax({
        type: "POST",
-        url: '/containercreate',
+        url: '/containers',
         data: data,
         success: function(data) {
             $("#wheel").hide();

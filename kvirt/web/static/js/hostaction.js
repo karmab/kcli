@@ -1,10 +1,8 @@
 function hostenable(client){
   $("#wheel").show();
-  data = {'name': client};
   $.ajax({  
        type: "POST",
-        url: '/hostenable',
-        data: data,
+        url: `/hosts/${client}/enable`,
         success: function(data) {
             $("#wheel").hide();
             if (data.result == 'success') {
@@ -20,11 +18,9 @@ function hostenable(client){
 
 function hostdisable(client){
   $("#wheel").show();
-  data = {'name': client};
   $.ajax({  
        type: "POST",
-        url: '/hostdisable',
-        data: data,
+        url: `/hosts/${client}/disable`,
         success: function(data) {
             $("#wheel").hide();
             if (data.result == 'success') {
@@ -39,11 +35,9 @@ function hostdisable(client){
 
 function hostswitch(client){
   $("#wheel").show();
-  data = {'name': client};
   $.ajax({  
        type: "POST",
-        url: '/hostswitch',
-        data: data,
+        url: `/hosts/${client}/switch`,
         success: function(data) {
             $("#wheel").hide();
             if (data.result == 'success') {

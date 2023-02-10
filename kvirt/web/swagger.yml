@@ -53,9 +53,23 @@ components:
         user:
           type: string
 paths:
-  /containercreate:
+  /containers:
+    get:
+      description: Returns list of containers
+      responses:
+        '200':
+          description: Successfully returned list of containers
+          content:
+            application/json:
+              schema:
+                type: object 
+                properties:
+                  containers:
+                    type: array
+                    items:
+                      type: string
     post:
-      description: create container
+      description: Create container
       requestBody:
         required: true
         content:
@@ -83,18 +97,16 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
-  /containerdelete:
+  /containers/{container}:
     delete:
-      description: delete container
-      requestBody:
+      description: Delete container
+      parameters:
+      - name: container
+        in: path
+        description: Container name
         required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
+        schema:
+          type: string
       responses:
         '200':
           description: Successfully deleted container
@@ -111,48 +123,16 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
-  /containerslist:
-    get:
-      description: Returns list of containers
-      responses:
-        '200':
-          description: Successfully returned list of containers
-          content:
-            application/json:
-              schema:
-                type: object 
-                properties:
-                  containers:
-                    type: array
-                    items:
-                      type: string
-  /containerprofileslist:
-    get:
-      description: Returns list of container profiles
-      responses:
-        '200':
-          description: Successfully returned list of containers
-          content:
-            application/json:
-              schema:
-                type: object 
-                properties:
-                  profiles:
-                    type: array
-                    items:
-                      type: string
-  /containerstart:
+  /containers/{container}/start:
     post:
-      description: start container
-      requestBody:
+      description: Start container
+      parameters:
+      - name: container
+        in: path
+        description: Container name
         required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
+        schema:
+          type: string
       responses:
         '200':
           description: Successfully started container
@@ -169,18 +149,16 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
-  /containerstop:
+  /containers/{container}/stop:
     post:
-      description: stop container
-      requestBody:
+      description: Stop container
+      parameters:
+      - name: container
+        in: path
+        description: Container name
         required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
+        schema:
+          type: string
       responses:
         '200':
           description: Successfully stopped container
@@ -197,9 +175,31 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
-  /diskcreate:
+  /containerprofiles:
+    get:
+      description: Returns list of container profiles
+      responses:
+        '200':
+          description: Successfully returned list of containers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  profiles:
+                    type: array
+                    items:
+                      type: string
+  /disks/{name}:
     post:
-      description: add disk to vm
+      description: Add disk to vm
+      parameters:
+      - name: name
+        in: path
+        description: Vm name
+        required: true
+        schema:
+          type: string
       requestBody:
         required: true
         content:
@@ -207,8 +207,6 @@ paths:
             schema:
               type: object
               properties:
-                name:
-                  type: string
                 size:
                   type: integer
                 pool:
@@ -229,9 +227,15 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
-  /diskdelete:
     delete:
-      description: delete disk from vm
+      description: Delete disk from vm
+      parameters:
+      - name: name
+        in: path
+        description: Vm name
+        required: true
+        schema:
+          type: string
       requestBody:
         required: true
         content:
@@ -239,8 +243,6 @@ paths:
             schema:
               type: object
               properties:
-                name:
-                  type: string
                 disk:
                   type: string
       responses:
@@ -259,18 +261,31 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
-  /hostdisable:
+  /hosts:
+    get:
+      description: Returns list of hosts
+      responses:
+        '200':
+          description: Successfully returned list of hosts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  clients:
+                    type: array
+                    items:
+                      type: string
+  /hosts/{name}/disable:
     post:
-      description: disable host
-      requestBody:
+      description: Disable host
+      parameters:
+      - name: name
+        in: path
+        description: Host name
         required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
+        schema:
+          type: string
       responses:
         '200':
           description: Successfully disabled host
@@ -287,18 +302,16 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
-  /hostenable:
+  /hosts/{name}/enable:
     post:
-      description: enable host
-      requestBody:
+      description: Enable host
+      parameters:
+      - name: name
+        in: path
+        description: Host name
         required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
+        schema:
+          type: string
       responses:
         '200':
           description: Successfully enabled host
@@ -315,33 +328,16 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
-  /hostslist:
-    get:
-      description: Returns list of hosts
-      responses:
-        '200':
-          description: Successfully returned list of hosts
-          content:
-            application/json:
-              schema:
-                type: object 
-                properties:
-                  clients:
-                    type: array
-                    items:
-                      type: string
-  /hostswitch:
+  /hosts/{name}/switch:
     post:
-      description: switch host
-      requestBody:
+      description: Switch host
+      parameters:
+      - name: name
+        in: path
+        description: Vm name
         required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
+        schema:
+          type: string
       responses:
         '200':
           description: Successfully switched host
@@ -358,9 +354,9 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
-  /imagecreate:
+  /images:
     post:
-      description: create image
+      description: Create image
       requestBody:
         required: true
         content:
@@ -392,7 +388,6 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
-  /imageslist:
     get:
       description: Returns list of images
       responses:
@@ -407,7 +402,7 @@ paths:
                     type: array
                     items:
                       type: string
-  /isoslist:
+  /isos:
     get:
       description: Returns list of isos
       responses:
@@ -422,9 +417,9 @@ paths:
                     type: array
                     items:
                       type: string
-  /kubecreate:
+  /kubes:
     post:
-      description: create kube
+      description: Create kube
       requestBody:
         required: true
         content:
@@ -455,7 +450,6 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
-  /kubeslist:
     get:
       description: Returns list of kubes
       responses:
@@ -470,9 +464,23 @@ paths:
                     type: array
                     items:
                       type: string
-  /networkcreate:
+  /networks:
+    get:
+      description: Returns list of networks
+      responses:
+        '200':
+          description: Successfully returned list of networks
+          content:
+            application/json:
+              schema:
+                type: object 
+                properties:
+                  networks:
+                    type: array
+                    items:
+                      type: string
     post:
-      description: create network
+      description: Create network
       requestBody:
         required: true
         content:
@@ -504,18 +512,16 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
-  /networkdelete:
+  /networks/{network}:
     delete:
-      description: delete network
-      requestBody:
+      description: Delete network
+      parameters:
+      - name: network
+        in: path
+        description: Network name
         required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                network:
-                  type: string
+        schema:
+          type: string
       responses:
         '200':
           description: Successfully deleted network
@@ -532,24 +538,16 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
-  /networkslist:
-    get:
-      description: Returns list of networks
-      responses:
-        '200':
-          description: Successfully returned list of networks
-          content:
-            application/json:
-              schema:
-                type: object 
-                properties:
-                  networks:
-                    type: array
-                    items:
-                      type: string
-  /niccreate:
+  /nics/{name}:
     post:
-      description: add nic to vm
+      description: Add nic to vm
+      parameters:
+      - name: name
+        in: path
+        description: Vm name
+        required: true
+        schema:
+          type: string
       requestBody:
         required: true
         content:
@@ -557,8 +555,6 @@ paths:
             schema:
               type: object
               properties:
-                name:
-                  type: string
                 network:
                   type: string
                 nic:
@@ -579,9 +575,15 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
-  /nicdelete:
     delete:
-      description: delete nic from vm
+      description: Delete nic from vm
+      parameters:
+      - name: name
+        in: path
+        description: Vm name
+        required: true
+        schema:
+          type: string
       requestBody:
         required: true
         content:
@@ -589,8 +591,6 @@ paths:
             schema:
               type: object
               properties:
-                name:
-                  type: string
                 nic:
                   type: string
       responses:
@@ -609,9 +609,23 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
-  /plancreate:
+  /plans:
+    get:
+      description: Returns list of plans
+      responses:
+        '200':
+          description: Successfully returned list of plans
+          content:
+            application/json:
+              schema:
+                type: object 
+                properties:
+                  plans:
+                    type: array
+                    items:
+                      type: string
     post:
-      description: create plan
+      description: Create plan
       requestBody:
         required: true
         content:
@@ -639,18 +653,16 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
-  /plandelete:
+  /plans/{plan}:
     delete:
-      description: delete plan
-      requestBody:
+      description: Delete plan
+      parameters:
+      - name: plan
+        in: path
+        description: Plan name
         required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
+        schema:
+          type: string
       responses:
         '200':
           description: Successfully deleted plan
@@ -667,33 +679,16 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
-  /planslist:
-    get:
-      description: Returns list of plans
-      responses:
-        '200':
-          description: Successfully returned list of plans
-          content:
-            application/json:
-              schema:
-                type: object 
-                properties:
-                  plans:
-                    type: array
-                    items:
-                      type: string
-  /planstart:
+  /plans/{plan}/start:
     post:
-      description: start plan
-      requestBody:
+      description: Start plan
+      parameters:
+      - name: plan
+        in: path
+        description: Plan name
         required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
+        schema:
+          type: string
       responses:
         '200':
           description: Successfully started plan
@@ -710,18 +705,16 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
-  /planstop:
+  /plans/{plan}/stop:
     post:
-      description: stop plan
-      requestBody:
+      description: Stop plan
+      parameters:
+      - name: plan
+        in: path
+        description: Plan name
         required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
+        schema:
+          type: string
       responses:
         '200':
           description: Successfully stopped plan
@@ -738,9 +731,23 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
-  /poolcreate:
+  /pools:
+    get:
+      description: Returns list of pools
+      responses:
+        '200':
+          description: Successfully returned list of pools
+          content:
+            application/json:
+              schema:
+                type: object 
+                properties:
+                  pools:
+                    type: array
+                    items:
+                      type: string
     post:
-      description: create pool
+      description: Create pool
       requestBody:
         required: true
         content:
@@ -768,18 +775,16 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
-  /pooldelete:
+  /pools/{pool}:
     delete:
-      description: delete pool
-      requestBody:
+      description: Delete pool
+      parameters:
+      - name: pool
+        in: path
+        description: Pool name
         required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                pool:
-                  type: string
+        schema:
+          type: string
       responses:
         '200':
           description: Successfully deleted pool
@@ -796,24 +801,23 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
-  /poolslist:
+  /products:
     get:
-      description: Returns list of pools
+      description: Returns list of products
       responses:
         '200':
-          description: Successfully returned list of pools
+          description: Successfully returned list of products
           content:
             application/json:
               schema:
                 type: object 
                 properties:
-                  pools:
+                  products:
                     type: array
                     items:
                       type: string
-  /productcreate:
     post:
-      description: create product
+      description: Create product
       requestBody:
         required: true
         content:
@@ -839,24 +843,23 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
-  /productslist:
+  /repos:
     get:
-      description: Returns list of products
+      description: Returns list of repos
       responses:
         '200':
-          description: Successfully returned list of products
+          description: Successfully returned list of repos
           content:
             application/json:
               schema:
                 type: object 
                 properties:
-                  products:
+                  repos:
                     type: array
                     items:
                       type: string
-  /repocreate:
     post:
-      description: create repo
+      description: Create repo
       requestBody:
         required: true
         content:
@@ -884,18 +887,16 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
-  /repodelete:
+  /repos/{repo}:
     delete:
-      description: delete repo
-      requestBody:
+      description: Delete repo
+      parameters:
+      - name: repo
+        in: path
+        description: Repo name
         required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                repo:
-                  type: string
+        schema:
+          type: string
       responses:
         '200':
           description: Successfully deleted repo
@@ -912,33 +913,15 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
-  /reposlist:
-    get:
-      description: Returns list of repos
-      responses:
-        '200':
-          description: Successfully returned list of repos
-          content:
-            application/json:
-              schema:
-                type: object 
-                properties:
-                  repos:
-                    type: array
-                    items:
-                      type: string
-  /repoupdate:
-    post:
-      description: update repo
-      requestBody:
+    patch:
+      description: Update repo
+      parameters:
+      - name: repo
+        in: path
+        description: Repo name
         required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                repo:
-                  type: string
+        schema:
+          type: string
       responses:
         '200':
           description: Successfully updated repo
@@ -955,23 +938,19 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
-  /snapshotcreate:
-    post:
-      description: create snapshot
-      requestBody:
+  /snapshots/{name}:
+    get:
+      description: List snapshots of a vm
+      parameters:
+      - name: name
+        in: path
+        description: Vm name
         required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                snapshot:
-                  type: string
+        schema:
+          type: string
       responses:
         '200':
-          description: Successfully created snapshot
+          description: Successfully listed snapshots
           content:
             application/json:
               schema:
@@ -982,9 +961,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Result'
-  /snapshotdelete:
     delete:
-      description: delete snapshot
+      description: Delete snapshot of a vm
+      parameters:
+      - name: name
+        in: path
+        description: Vm name
+        required: true
+        schema:
+          type: string
       requestBody:
         required: true
         content:
@@ -992,8 +977,6 @@ paths:
             schema:
               type: object
               properties:
-                name:
-                  type: string
                 snapshot:
                   type: string
       responses:
@@ -1009,9 +992,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Result'
-  /snapshotlist:
     post:
-      description: list snapshot
+      description: Create snapshot for a vm
+      parameters:
+      - name: name
+        in: path
+        description: Vm name
+        required: true
+        schema:
+          type: string
       requestBody:
         required: true
         content:
@@ -1019,11 +1008,11 @@ paths:
             schema:
               type: object
               properties:
-                name:
+                snapshot:
                   type: string
       responses:
         '200':
-          description: Successfully listed snapshots
+          description: Successfully created snapshot
           content:
             application/json:
               schema:
@@ -1034,9 +1023,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Result'
-  /snapshotrevert:
+  /snapshots/{name}/revert:
     post:
-      description: revert snapshot
+      description: Revert snapshot of a vm
+      parameters:
+      - name: name
+        in: path
+        description: Vm name
+        required: true
+        schema:
+          type: string
       requestBody:
         required: true
         content:
@@ -1044,8 +1040,6 @@ paths:
             schema:
               type: object
               properties:
-                name:
-                  type: string
                 snapshot:
                   type: string
       responses:
@@ -1061,9 +1055,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Result'
-  /vmcreate:
+  /vms:
+    get:
+      description: Returns list of vms
+      responses:
+        '200':
+          description: Successfully returned list of vms
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vm'
     post:
-      description: create vm
+      description: Create vm
       requestBody:
         required: true
         content:
@@ -1093,18 +1096,16 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
-  /vmdelete:
+  /vms/{name}:
     delete:
-      description: delete vm
-      requestBody:
+      description: Delete vm
+      parameters:
+      - name: name
+        in: path
+        description: Vm name
         required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
+        schema:
+          type: string
       responses:
         '200':
           description: Successfully deleted vm
@@ -1121,43 +1122,16 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
-  /vmslist:
-    get:
-      description: Returns list of vms
-      responses:
-        '200':
-          description: Successfully returned list of vms
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Vm'
-  /vmprofileslist:
-    get:
-      description: Returns list of profiles
-      responses:
-        '200':
-          description: Successfully returned list of profiles
-          content:
-            application/json:
-              schema:
-                type: object 
-                properties:
-                  profiles:
-                    type: array
-                    items:
-                      type: string
-  /vmstart:
+  /vms/{name}/start:
     post:
-      description: start vm
-      requestBody:
+      description: Start vm
+      parameters:
+      - name: name
+        in: path
+        description: Vm name
         required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
+        schema:
+          type: string
       responses:
         '200':
           description: Successfully started vm
@@ -1174,18 +1148,16 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
-  /vmstop:
+  /vms/{name}/stop:
     post:
-      description: stop vm
-      requestBody:
+      description: Stop vm
+      parameters:
+      - name: name
+        in: path
+        description: Vm name
         required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
+        schema:
+          type: string
       responses:
         '200':
           description: Successfully stopped vm
@@ -1202,3 +1174,18 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
+  /vmprofiles:
+    get:
+      description: Returns list of profiles
+      responses:
+        '200':
+          description: Successfully returned list of profiles
+          content:
+            application/json:
+              schema:
+                type: object 
+                properties:
+                  profiles:
+                    type: array
+                    items:
+                      type: string

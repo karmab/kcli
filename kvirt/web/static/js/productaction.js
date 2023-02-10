@@ -9,7 +9,7 @@ function productcreate(){
   data = {'product': product, 'plan': plan, 'parameters': parameters};
   $.ajax({
        type: "POST",
-        url: '/productcreate',
+        url: '/products',
         data: data,
         success: function(data) {
             $("#wheel").hide();

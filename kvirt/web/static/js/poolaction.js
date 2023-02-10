@@ -6,7 +6,7 @@ function poolcreate(){
   data = {'pool': pool, 'path': path, 'type': type};
   $.ajax({
        type: "POST",
-        url: '/poolcreate',
+        url: '/pools',
         data: data,
         success: function(data) {
             $("#wheel").hide();
@@ -21,11 +21,9 @@ function poolcreate(){
 
 function pooldelete(pool){
   $("#wheel").show();
-  data = {'pool': pool};
   $.ajax({
        type: "DELETE",
-        url: '/pooldelete',
-        data: data,
+        url: `/pools/${pool}`,
         success: function(data) {
             $("#wheel").hide();
             if (data.result == 'success') {
