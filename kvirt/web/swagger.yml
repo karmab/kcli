@@ -426,14 +426,18 @@ paths:
           application/json:
             schema:
               type: object
+              additionalProperties: true
               properties:
                 cluster:
                   type: string
                 type:
                   type: string
                   enum: [generic, openshift, k3s, microshift, hypershift, kind]
-                parameters:
-                  type: string
+              example:
+                cluster: mykube
+                type: generic
+                ctlplanes: 3
+                workers: 2
       responses:
         '200':
           description: Successfully created kube
@@ -1073,13 +1077,18 @@ paths:
           application/json:
             schema:
               type: object
+              additionalProperties: true
               properties:
                 name:
                   type: string
                 profile:
                   type: string
-                parameters:
-                  type: object
+              example:
+                name: supervm
+                profile: centos8
+                numcpus: 8
+                memory: 4096
+                start: true
       responses:
         '200':
           description: Successfully created vm

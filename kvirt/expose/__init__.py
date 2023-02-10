@@ -146,7 +146,7 @@ class Kexposer():
 
         @app.route('/expose')
         def exposelist():
-            return {'plans': self.plans, 'owners': self.owners}
+            return {'plans': self.plans, 'owners': self.owners, 'overrides': self.overrides}
 
         @app.route("/expose", method='POST')
         def exposeplancreate():

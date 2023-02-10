@@ -74,6 +74,8 @@ paths:
                       plan:
                         type: string
                         description: Owner
+                  overrides:
+                    type: object
     post:
       description: Create a plan
       requestBody:
@@ -83,11 +85,14 @@ paths:
           application/json:
             schema:
               type: object
+              additionalProperties: true
               properties:   
                 plan:
                   type: string
-                parameters:
-                  type: string
+              example:
+                plan: superplan
+                version: production
+                tag: '1.0'
       responses:
         '200':
           description: Successfully created a new plan
