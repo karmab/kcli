@@ -116,19 +116,27 @@ def vmprofiles():
 
 @app.route("/disks/<name>", method='POST')
 def diskcreate(name):
+    data = request.json or request.forms
+    if data is None:
+        response.status = 400
+        return 'Invalid data'
     config = Kconfig()
     k = config.k
-    size = int(request.forms['size'])
-    pool = request.forms['pool']
+    size = int(data['size'])
+    pool = data['pool']
     result = k.add_disk(name, size, pool)
     return result
 
 
 @app.route("/disks/<name>", method='DELETE')
 def diskdelete(name):
+    data = request.json or request.forms
+    if data is None:
+        response.status = 400
+        return 'Invalid json'
     config = Kconfig()
     k = config.k
-    diskname = request.forms['disk']
+    diskname = data['disk']
     result = k.delete_disk(name, diskname)
     response.status = 200
     # result = {'result': 'failure', 'reason': "Invalid Data"}
@@ -138,18 +146,26 @@ def diskdelete(name):
 
 @app.route("/nics/<name>", method='POST')
 def niccreate(name):
+    data = request.json or request.forms
+    if data is None:
+        response.status = 400
+        return 'Invalid data'
     config = Kconfig()
     k = config.k
-    network = request.forms['network']
+    network = data['network']
     result = k.add_nic(name, network)
     return result
 
 
 @app.route("/nics/<name>", method='DELETE')
 def nicdelete(name):
+    data = request.json or request.forms
+    if data is None:
+        response.status = 400
+        return 'Invalid data'
     config = Kconfig()
     k = config.k
-    nicname = request.forms['nic']
+    nicname = data['nic']
     result = k.delete_nic(name, nicname)
     response.status = 200
     return result
@@ -178,11 +194,15 @@ def poolcreateform():
 
 @app.route("/pools", method='POST')
 def poolcreate():
+    data = request.json or request.forms
+    if data is None:
+        response.status = 400
+        return 'Invalid data'
     config = Kconfig()
     k = config.k
-    pool = request.forms['pool']
-    path = request.forms['path']
-    pooltype = request.forms['type']
+    pool = data['pool']
+    path = data['path']
+    pooltype = data['type']
     result = k.create_pool(name=pool, poolpath=path, pooltype=pooltype)
     return result
 
@@ -199,10 +219,14 @@ def pooldelete(pool):
 
 @app.route("/repos", method='POST')
 def repocreate():
+    data = request.json or request.forms
+    if data is None:
+        response.status = 400
+        return 'Invalid data'
     config = Kconfig()
-    if 'repo' in request.forms:
-        repo = request.forms['repo']
-        url = request.forms['url']
+    if 'repo' in data:
+        repo = data['repo']
+        url = data['url']
         if url == '':
             result = {'result': 'failure', 'reason': "Invalid Data"}
             response.status = 400
@@ -241,13 +265,17 @@ def networkcreateform():
 
 @app.route("/networks", method='POST')
 def networkcreate(network):
+    data = request.json or request.forms
+    if data is None:
+        response.status = 400
+        return 'Invalid data'
     config = Kconfig()
     k = config.k
-    if 'network' in request.forms:
-        network = request.forms['network']
-        cidr = request.forms['cidr']
-        dhcp = bool(request.forms['dhcp'])
-        isolated = bool(request.forms['isolated'])
+    if 'network' in data:
+        network = data['network']
+        cidr = data['cidr']
+        dhcp = bool(data['dhcp'])
+        isolated = bool(data['isolated'])
         nat = not isolated
         result = k.create_network(name=network, cidr=cidr, dhcp=dhcp, nat=nat)
     else:
@@ -295,16 +323,21 @@ def vmstop(name):
 
 @app.route("/vms", method='POST')
 def vmcreate():
+    data = request.json or request.forms
+    if data is None:
+        response.status = 400
+        return 'Invalid data'
     config = Kconfig()
-    if 'name' in request.forms:
-        name = request.forms['name']
-        profile = request.forms['profile']
+    if 'name' in data:
+        name = data['name']
+        profile = data['profile']
         parameters = {}
-        for p in request.forms:
+        for p in data:
+            key = p
+            value = data[p]
             if p.startswith('parameters'):
-                value = request.forms[p]
                 key = p.replace('parameters[', '').replace(']', '')
-                parameters[key] = value
+            parameters[key] = value
         parameters['nets'] = parameters['nets'].split(',') if 'nets' in parameters else []
         parameters['disks'] = [int(disk) for disk in parameters['disks'].split(',')] if 'disks' in parameters else [10]
         if name == '':
@@ -357,7 +390,6 @@ def snapshotlist(name):
     config = Kconfig()
     k = config.k
     snapshots = k.list_snapshots(name)
-    print(snapshots)
     result = [snapshot for snapshot in snapshots]
     response.status = 200
     return result
@@ -365,10 +397,14 @@ def snapshotlist(name):
 
 @app.route("/snapshots/<name>/revert", method='POST')
 def snapshotrevert(name):
+    data = request.json or request.forms
+    if data is None:
+        response.status = 400
+        return 'Invalid data'
     config = Kconfig()
     k = config.k
-    if 'snapshot' in request.forms:
-        snapshot = request.forms['snapshot']
+    if 'snapshot' in data:
+        snapshot = data['snapshot']
         result = k.revert_snapshot(snapshot, name)
         response.status = 200
     else:
@@ -379,10 +415,14 @@ def snapshotrevert(name):
 
 @app.route("/snapshots/<name>", method='DELETE')
 def snapshotdelete(name):
+    data = request.json or request.forms
+    if data is None:
+        response.status = 400
+        return 'Invalid data'
     config = Kconfig()
     k = config.k
-    if 'snapshot' in request.forms:
-        snapshot = request.forms['snapshot']
+    if 'snapshot' in data:
+        snapshot = data['snapshot']
         result = k.delete_snapshot(snapshot, name)
     else:
         result = {'result': 'failure', 'reason': "Invalid Data"}
@@ -392,10 +432,14 @@ def snapshotdelete(name):
 
 @app.route("/snapshots/<name>", method='POST')
 def snapshotcreate(name):
+    data = request.json or request.forms
+    if data is None:
+        response.status = 400
+        return 'Invalid data'
     config = Kconfig()
     k = config.k
-    if 'snapshot' in request.forms:
-        snapshot = request.forms['snapshot']
+    if 'snapshot' in data:
+        snapshot = data['snapshot']
         result = k.create_snapshot(snapshot, name)
         response.status = 200
     else:
@@ -414,8 +458,12 @@ def planstart(plan):
 
 @app.route("/plan/<plan>/stop", method='POST')
 def planstop(plan):
+    data = request.json or request.forms
+    if data is None:
+        response.status = 400
+        return 'Invalid data'
     config = Kconfig()
-    plan = request.forms['name']
+    plan = data['name']
     result = config.stop_plan(plan)
     response.status = 200
     return result
@@ -431,10 +479,14 @@ def plandelete(plan):
 
 @app.route("/plans", method='POST')
 def plancreate():
+    data = request.json or request.forms
+    if data is None:
+        response.status = 400
+        return 'Invalid data'
     config = Kconfig()
-    if 'name' in request.forms:
-        plan = request.forms['name']
-        url = request.forms['url']
+    if 'name' in data:
+        plan = data['name']
+        url = data['url']
         if plan == '':
             plan = nameutils.get_random_name()
         result = config.plan(plan, url=url)
@@ -614,17 +666,22 @@ def productcreateform(prod):
 
 @app.route("/products", method='POST')
 def productcreate():
+    data = request.json or request.forms
+    if data is None:
+        response.status = 400
+        return 'Invalid data'
     config = Kconfig()
-    if 'product' in request.forms:
-        product = request.forms['product']
-        if 'plan' in request.forms:
-            plan = request.forms['plan']
+    if 'product' in data:
+        product = data['product']
+        if 'plan' in data:
+            plan = data['plan']
             parameters = {}
-            for p in request.forms:
+            for p in data:
+                key = p
+                value = data[p]
                 if p.startswith('parameters'):
-                    value = request.forms[p]
                     key = p.replace('parameters[', '').replace(']', '')
-                    parameters[key] = value
+                parameters[key] = value
             if plan == '':
                 plan = None
             result = config.create_product(product, plan=plan, overrides=parameters)
@@ -674,32 +731,36 @@ def kubecreateform(_type):
 
 @app.route("/kubes", method='POST')
 def kubecreate():
+    data = request.json or request.forms
+    if data is None:
+        response.status = 400
+        return 'Invalid data'
     config = Kconfig()
-    _type = request.forms['type']
+    _type = data['type']
     parameters = {}
-    for p in request.forms:
+    for p in data:
+        value = data[p]
+        if value.isdigit():
+            value = int(value)
+        elif value.lower() == 'true':
+            value = True
+        elif value.lower() == 'false':
+            value = False
+        elif value == 'None':
+            value = None
+        elif value == '[]':
+            value = []
+        elif value.startswith('[') and value.endswith(']'):
+            if '{' in value:
+                value = literal_eval(value)
+            else:
+                value = value[1:-1].split(',')
+                for index, v in enumerate(value):
+                    v = v.strip()
+                    value[index] = v
         if p.startswith('parameters'):
-            value = request.forms[p]
-            if value.isdigit():
-                value = int(value)
-            elif value.lower() == 'true':
-                value = True
-            elif value.lower() == 'false':
-                value = False
-            elif value == 'None':
-                value = None
-            elif value == '[]':
-                value = []
-            elif value.startswith('[') and value.endswith(']'):
-                if '{' in value:
-                    value = literal_eval(value)
-                else:
-                    value = value[1:-1].split(',')
-                    for index, v in enumerate(value):
-                        v = v.strip()
-                        value[index] = v
             key = p.replace('parameters[', '').replace(']', '')
-            parameters[key] = value
+        parameters[key] = value
     cluster = parameters['cluster']
     if 'pull_secret' in parameters and parameters['pull_secret'] == 'openshift_pull.json':
         if global_pull_secret is not None and os.path.exists(global_pull_secret):
@@ -833,13 +894,17 @@ def containerdelete(name):
 
 @app.route("/containers", method='POST')
 def containercreate():
+    data = request.json or request.forms
+    if data is None:
+        response.status = 400
+        return 'Invalid data'
     config = Kconfig()
     cont = Kcontainerconfig(config).cont
     k = config.k
-    if 'name' in request.forms:
-        name = request.forms['name']
-        if 'profile' in request.forms:
-            profile = [prof for prof in config.list_containerprofiles() if prof[0] == request.forms['profile']][0]
+    if 'name' in data:
+        name = data['name']
+        if 'profile' in data:
+            profile = [prof for prof in config.list_containerprofiles() if prof[0] == data['profile']][0]
             if name is None:
                 name = nameutils.get_random_name()
             image, nets, ports, volumes, cmd = profile[1:]
@@ -891,14 +956,18 @@ def imagecreateform():
 
 @app.route("/images", method='POST')
 def imagecreate():
+    data = request.json or request.forms
+    if data is None:
+        response.status = 400
+        return 'Invalid json'
     config = Kconfig()
-    if 'pool' in request.forms:
-        pool = request.forms['pool']
-        if 'pool' in request.forms and 'image' in request.forms:
-            pool = request.forms['pool']
-            image = request.forms['image']
-            url = request.forms['url']
-            cmd = request.forms['cmd']
+    if 'pool' in data:
+        pool = data['pool']
+        if 'pool' in data and 'image' in data:
+            pool = data['pool']
+            image = data['image']
+            url = data['url']
+            cmd = data['cmd']
             if url == '':
                 url = None
             if cmd == '':

@@ -153,7 +153,6 @@ class Kexposer():
             update = False
             currentconfig = self.config
             json = request.json
-            print(json)
             if json is None:
                 response.status = 400
                 return 'Invalid json'
