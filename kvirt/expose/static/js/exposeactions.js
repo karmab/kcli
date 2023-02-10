@@ -1,14 +1,12 @@
 function exposedelete(plan){
   $("#wheel").show();
-  data = {'plan': plan};
   var r = confirm("Are you sure you want to delete this Plan?");
   if (r != true) {
     return ;
   }
   $.ajax({
        type: "DELETE",
-        url: '/exposedelete',
-        data: data,
+        url: `/expose/${plan}`,
         success: function(data) {
             $("#wheel").hide();
                 location.reload(true);

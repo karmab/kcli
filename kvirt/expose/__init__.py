@@ -61,34 +61,27 @@ class Kexposer():
             self.refresh_plans()
             return {'plans': self.plans, 'owners': self.owners}
 
-        @app.route('/exposelist')
+        @app.route('/expose')
         def exposelist():
             return {'plans': self.plans, 'owners': self.owners}
 
-        @app.route("/exposedelete", method=['DELETE'])
-        def exposedelete():
+        @app.route("/expose/<plan>", method=['DELETE'])
+        def exposedelete(plan):
             """
             delete plan
             """
             currentconfig = self.config
-            if 'plan' in request.forms:
-                plan = request.forms['plan']
-                if plan not in self.plans:
-                    return f'Invalid plan name {plan}'
-                self.get_client(plan, currentconfig)
-                result = currentconfig.delete_plan(plan)
-                response.status = 200
-            else:
-                result = {'result': 'failure', 'reason': "Missing plan in data"}
+            if plan not in self.plans:
                 response.status = 400
+                return f'Invalid plan name {plan}'
+            self.get_client(plan, currentconfig)
+            result = currentconfig.delete_plan(plan)
+            response.status = 200
             return result
 
         @app.route("/exposecreate", method='POST')
         @view('result.html')
         def exposecreate():
-            """
-            create plan
-            """
             update = False
             currentconfig = self.config
             if 'plan' in request.forms:
@@ -153,9 +146,6 @@ class Kexposer():
         @app.route("/infoplan/<plan>")
         @view('infoplan.html')
         def infoplan(plan):
-            """
-            info plan
-            """
             currentconfig = self.config
             if plan not in self.plans:
                 return f'Invalid plan name {plan}'

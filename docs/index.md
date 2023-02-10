@@ -755,7 +755,7 @@ So for instance, you can simply use the following command to access your vm:
 
 ## How to use the web version
 
-Launch the following command and access your machine at port 9000:
+Launch the following command and access your machine at port 8000:
 
 ```Shell
 kweb
@@ -1127,7 +1127,7 @@ Additionally, basic commands ( start, stop, console, plan, list) accept a *--con
 
 You can expose a given plan in a web fashion with `kcli expose` so that others can make use of some infrastructure you own without having to deal with kcli themseleves.
 
-The user will be presented with a simple UI with a listing of the current vms of the plan and buttons allowing to either get info on the plan, delete or reprovision it.
+The user will be presented with a simple UI (running on port 9000) with a listing of the current vms of the plan and buttons allowing to either get info on the plan, delete or reprovision it.
 
 To expose your plan (with an optional list of parameters):
 
