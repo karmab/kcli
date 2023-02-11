@@ -363,7 +363,7 @@ def delete_vm(args):
     else:
         allclients = {config.client: config.k}
         names = [common.get_lastvm(config.client)] if not args.names else args.names
-    if count > 1:
+    if count != 0:
         if len(args.names) == 1:
             names = [f"{args.names[0]}-{number}" for number in range(count)]
         else:
@@ -1531,7 +1531,7 @@ def create_vm(args):
     else:
         error("You need to either provide a profile, an image or some parameters")
         sys.exit(1)
-    if count == 1:
+    if count == 0:
         result = config.create_vm(name, profile, overrides=overrides, customprofile=customprofile,
                                   onlyassets=onlyassets)
         if not onlyassets:
@@ -2415,7 +2415,7 @@ def create_vmdata(args):
     args.wait = False
     args.console = None
     args.serial = None
-    args.count = 1
+    args.count = 0
     create_vm(args)
 
 
@@ -3796,7 +3796,7 @@ def cli():
     vmcreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     vmcreate_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
     vmcreate_parser.add_argument('--console', help='Directly switch to console after creation', action='store_true')
-    vmcreate_parser.add_argument('-c', '--count', help='How many vms to create', type=int, default=1, metavar='COUNT')
+    vmcreate_parser.add_argument('-c', '--count', help='How many vms to create', type=int, default=0, metavar='COUNT')
     vmcreate_parser.add_argument('-i', '--image', help='Image to use', metavar='IMAGE')
     vmcreate_parser.add_argument('--profilefile', help='File to load profiles from', metavar='PROFILEFILE')
     vmcreate_parser.add_argument('-s', '--serial', help='Directly switch to serial console after creation',
