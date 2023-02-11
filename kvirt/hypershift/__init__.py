@@ -32,7 +32,7 @@ def handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts=[]):
     with open('iso.ign', 'w') as f:
         f.write(iso_data)
     iso_pool = data.get('pool') or config.pool
-    config.create_openshift_iso(cluster, ignitionfile='iso.ign', installer=True, uefi=True)
+    config.create_openshift_iso(cluster, ignitionfile='iso.ign', installer=True)
     if baremetal_hosts:
         iso_pool_path = config.k.get_pool_path(iso_pool)
         chmodcmd = f"chmod 666 {iso_pool_path}/{cluster}-worker.iso"

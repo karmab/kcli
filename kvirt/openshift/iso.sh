@@ -53,10 +53,12 @@ cmd="coreos-installer install --firstboot-args=\"${firstboot_args}\" --ignition=
 bash -c "$cmd"
 if [ "$?" == "0" ] ; then
   echo "Install Succeeded!"
-  {% if uefi|default(False) %}
-  NUM=$(efibootmgr -v | grep 'DVD\|CD' | cut -f1 -d' ' | sed 's/Boot000\([0-9]\)\*/\1/')
-  efibootmgr -b 000$NUM -B $NUM
-  {% endif %}
+  if [ -d /sys/firmware/efi ] ; then
+    NUM=$(efibootmgr -v | grep 'DVD\|CD' | cut -f1 -d' ' | sed 's/Boot000\([0-9]\)\*/\1/')
+    efibootmgr -b 000$NUM -B $NUM
+    mount /${install_device}2 /mnt
+    efibootmgr -d ${install_device} -p 2 -c -L RHCOS -l \\EFI\\BOOT\\BOOTX64.EFI
+  fi
   reboot
 else
   echo "Install Failed!"

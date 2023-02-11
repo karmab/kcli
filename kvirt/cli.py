@@ -1449,11 +1449,10 @@ def create_openshift_iso(args):
     cluster = args.cluster
     ignitionfile = args.ignitionfile
     direct = args.direct
-    uefi = args.uefi
     overrides = handle_parameters(args.param, args.paramfile)
     client = 'fake' if common.need_fake() else args.client
     config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.create_openshift_iso(cluster, overrides=overrides, ignitionfile=ignitionfile, direct=direct, uefi=uefi)
+    config.create_openshift_iso(cluster, overrides=overrides, ignitionfile=ignitionfile, direct=direct)
 
 
 def create_openshift_disconnected(args):
@@ -3668,8 +3667,6 @@ def cli():
     isocreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     isocreate_parser.add_argument('-d', '--direct', action='store_true', help='Embed directly target ignition in iso')
     isocreate_parser.add_argument('-f', '--ignitionfile', help='Ignition file')
-    isocreate_parser.add_argument('-u', '--uefi', action='store_true',
-                                  help='Remove iso entry from uefi after install (only applies to vms)')
     isocreate_parser.add_argument('cluster', metavar='CLUSTER', help='Cluster')
     isocreate_parser.set_defaults(func=create_openshift_iso)
     create_subparsers.add_parser('openshift-iso', parents=[isocreate_parser], description=isocreate_desc,
