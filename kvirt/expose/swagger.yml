@@ -132,7 +132,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Vm'
+                type: array
+                items:
+                 $ref: '#/components/schemas/Vm'
     delete:
       description: Delete a plan
       parameters:
