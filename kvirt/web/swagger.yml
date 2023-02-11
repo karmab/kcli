@@ -17,6 +17,21 @@ components:
           type: string
       example:
           result: success
+    Network:
+      type: object
+      properties:
+        cidr:
+          type: string
+        dhcp:
+          type: boolean
+        domain:
+          type: string
+        type:
+          type: string
+        mode:
+          type: string
+        plan:
+          type: string
     Vm:
       type: object
       properties:
@@ -275,7 +290,10 @@ paths:
                   clients:
                     type: array
                     items:
-                      type: string
+                      type: array
+                      items:
+                        type: string
+
   /hosts/{name}/disable:
     post:
       description: Disable host
@@ -480,9 +498,25 @@ paths:
                 type: object 
                 properties:
                   networks:
-                    type: array
-                    items:
-                      type: string
+                    type: object
+                    additionalProperties:
+                      $ref: '#/components/schemas/Network'
+              example:
+                networks:
+                  default:
+                    cidr: 192.168.122.0/24
+                    dhcp: true
+                    domain: default
+                    type: routed
+                    mode: nat
+                    plan: kvirt
+                  baremetal:
+                    cidr: N/A
+                    dhcp: false
+                    domain: baremetal
+                    type: routed
+                    mode: bridge
+                    plan: kvirt
     post:
       description: Create network
       requestBody:
@@ -627,7 +661,9 @@ paths:
                   plans:
                     type: array
                     items:
-                      type: string
+                      type: array
+                      items:
+                        type: string
     post:
       description: Create plan
       requestBody:
@@ -749,7 +785,9 @@ paths:
                   pools:
                     type: array
                     items:
-                      type: string
+                      type: array
+                      items:
+                        type: string
     post:
       description: Create pool
       requestBody:
@@ -1068,9 +1106,12 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Vm'
+                type: object
+                properties:
+                  vms:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Vm'
     post:
       description: Create vm
       requestBody:
@@ -1199,4 +1240,6 @@ paths:
                   profiles:
                     type: array
                     items:
-                      type: string
+                      type: array
+                      items:
+                        type: string
