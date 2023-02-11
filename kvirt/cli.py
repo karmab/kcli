@@ -4052,7 +4052,7 @@ def cli():
 
     vmdelete_desc = 'Delete Vm'
     vmdelete_parser = argparse.ArgumentParser(add_help=False)
-    vmdelete_parser.add_argument('-c', '--count', help='How many vms to delete', type=int, default=1, metavar='COUNT')
+    vmdelete_parser.add_argument('-c', '--count', help='How many vms to delete', type=int, default=0, metavar='COUNT')
     vmdelete_parser.add_argument('-s', '--snapshots', action='store_true', help='Remove snapshots if needed')
     vmdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     vmdelete_parser.add_argument('names', metavar='VMNAMES', nargs='*')
