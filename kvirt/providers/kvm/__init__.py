@@ -228,6 +228,7 @@ class Kvirt(object):
                kernel=None, initrd=None, cmdline=None, placement=[], autostart=False, cpuhotplug=False,
                memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False, metadata={},
                securitygroups=[], vmuser=None):
+        bootdev = 1
         namespace = ''
         ignition = False
         usermode = False
@@ -533,6 +534,8 @@ class Kvirt(object):
             if diskpooltype in ['logical', 'zfs'] and (backing is None or backing.startswith('/dev')):
                 diskformat = 'raw'
             if not nvme:
+                bootdevxml = f'<boot order="{bootdev}"/>'
+                bootdev += 1
                 disksxml = """%s<disk type='%s' device='disk'>
 <driver name='qemu' type='%s' %s/>
 <source %s='%s'/>
@@ -540,9 +543,77 @@ class Kvirt(object):
 <target dev='%s' bus='%s'/>
 %s
 %s
-</disk>""" % (disksxml, dtype, diskformat, dextra, dsource, diskpath, backingxml, diskdev, diskbus, diskwwn, diskserial)
+%s
+</disk>""" % (disksxml, dtype, diskformat, dextra, dsource, diskpath, backingxml, diskdev, diskbus, diskwwn, diskserial,
+                    bootdevxml)
             else:
                 nvmedisks.append(diskpath)
+        if iso is not None:
+            if os.path.exists(iso):
+                iso = os.path.abspath(iso)
+            if os.path.isabs(iso):
+                if self.protocol == 'ssh' and self.host not in ['localhost', '127.0.0.1']:
+                    isocheckcmd = 'ssh %s -p %s %s@%s "ls %s >/dev/null 2>&1"' % (self.identitycommand, self.port,
+                                                                                  self.user, self.host, iso)
+                    code = os.system(isocheckcmd)
+                    if code != 0:
+                        if start:
+                            return {'result': 'failure', 'reason': f"Iso {iso} not found"}
+                        else:
+                            warning(f"Iso {iso} not found. Make sure it's there before booting")
+                elif not os.path.exists(iso):
+                    if start:
+                        return {'result': 'failure', 'reason': f"Iso {iso} not found"}
+                    else:
+                        warning(f"Iso {iso} not found. Make sure it's there before booting")
+            else:
+                if iso not in volumes:
+                    if 'http' in iso:
+                        if os.path.basename(iso) in volumes:
+                            self.delete_image(os.path.basename(iso))
+                        pprint(f"Trying to gather {iso}")
+                        self.add_image(iso, pool=default_pool)
+                        conn.storagePoolLookupByName(default_pool).refresh()
+                        iso = f"{default_poolpath}/{os.path.basename(iso)}"
+                    elif start:
+                        return {'result': 'failure', 'reason': f"Iso {iso} not found"}
+                    else:
+                        warning(f"Iso {iso} not found. Make sure it's there before booting")
+                        iso = f"{default_poolpath}/{iso}"
+                        warning(f"Setting iso full path to {iso}")
+                else:
+                    isovolume = volumes[iso]['object']
+                    iso = isovolume.path()
+        isobus = 'scsi' if aarch64_full else 'sata'
+        isosourcexml = f"<source file='{iso}'/>" if iso is not None else ''
+        bootdevxml = f'<boot order="{bootdev}"/>'
+        bootdev += 1
+        isoxml = """<disk type='file' device='cdrom'>
+<driver name='qemu' type='raw'/>%s
+<target dev='hdc' bus='%s'/>
+<readonly/>
+%s
+</disk>""" % (isosourcexml, isobus, bootdevxml)
+        floppyxml = ''
+        floppy = overrides.get('floppy')
+        if floppy is not None:
+            if floppy not in volumes:
+                if 'http' in floppy:
+                    if os.path.basename(floppy) in volumes:
+                        self.delete_image(os.path.basename(floppy))
+                    pprint(f"Trying to gather {floppy}")
+                    self.add_image(floppy, pool=default_pool)
+                    conn.storagePoolLookupByName(default_pool).refresh()
+                    floppy = f"{default_poolpath}/{os.path.basename(floppy)}"
+                elif not floppy.startswith('/'):
+                    return {'result': 'failure', 'reason': f"Floppy {floppy} not found"}
+            else:
+                floppyvolume = volumes[floppy]['object']
+                floppy = floppyvolume.path()
+            floppyxml = """  <disk type='file' device='floppy'>
+<source file='%s'/>
+<target dev='fda' bus='fdc'/>
+</disk>""" % floppy
         expanderinfo = {}
         for index, cell in enumerate(numa):
             if not isinstance(cell, dict) or 'id' not in cell:
@@ -675,6 +746,7 @@ class Kvirt(object):
                 vhostpath = nets[index].get('vhostpath', f"{vhostdir}/vhost-user{vhostindex}")
                 sourcexml = f"<source type='unix' path='{vhostpath}' mode='client'/>"
                 sourcexml += "<driver name='vhost' rx_queue_size='256'/>"
+            bootdevxml = f'<boot order="{bootdev}"/>' if index == 0 else ''
             netxml = """%s
 <interface type='%s'>
 %s
@@ -685,7 +757,9 @@ class Kvirt(object):
 %s
 <model type='%s'/>
 %s
-</interface>""" % (netxml, iftype, mtuxml, macxml, sourcexml, ovsxml, nicnumaxml, filterxml, nettype, multiqueuexml)
+%s
+</interface>""" % (netxml, iftype, mtuxml, macxml, sourcexml, ovsxml, nicnumaxml, filterxml, nettype, multiqueuexml,
+                   bootdevxml)
         if guestagent:
             gcmds = []
             if image is not None and 'cos' not in image and 'fedora-coreos' not in image:
@@ -705,69 +779,6 @@ class Kvirt(object):
                 if subindex:
                     index = subindex.pop() + 1
             cmds = cmds[:index] + gcmds + cmds[index:]
-        if iso is not None:
-            if os.path.exists(iso):
-                iso = os.path.abspath(iso)
-            if os.path.isabs(iso):
-                if self.protocol == 'ssh' and self.host not in ['localhost', '127.0.0.1']:
-                    isocheckcmd = 'ssh %s -p %s %s@%s "ls %s >/dev/null 2>&1"' % (self.identitycommand, self.port,
-                                                                                  self.user, self.host, iso)
-                    code = os.system(isocheckcmd)
-                    if code != 0:
-                        if start:
-                            return {'result': 'failure', 'reason': f"Iso {iso} not found"}
-                        else:
-                            warning(f"Iso {iso} not found. Make sure it's there before booting")
-                elif not os.path.exists(iso):
-                    if start:
-                        return {'result': 'failure', 'reason': f"Iso {iso} not found"}
-                    else:
-                        warning(f"Iso {iso} not found. Make sure it's there before booting")
-            else:
-                if iso not in volumes:
-                    if 'http' in iso:
-                        if os.path.basename(iso) in volumes:
-                            self.delete_image(os.path.basename(iso))
-                        pprint(f"Trying to gather {iso}")
-                        self.add_image(iso, pool=default_pool)
-                        conn.storagePoolLookupByName(default_pool).refresh()
-                        iso = f"{default_poolpath}/{os.path.basename(iso)}"
-                    elif start:
-                        return {'result': 'failure', 'reason': f"Iso {iso} not found"}
-                    else:
-                        warning(f"Iso {iso} not found. Make sure it's there before booting")
-                        iso = f"{default_poolpath}/{iso}"
-                        warning(f"Setting iso full path to {iso}")
-                else:
-                    isovolume = volumes[iso]['object']
-                    iso = isovolume.path()
-        isobus = 'scsi' if aarch64_full else 'sata'
-        isosourcexml = f"<source file='{iso}'/>" if iso is not None else ''
-        isoxml = """<disk type='file' device='cdrom'>
-<driver name='qemu' type='raw'/>%s
-<target dev='hdc' bus='%s'/>
-<readonly/>
-</disk>""" % (isosourcexml, isobus)
-        floppyxml = ''
-        floppy = overrides.get('floppy')
-        if floppy is not None:
-            if floppy not in volumes:
-                if 'http' in floppy:
-                    if os.path.basename(floppy) in volumes:
-                        self.delete_image(os.path.basename(floppy))
-                    pprint(f"Trying to gather {floppy}")
-                    self.add_image(floppy, pool=default_pool)
-                    conn.storagePoolLookupByName(default_pool).refresh()
-                    floppy = f"{default_poolpath}/{os.path.basename(floppy)}"
-                elif not floppy.startswith('/'):
-                    return {'result': 'failure', 'reason': f"Floppy {floppy} not found"}
-            else:
-                floppyvolume = volumes[floppy]['object']
-                floppy = floppyvolume.path()
-            floppyxml = """  <disk type='file' device='floppy'>
-<source file='%s'/>
-<target dev='fda' bus='fdc'/>
-</disk>""" % floppy
         if cloudinit:
             openstack = False
             ignitiondata = None
@@ -1132,7 +1143,6 @@ class Kvirt(object):
             kernelxml = f"<kernel>{kernel}</kernel><initrd>{initrd}</initrd>"
             if cmdline is not None:
                 kernelxml += f"<cmdline>{cmdline}</cmdline>"
-        bootdev = "<boot dev='hd'/><boot dev='cdrom'/><boot dev='network'/>"
         memoryhotplugxml = "<maxMemory slots='16' unit='MiB'>1524288</maxMemory>" if memoryhotplug else ""
         videoxml = ""
         firmwarexml = ""
@@ -1241,7 +1251,6 @@ class Kvirt(object):
 <type arch='{arch}' {machine}>hvm</type>
 {ramxml}
 {firmwarexml}
-{bootdev}
 {kernelxml}
 <bootmenu enable="yes" timeout="60"/>
 </os>
@@ -1280,7 +1289,7 @@ class Kvirt(object):
 </domain>""".format(virttype=virttype, namespace=namespace, name=name, uuidxml=uuidxml, metadataxml=metadataxml,
                     memoryhotplugxml=memoryhotplugxml, cpupinningxml=cpupinningxml, numatunexml=numatunexml,
                     hugepagesxml=hugepagesxml, memory=memory, vcpuxml=vcpuxml, osfirmware=osfirmware, arch=arch,
-                    machine=machine, ramxml=ramxml, firmwarexml=firmwarexml, bootdev=bootdev, kernelxml=kernelxml,
+                    machine=machine, ramxml=ramxml, firmwarexml=firmwarexml, kernelxml=kernelxml,
                     smmxml=smmxml, emulatorxml=emulatorxml, disksxml=disksxml, busxml=busxml, netxml=netxml,
                     isoxml=isoxml, floppyxml=floppyxml, displayxml=displayxml, serialxml=serialxml, sharedxml=sharedxml,
                     guestxml=guestxml, videoxml=videoxml, hostdevxml=hostdevxml, rngxml=rngxml, tpmxml=tpmxml,
