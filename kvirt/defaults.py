@@ -236,7 +236,7 @@ BMC_PASSWORD = None
 BMC_MODEL = None
 
 SUSHYSERVICE = """[Unit]
-Description=Ksushy emulator
+Description=Ksushy emulator service
 After=syslog.target
 [Service]
 Environment=HOME={home}
@@ -247,5 +247,19 @@ Type=simple
 ExecStart=/usr/bin/ksushy
 StandardOutput=syslog
 StandardError=syslog"""
+
+WEBSERVICE = """[Unit]
+Description=Kweb service
+After=syslog.target
+[Service]
+Environment=HOME={home}
+Environment=PYTHONUNBUFFERED=true
+{ipv6}
+{ssl}
+Type=simple
+ExecStart=/usr/bin/kweb
+StandardOutput=syslog
+StandardError=syslog"""
+
 PLANTYPES = ['ansible', 'bucket', 'cluster', 'container', 'disk', 'dns', 'image', 'kube', 'loadbalancer', 'network',
              'plan', 'pool', 'profile', 'securitygroup', 'vm', 'workflow']

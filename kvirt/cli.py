@@ -3293,9 +3293,14 @@ def list_securitygroups(args):
     print(securitygroupstable)
 
 
-def create_sushy(args):
+def create_sushy_service(args):
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
-    baseconfig.deploy_sushy(ipv6=args.ipv6, ssl=args.ssl)
+    baseconfig.deploy_sushy_service(ipv6=args.ipv6, ssl=args.ssl)
+
+
+def create_web_service(args):
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
+    baseconfig.deploy_web_service(ipv6=args.ipv6, ssl=args.ssl)
 
 
 def cli():
@@ -3853,11 +3858,11 @@ def cli():
     securitygroupcreate_parser.set_defaults(func=create_securitygroup)
 
     sushycreate_desc = 'Create Sushy service'
-    sushycreate_parser = create_subparsers.add_parser('sushy', description=sushycreate_desc,
-                                                      help=sushycreate_desc, aliases=['sushy-service'])
+    sushycreate_parser = create_subparsers.add_parser('sushy-service', description=sushycreate_desc,
+                                                      help=sushycreate_desc, aliases=['sushy'])
     sushycreate_parser.add_argument('-i', '--ipv6', action='store_true', help='Listen on ipv6')
     sushycreate_parser.add_argument('-s', '--ssl', action='store_true', help='Enable ssl')
-    sushycreate_parser.set_defaults(func=create_sushy)
+    sushycreate_parser.set_defaults(func=create_sushy_service)
 
     vmsnapshotcreate_desc = 'Create Snapshot Of Vm'
     vmsnapshotcreate_parser = create_subparsers.add_parser('vm-snapshot', description=vmsnapshotcreate_desc,
@@ -3865,6 +3870,13 @@ def cli():
     vmsnapshotcreate_parser.add_argument('-n', '--name', help='vm name', required=True, metavar='VMNAME')
     vmsnapshotcreate_parser.add_argument('snapshot')
     vmsnapshotcreate_parser.set_defaults(func=snapshotcreate_vm)
+
+    webcreate_desc = 'Create Web service'
+    webcreate_parser = create_subparsers.add_parser('web-service', description=webcreate_desc,
+                                                    help=webcreate_desc, aliases=['web'])
+    webcreate_parser.add_argument('-i', '--ipv6', action='store_true', help='Listen on ipv6')
+    webcreate_parser.add_argument('-s', '--ssl', action='store_true', help='Enable ssl')
+    webcreate_parser.set_defaults(func=create_web_service)
 
     workflowcreate_desc = 'Create Workflow'
     workflowcreate_epilog = f"examples:\n{workflowcreate}"

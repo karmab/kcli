@@ -18,7 +18,8 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             CPUFLAGS, CPUPINNING, NUMAMODE, NUMA, PCIDEVICES, VIRTTYPE, MAILSERVER, MAILFROM, MAILTO,
                             TPM, JENKINSMODE, RNG, ZEROTIER_NETS, ZEROTIER_KUBELET, VMPORT, VMUSER, VMRULES,
                             VMRULES_STRICT, CACHE, SECURITYGROUPS, LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG, ROOTPASSWORD,
-                            WAIT, WAITCOMMAND, WAITTIMEOUT, TEMPKEY, BMC_USER, BMC_PASSWORD, BMC_MODEL, SUSHYSERVICE)
+                            WAIT, WAITCOMMAND, WAITTIMEOUT, TEMPKEY, BMC_USER, BMC_PASSWORD, BMC_MODEL, SUSHYSERVICE,
+                            WEBSERVICE)
 from ipaddress import ip_address, ip_network
 from random import choice
 from kvirt import common
@@ -1798,7 +1799,7 @@ class Kbaseconfig:
                 call(cmcmd, shell=True)
         return {'result': 'success'}
 
-    def deploy_sushy(self, ssl=False, ipv6=False):
+    def deploy_sushy_service(self, ssl=False, ipv6=False):
         if os.path.exists("/usr/lib/systemd/system/ksushy.service"):
             call("systemctl restart ksushy", shell=True)
             return
@@ -1811,6 +1812,17 @@ class Kbaseconfig:
         with open("/usr/lib/systemd/system/ksushy.service", "w") as f:
             f.write(sushydata)
         call("systemctl enable --now ksushy", shell=True)
+
+    def deploy_web_service(self, ssl=False, ipv6=False):
+        if os.path.exists("/usr/lib/systemd/system/kweb.service"):
+            call("systemctl restart kweb", shell=True)
+            return
+        home = os.environ.get('HOME', '/root')
+        ipv6 = "Environment=IPV6=true" if ipv6 else ''
+        webdata = WEBSERVICE.format(home=home, ipv6=ipv6, ssl=ssl)
+        with open("/usr/lib/systemd/system/kweb.service", "w") as f:
+            f.write(webdata)
+        call("systemctl enable --now kweb", shell=True)
 
     def get_vip_from_confpool(self, cluster, confpool, overrides):
         if confpool not in self.confpools:
