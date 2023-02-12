@@ -255,7 +255,6 @@ After=syslog.target
 Environment=HOME={home}
 Environment=PYTHONUNBUFFERED=true
 {ipv6}
-{ssl}
 Type=simple
 ExecStart=/usr/bin/kweb
 StandardOutput=syslog
