@@ -349,6 +349,9 @@ def handle_baremetal_iso_sno(config, plandir, cluster, data, baremetal_hosts=[],
     iso_name = f"{cluster}-sno.iso"
     baremetal_web = data.get('baremetal_web', True)
     baremetal_web_dir = data.get('baremetal_web_dir', '/var/www/html')
+    baremetal_web_subdir = data.get('baremetal_web_subdir')
+    if baremetal_web_subdir is not None:
+        baremetal_web_dir += f'/{baremetal_web_subdir}'
     baremetal_web_port = data.get('baremetal_web_port', 80)
     iso_pool_path = config.k.get_pool_path(iso_pool)
     if baremetal_web:
