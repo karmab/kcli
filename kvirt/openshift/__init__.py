@@ -26,6 +26,23 @@ virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere']
 cloudplatforms = ['aws', 'gcp', 'ibm']
 
 
+def create_ignition_files(config, plandir, cluster, domain, api_ip=None, bucket_url=None, ignition_version=None):
+    clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
+    ignition_overrides = {'api_ip': api_ip, 'cluster': cluster, 'domain': domain, 'role': 'master'}
+    ctlplane_ignition = config.process_inputfile(cluster, f"{plandir}/ignition.j2", overrides=ignition_overrides)
+    with open(f"{clusterdir}/ctlplane.ign", 'w') as f:
+        f.write(ctlplane_ignition)
+    del ignition_overrides['role']
+    worker_ignition = config.process_inputfile(cluster, f"{plandir}/ignition.j2", overrides=ignition_overrides)
+    with open(f"{clusterdir}/worker.ign", 'w') as f:
+        f.write(worker_ignition)
+    if bucket_url is not None:
+        ignition_overrides['bucket_url'] = bucket_url
+        bootstrap_ignition = config.process_inputfile(cluster, f"{plandir}/ignition.j2", overrides=ignition_overrides)
+        with open(f"{clusterdir}/bootstrap.ign", 'w') as f:
+            f.write(bootstrap_ignition)
+
+
 def backup_paramfile(installparam, clusterdir, cluster, plan, image, dnsconfig):
     with open(f"{clusterdir}/kcli_parameters.yml", 'w') as p:
         installparam['cluster'] = cluster
@@ -376,8 +393,22 @@ def scale(config, plandir, cluster, overrides):
     platform = config.type
     k = config.k
     data = {}
+    installparam = {}
     pprint(f"Scaling on client {client}")
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
+    if not os.path.exists(clusterdir):
+        warning(f"Creating {clusterdir} from your input (auth creds will be missing)")
+        overrides['cluster'] = cluster
+        api_ip = overrides.get('api_ip')
+        if config.type not in cloudplatforms and api_ip is None:
+            error("Missing api_ip...")
+            sys.exit(1)
+        domain = overrides.get('domain')
+        if domain is None:
+            error("Missing domain...")
+            sys.exit(1)
+        os.mkdir(clusterdir)
+        create_ignition_files(config, plandir, cluster, domain, api_ip=api_ip)
     if os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
         with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
             installparam = yaml.safe_load(install)
@@ -419,6 +450,8 @@ def scale(config, plandir, cluster, overrides):
             continue
         if platform in virtplatforms:
             os.chdir(os.path.expanduser("~/.kcli"))
+            if role == 'ctlplanes' and ('virtual_router_id' not in overrides or 'auth_pass' not in overrides):
+                warning("Scaling up wont work without virtual_router_id and auth_pass")
             result = config.plan(plan, inputfile=f'{plandir}/{role}.yml', overrides=overrides, threaded=threaded)
         elif platform in cloudplatforms:
             result = config.plan(plan, inputfile=f'{plandir}/cloud_{role}.yml', overrides=overrides, threaded=threaded)
@@ -1194,9 +1227,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         error("Leaving environment for debugging purposes")
         error(f"You can delete it with kcli delete kube --yes {cluster}")
         sys.exit(run)
-    copy2(f"{clusterdir}/master.ign", f"{clusterdir}/ctlplane.ign")
-    move(f"{clusterdir}/master.ign", f"{clusterdir}/master.ign.ori")
-    copy2(f"{clusterdir}/worker.ign", f"{clusterdir}/worker.ign.ori")
     if platform in virtplatforms:
         overrides['virtual_router_id'] = data.get('virtual_router_id') or hash(cluster) % 254 + 1
         virtual_router_id = overrides['virtual_router_id']
@@ -1211,27 +1241,20 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             warning("Ignoring /etc/hosts")
         else:
             update_etc_hosts(cluster, domain, host_ip, ingress_ip)
-        sedcmd = f'sed -i "s@api-int.{cluster}.{domain}@{api_ip}@" {clusterdir}/ctlplane.ign {clusterdir}/worker.ign'
-        call(sedcmd, shell=True)
-        sedcmd = f'sed -i "s@https://{api_ip}:22623/config@http://{api_ip}:22624/config@"'
-        sedcmd += f' {clusterdir}/ctlplane.ign {clusterdir}/worker.ign'
-        call(sedcmd, shell=True)
-        if ipv6:
-            sedcmd = f'sed -i "s@{api_ip}@[{api_ip}]@" {clusterdir}/ctlplane.ign {clusterdir}/worker.ign'
-            call(sedcmd, shell=True)
+    bucket_url = None
     if platform in cloudplatforms + ['openstack']:
         bucket = "%s-%s" % (cluster, domain.replace('.', '-'))
         if bucket not in config.k.list_buckets():
             config.k.create_bucket(bucket)
         config.k.upload_to_bucket(bucket, f"{clusterdir}/bootstrap.ign", public=True)
         bucket_url = config.k.public_bucketfile_url(bucket, "bootstrap.ign")
-        if platform == 'openstack':
-            ori_url = f"http://{api_ip}:22624"
-        else:
-            ori_url = f"https://api-int.{cluster}.{domain}:22623"
-        sedcmd = f'sed "s@{ori_url}/config/master@{bucket_url}@" '
-        sedcmd += f'{clusterdir}/ctlplane.ign > {clusterdir}/bootstrap.ign'
-        call(sedcmd, shell=True)
+    move(f"{clusterdir}/master.ign", f"{clusterdir}/master.ign.ori")
+    move(f"{clusterdir}/worker.ign", f"{clusterdir}/worker.ign.ori")
+    with open(f"{clusterdir}/worker.ign.ori") as f:
+        ignition_version = json.load(f)['ignition']['version']
+        installparam['ignition_version'] = ignition_version
+    create_ignition_files(config, plandir, cluster, domain, api_ip=api_ip, bucket_url=bucket_url,
+                          ignition_version=ignition_version)
     backup_paramfile(installparam, clusterdir, cluster, plan, image, dnsconfig)
     if platform in virtplatforms:
         if platform == 'vsphere':
@@ -1261,10 +1284,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         result = config.plan(plan, inputfile=f'{plandir}/cloud_bootstrap.yml', overrides=overrides)
         if result['result'] != 'success':
             sys.exit(1)
-        sedcmd = 'sed -i "s@https://api-int.%s.%s:22623/config@http://api-int.%s.%s:22624/config@"' % (cluster, domain,
-                                                                                                       cluster, domain)
-        sedcmd += f' {clusterdir}/ctlplane.ign {clusterdir}/worker.ign'
-        call(sedcmd, shell=True)
         if platform == 'ibm':
             while api_ip is None:
                 api_ip = k.info(f"{cluster}-bootstrap").get('private_ip')
