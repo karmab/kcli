@@ -95,7 +95,6 @@ http_proxy:
 no_proxy:
 sno: false
 sno_disk:
-sno_dns: true
 sno_cloud_remove_lb: true
 sno_disable_nics: []
 sno_ctplanes: false

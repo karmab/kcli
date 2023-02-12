@@ -18,6 +18,7 @@ from subprocess import call
 from time import sleep
 from urllib.request import urlopen, Request
 from random import choice
+import socket
 from string import ascii_letters, digits
 import yaml
 
@@ -1071,8 +1072,15 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if ipv6 or sno_disable_nics:
             nm_data = config.process_inputfile(cluster, f"{plandir}/ipv6.conf", overrides=data)
             sno_files.append({'path': "/etc/NetworkManager/conf.d/ipv6.conf", 'data': nm_data})
-        sno_dns = data.get('sno_dns', True)
+        sno_dns = False
+        for entry in [f'api-int.{cluster}.{domain}', f'api.{cluster}.{domain}', f'xxx.apps.{cluster}.{domain}']:
+            try:
+                socket.gethostbyname(entry)
+            except:
+                sno_dns = True
+        data['sno_dns'] = sno_dns
         if sno_dns:
+            warning("Injecting coredns static pod as some DNS records were missing")
             coredns_data = config.process_inputfile(cluster, f"{plandir}/staticpods/coredns.yml", overrides=data)
             corefile_data = config.process_inputfile(cluster, f"{plandir}/Corefile", overrides=data)
             forcedns_data = config.process_inputfile(cluster, f"{plandir}/99-forcedns", overrides=data)
