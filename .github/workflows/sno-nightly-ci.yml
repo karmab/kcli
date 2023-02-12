@@ -30,7 +30,7 @@ jobs:
    runs-on: libvirt
    steps:
    - name: Deploy Baremetal like vm
-     run: kcli -C local create vm -P uefi=true -P start=false -P memory=20480 -P numcpus=16 -P disks=[50] -P nets=[default] -P plan=$CLUSTER -P kube=$CLUSTER -P kubetype=openshift $CLUSTER
+     run: kcli -C local create vm -P uefi=true -P start=false -P memory=20480 -P numcpus=16 -P disks=[50,50] -P nets=[default] -P plan=$CLUSTER -P kube=$CLUSTER -P kubetype=openshift $CLUSTER
 
  deploy-openshift:
    needs: deploy-baremetal-like-vm
@@ -38,7 +38,7 @@ jobs:
    steps:
    - name: Deploy SNO
      run: |
-       kcli create cluster openshift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET -P version=$VERSION -P tag="$TAG" $CLUSTER
+       kcli create cluster openshift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET -P version=$VERSION -P tag="$TAG" -P sno_disk=vdb $CLUSTER
 
  clean-up:
    needs: deploy-openshift
