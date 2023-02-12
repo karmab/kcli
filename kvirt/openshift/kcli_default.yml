@@ -122,6 +122,7 @@ baremetal_hosts: []
 baremetal_web: true
 baremetal_web_port: 80
 baremetal_web_dir: /var/www/html
+baremetal_sub_dir:
 threaded: false
 ctlplanes_threaded: false
 workers_threaded: false
