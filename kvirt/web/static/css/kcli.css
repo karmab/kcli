@@ -1,5 +1,5 @@
 body {
-    font: 100% verdana, arial, sans-serif; */
+    font: 100% roboto, sans-serif; */
     background-color: #fff;
     margin: 50px;
     background-repeat:no-repeat;
@@ -15,7 +15,7 @@ body {
 }
 
 .green {
-        color: #5CB85C;
+        color: #6e8a6e;
 }
 
 .red {
