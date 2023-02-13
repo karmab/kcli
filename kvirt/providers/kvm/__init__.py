@@ -1455,6 +1455,7 @@ class Kvirt(object):
         except:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         if status[vm.isActive()] == "down":
+            vm.create()
             return {'result': 'success'}
         else:
             vm.reboot()

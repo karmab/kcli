@@ -70,8 +70,7 @@ class Kbase(object):
         return {'result': 'success'}
 
     def restart(self, name):
-        print("not implemented")
-        return {'result': 'success'}
+        return self.start(name)
 
     def report(self):
         print("not implemented")
