@@ -876,6 +876,7 @@ class Kibm(object):
 
     def list_pools(self):
         print("not implemented")
+        return []
 
     def list_networks(self):
         networks = {}

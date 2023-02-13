@@ -823,7 +823,7 @@ class Kgcp(object):
 # should return a dict of pool strings
     def list_pools(self):
         print("not implemented")
-        return
+        return []
 
     def list_networks(self):
         conn = self.conn

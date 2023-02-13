@@ -888,7 +888,7 @@ class Kopenstack(object):
 
     def list_pools(self):
         print("not implemented")
-        return
+        return []
 
     def list_networks(self):
         networks = {}

@@ -196,10 +196,10 @@ class Kbase(object):
         print("not implemented")
         return {'result': 'success'}
 
-# should return a dict of pool strings
+# should return a list of pools
     def list_pools(self):
         print("not implemented")
-        return {}
+        return []
 
     def list_networks(self):
         print("not implemented")

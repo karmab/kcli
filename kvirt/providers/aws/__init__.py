@@ -890,7 +890,7 @@ class Kaws(object):
 
     def list_pools(self):
         print("not implemented")
-        return
+        return []
 
     def list_networks(self):
         conn = self.conn
