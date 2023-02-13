@@ -106,7 +106,7 @@ def get_installer_version():
 
 
 def offline_image(version='stable', tag='4.12', pull_secret='openshift_pull.json'):
-    tag = str(tag).split(':')[-1]
+    tag = str(tag).split(':')[-1].split('-')[0]
     offline = 'xxx'
     if version in ['ci', 'nightly']:
         if version == "nightly":
@@ -124,10 +124,14 @@ def offline_image(version='stable', tag='4.12', pull_secret='openshift_pull.json
         url = f"https://mirror.openshift.com/pub/openshift-v4/clients/{ocp_repo}/{target}/release.txt"
     elif version == 'latest':
         url = f"https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{version}-{tag}/release.txt"
-    for line in urlopen(url).readlines():
-        if 'Pull From: ' in str(line):
-            offline = line.decode("utf-8").replace('Pull From: ', '').strip()
-            break
+    try:
+        lines = urlopen(url).readlines()
+        for line in lines:
+            if 'Pull From: ' in str(line):
+                offline = line.decode("utf-8").replace('Pull From: ', '').strip()
+                break
+    except Exception as e:
+        error(f"Hit {e} when opening {url}")
     return offline
 
 
