@@ -93,17 +93,16 @@ class Ksphere:
 
     def net_exists(self, name):
         print("not implemented")
-        return
 
     def create(self, name, virttype=None, profile='kvirt', flavor=None, plan='kvirt', cpumodel='host-model',
                cpuflags=[], cpupinning=[], numcpus=2, memory=512, guestid='centos7_64Guest', pool='default', image=None,
                disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None,
                vnc=True, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=[],
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
-               files=[], enableroot=True, overrides={}, tags=[], storemetadata=False, sharedfolders=[],
-               kernel=None, initrd=None, cmdline=None, placement=[], autostart=False, cpuhotplug=False,
-               memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False, metadata={},
-               securitygroups=[], vmuser=None):
+               files=[], enableroot=True, overrides={}, tags=[], storemetadata=False, sharedfolders=[], kernel=None,
+               initrd=None, cmdline=None, placement=[], autostart=False, cpuhotplug=False, memoryhotplug=False,
+               numamode=None, numa=[], pcidevices=[], tpm=False, rng=False, metadata={}, securitygroups=[],
+               vmuser=None):
         dc = self.dc
         vmFolder = dc.vmFolder
         diskmode = 'persistent'
@@ -557,7 +556,6 @@ class Ksphere:
 
     def serialconsole(self, name, web=False):
         print("not implemented")
-        return
 
     def console(self, name, tunnel=False, web=False):
         si = self.si
@@ -829,15 +827,12 @@ class Ksphere:
 
     def update_memory(self, name, memory):
         print("not implemented")
-        return
 
     def update_cpus(self, name, numcpus):
         print("not implemented")
-        return
 
     def update_start(self, name, start=True):
         print("not implemented")
-        return
 
     def update_information(self, name, information):
         self.update_metadata(name, 'information', information)
@@ -1116,7 +1111,7 @@ class Ksphere:
         return {'result': 'success'}
 
     def vm_ports(self, name):
-        return []
+        return ['default']
 
     def add_image(self, url, pool, short=None, cmd=None, name=None, size=None):
         downloaded = False
@@ -1301,23 +1296,18 @@ class Ksphere:
 
     def create_bucket(self, bucket, public=False):
         print("not implemented")
-        return
 
     def delete_bucket(self, bucket):
         print("not implemented")
-        return
 
     def delete_from_bucket(self, bucket, path):
         print("not implemented")
-        return
 
     def download_from_bucket(self, bucket, path):
         print("not implemented")
-        return
 
     def upload_to_bucket(self, bucket, path, overrides={}, temp_url=False, public=False):
         print("not implemented")
-        return
 
     def list_buckets(self):
         print("not implemented")
@@ -1344,7 +1334,6 @@ class Ksphere:
 
     def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False):
         print("not implemented")
-        return
 
     def update_nic(self, name, index, network):
         print("not implemented")
@@ -1485,4 +1474,29 @@ class Ksphere:
 
     def list_disks(self):
         print("not implemented")
-        return
+
+    def list_subnets(self):
+        print("not implemented")
+        return {}
+
+    def create_disk(self, name, size, pool=None, thin=True, image=None):
+        print("not implemented")
+
+    def create_pool(self, name, poolpath, pooltype='dir', user='qemu', thinpool=None):
+        print("not implemented")
+
+    def delete_pool(self, name, full=False):
+        print("not implemented")
+
+    def disk_exists(self, pool, name):
+        print("not implemented")
+
+    def network_ports(self, name):
+        print("not implemented")
+
+    def restart(self, name):
+        print("not implemented")
+
+    def update_flavor(self, name, flavor):
+        print("not implemented")
+        return {'result': 'success'}
