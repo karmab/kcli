@@ -501,6 +501,19 @@ class Ksphere:
             waitForMe(t)
         return {'result': 'success'}
 
+    def restart(self, name):
+        si = self.si
+        dc = self.dc
+        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vm, info = findvm2(si, vmFolder, name)
+        if vm is None:
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
+        try:
+            vm.RebootGuest()
+        except:
+            vm.ResetVM_Task()
+        return {'result': 'success'}
+
     def status(self, name):
         si = self.si
         dc = self.dc
@@ -1492,9 +1505,6 @@ class Ksphere:
         print("not implemented")
 
     def network_ports(self, name):
-        print("not implemented")
-
-    def restart(self, name):
         print("not implemented")
 
     def update_flavor(self, name, flavor):
