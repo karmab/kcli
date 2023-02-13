@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from kvirt.common import success, error, pprint, warning, info2, container_mode
-from kvirt.common import get_kubectl, kube_create_app, get_ssh_pub_key
+from kvirt.common import get_kubectl, kube_create_app, get_ssh_pub_key, _ssh_credentials, scp
 from kvirt.defaults import UBUNTUS
 import os
 from random import choice
@@ -22,6 +22,32 @@ def scale(config, plandir, cluster, overrides):
     data['basedir'] = '/workdir' if container_mode() else '.'
     cluster = data.get('cluster')
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
+    if not os.path.exists(clusterdir):
+        warning(f"Creating {clusterdir} from your input (auth creds will be missing)")
+        overrides['cluster'] = cluster
+        api_ip = overrides.get('api_ip')
+        if config.type not in cloudplatforms and api_ip is None:
+            error("Missing api_ip...")
+            sys.exit(1)
+        domain = overrides.get('domain')
+        if domain is None:
+            error("Missing domain...")
+            sys.exit(1)
+        os.mkdir(clusterdir)
+        source = "/root/join.sh"
+        destination = f"{clusterdir}/join.sh"
+        first_ctlplane_vm = f"{cluster}-ctlplane-0"
+        first_ctlplane_ip, first_ctlplane_vmport = _ssh_credentials(config.k, first_ctlplane_vm)[1:]
+        scpcmd = scp(first_ctlplane_vm, ip=first_ctlplane_ip, user='root', source=source, destination=destination,
+                     tunnel=config.tunnel, tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
+                     tunneluser=config.tunneluser, download=True, insecure=True, vmport=first_ctlplane_vmport)
+        os.system(scpcmd)
+        source = "/root/ctlplanecmd.sh"
+        destination = f"{clusterdir}/ctlplanecmd.sh"
+        scpcmd = scp(first_ctlplane_vm, ip=first_ctlplane_ip, user='root', source=source, destination=destination,
+                     tunnel=config.tunnel, tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
+                     tunneluser=config.tunneluser, download=True, insecure=True, vmport=first_ctlplane_vmport)
+        os.system(scpcmd)
     if os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
         with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
             installparam = yaml.safe_load(install)

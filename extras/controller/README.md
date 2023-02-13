@@ -4,7 +4,7 @@ There is a controller leveraging kcli and using vm, plan and clusters crds to cr
 
 - a running kubernetes/openshift cluster and KUBECONFIG env variable pointing to it (or simply .kube/config)
 - some infrastructure supported by kcli running somewhere and the corresponding credentials.
-- storage to hold at least one pvc (for cluster data) and optionally one for plan files data.
+- optionally storage to hold a pvc for cluster data and another one for plan files data.
 
 ## Deploying
 
@@ -21,18 +21,17 @@ kubectl create configmap kcli-config --from-file=$HOME/.kcli
 kubectl create configmap ssh-config --from-file=$HOME/.ssh
 ```
 
-Then deploy the controller:
+Then deploy the controller (along with its CRDS):
 
 ```
 kubectl create -f https://raw.githubusercontent.com/karmab/kcli/main/extras/controller/deploy.yml
 ```
 
-If you want to need a pvc for storing plan data, use the following instead:
+If you want to use a pvc named `kcli-clusters` for storing cluster data, add it:
 
 ```
-kubectl create -f https://raw.githubusercontent.com/karmab/kcli/main/extras/controller/deploy_2pvcs.yml
+kubectl -n kcli-infra patch deploy kcli-controller --type json -p='[{"op": "add", "path": "/spec/template/spec/containers/0/volumeMounts/-", "value": {"mountPath": "/root/.kcli/clusters", "name": "kcli-clusters"}}, {"op": "add", "path": "/spec/template/spec/volumes/-", "value": {"persistentVolumeClaim": {"claimName" : "kcli-clusters"}, "name": "kcli-clusters"}}]'
 ```
-
 
 ## How to use
 

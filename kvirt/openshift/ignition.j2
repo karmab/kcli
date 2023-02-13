@@ -1,0 +1,21 @@
+{% if bucket_url is defined %}
+{% set url = bucket_url %}
+{% else %}
+{% set address = api_ip if api_ip != None else "api." + cluster + "." + original_domain|default(domain) %}
+{% if ':' in address %}
+{% set address = "[" + api_ip + "]" %}
+{% endif %}
+{% set url = "http://" + address + ":22624/config/" + role|default('worker') %}
+{% endif %}
+{
+  "ignition": {
+    "config": {
+      "merge": [
+        {
+          "source": "{{ url }}"
+        }
+      ]
+    },
+    "version": "{{ ignition_version|default('3.2.0') }}"
+  }
+}

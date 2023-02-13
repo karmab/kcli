@@ -57,10 +57,30 @@ def handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts=[]):
 
 def scale(config, plandir, cluster, overrides):
     plan = cluster
-    data = {'cluster': cluster, 'kube': cluster, 'kubetype': 'hypershift'}
+    data = {'cluster': cluster, 'kube': cluster, 'kubetype': 'hypershift', 'namespace': 'clusters'}
     data['basedir'] = '/workdir' if container_mode() else '.'
     cluster = data.get('cluster')
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
+    if not os.path.exists(clusterdir):
+        warning(f"Creating {clusterdir} from your input (auth creds will be missing)")
+        overrides['cluster'] = cluster
+        overrides['clusterdir'] = clusterdir
+        plan = overrides.get('plan') or plan
+        if 'ingress_ip' not in overrides and config.type != 'kubevirt':
+            error("Missing ingress_ip...")
+            sys.exit(1)
+        domain = overrides.get('domain')
+        if domain is None:
+            error("Missing domain...")
+            sys.exit(1)
+        if 'management_ingress_domain' not in overrides:
+            overrides['management_ingress_domain'] = f'apps.{cluster}.{domain}'
+        os.mkdir(clusterdir)
+        nodepool = data.get('nodepool') or cluster
+        ignitionscript = config.process_inputfile(cluster, f"{plandir}/ignition.sh", overrides=overrides)
+        with open(f"{clusterdir}/ignition_{nodepool}.sh", 'w') as f:
+            f.write(ignitionscript)
+        call(f'bash {clusterdir}/ignition_{nodepool}.sh', shell=True)
     if os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
         with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
             installparam = yaml.safe_load(install)
@@ -198,7 +218,6 @@ def create(config, plandir, cluster, overrides):
             if existing_workers:
                 data['workers'] += len(existing_workers)
     else:
-        os.makedirs(clusterdir)
         os.makedirs(f"{clusterdir}/auth")
     supported_data = yaml.safe_load(os.popen("oc get cm/supported-versions -o yaml -n hypershift").read())['data']
     supported_versions = supported_versions = supported_data['supported-versions']
