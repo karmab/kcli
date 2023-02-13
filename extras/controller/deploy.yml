@@ -58,8 +58,6 @@ spec:
         volumeMounts:
         - mountPath: /root/.kcli
           name: kcli-conf
-        - mountPath: /root/.kcli/clusters
-          name: kcli-clusters
         - mountPath: /root/.ssh
           name: kcli-ssh
       volumes:
@@ -71,6 +69,3 @@ spec:
           defaultMode: 0700
           name: kcli-ssh
         name: kcli-ssh
-      - name: kcli-clusters
-        persistentVolumeClaim:
-          claimName: kcli-clusters

@@ -2025,11 +2025,17 @@ To do the same manually, run instead:
    kubectl create configmap kcli-config --from-file=$HOME/.kcli
    kubectl create configmap ssh-config --from-file=$HOME/.ssh
 
-Then deploy the crds and the controller:
+Then deploy the controller (along with its CRDS):
 
 ::
 
-   kubectl create -f https://raw.githubusercontent.com/karmab/kcli/main/extras/controller/crd.yml
+   kubectl create -f https://raw.githubusercontent.com/karmab/kcli/main/extras/controller/deploy.yml
+
+If you want to use a pvc named ``kcli-clusters`` for storing cluster data, add it:
+
+::
+
+   kubectl -n kcli-infra patch deploy kcli-controller --type json -p='[{"op": "add", "path": "/spec/template/spec/containers/0/volumeMounts/-", "value": {"mountPath": "/root/.kcli/clusters", "name": "kcli-clusters"}}, {"op": "add", "path": "/spec/template/spec/volumes/-", "value": {"persistentVolumeClaim": {"claimName" : "kcli-clusters"}, "name": "kcli-clusters"}}]'
 
 .. _how-to-use-1:
 
