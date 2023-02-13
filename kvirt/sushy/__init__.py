@@ -111,7 +111,7 @@ class Ksushy():
             config = Kconfig(client)
             k = config.k
             reset_type = request.json.get('ResetType', 'On')
-            if reset_type == 'On':
+            if reset_type in ['On', 'ForceRestart']:
                 try:
                     pprint(f"Starting vm {name}")
                     k.start(name)
