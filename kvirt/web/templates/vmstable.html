@@ -13,7 +13,7 @@
         <tbody>
             {% for vm in vms %}
             {% if vm.image is defined %}
-                {% if 'rhel' in vm.image.lower()%}
+                {% if 'rhel' in vm.image.lower() or 'rhcos' in vm.image.lower() %}
                     {% set logo = 'Redhat.png' %}
                 {% elif 'cfme' in vm.image.lower() %}
                     {% set logo = 'Centos.png' %}
