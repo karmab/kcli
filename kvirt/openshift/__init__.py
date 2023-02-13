@@ -408,7 +408,8 @@ def scale(config, plandir, cluster, overrides):
             error("Missing domain...")
             sys.exit(1)
         os.mkdir(clusterdir)
-        create_ignition_files(config, plandir, cluster, domain, api_ip=api_ip)
+        ignition_version = overrides['ignition_version']
+        create_ignition_files(config, plandir, cluster, domain, api_ip=api_ip, ignition_version=ignition_version)
     if os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
         with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
             installparam = yaml.safe_load(install)
@@ -451,7 +452,7 @@ def scale(config, plandir, cluster, overrides):
         if platform in virtplatforms:
             os.chdir(os.path.expanduser("~/.kcli"))
             if role == 'ctlplanes' and ('virtual_router_id' not in overrides or 'auth_pass' not in overrides):
-                warning("Scaling up wont work without virtual_router_id and auth_pass")
+                warning("Scaling up of ctlplanes won't work without virtual_router_id and auth_pass")
             result = config.plan(plan, inputfile=f'{plandir}/{role}.yml', overrides=overrides, threaded=threaded)
         elif platform in cloudplatforms:
             result = config.plan(plan, inputfile=f'{plandir}/cloud_{role}.yml', overrides=overrides, threaded=threaded)
