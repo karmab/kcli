@@ -1,6 +1,6 @@
 .navbar-custom {
   background-color: #008092;
-  border-color: #6e8a6e;
+  border-color: #bec3e0;
   background-image: -webkit-gradient(linear, left 0%, left 100%, from(#52b9ca), to(#898da6));
   background-image: -webkit-linear-gradient(top, #52b9ca, 0%, #898da6, 100%);
   background-image: -moz-linear-gradient(top, #52b9ca 0%, #898da6 100%);
@@ -20,11 +20,11 @@
   color: #ffffff;
 }
 .navbar-custom .navbar-nav > li:last-child > a {
-  border-right: 1px solid #1e664c;
+  border-right: 1px solid #3161a9;
 }
 .navbar-custom .navbar-nav > li > a {
   color: #ffffff;
-  border-left: 1px solid #1e664c;
+  border-left: 1px solid #3161a9;
 }
 .navbar-custom .navbar-nav > li > a:hover,
 .navbar-custom .navbar-nav > li > a:focus {
@@ -35,13 +35,13 @@
 .navbar-custom .navbar-nav > .active > a:hover,
 .navbar-custom .navbar-nav > .active > a:focus {
   color: #c0c0c0;
-  background-color: #1e664c;
-  background-image: -webkit-gradient(linear, left 0%, left 100%, from(#1e664c), to(#298e69));
-  background-image: -webkit-linear-gradient(top, #1e664c, 0%, #298e69, 100%);
-  background-image: -moz-linear-gradient(top, #1e664c 0%, #298e69 100%);
-  background-image: linear-gradient(to bottom, #1e664c 0%, #298e69 100%);
+  background-color: #3161a9;
+  background-image: -webkit-gradient(linear, left 0%, left 100%, from(#3161a9), to(#298e69));
+  background-image: -webkit-linear-gradient(top, #3161a9, 0%, #298e69, 100%);
+  background-image: -moz-linear-gradient(top, #3161a9 0%, #298e69 100%);
+  background-image: linear-gradient(to bottom, #3161a9 0%, #298e69 100%);
   background-repeat: repeat-x;
-  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff1e664c', endColorstr='#ff298e69', GradientType=0);
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff3161a9', endColorstr='#ff298e69', GradientType=0);
 }
 .navbar-custom .navbar-nav > .disabled > a,
 .navbar-custom .navbar-nav > .disabled > a:hover,
@@ -71,7 +71,7 @@
 .navbar-custom .navbar-nav > .open > a,
 .navbar-custom .navbar-nav > .open > a:hover,
 .navbar-custom .navbar-nav > .open > a:focus {
-  background-color: #1e664c;
+  background-color: #3161a9;
   color: #c0c0c0;
 }
 .navbar-custom .navbar-nav > .open > a .caret,
@@ -97,7 +97,7 @@
   .navbar-custom .navbar-nav .open .dropdown-menu > .active > a:hover,
   .navbar-custom .navbar-nav .open .dropdown-menu > .active > a:focus {
     color: #c0c0c0;
-    background-color: #1e664c;
+    background-color: #3161a9;
   }
   .navbar-custom .navbar-nav .open .dropdown-menu > .disabled > a,
   .navbar-custom .navbar-nav .open .dropdown-menu > .disabled > a:hover,
