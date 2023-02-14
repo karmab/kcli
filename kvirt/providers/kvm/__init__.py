@@ -2545,25 +2545,64 @@ class Kvirt(object):
         root = ET.fromstring(xml)
         cpunode = list(root.iter('vcpu'))[0]
         cpuattributes = cpunode.attrib
-        if not vm.isActive():
-            cpunode.text = str(numcpus)
-            newxml = ET.tostring(root)
-            conn.defineXML(newxml.decode("utf-8"))
-            return {'result': 'success'}
-        elif 'current' in cpuattributes and cpuattributes['current'] != numcpus:
-            if numcpus < int(cpuattributes['current']):
-                error("Can't remove cpus while vm is up")
-                return {'result': 'failure', 'reason': f"VM {name} not found"}
-            else:
-                vm.setVcpus(numcpus)
-                return {'result': 'success'}
-        else:
-            if vm.isActive() != 0:
-                warning("Note it will only be effective upon next start")
-            cpunode.text = str(numcpus)
-            newxml = ET.tostring(root)
-            conn.defineXML(newxml.decode("utf-8"))
-            return {'result': 'success'}
+        if vm.isActive() == 0:
+            if 'current' in cpuattributes and cpuattributes['current'] != numcpus:
+                if numcpus < int(cpuattributes['current']):
+                    error("Can't remove cpus while vm is up")
+                    return {'result': 'failure', 'reason': f"VM {name} not found"}
+                else:
+                    vm.setVcpus(numcpus)
+                    return {'result': 'success'}
+            warning("Note it will only be effective upon next start")
+        cpunode.text = str(numcpus)
+        newxml = ET.tostring(root)
+        conn.defineXML(newxml.decode("utf-8"))
+        return {'result': 'success'}
+
+    def update_cpuflags(self, name, cpuflags, disable=False):
+        addflags, removeflags = [], []
+        for flag in cpuflags:
+            if isinstance(flag, str):
+                if disable:
+                    removeflags.append(flag)
+                else:
+                    addflags.append(flag)
+            elif isinstance(flag, dict) and 'name' in flag:
+                flagname = flag['name']
+                if 'policy' in flag and flag['policy'] == 'disable':
+                    removeflags.append(flagname)
+                else:
+                    addflags.append(flagname)
+        conn = self.conn
+        try:
+            vm = conn.lookupByName(name)
+        except:
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
+        xml = vm.XMLDesc(0)
+        root = ET.fromstring(xml)
+        cpu = list(root.iter('cpu'))[0]
+        if vm.isActive() != 0:
+            warning("Note it will only be effective upon next start")
+        for entry in list(cpu.iter('feature')):
+            attrib = entry.attrib
+            feature, policy = attrib['name'], attrib['policy']
+            if feature in removeflags and policy not in ['disable', 'forbid']:
+                pprint(f"Removing flag {feature}")
+                cpu.remove(entry)
+            elif feature in addflags:
+                if policy in ['enable', 'require', 'force']:
+                    del addflags[feature]
+                else:
+                    cpu.remove(entry)
+                    pprint(f"Removing flag {feature}")
+        for feature in addflags:
+            pprint(f"Adding flag {feature}")
+            new_entry = f"<feature policy='require' name='{feature}'/>"
+            cpu.append((ET.fromstring(new_entry)))
+        newxml = ET.tostring(root)
+        conn.defineXML(newxml.decode("utf-8"))
+        return {'result': 'success'}
 
     def update_memory(self, name, memory):
         conn = self.conn

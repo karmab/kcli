@@ -1144,6 +1144,9 @@ class Kconfig(Kbaseconfig):
         nets = overrides.get('nets')
         disks = overrides.get('disks')
         information = overrides.get('information')
+        cpuflags = overrides.get('cpuflags', [])
+        disable = overrides.get('disable', False)
+        overrides.pop('disable', None)
         extra_metadata = {k: overrides[k] for k in overrides if k not in self.list_keywords()}
         template = overrides.get('template')
         if template is not None:
@@ -1270,9 +1273,13 @@ class Kconfig(Kbaseconfig):
                 newfiles = overrides['files']
                 pprint(f"Remediating files of {name}")
                 self.remediate_files(name, newfiles, overrides)
-        pool = overrides.get('pool')
-        if self.type == 'kvm' and pool is not None:
-            k.update_pool(name, pool)
+        if self.type == 'kvm':
+            pool = overrides.get('pool')
+            if pool is not None:
+                k.update_pool(name, pool)
+            if cpuflags:
+                pprint(f"Updating cpuflags of vm {name}")
+                k.update_cpuflags(name, cpuflags, disable)
         if self.type == 'vsphere' and template is not None and isinstance(template, bool):
             target = 'template' if template else 'vm'
             pprint(f"Updating vm {name} to {target}...")

@@ -552,4 +552,16 @@ $ kcli update vm -P iso=None myvm
 
 # Convert vm to template (vsphere specific)
 $ kcli update vm ubuntu-20.04-server-cloudimg-amd64 -P template=true
+
+# Convert vm to template (vsphere specific)
+$ kcli update vm ubuntu-20.04-server-cloudimg-amd64 -P template=true
+
+# Add cpuflags to a vm (kvm specific)
+$ kcli update vm -P cpuflags=[vmx] myvm
+
+# Remove cpuflags from a vm (kvm specific)
+$ kcli update vm -P cpuflags=[vmx] -P disable=true myvm
+
+# Add and remove cpuflags from a vm (kvm specific)
+$ kcli update vm -P cpuflags=['{"name": "vmx", "policy": "enable"}, {"name": "ss", "policy": "disable"}'] myvm
 """
