@@ -13,7 +13,7 @@ from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsol
 from kvirt.examples import disconnectedcreate, appopenshiftcreate, plantemplatecreate, kubehypershiftcreate
 from kvirt.examples import workflowcreate, kubegenericscale, kubek3sscale, kubeopenshiftscale
 from kvirt.examples import changelog, starthosts, stophosts, infohosts, ocdownload, openshiftdownload
-from kvirt.examples import networkcreate, securitygroupcreate, profilecreate
+from kvirt.examples import networkcreate, securitygroupcreate, profilecreate, vmupdate
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
 from kvirt.defaults import IMAGES, VERSION, LOCAL_OPENSHIFT_APPS, SSH_PUB_LOCATIONS, PLANTYPES
@@ -4896,8 +4896,10 @@ def cli():
     repoupdate_parser.set_defaults(func=update_repo)
 
     vmupdate_desc = 'Update Vm\'s Ip, Memory Or Numcpus'
+    vmupdate_epilog = f"examples:\n{vmupdate}"
     vmupdate_parser = update_subparsers.add_parser('vm', description=vmupdate_desc, help=vmupdate_desc,
-                                                   parents=[parent_parser])
+                                                   parents=[parent_parser], epilog=vmupdate_epilog,
+                                                   formatter_class=rawhelp)
     vmupdate_parser.add_argument('names', help='VMNAMES', nargs='*')
     vmupdate_parser.set_defaults(func=update_vm)
 

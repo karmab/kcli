@@ -528,3 +528,28 @@ $ kcli create profile -P image=ubuntu-22.10-server-cloudimg-amd64.img -P memory=
 # Create a profile without image, with uefi and without startingthe corresponding vm
 $ kcli create profile -P uefi=true -P start=false -P memory=4096 -P disks=[20,30] myprofile
 """
+
+vmupdate = """# Update memory and cpu of a vm
+$ kcli update vm -P memory=8192 -P numcpus=8 myvm
+
+# Update disks of a vm, including sizes of existing ones
+$ kcli update vm -P disks=[30,50] myvm
+
+# Move disks of a vm to a different pool
+$ kcli update vm -P pool=newpool myvm
+
+# Make the vm autostart along with the hypervisor
+$ kcli update vm -P autostart=true myvm
+
+# Update specific files of a vm (creating them if they don't exist)
+$ kcli update vm testfed -P files=['frout.txt','{"path": "/root/x/y/z", "content": "this is working great"}']
+
+# Change plan of a vm
+$ kcli update vm -P plan=myplan myvm
+
+# Remove iso of a vm
+$ kcli update vm -P iso=None myvm
+
+# Convert vm to template (vsphere specific)
+$ kcli update vm ubuntu-20.04-server-cloudimg-amd64 -P template=true
+"""

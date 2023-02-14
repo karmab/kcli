@@ -1,5 +1,4 @@
 $(document).ready(function() {
- //$("#refresh").prop("checked", true);
  setInterval(function(){
  var refresh = $("#refresh");
  if (refresh.prop("checked")) {
