@@ -3244,7 +3244,7 @@ def create_workflow(args):
                 overrides['target'] = {'user': user or vmuser, 'port': vmport, 'ip': vmip, 'hostname': hostname}
     if config is None:
         config = Kbaseconfig(client=args.client, debug=args.debug)
-    run = not args.dry
+    run = not args.render
     result = config.create_workflow(workflow, overrides, outputdir=outputdir, run=run)
     sys.exit(0 if result['result'] == 'success' else 1)
 
@@ -3880,7 +3880,7 @@ def cli():
                                                          help=workflowcreate_desc, parents=[parent_parser],
                                                          epilog=workflowcreate_epilog, formatter_class=rawhelp)
     workflowcreate_parser.add_argument('--outputdir', '-o', help='Output directory', metavar='OUTPUTDIR')
-    workflowcreate_parser.add_argument('-d', '--dry', help='Dry run. Only render', action='store_true')
+    workflowcreate_parser.add_argument('-r', '--render', help='Only render', action='store_true')
     workflowcreate_parser.add_argument('workflow', metavar='WORKFLOW', nargs='?')
     workflowcreate_parser.set_defaults(func=create_workflow)
 
@@ -4035,7 +4035,6 @@ def cli():
 
     pooldelete_desc = 'Delete Pool'
     pooldelete_parser = delete_subparsers.add_parser('pool', description=pooldelete_desc, help=pooldelete_desc)
-    pooldelete_parser.add_argument('-d', '--delete', action='store_true')
     pooldelete_parser.add_argument('-f', '--full', action='store_true')
     pooldelete_parser.add_argument('-p', '--path', help='Path of the pool', metavar='PATH')
     pooldelete_parser.add_argument('--thinpool', help='Existing thin pool to use with lvm', metavar='THINPOOL')
