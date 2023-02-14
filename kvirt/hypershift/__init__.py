@@ -212,11 +212,14 @@ def create(config, plandir, cluster, overrides):
     namespace = data.get('namespace')
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if os.path.exists(clusterdir):
-        warning(f"Using existing {clusterdir}")
         if nodepool != clustervalue:
+            warning(f"Using existing {clusterdir}")
             existing_workers = [vm for vm in config.k.list() if vm.get('kube', 'xxx') == cluster]
             if existing_workers:
                 data['workers'] += len(existing_workers)
+        else:
+            error("Remove existing {clusterdir}")
+            sys.exit(1)
     else:
         os.makedirs(f"{clusterdir}/auth")
     supported_data = yaml.safe_load(os.popen("oc get cm/supported-versions -o yaml -n hypershift").read())['data']
