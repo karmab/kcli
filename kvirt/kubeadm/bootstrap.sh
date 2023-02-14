@@ -22,9 +22,11 @@ chown root:root /root/admin.conf
 export KUBECONFIG=/root/admin.conf
 echo "export KUBECONFIG=/root/admin.conf" >> /root/.bashrc
 
-# untaint ctlplane node(s)
+{% if workers == 0 %}
+# untaint ctlplane nodes when there are no workers
 kubectl taint nodes --all node-role.kubernetes.io/master-
 kubectl taint nodes --all node-role.kubernetes.io/control-plane-
+{% endif %}
 
 {% if sdn != None %}
 # install Container Network Interface (CNI)
