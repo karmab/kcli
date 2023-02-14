@@ -1233,6 +1233,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             if sno_workers:
                 pprint(f"Plug {cluster}-worker.iso to get additional workers")
         backup_paramfile(installparam, clusterdir, cluster, plan, image, dnsconfig)
+        os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
+        process_apps(config, clusterdir, apps, overrides)
         sys.exit(0)
     run = call(f'openshift-install --dir={clusterdir} --log-level={log_level} create ignition-configs', shell=True)
     if run != 0:
