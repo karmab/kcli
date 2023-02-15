@@ -8,7 +8,7 @@ body {
 
 th
 {
-  background-color: #2f7ba9;
+  background-color: #008092;
   color:white;
 }
 
@@ -43,7 +43,7 @@ th
 
 .loader {
     border: 16px solid #f3f3f3; /* Light grey */
-    border-top: 16px solid #3498db; /* Blue */
+    border-top: 16px solid #008092; /* Blue */
     border-radius: 50%;
     width: 120px;
     height: 120px;
