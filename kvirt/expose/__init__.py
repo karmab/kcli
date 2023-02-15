@@ -50,6 +50,7 @@ class Kexposer():
         self.overrides = overrides
         self.pfmode = pfmode
         self.refresh_plans(verbose=True)
+        self.inputfile = inputfile
 
         @app.route('/static/<filename:path>')
         def server_static(filename):
@@ -86,7 +87,10 @@ class Kexposer():
                     elif p == 'pf':
                         pfdata = request.forms[p]
                 if pfdata is not None:
-                    new_parameters = yaml.safe_load(pfdata)
+                    try:
+                        new_parameters = yaml.safe_load(pfdata)
+                    except:
+                        new_parameters = {}
                     new_parameters.update(parameters)
                     parameters = new_parameters
                 try:
@@ -99,6 +103,7 @@ class Kexposer():
                             currentconfig.mailto = newmails
                     if 'owner' in overrides and overrides['owner'] == '':
                         del overrides['owner']
+                    inputfile = overrides.get('inputfile', self.inputfile)
                     if update:
                         result = currentconfig.plan(plan, inputfile=inputfile, overrides=overrides, update=True)
                     else:
@@ -118,6 +123,7 @@ class Kexposer():
             parameters = self.overrides
             if plan not in self.plans:
                 return f'Invalid plan name {plan}'
+            inputfile = self.overrides.get('inputfile', self.inputfile)
             info = get_parameters(inputfile, planfile=True)
             info = info.get('info', 'N/A')
             return {'parameters': parameters, 'plan': plan, 'pfmode': self.pfmode, 'info': info}
@@ -173,7 +179,10 @@ class Kexposer():
                         value = value.lower() == "true"
                     parameters[p] = value
                 if pfdata is not None:
-                    new_parameters = yaml.safe_load(pfdata)
+                    try:
+                        new_parameters = yaml.safe_load(pfdata)
+                    except:
+                        new_parameters = {}
                     new_parameters.update(parameters)
                     parameters = new_parameters
                 try:
@@ -186,6 +195,7 @@ class Kexposer():
                             currentconfig.mailto = newmails
                     if 'owner' in overrides and overrides['owner'] == '':
                         del overrides['owner']
+                    inputfile = self.overrides.get('inputfile', self.inputfile)
                     if update:
                         result = currentconfig.plan(plan, inputfile=inputfile, overrides=overrides, update=True)
                     else:

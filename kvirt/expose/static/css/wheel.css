@@ -1,3 +1,10 @@
+body {
+    font: 110% roboto, sans-serif; */
+    background-color: #fff;
+    margin: 50px;
+    background-repeat:no-repeat;
+    background-size: 100% auto;
+}
 
 #wheel
 {
