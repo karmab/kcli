@@ -1,0 +1,14 @@
+<thead>
+<tr>
+  <th>Plan name</th>
+  <th>Actions</th>
+</tr>
+</thead>
+<tbody>
+{% for plan in plans %}
+<tr>
+  <td>{{ plan }} {{ '(' + owners[plan] + ')' if plan in owners else '' }}</td>
+  <td><button type="button" class="btn btn-info" onclick="location.href='/infoplan/{{ plan }}'" target="_blank" >Info</button><button type="button" class="btn btn-success" onclick="location.href='/exposeform/{{ plan }}'" target="_blank" >Reprovision</button><button type="button" class="btn btn-danger" onclick="exposedelete('{{ plan }}');">Delete</button></td>
+</tr>
+{% endfor %}
+</tbody>

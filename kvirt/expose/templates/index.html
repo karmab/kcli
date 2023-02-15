@@ -1,20 +1,11 @@
 {% include "head.html" %}
 <div id="wheel"></div>
-<p>
-<table class="table table-bordered table-hover table-striped">
-<tbody>
-<tr class="table-info">
-  <th>Plan name</th>
-  <th>Actions</th>
-<tr>
-{% for plan in plans %}
-  <th>{{ plan }} {{ '(' + owners[plan] + ')' if plan in owners else '' }}</th>
-  <th><button type="button" class="btn btn-info" onclick="location.href='/infoplan/{{ plan }}'" target="_blank" >Info</button><button type="button" class="btn btn-success" onclick="location.href='/exposeform/{{ plan }}'" target="_blank" >Reprovision</button><button type="button" class="btn btn-danger" onclick="exposedelete('{{ plan }}');">Delete</button></th>
-  <th></th>
-  </tr>
-  </tbody>
-{% endfor %}
-</table>
-<br>
-</body>
+
+<button type="button" class="btn btn-default" id="refresh" onclick="window.location.reload()" ><span data-toggle="tooltip" title="Refresh Plans list" class="glyphicon glyphicon-refresh"></span></button><p>
+<table id="plans" class="table table-striped table-bordered" cellspacing="0" width="100%"/>
+
+<script>
+$(document).ready(planstable);
+</script>
+
 </html>

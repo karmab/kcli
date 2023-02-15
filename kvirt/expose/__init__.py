@@ -6,9 +6,6 @@ import os
 import re
 import yaml
 
-basedir = f"{os.path.dirname(Bottle.run.__code__.co_filename)}/expose"
-view = functools.partial(jinja2_view, template_lookup=[f"{basedir}/templates"])
-
 
 class Kexposer():
 
@@ -45,6 +42,8 @@ class Kexposer():
 
     def __init__(self, config, plan, inputfile, overrides={}, port=9000, pfmode=False):
         app = Bottle()
+        basedir = f"{os.path.dirname(Bottle.run.__code__.co_filename)}/expose"
+        view = functools.partial(jinja2_view, template_lookup=[f"{basedir}/templates"])
         self.basedir = os.path.dirname(inputfile) if '/' in inputfile else '.'
         self.plan = plan
         self.overrides = overrides
@@ -59,6 +58,12 @@ class Kexposer():
         @app.route('/')
         @view('index.html')
         def index():
+            self.refresh_plans()
+            return {'plans': self.plans, 'owners': self.owners}
+
+        @app.route('/planstable')
+        @view('planstable.html')
+        def plansstable():
             self.refresh_plans()
             return {'plans': self.plans, 'owners': self.owners}
 

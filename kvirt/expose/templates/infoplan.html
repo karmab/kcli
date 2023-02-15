@@ -3,16 +3,17 @@
 <p>
 <table class="table table-bordered table-hover">
   <tbody>
-  <tr class="table-info">
+  <tr>
     <th>Plan name</th>
     <th>Client</th>
     <th>Creation Date</th>
-  <tr>
-  <th>{{ plan }}</th>
-  <th>{{ client }}</th>
-  <th>{{ creationdate|default('') }} {{ owner|default('') }}</th>
   </tr>
-  <tr class="table-info">
+  <tr>
+  <td>{{ plan }}</td>
+  <td>{{ client }}</td>
+  <td>{{ creationdate|default('') }} {{ owner|default('') }}</th>
+  </tr>
+  <tr>
     <th>Vm name</th>
     <th>Status</th>
     <th>Ip</th>

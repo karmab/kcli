@@ -1,0 +1,59 @@
+body {
+    font: 100% roboto, sans-serif; */
+    background-color: #fff;
+    margin: 50px;
+    background-repeat:no-repeat;
+    background-size: 100% auto;
+}
+
+th
+{
+  background-color: #2f7ba9;
+  color:white;
+}
+
+.table table, .table th, .table td {
+    text-align: center;
+}
+
+.table tbody>tr>td.vert-align{
+    vertical-align: middle;
+}
+
+.green {
+        color: #6e8a6e;
+}
+
+.red {
+        color: #FF0000;
+}
+
+.blue {
+        color: #0000FF;
+}
+
+.left {
+        text-align: left;
+}
+
+.btn .form-control .dropdown-menu {
+    font-size: 17px;
+}
+
+
+.loader {
+    border: 16px solid #f3f3f3; /* Light grey */
+    border-top: 16px solid #3498db; /* Blue */
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    animation: spin 2s linear infinite;
+}
+
+#url{display:none;}
+
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
