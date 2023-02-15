@@ -218,7 +218,7 @@ def create(config, plandir, cluster, overrides):
             if existing_workers:
                 data['workers'] += len(existing_workers)
         else:
-            error("Remove existing {clusterdir}")
+            error(f"Remove existing {clusterdir}")
             sys.exit(1)
     else:
         os.makedirs(f"{clusterdir}/auth")
