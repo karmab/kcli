@@ -343,6 +343,8 @@ class Kvirt(object):
         fixqcow2path, fixqcow2backing = None, None
         volsxml = {}
         virtio_index, ide_index, scsi_index = 0, 0, 0
+        boot_legacy = overrides.get('boot_legacy', False)
+        bootxml = "<boot dev='hd'/><boot dev='cdrom'/><boot dev='network'/>" if boot_legacy else ''
         firstdisk = None
         ssddisks = []
         nvmedisks = []
@@ -534,7 +536,7 @@ class Kvirt(object):
             if diskpooltype in ['logical', 'zfs'] and (backing is None or backing.startswith('/dev')):
                 diskformat = 'raw'
             if not nvme:
-                bootdevxml = f'<boot order="{bootdev}"/>'
+                bootdevxml = f'<boot order="{bootdev}"/>' if not boot_legacy else ''
                 bootdev += 1
                 disksxml = """%s<disk type='%s' device='disk'>
 <driver name='qemu' type='%s' %s/>
@@ -586,7 +588,7 @@ class Kvirt(object):
                     iso = isovolume.path()
         isobus = 'scsi' if aarch64_full else 'sata'
         isosourcexml = f"<source file='{iso}'/>" if iso is not None else ''
-        bootdevxml = f'<boot order="{bootdev}"/>'
+        bootdevxml = f'<boot order="{bootdev}"/>' if not boot_legacy else ''
         bootdev += 1
         isoxml = """<disk type='file' device='cdrom'>
 <driver name='qemu' type='raw'/>%s
@@ -746,7 +748,7 @@ class Kvirt(object):
                 vhostpath = nets[index].get('vhostpath', f"{vhostdir}/vhost-user{vhostindex}")
                 sourcexml = f"<source type='unix' path='{vhostpath}' mode='client'/>"
                 sourcexml += "<driver name='vhost' rx_queue_size='256'/>"
-            bootdevxml = f'<boot order="{bootdev}"/>' if index == 0 else ''
+            bootdevxml = f'<boot order="{bootdev}"/>' if index == 0 and not boot_legacy else ''
             netxml = """%s
 <interface type='%s'>
 %s
@@ -1251,6 +1253,7 @@ class Kvirt(object):
 <type arch='{arch}' {machine}>hvm</type>
 {ramxml}
 {firmwarexml}
+{bootxml}
 {kernelxml}
 <bootmenu enable="yes" timeout="60"/>
 </os>
@@ -1289,7 +1292,7 @@ class Kvirt(object):
 </domain>""".format(virttype=virttype, namespace=namespace, name=name, uuidxml=uuidxml, metadataxml=metadataxml,
                     memoryhotplugxml=memoryhotplugxml, cpupinningxml=cpupinningxml, numatunexml=numatunexml,
                     hugepagesxml=hugepagesxml, memory=memory, vcpuxml=vcpuxml, osfirmware=osfirmware, arch=arch,
-                    machine=machine, ramxml=ramxml, firmwarexml=firmwarexml, kernelxml=kernelxml,
+                    machine=machine, ramxml=ramxml, firmwarexml=firmwarexml, bootxml=bootxml, kernelxml=kernelxml,
                     smmxml=smmxml, emulatorxml=emulatorxml, disksxml=disksxml, busxml=busxml, netxml=netxml,
                     isoxml=isoxml, floppyxml=floppyxml, displayxml=displayxml, serialxml=serialxml, sharedxml=sharedxml,
                     guestxml=guestxml, videoxml=videoxml, hostdevxml=hostdevxml, rngxml=rngxml, tpmxml=tpmxml,
