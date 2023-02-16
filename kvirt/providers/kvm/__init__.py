@@ -748,7 +748,7 @@ class Kvirt(object):
                 vhostpath = nets[index].get('vhostpath', f"{vhostdir}/vhost-user{vhostindex}")
                 sourcexml = f"<source type='unix' path='{vhostpath}' mode='client'/>"
                 sourcexml += "<driver name='vhost' rx_queue_size='256'/>"
-            bootdevxml = f'<boot order="{bootdev}"/>' if index == 0 and not boot_legacy else ''
+            bootdevxml = f'<boot order="{bootdev}"/>' if not boot_legacy else ''
             netxml = """%s
 <interface type='%s'>
 %s
