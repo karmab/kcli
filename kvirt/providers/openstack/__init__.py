@@ -780,6 +780,15 @@ class Kopenstack(object):
             shortimage = shortimage.replace('.gz', '')
             image_path = image_path.replace('.gz', '')
         disk_format = 'iso' if shortimage.endswith('iso') else 'qcow2'
+        if cmd is not None:
+            pprint(f"Running {cmd} on {image_path}")
+            if disk_format == 'iso':
+                if image_path not in cmd:
+                    cmd += f" {image_path}"
+                os.system(cmd)
+            elif which('virt-customize') is not None:
+                cmd = f"virt-customize -a {image_path} --run-command '{cmd}'"
+                os.system(cmd)
         glanceimage = self.glance.images.create(name=shortimage, disk_format=disk_format, container_format='bare')
         self.glance.images.upload(glanceimage.id, open(image_path, 'rb'))
         if downloaded:

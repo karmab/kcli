@@ -1773,6 +1773,25 @@ def get_coreos_installer(version='latest', arch=None):
     call(coreoscmd, shell=True)
 
 
+def create_embed_ignition_cmd(name, poolpath, baseiso, podman=False, extra_args=None):
+    if podman:
+        coreosinstaller = f"podman run --privileged --rm -w /data -v {poolpath}:/data -v /dev:/dev"
+        if not os.path.exists('/Users'):
+            coreosinstaller += " -v /run/udev:/run/udev"
+        coreosinstaller += " quay.io/coreos/coreos-installer:release"
+        isocmd = f"{coreosinstaller} iso ignition embed -fi iso.ign -o {name} {baseiso}"
+    else:
+        coreosinstaller = "coreos-installer"
+        destiso = f"{poolpath}/{name}"
+        isocmd = f"{coreosinstaller} iso ignition embed -fi {poolpath}/iso.ign -o {destiso} {poolpath}/{baseiso}"
+        if not os.path.exists('coreos-installer'):
+            arch = os.uname().machine if not os.path.exists('/Users') else 'x86_64'
+            get_coreos_installer(arch=arch)
+    if extra_args is not None:
+        isocmd += f"; {coreosinstaller} iso kargs modify -a '{extra_args}' {destiso}"
+    return isocmd
+
+
 def get_kubectl(version='latest'):
     SYSTEM = 'darwin' if os.path.exists('/Users') else 'linux'
     pprint("Downloading kubectl in current directory")
@@ -2061,6 +2080,7 @@ def generate_rhcos_iso(k, cluster, pool, version='latest', podman=False, install
         path = f'{version}/latest' if version != 'latest' else 'latest'
         liveiso = f"https://mirror.openshift.com/pub/openshift-v4/{arch}/dependencies/rhcos/{path}/{baseiso}"
     kubevirt = 'kubevirt' in str(type(k))
+    openstack = 'openstack' in str(type(k))
     name = f'{cluster}-iso' if kubevirt else f'{cluster}.iso'
     if name in [os.path.basename(iso) for iso in k.volumes(iso=True)]:
         warning(f"Deleting old iso {name}")
@@ -2073,6 +2093,13 @@ def generate_rhcos_iso(k, cluster, pool, version='latest', podman=False, install
         k.patch_pvc(pvc, isocmd, image="quay.io/coreos/coreos-installer:release", files=['iso.ign'])
         k.update_cdi_endpoint(pvc, f'{cluster}.iso')
         return
+    if openstack:
+        pprint(f"Creating iso {name}")
+        poolpath = '/tmp'
+        copy2('iso.ign', poolpath)
+        isocmd = create_embed_ignition_cmd(name, poolpath, baseiso, podman=podman, extra_args=extra_args)
+        k.add_image(liveiso, pool, name=name, cmd=isocmd)
+        return
     if baseiso not in k.volumes(iso=True):
         pprint(f"Downloading {liveiso}")
         k.add_image(liveiso, pool)
@@ -2082,21 +2109,7 @@ def generate_rhcos_iso(k, cluster, pool, version='latest', podman=False, install
             error(f"Corrupted iso {poolpath}/{baseiso}")
             sys.exit(1)
     pprint(f"Creating iso {name}")
-    if podman:
-        coreosinstaller = f"podman run --privileged --rm -w /data -v {poolpath}:/data -v /dev:/dev"
-        if not os.path.exists('/Users'):
-            coreosinstaller += " -v /run/udev:/run/udev"
-        coreosinstaller += " quay.io/coreos/coreos-installer:release"
-        isocmd = f"{coreosinstaller} iso ignition embed -fi iso.ign -o {name} {baseiso}"
-    else:
-        coreosinstaller = "coreos-installer"
-        destiso = f"{poolpath}/{name}"
-        isocmd = f"{coreosinstaller} iso ignition embed -fi {poolpath}/iso.ign -o {destiso} {poolpath}/{baseiso}"
-        if not os.path.exists('coreos-installer'):
-            arch = os.uname().machine if not os.path.exists('/Users') else 'x86_64'
-            get_coreos_installer(arch=arch)
-    if extra_args is not None:
-        isocmd += f"; {coreosinstaller} iso kargs modify -a '{extra_args}' {destiso}"
+    isocmd = create_embed_ignition_cmd(name, poolpath, baseiso, podman=podman, extra_args=extra_args)
     os.environ["PATH"] += f":{os.getcwd()}"
     if k.conn == 'fake':
         os.system(isocmd)
