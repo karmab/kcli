@@ -27,12 +27,15 @@ class Kopenstack(object):
     """
     def __init__(self, host='127.0.0.1', version='3', port=None, user='root', password=None, debug=False, project=None,
                  domain='Default', auth_url=None, ca_file=None, external_network=None, region_name=None,
-                 glance_disk=False):
+                 glance_disk=False, auth_type='password', auth_token=None):
         self.debug = debug
         self.host = host
-        loader = loading.get_plugin_loader('password')
-        auth = loader.load_from_options(auth_url=auth_url, username=user, password=password, project_name=project,
-                                        user_domain_name=domain, project_domain_name=domain)
+        loader = loading.get_plugin_loader(auth_type)
+        if auth_type == 'password':
+            auth = loader.load_from_options(auth_url=auth_url, username=user, password=password, project_name=project,
+                                            user_domain_name=domain, project_domain_name=domain)
+        else:
+            auth = loader.load_from_options(auth_url=auth_url, token=auth_token, project_id=project)
         if ca_file is not None:
             sess = session.Session(auth=auth, verify=os.path.expanduser(ca_file))
         else:

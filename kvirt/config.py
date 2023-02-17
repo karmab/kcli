@@ -318,19 +318,25 @@ class Kconfig(Kbaseconfig):
                 region_name = next((e for e in [self.options.get('region_name'),
                                     os.environ.get("OS_REGION_NAME")] if e is not None), None)
                 external_network = self.options.get('external_network')
-                if password is None:
-                    error("Missing password in the configuration. Leaving")
-                    sys.exit(1)
                 if auth_url.endswith('v2.0'):
                     domain = None
                 if ca_file is not None and not os.path.exists(os.path.expanduser(ca_file)):
                     error(f"Indicated ca_file {ca_file} not found. Leaving")
                     sys.exit(1)
                 glance_disk = self.options.get('glance_disk', False)
+                auth_token = next((e for e in [self.options.get('token'),
+                                               os.environ.get("OS_TOKEN")] if e is not None), None)
+                auth_type = 'token' if auth_token is not None else 'password'
+                if auth_type == 'password' and password is None:
+                    error("Missing password in the configuration. Leaving")
+                    sys.exit(1)
+                if auth_type == 'token':
+                    user, password, domain = None, None, None
                 from kvirt.providers.openstack import Kopenstack
                 k = Kopenstack(host=self.host, port=self.port, user=user, password=password, version=version,
                                debug=debug, project=project, domain=domain, auth_url=auth_url, ca_file=ca_file,
-                               external_network=external_network, region_name=region_name, glance_disk=glance_disk)
+                               external_network=external_network, region_name=region_name, glance_disk=glance_disk,
+                               auth_type=auth_type, auth_token=auth_token)
             elif self.type == 'vsphere':
                 user = self.options.get('user')
                 if user is None:

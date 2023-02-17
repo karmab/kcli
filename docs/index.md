@@ -487,6 +487,7 @@ The following parameters are specific to openstack:
 - external_network (Optional). Indicates which network use for floating ips (useful when you have several ones)
 - region_name (Optional). Used in OVH Openstack
 - glance_disk (Optional). Prevents creating a disk from glance image. Defaults to false
+- token (Optional). Keystone Token (That can be retrieved with `openstack token issue -c id -f value`)
 
 To use this provider with kcli rpm, you'll need to install the following rpms 
 
