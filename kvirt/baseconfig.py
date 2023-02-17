@@ -92,13 +92,12 @@ class Kbaseconfig:
                 except yaml.scanner.ScannerError as err:
                     error(f"Couldn't parse yaml in {secretsfile}. Got {err}")
                     sys.exit(1)
-        if inifile is None:
+        if offline:
+            self.ini = {'default': {'client': 'fake'}, 'fake': {'pool': 'default', 'type': 'fake'}}
+        elif inifile is None:
             defaultclient = 'local'
             _type = 'kvm'
-            if offline:
-                defaultclient = 'fake'
-                _type = 'fake'
-            elif not os.path.exists('/var/run/libvirt/libvirt-sock'):
+            if not os.path.exists('/var/run/libvirt/libvirt-sock'):
                 if os.path.exists('/i_am_a_container') and os.environ.get('KUBERNETES_SERVICE_HOST') is not None:
                     _type = 'kubevirt'
                 else:

@@ -1450,8 +1450,10 @@ def create_openshift_iso(args):
     ignitionfile = args.ignitionfile
     direct = args.direct
     overrides = handle_parameters(args.param, args.paramfile)
-    client = 'fake' if common.need_fake() else args.client
-    config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    client = overrides.get('client') or args.client
+    offline = client == 'fake' or common.need_fake()
+    config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     offline=offline)
     config.create_openshift_iso(cluster, overrides=overrides, ignitionfile=ignitionfile, direct=direct)
 
 
@@ -1748,7 +1750,9 @@ def create_kube(args):
         error(f"parameters that contain master word need to be replaced with ctlplane. Found {master_parameters}")
         sys.exit(1)
     client = overrides.get('client', args.client)
-    config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    offline = kubetype == 'openshift' and 'sno' in overrides and (client == 'fake' or common.need_fake())
+    config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     offline=offline)
     if overrides.get('force', args.force):
         config.delete_kube(cluster, overrides=overrides)
     confpool = overrides.get('namepool') or overrides.get('confpool')

@@ -79,8 +79,7 @@ class Kconfig(Kbaseconfig):
     """
 
     """
-    def __init__(self, client=None, debug=False, quiet=False, region=None, zone=None, namespace=None):
-        offline = True if client is not None and client == 'fake' else False
+    def __init__(self, client=None, debug=False, quiet=False, region=None, zone=None, namespace=None, offline=False):
         Kbaseconfig.__init__(self, client=client, debug=debug, quiet=quiet, offline=offline)
         if not self.enabled:
             k = None
