@@ -2095,10 +2095,14 @@ def generate_rhcos_iso(k, cluster, pool, version='latest', podman=False, install
         return
     if openstack:
         pprint(f"Creating iso {name}")
-        poolpath = '/tmp'
-        copy2('iso.ign', poolpath)
-        isocmd = create_embed_ignition_cmd(name, poolpath, baseiso, podman=podman, extra_args=extra_args)
-        k.add_image(liveiso, pool, name=name, cmd=isocmd)
+        baseisocmd = f"curl -L {liveiso} -o /tmp/{os.path.basename(liveiso)}"
+        call(baseisocmd, shell=True)
+        copy2('iso.ign', '/tmp')
+        isocmd = create_embed_ignition_cmd(name, '/tmp', baseiso, podman=podman, extra_args=extra_args)
+        os.system(isocmd)
+        k.add_image('/tmp/{name}.iso}', pool, name=name)
+        os.remove('/tmp/{os.path.basename(liveiso)}')
+        os.remove('/tmp/{name}.iso}')
         return
     if baseiso not in k.volumes(iso=True):
         pprint(f"Downloading {liveiso}")
