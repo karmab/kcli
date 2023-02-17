@@ -670,8 +670,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     macosx = data.get('macosx')
     if macosx and not os.path.exists('/i_am_a_container'):
         macosx = False
-    if platform == 'openstack':
-        if not sno and data.get('flavor') is None:
+    if platform == 'openstack' and not sno:
+        if data.get('flavor') is None:
             error("Missing flavor in parameter file")
             sys.exit(1)
         if api_ip is None:
