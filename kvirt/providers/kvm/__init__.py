@@ -343,8 +343,8 @@ class Kvirt(object):
         fixqcow2path, fixqcow2backing = None, None
         volsxml = {}
         virtio_index, ide_index, scsi_index = 0, 0, 0
-        custom_boot = overrides.get('custom_boot', False)
-        bootxml = "<boot dev='hd'/><boot dev='cdrom'/><boot dev='network'/>" if not custom_boot else ''
+        boot_order = overrides.get('boot_order', False)
+        bootxml = "<boot dev='hd'/><boot dev='cdrom'/><boot dev='network'/>" if not boot_order else ''
         firstdisk = None
         ssddisks = []
         nvmedisks = []
@@ -536,7 +536,7 @@ class Kvirt(object):
             if diskpooltype in ['logical', 'zfs'] and (backing is None or backing.startswith('/dev')):
                 diskformat = 'raw'
             if not nvme:
-                bootdevxml = f'<boot order="{bootdev}"/>' if custom_boot else ''
+                bootdevxml = f'<boot order="{bootdev}"/>' if boot_order else ''
                 bootdev += 1
                 disksxml = """%s<disk type='%s' device='disk'>
 <driver name='qemu' type='%s' %s/>
@@ -588,7 +588,8 @@ class Kvirt(object):
                     iso = isovolume.path()
         isobus = 'scsi' if aarch64_full else 'sata'
         isosourcexml = f"<source file='{iso}'/>" if iso is not None else ''
-        bootdevxml = f'<boot order="{bootdev}"/>' if custom_boot else ''
+        bootdevxml = f'<boot order="{bootdev}"/>' if boot_order else ''
+        bootdev_iso = bootdev
         bootdev += 1
         isoxml = """<disk type='file' device='cdrom'>
 <driver name='qemu' type='raw'/>%s
@@ -748,7 +749,8 @@ class Kvirt(object):
                 vhostpath = nets[index].get('vhostpath', f"{vhostdir}/vhost-user{vhostindex}")
                 sourcexml = f"<source type='unix' path='{vhostpath}' mode='client'/>"
                 sourcexml += "<driver name='vhost' rx_queue_size='256'/>"
-            bootdevxml = f'<boot order="{bootdev}"/>' if custom_boot else ''
+            bootdevxml = f'<boot order="{bootdev}"/>' if boot_order else ''
+            bootdev += 1
             netxml = """%s
 <interface type='%s'>
 %s
@@ -824,12 +826,14 @@ class Kvirt(object):
                 dtype = 'block' if diskpath.startswith('/dev') else 'file'
                 dsource = 'dev' if diskpath.startswith('/dev') else 'file'
                 isobus = 'scsi' if aarch64_full else 'sata'
+                bootdevxml = f'<boot order="{bootdev_iso}"/>' if boot_order else ''
                 isoxml = """<disk type='%s' device='cdrom'>
 <driver name='qemu' type='raw'/>
 <source %s='%s'/>
 <target dev='hdd' bus='%s'/>
 <readonly/>
-</disk>""" % (dtype, dsource, cloudinitiso, isobus)
+%s
+</disk>""" % (dtype, dsource, cloudinitiso, isobus, bootdevxml)
                 dest_machine = 'q99' if aarch64_full else machine
                 if ignitiondata is not None:
                     userdata, metadata, netdata = ignitiondata, '', None
