@@ -2081,6 +2081,7 @@ def generate_rhcos_iso(k, cluster, pool, version='latest', podman=False, install
         liveiso = f"https://mirror.openshift.com/pub/openshift-v4/{arch}/dependencies/rhcos/{path}/{baseiso}"
     kubevirt = 'kubevirt' in str(type(k))
     openstack = 'openstack' in str(type(k))
+    vsphere = 'vsphere' in str(type(k))
     name = f'{cluster}-iso' if kubevirt else f'{cluster}.iso'
     if name in [os.path.basename(iso) for iso in k.volumes(iso=True)]:
         warning(f"Deleting old iso {name}")
@@ -2093,7 +2094,7 @@ def generate_rhcos_iso(k, cluster, pool, version='latest', podman=False, install
         k.patch_pvc(pvc, isocmd, image="quay.io/coreos/coreos-installer:release", files=['iso.ign'])
         k.update_cdi_endpoint(pvc, f'{cluster}.iso')
         return
-    if openstack:
+    if openstack or vsphere:
         pprint(f"Creating iso {name}")
         baseisocmd = f"curl -L {liveiso} -o /tmp/{os.path.basename(liveiso)}"
         call(baseisocmd, shell=True)
