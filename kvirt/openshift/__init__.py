@@ -517,6 +517,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         clustervalue = cluster
     else:
         clustervalue = 'myopenshift'
+    if 'memory' not in data and data['ctlplanes'] == 1 and data['workers'] == 0:
+        data['ctlplane_memory'] = 32768
+        warning("Forcing memory of singe ctlplane vm to 32G")
     retries = data.get('retries')
     data['cluster'] = clustervalue
     domain = data.get('domain')
