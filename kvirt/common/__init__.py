@@ -2101,9 +2101,9 @@ def generate_rhcos_iso(k, cluster, pool, version='latest', podman=False, install
         copy2('iso.ign', '/tmp')
         isocmd = create_embed_ignition_cmd(name, '/tmp', baseiso, podman=podman, extra_args=extra_args)
         os.system(isocmd)
-        k.add_image('/tmp/{name}.iso}', pool, name=name)
-        os.remove('/tmp/{os.path.basename(liveiso)}')
-        os.remove('/tmp/{name}.iso}')
+        k.add_image(f'/tmp/{name}', pool, name=name)
+        os.remove(f'/tmp/{os.path.basename(liveiso)}')
+        os.remove(f'/tmp/{name}')
         return
     if baseiso not in k.volumes(iso=True):
         pprint(f"Downloading {liveiso}")

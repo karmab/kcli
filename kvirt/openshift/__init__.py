@@ -553,7 +553,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         data['mdns'] = False
         data['kubetype'] = 'openshift'
         data['kube'] = data['cluster']
-        if data.get('network_type', 'OpenShiftSDN') == 'OpenShiftSDN':
+        if data.get('network_type', 'OVNKubernetes') == 'OpenShiftSDN':
             warning("Forcing network_type to OVNKubernetes")
             data['network_type'] = 'OVNKubernetes'
     ctlplanes = data.get('ctlplanes', 1)
