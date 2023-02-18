@@ -2211,28 +2211,3 @@ k = config.k
 ```
 
 You can then either use config for high level actions or the more low level *k* object.
-
-## Using grpc
-
-### Server side
-
-Kcli provides an api using grpc protocol. This allows to run one or several instances of kcli as proxies and use
-a lightweight client written in the language of your choice.
-
-To make use of it:
-
-- On a node with kcli installed, launch `krpc`. If installing from rpm, you will need python3-grpcio package which:
-   - comes out of the box on fedora
-   - is available through [RDO repo](https://trunk.rdoproject.org/rhel8-master/deps/latest) for centos8/rhel8
-- On the client side, you can then access the api by targetting port 50051 of the server node (in insecure mode)
-
-Note that the server doesn't implement all the features yet. Most notably, *create_plan* isn't available at the moment. Check the following [doc](https://github.com/karmab/kcli/blob/main/docs/grpc_methods.md) to see the status of the implementation.
-
-### Client side
-
-- You can use a GRPC client such grpcurl. To list services, you need krpc to have grpcio-reflection package, which is only available through pip (and is installed when running kcli as container). You can use `grpcurl -plaintext $KCLI_SERVER:50051 list` to see objects at your disposal.
-- `kclirpc` can be used as a cli mimicking kcli but with grpc calls.
-- There is also a terraform provider for kcli using GRPC you can get from [here](https://github.com/karmab/terraform-provider-kcli)
-
-# API documentation
-

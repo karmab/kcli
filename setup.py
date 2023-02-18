@@ -15,9 +15,8 @@ PACKET = ['packet-python']
 VSPHERE = ['requests', 'pyvmomi']
 IBMCLOUD = ['google-crc32c==1.1.2', 'ibm_vpc', 'ibm-cos-sdk', 'ibm-platform-services', 'ibm-cloud-networking-services']
 #           'cos-aspera']
-GRPC = ['grpcio', 'grpcio-reflection']
 EXTRAS = ['pyghmi']
-ALL = ['docker>=2.0'] + ['podman'] + ['websockify'] + GRPC + EXTRAS + AWS + GCP + KUBEVIRT + OPENSTACK + OVIRT\
+ALL = ['docker>=2.0'] + ['podman'] + ['websockify'] + EXTRAS + AWS + GCP + KUBEVIRT + OPENSTACK + OVIRT\
     + PACKET + VSPHERE + IBMCLOUD
 
 description = 'Provisioner/Manager for Libvirt/Ovirt/Gcp/Aws/Openstack/Kubevirt/IBM Cloud and containers'
@@ -47,15 +46,12 @@ setup(
         'ovirt': OVIRT,
         'vsphere': VSPHERE,
         'ibm': IBMCLOUD,
-        'grpc': GRPC,
     },
     entry_points='''
         [console_scripts]
         kcli=kvirt.cli:cli
         kweb=kvirt.web.main:run
         klist.py=kvirt.klist:main
-        krpc=kvirt.krpc.server:main
-        kclirpc=kvirt.krpc.cli:cli
         ksushy=kvirt.sushy.main:run
         ignitionmerger=kvirt.ignitionmerger:cli
     ''',

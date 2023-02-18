@@ -1,3 +1,0 @@
-1. add rpc call in service Kcli
-2. python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. kcli.proto
-3. add logic code in server.py
