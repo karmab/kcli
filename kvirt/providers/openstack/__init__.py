@@ -52,12 +52,10 @@ class Kopenstack(object):
         self.external_network = external_network
         self.region_name = region_name
         self.glance_disk = glance_disk
-        return
 
 # should cleanly close your connection, if needed
     def close(self):
         print("not implemented")
-        return
 
     def exists(self, name):
         return
@@ -375,7 +373,6 @@ class Kopenstack(object):
         if web:
             return cmd
         print(cmd)
-        return
 
     def dnsinfo(self, name):
         nova = self.nova
@@ -467,7 +464,6 @@ class Kopenstack(object):
 
     def ip(self, name):
         print("not implemented")
-        return None
 
     def volumes(self, iso=False):
         images = []
@@ -529,7 +525,6 @@ class Kopenstack(object):
 
     def clone(self, old, new, full=False, start=False):
         print("not implemented")
-        return
 
     def update_metadata(self, name, metatype, metavalue, append=False):
         nova = self.nova
@@ -650,15 +645,19 @@ class Kopenstack(object):
 
     def update_start(self, name, start=True):
         print("not implemented")
-        return
 
     def update_information(self, name, information):
         self.update_metadata(name, 'information', information)
-        return
 
     def update_iso(self, name, iso):
-        print("not implemented")
-        return
+        nova = self.nova
+        # cinder = self.cinder
+        try:
+            vm = nova.servers.find(name=name)
+        except:
+            error(f"VM {name} not found")
+            return
+        print(vm)
 
     def create_disk(self, name, size, pool=None, thin=True, image=None):
         glance = self.glance
@@ -739,15 +738,12 @@ class Kopenstack(object):
 
     def add_nic(self, name, network):
         print("not implemented")
-        return
 
     def delete_nic(self, name, interface):
         print("not implemented")
-        return
 
     def create_pool(self, name, poolpath, pooltype='dir', user='qemu', thinpool=None):
         print("not implemented")
-        return
 
     def delete_image(self, image, pool=None):
         pprint(f"Deleting image {image}")
@@ -946,18 +942,15 @@ class Kopenstack(object):
 
     def delete_pool(self, name, full=False):
         print("not implemented")
-        return
 
     def network_ports(self, name):
         print("not implemented")
-        return
 
     def vm_ports(self, name):
         return ['default']
 
     def get_pool_path(self, pool):
         print("not implemented")
-        return
 
     def list_flavors(self):
         nova = self.nova
@@ -1085,7 +1078,6 @@ class Kopenstack(object):
             if path == obj_name:
                 swift.delete_object(bucket, obj_name)
                 break
-        return
 
     def download_from_bucket(self, bucket, path):
         swift = self.swift
@@ -1128,7 +1120,6 @@ class Kopenstack(object):
 
     def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False):
         print("not implemented")
-        return
 
     def update_nic(self, name, index, network):
         print("not implemented")
