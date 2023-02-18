@@ -650,14 +650,68 @@ class Kopenstack(object):
         self.update_metadata(name, 'information', information)
 
     def update_iso(self, name, iso):
+        if iso is not None:
+            iso_images = [img for img in self.glance.images.list() if img.name == iso]
+            if iso_images:
+                iso_image = iso_images[0]
+                iso_id = iso_image.id
+            else:
+                msg = f"Iso {iso} not found.Leaving..."
+                error(msg)
+                return {'result': 'failure', 'reason': msg}
         nova = self.nova
-        # cinder = self.cinder
+        cinder = self.cinder
         try:
             vm = nova.servers.find(name=name)
         except:
             error(f"VM {name} not found")
             return
-        print(vm)
+        currentiso = None
+        if 'id' in vm.image:
+            source = vm.image['id']
+            try:
+                source = self.glance.images.get(vm.image['id']).name
+                if source.endswith('.iso'):
+                    currentiso = source
+                    warning("Update of iso set with glance are not supported")
+                    return
+            except:
+                pass
+        iso_name = ''
+        for disk in vm._info['os-extended-volumes:volumes_attached']:
+            diskid = disk['id']
+            try:
+                volume = cinder.volumes.get(diskid)
+            except cinderclient.exceptions.NotFound:
+                continue
+            volinfo = volume.to_dict()
+            if 'volume_image_metadata' in volinfo and 'image_name' in volinfo['volume_image_metadata']:
+                source = volinfo['volume_image_metadata']['image_name']
+                if source.endswith('.iso'):
+                    currentiso = source
+                    iso_name = volume.name
+        if iso is None:
+            if currentiso is None:
+                return
+            else:
+                iso_volume = [volume for volume in cinder.volumes.list() if volume.name == iso_name][0]
+                iso_volume.detach()
+                iso_volume.delete()
+        elif currentiso is not None and currentiso == iso:
+            return
+        else:
+            volumes = [volume for volume in cinder.volumes.list() if volume.name == iso_name]
+            if volumes:
+                iso_volume = volumes[0]
+                iso_volume.detach()
+                iso_volume.delete()
+            index = len(vm._info.get('os-extended-volumes:volumes_attached', []))
+            diskname = f"{name}-disk{index}"
+            letter = chr(index + ord('a'))
+            volume = cinder.volumes.create(name=diskname, size=10, imageRef=iso_id)
+            self.cinder.volumes.set_bootable(volume.id, True)
+            cinder.volumes.attach(volume, vm.id, f'/dev/vd{letter}', mode='rw')
+            return {'result': 'success'}
 
     def create_disk(self, name, size, pool=None, thin=True, image=None):
         glance = self.glance
@@ -694,7 +748,7 @@ class Kopenstack(object):
         index = len(vm._info.get('os-extended-volumes:volumes_attached', []))
         diskname = f"{name}-disk{index}"
         letter = chr(index + ord('a'))
-        volume = cinder.volumes.create(name=diskname, size=size, imageRef=glanceimage)
+        volume = cinder.volumes.create(name=diskname, size=size, imageRef=glanceimage.id)
         cinder.volumes.attach(volume, vm.id, f'/dev/vd{letter}', mode='rw')
         return {'result': 'success'}
 
