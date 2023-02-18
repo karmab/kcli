@@ -134,8 +134,8 @@ class Kopenstack(object):
                 msg = f"you don't have image {target}"
                 return {'result': 'failure', 'reason': msg}
         else:
-            msg = "a bootable disk is needed"
-            return {'result': 'failure', 'reason': msg}
+            warning("a bootable disk is needed")
+            glanceimage = None
         os_index = len(disks) - 1 if disks and iso is not None else 0
         block_device_mapping_v2 = []
         for index, disk in enumerate(disks):
@@ -152,7 +152,7 @@ class Kopenstack(object):
                 disksize = disk.get('size', '10')
                 diskinterface = disk.get('interface', default_diskinterface)
             imageref = None
-            if index == os_index:
+            if index == os_index and glanceimage is not None:
                 imageref = glanceimage.id
                 glanceimage = None
             newvol = self.cinder.volumes.create(name=diskname, size=disksize, imageRef=imageref)
@@ -276,6 +276,8 @@ class Kopenstack(object):
                         neutron.create_security_group_rule(icmprule)
                     except:
                         pass
+        if not start:
+            vm.stop()
         return {'result': 'success'}
 
     def start(self, name):
