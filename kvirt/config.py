@@ -822,6 +822,8 @@ class Kconfig(Kbaseconfig):
                     return {'result': 'failure', 'reason': msg}
             else:
                 warning(f"{name} will require manual subscription to Red Hat Network")
+        if image is not None and cloudinit and iso is not None:
+            warning(f"Ignoring iso {iso} as image {image} is set")
         if scripts:
             for script in scripts:
                 if onfly is not None and '~' not in script:
