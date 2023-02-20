@@ -14,4 +14,3 @@ bmc_user: admin
 bmc_password: admin
 baremetal_hosts:
 - bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/ci-sno
-boot_order: true

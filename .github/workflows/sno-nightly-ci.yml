@@ -30,7 +30,7 @@ jobs:
    runs-on: libvirt
    steps:
    - name: Deploy Baremetal like vm
-     run: kcli -C local create vm -P uefi=true -P start=false -P memory=20480 -P numcpus=16 -P disks=[50,50] -P nets=[default] -P plan=$CLUSTER -P kube=$CLUSTER -P kubetype=openshift $CLUSTER
+     run: kcli -C local create vm -P uefi=true -P boot_order=true -P start=false -P memory=20480 -P numcpus=16 -P disks=[50,50] -P nets=[default] -P plan=$CLUSTER -P kube=$CLUSTER -P kubetype=openshift $CLUSTER
 
  deploy-openshift:
    needs: deploy-baremetal-like-vm
