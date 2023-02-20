@@ -2646,7 +2646,7 @@ class Kvirt(object):
         source = None
         if iso is not None:
             if self.host in ['localhost', '127.0.0.1'] and os.path.exists(iso):
-                source = os.path.abspath(iso)
+                iso = os.path.abspath(iso)
             else:
                 source = None
                 isos = self.volumes(iso=True)
