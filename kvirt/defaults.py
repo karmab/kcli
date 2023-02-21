@@ -32,25 +32,24 @@ TUNNELPORT = 22
 VMUSER = None
 VMPORT = None
 OPENSHIFT_TAG = '4.12'
+ALMA = 'http://repo.ifca.es/almalinux/'
 BSD = "https://object-storage.public.mtl1.vexxhost.net/swift/v1/1dbafeefbd4f4c80864414a441e72dd2"
-BSD += "/bsd-cloud-image.org/images/"
+BSD += "/bsd-cloud-image.org/images/dragonflybsd/"
+CENTOS = 'https://cloud.centos.org/centos/'
 DEBIAN = "https://cdimage.debian.org/cdimage/"
-RHCOS = "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/"
 FEDORA = "http://mirror.uv.es/mirror/fedora/linux/releases/"
 FEDORA_ARCHIVE = "https://archives.fedoraproject.org/pub/archive/fedora/linux/releases/"
+GENTOO = "https://gentoo.osuosl.org/experimental/amd64/openstack/"
+OPENSUSE = "https://download.opensuse.org/"
+LEAP = OPENSUSE + "distribution/leap/"
+RHCOS = "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/"
 ROCKY = 'https://dl.rockylinux.org/pub/rocky/'
 UBUNTU = 'https://cloud-images.ubuntu.com/'
-IMAGES = {'almalinux9': 'http://repo.ifca.es/almalinux/9.0/cloud/x86_64/images/'
-          'AlmaLinux-9-GenericCloud-latest.x86_64.qcow2',
+IMAGES = {'almalinux9': ALMA + '9.1/cloud/x86_64/images/AlmaLinux-9-GenericCloud-latest.x86_64.qcow2',
           'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-image-bootstrap.qcow2',
-          'centos6': 'https://cloud.centos.org/centos/6/images/CentOS-6-x86_64-GenericCloud.qcow2',
-          'centos7': 'https://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2',
-          'centos8': 'https://cloud.centos.org/centos/8/x86_64/images/'
-          'CentOS-8-GenericCloud-8.4.2105-20210603.0.x86_64.qcow2',
-          'centos8stream': 'https://cloud.centos.org/centos/8-stream/x86_64/'
-          'images/CentOS-Stream-GenericCloud-8-20210603.0.x86_64.qcow2',
-          'centos9stream': 'https://cloud.centos.org/centos/9-stream/x86_64/'
-          'images/CentOS-Stream-GenericCloud-9-20211203.0.x86_64.qcow2',
+          'centos7': CENTOS + '7/images/CentOS-7-x86_64-GenericCloud.qcow2',
+          'centos8stream': CENTOS + '8-stream/x86_64/images/CentOS-Stream-GenericCloud-8-20210603.0.x86_64.qcow2',
+          'centos9stream': CENTOS + '9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-20211203.0.x86_64.qcow2',
           'cirros': 'http://download.cirros-cloud.net/0.5.2/cirros-0.5.2-x86_64-disk.img',
           'debian8': DEBIAN + 'openstack/archive/8.11.0/debian-8.11.0-openstack-amd64.qcow2',
           'debian9': DEBIAN + 'openstack/current-9/debian-9-openstack-amd64.qcow2',
@@ -64,32 +63,19 @@ IMAGES = {'almalinux9': 'http://repo.ifca.es/almalinux/9.0/cloud/x86_64/images/'
           'fedora36': FEDORA_ARCHIVE + '36/Cloud/x86_64/images/Fedora-Cloud-Base-36-1.5.x86_64.qcow2',
           'fedora37': FEDORA + '37/Cloud/x86_64/images/Fedora-Cloud-Base-37-1.7.x86_64.qcow2',
           'fedoralatest': 'https://alt.fedoraproject.org/cloud',
-          'freebsd114': BSD + "freebsd/11.4/freebsd-11.4.qcow2",
           'freebsd122': BSD + "freebsd/12.2/freebsd-12.2.qcow2",
-          'freebsd130': BSD + "freebsd/13.0/freebsd-13.0.qcow2",
+          'freebsd130': BSD + "freebsd/13.0/freebsd-13.0-zfs.qcow2",
           'netbsd82': BSD + "netbsd/8.2/netbsd-8.2.qcow2",
-          'netbsd91': BSD + "netbsd/9.1/netbsd-9.1.qcow2",
-          'netbsd92': BSD + "netbsd/9.2/netbsd-9.2.qcow2",
-          'openbsd67': BSD + "openbsd/6.7/openbsd-6.7.qcow2",
-          'openbsd68': BSD + "openbsd/6.8/openbsd-6.8.qcow2",
-          'openbsd69': BSD + "openbsd/6.9/openbsd-6.9.qcow2",
-          'dragonflybsd563': BSD + "dragonflybsd/5.6.3/dragonflybsd-5.6.3.qcow2",
-          'dragonflybsd583': BSD + "dragonflybsd/5.8.3/dragonflybsd-5.8.3.qcow2",
-          'dragonflybsd600': BSD + "dragonflybsd/6.0.0/dragonflybsd-6.0.0.qcow2",
-          'gentoo': 'https://gentoo.osuosl.org/experimental/amd64/openstack/gentoo-openstack-amd64-default-latest.'
-          'qcow2',
-          'opensuse': 'https://download.opensuse.org/distribution/leap/15.4/appliances/'
-          'openSUSE-Leap-15.4-JeOS.x86_64-OpenStack-Cloud.qcow2',
-          'leap15': 'https://download.opensuse.org/distribution/leap/15.4/appliances/'
-          'openSUSE-Leap-15.4-JeOS.x86_64-OpenStack-Cloud.qcow2',
-          'leap152': 'https://download.opensuse.org/distribution/leap/15.2/appliances/'
-          'openSUSE-Leap-15.2-JeOS.x86_64-OpenStack-Cloud.qcow2',
-          'leap153': 'https://download.opensuse.org/distribution/leap/15.3/appliances/'
-          'openSUSE-Leap-15.3-JeOS.x86_64-OpenStack-Cloud.qcow2',
-          'leap154': 'https://download.opensuse.org/distribution/leap/15.4/appliances/'
-          'openSUSE-Leap-15.4-JeOS.x86_64-OpenStack-Cloud.qcow2',
-          'tumbleweed': 'https://download.opensuse.org/tumbleweed/appliances/'
-          'openSUSE-Tumbleweed-JeOS.x86_64-OpenStack-Cloud.qcow2',
+          'netbsd92': BSD + "netbsd/9.2/2021-12-11/netbsd-9.2.qcow2",
+          'openbsd71': BSD + "openbsd/7.1/2022-06-27/ufs/openbsd-7.1-2022-06-27.qcow2",
+          'openbsd72': BSD + "openbsd/7.2/2022-11-06/ufs/openbsd-7.2-2022-11-06.qcow2",
+          'dragonflybsd601': BSD + "dragonflybsd/6.0.1/2021-12-11/dragonflybsd-6.0.1-hammer2.qcow2",
+          'dragonflybsd622': BSD + 'dragonflybsd/6.2.2/2022-09-06/hammer2/dragonflybsd-6.2.2-hammer2-2022-09-06.qcow2',
+          'gentoo': GENTOO + 'gentoo-openstack-amd64-default-latest.qcow2',
+          'opensuse152': LEAP + '15.2/appliances/openSUSE-Leap-15.2-JeOS.x86_64-OpenStack-Cloud.qcow2',
+          'opensuse153': LEAP + '15.3/appliances/openSUSE-Leap-15.3-JeOS.x86_64-OpenStack-Cloud.qcow2',
+          'opensuse154': LEAP + '15.4/appliances/openSUSE-Leap-15.4-JeOS.x86_64-OpenStack-Cloud.qcow2',
+          'tumbleweed': OPENSUSE + 'tumbleweed/appliances/openSUSE-Tumbleweed-JeOS.x86_64-OpenStack-Cloud.qcow2',
           'rhcos46': RHCOS + '4.6',
           'rhcos47': RHCOS + '4.7',
           'rhcos48': RHCOS + '4.8',
