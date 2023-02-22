@@ -2478,7 +2478,7 @@ class Kconfig(Kbaseconfig):
                         return {'result': 'failure', 'reason': "Incorrect image"}
                     url = IMAGES[image]
                     image_type = 'openstack' if kvm_openstack and self.type == 'kvm' else self.type
-                    if 'rhcos' in image:
+                    if 'rhcos' in image and not image.endswith('qcow2.gz'):
                         if commit is not None:
                             url = common.get_commit_rhcos(commit, _type=image_type)
                         else:
