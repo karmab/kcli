@@ -279,12 +279,25 @@ class Kbaseconfig:
             with open(confpoolfile, 'r') as entries:
                 try:
                     self.confpools = yaml.safe_load(entries)
-                except yaml.scanner.ScannerError as err:
-                    error("Couldn't parse yaml in .kcli/confpools.yml. Leaving...")
-                    error(err)
+                except yaml.scanner.ScannerError as e:
+                    error(f"Couldn't parse yaml in .kcli/confpools.yml. Hit {e}...")
                     sys.exit(1)
                 if self.confpools is None:
                     self.confpools = {}
+        self.clusterprofiles = {}
+        clusterprofilesdir = f"{os.path.dirname(sys.modules[Kbaseconfig.__module__].__file__)}/clusterprofiles"
+        for clusterprofile in os.listdir(clusterprofilesdir):
+            entry = clusterprofile.replace('.yml', '')
+            self.clusterprofiles[entry] = yaml.safe_load(open(f"{clusterprofilesdir}/{clusterprofile}"))
+        clusterprofilesfile = default.get('clusterprofiles', f"{os.environ.get('HOME')}/.kcli/clusterprofiles.yml")
+        clusterprofilesfile = os.path.expanduser(clusterprofilesfile)
+        if os.path.exists(clusterprofilesfile):
+            with open(clusterprofilesfile, 'r') as entries:
+                try:
+                    self.clusterprofiles.update(yaml.safe_load(entries))
+                except yaml.scanner.ScannerError as e:
+                    error(f"Couldn't parse yaml in .kcli/clusterprofiles.yml. Hit {e}")
+                    sys.exit(1)
         self.extraclients = {}
         self._extraclients = []
         if client == 'all':
@@ -967,6 +980,9 @@ class Kbaseconfig:
                             reservedns, reservehost])
         return sorted(results, key=lambda x: x[0])
 
+    def list_clusterprofiles(self):
+        return self.clusterprofiles
+
     def list_confpools(self):
         return self.confpools
 
@@ -1009,7 +1025,7 @@ class Kbaseconfig:
         found = False
         for obj in [name, f'{self.client}_{name}']:
             if obj in selfconf:
-                del self.profiles[obj]
+                del selfconf[obj]
                 found = True
         if found:
             path = os.path.expanduser(f'~/.kcli/{conf_type}s.yml')
@@ -1089,6 +1105,17 @@ class Kbaseconfig:
 
     def update_profile(self, profile, overrides={}, quiet=False):
         return self._update_yaml_file(profile, self.profiles, 'profile', overrides=overrides, quiet=quiet)
+
+    def create_clusterprofile(self, clusterprofile, overrides={}, quiet=False):
+        return self._create_yaml_file(clusterprofile, self.clusterprofiles, 'clusterprofile', overrides=overrides,
+                                      quiet=quiet)
+
+    def delete_clusterprofile(self, clusterprofile, quiet=False):
+        return self._delete_yaml_object(clusterprofile, self.clusterprofiles, 'clusterprofile', quiet=quiet)
+
+    def update_clusterprofile(self, clusterprofile, overrides={}, quiet=False):
+        return self._update_yaml_file(clusterprofile, self.clusterprofiles, 'clusterprofile', overrides=overrides,
+                                      quiet=quiet, ignore_aliases=True)
 
     def create_confpool(self, confpool, overrides={}, quiet=False):
         return self._create_yaml_file(confpool, self.confpools, 'confpool', overrides=overrides, quiet=quiet)

@@ -1,0 +1,10 @@
+sslip: true
+ctlplanes: 3
+workers: 0
+numcpus: 16
+memory: 32768
+extra_disks:
+- 100
+apps:
+- users
+- odf-operator

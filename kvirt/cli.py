@@ -534,6 +534,17 @@ def delete_image(args):
     sys.exit(1 if 1 in codes else 0)
 
 
+def create_clusterprofile(args):
+    """Create Clusterprofile"""
+    clusterprofile = args.clusterprofile
+    overrides = common.get_overrides(param=args.param)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
+    result = baseconfig.create_clusterprofile(clusterprofile, overrides=overrides)
+    code = common.handle_response(result, clusterprofile, element='Clusterprofile', action='created',
+                                  client=baseconfig.client)
+    sys.exit(code)
+
+
 def create_confpool(args):
     """Create Confpool"""
     confpool = args.confpool
@@ -554,6 +565,21 @@ def create_profile(args):
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
     result = baseconfig.create_profile(profile, overrides=overrides)
     code = common.handle_response(result, profile, element='Profile', action='created', client=baseconfig.client)
+    sys.exit(code)
+
+
+def delete_clusterprofile(args):
+    """Delete clusterprofile"""
+    yes = args.yes
+    yes_top = args.yes_top
+    if not yes and not yes_top:
+        common.confirm("Are you sure?")
+    clusterprofile = args.clusterprofile
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
+    pprint(f"Deleting Clusterprofile {clusterprofile} on {baseconfig.client}")
+    result = baseconfig.delete_clusterprofile(clusterprofile)
+    code = common.handle_response(result, clusterprofile, element='Clusterprofile', action='deleted',
+                                  client=baseconfig.client)
     sys.exit(code)
 
 
@@ -582,6 +608,17 @@ def delete_profile(args):
     pprint(f"Deleting on {baseconfig.client}")
     result = baseconfig.delete_profile(profile)
     code = common.handle_response(result, profile, element='Profile', action='deleted', client=baseconfig.client)
+    sys.exit(code)
+
+
+def update_clusterprofile(args):
+    """Update clusterprofile"""
+    clusterprofile = args.clusterprofile
+    overrides = common.get_overrides(param=args.param)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
+    result = baseconfig.update_clusterprofile(clusterprofile, overrides=overrides)
+    code = common.handle_response(result, clusterprofile, element='Clusterprofile', action='updated',
+                                  client=baseconfig.client)
     sys.exit(code)
 
 
@@ -764,6 +801,20 @@ def list_vm(args):
         print(vmstable)
 
 
+def list_clusterprofile(args):
+    """List clusterprofiles"""
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    clusterprofiles = baseconfig.list_clusterprofiles()
+    output = args.global_output or args.output
+    if output is not None:
+        _list_output(clusterprofiles, output)
+    clusterprofilestable = PrettyTable(["Clusterprofile"])
+    for clusterprofile in sorted(clusterprofiles):
+        clusterprofilestable.add_row([clusterprofile])
+    clusterprofilestable.align["Clusterprofile"] = "l"
+    print(clusterprofilestable)
+
+
 def list_confpool(args):
     """List confpools"""
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
@@ -888,6 +939,19 @@ def list_lb(args):
             loadbalancerstable.add_row(lb)
     loadbalancerstable.align["Loadbalancer"] = "l"
     print(loadbalancerstable)
+
+
+def info_clusterprofile(args):
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    clusterprofile = args.clusterprofile
+    if clusterprofile not in baseconfig.clusterprofiles:
+        error(f"Clusterprofile {clusterprofile} not found")
+        sys.exit(1)
+    data = baseconfig.clusterprofiles[clusterprofile]
+    output = args.global_output or args.output
+    if output is not None:
+        _list_output(data, output)
+    print(common.print_info(data))
 
 
 def info_confpool(args):
@@ -1758,6 +1822,15 @@ def create_kube(args):
     confpool = overrides.get('namepool') or overrides.get('confpool')
     if cluster is None and confpool is not None:
         cluster = config.get_name_from_confpool(confpool)
+    clusterprofile = overrides.get('clusterprofile')
+    if clusterprofile is not None:
+        if clusterprofile not in config.clusterprofiles:
+            error(f"Clusterprofile {clusterprofile} not found")
+            sys.exit(1)
+        else:
+            clusterprofile = config.clusterprofiles[clusterprofile]
+            clusterprofile.update(overrides)
+            overrides = clusterprofile
     config.create_kube(cluster, kubetype, overrides=overrides)
 
 
@@ -3390,6 +3463,17 @@ def cli():
     create_subparsers.add_parser('bucket-file', parents=[bucketfilecreate_parser],
                                  description=bucketfilecreate_desc, help=bucketfilecreate_desc)
 
+    clusterprofilecreate_desc = 'Create Clusterprofile'
+    clusterprofilecreate_parser = argparse.ArgumentParser(add_help=False)
+    clusterprofilecreate_parser.add_argument('-P', '--param', action='append',
+                                             help='specify parameter or keyword for rendering (can specify multiple)',
+                                             metavar='PARAM')
+    clusterprofilecreate_parser.add_argument('clusterprofile', metavar='CLUSTERPROFILE')
+    clusterprofilecreate_parser.set_defaults(func=create_clusterprofile)
+    create_subparsers.add_parser('clusterprofile', parents=[clusterprofilecreate_parser],
+                                 description=clusterprofilecreate_desc, help=clusterprofilecreate_desc,
+                                 aliases=['cluster-profile', 'kube-profile', 'kubeprofile'])
+
     confpoolcreate_desc = 'Create Confpool'
     confpoolcreate_parser = argparse.ArgumentParser(add_help=False)
     confpoolcreate_parser.add_argument('-P', '--param', action='append',
@@ -3956,6 +4040,16 @@ def cli():
     cachedelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     cachedelete_parser.set_defaults(func=delete_cache)
 
+    clusterprofiledelete_desc = 'Delete Clusterprofile'
+    clusterprofiledelete_help = "Clusterprofile to delete"
+    clusterprofiledelete_parser = argparse.ArgumentParser(add_help=False)
+    clusterprofiledelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    clusterprofiledelete_parser.add_argument('clusterprofile', help=clusterprofiledelete_help, metavar='CLUSTERPROFILE')
+    clusterprofiledelete_parser.set_defaults(func=delete_clusterprofile)
+    delete_subparsers.add_parser('clusterprofile', parents=[clusterprofiledelete_parser],
+                                 description=clusterprofiledelete_desc, help=clusterprofiledelete_desc,
+                                 aliases=['cluster-profile', 'kube-profile', 'kubeprofile'])
+
     confpooldelete_desc = 'Delete Confpool'
     confpooldelete_help = "Confpool to delete"
     confpooldelete_parser = argparse.ArgumentParser(add_help=False)
@@ -4292,9 +4386,18 @@ def cli():
     baremetalhostinfo_parser.add_argument('-f', '--full', action='store_true', help='Provide entire output')
     baremetalhostinfo_parser.set_defaults(func=info_baremetal_host)
 
+    clusterprofileinfo_desc = 'Info Clusterprofile'
+    clusterprofileinfo_parser = info_subparsers.add_parser('clusterprofile', parents=[output_parser],
+                                                           description=clusterprofileinfo_desc,
+                                                           help=clusterprofileinfo_desc,
+                                                           aliases=['cluster-profile', 'kube-profile', 'kubeprofile'])
+    clusterprofileinfo_parser.add_argument('clusterprofile', metavar='CLUSTERPROFILE')
+    clusterprofileinfo_parser.set_defaults(func=info_clusterprofile)
+
     confpoolinfo_desc = 'Info Confpool'
-    confpoolinfo_parser = info_subparsers.add_parser('confpool', description=confpoolinfo_desc, help=confpoolinfo_desc)
-    confpoolinfo_parser.add_argument('confpool', metavar='PROFILE')
+    confpoolinfo_parser = info_subparsers.add_parser('confpool', parents=[output_parser], description=confpoolinfo_desc,
+                                                     help=confpoolinfo_desc)
+    confpoolinfo_parser.add_argument('confpool', metavar='CONFPOOL')
     confpoolinfo_parser.set_defaults(func=info_confpool)
 
     openshiftdisconnectedinfo_desc = 'Info Openshift Disconnected registry vm'
@@ -4448,6 +4551,15 @@ def cli():
                                                         parents=[output_parser])
     bucketfileslist_parser.add_argument('bucket', metavar='BUCKET')
     bucketfileslist_parser.set_defaults(func=list_bucketfiles)
+
+    clusterprofilelist_desc = 'List Clusterprofiles'
+    clusterprofilelist_parser = list_subparsers.add_parser('clusterprofile', description=clusterprofilelist_desc,
+                                                           help=clusterprofilelist_desc,
+                                                           aliases=['clusterprofiles', 'cluster-profile',
+                                                                    'cluster-profiles', 'kube-profile', 'kube-profiles',
+                                                                    'kubeprofile', 'kubeprofiles'],
+                                                           parents=[output_parser])
+    clusterprofilelist_parser.set_defaults(func=list_clusterprofile)
 
     confpoollist_desc = 'List Confpools'
     confpoollist_parser = list_subparsers.add_parser('confpool', description=confpoollist_desc, help=confpoollist_desc,
@@ -4823,12 +4935,22 @@ def cli():
     update_parser = subparsers.add_parser('update', description=update_desc, help=update_desc)
     update_subparsers = update_parser.add_subparsers(metavar='', dest='subcommand_update')
 
+    clusterprofileupdate_desc = 'Update Clusterprofile'
+    clusterprofileupdate_parser = update_subparsers.add_parser('clusterprofile', description=clusterprofileupdate_desc,
+                                                               help=clusterprofileupdate_desc,
+                                                               aliases=['cluster-profile', 'kube-profile'])
+    clusterprofileupdate_parser.add_argument('-P', '--param', action='append',
+                                             help='Define parameter for rendering (can specify multiple)',
+                                             metavar='PARAM')
+    clusterprofileupdate_parser.add_argument('clusterprofile', metavar='CLUSTERPROFILE', nargs='?')
+    clusterprofileupdate_parser.set_defaults(func=update_clusterprofile)
+
     confpoolupdate_desc = 'Update Confpool'
     confpoolupdate_parser = update_subparsers.add_parser('confpool', description=confpoolupdate_desc,
                                                          help=confpoolupdate_desc)
     confpoolupdate_parser.add_argument('-P', '--param', action='append',
                                        help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
-    confpoolupdate_parser.add_argument('confpool', metavar='PROFILE', nargs='?')
+    confpoolupdate_parser.add_argument('confpool', metavar='CONFPOOL', nargs='?')
     confpoolupdate_parser.set_defaults(func=update_confpool)
 
     kubeupdate_desc = 'Update Kube'
