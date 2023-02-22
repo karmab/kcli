@@ -35,7 +35,12 @@ kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Doc
 {% elif sdn == 'weavenet' %}
 kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=`kubectl version | base64 | tr -d '\n'`"
 {% elif sdn == 'calico' %}
-kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml | sed -e "s/# - name: CALICO_IPV4POOL_CIDR/- name: CALICO_IPV4POOL_CIDR/" -e "s@#   value: \"192.168.0.0/16\"@  value: \"$CIDR\"@"
+CALICO_VERSION={{ 'projectcalico/calico'|github_version(calico_version) }}
+curl -L https://raw.githubusercontent.com/projectcalico/calico/$CALICO_VERSION/manifests/tigera-operator.yaml > /root/tigera-operator.yaml
+curl -L https://raw.githubusercontent.com/projectcalico/calico/$CALICO_VERSION/manifests/custom-resources.yaml > /root/tigera-custom-resources.yaml
+sed -i "s@192.168.0.0/16@$CIDR@" /root/tigera-custom-resources.yaml
+kubectl create -f /root/tigera-operator.yaml
+kubectl create -f /root/tigera-custom-resources.yaml
 {% elif sdn == 'canal' %}
 kubectl apply -f https://docs.projectcalico.org/v3.1/getting-started/kubernetes/installation/hosted/canal/rbac.yaml
 kubectl apply -f https://docs.projectcalico.org/v3.1/getting-started/kubernetes/installation/hosted/canal/canal.yaml
