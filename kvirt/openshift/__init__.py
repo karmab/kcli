@@ -505,7 +505,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'baremetal_web_dir': '/var/www/html',
             'baremetal_web_port': 80,
             'baremetal_cidr': None,
-            'sushy': False,
             'coredns': True,
             'mdns': True,
             'sslip': False,
@@ -576,7 +575,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     ovn_hostrouting = data.get('ovn_hostrouting')
     upstream = data.get('upstream')
     metal3 = data.get('metal3')
-    sushy = data.get('sushy')
     if not data.get('coredns'):
         warning("You will need to provide DNS records for api and ingress on your own")
     mdns = data.get('mdns')
@@ -1044,11 +1042,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                                                                                   'client': config.client})
         with open(f"{clusterdir}/openshift/99-bootstrap-deletion.yaml", 'w') as _f:
             _f.write(deletionfile)
-        if not sushy:
-            deletionfile2 = f"{plandir}/99-bootstrap-deletion-2.yaml"
-            deletionfile2 = config.process_inputfile(cluster, deletionfile2, overrides={'registry': registry})
-            with open(f"{clusterdir}/openshift/99-bootstrap-deletion-2.yaml", 'w') as _f:
-                _f.write(deletionfile2)
+        deletionfile2 = f"{plandir}/99-bootstrap-deletion-2.yaml"
+        deletionfile2 = config.process_inputfile(cluster, deletionfile2, overrides={'registry': registry})
+        with open(f"{clusterdir}/openshift/99-bootstrap-deletion-2.yaml", 'w') as _f:
+            _f.write(deletionfile2)
         if notify:
             notifycmd = "cat /shared/results.txt"
             notifycmds, mailcontent = config.handle_notifications(cluster, notifymethods=config.notifymethods,
@@ -1068,7 +1065,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         registry = disconnected_url or 'quay.io'
         final_apps = []
         for a in apps:
-            if isinstance(a, str) and a not in ['users', 'autolabellers', 'metal3', 'nfs']:
+            if isinstance(a, str) and a not in ['users', 'nfs']:
                 final_apps.append(a)
             elif isinstance(a, dict) and 'name' in a:
                 final_apps.append(a['name'])
@@ -1102,10 +1099,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if metal3:
         copy2(f"{plandir}/99-metal3-provisioning.yaml", f"{clusterdir}/openshift")
         copy2(f"{plandir}/99-metal3-fake-machine.yaml", f"{clusterdir}/openshift")
-    if sushy:
-        config.import_in_kube(network=network, dest=f"{clusterdir}/openshift", secure=True)
-        copy2(f"{plandir}/sushy/deployment.yaml", f"{clusterdir}/openshift/99-sushy-deployment.yaml")
-        copy2(f"{plandir}/sushy/service.yaml", f"{clusterdir}/openshift/99-sushy-service.yaml")
     if sno:
         sno_name = f"{cluster}-sno"
         sno_files = []
@@ -1408,8 +1401,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             pprint(f"Deleting Dns entry for {vm} in {domain}")
             z = dnsconfig.k
             z.delete_dns(vm, domain)
-    if sushy:
-        call("oc expose -n kcli-infra svc/sushy", shell=True)
     if platform in cloudplatforms:
         bucket = "%s-%s" % (cluster, domain.replace('.', '-'))
         config.k.delete_bucket(bucket)
