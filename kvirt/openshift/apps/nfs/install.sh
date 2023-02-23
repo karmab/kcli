@@ -4,10 +4,16 @@ SHARE={{ nfs_share or '/var/nfsshare-%s' % cluster }}
 
 {% if nfs_ip == None %}
 export IP={{ nfs_network|local_ip }}
-# Latest nfs-utils 2.3.3-51 is broken
-rpm -qi nfs-utils >/dev/null 2>&1 || dnf -y install nfs-utils
-test ! -f /usr/lib/systemd/system/firewalld.service || systemctl disable --now firewalld
-systemctl enable --now nfs-server
+if [ "$(which apt-get)" != "" ] ; then
+ SERVICE=nfs-kernel-server
+ apt-get -y install nfs-kernel-server
+else
+ # Latest nfs-utils 2.3.3-51 is broken
+ rpm -qi nfs-utils >/dev/null 2>&1 || dnf -y install nfs-utils
+ test ! -f /usr/lib/systemd/system/firewalld.service || systemctl disable --now firewalld
+ SERVICE=nfs-server
+fi
+systemctl enable --now $SERVICE
 if [ ! -d $SHARE ] ; then
  mkdir $SHARE
  chcon -t svirt_sandbox_file_t $SHARE
