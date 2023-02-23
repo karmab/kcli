@@ -34,3 +34,25 @@ spec:
         {% for app in apps %}
         tasty install {{ app }} -w
         {% endfor %}
+{% if users_dev is defined %}
+    - name: install-users
+      image: {{ registry }}/karmab/kcli:latest
+      command:
+      - "/bin/sh"
+      - "-c"
+      - |
+        #!/bin/sh
+        kcli download oc
+        export PATH=.:$PATH
+        DIR_USER=/root/kcli/kvirt/openshift/apps/users
+        DEV_USER={{ users_dev }}
+        DEV_PASSWORD_SHA={{ users_devpassword_sha }}
+        ADMIN_USER={{ users_admin }}
+        ADMIN_PASSWORD_SHA={{ users_adminpassword_sha }}
+        printf "$ADMIN_USER:$ADMIN_PASSWORD_SHA )\n$DEV_USER:$DEV_PASSWORD_SHA\n" > htpasswd
+        NAMESPACE=openshift-config
+        oc apply -f $DIR_USER/oauth.yml
+        oc create secret generic htpass-secret --from-file=htpasswd=htpasswd -n $NAMESPACE
+        echo "Granting cluster-admin role to $ADMIN_USER"
+        oc adm policy add-cluster-role-to-user cluster-admin $ADMIN_USER
+{% endif %}

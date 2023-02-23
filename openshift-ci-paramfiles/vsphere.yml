@@ -15,3 +15,4 @@ async: true
 notify: true
 apps:
 - kubevirt-hyperconverged
+- users

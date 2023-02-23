@@ -23,6 +23,7 @@ apps:
 - local-storage-operator
 - odf-operator
 - kubevirt-hyperconverged
+- users
 autolabeller_rules:
 - ci-.*virt-ctlplane.*:
    - cluster.ocs.openshift.io/openshift-storage
