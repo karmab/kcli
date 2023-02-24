@@ -1260,3 +1260,7 @@ class Kopenstack(object):
         if sgs:
             sgs[0].delete()
         return {'result': 'success'}
+
+    def provider_network(self, name):
+        net = self.nova.neutron.find_network(name=name)
+        return True if net.to_dict()['router:external'] else False

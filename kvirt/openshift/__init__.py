@@ -659,6 +659,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         pprint(f"Setting domain to {domain}")
         ignore_hosts = False
     public_api_ip = data.get('public_api_ip')
+    provider_network = False
     network = data.get('network')
     ctlplanes = data.get('ctlplanes')
     workers = data.get('workers')
@@ -672,14 +673,16 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if data.get('flavor') is None:
             error("Missing flavor in parameter file")
             sys.exit(1)
-        if api_ip is None:
-            cidr = k.info_network(network)['cidr']
-            api_ip = str(ip_network(cidr)[-3])
-            data['api_ip'] = api_ip
-            warning(f"Using {api_ip} as api_ip")
-        if public_api_ip is None:
-            public_api_ip = config.k.create_network_port(f"{cluster}-vip", network, ip=api_ip,
-                                                         floating=True)['floating']
+        provider_network = k.provider_network(network)
+        if not provider_network:
+            if api_ip is None:
+                cidr = k.info_network(network)['cidr']
+                api_ip = str(ip_network(cidr)[-3])
+                data['api_ip'] = api_ip
+                warning(f"Using {api_ip} as api_ip")
+            if public_api_ip is None:
+                public_api_ip = config.k.create_network_port(f"{cluster}-vip", network, ip=api_ip,
+                                                             floating=True)['floating']
     if not os.path.exists(pull_secret):
         error(f"Missing pull secret file {pull_secret}")
         sys.exit(1)
@@ -1261,7 +1264,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         overrides['auth_pass'] = auth_pass
         installparam['auth_pass'] = auth_pass
         pprint(f"Using {api_ip} for api vip....")
-        host_ip = api_ip if platform != "openstack" else public_api_ip
+        host_ip = api_ip if platform != "openstack" or provider_network else public_api_ip
         if ignore_hosts or (not kubevirt_ignore_node_port and kubevirt_api_service and kubevirt_api_service_node_port):
             warning("Ignoring /etc/hosts")
         else:
