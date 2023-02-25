@@ -7,8 +7,7 @@ Kubevirt Provider Class
 import base64
 from ipaddress import ip_address
 from kubernetes import client
-# from kubernetes.stream import stream
-from kvirt.kubecommon import Kubecommon
+from kvirt.cluster.kubecommon import Kubecommon
 from kvirt import common
 from kvirt.common import error, pprint, warning
 from kvirt.defaults import IMAGES, UBUNTUS, METADATA_FIELDS

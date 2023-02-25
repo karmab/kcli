@@ -25,12 +25,12 @@ from random import choice
 from kvirt import common
 from kvirt.common import error, pprint, warning, container_mode, ssh, scp
 from kvirt.jinjafilters import jinjafilters
-from kvirt import kind
-from kvirt import microshift
-from kvirt import k3s
-from kvirt import kubeadm
-from kvirt import hypershift
-from kvirt import openshift
+from kvirt.cluster import kind
+from kvirt.cluster import microshift
+from kvirt.cluster import k3s
+from kvirt.cluster import kubeadm
+from kvirt.cluster import hypershift
+from kvirt.cluster import openshift
 import os
 from shutil import copytree, rmtree, which, copy2
 import yaml
@@ -285,7 +285,7 @@ class Kbaseconfig:
                 if self.confpools is None:
                     self.confpools = {}
         self.clusterprofiles = {}
-        clusterprofilesdir = f"{os.path.dirname(sys.modules[Kbaseconfig.__module__].__file__)}/clusterprofiles"
+        clusterprofilesdir = f"{os.path.dirname(sys.modules[Kbaseconfig.__module__].__file__)}/cluster/profiles"
         for clusterprofile in os.listdir(clusterprofilesdir):
             entry = clusterprofile.replace('.yml', '')
             self.clusterprofiles[entry] = yaml.safe_load(open(f"{clusterprofilesdir}/{clusterprofile}"))
