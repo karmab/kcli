@@ -18,13 +18,13 @@ from kvirt import nameutils
 from kvirt import common
 from kvirt.common import error, pprint, success, warning, generate_rhcos_iso, pwd_path, container_mode
 from kvirt.common import ssh, scp, _ssh_credentials, valid_ip, process_files, get_rhcos_url_from_file
-from kvirt import kind
-from kvirt import microshift
-from kvirt import k3s
-from kvirt import kubeadm
-from kvirt import hypershift
+from kvirt.cluster import kind
+from kvirt.cluster import microshift
+from kvirt.cluster import k3s
+from kvirt.cluster import kubeadm
+from kvirt.cluster import hypershift
+from kvirt.cluster import openshift
 from kvirt.expose import Kexposer
-from kvirt import openshift
 from kvirt.internalplans import haproxy as haproxyplan
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig

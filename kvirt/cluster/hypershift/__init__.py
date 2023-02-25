@@ -4,8 +4,8 @@ from glob import glob
 from kvirt.common import success, error, pprint, info2, container_mode, warning
 from kvirt.common import get_oc, pwd_path, get_installer_rhcos, get_ssh_pub_key, boot_baremetal_hosts, olm_app
 from kvirt.defaults import OPENSHIFT_TAG
-from kvirt.openshift import get_ci_installer, get_downstream_installer, get_installer_version, same_release_images
-from kvirt.openshift import process_apps, update_etc_hosts, offline_image
+from kvirt.cluster.openshift import get_ci_installer, get_downstream_installer, get_installer_version
+from kvirt.cluster.openshift import same_release_images, process_apps, update_etc_hosts, offline_image
 from ipaddress import ip_network
 import json
 import os

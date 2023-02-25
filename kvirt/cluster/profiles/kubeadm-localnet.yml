@@ -1,4 +1,5 @@
 network: localnet
+api_ip: 192.168.1.100
 ctlplanes: 3
 workers: 0
 disk_size: 100

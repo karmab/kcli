@@ -5,7 +5,7 @@ kubernetes utilites
 """
 
 import os
-from kvirt.kubecommon import Kubecommon
+from kvirt.cluster.kubecommon import Kubecommon
 from kvirt.common import error
 from kubernetes import client
 import urllib3

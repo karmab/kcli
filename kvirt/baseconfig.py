@@ -25,12 +25,12 @@ from random import choice
 from kvirt import common
 from kvirt.common import error, pprint, warning, container_mode, ssh, scp
 from kvirt.jinjafilters import jinjafilters
-from kvirt import kind
-from kvirt import microshift
-from kvirt import k3s
-from kvirt import kubeadm
-from kvirt import hypershift
-from kvirt import openshift
+from kvirt.cluster import kind
+from kvirt.cluster import microshift
+from kvirt.cluster import k3s
+from kvirt.cluster import kubeadm
+from kvirt.cluster import hypershift
+from kvirt.cluster import openshift
 import os
 from shutil import copytree, rmtree, which, copy2
 import yaml
@@ -285,7 +285,7 @@ class Kbaseconfig:
                 if self.confpools is None:
                     self.confpools = {}
         self.clusterprofiles = {}
-        clusterprofilesdir = f"{os.path.dirname(sys.modules[Kbaseconfig.__module__].__file__)}/clusterprofiles"
+        clusterprofilesdir = f"{os.path.dirname(sys.modules[Kbaseconfig.__module__].__file__)}/cluster/profiles"
         for clusterprofile in os.listdir(clusterprofilesdir):
             entry = clusterprofile.replace('.yml', '')
             self.clusterprofiles[entry] = yaml.safe_load(open(f"{clusterprofilesdir}/{clusterprofile}"))
@@ -1427,17 +1427,13 @@ class Kbaseconfig:
         pull_secret = overrides.get('pull_secret', 'openshift_pull.json')
         version = overrides.get('version', 'stable')
         tag = overrides.get('tag', OPENSHIFT_TAG)
-        upstream = overrides.get('upstream', False)
         macosx = os.path.exists('/Users')
         if version in ['ci', 'ci-nightly']:
             nightly = version == 'ci-nightly'
-            run = openshift.get_ci_installer(pull_secret, tag=tag, macosx=macosx, upstream=upstream, debug=self.debug,
-                                             nightly=nightly)
+            run = openshift.get_ci_installer(pull_secret, tag=tag, macosx=macosx, debug=self.debug, nightly=nightly)
         elif version == 'dev-preview':
             run = openshift.get_downstream_installer(devpreview=True, tag=tag, macosx=macosx, debug=self.debug,
                                                      pull_secret=pull_secret)
-        elif upstream:
-            run = openshift.get_upstream_installer(tag=tag, macosx=macosx, debug=self.debug)
         else:
             run = openshift.get_downstream_installer(tag=tag, macosx=macosx, debug=self.debug, pull_secret=pull_secret)
         if run != 0:
