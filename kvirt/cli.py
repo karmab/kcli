@@ -2390,14 +2390,6 @@ def download_openshift_installer(args):
     return baseconfig.download_openshift_installer(overrides)
 
 
-def download_okd_installer(args):
-    """Download Okd Installer"""
-    overrides = handle_parameters(args.param, args.paramfile)
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-    overrides['upstream'] = True
-    return baseconfig.download_openshift_installer(overrides)
-
-
 def download_tasty(args):
     """Download Tasty"""
     overrides = handle_parameters(args.param, args.paramfile)
@@ -3700,7 +3692,7 @@ def cli():
                                      description=kubeopenshiftcreate_desc,
                                      help=kubeopenshiftcreate_desc,
                                      epilog=kubeopenshiftcreate_epilog,
-                                     formatter_class=rawhelp, aliases=['okd'])
+                                     formatter_class=rawhelp)
 
     lbcreate_desc = 'Create Load Balancer'
     lbcreate_parser = create_subparsers.add_parser('lb', description=lbcreate_desc, help=lbcreate_desc,
@@ -4281,13 +4273,6 @@ def cli():
                                    description=ocdownload_desc,
                                    help=ocdownload_desc, epilog=ocdownload_epilog, formatter_class=rawhelp)
 
-    okddownload_desc = 'Download Okd Installer'
-    okddownload_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
-    okddownload_parser.set_defaults(func=download_okd_installer)
-    download_subparsers.add_parser('okd-installer', parents=[okddownload_parser],
-                                   description=okddownload_desc,
-                                   help=okddownload_desc, aliases=['okd-install'])
-
     openshiftdownload_desc = 'Download Openshift Installer'
     openshiftdownload_epilog = f"examples:\n{openshiftdownload}"
     openshiftdownload_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
@@ -4455,7 +4440,7 @@ def cli():
 
     kubeopenshiftinfo_desc = 'Info Openshift Kube'
     kubeopenshiftinfo_parser = kubeinfo_subparsers.add_parser('openshift', description=kubeopenshiftinfo_desc,
-                                                              help=kubeopenshiftinfo_desc, aliases=['okd'])
+                                                              help=kubeopenshiftinfo_desc)
     kubeopenshiftinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubeopenshiftinfo_parser.set_defaults(func=info_openshift_kube)
 
@@ -4801,7 +4786,7 @@ def cli():
     kubeopenshiftscale_parser.set_defaults(func=scale_openshift_kube)
     kubescale_subparsers.add_parser('openshift', parents=[kubeopenshiftscale_parser],
                                     description=kubeopenshiftscale_desc,
-                                    help=kubeopenshiftscale_desc, aliases=['okd'],
+                                    help=kubeopenshiftscale_desc,
                                     epilog=kubeopenshiftscale_epilog, formatter_class=rawhelp)
 
     vmscp_desc = 'Scp Into Vm'
@@ -4978,7 +4963,7 @@ def cli():
     kubeopenshiftupdate_parser.set_defaults(func=update_openshift_kube)
     kubeupdate_subparsers.add_parser('openshift', parents=[kubeopenshiftupdate_parser],
                                      description=kubeopenshiftupdate_desc,
-                                     help=kubeopenshiftupdate_desc, aliases=['okd'])
+                                     help=kubeopenshiftupdate_desc)
 
     profileupdate_desc = 'Update Profile'
     profileupdate_parser = update_subparsers.add_parser('profile', description=profileupdate_desc,
