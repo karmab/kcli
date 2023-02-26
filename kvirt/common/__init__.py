@@ -2029,6 +2029,8 @@ def make_iso(name, tmpdir, userdata, metadata, netdata, openstack=False):
     if openstack:
         os.makedirs(f"{tmpdir}/root/openstack/latest")
         move(f"{tmpdir}/user-data", f"{tmpdir}/root/openstack/latest/user_data")
+        if os.path.getsize(f"{tmpdir}/meta-data") == 0:
+            open(f"{tmpdir}/meta-data", 'w').write('{}')
         move(f"{tmpdir}/meta-data", f"{tmpdir}/root/openstack/latest/meta_data.json")
         isocmd += f" -V config-2 --joliet --rock {tmpdir}/root"
     else:
