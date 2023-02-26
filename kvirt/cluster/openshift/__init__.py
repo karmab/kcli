@@ -215,14 +215,22 @@ def get_downstream_installer(devpreview=False, macosx=False, tag=None, debug=Fal
     return call(cmd, shell=True)
 
 
-def get_upstream_installer(tag=None, macosx=False, debug=False):
+def get_upstream_installer(tag=None, macosx=False, debug=False, nightly=False):
     system = 'mac' if os.path.exists('/Users') or macosx else 'linux'
-    msg = 'Downloading okd openshift-install from github in current directory'
+    if tag is not None and nightly:
+        if ':' not in tag:
+            tag = f"okd:{tag}"
+        if 'quay.io' not in tag and 'registry.ci.openshift.org' in tag:
+            tag = f"quay.io/{tag}"
+        cmd = f"oc adm release extract --command=openshift-install --to . {tag}"
+        cmd += "; chmod 700 openshift-install"
+    else:
+        base_url = 'https://github.com/okd-project/okd/releases/download'
+        okd_tag = github_version('okd-project/okd', version=tag)
+        cmd = f"curl -Ls {base_url}/{okd_tag}/openshift-install-{system}-{okd_tag}.tar.gz"
+        cmd += " | tar zxf - openshift-install ; chmod 700 openshift-install"
+    msg = f'Downloading openshift-install {tag} in current directory'
     pprint(msg)
-    base_url = 'https://github.com/okd-project/okd/releases/download'
-    okd_tag = github_version('okd-project/okd', version=tag)
-    cmd = f"curl -Ls {base_url}/{okd_tag}/openshift-install-{system}-{okd_tag}.tar.gz"
-    cmd += " | tar zxf - openshift-install ; chmod 700 openshift-install"
     if debug:
         pprint(cmd)
     return call(cmd, shell=True)
@@ -718,12 +726,13 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 tag = f'registry.ci.openshift.org/{basetag}/release:{tag}'
         os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = tag
         pprint(f"Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to {tag}")
-    os.environ["PATH"] += f":{os.getcwd()}"
     which_openshift = which('openshift-install')
     if which_openshift is not None:
         warning("Using existing openshift-install found in your PATH")
     elif upstream:
-        run = get_upstream_installer(tag=overrides.get('upstream_tag'))
+        upstream_tag = overrides.get('tag')
+        upstream_nightly = version in ['ci', 'nightly']
+        run = get_upstream_installer(tag=upstream_tag, nightly=upstream_nightly)
     elif not same_release_images(version=version, tag=tag, pull_secret=pull_secret,
                                  path=os.path.dirname(which_openshift)):
         if version in ['ci', 'nightly'] or '/' in str(tag):
