@@ -8,10 +8,11 @@ import sys
 from ipaddress import ip_network
 from kvirt.common import error, pprint, success, warning, info2
 from kvirt.common import get_oc, pwd_path
-from kvirt.common import get_commit_rhcos, generate_rhcos_iso, olm_app
+from kvirt.common import get_latest_fcos, generate_rhcos_iso, olm_app
 from kvirt.common import get_installer_rhcos
 from kvirt.common import ssh, scp, _ssh_credentials, get_ssh_pub_key, boot_baremetal_hosts
 from kvirt.defaults import LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG
+from kvirt.jinjafilters.jinjafilters import github_version
 import re
 from shutil import copy2, move, rmtree, which
 from subprocess import call
@@ -209,6 +210,19 @@ def get_downstream_installer(devpreview=False, macosx=False, tag=None, debug=Fal
     cmd += f"openshift-install-{INSTALLSYSTEM}-{version}.tar.gz "
     cmd += "| tar zxf - openshift-install"
     cmd += "; chmod 700 openshift-install"
+    if debug:
+        pprint(cmd)
+    return call(cmd, shell=True)
+
+
+def get_upstream_installer(tag=None, macosx=False, debug=False):
+    system = 'mac' if os.path.exists('/Users') or macosx else 'linux'
+    msg = 'Downloading okd openshift-install from github in current directory'
+    pprint(msg)
+    base_url = 'https://github.com/okd-project/okd/releases/download'
+    okd_tag = github_version('okd-project/okd', version=tag)
+    cmd = f"curl -Ls {base_url}/{okd_tag}/openshift-install-{system}-{okd_tag}.tar.gz"
+    cmd += " | tar zxf - openshift-install ; chmod 700 openshift-install"
     if debug:
         pprint(cmd)
     return call(cmd, shell=True)
@@ -488,6 +502,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'coredns': True,
             'mdns': True,
             'sslip': False,
+            'upstream': False,
             'retries': 2}
     data.update(overrides)
     if 'cluster' in overrides:
@@ -504,6 +519,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     domain = data.get('domain')
     original_domain = None
     async_install = data.get('async')
+    upstream = data.get('upstream')
     sslip = data.get('sslip')
     baremetal_hosts = data.get('baremetal_hosts', [])
     notify = data.get('notify')
@@ -643,7 +659,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     ctlplanes = data.get('ctlplanes')
     workers = data.get('workers')
     tag = data.get('tag')
-    pull_secret = pwd_path(data.get('pull_secret'))
+    pull_secret = pwd_path(data.get('pull_secret')) if not upstream else f"{plandir}/fake_pull.json"
     pull_secret = os.path.expanduser(pull_secret)
     macosx = data.get('macosx')
     if macosx and not os.path.exists('/i_am_a_container'):
@@ -706,6 +722,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     which_openshift = which('openshift-install')
     if which_openshift is not None:
         warning("Using existing openshift-install found in your PATH")
+    elif upstream:
+        run = get_upstream_installer(tag=overrides.get('upstream_tag'))
     elif not same_release_images(version=version, tag=tag, pull_secret=pull_secret,
                                  path=os.path.dirname(which_openshift)):
         if version in ['ci', 'nightly'] or '/' in str(tag):
@@ -750,14 +768,15 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         image_type = 'openstack' if data.get('kvm_openstack') and config.type == 'kvm' else config.type
         region = config.k.region if config.type == 'aws' else None
         try:
-            image_url = get_installer_rhcos(_type=image_type, region=region, arch=arch)
+            if upstream:
+                fcos_url = 'https://builds.coreos.fedoraproject.org/streams/stable.json'
+                image_url = get_latest_fcos(fcos_url, _type=image_type)
+            else:
+                image_url = get_installer_rhcos(_type=image_type, region=region, arch=arch)
         except:
-            try:
-                image_url = get_commit_rhcos(COMMIT_ID, _type=image_type, region=region)
-            except:
-                error(f"Couldn't gather the {config.type} image associated to commit {COMMIT_ID}")
-                error("Force an image in your parameter file")
-                sys.exit(1)
+            error(f"Couldn't gather the {config.type} image associated to commit {COMMIT_ID}")
+            error("Force an image in your parameter file")
+            sys.exit(1)
         if platform in ['aws', 'gcp']:
             image = image_url
         else:

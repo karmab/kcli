@@ -1426,8 +1426,12 @@ class Kbaseconfig:
     def download_openshift_installer(self, overrides={}):
         pull_secret = overrides.get('pull_secret', 'openshift_pull.json')
         version = overrides.get('version', 'stable')
+        upstream = overrides.get('upstream', False)
         tag = overrides.get('tag', OPENSHIFT_TAG)
         macosx = os.path.exists('/Users')
+        if upstream:
+            upstream_tag = overrides.get('tag')
+            run = openshift.get_upstream_installer(tag=upstream_tag, macosx=macosx, debug=self.debug)
         if version in ['ci', 'ci-nightly']:
             nightly = version == 'ci-nightly'
             run = openshift.get_ci_installer(pull_secret, tag=tag, macosx=macosx, debug=self.debug, nightly=nightly)

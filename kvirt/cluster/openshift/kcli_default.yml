@@ -125,3 +125,5 @@ sslip: false
 pub_key:
 baremetal_cidr:
 manifests: manifests
+upstream: false
+upstream_tag:
