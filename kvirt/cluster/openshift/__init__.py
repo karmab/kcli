@@ -12,7 +12,6 @@ from kvirt.common import get_latest_fcos, generate_rhcos_iso, olm_app
 from kvirt.common import get_installer_rhcos
 from kvirt.common import ssh, scp, _ssh_credentials, get_ssh_pub_key, boot_baremetal_hosts
 from kvirt.defaults import LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG
-from kvirt.jinjafilters.jinjafilters import github_version
 import re
 from shutil import copy2, move, rmtree, which
 from subprocess import call
@@ -215,20 +214,17 @@ def get_downstream_installer(devpreview=False, macosx=False, tag=None, debug=Fal
     return call(cmd, shell=True)
 
 
-def get_upstream_installer(tag=None, macosx=False, debug=False, nightly=False):
-    system = 'mac' if os.path.exists('/Users') or macosx else 'linux'
-    if tag is not None and nightly:
-        if ':' not in tag:
-            tag = f"okd:{tag}"
-        if 'quay.io' not in tag and 'registry.ci.openshift.org' in tag:
-            tag = f"quay.io/{tag}"
-        cmd = f"oc adm release extract --command=openshift-install --to . {tag}"
-        cmd += "; chmod 700 openshift-install"
-    else:
-        base_url = 'https://github.com/okd-project/okd/releases/download'
-        okd_tag = github_version('okd-project/okd', version=tag)
-        cmd = f"curl -Ls {base_url}/{okd_tag}/openshift-install-{system}-{okd_tag}.tar.gz"
-        cmd += " | tar zxf - openshift-install ; chmod 700 openshift-install"
+def get_upstream_installer(tag, version='stable', debug=False):
+    if 'quay.io' not in tag and 'registry.ci.openshift.org' not in tag:
+        if version == 'dev-preview':
+            url = "https://amd64.origin.releases.ci.openshift.org/api/v1/releasestream/4-scos-next/latest"
+        elif version == 'scos':
+            url = "https://amd64.origin.releases.ci.openshift.org/api/v1/releasestream/4-scos-stable/latest"
+        else:
+            url = f"https://amd64.origin.releases.ci.openshift.org/api/v1/releasestream/{tag}.0-0.okd/latest"
+        tag = json.loads(urlopen(url).read())['pullSpec']
+    cmd = f"oc adm release extract --command=openshift-install --to . {tag}"
+    cmd += "; chmod 700 openshift-install"
     msg = f'Downloading openshift-install {tag} in current directory'
     pprint(msg)
     if debug:
@@ -730,9 +726,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if which_openshift is not None:
         warning("Using existing openshift-install found in your PATH")
     elif upstream:
-        upstream_tag = overrides.get('tag')
-        upstream_nightly = version in ['ci', 'nightly']
-        run = get_upstream_installer(tag=upstream_tag, nightly=upstream_nightly)
+        run = get_upstream_installer(tag, version=version)
     elif not same_release_images(version=version, tag=tag, pull_secret=pull_secret,
                                  path=os.path.dirname(which_openshift)):
         if version in ['ci', 'nightly'] or '/' in str(tag):
