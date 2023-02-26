@@ -348,10 +348,8 @@ def create(config, plandir, cluster, overrides):
     cmcmd = f"oc create -f {clusterdir}/hostedcluster.yaml"
     call(cmcmd, shell=True)
     which_openshift = which('openshift-install')
-    if which_openshift is not None:
-        warning("Using existing openshift-install found in your PATH")
-    elif not same_release_images(version=version, tag=tag, pull_secret=pull_secret,
-                                 path=os.path.dirname(which_openshift)):
+    openshift_dir = os.path.dirname(which_openshift) if which_openshift is not None else '.'
+    if not same_release_images(version=version, tag=tag, pull_secret=pull_secret, path=openshift_dir):
         if version in ['ci', 'nightly']:
             nightly = version == 'nigthly'
             run = get_ci_installer(pull_secret, tag=tag, nightly=nightly)
@@ -363,6 +361,8 @@ def create(config, plandir, cluster, overrides):
             error("Couldn't download openshift-install")
             sys.exit(run)
         pprint("Move downloaded openshift-install somewhere in your PATH if you want to reuse it")
+    elif which_openshift is not None:
+        pprint("Using existing openshift-install found in your PATH")
     else:
         pprint("Reusing matching openshift-install")
     os.environ["PATH"] += f":{os.getcwd()}"
