@@ -8,7 +8,7 @@ import sys
 from ipaddress import ip_network
 from kvirt.common import error, pprint, success, warning, info2
 from kvirt.common import get_oc, pwd_path
-from kvirt.common import get_commit_rhcos, get_latest_fcos, generate_rhcos_iso, olm_app
+from kvirt.common import get_commit_rhcos, generate_rhcos_iso, olm_app
 from kvirt.common import get_installer_rhcos
 from kvirt.common import ssh, scp, _ssh_credentials, get_ssh_pub_key, boot_baremetal_hosts
 from kvirt.defaults import LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG
@@ -214,9 +214,9 @@ def get_downstream_installer(devpreview=False, macosx=False, tag=None, debug=Fal
     return call(cmd, shell=True)
 
 
-def get_ci_installer(pull_secret, tag=None, macosx=False, upstream=False, debug=False, nightly=False):
+def get_ci_installer(pull_secret, tag=None, macosx=False, debug=False, nightly=False):
     arch = 'arm64' if os.uname().machine == 'aarch64' else None
-    base = 'openshift' if not upstream else 'origin'
+    base = 'openshift'
     if tag is not None and nightly:
         nightly_url = f"https://amd64.ocp.releases.ci.openshift.org/api/v1/releasestream/{tag}.0-0.nightly/latest"
         tag = json.loads(urlopen(nightly_url).read())['pullSpec']
@@ -234,31 +234,12 @@ def get_ci_installer(pull_secret, tag=None, macosx=False, upstream=False, debug=
         if arch == 'arm64':
             tag = f'registry.ci.openshift.org/ocp-arm64/release-arm64:{tag}'
         else:
-            basetag = 'ocp' if not upstream else 'origin'
+            basetag = 'ocp'
             tag = f'registry.ci.openshift.org/{basetag}/release:{tag}'
     os.environ['OPENSHIFT_RELEASE_IMAGE'] = tag
     msg = f'Downloading openshift-install {tag} in current directory'
     pprint(msg)
-    if upstream:
-        cmd = f"oc adm release extract --command=openshift-install --to . {tag}"
-    else:
-        cmd = f"oc adm release extract --registry-config {pull_secret} --command=openshift-install --to . {tag}"
-    cmd += "; chmod 700 openshift-install"
-    if debug:
-        pprint(cmd)
-    return call(cmd, shell=True)
-
-
-def get_upstream_installer(macosx=False, tag=None, debug=False):
-    INSTALLSYSTEM = 'mac' if os.path.exists('/Users') or macosx else 'linux'
-    msg = 'Downloading okd openshift-install from github in current directory'
-    pprint(msg)
-    r = urlopen("https://api.github.com/repos/openshift/okd/releases")
-    data = json.loads(r.read())
-    version = sorted([x['tag_name'] for x in data])[-1]
-    cmd = "curl -Ls https://github.com/openshift/okd/releases/download/"
-    cmd += f"{version}/openshift-install-{INSTALLSYSTEM}-{version}.tar.gz"
-    cmd += "| tar zxf - openshift-install"
+    cmd = f"oc adm release extract --registry-config {pull_secret} --command=openshift-install --to . {tag}"
     cmd += "; chmod 700 openshift-install"
     if debug:
         pprint(cmd)
@@ -481,7 +462,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'pull_secret': 'openshift_pull.json',
             'version': 'stable',
             'macosx': False,
-            'upstream': False,
             'fips': False,
             'apps': [],
             'minimal': False,
@@ -573,7 +553,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     disconnected_prefix = data.get('disconnected_prefix', 'ocp4')
     ipsec = data.get('ipsec')
     ovn_hostrouting = data.get('ovn_hostrouting')
-    upstream = data.get('upstream')
     metal3 = data.get('metal3')
     if not data.get('coredns'):
         warning("You will need to provide DNS records for api and ingress on your own")
@@ -664,7 +643,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     ctlplanes = data.get('ctlplanes')
     workers = data.get('workers')
     tag = data.get('tag')
-    pull_secret = pwd_path(data.get('pull_secret')) if not upstream else f"{plandir}/fake_pull.json"
+    pull_secret = pwd_path(data.get('pull_secret'))
     pull_secret = os.path.expanduser(pull_secret)
     macosx = data.get('macosx')
     if macosx and not os.path.exists('/i_am_a_container'):
@@ -719,7 +698,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             if arch in ['aarch64', 'arm64']:
                 tag = f'registry.ci.openshift.org/ocp-arm64/release-arm64:{tag}'
             else:
-                basetag = 'ocp' if not upstream else 'origin'
+                basetag = 'ocp'
                 tag = f'registry.ci.openshift.org/{basetag}/release:{tag}'
         os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = tag
         pprint(f"Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to {tag}")
@@ -727,11 +706,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     which_openshift = which('openshift-install')
     if which_openshift is None or not same_release_images(version=version, tag=tag, pull_secret=pull_secret,
                                                           path=os.path.dirname(which_openshift)):
-        if upstream:
-            run = get_upstream_installer(tag=tag)
-        elif version in ['ci', 'nightly'] or '/' in str(tag):
+        if version in ['ci', 'nightly'] or '/' in str(tag):
             nightly = version == 'nigthly'
-            run = get_ci_installer(pull_secret, tag=tag, upstream=upstream, nightly=nightly)
+            run = get_ci_installer(pull_secret, tag=tag, nightly=nightly)
         elif version == 'dev-preview':
             run = get_downstream_installer(devpreview=True, tag=tag, pull_secret=pull_secret)
         else:
@@ -772,20 +749,15 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     elif image is None:
         image_type = 'openstack' if data.get('kvm_openstack') and config.type == 'kvm' else config.type
         region = config.k.region if config.type == 'aws' else None
-        if upstream:
-            fcos_base = 'stable' if version == 'stable' else 'testing'
-            fcos_url = f"https://builds.coreos.fedoraproject.org/streams/{fcos_base}.json"
-            image_url = get_latest_fcos(fcos_url, _type=image_type, region=region)
-        else:
+        try:
+            image_url = get_installer_rhcos(_type=image_type, region=region, arch=arch)
+        except:
             try:
-                image_url = get_installer_rhcos(_type=image_type, region=region, arch=arch)
+                image_url = get_commit_rhcos(COMMIT_ID, _type=image_type, region=region)
             except:
-                try:
-                    image_url = get_commit_rhcos(COMMIT_ID, _type=image_type, region=region)
-                except:
-                    error(f"Couldn't gather the {config.type} image associated to commit {COMMIT_ID}")
-                    error("Force an image in your parameter file")
-                    sys.exit(1)
+                error(f"Couldn't gather the {config.type} image associated to commit {COMMIT_ID}")
+                error("Force an image in your parameter file")
+                sys.exit(1)
         if platform in ['aws', 'gcp']:
             image = image_url
         else:
