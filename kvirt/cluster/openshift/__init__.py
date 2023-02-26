@@ -704,8 +704,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         pprint(f"Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to {tag}")
     os.environ["PATH"] += f":{os.getcwd()}"
     which_openshift = which('openshift-install')
-    if which_openshift is None or not same_release_images(version=version, tag=tag, pull_secret=pull_secret,
-                                                          path=os.path.dirname(which_openshift)):
+    if which_openshift is not None:
+        warning("Using existing openshift-install found in your PATH")
+    elif not same_release_images(version=version, tag=tag, pull_secret=pull_secret,
+                                 path=os.path.dirname(which_openshift)):
         if version in ['ci', 'nightly'] or '/' in str(tag):
             nightly = version == 'nigthly'
             run = get_ci_installer(pull_secret, tag=tag, nightly=nightly)
@@ -717,8 +719,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             error("Couldn't download openshift-install")
             sys.exit(run)
         pprint("Move downloaded openshift-install somewhere in your PATH if you want to reuse it")
-    elif not os.path.exists('openshift-install'):
-        warning("Using existing openshift-install found in your PATH")
     else:
         pprint("Reusing matching openshift-install")
     if disconnected_url is not None:
