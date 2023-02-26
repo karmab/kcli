@@ -116,7 +116,6 @@ def scale(config, plandir, cluster, overrides):
 
 def create(config, plandir, cluster, overrides):
     log_level = 'debug' if config.debug else 'info'
-    os.environ["PATH"] += f":{os.getcwd()}"
     k = config.k
     platform = config.type
     arch = k.get_capabilities()['arch'] if config.type == 'kvm' else 'x86_64'
@@ -366,6 +365,7 @@ def create(config, plandir, cluster, overrides):
         pprint("Move downloaded openshift-install somewhere in your PATH if you want to reuse it")
     else:
         pprint("Reusing matching openshift-install")
+    os.environ["PATH"] += f":{os.getcwd()}"
     INSTALLER_VERSION = get_installer_version()
     pprint(f"Using installer version {INSTALLER_VERSION}")
     nodepool_image = os.popen("openshift-install version | grep 'release image' | cut -f3 -d' '").read().strip()

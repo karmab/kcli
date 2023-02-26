@@ -748,6 +748,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         pprint("Move downloaded openshift-install somewhere in your PATH if you want to reuse it")
     else:
         pprint("Reusing matching openshift-install")
+    os.environ["PATH"] += f":{os.getcwd()}"
     if disconnected_url is not None:
         if disconnected_user is None:
             error("disconnected_user needs to be set")
