@@ -565,3 +565,22 @@ $ kcli update vm -P cpuflags=[vmx] -P disable=true myvm
 # Add and remove cpuflags from a vm (kvm specific)
 $ kcli update vm -P cpuflags=['{"name": "vmx", "policy": "enable"}, {"name": "ss", "policy": "disable"}'] myvm
 """
+
+vmlist = """# List vms
+$ kcli list vm
+
+# Filter vms which are up
+$ kcli list vm -P status=up
+
+# Filter vms with a plan name starting with prod
+$ kcli list vm -P plan=prod
+
+# Combine filters
+$ kcli list vm -P plan=prod -P status=up
+
+# Get vms whose ip starts with 192.168.122
+$ kcli list vm -P ip=192.168.122
+
+# Get vms whose name starts with myclu
+$ kcli list vm -P name=myclu
+"""

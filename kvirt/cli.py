@@ -13,7 +13,7 @@ from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsol
 from kvirt.examples import disconnectedcreate, appopenshiftcreate, plantemplatecreate, kubehypershiftcreate
 from kvirt.examples import workflowcreate, kubegenericscale, kubek3sscale, kubeopenshiftscale
 from kvirt.examples import changelog, starthosts, stophosts, infohosts, ocdownload, openshiftdownload
-from kvirt.examples import networkcreate, securitygroupcreate, profilecreate, vmupdate
+from kvirt.examples import networkcreate, securitygroupcreate, profilecreate, vmupdate, vmlist
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
 from kvirt.defaults import IMAGES, VERSION, LOCAL_OPENSHIFT_APPS, SSH_PUB_LOCATIONS, PLANTYPES
@@ -744,7 +744,11 @@ def _parse_vms_list(_list):
 def list_vm(args):
     """List vms"""
     output = args.global_output or args.output
-    filters = args.filters
+    overrides = handle_parameters(args.param, args.paramfile)
+    correct_keys = ['name', 'ip', 'status', 'image', 'plan', 'profile']
+    if not [key in overrides for key in correct_keys]:
+        warning(f"Ignoring wrong filters. key should be part of {correct_keys}")
+        overrides = {}
     if args.client is not None and args.client == 'all':
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
         args.client = ','.join(baseconfig.clients)
@@ -768,9 +772,11 @@ def list_vm(args):
                 plan = vm.get('plan', '')
                 profile = vm.get('profile', '')
                 vminfo = [name, client, status, ip, source, plan, profile]
-                if filters:
-                    if status == filters:
-                        vmstable.add_row(vminfo)
+                if overrides:
+                    for key in ['name', 'status', 'image', 'plan', 'profile']:
+                        if key in overrides and vm.get(key) == overrides[key]:
+                            vmstable.add_row(vminfo)
+                            break
                 else:
                     vmstable.add_row(vminfo)
         print(vmstable)
@@ -793,9 +799,11 @@ def list_vm(args):
             plan = vm.get('plan', '')
             profile = vm.get('profile', '')
             vminfo = [name, status, ip, source, plan, profile]
-            if filters:
-                if status == filters:
-                    vmstable.add_row(vminfo)
+            if overrides:
+                for key in ['name', 'ip', 'status', 'image', 'plan', 'profile']:
+                    if key in overrides and overrides[key] in vm.get(key):
+                        vmstable.add_row(vminfo)
+                        break
             else:
                 vmstable.add_row(vminfo)
         print(vmstable)
@@ -4683,9 +4691,10 @@ def cli():
     securitygrouplist_parser.set_defaults(func=list_securitygroups)
 
     vmlist_desc = 'List Vms'
-    vmlist_parser = list_subparsers.add_parser('vm', parents=[output_parser], description=vmlist_desc, help=vmlist_desc,
-                                               aliases=['vms'])
-    vmlist_parser.add_argument('--filters', choices=('up', 'down'))
+    vmlist_epilog = f"examples:\n{vmlist}"
+    vmlist_parser = list_subparsers.add_parser('vm', parents=[parent_parser, output_parser], description=vmlist_desc,
+                                               help=vmlist_desc, aliases=['vms'], epilog=vmlist_epilog,
+                                               formatter_class=rawhelp)
     vmlist_parser.set_defaults(func=list_vm)
 
     vmsnapshotlist_desc = 'List Snapshots Of Vm'
