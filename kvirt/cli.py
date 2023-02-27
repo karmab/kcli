@@ -3220,7 +3220,8 @@ def info_baremetal_host(args):
 
 def info_host(args):
     """Report info about host"""
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    client = args.host or args.client
+    config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     k.report()
 
@@ -4396,6 +4397,7 @@ def cli():
     hostinfo_desc = 'Report Info About Host'
     hostinfo_parser = argparse.ArgumentParser(add_help=False)
     hostinfo_parser.set_defaults(func=info_host)
+    hostinfo_parser.add_argument('host', metavar='HOST', nargs='?')
     info_subparsers.add_parser('host', parents=[hostinfo_parser], description=hostinfo_desc, help=hostinfo_desc,
                                aliases=['client'])
 
