@@ -24,7 +24,7 @@ from threading import Thread
 
 class Kweb():
 
-    def __init__(self):
+    def __init__(self, readonly=False):
         app = Bottle()
 
         app = Bottle()
@@ -55,14 +55,14 @@ class Kweb():
             for vm in k.list():
                 vm['info'] = print_info(vm, output='plain', pretty=True)
                 vms.append(vm)
-            return {'vms': vms}
+            return {'vms': vms, 'readonly': readonly}
 
         @app.route("/")
         @app.route('/vmsindex')
         @view('vms.html')
         def vms():
             baseconfig = Kbaseconfig()
-            return {'title': 'Home', 'client': baseconfig.client}
+            return {'title': 'Home', 'client': baseconfig.client, 'readonly': readonly}
 
         @app.route('/vmcreateform')
         @view('vmcreate.html')
@@ -97,7 +97,7 @@ class Kweb():
         def vmprofilestable():
             baseconfig = Kbaseconfig()
             profiles = baseconfig.list_profiles()
-            return {'profiles': profiles}
+            return {'profiles': profiles, 'readonly': readonly}
 
         @app.route('/vmprofilesindex')
         @view('vmprofiles.html')
@@ -107,6 +107,9 @@ class Kweb():
 
         @app.route("/disks/<name>", method='POST')
         def diskcreate(name):
+            if readonly:
+                response.status = 403
+                return {}
             data = request.json or request.forms
             if data is None:
                 response.status = 400
@@ -120,6 +123,9 @@ class Kweb():
 
         @app.route("/disks/<name>", method='DELETE')
         def diskdelete(name):
+            if readonly:
+                response.status = 403
+                return {}
             data = request.json or request.forms
             if data is None:
                 response.status = 400
@@ -135,6 +141,9 @@ class Kweb():
 
         @app.route("/nics/<name>", method='POST')
         def niccreate(name):
+            if readonly:
+                response.status = 403
+                return {}
             data = request.json or request.forms
             if data is None:
                 response.status = 400
@@ -147,6 +156,9 @@ class Kweb():
 
         @app.route("/nics/<name>", method='DELETE')
         def nicdelete(name):
+            if readonly:
+                response.status = 403
+                return {}
             data = request.json or request.forms
             if data is None:
                 response.status = 400
@@ -177,6 +189,9 @@ class Kweb():
 
         @app.route("/pools", method='POST')
         def poolcreate():
+            if readonly:
+                response.status = 403
+                return {}
             data = request.json or request.forms
             if data is None:
                 response.status = 400
@@ -191,6 +206,9 @@ class Kweb():
 
         @app.route("/pools/<pool>", method='DELETE')
         def pooldelete(pool):
+            if readonly:
+                response.status = 403
+                return {}
             config = Kconfig()
             k = config.k
             result = k.delete_pool(name=pool)
@@ -200,6 +218,9 @@ class Kweb():
 
         @app.route("/repos", method='POST')
         def repocreate():
+            if readonly:
+                response.status = 403
+                return {}
             data = request.json or request.forms
             if data is None:
                 response.status = 400
@@ -220,6 +241,9 @@ class Kweb():
 
         @app.route("/repos/<repo>", method='DELETE')
         def repodelete(repo):
+            if readonly:
+                response.status = 403
+                return {}
             config = Kconfig()
             result = config.delete_repo(repo)
             response.status = 200
@@ -227,6 +251,9 @@ class Kweb():
 
         @app.route("/repos/<repo>", method='PATCH')
         def repoupdate(repo):
+            if readonly:
+                response.status = 403
+                return {}
             config = Kconfig()
             result = config.update_repo(repo)
             response.status = 200
@@ -242,6 +269,9 @@ class Kweb():
 
         @app.route("/networks", method='POST')
         def networkcreate(network):
+            if readonly:
+                response.status = 403
+                return {}
             data = request.json or request.forms
             if data is None:
                 response.status = 400
@@ -262,6 +292,9 @@ class Kweb():
 
         @app.route("/networks/<network>", method='DELETE')
         def networkdelete(network):
+            if readonly:
+                response.status = 403
+                return {}
             config = Kconfig()
             k = config.k
             result = k.delete_network(name=network)
@@ -278,6 +311,9 @@ class Kweb():
 
         @app.route("/vms/<name>/start", method='POST')
         def vmstart(name):
+            if readonly:
+                response.status = 403
+                return {}
             config = Kconfig()
             k = config.k
             result = k.start(name)
@@ -286,6 +322,9 @@ class Kweb():
 
         @app.route("/vms/<name>/stop", method='POST')
         def vmstop(name):
+            if readonly:
+                response.status = 403
+                return {}
             config = Kconfig()
             k = config.k
             result = k.stop(name)
@@ -294,6 +333,9 @@ class Kweb():
 
         @app.route("/vms", method='POST')
         def vmcreate():
+            if readonly:
+                response.status = 403
+                return {}
             data = request.json or request.forms
             if data is None:
                 response.status = 400
@@ -323,6 +365,9 @@ class Kweb():
 
         @app.route("/vms/<name>", method='DELETE')
         def vmdelete(name):
+            if readonly:
+                response.status = 403
+                return {}
             config = Kconfig()
             k = config.k
             result = k.delete(name)
@@ -333,6 +378,9 @@ class Kweb():
 
         @app.route("/hosts/<name>/enable", method='POST')
         def hostenable(name):
+            if readonly:
+                response.status = 403
+                return {}
             baseconfig = Kbaseconfig()
             result = baseconfig.enable_host(name)
             response.status = 200
@@ -340,6 +388,9 @@ class Kweb():
 
         @app.route("/hosts/<name>/disable", method='POST')
         def hostdisable(name):
+            if readonly:
+                response.status = 403
+                return {}
             baseconfig = Kbaseconfig()
             result = baseconfig.disable_host(name)
             response.status = 200
@@ -347,6 +398,9 @@ class Kweb():
 
         @app.route("/hosts/<name>/switch", method='POST')
         def hostswitch(name):
+            if readonly:
+                response.status = 403
+                return {}
             baseconfig = Kbaseconfig()
             result = baseconfig.switch_host(name)
             response.status = 200
@@ -363,6 +417,9 @@ class Kweb():
 
         @app.route("/snapshots/<name>/revert", method='POST')
         def snapshotrevert(name):
+            if readonly:
+                response.status = 403
+                return {}
             data = request.json or request.forms
             if data is None:
                 response.status = 400
@@ -380,6 +437,9 @@ class Kweb():
 
         @app.route("/snapshots/<name>", method='DELETE')
         def snapshotdelete(name):
+            if readonly:
+                response.status = 403
+                return {}
             data = request.json or request.forms
             if data is None:
                 response.status = 400
@@ -396,6 +456,9 @@ class Kweb():
 
         @app.route("/snapshots/<name>", method='POST')
         def snapshotcreate(name):
+            if readonly:
+                response.status = 403
+                return {}
             data = request.json or request.forms
             if data is None:
                 response.status = 400
@@ -413,6 +476,9 @@ class Kweb():
 
         @app.route("/plan/<plan>/start", method='POST')
         def planstart(plan):
+            if readonly:
+                response.status = 403
+                return {}
             config = Kconfig()
             result = config.start_plan(plan)
             response.status = 200
@@ -420,6 +486,9 @@ class Kweb():
 
         @app.route("/plan/<plan>/stop", method='POST')
         def planstop(plan):
+            if readonly:
+                response.status = 403
+                return {}
             data = request.json or request.forms
             if data is None:
                 response.status = 400
@@ -432,6 +501,9 @@ class Kweb():
 
         @app.route("/plans/<plan>", method='DELETE')
         def plandelete(plan):
+            if readonly:
+                response.status = 403
+                return {}
             config = Kconfig()
             result = config.delete_plan(plan)
             response.status = 200
@@ -439,6 +511,9 @@ class Kweb():
 
         @app.route("/plans", method='POST')
         def plancreate():
+            if readonly:
+                response.status = 403
+                return {}
             data = request.json or request.forms
             if data is None:
                 response.status = 400
@@ -468,7 +543,7 @@ class Kweb():
             config = Kconfig()
             cont = Kcontainerconfig(config).cont
             containers = cont.list_containers()
-            return {'containers': containers}
+            return {'containers': containers, 'readonly': readonly}
 
         @app.route('/containersindex')
         @view('containers.html')
@@ -489,7 +564,7 @@ class Kweb():
             config = Kconfig()
             k = config.k
             networks = k.list_networks()
-            return {'networks': networks}
+            return {'networks': networks, 'readonly': readonly}
 
         @app.route('/networksindex')
         @view('networks.html')
@@ -516,7 +591,7 @@ class Kweb():
             for pool in k.list_pools():
                 poolpath = k.get_pool_path(pool)
                 pools.append([pool, poolpath])
-            return {'pools': pools}
+            return {'pools': pools, 'readonly': readonly}
 
         @app.route('/poolsindex')
         @view('pools.html')
@@ -545,7 +620,7 @@ class Kweb():
             for repo in repoinfo:
                 url = repoinfo[repo]
                 repos.append([repo, url])
-            return {'repos': repos}
+            return {'repos': repos, 'readonly': readonly}
 
         @app.route('/repos')
         @view('repos.html')
@@ -586,7 +661,7 @@ class Kweb():
                 description = product.get('description', 'N/A')
                 numvms = product.get('numvms', 'N/A')
                 products.append([repo, group, name, description, numvms])
-            return {'products': products}
+            return {'products': products, 'readonly': readonly}
 
         @app.route('/productsindex')
         @view('products.html')
@@ -607,6 +682,9 @@ class Kweb():
 
         @app.route("/products", method='POST')
         def productcreate():
+            if readonly:
+                response.status = 403
+                return {}
             data = request.json or request.forms
             if data is None:
                 response.status = 400
@@ -670,6 +748,9 @@ class Kweb():
 
         @app.route("/kubes", method='POST')
         def kubecreate():
+            if readonly:
+                response.status = 403
+                return {}
             data = request.json or request.forms
             if data is None:
                 response.status = 400
@@ -754,7 +835,7 @@ class Kweb():
                     clients.append([client, _type, enabled, 'X'])
                 else:
                     clients.append([client, _type, enabled, ''])
-            return {'clients': clients}
+            return {'clients': clients, 'readonly': readonly}
 
         @app.route('/hostsindex')
         @view('hosts.html')
@@ -771,7 +852,7 @@ class Kweb():
         @view('planstable.html')
         def planstable():
             config = Kconfig()
-            return {'plans': config.list_plans()}
+            return {'plans': config.list_plans(), 'readonly': readonly}
 
         @app.route('/plansindex')
         @view('plans.html')
@@ -790,7 +871,7 @@ class Kweb():
         def kubestable():
             config = Kconfig()
             kubes = config.list_kubes()
-            return {'kubes': kubes}
+            return {'kubes': kubes, 'readonly': readonly}
 
         @app.route('/kubesindex')
         @view('kubes.html')
@@ -800,6 +881,9 @@ class Kweb():
 
         @app.route("/container/<name>/start", method='POST')
         def containerstart(name):
+            if readonly:
+                response.status = 403
+                return {}
             config = Kconfig()
             cont = Kcontainerconfig(config).cont
             result = cont.start_container(name)
@@ -808,6 +892,9 @@ class Kweb():
 
         @app.route("/containers/<name>/stop", method='POST')
         def containerstop(name):
+            if readonly:
+                response.status = 403
+                return {}
             config = Kconfig()
             cont = Kcontainerconfig(config).cont
             result = cont.stop_container(name)
@@ -816,6 +903,9 @@ class Kweb():
 
         @app.route("/container/<name>/delete", method='DELETE')
         def containerdelete(name):
+            if readonly:
+                response.status = 403
+                return {}
             config = Kconfig()
             cont = Kcontainerconfig(config).cont
             result = cont.delete_container(name)
@@ -824,6 +914,9 @@ class Kweb():
 
         @app.route("/containers", method='POST')
         def containercreate():
+            if readonly:
+                response.status = 403
+                return {}
             data = request.json or request.forms
             if data is None:
                 response.status = 400
@@ -863,7 +956,7 @@ class Kweb():
             config = Kconfig()
             k = config.k
             images = k.volumes()
-            return {'images': images}
+            return {'images': images, 'readonly': readonly}
 
         @app.route('/imagesindex')
         @view('images.html')
@@ -881,6 +974,9 @@ class Kweb():
 
         @app.route("/images", method='POST')
         def imagecreate():
+            if readonly:
+                response.status = 403
+                return {}
             data = request.json or request.forms
             if data is None:
                 response.status = 400
@@ -920,7 +1016,7 @@ class Kweb():
             config = Kconfig()
             k = config.k
             isos = k.volumes(iso=True)
-            return {'isos': isos}
+            return {'isos': isos, 'readonly': readonly}
 
         @app.route('/isosindex')
         @view('isos.html')
@@ -939,7 +1035,7 @@ class Kweb():
         def containerprofilestable():
             baseconfig = Kbaseconfig()
             profiles = baseconfig.list_containerprofiles()
-            return {'profiles': profiles}
+            return {'profiles': profiles, 'readonly': readonly}
 
         @app.route('/containerprofilesindex')
         @view('containerprofiles.html')

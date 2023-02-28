@@ -9,7 +9,9 @@
             <tr>
                 <td>{{ image }}</td>
                 <td>
+                {% if not readonly %}
                     <button type="button" class="btn btn-default" id="create" onclick="vmcreate('', '{{ image }}');"><span data-toggle="tooltip" title="Create Vm from Image" class="glyphicon glyphicon-shopping-cart"></span></button><p>
+                {% endif %}
                 </td>
             </tr>
             {% endfor %} 

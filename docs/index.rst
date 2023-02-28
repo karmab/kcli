@@ -837,6 +837,8 @@ Launch the following command and access your machine at port 8000:
 
    kweb
 
+The command supports a flag ``--readonly`` to make the web read only.
+
 Calling web endpoints through REST
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

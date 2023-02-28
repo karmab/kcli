@@ -16,7 +16,9 @@
                 <td>{{ networks[network]['cidr'] }}</td>
                 <td>{{ networks[network]['dhcp'] }}</td>
                 <td>{{ networks[network]['mode'] }}</td>
+                {% if not readonly %}
                 <td onclick="networkdelete('{{ network }}');"><span class="glyphicon glyphicon-trash"></span> Delete</td>
+                {% endif %}
             </tr>
             {% endfor %} 
         </tbody>

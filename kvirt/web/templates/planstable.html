@@ -16,11 +16,13 @@
                     <span class="caret"></span>
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                        {% if not readonly %}
                         <li onclick="planstart('{{ plan[0] }}');"><span class="glyphicon glyphicon-play green" data-toggle="tooltip" title="Start Plan"></span> Start</li>
                         <li class="divider"></li>
                         <li onclick="planstop('{{ plan[0] }}');"><span class="glyphicon glyphicon-stop" data-toggle="tooltip" title="Stop Plan"></span> Stop</li>
                         <li class="divider"></li>
                         <li onclick="plandelete('{{ plan[0] }}');"><span class="glyphicon glyphicon-trash red" data-toggle="tooltip" title="Delete Plan"></span> Delete</li>
+                        {% endif %}
                     </ul></div>
                 </td>
             </tr>

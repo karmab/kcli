@@ -10,7 +10,9 @@
             <tr>
                 <td>{{ pool[0] }}</td>
                 <td>{{ pool[1] }}</td>
+                {% if not readonly %}
                 <td onclick="pooldelete('{{ pool[0] }}');"><span class="glyphicon glyphicon-trash"></span> Delete</td>
+                {% endif %}
             </tr>
             {% endfor %} 
         </tbody>
