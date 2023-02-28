@@ -90,5 +90,6 @@
             <li><a href="https://kcli.readthedocs.io">Documentation</a></li>
         </ul>
         <p class="navbar-text navbar-right">Current Client: {{ client }}</p>
+{% if readonly %}<p class="navbar-text navbar-right">Running in readonly mode</p>{% endif %}
     </div>
     </nav>
