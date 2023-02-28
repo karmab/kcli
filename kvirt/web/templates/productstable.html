@@ -17,7 +17,9 @@
                 <td>{{ product[3] }}</td>
                 <td>{{ product[4] }}</td>
                 <td>
+                    {% if not readonly %}
                     <a href="/productcreate/{{ product[2]) }}"><span data-toggle="tooltip" title="Create Product" class="glyphicon glyphicon-shopping-cart"></span></a><p>
+                    {% endif %}
                 </td>
             </tr>
             {% endfor %} 

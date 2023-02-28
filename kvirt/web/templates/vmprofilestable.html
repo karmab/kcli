@@ -29,7 +29,9 @@
                 <td>{{ profile[9] }}</td>
                 <td>{{ profile[10] }}</td>
                 <td>
+                    {% if not readonly %}
                     <button type="button" class="btn btn-default" id="create" onclick="vmcreate('', '{{ profile[0] }}');"><span data-toggle="tooltip" title="Create Vm from Profile" class="glyphicon glyphicon-shopping-cart"></span></button><p>
+                    {% endif %}
                 </td>
             </tr>
             {% endfor %} 

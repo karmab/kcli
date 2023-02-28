@@ -17,57 +17,57 @@
             <li class="dropdown">
                 <a data-toggle="dropdown" class="dropdown-toggle" href="#">Vms <b class="caret"></b></a>
                 <ul role="menu" class="dropdown-menu">
-                    <li><a href="/vmsindex">List</a></li>
-                    <li><a href="/vmprofilesindex">Profiles</a></li>
-                    <li><a href="/vmcreateform">Create</a></li>
+                     <li><a href="/vmsindex">List</a></li>
+                     <li><a href="/vmprofilesindex">Profiles</a></li>
+{% if not readonly %}<li><a href="/vmcreateform">Create</a></li>{% endif %}
                 </ul>
             </li>
             <li class="dropdown">
                 <a data-toggle="dropdown" class="dropdown-toggle" href="#">Plans <b class="caret"></b></a>
                 <ul role="menu" class="dropdown-menu">
-                    <li><a href="/plansindex">List Plans</a></li>
-                    <li><a href="/plancreateform">Create Plan</a></li>
+                     <li><a href="/plansindex">List Plans</a></li>
+{% if not readonly %}<li><a href="/plancreateform">Create Plan</a></li>{% endif %}
                 </ul>
             </li>
             <li class="dropdown">
                 <a data-toggle="dropdown" class="dropdown-toggle" href="#">Clusters <b class="caret"></b></a>
                 <ul role="menu" class="dropdown-menu">
-                    <li><a href="/kubesindex">List Clusters</a></li>
-                    <li><a href="/kubecreateform/generic">Create Generic Cluster</a></li>
-                    <li><a href="/kubecreateform/k3s">Create K3s Cluster</a></li>
-                    <li><a href="/kubecreateform/kind">Create Kind Cluster</a></li>
-                    <li><a href="/kubecreateform/openshift">Create Openshift Cluster</a></li>
-                    <li><a href="/kubecreateform/hypershift">Create Hypershift Cluster</a></li>
-                    <li><a href="/kubecreateform/microshift">Create Microshift Cluster</a></li>
+                     <li><a href="/kubesindex">List Clusters</a></li>
+{% if not readonly %}<li><a href="/kubecreateform/generic">Create Generic Cluster</a></li>{% endif %}
+{% if not readonly %}<li><a href="/kubecreateform/k3s">Create K3s Cluster</a></li>{% endif %}
+{% if not readonly %}<li><a href="/kubecreateform/kind">Create Kind Cluster</a></li>{% endif %}
+{% if not readonly %}<li><a href="/kubecreateform/openshift">Create Openshift Cluster</a></li>{% endif %}
+{% if not readonly %}<li><a href="/kubecreateform/hypershift">Create Hypershift Cluster</a></li>{% endif %}
+{% if not readonly %}<li><a href="/kubecreateform/microshift">Create Microshift Cluster</a></li>{% endif %}
                 </ul>
             </li>
             <li class="dropdown">
                 <a data-toggle="dropdown" class="dropdown-toggle" href="#">Pools <b class="caret"></b></a>
                 <ul role="menu" class="dropdown-menu">
-                    <li><a href="/poolsindex">List Pools</a></li>
-                    <li><a href="/poolcreateform">Create Pool</a></li>
+                     <li><a href="/poolsindex">List Pools</a></li>
+{% if not readonly %}<li><a href="/poolcreateform">Create Pool</a></li>{% endif %}
                 </ul>
             </li>
             <li class="dropdown">
                 <a data-toggle="dropdown" class="dropdown-toggle" href="#">Networks <b class="caret"></b></a>
                 <ul role="menu" class="dropdown-menu">
-                    <li><a href="/networksindex">List Networks</a></li>
-                    <li><a href="/networkcreateform">Create Network</a></li>
+                     <li><a href="/networksindex">List Networks</a></li>
+{% if not readonly %}<li><a href="/networkcreateform">Create Network</a></li>{% endif %}
                 </ul>
             </li>
             <li class="dropdown">
                 <a data-toggle="dropdown" class="dropdown-toggle" href="#">Containers <b class="caret"></b></a>
                 <ul role="menu" class="dropdown-menu">
-                    <li><a href="/containersindex">List Containers</a></li>
-                    <li><a href="/containerprofilesindex">Profiles</a></li>
-                    <li><a href="/containercreateform">Create Container</a></li>
+                     <li><a href="/containersindex">List Containers</a></li>
+                     <li><a href="/containerprofilesindex">Profiles</a></li>
+{% if not readonly %}<li><a href="/containercreateform">Create Container</a></li>{% endif %}
                 </ul>
             </li>
             <li class="dropdown">
                 <a data-toggle="dropdown" class="dropdown-toggle" href="#">Repos <b class="caret"></b></a>
                 <ul role="menu" class="dropdown-menu">
-                    <li><a href="/repos">List Repos</a></li>
-                    <li><a href="/repocreateform">Create Repo</a></li>
+                     <li><a href="/repos">List Repos</a></li>
+{% if not readonly %}<li><a href="/repocreateform">Create Repo</a></li>{% endif %}
                 </ul>
             </li>
             <li class="dropdown">
@@ -79,10 +79,10 @@
             <li class="dropdown">
                 <a data-toggle="dropdown" class="dropdown-toggle" href="#">Clients <b class="caret"></b></a>
                 <ul role="menu" class="dropdown-menu">
-                    <li ><a href="/hostsindex">List Clients</a></li>
-                    <li ><a href="/imagesindex">List Images</a></li>
-                    <li ><a href="/isosindex">List Isos</a></li>
-                    <li ><a href="/imagecreateform">Download Images</a></li>
+                     <li ><a href="/hostsindex">List Clients</a></li>
+                     <li ><a href="/imagesindex">List Images</a></li>
+                     <li ><a href="/isosindex">List Isos</a></li>
+{% if not readonly %}<li ><a href="/imagecreateform">Download Images</a></li>{% endif %}
                 </ul>
             </li>
         </ul>

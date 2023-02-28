@@ -11,6 +11,7 @@
                 <td>{{ repo[0] }}</td>
                 <td>{{ repo[1] }}</td>
                <td>
+                   {% if not readonly %}
                     <div class="dropdown">
                         <button class="btn btn-default dropdown-toggle" type="button" id="actions" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"><font size="1">Actions</font>
                     <span class="caret"></span>
@@ -20,6 +21,7 @@
                         <li class="divider"></li>
                 		<li onclick="repoupdate('{{ repo[0] }}');"><span class="glyphicon glyphicon-cd blue"></span> Update</li>
                     </ul></div>
+                    {% endif %}
                 </td>
             </tr>
             {% endfor %} 

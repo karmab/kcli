@@ -18,11 +18,13 @@
                     <span class="caret"></span>
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                        {% if not readonly %}
                         <li onclick="planstart('{{ kube }}');"><span class="glyphicon glyphicon-play green" data-toggle="tooltip" title="Start Kube"></span> Start</li>
                         <li class="divider"></li>
                         <li onclick="planstop('{{ kube }}');"><span class="glyphicon glyphicon-stop" data-toggle="tooltip" title="Stop Kube"></span> Stop</li>
                         <li class="divider"></li>
                         <li onclick="plandelete('{{ kube }}');"><span class="glyphicon glyphicon-trash red" data-toggle="tooltip" title="Delete Kube"></span> Delete</li>
+                        {% endif %}
                     </ul></div>
                 </td>
             </tr>

@@ -24,11 +24,13 @@
                     <span class="caret"></span>
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                        {% if not readonly %}
                         <li onclick="containerstart('{{ container[0] }}');"><span class="glyphicon glyphicon-play"></span> Start</li>
                         <li class="divider"></li>
                         <li onclick="containerstop('{{ container[0] }}');"><span class="glyphicon glyphicon-stop"></span> Stop</li>
                         <li class="divider"></li>
                         <li onclick="containerdelete('{{ container[0] }}');"><span class="glyphicon glyphicon-trash"></span> Delete</li>
+                        {% endif %}
                     </ul></div>
                 </td>
             </tr>

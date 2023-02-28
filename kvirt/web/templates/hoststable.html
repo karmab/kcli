@@ -20,11 +20,13 @@
                     <span class="caret"></span>
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                        {% if not readonly %}
                         <li onclick="hostenable('{{ client[0] }}');"><span class="glyphicon glyphicon-ok-circle green" data-toggle="tooltip" title="Enable"></span> Enable</li>
                         <li class="divider"></li>
                         <li onclick="hostdisable('{{ client[0] }}');"><span class="glyphicon glyphicon-remove-circle" data-toggle="tooltip" title="Disable"></span> Disable</li>
                         <li class="divider"></li>
                         <li onclick="hostswitch('{{ client[0] }}');"><span class="glyphicon glyphicon-heart-empty" data-toggle="tooltip" title="Switch"></span> Switch</li>
+                        {% endif %}
                     </ul></div>
                 </td>
             </tr>
