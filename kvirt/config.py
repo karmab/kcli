@@ -721,6 +721,11 @@ class Kconfig(Kbaseconfig):
         securitygroups = profile.get('securitygroups', default_securitygroups)
         numcpus = profile.get('numcpus', default_numcpus)
         memory = profile.get('memory', default_memory)
+        if isinstance(memory, str) and (memory.lower().endswith('gb') or memory.lower().endswith('g')):
+            try:
+                memory = int(memory.lower('gb', '').replace('g', '')) * 1024
+            except Exception as e:
+                error(f"Couldnt convert memory. Hit {e}")
         pool = profile.get('pool', default_pool)
         disks = profile.get('disks', default_disks)
         disksize = profile.get('disksize', default_disksize)

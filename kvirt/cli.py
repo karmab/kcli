@@ -1564,8 +1564,17 @@ def create_vm(args):
     for key in overrides:
         if key in vars(config) and vars(config)[key] is not None and type(overrides[key]) != type(vars(config)[key]):
             key_type = str(type(vars(config)[key]))
-            error(f"The provided parameter {key} has a wrong type, it should be {key_type}")
-            sys.exit(1)
+            if key == 'memory' and isinstance(overrides[key], str) and\
+               (overrides[key].lower().endswith('gb') or overrides[key].lower().endswith('g')):
+                memory = overrides['memory'].lower().replace('gb', '').replace('g', '')
+                try:
+                    overrides['memory'] = int(memory) * 1024
+                except:
+                    error("Couldnt convert memory")
+                    sys.exit(1)
+            else:
+                error(f"The provided parameter {key} has a wrong type, it should be {key_type}")
+                sys.exit(1)
     if 'name' in overrides:
         name = overrides['name']
     if name is None:
