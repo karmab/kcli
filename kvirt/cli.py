@@ -741,6 +741,15 @@ def _parse_vms_list(_list):
     print(vmstable)
 
 
+def _parse_cluster_status(status):
+    if status is None or not status:
+        return
+    for line in status['nodes']:
+        print(line)
+    for line in status['version']:
+        print(line)
+
+
 def list_vm(args):
     """List vms"""
     output = args.global_output or args.output
@@ -2270,8 +2279,9 @@ def info_generic_kube(args):
     if args.cluster is not None:
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
-        _list = config.info_specific_kube(args.cluster)
-        _parse_vms_list(_list)
+        data = config.info_specific_kube(args.cluster, status=args.status)
+        _parse_vms_list(data['vms'])
+        _parse_cluster_status(data.get('status'))
     else:
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
         baseconfig.info_kube_generic(quiet=True)
@@ -2282,8 +2292,9 @@ def info_kind_kube(args):
     if args.cluster is not None:
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
-        _list = config.info_specific_kube(args.cluster)
-        _parse_vms_list(_list)
+        data = config.info_specific_kube(args.cluster, status=args.status)
+        _parse_vms_list(data['vms'])
+        _parse_cluster_status(data.get('status'))
     else:
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
         baseconfig.info_kube_kind(quiet=True)
@@ -2294,8 +2305,9 @@ def info_microshift_kube(args):
     if args.cluster is not None:
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
-        _list = config.info_specific_kube(args.cluster)
-        _parse_vms_list(_list)
+        data = config.info_specific_kube(args.cluster, status=args.status)
+        _parse_vms_list(data['vms'])
+        _parse_cluster_status(data.get('status'))
     else:
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
         baseconfig.info_kube_microshift(quiet=True)
@@ -2306,8 +2318,9 @@ def info_k3s_kube(args):
     if args.cluster is not None:
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
-        _list = config.info_specific_kube(args.cluster)
-        _parse_vms_list(_list)
+        data = config.info_specific_kube(args.cluster, status=args.status)
+        _parse_vms_list(data['vms'])
+        _parse_cluster_status(data.get('status'))
     else:
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
         baseconfig.info_kube_k3s(quiet=True)
@@ -2318,8 +2331,9 @@ def info_hypershift_kube(args):
     if args.cluster is not None:
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
-        _list = config.info_specific_kube(args.cluster)
-        _parse_vms_list(_list)
+        data = config.info_specific_kube(args.cluster, status=args.status)
+        _parse_vms_list(data['vms'])
+        _parse_cluster_status(data.get('status'))
     else:
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
         baseconfig.info_kube_hypershift(quiet=True)
@@ -2330,8 +2344,9 @@ def info_openshift_kube(args):
     if args.cluster is not None:
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
-        _list = config.info_specific_kube(args.cluster)
-        _parse_vms_list(_list)
+        data = config.info_specific_kube(args.cluster, status=args.status)
+        _parse_vms_list(data['vms'])
+        _parse_cluster_status(data.get('status'))
     else:
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
         baseconfig.info_kube_openshift(quiet=True)
@@ -4432,34 +4447,40 @@ def cli():
     kubegenericinfo_desc = 'Info Generic Kube'
     kubegenericinfo_parser = kubeinfo_subparsers.add_parser('generic', description=kubegenericinfo_desc,
                                                             help=kubegenericinfo_desc, aliases=['kubeadm'])
+    kubegenericinfo_parser.add_argument('-s', '--status', action='store_true', help='Check status of cluster')
     kubegenericinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubegenericinfo_parser.set_defaults(func=info_generic_kube)
 
     kubekindinfo_desc = 'Info Kind Kube'
     kubekindinfo_parser = kubeinfo_subparsers.add_parser('kind', description=kubekindinfo_desc, help=kubekindinfo_desc)
+    kubekindinfo_parser.add_argument('-s', '--status', action='store_true', help='Check status of cluster')
     kubekindinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubekindinfo_parser.set_defaults(func=info_kind_kube)
 
     kubemicroshiftinfo_desc = 'Info Microshift Kube'
     kubemicroshiftinfo_parser = kubeinfo_subparsers.add_parser('microshift', description=kubemicroshiftinfo_desc,
                                                                help=kubemicroshiftinfo_desc)
+    kubemicroshiftinfo_parser.add_argument('-s', '--status', action='store_true', help='Check status of cluster')
     kubemicroshiftinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubemicroshiftinfo_parser.set_defaults(func=info_microshift_kube)
 
     kubek3sinfo_desc = 'Info K3s Kube'
     kubek3sinfo_parser = kubeinfo_subparsers.add_parser('k3s', description=kubek3sinfo_desc, help=kubek3sinfo_desc)
+    kubek3sinfo_parser.add_argument('-s', '--status', action='store_true', help='Check status of cluster')
     kubek3sinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubek3sinfo_parser.set_defaults(func=info_k3s_kube)
 
     kubehypershiftinfo_desc = 'Info Hypershift Kube'
     kubehypershiftinfo_parser = kubeinfo_subparsers.add_parser('hypershift', description=kubehypershiftinfo_desc,
                                                                help=kubehypershiftinfo_desc)
+    kubehypershiftinfo_parser.add_argument('-s', '--status', action='store_true', help='Check status of cluster')
     kubehypershiftinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubehypershiftinfo_parser.set_defaults(func=info_hypershift_kube)
 
     kubeopenshiftinfo_desc = 'Info Openshift Kube'
     kubeopenshiftinfo_parser = kubeinfo_subparsers.add_parser('openshift', description=kubeopenshiftinfo_desc,
                                                               help=kubeopenshiftinfo_desc)
+    kubeopenshiftinfo_parser.add_argument('-s', '--status', action='store_true', help='Check status of cluster')
     kubeopenshiftinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubeopenshiftinfo_parser.set_defaults(func=info_openshift_kube)
 

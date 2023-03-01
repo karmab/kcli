@@ -1,0 +1,12 @@
+{% extends "layout.html" %}
+{% block content %}
+
+{% for line in nodes %}
+{{ line }}<p>
+{% endfor %}
+<b>
+{% for line in version %}
+{{ line }}<p>
+{% endfor %}
+
+{% endblock %}

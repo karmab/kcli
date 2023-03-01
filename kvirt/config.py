@@ -3366,13 +3366,30 @@ class Kconfig(Kbaseconfig):
                     updated_files.append(destination)
         return updated_files
 
-    def info_specific_kube(self, cluster):
+    def info_specific_kube(self, cluster, status=False):
         pprint(f"Providing information about running cluster {cluster}")
         k = self.k
-        results = []
+        results = {}
+        vms = []
         for vm in k.list():
             if vm.get('kube', '') == cluster:
-                results.append(vm)
+                vms.append(vm)
+        results = {'vms': vms}
+        if status:
+            clusterdir = os.path.expanduser(f'~/.kcli/clusters/{cluster}')
+            kubeconfig = f'{clusterdir}/auth/kubeconfig'
+            if not os.path.exists(kubeconfig):
+                warning(f"Couldnt gather status yet for cluster {cluster}")
+                results['status'] = {}
+            else:
+                openshift = os.path.exists(f'{clusterdir}/worker.ign')
+                if openshift:
+                    nodes = os.popen(f'KUBECONFIG={kubeconfig} oc get nodes').readlines()
+                    version = os.popen(f'KUBECONFIG={kubeconfig} oc get clusterversion').readlines()
+                else:
+                    nodes = os.popen(f'KUBECONFIG={kubeconfig} kubectl get nodes').readlines()
+                    version = os.popen(f'KUBECONFIG={kubeconfig} kubectl version').readlines()
+                results['status'] = {'nodes': nodes, 'version': version}
         return results
 
     def info_specific_plan(self, plan):

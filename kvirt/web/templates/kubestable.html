@@ -18,6 +18,8 @@
                     <span class="caret"></span>
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                        <li onclick="location.href='/kubeinfo/{{ kube }}'" target="_blank"><span class="glyphicon glyphicon-edit" data-toggle="tooltip" title="Status Kube"></span>Status</li>
+                        <li class="divider"></li>
                         {% if not readonly %}
                         <li onclick="planstart('{{ kube }}');"><span class="glyphicon glyphicon-play green" data-toggle="tooltip" title="Start Kube"></span> Start</li>
                         <li class="divider"></li>

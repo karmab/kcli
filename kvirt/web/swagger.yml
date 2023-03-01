@@ -67,6 +67,16 @@ components:
           type: string
         user:
           type: string
+    Kubestatus:
+      type: object
+      properties:
+        nodes:
+          type: string
+        version:
+          type: string
+      example:
+          nodes: mynodes
+          version: myversion
 paths:
   /containers:
     get:
@@ -486,6 +496,26 @@ paths:
                     type: array
                     items:
                       type: string
+  /kubes/{name}:
+    get:
+      description: Returns status of a given cluster
+      parameters:
+      - name: name
+        in: path
+        description: Cluster name
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Successfully returned status of given cluster
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Kubestatus'
+              example:
+                nodes: info-about-nodes
+                version: info-about-version
   /networks:
     get:
       description: Returns list of networks
