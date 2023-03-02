@@ -1,0 +1,5 @@
+{
+  "management": {
+    "cpuset": "{{ sno_cpuset }}"
+  }
+}

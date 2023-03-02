@@ -497,6 +497,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'sno_wait': False,
             'sno_localhost_fix': False,
             'sno_disable_nics': [],
+            'sno_du': False,
+            'sno_cpuset': None,
             'notify': False,
             'async': False,
             'kubevirt_api_service': False,
@@ -579,7 +581,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if not data.get('coredns'):
         warning("You will need to provide DNS records for api and ingress on your own")
     mdns = data.get('mdns')
-    sno_localhost_fix = data.get('sno_localhost_fix', False)
+    sno_localhost_fix = data.get('sno_localhost_fix')
+    sno_du = data.get('sno_du')
+    sno_cpuset = data.get('sno_cpuset')
     kubevirt_api_service, kubevirt_api_service_node_port = False, False
     kubevirt_ignore_node_port = data['kubevirt_ignore_node_port']
     version = data.get('version')
@@ -1151,6 +1155,17 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             keepalivedconf_data = config.process_inputfile(cluster, f"{plandir}/keepalived.conf", overrides=data)
             sno_files.extend([{"path": "/etc/kubernetes/manifests/keepalived.yml", "data": keepalived_data},
                               {"path": "/etc/kubernetes/keepalived.conf.template", "data": keepalivedconf_data}])
+        if sno_du:
+            if sno_cpuset is None:
+                warning("Skipping DU manifests since sno_cpuset is not defined")
+            else:
+                pprint("Injecting DU manifests")
+                partitioning_data = config.process_inputfile(cluster, f"{plandir}/01-workload-partitioning",
+                                                             overrides=data)
+                pinning_data = config.process_inputfile(cluster, f"{plandir}/openshift-workload-pinning",
+                                                        overrides=data)
+                sno_files.extend([{"path": "/etc/crio/crio.conf.d/01-workload-partitioning", "data": partitioning_data},
+                                  {"path": "/etc/kubernetes/openshift-workload-pinning", "data": pinning_data}])
         if sno_files:
             rendered = config.process_inputfile(cluster, f"{plandir}/99-sno.yaml", overrides={'files': sno_files})
             with open(f"{clusterdir}/openshift/99-sno.yaml", 'w') as f:
