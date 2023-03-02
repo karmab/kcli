@@ -1925,3 +1925,25 @@ class Kbaseconfig:
                     sys.exit(1)
                 self.update_confpool(confpool, {'name_reservations': name_reservations})
                 return free_name
+
+    def info_specific_kube(self, cluster):
+        pprint(f"Providing information about cluster {cluster}")
+        clusterdir = os.path.expanduser(f'~/.kcli/clusters/{cluster}')
+        kubeconfig = f'{clusterdir}/auth/kubeconfig'
+        if not os.path.exists(kubeconfig):
+            if 'KUBECONFIG' in os.environ:
+                kubeconfig = os.environ['KUBECONFIG']
+                warning(f"{kubeconfig} not found...Using KUBECONFIG instead")
+            else:
+                kubeconfig = os.environ['KUBECONFIG']
+                warning("KUBECONFIG not set...Using .kube/config instead")
+                kubeconfig = os.path.expanduser('~/.kube/config')
+        openshift = os.path.exists(f'{clusterdir}/worker.ign')
+        if openshift:
+            nodes = os.popen(f'KUBECONFIG={kubeconfig} oc get nodes').readlines()
+            version = os.popen(f'KUBECONFIG={kubeconfig} oc get clusterversion').readlines()
+        else:
+            nodes = os.popen(f'KUBECONFIG={kubeconfig} kubectl get nodes').readlines()
+            version = os.popen(f'KUBECONFIG={kubeconfig} kubectl version').readlines()
+        results = {'nodes': nodes, 'version': version}
+        return results

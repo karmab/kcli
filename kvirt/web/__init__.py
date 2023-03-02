@@ -876,31 +876,19 @@ class Kweb():
         @app.route('/kubes/<kube>')
         def kubeinfo(kube):
             config = Kconfig()
-            kubes = config.list_kubes()
-            if kube not in kubes:
-                return {}
-            else:
+            data = {}
+            if kube in config.list_kubes():
                 data = config.info_specific_kube(kube, status=True)
-                if 'status' not in data or not data['status']:
-                    return {}
-                else:
-                    status = data['status']
-                    return {'nodes': status['nodes'], 'version': status['version']}
+            return data
 
         @app.route('/kubeinfo/<kube>')
         @view('kubeinfo.html')
         def kubeinfoview(kube):
             config = Kconfig()
-            kubes = config.list_kubes()
-            if kube not in kubes:
-                return {}
-            else:
+            data = {}
+            if kube in config.list_kubes():
                 data = config.info_specific_kube(kube, status=True)
-                if 'status' not in data or not data['status']:
-                    return {}
-                else:
-                    status = data['status']
-                    return {'nodes': status['nodes'], 'version': status['version']}
+            return data
 
         @app.route('/kubesindex')
         @view('kubes.html')
