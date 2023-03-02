@@ -390,6 +390,8 @@ def handle_baremetal_iso_sno(config, plandir, cluster, data, baremetal_hosts=[],
     host_ip = os.popen(ip_cmd).read().strip()
     if baremetal_web_port != 80:
         host_ip += f":{baremetal_web_port}"
+    if baremetal_web_subdir is not None:
+        iso_name = f'{baremetal_web_subdir}/{iso_name}'
     return f'http://{host_ip}/{iso_name}'
 
 
