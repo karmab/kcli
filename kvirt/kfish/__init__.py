@@ -2,21 +2,14 @@ from urllib.parse import urlparse
 from urllib.request import urlopen, Request
 import base64
 import json
-import os
 import ssl
 import sys
-from uuid import UUID
 
 
 class Redfish(object):
     def __init__(self, url, user='root', password='calvin', insecure=True, model='dell', debug=False):
         self.debug = debug
         self.model = model.lower()
-        try:
-            UUID(os.path.basename(url))
-            self.model = 'virtual'
-        except:
-            pass
         url = url.replace('idrac-virtualmedia', 'https').replace('ilo5-virtualmedia', 'https')
         if '://' not in url:
             if self.model in ['hp', 'hpe', 'supermicro']:
