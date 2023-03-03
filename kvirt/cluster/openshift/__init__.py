@@ -136,6 +136,8 @@ def offline_image(version='stable', tag='4.12', pull_secret='openshift_pull.json
 
 
 def same_release_images(version='stable', tag='4.12', pull_secret='openshift_pull.json', path='.'):
+    if not os.path.exists(f'{path}/openshift-install'):
+        return False
     try:
         existing = os.popen(f'{path}/openshift-install version').readlines()[2].split(" ")[2].strip()
     except:
