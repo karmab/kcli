@@ -481,11 +481,12 @@ def download_image(args):
     url = args.url
     size = args.size
     arch = args.arch
+    rhcos_installer = args.installer
     kvm_openstack = not args.qemu
     update_profile = not args.skip_profile
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     result = config.handle_host(pool=pool, image=image, download=True, cmd=cmd, url=url, update_profile=update_profile,
-                                size=size, arch=arch, kvm_openstack=kvm_openstack)
+                                size=size, arch=arch, kvm_openstack=kvm_openstack, rhcos_installer=rhcos_installer)
     if result['result'] == 'success':
         sys.exit(0)
     else:
@@ -4253,7 +4254,10 @@ def cli():
     imagedownload_parser.add_argument('-a', '--arch', help='Target arch', choices=['x86_64', 'aarch64'],
                                       default='x86_64')
     imagedownload_parser.add_argument('-c', '--cmd', help='Extra command to launch after downloading', metavar='CMD')
-    imagedownload_parser.add_argument('-q', '--qemu', help='Use qemu variant (kvm specific)', action='store_true')
+    imagedownload_parser.add_argument('-i', '--installer', help='Get rhcos url from openshift-installer',
+                                      action='store_true')
+    imagedownload_parser.add_argument('-q', '--qemu', help='Use qemu variant for rhcos (kvm specific)',
+                                      action='store_true')
     imagedownload_parser.add_argument('-p', '--pool', help='Pool to use. Defaults to default', metavar='POOL')
     imagedownload_parser.add_argument('-u', '--url', help='Url to use', metavar='URL', type=valid_url)
     imagedownload_parser.add_argument('--size', help='Disk size (kubevirt specific)', type=int, metavar='SIZE')

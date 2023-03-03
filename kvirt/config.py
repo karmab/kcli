@@ -2453,8 +2453,8 @@ class Kconfig(Kbaseconfig):
         return returndata
 
     def handle_host(self, pool=None, image=None, switch=None, download=False,
-                    url=None, cmd=None, sync=False, update_profile=False, commit=None, size=None, arch='x86_64',
-                    kvm_openstack=True):
+                    url=None, cmd=None, sync=False, update_profile=False, size=None, arch='x86_64',
+                    kvm_openstack=True, rhcos_commit=None, rhcos_installer=False):
         """
 
         :param pool:
@@ -2484,8 +2484,11 @@ class Kconfig(Kbaseconfig):
                     url = IMAGES[image]
                     image_type = 'openstack' if kvm_openstack and self.type == 'kvm' else self.type
                     if 'rhcos' in image and not image.endswith('qcow2.gz'):
-                        if commit is not None:
-                            url = common.get_commit_rhcos(commit, _type=image_type)
+                        if rhcos_commit is not None:
+                            url = common.get_commit_rhcos(rhcos_commit, _type=image_type)
+                        elif rhcos_installer:
+                            os.environ['PATH'] += f':{os.getcwd()}'
+                            url = common.get_installer_rhcos(_type=image_type, arch=arch)
                         else:
                             if arch != 'x86_64':
                                 url += f'-{arch}'
