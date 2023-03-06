@@ -26,8 +26,11 @@ firstboot_args='console=tty0 rd.neednet=1 {{ nics | join(" ") }} {{ extra_args|d
 {% set ip = net.get('ip') %}
 {% set netmask = net.get('netmask') or net.get('prefix') %}
 {% set gateway = net.get('gateway') %}
+{% if dns is not defined %}
+{% set dns = net.get('dns') or gateway %}
+{% endif %}
 {% if ip is defined and netmask is defined and gateway is defined %}
-firstboot_args="$firstboot_args ip={{ "[" + ip + "]" if ':' in ip else ip }}::{{ "[" + gateway + "]" if ':' in gateway else gateway }}:{{ netmask }}:{{ hostname|default("") }}:{{ nic }}:none nameserver={{ "[" + dns|default(gateway) + "]" if ':' in dns|default(gateway) else dns|default(gateway) }}"
+firstboot_args="$firstboot_args ip={{ "[" + ip + "]" if ':' in ip else ip }}::{{ "[" + gateway + "]" if ':' in gateway else gateway }}:{{ netmask }}:{{ hostname|default("") }}:{{ nic }}:none nameserver={{ "[" + dns + "]" if ':' in dns else dns }}"
 {% endif %}
 {% endfor %}
 
