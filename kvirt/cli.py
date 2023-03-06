@@ -2179,11 +2179,14 @@ def expose_cluster(args):
         plan = nameutils.get_random_name()
         pprint(f"Using {plan} as name of the plan")
     port = args.port
-    overrides = handle_parameters(args.param, args.paramfile)
-    with NamedTemporaryFile() as temp:
-        kubetype = overrides.get('type') or overrides.get('kubetype') or 'generic'
-        temp.write(f"{plan}:\n type: cluster\n kubetype: {kubetype}".encode())
-        temp.seek(0)
+    overrides = handle_parameters(args.param, None)
+    full_overrides = handle_parameters(args.param, args.paramfile)
+    kubetype = overrides.get('type') or overrides.get('kubetype') or 'generic'
+    pprint(f"Setting kubetype to {kubetype}")
+    data = {plan: {"type": "kube", "kubetype": kubetype}}
+    data.update(full_overrides)
+    with NamedTemporaryFile(mode='w+t') as temp:
+        yaml.dump(data, temp)
         inputfile = temp.name
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
