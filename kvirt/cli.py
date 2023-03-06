@@ -2185,6 +2185,9 @@ def expose_cluster(args):
     pprint(f"Setting kubetype to {kubetype}")
     data = {plan: {"type": "kube", "kubetype": kubetype}}
     data.update(full_overrides)
+    if kubetype in ['openshift', 'hypershift']:
+        data['sno_wait'] = True
+        data['async'] = True
     with NamedTemporaryFile(mode='w+t') as temp:
         yaml.dump(data, temp)
         inputfile = temp.name

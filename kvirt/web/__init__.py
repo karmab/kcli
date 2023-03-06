@@ -789,6 +789,9 @@ class Kweb():
                     result = {'result': 'failure', 'reason': "Specify an absolute path to an existing pull secret"}
                     response.status = 400
                     return result
+            if _type in ['openshift', 'hypershift']:
+                parameters['sno_wait'] = True
+                parameters['async'] = True
             if _type == 'generic':
                 thread = Thread(target=config.create_kube_generic, kwargs={'cluster': cluster, 'overrides': parameters})
             elif _type == 'openshift':
