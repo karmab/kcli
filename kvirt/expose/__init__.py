@@ -40,7 +40,7 @@ class Kexposer():
                     overrides = fileoverrides
         return overrides
 
-    def __init__(self, config, plan, inputfile, overrides={}, port=9000, pfmode=False):
+    def __init__(self, config, plan, inputfile, overrides={}, port=9000, pfmode=False, cluster=False):
         app = Bottle()
         basedir = f"{os.path.dirname(Bottle.run.__code__.co_filename)}/expose"
         view = functools.partial(jinja2_view, template_lookup=[f"{basedir}/templates"])
@@ -48,6 +48,7 @@ class Kexposer():
         self.plan = plan
         self.overrides = overrides
         self.pfmode = pfmode
+        self.cluster = cluster
         self.refresh_plans(verbose=True)
         self.inputfile = inputfile
 
@@ -112,7 +113,10 @@ class Kexposer():
                     if update:
                         result = currentconfig.plan(plan, inputfile=inputfile, overrides=overrides, update=True)
                     else:
-                        currentconfig.delete_plan(plan)
+                        if self.cluster:
+                            currentconfig.delete_kube(plan)
+                        else:
+                            currentconfig.delete_plan(plan)
                         result = currentconfig.plan(plan, inputfile=inputfile, overrides=overrides)
                 except Exception as e:
                     error = f'Hit issue when running plan: {str(e)}'
@@ -148,10 +152,18 @@ class Kexposer():
                 return {'vms': vms, 'plan': plan, 'client': currentconfig.client, 'creationdate': creationdate,
                         'owner': owner}
 
+        def _infocluster(plan):
+            currentconfig = self.config
+            data = currentconfig.info_specific_kube(plan)
+            return data
+
         @app.route("/infoplan/<plan>")
         @view('infoplan.html')
         def infoplan(plan):
-            return _infoplan(plan)
+            if self.cluster:
+                return _infocluster(plan)
+            else:
+                return _infoplan(plan)
 
         # API
 
@@ -204,7 +216,10 @@ class Kexposer():
                     if update:
                         result = currentconfig.plan(plan, inputfile=inputfile, overrides=overrides, update=True)
                     else:
-                        currentconfig.delete_plan(plan)
+                        if self.cluster:
+                            currentconfig.delete_kube(plan)
+                        else:
+                            currentconfig.delete_plan(plan)
                         result = currentconfig.plan(plan, inputfile=inputfile, overrides=overrides)
                 except Exception as e:
                     error = f'Hit issue when running plan: {str(e)}'
@@ -216,7 +231,10 @@ class Kexposer():
 
         @app.route("/expose/<plan>")
         def exposeplaninfo(plan):
-            return _infoplan(plan)
+            if self.cluster:
+                return _infocluster(plan)
+            else:
+                return _infoplan(plan)
 
         @app.route("/expose/<plan>", method=['DELETE'])
         def exposedelete(plan):
@@ -225,7 +243,10 @@ class Kexposer():
                 response.status = 400
                 return f'Invalid plan name {plan}'
             self.get_client(plan, currentconfig)
-            result = currentconfig.delete_plan(plan)
+            if self.cluster:
+                result = currentconfig.delete_kube(plan)
+            else:
+                result = currentconfig.delete_plan(plan)
             response.status = 200
             return result
 

@@ -2184,7 +2184,7 @@ def expose_cluster(args):
     kubetype = overrides.get('type') or overrides.get('kubetype') or 'generic'
     pprint(f"Setting kubetype to {kubetype}")
     data = {plan: {"type": "kube", "kubetype": kubetype}}
-    data.update(full_overrides)
+    data.update({'parameters': full_overrides})
     if kubetype in ['openshift', 'hypershift']:
         data['sno_wait'] = True
         data['async'] = True
@@ -2193,7 +2193,7 @@ def expose_cluster(args):
         inputfile = temp.name
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
-        config.expose_plan(plan, inputfile=inputfile, overrides=overrides, port=port, pfmode=args.pfmode)
+        config.expose_plan(plan, inputfile=inputfile, overrides=overrides, port=port, pfmode=args.pfmode, cluster=True)
 
 
 def expose_plan(args):

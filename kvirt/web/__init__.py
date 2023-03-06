@@ -881,7 +881,7 @@ class Kweb():
             config = Kconfig()
             data = {}
             if kube in config.list_kubes():
-                data = config.info_specific_kube(kube, status=True)
+                data = config.info_specific_kube(kube)
             return data
 
         @app.route('/kubeinfo/<kube>')
@@ -890,7 +890,7 @@ class Kweb():
             config = Kconfig()
             data = {}
             if kube in config.list_kubes():
-                data = config.info_specific_kube(kube, status=True)
+                data = config.info_specific_kube(kube)
             return data
 
         @app.route('/kubesindex')

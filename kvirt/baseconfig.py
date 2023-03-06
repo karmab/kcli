@@ -1939,11 +1939,16 @@ class Kbaseconfig:
                 warning("KUBECONFIG not set...Using .kube/config instead")
                 kubeconfig = os.path.expanduser('~/.kube/config')
         openshift = os.path.exists(f'{clusterdir}/worker.ign')
+        nodes = []
         if openshift:
-            nodes = os.popen(f'KUBECONFIG={kubeconfig} oc get nodes').readlines()
-            version = os.popen(f'KUBECONFIG={kubeconfig} oc get clusterversion').readlines()
+            nodes_command = f'KUBECONFIG={kubeconfig} oc get nodes --no-headers=true -o wide'
+            version = os.popen(f'KUBECONFIG={kubeconfig} oc get clusterversion --no-headers').read()
         else:
-            nodes = os.popen(f'KUBECONFIG={kubeconfig} kubectl get nodes').readlines()
-            version = os.popen(f'KUBECONFIG={kubeconfig} kubectl version').readlines()
+            nodes_command = f'KUBECONFIG={kubeconfig} kubectl get nodes --no-headers=true -o wide'
+            server_command = f'KUBECONFIG={kubeconfig} kubectl version -o yaml'
+            version = yaml.safe_load(os.popen(server_command).read())['serverVersion']['gitVersion']
+        for entry in os.popen(nodes_command).readlines():
+            node = [column.strip() for column in entry.split()[0:6]]
+            nodes.append(node)
         results = {'nodes': nodes, 'version': version}
         return results
