@@ -166,18 +166,6 @@ def get_rhcos_openstack_url():
     return f"{data['baseURI']}{data['images']['openstack']['path']}"
 
 
-def get_minimal_rhcos():
-    for line in os.popen('openshift-install version').readlines():
-        if 'built from commit' in line:
-            commit_id = line.replace('built from commit ', '').strip()
-            break
-    r = urlopen(f"https://raw.githubusercontent.com/openshift/installer/{commit_id}/data/data/rhcos.json")
-    r = str(r.read(), 'utf-8').strip()
-    data = json.loads(r)
-    ver = os.path.basename(data['images']['qemu']['path']).replace('-0-qemu.x86_64.qcow2.gz', '').replace('rhcos-', '')
-    return int(ver.replace('.', ''))
-
-
 def get_downstream_installer(devpreview=False, macosx=False, tag=None, debug=False, pull_secret='openshift_pull.json'):
     arch = 'arm64' if os.uname().machine == 'aarch64' else None
     repo = 'ocp-dev-preview' if devpreview else 'ocp'
@@ -490,7 +478,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'macosx': False,
             'fips': False,
             'apps': [],
-            'minimal': False,
             'dualstack': False,
             'kvm_forcestack': False,
             'kvm_openstack': True,
@@ -601,7 +588,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if os.path.exists('coreos-installer'):
         pprint("Removing old coreos-installer")
         os.remove('coreos-installer')
-    minimal = data.get('minimal')
     if version not in ['ci', 'dev-preview', 'nightly', 'stable']:
         error(f"Incorrect version {version}")
         sys.exit(1)
@@ -949,12 +935,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         error("Leaving environment for debugging purposes")
         error(f"You can delete it with kcli delete kube --yes {cluster}")
         sys.exit(run)
-    if minimal:
-        warning("Deploying cvo overrides to provide a minimal install")
-        with open(f"{plandir}/cvo-overrides.yaml") as f:
-            cvo_override = f.read()
-        with open(f"{clusterdir}/manifests/cvo-overrides.yaml", "a") as f:
-            f.write(cvo_override)
     ntp_server = data.get('ntp_server')
     if ntp_server is not None:
         ntp_data = config.process_inputfile(cluster, f"{plandir}/chrony.conf", overrides={'ntp_server': ntp_server})
@@ -1411,20 +1391,16 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_apps.yml', overrides=lb_overrides)
             if result['result'] != 'success':
                 sys.exit(1)
-    if minimal or async_install or (sno and not sno_wait):
+    if async_install or (sno and sno_wait):
         kubeconf = os.environ['KUBECONFIG']
         kubepassword = open(f"{clusterdir}/auth/kubeadmin-password").read()
-        if minimal:
-            success("Minimal Cluster ready to be used")
-            success("INFO Install Complete")
         if async_install:
             success("Async Cluster created")
             info2("You will need to wait before it is fully available")
         info2(f"To access the cluster as the system:admin user when running 'oc', run export KUBECONFIG={kubeconf}")
         info2(f"Access the Openshift web-console here: https://console-openshift-console.apps.{cluster}.{domain}")
         info2(f"Login to the console with user: kubeadmin, password: {kubepassword}")
-        if not minimal:
-            return
+        return
     else:
         installcommand = f'openshift-install --dir={clusterdir} --log-level={log_level} wait-for install-complete'
         installcommand += f" || {installcommand}"

@@ -33,7 +33,6 @@ cluster_network_ipv6: "fd01::/48"
 service_network_ipv4: "172.30.0.0/16"
 service_network_ipv6: "fd02::/112"
 ntp_server:
-minimal: false
 pool:
 flavor:
 flavor_bootstrap:
