@@ -13,7 +13,7 @@ from kvirt.common import get_installer_rhcos
 from kvirt.common import ssh, scp, _ssh_credentials, get_ssh_pub_key, boot_baremetal_hosts
 from kvirt.defaults import LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG
 import re
-from shutil import copy2, move, rmtree, which
+from shutil import copyfile, copy2, move, rmtree, which
 from subprocess import call
 from time import sleep
 from urllib.request import urlopen, Request
@@ -382,11 +382,11 @@ def handle_baremetal_iso_sno(config, plandir, cluster, data, baremetal_hosts=[],
     if baremetal_web:
         if os.path.exists(f"{baremetal_web_dir}/{iso_name}"):
             call(f"sudo rm {baremetal_web_dir}/{iso_name}", shell=True)
-        copy2(f'{iso_pool_path}/{iso_name}', baremetal_web_dir)
+        copyfile(f'{iso_pool_path}/{iso_name}', f'{baremetal_web_dir}/{iso_name}')
         if baremetal_web_dir == '/var/www/html':
             call(f"sudo chown apache:apache {baremetal_web_dir}/{iso_name}", shell=True)
             if which('getenforce') is not None and os.popen('getenforce').read().strip() == 'Enforcing':
-                call(f"restoreconf -Frvv {baremetal_web_dir}/{iso_name}", shell=True)
+                call(f"restorecon -Frvv {baremetal_web_dir}/{iso_name}", shell=True)
     else:
         call(f"sudo chmod a+r {iso_pool_path}/{iso_name}", shell=True)
     nic = os.popen('ip r | grep default | cut -d" " -f5 | head -1').read().strip()
