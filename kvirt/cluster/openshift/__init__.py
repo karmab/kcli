@@ -523,7 +523,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         clustervalue = cluster
     else:
         clustervalue = 'myopenshift'
-    if 'memory' not in data and data['ctlplanes'] == 1 and data['workers'] == 0:
+    if data['ctlplanes'] == 1 and data['workers'] == 0\
+       and 'ctlplane_memory' not in overrides and 'memory' not in overrides:
         data['ctlplane_memory'] = 32768
         warning("Forcing memory of singe ctlplane vm to 32G")
     retries = data.get('retries')
