@@ -384,7 +384,7 @@ def handle_baremetal_iso_sno(config, plandir, cluster, data, baremetal_hosts=[],
             call(f"sudo rm {baremetal_web_dir}/{iso_name}", shell=True)
         copy2(f'{iso_pool_path}/{iso_name}', baremetal_web_dir)
         if baremetal_web_dir == '/var/www/html':
-            call(f"sudo chown apache.apache {baremetal_web_dir}/{iso_name}", shell=True)
+            call(f"sudo chown apache:apache {baremetal_web_dir}/{iso_name}", shell=True)
     else:
         call(f"sudo chmod a+r {iso_pool_path}/{iso_name}", shell=True)
     nic = os.popen('ip r | grep default | cut -d" " -f5 | head -1').read().strip()
