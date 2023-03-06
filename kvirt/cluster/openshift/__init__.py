@@ -1411,7 +1411,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_apps.yml', overrides=lb_overrides)
             if result['result'] != 'success':
                 sys.exit(1)
-    if minimal or async_install:
+    if minimal or async_install or (sno and not sno_wait):
         kubeconf = os.environ['KUBECONFIG']
         kubepassword = open(f"{clusterdir}/auth/kubeadmin-password").read()
         if minimal:
@@ -1423,7 +1423,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         info2(f"To access the cluster as the system:admin user when running 'oc', run export KUBECONFIG={kubeconf}")
         info2(f"Access the Openshift web-console here: https://console-openshift-console.apps.{cluster}.{domain}")
         info2(f"Login to the console with user: kubeadmin, password: {kubepassword}")
-        if async_install:
+        if not minimal:
             return
     else:
         installcommand = f'openshift-install --dir={clusterdir} --log-level={log_level} wait-for install-complete'
