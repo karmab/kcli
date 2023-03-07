@@ -1927,7 +1927,6 @@ class Kbaseconfig:
                 return free_name
 
     def info_specific_kube(self, cluster, openshift=False):
-        pprint(f"Providing information about cluster {cluster}")
         clusterdir = os.path.expanduser(f'~/.kcli/clusters/{cluster}')
         if os.path.exists(f'{clusterdir}/worker.ign'):
             openshift = True
@@ -1943,7 +1942,7 @@ class Kbaseconfig:
         nodes = []
         if openshift:
             nodes_command = f'KUBECONFIG={kubeconfig} oc get nodes --no-headers=true -o wide'
-            version = os.popen(f'KUBECONFIG={kubeconfig} oc get clusterversion --no-headers').read()
+            version = os.popen(f'KUBECONFIG={kubeconfig} oc get clusterversion --no-headers').read().strip()
         else:
             nodes_command = f'KUBECONFIG={kubeconfig} kubectl get nodes --no-headers=true -o wide'
             server_command = f'KUBECONFIG={kubeconfig} kubectl version -o yaml'

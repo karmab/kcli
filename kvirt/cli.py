@@ -2275,7 +2275,7 @@ def info_openshift_app(args):
 
 
 def info_plan(args):
-    """Info plan """
+    output = args.global_output or args.output
     doc = args.doc
     quiet = args.quiet
     url = args.url
@@ -2287,7 +2287,10 @@ def info_plan(args):
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
         _list = config.info_specific_plan(args.plan)
-        _parse_vms_list(_list)
+        if output is not None:
+            _list_output(_list, output)
+        else:
+            _parse_vms_list(_list)
     elif url is None:
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
         baseconfig.info_plan(inputfile, quiet=quiet, doc=doc)
@@ -2299,18 +2302,23 @@ def info_plan(args):
 
 def info_kube(args):
     kubetype = args.kubetype
+    output = args.global_output or args.output
     openshift = kubetype == 'openshift'
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     if args.cluster is not None:
         status = baseconfig.info_specific_kube(args.cluster, openshift)
         if status is None or not status:
             return
-        kubetable = PrettyTable(["Name", "Status", "Role", "Age", "Version", "Ip"])
-        kubetable.title = f"{status['version'].strip()}"
-        for node in status['nodes']:
-            kubetable.add_row(node)
-        kubetable.align["Kube"] = "l"
-        print(kubetable)
+        elif output is not None:
+            _list_output(status, output)
+        else:
+            pprint(f"Providing information about cluster {args.cluster}")
+            kubetable = PrettyTable(["Name", "Status", "Role", "Age", "Version", "Ip"])
+            kubetable.title = f"{status['version'].strip()}"
+            for node in status['nodes']:
+                kubetable.add_row(node)
+            kubetable.align["Kube"] = "l"
+            print(kubetable)
     else:
         if kubetype == 'openshift':
             baseconfig.info_kube_openshift(quiet=True)
@@ -4456,35 +4464,41 @@ def cli():
 
     kubegenericinfo_desc = 'Info Generic Kube'
     kubegenericinfo_parser = kubeinfo_subparsers.add_parser('generic', description=kubegenericinfo_desc,
-                                                            help=kubegenericinfo_desc, aliases=['kubeadm'])
+                                                            help=kubegenericinfo_desc, aliases=['kubeadm'],
+                                                            parents=[output_parser])
     kubegenericinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubegenericinfo_parser.set_defaults(func=info_generic_kube)
 
     kubekindinfo_desc = 'Info Kind Kube'
-    kubekindinfo_parser = kubeinfo_subparsers.add_parser('kind', description=kubekindinfo_desc, help=kubekindinfo_desc)
+    kubekindinfo_parser = kubeinfo_subparsers.add_parser('kind', description=kubekindinfo_desc, help=kubekindinfo_desc,
+                                                         parents=[output_parser])
     kubekindinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubekindinfo_parser.set_defaults(func=info_kind_kube)
 
     kubemicroshiftinfo_desc = 'Info Microshift Kube'
     kubemicroshiftinfo_parser = kubeinfo_subparsers.add_parser('microshift', description=kubemicroshiftinfo_desc,
-                                                               help=kubemicroshiftinfo_desc)
+                                                               help=kubemicroshiftinfo_desc,
+                                                               parents=[output_parser])
     kubemicroshiftinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubemicroshiftinfo_parser.set_defaults(func=info_microshift_kube)
 
     kubek3sinfo_desc = 'Info K3s Kube'
-    kubek3sinfo_parser = kubeinfo_subparsers.add_parser('k3s', description=kubek3sinfo_desc, help=kubek3sinfo_desc)
+    kubek3sinfo_parser = kubeinfo_subparsers.add_parser('k3s', description=kubek3sinfo_desc, help=kubek3sinfo_desc,
+                                                        parents=[output_parser])
     kubek3sinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubek3sinfo_parser.set_defaults(func=info_k3s_kube)
 
     kubehypershiftinfo_desc = 'Info Hypershift Kube'
     kubehypershiftinfo_parser = kubeinfo_subparsers.add_parser('hypershift', description=kubehypershiftinfo_desc,
-                                                               help=kubehypershiftinfo_desc)
+                                                               help=kubehypershiftinfo_desc,
+                                                               parents=[output_parser])
     kubehypershiftinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubehypershiftinfo_parser.set_defaults(func=info_hypershift_kube)
 
     kubeopenshiftinfo_desc = 'Info Openshift Kube'
     kubeopenshiftinfo_parser = kubeinfo_subparsers.add_parser('openshift', description=kubeopenshiftinfo_desc,
-                                                              help=kubeopenshiftinfo_desc)
+                                                              help=kubeopenshiftinfo_desc,
+                                                              parents=[output_parser])
     kubeopenshiftinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubeopenshiftinfo_parser.set_defaults(func=info_openshift_kube)
 
