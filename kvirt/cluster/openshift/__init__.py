@@ -142,6 +142,8 @@ def same_release_images(version='stable', tag='4.12', pull_secret='openshift_pul
         existing = os.popen(f'{path}/openshift-install version').readlines()[2].split(" ")[2].strip()
     except:
         return False
+    if path != '.' and not existing.startswith('quay.io/openshift-release-dev/ocp-release'):
+        return True
     offline = offline_image(version=version, tag=tag, pull_secret=pull_secret)
     return offline == existing
 
