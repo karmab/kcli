@@ -1947,13 +1947,22 @@ class Kbaseconfig:
         nodes = []
         if openshift:
             nodes_command = f'KUBECONFIG={kubeconfig} oc get nodes --no-headers=true -o wide'
-            version = os.popen(f'KUBECONFIG={kubeconfig} oc get clusterversion --no-headers').read().strip()
+            try:
+                version = os.popen(f'KUBECONFIG={kubeconfig} oc get clusterversion --no-headers').read().strip()
+            except:
+                version = 'N/A'
         else:
             nodes_command = f'KUBECONFIG={kubeconfig} kubectl get nodes --no-headers=true -o wide'
             server_command = f'KUBECONFIG={kubeconfig} kubectl version -o yaml'
-            version = yaml.safe_load(os.popen(server_command).read())['serverVersion']['gitVersion']
-        for entry in os.popen(nodes_command).readlines():
-            node = [column.strip() for column in entry.split()[0:6]]
-            nodes.append(node)
+            try:
+                version = yaml.safe_load(os.popen(server_command).read())['serverVersion']['gitVersion']
+            except:
+                version = 'N/A'
+        try:
+            for entry in os.popen(nodes_command).readlines():
+                node = [column.strip() for column in entry.split()[0:6]]
+                nodes.append(node)
+        except:
+            pass
         results = {'nodes': nodes, 'version': version}
         return results
