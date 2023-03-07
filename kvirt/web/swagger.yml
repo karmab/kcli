@@ -534,6 +534,56 @@ paths:
               schema:
                 type: string
                 example: mysuperkubeconfig
+  /kubeprofiles:
+    get:
+      description: Returns list of cluster profiles
+      responses:
+        '200':
+          description: Successfully returned list of cluster profiles
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  profiles:
+                    type: object
+              example:
+                profiles:
+                  sample-kubeadm-localnet:
+                    kubetype: generic
+                    network: localnet
+                    api_ip: 192.168.1.100
+                    ctlplanes: 3
+                    workers: 0
+                  sample-openshift-sno:
+                    kubetype: generic
+                    sno: true
+                    sno_wait: true
+    post:
+  /kubeprofiles/{name}:
+    get:
+      description: Returns information on a specific cluster profile
+      parameters:
+      - name: name
+        in: path
+        description: Cluster name
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Successfully provided information on a given cluster profile
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                kubetype: generic
+                network: default
+                ctlplanes: 3
+                workers: 0
+                memory: 16384
+                disk_size: 100
   /networks:
     get:
       description: Returns list of networks
