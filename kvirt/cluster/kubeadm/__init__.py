@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 
-from kvirt.common import success, error, pprint, warning, info2, container_mode
+from kvirt.common import success, pprint, warning, info2, container_mode
 from kvirt.common import get_kubectl, kube_create_app, get_ssh_pub_key, _ssh_credentials, scp
 from kvirt.defaults import UBUNTUS
 import os
 from random import choice
 from shutil import which
 from string import ascii_letters, digits
-import sys
 from time import sleep
 import yaml
 
@@ -27,12 +26,12 @@ def scale(config, plandir, cluster, overrides):
         overrides['cluster'] = cluster
         api_ip = overrides.get('api_ip')
         if config.type not in cloudplatforms and api_ip is None:
-            error("Missing api_ip...")
-            sys.exit(1)
+            msg = "Missing api_ip..."
+            return {'result': 'failure', 'reason': msg}
         domain = overrides.get('domain')
         if domain is None:
-            error("Missing domain...")
-            sys.exit(1)
+            msg = "Missing domain..."
+            return {'result': 'failure', 'reason': msg}
         os.mkdir(clusterdir)
         source = "/root/join.sh"
         destination = f"{clusterdir}/join.sh"
@@ -79,19 +78,19 @@ def create(config, plandir, cluster, overrides):
             'calico_version': None}
     data.update(overrides)
     if 'keys' not in overrides and get_ssh_pub_key() is None:
-        error("No usable public key found, which is required for the deployment. Create one using ssh-keygen")
-        sys.exit(1)
+        msg = "No usable public key found, which is required for the deployment. Create one using ssh-keygen"
+        return {'result': 'failure', 'reason': msg}
     data['cluster'] = overrides.get('cluster', cluster if cluster is not None else 'mykube')
     plan = cluster if cluster is not None else data['cluster']
     data['kube'] = data['cluster']
     cloud_lb = data.get('cloud_lb', True)
     ctlplanes = data.get('ctlplanes', 1)
     if ctlplanes == 0:
-        error("Invalid number of ctlplanes")
-        sys.exit(1)
+        msg = "Invalid number of ctlplanes"
+        return {'result': 'failure', 'reason': msg}
     if ctlplanes > 1 and platform in cloudplatforms and not cloud_lb:
-        error("multiple ctlplanes require cloud_lb to be set to True")
-        sys.exit(1)
+        msg = "multiple ctlplanes require cloud_lb to be set to True"
+        return {'result': 'failure', 'reason': msg}
     network = data.get('network', 'default')
     api_ip = data.get('api_ip')
     if platform in cloudplatforms:
@@ -108,13 +107,14 @@ def create(config, plandir, cluster, overrides):
             api_ip = config.k.create_service(f"{cluster}-api", config.k.namespace, selector, _type=service_type,
                                              ports=[6443])
             if api_ip is None:
-                sys.exit(1)
+                msg = "Couldnt get an kubevirt api_ip from service"
+                return {'result': 'failure', 'reason': msg}
             else:
                 pprint(f"Using api_ip {api_ip}")
                 data['api_ip'] = api_ip
         else:
-            error("You need to define api_ip in your parameters file")
-            sys.exit(1)
+            msg = "You need to define api_ip in your parameters file"
+            return {'result': 'failure', 'reason': msg}
     if platform not in cloudplatforms:
         if data.get('virtual_router_id') is None:
             data['virtual_router_id'] = hash(data['cluster']) % 254 + 1
@@ -124,8 +124,8 @@ def create(config, plandir, cluster, overrides):
         data['auth_pass'] = auth_pass
     version = data.get('version')
     if version is not None and not str(version).startswith('1.'):
-        error(f"Invalid version {version}")
-        sys.exit(1)
+        msg = f"Invalid version {version}"
+        return {'result': 'failure', 'reason': msg}
     if data.get('eksd', False) and data.get('engine', 'containerd') != 'docker':
         warning("Forcing engine to docker for eksd")
         data['engine'] = 'docker'
@@ -135,8 +135,8 @@ def create(config, plandir, cluster, overrides):
     data['ubuntu'] = 'ubuntu' in image.lower() or len([u for u in UBUNTUS if u in image]) > 0
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if os.path.exists(clusterdir):
-        error(f"Please remove existing directory {clusterdir} first")
-        sys.exit(1)
+        msg = f"Please remove existing directory {clusterdir} first"
+        return {'result': 'failure', 'reason': msg}
     if which('kubectl') is None:
         get_kubectl()
     if not os.path.exists(clusterdir):
@@ -157,19 +157,19 @@ def create(config, plandir, cluster, overrides):
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     result = config.plan(plan, inputfile=f'{plandir}/bootstrap.yml', overrides=data)
     if result['result'] != "success":
-        sys.exit(1)
+        return result
     if ctlplanes > 1:
         ctlplane_threaded = data.get('threaded', False) or data.get('ctlplanes_threaded', False)
         result = config.plan(plan, inputfile=f'{plandir}/ctlplanes.yml', overrides=data, threaded=ctlplane_threaded)
         if result['result'] != "success":
-            sys.exit(1)
+            return result
     if cloud_lb and config.type in cloudplatforms:
         config.k.delete_dns(f'api.{cluster}', domain=domain)
         if config.type == 'aws':
             data['vpcid'] = config.k.get_vpcid_of_vm(f"{cluster}-ctlplane-0")
         result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_api.yml', overrides=data)
         if result['result'] != 'success':
-            sys.exit(1)
+            return result
     workers = data.get('workers', 0)
     if workers > 0:
         pprint("Deploying workers")
@@ -205,3 +205,4 @@ def create(config, plandir, cluster, overrides):
     success(f"Kubernetes cluster {cluster} deployed!!!")
     info2(f"export KUBECONFIG=$HOME/.kcli/clusters/{cluster}/auth/kubeconfig")
     info2("export PATH=$PWD:$PATH")
+    return {'result': 'success'}

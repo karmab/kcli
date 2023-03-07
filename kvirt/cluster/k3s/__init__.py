@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 
-from kvirt.common import success, pprint, error, warning, get_kubectl, info2, container_mode
+from kvirt.common import success, pprint, warning, get_kubectl, info2, container_mode
 import os
 import re
-import sys
 import yaml
 from random import choice
 from string import ascii_letters, digits
@@ -90,13 +89,14 @@ def create(config, plandir, cluster, overrides):
                 api_ip = config.k.create_service(f"{cluster}-api", config.k.namespace, selector,
                                                  _type="LoadBalancer", ports=[6443])
                 if api_ip is None:
-                    sys.exit(1)
+                    msg = "Couldnt get an kubevirt api_ip from service"
+                    return {'result': 'failure', 'reason': msg}
                 else:
                     pprint(f"Using api_ip {api_ip}")
                     data['api_ip'] = api_ip
             else:
-                error("You need to define api_ip in your parameters file")
-                sys.exit(1)
+                msg = "You need to define api_ip in your parameters file"
+                return {'result': 'failure', 'reason': msg}
         if data.get('virtual_router_id') is None:
             data['virtual_router_id'] = hash(data['cluster']) % 254 + 1
             pprint(f"Using keepalived virtual_router_id {data['virtual_router_id']}")
@@ -111,8 +111,8 @@ def create(config, plandir, cluster, overrides):
     cluster = data.get('cluster')
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if os.path.exists(clusterdir):
-        error(f"Please remove existing directory {clusterdir} first...")
-        sys.exit(1)
+        msg = f"Please remove existing directory {clusterdir} first..."
+        return {'result': 'failure', 'reason': msg}
     if which('kubectl') is None:
         get_kubectl()
     if not os.path.exists(clusterdir):
@@ -141,7 +141,7 @@ def create(config, plandir, cluster, overrides):
     bootstrap_overrides['install_k3s_args'] = bootstrap_install_k3s_args
     result = config.plan(plan, inputfile=f'{plandir}/bootstrap.yml', overrides=bootstrap_overrides)
     if result['result'] != "success":
-        sys.exit(1)
+        return result
     for role in ['ctlplanes', 'workers']:
         if (role == 'ctlplanes' and ctlplanes == 1) or (role == 'workers' and workers == 0):
             continue

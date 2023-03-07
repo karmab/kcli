@@ -1862,7 +1862,13 @@ def create_kube(args):
             clusterprofile = config.clusterprofiles[clusterprofile]
             clusterprofile.update(overrides)
             overrides = clusterprofile
-    config.create_kube(cluster, kubetype, overrides=overrides)
+    result = config.create_kube(cluster, kubetype, overrides=overrides)
+    if 'result' in result and result['result'] == 'success':
+        sys.exit(0)
+    else:
+        if 'reason' in result:
+            error(result['reason'])
+        sys.exit(1)
 
 
 def create_generic_kube(args):
@@ -1924,7 +1930,13 @@ def scale_kube(args):
         overrides['ctlplanes'] = args.ctlplanes
     if args.workers is not None:
         overrides['workers'] = args.workers
-    config.scale_kube(cluster, kubetype, overrides=overrides)
+    result = config.scale_kube(cluster, kubetype, overrides=overrides)
+    if 'result' in result and result['result'] == 'success':
+        sys.exit(0)
+    else:
+        if 'reason' in result:
+            error(result['reason'])
+        sys.exit(1)
 
 
 def scale_generic_kube(args):

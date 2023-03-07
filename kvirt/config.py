@@ -2786,17 +2786,18 @@ class Kconfig(Kbaseconfig):
         if baremetalpool is not None:
             self.get_baremetal_hosts_from_confpool(cluster, baremetalpool, overrides=overrides)
         if kubetype == 'openshift':
-            self.create_kube_openshift(cluster, overrides=overrides)
+            result = self.create_kube_openshift(cluster, overrides=overrides)
         elif kubetype == 'hypershift':
-            self.create_kube_hypershift(cluster, overrides=overrides)
+            result = self.create_kube_hypershift(cluster, overrides=overrides)
         elif kubetype == 'microshift':
-            self.create_kube_microshift(cluster, overrides=overrides)
+            result = self.create_kube_microshift(cluster, overrides=overrides)
         elif kubetype == 'kind':
-            self.create_kube_kind(cluster, overrides=overrides)
+            result = self.create_kube_kind(cluster, overrides=overrides)
         elif kubetype == 'k3s':
-            self.create_kube_k3s(cluster, overrides=overrides)
+            result = self.create_kube_k3s(cluster, overrides=overrides)
         else:
-            self.create_kube_generic(cluster, overrides=overrides)
+            result = self.create_kube_generic(cluster, overrides=overrides)
+        return result
 
     def create_kube_generic(self, cluster, overrides={}):
         if container_mode():
@@ -2804,7 +2805,7 @@ class Kconfig(Kbaseconfig):
         else:
             os.environ['PATH'] += ':%s' % os.getcwd()
         plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
-        kubeadm.create(self, plandir, cluster, overrides)
+        return kubeadm.create(self, plandir, cluster, overrides)
 
     def create_kube_kind(self, cluster, overrides={}):
         if container_mode():
@@ -2812,7 +2813,7 @@ class Kconfig(Kbaseconfig):
         else:
             os.environ['PATH'] += ':%s' % os.getcwd()
         plandir = os.path.dirname(kind.create.__code__.co_filename)
-        kind.create(self, plandir, cluster, overrides)
+        return kind.create(self, plandir, cluster, overrides)
 
     def create_kube_microshift(self, cluster, overrides={}):
         if container_mode():
@@ -2820,7 +2821,7 @@ class Kconfig(Kbaseconfig):
         else:
             os.environ['PATH'] += ':%s' % os.getcwd()
         plandir = os.path.dirname(microshift.create.__code__.co_filename)
-        microshift.create(self, plandir, cluster, overrides)
+        return microshift.create(self, plandir, cluster, overrides)
 
     def create_kube_k3s(self, cluster, overrides={}):
         if container_mode():
@@ -2828,7 +2829,7 @@ class Kconfig(Kbaseconfig):
         else:
             os.environ['PATH'] += ':%s' % os.getcwd()
         plandir = os.path.dirname(k3s.create.__code__.co_filename)
-        k3s.create(self, plandir, cluster, overrides)
+        return k3s.create(self, plandir, cluster, overrides)
 
     def create_kube_hypershift(self, cluster, overrides={}):
         if container_mode():
@@ -2838,7 +2839,7 @@ class Kconfig(Kbaseconfig):
         plandir = os.path.dirname(hypershift.create.__code__.co_filename)
         # dnsclient = overrides.get('dnsclient')
         # dnsconfig = Kconfig(client=dnsclient) if dnsclient is not None else None
-        hypershift.create(self, plandir, cluster, overrides)
+        return hypershift.create(self, plandir, cluster, overrides)
 
     def create_kube_openshift(self, cluster, overrides={}):
         if container_mode():
@@ -2848,7 +2849,7 @@ class Kconfig(Kbaseconfig):
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
         dnsclient = overrides.get('dnsclient')
         dnsconfig = Kconfig(client=dnsclient) if dnsclient is not None else None
-        openshift.create(self, plandir, cluster, overrides, dnsconfig=dnsconfig)
+        return openshift.create(self, plandir, cluster, overrides, dnsconfig=dnsconfig)
 
     def delete_kube(self, cluster, overrides={}):
         hypershift = False
@@ -2937,29 +2938,30 @@ class Kconfig(Kbaseconfig):
 
     def scale_kube(self, cluster, kubetype, overrides={}):
         if kubetype == 'generic':
-            self.scale_kube_generic(cluster, overrides=overrides)
+            result = self.scale_kube_generic(cluster, overrides=overrides)
         elif kubetype == 'k3s':
-            self.scale_kube_k3s(cluster, overrides=overrides)
+            result = self.scale_kube_k3s(cluster, overrides=overrides)
         elif kubetype == 'openshift':
-            self.scale_kube_openshift(cluster, overrides=overrides)
+            result = self.scale_kube_openshift(cluster, overrides=overrides)
         elif kubetype == 'hypershift':
-            self.scale_kube_hypershift(cluster, overrides=overrides)
+            result = self.scale_kube_hypershift(cluster, overrides=overrides)
+        return result
 
     def scale_kube_generic(self, cluster, overrides={}):
         plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
-        kubeadm.scale(self, plandir, cluster, overrides)
+        return kubeadm.scale(self, plandir, cluster, overrides)
 
     def scale_kube_k3s(self, cluster, overrides={}):
         plandir = os.path.dirname(k3s.create.__code__.co_filename)
-        k3s.scale(self, plandir, cluster, overrides)
+        return k3s.scale(self, plandir, cluster, overrides)
 
     def scale_kube_hypershift(self, cluster, overrides={}):
         plandir = os.path.dirname(hypershift.create.__code__.co_filename)
-        hypershift.scale(self, plandir, cluster, overrides)
+        return hypershift.scale(self, plandir, cluster, overrides)
 
     def scale_kube_openshift(self, cluster, overrides={}):
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
-        openshift.scale(self, plandir, cluster, overrides)
+        return openshift.scale(self, plandir, cluster, overrides)
 
     def update_kube(self, cluster, _type, overrides={}, plan=None):
         overrides['skip_files_remediation'] = True

@@ -403,12 +403,12 @@ def scale(config, plandir, cluster, overrides):
         overrides['cluster'] = cluster
         api_ip = overrides.get('api_ip')
         if config.type not in cloudplatforms and api_ip is None:
-            error("Missing api_ip...")
-            sys.exit(1)
+            msg = 'Missing api_ip...'
+            return {'result': 'failure', 'reason': msg}
         domain = overrides.get('domain')
         if domain is None:
-            error("Missing domain...")
-            sys.exit(1)
+            msg = "Missing domain..."
+            return {'result': 'failure', 'reason': msg}
         os.mkdir(clusterdir)
         ignition_version = overrides['ignition_version']
         create_ignition_files(config, plandir, cluster, domain, api_ip=api_ip, ignition_version=ignition_version)
@@ -425,8 +425,8 @@ def scale(config, plandir, cluster, overrides):
     if image is None:
         cluster_image = k.info(f"{cluster}-ctlplane-0").get('image')
         if cluster_image is None:
-            error("Missing image...")
-            sys.exit(1)
+            msg = "Missing image..."
+            return {'result': 'failure', 'reason': msg}
         else:
             pprint(f"Using image {cluster_image}")
             image = cluster_image
@@ -459,7 +459,8 @@ def scale(config, plandir, cluster, overrides):
         elif platform in cloudplatforms:
             result = config.plan(plan, inputfile=f'{plandir}/cloud_{role}.yml', overrides=overrides, threaded=threaded)
         if result['result'] != 'success':
-            sys.exit(1)
+            return result
+    return {'result': 'success'}
 
 
 def create(config, plandir, cluster, overrides, dnsconfig=None):
@@ -557,8 +558,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             data['network_type'] = 'OVNKubernetes'
     ctlplanes = data.get('ctlplanes', 1)
     if ctlplanes == 0:
-        error("Invalid number of ctlplanes")
-        sys.exit(1)
+        msg = "Invalid number of ctlplanes"
+        return {'result': 'failure', 'reason': msg}
     network = data.get('network')
     ipv6 = data['ipv6']
     disconnected_deploy = data.get('disconnected_deploy', False)
@@ -591,8 +592,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         pprint("Removing old coreos-installer")
         os.remove('coreos-installer')
     if version not in ['ci', 'dev-preview', 'nightly', 'stable']:
-        error(f"Incorrect version {version}")
-        sys.exit(1)
+        msg = f"Incorrect version {version}"
+        return {'result': 'failure', 'reason': msg}
     else:
         pprint(f"Using {version} version")
     cluster = data.get('cluster')
@@ -603,12 +604,13 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         network = data.get('network')
         networkinfo = k.info_network(network)
         if not networkinfo:
-            sys.exit(1)
+            msg = f"Issue getting network {network}"
+            return {'result': 'failure', 'reason': msg}
         if platform == 'kvm' and networkinfo['type'] == 'routed':
             cidr = networkinfo['cidr']
             if cidr == 'N/A':
-                error("Couldnt gather an api_ip from your specified network")
-                sys.exit(1)
+                msg = "Couldnt gather an api_ip from your specified network"
+                return {'result': 'failure', 'reason': msg}
             api_index = 2 if ':' in cidr else -3
             api_ip = str(ip_network(cidr)[api_index])
             warning(f"Using {api_ip} as api_ip")
@@ -621,8 +623,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             api_ip = k.create_service(f"{cluster}-api", k.namespace, selector, _type=service_type,
                                       ports=[6443, 22623, 22624, 80, 443], openshift_hack=True)
             if api_ip is None:
-                error("Couldnt gather an api_ip from your specified network")
-                sys.exit(1)
+                msg = "Couldnt gather an api_ip from your specified network"
+                return {'result': 'failure', 'reason': msg}
             else:
                 pprint(f"Using api_ip {api_ip}")
                 overrides['api_ip'] = api_ip
@@ -630,8 +632,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 kubevirt_api_service = True
                 overrides['mdns'] = False
         else:
-            error("You need to define api_ip in your parameters file")
-            sys.exit(1)
+            msg = "You need to define api_ip in your parameters file"
+            return {'result': 'failure', 'reason': msg}
     if platform in virtplatforms and not sno and ':' in api_ip:
         ipv6 = True
     if ipv6:
@@ -671,8 +673,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         macosx = False
     if platform == 'openstack' and not sno:
         if data.get('flavor') is None:
-            error("Missing flavor in parameter file")
-            sys.exit(1)
+            msg = "Missing flavor in parameter file"
+            return {'result': 'failure', 'reason': msg}
         provider_network = k.provider_network(network)
         if not provider_network:
             if api_ip is None:
@@ -684,8 +686,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 public_api_ip = config.k.create_network_port(f"{cluster}-vip", network, ip=api_ip,
                                                              floating=True)['floating']
     if not os.path.exists(pull_secret):
-        error(f"Missing pull secret file {pull_secret}")
-        sys.exit(1)
+        msg = f"Missing pull secret file {pull_secret}"
+        return {'result': 'failure', 'reason': msg}
     if which('oc') is None:
         get_oc(macosx=macosx)
     pub_key = data.get('pub_key') or get_ssh_pub_key()
@@ -695,21 +697,21 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             warning("Using first key from your keys array")
             pub_key = keys[0]
         else:
-            error("No usable public key found, which is required for the deployment. Create one using ssh-keygen")
-            sys.exit(1)
+            msg = "No usable public key found, which is required for the deployment. Create one using ssh-keygen"
+            return {'result': 'failure', 'reason': msg}
     pub_key = os.path.expanduser(pub_key)
     if pub_key.startswith('ssh-'):
         data['pub_key'] = pub_key
     elif os.path.exists(pub_key):
         data['pub_key'] = open(pub_key).read().strip()
     else:
-        error(f"Publickey file {pub_key} not found")
-        sys.exit(1)
+        msg = f"Publickey file {pub_key} not found"
+        return {'result': 'failure', 'reason': msg}
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if os.path.exists(clusterdir):
         if [v for v in config.k.list() if v.get('plan', 'kvirt') == cluster]:
-            error(f"Please remove existing directory {clusterdir} first...")
-            sys.exit(1)
+            msg = f"Please remove existing directory {clusterdir} first..."
+            return {'result': 'failure', 'reason': msg}
         else:
             pprint(f"Removing directory {clusterdir}")
             rmtree(clusterdir)
@@ -736,8 +738,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         else:
             run = get_downstream_installer(tag=tag, pull_secret=pull_secret)
         if run != 0:
-            error("Couldn't download openshift-install")
-            sys.exit(run)
+            msg = "Couldn't download openshift-install"
+            return {'result': 'failure', 'reason': msg}
         pprint("Move downloaded openshift-install somewhere in your PATH if you want to reuse it")
     elif which_openshift is not None:
         pprint("Using existing openshift-install found in your PATH")
@@ -746,11 +748,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     os.environ["PATH"] += f":{os.getcwd()}"
     if disconnected_url is not None:
         if disconnected_user is None:
-            error("disconnected_user needs to be set")
-            sys.exit(1)
+            msg = "disconnected_user needs to be set"
+            return {'result': 'failure', 'reason': msg}
         if disconnected_password is None:
-            error("disconnected_password needs to be set")
-            sys.exit(1)
+            msg = "disconnected_password needs to be set"
+            return {'result': 'failure', 'reason': msg}
         if disconnected_url.startswith('http'):
             warning(f"Removing scheme from {disconnected_url}")
             disconnected_url = disconnected_url.replace('http://', '').replace('https://', '')
@@ -779,9 +781,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             else:
                 image_url = get_installer_rhcos(_type=image_type, region=region, arch=arch)
         except:
-            error(f"Couldn't gather the {config.type} image associated to commit {COMMIT_ID}")
-            error("Force an image in your parameter file")
-            sys.exit(1)
+            msg = f"Couldn't gather the {config.type} image associated to commit {COMMIT_ID}. "
+            msg += "Force an image in your parameter file"
+            return {'result': 'failure', 'reason': msg}
         if platform in ['aws', 'gcp']:
             image = image_url
         else:
@@ -795,14 +797,14 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 result = config.handle_host(pool=config.pool, image=image, download=True, update_profile=False,
                                             url=image_url, size=data.get('kubevirt_disk_size'))
                 if result['result'] != 'success':
-                    sys.exit(1)
+                    return result
         pprint(f"Using image {image}")
     else:
         pprint(f"Checking if image {image} is available")
         images = [v for v in k.volumes() if image in v]
         if not images:
-            error(f"Missing {image}. Indicate correct image in your parameters file...")
-            sys.exit(1)
+            msg = f"Missing {image}. Indicate correct image in your parameters file..."
+            return {'result': 'failure', 'reason': msg}
     overrides['image'] = image
     static_networking_ctlplane, static_networking_worker = False, False
     macentries = []
@@ -847,7 +849,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         result = config.plan(disconnected_plan, inputfile=f'{plandir}/disconnected.yml',
                              overrides=disconnected_overrides)
         if result['result'] != 'success':
-            sys.exit(1)
+            return result
         disconnected_ip, disconnected_vmport = _ssh_credentials(k, disconnected_vm)[1:]
         cacmd = "cat /opt/registry/certs/domain.crt"
         cacmd = ssh(disconnected_vm, ip=disconnected_ip, user='root', tunnel=config.tunnel,
@@ -934,9 +936,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         f.write(installconfig)
     run = call(f'openshift-install --dir={clusterdir} --log-level={log_level} create manifests', shell=True)
     if run != 0:
-        error("Leaving environment for debugging purposes")
-        error(f"You can delete it with kcli delete kube --yes {cluster}")
-        sys.exit(run)
+        msg = "Leaving environment for debugging purposes. "
+        msg += f"Delete it with kcli delete kube --yes {cluster}"
+        return {'result': 'failure', 'reason': msg}
     ntp_server = data.get('ntp_server')
     if ntp_server is not None:
         ntp_data = config.process_inputfile(cluster, f"{plandir}/chrony.conf", overrides={'ntp_server': ntp_server})
@@ -1178,8 +1180,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         run = call(f'openshift-install --dir={clusterdir} --log-level={log_level} create single-node-ignition-config',
                    shell=True)
         if run != 0:
-            error("Hit issue.Leaving")
-            sys.exit(run)
+            msg = "Hit issue when generating bootstrap-in-place ignition"
+            return {'result': 'failure', 'reason': msg}
         move(f"{clusterdir}/bootstrap-in-place-for-live-iso.ign", f"./{sno_name}.ign")
         with open("iso.ign", 'w') as f:
             iso_overrides = {}
@@ -1231,9 +1233,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             pprint("Launching install-complete step. It will be retried extra times in case of timeouts")
             run = call(installcommand, shell=True)
             if run != 0:
-                error("Leaving environment for debugging purposes")
-                error(f"You can delete it with kcli delete cluster --yes {cluster}")
-                sys.exit(run)
+                msg = "Leaving environment for debugging purposes. "
+                msg += f"Delete it with kcli delete cluster --yes {cluster}"
+                return {'result': 'failure', 'reason': msg}
         else:
             c = os.environ['KUBECONFIG']
             kubepassword = open(f"{clusterdir}/auth/kubeadmin-password").read()
@@ -1251,13 +1253,13 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
         if sno_wait:
             process_apps(config, clusterdir, apps, overrides)
-        sys.exit(0)
+        return {'result': 'success'}
     run = call(f'openshift-install --dir={clusterdir} --log-level={log_level} create ignition-configs', shell=True)
     if run != 0:
-        error("Hit issues when generating ignition-config files")
-        error("Leaving environment for debugging purposes")
-        error(f"You can delete it with kcli delete kube --yes {cluster}")
-        sys.exit(run)
+        msg = "Hit issues when generating ignition-config files"
+        msg += ". Leaving environment for debugging purposes, "
+        msg += f"Delete it with kcli delete kube --yes {cluster}"
+        return {'result': 'failure', 'reason': msg}
     if platform in virtplatforms:
         overrides['virtual_router_id'] = data.get('virtual_router_id') or hash(cluster) % 254 + 1
         virtual_router_id = overrides['virtual_router_id']
@@ -1294,7 +1296,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         pprint("Deploying bootstrap")
         result = config.plan(plan, inputfile=f'{plandir}/bootstrap.yml', overrides=overrides)
         if result['result'] != 'success':
-            sys.exit(1)
+            return result
         if static_networking_ctlplane:
             wait_for_ignition(cluster, domain, role='master')
         pprint("Deploying ctlplanes")
@@ -1303,18 +1305,18 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             overrides['workers'] = overrides['workers'] - len(baremetal_hosts)
         result = config.plan(plan, inputfile=f'{plandir}/ctlplanes.yml', overrides=overrides, threaded=threaded)
         if result['result'] != 'success':
-            sys.exit(1)
+            return result
         todelete = [f"{cluster}-bootstrap"]
         if dnsconfig is not None:
             dns_overrides = {'api_ip': api_ip, 'ingress_ip': ingress_ip, 'cluster': cluster, 'domain': domain}
             result = dnsconfig.plan(plan, inputfile=f'{plandir}/cloud_dns.yml', overrides=dns_overrides)
             if result['result'] != 'success':
-                sys.exit(1)
+                return result
     else:
         pprint("Deploying bootstrap")
         result = config.plan(plan, inputfile=f'{plandir}/cloud_bootstrap.yml', overrides=overrides)
         if result['result'] != 'success':
-            sys.exit(1)
+            return result
         if platform == 'ibm':
             while api_ip is None:
                 api_ip = k.info(f"{cluster}-bootstrap").get('private_ip')
@@ -1326,7 +1328,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         threaded = data.get('threaded', False) or data.get('ctlplanes_threaded', False)
         result = config.plan(plan, inputfile=f'{plandir}/cloud_ctlplanes.yml', overrides=overrides, threaded=threaded)
         if result['result'] != 'success':
-            sys.exit(1)
+            return result
         if platform == 'ibm':
             first_ctlplane_ip = None
             while first_ctlplane_ip is None:
@@ -1337,14 +1339,14 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             call(sedcmd, shell=True)
         result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_api.yml', overrides=overrides)
         if result['result'] != 'success':
-            sys.exit(1)
+            return result
         lb_overrides = {'cluster': cluster, 'domain': domain, 'members': ctlplanes, 'role': 'master'}
         if 'dnsclient' in overrides:
             lb_overrides['dnsclient'] = overrides['dnsclient']
         if workers == 0:
             result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_apps.yml', overrides=lb_overrides)
             if result['result'] != 'success':
-                sys.exit(1)
+                return result
         todelete = [f"{cluster}-bootstrap"]
     if not kubevirt_ignore_node_port and kubevirt_api_service and kubevirt_api_service_node_port:
         nodeport = k.get_node_ports(f'{cluster}-api', k.namespace)[6443]
@@ -1367,9 +1369,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         bootstrapcommand = ' || '.join([bootstrapcommand for x in range(retries)])
         run = call(bootstrapcommand, shell=True)
         if run != 0:
-            error("Leaving environment for debugging purposes")
-            error(f"You can delete it with kcli delete cluster --yes {cluster}")
-            sys.exit(run)
+            msg = "Leaving environment for debugging purposes. "
+            msg += f"Delete it with kcli delete cluster --yes {cluster}"
+            return {'result': 'failure', 'reason': msg}
     if workers > 0:
         if static_networking_worker:
             wait_for_ignition(cluster, domain, role='worker')
@@ -1385,16 +1387,16 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 threaded = data.get('threaded', False) or data.get('workers_threaded', False)
                 result = config.plan(plan, inputfile=f'{plandir}/workers.yml', overrides=overrides, threaded=threaded)
                 if result['result'] != 'success':
-                    sys.exit(1)
+                    return result
         elif platform in cloudplatforms:
             result = config.plan(plan, inputfile=f'{plandir}/cloud_workers.yml', overrides=overrides)
             if result['result'] != 'success':
-                sys.exit(1)
+                return result
             lb_overrides['role'] = 'worker'
             lb_overrides['members'] = workers
             result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_apps.yml', overrides=lb_overrides)
             if result['result'] != 'success':
-                sys.exit(1)
+                return result
     if async_install:
         kubeconf = os.environ['KUBECONFIG']
         kubepassword = open(f"{clusterdir}/auth/kubeadmin-password").read()
@@ -1404,16 +1406,16 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         info2(f"To access the cluster as the system:admin user when running 'oc', run export KUBECONFIG={kubeconf}")
         info2(f"Access the Openshift web-console here: https://console-openshift-console.apps.{cluster}.{domain}")
         info2(f"Login to the console with user: kubeadmin, password: {kubepassword}")
-        return
+        return {'result': 'success'}
     else:
         installcommand = f'openshift-install --dir={clusterdir} --log-level={log_level} wait-for install-complete'
         installcommand += f" || {installcommand}"
         pprint("Launching install-complete step. It will be retried one extra time in case of timeouts")
         run = call(installcommand, shell=True)
         if run != 0:
-            error("Leaving environment for debugging purposes")
-            error(f"You can delete it with kcli delete cluster --yes {cluster}")
-            sys.exit(run)
+            msg = "Leaving environment for debugging purposes. "
+            msg += f"Delete it with kcli delete cluster --yes {cluster}"
+            return {'result': 'failure', 'reason': msg}
     for vm in todelete:
         pprint(f"Deleting {vm}")
         k.delete(vm)
@@ -1440,3 +1442,4 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         k.reserve_dns(f'apps.{cluster}', domain=domain, ip=api_ip, alias=['*'])
         if platform == 'ibm':
             k._add_sno_security_group(cluster)
+    return {'result': 'success'}

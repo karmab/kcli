@@ -1,7 +1,6 @@
-from kvirt.common import success, info2, error, warning
+from kvirt.common import success, info2, warning
 from kvirt.common import scp, _ssh_credentials, get_ssh_pub_key
 import os
-import sys
 import yaml
 
 CNI_DIR = 'cni_bin'
@@ -12,19 +11,19 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     data = {'kubetype': 'kind'}
     data.update(overrides)
     if 'keys' not in overrides and get_ssh_pub_key() is None:
-        error("No usable public key found, which is required for the deployment. Create one using ssh-keygen")
-        sys.exit(1)
+        msg = "No usable public key found, which is required for the deployment. Create one using ssh-keygen"
+        return {'result': 'failure', 'reason': msg}
     data['cluster'] = overrides.get('cluster', cluster if cluster is not None else 'mykind')
     plan = cluster if cluster is not None else data['cluster']
     data['kube'] = data['cluster']
     ctlplanes = data.get('ctlplanes', 1)
     if ctlplanes == 0:
-        error("Invalid number of ctlplanes")
-        sys.exit(1)
+        msg = "Invalid number of ctlplanes"
+        return {'result': 'failure', 'reason': msg}
     clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
     if os.path.exists(clusterdir):
-        error("Please remove existing directory %s first..." % clusterdir)
-        sys.exit(1)
+        msg = "Please remove existing directory %s first..." % clusterdir
+        return {'result': 'failure', 'reason': msg}
     if not os.path.exists(clusterdir):
         os.makedirs(clusterdir)
         os.mkdir("%s/auth" % clusterdir)
@@ -37,13 +36,13 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if os.path.exists(CNI_DIR) and os.path.isdir(CNI_DIR):
         warning("Disabling default CNI to use yours instead")
         if not os.listdir(CNI_DIR):
-            error("No CNI plugin provided, aborting...")
-            sys.exit(1)
+            msg = "No CNI plugin provided, aborting..."
+            return {'result': 'failure', 'reason': msg}
         data['cni_bin_path'] = f"{os.getcwd()}/{CNI_DIR}"
         data['disable_default_cni'] = True
     result = config.plan(plan, inputfile='%s/kcli_plan.yml' % plandir, overrides=data)
     if result['result'] != 'success':
-        sys.exit(1)
+        return result
     kindnode = "%s-kind" % cluster
     kindnodeip = "%s-kind" % cluster
     kindnodeip, kindnodevmport = _ssh_credentials(k, kindnode)[1:]
