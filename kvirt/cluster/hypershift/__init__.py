@@ -67,12 +67,12 @@ def scale(config, plandir, cluster, overrides):
         overrides['clusterdir'] = clusterdir
         plan = overrides.get('plan') or plan
         if 'ingress_ip' not in overrides and config.type != 'kubevirt':
-            error("Missing ingress_ip...")
-            sys.exit(1)
+            msg = "Missing ingress_ip..."
+            return {'result': 'failure', 'reason': msg}
         domain = overrides.get('domain')
         if domain is None:
-            error("Missing domain...")
-            sys.exit(1)
+            msg = "Missing domain..."
+            return {'result': 'failure', 'reason': msg}
         if 'management_ingress_domain' not in overrides:
             overrides['management_ingress_domain'] = f'apps.{cluster}.{domain}'
         os.mkdir(clusterdir)
@@ -184,8 +184,8 @@ def create(config, plandir, cluster, overrides):
             pprint(f"Using default class {sc['metadata']['name']}")
             default_sc = True
     if not default_sc:
-        error("Default Storage class not found. Leaving...")
-        sys.exit(1)
+        msg = "Default Storage class not found. Leaving..."
+        return {'result': 'failure', 'reason': msg}
     kubeconfig = os.environ.get('KUBECONFIG')
     kubeconfigdir = os.path.dirname(kubeconfig) if kubeconfig is not None else os.path.expanduser("~/.kube")
     kubeconfig = os.path.basename(kubeconfig) if kubeconfig is not None else 'config'
@@ -197,8 +197,8 @@ def create(config, plandir, cluster, overrides):
                         'mce_hypershift': True}
             config.create_app_openshift(app_name, app_data)
         elif which('podman') is None:
-            error("Please install podman first in order to install hypershift")
-            sys.exit(1)
+            msg = "Please install podman first in order to install hypershift"
+            return {'result': 'failure', 'reason': msg}
         else:
             hypercmd = f"podman pull {data['operator_image']}"
             call(hypercmd, shell=True)
@@ -217,16 +217,16 @@ def create(config, plandir, cluster, overrides):
             if existing_workers:
                 data['workers'] += len(existing_workers)
         else:
-            error(f"Remove existing {clusterdir}")
-            sys.exit(1)
+            msg = f"Remove existing {clusterdir}"
+            return {'result': 'failure', 'reason': msg}
     else:
         os.makedirs(f"{clusterdir}/auth")
     supported_data = yaml.safe_load(os.popen("oc get cm/supported-versions -o yaml -n hypershift").read())['data']
     supported_versions = supported_versions = supported_data['supported-versions']
     versions = yaml.safe_load(supported_versions)['versions']
     if str(tag) not in versions:
-        error(f"Invalid tag {tag}. Choose between {','.join(versions)}")
-        sys.exit(1)
+        msg = f"Invalid tag {tag}. Choose between {','.join(versions)}"
+        return {'result': 'failure', 'reason': msg}
     management_cmd = "oc get ingresscontroller -n openshift-ingress-operator default -o jsonpath='{.status.domain}'"
     management_ingress_domain = os.popen(management_cmd).read()
     data['management_ingress_domain'] = management_ingress_domain
@@ -250,8 +250,8 @@ def create(config, plandir, cluster, overrides):
     pull_secret = pwd_path(data.get('pull_secret'))
     pull_secret = os.path.expanduser(pull_secret)
     if not os.path.exists(pull_secret):
-        error(f"Missing pull secret file {pull_secret}")
-        sys.exit(1)
+        msg = f"Missing pull secret file {pull_secret}"
+        return {'result': 'failure', 'reason': msg}
     data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
     pub_key = data.get('pub_key') or get_ssh_pub_key()
     keys = data.get('keys', [])
@@ -260,16 +260,16 @@ def create(config, plandir, cluster, overrides):
             warning("Using first key from your keys array")
             pub_key = keys[0]
         else:
-            error("No usable public key found, which is required for the deployment. Create one using ssh-keygen")
-            sys.exit(1)
+            msg = "No usable public key found, which is required for the deployment. Create one using ssh-keygen"
+            return {'result': 'failure', 'reason': msg}
     pub_key = os.path.expanduser(pub_key)
     if pub_key.startswith('ssh-'):
         data['pub_key'] = pub_key
     elif os.path.exists(pub_key):
         data['pub_key'] = open(pub_key).read().strip()
     else:
-        error(f"Publickey file {pub_key} not found")
-        sys.exit(1)
+        msg = f"Publickey file {pub_key} not found"
+        return {'result': 'failure', 'reason': msg}
     ingress_ip = data.get('ingress_ip')
     cidr = '192.168.122.0/24'
     ipv6 = False
@@ -290,15 +290,15 @@ def create(config, plandir, cluster, overrides):
                 ingress_ip = k.create_service(f"{cluster}-ingress", k.namespace, selector, _type=service_type,
                                               ports=[80, 443])
                 if ingress_ip is None:
-                    error("Couldnt gather an ingress_ip from your specified network")
-                    sys.exit(1)
+                    msg = "Couldnt gather an ingress_ip from your specified network"
+                    return {'result': 'failure', 'reason': msg}
                 else:
                     pprint(f"Using ingress_ip {ingress_ip}")
                     data['ingress_ip'] = ingress_ip
                     data['kubevirt_ingress_service'] = True
             else:
-                error("You need to define ingress_ip in your parameters file")
-                sys.exit(1)
+                msg = "You need to define ingress_ip in your parameters file"
+                return {'result': 'failure', 'reason': msg}
         if data.get('virtual_router_id') is None:
             virtual_router_id = hash(cluster) % 254 + 1
             data['virtual_router_id'] = virtual_router_id
@@ -358,8 +358,8 @@ def create(config, plandir, cluster, overrides):
         else:
             run = get_downstream_installer(tag=tag, pull_secret=pull_secret)
         if run != 0:
-            error("Couldn't download openshift-install")
-            sys.exit(run)
+            msg = "Couldn't download openshift-install"
+            return {'result': 'failure', 'reason': msg}
         pprint("Move downloaded openshift-install somewhere in your PATH if you want to reuse it")
     elif which_openshift is not None:
         pprint("Using existing openshift-install found in your PATH")
@@ -386,15 +386,15 @@ def create(config, plandir, cluster, overrides):
                 result = config.handle_host(pool=config.pool, image=image, download=True, update_profile=False,
                                             url=image_url, size=data.get('kubevirt_disk_size'))
                 if result['result'] != 'success':
-                    sys.exit(1)
+                    return result
         pprint(f"Using image {image}")
         data['image'] = image
     else:
         pprint(f"Checking if image {image} is available")
         images = [v for v in k.volumes() if image in v]
         if not images:
-            error(f"Missing {image}. Indicate correct image in your parameters file...")
-            sys.exit(1)
+            msg = f"Missing {image}. Indicate correct image in your parameters file..."
+            return {'result': 'failure', 'reason': msg}
     with open(f"{clusterdir}/kcli_parameters.yml", 'w') as p:
         installparam = overrides.copy()
         installparam['plan'] = plan
@@ -435,8 +435,8 @@ def create(config, plandir, cluster, overrides):
         sleep(30)
         timeout += 30
         if timeout > 300:
-            error("Timeout trying to retrieve worker ignition")
-            sys.exit(1)
+            msg = "Timeout trying to retrieve worker ignition"
+            return {'result': 'failure', 'reason': msg}
         call(f'bash {clusterdir}/ignition_{nodepool}.sh', shell=True)
     if 'name' in data:
         del data['name']
@@ -478,7 +478,7 @@ def create(config, plandir, cluster, overrides):
     if platform in cloudplatforms:
         result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_apps.yml', overrides=data)
         if result['result'] != 'success':
-            sys.exit(1)
+            return result
     async_install = data.get('async')
     if async_install or which('openshift-install') is None:
         success(f"Kubernetes cluster {cluster} deployed!!!")
@@ -490,9 +490,9 @@ def create(config, plandir, cluster, overrides):
         pprint("Launching install-complete step. It will be retried extra times to handle timeouts")
         run = call(installcommand, shell=True)
         if run != 0:
-            error("Leaving environment for debugging purposes")
-            error(f"You can delete it with kcli delete kube --yes {cluster}")
-            sys.exit(run)
+            msg = "Leaving environment for debugging purposes. "
+            msg += f"Delete it with kcli delete kube --yes {cluster}"
+            return {'result': 'failure', 'reason': msg}
     if platform in cloudplatforms:
         bucket = f"{cluster}-{domain.replace('.', '-')}"
         config.k.delete_bucket(bucket)
