@@ -2137,23 +2137,24 @@ def create_playbook(args):
 
 
 def update_plan(args):
-    """Update plan"""
-    autostart = args.autostart
-    noautostart = args.noautostart
     plan = args.plan
     url = args.url
     path = args.path
     container = args.container
     overrides = handle_parameters(args.param, args.paramfile)
+    autostart = overrides.get('autostart', False)
+    noautostart = overrides.get('noautostart', False)
     inputfile = overrides.get('inputfile') or args.inputfile or 'kcli_plan.yml'
     if container_mode():
         inputfile = f"/workdir/{inputfile}"
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    if autostart:
-        config.autostart_plan(plan)
-        return
-    elif noautostart:
-        config.noautostart_plan(plan)
+    if autostart or noautostart:
+        if config.type != 'kvm':
+            error("Changing autostart of vms only apply to kvm")
+        elif autostart:
+            config.autostart_plan(plan)
+        elif noautostart:
+            config.noautostart_plan(plan)
         return
     config.plan(plan, url=url, path=path, container=container, inputfile=inputfile, overrides=overrides, update=True)
 
@@ -5049,8 +5050,6 @@ def cli():
     planupdate_desc = 'Update Plan'
     planupdate_parser = update_subparsers.add_parser('plan', description=planupdate_desc, help=planupdate_desc,
                                                      parents=[parent_parser])
-    planupdate_parser.add_argument('--autostart', action='store_true', help='Set autostart for vms of the plan')
-    planupdate_parser.add_argument('--noautostart', action='store_true', help='Remove autostart for vms of the plan')
     planupdate_parser.add_argument('-u', '--url', help='Url for plan', metavar='URL', type=valid_url)
     planupdate_parser.add_argument('-p', '--path', help='Path where to download plans. Defaults to plan',
                                    metavar='PATH')

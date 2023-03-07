@@ -559,7 +559,6 @@ paths:
                     kubetype: generic
                     sno: true
                     sno_wait: true
-    post:
   /kubeprofiles/{name}:
     get:
       description: Returns information on a specific cluster profile
