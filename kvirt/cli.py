@@ -755,15 +755,6 @@ def _parse_vms_list(_list):
     print(vmstable)
 
 
-def _parse_cluster_status(status):
-    if status is None or not status:
-        return
-    print(f"Version: {status['version'].strip()}")
-    print("Name\tStatus\tRole\tAge\tVersion\tIp")
-    for line in status['nodes']:
-        print('\t'.join(line))
-
-
 def list_vm(args):
     """List vms"""
     output = args.global_output or args.output
@@ -2181,13 +2172,13 @@ def expose_cluster(args):
     port = args.port
     overrides = handle_parameters(args.param, None)
     full_overrides = handle_parameters(args.param, args.paramfile)
-    kubetype = overrides.get('type') or overrides.get('kubetype') or 'generic'
+    kubetype = full_overrides.get('type') or full_overrides.get('kubetype') or 'generic'
     pprint(f"Setting kubetype to {kubetype}")
     data = {plan: {"type": "kube", "kubetype": kubetype}}
     data.update({'parameters': full_overrides})
     if kubetype in ['openshift', 'hypershift']:
-        data['sno_wait'] = True
-        data['async'] = True
+        data['parameters']['sno_wait'] = False
+        data['parameters']['async'] = True
     with NamedTemporaryFile(mode='w+t') as temp:
         yaml.dump(data, temp)
         inputfile = temp.name
@@ -2295,12 +2286,20 @@ def info_plan(args):
 
 
 def info_kube(args):
+    kubetype = args.kubetype
+    openshift = kubetype == 'openshift'
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     if args.cluster is not None:
-        data = baseconfig.info_specific_kube(args.cluster)
-        _parse_cluster_status(data)
+        status = baseconfig.info_specific_kube(args.cluster, openshift)
+        if status is None or not status:
+            return
+        kubetable = PrettyTable(["Name", "Status", "Role", "Age", "Version", "Ip"])
+        kubetable.title = f"{status['version'].strip()}"
+        for node in status['nodes']:
+            kubetable.add_row(node)
+        kubetable.align["Kube"] = "l"
+        print(kubetable)
     else:
-        kubetype = args.kubetype
         if kubetype == 'openshift':
             baseconfig.info_kube_openshift(quiet=True)
         if kubetype == 'hypershift':
