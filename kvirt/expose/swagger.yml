@@ -156,3 +156,23 @@ paths:
                 properties:   
                   message:
                     type: string
+  /expose/{cluster}/kubeconfig:
+    get:
+      description: Get kubeconfig for an exposed cluster
+      parameters:
+      - name: cluster
+        in: path
+        description: Cluster name
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Successfully provided info on plan
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: mysuperkubeconfig
+        '400':
+          description: Kubeconfig not gound

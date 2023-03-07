@@ -884,6 +884,15 @@ class Kweb():
                 data = config.info_specific_kube(kube)
             return data
 
+        @app.route('/kubes/<kube>/kubeconfig')
+        def kubeconfig(kube):
+            kubeconfig = os.path.expanduser(f'~/.kcli/clusters/{kube}/auth/kubeconfig')
+            if os.path.exists(kubeconfig):
+                return open(kubeconfig).read()
+            else:
+                response.status = 404
+                return {}
+
         @app.route('/kubeinfo/<kube>')
         @view('kubeinfo.html')
         def kubeinfoview(kube):

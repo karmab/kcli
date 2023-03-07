@@ -516,6 +516,24 @@ paths:
               example:
                 nodes: info-about-nodes
                 version: info-about-version
+  /kubes/{name}/kubeconfig:
+    get:
+      description: Returns kubeconfig of a given cluster
+      parameters:
+      - name: name
+        in: path
+        description: Cluster name
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Successfully returned kubeconfig of given cluster
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: mysuperkubeconfig
   /networks:
     get:
       description: Returns list of networks

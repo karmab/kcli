@@ -236,6 +236,15 @@ class Kexposer():
             else:
                 return _infoplan(plan)
 
+        @app.route('/expose/<kube>/kubeconfig')
+        def kubeconfig(kube):
+            kubeconfig = os.path.expanduser(f'~/.kcli/clusters/{kube}/auth/kubeconfig')
+            if not os.path.exists(kubeconfig) or not self.cluster:
+                response.status = 404
+                return {}
+            else:
+                return open(kubeconfig).read()
+
         @app.route("/expose/<plan>", method=['DELETE'])
         def exposedelete(plan):
             currentconfig = self.config
