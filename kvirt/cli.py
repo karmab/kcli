@@ -1405,8 +1405,8 @@ def list_apps_openshift(args):
     print(appstable)
 
 
-def list_kube(args):
-    """List kube"""
+def list_cluster(args):
+    """List clusters"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.extraclients:
         kubestable = PrettyTable(["Cluster", "Type", "Plan", "Host", "Vms"])
@@ -4570,6 +4570,11 @@ def cli():
     bucketfileslist_parser.add_argument('bucket', metavar='BUCKET')
     bucketfileslist_parser.set_defaults(func=list_bucketfiles)
 
+    clusterlist_desc = 'List Clusters'
+    clusterlist_parser = list_subparsers.add_parser('cluster', description=clusterlist_desc, help=clusterlist_desc,
+                                                    aliases=['clusters', 'kube', 'kubes'], parents=[output_parser])
+    clusterlist_parser.set_defaults(func=list_cluster)
+
     clusterprofilelist_desc = 'List Clusterprofiles'
     clusterprofilelist_parser = list_subparsers.add_parser('clusterprofile', description=clusterprofilelist_desc,
                                                            help=clusterprofilelist_desc,
@@ -4642,11 +4647,6 @@ def cli():
                                                     aliases=['keywords', 'parameter', 'parameters'],
                                                     parents=[output_parser])
     keywordlist_parser.set_defaults(func=list_keyword)
-
-    kubelist_desc = 'List Kubes'
-    kubelist_parser = list_subparsers.add_parser('kube', description=kubelist_desc, help=kubelist_desc,
-                                                 aliases=['kubes', 'cluster', 'clusters'], parents=[output_parser])
-    kubelist_parser.set_defaults(func=list_kube)
 
     kubeconfiglist_desc = 'List Kubeconfigs'
     kubeconfiglist_parser = list_subparsers.add_parser('kubeconfig', description=kubeconfiglist_desc,

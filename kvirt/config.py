@@ -1322,24 +1322,32 @@ class Kconfig(Kbaseconfig):
         return results
 
     def list_kubes(self):
-        """
-
-        :return:
-        """
         k = self.k
         kubes = {}
         for vm in k.list():
             if 'kube' in vm and 'kubetype' in vm:
                 vmname = vm['name']
                 kube = vm['kube']
-                kubetype = vm['kubetype']
-                kubeplan = vm['plan']
+                _type = vm['kubetype']
+                plan = vm['plan']
                 if kube not in kubes:
-                    kubes[kube] = {'type': kubetype, 'plan': kubeplan, 'vms': [vmname]}
+                    kubes[kube] = {'type': _type, 'plan': plan, 'vms': [vmname]}
                 else:
                     kubes[kube]['vms'].append(vmname)
         for kube in kubes:
             kubes[kube]['vms'] = ','.join(kubes[kube]['vms'])
+        clustersdir = os.path.expanduser('~/.kcli/clusters')
+        for kube in next(os.walk(clustersdir))[1]:
+            if kube in kubes:
+                continue
+            clusterdir = f'{clustersdir}/{kube}'
+            _type, plan = 'generic', kube
+            if os.path.exists(f'{clusterdir}/kcli_parameters.yml'):
+                with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
+                    installparam = yaml.safe_load(install)
+                    _type = installparam.get('kubetype', _type)
+                    plan = installparam.get('plan', plan)
+            kubes[kube] = {'type': _type, 'plan': plan, 'vms': []}
         return kubes
 
     def create_product(self, name, repo=None, group=None, plan=None, latest=False, overrides={}):
