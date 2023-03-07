@@ -1107,6 +1107,11 @@ class Kbaseconfig:
         return self._update_yaml_file(profile, self.profiles, 'profile', overrides=overrides, quiet=quiet)
 
     def create_clusterprofile(self, clusterprofile, overrides={}, quiet=False):
+        clusterprofiles = self.clusterprofiles
+        clusterprofilesdir = f"{os.path.dirname(sys.modules[Kbaseconfig.__module__].__file__)}/cluster/profiles"
+        for clusterprofile in os.listdir(clusterprofilesdir):
+            entry = clusterprofile.replace('.yml', '')
+            del clusterprofiles[entry]
         return self._create_yaml_file(clusterprofile, self.clusterprofiles, 'clusterprofile', overrides=overrides,
                                       quiet=quiet)
 

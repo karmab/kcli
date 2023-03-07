@@ -58,8 +58,8 @@ function vmcreate(name, profile){
   name = $("#name").val();
  }
  else if (name == '') {
-    var name = prompt("Enter vm name or leave blank to autogenerate one");
-    if (name === null) {
+    var name = prompt("Enter vm name");
+    if (name === "") {
     return;
     }
  }

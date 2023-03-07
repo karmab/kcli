@@ -169,3 +169,16 @@ function hoststable() {
           }
     });
 }
+
+function kubeprofilestable() {
+    $.ajax({
+         type: "GET",
+          url: '/kubeprofilestable',
+          success: function(data) {
+            $('#profiles').html(data);
+            $('#profiles').dataTable({
+            retrieve: true,
+            });
+          }
+    });
+}

@@ -758,8 +758,8 @@ class Kweb():
             config = Kconfig()
             _type = data['type']
             parameters = {}
-            for p in data:
-                value = data[p]
+            for key in data:
+                value = data[key]
                 if value.isdigit():
                     value = int(value)
                 elif value.lower() == 'true':
@@ -778,8 +778,8 @@ class Kweb():
                         for index, v in enumerate(value):
                             v = v.strip()
                             value[index] = v
-                if p.startswith('parameters'):
-                    key = p.replace('parameters[', '').replace(']', '')
+                if key.startswith('parameters'):
+                    key = key.replace('parameters[', '').replace(']', '')
                 parameters[key] = value
             cluster = parameters['cluster']
             if 'pull_secret' in parameters and parameters['pull_secret'] == 'openshift_pull.json':
@@ -917,6 +917,35 @@ class Kweb():
         def kubes():
             config = Kconfig()
             return {'title': 'Kubes', 'client': config.client}
+
+        @app.route('/kubeprofiles/<profile>')
+        def kubeprofileinfo(profile):
+            baseconfig = Kbaseconfig()
+            if profile not in baseconfig.clusterprofiles:
+                response.status = 404
+                result = {'result': 'failure', 'reason': "Clusterprofile {profile} not found"}
+                return result
+            else:
+                return baseconfig.clusterprofiles[profile]
+
+        @app.route('/kubeprofiles')
+        def kubeprofileslist():
+            baseconfig = Kbaseconfig()
+            profiles = baseconfig.list_clusterprofiles()
+            return {'profiles': profiles}
+
+        @app.route('/kubeprofilestable')
+        @view('kubeprofilestable.html')
+        def kubeprofilestable():
+            baseconfig = Kbaseconfig()
+            profiles = baseconfig.list_clusterprofiles()
+            return {'profiles': profiles, 'readonly': readonly}
+
+        @app.route('/kubeprofilesindex')
+        @view('kubeprofiles.html')
+        def kubeprofiles():
+            baseconfig = Kbaseconfig()
+            return {'title': 'KubeProfiles', 'client': baseconfig.client}
 
         @app.route("/container/<name>/start", method='POST')
         def containerstart(name):

@@ -1,0 +1,20 @@
+        <thead>
+            <tr>
+                <th>Profile</th>
+                <th>Type</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for profile in profiles %}
+            <tr>
+                <td>{{ profile }}</td>
+                <td>{{ profiles[profile]["kubetype"]|default("generic") }}</td>
+                <td>
+                    {% if not readonly %}
+                    <button type="button" class="btn btn-default" id="create" onclick="kubecreatefromprofile('{{ profiles[profile]["kubetype"]|default("generic") }}', '{{ profile }}');"><span data-toggle="tooltip" title="Create Kube from Profile" class="glyphicon glyphicon-shopping-cart"></span></button><p>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %} 
+        </tbody>

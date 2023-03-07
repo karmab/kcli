@@ -1,0 +1,12 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div id="wheel"></div>
+<div class='notifications top-right'></div>
+<button type="button" class="btn btn-default" id="refresh" onclick="window.location.reload()" ><span data-toggle="tooltip" title="Refresh Profiles" class="glyphicon glyphicon-refresh"></span></button><p>
+<table id="profiles" class="table table-striped table-bordered" cellspacing="0" width="100%"/>
+
+<script>
+$(document).ready(kubeprofilestable);
+</script>
+{% endblock %}

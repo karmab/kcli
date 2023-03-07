@@ -1,4 +1,5 @@
 # sslip: true
+kubetype: openshift
 sno: true
 sno_wait: true
 apps:
