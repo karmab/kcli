@@ -1213,7 +1213,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             warning("Not updating /etc/hosts as per your request")
         elif api_ip is not None:
             update_etc_hosts(cluster, domain, api_ip)
-        else:
+        elif not sno_dns:
             warning("Add the following entry in /etc/hosts if needed")
             dnsentries = ['api', 'console-openshift-console.apps', 'oauth-openshift.apps',
                           'prometheus-k8s-openshift-monitoring.apps']
