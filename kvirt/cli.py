@@ -758,10 +758,10 @@ def _parse_vms_list(_list):
 def _parse_cluster_status(status):
     if status is None or not status:
         return
+    print(f"Version: {status['version'].strip()}")
+    print("Name\tStatus\tRole\tAge\tVersion\tIp")
     for line in status['nodes']:
-        print(line)
-    for line in status['version']:
-        print(line)
+        print('\t'.join(line))
 
 
 def list_vm(args):
