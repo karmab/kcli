@@ -1215,7 +1215,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             warning("Not updating /etc/hosts as per your request")
         elif api_ip is not None:
             update_etc_hosts(cluster, domain, api_ip)
-        elif not sno_dns:
+        elif sno_dns:
             warning("Add the following entry in /etc/hosts if needed")
             dnsentries = ['api', 'console-openshift-console.apps', 'oauth-openshift.apps',
                           'prometheus-k8s-openshift-monitoring.apps']
@@ -1241,14 +1241,16 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             info2(f"To access the cluster as the system:admin user when running 'oc', run export KUBECONFIG={c}")
             info2(f"Access the Openshift web-console here: {console}")
             info2(f"Login to the console with user: kubeadmin, password: {kubepassword}")
-            pprint(f"Plug {cluster}-sno.iso to your SNO node to complete the installation")
+            if not baremetal_hosts:
+                pprint(f"Plug {cluster}-sno.iso to your SNO node to complete the installation")
             if sno_ctlplanes:
                 pprint(f"Plug {cluster}-master.iso to get additional ctlplanes")
             if sno_workers:
                 pprint(f"Plug {cluster}-worker.iso to get additional workers")
         backup_paramfile(installparam, clusterdir, cluster, plan, image, dnsconfig)
         os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
-        process_apps(config, clusterdir, apps, overrides)
+        if sno_wait:
+            process_apps(config, clusterdir, apps, overrides)
         sys.exit(0)
     run = call(f'openshift-install --dir={clusterdir} --log-level={log_level} create ignition-configs', shell=True)
     if run != 0:
@@ -1393,7 +1395,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_apps.yml', overrides=lb_overrides)
             if result['result'] != 'success':
                 sys.exit(1)
-    if async_install or (sno and sno_wait):
+    if async_install:
         kubeconf = os.environ['KUBECONFIG']
         kubepassword = open(f"{clusterdir}/auth/kubeadmin-password").read()
         if async_install:
