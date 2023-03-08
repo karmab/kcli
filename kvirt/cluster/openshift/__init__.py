@@ -301,7 +301,7 @@ def process_postscripts(clusterdir, postscripts):
 
 def wait_for_ignition(cluster, domain, role='worker'):
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
-    ignitionfile = "{clusterdir}/ctlplane.ign" if role == 'master' else f"{clusterdir}/worker.ign"
+    ignitionfile = f"{clusterdir}/ctlplane.ign" if role == 'master' else f"{clusterdir}/worker.ign"
     os.remove(ignitionfile)
     while not os.path.exists(ignitionfile) or os.stat(ignitionfile).st_size == 0:
         try:
