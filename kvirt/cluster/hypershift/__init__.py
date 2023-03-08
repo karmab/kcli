@@ -501,3 +501,4 @@ def create(config, plandir, cluster, overrides):
     overrides['hypershift'] = True
     overrides['cluster'] = cluster
     process_apps(config, clusterdir, apps, overrides)
+    return {'result': 'success'}

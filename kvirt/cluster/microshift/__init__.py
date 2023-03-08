@@ -90,3 +90,4 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     success(f"Kubernetes cluster {cluster} deployed!!!")
     info2(f"export KUBECONFIG=$HOME/.kcli/clusters/{cluster}/auth/kubeconfig")
     info2("export PATH=$PWD:$PATH")
+    return {'result': 'success'}
