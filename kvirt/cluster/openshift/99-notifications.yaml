@@ -7,9 +7,10 @@ metadata:
     app: kcli
 spec:
   backoffLimit: 12
-#  ttlSecondsAfterFinished: 100
   template:
    spec:
+    nodeSelector:
+      kubernetes.io/hostname: {{ cluster }}-ctlplane-0.{{ domain }}
     serviceAccountName: autoapprover
     restartPolicy: OnFailure
     initContainers:
@@ -29,6 +30,8 @@ spec:
         name: shared
     containers:
     - name: launch-notify-cmds
+      securityContext:
+        privileged: true
       image: {{ registry }}/karmab/curl:latest
       command:
       - "/bin/sh"
@@ -44,9 +47,15 @@ spec:
 {% for cmd in cmds %}
         {{ cmd }}
 {% endfor %}
+        rm -f /etc/kubernetes/kubeconfig.{{ cluster }}
       volumeMounts:
-      - mountPath: /shared
-        name: shared
+      - name: shared
+        mountPath: /shared
+      - name: conf-dir
+        mountPath: "/etc/kubernetes"
     volumes:
-    - emptyDir: {}
-      name: shared
+    - name: shared
+      emptyDir: {}
+    - name: conf-dir
+      hostPath:
+        path: "/etc/kubernetes"

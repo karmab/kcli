@@ -3228,9 +3228,8 @@ class Kconfig(Kbaseconfig):
                 else:
                     now = datetime.now()
                     now = now. strftime("%a,%d %b %Y %H:%M:%S")
-                    tos = ','.join(["<%s>" % to for to in mailto])
-                    mailcontent = "From: %s <%s>\nTo: %s\nDate: %s\nSubject: %s" % (mailfrom, mailfrom, tos, now,
-                                                                                    title)
+                    tos = ','.join([f"<{to}>" for to in mailto])
+                    mailcontent = f"From: {mailfrom} <{mailfrom}>\nTo: {tos}\nDate: {now}\nSubject: {title}"
                     mailcmd = []
                     if not cluster:
                         mailcmd.append('test -f /etc/debian_version && apt-get -y install curl')
@@ -3239,7 +3238,16 @@ class Kconfig(Kbaseconfig):
                     curlcmd = f"curl --silent --url smtp://{mailserver}:25 --mail-from {mailfrom}"
                     for address in mailto:
                         curlcmd += f" --mail-rcpt {address} "
-                    curlcmd += " --upload-file /tmp/mail.txt"
+                    if cluster:
+                        mailcontent = ""
+                        kubeconfig = f'/etc/kubernetes/kubeconfig.{name}'
+                        curlcmd += f' -H "Subject: {title}" -H "From: {mailfrom} <{mailfrom}>"'
+                        for address in mailto:
+                            curlcmd += f' -H "To: {address} <{address}>"'
+                        curlcmd += ' -F "=(;type=multipart/mixed" -F "=$(cat /tmp/mail.txt);type=text/plain"'
+                        curlcmd += f' -F "file=@{kubeconfig};type=text/plain;encoder=base64" -F "=)"'
+                    else:
+                        curlcmd += " --upload-file /tmp/mail.txt"
                     mailcmd.append(curlcmd)
                     cmds.extend(mailcmd)
             else:

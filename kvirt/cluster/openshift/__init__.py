@@ -1052,6 +1052,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                                                                   cluster=True)
             notifyfile = f"{plandir}/99-notifications.yaml"
             notifyfile = config.process_inputfile(cluster, notifyfile, overrides={'registry': registry,
+                                                                                  'cluster': cluster,
+                                                                                  'domain': original_domain,
                                                                                   'cmds': notifycmds,
                                                                                   'mailcontent': mailcontent})
             with open(f"{clusterdir}/openshift/99-notifications.yaml", 'w') as _f:
