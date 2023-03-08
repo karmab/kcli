@@ -9,8 +9,10 @@ spec:
   backoffLimit: 12
   template:
    spec:
+{% if not sno %}
     nodeSelector:
       kubernetes.io/hostname: {{ cluster }}-ctlplane-0.{{ domain }}
+{% endif %}
     serviceAccountName: autoapprover
     restartPolicy: OnFailure
     initContainers:

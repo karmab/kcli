@@ -1041,24 +1041,25 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         deletionfile2 = config.process_inputfile(cluster, deletionfile2, overrides={'registry': registry})
         with open(f"{clusterdir}/openshift/99-bootstrap-deletion-2.yaml", 'w') as _f:
             _f.write(deletionfile2)
-        if notify:
-            notifycmd = "cat /shared/results.txt"
-            notifycmds, mailcontent = config.handle_notifications(cluster, notifymethods=config.notifymethods,
-                                                                  pushbullettoken=config.pushbullettoken,
-                                                                  notifycmd=notifycmd, slackchannel=config.slackchannel,
-                                                                  slacktoken=config.slacktoken,
-                                                                  mailserver=config.mailserver,
-                                                                  mailfrom=config.mailfrom, mailto=config.mailto,
-                                                                  cluster=True)
-            notifyfile = f"{plandir}/99-notifications.yaml"
-            notifyfile = config.process_inputfile(cluster, notifyfile, overrides={'registry': registry,
-                                                                                  'cluster': cluster,
-                                                                                  'domain': original_domain,
-                                                                                  'cmds': notifycmds,
-                                                                                  'mailcontent': mailcontent})
-            with open(f"{clusterdir}/openshift/99-notifications.yaml", 'w') as _f:
-                _f.write(notifyfile)
-    if apps and (async_install or sno):
+    if notify and (async_install or (sno and not sno_wait)):
+        notifycmd = "cat /shared/results.txt"
+        notifycmds, mailcontent = config.handle_notifications(cluster, notifymethods=config.notifymethods,
+                                                              pushbullettoken=config.pushbullettoken,
+                                                              notifycmd=notifycmd, slackchannel=config.slackchannel,
+                                                              slacktoken=config.slacktoken,
+                                                              mailserver=config.mailserver,
+                                                              mailfrom=config.mailfrom, mailto=config.mailto,
+                                                              cluster=True)
+        notifyfile = f"{plandir}/99-notifications.yaml"
+        notifyfile = config.process_inputfile(cluster, notifyfile, overrides={'registry': registry,
+                                                                              'cluster': cluster,
+                                                                              'domain': original_domain,
+                                                                              'sno': sno,
+                                                                              'cmds': notifycmds,
+                                                                              'mailcontent': mailcontent})
+        with open(f"{clusterdir}/openshift/99-notifications.yaml", 'w') as _f:
+            _f.write(notifyfile)
+    if apps and (async_install or (sno and not sno_wait)):
         registry = disconnected_url or 'quay.io'
         user = False
         autolabeller = False
@@ -1159,6 +1160,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                                                         overrides=data)
                 sno_files.extend([{"path": "/etc/crio/crio.conf.d/01-workload-partitioning", "data": partitioning_data},
                                   {"path": "/etc/kubernetes/openshift-workload-pinning", "data": pinning_data}])
+        if notify:
+            sno_files.append({"path": f"/etc/kubernetes/kubeconfig.{cluster}",
+                              "origin": f'{clusterdir}/auth/kubeconfig'})
         if sno_files:
             rendered = config.process_inputfile(cluster, f"{plandir}/99-sno.yaml", overrides={'files': sno_files})
             with open(f"{clusterdir}/openshift/99-sno.yaml", 'w') as f:
