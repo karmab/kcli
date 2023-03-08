@@ -6,7 +6,7 @@ metadata:
   labels:
     app: kcli
 spec:
-  backoffLimit: 12
+  backoffLimit: {{ 20 if sno else 12 }}
   template:
    spec:
 {% if not sno %}
@@ -43,7 +43,7 @@ spec:
 {% if mailcontent != None %}
 {% set mailcontent = mailcontent.split('\n') %}
 {% for line in mailcontent %}
-        echo "{{ line }}" >> /tmp/mail.txt
+        echo "{{ line }}" >> /var/tmp/mail.txt
 {% endfor %}
 {% endif %}
 {% for cmd in cmds %}

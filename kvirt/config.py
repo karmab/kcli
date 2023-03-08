@@ -914,7 +914,7 @@ class Kconfig(Kbaseconfig):
         networkwaitcommand = [f'sleep {networkwait}'] if networkwait > 0 else []
         rootcommand = [f'echo root:{rootpassword} | chpasswd'] if rootpassword is not None else []
         cmds = rootcommand + networkwaitcommand + rhncommands + sharedfoldercmds + zerotiercmds + cmds + scriptcmds
-        if notify:
+        if notify and image is not None:
             if notifycmd is None and notifyscript is None:
                 if 'cos' in image:
                     notifycmd = 'journalctl --identifier=ignition --all --no-pager'
@@ -938,7 +938,7 @@ class Kconfig(Kbaseconfig):
                                                                 slackchannel=slackchannel, slacktoken=slacktoken,
                                                                 mailserver=mailserver, mailfrom=mailfrom, mailto=mailto)
             if mailcontent is not None:
-                files.append({'path': '/tmp/mail.txt', 'content': mailcontent})
+                files.append({'path': '/var/tmp/mail.txt', 'content': mailcontent})
             if notifycmds:
                 if not cmds:
                     cmds = notifycmds
@@ -3233,8 +3233,8 @@ class Kconfig(Kbaseconfig):
                     mailcmd = []
                     if not cluster:
                         mailcmd.append('test -f /etc/debian_version && apt-get -y install curl')
-                        mailcmd.append('echo "" >> /tmp/mail.txt')
-                    mailcmd.append(f'{notifycmd} 2>&1 >> /tmp/mail.txt')
+                        mailcmd.append('echo "" >> /var/tmp/mail.txt')
+                    mailcmd.append(f'{notifycmd} 2>&1 >> /var/tmp/mail.txt')
                     curlcmd = f"curl --silent --url smtp://{mailserver}:25 --mail-from {mailfrom}"
                     for address in mailto:
                         curlcmd += f" --mail-rcpt {address} "
@@ -3244,10 +3244,10 @@ class Kconfig(Kbaseconfig):
                         curlcmd += f' -H "Subject: {title}" -H "From: {mailfrom} <{mailfrom}>"'
                         for address in mailto:
                             curlcmd += f' -H "To: {address} <{address}>"'
-                        curlcmd += ' -F "=(;type=multipart/mixed" -F "=$(cat /tmp/mail.txt);type=text/plain"'
+                        curlcmd += ' -F "=(;type=multipart/mixed" -F "=$(cat /var/tmp/mail.txt);type=text/plain"'
                         curlcmd += f' -F "file=@{kubeconfig};type=text/plain;encoder=base64" -F "=)"'
                     else:
-                        curlcmd += " --upload-file /tmp/mail.txt"
+                        curlcmd += " --upload-file /var/tmp/mail.txt"
                     mailcmd.append(curlcmd)
                     cmds.extend(mailcmd)
             else:

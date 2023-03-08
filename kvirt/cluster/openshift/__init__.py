@@ -1028,8 +1028,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 _f.write(monitoringfile)
             continue
         copy2(f, f"{clusterdir}/openshift")
+    registry = disconnected_url or 'quay.io'
     if async_install:
-        registry = disconnected_url or 'quay.io'
         config.import_in_kube(network=network, dest=f"{clusterdir}/openshift", secure=True)
         deletionfile = f"{plandir}/99-bootstrap-deletion.yaml"
         deletionfile = config.process_inputfile(cluster, deletionfile, overrides={'cluster': cluster,
@@ -1160,9 +1160,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                                                         overrides=data)
                 sno_files.extend([{"path": "/etc/crio/crio.conf.d/01-workload-partitioning", "data": partitioning_data},
                                   {"path": "/etc/kubernetes/openshift-workload-pinning", "data": pinning_data}])
-        if notify:
-            sno_files.append({"path": f"/etc/kubernetes/kubeconfig.{cluster}",
-                              "origin": f'{clusterdir}/auth/kubeconfig'})
         if sno_files:
             rendered = config.process_inputfile(cluster, f"{plandir}/99-sno.yaml", overrides={'files': sno_files})
             with open(f"{clusterdir}/openshift/99-sno.yaml", 'w') as f:
@@ -1194,6 +1191,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             extra_args = overrides.get('extra_args')
             _files = [{"path": "/root/sno-finish.service", "origin": f"{plandir}/sno-finish.service"},
                       {"path": "/usr/local/bin/sno-finish.sh", "origin": f"{plandir}/sno-finish.sh", "mode": 700}]
+            if notify:
+                _files.append({"path": "/root/kubeconfig", "origin": f'{clusterdir}/auth/kubeconfig'})
             iso_overrides['files'] = _files
             iso_overrides.update(data)
             result = config.create_vm(sno_name, 'rhcos46', overrides=iso_overrides, onlyassets=True)
