@@ -149,7 +149,10 @@ class Ksphere:
             confspec.flags.diskUuidEnabled = True
             confspec.annotation = name
             confspec.memoryMB = memory
+            confspec.memoryHotAddEnabled = memoryhotplug
             confspec.numCPUs = numcpus
+            confspec.cpuHotAddEnabled = cpuhotplug
+            confspec.cpuHotRemoveEnabled = cpuhotplug
             extraconfig = []
             for entry in [field for field in metadata if field in METADATA_FIELDS]:
                 opt = vim.option.OptionValue()
