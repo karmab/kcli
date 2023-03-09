@@ -49,7 +49,7 @@
   - path: /etc/kubernetes/config.hcl.templ
     origin: config.hcl.templ
 {% endif %}
-{% endfor %}
 {% if files|default([]) %}
  extra_files: {{ files }}
 {% endif %}
+{% endfor %}

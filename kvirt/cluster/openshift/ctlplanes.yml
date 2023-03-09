@@ -58,11 +58,11 @@
   - path: /etc/kubernetes/keepalived.conf
     origin: keepalived.conf
 {% endif %}
-{% if files|default([]) %}
- extra_files: {{ files }}
-{% endif %}
 {% if async and num == 0 %}
   - path: /etc/kubernetes/kubeconfig.{{ cluster }}
     origin: ~/.kcli/clusters/{{ cluster }}/auth/kubeconfig
+{% endif %}
+{% if files|default([]) %}
+ extra_files: {{ files }}
 {% endif %}
 {% endfor %}

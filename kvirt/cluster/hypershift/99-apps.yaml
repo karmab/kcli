@@ -1,0 +1,58 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: install-operators
+  namespace: kcli-infra
+  labels:
+    app: kcli
+spec:
+  backoffLimit: 12
+  template:
+   spec:
+    serviceAccountName: autoapprover
+    restartPolicy: OnFailure
+    initContainers:
+    - name: wait-for-cluster-version
+      image: {{ registry }}/karmab/kubectl:latest
+      command:
+      - "/bin/sh"
+      - "-c"
+      - |
+        #!/bin/sh
+        CLUSTER_VERSION=$(kubectl get clusterversion version -o jsonpath='{.status.history[0].state}')
+        [ "$CLUSTER_VERSION" == "Completed" ] || exit 1
+    containers:
+    - name: install-operators
+      image: {{ registry }}/karmab/curl:latest
+      command:
+      - "/bin/sh"
+      - "-c"
+      - |
+        #!/bin/sh
+        curl -s -L https://github.com/karmab/tasty/releases/download/v0.6.0/tasty-linux-amd64 > /usr/bin/tasty
+        chmod u+x /usr/bin/tasty
+        {% for app in apps %}
+        tasty install {{ app }} -w
+        {% endfor %}
+{% if users_dev is defined %}
+    - name: install-users
+      image: {{ registry }}/karmab/kcli:latest
+      command:
+      - "/bin/sh"
+      - "-c"
+      - |
+        #!/bin/sh
+        kcli download oc
+        export PATH=.:$PATH
+        DIR_USER=/root/kcli/kvirt/openshift/apps/users
+        DEV_USER={{ users_dev }}
+        DEV_PASSWORD_SHA={{ users_devpassword_sha }}
+        ADMIN_USER={{ users_admin }}
+        ADMIN_PASSWORD_SHA={{ users_adminpassword_sha }}
+        printf "$ADMIN_USER:$ADMIN_PASSWORD_SHA )\n$DEV_USER:$DEV_PASSWORD_SHA\n" > htpasswd
+        NAMESPACE=openshift-config
+        oc apply -f $DIR_USER/oauth.yml
+        oc create secret generic htpass-secret --from-file=htpasswd=htpasswd -n $NAMESPACE
+        echo "Granting cluster-admin role to $ADMIN_USER"
+        oc adm policy add-cluster-role-to-user cluster-admin $ADMIN_USER
+{% endif %}

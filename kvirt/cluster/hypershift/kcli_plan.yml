@@ -29,6 +29,11 @@
 {% do files.append(new_file) %}
 {% set new_file = {'path': '/etc/kubernetes/Corefile', 'origin': 'Corefile'} %}
 {% do files.append(new_file) %}
+{% if async and num == 0 %}
+{% set new_file = {'path': '/etc/kubernetes/kubeconfig.' + cluster + '/auth/kubeconfig', 'origin': '~/.kcli/clusters/' + cluster + '/auth/kubeconfig'} %}
+{% do files.append(new_file) %}
+{% endif %}
+
 {% endif %}
 
 {{ cluster }}-worker-{{ num }}:

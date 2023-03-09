@@ -133,7 +133,9 @@ def create(config, plandir, cluster, overrides):
             'network': 'default',
             'etcd_size': 4,
             'workers': 2,
+            'apps': [],
             'async': False,
+            'notify': False,
             'tag': OPENSHIFT_TAG,
             'version': 'stable',
             'network_type': 'OVNKubernetes',
@@ -166,9 +168,13 @@ def create(config, plandir, cluster, overrides):
     plan = cluster if cluster is not None else clustervalue
     baremetal_iso = data.get('baremetal_iso', False)
     baremetal_hosts = data.get('baremetal_hosts', [])
+    async_install = data.get('async')
+    notify = data.get('notify')
     sslip = data.get('sslip')
     domain = data.get('domain')
+    original_domain = domain
     data['original_domain'] = domain
+    apps = overrides.get('apps', [])
     version = data.get('version')
     tag = data.get('tag')
     if str(tag) == '4.1':
@@ -337,6 +343,76 @@ def create(config, plandir, cluster, overrides):
                     pprint(f"Injecting manifest {f}")
                     mc_data = json.dumps(mc_data)
                     manifests.append({'name': mc_name, 'data': mc_data})
+    if notify and async_install:
+        # registry = disconnected_url or 'quay.io'
+        registry = 'quay.io'
+        notifycmd = "cat /shared/results.txt"
+        notifycmds, mailcontent = config.handle_notifications(cluster, notifymethods=config.notifymethods,
+                                                              pushbullettoken=config.pushbullettoken,
+                                                              notifycmd=notifycmd, slackchannel=config.slackchannel,
+                                                              slacktoken=config.slacktoken,
+                                                              mailserver=config.mailserver,
+                                                              mailfrom=config.mailfrom, mailto=config.mailto,
+                                                              cluster=True)
+        notifyfile = f"{plandir}/99-notifications.yaml"
+        notifyfile = config.process_inputfile(cluster, notifyfile, overrides={'registry': registry,
+                                                                              'cluster': cluster,
+                                                                              'domain': original_domain,
+                                                                              'cmds': notifycmds,
+                                                                              'mailcontent': mailcontent})
+        manifests.append({'name': 'notifications', 'data': notifyfile})
+    if apps and async_install:
+        # registry = disconnected_url or 'quay.io'
+        registry = 'quay.io'
+        user = False
+        autolabeller = False
+        final_apps = []
+        for a in apps:
+            if isinstance(a, str) and a == 'users' or (isinstance(a, dict) and a.get('name', '') == 'users'):
+                user = True
+            elif isinstance(a, str) and a == 'autolabeller'\
+                    or (isinstance(a, dict) and a.get('name', '') == 'autolabeller'):
+                autolabeller = True
+            elif isinstance(a, str) and a != 'nfs':
+                final_apps.append(a)
+            elif isinstance(a, dict) and 'name' in a:
+                final_apps.append(a['name'])
+            else:
+                error(f"Invalid app {a}. Skipping")
+        appsfile = f"{plandir}/99-apps.yaml"
+        apps_data = {'registry': registry, 'apps': final_apps}
+        if user:
+            apps_data['users_dev'] = overrides.get('users_dev', 'dev')
+            users_devpassword = overrides.get('users_dev', 'dev')
+            users_devpassword_sha = os.popen(f'openssl passwd -apr1 {users_devpassword}').read().strip()
+            apps_data['users_devpassword_sha'] = users_devpassword_sha
+            apps_data['users_admin'] = overrides.get('users_admin', 'admin')
+            users_adminpassword = overrides.get('users_adminpassword', 'admin')
+            users_adminpassword_sha = os.popen(f'openssl passwd -apr1 {users_adminpassword}').read().strip()
+            apps_data['users_adminpassword_sha'] = users_adminpassword_sha
+        appsfile = config.process_inputfile(cluster, appsfile, overrides=apps_data)
+        manifests.append({'name': 'apps', 'data': appsfile})
+        appdir = f"{plandir}/apps"
+        apps_namespace = {'advanced-cluster-management': 'open-cluster-management',
+                          'multicluster-engine': 'multicluster-engine', 'kubevirt-hyperconverged': 'openshift-cnv',
+                          'local-storage-operator': 'openshift-local-storage',
+                          'ocs-operator': 'openshift-storage', 'odf-lvm-operator': 'openshift-storage',
+                          'odf-operator': 'openshift-storage', 'metallb-operator': 'openshift-operators',
+                          'autolabeller': 'autorules'}
+        if autolabeller:
+            final_apps.append('autolabeller')
+        for appname in final_apps:
+            app_data = data.copy()
+            if data.get('apps_install_cr') and os.path.exists(f"{appdir}/{appname}/cr.yml"):
+                app_data['namespace'] = apps_namespace[appname]
+                if original_domain is not None:
+                    app_data['domain'] = original_domain
+                cr_content = config.process_inputfile(cluster, f"{appdir}/{appname}/cr.yml", overrides=app_data)
+                rendered = config.process_inputfile(cluster, f"{plandir}/99-apps-cr.yaml",
+                                                    overrides={'registry': registry,
+                                                               'app': appname,
+                                                               'cr_content': cr_content})
+                manifests.append({'name': f'app-{appname}', 'data': rendered})
     if manifests:
         assetsdata['manifests'] = manifests
     hosted_version = data.get('hosted_version') or version
@@ -479,7 +555,6 @@ def create(config, plandir, cluster, overrides):
         result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_apps.yml', overrides=data)
         if result['result'] != 'success':
             return result
-    async_install = data.get('async')
     if async_install or which('openshift-install') is None:
         success(f"Kubernetes cluster {cluster} deployed!!!")
         info2(f"export KUBECONFIG=$HOME/.kcli/clusters/{cluster}/auth/kubeconfig")
