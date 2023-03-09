@@ -3395,3 +3395,67 @@ class Kconfig(Kbaseconfig):
             if vm.get('plan', '') == plan:
                 results.append(vm)
         return results
+
+    def autoscale_cluster(self, cluster):
+        clusterdir = f"{os.environ['HOME']}/.kcli/clusters/{cluster}"
+        kubeconfig = f"{clusterdir}/auth/kubeconfig"
+        with open(f"{clusterdir}/kcli_parameters.yml") as f:
+            overrides = yaml.safe_load(f)
+        kubetype = overrides.get('kubetype', 'generic')
+        threshold = int(os.environ.get('AUTOSCALE_MAXIMUM', 10000))
+        if threshold > 9999:
+            pprint(f"Skipping autoscaling up checks for cluster {cluster} as per threshold {threshold}")
+            return {'result': 'success'}
+        idle = int(os.environ.get('AUTOSCALE_MINIMUM', 2))
+        if idle < 1:
+            pprint(f"Skipping autoscaling down checks for cluster {cluster} as per idle {idle}")
+            return {'result': 'success'}
+        workers = overrides.get('workers', 0)
+        if not os.path.exists(kubeconfig):
+            pprint(f"Skipping autoscaling checks on {cluster} as kubeconfig is missing")
+            return {'result': 'success'}
+        pprint(f"Checking non scheduled pods count on cluster {cluster}")
+        os.environ['KUBECONFIG'] = kubeconfig
+        selector = "!node-role.kubernetes.io/control-plane,node-role.kubernetes.io/worker"
+        currentcmd = f"kubectl get node --selector='{selector}'"
+        currentcmd += " | grep ' Ready'"
+        currentnodes = os.popen(currentcmd).readlines()
+        if len(currentnodes) != workers:
+            pprint(f"Ongoing scaling operation on cluster {cluster}")
+            return {'result': 'success'}
+        pendingcmd = "kubectl get pods -A --field-selector=status.phase=Pending -o yaml"
+        pending_pods = yaml.safe_load(os.popen(pendingcmd).read())['items']
+        if len(pending_pods) > threshold:
+            pprint(f"Triggering scaling up for cluster {cluster} as there are {len(pending_pods)} pending pods")
+            overrides['workers'] += 1
+            result = self.scale_kube(cluster, kubetype, overrides=overrides)
+            pprint("Scaling up cluster {cluster} to {workers} workers")
+            return result
+        nodes = {}
+        currentcmd = "kubectl get pod -A -o yaml"
+        allpods = yaml.safe_load(os.popen(currentcmd).read())['items']
+        for pod in allpods:
+            nodename = pod['spec']['nodeName']
+            status = pod['status']['phase']
+            if status != 'Running':
+                continue
+            if nodename not in nodes:
+                nodes[nodename] = 1
+            else:
+                nodes[nodename] += 1
+        todelete = 0
+        for node in nodes:
+            if nodes[node] < idle:
+                todelete += 1
+        if todelete > 0:
+            pprint(f"Triggering scaling down for cluster {cluster} as there are {todelete} idle nodes")
+            workers = workers - todelete
+            pprint(f"Scaling down cluster {cluster} to {workers} workers")
+            result = self.scale_kube(cluster, kubetype, overrides=overrides)
+            return result
+        return {'result': 'success'}
+
+    def loop_autoscale_cluster(self, cluster):
+        while True:
+            self.autoscale_cluster(cluster)
+            sleep(60)
