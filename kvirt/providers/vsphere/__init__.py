@@ -839,10 +839,28 @@ class Ksphere:
         waitForMe(t)
 
     def update_memory(self, name, memory):
-        print("not implemented")
+        si = self.si
+        dc = self.dc
+        vmFolder = dc.vmFolder
+        vm = findvm(si, vmFolder, name)
+        if vm is None:
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
+        configspec = vim.vm.ConfigSpec()
+        configspec.memoryMB = memory
+        t = vm.ReconfigVM_Task(configspec)
+        waitForMe(t)
 
     def update_cpus(self, name, numcpus):
-        print("not implemented")
+        si = self.si
+        dc = self.dc
+        vmFolder = dc.vmFolder
+        vm = findvm(si, vmFolder, name)
+        if vm is None:
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
+        configspec = vim.vm.ConfigSpec()
+        configspec.numCPUs = numcpus
+        t = vm.ReconfigVM_Task(configspec)
+        waitForMe(t)
 
     def update_start(self, name, start=True):
         print("not implemented")
