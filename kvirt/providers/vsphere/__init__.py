@@ -667,9 +667,10 @@ class Ksphere:
             for nic in guest.net:
                 if nic.ipAddress:
                     ip = nic.ipAddress[0]
-                    ips.append(ip)
-                    if 'ip' not in yamlinfo:
-                        yamlinfo['ip'] = ip
+                    if not ip.startwith('fe80::'):
+                        ips.append(ip)
+                        if 'ip' not in yamlinfo:
+                            yamlinfo['ip'] = ip
         if len(ips) > 1:
             yamlinfo['ips'] = ips
         for entry in config.extraConfig:
