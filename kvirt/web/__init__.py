@@ -1151,8 +1151,8 @@ class Kweb():
 
         self.app = app
         self.port = os.environ.get('PORT', 8000)
-        self.debug = 'DEBUG' in os.environ
-        self.ipv6 = 'IPV6' in os.environ
+        self.debug = 'KWEB_DEBUG' in os.environ
+        self.ipv6 = 'KWEB_IPV6' in os.environ
         self.host = '::' if self.ipv6 else '0.0.0.0'
         self.pull_secret = os.environ.get('PULL_SECRET')
 

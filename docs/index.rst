@@ -844,6 +844,48 @@ Calling web endpoints through REST
 
 you can check the `swagger spec <https://petstore.swagger.io/?url=https://raw.githubusercontent.com/karmab/kcli/main/kvirt/web/swagger.yml>`__ to call the different endpoints using your language of choice.
 
+ksushy
+------
+
+ksushy provides a REST interface to interact with vms using Redfish. This provides a functionality similar to sushy-emulator but extending it to more providers (typically Vsphere, Kubevirt and oVirt) and through more friendly urls.
+
+Deploy ksushy service
+~~~~~~~~~~~~~~~~~~~~~
+
+ksushy can be launched manually for testing purposes but the following command creates a systemd unit instead, listening on port 9000. The call accepts different flags to:
+
+-  listen on ipv6
+-  enable ssl
+-  specify an optional username and password for authentication
+
+::
+
+   kcli create sushy-service
+
+Interacting with vms through redfish
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Once the service is deployed, one can query an existing vm running locally using the following
+
+::
+
+   curl http://127.0.0.1/redfish/v1/Systems/local/mynode
+
+For querying a vm running on a different provider, the url would change to specify the provider as defined in ~/.kcli/config.yml
+
+::
+
+   curl http://127.0.0.1/redfish/v1/Systems/myotherprovider/mynode2
+
+Typical redfish operations like start, stop, info, listing nics of a vm are supported for all providers.
+
+For plugging an iso, only virtualization providers can be used.
+
+Restricting access
+~~~~~~~~~~~~~~~~~~
+
+When deploying the service, an username and password can be specified for securing access through basic authentication
+
 Multiple clients
 ----------------
 
@@ -1880,7 +1922,7 @@ For each entry you would specify:
 -  password or bmc_password. bmc_password can also be set outside the array if you use the same password for all of your baremetal workers
 -  Optionally model or bmc_model (either dell,hp, supermicro) to have the bmc_url evaluated for you (Only specify its ip in this case)
 
-As an example, the following array will boot 3 workers (based on kvm vms with sushy tool)
+As an example, the following array will boot 3 workers (based on kvm vms with ksushy)
 
 ::
 

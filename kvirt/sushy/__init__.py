@@ -2,7 +2,7 @@
 # coding=utf-8
 
 from kvirt.defaults import FAKECERT
-from kvirt.bottle import Bottle, request, response, jinja2_view, server_names, ServerAdapter
+from kvirt.bottle import Bottle, request, response, jinja2_view, server_names, ServerAdapter, auth_basic
 from kvirt.common import pprint
 from kvirt.config import Kconfig
 import os
@@ -14,6 +14,20 @@ from tempfile import NamedTemporaryFile
 
 basedir = f"{os.path.dirname(Bottle.run.__code__.co_filename)}/sushy"
 view = functools.partial(jinja2_view, template_lookup=[f"{basedir}/templates"])
+
+default_user = os.environ.get('KSUSHY_USER')
+default_password = os.environ.get('KSUSHY_PASSWORD')
+
+
+def credentials(user, password):
+    if default_user is None or default_password is None:
+        return True
+    elif user is None or password is None:
+        return False
+    elif user == default_user or password == default_password:
+        return True
+    else:
+        return False
 
 
 class SSLCherryPy(ServerAdapter):
@@ -38,17 +52,21 @@ class Ksushy():
     def __init__(self):
         app = Bottle()
 
+        @app.route('/redfish/v1')
         @app.route('/redfish/v1/')
+        @auth_basic(credentials)
         @view('root.json')
         def root_resource():
             return {}
 
         @app.route('/redfish/v1/Managers')
+        @auth_basic(credentials)
         @view('managers.json')
         def manager_collection_resource():
             return {}
 
         @app.route('/redfish/v1/Systems')
+        @auth_basic(credentials)
         @view('systems.json')
         def system_collection_resource():
             config = Kconfig()
@@ -59,6 +77,7 @@ class Ksushy():
             return {'vms': vms, 'count': len(vms)}
 
         @app.route('/redfish/v1/Systems/<client>/<name>')
+        @auth_basic(credentials)
         @view('system.json')
         def system_resource_get(client, name):
             config = Kconfig(client)
@@ -73,6 +92,7 @@ class Ksushy():
             return data
 
         @app.route('/redfish/v1/Systems/<client>/<name>', method='PATCH')
+        @auth_basic(credentials)
         def system_resource(client, name):
             pprint('ignoring patch request')
             boot = request.json.get('Boot', {})
@@ -82,6 +102,7 @@ class Ksushy():
             return
 
         @app.route('/redfish/v1/Systems/<client>/<name>/EthernetInterfaces')
+        @auth_basic(credentials)
         @view('interfaces.json')
         def manage_interfaces(client, name):
             config = Kconfig(client)
@@ -97,16 +118,19 @@ class Ksushy():
             return {'client': client, 'name': name, 'macs': macs, 'count': len(macs)}
 
         @app.route('/redfish/v1/Systems/<client>/<name>/EthernetInterfaces/<mac>')
+        @auth_basic(credentials)
         @view('interface.json')
         def manage_interface(client, name, mac):
             return {'client': client, 'name': name, 'mac': mac}
 
         @app.route('/redfish/v1/Managers/<client>/<name>')
+        @auth_basic(credentials)
         @view('manager.json')
         def manager_resource(client, name):
             return {'client': client, 'name': name, 'date_time': datetime.now().strftime('%Y-%M-%dT%H:%M:%S+00:00')}
 
         @app.route('/redfish/v1/Systems/<client>/<name>/Actions/ComputerSystem.Reset', method='POST')
+        @auth_basic(credentials)
         def system_reset_action(client, name):
             config = Kconfig(client)
             k = config.k
@@ -129,11 +153,13 @@ class Ksushy():
             return ''
 
         @app.route('/redfish/v1/Managers/<client>/<name>/VirtualMedia')
+        @auth_basic(credentials)
         @view('virtualmedias.json')
         def virtualmedia_collection_resource(client, name):
             return {'client': client, 'name': name}
 
         @app.route('/redfish/v1/Managers/<client>/<name>/VirtualMedia/Cd')
+        @auth_basic(credentials)
         @view('virtualmedia_cd.json')
         def virtualmedia_cd_resource(client, name):
             config = Kconfig(client)
@@ -149,6 +175,7 @@ class Ksushy():
 
         @app.route('/redfish/v1/Managers/<client>/<name>/VirtualMedia/Cd/Actions/VirtualMedia.InsertMedia',
                    method='POST')
+        @auth_basic(credentials)
         def virtualmedia_insert(client, name):
             config = Kconfig(client)
             if not config.k.exists(name):
@@ -176,6 +203,7 @@ class Ksushy():
 
         @app.route('/redfish/v1/Managers/<client>/<name>/VirtualMedia/Cd/Actions/VirtualMedia.EjectMedia',
                    method='POST')
+        @auth_basic(credentials)
         def virtualmedia_eject(client, name):
             config = Kconfig(client)
             if not config.k.exists(name):
@@ -192,14 +220,15 @@ class Ksushy():
             return ''
 
         @app.route('/redfish/v1/Systems/<client>/<name>/BIOS')
+        @auth_basic(credentials)
         @view('bios.json')
         def bios_resource(client, name):
             return {'client': client, 'name': name}
 
         self.app = app
-        self.port = os.environ.get('PORT', 9000)
-        self.debug = 'DEBUG' in os.environ
-        self.ipv6 = 'IPV6' in os.environ
+        self.port = os.environ.get('KSUSHY_PORT', 9000)
+        self.debug = 'KSUSHY_DEBUG' in os.environ
+        self.ipv6 = 'KSUSHY_IPV6' in os.environ
         self.host = '::' if self.ipv6 else '0.0.0.0'
 
     def run(self):

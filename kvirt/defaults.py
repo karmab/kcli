@@ -230,6 +230,8 @@ Environment=HOME={home}
 Environment=PYTHONUNBUFFERED=true
 {ipv6}
 {ssl}
+{user}
+{password}
 Type=simple
 ExecStart=/usr/bin/ksushy
 StandardOutput=syslog
