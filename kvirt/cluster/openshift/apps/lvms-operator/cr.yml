@@ -1,0 +1,13 @@
+apiVersion: lvm.topolvm.io/v1alpha1
+kind: LVMCluster
+metadata:
+  name: lvmcluster
+  namespace: {{ namespace }}
+spec:
+  storage:
+    deviceClasses:
+    - name: {{ lvms_vg }}
+      thinPoolConfig:
+        name: {{ lvms_vg }}-thin-pool
+        sizePercent: {{ lvms_thinpool_percent }}
+        overprovisionRatio: {{ lvms_thinpool_overprovisionratio }}

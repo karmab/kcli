@@ -1,0 +1,5 @@
+lvms_vg: vg1
+namespace: openshift-storage
+lvms_default_storageclass: true
+lvms_thinpool_percent: 90
+lvms_thinpool_overprovisionratio: 10
