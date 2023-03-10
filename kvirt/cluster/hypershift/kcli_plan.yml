@@ -29,9 +29,17 @@
 {% do files.append(new_file) %}
 {% set new_file = {'path': '/etc/kubernetes/Corefile', 'origin': 'Corefile'} %}
 {% do files.append(new_file) %}
-{% if async and num == 0 %}
-{% set new_file = {'path': '/etc/kubernetes/kubeconfig.' + cluster + '/auth/kubeconfig', 'origin': '~/.kcli/clusters/' + cluster + '/auth/kubeconfig'} %}
+{% if async_files|default([]) and num == 0 %}
+{% set new_file = {'path': '/etc/kubernetes/kubeconfig.%s' % cluster, 'origin': '~/.kcli/clusters/%s/auth/kubeconfig' % cluster} %}
 {% do files.append(new_file) %}
+{% set new_file = {'path': '/usr/local/bin/extras.sh', 'origin': 'extras.sh'} %}
+{% do files.append(new_file) %}
+{% set new_file = {'path': '/root/extras.service', 'origin': 'extras.service'} %}
+{% do files.append(new_file) %}
+{% for async_file in async_files|default([]) %}
+{% set new_file = {'path': '/etc/kubernetes/%s' % async_file['name'], 'content': async_file['content'] } %}
+{% do files.append(new_file) %}
+{% endfor %}
 {% endif %}
 
 {% endif %}

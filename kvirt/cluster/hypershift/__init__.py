@@ -279,13 +279,13 @@ def create(config, plandir, cluster, overrides):
     else:
         msg = f"Publickey file {pub_key} not found"
         return {'result': 'failure', 'reason': msg}
+    network = data.get('network')
     ingress_ip = data.get('ingress_ip')
     cidr = '192.168.122.0/24'
     ipv6 = False
     virtual_router_id = None
     if config.type in virtplatforms:
         if ingress_ip is None:
-            network = data.get('network')
             networkinfo = k.info_network(network)
             if config.type == 'kvm' and networkinfo['type'] == 'routed':
                 cidr = networkinfo['cidr']
@@ -346,7 +346,8 @@ def create(config, plandir, cluster, overrides):
                     pprint(f"Injecting manifest {f}")
                     mc_data = json.dumps(mc_data)
                     manifests.append({'name': mc_name, 'data': mc_data})
-    if notify and async_install:
+    async_files = []
+    if notify:
         # registry = disconnected_url or 'quay.io'
         registry = 'quay.io'
         notifycmd = "cat /shared/results.txt"
@@ -363,16 +364,15 @@ def create(config, plandir, cluster, overrides):
                                                                               'domain': original_domain,
                                                                               'cmds': notifycmds,
                                                                               'mailcontent': mailcontent})
-        manifests.append({'name': 'notifications', 'data': notifyfile})
-    if apps and async_install:
+        async_files.append({'name': '99-notifications.yaml', 'content': notifyfile})
+    if apps:
         # registry = disconnected_url or 'quay.io'
         registry = 'quay.io'
-        user = False
         autolabeller = False
         final_apps = []
         for a in apps:
             if isinstance(a, str) and a == 'users' or (isinstance(a, dict) and a.get('name', '') == 'users'):
-                user = True
+                continue
             elif isinstance(a, str) and a == 'autolabeller'\
                     or (isinstance(a, dict) and a.get('name', '') == 'autolabeller'):
                 autolabeller = True
@@ -384,17 +384,8 @@ def create(config, plandir, cluster, overrides):
                 error(f"Invalid app {a}. Skipping")
         appsfile = f"{plandir}/99-apps.yaml"
         apps_data = {'registry': registry, 'apps': final_apps}
-        if user:
-            apps_data['users_dev'] = overrides.get('users_dev', 'dev')
-            users_devpassword = overrides.get('users_dev', 'dev')
-            users_devpassword_sha = os.popen(f'openssl passwd -apr1 {users_devpassword}').read().strip()
-            apps_data['users_devpassword_sha'] = users_devpassword_sha
-            apps_data['users_admin'] = overrides.get('users_admin', 'admin')
-            users_adminpassword = overrides.get('users_adminpassword', 'admin')
-            users_adminpassword_sha = os.popen(f'openssl passwd -apr1 {users_adminpassword}').read().strip()
-            apps_data['users_adminpassword_sha'] = users_adminpassword_sha
         appsfile = config.process_inputfile(cluster, appsfile, overrides=apps_data)
-        manifests.append({'name': 'apps', 'data': appsfile})
+        async_files.append({'name': '99-apps.yaml', 'content': appsfile})
         appdir = f"{plandir}/apps"
         apps_namespace = {'advanced-cluster-management': 'open-cluster-management',
                           'multicluster-engine': 'multicluster-engine', 'kubevirt-hyperconverged': 'openshift-cnv',
@@ -415,19 +406,19 @@ def create(config, plandir, cluster, overrides):
                                                     overrides={'registry': registry,
                                                                'app': appname,
                                                                'cr_content': cr_content})
-                manifests.append({'name': f'app-{appname}', 'data': rendered})
+                async_files.append({'name': f'99-app-{appname}.yaml', 'content': rendered})
     if autoscale:
         config.import_in_kube(network=network, dest=f"{clusterdir}", secure=True)
         for entry in ["99-kcli-conf-cm.yaml", "99-kcli-ssh-cm.yaml"]:
-            clean = entry.replace('.yaml', '')
-            manifests.append({'name': f'autoscale-{clean}', 'data': open(f'{clusterdir}/{entry}').read()})
+            async_files.append({'name': entry, 'content': open(f'{clusterdir}/{entry}').read()})
         commondir = os.path.dirname(pprint.__code__.co_filename)
         autoscale_overrides = {'cluster': cluster, 'kubetype': 'hypershift', 'workers': workers, 'replicas': 1}
         autoscale_data = config.process_inputfile(cluster, f"{commondir}/autoscale.yaml.j2",
                                                   overrides=autoscale_overrides)
-        manifests.append({'name': 'autoscale-deployment', 'data': autoscale_data})
+        async_files.append({'name': 'kcli-autoscale-deployment.yaml', 'content': autoscale_data})
     if manifests:
         assetsdata['manifests'] = manifests
+    data['async_files'] = async_files
     hosted_version = data.get('hosted_version') or version
     hosted_tag = data.get('hosted_tag') or tag
     assetsdata['hostedcluster_image'] = offline_image(version=hosted_version, tag=hosted_tag, pull_secret=pull_secret)

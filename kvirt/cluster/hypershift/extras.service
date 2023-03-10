@@ -1,0 +1,8 @@
+[Service]
+Description=Extra service
+Type=oneshot
+After=network-online.target
+Wants=network-online.target
+ExecStart=/usr/local/bin/extras.sh
+[Install]
+WantedBy=multi-user.target
