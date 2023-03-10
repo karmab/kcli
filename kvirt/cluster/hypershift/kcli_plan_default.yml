@@ -62,3 +62,4 @@ management_ingress_ip:
 nodepool:
 hosted_version:
 hosted_tag:
+autoscale: false

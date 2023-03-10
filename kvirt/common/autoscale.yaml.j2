@@ -6,7 +6,7 @@ metadata:
   labels:
     app: kcli
 spec:
-  replicas: 1
+  replicas: {{ replicas|default(1) }}
   selector:
     matchLabels:
       app: kcli
@@ -28,11 +28,11 @@ spec:
         - /root/kcli/autoscale.py
         env:
         - name: AUTOSCALE_CLUSTER
-          value: "mykube"
+          value: "{{ cluster|default('mykube') }}"
         - name: AUTOSCALE_CLUSTERTYPE
-          value: "generic"
+          value: "{{ kubetype|default('generic') }}"
         - name: AUTOSCALE_WORKERS
-          value: "1"
+          value: "{{ workers|default(1) }}"
         - name: AUTOSCALE_MAXIMUM
           value: "9999"
         - name: AUTOSCALE_MINIMUM

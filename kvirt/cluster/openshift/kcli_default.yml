@@ -127,3 +127,4 @@ pub_key:
 baremetal_cidr:
 manifests: manifests
 upstream: false
+autoscale: false

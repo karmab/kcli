@@ -13,13 +13,13 @@ from kvirt.common import get_installer_rhcos
 from kvirt.common import ssh, scp, _ssh_credentials, get_ssh_pub_key, boot_baremetal_hosts
 from kvirt.defaults import LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG
 import re
+from random import choice
 from shutil import copyfile, copy2, move, rmtree, which
+import socket
+from string import ascii_letters, digits
 from subprocess import call
 from time import sleep
 from urllib.request import urlopen, Request
-from random import choice
-import socket
-from string import ascii_letters, digits
 import yaml
 
 
@@ -506,6 +506,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'coredns': True,
             'mdns': True,
             'sslip': False,
+            'autoscale': False,
             'upstream': False,
             'retries': 2}
     data.update(overrides)
@@ -525,6 +526,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     original_domain = None
     async_install = data.get('async')
     upstream = data.get('upstream')
+    autoscale = data.get('autoscale')
     sslip = data.get('sslip')
     baremetal_hosts = data.get('baremetal_hosts', [])
     notify = data.get('notify')
@@ -1029,7 +1031,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             continue
         copy2(f, f"{clusterdir}/openshift")
     registry = disconnected_url or 'quay.io'
-    if async_install:
+    if async_install or autoscale:
         config.import_in_kube(network=network, dest=f"{clusterdir}/openshift", secure=True)
         deletionfile = f"{plandir}/99-bootstrap-deletion.yaml"
         deletionfile = config.process_inputfile(cluster, deletionfile, overrides={'cluster': cluster,
@@ -1037,10 +1039,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                                                                                   'client': config.client})
         with open(f"{clusterdir}/openshift/99-bootstrap-deletion.yaml", 'w') as _f:
             _f.write(deletionfile)
-        deletionfile2 = f"{plandir}/99-bootstrap-deletion-2.yaml"
-        deletionfile2 = config.process_inputfile(cluster, deletionfile2, overrides={'registry': registry})
-        with open(f"{clusterdir}/openshift/99-bootstrap-deletion-2.yaml", 'w') as _f:
-            _f.write(deletionfile2)
+        if not autoscale:
+            deletionfile2 = f"{plandir}/99-bootstrap-deletion-2.yaml"
+            deletionfile2 = config.process_inputfile(cluster, deletionfile2, overrides={'registry': registry})
+            with open(f"{clusterdir}/openshift/99-bootstrap-deletion-2.yaml", 'w') as _f:
+                _f.write(deletionfile2)
     if notify and (async_install or (sno and not sno_wait)):
         notifycmd = "cat /shared/results.txt"
         notifycmds, mailcontent = config.handle_notifications(cluster, notifymethods=config.notifymethods,
@@ -1259,6 +1262,13 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if sno_wait:
             process_apps(config, clusterdir, apps, overrides)
         return {'result': 'success'}
+    if autoscale:
+        commondir = os.path.dirname(pprint.__code__.co_filename)
+        autoscale_overrides = {'cluster': cluster, 'kubetype': 'openshift', 'workers': workers, 'replicas': 1}
+        autoscale_data = config.process_inputfile(cluster, f"{commondir}/autoscale.yaml.j2",
+                                                  overrides=autoscale_overrides)
+        with open(f"{clusterdir}/openshift/99-autoscale.yaml", 'w') as f:
+            f.write(autoscale_data)
     run = call(f'openshift-install --dir={clusterdir} --log-level={log_level} create ignition-configs', shell=True)
     if run != 0:
         msg = "Hit issues when generating ignition-config files"

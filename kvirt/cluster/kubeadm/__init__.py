@@ -7,6 +7,8 @@ import os
 from random import choice
 from shutil import which
 from string import ascii_letters, digits
+from subprocess import call
+from tempfile import NamedTemporaryFile
 from time import sleep
 import yaml
 
@@ -75,7 +77,7 @@ def create(config, plandir, cluster, overrides):
     platform = config.type
     k = config.k
     data = {'kubetype': 'generic', 'sslip': False, 'domain': 'karmalabs.corp', 'wait_ready': False, 'extra_scripts': [],
-            'calico_version': None}
+            'calico_version': None, 'autoscale': False}
     data.update(overrides)
     if 'keys' not in overrides and get_ssh_pub_key() is None:
         msg = "No usable public key found, which is required for the deployment. Create one using ssh-keygen"
@@ -84,6 +86,7 @@ def create(config, plandir, cluster, overrides):
     plan = cluster if cluster is not None else data['cluster']
     data['kube'] = data['cluster']
     cloud_lb = data.get('cloud_lb', True)
+    autoscale = data.get('autoscale')
     ctlplanes = data.get('ctlplanes', 1)
     if ctlplanes == 0:
         msg = "Invalid number of ctlplanes"
@@ -202,6 +205,16 @@ def create(config, plandir, cluster, overrides):
                 break
             else:
                 sleep(10)
+    if autoscale:
+        config.import_in_kube(network=network, secure=True)
+        with NamedTemporaryFile(mode='w+t') as temp:
+            commondir = os.path.dirname(pprint.__code__.co_filename)
+            autoscale_overrides = {'cluster': cluster, 'kubetype': 'generic', 'workers': workers, 'replicas': 1}
+            autoscale_data = config.process_inputfile(cluster, f"{commondir}/autoscale.yaml.j2",
+                                                      overrides=autoscale_overrides)
+            temp.write(autoscale_data)
+            autoscalecmd = f"kubectl create -f {temp.name}"
+            call(autoscalecmd, shell=True)
     success(f"Kubernetes cluster {cluster} deployed!!!")
     info2(f"export KUBECONFIG=$HOME/.kcli/clusters/{cluster}/auth/kubeconfig")
     info2("export PATH=$PWD:$PATH")

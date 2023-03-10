@@ -149,6 +149,7 @@ def create(config, plandir, cluster, overrides):
             'kubevirt_ingress_service': False,
             'cluster_network_ipv4': '10.129.0.0/14',
             'service_network_ipv4': '172.31.0.0/16',
+            'autoscale': False,
             'retries': 3}
     data.update(overrides)
     retries = data.get('retries')
@@ -170,11 +171,13 @@ def create(config, plandir, cluster, overrides):
     baremetal_hosts = data.get('baremetal_hosts', [])
     async_install = data.get('async')
     notify = data.get('notify')
+    autoscale = data.get('autoscale')
     sslip = data.get('sslip')
     domain = data.get('domain')
     original_domain = domain
     data['original_domain'] = domain
     apps = overrides.get('apps', [])
+    workers = data.get('workers')
     version = data.get('version')
     tag = data.get('tag')
     if str(tag) == '4.1':
@@ -413,6 +416,16 @@ def create(config, plandir, cluster, overrides):
                                                                'app': appname,
                                                                'cr_content': cr_content})
                 manifests.append({'name': f'app-{appname}', 'data': rendered})
+    if autoscale:
+        config.import_in_kube(network=network, dest=f"{clusterdir}", secure=True)
+        for entry in ["99-kcli-conf-cm.yaml", "99-kcli-ssh-cm.yaml"]:
+            clean = entry.replace('.yaml', '')
+            manifests.append({'name': f'autoscale-{clean}', 'data': open(f'{clusterdir}/{entry}').read()})
+        commondir = os.path.dirname(pprint.__code__.co_filename)
+        autoscale_overrides = {'cluster': cluster, 'kubetype': 'hypershift', 'workers': workers, 'replicas': 1}
+        autoscale_data = config.process_inputfile(cluster, f"{commondir}/autoscale.yaml.j2",
+                                                  overrides=autoscale_overrides)
+        manifests.append({'name': 'autoscale-deployment', 'data': autoscale_data})
     if manifests:
         assetsdata['manifests'] = manifests
     hosted_version = data.get('hosted_version') or version

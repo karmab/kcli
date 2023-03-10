@@ -3,10 +3,12 @@
 from kvirt.common import success, pprint, warning, get_kubectl, info2, container_mode
 import os
 import re
-import yaml
 from random import choice
-from string import ascii_letters, digits
 from shutil import which
+from string import ascii_letters, digits
+from subprocess import call
+from tempfile import NamedTemporaryFile
+import yaml
 
 cloudplatforms = ['aws', 'gcp']
 
@@ -64,14 +66,16 @@ def scale(config, plandir, cluster, overrides):
 
 def create(config, plandir, cluster, overrides):
     platform = config.type
-    data = {'kubetype': 'k3s', 'sdn': 'flannel', 'extra_scripts': []}
+    data = {'kubetype': 'k3s', 'ctlplanes': 1, 'workers': 0, 'sdn': 'flannel', 'extra_scripts': [], 'autoscale': False,
+            'network': 'default'}
     data.update(overrides)
     data['cluster'] = overrides.get('cluster', cluster if cluster is not None else 'myk3s')
     plan = cluster if cluster is not None else data['cluster']
     data['kube'] = data['cluster']
-    ctlplanes = data.get('ctlplanes', 1)
-    workers = data.get('workers', 0)
-    network = data.get('network', 'default')
+    autoscale = data['autoscale']
+    ctlplanes = data['ctlplanes']
+    workers = data['workers']
+    network = data['network']
     sdn = None if 'sdn' in overrides and overrides['sdn'] is None else data.get('sdn')
     image = data.get('image', 'ubuntu2004')
     api_ip = data.get('api_ip')
@@ -161,6 +165,16 @@ def create(config, plandir, cluster, overrides):
             os.chdir(os.path.expanduser("~/.kcli"))
             threaded = data.get('threaded', False) or data.get('workers_threaded', False)
             config.plan(plan, inputfile=f'{plandir}/workers.yml', overrides=nodes_overrides, threaded=threaded)
+    if autoscale:
+        config.import_in_kube(network=network, secure=True)
+        with NamedTemporaryFile(mode='w+t') as temp:
+            commondir = os.path.dirname(pprint.__code__.co_filename)
+            autoscale_overrides = {'cluster': cluster, 'kubetype': 'k3s', 'workers': workers, 'replicas': 1}
+            autoscale_data = config.process_inputfile(cluster, f"{commondir}/autoscale.yaml.j2",
+                                                      overrides=autoscale_overrides)
+            temp.write(autoscale_data)
+            autoscalecmd = f"kubectl create -f {temp.name}"
+            call(autoscalecmd, shell=True)
     success(f"K3s cluster {cluster} deployed!!!")
     info2(f"export KUBECONFIG=$HOME/.kcli/clusters/{cluster}/auth/kubeconfig")
     info2("export PATH=$PWD:$PATH")

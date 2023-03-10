@@ -65,3 +65,4 @@ keys: []
 tempkey: false
 wait_ready: false
 calico_version: None
+autoscale: False
