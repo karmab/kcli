@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: kcli
+  name: kcli-autoscale
   namespace: kcli-infra
   labels:
     app: kcli
@@ -15,13 +15,13 @@ spec:
       labels:
         app: kcli
     spec:
-      serviceAccountName: autoapprover
+      serviceAccountName: {{ sa|default("autoapprover") }}
       tolerations:
       - effect: NoSchedule
         key: node-role.kubernetes.io/ctlplane
         operator: Exists
       containers:
-      - name: kcli
+      - name: kcli-autoscale
         image: quay.io/karmab/kcli:latest
         command:
         - /usr/local/bin/python3

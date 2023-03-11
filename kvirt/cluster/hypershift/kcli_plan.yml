@@ -22,6 +22,7 @@
 {% set new_file = {'path': '/etc/kubernetes/keepalived.conf', 'origin': 'keepalived.conf'} %}
 {% do files.append(new_file) %}
 {% endif %}
+
 {% if not sslip and coredns %}
 {% set new_file = {'path': '/etc/NetworkManager/dispatcher.d/99-forcedns', 'origin': '99-forcedns', 'mode': 755} %}
 {% do files.append(new_file) %}
@@ -29,25 +30,25 @@
 {% do files.append(new_file) %}
 {% set new_file = {'path': '/etc/kubernetes/Corefile', 'origin': 'Corefile'} %}
 {% do files.append(new_file) %}
+{% endif %}
+
 {% if async_files|default([]) and num == 0 %}
 {% set new_file = {'path': '/etc/kubernetes/kubeconfig.%s' % cluster, 'origin': '~/.kcli/clusters/%s/auth/kubeconfig' % cluster} %}
 {% do files.append(new_file) %}
-{% set new_file = {'path': '/usr/local/bin/extras.sh', 'origin': 'extras.sh'} %}
+{% set new_file = {'path': '/usr/local/bin/extras.sh', 'origin': 'extras.sh', 'mode': 700} %}
 {% do files.append(new_file) %}
 {% set new_file = {'path': '/root/extras.service', 'origin': 'extras.service'} %}
 {% do files.append(new_file) %}
-{% for async_file in async_files|default([]) %}
-{% set new_file = {'path': '/etc/kubernetes/%s' % async_file['name'], 'content': async_file['content'] } %}
-{% do files.append(new_file) %}
+{% for async_file in async_files %}
+{% do files.append(async_file) %}
 {% endfor %}
-{% endif %}
-
 {% endif %}
 
 {{ cluster }}-worker-{{ num }}:
  domain: {{ original_domain|default('karmalabs.corp') }}
  image: {{ image }}
  pool: {{ pool or config_pool }}
+ notify: false
  keys: {{ keys }}
  flavor: {{ flavor }}
  enableroot: false 

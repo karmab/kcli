@@ -10,8 +10,7 @@ spec:
   template:
    spec:
     nodeSelector:
-      kubernetes.io/hostname: {{ cluster }}-ctlplane-0.{{ domain }}
-    serviceAccountName: autoapprover
+      kubernetes.io/hostname: {{ cluster }}-worker-0.{{ domain }}
     restartPolicy: OnFailure
     initContainers:
     - name: wait-for-cluster-version
@@ -47,7 +46,6 @@ spec:
 {% for cmd in cmds %}
         {{ cmd }}
 {% endfor %}
-        rm -f /etc/kubernetes/kubeconfig.{{ cluster }}
       volumeMounts:
       - name: shared
         mountPath: /shared

@@ -14,6 +14,7 @@ import socket
 import sys
 from shutil import which, copy2
 from subprocess import call
+from tempfile import TemporaryDirectory, NamedTemporaryFile
 from time import sleep
 from urllib.parse import urlparse
 import yaml
@@ -125,6 +126,9 @@ def create(config, plandir, cluster, overrides):
         warning("KUBECONFIG not set...Using .kube/config instead")
     elif not os.path.isabs(os.environ['KUBECONFIG']):
         os.environ['KUBECONFIG'] = f"{os.getcwd()}/{os.environ['KUBECONFIG']}"
+        if not os.path.exists(os.environ['KUBECONFIG']):
+            msg = "Kubeconfig not found. Leaving..."
+            return {'result': 'failure', 'reason': msg}
     data = {'kubetype': 'hypershift',
             'domain': 'karmalabs.corp',
             'baremetal_iso': False,
@@ -346,7 +350,11 @@ def create(config, plandir, cluster, overrides):
                     pprint(f"Injecting manifest {f}")
                     mc_data = json.dumps(mc_data)
                     manifests.append({'name': mc_name, 'data': mc_data})
+    if manifests:
+        assetsdata['manifests'] = manifests
     async_files = []
+    async_tempdir = TemporaryDirectory()
+    asyncdir = async_tempdir.name
     if notify:
         # registry = disconnected_url or 'quay.io'
         registry = 'quay.io'
@@ -364,8 +372,11 @@ def create(config, plandir, cluster, overrides):
                                                                               'domain': original_domain,
                                                                               'cmds': notifycmds,
                                                                               'mailcontent': mailcontent})
-        async_files.append({'name': '99-notifications.yaml', 'content': notifyfile})
-    if apps:
+        with open(f"{asyncdir}/99-notifications.yaml", 'w') as f:
+            f.write(notifyfile)
+        async_files.append({'path': '/etc/kubernetes/99-notifications.yaml',
+                            'origin': f"{asyncdir}/99-notifications.yaml"})
+    if async_install and apps:
         # registry = disconnected_url or 'quay.io'
         registry = 'quay.io'
         autolabeller = False
@@ -385,7 +396,10 @@ def create(config, plandir, cluster, overrides):
         appsfile = f"{plandir}/99-apps.yaml"
         apps_data = {'registry': registry, 'apps': final_apps}
         appsfile = config.process_inputfile(cluster, appsfile, overrides=apps_data)
-        async_files.append({'name': '99-apps.yaml', 'content': appsfile})
+        with open(f"{asyncdir}/99-apps.yaml", 'w') as f:
+            f.write(appsfile)
+        async_files.append({'path': '/etc/kubernetes/99-apps.yaml',
+                            'origin': f"{asyncdir}/99-apps.yaml"})
         appdir = f"{plandir}/apps"
         apps_namespace = {'advanced-cluster-management': 'open-cluster-management',
                           'multicluster-engine': 'multicluster-engine', 'kubevirt-hyperconverged': 'openshift-cnv',
@@ -406,18 +420,21 @@ def create(config, plandir, cluster, overrides):
                                                     overrides={'registry': registry,
                                                                'app': appname,
                                                                'cr_content': cr_content})
-                async_files.append({'name': f'99-app-{appname}.yaml', 'content': rendered})
+                with open(f"{asyncdir}/99-apps-cr.yaml", 'w') as f:
+                    f.write(rendered)
+                async_files.append({'path': '/etc/kubernetes/99-app-cr.yaml', 'origin': f"{asyncdir}/99-apps-cr.yaml"})
     if autoscale:
         config.import_in_kube(network=network, dest=f"{clusterdir}", secure=True)
         for entry in ["99-kcli-conf-cm.yaml", "99-kcli-ssh-cm.yaml"]:
-            async_files.append({'name': entry, 'content': open(f'{clusterdir}/{entry}').read()})
+            async_files.append({'path': f'/etc/kubernetes/{entry}', 'origin': f"{clusterdir}/{entry}"})
         commondir = os.path.dirname(pprint.__code__.co_filename)
-        autoscale_overrides = {'cluster': cluster, 'kubetype': 'hypershift', 'workers': workers, 'replicas': 1}
+        autoscale_overrides = {'cluster': cluster, 'kubetype': 'hypershift', 'workers': workers, 'replicas': 1,
+                               'sa': 'default'}
         autoscale_data = config.process_inputfile(cluster, f"{commondir}/autoscale.yaml.j2",
                                                   overrides=autoscale_overrides)
-        async_files.append({'name': 'kcli-autoscale-deployment.yaml', 'content': autoscale_data})
-    if manifests:
-        assetsdata['manifests'] = manifests
+        with open(f"{asyncdir}/autoscale.yaml", 'w') as f:
+            f.write(autoscale_data)
+        async_files.append({'path': '/etc/kubernetes/autoscale.yaml', 'origin': f"{asyncdir}/autoscale.yaml"})
     data['async_files'] = async_files
     hosted_version = data.get('hosted_version') or version
     hosted_tag = data.get('hosted_tag') or tag
@@ -520,6 +537,19 @@ def create(config, plandir, cluster, overrides):
         call(f'bash {clusterdir}/ignition_{nodepool}.sh', shell=True)
     if 'name' in data:
         del data['name']
+    kubeconfigpath = f'{clusterdir}/auth/kubeconfig'
+    kubeconfig = os.popen(f"oc extract -n {namespace} secret/{cluster}-admin-kubeconfig --to=-").read()
+    with open(kubeconfigpath, 'w') as f:
+        f.write(kubeconfig)
+    kubeadminpath = f'{clusterdir}/auth/kubeadmin-password'
+    kubeadmin = os.popen(f"oc extract -n {namespace} secret/{cluster}-kubeadmin-password --to=-").read()
+    with open(kubeadminpath, 'w') as f:
+        f.write(kubeadmin)
+    autoapproverpath = f'{clusterdir}/auth/autoapprovercron.yml'
+    autoapprover = config.process_inputfile(cluster, f"{plandir}/autoapprovercron.yml", overrides=data)
+    with open(autoapproverpath, 'w') as f:
+        f.write(autoapprover)
+    call(f"oc apply -f {autoapproverpath}", shell=True)
     if platform in cloudplatforms + ['openstack']:
         copy2(f"{clusterdir}/{nodepool}.ign", f"{clusterdir}/{nodepool}.ign.ori")
         bucket = f"{cluster}-{domain.replace('.', '-')}"
@@ -538,23 +568,11 @@ def create(config, plandir, cluster, overrides):
         pprint("Deploying workers")
         worker_threaded = data.get('threaded', False) or data.get('workers_threaded', False)
         config.plan(plan, inputfile=f'{plandir}/kcli_plan.yml', overrides=data, threaded=worker_threaded)
+    async_tempdir.cleanup()
     if ignore_hosts:
         warning("Not updating /etc/hosts as per your request")
     else:
         update_etc_hosts(cluster, domain, management_api_ip, ingress_ip)
-    kubeconfigpath = f'{clusterdir}/auth/kubeconfig'
-    kubeconfig = os.popen(f"oc extract -n {namespace} secret/{cluster}-admin-kubeconfig --to=-").read()
-    with open(kubeconfigpath, 'w') as f:
-        f.write(kubeconfig)
-    kubeadminpath = f'{clusterdir}/auth/kubeadmin-password'
-    kubeadmin = os.popen(f"oc extract -n {namespace} secret/{cluster}-kubeadmin-password --to=-").read()
-    with open(kubeadminpath, 'w') as f:
-        f.write(kubeadmin)
-    autoapproverpath = f'{clusterdir}/auth/autoapprovercron.yml'
-    autoapprover = config.process_inputfile(cluster, f"{plandir}/autoapprovercron.yml", overrides=data)
-    with open(autoapproverpath, 'w') as f:
-        f.write(autoapprover)
-    call(f"oc apply -f {autoapproverpath}", shell=True)
     if platform in cloudplatforms:
         result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_apps.yml', overrides=data)
         if result['result'] != 'success':
@@ -580,4 +598,18 @@ def create(config, plandir, cluster, overrides):
     overrides['hypershift'] = True
     overrides['cluster'] = cluster
     process_apps(config, clusterdir, apps, overrides)
+    if autoscale:
+        config.import_in_kube(network=network, secure=True)
+        with NamedTemporaryFile(mode='w+t') as temp:
+            commondir = os.path.dirname(pprint.__code__.co_filename)
+            autoscale_overrides = {'cluster': cluster, 'kubetype': 'k3s', 'workers': workers, 'replicas': 1,
+                                   'sa': 'default'}
+            autoscale_data = config.process_inputfile(cluster, f"{commondir}/autoscale.yaml.j2",
+                                                      overrides=autoscale_overrides)
+            temp.write(autoscale_data)
+            temp.seek(0)
+            scc_cmd = "oc adm policy add-scc-to-user anyuid -z default -n kcli-infra"
+            call(scc_cmd, shell=True)
+            autoscale_cmd = f"oc create -f {temp.name}"
+            call(autoscale_cmd, shell=True)
     return {'result': 'success'}

@@ -520,7 +520,6 @@ def process_ignition_files(files=[], overrides={}):
         mode = int(str(fil.get('mode', '644')), 8)
         permissions = fil.get('permissions', mode)
         render = fil.get('render', True)
-        binary = False
         if isinstance(render, str):
             render = True if render.lower() == 'true' else False
         if origin is not None:
@@ -547,25 +546,22 @@ def process_ignition_files(files=[], overrides={}):
                     error(f"Error rendering origin file {origin}. Got: {e.message}")
                     sys.exit(1)
                 except UnicodeDecodeError:
-                    warning(f"Interpreting file {origin} as binary")
-                    binary = True
-                    content = str(base64.b64encode(open(origin, "rb").read()), "utf-8")
+                    warning(f"Skipping file {origin} as binary")
+                    continue
             else:
                 try:
                     content = open(origin, 'r').readlines()
                 except UnicodeDecodeError:
-                    warning(f"Interpreting file {origin} as binary")
-                    binary = True
-                    content = str(base64.b64encode(open(origin, "rb").read()), "utf-8")
+                    warning(f"SKipping file {origin} as binary")
+                    continue
         elif content is None:
             continue
-        if not binary and not isinstance(content, str):
+        if not isinstance(content, str):
             content = '\n'.join(content) + '\n'
         if path.endswith('.service'):
             unitsdata.append({"contents": content, "name": os.path.basename(path), "enabled": True})
         else:
-            if not binary:
-                content = base64.b64encode(content.encode()).decode("UTF-8")
+            content = base64.b64encode(content.encode()).decode("UTF-8")
             filesdata.append({'path': path, 'mode': permissions, 'overwrite': True,
                               "contents": {"source": f"data:text/plain;charset=utf-8;base64,{content}",
                                            "verification": {}}})

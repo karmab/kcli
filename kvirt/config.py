@@ -3460,7 +3460,7 @@ class Kconfig(Kbaseconfig):
                 pprint(f"Ongoing scaling operation on cluster {kube}")
             else:
                 result = self.autoscale_cluster(kube, kubetype, workers, threshold, idle)
-                if result['reason'] != 'success':
+                if result['result'] != 'success':
                     return result
                 else:
                     workers = result['workers']

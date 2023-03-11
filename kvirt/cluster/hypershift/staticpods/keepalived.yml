@@ -3,7 +3,7 @@ kind: Pod
 apiVersion: v1
 metadata:
   name: keepalived
-  namespace: openshift-infra
+  namespace: kcli-infra
   creationTimestamp:
   deletionGracePeriodSeconds: 65
   labels:

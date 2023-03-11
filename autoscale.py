@@ -9,8 +9,8 @@ for variable in ['CLUSTER', 'CLUSTERTYPE', 'MAXIMUM', 'MINIMUM']:
         sys.exit(1)
 kube = os.environ['AUTOSCALE_CLUSTER']
 kubetype = os.environ['AUTOSCALE_CLUSTERTYPE']
-workers = os.environ['AUTOSCALE_WORKERS']
-threshold = os.environ['AUTOSCALE_MAXIMUM']
-idle = os.environ['AUTOSCALE_MINIMUM']
+workers = int(os.environ['AUTOSCALE_WORKERS'])
+threshold = int(os.environ['AUTOSCALE_MAXIMUM'])
+idle = int(os.environ['AUTOSCALE_MINIMUM'])
 config = Kconfig()
 config.loop_autoscale_cluster(kube, kubetype, workers, threshold, idle)
