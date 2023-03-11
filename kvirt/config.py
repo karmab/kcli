@@ -1782,6 +1782,8 @@ class Kconfig(Kbaseconfig):
                 overrides.update({key: baseoverrides[key] for key in baseoverrides if key not in overrides})
         if entries is None:
             entries = {}
+        if self.debug:
+            print(yaml.dump(entries))
         parameters = entries.get('parameters')
         if parameters is not None:
             del entries['parameters']
