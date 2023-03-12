@@ -1630,7 +1630,42 @@ And deploy any product. Deletion is handled by deleting the corresponding plan.
 Deploying kubernetes/openshift clusters
 =======================================
 
-You can deploy generic kubernetes (based on kubeadm), k3s, kind, openshift/okd, hypershift and microshift on any platform and on an arbitrary number of control plane nodes and workers. The cluster can be scaled afterwards if needed.
+You can deploy generic kubernetes (based on kubeadm), k3s, kind, openshift/okd, hypershift and microshift on any platform and on an arbitrary number of control plane nodes and workers.
+
+Benefits
+--------
+
+The main benefit is to abstract deployment details so that the same workflow can be used regardless of the
+
+-  create a parameter file
+-  launch the deployment oneliner
+-  enjoy
+
+Other benefits are:
+
+-  easy tweaking of vms hardware
+-  tuning the version to deploy
+-  support for alternative CNIs
+-  configuration of static networking for the nodes
+-  installation of additional applications/operators
+-  handling of lifecycle after installation:
+
+   -  scaling
+   -  autoscaling
+
+-  support for deploying Baremetal workers in Openshift and Hypershift (optionally using Redfish)
+-  support for deploying Openshift SNOs (optionally using Redfish)
+
+.. _workflow-1:
+
+Workflow
+--------
+
+For all the platforms, the workflow is the following:
+
+-  create a (yaml) parameter file to describe intented end result
+-  launch the specific subcommand. For instance, to deploy a generic kubernetes cluster, one would use ``kcli create cluster generic --pf my_parameters.yml  $cluster``. Parameter files can be repeated and combined with specific parameters on the command line, which always take precedence.
+-  Once the installation finishes, set the following environment variable in order to interact with the csluter ``export KUBECONFIG=$HOME/.kcli/clusters/$cluster/auth/kubeconfig``
 
 Getting information on available parameters
 -------------------------------------------
@@ -1646,28 +1681,51 @@ Deploying generic kubernetes clusters
 
    kcli create cluster generic -P ctlplanes=X -P workers=Y $cluster
 
+Architecture
+~~~~~~~~~~~~
+
+the generic cluster workflow leverages Kubeadm to create a cluster with the specified number of vms running either as ctlplanes or workers on any of the supported platforms.
+
+Those vms can either be centos8stream, fedora or ubuntu based (as per the official Kubeadm doc).
+
+The first node is used for bootstrapping the cluster, through commands that run by rendering cloudinit data.
+
+Once it is done, the generated token is retrieved, which allows to add the other nodes.
+
+for HA and Loadbalancing, Keepalived and Haproxy are leveraged, which involves declaring a vip. For Libvirt, when no vip is provided, an educated guess around the vip is done for virtual networks.
+
+For cloud providers (aws, gcp and ibmcloud), loadbalancer along with dns is used to achieve the same result. That requires specifying an existing top level domain.
+
+There are a lot of available options in this workflow, whether it’s:
+
+-  customizing the hardware of the involved vms
+-  using a different k8s version, cni or engine
+-  deploying nfs, nginx ingress or metallb.
+-  etc
+
 Deploying openshift clusters
 ----------------------------
 
 *DISCLAIMER*: This is not supported in anyway by Red Hat (although the end result cluster would be).
 
-for Openshift, the official installer is leveraged with kcli creating the vms, and injecting some extra pods to provide api/ingress vip and self contained dns.
+for Openshift, the official installer binary is leveraged with kcli creating the vms, and injecting some extra pods to provide api/ingress vip and self contained dns.
 
 The benefits of deploying Openshift with this workflow are:
 
--  Auto download openshift-install binary specified version.
+-  Auto download openshift-install specified version.
 -  Easy vms tuning.
--  Single workflow regardless of the target platform
+-  Single workflow regardless of the target platform.
 -  Self contained dns. (For cloud platforms, cloud public dns is leveraged instead)
 -  For libvirt, no need to compile installer or tweak libvirtd.
 -  Vms can be connected to a physical bridge.
 -  Multiple clusters can live on the same l2 network.
--  Support for disconnected registry and ipv6 networks
+-  Support for disconnected registry and ipv6 networks.
+-  Support for upstream OKD
 
 Requirements
 ~~~~~~~~~~~~
 
--  Valid pull secret (for downstream)
+-  Valid pull secret
 -  Ssh public key.
 -  Write access to /etc/hosts file to allow editing of this file.
 -  An available ip in your vm’s network to use as *api_ip*. Make sure it is excluded from your dhcp server. An optional *ingress_ip* can be specified, otherwise api_ip will be used.
@@ -1675,10 +1733,6 @@ Requirements
 -  Target platform needs:
 
    -  Ignition support
-
-      -  (for Ovirt/Rhv, this means >= 4.4).
-      -  For Libvirt, support for fw_cfg in qemu (install qemu-kvm-ev on centos for instance).
-
    -  On Openstack:
 
       -  swift available on the install.
@@ -1702,72 +1756,55 @@ A minimal one could be the following one
    cluster: mycluster
    domain: karmalabs.corp
    version: stable
-   tag: '4.8'
+   tag: '4.12'
    ctlplanes: 3 
    workers: 2
    memory: 16384
    numcpus: 16
 
-Here’s the list of all variables that can be used (you can list them with ``kcli info cluster openshift``)
+Here’s the list of typical variables that can be used (you can list them with ``kcli info cluster openshift``)
 
-======================= ================================== ========================================================================================================
-Parameter               Default Value                      Comments
-======================= ================================== ========================================================================================================
-*version*               nightly                            You can choose between nightly, ci or stable. ci requires specific data in your secret
-tag                     4.5                                
-async                   false                              Exit once vms are created and let job in cluster delete bootstrap
-notify                  false                              Whether to send notifications once cluster is deployed. Mean to be used in async mode
-pull_secret             openshift_pull.json                
-image                   rhcos45                            rhcos image to use (should be qemu for libvirt/kubevirt and openstack one for ovirt/openstack)
-helper_image            CentOS-7-x86_64-GenericCloud.qcow2 which image to use when deploying temporary helper vms
-network                 default                            Any existing network can be used
-api_ip                  None                               
-ingress_ip              None                               
-ctlplanes               1                                  number of ctlplane
-workers                 0                                  number of workers
-fips                    False                              
-cluster                 testk                              
-domain                  karmalabs.corp                     
-network_type            OpenShiftSDN                       
-minimal                 False                              
-pool                    default                            
-flavor                  None                               
-flavor_bootstrap        None                               
-flavor_ctlplane         None                               
-flavor_worker           None                               
-numcpus                 4                                  
-bootstrap_numcpus       None                               
-ctlplane_numcpus        None                               
-worker_numcpus          None                               
-memory                  8192                               
-bootstrap_memory        None                               
-ctlplane_memory         None                               
-worker_memory           None                               
-disk_size               30                                 disk size in Gb for final nodes
-keys                    []                                 
-apps                    []                                 
-extra_disks             []                                 
-extra_ctlplane_disks    []                                 
-extra_worker_disks      []                                 
-extra_networks          []                                 
-extra_ctlplane_networks []                                 
-extra_worker_networks   []                                 
-bootstrap_mac           None                               
-disconnected_url        None                               
-disconnected_user       None                               
-disconnected_password   None                               
-imagecontentsources     []                                 
-ca                      None                               optional string of certificates to trust
-ipv6                    False                              
-baremetal               False                              Whether to also deploy the metal3 operator, for provisioning physical workers
-baremetal_machine_cidr  None                               
-provisioning_net        provisioning                       
-provisioning_nic        ens4                               
-cloud_tag               None                               
-cloud_scale             False                              
-cloud_api_internal      False                              
-apps                    []                                 Extra applications to deploy on the cluster, available ones are visible with ``kcli list app openshift``
-======================= ================================== ========================================================================================================
+===================== =================== ===============================================================================================================================
+Parameter             Default Value       Comments
+===================== =================== ===============================================================================================================================
+cluster               testk               
+domain                karmalabs.corp      
+*version*             stable              You can choose between stable, dev-preview, nightly, ci or stable. both ci and nightly require specific data in the pull secret
+tag                   4.12                
+async                 false               Exit once vms are created and let job in cluster delete bootstrap
+notify                false               Whether to send notifications once cluster is deployed. Mean to be used in async mode
+pull_secret           openshift_pull.json 
+network               default             Any existing network can be used
+api_ip                None                
+ingress_ip            None                
+ctlplanes             1                   number of ctlplane
+workers               0                   number of workers
+network_type          OVNKubernetes       
+pool                  default             
+flavor                None                
+flavor_bootstrap      None                
+flavor_ctlplane       None                
+flavor_worker         None                
+numcpus               4                   
+bootstrap_numcpus     None                
+ctlplane_numcpus      None                
+worker_numcpus        None                
+memory                8192                
+bootstrap_memory      None                
+ctlplane_memory       None                
+worker_memory         None                
+disk_size             30                  disk size in Gb for final nodes
+extra_disks           []                  
+disconnected_url      None                
+disconnected_user     None                
+disconnected_password None                
+imagecontentsources   []                  
+baremetal             False               Whether to also deploy the metal3 operator, for provisioning physical workers
+cloud_tag             None                
+cloud_scale           False               
+cloud_api_internal    False               
+apps                  []                  Extra applications to deploy on the cluster, available ones are visible with ``kcli list app openshift``
+===================== =================== ===============================================================================================================================
 
 Deploying
 ^^^^^^^^^
@@ -1776,44 +1813,15 @@ Deploying
 
    kcli create kube openshift --paramfile parameters.yml $cluster
 
--  You will be asked for your sudo password in order to create a /etc/hosts entry for the api vip.
-
--  Once that finishes, set the following environment variable in order to use oc commands ``export KUBECONFIG=$HOME/.kcli/clusters/$cluster/auth/kubeconfig``
-
 Providing custom machine configs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If a ``manifests`` directory exists in the current directory, the \*yaml assets found there are copied to the directory generated by the install, prior to deployment.
 
+.. _architecture-1:
+
 Architecture
 ~~~~~~~~~~~~
-
-On kubeadm
-^^^^^^^^^^
-
-the generic cluster workflow leverages Kubeadm to create a cluster with the specified number of vms running either as ctlplanes or workers on any of the supported platforms.
-
-Those vms can either be centos8 or ubuntu based (as per the official Kubeadm doc).
-
-The first node is used for bootstrapping the cluster, through commands that are run by rendering cloudinit data.
-
-Once it is finished, the generated token is retrieved, which allows to add additional controle plane nodes or workers (and later on scale if needed).
-
-for HA and Loadbalancing, Keepalived and Haproxy are leveraged, which involves declaring a vip. With Libvirt and when no vip is provided, an educated guess around the vip is done when using a virtual network.
-
-For the cloud providers (aws, gcp and ibmcloud), loadbalancer along with dns is used instead to achieve the same result. That does require specifying an existing top level domain.
-
-There are a lot of available options in this workflow, whether it’s:
-
--  customizing the hardware of the involved vms
--  using a different k8s version, cni or engine
--  deploying nfs, nginx ingress or metallb.
--  etc
-
-All the parameters can be seen with ``kcli info cluster generic``
-
-On libvirt/ovirt/vsphere/kubevirt/openstack
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 We deploy :
 
@@ -1837,47 +1845,32 @@ Initially, the api vip runs on the bootstrap node.
 
 Ignition files are provided over 22624/http using api ip instead of fqdn. The ignition files for both ctlplane and worker are patched for it.
 
-Haproxy is created as static pod on the ctlplane nodes to load balance traffic to the routers. When there are no workers, routers are instead scheduled on the ctlplane nodes and the haproxy static pod isn’t created, so routers are simply accessed through the vip without load balancing in this case.
+Haproxy is created as static pod on the ctlplane nodes to load balance traffic to the routers. When there are no workers, routers are instead scheduled on the ctlplane nodes and the haproxy static pod isn’t created, so routers are simply accessed through the vip without load balancing.
 
-Once bootstrap steps finished, the vips transitions to one of the ctlplanes.
+Once bootstrap phase finished, the vips transition to one of the ctlplanes.
 
 At this point, workers are created and the installation is monitored until completion. A flag allows to deploy in an async manner
 
-It’s possible to scale ctlplanes or workers after the initial installation, using ``kcli scale cluster openshift`` (Instead of scaling machines as done in IPI workflows)
+On cloud platforms, We rely on dns and load balancing services and as such dont need static pods.
 
-On aws/gcp/ibmcloud
-^^^^^^^^^^^^^^^^^^^
-
-On those platforms, We rely on dns and load balancing services and as such dont need static pods.
-
-In the case of deploying a single ctlplane, a flag allows to get rid of the loadbalancer at the end of the install.
+In the case of deploying a single ctlplane, the flag ``sno_cloud_remove_lb`` allows to get rid of the loadbalancer at the end of the install.
 
 SNO (single node openshift ) support
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can deploy a single node setting ctlplanes to 1 and workers to 0 in your parameter file. On Cloud platforms, you can use an extra parameter, ``sno_cloud_remove_lb``, to remove loadbalancer and point dns directly to the public ip of your node, making the resulting cluster only rely on the corresponding instance.
+You can deploy a single node setting ctlplanes to 1 and workers to 0 in your parameter file.
 
-Alternatively, you can leverage bootstrap in place (bip) and rhcos live iso with the flag ``sno``, which allows you to provision a baremetal sno by creating a custom iso stored in your specified libvirt pool. The following extra parameters are available with this workflow:
+Alternatively, bootstrap in place (bip) with rhcos live iso can be leveraged with the flag ``sno``, which allows to provision a baremetal node by creating a custom iso stored in one specified libvirt pool. The following extra parameters are available with this workflow:
 
 -  sno_disk: You can indicate which disk to use for installing Rhcos operating system in your node. If none is specified, the disk will be autodiscovered
--  sno_dns: Defaults to true. A static pod leveraging coredns and pointing the relevant dns records to the ip of the node is injected after ctlplane ignition is generated, removing the need for external dns. Use this if you can’t provide the DNS requirements for the single node
 -  extra_args: You can use this variable to specify as a string any extra args to add to the generated iso. A common use case for this is to set static networking for the node, for instanc with something like ``ip=192.168.1.200::192.168.1.1:255.255.255.0:mysupersno.dev.local:enp1s0:none nameserver=192.168.1.1``
--  api_ip: This is normally not needed but if you already have some DNS records in place pointing to a given api vip or you don’t know your baremetal ip, you can specify the vip so that an extra keepalived static pod is injected.
+-  api_ip: This is normally not needed but if DNS records already exist pointing to a given ip or when the ip of the node is unknown, a vip can be specified so that an extra keepalived static pod is injected.
 
-In the baremetal context, you are normally responsible for attaching the generated iso to your target node but you can also use the ``baremetal_hosts`` feature described below, you will need to have apache running on the hypervisor and give write access to /var/www/html for the user launching the command, using something like the following
+In the baremetal context, the generated iso can be directly plugged to target nodes but the ``baremetal_hosts`` feature can also be used as described below, which required apache to be running on the hypervisor and to give write access to /var/www/html for the user launching the command, using something like:
 
 ::
 
    sudo setfacl -m u:$(id -un):rwx /var/www/html
-
-Adding more workers
-~~~~~~~~~~~~~~~~~~~
-
-The procedure is the same independently of the type of cluster used.
-
-::
-
-   kcli scale kube <generic|openshift|okd|k3s> -P workers=num_of_workers --paramfile parameters.yml $cluster
 
 Generating a worker iso
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -1887,22 +1880,6 @@ In openshift case, for baremetal workers you can use the following command to ge
 ::
 
    kcli create openshift-iso --paramfile parameters.yml $cluster
-
-Interacting with your clusters
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-All generated assets for a given cluster are stored in ``$HOME/.kcli/clusters/$cluster``.
-
-In particular, the kubeconfig file to use to interact with the cluster is stored at ``$HOME/.kcli/clusters/$cluster/auth/kubeconfig``
-
-Cleaning up
-~~~~~~~~~~~
-
-The procedure is the same independently of the type of cluster used.
-
-::
-
-   kcli delete kube $cluster
 
 Baremetal hosts support
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -1975,12 +1952,37 @@ Note that you will also need to sync the following images on the registry:
 -  quay.io/karmab/kubectl:latest
 -  quay.io/karmab/kcli:latest
 
+Interacting with your clusters
+------------------------------
+
+All generated assets for a given cluster are stored in ``$HOME/.kcli/clusters/$cluster``.
+
+Scaling/Adding more workers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The procedure is the same independently of the type of cluster used.
+
+::
+
+   kcli scale kube <generic|openshift|okd|k3s> -P workers=num_of_workers --paramfile parameters.yml $cluster
+
+ctlplane nodes can also be scaled the same way
+
+Cleaning up
+~~~~~~~~~~~
+
+The procedure is the same independently of the type of cluster used.
+
+::
+
+   kcli delete kube $cluster
+
 Deploying applications on top of kubernetes/openshift
-=====================================================
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can use kcli to deploy applications on your kubernetes/openshift (regardless of whether it was deployed with kcli)
 
-Applications such as the following one are currently supported:
+Applications currently supported include:
 
 -  argocd
 -  kubevirt
@@ -2019,8 +2021,8 @@ Applications can be deleted the same way:
 
    kcli delete app generic|openshift $app_name
 
-Running on kubernetes/openshift
-===============================
+Running kcli on kubernetes/openshift
+====================================
 
 You can run the container on those platforms and either use the web interface or log in the pod to run ``kcli`` commandline
 
