@@ -3413,7 +3413,7 @@ class Kconfig(Kbaseconfig):
         selector = "!node-role.kubernetes.io/control-plane,node-role.kubernetes.io/worker"
         currentcmd = f"kubectl get node --selector='{selector}'"
         currentcmd += " | grep ' Ready'"
-        workers = os.popen(currentcmd).readlines()
+        workers = len(os.popen(currentcmd).readlines())
         pendingcmd = "kubectl get pods -A --field-selector=status.phase=Pending -o yaml"
         pending_pods = yaml.safe_load(os.popen(pendingcmd).read())['items']
         if len(pending_pods) > threshold:
@@ -3438,6 +3438,7 @@ class Kconfig(Kbaseconfig):
         todelete = 0
         for node in nodes:
             if nodes[node] < idle:
+                pprint(f"node {node} to be removed since it only has the following pods: {nodes[node]}")
                 todelete += 1
         if todelete > 0:
             pprint(f"Triggering scaling down for cluster {kube} as there are {todelete} idle nodes")
@@ -3449,8 +3450,10 @@ class Kconfig(Kbaseconfig):
         return {'result': 'success', 'workers': workers}
 
     def loop_autoscale_cluster(self, kube, kubetype, workers, threshold, idle):
-        common.get_kubectl()
-        os.environ['PATH'] += ':.'
+        pprint(f"Starting with {workers} workers")
+        if which('kubectl') is None:
+            common.get_kubectl()
+            os.environ['PATH'] += ':.'
         while True:
             selector = "!node-role.kubernetes.io/control-plane,node-role.kubernetes.io/worker"
             currentcmd = f"kubectl get node --selector='{selector}'"
@@ -3464,4 +3467,5 @@ class Kconfig(Kbaseconfig):
                     return result
                 else:
                     workers = result['workers']
+                    pprint(f"Current workers number desired: {workers}")
             sleep(60)

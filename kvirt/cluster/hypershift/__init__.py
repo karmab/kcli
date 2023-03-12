@@ -110,9 +110,9 @@ def scale(config, plandir, cluster, overrides):
         boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
         worker_overrides['workers'] = worker_overrides.get('workers', 2) - len(new_baremetal_hosts)
     if worker_overrides.get('workers', 2) <= 0:
-        return
+        return {'result': 'success'}
     threaded = data.get('threaded', False) or data.get('workers_threaded', False)
-    config.plan(plan, inputfile=f'{plandir}/kcli_plan.yml', overrides=worker_overrides, threaded=threaded)
+    return config.plan(plan, inputfile=f'{plandir}/kcli_plan.yml', overrides=worker_overrides, threaded=threaded)
 
 
 def create(config, plandir, cluster, overrides):
@@ -376,65 +376,67 @@ def create(config, plandir, cluster, overrides):
             f.write(notifyfile)
         async_files.append({'path': '/etc/kubernetes/99-notifications.yaml',
                             'origin': f"{asyncdir}/99-notifications.yaml"})
-    if async_install and apps:
-        # registry = disconnected_url or 'quay.io'
-        registry = 'quay.io'
-        autolabeller = False
-        final_apps = []
-        for a in apps:
-            if isinstance(a, str) and a == 'users' or (isinstance(a, dict) and a.get('name', '') == 'users'):
-                continue
-            elif isinstance(a, str) and a == 'autolabeller'\
-                    or (isinstance(a, dict) and a.get('name', '') == 'autolabeller'):
-                autolabeller = True
-            elif isinstance(a, str) and a != 'nfs':
-                final_apps.append(a)
-            elif isinstance(a, dict) and 'name' in a:
-                final_apps.append(a['name'])
-            else:
-                error(f"Invalid app {a}. Skipping")
-        appsfile = f"{plandir}/99-apps.yaml"
-        apps_data = {'registry': registry, 'apps': final_apps}
-        appsfile = config.process_inputfile(cluster, appsfile, overrides=apps_data)
-        with open(f"{asyncdir}/99-apps.yaml", 'w') as f:
-            f.write(appsfile)
-        async_files.append({'path': '/etc/kubernetes/99-apps.yaml',
-                            'origin': f"{asyncdir}/99-apps.yaml"})
-        appdir = f"{plandir}/apps"
-        apps_namespace = {'advanced-cluster-management': 'open-cluster-management',
-                          'multicluster-engine': 'multicluster-engine', 'kubevirt-hyperconverged': 'openshift-cnv',
-                          'local-storage-operator': 'openshift-local-storage',
-                          'ocs-operator': 'openshift-storage', 'odf-lvm-operator': 'openshift-storage',
-                          'odf-operator': 'openshift-storage', 'metallb-operator': 'openshift-operators',
-                          'autolabeller': 'autorules'}
-        if autolabeller:
-            final_apps.append('autolabeller')
-        for appname in final_apps:
-            app_data = data.copy()
-            if data.get('apps_install_cr') and os.path.exists(f"{appdir}/{appname}/cr.yml"):
-                app_data['namespace'] = apps_namespace[appname]
-                if original_domain is not None:
-                    app_data['domain'] = original_domain
-                cr_content = config.process_inputfile(cluster, f"{appdir}/{appname}/cr.yml", overrides=app_data)
-                rendered = config.process_inputfile(cluster, f"{plandir}/99-apps-cr.yaml",
-                                                    overrides={'registry': registry,
-                                                               'app': appname,
-                                                               'cr_content': cr_content})
-                with open(f"{asyncdir}/99-apps-cr.yaml", 'w') as f:
-                    f.write(rendered)
-                async_files.append({'path': '/etc/kubernetes/99-app-cr.yaml', 'origin': f"{asyncdir}/99-apps-cr.yaml"})
-    if autoscale:
-        config.import_in_kube(network=network, dest=f"{clusterdir}", secure=True)
-        for entry in ["99-kcli-conf-cm.yaml", "99-kcli-ssh-cm.yaml"]:
-            async_files.append({'path': f'/etc/kubernetes/{entry}', 'origin': f"{clusterdir}/{entry}"})
-        commondir = os.path.dirname(pprint.__code__.co_filename)
-        autoscale_overrides = {'cluster': cluster, 'kubetype': 'hypershift', 'workers': workers, 'replicas': 1,
-                               'sa': 'default'}
-        autoscale_data = config.process_inputfile(cluster, f"{commondir}/autoscale.yaml.j2",
-                                                  overrides=autoscale_overrides)
-        with open(f"{asyncdir}/autoscale.yaml", 'w') as f:
-            f.write(autoscale_data)
-        async_files.append({'path': '/etc/kubernetes/autoscale.yaml', 'origin': f"{asyncdir}/autoscale.yaml"})
+    if async_install:
+        if apps:
+            # registry = disconnected_url or 'quay.io'
+            registry = 'quay.io'
+            autolabeller = False
+            final_apps = []
+            for a in apps:
+                if isinstance(a, str) and a == 'users' or (isinstance(a, dict) and a.get('name', '') == 'users'):
+                    continue
+                elif isinstance(a, str) and a == 'autolabeller'\
+                        or (isinstance(a, dict) and a.get('name', '') == 'autolabeller'):
+                    autolabeller = True
+                elif isinstance(a, str) and a != 'nfs':
+                    final_apps.append(a)
+                elif isinstance(a, dict) and 'name' in a:
+                    final_apps.append(a['name'])
+                else:
+                    error(f"Invalid app {a}. Skipping")
+            appsfile = f"{plandir}/99-apps.yaml"
+            apps_data = {'registry': registry, 'apps': final_apps}
+            appsfile = config.process_inputfile(cluster, appsfile, overrides=apps_data)
+            with open(f"{asyncdir}/99-apps.yaml", 'w') as f:
+                f.write(appsfile)
+            async_files.append({'path': '/etc/kubernetes/99-apps.yaml',
+                                'origin': f"{asyncdir}/99-apps.yaml"})
+            appdir = f"{plandir}/apps"
+            apps_namespace = {'advanced-cluster-management': 'open-cluster-management',
+                              'multicluster-engine': 'multicluster-engine', 'kubevirt-hyperconverged': 'openshift-cnv',
+                              'local-storage-operator': 'openshift-local-storage',
+                              'ocs-operator': 'openshift-storage', 'odf-lvm-operator': 'openshift-storage',
+                              'odf-operator': 'openshift-storage', 'metallb-operator': 'openshift-operators',
+                              'autolabeller': 'autorules'}
+            if autolabeller:
+                final_apps.append('autolabeller')
+            for appname in final_apps:
+                app_data = data.copy()
+                if data.get('apps_install_cr') and os.path.exists(f"{appdir}/{appname}/cr.yml"):
+                    app_data['namespace'] = apps_namespace[appname]
+                    if original_domain is not None:
+                        app_data['domain'] = original_domain
+                    cr_content = config.process_inputfile(cluster, f"{appdir}/{appname}/cr.yml", overrides=app_data)
+                    rendered = config.process_inputfile(cluster, f"{plandir}/99-apps-cr.yaml",
+                                                        overrides={'registry': registry,
+                                                                   'app': appname,
+                                                                   'cr_content': cr_content})
+                    with open(f"{asyncdir}/99-apps-cr.yaml", 'w') as f:
+                        f.write(rendered)
+                    async_files.append({'path': '/etc/kubernetes/99-app-cr.yaml',
+                                        'origin': f"{asyncdir}/99-apps-cr.yaml"})
+        if autoscale:
+            config.import_in_kube(network=network, dest=f"{clusterdir}", secure=True)
+            for entry in ["99-kcli-conf-cm.yaml", "99-kcli-ssh-cm.yaml"]:
+                async_files.append({'path': f'/etc/kubernetes/{entry}', 'origin': f"{clusterdir}/{entry}"})
+            commondir = os.path.dirname(pprint.__code__.co_filename)
+            autoscale_overrides = {'cluster': cluster, 'kubetype': 'hypershift', 'workers': workers, 'replicas': 1,
+                                   'sa': 'default'}
+            autoscale_data = config.process_inputfile(cluster, f"{commondir}/autoscale.yaml.j2",
+                                                      overrides=autoscale_overrides)
+            with open(f"{asyncdir}/autoscale.yaml", 'w') as f:
+                f.write(autoscale_data)
+            async_files.append({'path': '/etc/kubernetes/autoscale.yaml', 'origin': f"{asyncdir}/autoscale.yaml"})
     data['async_files'] = async_files
     hosted_version = data.get('hosted_version') or version
     hosted_tag = data.get('hosted_tag') or tag
@@ -545,7 +547,7 @@ def create(config, plandir, cluster, overrides):
     kubeadmin = os.popen(f"oc extract -n {namespace} secret/{cluster}-kubeadmin-password --to=-").read()
     with open(kubeadminpath, 'w') as f:
         f.write(kubeadmin)
-    autoapproverpath = f'{clusterdir}/auth/autoapprovercron.yml'
+    autoapproverpath = f'{clusterdir}/autoapprovercron.yml'
     autoapprover = config.process_inputfile(cluster, f"{plandir}/autoapprovercron.yml", overrides=data)
     with open(autoapproverpath, 'w') as f:
         f.write(autoapprover)
