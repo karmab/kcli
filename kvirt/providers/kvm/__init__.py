@@ -3233,8 +3233,8 @@ class Kvirt(object):
         conn = self.conn
         networks = self.list_networks()
         if name in networks:
-            pprint(f"Network {name} already exists")
-            return {'result': 'exist'}
+            msg = f"Network {name} already exists"
+            return {'result': 'failure', 'reason': msg}
         if 'macvtap' in overrides and overrides['macvtap']:
             if 'nic' not in overrides:
                 return {'result': 'failure', 'reason': "Missing nic parameter"}
