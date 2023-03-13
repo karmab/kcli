@@ -18,6 +18,7 @@ from shutil import copyfile, copy2, move, rmtree, which
 import socket
 from string import ascii_letters, digits
 from subprocess import call
+from tempfile import TemporaryDirectory
 from time import sleep
 from urllib.request import urlopen, Request
 import yaml
@@ -977,10 +978,45 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             warning(f"Skipping empty file {yamlfile}")
         elif 'catalogSource' in yamlfile or 'imageContentSourcePolicy' in yamlfile:
             copy2(yamlfile, f"{clusterdir}/openshift")
-    if 'network_type' in data and data['network_type'] == 'Calico':
-        calicocmd = "curl https://projectcalico.docs.tigera.io/manifests/ocp.tgz | tar xvz --strip-components=1 "
-        calicocmd += f"-C {clusterdir}/manifests"
-        call(calicocmd, shell=True)
+    if 'network_type' in data:
+        if data['network_type'] == 'Calico':
+            calicocmd = "curl https://projectcalico.docs.tigera.io/manifests/ocp.tgz | tar xvz --strip-components=1 "
+            calicocmd += f"-C {clusterdir}/manifests"
+            call(calicocmd, shell=True)
+        if data['network_type'] == 'Contrail':
+            if which('git') is None:
+                return {'result': 'failure', 'reason': "Git is needed when deploying with contrail"}
+            if 'hub.juniper.net' not in data['pull_secret']:
+                return {'result': 'failure', 'reason': "A token for hub.juniper.net registry is needed"}
+            ctl_network_create = data['contrail_ctl_create']
+            ctl_network = data['contrail_ctl_network']
+            ctl_cidr = data['contrail_ctl_cidr']
+            networkinfo = k.info_network(ctl_network)
+            if not networkinfo:
+                if ctl_network_create:
+                    result = k.create_network(ctl_network, cidr=ctl_cidr, plan=plan)
+                    if result['result'] != 'success':
+                        return result
+                else:
+                    msg = f"Issue getting contrail ctl network {ctl_network}"
+                    return {'result': 'failure', 'reason': msg}
+            elif platform == 'kvm' and networkinfo['type'] == 'routed':
+                cidr = networkinfo['cidr']
+                if cidr == 'N/A':
+                    msg = "Couldnt gather cidr from your specified contrail ctl network"
+                    return {'result': 'failure', 'reason': msg}
+                elif cidr != ctl_cidr:
+                    msg = "Contrail ctl network cidr doesnt match contrail_ctl_cidr"
+                    return {'result': 'failure', 'reason': msg}
+            if 'uefi' in data and data['uefi']:
+                data['secureboot'] = True
+            with TemporaryDirectory() as tmpdir:
+                contrail_data = {'tmpdir': tmpdir, 'clusterdir': clusterdir, 'uefi': data.get('uefi', False)}
+                contrail_data.update({key: data[key] for key in data if key.startswith('contrail')})
+                contrail_script = config.process_inputfile('xxx', f'{plandir}/contrail.sh.j2', overrides=contrail_data)
+                with open(f"{tmpdir}/contrail.sh", 'w') as f:
+                    f.write(contrail_script)
+                call(f'bash {tmpdir}/contrail.sh', shell=True)
     if ipsec or ovn_hostrouting:
         ovn_data = config.process_inputfile(cluster, f"{plandir}/99-ovn.yaml",
                                             overrides={'ipsec': ipsec, 'ovn_hostrouting': ovn_hostrouting})

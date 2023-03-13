@@ -1,6 +1,8 @@
 {% for num in range(0, ctlplanes|int) %}
 {% if extra_ctlplane_networks %}
 {% set extra_networks = extra_ctlplane_networks %}
+{% elif network_type == 'Contrail' %}
+{% set extra_networks = [contrail_ctl_network] %}
 {% endif %}
 {% if extra_ctlplane_disks %}
 {% set extra_disks = extra_ctlplane_disks %}
@@ -61,6 +63,13 @@
 {% if async and num == 0 %}
   - path: /etc/kubernetes/kubeconfig.{{ cluster }}
     origin: ~/.kcli/clusters/{{ cluster }}/auth/kubeconfig
+{% endif %}
+{% if network_type == 'Contrail' and num == 0 %}
+  - path: /usr/local/bin/ca-patch.sh
+    origin: contrail-ca-patch.sh
+    mode: 700
+  - path: /root/ca-patch.service
+    origin: contrail-ca-patch.service
 {% endif %}
 {% if files|default([]) %}
  extra_files: {{ files }}
