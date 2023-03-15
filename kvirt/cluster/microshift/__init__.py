@@ -7,11 +7,11 @@ import yaml
 
 def valid_rhn_credentials(config, overrides):
     rhnuser = config.rhnuser or overrides.get('rhnuser')
-    rhnpassword = config.rhnuser or overrides.get('rhnpassword')
+    rhnpassword = config.rhnpassword or overrides.get('rhnpassword')
     if rhnuser is not None and rhnpassword is not None:
         return True
-    rhnak = config.rhnuser or overrides.get('rhnak')
-    rhnorg = config.rhnuser or overrides.get('rhnorg')
+    rhnak = config.rhnak or overrides.get('rhnactivationkey')
+    rhnorg = config.rhnorg or overrides.get('rhnorg')
     if rhnak is not None and rhnorg is not None:
         return True
     return False
@@ -20,8 +20,12 @@ def valid_rhn_credentials(config, overrides):
 def create(config, plandir, cluster, overrides, dnsconfig=None):
     data = {'kubetype': 'microshift', 'sslip': True, 'image': 'rhel8', 'pull_secret': 'openshift_pull.json'}
     data.update(overrides)
-    if 'rhel' in data['image'] and not valid_rhn_credentials(config, overrides):
-        msg = "Using rhel image requires setting rhnuser/rhnpassword or rhnorg/rhnak in your conf or as parameters"
+    if 'rhel' not in data['image']:
+        msg = "A rhel image is currently required for deployment"
+        return {'result': 'failure', 'reason': msg}
+    if not valid_rhn_credentials(config, overrides):
+        msg = "Using rhel image requires setting rhnuser/rhnpassword or rhnorg/rhnactivationkey "
+        msg += "in your conf or as parameters"
         return {'result': 'failure', 'reason': msg}
     if 'keys' not in overrides and get_ssh_pub_key() is None:
         msg = "No usable public key found, which is required for the deployment. Create one using ssh-keygen"
