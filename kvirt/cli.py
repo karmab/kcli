@@ -1237,6 +1237,7 @@ def create_app_generic(args):
             error(f"app {app} not available. Skipping...")
             continue
         pprint(f"Adding app {app}")
+        overrides['name'] = app
         overrides[f'{app}_version'] = overrides[f'{app}_version'] if f'{app}_version' in overrides else 'latest'
         baseconfig.create_app_generic(app, overrides, outputdir=outputdir)
 
@@ -1308,6 +1309,7 @@ def delete_app_generic(args):
             error(f"app {app} not available. Skipping...")
             continue
         pprint(f"Deleting app {app}")
+        overrides['name'] = app
         overrides[f'{app}_version'] = overrides[f'{app}_version'] if f'{app}_version' in overrides else 'latest'
         baseconfig.delete_app_generic(app, overrides)
 

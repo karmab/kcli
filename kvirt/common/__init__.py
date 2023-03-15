@@ -3,7 +3,6 @@
 
 from ast import literal_eval
 from datetime import datetime
-import glob
 from hashlib import sha256
 from kvirt.jinjafilters import jinjafilters
 from kvirt.defaults import UBUNTUS, SSH_PUB_LOCATIONS
@@ -12,6 +11,7 @@ from kvirt import version
 from ipaddress import ip_address
 from random import randint
 import base64
+from glob import glob
 from grp import getgrgid
 from jinja2 import Environment, FileSystemLoader
 from jinja2 import StrictUndefined as undefined
@@ -1852,24 +1852,27 @@ def get_tasty(version='latest'):
 
 
 def kube_create_app(config, appdir, overrides={}, outputdir=None):
+    appname = overrides['name']
     appdata = {'cluster': 'mykube', 'domain': 'karmalabs.corp', 'ctlplanes': 1, 'workers': 0}
-    cluster = appdata['cluster']
     cwd = os.getcwd()
     os.environ["PATH"] += f":{cwd}"
     overrides['cwd'] = cwd
-    default_parameter_file = f"{appdir}/kcli_default.yml"
+    default_parameter_file = f"{appdir}/{appname}/kcli_default.yml"
     if os.path.exists(default_parameter_file):
         with open(default_parameter_file, 'r') as entries:
             appdefault = yaml.safe_load(entries)
             appdata.update(appdefault)
     appdata.update(overrides)
+    cluster = appdata['cluster']
     with TemporaryDirectory() as tmpdir:
-        for root, dirs, files in os.walk(appdir):
-            for name in files:
-                rendered = config.process_inputfile(cluster, f"{appdir}/{name}", overrides=appdata)
-                destfile = f"{outputdir}/{name}" if outputdir is not None else f"{tmpdir}/{name}"
-                with open(destfile, 'w') as f:
-                    f.write(rendered)
+        app_files = glob(f'{appdir}/{appname}/*.sh')
+        app_files.extend(glob(f'{appdir}/{appname}/*.yml'))
+        app_files = [os.path.basename(_fic) for _fic in app_files]
+        for app_file in app_files:
+            rendered = config.process_inputfile(cluster, f"{appdir}/{appname}/{app_file}", overrides=appdata)
+            destfile = f"{outputdir if outputdir is not None else tmpdir}/{app_file}"
+            with open(destfile, 'w') as f:
+                f.write(rendered)
         if outputdir is None:
             os.chdir(tmpdir)
             result = call(f'bash {tmpdir}/install.sh', shell=True)
@@ -1881,19 +1884,29 @@ def kube_create_app(config, appdir, overrides={}, outputdir=None):
 
 
 def kube_delete_app(config, appdir, overrides={}):
+    appname = overrides['name']
+    appdata = {'cluster': 'mykube', 'domain': 'karmalabs.corp', 'ctlplanes': 1, 'workers': 0}
     found = False
-    cluster = 'xxx'
     cwd = os.getcwd()
     os.environ["PATH"] += f":{cwd}"
     overrides['cwd'] = cwd
+    default_parameter_file = f"{appdir}/{appname}/kcli_default.yml"
+    if os.path.exists(default_parameter_file):
+        with open(default_parameter_file, 'r') as entries:
+            appdefault = yaml.safe_load(entries)
+            appdata.update(appdefault)
+    appdata.update(overrides)
+    cluster = appdata['cluster']
     with TemporaryDirectory() as tmpdir:
-        for root, dirs, files in os.walk(appdir):
-            for name in files:
-                if name == 'uninstall.sh':
-                    found = True
-                rendered = config.process_inputfile(cluster, f"{appdir}/{name}", overrides=overrides)
-                with open(f"{tmpdir}/{name}", 'w') as f:
-                    f.write(rendered)
+        app_files = glob(f'{appdir}/{appname}/*.sh')
+        app_files.extend(glob(f'{appdir}/{appname}/*.yml'))
+        app_files = [os.path.basename(_fic) for _fic in app_files]
+        for app_file in app_files:
+            if app_file == 'uninstall.sh':
+                found = True
+            rendered = config.process_inputfile(cluster, f"{appdir}/{appname}/{app_file}", overrides=overrides)
+            with open(f"{tmpdir}/{app_file}", 'w') as f:
+                f.write(rendered)
         os.chdir(tmpdir)
         if not found:
             warning("Uninstall not supported for this app")
@@ -1908,7 +1921,6 @@ def openshift_create_app(config, appdir, overrides={}, outputdir=None):
     appname = overrides['name']
     appdata = {'cluster': 'myopenshift', 'domain': 'karmalabs.corp', 'ctlplanes': 1, 'workers': 0}
     install_cr = overrides.get('install_cr', True)
-    cluster = appdata['cluster']
     cwd = os.getcwd()
     os.environ["PATH"] += f":{cwd}"
     overrides['cwd'] = cwd
@@ -1921,43 +1933,34 @@ def openshift_create_app(config, appdir, overrides={}, outputdir=None):
                 warning(f"Forcing namespace to {appdefault['namespace']}")
                 del overrides['namespace']
     appdata.update(overrides)
+    cluster = appdata['cluster']
     with TemporaryDirectory() as tmpdir:
-        env = Environment(loader=FileSystemLoader(appdir), extensions=['jinja2.ext.do'], trim_blocks=True,
-                          lstrip_blocks=True)
-        for jinjafilter in jinjafilters.jinjafilters:
-            env.filters[jinjafilter] = jinjafilters.jinjafilters[jinjafilter]
-        try:
-            templ = env.get_template(os.path.basename("install.yml.j2"))
-        except TemplateSyntaxError as e:
-            error(f"Error rendering line {e.lineno} of file {e.filename}. Got: {e.message}")
-            sys.exit(1)
-        except TemplateError as e:
-            error(f"Error rendering file {e.filename}. Got: {e.message}")
-            sys.exit(1)
-        destfile = f"{outputdir}/install.yml" if outputdir is not None else f"{tmpdir}/install.yml"
-        with open(destfile, 'w') as f:
-            olmfile = templ.render(appdata)
-            f.write(olmfile)
-        destfile = f"{outputdir}/install.sh" if outputdir is not None else f"{tmpdir}/install.sh"
+        app_files = glob(f'{appdir}/{appname}/*.sh')
+        app_files.extend(glob(f'{appdir}/{appname}/*.yml'))
+        app_files = [os.path.basename(_fic) for _fic in app_files]
+        for app_file in app_files:
+            rendered = config.process_inputfile(cluster, f"{appdir}/{appname}/{app_file}", overrides=appdata)
+            destfile = f"{outputdir if outputdir is not None else tmpdir}/{app_file}"
+            with open(destfile, 'w') as g:
+                g.write(rendered)
+        destfile = f"{outputdir if outputdir is not None else tmpdir}/install.yml"
+        with open(destfile, 'w') as g:
+            rendered = config.process_inputfile(cluster, f"{appdir}/install.yml.j2", overrides=appdata)
+            g.write(rendered)
+        destfile = f"{outputdir if outputdir is not None else tmpdir}/install.sh"
         with open(destfile, 'w') as f:
             f.write("oc create -f install.yml\n")
             if os.path.exists(f"{appdir}/{appname}/pre.sh"):
-                rendered = config.process_inputfile(cluster, f"{appdir}/{appname}/pre.sh", overrides=appdata)
-                f.write(f"{rendered}\n")
+                f.write("bash pre.sh\n")
             if install_cr and os.path.exists(f"{appdir}/{appname}/cr.yml"):
-                rendered = config.process_inputfile(cluster, f"{appdir}/{appname}/cr.yml", overrides=appdata)
-                destfile = f"{outputdir}/cr.yml" if outputdir is not None else f"{tmpdir}/cr.yml"
-                with open(destfile, 'w') as g:
-                    g.write(rendered)
                 crd = overrides.get('crd')
                 rendered = config.process_inputfile(cluster, f"{appdir}/cr.sh", overrides={'crd': crd})
                 f.write(rendered)
             if os.path.exists(f"{appdir}/{appname}/post.sh"):
-                rendered = config.process_inputfile(cluster, f"{appdir}/{appname}/post.sh", overrides=appdata)
-                f.write(rendered)
+                f.write("bash post.sh\n")
         if outputdir is None:
             os.chdir(tmpdir)
-            result = call(f'bash {tmpdir}/install.sh', shell=True)
+            result = call('bash install.sh', shell=True)
         else:
             pprint(f"Copied artifacts to {outputdir}")
             result = 0
@@ -1968,7 +1971,6 @@ def openshift_create_app(config, appdir, overrides={}, outputdir=None):
 def openshift_delete_app(config, appdir, overrides={}):
     appname = overrides['name']
     appdata = {'cluster': 'myopenshift', 'domain': 'karmalabs.corp', 'ctlplanes': 1, 'workers': 0}
-    cluster = appdata['cluster']
     cwd = os.getcwd()
     os.environ["PATH"] += f":{cwd}"
     overrides['cwd'] = cwd
@@ -1981,34 +1983,27 @@ def openshift_delete_app(config, appdir, overrides={}):
                 warning(f"Forcing namespace to {appdefault['namespace']}")
                 del overrides['namespace']
     appdata.update(overrides)
+    cluster = appdata['cluster']
     with TemporaryDirectory() as tmpdir:
-        env = Environment(loader=FileSystemLoader(appdir), extensions=['jinja2.ext.do'], trim_blocks=True,
-                          lstrip_blocks=True)
-        for jinjafilter in jinjafilters.jinjafilters:
-            env.filters[jinjafilter] = jinjafilters.jinjafilters[jinjafilter]
-        try:
-            templ = env.get_template(os.path.basename("install.yml.j2"))
-        except TemplateSyntaxError as e:
-            error(f"Error rendering line {e.lineno} of file {e.filename}. Got: {e.message}")
-            sys.exit(1)
-        except TemplateError as e:
-            error(f"Error rendering file {e.filename}. Got: {e.message}")
-            sys.exit(1)
+        app_files = glob(f'{appdir}/{appname}/*.sh')
+        app_files.extend(glob(f'{appdir}/{appname}/*.yml'))
+        app_files = [os.path.basename(_fic) for _fic in app_files]
+        for app_file in app_files:
+            rendered = config.process_inputfile(cluster, f"{appdir}/{appname}/{app_file}", overrides=appdata)
+            destfile = f"{tmpdir }/{app_file}"
+            with open(destfile, 'w') as g:
+                g.write(rendered)
         destfile = f"{tmpdir}/install.yml"
-        with open(destfile, 'w') as f:
-            olmfile = templ.render(appdata)
-            f.write(olmfile)
+        with open(destfile, 'w') as g:
+            rendered = config.process_inputfile(cluster, f"{appdir}/install.yml.j2", overrides=appdata)
+            g.write(rendered)
         destfile = f"{tmpdir}/uninstall.sh"
         with open(destfile, 'w') as f:
-            if os.path.exists(f"{appdir}/{appname}/cr.yml"):
-                rendered = config.process_inputfile(cluster, f"{appdir}/{appname}/cr.yml", overrides=appdata)
-                destfile = f"{tmpdir}/cr.yml"
-                with open(destfile, 'w') as g:
-                    g.write(rendered)
+            if os.path.exists(f"{tmpdir}/cr.yml"):
                 f.write("oc delete -f cr.yml\n")
             f.write("oc delete -f install.yml")
         os.chdir(tmpdir)
-        result = call(f'bash {tmpdir}/uninstall.sh', shell=True)
+        result = call('bash uninstall.sh', shell=True)
     os.chdir(cwd)
     return result
 
@@ -2173,7 +2168,7 @@ def olm_app(package):
 def need_fake():
     kclidir = os.path.expanduser("~/.kcli")
     groups = [getgrgid(g).gr_name for g in os.getgroups()]
-    if not glob.glob(f"{kclidir}/config.y*ml") and\
+    if not glob(f"{kclidir}/config.y*ml") and\
        ((groups == ['root'] and not os.path.exists("/var/run/libvirt/libvirt-sock")) or 'libvirt' not in groups):
         if os.path.exists('/i_am_a_container') and os.environ.get('KUBERNETES_SERVICE_HOST') is not None:
             return False

@@ -1,0 +1,67 @@
+apiVersion: hive.openshift.io/v1
+kind: ClusterImageSet
+metadata:
+  name: openshift-v${MINOR}
+  namespace: multicluster-engine
+spec:
+  releaseImage: ${RELEASE}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: assisted-service-config
+  namespace: multicluster-engine
+  labels:
+    app: assisted-service
+data:
+  LOG_LEVEL: "debug"
+{% if assisted_disable_validations %}
+  DISABLED_HOST_VALIDATIONS: belongs-to-majority-group,belongs-to-machine-cidr
+{% endif %}
+---
+apiVersion: agent-install.openshift.io/v1beta1
+kind: AgentServiceConfig
+metadata:
+  namespace: multicluster-engine
+  name: agent
+  annotations:
+    unsupported.agent-install.openshift.io/assisted-service-configmap: 'assisted-service-config'
+spec:
+  databaseStorage:
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 40Gi
+  filesystemStorage:
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 40Gi
+  osImages:
+    - openshiftVersion: "${MINOR}"
+      url: "$RHCOS_ISO"
+      rootFSUrl: "$RHCOS_ROOTFS"
+      cpuArchitecture: "x86_64"
+      version: "${VERSION}"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  creationTimestamp: null
+  name: assisted-deployment-ssh-private-key
+  namespace: multicluster-engine
+type: Opaque
+stringData:
+  ssh-privatekey: |
+${SSH_PRIV_KEY}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: assisted-deployment-pull-secret
+  namespace: multicluster-engine
+stringData:
+  .dockerconfigjson: '${PULLSECRET}'
+  type: kubernetes.io/dockerconfigjson

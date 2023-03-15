@@ -1,1 +1,3 @@
 mce_hypershift: true
+mce_assisted: true
+mce_assisted_disable_validations: false
