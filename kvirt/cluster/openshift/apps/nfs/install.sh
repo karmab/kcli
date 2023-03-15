@@ -45,11 +45,16 @@ echo 'apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
    name: nfs
-provisioner: storage.io/nfs
+{% if nfs_default_storageclass %}
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+{% endif %}
+provisioner: k8s-sigs.io/nfs-subdir-external-provisioner
 parameters:
   pathPattern: "${.PVC.namespace}/${.PVC.name}"
   onDelete: delete' > $BASEDIR/deploy/class.yaml
 oc create -f $BASEDIR/deploy/deployment.yaml -f $BASEDIR/deploy/class.yaml
-{% if nfs_default_storageclass %}
-oc patch storageclass nfs -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+{% if not nfs_default_storageclass %}
+echo Run the following command to make odf-storagecluster-ceph-rbd the default storage class
+echo oc patch storageclass nfs -p \'{\"metadata\": {\"annotations\":{\"storageclass.kubernetes.io/is-default-class\":\"true\"}}}\'
 {% endif %}

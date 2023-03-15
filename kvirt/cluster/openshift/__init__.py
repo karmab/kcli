@@ -986,7 +986,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if data['network_type'] == 'Contrail':
             if which('git') is None:
                 return {'result': 'failure', 'reason': "Git is needed when deploying with contrail"}
-            if 'hub.juniper.net' not in data['pull_secret']:
+            if 'enterprise-hub.juniper.net' not in data['pull_secret']:
                 return {'result': 'failure', 'reason': "A token for hub.juniper.net registry is needed"}
             ctl_network_create = data['contrail_ctl_create']
             ctl_network = data['contrail_ctl_network']
