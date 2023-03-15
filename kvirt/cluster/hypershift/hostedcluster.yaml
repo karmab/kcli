@@ -27,6 +27,32 @@ metadata:
 stringData:
   id_rsa.pub: {{ pub_key|default('') }}
 ---
+{% if assisted %}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  creationTimestamp: null
+  name: capi-provider-role
+  namespace: {{ namespace }}-{{ cluster }}
+rules:
+- apiGroups:
+  - agent-install.openshift.io
+  resources:
+  - agents
+  verbs:
+  - '*'
+---
+apiVersion: agent-install.openshift.io/v1beta1
+kind: InfraEnv
+metadata:
+  name: {{ cluster }}
+  namespace: {{ namespace }}-{{ cluster }}
+spec:
+  pullSecretRef:
+    name: {{ cluster }}-pull-secret
+  sshAuthorizedKey: {{ cluster }}-ssh-key
+---
+{% endif %}
 apiVersion: hypershift.openshift.io/v1beta1
 kind: HostedCluster
 metadata:
@@ -60,7 +86,13 @@ spec:
     - cidr: {{ cidr|default('') }}
     networkType: {{ network_type }}
   platform:
+{% if assisted %}
+    agent:
+      agentNamespace: {{ namespace }}-{{ cluster }}
+    type: Agent
+{% else %}
     type: None
+{% endif %}
   infraID: {{ cluster }}
   dns:
     baseDomain: {{ domain }}

@@ -23,7 +23,7 @@ spec:
     autoRepair: false
     upgradeType: InPlace
   platform:
-    type: None
+    type: {{ 'Agent' if assisted else 'None' }}
   release:
     image: "{{ nodepool_image }}"
 {% if manifests|default([]) %}

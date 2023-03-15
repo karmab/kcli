@@ -2356,3 +2356,22 @@ def get_changelog(diff, data=False):
             return open(f"{tmpdir}/results.txt").read()
         else:
             call(cmd, shell=True)
+
+
+def virtual_baremetal(url, clients=[]):
+    if 'redfish/v1/Systems/' not in url:
+        return False
+    if valid_uuid(os.path.basename(url)):
+        return True
+    for cli in clients:
+        if f'redfish/v1/Systems/{cli}/' in url:
+            return True
+    return False
+
+
+def dell_baremetal(bmc_user, bmc_password):
+    if bmc_user is None:
+        bmc_user = 'root'
+    if bmc_password is None:
+        bmc_password = 'calvin'
+    return bmc_user, bmc_password

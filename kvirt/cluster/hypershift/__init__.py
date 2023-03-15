@@ -3,6 +3,7 @@
 from glob import glob
 from kvirt.common import success, error, pprint, info2, container_mode, warning
 from kvirt.common import get_oc, pwd_path, get_installer_rhcos, get_ssh_pub_key, boot_baremetal_hosts, olm_app
+from kvirt.common import virtual_baremetal, dell_baremetal
 from kvirt.defaults import OPENSHIFT_TAG
 from kvirt.cluster.openshift import get_ci_installer, get_downstream_installer, get_installer_version
 from kvirt.cluster.openshift import same_release_images, process_apps, update_etc_hosts, offline_image
@@ -21,6 +22,34 @@ import yaml
 
 virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere']
 cloudplatforms = ['aws', 'gcp', 'ibm']
+
+
+def create_baremetal_objects(config, plandir, cluster, namespace, baremetal_hosts, overrides={}):
+    clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
+    uefi = overrides.get('uefi', False)
+    for index, host in enumerate(baremetal_hosts):
+        bmc_url = host.get('url') or host.get('bmc_url')
+        bmc_user = host.get('username') or host.get('user') or host.get('bmc_username') or host.get('bmc_user')\
+            or overrides.get('bmc_user') or overrides.get('bmc_username')\
+            or overrides.get('user') or overrides.get('username')
+        bmc_password = host.get('password') or host.get('bmc_password') or overrides.get('bmc_password')
+        if bmc_url is not None and virtual_baremetal(bmc_url, clients=config.clients):
+            bmc_user, bmc_password = 'fake', 'fake'
+        bmc_model = host.get('model') or host.get('bmc_model') or overrides.get('bmc_model', 'dell')
+        bmc_mac = host.get('mac') or host.get('bmc_mac')
+        if bmc_model == 'dell':
+            bmc_user, bmc_password = dell_baremetal(bmc_user, bmc_password)
+        bmc_name = host.get('name') or host.get('bmc_name') or f'node-{index}'
+        if bmc_url is not None and bmc_user is not None and bmc_password is not None:
+            bmc_overrides = {'url': bmc_url, 'user': bmc_user, 'password': bmc_password, 'model': bmc_model,
+                             'name': bmc_name, 'uefi': uefi, 'namespace': namespace, 'cluster': cluster}
+            if bmc_mac is not None:
+                bmc_overrides['mac'] = bmc_mac
+            bmc_data = config.process_inputfile(cluster, f"{plandir}/bmc.yml.j2", overrides=bmc_overrides)
+            with open(f"{clusterdir}/bmc_{bmc_name}.yml", 'w') as f:
+                f.write(bmc_data)
+            cmcmd = f"oc create -f {clusterdir}/bmc_{bmc_name}.yml"
+            call(cmcmd, shell=True)
 
 
 def handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts=[]):
@@ -58,9 +87,10 @@ def handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts=[]):
 
 def scale(config, plandir, cluster, overrides):
     plan = cluster
-    data = {'cluster': cluster, 'kube': cluster, 'kubetype': 'hypershift', 'namespace': 'clusters'}
+    data = {'cluster': cluster, 'kube': cluster, 'kubetype': 'hypershift', 'namespace': 'clusters', 'assisted': False}
     data['basedir'] = '/workdir' if container_mode() else '.'
-    cluster = data.get('cluster')
+    cluster = data['cluster']
+    namespace = data['namespace']
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if not os.path.exists(clusterdir):
         warning(f"Creating {clusterdir} from your input (auth creds will be missing)")
@@ -88,6 +118,7 @@ def scale(config, plandir, cluster, overrides):
             data.update(installparam)
             plan = installparam.get('plan', plan)
     data.update(overrides)
+    assisted = data['assisted']
     if 'nodepool' not in data:
         data['nodepool'] = cluster
     with open(f"{clusterdir}/kcli_parameters.yml", 'w') as paramfile:
@@ -99,15 +130,18 @@ def scale(config, plandir, cluster, overrides):
     new_baremetal_hosts = overrides.get('baremetal_hosts', [])
     baremetal_hosts = [entry for entry in new_baremetal_hosts if entry not in old_baremetal_hosts]
     if baremetal_hosts:
-        if not old_baremetal_hosts:
-            iso_url = handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts)
+        if assisted:
+            create_baremetal_objects(config, plandir, cluster, namespace, baremetal_hosts, overrides)
         else:
-            svcip_cmd = 'oc get node -o yaml'
-            svcip = yaml.safe_load(os.popen(svcip_cmd).read())['items'][0]['status']['addresses'][0]['address']
-            svcport_cmd = 'oc get svc -n default httpd-kcli-svc -o yaml'
-            svcport = yaml.safe_load(os.popen(svcport_cmd).read())['spec']['ports'][0]['nodePort']
-            iso_url = f'http://{svcip}:{svcport}/{cluster}-worker.iso'
-        boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
+            if not old_baremetal_hosts:
+                iso_url = handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts)
+            else:
+                svcip_cmd = 'oc get node -o yaml'
+                svcip = yaml.safe_load(os.popen(svcip_cmd).read())['items'][0]['status']['addresses'][0]['address']
+                svcport_cmd = 'oc get svc -n default httpd-kcli-svc -o yaml'
+                svcport = yaml.safe_load(os.popen(svcport_cmd).read())['spec']['ports'][0]['nodePort']
+                iso_url = f'http://{svcip}:{svcport}/{cluster}-worker.iso'
+            boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
         worker_overrides['workers'] = worker_overrides.get('workers', 2) - len(new_baremetal_hosts)
     if worker_overrides.get('workers', 2) <= 0:
         return {'result': 'success'}
@@ -154,6 +188,7 @@ def create(config, plandir, cluster, overrides):
             'cluster_network_ipv4': '10.129.0.0/14',
             'service_network_ipv4': '172.31.0.0/16',
             'autoscale': False,
+            'assisted': False,
             'retries': 3}
     data.update(overrides)
     retries = data.get('retries')
@@ -183,6 +218,7 @@ def create(config, plandir, cluster, overrides):
     apps = overrides.get('apps', [])
     workers = data.get('workers')
     version = data.get('version')
+    assisted = data.get('assisted')
     tag = data.get('tag')
     if str(tag) == '4.1':
         tag = '4.10'
@@ -562,7 +598,9 @@ def create(config, plandir, cluster, overrides):
         new_ignition = {'ignition': {'config': {'merge': [{'source': bucket_url}]}, 'version': '3.2.0'}}
         with open(f"{clusterdir}/{nodepool}.ign", 'w') as f:
             f.write(json.dumps(new_ignition))
-    if baremetal_iso or baremetal_hosts:
+    if assisted:
+        create_baremetal_objects(config, plandir, cluster, namespace, baremetal_hosts, overrides)
+    elif baremetal_iso or baremetal_hosts:
         iso_url = handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts)
         boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
         data['workers'] -= len(baremetal_hosts)
