@@ -63,3 +63,4 @@ nodepool:
 hosted_version:
 hosted_tag:
 autoscale: false
+assisted: false

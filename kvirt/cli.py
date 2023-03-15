@@ -2323,13 +2323,13 @@ def info_kube(args):
     else:
         if kubetype == 'openshift':
             baseconfig.info_kube_openshift(quiet=True)
-        if kubetype == 'hypershift':
+        elif kubetype == 'hypershift':
             baseconfig.info_kube_hypershift(quiet=True)
-        if kubetype == 'microshift':
+        elif kubetype == 'microshift':
             baseconfig.info_kube_microshift(quiet=True)
-        if kubetype == 'k3s':
+        elif kubetype == 'k3s':
             baseconfig.info_kube_k3s(quiet=True)
-        if kubetype == 'kind':
+        elif kubetype == 'kind':
             baseconfig.info_kube_kind(quiet=True)
         else:
             baseconfig.info_kube_generic(quiet=True)
