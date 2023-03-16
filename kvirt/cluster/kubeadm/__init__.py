@@ -188,16 +188,18 @@ def create(config, plandir, cluster, overrides):
     os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
     apps = data.get('apps', [])
     if apps:
+        appdir = f"{plandir}/apps"
         os.environ["PATH"] += f":{os.getcwd()}"
         for app in apps:
-            appdir = f"{plandir}/apps/{app}"
+            app_data = data.copy()
             if not os.path.exists(appdir):
                 warning(f"Skipping unsupported app {app}")
             else:
                 pprint(f"Adding app {app}")
                 if f'{app}_version' not in overrides:
-                    data[f'{app}_version'] = 'latest'
-                kube_create_app(config, appdir, overrides=data)
+                    app_data[f'{app}_version'] = 'latest'
+                app_data['name'] = app
+                kube_create_app(config, appdir, overrides=app_data)
     if data['wait_ready']:
         pprint("Waiting for all nodes to join cluster")
         while True:

@@ -3122,8 +3122,8 @@ class Kconfig(Kbaseconfig):
                 else:
                     f.write(result['data'])
         if iso:
-            if self.type not in ['kvm', 'fake', 'kubevirt']:
-                warning("Iso only get generated for kvm type")
+            if self.type not in ['kvm', 'fake', 'kubevirt', 'vsphere', 'openstack']:
+                warning(f"Iso generation not supported on {self.type}")
             else:
                 iso_pool = overrides.get('pool') or self.pool
                 generate_rhcos_iso(self.k, f"{cluster}-{role}", iso_pool, version=iso_version, podman=podman,

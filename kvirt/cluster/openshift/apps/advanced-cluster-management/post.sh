@@ -11,3 +11,7 @@ oc -n open-cluster-management patch deploy console-header -p '{"spec":{"template
 DEPLOY_NAME=$(oc -n open-cluster-management get deploy -o name | grep consoleui)
 oc -n open-cluster-management patch ${DEPLOY_NAME} -p '{"spec":{"template":{"spec":{"containers":[{"name":"hcm-ui","env":[{"name": "featureFlags_baremetal","value":"true"}]}]}}}}'
 {% endif %}
+
+{% if acm_assisted %}
+bash assisted-service.sh
+{% endif %}
