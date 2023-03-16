@@ -133,6 +133,9 @@ $ kcli create vm -p myprofile myvm
 
 # Boot an empty vm from a given iso
 $ kcli create vm -P iso=xxx.iso myvm
+
+# Create 3 vm to emulate baremetal
+$ kcli create vm -P start=false -P memory=20480 -P numcpus=16 -P disks=[200] -P uefi=true -P nets=[default] -c 3 myclu
 """
 
 vmconsole = """# Open a graphical console for vm ( only shows the command if using container)
