@@ -1211,7 +1211,11 @@ You can also use *noconf: true* to only add the nic with no configuration done i
 
 the *ovs: true* allows you to create the nic as ovs port of the indicated bridge. Not that such bridges have to be created independently at the moment
 
-You can provide network configuration on the command line when creating a single vm with *-P ip1=… -P netmask1=… -P gateway=…*
+You can also provide network configuration on the command line when creating a single vm with something like:
+
+::
+
+   kcli create vm -i $img -P nets=['{"name":"default","ip":"192.168.122.250","netmask":"24","gateway":"192.168.122.1"}']
 
 ip, dns and host Reservations
 -----------------------------
