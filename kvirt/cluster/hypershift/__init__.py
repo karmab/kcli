@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from base64 import b64encode
 from glob import glob
 from kvirt.common import success, error, pprint, info2, container_mode, warning
 from kvirt.common import get_oc, pwd_path, get_installer_rhcos, get_ssh_pub_key, boot_baremetal_hosts, olm_app
@@ -24,32 +25,50 @@ virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere']
 cloudplatforms = ['aws', 'gcp', 'ibm']
 
 
-def create_baremetal_objects(config, plandir, cluster, namespace, baremetal_hosts, overrides={}):
+def create_bmh_objects(config, plandir, cluster, namespace, baremetal_hosts, overrides={}):
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     uefi = overrides.get('uefi', False)
-    for index, host in enumerate(baremetal_hosts):
-        bmc_url = host.get('url') or host.get('bmc_url')
-        bmc_user = host.get('username') or host.get('user') or host.get('bmc_username') or host.get('bmc_user')\
-            or overrides.get('bmc_user') or overrides.get('bmc_username')\
-            or overrides.get('user') or overrides.get('username')
-        bmc_password = host.get('password') or host.get('bmc_password') or overrides.get('bmc_password')
-        if bmc_url is not None and virtual_baremetal(bmc_url, clients=config.clients):
-            bmc_user, bmc_password = 'fake', 'fake'
-        bmc_model = host.get('model') or host.get('bmc_model') or overrides.get('bmc_model', 'dell')
-        bmc_mac = host.get('mac') or host.get('bmc_mac')
-        if bmc_model == 'dell':
-            bmc_user, bmc_password = dell_baremetal(bmc_user, bmc_password)
-        bmc_name = host.get('name') or host.get('bmc_name') or f'node-{index}'
-        if bmc_url is not None and bmc_user is not None and bmc_password is not None:
+    with open(f"{clusterdir}/bmcs.yml", 'w') as f:
+        for index, host in enumerate(baremetal_hosts):
+            bmc_url = host.get('url') or host.get('bmc_url')
+            if bmc_url is None:
+                warning("Skipping entry {index} in baremetal_hosts array as it misses url")
+                continue
+            bmc_user = host.get('username') or host.get('user') or host.get('bmc_username') or host.get('bmc_user')\
+                or overrides.get('bmc_user') or overrides.get('bmc_username')\
+                or overrides.get('user') or overrides.get('username')
+            bmc_password = host.get('password') or host.get('bmc_password') or overrides.get('bmc_password')
+            if virtual_baremetal(bmc_url, clients=config.clients):
+                bmc_user, bmc_password = 'fake', 'fake'
+                overrides['bmc_model'] = 'fake'
+            bmc_model = host.get('model') or host.get('bmc_model') or overrides.get('bmc_model', 'dell')
+            bmc_mac = host.get('mac') or host.get('bmc_mac')
+            if bmc_mac is None:
+                warning("Skipping entry {index} in baremetal_hosts array as it misses mac")
+                continue
+            if bmc_model == 'dell':
+                bmc_user, bmc_password = dell_baremetal(bmc_user, bmc_password)
+            if bmc_user is None:
+                warning("Skipping entry {index} in baremetal_hosts array as it misses user")
+                continue
+            if bmc_password is None:
+                warning("Skipping entry {index} in baremetal_hosts array as it misses password")
+                continue
+            bmc_uefi = host.get('uefi') or host.get('bmc_uefi') or uefi
+            bmc_name = host.get('name') or host.get('bmc_name') or f'{cluster}-node-{index}'
+            if bmc_model in ['hp', 'hpe', 'supermicro']:
+                bmc_url = bmc_url.replace('https://', 'redfish-virtualmedia')
+            elif bmc_model == 'dell':
+                bmc_url = bmc_url.replace('https://', 'idrac-virtualmedia')
+            elif bmc_model == 'fake':
+                bmc_url = bmc_url.replace('http', 'redfish-virtualmedia+http')
             bmc_overrides = {'url': bmc_url, 'user': bmc_user, 'password': bmc_password, 'model': bmc_model,
-                             'name': bmc_name, 'uefi': uefi, 'namespace': namespace, 'cluster': cluster}
-            if bmc_mac is not None:
-                bmc_overrides['mac'] = bmc_mac
+                             'name': bmc_name, 'uefi': bmc_uefi, 'namespace': namespace, 'cluster': cluster,
+                             'mac': bmc_mac}
             bmc_data = config.process_inputfile(cluster, f"{plandir}/bmc.yml.j2", overrides=bmc_overrides)
-            with open(f"{clusterdir}/bmc_{bmc_name}.yml", 'w') as f:
-                f.write(bmc_data)
-            cmcmd = f"oc create -f {clusterdir}/bmc_{bmc_name}.yml"
-            call(cmcmd, shell=True)
+            f.write(bmc_data)
+    cmcmd = f"oc create -f {clusterdir}/bmcs.yml"
+    call(cmcmd, shell=True)
 
 
 def handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts=[]):
@@ -131,7 +150,7 @@ def scale(config, plandir, cluster, overrides):
     baremetal_hosts = [entry for entry in new_baremetal_hosts if entry not in old_baremetal_hosts]
     if baremetal_hosts:
         if assisted:
-            create_baremetal_objects(config, plandir, cluster, namespace, baremetal_hosts, overrides)
+            create_bmh_objects(config, plandir, cluster, namespace, baremetal_hosts, overrides)
         else:
             if not old_baremetal_hosts:
                 iso_url = handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts)
@@ -166,6 +185,7 @@ def create(config, plandir, cluster, overrides):
     data = {'kubetype': 'hypershift',
             'domain': 'karmalabs.corp',
             'baremetal_iso': False,
+            'baremetal_hosts': [],
             'coredns': True,
             'mdns': False,
             'network': 'default',
@@ -219,6 +239,7 @@ def create(config, plandir, cluster, overrides):
     workers = data.get('workers')
     version = data.get('version')
     assisted = data.get('assisted')
+    coredns = data.get('coredns')
     tag = data.get('tag')
     if str(tag) == '4.1':
         tag = '4.10'
@@ -240,10 +261,10 @@ def create(config, plandir, cluster, overrides):
     kubeconfig = os.path.basename(kubeconfig) if kubeconfig is not None else 'config'
     if yaml.safe_load(os.popen('oc get crd hostedclusters.hypershift.openshift.io -o yaml 2>/dev/null').read()) is None:
         warning("Hypershift not installed. Installing it for you")
-        if data.get('use_mce'):
+        if data.get('use_mce') or assisted:
             app_name, source, channel, csv, description, namespace, channels, crd = olm_app('multicluster-engine')
             app_data = {'name': app_name, 'source': source, 'channel': channel, 'namespace': namespace, 'crd': crd,
-                        'mce_hypershift': True}
+                        'mce_hypershift': True, 'assisted': assisted}
             config.create_app_openshift(app_name, app_data)
         elif which('podman') is None:
             msg = "Please install podman first in order to install hypershift"
@@ -386,6 +407,25 @@ def create(config, plandir, cluster, overrides):
                     pprint(f"Injecting manifest {f}")
                     mc_data = json.dumps(mc_data)
                     manifests.append({'name': mc_name, 'data': mc_data})
+    if assisted:
+        keepalived_yml_data = config.process_inputfile(cluster, f"{plandir}/staticpods/keepalived.yml", overrides=data)
+        keepalived_yml_data = b64encode(keepalived_yml_data.encode()).decode("UTF-8")
+        keepalived_conf_data = config.process_inputfile(cluster, f"{plandir}/keepalived.conf", overrides=data)
+        keepalived_conf_data = b64encode(keepalived_conf_data.encode()).decode("UTF-8")
+        assisted_data = {'keepalived_yml_data': keepalived_yml_data, 'keepalived_conf_data': keepalived_conf_data}
+        if not sslip and coredns:
+            coredns_yml_data = config.process_inputfile(cluster, f"{plandir}/staticpods/coredns.yml", overrides=data)
+            coredns_yml_data = b64encode(coredns_yml_data.encode()).decode("UTF-8")
+            assisted_data['coredns_yml_data'] = coredns_yml_data
+            coredns_conf_data = config.process_inputfile(cluster, f"{plandir}/Corefile", overrides=data)
+            coredns_conf_data = b64encode(coredns_conf_data.encode()).decode("UTF-8")
+            assisted_data['coredns_conf_data'] = coredns_conf_data
+            force_dns_data = config.process_inputfile(cluster, f"{plandir}/99-forcedns", overrides=data)
+            force_dns_data = b64encode(force_dns_data.encode()).decode("UTF-8")
+            assisted_data['force_dns_data'] = force_dns_data
+        assisted_data = config.process_inputfile(cluster, 'assisted_ingress.yml', overrides=assisted_data)
+        assisted_data = json.dumps(assisted_data)
+        manifests.append({'name': 'assisted-ingress', 'data': assisted_data})
     if manifests:
         assetsdata['manifests'] = manifests
     async_files = []
@@ -505,31 +545,32 @@ def create(config, plandir, cluster, overrides):
     pprint(f"Using installer version {INSTALLER_VERSION}")
     nodepool_image = os.popen("openshift-install version | grep 'release image' | cut -f3 -d' '").read().strip()
     assetsdata['nodepool_image'] = nodepool_image
-    image = data.get('image')
-    if image is None:
-        image_type = 'openstack' if data.get('kvm_openstack', True) and config.type == 'kvm' else config.type
-        region = config.k.region if config.type == 'aws' else None
-        image_url = get_installer_rhcos(_type=image_type, region=region, arch=arch)
-        if platform in ['aws', 'gcp']:
-            image = image_url
+    if not assisted:
+        image = data.get('image')
+        if image is None:
+            image_type = 'openstack' if data.get('kvm_openstack', True) and config.type == 'kvm' else config.type
+            region = config.k.region if config.type == 'aws' else None
+            image_url = get_installer_rhcos(_type=image_type, region=region, arch=arch)
+            if platform in ['aws', 'gcp']:
+                image = image_url
+            else:
+                image = os.path.basename(os.path.splitext(image_url)[0])
+                if platform == 'ibm':
+                    image = image.replace('.', '-').replace('_', '-').lower()
+                images = [v for v in k.volumes() if image in v]
+                if not images:
+                    result = config.handle_host(pool=config.pool, image=image, download=True, update_profile=False,
+                                                url=image_url, size=data.get('kubevirt_disk_size'))
+                    if result['result'] != 'success':
+                        return result
+            pprint(f"Using image {image}")
+            data['image'] = image
         else:
-            image = os.path.basename(os.path.splitext(image_url)[0])
-            if platform == 'ibm':
-                image = image.replace('.', '-').replace('_', '-').lower()
+            pprint(f"Checking if image {image} is available")
             images = [v for v in k.volumes() if image in v]
             if not images:
-                result = config.handle_host(pool=config.pool, image=image, download=True, update_profile=False,
-                                            url=image_url, size=data.get('kubevirt_disk_size'))
-                if result['result'] != 'success':
-                    return result
-        pprint(f"Using image {image}")
-        data['image'] = image
-    else:
-        pprint(f"Checking if image {image} is available")
-        images = [v for v in k.volumes() if image in v]
-        if not images:
-            msg = f"Missing {image}. Indicate correct image in your parameters file..."
-            return {'result': 'failure', 'reason': msg}
+                msg = f"Missing {image}. Indicate correct image in your parameters file..."
+                return {'result': 'failure', 'reason': msg}
     with open(f"{clusterdir}/kcli_parameters.yml", 'w') as p:
         installparam = overrides.copy()
         installparam['plan'] = plan
@@ -542,7 +583,9 @@ def create(config, plandir, cluster, overrides):
             installparam['ingress_ip'] = ingress_ip
         if virtual_router_id is not None:
             installparam['virtual_router_id'] = virtual_router_id
-        installparam['image'] = image
+        installparam['assisted'] = assisted
+        if not assisted:
+            installparam['image'] = image
         installparam['ipv6'] = ipv6
         installparam['original_domain'] = data['original_domain']
         yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
@@ -554,25 +597,26 @@ def create(config, plandir, cluster, overrides):
     cmcmd = f"oc create -f {clusterdir}/nodepool_{nodepool}.yaml"
     call(cmcmd, shell=True)
     assetsdata['clusterdir'] = clusterdir
-    ignitionscript = config.process_inputfile(cluster, f"{plandir}/ignition.sh", overrides=assetsdata)
-    with open(f"{clusterdir}/ignition_{nodepool}.sh", 'w') as f:
-        f.write(ignitionscript)
-    pprint("Waiting before ignition data is available")
-    user_data = f"user-data-{nodepool}"
-    call(f"until oc -n {namespace}-{cluster} get secret | grep {user_data} >/dev/null 2>&1 ; do sleep 1 ; done",
-         shell=True)
-    ignition_worker = f"{clusterdir}/{nodepool}.ign"
-    open(ignition_worker, 'a').close()
-    timeout = 0
-    while True:
-        if os.path.getsize(ignition_worker) != 0 and 'Token not found' not in open(ignition_worker).read():
-            break
-        sleep(30)
-        timeout += 30
-        if timeout > 300:
-            msg = "Timeout trying to retrieve worker ignition"
-            return {'result': 'failure', 'reason': msg}
-        call(f'bash {clusterdir}/ignition_{nodepool}.sh', shell=True)
+    if not assisted:
+        ignitionscript = config.process_inputfile(cluster, f"{plandir}/ignition.sh", overrides=assetsdata)
+        with open(f"{clusterdir}/ignition_{nodepool}.sh", 'w') as f:
+            f.write(ignitionscript)
+        pprint("Waiting before ignition data is available")
+        user_data = f"user-data-{nodepool}"
+        call(f"until oc -n {namespace}-{cluster} get secret | grep {user_data} >/dev/null 2>&1 ; do sleep 1 ; done",
+             shell=True)
+        ignition_worker = f"{clusterdir}/{nodepool}.ign"
+        open(ignition_worker, 'a').close()
+        timeout = 0
+        while True:
+            if os.path.getsize(ignition_worker) != 0 and 'Token not found' not in open(ignition_worker).read():
+                break
+            sleep(30)
+            timeout += 30
+            if timeout > 300:
+                msg = "Timeout trying to retrieve worker ignition"
+                return {'result': 'failure', 'reason': msg}
+            call(f'bash {clusterdir}/ignition_{nodepool}.sh', shell=True)
     if 'name' in data:
         del data['name']
     kubeconfigpath = f'{clusterdir}/auth/kubeconfig'
@@ -588,7 +632,7 @@ def create(config, plandir, cluster, overrides):
     with open(autoapproverpath, 'w') as f:
         f.write(autoapprover)
     call(f"oc apply -f {autoapproverpath}", shell=True)
-    if platform in cloudplatforms + ['openstack']:
+    if not assisted and platform in cloudplatforms + ['openstack']:
         copy2(f"{clusterdir}/{nodepool}.ign", f"{clusterdir}/{nodepool}.ign.ori")
         bucket = f"{cluster}-{domain.replace('.', '-')}"
         if bucket not in config.k.list_buckets():
@@ -598,12 +642,13 @@ def create(config, plandir, cluster, overrides):
         new_ignition = {'ignition': {'config': {'merge': [{'source': bucket_url}]}, 'version': '3.2.0'}}
         with open(f"{clusterdir}/{nodepool}.ign", 'w') as f:
             f.write(json.dumps(new_ignition))
-    if assisted:
-        create_baremetal_objects(config, plandir, cluster, namespace, baremetal_hosts, overrides)
     elif baremetal_iso or baremetal_hosts:
-        iso_url = handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts)
-        boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
-        data['workers'] -= len(baremetal_hosts)
+        if assisted:
+            create_bmh_objects(config, plandir, cluster, namespace, baremetal_hosts, overrides)
+        else:
+            iso_url = handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts)
+            boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
+        data['workers'] = data.get('workers', 2) - len(baremetal_hosts)
     if data['workers'] > 0:
         pprint("Deploying workers")
         worker_threaded = data.get('threaded', False) or data.get('workers_threaded', False)

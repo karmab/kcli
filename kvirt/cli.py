@@ -1266,6 +1266,7 @@ def create_app_openshift(args):
         if app in LOCAL_OPENSHIFT_APPS:
             name = app
             app_data = overrides.copy()
+            app_data['name'] = name
             if app == 'users' and args.subcommand_create_app == 'hypershift':
                 app_data['hypershift'] = True
         else:

@@ -1573,7 +1573,8 @@ class Kconfig(Kbaseconfig):
             kubeconfigmgmt = f"{clusterdir}/kubeconfig.mgmt"
             call(f'KUBECONFIG={kubeconfigmgmt} oc delete -f {clusterdir}/autoapprovercron.yml', shell=True)
             call(f'KUBECONFIG={kubeconfigmgmt} oc delete -f {clusterdir}/hostedcluster.yaml', shell=True)
-            if 'baremetal_iso' in clusterdata or 'baremetal_hosts' in clusterdata:
+            assisted = clusterdata.get('assisted', False)
+            if not assisted and ('baremetal_iso' in clusterdata or 'baremetal_hosts' in clusterdata):
                 call('KUBECONFIG={kubeconfigmgmt} oc -n default delete all -l app=httpd-kcli', shell=True)
                 call('KUBECONFIG={kubeconfigmgmt} oc -n default delete svc httpd-kcli-svc', shell=True)
                 call('KUBECONFIG={kubeconfigmgmt} oc -n default delete pvc httpd-kcli-pvc', shell=True)

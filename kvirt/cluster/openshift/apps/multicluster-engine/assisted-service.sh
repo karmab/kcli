@@ -18,3 +18,4 @@ export VERSION=$(openshift-install coreos print-stream-json | jq -r '.["architec
 export RELEASE=$(openshift-install version | grep 'release image' | cut -d' ' -f3)
 
 envsubst < assisted-service.sample.yml | oc create -f -
+oc create -f 99-metal3-provisioning.yaml

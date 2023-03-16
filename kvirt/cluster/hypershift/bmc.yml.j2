@@ -30,11 +30,10 @@ spec:
     address: idrac-virtualmedia://{{ url }}/redfish/v1/Systems/System.Embedded.1
     {% endif %}
     credentialsName: {{ name }}
-{% if mac is defined %}
   bootMACAddress: {{ mac }}
-{% endif %}
   hardwareProfile: unknown
   online: true
   automatedCleaningMode: disabled
   bootMode: {{ 'UEFI' if uefi else 'legacy' }}
 ---
+

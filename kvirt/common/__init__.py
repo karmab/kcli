@@ -2361,6 +2361,8 @@ def virtual_baremetal(url, clients=[]):
     for cli in clients:
         if f'redfish/v1/Systems/{cli}/' in url:
             return True
+    if 'redfish/v1/Systems/local/' in url:
+        return True
     return False
 
 
