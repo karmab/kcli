@@ -227,7 +227,7 @@ def create(config, plandir, cluster, overrides):
     pprint(f"Deploying cluster {clustervalue}")
     plan = cluster if cluster is not None else clustervalue
     baremetal_iso = data.get('baremetal_iso', False)
-    baremetal_hosts = data.get('baremetal_hosts', [])
+    baremetal_hosts = data.get('baremetal_hosts')
     async_install = data.get('async')
     notify = data.get('notify')
     autoscale = data.get('autoscale')
@@ -427,7 +427,7 @@ def create(config, plandir, cluster, overrides):
         assisted_data['coredns'] = coredns
         assisted_data = config.process_inputfile(cluster, f'{plandir}/assisted_ingress.yml', overrides=assisted_data)
         assisted_data = json.dumps(assisted_data)
-        manifests.append({'name': 'assisted-ingress', 'data': assisted_data})
+        manifests.append({'name': f'assisted-ingress-{cluster}', 'data': assisted_data})
     if manifests:
         assetsdata['manifests'] = manifests
     async_files = []
@@ -593,6 +593,7 @@ def create(config, plandir, cluster, overrides):
         yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     if os.path.exists(f"{clusterdir}/{nodepool}.ign"):
         os.remove(f"{clusterdir}/{nodepool}.ign")
+    print(assetsdata)
     nodepoolfile = config.process_inputfile(cluster, f"{plandir}/nodepool.yaml", overrides=assetsdata)
     with open(f"{clusterdir}/nodepool_{nodepool}.yaml", 'w') as f:
         f.write(nodepoolfile)
@@ -625,10 +626,6 @@ def create(config, plandir, cluster, overrides):
     kubeconfig = os.popen(f"oc extract -n {namespace} secret/{cluster}-admin-kubeconfig --to=-").read()
     with open(kubeconfigpath, 'w') as f:
         f.write(kubeconfig)
-    kubeadminpath = f'{clusterdir}/auth/kubeadmin-password'
-    kubeadmin = os.popen(f"oc extract -n {namespace} secret/{cluster}-kubeadmin-password --to=-").read()
-    with open(kubeadminpath, 'w') as f:
-        f.write(kubeadmin)
     autoapproverpath = f'{clusterdir}/autoapprovercron.yml'
     autoapprover = config.process_inputfile(cluster, f"{plandir}/autoapprovercron.yml", overrides=data)
     with open(autoapproverpath, 'w') as f:
@@ -664,6 +661,10 @@ def create(config, plandir, cluster, overrides):
         result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_apps.yml', overrides=data)
         if result['result'] != 'success':
             return result
+    kubeadminpath = f'{clusterdir}/auth/kubeadmin-password'
+    kubeadmin = os.popen(f"oc extract -n {namespace} secret/{cluster}-kubeadmin-password --to=-").read()
+    with open(kubeadminpath, 'w') as f:
+        f.write(kubeadmin)
     if async_install or which('openshift-install') is None:
         success(f"Kubernetes cluster {cluster} deployed!!!")
         info2(f"export KUBECONFIG=$HOME/.kcli/clusters/{cluster}/auth/kubeconfig")

@@ -6,7 +6,7 @@ metadata:
   name: {{ entry['name'] }}
   namespace: {{ namespace }}
 data:
-  config: '{{ entry["data"] }}'
+  config: {{ entry["data"] }}
 ---
 {% endfor %}
 {% endif %}
@@ -34,4 +34,4 @@ spec:
 {% endif %}
 status:
   conditions: null
-  replicas: {{ baremetal_hosts|length if assisted else 0 }}
+  replicas: {{ workers }}
