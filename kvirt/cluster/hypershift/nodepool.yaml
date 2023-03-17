@@ -26,6 +26,7 @@ spec:
     type: {{ 'Agent' if assisted else 'None' }}
   release:
     image: "{{ nodepool_image }}"
+  replicas: {{ workers }}
 {% if manifests|default([]) %}
   config:
 {% for entry in manifests %}

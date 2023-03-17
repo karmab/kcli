@@ -1,7 +1,7 @@
 apiVersion: machineconfiguration.openshift.io/v1
 kind: MachineConfig
 metadata:
-  name: assisted-ingress
+  name: assisted-ingress-{{ cluster }}
   labels:
     machineconfiguration.openshift.io/role: worker
 spec:
@@ -12,33 +12,27 @@ spec:
       files:
         - contents:
             source: data:text/plain;charset=utf-8;base64,{{ keepalived_yml_data }}
-            verification: {}
-          filesystem: root
           mode: 420
+          overwrite: true
           path: /etc/kubernetes/manifests/keepalived.yml
         - contents:
-            source: data:text/plain;charset=utf-8;base64{{ keepalived_conf_data }}
-            verification: {}
-          filesystem: root
+            source: data:text/plain;charset=utf-8;base64,{{ keepalived_conf_data }}
           mode: 420
+          overwrite: true
           path: /etc/kubernetes/keepalived.conf
 {% if not sslip and coredns %}
         - contents:
-            source: data:text/plain;charset=utf-8;base64{{ coredns_conf_data }}
-            verification: {}
-          filesystem: root
+            source: data:text/plain;charset=utf-8;base64,{{ coredns_conf_data }}
           mode: 420
+          overwrite: true
           path: /etc/kubernetes/Corefile
         - contents:
-            source: data:text/plain;charset=utf-8;base64{{ coredns_yml_data }}
-            verification: {}
-          filesystem: root
+            source: data:text/plain;charset=utf-8;base64,{{ coredns_yml_data }}
           mode: 420
+          overwrite: true
           path: /etc/kubernetes/manifests/coredns.yml
         - contents:
             source: data:text/plain;charset=utf-8;base64{{ force_dns_data }}
-            verification: {}
-          filesystem: root
           mode: 420
           path: /etc/NetworkManager/dispatcher.d/99-forcedns
 {% endif %}

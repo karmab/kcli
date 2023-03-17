@@ -144,6 +144,7 @@ def scale(config, plandir, cluster, overrides):
         yaml.safe_dump(data, paramfile)
     pprint(f"Scaling on client {config.client}")
     worker_overrides = data.copy()
+    workers = worker_overrides.get('workers', 2)
     os.chdir(os.path.expanduser("~/.kcli"))
     old_baremetal_hosts = installparam.get('baremetal_hosts', [])
     new_baremetal_hosts = overrides.get('baremetal_hosts', [])
@@ -151,6 +152,9 @@ def scale(config, plandir, cluster, overrides):
     if baremetal_hosts:
         if assisted:
             create_bmh_objects(config, plandir, cluster, namespace, baremetal_hosts, overrides)
+            cmcmd = f"oc -n {namespace}-{cluster} scale nodepool {data['nodepool']} --replicas {workers}"
+            call(cmcmd, shell=True)
+            return {'result': 'success'}
         else:
             if not old_baremetal_hosts:
                 iso_url = handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts)
@@ -161,7 +165,7 @@ def scale(config, plandir, cluster, overrides):
                 svcport = yaml.safe_load(os.popen(svcport_cmd).read())['spec']['ports'][0]['nodePort']
                 iso_url = f'http://{svcip}:{svcport}/{cluster}-worker.iso'
             boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
-        worker_overrides['workers'] = worker_overrides.get('workers', 2) - len(new_baremetal_hosts)
+            worker_overrides['workers'] = workers - len(new_baremetal_hosts)
     if worker_overrides.get('workers', 2) <= 0:
         return {'result': 'success'}
     threaded = data.get('threaded', False) or data.get('workers_threaded', False)
@@ -423,6 +427,7 @@ def create(config, plandir, cluster, overrides):
             force_dns_data = config.process_inputfile(cluster, f"{plandir}/99-forcedns", overrides=data)
             force_dns_data = b64encode(force_dns_data.encode()).decode("UTF-8")
             assisted_data['force_dns_data'] = force_dns_data
+        assisted_data['cluster'] = cluster
         assisted_data['sslip'] = sslip
         assisted_data['coredns'] = coredns
         assisted_data = config.process_inputfile(cluster, f'{plandir}/assisted_ingress.yml', overrides=assisted_data)
@@ -593,7 +598,6 @@ def create(config, plandir, cluster, overrides):
         yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     if os.path.exists(f"{clusterdir}/{nodepool}.ign"):
         os.remove(f"{clusterdir}/{nodepool}.ign")
-    print(assetsdata)
     nodepoolfile = config.process_inputfile(cluster, f"{plandir}/nodepool.yaml", overrides=assetsdata)
     with open(f"{clusterdir}/nodepool_{nodepool}.yaml", 'w') as f:
         f.write(nodepoolfile)
@@ -647,7 +651,7 @@ def create(config, plandir, cluster, overrides):
         else:
             iso_url = handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts)
             boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
-        data['workers'] = data.get('workers', 2) - len(baremetal_hosts)
+            data['workers'] = data.get('workers', 2) - len(baremetal_hosts)
     if data['workers'] > 0:
         pprint("Deploying workers")
         worker_threaded = data.get('threaded', False) or data.get('workers_threaded', False)

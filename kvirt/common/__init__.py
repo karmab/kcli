@@ -1866,7 +1866,7 @@ def kube_create_app(config, appdir, overrides={}, outputdir=None):
     cluster = appdata['cluster']
     with TemporaryDirectory() as tmpdir:
         app_files = glob(f'{appdir}/{appname}/*.sh')
-        app_files.extend(glob(f'{appdir}/{appname}/*.yml'))
+        app_files.extend(glob(f'{appdir}/{appname}/*.y*ml'))
         app_files = [os.path.basename(_fic) for _fic in app_files]
         for app_file in app_files:
             rendered = config.process_inputfile(cluster, f"{appdir}/{appname}/{app_file}", overrides=appdata)
@@ -1899,7 +1899,7 @@ def kube_delete_app(config, appdir, overrides={}):
     cluster = appdata['cluster']
     with TemporaryDirectory() as tmpdir:
         app_files = glob(f'{appdir}/{appname}/*.sh')
-        app_files.extend(glob(f'{appdir}/{appname}/*.yml'))
+        app_files.extend(glob(f'{appdir}/{appname}/*.y*ml'))
         app_files = [os.path.basename(_fic) for _fic in app_files]
         for app_file in app_files:
             if app_file == 'uninstall.sh':
@@ -1936,7 +1936,7 @@ def openshift_create_app(config, appdir, overrides={}, outputdir=None):
     cluster = appdata['cluster']
     with TemporaryDirectory() as tmpdir:
         app_files = glob(f'{appdir}/{appname}/*.sh')
-        app_files.extend(glob(f'{appdir}/{appname}/*.yml'))
+        app_files.extend(glob(f'{appdir}/{appname}/*.y*ml'))
         app_files = [os.path.basename(_fic) for _fic in app_files]
         for app_file in app_files:
             rendered = config.process_inputfile(cluster, f"{appdir}/{appname}/{app_file}", overrides=appdata)
@@ -1986,7 +1986,7 @@ def openshift_delete_app(config, appdir, overrides={}):
     cluster = appdata['cluster']
     with TemporaryDirectory() as tmpdir:
         app_files = glob(f'{appdir}/{appname}/*.sh')
-        app_files.extend(glob(f'{appdir}/{appname}/*.yml'))
+        app_files.extend(glob(f'{appdir}/{appname}/*.y*ml'))
         app_files = [os.path.basename(_fic) for _fic in app_files]
         for app_file in app_files:
             rendered = config.process_inputfile(cluster, f"{appdir}/{appname}/{app_file}", overrides=appdata)
