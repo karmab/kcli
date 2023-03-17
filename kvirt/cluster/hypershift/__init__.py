@@ -423,7 +423,9 @@ def create(config, plandir, cluster, overrides):
             force_dns_data = config.process_inputfile(cluster, f"{plandir}/99-forcedns", overrides=data)
             force_dns_data = b64encode(force_dns_data.encode()).decode("UTF-8")
             assisted_data['force_dns_data'] = force_dns_data
-        assisted_data = config.process_inputfile(cluster, 'assisted_ingress.yml', overrides=assisted_data)
+        assisted_data['sslip'] = sslip
+        assisted_data['coredns'] = coredns
+        assisted_data = config.process_inputfile(cluster, f'{plandir}/assisted_ingress.yml', overrides=assisted_data)
         assisted_data = json.dumps(assisted_data)
         manifests.append({'name': 'assisted-ingress', 'data': assisted_data})
     if manifests:
