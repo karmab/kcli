@@ -189,7 +189,7 @@ def create(config, plandir, cluster, overrides):
     apps = data.get('apps', [])
     if apps:
         appdir = f"{plandir}/apps"
-        os.environ["PATH"] += f":{os.getcwd()}"
+        os.environ["PATH"] = f'{os.getcwd()}:{os.environ["PATH"]}'
         for app in apps:
             app_data = data.copy()
             if not os.path.exists(appdir):

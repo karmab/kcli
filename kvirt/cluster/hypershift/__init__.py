@@ -542,7 +542,7 @@ def create(config, plandir, cluster, overrides):
         pprint("Using existing openshift-install found in your PATH")
     else:
         pprint("Reusing matching openshift-install")
-    os.environ["PATH"] += f":{os.getcwd()}"
+    os.environ["PATH"] = f'{os.getcwd()}:{os.environ["PATH"]}'
     INSTALLER_VERSION = get_installer_version()
     pprint(f"Using installer version {INSTALLER_VERSION}")
     nodepool_image = os.popen("openshift-install version | grep 'release image' | cut -f3 -d' '").read().strip()
