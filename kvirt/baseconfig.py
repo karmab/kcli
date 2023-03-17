@@ -1369,11 +1369,11 @@ class Kbaseconfig:
 
     def create_app_generic(self, app, overrides={}, outputdir=None):
         appdir = f"{os.path.dirname(kubeadm.create.__code__.co_filename)}/apps"
-        common.kube_create_app(self, appdir, overrides=overrides, outputdir=outputdir)
+        common.kube_create_app(self, app, appdir, overrides=overrides, outputdir=outputdir)
 
     def delete_app_generic(self, app, overrides={}):
         appdir = f"{os.path.dirname(kubeadm.create.__code__.co_filename)}/apps"
-        common.kube_delete_app(self, appdir, overrides=overrides)
+        common.kube_delete_app(self, app, appdir, overrides=overrides)
 
     def info_app_generic(self, app):
         plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
@@ -1390,16 +1390,16 @@ class Kbaseconfig:
     def create_app_openshift(self, app, overrides={}, outputdir=None):
         appdir = f"{os.path.dirname(openshift.create.__code__.co_filename)}/apps"
         if app in LOCAL_OPENSHIFT_APPS:
-            common.kube_create_app(self, appdir, overrides=overrides, outputdir=outputdir)
+            common.kube_create_app(self, app, appdir, overrides=overrides, outputdir=outputdir)
         else:
-            common.openshift_create_app(self, appdir, overrides=overrides, outputdir=outputdir)
+            common.openshift_create_app(self, app, appdir, overrides=overrides, outputdir=outputdir)
 
     def delete_app_openshift(self, app, overrides={}):
         appdir = f"{os.path.dirname(openshift.create.__code__.co_filename)}/apps"
         if app in LOCAL_OPENSHIFT_APPS:
-            common.kube_delete_app(self, appdir, overrides=overrides)
+            common.kube_delete_app(self, app, appdir, overrides=overrides)
         else:
-            common.openshift_delete_app(self, appdir, overrides=overrides)
+            common.openshift_delete_app(self, app, appdir, overrides=overrides)
 
     def info_app_openshift(self, app):
         plandir = os.path.dirname(openshift.create.__code__.co_filename)

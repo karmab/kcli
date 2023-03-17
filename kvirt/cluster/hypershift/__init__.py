@@ -652,7 +652,7 @@ def create(config, plandir, cluster, overrides):
             iso_url = handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts)
             boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
             data['workers'] = data.get('workers', 2) - len(baremetal_hosts)
-    if data['workers'] > 0:
+    if not assisted and data['workers'] > 0:
         pprint("Deploying workers")
         worker_threaded = data.get('threaded', False) or data.get('workers_threaded', False)
         config.plan(plan, inputfile=f'{plandir}/kcli_plan.yml', overrides=data, threaded=worker_threaded)

@@ -1237,7 +1237,6 @@ def create_app_generic(args):
             error(f"app {app} not available. Skipping...")
             continue
         pprint(f"Adding app {app}")
-        overrides['name'] = app
         overrides[f'{app}_version'] = overrides[f'{app}_version'] if f'{app}_version' in overrides else 'latest'
         baseconfig.create_app_generic(app, overrides, outputdir=outputdir)
 
@@ -1283,7 +1282,7 @@ def create_app_openshift(args):
                     channel = overrides_channel
             if 'namespace' in overrides:
                 namespace = overrides['namespace']
-            app_data = {'name': name, 'source': source, 'channel': channel, 'namespace': namespace, 'crd': crd}
+            app_data = {'source': source, 'channel': channel, 'namespace': namespace, 'crd': crd}
             app_data.update(overrides)
         pprint(f"Adding app {app}")
         baseconfig.create_app_openshift(name, app_data, outputdir=outputdir)
@@ -1310,7 +1309,6 @@ def delete_app_generic(args):
             error(f"app {app} not available. Skipping...")
             continue
         pprint(f"Deleting app {app}")
-        overrides['name'] = app
         overrides[f'{app}_version'] = overrides[f'{app}_version'] if f'{app}_version' in overrides else 'latest'
         baseconfig.delete_app_generic(app, overrides)
 
@@ -1341,7 +1339,7 @@ def delete_app_openshift(args):
             if name is None:
                 error(f"Couldn't find any app matching {app}. Skipping...")
                 continue
-            app_data = {'name': name, 'source': source, 'channel': channel, 'namespace': namespace, 'crd': crd}
+            app_data = {'source': source, 'channel': channel, 'namespace': namespace, 'crd': crd}
             app_data.update(overrides)
         pprint(f"Deleting app {name}")
         baseconfig.delete_app_openshift(app, app_data)

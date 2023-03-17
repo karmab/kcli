@@ -198,8 +198,7 @@ def create(config, plandir, cluster, overrides):
                 pprint(f"Adding app {app}")
                 if f'{app}_version' not in overrides:
                     app_data[f'{app}_version'] = 'latest'
-                app_data['name'] = app
-                kube_create_app(config, appdir, overrides=app_data)
+                kube_create_app(config, app, appdir, overrides=app_data)
     if data['wait_ready']:
         pprint("Waiting for all nodes to join cluster")
         while True:
