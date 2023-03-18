@@ -1,0 +1,28 @@
+cluster: hypershift-assisted
+assisted: true
+version: stable
+tag: 4.12
+network: default
+ingress_ip: 192.168.122.248
+workers: 3
+sslip: true
+uefi: true
+baremetal_hosts:
+- url: http://10.19.135.107:9000/redfish/v1/Systems/local/myclu-0
+  mac: "aa:aa:aa:bb:bb:90"
+- url: http://10.19.135.107:9000/redfish/v1/Systems/local/myclu-1
+  mac: "aa:aa:aa:bb:bb:91"
+- url: http://10.19.135.107:9000/redfish/v1/Systems/local/myclu-2
+  mac: "aa:aa:aa:bb:bb:92"
+#- url: http://10.19.135.107:9000/redfish/v1/Systems/local/myclu-3
+#  mac: "aa:aa:aa:bb:bb:93"
+#  dns_resolver:
+#  - 192.168.122.1
+#  - 2620:52:0:1303::1
+#  addresses:
+#  - ip: 192.168.122.11
+#    netmask: 24
+#    gateway: 192.168.122.1
+#  - ip: 2620:52:0:1303::21
+#    netmask: 64
+#    gateway: 2620:52:0:1303::1

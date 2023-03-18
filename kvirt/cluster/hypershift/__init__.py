@@ -28,6 +28,7 @@ cloudplatforms = ['aws', 'gcp', 'ibm']
 def create_bmh_objects(config, plandir, cluster, namespace, baremetal_hosts, overrides={}):
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     uefi = overrides.get('uefi', False)
+    nmstatedata = ''
     with open(f"{clusterdir}/bmcs.yml", 'w') as f:
         for index, host in enumerate(baremetal_hosts):
             bmc_url = host.get('url') or host.get('bmc_url')
@@ -67,8 +68,23 @@ def create_bmh_objects(config, plandir, cluster, namespace, baremetal_hosts, ove
                              'mac': bmc_mac}
             bmc_data = config.process_inputfile(cluster, f"{plandir}/bmc.yml.j2", overrides=bmc_overrides)
             f.write(bmc_data)
-    cmcmd = f"oc create -f {clusterdir}/bmcs.yml"
-    call(cmcmd, shell=True)
+            if 'addresses' in host:
+                host_data = host.copy()
+                host_data['name'] = bmc_name
+                host_data['cluster'] = cluster
+                host_data['namespace'] = namespace
+                if 'dns_resolver' not in host_data:
+                    warning("Skipping nmstate for entry {index} as dns_resolver isnt defined")
+                    continue
+                nmstatedata += config.process_inputfile(cluster, f'{plandir}/nmstateconfig.yml.j2', overrides=host_data)
+                nmstatedata += '---\n'
+    bmccmd = f"oc create -f {clusterdir}/bmcs.yml"
+    call(bmccmd, shell=True)
+    if nmstatedata != '':
+        with open(f"{clusterdir}/nmstateconfig.yml", 'w') as f:
+            f.write(nmstatedata)
+        nmcmd = f"oc create -f {clusterdir}/nmstateconfig.yml"
+        call(nmcmd, shell=True)
 
 
 def handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts=[]):

@@ -74,6 +74,12 @@ spec:
   pullSecretRef:
     name: {{ cluster }}-pull-secret
   sshAuthorizedKey: {{ pub_key }}
+  agentLabelSelector:
+    matchLabels:
+      cluster-name: {{ namespace }}-{{ cluster }}
+  nmStateConfigLabelSelector:
+    matchLabels:
+      cluster-name: {{ namespace }}-{{ cluster }}
 ---
 {% endif %}
 apiVersion: hypershift.openshift.io/v1beta1

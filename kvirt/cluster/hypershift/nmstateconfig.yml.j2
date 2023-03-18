@@ -1,0 +1,45 @@
+apiVersion: agent-install.openshift.io/v1beta1
+kind: NMStateConfig
+metadata:
+ name: {{ name }}
+ labels:
+   cluster-name: {{ namespace }}-{{ cluster }}
+ spec:
+ config:
+    interfaces:
+    - macAddress: {{ mac }}
+      name: {{ nic|default('ens3') }}
+    networkConfig:
+      dns-resolver:
+        config:
+          server:
+{% for ns in dns_resolver %}
+          - {{ ns }}
+{% endfor %}
+      interfaces:
+      - ethernet:
+          auto-negotiation: true
+          duplex: full
+          speed: 1000
+{% for int in addresses %}
+  {{ '      ipv6' if '::' in int['ip'] else '      ipv4' }}:
+          address:
+          - ip: {{ int['ip'] }}
+            prefix-length: {{ int['netmask'] }}
+          enabled: true
+{% endfor %}
+        mac-address: {{ mac }}
+        mtu: 1500
+        name: {{ nic|default('ens3') }}
+        state: up
+        type: ethernet
+      routes:
+        config:
+{% for int in addresses %}
+        - destination: {{ '::/0' if '::' in int['ip'] else '0.0.0.0/0' }}
+          next-hop-address: {{ int['gateway']  }}
+          next-hop-interface: {{ nic|default('ens3') }}
+{% if not '::' in int['ip'] %}
+          table-id: 254
+{% endif %}
+{% endfor %}
