@@ -1852,7 +1852,7 @@ def get_tasty(version='latest'):
 
 
 def kube_create_app(config, appname, appdir, overrides={}, outputdir=None):
-    appdata = {'cluster': 'mykube', 'domain': 'karmalabs.corp', 'ctlplanes': 1, 'workers': 0}
+    appdata = {'name': appname, 'cluster': 'mykube', 'domain': 'karmalabs.corp', 'ctlplanes': 1, 'workers': 0}
     cwd = os.getcwd()
     os.environ["PATH"] += f":{cwd}"
     overrides['cwd'] = cwd
@@ -1865,6 +1865,7 @@ def kube_create_app(config, appname, appdir, overrides={}, outputdir=None):
     cluster = appdata['cluster']
     with TemporaryDirectory() as tmpdir:
         app_files = glob(f'{appdir}/{appname}/*.sh')
+        app_files.extend(glob(f'{appdir}/{appname}/*py'))
         app_files.extend(glob(f'{appdir}/{appname}/*.y*ml'))
         app_files = [os.path.basename(_fic) for _fic in app_files]
         for app_file in app_files:
@@ -1883,7 +1884,7 @@ def kube_create_app(config, appname, appdir, overrides={}, outputdir=None):
 
 
 def kube_delete_app(config, appname, appdir, overrides={}):
-    appdata = {'cluster': 'mykube', 'domain': 'karmalabs.corp', 'ctlplanes': 1, 'workers': 0}
+    appdata = {'name': appname, 'cluster': 'mykube', 'domain': 'karmalabs.corp', 'ctlplanes': 1, 'workers': 0}
     found = False
     cwd = os.getcwd()
     os.environ["PATH"] += f":{cwd}"
@@ -1897,6 +1898,7 @@ def kube_delete_app(config, appname, appdir, overrides={}):
     cluster = appdata['cluster']
     with TemporaryDirectory() as tmpdir:
         app_files = glob(f'{appdir}/{appname}/*.sh')
+        app_files.extend(glob(f'{appdir}/{appname}/*py'))
         app_files.extend(glob(f'{appdir}/{appname}/*.y*ml'))
         app_files = [os.path.basename(_fic) for _fic in app_files]
         for app_file in app_files:
@@ -1916,7 +1918,7 @@ def kube_delete_app(config, appname, appdir, overrides={}):
 
 
 def openshift_create_app(config, appname, appdir, overrides={}, outputdir=None):
-    appdata = {'cluster': 'myopenshift', 'domain': 'karmalabs.corp', 'ctlplanes': 1, 'workers': 0}
+    appdata = {'name': appname, 'cluster': 'myopenshift', 'domain': 'karmalabs.corp', 'ctlplanes': 1, 'workers': 0}
     install_cr = overrides.get('install_cr', True)
     cwd = os.getcwd()
     os.environ["PATH"] += f":{cwd}"
@@ -1933,6 +1935,7 @@ def openshift_create_app(config, appname, appdir, overrides={}, outputdir=None):
     cluster = appdata['cluster']
     with TemporaryDirectory() as tmpdir:
         app_files = glob(f'{appdir}/{appname}/*.sh')
+        app_files.extend(glob(f'{appdir}/{appname}/*py'))
         app_files.extend(glob(f'{appdir}/{appname}/*.y*ml'))
         app_files = [os.path.basename(_fic) for _fic in app_files]
         for app_file in app_files:
@@ -1966,7 +1969,7 @@ def openshift_create_app(config, appname, appdir, overrides={}, outputdir=None):
 
 
 def openshift_delete_app(config, appname, appdir, overrides={}):
-    appdata = {'cluster': 'myopenshift', 'domain': 'karmalabs.corp', 'ctlplanes': 1, 'workers': 0}
+    appdata = {'name': appname, 'cluster': 'myopenshift', 'domain': 'karmalabs.corp', 'ctlplanes': 1, 'workers': 0}
     cwd = os.getcwd()
     os.environ["PATH"] += f":{cwd}"
     overrides['cwd'] = cwd
@@ -1982,6 +1985,7 @@ def openshift_delete_app(config, appname, appdir, overrides={}):
     cluster = appdata['cluster']
     with TemporaryDirectory() as tmpdir:
         app_files = glob(f'{appdir}/{appname}/*.sh')
+        app_files.extend(glob(f'{appdir}/{appname}/*py'))
         app_files.extend(glob(f'{appdir}/{appname}/*.y*ml'))
         app_files = [os.path.basename(_fic) for _fic in app_files]
         for app_file in app_files:

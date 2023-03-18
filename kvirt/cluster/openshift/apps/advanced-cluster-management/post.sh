@@ -15,3 +15,7 @@ oc -n open-cluster-management patch ${DEPLOY_NAME} -p '{"spec":{"template":{"spe
 {% if acm_assisted %}
 bash assisted-service.sh
 {% endif %}
+
+{% if acm_hypershift %}
+oc patch mce multiclusterengine --type=merge -p '{"spec":{"overrides":{"components":[{"name":"hypershift-preview","enabled": true}]}}}'
+{% endif %}

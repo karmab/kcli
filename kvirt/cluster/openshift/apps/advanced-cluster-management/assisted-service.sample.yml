@@ -18,6 +18,9 @@ data:
 {% if assisted_disable_validations %}
   DISABLED_HOST_VALIDATIONS: belongs-to-majority-group,belongs-to-machine-cidr
 {% endif %}
+{% if disconnected_url != None %}
+  PUBLIC_CONTAINER_REGISTRIES: "quay.io,registry.ci.openshift.org,registry.redhat.io"
+{% endif %}
 ---
 apiVersion: agent-install.openshift.io/v1beta1
 kind: AgentServiceConfig
@@ -39,6 +42,10 @@ spec:
     resources:
       requests:
         storage: 40Gi
+{% if disconnected_url != None %}
+  mirrorRegistryRef:
+    name: "custom-registries"
+{% endif %}
   osImages:
     - openshiftVersion: "${MINOR}"
       url: "$RHCOS_ISO"
@@ -65,3 +72,44 @@ metadata:
 stringData:
   .dockerconfigjson: '${PULLSECRET}'
   type: kubernetes.io/dockerconfigjson
+{% if disconnected_url != None %}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: custom-registries
+  namespace: multicluster-engine
+  labels:
+    app: assisted-service
+data:
+  ca-bundle.crt: |
+${CA_CERT}
+  registries.conf: |
+    unqualified-search-registries = ["registry.access.redhat.com", "docker.io"]
+
+    [[registry]]
+      prefix = ""
+      location = "quay.io/openshift-release-dev/ocp-release"
+      mirror-by-digest-only = true
+
+      [[registry.mirror]]
+        location = "${LOCAL_REGISTRY}/${DISCONNECTED_PREFIX_IMAGES}"
+
+    [[registry]]
+      prefix = ""
+      location = "registry.ci.openshift.org/ocp/release"
+      mirror-by-digest-only = true
+
+      [[registry.mirror]]
+        location = "${LOCAL_REGISTRY}/${DISCONNECTED_PREFIX_IMAGES}"
+
+    [[registry]]
+      prefix = ""
+      location = "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
+      mirror-by-digest-only = true
+
+      [[registry.mirror]]
+        location = "${LOCAL_REGISTRY}/${DISCONNECTED_PREFIX}"
+
+${REGISTRIES}
+{% endif %}

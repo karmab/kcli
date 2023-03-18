@@ -1,3 +1,3 @@
-{% if mce_assisted %}
+{% if assisted %}
 bash assisted-service.sh
 {% endif %}

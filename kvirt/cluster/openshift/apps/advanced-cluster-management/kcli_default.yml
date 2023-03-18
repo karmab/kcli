@@ -1,4 +1,10 @@
 acm_deploy_baremetal_console: false
 acm_disable_hub: false
 pull_secret: openshift_pull.json
-acm_assisted: false
+acm_hypershift: true
+acm_mce_catalog:
+assisted: true
+assisted_disable_validations: false
+assisted_download_images: false
+assisted_download_nic: eth0
+disconnected_url:
