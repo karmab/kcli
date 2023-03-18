@@ -626,10 +626,6 @@ def create(config, plandir, cluster, overrides):
             call(f'bash {clusterdir}/ignition_{nodepool}.sh', shell=True)
     if 'name' in data:
         del data['name']
-    kubeconfigpath = f'{clusterdir}/auth/kubeconfig'
-    kubeconfig = os.popen(f"oc extract -n {namespace} secret/{cluster}-admin-kubeconfig --to=-").read()
-    with open(kubeconfigpath, 'w') as f:
-        f.write(kubeconfig)
     autoapproverpath = f'{clusterdir}/autoapprovercron.yml'
     autoapprover = config.process_inputfile(cluster, f"{plandir}/autoapprovercron.yml", overrides=data)
     with open(autoapproverpath, 'w') as f:
@@ -652,6 +648,20 @@ def create(config, plandir, cluster, overrides):
             iso_url = handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts)
             boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
             data['workers'] = data.get('workers', 2) - len(baremetal_hosts)
+    pprint("Waiting for kubeconfig to be available")
+    call(f"until oc -n {namespace} get secret {cluster}-admin-kubeconfig >/dev/null 2>&1 ; do sleep 1 ; done",
+         shell=True)
+    kubeconfigpath = f'{clusterdir}/auth/kubeconfig'
+    kubeconfig = os.popen(f"oc extract -n {namespace} secret/{cluster}-admin-kubeconfig --to=-").read()
+    with open(kubeconfigpath, 'w') as f:
+        f.write(kubeconfig)
+    pprint("Waiting for kubeadmin-password to be available")
+    call(f"until oc -n {namespace} get secret {cluster}-kubeadmin-password >/dev/null 2>&1 ; do sleep 1 ; done",
+         shell=True)
+    kubeadminpath = f'{clusterdir}/auth/kubeadmin-password'
+    kubeadmin = os.popen(f"oc extract -n {namespace} secret/{cluster}-kubeadmin-password --to=-").read()
+    with open(kubeadminpath, 'w') as f:
+        f.write(kubeadmin)
     if not assisted and data['workers'] > 0:
         pprint("Deploying workers")
         worker_threaded = data.get('threaded', False) or data.get('workers_threaded', False)
@@ -665,10 +675,6 @@ def create(config, plandir, cluster, overrides):
         result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_apps.yml', overrides=data)
         if result['result'] != 'success':
             return result
-    kubeadminpath = f'{clusterdir}/auth/kubeadmin-password'
-    kubeadmin = os.popen(f"oc extract -n {namespace} secret/{cluster}-kubeadmin-password --to=-").read()
-    with open(kubeadminpath, 'w') as f:
-        f.write(kubeadmin)
     if async_install or which('openshift-install') is None:
         success(f"Kubernetes cluster {cluster} deployed!!!")
         info2(f"export KUBECONFIG=$HOME/.kcli/clusters/{cluster}/auth/kubeconfig")
