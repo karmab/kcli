@@ -17,3 +17,7 @@ oc create secret generic htpass-secret --from-file=htpasswd=htpasswd -n $NAMESPA
 {% endif %}
 echo "Granting cluster-admin role to $ADMIN_USER"
 oc adm policy add-cluster-role-to-user cluster-admin $ADMIN_USER
+echo "Creating cluster-admins group"
+oc adm groups new cluster-admins
+echo "Adding admin user $ADMIN_USER to cluster-admins group"
+oc adm groups add-users cluster-admins $ADMIN_USER
