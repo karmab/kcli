@@ -10,10 +10,11 @@ until oc get crd/clusterimagesets.hive.openshift.io >/dev/null 2>&1 ; do sleep 1
 
 export RHCOS_ISO=$(openshift-install coreos print-stream-json | jq -r '.["architectures"]["x86_64"]["artifacts"]["metal"]["formats"]["iso"]["disk"]["location"]')
 export RHCOS_ROOTFS=$(openshift-install coreos print-stream-json | jq -r '.["architectures"]["x86_64"]["artifacts"]["metal"]["formats"]["pxe"]["rootfs"]["location"]')
-{% if assisted_download_images %}
+{% if disconnected_url != None %}
 curl -Lk $RHCOS_ISO > /var/www/html/rhcos-live.x86_64.iso
 curl -Lk $RHCOS_ROOTFS > /var/www/html/rhcos-live-rootfs.x86_64.img
 BAREMETAL_IP=$(ip -o addr show {{ assisted_download_nic }} | head -1 | awk '{print $4}' | cut -d'/' -f1)
+echo $BAREMETAL_IP | grep -q ':' && BAREMETAL_IP=[$BAREMETAL_IP]
 export RHCOS_ISO=http://${BAREMETAL_IP}/rhcos-live.x86_64.iso
 export RHCOS_ROOTFS=http://${BAREMETAL_IP}/rhcos-live-rootfs.x86_64.img
 {% endif %}
@@ -38,4 +39,4 @@ export REGISTRIES=$(cat registries.txt)
 {% endif %}
 
 envsubst < assisted-service.sample.yml | oc create -f -
-oc apply -f 99-metal3-provisioning.yaml
+oc create -f 99-metal3-provisioning.yaml >/dev/null 2>&1 || true

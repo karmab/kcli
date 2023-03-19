@@ -38,4 +38,4 @@ export REGISTRIES=$(cat registries.txt)
 {% endif %}
 
 envsubst < assisted-service.sample.yml | oc create -f -
-oc apply -f 99-metal3-provisioning.yaml
+oc create -f 99-metal3-provisioning.yaml >/dev/null 2>&1 || true

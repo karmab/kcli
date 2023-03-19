@@ -1,6 +1,5 @@
 mce_hypershift: true
 assisted: true
 assisted_disable_validations: false
-assisted_download_images: false
 assisted_download_nic: eth0
 disconnected_url:

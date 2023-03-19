@@ -219,7 +219,7 @@ def create(config, plandir, cluster, overrides):
             'network_type': 'OVNKubernetes',
             'fips': False,
             'operator_image': 'quay.io/hypershift/hypershift-operator:latest',
-            'use_mce': False,
+            'mce': False,
             'namespace': 'clusters',
             'disconnected_url': None,
             'pull_secret': 'openshift_pull.json',
@@ -281,7 +281,7 @@ def create(config, plandir, cluster, overrides):
     kubeconfig = os.path.basename(kubeconfig) if kubeconfig is not None else 'config'
     if yaml.safe_load(os.popen('oc get crd hostedclusters.hypershift.openshift.io -o yaml 2>/dev/null').read()) is None:
         warning("Hypershift not installed. Installing it for you")
-        if data.get('use_mce') or assisted:
+        if data.get('mce') or assisted:
             app_name, source, channel, csv, description, namespace, channels, crd = olm_app('multicluster-engine')
             app_data = {'name': app_name, 'source': source, 'channel': channel, 'namespace': namespace, 'crd': crd,
                         'mce_hypershift': True, 'assisted': assisted}
