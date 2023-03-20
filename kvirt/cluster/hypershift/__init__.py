@@ -494,7 +494,7 @@ def create(config, plandir, cluster, overrides):
                 else:
                     error(f"Invalid app {a}. Skipping")
             appsfile = f"{plandir}/99-apps.yaml"
-            apps_data = {'registry': registry, 'apps': final_apps}
+            apps_data = {'registry': registry, 'apps': final_apps, overrides: yaml.dump(overrides)}
             appsfile = config.process_inputfile(cluster, appsfile, overrides=apps_data)
             with open(f"{asyncdir}/99-apps.yaml", 'w') as f:
                 f.write(appsfile)

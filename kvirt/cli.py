@@ -2417,12 +2417,6 @@ def download_openshift_installer(args):
     return baseconfig.download_openshift_installer(overrides)
 
 
-def download_tasty(args):
-    """Download Tasty"""
-    overrides = handle_parameters(args.param, args.paramfile)
-    common.get_tasty(version=overrides.get('version', 'latest'))
-
-
 def create_pipeline_github(args):
     """Create Github Pipeline"""
     plan = args.plan
@@ -4325,12 +4319,6 @@ def cli():
     plandownload_parser.set_defaults(func=download_plan)
     download_subparsers.add_parser('plan', parents=[plandownload_parser], description=plandownload_desc,
                                    help=plandownload_desc)
-
-    tastydownload_desc = 'Download Tasty'
-    tastydownload_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
-    tastydownload_parser.set_defaults(func=download_tasty)
-    download_subparsers.add_parser('tasty', parents=[tastydownload_parser], description=tastydownload_desc,
-                                   help=tastydownload_desc)
 
     enable_desc = 'Enable Host'
     enable_parser = subparsers.add_parser('enable', description=enable_desc, help=enable_desc)

@@ -22,14 +22,13 @@ spec:
         [ "$CLUSTER_VERSION" == "Completed" ] || exit 1
     containers:
     - name: install-operators
-      image: {{ registry }}/karmab/curl:latest
+      image: {{ registry }}/karmab/kcli:latest
       command:
       - "/bin/sh"
       - "-c"
       - |
         #!/bin/sh
-        curl -s -L https://github.com/karmab/tasty/releases/download/v0.6.0/tasty-linux-amd64 > /usr/bin/tasty
-        chmod u+x /usr/bin/tasty
+        echo -e {{ overrides }} > params.yml
         {% for app in apps %}
-        tasty install {{ app }} -w
+        kcli create app openshift {{ app }} --pf params.yml
         {% endfor %}

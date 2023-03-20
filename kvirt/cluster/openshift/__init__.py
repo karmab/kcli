@@ -1100,57 +1100,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             _f.write(notifyfile)
     if apps and (async_install or (sno and not sno_wait)):
         registry = disconnected_url or 'quay.io'
-        user = False
-        autolabeller = False
-        final_apps = []
-        for a in apps:
-            if isinstance(a, str) and a == 'users' or (isinstance(a, dict) and a.get('name', '') == 'users'):
-                user = True
-            elif isinstance(a, str) and a == 'autolabeller'\
-                    or (isinstance(a, dict) and a.get('name', '') == 'autolabeller'):
-                autolabeller = True
-            elif isinstance(a, str) and a != 'nfs':
-                final_apps.append(a)
-            elif isinstance(a, dict) and 'name' in a:
-                final_apps.append(a['name'])
-            else:
-                error(f"Invalid app {a}. Skipping")
         appsfile = f"{plandir}/99-apps.yaml"
-        apps_data = {'registry': registry, 'apps': final_apps}
-        if user:
-            apps_data['users_dev'] = overrides.get('users_dev', 'dev')
-            users_devpassword = overrides.get('users_dev', 'dev')
-            users_devpassword_sha = os.popen(f'openssl passwd -apr1 {users_devpassword}').read().strip()
-            apps_data['users_devpassword_sha'] = users_devpassword_sha
-            apps_data['users_admin'] = overrides.get('users_admin', 'admin')
-            users_adminpassword = overrides.get('users_adminpassword', 'admin')
-            users_adminpassword_sha = os.popen(f'openssl passwd -apr1 {users_adminpassword}').read().strip()
-            apps_data['users_adminpassword_sha'] = users_adminpassword_sha
+        apps_data = {'registry': registry, 'overrides': yaml.dump(overrides)}
         appsfile = config.process_inputfile(cluster, appsfile, overrides=apps_data)
         with open(f"{clusterdir}/openshift/99-apps.yaml", 'w') as _f:
             _f.write(appsfile)
-        appdir = f"{plandir}/apps"
-        apps_namespace = {'advanced-cluster-management': 'open-cluster-management',
-                          'multicluster-engine': 'multicluster-engine', 'kubevirt-hyperconverged': 'openshift-cnv',
-                          'local-storage-operator': 'openshift-local-storage',
-                          'ocs-operator': 'openshift-storage', 'odf-lvm-operator': 'openshift-storage',
-                          'odf-operator': 'openshift-storage', 'metallb-operator': 'openshift-operators',
-                          'autolabeller': 'autorules'}
-        if autolabeller:
-            final_apps.append('autolabeller')
-        for appname in final_apps:
-            app_data = data.copy()
-            if data.get('apps_install_cr') and os.path.exists(f"{appdir}/{appname}/cr.yml"):
-                app_data['namespace'] = apps_namespace[appname]
-                if original_domain is not None:
-                    app_data['domain'] = original_domain
-                cr_content = config.process_inputfile(cluster, f"{appdir}/{appname}/cr.yml", overrides=app_data)
-                rendered = config.process_inputfile(cluster, f"{plandir}/99-apps-cr.yaml",
-                                                    overrides={'registry': registry,
-                                                               'app': appname,
-                                                               'cr_content': cr_content})
-                with open(f"{clusterdir}/openshift/99-apps-{appname}.yaml", 'w') as g:
-                    g.write(rendered)
     if metal3:
         copy2(f"{plandir}/99-metal3-provisioning.yaml", f"{clusterdir}/openshift")
         copy2(f"{plandir}/99-metal3-fake-machine.yaml", f"{clusterdir}/openshift")
