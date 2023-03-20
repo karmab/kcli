@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+oc create -f 99-metal3-provisioning.yaml >/dev/null 2>&1 || oc patch provisioning provisioning-configuration --type merge -p '{"spec":{"watchAllNamespaces": true}}'
+
 if [ "$(which openshift-install)" == "" ] ; then 
   echo openshift-install needs to be in your path
   exit 1
@@ -40,4 +42,3 @@ export REGISTRIES=$(cat registries.txt)
 {% endif %}
 
 envsubst < assisted-service.sample.yml | oc create -f -
-oc create -f 99-metal3-provisioning.yaml >/dev/null 2>&1 || true
