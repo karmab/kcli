@@ -1101,7 +1101,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if apps and (async_install or (sno and not sno_wait)):
         registry = disconnected_url or 'quay.io'
         appsfile = f"{plandir}/99-apps.yaml"
-        apps_data = {'registry': registry, 'overrides': yaml.dump(overrides)}
+        apps_data = {'registry': registry, 'overrides': overrides, 'overrides_string': yaml.dump(overrides)}
         appsfile = config.process_inputfile(cluster, appsfile, overrides=apps_data)
         with open(f"{clusterdir}/openshift/99-apps.yaml", 'w') as _f:
             _f.write(appsfile)

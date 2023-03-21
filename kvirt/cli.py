@@ -83,8 +83,7 @@ def cache_vms(baseconfig, region, zone, namespace):
                 yaml.safe_dump(_list, c, default_flow_style=False, encoding='utf-8', allow_unicode=True,
                                sort_keys=False)
             except:
-                yaml.safe_dump(_list, c, default_flow_style=False, encoding='utf-8', allow_unicode=True,
-                               sort_keys=False)
+                yaml.safe_dump(_list, c, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     return _list
 
 

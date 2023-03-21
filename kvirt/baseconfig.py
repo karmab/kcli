@@ -1091,10 +1091,9 @@ class Kbaseconfig:
         with open(path, 'w') as dest_file:
             if ignore_aliases:
                 yaml.dump(selfconf, dest_file, default_flow_style=False, encoding='utf-8', allow_unicode=True,
-                          sort_keys=False, Dumper=NoAliasDumper)
+                          Dumper=NoAliasDumper)
             else:
-                yaml.safe_dump(selfconf, dest_file, default_flow_style=False, encoding='utf-8', allow_unicode=True,
-                               sort_keys=False)
+                yaml.safe_dump(selfconf, dest_file, default_flow_style=False, encoding='utf-8', allow_unicode=True)
         return {'result': 'success'}
 
     def create_profile(self, profile, overrides={}, quiet=False):
@@ -1561,12 +1560,16 @@ class Kbaseconfig:
             f.write("\n- can include hardware spec, inject files in different ways or scripts\n")
         with open(f"{directory}/kcli_default.yml", "w") as f:
             f.write("# Default parameter values for your plan\n# This is a YAML-formatted file\n")
-            yaml.safe_dump(data, f, default_flow_style=False, encoding='utf-8', allow_unicode=True,
-                           sort_keys=True)
+            try:
+                yaml.safe_dump(data, f, default_flow_style=False, encoding='utf-8', allow_unicode=True, sort_keys=True)
+            except:
+                yaml.safe_dump(data, f, default_flow_style=False, encoding='utf-8', allow_unicode=True)
         with open(f"{directory}/kcli_parameters.yml.sample", "w") as f:
             f.write("# Optional runtime parameter values for your plan\n# This is a YAML-formatted file\n")
-            yaml.safe_dump(data, f, default_flow_style=False, encoding='utf-8', allow_unicode=True,
-                           sort_keys=True)
+            try:
+                yaml.safe_dump(data, f, default_flow_style=False, encoding='utf-8', allow_unicode=True, sort_keys=True)
+            except:
+                yaml.safe_dump(data, f, default_flow_style=False, encoding='utf-8', allow_unicode=True)
         filessection = """ files:
  - path: /etc/motd
    content: Welcome to cluster {{ cluster }}

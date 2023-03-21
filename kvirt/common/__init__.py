@@ -1326,7 +1326,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
             paths.append(path)
     data['storage']['files'] = storagefinal
     try:
-        result = json.dumps(data, sort_keys=True, indent=indent, separators=separators)
+        result = json.dumps(data, indent=indent, separators=separators, sort_keys=True)
     except:
         result = json.dumps(data, indent=indent, separators=separators)
     if compact:
@@ -2040,7 +2040,7 @@ def patch_bootstrap(path, script_content, service_content, service_name):
     data['systemd']['units'].append({"contents": service_content, "name": f'{service_name}.service',
                                      "enabled": True})
     try:
-        result = json.dumps(data, sort_keys=True, indent=indent, separators=separators)
+        result = json.dumps(data, indent=indent, separators=separators, sort_keys=True)
     except:
         result = json.dumps(data, indent=indent, separators=separators)
     with open(path, 'w') as ignition:

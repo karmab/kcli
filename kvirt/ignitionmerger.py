@@ -90,7 +90,11 @@ def mergeignition(args):
             data = merge2ignitions(newdata, data)
     if 'ignition' not in data:
         data['ignition'] = {'config': {}, 'version': version}
-    print(json.dumps(data, sort_keys=True, indent=indent, separators=separators))
+    try:
+        result = json.dumps(data, indent=indent, separators=separators, sort_keys=True)
+    except:
+        result = json.dumps(data, indent=indent, separators=separators)
+    print(result)
 
 
 def cli():
