@@ -44,3 +44,4 @@ envsubst < assisted-service.sample.yml | oc create -f -
 
 oc wait --for=condition=Ready pod -l app=assisted-image-service -A --timeout=300s
 oc wait --for=condition=Ready pod -l app=assisted-service -A  --timeout=300s
+oc wait --for=condition=Ready pod -l app=agentinstalladmission -A  --timeout=300s

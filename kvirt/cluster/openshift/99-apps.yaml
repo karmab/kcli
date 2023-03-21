@@ -30,6 +30,6 @@ spec:
       - |
         #!/bin/sh
         echo {{ overrides|base64 }} | base64 -d > ./params.yml
-        {% for app in apps %}
+        {% for app in overrides.apps %}
         kcli install app openshift {{ app }} --pf ./params.yml
         {% endfor %}
