@@ -28,6 +28,8 @@ spec:
       - "-c"
       - |
         #!/bin/sh
+        kcli download oc
+        export PATH=.:$PATH
         echo -e {{ overrides }} > params.yml
         {% for app in apps %}
         kcli create app openshift {{ app }} --pf params.yml

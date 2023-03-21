@@ -6,7 +6,7 @@ metadata:
   labels:
     app: kcli
 spec:
-  backoffLimit: 12
+  backoffLimit: 25
   template:
    spec:
     serviceAccountName: autoapprover
@@ -29,7 +29,9 @@ spec:
       - "-c"
       - |
         #!/bin/sh
+        kcli download oc
+        export PATH=.:$PATH
         echo {{ overrides_string|base64 }} | base64 -d > ./params.yml
         {% for app in overrides.apps %}
-        kcli install app openshift {{ app }} --pf ./params.yml
+        kcli create app openshift {{ app }} --pf ./params.yml
         {% endfor %}

@@ -2,6 +2,11 @@
 #
 oc create -f 99-metal3-provisioning.yaml >/dev/null 2>&1 || oc patch provisioning provisioning-configuration --type merge -p '{"spec":{"watchAllNamespaces": true}}'
 
+oc wait --for=condition=complete multiclusterhub/multiclusterhub --timeout=10m
+
+until oc get crd/agentserviceconfigs.agent-install.openshift.io >/dev/null 2>&1 ; do sleep 1 ; done
+until oc get crd/clusterimagesets.hive.openshift.io >/dev/null 2>&1 ; do sleep 1 ; done
+
 if [ "$(which openshift-install)" == "" ] ; then 
   echo openshift-install needs to be in your path
   exit 1
@@ -38,9 +43,5 @@ export REGISTRIES=$(cat registries.txt)
 {% endif %}
 
 oc wait -n openshift-machine-api --for=condition=Ready $(oc -n openshift-machine-api  get pod -l baremetal.openshift.io/cluster-baremetal-operator=metal3-state -o name | xargs)
-until [ "$(oc get mce multiclusterengine -o jsonpath='{.status.phase}')" == "Available" ] ; do sleep 1 ; done
 
 envsubst < assisted-service.sample.yml | oc create -f -
-
-oc wait --for=condition=Ready pod -l app=assisted-image-service -A --timeout=300s
-oc wait --for=condition=Ready pod -l app=assisted-service -A  --timeout=300s
