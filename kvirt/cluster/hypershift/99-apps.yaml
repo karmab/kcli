@@ -18,8 +18,10 @@ spec:
       - "-c"
       - |
         #!/bin/sh
-        CLUSTER_VERSION=$(kubectl get clusterversion version -o jsonpath='{.status.history[0].state}')
-        [ "$CLUSTER_VERSION" == "Completed" ] || exit 1
+        until [ "$CLUSTER_VERSION" == "Completed" ] ; do
+          CLUSTER_VERSION=$(kubectl get clusterversion version -o jsonpath='{.status.history[0].state}')
+          sleep 30
+        done
     containers:
     - name: install-operators
       image: {{ registry }}/karmab/kcli:latest
