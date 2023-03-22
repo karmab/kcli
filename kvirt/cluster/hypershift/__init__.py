@@ -264,9 +264,23 @@ def create(config, plandir, cluster, overrides):
     if str(tag) == '4.1':
         tag = '4.10'
         data['tag'] = tag
-    default_sc = False
+    cluster = data.get('cluster')
+    namespace = data.get('namespace')
+    clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
+    if os.path.exists(clusterdir):
+        if nodepool != clustervalue:
+            warning(f"Using existing {clusterdir}")
+            existing_workers = [vm for vm in config.k.list() if vm.get('kube', 'xxx') == cluster]
+            if existing_workers:
+                data['workers'] += len(existing_workers)
+        else:
+            msg = f"Remove existing {clusterdir}"
+            return {'result': 'failure', 'reason': msg}
+    else:
+        os.makedirs(f"{clusterdir}/auth")
     if which('oc') is None:
         get_oc()
+    default_sc = False
     for sc in yaml.safe_load(os.popen('oc get sc -o yaml').read())['items']:
         if 'annotations' in sc['metadata']\
            and 'storageclass.kubernetes.io/is-default-class' in sc['metadata']['annotations']\
@@ -297,20 +311,6 @@ def create(config, plandir, cluster, overrides):
             call(hypercmd, shell=True)
             sleep(120)
     data['basedir'] = '/workdir' if container_mode() else '.'
-    cluster = data.get('cluster')
-    namespace = data.get('namespace')
-    clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
-    if os.path.exists(clusterdir):
-        if nodepool != clustervalue:
-            warning(f"Using existing {clusterdir}")
-            existing_workers = [vm for vm in config.k.list() if vm.get('kube', 'xxx') == cluster]
-            if existing_workers:
-                data['workers'] += len(existing_workers)
-        else:
-            msg = f"Remove existing {clusterdir}"
-            return {'result': 'failure', 'reason': msg}
-    else:
-        os.makedirs(f"{clusterdir}/auth")
     supported_data = yaml.safe_load(os.popen("oc get cm/supported-versions -o yaml -n hypershift").read())['data']
     supported_versions = supported_versions = supported_data['supported-versions']
     versions = yaml.safe_load(supported_versions)['versions']
