@@ -7,5 +7,6 @@ memory: 32768
 extra_disks:
 - 100
 apps:
-- users
+- local-storage-operator
 - odf-operator
+- users

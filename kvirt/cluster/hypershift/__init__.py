@@ -538,10 +538,10 @@ def create(config, plandir, cluster, overrides):
             async_files.append({'path': '/etc/kubernetes/autoscale.yaml', 'origin': f"{asyncdir}/autoscale.yaml"})
     data['async_files'] = async_files
     if assisted:
-        assistedfile = config.process_inputfile(cluster, f"{plandir}/assisted_infra.yaml", overrides=assetsdata)
-        with open(f"{clusterdir}/assisted_infra.yaml", 'w') as f:
+        assistedfile = config.process_inputfile(cluster, f"{plandir}/assisted_infra.yml", overrides=assetsdata)
+        with open(f"{clusterdir}/assisted_infra.yml", 'w') as f:
             f.write(assistedfile)
-        cmcmd = f"oc create -f {clusterdir}/assisted_infra.yaml"
+        cmcmd = f"oc create -f {clusterdir}/assisted_infra.yml"
         call(cmcmd, shell=True)
     hosted_version = data.get('hosted_version') or version
     hosted_tag = data.get('hosted_tag') or tag

@@ -3,4 +3,5 @@ kubetype: openshift
 sno: true
 sno_wait: true
 apps:
+- lvms
 - users
