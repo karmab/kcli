@@ -1202,9 +1202,11 @@ class Kvirt(object):
                     ramxml += f'<nvram>/var/lib/libvirt/qemu/nvram/{name}.fd</nvram>'
             else:
                 osfirmware = "firmware='efi'"
+                ramxml = f"<loader secure='{secure}'/>"
                 if secureboot:
                     smmxml = "<smm state='on'/>"
-                ramxml = f"<loader secure='{secure}'/>"
+                else:
+                    ramxml += "<firmware><feature enabled='yes' name='secure-boot'/></firmware>"
         arch = 'aarch64' if aarch64 else overrides.get('arch', 'x86_64')
         if not aarch64:
             acpixml = '<acpi/>\n<apic/>'
