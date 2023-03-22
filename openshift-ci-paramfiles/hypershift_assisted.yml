@@ -6,7 +6,6 @@ network: default
 ingress_ip: 192.168.122.248
 workers: 3
 sslip: true
-uefi: true
 baremetal_hosts:
 - url: http://10.19.135.107:9000/redfish/v1/Systems/local/myclu-0
   mac: "aa:aa:aa:bb:bb:90"

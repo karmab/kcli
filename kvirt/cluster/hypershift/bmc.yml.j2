@@ -34,6 +34,5 @@ spec:
   hardwareProfile: unknown
   online: true
   automatedCleaningMode: disabled
-  bootMode: {{ 'UEFI' if uefi else 'legacy' }}
+  bootMode: {{ 'legacy' if not uefi|default(True) else 'UEFI' }}
 ---
-
