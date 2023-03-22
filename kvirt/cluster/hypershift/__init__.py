@@ -543,9 +543,13 @@ def create(config, plandir, cluster, overrides):
             f.write(assistedfile)
         cmcmd = f"oc create -f {clusterdir}/assisted_infra.yml"
         call(cmcmd, shell=True)
-    hosted_version = data.get('hosted_version') or version
-    hosted_tag = data.get('hosted_tag') or tag
-    assetsdata['hostedcluster_image'] = offline_image(version=hosted_version, tag=hosted_tag, pull_secret=pull_secret)
+    if 'OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE' in os.environ:
+        assetsdata['hostedcluster_image'] = os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE']
+    else:
+        hosted_version = data.get('hosted_version') or version
+        hosted_tag = data.get('hosted_tag') or tag
+        assetsdata['hostedcluster_image'] = offline_image(version=hosted_version, tag=hosted_tag,
+                                                          pull_secret=pull_secret)
     hostedclusterfile = config.process_inputfile(cluster, f"{plandir}/hostedcluster.yaml", overrides=assetsdata)
     with open(f"{clusterdir}/hostedcluster.yaml", 'w') as f:
         f.write(hostedclusterfile)
@@ -572,8 +576,11 @@ def create(config, plandir, cluster, overrides):
     os.environ["PATH"] = f'{os.getcwd()}:{os.environ["PATH"]}'
     INSTALLER_VERSION = get_installer_version()
     pprint(f"Using installer version {INSTALLER_VERSION}")
-    nodepool_image = os.popen("openshift-install version | grep 'release image' | cut -f3 -d' '").read().strip()
-    assetsdata['nodepool_image'] = nodepool_image
+    if 'OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE' in os.environ:
+        assetsdata['nodepool_image'] = os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE']
+    else:
+        nodepool_image = os.popen("openshift-install version | grep 'release image' | cut -f3 -d' '").read().strip()
+        assetsdata['nodepool_image'] = nodepool_image
     if not assisted:
         image = data.get('image')
         if image is None:
