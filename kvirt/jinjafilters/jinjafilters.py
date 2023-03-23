@@ -105,7 +105,7 @@ done
 if [ "$ready" == "false" ] ; then
  echo timeout waiting for CRD %s
  exit 1
-fi """ % (timeout, crd, crd, crd)
+fi """ % (timeout, crd.lower(), crd, crd)
     return result
 
 

@@ -1,2 +1,3 @@
-{{ crd | waitcrd(timeout) }}
+{{ crd | waitcrd }}
 oc create -f cr.yml
+
