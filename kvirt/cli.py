@@ -531,7 +531,7 @@ def delete_image(args):
 def create_clusterprofile(args):
     """Create Clusterprofile"""
     clusterprofile = args.clusterprofile
-    overrides = common.get_overrides(param=args.param)
+    overrides = handle_parameters(args.param, args.paramfile)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
     result = baseconfig.create_clusterprofile(clusterprofile, overrides=overrides)
     code = common.handle_response(result, clusterprofile, element='Clusterprofile', action='created',
@@ -542,7 +542,7 @@ def create_clusterprofile(args):
 def create_confpool(args):
     """Create Confpool"""
     confpool = args.confpool
-    overrides = common.get_overrides(param=args.param)
+    overrides = handle_parameters(args.param, args.paramfile)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
     result = baseconfig.create_confpool(confpool, overrides=overrides)
     code = common.handle_response(result, confpool, element='Confpool', action='created', client=baseconfig.client)
@@ -608,7 +608,7 @@ def delete_profile(args):
 def update_clusterprofile(args):
     """Update clusterprofile"""
     clusterprofile = args.clusterprofile
-    overrides = common.get_overrides(param=args.param)
+    overrides = handle_parameters(args.param, args.paramfile)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
     result = baseconfig.update_clusterprofile(clusterprofile, overrides=overrides)
     code = common.handle_response(result, clusterprofile, element='Clusterprofile', action='updated',
@@ -619,7 +619,7 @@ def update_clusterprofile(args):
 def update_confpool(args):
     """Update confpool"""
     confpool = args.confpool
-    overrides = common.get_overrides(param=args.param)
+    overrides = handle_parameters(args.param, args.paramfile)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
     result = baseconfig.update_confpool(confpool, overrides=overrides)
     code = common.handle_response(result, confpool, element='Confpool', action='updated', client=baseconfig.client)
@@ -3480,10 +3480,7 @@ def cli():
                                  description=bucketfilecreate_desc, help=bucketfilecreate_desc)
 
     clusterprofilecreate_desc = 'Create Clusterprofile'
-    clusterprofilecreate_parser = argparse.ArgumentParser(add_help=False)
-    clusterprofilecreate_parser.add_argument('-P', '--param', action='append',
-                                             help='specify parameter or keyword for rendering (can specify multiple)',
-                                             metavar='PARAM')
+    clusterprofilecreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     clusterprofilecreate_parser.add_argument('clusterprofile', metavar='CLUSTERPROFILE')
     clusterprofilecreate_parser.set_defaults(func=create_clusterprofile)
     create_subparsers.add_parser('clusterprofile', parents=[clusterprofilecreate_parser],
@@ -3491,10 +3488,7 @@ def cli():
                                  aliases=['cluster-profile', 'kube-profile', 'kubeprofile'])
 
     confpoolcreate_desc = 'Create Confpool'
-    confpoolcreate_parser = argparse.ArgumentParser(add_help=False)
-    confpoolcreate_parser.add_argument('-P', '--param', action='append',
-                                       help='specify parameter or keyword for rendering (can specify multiple)',
-                                       metavar='PARAM')
+    confpoolcreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     confpoolcreate_parser.add_argument('confpool', metavar='CONFPOOL')
     confpoolcreate_parser.set_defaults(func=create_confpool)
     create_subparsers.add_parser('confpool', parents=[confpoolcreate_parser], description=confpoolcreate_desc,
@@ -4955,18 +4949,14 @@ def cli():
     clusterprofileupdate_desc = 'Update Clusterprofile'
     clusterprofileupdate_parser = update_subparsers.add_parser('clusterprofile', description=clusterprofileupdate_desc,
                                                                help=clusterprofileupdate_desc,
-                                                               aliases=['cluster-profile', 'kube-profile'])
-    clusterprofileupdate_parser.add_argument('-P', '--param', action='append',
-                                             help='Define parameter for rendering (can specify multiple)',
-                                             metavar='PARAM')
+                                                               aliases=['cluster-profile', 'kube-profile'],
+                                                               parents=[parent_parser])
     clusterprofileupdate_parser.add_argument('clusterprofile', metavar='CLUSTERPROFILE', nargs='?')
     clusterprofileupdate_parser.set_defaults(func=update_clusterprofile)
 
     confpoolupdate_desc = 'Update Confpool'
     confpoolupdate_parser = update_subparsers.add_parser('confpool', description=confpoolupdate_desc,
-                                                         help=confpoolupdate_desc)
-    confpoolupdate_parser.add_argument('-P', '--param', action='append',
-                                       help='Define parameter for rendering (can specify multiple)', metavar='PARAM')
+                                                         help=confpoolupdate_desc, parents=[parent_parser])
     confpoolupdate_parser.add_argument('confpool', metavar='CONFPOOL', nargs='?')
     confpoolupdate_parser.set_defaults(func=update_confpool)
 
