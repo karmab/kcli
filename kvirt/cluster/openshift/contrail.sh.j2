@@ -6,13 +6,14 @@ VERSION={{ contrail_version }}
 cd $TMPDIR
 git clone https://github.com/Juniper/contrail-networking
 cd contrail-networking/releases/$VERSION/ocp
-sed -i "s@10.40.1.0/24@$DATA_CIDR@" vrrp/99-network-configmap.yaml
-sed -i "s@10.40.1.1@$DATA_GATEWAY@" vrrp/99-network-configmap.yaml
+sed -i "s@10.40.1.0/24@$CTL_CIDR@" vrrp/99-network-configmap.yaml
+sed -i "s@10.40.1.1@$CTL_GATEWAY@" vrrp/99-network-configmap.yaml
 
 FIRST_NIC={{ 'enp1s0' if uefi|default(False) else 'ens3' }}
 SECOND_NIC={{ 'enp2s0' if uefi|default(False) else 'ens4' }}
 sed -i "s@ens3@$FIRST_NIC@" 99-disable-offload-master.yaml 99-disable-offload-worker.yaml
 sed -i "s@ens4@$SECOND_NIC@" vrrp/99-disable-offload-master-ens4.yaml vrrp/99-disable-offload-worker-ens4.yaml
 
-cp *yaml $CLUSTERDIR/manifests
-cp *yaml $CLUSTERDIR/manifests
+find . -name "*yaml" -exec cp {} $CLUSTERDIR/manifests \;
+mkdir $CLUSTERDIR/contrail
+find . -name "*yaml" -exec cp {} $CLUSTERDIR/contrail \;

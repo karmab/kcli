@@ -3382,9 +3382,9 @@ def list_securitygroups(args):
     print(securitygroupstable)
 
 
-def create_sushy_service(args):
+def create_ksushy_service(args):
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
-    baseconfig.deploy_sushy_service(ipv6=args.ipv6, ssl=args.ssl, user=args.user, password=args.password)
+    baseconfig.deploy_ksushy_service(ipv6=args.ipv6, ssl=args.ssl, user=args.user, password=args.password)
 
 
 def create_web_service(args):
@@ -3957,14 +3957,15 @@ def cli():
     securitygroupcreate_parser.add_argument('securitygroup')
     securitygroupcreate_parser.set_defaults(func=create_securitygroup)
 
-    sushycreate_desc = 'Create Sushy service'
+    sushycreate_desc = 'Create Ksushy service'
     sushycreate_parser = create_subparsers.add_parser('sushy-service', description=sushycreate_desc,
-                                                      help=sushycreate_desc, aliases=['sushy'])
+                                                      help=sushycreate_desc, aliases=['sushy', 'ksushy',
+                                                                                      'ksushy-service'])
     sushycreate_parser.add_argument('-i', '--ipv6', action='store_true', help='Listen on ipv6')
     sushycreate_parser.add_argument('-s', '--ssl', action='store_true', help='Enable ssl')
     sushycreate_parser.add_argument('-u', '--user', help='User for authentication')
     sushycreate_parser.add_argument('-p', '--password', help='Password for authentication')
-    sushycreate_parser.set_defaults(func=create_sushy_service)
+    sushycreate_parser.set_defaults(func=create_ksushy_service)
 
     vmsnapshotcreate_desc = 'Create Snapshot Of Vm'
     vmsnapshotcreate_parser = create_subparsers.add_parser('vm-snapshot', description=vmsnapshotcreate_desc,

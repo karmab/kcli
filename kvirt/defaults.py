@@ -222,7 +222,7 @@ BMC_USER = None
 BMC_PASSWORD = None
 BMC_MODEL = None
 
-SUSHYSERVICE = """[Unit]
+KSUSHYSERVICE = """[Unit]
 Description=Ksushy emulator service
 After=syslog.target
 [Service]

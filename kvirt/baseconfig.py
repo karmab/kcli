@@ -18,7 +18,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             CPUFLAGS, CPUPINNING, NUMAMODE, NUMA, PCIDEVICES, VIRTTYPE, MAILSERVER, MAILFROM, MAILTO,
                             TPM, JENKINSMODE, RNG, ZEROTIER_NETS, ZEROTIER_KUBELET, VMPORT, VMUSER, VMRULES,
                             VMRULES_STRICT, CACHE, SECURITYGROUPS, LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG, ROOTPASSWORD,
-                            WAIT, WAITCOMMAND, WAITTIMEOUT, TEMPKEY, BMC_USER, BMC_PASSWORD, BMC_MODEL, SUSHYSERVICE,
+                            WAIT, WAITCOMMAND, WAITTIMEOUT, TEMPKEY, BMC_USER, BMC_PASSWORD, BMC_MODEL, KSUSHYSERVICE,
                             WEBSERVICE)
 from ipaddress import ip_address, ip_network
 from random import choice
@@ -1831,7 +1831,7 @@ class Kbaseconfig:
                 call(cmcmd, shell=True)
         return {'result': 'success'}
 
-    def deploy_sushy_service(self, ssl=False, ipv6=False, user=None, password=None):
+    def deploy_ksushy_service(self, ssl=False, ipv6=False, user=None, password=None):
         if os.path.exists("/usr/lib/systemd/system/ksushy.service"):
             call("systemctl restart ksushy", shell=True)
             return
@@ -1842,7 +1842,7 @@ class Kbaseconfig:
         ipv6 = "Environment=KSUSHY_IPV6=true" if ipv6 else ''
         user = f"Environment=KSUSHY_USER={user}" if user is not None else ''
         password = f"Environment=KSUSHY_PASSWORD={password}" if password is not None else ''
-        sushydata = SUSHYSERVICE.format(home=home, ipv6=ipv6, ssl=ssl, user=user, password=password)
+        sushydata = KSUSHYSERVICE.format(home=home, ipv6=ipv6, ssl=ssl, user=user, password=password)
         with open("/usr/lib/systemd/system/ksushy.service", "w") as f:
             f.write(sushydata)
         call("systemctl enable --now ksushy", shell=True)

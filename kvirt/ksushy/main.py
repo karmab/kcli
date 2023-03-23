@@ -1,4 +1,4 @@
-from kvirt.sushy import Ksushy
+from kvirt.ksushy import Ksushy
 
 
 def run():

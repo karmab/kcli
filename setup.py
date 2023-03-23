@@ -52,7 +52,7 @@ setup(
         kcli=kvirt.cli:cli
         kweb=kvirt.web.main:run
         klist.py=kvirt.klist:main
-        ksushy=kvirt.sushy.main:run
+        ksushy=kvirt.ksushy.main:run
         ignitionmerger=kvirt.ignitionmerger:cli
     ''',
 )
