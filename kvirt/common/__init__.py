@@ -1941,12 +1941,14 @@ def openshift_create_app(config, appname, appdir, overrides={}, outputdir=None):
             if os.path.exists(f"{appdir}/{appname}/pre.sh"):
                 f.write("bash pre.sh\n")
             if install_cr and os.path.exists(f"{appdir}/{appname}/cr.yml"):
+                timeout = overrides.get('timeout', 120)
                 crd = overrides.get('crd')
                 for line in open(f"{appdir}/{appname}/cr.yml", 'r').readlines():
                     if 'kind' in line:
                         crd = line.split(':')[1].strip()
                         break
-                rendered = config.process_inputfile(cluster, f"{appdir}/cr.sh", overrides={'crd': crd})
+                rendered = config.process_inputfile(cluster, f"{appdir}/cr.sh", overrides={'crd': crd,
+                                                                                           'timeout': timeout})
                 f.write(rendered)
             if os.path.exists(f"{appdir}/{appname}/post.sh"):
                 f.write("bash post.sh\n")

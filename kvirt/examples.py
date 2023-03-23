@@ -289,6 +289,9 @@ $ kcli create app openshift serverless-operator -P csv=serverless-operator.v1.22
 
 # Set installplan to manual
 $ kcli create app openshift serverless-operator -P installplan=manual
+
+# Wait longer on a given operator
+$ kcli create app openshift multicluster-engine -P timeout=600
 """
 
 changelog = """Get commits between current version and main
