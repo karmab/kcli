@@ -12,7 +12,7 @@ import functools
 from tempfile import NamedTemporaryFile
 
 
-basedir = f"{os.path.dirname(Bottle.run.__code__.co_filename)}/sushy"
+basedir = f"{os.path.dirname(Bottle.run.__code__.co_filename)}/ksushy"
 view = functools.partial(jinja2_view, template_lookup=[f"{basedir}/templates"])
 
 default_user = os.environ.get('KSUSHY_USER')
