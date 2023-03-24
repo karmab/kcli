@@ -44,9 +44,8 @@ spec:
   pullSecretRef:
     name: {{ cluster }}-pull-secret
   sshAuthorizedKey: {{ pub_key }}
-  agentLabelSelector:
-    matchLabels:
-      cluster-name: {{ namespace }}-{{ cluster }}
+  agentLabels:
+    cluster-name: {{ namespace }}-{{ cluster }}
   nmStateConfigLabelSelector:
     matchLabels:
       cluster-name: {{ namespace }}-{{ cluster }}
