@@ -1515,6 +1515,7 @@ class Kconfig(Kbaseconfig):
         elif vmclients:
             deleteclients.update({cli: Kconfig(client=cli).k for cli in vmclients if cli != self.client})
         hypershift = False
+        assisted = False
         for hypervisor in deleteclients:
             c = deleteclients[hypervisor]
             for vm in sorted(c.list(), key=lambda x: x['name']):
@@ -1564,6 +1565,7 @@ class Kconfig(Kbaseconfig):
                                     kubetype = clusterdata.get('kubetype', 'generic')
                                     if kubetype == 'hypershift':
                                         hypershift = True
+                                        assisted = clusterdata.get(assisted, False)
                                     domain = clusterdata.get('domain', domain)
                                     dnsclient = clusterdata.get('dnsclient')
                             if not hypershift:
@@ -1572,8 +1574,8 @@ class Kconfig(Kbaseconfig):
         if hypershift:
             kubeconfigmgmt = f"{clusterdir}/kubeconfig.mgmt"
             call(f'KUBECONFIG={kubeconfigmgmt} oc delete -f {clusterdir}/autoapprovercron.yml', shell=True)
+            call(f'KUBECONFIG={kubeconfigmgmt} oc delete -f {clusterdir}/nodepool_{cluster}.yaml', shell=True)
             call(f'KUBECONFIG={kubeconfigmgmt} oc delete -f {clusterdir}/hostedcluster.yaml', shell=True)
-            assisted = clusterdata.get('assisted', False)
             if not assisted and ('baremetal_iso' in clusterdata or 'baremetal_hosts' in clusterdata):
                 call('KUBECONFIG={kubeconfigmgmt} oc -n default delete all -l app=httpd-kcli', shell=True)
                 call('KUBECONFIG={kubeconfigmgmt} oc -n default delete svc httpd-kcli-svc', shell=True)
@@ -2856,6 +2858,7 @@ class Kconfig(Kbaseconfig):
 
     def delete_kube(self, cluster, overrides={}):
         hypershift = False
+        assisted = False
         domain = overrides.get('domain', 'karmalabs.corp')
         kubetype = 'generic'
         dnsclient = None
@@ -2872,6 +2875,7 @@ class Kconfig(Kbaseconfig):
                     kubetype = clusterdata.get('kubetype', 'generic')
                     if kubetype == 'hypershift':
                         hypershift = True
+                        assisted = clusterdata.get('assisted', False)
                     domain = clusterdata.get('domain', domain)
                     dnsclient = clusterdata.get('dnsclient')
             if not hypershift:
@@ -2919,8 +2923,9 @@ class Kconfig(Kbaseconfig):
         if hypershift:
             kubeconfigmgmt = f"{clusterdir}/kubeconfig.mgmt"
             call(f'KUBECONFIG={kubeconfigmgmt} oc delete -f {clusterdir}/autoapprovercron.yml', shell=True)
+            call(f'KUBECONFIG={kubeconfigmgmt} oc delete -f {clusterdir}/nodepool_{cluster}.yaml', shell=True)
             call(f'KUBECONFIG={kubeconfigmgmt} oc delete -f {clusterdir}/hostedcluster.yaml', shell=True)
-            if 'baremetal_iso' in clusterdata or 'baremetal_hosts' in clusterdata:
+            if not assisted and ('baremetal_iso' in clusterdata or 'baremetal_hosts' in clusterdata):
                 call(f'KUBECONFIG={kubeconfigmgmt} oc -n default delete all -l app=httpd-kcli', shell=True)
                 call(f'KUBECONFIG={kubeconfigmgmt} oc -n default delete pvc httpd-kcli-pvc', shell=True)
             pprint(f"Deleting directory {clusterdir}")

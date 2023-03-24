@@ -607,6 +607,13 @@ def create(config, plandir, cluster, overrides):
             if not images:
                 msg = f"Missing {image}. Indicate correct image in your parameters file..."
                 return {'result': 'failure', 'reason': msg}
+    else:
+        create_bmh_objects(config, plandir, cluster, namespace, baremetal_hosts, overrides)
+        agents = len(baremetal_hosts)
+        pprint(f"Waiting for {agents} agents to appear")
+        agent_ns = f"{namespace}-{cluster}"
+        call(f'until [ "$(oc -n {agent_ns} get agent -o name | wc -l | xargs)" == "{agents}" ] ; do sleep 1 ; done',
+             shell=True)
     with open(f"{clusterdir}/kcli_parameters.yml", 'w') as p:
         installparam = overrides.copy()
         installparam['plan'] = plan
@@ -660,20 +667,18 @@ def create(config, plandir, cluster, overrides):
     with open(autoapproverpath, 'w') as f:
         f.write(autoapprover)
     call(f"oc apply -f {autoapproverpath}", shell=True)
-    if not assisted and platform in cloudplatforms + ['openstack']:
-        copy2(f"{clusterdir}/{nodepool}.ign", f"{clusterdir}/{nodepool}.ign.ori")
-        bucket = f"{cluster}-{domain.replace('.', '-')}"
-        if bucket not in config.k.list_buckets():
-            config.k.create_bucket(bucket)
-        config.k.upload_to_bucket(bucket, f"{clusterdir}/{nodepool}.ign", public=True)
-        bucket_url = config.k.public_bucketfile_url(bucket, f"{nodepool}.ign")
-        new_ignition = {'ignition': {'config': {'merge': [{'source': bucket_url}]}, 'version': '3.2.0'}}
-        with open(f"{clusterdir}/{nodepool}.ign", 'w') as f:
-            f.write(json.dumps(new_ignition))
-    elif baremetal_iso or baremetal_hosts:
-        if assisted:
-            create_bmh_objects(config, plandir, cluster, namespace, baremetal_hosts, overrides)
-        else:
+    if not assisted:
+        if platform in cloudplatforms + ['openstack']:
+            copy2(f"{clusterdir}/{nodepool}.ign", f"{clusterdir}/{nodepool}.ign.ori")
+            bucket = f"{cluster}-{domain.replace('.', '-')}"
+            if bucket not in config.k.list_buckets():
+                config.k.create_bucket(bucket)
+            config.k.upload_to_bucket(bucket, f"{clusterdir}/{nodepool}.ign", public=True)
+            bucket_url = config.k.public_bucketfile_url(bucket, f"{nodepool}.ign")
+            new_ignition = {'ignition': {'config': {'merge': [{'source': bucket_url}]}, 'version': '3.2.0'}}
+            with open(f"{clusterdir}/{nodepool}.ign", 'w') as f:
+                f.write(json.dumps(new_ignition))
+        elif baremetal_iso or baremetal_hosts:
             iso_url = handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts)
             boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
             data['workers'] = data.get('workers', 2) - len(baremetal_hosts)
