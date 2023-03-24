@@ -1949,7 +1949,7 @@ def openshift_create_app(config, appname, appdir, overrides={}, outputdir=None):
                 rendered = config.process_inputfile(cluster, f"{appdir}/cr.sh", overrides={'crd': crd})
                 f.write(rendered)
             if os.path.exists(f"{appdir}/{appname}/post.sh"):
-                f.write("bash post.sh\n")
+                f.write("\nbash post.sh\n")
         if outputdir is None:
             os.chdir(tmpdir)
             result = call('bash install.sh', shell=True)

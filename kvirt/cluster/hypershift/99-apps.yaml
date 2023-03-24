@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: install-operators
+  name: install-apps
   namespace: kcli-infra
   labels:
     app: kcli
@@ -23,7 +23,7 @@ spec:
           sleep 30
         done
     containers:
-    - name: install-operators
+    - name: install-apps
       image: {{ registry }}/karmab/kcli:latest
       command:
       - "/bin/sh"

@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: kcli-bootstrap-delete
+  name: bootstrap-delete
   namespace: kcli-infra
   labels:
     app: kcli
