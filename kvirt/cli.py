@@ -319,14 +319,20 @@ def restart_container(args):
 
 
 def console_vm(args):
-    """Vnc/Spice/Serial Vm console"""
+    """Vnc/Serial/Web Vm console"""
     serial = args.serial
+    web = args.web
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     name = common.get_lastvm(config.client) if not args.name else args.name
     k = config.k
     tunnel = config.tunnel
     if serial:
         k.serialconsole(name)
+    elif web:
+        if config.type not in ['kvm', 'kubevirt', 'ovirt']:
+            error(f"Web console is not available on {config.type}")
+            sys.exit(1)
+        config.webconsole(name)
     else:
         k.console(name=name, tunnel=tunnel)
 
@@ -3995,10 +4001,11 @@ def cli():
     vmclone_parser.add_argument('name', metavar='VMNAME')
     vmclone_parser.set_defaults(func=clone_vm)
 
-    vmconsole_desc = 'Vm Console (vnc/spice/serial)'
+    vmconsole_desc = 'Vm Console (vnc/serial/web)'
     vmconsole_epilog = f"examples:\n{vmconsole}"
     vmconsole_parser = argparse.ArgumentParser(add_help=False)
     vmconsole_parser.add_argument('-s', '--serial', action='store_true')
+    vmconsole_parser.add_argument('-w', '--web', action='store_true')
     vmconsole_parser.add_argument('name', metavar='VMNAME', nargs='?')
     vmconsole_parser.set_defaults(func=console_vm)
     subparsers.add_parser('console', parents=[vmconsole_parser], description=vmconsole_desc, help=vmconsole_desc,

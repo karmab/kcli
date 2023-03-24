@@ -17,7 +17,7 @@ from kvirt.jinjafilters import jinjafilters
 from kvirt import nameutils
 from kvirt import common
 from kvirt.common import error, pprint, success, warning, generate_rhcos_iso, pwd_path, container_mode
-from kvirt.common import ssh, scp, _ssh_credentials, valid_ip, process_files, get_rhcos_url_from_file
+from kvirt.common import ssh, scp, _ssh_credentials, valid_ip, process_files, get_rhcos_url_from_file, get_free_port
 from kvirt.cluster import kind
 from kvirt.cluster import microshift
 from kvirt.cluster import k3s
@@ -28,6 +28,7 @@ from kvirt.expose import Kexposer
 from kvirt.internalplans import haproxy as haproxyplan
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
+from kvirt.miniconsole import Kminiconsole
 from getpass import getuser
 import glob
 import os
@@ -3475,3 +3476,13 @@ class Kconfig(Kbaseconfig):
                     workers = result['workers']
                     pprint(f"Current workers number desired: {workers}")
             sleep(60)
+
+    def threaded_web_console(self, port, name):
+        console = Kminiconsole(config=self, port=port, name=name)
+        console.run()
+
+    def webconsole(self, name):
+        port = get_free_port()
+        t = threading.Thread(target=self.threaded_web_console, args=(port, name,))
+        t.start()
+        webbrowser.open(f"http://127.0.0.1:{port}", new=2, autoraise=True)

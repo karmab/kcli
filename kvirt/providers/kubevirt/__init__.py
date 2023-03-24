@@ -72,6 +72,7 @@ class Kubevirt(Kubecommon):
         self.harvester = harvester
         self.embed_userdata = embed_userdata
         self.first_consumer = first_consumer
+        self.kubeconfig_file = kubeconfig_file
         return
 
     def close(self):
@@ -598,11 +599,13 @@ class Kubevirt(Kubecommon):
                 podname = pod.metadata.name
                 localport = common.get_free_port()
                 break
-        nccmd = f"{kubectl} exec -n {namespace} {podname} -- /bin/sh -c "
+        nccmd = f'KUBECONFIG={self.kubeconfig_file} ' if self.kubeconfig_file is not None else ''
+        nccmd += f"{kubectl} exec -n {namespace} {podname} -- /bin/sh -c "
         nccmd += f"'nc -l {localport} --sh-exec \"nc -U /var/run/kubevirt-private/{uid}/virt-vnc\"'"
         nccmd += " &"
         os.system(nccmd)
-        forwardcmd = f"{kubectl} port-forward {podname} {localport}:{localport} &"
+        forwardcmd = f'KUBECONFIG={self.kubeconfig_file} ' if self.kubeconfig_file is not None else ''
+        forwardcmd += f"{kubectl} port-forward {podname} {localport}:{localport} &"
         os.system(forwardcmd)
         time.sleep(5)
         if web:
