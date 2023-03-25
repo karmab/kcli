@@ -219,7 +219,7 @@ def create(config, plandir, cluster, overrides):
             'network_type': 'OVNKubernetes',
             'fips': False,
             'operator_image': 'quay.io/hypershift/hypershift-operator:latest',
-            'mce': False,
+            'mce': True,
             'namespace': 'clusters',
             'disconnected_url': None,
             'pull_secret': 'openshift_pull.json',
@@ -296,8 +296,8 @@ def create(config, plandir, cluster, overrides):
     if yaml.safe_load(os.popen('oc get crd hostedclusters.hypershift.openshift.io -o yaml 2>/dev/null').read()) is None:
         warning("Hypershift not installed. Installing it for you")
         if data.get('mce') or assisted:
-            app_name, source, channel, csv, description, namespace, channels, crd = olm_app('multicluster-engine')
-            app_data = {'name': app_name, 'source': source, 'channel': channel, 'namespace': namespace, 'crd': crd,
+            app_name, source, channel, csv, description, x_namespace, channels, crd = olm_app('multicluster-engine')
+            app_data = {'name': app_name, 'source': source, 'channel': channel, 'namespace': x_namespace, 'crd': crd,
                         'mce_hypershift': True, 'assisted': assisted}
             config.create_app_openshift(app_name, app_data)
         elif which('podman') is None:
