@@ -1,0 +1,13 @@
+cluster: mycontrail
+domain: karmalabs.corp
+version: stable
+tag: 4.10.31
+api_ip: 192.168.122.253
+sslip: true
+ctlplanes: 3
+workers: 0
+numcpus: 16
+disk_size: 400
+memory: 65536
+network: default
+network_type: Contrail
