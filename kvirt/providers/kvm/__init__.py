@@ -880,12 +880,14 @@ class Kvirt(object):
         elif virttype not in ['qemu', 'kvm', 'xen', 'lxc']:
             msg = f"Incorrect virttype {virttype}"
             return {'result': 'failure', 'reason': msg}
+        nestedfeature = capabilities['nestedfeature']
         if nested:
-            nestedfeature = capabilities['nestedfeature']
             if nestedfeature is not None:
                 cpuxml += f"<feature policy='require' name='{nestedfeature}'/>"
             else:
                 warning("Hypervisor not compatible with nesting. Skipping")
+        elif nestedfeature is not None:
+            cpuxml += f"<feature policy='disable' name='{nestedfeature}'/>"
         if cpuflags:
             for flag in cpuflags:
                 if isinstance(flag, str):
