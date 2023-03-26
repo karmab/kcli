@@ -300,6 +300,7 @@ def create(config, plandir, cluster, overrides):
             app_data = {'name': app_name, 'source': source, 'channel': channel, 'namespace': x_namespace, 'crd': crd,
                         'mce_hypershift': True, 'assisted': assisted}
             config.create_app_openshift(app_name, app_data)
+            sleep(240)
         elif which('podman') is None:
             msg = "Please install podman first in order to install hypershift"
             return {'result': 'failure', 'reason': msg}
@@ -310,6 +311,7 @@ def create(config, plandir, cluster, overrides):
             hypercmd += f"-e KUBECONFIG=/k/{kubeconfig} -v {kubeconfigdir}:/k {data['operator_image']} install"
             call(hypercmd, shell=True)
             sleep(120)
+    call("oc wait --for=condition=Ready pod -l app=operator -n hypershift --timeout=300s", shell=True)
     data['basedir'] = '/workdir' if container_mode() else '.'
     supported_data = yaml.safe_load(os.popen("oc get cm/supported-versions -o yaml -n hypershift").read())['data']
     supported_versions = supported_versions = supported_data['supported-versions']
