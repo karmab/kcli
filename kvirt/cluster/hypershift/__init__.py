@@ -230,6 +230,11 @@ def create(config, plandir, cluster, overrides):
             'autoscale': False,
             'assisted': False,
             'calico_version': None,
+            'contrail_version': '22.4',
+            'contrail_ctl_network': 'contrail-ctl',
+            'contrail_ctl_create': True,
+            'contrail_ctl_cidr': '10.40.1.0/24',
+            'contrail_ctl_gateway': '10.40.1.1',
             'retries': 3}
     data.update(overrides)
     retries = data.get('retries')
@@ -314,12 +319,12 @@ def create(config, plandir, cluster, overrides):
             sleep(120)
     call("oc wait --for=condition=Ready pod -l app=operator -n hypershift --timeout=300s", shell=True)
     data['basedir'] = '/workdir' if container_mode() else '.'
-    supported_data = yaml.safe_load(os.popen("oc get cm/supported-versions -o yaml -n hypershift").read())['data']
-    supported_versions = supported_versions = supported_data['supported-versions']
-    versions = yaml.safe_load(supported_versions)['versions']
-    if str(tag) not in versions:
-        msg = f"Invalid tag {tag}. Choose between {','.join(versions)}"
-        return {'result': 'failure', 'reason': msg}
+    # supported_data = yaml.safe_load(os.popen("oc get cm/supported-versions -o yaml -n hypershift").read())['data']
+    # supported_versions = supported_versions = supported_data['supported-versions']
+    # versions = yaml.safe_load(supported_versions)['versions']
+    # if str(tag) not in versions:
+    #    msg = f"Invalid tag {tag}. Choose between {','.join(versions)}"
+    #    return {'result': 'failure', 'reason': msg}
     management_cmd = "oc get ingresscontroller -n openshift-ingress-operator default -o jsonpath='{.status.domain}'"
     management_ingress_domain = os.popen(management_cmd).read()
     data['management_ingress_domain'] = management_ingress_domain
@@ -452,6 +457,40 @@ def create(config, plandir, cluster, overrides):
         assisted_data = config.process_inputfile(cluster, f'{plandir}/assisted_ingress.yml', overrides=assisted_data)
         assisted_data = json.dumps(assisted_data)
         manifests.append({'name': f'assisted-ingress-{cluster}', 'data': assisted_data})
+    if data['network_type'] == 'Contrail':
+        if which('git') is None:
+            return {'result': 'failure', 'reason': "Git is needed when deploying with contrail"}
+        if 'enterprise-hub.juniper.net' not in data['pull_secret']:
+            return {'result': 'failure', 'reason': "A token for hub.juniper.net registry is needed"}
+        ctl_network_create = data['contrail_ctl_create']
+        ctl_network = data['contrail_ctl_network']
+        ctl_cidr = data['contrail_ctl_cidr']
+        networkinfo = k.info_network(ctl_network)
+        if not networkinfo:
+            if ctl_network_create:
+                result = k.create_network(ctl_network, cidr=ctl_cidr, plan=plan)
+                if result['result'] != 'success':
+                    return result
+            else:
+                msg = f"Issue getting contrail ctl network {ctl_network}"
+                return {'result': 'failure', 'reason': msg}
+        elif platform == 'kvm' and networkinfo['type'] == 'routed':
+            cidr = networkinfo['cidr']
+            if cidr == 'N/A':
+                msg = "Couldnt gather cidr from your specified contrail ctl network"
+                return {'result': 'failure', 'reason': msg}
+            elif cidr != ctl_cidr:
+                msg = "Contrail ctl network cidr doesnt match contrail_ctl_cidr"
+                return {'result': 'failure', 'reason': msg}
+        if 'uefi' in data and data['uefi']:
+            data['secureboot'] = True
+        contrail_data = {'uefi': data.get('uefi', False)}
+        contrail_data.update({key: data[key] for key in data if key.startswith('contrail')})
+        pullsecret_encoded = str(b64encode(data['pull_secret'].encode('utf-8')), 'utf-8')
+        contrail_data['pullsecret_encoded'] = pullsecret_encoded
+        contrail_script = config.process_inputfile('xxx', f'{plandir}/contrail.sh.j2', overrides=contrail_data)
+        with open(f"{clusterdir}/contrail.sh", 'w') as f:
+            f.write(contrail_script)
     if manifests:
         assetsdata['manifests'] = manifests
     async_files = []
