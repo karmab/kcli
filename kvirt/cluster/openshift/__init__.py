@@ -1013,7 +1013,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             with TemporaryDirectory() as tmpdir:
                 contrail_data = {'tmpdir': tmpdir, 'clusterdir': clusterdir, 'uefi': data.get('uefi', False)}
                 contrail_data.update({key: data[key] for key in data if key.startswith('contrail')})
-                pullsecret_encoded = key = str(b64encode(data['pull_secret'].encode('utf-8')), 'utf-8')
+                pullsecret_encoded = str(b64encode(data['pull_secret'].encode('utf-8')), 'utf-8')
                 contrail_data['pullsecret_encoded'] = pullsecret_encoded
                 contrail_script = config.process_inputfile('xxx', f'{plandir}/contrail.sh.j2', overrides=contrail_data)
                 with open(f"{tmpdir}/contrail.sh", 'w') as f:
