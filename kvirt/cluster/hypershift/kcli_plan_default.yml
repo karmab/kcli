@@ -70,3 +70,8 @@ autoscale: false
 assisted: false
 calico_version:
 cloud_storage: true
+contrail_version: 23.1
+contrail_ctl_network: contrail-ctl
+contrail_ctl_create: true
+contrail_ctl_cidr: 10.40.1.0/24
+contrail_ctl_gateway: 10.40.1.1

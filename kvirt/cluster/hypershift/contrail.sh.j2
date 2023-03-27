@@ -1,0 +1,27 @@
+CLUSTERDIR={{ cluster }}
+CTL_CIDR={{ contrail_ctl_cidr }}
+CTL_GATEWAY={{ contrail_ctl_gateway }}
+VERSION={{ contrail_version }}
+PULLSECRET_ENCODED={{ pullsecret_encoded }}
+
+cd /etc/kubernetes
+git clone https://github.com/Juniper/contrail-networking
+cd contrail-networking/releases/$VERSION/ocp
+sed -i "s@10.40.1.0/24@$CTL_CIDR@" vrrp/99-network-configmap.yaml
+sed -i "s@10.40.1.1@$CTL_GATEWAY@" vrrp/99-network-configmap.yaml
+
+FIRST_NIC={{ 'enp1s0' if uefi|default(False) else 'ens3' }}
+SECOND_NIC={{ 'enp2s0' if uefi|default(False) else 'ens4' }}
+grep -l 'machineconfiguration.openshift.io/role: master' * | xargs -0 rm -f --
+rm -f *master*
+sed -i "s@ens3@$FIRST_NIC@" 99-disable-offload-worker.yaml
+sed -i "s@ens3@$FIRST_NIC@" 99-disable-offload-worker.yaml
+sed -i "s@ens4@$SECOND_NIC@" vrrp/99-disable-offload-worker-ens4.yaml
+
+sed -i "s@<base64-encoded-credential>@$PULLSECRET_ENCODED@" auth-registry/*pullsecret.yaml
+
+mkdir /etc/kubernetes/contrail-manifests
+find . -name "*yaml" -exec cp {} /etc/kubernetes/contrail-manifests \;
+
+export KUBECONFIG=/etc/kubernetes/kubeconfig.$CLUSTER
+oc apply -f /etc/kubernetes/contrail-manifests
