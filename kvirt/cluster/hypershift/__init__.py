@@ -229,6 +229,7 @@ def create(config, plandir, cluster, overrides):
             'service_network_ipv4': '172.31.0.0/16',
             'autoscale': False,
             'assisted': False,
+            'calico_version': None,
             'retries': 3}
     data.update(overrides)
     retries = data.get('retries')
@@ -634,6 +635,16 @@ def create(config, plandir, cluster, overrides):
         installparam['ipv6'] = ipv6
         installparam['original_domain'] = data['original_domain']
         yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
+    if 'network_type' in data:
+        if data['network_type'] == 'Calico':
+            calico_version = data['calico_version']
+            with TemporaryDirectory() as tmpdir:
+                calico_data = {'tmpdir': tmpdir, 'namespace': namespace, 'cluster': cluster, 'clusterdir': clusterdir,
+                               'calico_version': calico_version}
+                calico_script = config.process_inputfile('xxx', f'{plandir}/calico.sh.j2', overrides=calico_data)
+                with open(f"{tmpdir}/calico.sh", 'w') as f:
+                    f.write(calico_script)
+                call(f'bash {tmpdir}/calico.sh', shell=True)
     if os.path.exists(f"{clusterdir}/{nodepool}.ign"):
         os.remove(f"{clusterdir}/{nodepool}.ign")
     nodepoolfile = config.process_inputfile(cluster, f"{plandir}/nodepool.yaml", overrides=assetsdata)

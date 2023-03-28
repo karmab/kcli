@@ -509,6 +509,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'sslip': False,
             'autoscale': False,
             'upstream': False,
+            'calico_version': None,
+            'contrail_version': '22.4',
+            'contrail_ctl_network': 'contrail-ctl',
+            'contrail_ctl_create': True,
+            'contrail_ctl_cidr': '10.40.1.0/24',
+            'contrail_ctl_gateway': '10.40.1.1',
             'retries': 2}
     data.update(overrides)
     if 'cluster' in overrides:
@@ -980,9 +986,13 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             copy2(yamlfile, f"{clusterdir}/openshift")
     if 'network_type' in data:
         if data['network_type'] == 'Calico':
-            calicocmd = "curl https://projectcalico.docs.tigera.io/manifests/ocp.tgz | tar xvz --strip-components=1 "
-            calicocmd += f"-C {clusterdir}/manifests"
-            call(calicocmd, shell=True)
+            calico_version = data['calico_version']
+            with TemporaryDirectory() as tmpdir:
+                calico_data = {'tmpdir': tmpdir, 'clusterdir': clusterdir, 'calico_version': calico_version}
+                calico_script = config.process_inputfile('xxx', f'{plandir}/calico.sh.j2', overrides=calico_data)
+                with open(f"{tmpdir}/calico.sh", 'w') as f:
+                    f.write(calico_script)
+                call(f'bash {tmpdir}/calico.sh', shell=True)
         if data['network_type'] == 'Contrail':
             if which('git') is None:
                 return {'result': 'failure', 'reason': "Git is needed when deploying with contrail"}

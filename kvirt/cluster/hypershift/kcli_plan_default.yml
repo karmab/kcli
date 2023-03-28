@@ -68,3 +68,4 @@ hosted_version:
 hosted_tag:
 autoscale: false
 assisted: false
+calico_version:
