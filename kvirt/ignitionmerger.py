@@ -4,26 +4,27 @@
 import argparse
 import json
 import os
+import sys
 
 
 def error(text):
     color = "31"
-    print('\033[0;%sm%s\033[0;0m' % (color, text))
+    print(f'\033[0;{color}m{text}\033[0;0m')
 
 
 def warning(text):
     color = "33"
-    print('\033[0;%sm%s\033[0;0m' % (color, text))
+    print(f'\033[0;{color}m{text}\033[0;0m')
 
 
 def info(text):
     color = "36"
-    print('\033[0;%sm%s\033[0;0m' % (color, text))
+    print(f'\033[0;{color}m{text}\033[0;0m')
 
 
 def success(text):
     color = "32"
-    print('\033[0;%sm%s\033[0;0m' % (color, text))
+    print(f'\033[0;{color}m{text}\033[0;0m')
 
 
 def merge2ignitions(newdata, data):
@@ -73,20 +74,20 @@ def merge2ignitions(newdata, data):
 def mergeignition(args):
     version = '3.1.0'
     separators = (',', ':') if args.compact else (',', ': ')
-    indent = 0 if args.compact else 4
+    indent = None if args.compact else 4
     paths = args.paths
     data = {}
     for path in paths:
         if not os.path.exists(path):
-            error("Missing path %s. Ignoring" % path)
-            os._exit(1)
+            error(f"Missing path {path}. Ignoring")
+            sys.exit(1)
         else:
             with open(path, 'r') as extra:
                 try:
                     newdata = json.load(extra)
                 except:
-                    error("Couldn't process %s. Leaving" % path)
-                    os._exit(1)
+                    error(f"Couldn't process {path}. Leaving")
+                    sys.exit(1)
             data = merge2ignitions(newdata, data)
     if 'ignition' not in data:
         data['ignition'] = {'config': {}, 'version': version}
