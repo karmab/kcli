@@ -745,10 +745,10 @@ def list_vm(args):
     """List vms"""
     output = args.global_output or args.output
     overrides = handle_parameters(args.param, args.paramfile)
-    correct_keys = ['name', 'ip', 'status', 'image', 'plan', 'profile']
-    if not [key in overrides for key in correct_keys]:
-        warning(f"Ignoring wrong filters. key should be part of {correct_keys}")
-        overrides = {}
+    filter_keys = ['name', 'ip', 'status', 'image', 'plan', 'profile']
+    if [key for key in overrides if key not in filter_keys]:
+        warning(f"Ignoring wrong filters. key should be part of {filter_keys}")
+        overrides = {key: overrides[key] for key in filter_keys if key in overrides}
     if args.client is not None and args.client == 'all':
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
         args.client = ','.join(baseconfig.clients)
@@ -773,10 +773,15 @@ def list_vm(args):
                 profile = vm.get('profile', '')
                 vminfo = [name, client, status, ip, source, plan, profile]
                 if overrides:
-                    for key in ['name', 'status', 'image', 'plan', 'profile']:
-                        if key in overrides and vm.get(key) == overrides[key]:
-                            vmstable.add_row(vminfo)
+                    match = True
+                    for key in overrides:
+                        if (overrides[key] is None and vm.get(key) is not None)\
+                           or (overrides[key] is not None and vm.get(key) is None)\
+                           or not vm[key] in overrides[key]:
+                            match = False
                             break
+                    if match:
+                        vmstable.add_row(vminfo)
                 else:
                     vmstable.add_row(vminfo)
         print(vmstable)
@@ -800,10 +805,15 @@ def list_vm(args):
             profile = vm.get('profile', '')
             vminfo = [name, status, ip, source, plan, profile]
             if overrides:
-                for key in ['name', 'ip', 'status', 'image', 'plan', 'profile']:
-                    if key in overrides and overrides[key] in vm.get(key):
-                        vmstable.add_row(vminfo)
+                match = True
+                for key in overrides:
+                    if (overrides[key] is None and vm.get(key) is not None)\
+                       or (overrides[key] is not None and vm.get(key) is None)\
+                       or not vm[key] in overrides[key]:
+                        match = False
                         break
+                if match:
+                    vmstable.add_row(vminfo)
             else:
                 vmstable.add_row(vminfo)
         print(vmstable)
