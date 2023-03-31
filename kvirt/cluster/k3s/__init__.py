@@ -115,7 +115,7 @@ def create(config, plandir, cluster, overrides):
     cluster = data.get('cluster')
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if os.path.exists(clusterdir):
-        msg = f"Please remove existing directory {clusterdir} first..."
+        msg = f"Remove existing directory {clusterdir} or use --force"
         return {'result': 'failure', 'reason': msg}
     if which('kubectl') is None:
         get_kubectl()

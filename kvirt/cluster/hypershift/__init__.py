@@ -275,7 +275,7 @@ def create(config, plandir, cluster, overrides):
             if existing_workers:
                 data['workers'] += len(existing_workers)
         else:
-            msg = f"Remove existing {clusterdir}"
+            msg = f"Remove existing directory {clusterdir} or use --force"
             return {'result': 'failure', 'reason': msg}
     else:
         os.makedirs(f"{clusterdir}/auth")
@@ -312,7 +312,6 @@ def create(config, plandir, cluster, overrides):
             hypercmd += f"-e KUBECONFIG=/k/{kubeconfig} -v {kubeconfigdir}:/k {data['operator_image']} install"
             call(hypercmd, shell=True)
             sleep(120)
-    call("oc wait --for=condition=Ready pod -l app=operator -n hypershift --timeout=300s", shell=True)
     data['basedir'] = '/workdir' if container_mode() else '.'
     supported_data = yaml.safe_load(os.popen("oc get cm/supported-versions -o yaml -n hypershift").read())['data']
     supported_versions = supported_versions = supported_data['supported-versions']

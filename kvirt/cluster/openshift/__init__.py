@@ -719,10 +719,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if os.path.exists(clusterdir):
         if [v for v in config.k.list() if v.get('plan', 'kvirt') == cluster]:
-            msg = f"Please remove existing directory {clusterdir} first..."
+            msg = f"Remove existing directory {clusterdir} or use --force"
             return {'result': 'failure', 'reason': msg}
         else:
-            pprint(f"Removing directory {clusterdir}")
+            pprint(f"Removing existing directory {clusterdir}")
             rmtree(clusterdir)
     os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
     if version == 'ci':

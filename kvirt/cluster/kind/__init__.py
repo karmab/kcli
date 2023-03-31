@@ -22,7 +22,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         return {'result': 'failure', 'reason': msg}
     clusterdir = os.path.expanduser("~/.kcli/clusters/%s" % cluster)
     if os.path.exists(clusterdir):
-        msg = "Please remove existing directory %s first..." % clusterdir
+        msg = f"Remove existing directory {clusterdir} or use --force"
         return {'result': 'failure', 'reason': msg}
     if not os.path.exists(clusterdir):
         os.makedirs(clusterdir)
