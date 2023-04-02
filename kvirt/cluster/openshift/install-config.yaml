@@ -1,23 +1,19 @@
-{% set network_type = network_type|default('OpenShiftSDN') %}
+{% if not cluster_networks %}
 {% set cluster_network_ipv4 = {"cidr": cluster_network_ipv4, "hostPrefix": 23} %}
 {% set cluster_network_ipv6 = {"cidr": cluster_network_ipv6, "hostPrefix": 64} %}
+{% set cluster_networks = [cluster_network_ipv4] + [cluster_network_ipv6] if dualstack|default(False) else [cluster_network_ipv6] if ipv6 else [cluster_network_ipv4] %} 
+{% endif %}
+
+{% if not service_networks %}
 {% set service_network_ipv4 = [service_network_ipv4] %}
 {% set service_network_ipv6 = [service_network_ipv6] %}
+{% set service_networks = [service_network_ipv4] + [service_network_ipv6] if dualstack|default(False) else [service_network_ipv6] if ipv6 else [service_network_ipv4] %} 
+{% endif %}
+
 {% set machine_cidr_ipv4 = ["10.0.0.0/16"] %}
 {% set machine_cidr_ipv6 = ["fc00::/48"] %}
-{% if dualstack|default(False) %}
-{% set machine_cidrs = machine_cidr_ipv4 + machine_cidr_ipv6 %}
-{% set cluster_networks = [cluster_network_ipv4] + [cluster_network_ipv6] %}
-{% set service_networks = service_network_ipv4 + service_network_ipv6 %}
-{% elif ipv6 %}
-{% set machine_cidrs = machine_cidr_ipv6 %}
-{% set cluster_networks = [cluster_network_ipv6] %}
-{% set service_networks = service_network_ipv6 %}
-{% else %}
-{% set machine_cidrs = machine_cidr_ipv4 %}
-{% set cluster_networks = [cluster_network_ipv4] %}
-{% set service_networks = service_network_ipv4 %}
-{% endif %}
+{% set machine_cidrs = machine_cidr_ipv4 + machine_cidr_ipv6 if dualstack|default(False) else machine_cidr_ipv6 if ipv6 else machine_cidr_ipv4 %}
+
 apiVersion: v1
 {% if fips %}
 fips: True
