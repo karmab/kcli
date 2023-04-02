@@ -97,7 +97,8 @@ class Kbaseconfig:
         elif inifile is None:
             defaultclient = 'local'
             _type = 'kvm'
-            if not os.path.exists('/var/run/libvirt/libvirt-sock'):
+            if not os.path.exists('/var/run/libvirt/libvirt-sock')\
+               and not os.path.exists('/var/run/libvirt/libvirt-admin-sock'):
                 if os.path.exists('/i_am_a_container') and os.environ.get('KUBERNETES_SERVICE_HOST') is not None:
                     _type = 'kubevirt'
                 else:
