@@ -8,8 +8,10 @@ until oc get crd/agentserviceconfigs.agent-install.openshift.io >/dev/null 2>&1 
 until oc get crd/clusterimagesets.hive.openshift.io >/dev/null 2>&1 ; do sleep 1 ; done
 
 if [ "$(which openshift-install)" == "" ] ; then 
-  echo openshift-install needs to be in your path
-  exit 1
+  VERSION={{ version|default('stable') }}
+  TAG={{ tag|default('4.12') }}
+  kcli download openshift-install -P version=$VERSION -P tag=$TAG
+  export PATH=.:$PATH
 fi
 
 export RHCOS_ISO=$(openshift-install coreos print-stream-json | jq -r '.["architectures"]["x86_64"]["artifacts"]["metal"]["formats"]["iso"]["disk"]["location"]')
