@@ -7,7 +7,7 @@
 {% if not service_networks %}
 {% set service_network_ipv4 = [service_network_ipv4] %}
 {% set service_network_ipv6 = [service_network_ipv6] %}
-{% set service_networks = [service_network_ipv4] + [service_network_ipv6] if dualstack|default(False) else [service_network_ipv6] if ipv6 else [service_network_ipv4] %} 
+{% set service_networks = [service_network_ipv4] + [service_network_ipv6] if dualstack|default(False) else service_network_ipv6 if ipv6 else service_network_ipv4 %}
 {% endif %}
 
 {% set machine_cidr_ipv4 = ["10.0.0.0/16"] %}

@@ -935,9 +935,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         data['pull_secret'] = json.dumps(auths)
     else:
         data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
-    # if platform == 'gcp':
-    #    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = os.path.expanduser(config.ini[config.client]['credentials'])
-    #    data['region'] = k.region
     installconfig = config.process_inputfile(cluster, f"{plandir}/install-config.yaml", overrides=data)
     with open(f"{clusterdir}/install-config.yaml", 'w') as f:
         f.write(installconfig)
