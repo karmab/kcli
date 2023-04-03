@@ -1,0 +1,22 @@
+name: KUBEADM-NIGHTLY-CI
+on:
+  schedule:
+    - cron: '02 21 * * *'
+
+env:
+ HOME: /root
+ PYTHONUNBUFFERED: true
+ PLAN: ci-kubeadm
+ CLUSTERPROFILE: sample-kubeadm-default
+ EXTRAPARAMS: ""
+
+jobs:
+    deploy-kubeadm:
+      runs-on: libvirt
+      steps:
+       - uses: actions/checkout@v2
+       - run: git pull origin ${GITHUB_REF##*/}
+       - name: Install kcli
+         run: curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
+       - name: Deploy Kubeadm on libvirt
+         run: kcli create cluster generic -P clusterprofile=$CLUSTERPROFILE $EXTRAPARAMS $PLAN --force

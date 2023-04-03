@@ -1,0 +1,33 @@
+name: KUBEADM-CI
+on:
+  workflow_dispatch:
+    inputs:
+      PLAN:
+        description: 'Plan Name'
+        required: true
+        default: ci-kubeadm
+      CLUSTERPROFILE:
+        description: 'Cluster Profile'
+        required: true
+        default: "sample-kubeadm-default"
+      EXTRAPARAMS:
+        description: 'Extra params'
+        default: ''
+
+env:
+ HOME: /root
+ PYTHONUNBUFFERED: true
+ PLAN: ${{github.event.inputs.PLAN}}
+ CLUSTERPROFILE: ${{github.event.inputs.CLUSTERPROFILE}}
+ EXTRAPARAMS: ${{github.event.inputs.EXTRAPARAMS}}
+
+jobs:
+    deploy-kubeadm:
+      runs-on: libvirt
+      steps:
+       - uses: actions/checkout@v2
+       - run: git pull origin ${GITHUB_REF##*/}
+       - name: Install kcli
+         run: curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
+       - name: Deploy Kubeadm on libvirt
+         run: kcli create cluster generic -P clusterprofile=$CLUSTERPROFILE $EXTRAPARAMS $PLAN --force
