@@ -63,5 +63,12 @@
    origin: bootstrap.sh
  - path: /root/deploy.sh
    origin: deploy_ctlplanes.sh
+{% if engine == 'containerd' %}
+ - path: /etc/crictl.yaml
+   content: |
+     runtime-endpoint: unix:///run/containerd/containerd.sock
+     image-endpoint: unix:///run/containerd/containerd.sock
+     timeout: 10
+{% endif %}
  scripts:
  - deploy.sh
