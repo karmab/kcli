@@ -47,7 +47,6 @@ curl -L -o /etc/yum.repos.d/devel:kubic:libcontainers:stable:cri-o:$CRIO_VERSION
 dnf -y install containers-common-1-6.module_el8.6.0+954+963caf36
 dnf -y install cri-o conntrack
 sed -i 's@conmon = .*@conmon = "/bin/conmon"@' /etc/crio/crio.conf
-[ "$TARGET" == 'fedora' ]  && sed -i 's/SystemdCgroup = .*/SystemdCgroup = true/' /etc/containerd/config.toml
 {% if HTTP_PROXY is defined %}
 mkdir /etc/systemd/system/crio.service.d
 cat > /etc/systemd/system/crio.service.d/http_proxy.conf << EOF
@@ -75,6 +74,7 @@ yum-config-manager --add-repo https://download.docker.com/linux/$TARGET/docker-c
 dnf install -y containerd.io
 mkdir -p /etc/containerd
 containerd config default > /etc/containerd/config.toml
+[ "$TARGET" == 'fedora' ] && sed -i 's/SystemdCgroup = .*/SystemdCgroup = true/' /etc/containerd/config.toml
 {% if HTTP_PROXY is defined %}
 mkdir /etc/systemd/system/containerd.service.d
 cat > /etc/systemd/system/containerd.service.d/http_proxy.conf << EOF
