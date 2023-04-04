@@ -23,7 +23,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
 from ipaddress import ip_address, ip_network
 from random import choice
 from kvirt import common
-from kvirt.common import error, pprint, warning, container_mode, ssh, scp
+from kvirt.common import error, pprint, warning, container_mode, ssh, scp, NoAliasDumper
 from kvirt.jinjafilters import jinjafilters
 from kvirt.cluster import kind
 from kvirt.cluster import microshift
@@ -43,11 +43,6 @@ import sys
 from subprocess import call
 from tempfile import TemporaryDirectory
 from time import sleep
-
-
-class NoAliasDumper(yaml.SafeDumper):
-    def ignore_aliases(self, data):
-        return True
 
 
 def other_client(profile, clients):

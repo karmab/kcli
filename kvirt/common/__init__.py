@@ -31,6 +31,12 @@ from time import sleep
 from uuid import UUID
 import yaml
 
+
+class NoAliasDumper(yaml.SafeDumper):
+    def ignore_aliases(self, data):
+        return True
+
+
 ceo_yaml = """apiVersion: operator.openshift.io/v1
 kind: Etcd
 metadata:
@@ -1473,7 +1479,7 @@ def pretty_print(o, value=False):
 
     :param o:
     """
-    data = yaml.dump(o, default_flow_style=False, indent=2, allow_unicode=True)
+    data = yaml.dump(o, default_flow_style=False, indent=2, allow_unicode=True, Dumper=NoAliasDumper)
     data = data.replace("'", '').replace('\n\n', '\n').replace('#cloud-config', '|\n            #cloud-config')
     if not value:
         print(data)
