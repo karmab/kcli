@@ -30,19 +30,13 @@
    mode: 644
 {% endif %}
  - registry.yml
- - path: /root/ctlplanecmd.sh
-   origin: ~/.kcli/clusters/{{ cluster }}/ctlplanecmd.sh
- - path: /root/admin.conf
-   origin: ~/.kcli/clusters/{{ cluster }}/auth/kubeconfig
 {% if eksd %}
  - eksd.sh
 {% endif %}
  - path: /root/pre.sh
    origin: pre_{{ 'ubuntu' if ubuntu|default(False) else 'el' }}.sh
- - path: /root/ctlplanes.sh
-   origin: ctlplanes_extra.sh
- - path: /root/deploy.sh
-   origin: deploy_ctlplanes.sh
+ - join.sh
+ - deploy.sh
 {% if engine == 'containerd' %}
  - path: /etc/crictl.yaml
    content: |
@@ -50,6 +44,6 @@
      image-endpoint: unix:///run/containerd/containerd.sock
      timeout: 10
 {% endif %}
- scripts:
- - deploy.sh
+ cmds:
+ - bash /root/deploy.sh
 {% endfor %}

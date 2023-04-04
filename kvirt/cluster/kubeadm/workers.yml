@@ -17,18 +17,13 @@
  nets: {{ [network] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
  files:
- - path: /root/join.sh
-   origin: ~/.kcli/clusters/{{ cluster }}/join.sh
- - path: /root/admin.conf
-   origin: ~/.kcli/clusters/{{ cluster }}/auth/kubeconfig
 {% if eksd %}
  - eksd.sh
 {% endif %}
  - path: /root/pre.sh
    origin: pre_{{ 'ubuntu' if ubuntu|default(False) else 'el' }}.sh
- - workers.sh
- - path: /root/deploy.sh
-   origin: deploy_workers.sh
+ - deploy.sh
+ - join.sh
 {% if config_type == 'gcp' %}
  - path: /usr/local/bin/gcp-hack.sh
    origin: gcp-hack.sh
@@ -44,6 +39,6 @@
      image-endpoint: unix:///run/containerd/containerd.sock
      timeout: 10
 {% endif %}
- scripts:
- - deploy.sh
+ cmds:
+ - bash /root/deploy.sh
 {% endfor %}

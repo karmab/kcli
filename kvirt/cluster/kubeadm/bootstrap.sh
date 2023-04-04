@@ -11,16 +11,18 @@ API_IP={{ "api.%s.sslip.io" % api_ip.replace('.', '-').replace(':', '-') }}
 API_IP={{ api_ip }}
 {% endif %}
 
+DOMAIN={{ domain }}
+
 # initialize cluster
-kubeadm certs certificate-key > /root/certificate-key.txt
-CERTKEY=$(cat /root/certificate-key.txt)
-kubeadm init --control-plane-endpoint "${API_IP}:6443" --pod-network-cidr $CIDR --certificate-key $CERTKEY --upload-certs {{ '--image-repository public.ecr.aws/eks-distro/kubernetes --kubernetes-version $EKSD_API_VERSION' if eksd else '' }}
+CERTKEY={{ cert_key }}
+TOKEN={{ token }}
+kubeadm init --control-plane-endpoint "${API_IP}:6443" --pod-network-cidr $CIDR --certificate-key $CERTKEY --upload-certs {{ '--image-repository public.ecr.aws/eks-distro/kubernetes --kubernetes-version $EKSD_API_VERSION' if eksd else '' }} --token $TOKEN --token-ttl 0
 
 # config cluster credentials
-cp /etc/kubernetes/admin.conf /root/
-chown root:root /root/admin.conf
-export KUBECONFIG=/root/admin.conf
-echo "export KUBECONFIG=/root/admin.conf" >> /root/.bashrc
+cp /etc/kubernetes/admin.conf /root/kubeconfig
+chown root:root /root/kubeconfig
+export KUBECONFIG=/root/kubeconfig
+echo "export KUBECONFIG=/root/kubeconfig" >> /root/.bashrc
 
 {% if workers == 0 %}
 # untaint ctlplane nodes when there are no workers
@@ -58,19 +60,6 @@ cilium install
 mkdir -p /root/.kube
 cp -i /etc/kubernetes/admin.conf /root/.kube/config
 chown root:root /root/.kube/config
-
-# join worker(s) to cluster
-TOKEN=`kubeadm token create --ttl 0`
-HASH=`openssl x509 -in /etc/kubernetes/pki/ca.crt -noout -pubkey | openssl rsa -pubin -outform DER 2>/dev/null | sha256sum | cut -d' ' -f1`
-CMD="kubeadm join ${API_IP}:6443 --token $TOKEN --discovery-token-ca-cert-hash sha256:$HASH"
-
-sleep 60
-
-CERTKEY=$(cat /root/certificate-key.txt)
-MASTERCMD="$CMD --control-plane --certificate-key $CERTKEY"
-echo $MASTERCMD > /root/ctlplanecmd.sh
-
-echo ${CMD} > /root/join.sh
 
 {% if ingress %}
 # (addon) install Ingress Controller
