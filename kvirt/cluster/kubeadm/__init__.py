@@ -1,18 +1,19 @@
 #!/usr/bin/env python
 
+from binascii import hexlify
 from kvirt.common import success, pprint, warning, info2, container_mode
-from kvirt.common import get_kubectl, kube_create_app, get_ssh_pub_key, _ssh_credentials, scp
+from kvirt.common import get_kubectl, kube_create_app, get_ssh_pub_key, _ssh_credentials, ssh
 from kvirt.defaults import UBUNTUS
 import os
 from random import choice
+from re import match
 from shutil import which
-from string import ascii_letters, digits
+from string import ascii_lowercase, ascii_letters, digits
 from subprocess import call
 from tempfile import NamedTemporaryFile
 from time import sleep
 import yaml
 
-# virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere']
 cloudplatforms = ['aws', 'gcp', 'ibm']
 
 
@@ -26,29 +27,33 @@ def scale(config, plandir, cluster, overrides):
     if not os.path.exists(clusterdir):
         warning(f"Creating {clusterdir} from your input (auth creds will be missing)")
         overrides['cluster'] = cluster
-        api_ip = overrides.get('api_ip')
-        if config.type not in cloudplatforms and api_ip is None:
-            msg = "Missing api_ip..."
-            return {'result': 'failure', 'reason': msg}
-        domain = overrides.get('domain')
-        if domain is None:
-            msg = "Missing domain..."
-            return {'result': 'failure', 'reason': msg}
-        os.mkdir(clusterdir)
-        source = "/root/join.sh"
-        destination = f"{clusterdir}/join.sh"
         first_ctlplane_vm = f"{cluster}-ctlplane-0"
         first_ctlplane_ip, first_ctlplane_vmport = _ssh_credentials(config.k, first_ctlplane_vm)[1:]
-        scpcmd = scp(first_ctlplane_vm, ip=first_ctlplane_ip, user='root', source=source, destination=destination,
-                     tunnel=config.tunnel, tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
-                     tunneluser=config.tunneluser, download=True, insecure=True, vmport=first_ctlplane_vmport)
-        os.system(scpcmd)
-        source = "/root/ctlplanecmd.sh"
-        destination = f"{clusterdir}/ctlplanecmd.sh"
-        scpcmd = scp(first_ctlplane_vm, ip=first_ctlplane_ip, user='root', source=source, destination=destination,
-                     tunnel=config.tunnel, tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
-                     tunneluser=config.tunneluser, download=True, insecure=True, vmport=first_ctlplane_vmport)
-        os.system(scpcmd)
+        api_ip = overrides.get('api_ip')
+        if config.type not in cloudplatforms and api_ip is None:
+            apicmd = "grep API_IP= /root/bootstrap.sh"
+            apicmd = ssh(first_ctlplane_vm, ip=first_ctlplane_ip, user='root', tunnel=config.tunnel,
+                         tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
+                         insecure=True, cmd=apicmd, vmport=first_ctlplane_vmport)
+            data['api_ip'] = os.popen(apicmd).read().strip().split('=')[1]
+        domain = overrides.get('domain')
+        if domain is None:
+            domaincmd = "grep DOMAIN= /root/bootstrap.sh"
+            domaincmd = ssh(first_ctlplane_vm, ip=first_ctlplane_ip, user='root', tunnel=config.tunnel,
+                            tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
+                            insecure=True, cmd=domaincmd, vmport=first_ctlplane_vmport)
+            data['domain'] = os.popen(domaincmd).read().strip().split('=')[1]
+        os.mkdir(clusterdir)
+        tokencmd = "grep TOKEN= /root/bootstrap.sh"
+        tokencmd = ssh(first_ctlplane_vm, ip=first_ctlplane_ip, user='root', tunnel=config.tunnel,
+                       tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
+                       insecure=True, cmd=tokencmd, vmport=first_ctlplane_vmport)
+        data['token'] = os.popen(tokencmd).read().strip().split('=')[1]
+        certkeycmd = "grep CERTKEY= /root/bootstrap.sh"
+        certkeycmd = ssh(first_ctlplane_vm, ip=first_ctlplane_ip, user='root', tunnel=config.tunnel,
+                         tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
+                         insecure=True, cmd=certkeycmd, vmport=first_ctlplane_vmport)
+        data['cert_key'] = os.popen(certkeycmd).read().strip().split('=')[1]
     if os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
         with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
             installparam = yaml.safe_load(install)
@@ -70,14 +75,18 @@ def scale(config, plandir, cluster, overrides):
         if overrides.get(role, 0) == 0:
             continue
         threaded = data.get('threaded', False) or data.get(f'{role}_threaded', False)
-        config.plan(plan, inputfile=f'{plandir}/{role}.yml', overrides=overrides, threaded=threaded)
+        result = config.plan(plan, inputfile=f'{plandir}/{role}.yml', overrides=overrides, threaded=threaded)
+        if result['result'] != 'success':
+            return result
+    return {'result': 'success'}
 
 
 def create(config, plandir, cluster, overrides):
     platform = config.type
     k = config.k
     data = {'kubetype': 'generic', 'sslip': False, 'domain': 'karmalabs.corp', 'wait_ready': False, 'extra_scripts': [],
-            'calico_version': None, 'autoscale': False}
+            'calico_version': None, 'autoscale': False, 'token': None, 'async': False}
+    async_install = data['async']
     data.update(overrides)
     if 'keys' not in overrides and get_ssh_pub_key() is None:
         msg = "No usable public key found, which is required for the deployment. Create one using ssh-keygen"
@@ -125,6 +134,19 @@ def create(config, plandir, cluster, overrides):
         pprint(f"Using keepalived virtual_router_id {virtual_router_id}")
         auth_pass = ''.join(choice(ascii_letters + digits) for i in range(5))
         data['auth_pass'] = auth_pass
+    valid_characters = ascii_lowercase + digits
+    token = data['token']
+    if token is not None:
+        if match(r"[a-z0-9]{6}.[a-z0-9]{16}", data['token']) is not None:
+            msg = "Incorrect token format. It should be [a-z0-9]{6}.[a-z0-9]{16}"
+            return {'result': 'failure', 'reason': msg}
+    else:
+        token1 = ''.join(choice(valid_characters) for i in range(6))
+        token2 = ''.join(choice(valid_characters) for i in range(16))
+        token = f'{token1}.{token2}'
+        data['token'] = token
+    cert_key = hexlify(os.urandom(32)).decode()
+    data['cert_key'] = hexlify(os.urandom(32)).decode()
     version = data.get('version')
     if version is not None and not str(version).startswith('1.'):
         msg = f"Invalid version {version}"
@@ -153,6 +175,8 @@ def create(config, plandir, cluster, overrides):
             if 'auth_pass' in data:
                 installparam['auth_pass'] = auth_pass
             installparam['plan'] = plan
+            installparam['token'] = token
+            installparam['cert_key'] = cert_key
             installparam['cluster'] = cluster
             installparam['kubetype'] = 'generic'
             installparam['image'] = image
@@ -185,6 +209,10 @@ def create(config, plandir, cluster, overrides):
     predata = config.process_inputfile(plan, f"{plandir}/{prefile}", overrides=data)
     with open(f"{clusterdir}/pre.sh", 'w') as f:
         f.write(predata)
+    if async_install:
+        success(f"Kubernetes cluster {cluster} deployed!!!")
+        info2(f"get kubeconfig from {cluster}-ctlplane-0 /root")
+        return {'result': 'success'}
     os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
     apps = data.get('apps', [])
     if apps:

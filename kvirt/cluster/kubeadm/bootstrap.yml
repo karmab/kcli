@@ -21,16 +21,14 @@
  reservedns: true
 {% endif %}
  domain: {{ domain }}
- wait: true
  notify: {{ notify }}
  notifycmd: {{ notifycmd }}
+{% if not async %}
+ wait: true
  finishfiles:
- - origin: /root/join.sh
-   path: ~/.kcli/clusters/{{ cluster }}/join.sh
  - origin: /etc/kubernetes/admin.conf
    path: ~/.kcli/clusters/{{ cluster }}/auth/kubeconfig
- - origin: /root/ctlplanecmd.sh
-   path: ~/.kcli/clusters/{{ cluster }}/ctlplanecmd.sh
+{% endif %}
  nets: {{ [primary_network] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
  files:
@@ -59,10 +57,8 @@
 {% endif %}
  - path: /root/pre.sh
    origin: pre_{{ 'ubuntu' if ubuntu|default(False) else 'el' }}.sh
- - path: /root/ctlplanes.sh
-   origin: bootstrap.sh
- - path: /root/deploy.sh
-   origin: deploy_ctlplanes.sh
+ - bootstrap.sh
+ - deploy.sh
 {% if engine == 'containerd' %}
  - path: /etc/crictl.yaml
    content: |
@@ -70,5 +66,5 @@
      image-endpoint: unix:///run/containerd/containerd.sock
      timeout: 10
 {% endif %}
- scripts:
- - deploy.sh
+ cmds:
+ - bash /root/deploy.sh
