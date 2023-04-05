@@ -310,6 +310,7 @@ def create(config, plandir, cluster, overrides):
             call(hypercmd, shell=True)
             hypercmd = "podman run -it --rm --security-opt label=disable --entrypoint=/usr/bin/hypershift "
             hypercmd += f"-e KUBECONFIG=/k/{kubeconfig} -v {kubeconfigdir}:/k {data['operator_image']} install"
+            hypercmd += f" --hypershift-image {data['operator_image']}"
             call(hypercmd, shell=True)
             sleep(120)
     data['basedir'] = '/workdir' if container_mode() else '.'
