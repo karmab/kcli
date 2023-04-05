@@ -1244,6 +1244,8 @@ class Ksphere:
         nm = vim.OvfManager.NetworkMapping(name=self.import_network, network=network)
         networkmapping.append(nm)
         host = self._getfirsthost(self.clu)
+        if host is not None:
+            pprint(f"Using host {host.name} for import")
         spec_params = vim.OvfManager.CreateImportSpecParams(diskProvisioning="thin", networkMapping=networkmapping,
                                                             hostSystem=host)
         import_spec = manager.CreateImportSpec(ovfd, resourcepool, datastore, spec_params)
@@ -1282,22 +1284,19 @@ class Ksphere:
     def report(self):
         si = self.si
         about = si.content.about
-        print(f"Host: {self.vcip}")
+        print(f"Vcenter: {self.vcip}")
         print(f"Datacenter: {self.dc.name}")
         print(f"Version: {about.version}")
         print(f"Api Version: {about.apiVersion}")
         print(f"Datacenter: {self.dc.name}")
         rootFolder = self.rootFolder
-        o = si.content.viewManager.CreateContainerView(rootFolder, [vim.HostSystem], True)
-        view = o.view
-        o.Destroy()
-        for h in view:
-            print(f"Host: {h.name}")
         o = si.content.viewManager.CreateContainerView(rootFolder, [vim.ComputeResource], True)
         view = o.view
         o.Destroy()
         for clu in view:
             print(f"Cluster: {clu.name}")
+            for h in clu.host:
+                print(f"Host: {h.name}")
             for dts in clu.datastore:
                 print(f"Pool: {dts.name}")
 
