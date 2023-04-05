@@ -820,11 +820,11 @@ class Kconfig(Kbaseconfig):
                     overrides['rhnuser'] = rhnuser
                     overrides['rhnpassword'] = rhnpassword
                 elif rhnak is not None and rhnorg is not None:
-                    overrides['rhnak'] = rhnak
+                    overrides['rhnactivationkey'] = rhnak
                     overrides['rhnorg'] = rhnorg
                 else:
-                    msg = "Rhn registration required but missing credentials."
-                    msg += "Define rhnuser/rhnpassword or rhnak/rhnorg"
+                    msg = "Rhn registration required but missing credentials. "
+                    msg += "Define rhnuser/rhnpassword or rhnactivationkey/rhnorg"
                     return {'result': 'failure', 'reason': msg}
             else:
                 warning(f"{name} will require manual subscription to Red Hat Network")
