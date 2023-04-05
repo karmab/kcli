@@ -1243,13 +1243,14 @@ class Ksphere:
         networkmapping = vim.OvfManager.NetworkMapping.Array()
         nm = vim.OvfManager.NetworkMapping(name=self.import_network, network=network)
         networkmapping.append(nm)
-        spec_params = vim.OvfManager.CreateImportSpecParams(diskProvisioning="thin", networkMapping=networkmapping)
+        host = self._getfirsthost(self.clu)
+        spec_params = vim.OvfManager.CreateImportSpecParams(diskProvisioning="thin", networkMapping=networkmapping,
+                                                            hostSystem=host)
         import_spec = manager.CreateImportSpec(ovfd, resourcepool, datastore, spec_params)
         lease = resourcepool.ImportVApp(import_spec.importSpec, vmFolder)
         while True:
             if lease.state == vim.HttpNfcLease.State.ready:
                 pprint("Uploading vmdk")
-                host = self._getfirsthost()
                 url = lease.info.deviceUrl[0].url.replace('*', host.name)
                 keepalive_thread = Thread(target=keep_lease_alive, args=(lease,))
                 keepalive_thread.start()
@@ -1268,14 +1269,15 @@ class Ksphere:
             os.remove(f'/tmp/{shortimage}')
         return {'result': 'success'}
 
-    def _getfirsthost(self):
+    def _getfirsthost(self, cluster):
         si = self.si
         rootFolder = self.rootFolder
-        o = si.content.viewManager.CreateContainerView(rootFolder, [vim.HostSystem], True)
+        o = si.content.viewManager.CreateContainerView(rootFolder, [vim.ComputeResource], True)
         view = o.view
         o.Destroy()
-        host = view[0] if view else None
-        return host
+        for clu in view:
+            if clu.name == cluster:
+                return clu.host[0]
 
     def report(self):
         si = self.si
