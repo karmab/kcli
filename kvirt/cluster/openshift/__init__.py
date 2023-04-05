@@ -8,7 +8,7 @@ import sys
 from ipaddress import ip_network
 from kvirt.common import error, pprint, success, warning, info2
 from kvirt.common import get_oc, pwd_path
-from kvirt.common import get_latest_fcos, generate_rhcos_iso, olm_app
+from kvirt.common import get_latest_fcos, generate_rhcos_iso, olm_app, get_commit_rhcos
 from kvirt.common import get_installer_rhcos
 from kvirt.common import ssh, scp, _ssh_credentials, get_ssh_pub_key, boot_baremetal_hosts
 from kvirt.defaults import LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG
@@ -158,17 +158,6 @@ def get_installer_minor(installer_version):
 def get_release_image():
     release_image = os.popen('openshift-install version').readlines()[2].split(" ")[2].strip()
     return release_image
-
-
-def get_rhcos_openstack_url():
-    for line in os.popen('openshift-install version').readlines():
-        if 'built from commit' in line:
-            commit_id = line.replace('built from commit ', '').strip()
-            break
-    r = urlopen(f"https://raw.githubusercontent.com/openshift/installer/{commit_id}/data/data/rhcos.json")
-    r = str(r.read(), 'utf-8').strip()
-    data = json.loads(r)
-    return f"{data['baseURI']}{data['images']['openstack']['path']}"
 
 
 def get_downstream_installer(devpreview=False, macosx=False, tag=None, debug=False, pull_secret='openshift_pull.json'):
@@ -790,7 +779,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 fcos_url = 'https://builds.coreos.fedoraproject.org/streams/stable.json'
                 image_url = get_latest_fcos(fcos_url, _type=image_type)
             else:
-                image_url = get_installer_rhcos(_type=image_type, region=region, arch=arch)
+                try:
+                    image_url = get_installer_rhcos(_type=image_type, region=region, arch=arch)
+                except:
+                    image_url = get_commit_rhcos(COMMIT_ID, _type=image_type, region=region)
         except:
             msg = f"Couldn't gather the {config.type} image associated to commit {COMMIT_ID}. "
             msg += "Force an image in your parameter file"
