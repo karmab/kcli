@@ -2419,6 +2419,12 @@ def download_helm(args):
     common.get_helm(version=overrides.get('version', 'latest'))
 
 
+def download_hypershift(args):
+    """Download Hypershift"""
+    overrides = handle_parameters(args.param, args.paramfile)
+    common.get_hypershift(version=overrides.get('version', 'latest'))
+
+
 def download_oc(args):
     """Download Oc"""
     overrides = handle_parameters(args.param, args.paramfile)

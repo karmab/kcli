@@ -1795,6 +1795,22 @@ def create_embed_ignition_cmd(name, poolpath, baseiso, podman=False, extra_args=
     return isocmd
 
 
+def get_hypershift(version='latest', macosx=False):
+    # SYSTEM = 'mac' if os.path.exists('/Users') else 'linux'
+    # arch = 'arm64' if os.uname().machine == 'aarch64' else 'x86_64'
+    # pprint("Downloading hypershift in current directory")
+    if which('podman') is None:
+        error("Please install podman first in order to install hypershift")
+        return 1
+    operator_image = f'quay.io/hypershift/hypershift-operator:{version}'
+    hypercmd = f"podman pull {operator_image} ;"
+    hypercmd += f"podman create --name hypershift-copy {operator_image} ;"
+    hypercmd += "podman cp hypershift-copy:/usr/bin/hypershift . ;"
+    hypercmd += "chmod 700 hypershift ;"
+    hypercmd += "podman rm -f hypershift-copy"
+    call(hypercmd, shell=True)
+
+
 def get_kubectl(version='latest'):
     SYSTEM = 'darwin' if os.path.exists('/Users') else 'linux'
     pprint("Downloading kubectl in current directory")
