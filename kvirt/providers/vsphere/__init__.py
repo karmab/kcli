@@ -823,9 +823,18 @@ class Ksphere:
         o = si.content.viewManager.CreateContainerView(rootFolder, [vim.VirtualMachine], True)
         vmlist = o.view
         o.Destroy()
-        return [v.name for v
-                in vmlist if v.config.template and
-                (v.summary is None or (v.summary is not None and v.summary.runtime.connectionState != 'orphaned'))]
+        results = [v for v in vmlist if v.config.template and
+                   (v.summary is None or (v.summary is not None and v.summary.runtime.connectionState != 'orphaned'))]
+        if self.debug:
+            debug_results = []
+            for v in results:
+                devices = v.config.hardware.device
+                for number, dev in enumerate(devices):
+                    if type(dev).__name__ == 'vim.vm.device.VirtualDisk':
+                        debug_results.append(f'{dev.backing.datastore.name}/{v.name}')
+            return debug_results
+        else:
+            return [v.name for v in results]
 
     def update_metadata(self, name, metatype, metavalue, append=False):
         si = self.si
