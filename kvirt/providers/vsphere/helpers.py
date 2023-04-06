@@ -69,10 +69,7 @@ def findvm(si, folder, name):
     view = si.content.viewManager.CreateContainerView(folder, [vim.VirtualMachine], True)
     vmlist = collectproperties(si, view=view, objtype=vim.VirtualMachine, pathset=['name'], includemors=True)
     vm = list(filter(lambda v: v['name'] == name, vmlist))
-    if len(vm) >= 1:
-        return vm[-1]['obj']
-    else:
-        return None
+    return vm[-1]['obj'] if len(vm) >= 1 else None
 
 
 def findvm2(si, folder, name, props=['runtime', 'config', 'summary', 'guest']):
@@ -85,11 +82,22 @@ def findvm2(si, folder, name, props=['runtime', 'config', 'summary', 'guest']):
     options = vmodl.query.PropertyCollector.RetrieveOptions()
     vmlist = prop_collector.RetrievePropertiesEx([filter_spec], options)
     vms = [o for o in vmlist.objects if o.obj.name == name]
-    if vms:
-        vm = vms[0]
-        return vm.obj, convert_properties(vms[0])
-    else:
-        return None, None
+    return (vms[0].obj, convert_properties(vms[0])) if vms else (None, None)
+
+
+def findvmdc(si, folder, name, datacenter):
+    view = si.content.viewManager.CreateContainerView(folder, [vim.VirtualMachine], True)
+    vmlist = collectproperties(si, view=view, objtype=vim.VirtualMachine, pathset=['name'], includemors=True)
+    vms = list(filter(lambda v: v['name'] == name, vmlist))
+    result = None, None
+    for vm in vms:
+        obj = vm['obj'].parent
+        while not isinstance(obj, vim.Datacenter):
+            obj = obj.parent
+        result = vm['obj'], obj.name
+        if obj.name == datacenter.name:
+            return result
+    return result
 
 
 def convert(octets, GB=True):
