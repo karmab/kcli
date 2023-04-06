@@ -521,7 +521,8 @@ The following parameters are specific to vsphere:
 - isofolder: Optional folder where to keep ISOs
 - dvs: Whether to gather DVS networks. Enabled by default, but can be set to False to speed up operations if you don't have dvs networks
 - import_network: Defaults to 'VM Network'. Network to use as part of the template created when downloading image
-- timeout: Defaults to 1800. Custom connectionPooltimeout
+- timeout: Defaults to 2700. Custom connectionPooltimeout
+- force_pool: Defaults to False. Whether to check source pool of image and relocate when it doesn't match specified pool
 
 Note that pool in Vsphere context refers to datastore.
 

@@ -34,7 +34,7 @@ from uuid import UUID
 class Ksphere:
     def __init__(self, host, user, password, datacenter, cluster, debug=False, isofolder=None,
                  filtervms=False, filteruser=False, filtertag=None, category='kcli', basefolder=None, dvs=True,
-                 import_network='VM Network', timeout=2700):
+                 import_network='VM Network', timeout=2700, force_pool=False):
         if hasattr(connect, 'SmartConnectNoSSL'):
             si = connect.SmartConnectNoSSL(host=host, port=443, user=user, pwd=password,
                                            connectionPoolTimeout=timeout)
@@ -63,7 +63,7 @@ class Ksphere:
         self.portgs = {}
         self.basefolder = basefolder
         self.import_network = import_network
-        return
+        self.force_pool = force_pool
 
     def set_networks(self):
         si = self.si
@@ -139,11 +139,25 @@ class Ksphere:
         else:
             resourcepool = clu.resourcePool
         if image is not None:
+            image = os.path.basename(image)
+            clonespec = createclonespec(resourcepool)
             rootFolder = self.rootFolder
             imageobj = findvm(si, rootFolder, image)
             if imageobj is None:
                 return {'result': 'failure', 'reason': f"Image {image} not found"}
-            clonespec = createclonespec(resourcepool)
+            if overrides.get('force_pool', self.force_pool):
+                datastores = self._datastores_datacenters()
+                if datastores[pool] != self.dc.name:
+                    return {'result': 'failure', 'reason': f"Pool {pool} doesn't belong to Datacenter {self.dc.name}"}
+                devices = imageobj.config.hardware.device
+                for number, dev in enumerate(devices):
+                    if type(dev).__name__ == 'vim.vm.device.VirtualDisk':
+                        if dev.backing.datastore.name != pool:
+                            warning(f"Vm {name} will be relocated to pool {pool}")
+                            relospec = vim.vm.RelocateSpec()
+                            relospec.datastore = find(si, rootFolder, vim.Datastore, pool)
+                            relospec.pool = resourcepool
+                            clonespec.location = relospec
             confspec = vim.vm.ConfigSpec()
             confspec.flags = vim.vm.FlagInfo()
             confspec.flags.diskUuidEnabled = True
@@ -1551,3 +1565,16 @@ class Ksphere:
     def update_flavor(self, name, flavor):
         print("not implemented")
         return {'result': 'success'}
+
+    def _datastores_datacenters(self):
+        si = self.si
+        rootFolder = self.rootFolder
+        o = si.content.viewManager.CreateContainerView(rootFolder, [vim.Datacenter], True)
+        view = o.view
+        o.Destroy()
+        datastores = {}
+        for datacenter in view:
+            for clu in datacenter.hostFolder.childEntity:
+                for datastore in clu.datastore:
+                    datastores[datastore.name] = datacenter.name
+        return datastores
