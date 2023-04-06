@@ -34,7 +34,7 @@ from uuid import UUID
 class Ksphere:
     def __init__(self, host, user, password, datacenter, cluster, debug=False, isofolder=None,
                  filtervms=False, filteruser=False, filtertag=None, category='kcli', basefolder=None, dvs=True,
-                 import_network='VM Network', timeout=1800):
+                 import_network='VM Network', timeout=2700):
         if hasattr(connect, 'SmartConnectNoSSL'):
             si = connect.SmartConnectNoSSL(host=host, port=443, user=user, pwd=password,
                                            connectionPoolTimeout=timeout)

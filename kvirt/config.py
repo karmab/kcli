@@ -368,7 +368,7 @@ class Kconfig(Kbaseconfig):
                 basefolder = self.options.get('basefolder')
                 dvs = self.options.get('dvs', True)
                 import_network = self.options.get('import_network', 'VM Network')
-                timeout = self.options.get('timeout', 1800)
+                timeout = self.options.get('timeout', 2700)
                 from kvirt.providers.vsphere import Ksphere
                 k = Ksphere(self.host, user, password, datacenter, cluster, isofolder=isofolder, debug=debug,
                             filtervms=filtervms, filteruser=filteruser, filtertag=filtertag, category=category,
