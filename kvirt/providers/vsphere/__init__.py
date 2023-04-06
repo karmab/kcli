@@ -1156,9 +1156,6 @@ class Ksphere:
         resourcepool = clu.resourcePool
         vmFolder = self.dc.vmFolder
         manager = si.content.ovfManager
-        network = find(si, rootFolder, vim.Network, self.import_network)
-        if network is None:
-            return {'result': 'failure', 'reason': f"Import network {self.import_network} not found"}
         shortimage = os.path.basename(url).split('?')[0]
         name = name.replace('.ova', '').replace('.x86_64', '') if name is not None else shortimage
         iso = True if shortimage.endswith('.iso') or name.endswith('.iso') else False
@@ -1240,15 +1237,19 @@ class Ksphere:
         ovfd = open(ovf_path).read()
         ovfd = re.sub('<Name>.*</Name>', f'<Name>{name}</Name>', ovfd)
         datastore = find(si, rootFolder, vim.Datastore, pool)
+        network = None
+        for host in self._get_hosts(self.clu):
+            networks = [n for n in host.network if n.name == self.import_network]
+            if networks:
+                pprint(f"Using esxi host {host.name} for import")
+                network = networks[0]
+                break
+        if network is None:
+            error("Couldnt find a esxi host in the cluster to run the import")
+            sys.exit(1)
         networkmapping = vim.OvfManager.NetworkMapping.Array()
         nm = vim.OvfManager.NetworkMapping(name=self.import_network, network=network)
         networkmapping.append(nm)
-        host = self._getfirsthost(self.clu)
-        if host is not None:
-            pprint(f"Using esxi host {host.name} for import")
-        else:
-            error("Couldnt find a esxi host in the cluster to run the import")
-            sys.exit(1)
         spec_params = vim.OvfManager.CreateImportSpecParams(diskProvisioning="thin", networkMapping=networkmapping,
                                                             hostSystem=host)
         import_spec = manager.CreateImportSpec(ovfd, resourcepool, datastore, spec_params)
@@ -1277,7 +1278,7 @@ class Ksphere:
             os.remove(f'/tmp/{shortimage}')
         return {'result': 'success'}
 
-    def _getfirsthost(self, cluster):
+    def _get_hosts(self, cluster):
         si = self.si
         rootFolder = self.rootFolder
         o = si.content.viewManager.CreateContainerView(rootFolder, [vim.ComputeResource], True)
@@ -1285,7 +1286,8 @@ class Ksphere:
         o.Destroy()
         for clu in view:
             if clu.name == cluster:
-                return clu.host[0]
+                return clu.host
+        return []
 
     def report(self):
         si = self.si
