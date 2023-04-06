@@ -818,23 +818,20 @@ class Ksphere:
     def volumes(self, iso=False):
         if iso:
             return self._getisos()
+        results = []
         si = self.si
         rootFolder = self.rootFolder
         o = si.content.viewManager.CreateContainerView(rootFolder, [vim.VirtualMachine], True)
         vmlist = o.view
         o.Destroy()
-        results = [v for v in vmlist if v.config.template and
-                   (v.summary is None or (v.summary is not None and v.summary.runtime.connectionState != 'orphaned'))]
-        if self.debug:
-            debug_results = []
-            for v in results:
-                devices = v.config.hardware.device
-                for number, dev in enumerate(devices):
-                    if type(dev).__name__ == 'vim.vm.device.VirtualDisk':
-                        debug_results.append(f'{dev.backing.datastore.name}/{v.name}')
-            return debug_results
-        else:
-            return [v.name for v in results]
+        vms = [v for v in vmlist if v.config.template and
+               (v.summary is None or (v.summary is not None and v.summary.runtime.connectionState != 'orphaned'))]
+        for v in sorted(vms, key=lambda x: x.name):
+            devices = v.config.hardware.device
+            for number, dev in enumerate(devices):
+                if type(dev).__name__ == 'vim.vm.device.VirtualDisk':
+                    results.append(f'{dev.backing.datastore.name}/{v.name}')
+        return sorted(results)
 
     def update_metadata(self, name, metatype, metavalue, append=False):
         si = self.si
@@ -1173,7 +1170,7 @@ class Ksphere:
             msg = "qemu-img is required for conversion"
             error(msg)
             return {'result': 'failure', 'reason': msg}
-        if shortimage in self.volumes():
+        if shortimage in [os.path.basename(v) for v in self.volumes()]:
             pprint(f"Template {shortimage} already there")
             return {'result': 'success'}
         if not find(si, rootFolder, vim.Datastore, pool):
