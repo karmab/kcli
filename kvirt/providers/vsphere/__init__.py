@@ -1285,20 +1285,20 @@ class Ksphere:
         si = self.si
         about = si.content.about
         print(f"Vcenter: {self.vcip}")
-        print(f"Datacenter: {self.dc.name}")
         print(f"Version: {about.version}")
         print(f"Api Version: {about.apiVersion}")
-        print(f"Datacenter: {self.dc.name}")
         rootFolder = self.rootFolder
-        o = si.content.viewManager.CreateContainerView(rootFolder, [vim.ComputeResource], True)
+        o = si.content.viewManager.CreateContainerView(rootFolder, [vim.Datacenter], True)
         view = o.view
         o.Destroy()
-        for clu in view:
-            print(f"Cluster: {clu.name}")
-            for h in clu.host:
-                print(f"Host: {h.name}")
-            for dts in clu.datastore:
-                print(f"Pool: {dts.name}")
+        for datacenter in view:
+            print(f"Datacenter: {datacenter.name}")
+            for clu in datacenter.hostFolder.childEntity:
+                print(f"Cluster: {clu.name}")
+                for dts in clu.datastore:
+                    print(f"Pool: {dts.name}")
+                for h in clu.host:
+                    print(f"Host: {h.name}")
 
     def delete_image(self, image, pool=None):
         si = self.si
