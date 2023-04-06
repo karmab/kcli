@@ -1245,10 +1245,16 @@ class Ksphere:
         networkmapping.append(nm)
         host = self._getfirsthost(self.clu)
         if host is not None:
-            pprint(f"Using host {host.name} for import")
+            pprint(f"Using esxi host {host.name} for import")
+        else:
+            error("Couldnt find a esxi host in the cluster to run the import")
+            sys.exit(1)
         spec_params = vim.OvfManager.CreateImportSpecParams(diskProvisioning="thin", networkMapping=networkmapping,
                                                             hostSystem=host)
         import_spec = manager.CreateImportSpec(ovfd, resourcepool, datastore, spec_params)
+        if import_spec.error:
+            error(f"Import spec error: {import_spec.error}")
+            sys.exit(1)
         lease = resourcepool.ImportVApp(import_spec.importSpec, vmFolder)
         while True:
             if lease.state == vim.HttpNfcLease.State.ready:
@@ -1287,6 +1293,7 @@ class Ksphere:
         print(f"Vcenter: {self.vcip}")
         print(f"Version: {about.version}")
         print(f"Api Version: {about.apiVersion}")
+        print("")
         rootFolder = self.rootFolder
         o = si.content.viewManager.CreateContainerView(rootFolder, [vim.Datacenter], True)
         view = o.view
@@ -1298,7 +1305,10 @@ class Ksphere:
                 for dts in clu.datastore:
                     print(f"Pool: {dts.name}")
                 for h in clu.host:
-                    print(f"Host: {h.name}")
+                    print(f"ESXI Host: {h.name}")
+                for n in clu.network:
+                    print(f"Network: {n.name}")
+            print("")
 
     def delete_image(self, image, pool=None):
         si = self.si
