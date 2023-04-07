@@ -139,6 +139,7 @@ class Ksphere:
         else:
             resourcepool = clu.resourcePool
         if image is not None:
+            imagepool = image.split('/')[0] if '/' in image else None
             image = os.path.basename(image)
             clonespec = createclonespec(resourcepool)
             rootFolder = self.rootFolder
@@ -148,16 +149,17 @@ class Ksphere:
             datastores = self._datastores_datacenters()
             if datastores[pool] != self.dc.name:
                 return {'result': 'failure', 'reason': f"Pool {pool} doesn't belong to Datacenter {self.dc.name}"}
-            devices = imageobj.config.hardware.device
-            for number, dev in enumerate(devices):
-                if type(dev).__name__ == 'vim.vm.device.VirtualDisk':
-                    imagepool = dev.backing.datastore.name
-                    if imagedc != self.dc.name or (overrides.get('force_pool', self.force_pool) and imagepool != pool):
-                        warning(f"Vm {name} will be relocated from pool {imagepool} to {pool}")
-                        relospec = vim.vm.RelocateSpec()
-                        relospec.datastore = find(si, rootFolder, vim.Datastore, pool)
-                        relospec.pool = resourcepool
-                        clonespec.location = relospec
+            if imagepool is None:
+                devices = imageobj.config.hardware.device
+                for number, dev in enumerate(devices):
+                    if type(dev).__name__ == 'vim.vm.device.VirtualDisk':
+                        imagepool = dev.backing.datastore.name
+            if imagedc != self.dc.name or (overrides.get('force_pool', self.force_pool) and imagepool != pool):
+                warning(f"Vm {name} will be relocated from pool {imagepool} to {pool}")
+                relospec = vim.vm.RelocateSpec()
+                relospec.datastore = find(si, rootFolder, vim.Datastore, pool)
+                relospec.pool = resourcepool
+                clonespec.location = relospec
             confspec = vim.vm.ConfigSpec()
             confspec.flags = vim.vm.FlagInfo()
             confspec.flags.diskUuidEnabled = True
