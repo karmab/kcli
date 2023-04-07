@@ -4,6 +4,7 @@ info: |
     Any install_k3s_* argument can be specified. default channel is stable
     default sdn is flannel, although minimal support for cilium is provided if choosing this sdn
     sdn can be unset to force no installation of any CNI
+    Additional apps can be installed at deployment time through the apps array
 ctlplanes: 1
 workers: 0
 sdn: flannel
@@ -42,3 +43,4 @@ tempkey: false
 auth_pass:
 virtual_router_id:
 autoscale: False
+apps: []

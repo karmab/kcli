@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from kvirt.common import success, pprint, warning, get_kubectl, info2, container_mode
+from kvirt.common import success, pprint, warning, get_kubectl, info2, container_mode, kube_create_app
 import os
 import re
 from random import choice
@@ -165,6 +165,20 @@ def create(config, plandir, cluster, overrides):
             os.chdir(os.path.expanduser("~/.kcli"))
             threaded = data.get('threaded', False) or data.get('workers_threaded', False)
             config.plan(plan, inputfile=f'{plandir}/workers.yml', overrides=nodes_overrides, threaded=threaded)
+    os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
+    apps = data.get('apps', [])
+    if apps:
+        appdir = f"{plandir}/apps"
+        os.environ["PATH"] = f'{os.getcwd()}:{os.environ["PATH"]}'
+        for app in apps:
+            app_data = data.copy()
+            if not os.path.exists(appdir):
+                warning(f"Skipping unsupported app {app}")
+            else:
+                pprint(f"Adding app {app}")
+                if f'{app}_version' not in overrides:
+                    app_data[f'{app}_version'] = 'latest'
+                kube_create_app(config, app, appdir, overrides=app_data)
     if autoscale:
         config.import_in_kube(network=network, secure=True)
         with NamedTemporaryFile(mode='w+t') as temp:
