@@ -27,7 +27,7 @@ from zipfile import ZipFile
 from kvirt.providers.vsphere.helpers import find, collectproperties, findvm, createfolder, changecd, convert, waitForMe
 from kvirt.providers.vsphere.helpers import createscsispec, creatediskspec, createdvsnicspec, createclonespec
 from kvirt.providers.vsphere.helpers import createnicspec, createisospec, deletedirectory, dssize, keep_lease_alive
-from kvirt.providers.vsphere.helpers import create_filter_spec, get_all_obj, convert_properties, findvm2
+from kvirt.providers.vsphere.helpers import create_filter_spec, get_all_obj, convert_properties, findvm2, findvmdc
 from uuid import UUID
 
 
@@ -142,22 +142,22 @@ class Ksphere:
             image = os.path.basename(image)
             clonespec = createclonespec(resourcepool)
             rootFolder = self.rootFolder
-            imageobj = findvm(si, rootFolder, image)
+            imageobj, imagedc = findvmdc(si, rootFolder, image, self.dc)
             if imageobj is None:
                 return {'result': 'failure', 'reason': f"Image {image} not found"}
-            if overrides.get('force_pool', self.force_pool):
-                datastores = self._datastores_datacenters()
-                if datastores[pool] != self.dc.name:
-                    return {'result': 'failure', 'reason': f"Pool {pool} doesn't belong to Datacenter {self.dc.name}"}
-                devices = imageobj.config.hardware.device
-                for number, dev in enumerate(devices):
-                    if type(dev).__name__ == 'vim.vm.device.VirtualDisk':
-                        if dev.backing.datastore.name != pool:
-                            warning(f"Vm {name} will be relocated to pool {pool}")
-                            relospec = vim.vm.RelocateSpec()
-                            relospec.datastore = find(si, rootFolder, vim.Datastore, pool)
-                            relospec.pool = resourcepool
-                            clonespec.location = relospec
+            datastores = self._datastores_datacenters()
+            if datastores[pool] != self.dc.name:
+                return {'result': 'failure', 'reason': f"Pool {pool} doesn't belong to Datacenter {self.dc.name}"}
+            devices = imageobj.config.hardware.device
+            for number, dev in enumerate(devices):
+                if type(dev).__name__ == 'vim.vm.device.VirtualDisk':
+                    imagepool = dev.backing.datastore.name
+                    if imagedc != self.dc.name or (overrides.get('force_pool', self.force_pool) and imagepool != pool):
+                        warning(f"Vm {name} will be relocated from pool {imagepool} to {pool}")
+                        relospec = vim.vm.RelocateSpec()
+                        relospec.datastore = find(si, rootFolder, vim.Datastore, pool)
+                        relospec.pool = resourcepool
+                        clonespec.location = relospec
             confspec = vim.vm.ConfigSpec()
             confspec.flags = vim.vm.FlagInfo()
             confspec.flags.diskUuidEnabled = True
