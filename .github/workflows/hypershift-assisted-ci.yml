@@ -1,15 +1,15 @@
-name: SNO-CI
+name: HYPERSHIFT-ASSISTED-CI
 on:
   workflow_dispatch:
     inputs:
       CLUSTER:
         description: 'Cluster'
         required: true
-        default: ci-sno
+        default: ci-hypershift-assisted
       PARAMFILE:
         description: 'paramfile'
         required: false
-        default: openshift-ci-paramfiles/sno.yml
+        default: openshift-ci-paramfiles/hypershift_assisted.yml
       EXTRAPARAMS:
         description: 'Extra params'
         default: ''
@@ -29,6 +29,7 @@ on:
 env:
  HOME: /root
  PYTHONUNBUFFERED: true
+ KUBECONFIG: /root/.kcli/clusters/ci-libvirt/auth/kubeconfig
  CLUSTER: ${{github.event.inputs.CLUSTER}}
  INPUTFILE: ${{github.event.inputs.INPUTFILE}}
  PARAMFILE: ${{github.event.inputs.PARAMFILE}}
@@ -48,20 +49,22 @@ jobs:
            curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
            kcli create sushy-service
        - name: Delete old install
-         run: kcli delete cluster --yes $CLUSTER || true
+         run: |
+           kcli delete cluster --yes $CLUSTER || true
+           kcli delete plan --yes $CLUSTER-vms || true
 
-    deploy-baremetal-like-vm:
+    deploy-baremetal-like-vms:
       needs: requirements
       runs-on: libvirt
       steps:
-      - name: Deploy Baremetal like vm
+      - name: Deploy Baremetal like vms
         run: |
-          kcli -C local create vm -P uefi=true -P boot_order=true -P start=false -P memory=20480 -P numcpus=16 -P disks=[50] -P nets=[default] -P user=core -P plan=$CLUSTER -P kube=$CLUSTER -P kubetype=openshift $EXTRAPARAMS $CLUSTER
+          kcli -C local create vm -P uefi=true -P start=false -P memory=20480 -P numcpus=16 -P disks=['{"size": 200, "interface": "sata"}'] -P nets=['{"name": "default", "mac": "aa:aa:aa:bb:bb:80"}'] -P plan=$CLUSTER-vms -c 3 $CLUSTER
 
-    deploy-openshift:
-      needs: deploy-baremetal-like-vm
+    deploy-hypershift:
+      needs: deploy-baremetal-like-vms
       runs-on: libvirt
       steps:
-      - name: Deploy SNO
+      - name: Deploy HYPERSHIFT ASSISTED
         run: |
-          kcli create cluster openshift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET -P version=$VERSION -P tag="$TAG" $EXTRAPARAMS $CLUSTER
+          kcli create cluster hypershift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET -P version=$VERSION -P tag="$TAG" $EXTRAPARAMS $CLUSTER

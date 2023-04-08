@@ -1,0 +1,54 @@
+name: HYPERSHIFT-ASSISTED-NIGHTLY-CI
+on:
+  schedule:
+    - cron: '2 20 * * *'
+
+env:
+ HOME: /root
+ PYTHONUNBUFFERED: true
+ CLUSTER: ci-hypershift-assisted
+ PULLSECRET: /root/openshift_pull.json
+ KUBECONFIG: /root/.kcli/clusters/ci-libvirt/auth/kubeconfig
+ PARAMFILE: openshift-ci-paramfiles/hypershift_assisted.yml.yml
+ VERSION: stable
+ TAG: "4.12"
+
+jobs:
+ requirements:
+   runs-on: libvirt
+   steps:
+    - uses: actions/checkout@v2
+    - run: git pull origin ${GITHUB_REF##*/}
+    - name: Install kcli
+      run: |
+        curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
+        kcli create sushy-service
+    - name: Delete old install
+      run: |
+        kcli delete cluster --yes $CLUSTER || true
+        kcli delete plan --yes $CLUSTER-vms || true
+
+ deploy-baremetal-like-vms:
+   needs: requirements
+   runs-on: libvirt
+   steps:
+   - name: Deploy Baremetal like vm
+     run: |
+       kcli -C local create vm -P uefi=true -P start=false -P memory=20480 -P numcpus=16 -P disks=['{"size": 200, "interface": "sata"}'] -P nets=['{"name": "default", "mac": "aa:aa:aa:bb:bb:80"}'] -P plan=$CLUSTER -P kube=$CLUSTER -P kubetype=hypershift -c 3 $CLUSTER
+
+ deploy-hypershift:
+   needs: deploy-baremetal-like-vms
+   runs-on: libvirt
+   steps:
+   - name: Deploy HYPERSHIFT ASSISTED
+     run: |
+       kcli create cluster hypershift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET -P version=$VERSION -P tag="$TAG" $CLUSTER
+
+ clean-up:
+   needs: deploy-hypershift
+   runs-on: libvirt
+   steps:
+   - name: Clean everything after success
+     run: |
+       kcli delete cluster --yes $CLUSTER
+       kcli delete plan --yes $CLUSTER-vms
