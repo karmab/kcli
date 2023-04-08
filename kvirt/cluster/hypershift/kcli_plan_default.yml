@@ -63,7 +63,6 @@ cluster_network_ipv4: "10.129.0.0/14"
 service_network_ipv4: "172.31.0.0/16"
 management_api_ip:
 management_ingress_ip:
-nodepool:
 hosted_version:
 hosted_tag:
 autoscale: false
