@@ -14,7 +14,7 @@ data:
 apiVersion: hypershift.openshift.io/v1beta1
 kind: NodePool
 metadata:
-  name: {{ nodepool }}
+  name: {{ cluster }}
   namespace: {{ namespace }}
 spec:
   clusterName: {{ cluster }}

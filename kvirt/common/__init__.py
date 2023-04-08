@@ -1300,8 +1300,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
         role = name.split('-')[-1]
     if role is not None:
         cluster = overrides.get('cluster', plan)
-        nodepool = overrides.get('nodepool')
-        ignitionclusterpath = find_ignition_files(role, cluster=cluster, nodepool=nodepool)
+        ignitionclusterpath = find_ignition_files(role, cluster=cluster)
         if ignitionclusterpath is not None:
             data = mergeignition(name, ignitionclusterpath, data)
         rolepath = f"/workdir/{plan}-{role}.ign" if container_mode() else f"{plan}-{role}.ign"
@@ -1463,9 +1462,9 @@ def get_latest_fedora(url='https://alt.fedoraproject.org/cloud'):
     return re.sub('.*href="(.*)">Download.*', r'\1', LINE).strip()
 
 
-def find_ignition_files(role, cluster, nodepool=None):
+def find_ignition_files(role, cluster):
     clusterpath = os.path.expanduser(f"~/.kcli/clusters/{cluster}/{role}.ign")
-    nodepoolpath = os.path.expanduser(f"~/.kcli/clusters/{cluster}/{nodepool}.ign")
+    nodepoolpath = os.path.expanduser(f"~/.kcli/clusters/{cluster}/nodepool.ign")
     if os.path.exists(clusterpath):
         return clusterpath
     elif os.path.exists(nodepoolpath):
