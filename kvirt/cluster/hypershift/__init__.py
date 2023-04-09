@@ -602,6 +602,9 @@ def create(config, plandir, cluster, overrides):
     else:
         create_bmh_objects(config, plandir, cluster, namespace, baremetal_hosts, overrides)
         agents = len(baremetal_hosts)
+        if not agents:
+            warning("No baremetal hosts were defined. Setting agent count to 2")
+            agents = 2
         pprint(f"Waiting for {agents} agents to appear")
         agent_ns = f"{namespace}-{cluster}"
         call(f'until [ "$(oc -n {agent_ns} get agent -o name | wc -l | xargs)" -eq "{agents}" ] ; do sleep 1 ; done',
