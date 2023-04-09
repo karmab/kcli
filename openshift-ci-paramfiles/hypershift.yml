@@ -3,7 +3,7 @@ version: ci
 tag: 4.13
 network: baremetal
 ingress_ip: 10.19.135.130
-assisted: true
+mce_assisted: true
 workers: 2
 numcpus: 16
 memory: 16384

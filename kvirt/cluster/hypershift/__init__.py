@@ -225,6 +225,8 @@ def create(config, plandir, cluster, overrides):
             'cluster_network_ipv4': '10.129.0.0/14',
             'service_network_ipv4': '172.31.0.0/16',
             'autoscale': False,
+            'mce': True,
+            'mce_assisted': False,
             'assisted': False,
             'calico_version': None,
             'retries': 3}
@@ -284,10 +286,11 @@ def create(config, plandir, cluster, overrides):
     kubeconfig = os.path.basename(kubeconfig) if kubeconfig is not None else 'config'
     if yaml.safe_load(os.popen('oc get crd hostedclusters.hypershift.openshift.io -o yaml 2>/dev/null').read()) is None:
         warning("Hypershift not installed. Installing it for you")
-        if data.get('mce') or assisted:
+        if data['mce'] or assisted:
+            mce_assisted = assisted or data['mce_assisted']
             app_name, source, channel, csv, description, x_namespace, channels, crd = olm_app('multicluster-engine')
             app_data = {'name': app_name, 'source': source, 'channel': channel, 'namespace': x_namespace, 'crd': crd,
-                        'mce_hypershift': True, 'assisted': assisted}
+                        'mce_hypershift': True, 'assisted': mce_assisted}
             config.create_app_openshift(app_name, app_data)
             sleep(240)
         elif which('podman') is None:
