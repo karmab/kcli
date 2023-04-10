@@ -59,7 +59,7 @@ jobs:
       steps:
       - name: Deploy Baremetal like vms
         run: |
-          kcli -C local create vm -P uefi=true -P start=false -P memory=20480 -P numcpus=16 -P disks=['{"size": 200, "interface": "sata"}'] -P nets=['{"name": "default", "mac": "aa:aa:aa:bb:bb:80"}'] -P plan=$CLUSTER-vms -c 3 $CLUSTER
+          kcli -C local create vm -P uefi=true -P start=false -P memory=20480 -P numcpus=16 -P disks=['{"size": 200, "interface": "sata"}'] -P nets=['{"name": "default", "mac": "aa:aa:aa:bb:bb:80"}'] -P plan=$CLUSTER-vms -P user=core -c 3 $CLUSTER
 
     deploy-hypershift:
       needs: deploy-baremetal-like-vms

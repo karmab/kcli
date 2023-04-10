@@ -1,7 +1,7 @@
 name: HYPERSHIFT-ASSISTED-NIGHTLY-CI
 on:
   schedule:
-    - cron: '2 20 * * *'
+    - cron: '59 22 * * *'
 
 env:
  HOME: /root
@@ -9,7 +9,7 @@ env:
  CLUSTER: ci-hypershift-assisted
  PULLSECRET: /root/openshift_pull.json
  KUBECONFIG: /root/.kcli/clusters/ci-libvirt/auth/kubeconfig
- PARAMFILE: openshift-ci-paramfiles/hypershift_assisted.yml.yml
+ PARAMFILE: openshift-ci-paramfiles/hypershift_assisted.yml
  VERSION: stable
  TAG: "4.12"
 
@@ -34,7 +34,7 @@ jobs:
    steps:
    - name: Deploy Baremetal like vm
      run: |
-       kcli -C local create vm -P uefi=true -P start=false -P memory=20480 -P numcpus=16 -P disks=['{"size": 200, "interface": "sata"}'] -P nets=['{"name": "default", "mac": "aa:aa:aa:bb:bb:80"}'] -P plan=$CLUSTER -P kube=$CLUSTER -P kubetype=hypershift -c 3 $CLUSTER
+       kcli -C local create vm -P uefi=true -P start=false -P memory=20480 -P numcpus=16 -P disks=['{"size": 200, "interface": "sata"}'] -P nets=['{"name": "default", "mac": "aa:aa:aa:bb:bb:80"}'] -P plan=$CLUSTER-vms -P user=core -c 3 $CLUSTER
 
  deploy-hypershift:
    needs: deploy-baremetal-like-vms
