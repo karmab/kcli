@@ -4288,6 +4288,19 @@ def cli():
     download_subparsers.add_parser('image', parents=[imagedownload_parser], description=imagedownload_desc,
                                    help=imagedownload_desc)
 
+    helmdownload_desc = 'Download Helm'
+    helmdownload_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
+    helmdownload_parser.set_defaults(func=download_helm)
+    download_subparsers.add_parser('helm', parents=[helmdownload_parser],
+                                   description=helmdownload_desc,
+                                   help=helmdownload_desc)
+
+    hypershiftdownload_desc = 'Download Hypershift'
+    hypershiftdownload_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
+    hypershiftdownload_parser.set_defaults(func=download_hypershift)
+    download_subparsers.add_parser('hypershift', parents=[hypershiftdownload_parser],
+                                   description=hypershiftdownload_desc, help=hypershiftdownload_desc)
+
     isodownload_desc = 'Download Iso'
     isodownload_help = "Iso name"
     isodownload_parser = argparse.ArgumentParser(add_help=False)
@@ -4297,13 +4310,6 @@ def cli():
     isodownload_parser.set_defaults(func=download_iso)
     download_subparsers.add_parser('iso', parents=[isodownload_parser], description=isodownload_desc,
                                    help=isodownload_desc)
-
-    helmdownload_desc = 'Download Helm'
-    helmdownload_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
-    helmdownload_parser.set_defaults(func=download_helm)
-    download_subparsers.add_parser('helm', parents=[helmdownload_parser],
-                                   description=helmdownload_desc,
-                                   help=helmdownload_desc)
 
     kubectldownload_desc = 'Download Kubectl'
     kubectldownload_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
