@@ -1788,7 +1788,7 @@ class Kvirt(object):
                 for x in ifaces:
                     if ifaces[x]['hwaddr'] == mac and ifaces[x]['addrs'] is not None:
                         for entry in ifaces[x]['addrs']:
-                            if entry['addr'].startswith('fe80::'):
+                            if entry['addr'].startswith('fe80::') or entry['addr'].startswith('169.254.169'):
                                 continue
                             ip = entry['addr']
                             ips.append(ip)
