@@ -101,7 +101,6 @@ sno_ctplanes: false
 sno_workers: false
 sno_wait: false
 sno_localhost_fix: false
-sno_du: false
 sno_cpuset:
 metal3: false
 baremetal_user: root
