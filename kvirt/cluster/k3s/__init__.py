@@ -61,7 +61,10 @@ def scale(config, plandir, cluster, overrides):
                 overrides[role] = len(vmrules_names)
             overrides['vmrules_names'] = sorted(vmrules_names)
         overrides['install_k3s_args'] = install_k3s_args
-        config.plan(plan, inputfile=f'{plandir}/{role}.yml', overrides=overrides, threaded=threaded)
+        result = config.plan(plan, inputfile=f'{plandir}/{role}.yml', overrides=overrides, threaded=threaded)
+        if result['result'] != 'success':
+            return result
+    return {'result': 'success'}
 
 
 def create(config, plandir, cluster, overrides):
