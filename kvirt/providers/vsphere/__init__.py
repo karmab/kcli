@@ -865,6 +865,8 @@ class Ksphere:
         waitForMe(t)
 
     def update_memory(self, name, memory):
+        if memory % 1024 != 0:
+            return {'result': 'failure', 'reason': "Memory needs to be multiple of 1024"}
         si = self.si
         dc = self.dc
         vmFolder = dc.vmFolder
