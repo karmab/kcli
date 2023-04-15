@@ -174,6 +174,45 @@ Or for a full install:
 
    pip3 install -e git+https://github.com/karmab/kcli.git#egg=kcli[all]
 
+Updating
+========
+
+You can update kcli using the same mechanism used for installation
+
+Package
+-------
+
+For rhel based OS (*fedora*/*rhel or centos*), you can run this:
+
+.. code:: bash
+
+   sudo sudo dnf -y install kcli
+
+If using a debian based distribution, use this instead:
+
+.. code:: bash
+
+   sudo apt-get update
+   sudo apt-get -y install python3-kcli
+
+Note that the generic script will also perform updating
+
+Container
+---------
+
+.. code:: shell
+
+   podman pull quay.io/karmab/kcli
+
+.. _generic-platform-1:
+
+Generic platform
+----------------
+
+.. code:: shell
+
+   pip3 install -U kcli
+
 Configuration
 =============
 
@@ -716,7 +755,11 @@ Typical commands
 
    -  ``kcli list vm``
 
--  List cloud images
+-  List images available for download
+
+   -  ``kcli list available-images``
+
+-  List install images
 
    -  ``kcli list images``
 
@@ -1076,6 +1119,8 @@ ansible
       - ctlplane3
 
 An inventory will be created for you in /tmp and that *group_vars* and *host_vars* directory are taken into account. You can optionally define your own groups, as in this example. The playbooks are launched in alphabetical order
+
+.. _container-1:
 
 container
 ~~~~~~~~~

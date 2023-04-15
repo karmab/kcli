@@ -167,6 +167,39 @@ Or for a full install:
 pip3 install -e git+https://github.com/karmab/kcli.git#egg=kcli[all]
 ```
 
+# Updating
+
+You can update kcli using the same mechanism used for installation
+
+
+## Package
+
+For rhel based OS (*fedora*/*rhel or centos*), you can run this:
+
+```bash
+sudo sudo dnf -y install kcli
+```
+
+If using a debian based distribution, use this instead:
+
+```bash
+sudo apt-get update
+sudo apt-get -y install python3-kcli
+```
+
+Note that the generic script will also perform updating
+
+## Container 
+
+```Shell
+podman pull quay.io/karmab/kcli
+```
+## Generic platform
+
+```Shell
+pip3 install -U kcli
+```
+
 # Configuration
 
 If you only want to use your local libvirt, *no specific configuration* is needed.
@@ -694,7 +727,9 @@ For ignition support on ovirt, you will need a version of ovirt >= 4.3.4. Note t
 
 - List vms
   - `kcli list vm`
-- List cloud images
+- List images available for download
+  - `kcli list available-images`
+- List install images
   - `kcli list images `
 - Create vm from a profile named base7
   - `kcli create vm -p base7 myvm`
