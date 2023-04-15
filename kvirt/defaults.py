@@ -42,6 +42,7 @@ FEDORA_ARCHIVE = "https://archives.fedoraproject.org/pub/archive/fedora/linux/re
 GENTOO = "https://gentoo.osuosl.org/experimental/amd64/openstack/"
 OPENSUSE = "https://download.opensuse.org/"
 LEAP = OPENSUSE + "distribution/leap/"
+LEAP_MICRO = OPENSUSE + "distribution/leap-micro/"
 RHCOS = "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/"
 ROCKY = 'https://dl.rockylinux.org/pub/rocky/'
 UBUNTU = 'https://cloud-images.ubuntu.com/'
@@ -76,6 +77,7 @@ IMAGES = {'almalinux9': ALMA + '9.1/cloud/x86_64/images/AlmaLinux-9-GenericCloud
           'opensuse153': LEAP + '15.3/appliances/openSUSE-Leap-15.3-JeOS.x86_64-OpenStack-Cloud.qcow2',
           'opensuse154': LEAP + '15.4/appliances/openSUSE-Leap-15.4-JeOS.x86_64-OpenStack-Cloud.qcow2',
           'tumbleweed': OPENSUSE + 'tumbleweed/appliances/openSUSE-Tumbleweed-JeOS.x86_64-OpenStack-Cloud.qcow2',
+          'opensusemicro53': LEAP_MICRO + '5.3/appliances/openSUSE-Leap-Micro.x86_64-5.3.0-Default-qcow-Build9.20.qcow2',
           'rhcos46': RHCOS + '4.6',
           'rhcos47': RHCOS + '4.7',
           'rhcos48': RHCOS + '4.8',
