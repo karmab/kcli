@@ -2,7 +2,12 @@
 {% set extra_args = extra_ctlplane_args %}
 {% endif %}
 
+{% if 'opensuse' in image %}
+zypper -n install curl
+{% else %}
 apt-get -y install curl
+{% endif %}
+
 curl -sfL https://get.k3s.io | {{ install_k3s_args }} K3S_TOKEN={{ token }} sh -s - server {{ '--cluster-init' if ctlplanes > 1 else '' }} {{ extra_args|join(" ") }}
 export IP={{ api_ip if ctlplanes > 1 else '$(hostname -I | cut -f1 -d" ")' }}
 export K3S_TOKEN=$(cat /var/lib/rancher/k3s/server/node-token)
