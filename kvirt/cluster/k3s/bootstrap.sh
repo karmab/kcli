@@ -2,6 +2,9 @@
 {% set extra_args = extra_ctlplane_args %}
 {% endif %}
 
+{% if config_type == 'gcp' %}
+systemctl enable --now gcp-hack
+{% endif %}
 {% if 'opensuse' in image %}
 zypper -n install curl
 {% else %}

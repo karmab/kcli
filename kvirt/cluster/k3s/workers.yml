@@ -19,6 +19,14 @@
  disks: {{ [disk_size] + extra_disks }}
  files:
  - join.sh
+{% if config_type == 'gcp' %}
+ - path: /usr/local/bin/gcp-hack.sh
+   origin: gcp-hack.sh
+   mode: 755
+ - path: /usr/lib/systemd/system/gcp-hack.service
+   origin: gcp-hack.service
+   mode: 644
+{% endif %}
  scripts:
  - workers.sh
 {% endfor %}

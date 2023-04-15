@@ -7,6 +7,16 @@
  {% set extra_disks = extra_ctlplane_disks %}
 {% endif %}
 
+{% set all_files = files|default([]) %}
+{% set all_scripts = ["ctlplanes.sh"] %}
+{% if config_type not in ['aws', 'gcp', 'ibm'] %}
+{% do all_files.append("keepalived.conf") %}
+{% do all_scripts.append("keepalived.sh") %}
+{% elif config_type == 'gcp' %}
+{% do all_files.append({"path" : "/usr/local/bin/gcp-hack.sh", "origin": 'gcp-hack.sh', "mode": 755}) %}
+{% do all_files.append({"path" : "/usr/lib/systemd/system/gcp-hack.service", "origin": 'gcp-hack.service', "mode": 644}) %}
+{% endif %}
+
 {% set default_ctlplane = cluster + '-ctlplane-' + number|string %}
 {% set ctlplane = vmrules_names[number] if vmrules_names is defined else default_ctlplane %}
 
@@ -18,10 +28,6 @@
  memory: {{ ctlplane_memory | default(memory, memory) }}
  nets: {{ [network] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
- files: {{ files + ["keepalived.conf"] if files|default([]) else ["keepalived.conf"] }}
- scripts:
- - ctlplanes.sh
-{% if ctlplanes > 1 and config_type not in ['aws', 'gcp'] %}
- - keepalived.sh
-{% endif %}
+ files: {{ all_files }}
+ scripts: {{ all_scripts }}
 {% endfor %}

@@ -2,6 +2,9 @@
 {% set extra_args = extra_ctlplane_args %}
 {% endif %}
 
+{% if config_type == 'gcp' %}
+systemctl enable --now gcp-hack
+{% endif %}
 apt-get -y install curl
 {% if sdn != None and sdn == 'cilium' %}
 echo bpffs /sys/fs/bpf bpf defaults 0 0 >> /etc/fstab

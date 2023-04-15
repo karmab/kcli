@@ -1193,7 +1193,7 @@ class Kgcp(object):
                 if backendservice_name == name:
                     internal = True if backendservice['loadBalancingScheme'] == 'INTERNAL' else False
                     pprint("Waiting to make sure forwarding rule is gone")
-                    sleep(10)
+                    sleep(20)
                     pprint(f"Deleting backend service {name}")
                     operation = conn.regionBackendServices().delete(project=project, region=region,
                                                                     backendService=name).execute()

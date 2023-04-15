@@ -101,7 +101,7 @@ def create(config, plandir, cluster, overrides):
         msg = "Invalid number of ctlplanes"
         return {'result': 'failure', 'reason': msg}
     if ctlplanes > 1 and platform in cloudplatforms and not cloud_lb:
-        msg = "multiple ctlplanes require cloud_lb to be set to True"
+        msg = "Multiple ctlplanes require cloud_lb to be set to True"
         return {'result': 'failure', 'reason': msg}
     network = data.get('network', 'default')
     api_ip = data.get('api_ip')

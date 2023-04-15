@@ -16,7 +16,7 @@ cloudplatforms = ['aws', 'gcp']
 def scale(config, plandir, cluster, overrides):
     plan = cluster
     data = {'cluster': cluster, 'kube': cluster, 'kubetype': 'k3s', 'image': 'ubuntu2004', 'sdn': 'flannel',
-            'extra_scripts': []}
+            'extra_scripts': [], 'cloud_lb': True}
     data['basedir'] = '/workdir' if container_mode() else '.'
     cluster = data.get('cluster')
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
@@ -70,11 +70,12 @@ def scale(config, plandir, cluster, overrides):
 def create(config, plandir, cluster, overrides):
     platform = config.type
     data = {'kubetype': 'k3s', 'ctlplanes': 1, 'workers': 0, 'sdn': 'flannel', 'extra_scripts': [], 'autoscale': False,
-            'network': 'default'}
+            'network': 'default', 'cloud_lb': True}
     data.update(overrides)
     data['cluster'] = overrides.get('cluster', cluster if cluster is not None else 'myk3s')
     plan = cluster if cluster is not None else data['cluster']
     data['kube'] = data['cluster']
+    cloud_lb = data['cloud_lb']
     autoscale = data['autoscale']
     ctlplanes = data['ctlplanes']
     workers = data['workers']
@@ -84,8 +85,12 @@ def create(config, plandir, cluster, overrides):
     api_ip = data.get('api_ip')
     if ctlplanes > 1:
         if platform in cloudplatforms:
+            if not cloud_lb:
+                msg = "Multiple ctlplanes require cloud_lb to be set to True"
+                return {'result': 'failure', 'reason': msg}
             domain = data.get('domain', 'karmalabs.corp')
-            api_ip = f"{cluster}-ctlplane.{domain}"
+            api_ip = f"api.{cluster}.{domain}"
+            data['api_ip'] = api_ip
         elif api_ip is None:
             if network == 'default' and platform == 'kvm':
                 warning("Using 192.168.122.253 as api_ip")
@@ -168,6 +173,13 @@ def create(config, plandir, cluster, overrides):
             os.chdir(os.path.expanduser("~/.kcli"))
             threaded = data.get('threaded', False) or data.get('workers_threaded', False)
             config.plan(plan, inputfile=f'{plandir}/workers.yml', overrides=nodes_overrides, threaded=threaded)
+    if cloud_lb and config.type in cloudplatforms:
+        config.k.delete_dns(f'api.{cluster}', domain=domain)
+        if config.type == 'aws':
+            data['vpcid'] = config.k.get_vpcid_of_vm(f"{cluster}-ctlplane-0")
+        result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_api.yml', overrides=data)
+        if result['result'] != 'success':
+            return result
     os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
     apps = data.get('apps', [])
     if apps:
