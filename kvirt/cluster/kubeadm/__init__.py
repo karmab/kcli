@@ -158,6 +158,7 @@ def create(config, plandir, cluster, overrides):
     cluster = data.get('cluster')
     image = data.get('image', 'centos8stream')
     data['ubuntu'] = 'ubuntu' in image.lower() or len([u for u in UBUNTUS if u in image]) > 0
+    data['opensuse'] = 'opensuse' in image.lower()
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if os.path.exists(clusterdir):
         msg = f"Remove existing directory {clusterdir} or use --force"
@@ -205,7 +206,12 @@ def create(config, plandir, cluster, overrides):
         os.chdir(os.path.expanduser("~/.kcli"))
         worker_threaded = data.get('threaded', False) or data.get('workers_threaded', False)
         config.plan(plan, inputfile=f'{plandir}/workers.yml', overrides=data, threaded=worker_threaded)
-    prefile = 'pre_ubuntu.sh' if data['ubuntu'] else 'pre_el.sh'
+    if data['ubuntu']:
+        prefile = 'pre_ubuntu.sh'
+    elif data['opensuse']:
+        prefile = 'pre_suse.sh'
+    else:
+        prefile = 'pre_el.sh'
     predata = config.process_inputfile(plan, f"{plandir}/{prefile}", overrides=data)
     with open(f"{clusterdir}/pre.sh", 'w') as f:
         f.write(predata)
