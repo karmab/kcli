@@ -609,6 +609,7 @@ def create(config, plandir, cluster, overrides):
         agent_ns = f"{namespace}-{cluster}"
         call(f'until [ "$(oc -n {agent_ns} get agent -o name | wc -l | xargs)" -eq "{agents}" ] ; do sleep 1 ; done',
              shell=True)
+        pprint("Waiting for 2mn to avoid race conditions when creating nodepool")
         sleep(120)
     with open(f"{clusterdir}/kcli_parameters.yml", 'w') as p:
         installparam = overrides.copy()
