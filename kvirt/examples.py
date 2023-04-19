@@ -110,7 +110,7 @@ vmcreate = """# Create a centos vm from image centos8stream with a random name
 $ kcli create vm -i centos8stream
 
 # Create a centos vm named myvm customizing its memory and cpus
-$ kcli create vm -i centos8stream -P memory=4096 -P numcpus=4
+$ kcli create vm -i centos8stream -P memory=4096 -P numcpus=4 myvm
 
 # Pass disks, networks and even cmds
 $ kcli create vm -i centos8stream -P disks=[10,20] -P nets=[default] -P cmds=['yum -y install nc']
