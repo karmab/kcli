@@ -1,0 +1,5 @@
+sno: true
+sno_wait: true
+apps:
+- lvms-operator
+- users

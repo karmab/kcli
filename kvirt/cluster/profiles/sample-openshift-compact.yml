@@ -1,5 +1,4 @@
 sslip: true
-kubetype: openshift
 ctlplanes: 3
 workers: 0
 numcpus: 16

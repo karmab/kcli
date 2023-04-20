@@ -1,7 +1,10 @@
-# sslip: true
-kubetype: openshift
-sno: true
-sno_wait: true
+ctlplanes: 1
+workers: 0
+sslip: true
+numcpus: 16
+memory: 32768
+extra_disks:
+- 100
 apps:
-- lvms
+- lvms-operator
 - users
