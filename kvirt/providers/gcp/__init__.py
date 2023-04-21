@@ -1173,6 +1173,19 @@ class Kgcp(object):
                     operation = conn.forwardingRules().delete(project=project, region=region,
                                                               forwardingRule=forwarding_rule_name).execute()
                     self._wait_for_operation(operation)
+                    pprint("Waiting to make sure forwarding rule is gone")
+                    timeout = 0
+                    deleted = False
+                    while not deleted:
+                        forwarding_rules = conn.forwardingRules().list(project=project, region=region).execute()
+                        if 'items' not in forwarding_rules:
+                            deleted = True
+                        elif [f['name'] for f in forwarding_rules['items'] if f['name'] == forwarding_rule_name]:
+                            sleep(5)
+                            timeout += 5
+                        elif timeout >= 60:
+                            warning("Timeout waiting for forwarding rule to be gone")
+                            break
         try:
             address = conn_beta.addresses().get(project=project, region=region, address=name).execute()
             if 'labels' in address and 'domain' in address['labels'] and 'dnsclient' not in address['labels']:
@@ -1192,8 +1205,6 @@ class Kgcp(object):
                 backendservice_name = backendservice['name']
                 if backendservice_name == name:
                     internal = True if backendservice['loadBalancingScheme'] == 'INTERNAL' else False
-                    pprint("Waiting to make sure forwarding rule is gone")
-                    sleep(20)
                     pprint(f"Deleting backend service {name}")
                     operation = conn.regionBackendServices().delete(project=project, region=region,
                                                                     backendService=name).execute()

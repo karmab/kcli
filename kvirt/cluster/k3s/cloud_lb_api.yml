@@ -8,9 +8,7 @@ api.{{ cluster }}:
 {% endif %}
  ports:
  - 6443
- - 2379
- - 2380
  vms:
-{% for num in range(0, ctlplanes|int) %}
+{% for num in range(0, ctlplanes) %}
  - {{ cluster }}-ctlplane-{{ num }}
 {% endfor %}
