@@ -30,9 +30,6 @@
    mode: 644
 {% endif %}
  - registry.yml
-{% if eksd %}
- - eksd.sh
-{% endif %}
  - path: /root/pre.sh
    origin: pre_{{ 'ubuntu' if ubuntu|default(False) else 'el' }}.sh
  - join.sh
