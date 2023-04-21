@@ -23,8 +23,7 @@ class Kgcp(object):
     """
 
     """
-    def __init__(self, debug=False, project="kubevirt-button", zone="europe-west1-b",
-                 region='europe-west1'):
+    def __init__(self, project, zone="europe-west1-b", region='europe-west1', debug=False):
         self.conn = googleapiclient.discovery.build('compute', 'v1')
         self.conn_beta = googleapiclient.discovery.build('compute', 'beta')
         self.project = project
