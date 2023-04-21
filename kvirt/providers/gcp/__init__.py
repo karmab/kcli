@@ -239,7 +239,7 @@ class Kgcp(object):
                 body['metadata']['items'].append(newval)
             newval = {'key': 'user-data', 'value': userdata}
             body['metadata']['items'].append(newval)
-        if 'kubetype' in metadata and metadata['kubetype'] in ["generic", "openshift"]:
+        if 'kubetype' in metadata and metadata['kubetype'] in ["generic", "openshift", "k3s"]:
             kube = metadata['kube']
             kubetype = metadata['kubetype']
             if not [r for r in conn.firewalls().list(project=project).execute()['items'] if r['name'] == kube]:

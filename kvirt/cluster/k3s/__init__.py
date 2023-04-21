@@ -81,6 +81,7 @@ def create(config, plandir, cluster, overrides):
     workers = data['workers']
     network = data['network']
     sdn = None if 'sdn' in overrides and overrides['sdn'] is None else data.get('sdn')
+    domain = data.get('domain', 'karmalabs.corp')
     image = data.get('image', 'ubuntu2004')
     api_ip = data.get('api_ip')
     if ctlplanes > 1:
@@ -88,7 +89,6 @@ def create(config, plandir, cluster, overrides):
             if not cloud_lb:
                 msg = "Multiple ctlplanes require cloud_lb to be set to True"
                 return {'result': 'failure', 'reason': msg}
-            domain = data.get('domain', 'karmalabs.corp')
             api_ip = f"api.{cluster}.{domain}"
             data['api_ip'] = api_ip
         elif api_ip is None:
