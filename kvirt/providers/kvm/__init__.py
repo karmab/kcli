@@ -3155,7 +3155,7 @@ class Kvirt(object):
     def add_image(self, url, pool, cmd=None, name=None, size=None):
         poolname = pool
         shortimage = os.path.basename(url).split('?')[0]
-        if name is not None and name.endswith('iso'):
+        if name is not None and name not in list(IMAGES.keys()):
             shortimage = name
         shortimage_uncompressed = shortimage.replace('.gz', '').replace('.xz', '').replace('.bz2', '')
         conn = self.conn
@@ -3173,7 +3173,7 @@ class Kvirt(object):
         downloadpath = poolpath if pooltype == 'dir' else '/tmp'
         if shortimage_uncompressed in volumes:
             pprint(f"Image {shortimage_uncompressed} already there.Leaving...")
-            return {'result': 'success'}
+            return {'result': 'success', 'found': True}
         if name == 'rhcos42':
             shortimage += '.gz'
         if self.host == 'localhost' or self.host == '127.0.0.1':

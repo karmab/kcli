@@ -2525,25 +2525,33 @@ class Kconfig(Kbaseconfig):
                             return {'result': 'failure', 'reason': "Missing image"}
                 if cmd is None and image != '' and image in IMAGESCOMMANDS:
                     cmd = IMAGESCOMMANDS[image]
-                pprint(f"Using url {url}...")
-                pprint(f"Grabbing image {image}...")
+                pprint(f"Grabbing image {image} from url {url}")
                 need_iso = 'api/assisted-images/images' in url
                 shortname = os.path.basename(url).split('?')[0]
                 if need_iso:
                     image = f'boot-{shortname}.iso'
+                rhcos_latest = False
+                rhcos_dependencies_base = 'https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos'
+                if url.startswith(rhcos_dependencies_base) and url.endswith('rhcos-openstack.x86_64.qcow2.gz'):
+                    tag = url.split('/')[7]
+                    image = f'rhcos-openstack-{tag}.x86_64.qcow2'
+                    rhcos_latest = True
                 try:
                     result = k.add_image(url, pool, cmd=cmd, name=image, size=size)
                 except Exception as e:
                     error(f"Got {e}")
                     error(f"Please run kcli delete image --yes {shortname}")
                     return {'result': 'failure', 'reason': "User interruption"}
+                found = 'found' in result
+                if found:
+                    return {'result': 'success'}
                 common.handle_response(result, image, element='Image', action='Added')
                 if result['result'] != 'success':
                     return {'result': 'failure', 'reason': result['reason']}
                 elif update_profile:
                     if shortname.endswith('.bz2') or shortname.endswith('.gz') or shortname.endswith('.xz'):
                         shortname = os.path.splitext(shortname)[0]
-                    if self.type == 'vsphere':
+                    if self.type == 'vsphere' or rhcos_latest:
                         shortname = image
                     if self.type == 'ibm':
                         shortname = shortname.replace('.', '-').replace('_', '-').lower()
