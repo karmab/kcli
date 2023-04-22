@@ -13,7 +13,7 @@ apt-get -y install curl
 {% endif %}
 
 curl -sfL https://get.k3s.io | {{ install_k3s_args }} K3S_TOKEN={{ token }} sh -s - server {{ '--cluster-init' if ctlplanes > 1 else '' }} {{ extra_args|join(" ") }}
-export IP={{ api_ip if ctlplanes > 1 else '$(hostname -I | cut -f1 -d" ")' }}
+export IP={{ api_ip if cloud_lb else '$(hostname -I | cut -f1 -d" ")' }}
 export K3S_TOKEN=$(cat /var/lib/rancher/k3s/server/node-token)
 sed "s/127.0.0.1/$IP/" /etc/rancher/k3s/k3s.yaml > /root/kubeconfig
 if [ -d /root/manifests ] ; then
