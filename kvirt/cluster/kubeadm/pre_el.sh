@@ -9,11 +9,7 @@ modprobe br_netfilter
 sysctl -p
 setenforce 0
 sed -i "s/SELINUX=enforcing/SELINUX=permissive/" /etc/selinux/config
-{% if eksd %}
-{% set split = eksd_version.split('-') %}
-{% set kubernetes_version = split[0] + '-' + split[1] %}
-VERSION=$(dnf --showduplicates list kubectl  | grep kubectl | grep {{ kubernetes_version|replace('-', '.') }} | tail -1 | awk '{print $2}' | xargs)
-{% elif version != None %}
+{% if version != None %}
 VERSION=$(dnf --showduplicates list kubectl  | grep kubectl | grep {{ version }} | tail -1 | awk '{print $2}' | xargs)
 {% else %}
 VERSION=$(dnf --showduplicates list kubectl  | grep kubectl | tail -1 | awk '{print $2}' | xargs)

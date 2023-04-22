@@ -52,12 +52,6 @@ extra_worker_networks: []
 sslip: false
 autolabel: true
 virtual_router_id:
-registry: false
-registry_pvc: false
-registry_user: dummy
-registry_password: dummy
-eksd: false
-eksd_version: latest
 threaded: false
 ctlplanes_threaded: false
 workers_threaded: false

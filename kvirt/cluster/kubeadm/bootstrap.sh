@@ -16,7 +16,7 @@ DOMAIN={{ domain }}
 # initialize cluster
 CERTKEY={{ cert_key }}
 TOKEN={{ token }}
-kubeadm init --control-plane-endpoint "${API_IP}:6443" --pod-network-cidr $CIDR --certificate-key $CERTKEY --upload-certs {{ '--image-repository public.ecr.aws/eks-distro/kubernetes --kubernetes-version $EKSD_API_VERSION' if eksd else '' }} --token $TOKEN --token-ttl 0
+kubeadm init --control-plane-endpoint "${API_IP}:6443" --pod-network-cidr $CIDR --certificate-key $CERTKEY --upload-certs --token $TOKEN --token-ttl 0
 
 # config cluster credentials
 cp /etc/kubernetes/admin.conf /root/kubeconfig
@@ -61,51 +61,9 @@ mkdir -p /root/.kube
 cp -i /etc/kubernetes/admin.conf /root/.kube/config
 chown root:root /root/.kube/config
 
-{% if ingress %}
-# (addon) install Ingress Controller
-{% if ingress_method == 'nginx' %}
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/{{ 'cloud' if metallb else 'baremetal' }}/deploy.yaml
-{% endif %}
-{% endif %}
-
-{% if policy_as_code %}
-# (addon) install Policy-as-Code (PaC) Controller
-{% if policy_as_code_method == 'gatekeeper' %}
-kubectl apply -f https://raw.githubusercontent.com/open-policy-agent/gatekeeper/master/deploy/gatekeeper.yaml
-{% elif policy_as_code_method == 'kyverno' %}
-kubectl apply -f https://raw.githubusercontent.com/kyverno/kyverno/main/definitions/release/install.yaml
-{% endif %}
-{% endif %}
-
-{% if autolabel %}
-# (addon) install Autolabeler
-kubectl apply -f https://raw.githubusercontent.com/karmab/autolabeller/main/autorules.yml
-{% endif %}
-
-{% if registry %}
-# (addon) install Registry
-mkdir -p /opt/registry/{auth,certs,data,conf}
-REGISTRY_NAME="api.{{ cluster }}.{{ domain }}"
-REGISTRY_USER={{ registry_user }}
-REGISTRY_PASSWORD={{ registry_password }}
-openssl req -newkey rsa:4096 -nodes -sha256 -keyout /opt/registry/certs/domain.key -x509 -days 365 -out /opt/registry/certs/domain.crt -subj "/C=US/ST=Madrid/L=San Bernardo/O=Karmalabs/OU=Guitar/CN=$REGISTRY_NAME" -addext "subjectAltName=DNS:$REGISTRY_NAME"
-cp /opt/registry/certs/domain.crt /etc/pki/ca-trust/source/anchors/
-update-ca-trust extract
-htpasswd -bBc /opt/registry/auth/htpasswd $REGISTRY_USER $REGISTRY_PASSWORD
-kubectl apply -f /root/registry.yml
-cp /opt/registry/certs/domain.{key,crt} /var/www/html
-cp /opt/registry/auth/htpasswd /var/www/html
-{% endif %}
-
 {% if multus %}
 /root/multus.sh
 {% endif %}
 {% if nfs %}
 /root/nfs.sh
-{% endif %}
-
-{% if metallb %}
-# (addon) install Metal Load Balancer (LB)
-cd /root
-bash /root/metallb.sh
 {% endif %}

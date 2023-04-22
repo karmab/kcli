@@ -36,24 +36,12 @@
  - keepalived.conf
  - keepalived.sh
 {% endif %}
- - registry.yml
 {% if multus %}
  - multus.sh
-{% endif %}
-{% if metallb %}
- - path: /root/metallb.sh
-   origin: apps/metallb/install.sh
- - path: /root/metallb_cr.yml
-   origin: apps/metallb/metallb_cr.yml
- - path: /root/metallb_advertisements.yml
-   origin: apps/metallb/metallb_advertisements.yml
 {% endif %}
 {% if nfs %}
  - nfs.yml
  - nfs.sh
-{% endif %}
-{% if eksd %}
- - eksd.sh
 {% endif %}
  - path: /root/pre.sh
    origin: pre_{{ 'ubuntu' if ubuntu|default(False) else 'el' }}.sh

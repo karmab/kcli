@@ -151,9 +151,6 @@ def create(config, plandir, cluster, overrides):
     if version is not None and not str(version).startswith('1.'):
         msg = f"Invalid version {version}"
         return {'result': 'failure', 'reason': msg}
-    if data.get('eksd', False) and data.get('engine', 'containerd') != 'docker':
-        warning("Forcing engine to docker for eksd")
-        data['engine'] = 'docker'
     data['basedir'] = '/workdir' if container_mode() else '.'
     cluster = data.get('cluster')
     image = data.get('image', 'centos8stream')
@@ -215,6 +212,14 @@ def create(config, plandir, cluster, overrides):
         return {'result': 'success'}
     os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
     apps = data.get('apps', [])
+    if data.get('metallb', False) and 'metallb' not in apps:
+        apps.append('metallb')
+    if data.get('ingress', False) and 'ingress' not in apps:
+        apps.append('ingress')
+    if data.get('policy_as_code', False) and 'policy_as_code' not in apps:
+        apps.append('policy_as_code')
+    if data.get('autolabeller', False) and 'autolabeller' not in apps:
+        apps.append('autolabeller')
     if apps:
         appdir = f"{plandir}/apps"
         os.environ["PATH"] = f'{os.getcwd()}:{os.environ["PATH"]}'
