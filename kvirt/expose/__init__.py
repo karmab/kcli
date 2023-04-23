@@ -122,7 +122,8 @@ class Kexposer():
                     error = f'Hit issue when running plan: {str(e)}'
                     response.status = 400
                     result = {'result': 'failure', 'error': error}
-                return {'plan': plan, 'result': result}
+                result.update({'plan': plan})
+                return result
             else:
                 return 'Missing plan in data'
 

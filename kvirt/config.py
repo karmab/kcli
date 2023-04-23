@@ -36,7 +36,7 @@ import re
 import socket
 from shutil import rmtree, which
 import sys
-from subprocess import call
+from subprocess import call, run, PIPE, STDOUT
 from tempfile import TemporaryDirectory
 import threading
 from time import sleep
@@ -1799,8 +1799,8 @@ class Kconfig(Kbaseconfig):
                 warning(f"{inputfile} doesn't look like a valid plan.Skipping....")
                 return
             else:
-                error(f"{inputfile} doesn't look like a valid plan file.Maybe you provided a parameter file?...")
-                sys.exit(1)
+                msg = f"{inputfile} doesn't look like a valid plan file. Maybe you provided a parameter file ?"
+                return {'result': 'failure', 'reason': msg}
         inputdir = os.path.dirname(inputfile) if os.path.dirname(inputfile) != '' and os.path.isabs(inputfile) else '.'
         pre_base = os.path.splitext(os.path.basename(inputfile))[0]
         pre_script = f'{inputdir}/kcli_pre.sh' if pre_base == 'kcli_plan' else f"{inputdir}/{pre_base}_pre.sh"
@@ -1812,10 +1812,12 @@ class Kconfig(Kbaseconfig):
                     pre_script = self.process_inputfile('xxx', pre_script, overrides=overrides)
                     with open(f"{tmpdir}/pre.sh", 'w') as f:
                         f.write(pre_script)
-                    run = call(f'bash {tmpdir}/pre.sh', shell=True)
-                    if run != 0:
-                        error(f"Issues running {pre_script_short}. Leaving")
-                        sys.exit(run)
+                    pre_run = run(f'bash {tmpdir}/pre.sh', shell=True, stdout=PIPE, stderr=STDOUT,
+                                  universal_newlines=True)
+                    if pre_run.returncode != 0:
+                        msg = f"Issue when running {pre_script_short} :\n{pre_run.stdout}"
+                        error(msg)
+                        return {'result': 'failure', 'reason': msg}
             else:
                 warning(f"Skipping {pre_script_short} as requested")
         keywords = self.list_keywords()
@@ -2459,9 +2461,12 @@ class Kconfig(Kbaseconfig):
                     post_script = self.process_inputfile('xxx', post_script, overrides=overrides)
                     with open(f"{tmpdir}/post.sh", 'w') as f:
                         f.write(post_script)
-                    run = call(f'bash {tmpdir}/post.sh', shell=True)
-                    if run != 0:
-                        error("Issues running kcli_post.sh. Leaving")
+                    post_run = run(f'bash {tmpdir}/post.sh', shell=True, stdout=PIPE, stderr=STDOUT,
+                                   universal_newlines=True)
+                    if post_run.returncode != 0:
+                        msg = f"Issue when running kcli_post.sh :\n{post_run.stdout}"
+                        error(msg)
+                        return {'result': 'failure', 'reason': msg}
             else:
                 warning("Skipping kcli_post.sh as requested")
         if overrides.get('tempkeydir') is not None:

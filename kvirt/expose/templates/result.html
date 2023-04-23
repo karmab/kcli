@@ -1,20 +1,22 @@
 {% include "head.html" %}
 
-{% if result['result'] == 'success' %}
-<div class="alert alert-success" role="alert">
-Plan {{ plan }} created!
-</div>
-{% elif 'error' in result %}
+{% if result != 'success' %}
 <div class="alert alert-danger" role="alert">
-Plan {{ plan }} not created because of {{ result['error'] }}:<p>
-</div>
-{% else %}
-<div class="alert alert-danger" role="alert">
-Plan {{ plan }} not created because of issue with the following vms:<p>
-
-{% for v in result['failedvms'] %}
+Plan {{ plan }} not created because of<p>
+{{ reason|replace('\n', '<p>') }}<p>
+{% if failedvms %}
+{% for v in failedvms %}
 {{ v['name'] }} {{ v['reason'] }}<p>
 {% endfor %}
+{% endif %}
+</div>
+{% elif not newvms %}
+<div class="alert alert-info" role="alert">
+Plan {{ plan }} left unchanged
+</div>
+{% else %}
+<div class="alert alert-success" role="alert">
+Plan {{ plan }} created
 </div>
 {% endif %}
 <p><a href="/">Back to listing</a>
