@@ -3,6 +3,7 @@ workers: 0
 sslip: true
 numcpus: 16
 memory: 32768
+disk_size: 100
 extra_disks:
 - 100
 apps:
