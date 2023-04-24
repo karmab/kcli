@@ -15,7 +15,7 @@ import os
 import re
 import requests
 import random
-from ssl import get_server_certificate
+from ssl import _create_unverified_context, get_server_certificate
 import sys
 import tarfile
 from shutil import which
@@ -35,7 +35,14 @@ class Ksphere:
     def __init__(self, host, user, password, datacenter, cluster, debug=False, isofolder=None,
                  filtervms=False, filteruser=False, filtertag=None, category='kcli', basefolder=None, dvs=True,
                  import_network='VM Network', timeout=2700, force_pool=False):
-        if hasattr(connect, 'SmartConnectNoSSL'):
+        if timeout < 1:
+            smart_stub = connect.SmartStubAdapter(host=host, port=443, sslContext=_create_unverified_context(),
+                                                  connectionPoolTimeout=0)
+            session_stub = connect.VimSessionOrientedStub(smart_stub,
+                                                          connect.VimSessionOrientedStub.makeUserLoginMethod(user,
+                                                                                                             password))
+            si = vim.ServiceInstance('ServiceInstance', session_stub)
+        elif hasattr(connect, 'SmartConnectNoSSL'):
             si = connect.SmartConnectNoSSL(host=host, port=443, user=user, pwd=password,
                                            connectionPoolTimeout=timeout)
         else:
