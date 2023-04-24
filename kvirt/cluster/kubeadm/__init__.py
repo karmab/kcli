@@ -210,6 +210,9 @@ def create(config, plandir, cluster, overrides):
         success(f"Kubernetes cluster {cluster} deployed!!!")
         info2(f"get kubeconfig from {cluster}-ctlplane-0 /root")
         return {'result': 'success'}
+    success(f"Kubernetes cluster {cluster} deployed!!!")
+    info2(f"export KUBECONFIG=$HOME/.kcli/clusters/{cluster}/auth/kubeconfig")
+    info2("export PATH=$PWD:$PATH")
     os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
     apps = data.get('apps', [])
     if data.get('metallb', False) and 'metallb' not in apps:
@@ -249,7 +252,12 @@ def create(config, plandir, cluster, overrides):
             temp.write(autoscale_data)
             autoscalecmd = f"kubectl create -f {temp.name}"
             call(autoscalecmd, shell=True)
-    success(f"Kubernetes cluster {cluster} deployed!!!")
-    info2(f"export KUBECONFIG=$HOME/.kcli/clusters/{cluster}/auth/kubeconfig")
-    info2("export PATH=$PWD:$PATH")
+    if config.type == 'aws' and data.get('cloud_storage', True):
+        pprint("Deploying storage class cluster")
+        with NamedTemporaryFile(mode='w+t') as temp:
+            commondir = os.path.dirname(pprint.__code__.co_filename)
+            storage_data = config.process_inputfile(cluster, f"{commondir}/aws_storage.sh.j2")
+            temp.write(storage_data)
+            storagecmd = f"bash {temp.name}"
+            call(storagecmd, shell=True)
     return {'result': 'success'}

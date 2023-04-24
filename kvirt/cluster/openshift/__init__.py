@@ -18,7 +18,7 @@ from shutil import copyfile, copy2, move, rmtree, which
 import socket
 from string import ascii_letters, digits
 from subprocess import call
-from tempfile import TemporaryDirectory
+from tempfile import TemporaryDirectory, NamedTemporaryFile
 from time import sleep
 from urllib.request import urlopen, Request
 import yaml
@@ -1443,4 +1443,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         k.reserve_dns(f'apps.{cluster}', domain=domain, ip=api_ip, alias=['*'])
         if platform == 'ibm':
             k._add_sno_security_group(cluster)
+    if config.type == 'aws' and data.get('cloud_storage', True):
+        pprint("Deploying storage class cluster")
+        with NamedTemporaryFile(mode='w+t') as temp:
+            commondir = os.path.dirname(pprint.__code__.co_filename)
+            storage_data = config.process_inputfile(cluster, f"{commondir}/aws_storage.sh.j2")
+            temp.write(storage_data)
+            storagecmd = f"bash {temp.name}"
+            call(storagecmd, shell=True)
     return {'result': 'success'}
