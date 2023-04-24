@@ -325,9 +325,14 @@ def create(config, plandir, cluster, overrides):
             data['nodeport'] = True
     management_api_ip = data.get('management_api_ip')
     if management_api_ip is None:
-        management_api_url = os.popen("oc whoami --show-server").read()
-        management_api_domain = urlparse(management_api_url).hostname
-        management_api_ip = socket.getaddrinfo(management_api_domain, 6443, proto=socket.IPPROTO_TCP)[0][4][0]
+        management_ips_cmd = "oc get nodes --no-headers -o jsonpath=\"{.items[*]['status.addresses'][0]['address']}\""
+        management_ips = os.popen(management_ips_cmd).readlines()
+        if len(management_ips) == 1:
+            management_api_ip = management_ips[0]
+        else:
+            management_api_url = os.popen("oc whoami --show-server").read()
+            management_api_domain = urlparse(management_api_url).hostname
+            management_api_ip = socket.getaddrinfo(management_api_domain, 6443, proto=socket.IPPROTO_TCP)[0][4][0]
         data['management_api_ip'] = management_api_ip
     pprint(f"Using {management_api_ip} as management api ip")
     pub_key = data.get('pub_key')
