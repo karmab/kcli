@@ -1176,10 +1176,10 @@ class Kgcp(object):
                     timeout = 0
                     deleted = False
                     while not deleted:
-                        forwarding_rules = conn.forwardingRules().list(project=project, region=region).execute()
-                        if 'items' not in forwarding_rules:
+                        new_forwarding_rules = conn.forwardingRules().list(project=project, region=region).execute()
+                        if 'items' not in new_forwarding_rules:
                             deleted = True
-                        elif [f['name'] for f in forwarding_rules['items'] if f['name'] == forwarding_rule_name]:
+                        elif [f['name'] for f in new_forwarding_rules['items'] if f['name'] == forwarding_rule_name]:
                             sleep(5)
                             timeout += 5
                         elif timeout >= 60:

@@ -10,7 +10,7 @@ from kvirt.common import error, pprint, success, warning, info2
 from kvirt.common import get_oc, pwd_path
 from kvirt.common import get_latest_fcos, generate_rhcos_iso, olm_app, get_commit_rhcos
 from kvirt.common import get_installer_rhcos
-from kvirt.common import ssh, scp, _ssh_credentials, get_ssh_pub_key, boot_baremetal_hosts
+from kvirt.common import ssh, scp, _ssh_credentials, get_ssh_pub_key, boot_baremetal_hosts, deploy_cloud_storage
 from kvirt.defaults import LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG
 import re
 from random import choice
@@ -18,7 +18,7 @@ from shutil import copyfile, copy2, move, rmtree, which
 import socket
 from string import ascii_letters, digits
 from subprocess import call
-from tempfile import TemporaryDirectory, NamedTemporaryFile
+from tempfile import TemporaryDirectory
 from time import sleep
 from urllib.request import urlopen, Request
 import yaml
@@ -1443,12 +1443,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         k.reserve_dns(f'apps.{cluster}', domain=domain, ip=api_ip, alias=['*'])
         if platform == 'ibm':
             k._add_sno_security_group(cluster)
-    if config.type == 'aws' and data.get('cloud_storage', True):
-        pprint("Deploying storage class cluster")
-        with NamedTemporaryFile(mode='w+t') as temp:
-            commondir = os.path.dirname(pprint.__code__.co_filename)
-            storage_data = config.process_inputfile(cluster, f"{commondir}/aws_storage.sh.j2")
-            temp.write(storage_data)
-            storagecmd = f"bash {temp.name}"
-            call(storagecmd, shell=True)
+    if config.type in cloudplatforms and data.get('cloud_storage', True):
+        pprint("Deploying cloud storage class")
+        deploy_cloud_storage(clusterdir, config)
     return {'result': 'success'}

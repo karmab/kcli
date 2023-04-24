@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from kvirt.common import success, pprint, warning, get_kubectl, info2, container_mode, kube_create_app
+from kvirt.common import deploy_cloud_storage
 import os
 import re
 from random import choice
@@ -207,12 +208,7 @@ def create(config, plandir, cluster, overrides):
             temp.write(autoscale_data)
             autoscalecmd = f"kubectl create -f {temp.name}"
             call(autoscalecmd, shell=True)
-    if config.type == 'aws' and data.get('cloud_storage', True):
-        pprint("Deploying storage class cluster")
-        with NamedTemporaryFile(mode='w+t') as temp:
-            commondir = os.path.dirname(pprint.__code__.co_filename)
-            storage_data = config.process_inputfile(cluster, f"{commondir}/aws_storage.sh.j2")
-            temp.write(storage_data)
-            storagecmd = f"bash {temp.name}"
-            call(storagecmd, shell=True)
+    if config.type in cloudplatforms and data.get('cloud_storage', True):
+        pprint("Deploying cloud storage class")
+        deploy_cloud_storage(clusterdir, config)
     return {'result': 'success'}

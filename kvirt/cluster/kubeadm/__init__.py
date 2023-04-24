@@ -2,7 +2,7 @@
 
 from binascii import hexlify
 from kvirt.common import success, pprint, warning, info2, container_mode
-from kvirt.common import get_kubectl, kube_create_app, get_ssh_pub_key, _ssh_credentials, ssh
+from kvirt.common import get_kubectl, kube_create_app, get_ssh_pub_key, _ssh_credentials, ssh, deploy_cloud_storage
 from kvirt.defaults import UBUNTUS
 import os
 from random import choice
@@ -252,12 +252,7 @@ def create(config, plandir, cluster, overrides):
             temp.write(autoscale_data)
             autoscalecmd = f"kubectl create -f {temp.name}"
             call(autoscalecmd, shell=True)
-    if config.type == 'aws' and data.get('cloud_storage', True):
-        pprint("Deploying storage class cluster")
-        with NamedTemporaryFile(mode='w+t') as temp:
-            commondir = os.path.dirname(pprint.__code__.co_filename)
-            storage_data = config.process_inputfile(cluster, f"{commondir}/aws_storage.sh.j2")
-            temp.write(storage_data)
-            storagecmd = f"bash {temp.name}"
-            call(storagecmd, shell=True)
+    if config.type in cloudplatforms and data.get('cloud_storage', True):
+        pprint("Deploying cloud storage class")
+        deploy_cloud_storage(clusterdir, config)
     return {'result': 'success'}

@@ -2382,3 +2382,12 @@ def dell_baremetal(bmc_user, bmc_password):
     if bmc_password is None:
         bmc_password = 'calvin'
     return bmc_user, bmc_password
+
+
+def deploy_cloud_storage(clusterdir, config):
+    commondir = os.path.dirname(pprint.__code__.co_filename)
+    storage_data = config.process_inputfile('xxx', f"{commondir}/storage.sh.j2")
+    with open(f"{clusterdir}/storage.sh", 'w') as f:
+        f.write(storage_data)
+    storagecmd = f"bash {clusterdir}/storage.sh"
+    call(storagecmd, shell=True)
