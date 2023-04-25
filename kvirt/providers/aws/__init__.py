@@ -1256,16 +1256,20 @@ class Kaws(object):
             return
         location = {'LocationConstraint': self.region}
         args = {'Bucket': bucket, "CreateBucketConfiguration": location}
-        if public:
-            args['ACL'] = 'public-read'
+        args['ObjectOwnership'] = 'ObjectWriter'
         s3.create_bucket(**args)
+        s3.put_public_access_block(Bucket=bucket, PublicAccessBlockConfiguration={
+            'BlockPublicAcls': False,
+            'IgnorePublicAcls': False,
+            'BlockPublicPolicy': False,
+            'RestrictPublicBuckets': False})
 
     def delete_bucket(self, bucket):
         s3 = self.s3
         if bucket not in self.list_buckets():
             error(f"Inexistent bucket {bucket}")
             return
-        for obj in s3.list_objects(Bucket=bucket)['Contents']:
+        for obj in s3.list_objects(Bucket=bucket).get('Contents', []):
             key = obj['Key']
             pprint(f"Deleting object {key} from bucket {bucket}")
             s3.delete_object(Bucket=bucket, Key=key)
@@ -1310,7 +1314,12 @@ class Kaws(object):
         if bucket not in self.list_buckets():
             error(f"Inexistent bucket {bucket}")
             return []
-        return [obj['Key'] for obj in s3.list_objects(Bucket=bucket)['Contents']]
+        bucketfiles = s3.list_objects(Bucket=bucket)['Contents']
+        if self.debug:
+            bucketurl = f"https://{bucket}.s3.{self.region}.amazonaws.com"
+            return [f"{obj['Key']} ({bucketurl}/{obj['Key']})" for obj in bucketfiles]
+        else:
+            return [obj['Key'] for obj in bucketfiles]
 
     def public_bucketfile_url(self, bucket, path):
         return f"https://{bucket}.s3.{self.region}.amazonaws.com/{path}"
