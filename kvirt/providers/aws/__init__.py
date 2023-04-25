@@ -4,6 +4,7 @@
 Aws Provider Class
 """
 
+from base64 import b64encode
 from ipaddress import ip_network
 from kvirt import common
 from kvirt.common import pprint, error, warning, get_ssh_pub_key
@@ -53,9 +54,9 @@ class Kaws(object):
 
     def exists(self, name):
         conn = self.conn
+        df = {'InstanceIds': [name]} if name.startswith('i-') else {'Filters': [{'Name': "tag:Name", 'Values': [name]}]}
         try:
-            Filters = {'Name': "tag:Name", 'Values': [name]}
-            conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
+            conn.describe_instances(**df)['Reservations'][0]['Instances'][0]
             return True
         except:
             return False
@@ -283,18 +284,47 @@ class Kaws(object):
                 blockdevicemapping['Ebs']['VolumeType'] = disk.get('type', 'standard')
             blockdevicemapping['Ebs']['VolumeSize'] = disksize
             blockdevicemappings.append(blockdevicemapping)
-        conn.run_instances(ImageId=imageid, MinCount=1, MaxCount=1, InstanceType=flavor,
-                           KeyName=keypair, BlockDeviceMappings=blockdevicemappings,
-                           NetworkInterfaces=networkinterfaces, UserData=userdata, TagSpecifications=vmtags)
+        if overrides.get('spot', False):
+            userdata_encode = (b64encode(userdata.encode())).decode("utf-8")
+            LaunchSpecification = {'SecurityGroups': SecurityGroupIds,
+                                   'ImageId': imageid,
+                                   'InstanceType': flavor,
+                                   'KeyName': keypair,
+                                   'BlockDeviceMappings': blockdevicemappings,
+                                   'UserData': userdata_encode,
+                                   'NetworkInterfaces': networkinterfaces}
+            result = conn.request_spot_instances(InstanceCount=1, Type='one-time',
+                                                 InstanceInterruptionBehavior='terminate',
+                                                 LaunchSpecification=LaunchSpecification)
+            requestid = result['SpotInstanceRequests'][0]['SpotInstanceRequestId']
+            sleep(10)
+            timeout = 0
+            while True:
+                spot_data = conn.describe_spot_instance_requests(SpotInstanceRequestIds=[requestid])
+                instance_data = spot_data['SpotInstanceRequests'][0]
+                if 'InstanceId' in instance_data:
+                    instanceid = instance_data['InstanceId']
+                    conn.create_tags(Resources=[instanceid], Tags=[{'Key': 'Name', 'Value': name}])
+                    break
+                elif timeout > 60:
+                    warning("Timeout waiting for instanceid associated to spot request to show up")
+                    break
+                else:
+                    pprint("Waiting for instanceid associated to spot request to show up")
+                    sleep(5)
+        else:
+            conn.run_instances(ImageId=imageid, MinCount=1, MaxCount=1, InstanceType=flavor,
+                               KeyName=keypair, BlockDeviceMappings=blockdevicemappings,
+                               NetworkInterfaces=networkinterfaces, UserData=userdata, TagSpecifications=vmtags)
         if reservedns and domain is not None:
             self.reserve_dns(name, nets=nets, domain=domain, alias=alias, instanceid=name)
         return {'result': 'success'}
 
     def start(self, name):
         conn = self.conn
+        df = {'InstanceIds': [name]} if name.startswith('i-') else {'Filters': [{'Name': "tag:Name", 'Values': [name]}]}
         try:
-            Filters = {'Name': "tag:Name", 'Values': [name]}
-            vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
+            vm = conn.describe_instances(**df)['Reservations'][0]['Instances'][0]
         except:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         instanceid = vm['InstanceId']
@@ -303,9 +333,9 @@ class Kaws(object):
 
     def stop(self, name, soft=False):
         conn = self.conn
+        df = {'InstanceIds': [name]} if name.startswith('i-') else {'Filters': [{'Name': "tag:Name", 'Values': [name]}]}
         try:
-            Filters = {'Name': "tag:Name", 'Values': [name]}
-            vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
+            vm = conn.describe_instances(**df)['Reservations'][0]['Instances'][0]
         except:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         instanceid = vm['InstanceId']
@@ -330,9 +360,9 @@ class Kaws(object):
 
     def restart(self, name):
         conn = self.conn
+        df = {'InstanceIds': [name]} if name.startswith('i-') else {'Filters': [{'Name': "tag:Name", 'Values': [name]}]}
         try:
-            Filters = {'Name': "tag:Name", 'Values': [name]}
-            vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
+            vm = conn.describe_instances(**df)['Reservations'][0]['Instances'][0]
         except:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         instanceid = vm['InstanceId']
@@ -345,9 +375,9 @@ class Kaws(object):
 
     def status(self, name):
         conn = self.conn
+        df = {'InstanceIds': [name]} if name.startswith('i-') else {'Filters': [{'Name': "tag:Name", 'Values': [name]}]}
         try:
-            Filters = {'Name': "tag:Name", 'Values': [name]}
-            vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
+            vm = conn.describe_instances(**df)['Reservations'][0]['Instances'][0]
         except:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         status = vm['State']['Name']
@@ -368,12 +398,9 @@ class Kaws(object):
         return sorted(vms, key=lambda x: x['name'])
 
     def console(self, name, tunnel=False, web=False):
+        df = {'InstanceIds': [name]} if name.startswith('i-') else {'Filters': [{'Name': "tag:Name", 'Values': [name]}]}
         try:
-            if name.startswith('i-'):
-                vm = self.conn.describe_instances(InstanceIds=[name])['Reservations'][0]['Instances'][0]
-            else:
-                Filters = {'Name': "tag:Name", 'Values': [name]}
-                vm = self.conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
+            vm = self.conn.describe_instances(**df)['Reservations'][0]['Instances'][0]
         except:
             error(f"VM {name} not found")
         instanceid = vm['InstanceId']
@@ -395,9 +422,9 @@ class Kaws(object):
 
     def serialconsole(self, name, web=False):
         conn = self.conn
+        df = {'InstanceIds': [name]} if name.startswith('i-') else {'Filters': [{'Name': "tag:Name", 'Values': [name]}]}
         try:
-            Filters = {'Name': "tag:Name", 'Values': [name]}
-            vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
+            vm = conn.describe_instances(**df)['Reservations'][0]['Instances'][0]
         except:
             error(f"VM {name} not found")
             return
@@ -413,9 +440,9 @@ class Kaws(object):
 
     def dnsinfo(self, name):
         conn = self.conn
+        df = {'InstanceIds': [name]} if name.startswith('i-') else {'Filters': [{'Name': "tag:Name", 'Values': [name]}]}
         try:
-            Filters = {'Name': "tag:Name", 'Values': [name]}
-            vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
+            vm = conn.describe_instances(**df)['Reservations'][0]['Instances'][0]
         except:
             return None, None
         dnsclient, domain = None, None
@@ -429,24 +456,18 @@ class Kaws(object):
 
     def get_id(self, name):
         conn = self.conn
+        df = {'InstanceIds': [name]} if name.startswith('i-') else {'Filters': [{'Name': "tag:Name", 'Values': [name]}]}
         try:
-            if name.startswith('i-'):
-                vm = conn.describe_instances(InstanceIds=[name])['Reservations'][0]['Instances'][0]
-            else:
-                Filters = {'Name': "tag:Name", 'Values': [name]}
-                vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
+            vm = conn.describe_instances(**df)['Reservations'][0]['Instances'][0]
         except:
             return None
         return vm['InstanceId']
 
     def get_security_groups(self, name):
         conn = self.conn
+        df = {'InstanceIds': [name]} if name.startswith('i-') else {'Filters': [{'Name': "tag:Name", 'Values': [name]}]}
         try:
-            if name.startswith('i-'):
-                vm = conn.describe_instances(InstanceIds=[name])['Reservations'][0]['Instances'][0]
-            else:
-                Filters = {'Name': "tag:Name", 'Values': [name]}
-                vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
+            vm = conn.describe_instances(**df)['Reservations'][0]['Instances'][0]
         except:
             return []
         return vm['SecurityGroups']
@@ -478,13 +499,10 @@ class Kaws(object):
         yamlinfo = {}
         conn = self.conn
         resource = self.resource
+        df = {'InstanceIds': [name]} if name.startswith('i-') else {'Filters': [{'Name': "tag:Name", 'Values': [name]}]}
         if vm is None:
             try:
-                if name.startswith('i-'):
-                    vm = conn.describe_instances(InstanceIds=[name])['Reservations'][0]['Instances'][0]
-                else:
-                    Filters = {'Name': "tag:Name", 'Values': [name]}
-                    vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
+                vm = conn.describe_instances(**df)['Reservations'][0]['Instances'][0]
             except:
                 error(f"VM {name} not found")
                 return {}
@@ -544,12 +562,9 @@ class Kaws(object):
     def get_vpcid_of_vm(self, name):
         vcpid = None
         conn = self.conn
+        df = {'InstanceIds': [name]} if name.startswith('i-') else {'Filters': [{'Name': "tag:Name", 'Values': [name]}]}
         try:
-            if name.startswith('i-'):
-                vm = conn.describe_instances(InstanceIds=[name])['Reservations'][0]['Instances'][0]
-            else:
-                Filters = {'Name': "tag:Name", 'Values': [name]}
-                vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
+            vm = conn.describe_instances(**df)['Reservations'][0]['Instances'][0]
         except:
             error(f"VM {name} not found")
             return {}
@@ -560,9 +575,9 @@ class Kaws(object):
 
     def ip(self, name):
         conn = self.conn
+        df = {'InstanceIds': [name]} if name.startswith('i-') else {'Filters': [{'Name': "tag:Name", 'Values': [name]}]}
         try:
-            Filters = {'Name': "tag:Name", 'Values': [name]}
-            vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
+            vm = conn.describe_instances(**df)['Reservations'][0]['Instances'][0]
         except:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         return vm.get('PublicIpAddress')
@@ -570,9 +585,9 @@ class Kaws(object):
     def internalip(self, name):
         ip = None
         conn = self.conn
+        df = {'InstanceIds': [name]} if name.startswith('i-') else {'Filters': [{'Name': "tag:Name", 'Values': [name]}]}
         try:
-            Filters = {'Name': "tag:Name", 'Values': [name]}
-            vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
+            vm = conn.describe_instances(**df)['Reservations'][0]['Instances'][0]
         except:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         if vm['NetworkInterfaces'] and 'PrivateIpAddresses' in vm['NetworkInterfaces'][0]:
@@ -608,9 +623,9 @@ class Kaws(object):
     def delete(self, name, snapshots=False):
         conn = self.conn
         dnsclient, domain = None, None
+        df = {'InstanceIds': [name]} if name.startswith('i-') else {'Filters': [{'Name': "tag:Name", 'Values': [name]}]}
         try:
-            Filters = {'Name': "tag:Name", 'Values': [name]}
-            vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
+            vm = conn.describe_instances(**df)['Reservations'][0]['Instances'][0]
         except:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         if vm['State']['Name'] not in ['pending', 'running']:
@@ -647,9 +662,9 @@ class Kaws(object):
 
     def update_metadata(self, name, metatype, metavalue, append=False):
         conn = self.conn
+        df = {'InstanceIds': [name]} if name.startswith('i-') else {'Filters': [{'Name': "tag:Name", 'Values': [name]}]}
         try:
-            Filters = {'Name': "tag:Name", 'Values': [name]}
-            vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
+            vm = conn.describe_instances(**df)['Reservations'][0]['Instances'][0]
         except:
             return 1
         instanceid = vm['InstanceId']
@@ -667,9 +682,9 @@ class Kaws(object):
 
     def update_memory(self, name, memory):
         conn = self.conn
+        df = {'InstanceIds': [name]} if name.startswith('i-') else {'Filters': [{'Name': "tag:Name", 'Values': [name]}]}
         try:
-            Filters = {'Name': "tag:Name", 'Values': [name]}
-            vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
+            vm = conn.describe_instances(**df)['Reservations'][0]['Instances'][0]
         except:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         state = vm['State']['Name']
@@ -690,9 +705,9 @@ class Kaws(object):
 
     def update_flavor(self, name, flavor):
         conn = self.conn
+        df = {'InstanceIds': [name]} if name.startswith('i-') else {'Filters': [{'Name': "tag:Name", 'Values': [name]}]}
         try:
-            Filters = {'Name': "tag:Name", 'Values': [name]}
-            vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
+            vm = conn.describe_instances(**df)['Reservations'][0]['Instances'][0]
         except:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         instanceid = vm['InstanceId']
@@ -708,9 +723,9 @@ class Kaws(object):
 
     def update_cpus(self, name, numcpus):
         conn = self.conn
+        df = {'InstanceIds': [name]} if name.startswith('i-') else {'Filters': [{'Name': "tag:Name", 'Values': [name]}]}
         try:
-            Filters = {'Name': "tag:Name", 'Values': [name]}
-            vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
+            vm = conn.describe_instances(**df)['Reservations'][0]['Instances'][0]
         except:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         instanceid = vm['InstanceId']
@@ -748,9 +763,9 @@ class Kaws(object):
     def add_disk(self, name, size, pool=None, thin=True, image=None, shareable=False, existing=None,
                  interface='virtio', novm=False, overrides={}):
         conn = self.conn
+        df = {'InstanceIds': [name]} if name.startswith('i-') else {'Filters': [{'Name': "tag:Name", 'Values': [name]}]}
         try:
-            Filters = {'Name': "tag:Name", 'Values': [name]}
-            vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
+            vm = conn.describe_instances(**df)['Reservations'][0]['Instances'][0]
         except:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         instanceid = vm['InstanceId']
@@ -1095,9 +1110,9 @@ class Kaws(object):
 
     def export(self, name, image=None):
         conn = self.conn
+        df = {'InstanceIds': [name]} if name.startswith('i-') else {'Filters': [{'Name': "tag:Name", 'Values': [name]}]}
         try:
-            Filters = {'Name': "tag:Name", 'Values': [name]}
-            vm = conn.describe_instances(Filters=[Filters])['Reservations'][0]['Instances'][0]
+            vm = conn.describe_instances(**df)['Reservations'][0]['Instances'][0]
         except:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         InstanceId = vm['InstanceId']
