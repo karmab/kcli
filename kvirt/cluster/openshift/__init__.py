@@ -9,13 +9,13 @@ from ipaddress import ip_network
 from kvirt.common import error, pprint, success, warning, info2
 from kvirt.common import get_oc, pwd_path
 from kvirt.common import get_latest_fcos, generate_rhcos_iso, olm_app, get_commit_rhcos
-from kvirt.common import get_installer_rhcos
+from kvirt.common import get_installer_rhcos, wait_cloud_dns
 from kvirt.common import ssh, scp, _ssh_credentials, get_ssh_pub_key, boot_baremetal_hosts, deploy_cloud_storage
 from kvirt.defaults import LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG
 import re
 from random import choice
 from shutil import copyfile, copy2, move, rmtree, which
-import socket
+from socket import gethostbyname
 from string import ascii_letters, digits
 from subprocess import call
 from tempfile import TemporaryDirectory
@@ -1119,7 +1119,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         sno_dns = False
         for entry in [f'api-int.{cluster}.{domain}', f'api.{cluster}.{domain}', f'xxx.apps.{cluster}.{domain}']:
             try:
-                socket.gethostbyname(entry)
+                gethostbyname(entry)
             except:
                 sno_dns = True
         data['sno_dns'] = sno_dns
@@ -1429,6 +1429,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         config.k.delete_bucket(bucket)
     if original_domain is not None:
         overrides['domain'] = original_domain
+    if config.type in cloudplatforms:
+        wait_cloud_dns(cluster, domain)
     os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
     process_apps(config, clusterdir, apps, overrides)
     process_postscripts(clusterdir, postscripts)
@@ -1445,5 +1447,5 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             k._add_sno_security_group(cluster)
     if config.type in cloudplatforms and data.get('cloud_storage', True):
         pprint("Deploying cloud storage class")
-        deploy_cloud_storage(clusterdir, config)
+        deploy_cloud_storage(config, cluster)
     return {'result': 'success'}

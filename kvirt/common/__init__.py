@@ -2384,7 +2384,23 @@ def dell_baremetal(bmc_user, bmc_password):
     return bmc_user, bmc_password
 
 
-def deploy_cloud_storage(clusterdir, config):
+def wait_cloud_dns(cluster, domain):
+    timeout = 0
+    while True:
+        pprint(f"Waiting for api.{cluster}.{domain} to resolve")
+        try:
+            socket.gethostbyname(f"api.{cluster}.{domain}")
+            return
+        except:
+            sleep(10)
+            timeout += 10
+        if timeout > 120:
+            warning(f"Timeout waiting for api.{cluster}.{domain} to resolve")
+            return
+
+
+def deploy_cloud_storage(config, cluster):
+    clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     commondir = os.path.dirname(pprint.__code__.co_filename)
     storage_data = config.process_inputfile('xxx', f"{commondir}/storage.sh.j2")
     with open(f"{clusterdir}/storage.sh", 'w') as f:

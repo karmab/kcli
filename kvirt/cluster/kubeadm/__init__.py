@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from binascii import hexlify
-from kvirt.common import success, pprint, warning, info2, container_mode
+from kvirt.common import success, pprint, warning, info2, container_mode, wait_cloud_dns
 from kvirt.common import get_kubectl, kube_create_app, get_ssh_pub_key, _ssh_credentials, ssh, deploy_cloud_storage
 from kvirt.defaults import UBUNTUS
 import os
@@ -213,6 +213,8 @@ def create(config, plandir, cluster, overrides):
     success(f"Kubernetes cluster {cluster} deployed!!!")
     info2(f"export KUBECONFIG=$HOME/.kcli/clusters/{cluster}/auth/kubeconfig")
     info2("export PATH=$PWD:$PATH")
+    if config.type in cloudplatforms:
+        wait_cloud_dns(cluster, domain)
     os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
     apps = data.get('apps', [])
     if data.get('metallb', False) and 'metallb' not in apps:
@@ -254,5 +256,5 @@ def create(config, plandir, cluster, overrides):
             call(autoscalecmd, shell=True)
     if config.type in cloudplatforms and data.get('cloud_storage', True):
         pprint("Deploying cloud storage class")
-        deploy_cloud_storage(clusterdir, config)
+        deploy_cloud_storage(config, cluster)
     return {'result': 'success'}

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from kvirt.common import success, pprint, warning, get_kubectl, info2, container_mode, kube_create_app
-from kvirt.common import deploy_cloud_storage
+from kvirt.common import deploy_cloud_storage, wait_cloud_dns
 import os
 import re
 from random import choice
@@ -184,6 +184,8 @@ def create(config, plandir, cluster, overrides):
     success(f"K3s cluster {cluster} deployed!!!")
     info2(f"export KUBECONFIG=$HOME/.kcli/clusters/{cluster}/auth/kubeconfig")
     info2("export PATH=$PWD:$PATH")
+    if config.type in cloudplatforms:
+        wait_cloud_dns(cluster, domain)
     os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
     apps = data.get('apps', [])
     if apps:
@@ -210,5 +212,5 @@ def create(config, plandir, cluster, overrides):
             call(autoscalecmd, shell=True)
     if config.type in cloudplatforms and data.get('cloud_storage', True):
         pprint("Deploying cloud storage class")
-        deploy_cloud_storage(clusterdir, config)
+        deploy_cloud_storage(config, cluster)
     return {'result': 'success'}
