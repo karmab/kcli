@@ -1705,6 +1705,7 @@ def create_vmdisk(args):
     """Add disk to vm"""
     overrides = handle_parameters(args.param, args.paramfile)
     name = args.name
+    force = args.force
     novm = args.novm
     size = args.size
     image = args.image
@@ -1725,6 +1726,10 @@ def create_vmdisk(args):
         pprint(f"Creating disk {name}...")
     else:
         pprint(f"Adding disk to {name}...")
+    if force:
+        diskname = f"{name}_0.img"
+        pprint(f"Deleting primary disk {diskname}")
+        k.delete_disk(name=name, diskname=diskname, pool=pool, novm=novm)
     k.add_disk(name=name, size=size, pool=pool, image=image, interface=interface, novm=novm, overrides=overrides)
 
 
@@ -3940,6 +3945,7 @@ def cli():
     vmdiskadd_desc = 'Add Disk To Vm'
     diskcreate_epilog = f"examples:\n{diskcreate}"
     vmdiskadd_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
+    vmdiskadd_parser.add_argument('-f', '--force', action='store_true', help='Delete existing primary disk first')
     vmdiskadd_parser.add_argument('-s', '--size', type=int, help='Size of the disk to add, in GB', metavar='SIZE',
                                   default=10)
     vmdiskadd_parser.add_argument('-i', '--image', help='Name or Path of a Image', metavar='IMAGE')
