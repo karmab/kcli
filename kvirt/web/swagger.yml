@@ -1093,7 +1093,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Result'
+                type: object 
+                properties:
+                  snapshots:
+                    type: array
+                    items:
+                      type: array
+                      items:
+                        type: string
         '400':
           description: Invalid data
           content:
@@ -1246,6 +1253,31 @@ paths:
                 result: failure
                 reason: Invalid data
   /vms/{name}:
+    get:
+      description: Info vm
+      parameters:
+      - name: name
+        in: path
+        description: Vm name
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Successfully provided info on vm
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vm'
+        '400':
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+              example:
+                result: failure
+                reason: Invalid data
     delete:
       description: Delete vm
       parameters:
