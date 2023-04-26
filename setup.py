@@ -1,7 +1,5 @@
 # coding=utf-8
 from setuptools import setup, find_packages
-from setuptools.extern.packaging import version
-version.Version = version.LegacyVersion
 
 import os
 INSTALL = ['argcomplete', 'PyYAML', 'prettytable', 'jinja2', 'libvirt-python>=2.0.0']
