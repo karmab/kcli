@@ -4,6 +4,8 @@
 Base Kvirt serving as interface for the virtualisation providers
 """
 
+from kvirt import common
+
 # general notes
 # most functions should either return
 # return {'result': 'success'}
@@ -206,9 +208,8 @@ class Kbase(object):
         return {}
 
     def info_network(self, name):
-        # networkinfo = common.info_network(self, name)
-        # return networkinfo
-        return {}
+        networkinfo = common.info_network(self, name)
+        return networkinfo
 
     def list_subnets(self):
         print("not implemented")

@@ -389,6 +389,11 @@ class Kconfig(Kbaseconfig):
                 k = Kpacket(auth_token, project, facility=facility, debug=debug,
                             tunnelhost=self.tunnelhost, tunneluser=self.tunneluser, tunnelport=self.tunnelport,
                             tunneldir=self.tunneldir)
+            elif self.type == 'web':
+                port = self.options.get('port', 8000)
+                from kvirt.providers.web import Kwebclient
+                k = Kwebclient(self.host, port, debug=debug)
+                self.type = 'web'
             elif offline:
                 from kvirt.providers.fake import Kfake
                 k = Kfake()

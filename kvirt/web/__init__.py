@@ -198,10 +198,10 @@ class Kweb():
                 return 'Invalid data'
             config = Kconfig()
             k = config.k
-            pool = data['pool']
-            path = data['path']
-            pooltype = data['type']
-            result = k.create_pool(name=pool, poolpath=path, pooltype=pooltype)
+            args = {'name': data['pool'], 'poolpath': data['path']}
+            if 'type' in data:
+                args['pooltype'] = data['type']
+            result = k.create_pool(**args)
             return result
 
         @app.route("/pools/<pool>", method='DELETE')
@@ -268,7 +268,7 @@ class Kweb():
             return {'title': 'CreateNetwork', 'client': config.client}
 
         @app.route("/networks", method='POST')
-        def networkcreate(network):
+        def networkcreate():
             if readonly:
                 response.status = 403
                 return {}
@@ -351,9 +351,16 @@ class Kweb():
                     if p.startswith('parameters'):
                         key = p.replace('parameters[', '').replace(']', '')
                     parameters[key] = value
-                parameters['nets'] = parameters['nets'].split(',') if 'nets' in parameters else []
-                parameters['disks'] = [int(disk) for disk in parameters['disks'].split(',')]\
-                    if 'disks' in parameters else [10]
+                if 'nets' in parameters:
+                    if isinstance(parameters, str):
+                        parameters['nets'] = parameters['nets'].split(',')
+                else:
+                    parameters['nets'] = []
+                if 'disks' in parameters:
+                    if isinstance(parameters, str):
+                        parameters['disks'] = parameters['disks'].split(',')
+                else:
+                    parameters['disks'] = [10]
                 if name == '':
                     name = nameutils.get_random_name()
                 result = config.create_vm(name, profile, overrides=parameters)
@@ -362,6 +369,19 @@ class Kweb():
                 result = {'result': 'failure', 'reason': "Invalid Data"}
                 response.status = 400
             return result
+
+        @app.route("/vms/<name>", method='GET')
+        def vminfo(name):
+            if readonly:
+                response.status = 403
+                return {}
+            config = Kconfig()
+            k = config.k
+            result = k.info(name)
+            response.status = 200
+            return result
+
+        # HOSTS
 
         @app.route("/vms/<name>", method='DELETE')
         def vmdelete(name):
@@ -411,7 +431,7 @@ class Kweb():
             config = Kconfig()
             k = config.k
             snapshots = k.list_snapshots(name)
-            result = [snapshot for snapshot in snapshots]
+            result = {'snapshots': [snapshot for snapshot in snapshots]}
             response.status = 200
             return result
 
@@ -1056,7 +1076,7 @@ class Kweb():
                     pool = data['pool']
                     image = data['image']
                     url = data['url']
-                    cmd = data['cmd']
+                    cmd = data.get('cmd')
                     if url == '':
                         url = None
                     if cmd == '':
