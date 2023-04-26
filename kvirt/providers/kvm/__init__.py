@@ -3155,7 +3155,9 @@ class Kvirt(object):
     def add_image(self, url, pool, cmd=None, name=None, size=None):
         poolname = pool
         shortimage = os.path.basename(url).split('?')[0]
-        if name is not None and name not in list(IMAGES.keys()):
+        if name is not None and (shortimage == "rhcos-openstack.x86_64.qcow2.gz" or
+                                 (name not in list(IMAGES.keys()) and
+                                  not any(shortimage.endswith(suffix) for suffix in ['.gz', '.xz', '.bz2']))):
             shortimage = name
         shortimage_uncompressed = shortimage.replace('.gz', '').replace('.xz', '').replace('.bz2', '')
         conn = self.conn
