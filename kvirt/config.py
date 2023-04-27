@@ -504,32 +504,19 @@ class Kconfig(Kbaseconfig):
             if customprofile:
                 vmprofiles[profile] = customprofile
                 customprofileimage = customprofile.get('image')
-                if customprofileimage is not None:
-                    clientprofile = f"{self.client}_{customprofileimage}"
-                    if clientprofile in vmprofiles and 'image' in vmprofiles[clientprofile]:
-                        vmprofiles[profile]['image'] = vmprofiles[clientprofile]['image']
-                    elif customprofileimage in IMAGES and self.type not in ['packet', 'vsphere'] and\
-                            IMAGES[customprofileimage] not in [os.path.basename(v) for v in self.k.volumes()]:
-                        pprint(f"Image {customprofileimage} not found. Downloading")
-                        self.handle_host(pool=self.pool, image=customprofileimage, download=True, update_profile=True)
-                        vmprofiles[profile]['image'] = os.path.basename(IMAGES[customprofileimage])
+                if customprofileimage is not None\
+                   and customprofileimage not in [os.path.basename(v) for v in self.k.volumes()]:
+                    pprint(f"Image {customprofileimage} not found. Downloading")
+                    self.handle_host(pool=self.pool, image=customprofileimage, download=True)
+                    vmprofiles[profile]['image'] = os.path.basename(IMAGES[customprofileimage])
             else:
                 pprint(f"Deploying vm {name} from profile {profile}...")
             if profile not in vmprofiles:
-                clientprofile = f"{self.client}_{profile}"
-                if clientprofile in vmprofiles:
-                    if 'image' in vmprofiles[clientprofile]:
-                        vmprofiles[profile] = {'image': vmprofiles[clientprofile]['image']}
-                    if 'iso' in vmprofiles[clientprofile]:
-                        vmprofiles[profile] = {'iso': vmprofiles[clientprofile]['iso']}
-                elif profile in IMAGES and IMAGES[profile] not in [os.path.basename(v) for v in self.k.volumes()]\
-                        and self.type not in ['aws', 'gcp', 'packet', 'vsphere']:
+                if profile in IMAGES and profile not in [os.path.basename(v) for v in self.k.volumes()]\
+                        and self.type not in ['aws', 'gcp', 'packet', 'vsphere', 'ibmcloud']:
                     pprint(f"Image {profile} not found. Downloading")
-                    self.handle_host(pool=self.pool, image=profile, download=True, update_profile=True)
-                    good_image = os.path.basename(IMAGES[profile])
-                    if not good_image.endswith('.qcow2') and not good_image.endswith('.img'):
-                        good_image = [x[4] for x in self.list_profiles() if x[0] == profile][0]
-                    vmprofiles[profile] = {'image': good_image}
+                    self.handle_host(pool=self.pool, image=profile, download=True)
+                    vmprofiles[profile] = {'image': profile}
                 elif profile.startswith('rhcos-4') and profile.endswith('qcow2')\
                         and self.type in ['ovirt', 'openstack', 'kubevirt', 'kvm']\
                         and profile not in [os.path.basename(v) for v in self.k.volumes()]:
@@ -1890,23 +1877,18 @@ class Kconfig(Kbaseconfig):
             pprint("Deploying Images...")
             images = [os.path.basename(t) for t in k.volumes()]
             for image in imageentries:
-                clientprofile = f"{self.client}_{image}"
                 imageprofile = entries[image]
                 pool = imageprofile.get('pool', self.pool)
                 imagesize = imageprofile.get('size')
                 imageurl = imageprofile.get('url')
-                filename = os.path.basename(imageurl) if imageurl is not None else 'xxx'
-                clientprofile = "%s_%s" % (self.client, image)
-                if image in images or image in self.profiles or \
-                   (clientprofile in self.profiles and filename == self.profiles[clientprofile]['image']):
+                if image in images:
                     pprint(f"Image {image} skipped!")
                     continue
                 else:
                     if isinstance(imageurl, str) and imageurl == "None":
                         imageurl = None
                     cmd = imageprofile.get('cmd')
-                    self.handle_host(pool=pool, image=image, download=True, cmd=cmd, url=imageurl, update_profile=True,
-                                     size=imagesize)
+                    self.handle_host(pool=pool, image=image, download=True, cmd=cmd, url=imageurl, size=imagesize)
         if bucketentries and not onlyassets and self.type in ['aws', 'gcp', 'openstack']:
             pprint("Deploying Bucket Entries...")
             for bucketentry in bucketentries:
@@ -2215,16 +2197,14 @@ class Kconfig(Kbaseconfig):
                     for entry in self.list_profiles():
                         currentimage = profile['image']
                         entryprofile = entry[0]
-                        clientprofile = f"{self.client}_{currentimage}"
-                        if entryprofile == currentimage or entryprofile == clientprofile:
+                        if entryprofile == currentimage:
                             profile['image'] = entry[4]
                             currentoverrides['image'] = profile['image']
                             break
                     imageprofile = profile['image']
-                    if imageprofile in IMAGES and self.type not in ['packet', 'vsphere'] and\
-                            IMAGES[imageprofile] not in [os.path.basename(v) for v in self.k.volumes()]:
+                    if imageprofile not in [os.path.basename(v) for v in self.k.volumes()] and imageprofile in IMAGES:
                         pprint(f"Image {imageprofile} not found. Downloading")
-                        self.handle_host(pool=self.pool, image=imageprofile, download=True, update_profile=True)
+                        self.handle_host(pool=self.pool, image=imageprofile)
                 if threaded:
                     new_args = (name, profilename, currentoverrides, profile, z, plan, currentplandir, vmclient,
                                 onfly, onlyassets, newvms, failedvms, asyncwaitvms, newassets)
@@ -2474,22 +2454,9 @@ class Kconfig(Kbaseconfig):
         return returndata
 
     def handle_host(self, pool=None, image=None, switch=None, download=False,
-                    url=None, cmd=None, sync=False, update_profile=False, size=None, arch='x86_64',
+                    url=None, cmd=None, sync=False, size=None, arch='x86_64',
                     kvm_openstack=True, rhcos_commit=None, rhcos_installer=False):
-        """
-
-        :param pool:
-        :param images:
-        :param switch:
-        :param download:
-        :param url:
-        :param cmd:
-        :param sync:
-        :param profile:
-        :return:
-        """
         if download:
-            imagename = image
             k = self.k
             if pool is None:
                 pool = self.pool
@@ -2535,12 +2502,10 @@ class Kconfig(Kbaseconfig):
                 shortname = os.path.basename(url).split('?')[0]
                 if need_iso:
                     image = f'boot-{shortname}.iso'
-                rhcos_latest = False
                 rhcos_dependencies_base = 'https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos'
                 if url.startswith(rhcos_dependencies_base) and url.endswith('rhcos-openstack.x86_64.qcow2.gz'):
                     tag = url.split('/')[7]
                     image = f'rhcos-openstack-{tag}.x86_64.qcow2'
-                    rhcos_latest = True
                 try:
                     result = k.add_image(url, pool, cmd=cmd, name=image, size=size)
                 except Exception as e:
@@ -2553,21 +2518,6 @@ class Kconfig(Kbaseconfig):
                 common.handle_response(result, image, element='Image', action='Added')
                 if result['result'] != 'success':
                     return {'result': 'failure', 'reason': result['reason']}
-                elif update_profile:
-                    if shortname.endswith('.bz2') or shortname.endswith('.gz') or shortname.endswith('.xz'):
-                        shortname = os.path.splitext(shortname)[0]
-                    if self.type == 'vsphere' or rhcos_latest:
-                        shortname = image
-                    if self.type == 'ibm':
-                        shortname = shortname.replace('.', '-').replace('_', '-').lower()
-                    clientprofile = f"{self.client}_{imagename}"
-                    profileinfo = {'iso': shortname} if shortname.endswith('.iso') else {'image': shortname}
-                    if clientprofile not in self.profiles:
-                        pprint(f"Adding a profile named {clientprofile} with default values")
-                        self.create_profile(clientprofile, profileinfo, quiet=True)
-                    else:
-                        pprint(f"Updating profile {clientprofile}")
-                        self.update_profile(clientprofile, profileinfo, quiet=True)
             return {'result': 'success'}
         elif switch:
             if switch not in self.clients:

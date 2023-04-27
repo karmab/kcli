@@ -193,7 +193,7 @@ class Ksushy():
                     iso = f"boot-{token_iso}.iso"
                 isos = [os.path.basename(i) for i in config.k.volumes(iso=True)]
                 if iso not in isos:
-                    config.handle_host(pool=config.pool, image=iso, download=True, url=image, update_profile=False)
+                    config.handle_host(pool=config.pool, image=iso, download=True, url=image)
                 config.update_vm(name, {'iso': iso})
             except subprocess.CalledProcessError:
                 response.status = 400

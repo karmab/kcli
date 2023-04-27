@@ -1936,8 +1936,7 @@ class Kvirt(object):
         conn = self.conn
         if self.get_capabilities()['arch'] == 'aarch64':
             IMAGES.update({i: IMAGES[i].replace('x86_64', 'aarch64').replace('amd64', 'arm64') for i in IMAGES})
-        default_images = [os.path.basename(t).replace('.bz2', '') for t in list(IMAGES.values())
-                          if t is not None and 'product-software' not in t]
+        default_images = list(IMAGES.keys())
         for pool in conn.listAllStoragePools(VIR_CONNECT_LIST_STORAGE_POOLS_ACTIVE):
             poolname = pool.name()
             try:
@@ -3157,7 +3156,7 @@ class Kvirt(object):
         shortimage = os.path.basename(url).split('?')[0]
         need_uncompress = any(shortimage.endswith(suffix) for suffix in ['.gz', '.xz', '.bz2'])
         extension = os.path.splitext(shortimage)[1].replace('.', '') if need_uncompress else None
-        if name is None or name in list(IMAGES.keys()):
+        if name is None:
             name = shortimage.replace('.gz', '').replace('.xz', '').replace('.bz2', '')
         full_name = f"{name}.{extension}" if need_uncompress else name
         conn = self.conn
