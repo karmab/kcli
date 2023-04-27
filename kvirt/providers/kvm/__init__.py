@@ -3155,11 +3155,11 @@ class Kvirt(object):
     def add_image(self, url, pool, cmd=None, name=None, size=None):
         poolname = pool
         shortimage = os.path.basename(url).split('?')[0]
-        if name is not None and (shortimage == "rhcos-openstack.x86_64.qcow2.gz" or
-                                 (name not in list(IMAGES.keys()) and
-                                  not any(shortimage.endswith(suffix) for suffix in ['.gz', '.xz', '.bz2']))):
-            shortimage = name
-        shortimage_uncompressed = shortimage.replace('.gz', '').replace('.xz', '').replace('.bz2', '')
+        need_uncompress = any(shortimage.endswith(suffix) for suffix in ['.gz', '.xz', '.bz2'])
+        extension = os.path.splitext(shortimage)[1].replace('.', '') if need_uncompress else None
+        if name is None or name in list(IMAGES.keys()):
+            name = shortimage.replace('.gz', '').replace('.xz', '').replace('.bz2', '')
+        full_name = f"{name}.{extension}" if need_uncompress else name
         conn = self.conn
         volumes = []
         try:
@@ -3173,18 +3173,16 @@ class Kvirt(object):
         pooltype = list(root.iter('pool'))[0].get('type')
         poolpath = list(root.iter('path'))[0].text
         downloadpath = poolpath if pooltype == 'dir' else '/tmp'
-        if shortimage_uncompressed in volumes:
-            pprint(f"Image {shortimage_uncompressed} already there.Leaving...")
+        if name in volumes:
+            pprint(f"Image {name} already there.Leaving...")
             return {'result': 'success', 'found': True}
-        if name == 'rhcos42':
-            shortimage += '.gz'
         if self.host == 'localhost' or self.host == '127.0.0.1':
-            downloadcmd = f"curl -Lko {downloadpath}/{shortimage} -f '{url}'"
+            downloadcmd = f"curl -Lko {downloadpath}/{full_name} -f '{url}'"
         elif self.protocol == 'ssh':
             host = self.host.replace('[', '').replace(']', '')
             downloadcmd = 'ssh %s -p %s %s@%s "curl -Lko %s/%s -f \'%s\'"' % (self.identitycommand, self.port,
                                                                               self.user, host, downloadpath,
-                                                                              shortimage, url)
+                                                                              full_name, url)
         code = call(downloadcmd, shell=True)
         if code == 23:
             pprint("Consider running the following command on the hypervisor:")
@@ -3198,32 +3196,30 @@ class Kvirt(object):
             return {'result': 'failure', 'reason': "Permission issues"}
         elif code != 0:
             return {'result': 'failure', 'reason': "Unable to download indicated image"}
-        if shortimage.endswith('xz') or shortimage.endswith('gz') or shortimage.endswith('bz2') or name == 'rhcos42':
+        if need_uncompress:
             executable = {'xz': 'unxz', 'gz': 'gunzip', 'bz2': 'bunzip2'}
-            extension = os.path.splitext(shortimage)[1].replace('.', '')
-            executable = executable[extension] if name != 'rhcos42' else 'gunzip'
+            executable = executable[extension]
             if self.host == 'localhost' or self.host == '127.0.0.1':
                 if which(executable) is not None:
-                    uncompresscmd = f"{executable} -f {poolpath}/{shortimage}"
+                    uncompresscmd = f"{executable} -f {poolpath}/{full_name}"
                     os.system(uncompresscmd)
                 else:
                     error(f"{executable} not found. Can't uncompress image")
                     return {'result': 'failure', 'reason': f"{executable} not found. Can't uncompress image"}
             elif self.protocol == 'ssh':
                 uncompresscmd = 'ssh %s -p %s %s@%s "%s -f %s/%s"' % (self.identitycommand, self.port, self.user,
-                                                                      self.host, executable, poolpath, shortimage)
+                                                                      self.host, executable, poolpath, full_name)
                 os.system(uncompresscmd)
         if cmd is not None:
             if self.host == 'localhost' or self.host == '127.0.0.1':
                 if which('virt-customize') is not None:
-                    cmd = f"virt-customize -a {poolpath}/{shortimage_uncompressed} --run-command '{cmd}'"
+                    cmd = f"virt-customize -a {poolpath}/{name} --run-command '{cmd}'"
                     os.system(cmd)
             elif self.protocol == 'ssh':
                 cmd = 'ssh %s -p %s %s@%s "virt-customize -a %s/%s --run-command \'%s\'"' % (self.identitycommand,
                                                                                              self.port, self.user,
                                                                                              self.host, poolpath,
-                                                                                             shortimage_uncompressed,
-                                                                                             cmd)
+                                                                                             name, cmd)
                 os.system(cmd)
         if pooltype in ['logical', 'zfs']:
             product = list(root.iter('product'))
@@ -3231,7 +3227,7 @@ class Kvirt(object):
                 thinpool = list(root.iter('product'))[0].get('name')
             else:
                 thinpool = None
-            self.add_image_to_deadpool(poolname, pooltype, poolpath, shortimage_uncompressed, thinpool)
+            self.add_image_to_deadpool(poolname, pooltype, poolpath, name, thinpool)
             return {'result': 'success'}
         pool.refresh()
         return {'result': 'success'}
