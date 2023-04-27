@@ -326,7 +326,7 @@ def create(config, plandir, cluster, overrides):
     management_api_ip = data.get('management_api_ip')
     if management_api_ip is None:
         management_ips_cmd = "oc get nodes --no-headers -o jsonpath=\"{.items[*]['status.addresses'][0]['address']}\""
-        management_ips = os.popen(management_ips_cmd).readlines().split(' ')
+        management_ips = os.popen(management_ips_cmd).read().split(' ')
         if len(management_ips) == 1:
             management_api_ip = management_ips[0]
         else:
