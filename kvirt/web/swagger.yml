@@ -460,6 +460,41 @@ paths:
                     type: array
                     items:
                       type: string
+  /images/{name}:
+    delete:
+      description: Delete image
+      parameters:
+      - name: name
+        in: path
+        description: Image name
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                pool:
+                  type: string
+      responses:
+        '200':
+          description: Successfully deleted image
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '400':
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+              example:
+                result: failure
+                reason: Invalid data
   /isos:
     get:
       description: Returns list of isos
@@ -1390,6 +1425,15 @@ paths:
         required: true
         schema:
           type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                snapshots:
+                  type: boolean
       responses:
         '200':
           description: Successfully deleted vm

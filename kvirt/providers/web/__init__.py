@@ -4,9 +4,10 @@
 from inspect import signature
 from kvirt import common
 from kvirt.common import pprint, error
-from urllib.request import urlopen, Request
+import os
 import json
 import ssl
+from urllib.request import urlopen, Request
 import webbrowser
 
 
@@ -281,8 +282,12 @@ class Kwebclient(object):
         return response
 
     def delete_image(self, image, pool=None):
-        print("not implemented")
-        return {'result': 'success'}
+        image_url = f"{self.base}/images/{os.path.basename(image)}"
+        data = {'pool': pool} if pool is not None else {}
+        data = json.dumps(data).encode('utf-8')
+        request = Request(image_url, data=data, headers=self.headers, method='DELETE')
+        response = json.loads(urlopen(request, context=self.context).read())
+        return response
 
     def add_image(self, url, pool, short=None, cmd=None, name=None, size=None):
         image_url = f"{self.base}/images"

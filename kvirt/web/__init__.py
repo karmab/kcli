@@ -1163,6 +1163,19 @@ class Kweb():
                 response.status = 400
             return result
 
+        @app.route("/images/<image>", method='DELETE')
+        def imagedelete(image):
+            if readonly:
+                response.status = 403
+                return {}
+            config = Kconfig()
+            k = config.k
+            data = request.json or request.forms
+            pool = data.get('pool') or config.pool
+            result = k.delete_image(image, pool=pool)
+            response.status = 200
+            return result
+
         @app.route('/isos')
         def isoslist():
             config = Kconfig()
