@@ -11,7 +11,7 @@ import ssl
 
 
 class Kwebclient(object):
-    def __init__(self, host='127.0.0.1', port=8000, debug=False):
+    def __init__(self, host='127.0.0.1', port=8000, debug=False, localkube=True):
         self.debug = debug
         self.conn = 'web'
         self.base = f'http://{host}:{port}'
@@ -19,6 +19,7 @@ class Kwebclient(object):
         self.context = ssl.create_default_context()
         self.context.check_hostname = False
         self.context.verify_mode = ssl.CERT_NONE
+        self.localkube = localkube
 
     def close(self):
         return
@@ -446,3 +447,25 @@ class Kwebclient(object):
     def delete_security_group(self, name):
         print("not implemented")
         return {'result': 'success'}
+
+    def create_kube(self, cluster, kubetype, overrides={}):
+        kubes_url = f"{self.base}/kubes"
+        overrides['cluster'] = cluster
+        overrides['kubetype'] = kubetype
+        data = json.dumps(overrides).encode('utf-8')
+        request = Request(kubes_url, data=data, headers=self.headers)
+        response = json.loads(urlopen(request, context=self.context).read())
+        return response
+
+    def delete_kube(self, kube):
+        kubes_url = f"{self.base}/kubes/{kube}"
+        data = json.dumps({}).encode('utf-8')
+        request = Request(kubes_url, data=data, headers=self.headers, method='DELETE')
+        response = json.loads(urlopen(request, context=self.context).read())
+        return response
+
+    def list_kubes(self):
+        kubes_url = f"{self.base}/kubes"
+        request = Request(kubes_url, headers=self.headers)
+        response = json.loads(urlopen(request, context=self.context).read())
+        return response['kubes']

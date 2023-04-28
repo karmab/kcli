@@ -391,8 +391,9 @@ class Kconfig(Kbaseconfig):
                             tunneldir=self.tunneldir)
             elif self.type == 'web':
                 port = self.options.get('port', 8000)
+                localkube = self.options.get('localkube', True)
                 from kvirt.providers.web import Kwebclient
-                k = Kwebclient(self.host, port, debug=debug)
+                k = Kwebclient(self.host, port, localkube=localkube, debug=debug)
                 self.type = 'web'
             elif offline:
                 from kvirt.providers.fake import Kfake
@@ -1315,6 +1316,8 @@ class Kconfig(Kbaseconfig):
 
     def list_kubes(self):
         k = self.k
+        if self.type == 'web' and self.k.localkube:
+            return k.list_kubes()
         kubes = {}
         for vm in k.list():
             if 'kube' in vm and 'kubetype' in vm:
@@ -2748,6 +2751,8 @@ class Kconfig(Kbaseconfig):
         self.create_kube(cluster, kubetype, kube_overrides)
 
     def create_kube(self, cluster, kubetype, overrides={}):
+        if self.type == 'web' and self.k.localkube:
+            return self.k.create_kube(cluster, kubetype, overrides=overrides)
         ippool = overrides.get('ippool') or overrides.get('confpool')
         baremetalpool = overrides.get('ippool') or overrides.get('confpool')
         if ippool is not None:
@@ -2827,6 +2832,8 @@ class Kconfig(Kbaseconfig):
         kubetype = 'generic'
         dnsclient = None
         k = self.k
+        if self.type == 'web' and self.k.localkube:
+            return k.delete_kube(cluster, overrides=overrides)
         cluster = overrides.get('cluster', cluster)
         if cluster is None or cluster == '':
             cluster = 'mykube'
