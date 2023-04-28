@@ -1294,12 +1294,9 @@ class Kconfig(Kbaseconfig):
                 k.convert_to_template(name)
             else:
                 k.convert_to_vm(name)
+        return {'result': 'success'}
 
     def list_plans(self):
-        """
-
-        :return:
-        """
         k = self.k
         results = []
         plans = {}

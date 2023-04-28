@@ -673,6 +673,46 @@ paths:
               example:
                 result: failure
                 reason: Invalid data
+    put:
+      description: Update network
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+              properties:
+                dhcp:
+                  type: string
+              example:
+                dhcp: true
+                domain: default
+                mode: nat
+                plan: myplan
+      parameters:
+      - name: network
+        in: path
+        description: Network name
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Successfully updated network
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '400':
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+              example:
+                result: failure
+                reason: Invalid data
   /nics/{name}:
     post:
       description: Add nic to vm
@@ -1298,6 +1338,47 @@ paths:
       responses:
         '200':
           description: Successfully deleted vm
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '400':
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+              example:
+                result: failure
+                reason: Invalid data
+    put:
+      description: Update vm
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+              properties:
+                numcpus:
+                  type: string
+                memory:
+                  type: string
+              example:
+                numcpus: 8
+                memory: 4096
+                autostart: false
+      parameters:
+      - name: name
+        in: path
+        description: Vm name
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Successfully updated vm
           content:
             application/json:
               schema:

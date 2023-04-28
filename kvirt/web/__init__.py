@@ -301,6 +301,34 @@ class Kweb():
             response.status = 200
             return result
 
+        @app.route("/networks/<network>", method='UPDATE')
+        def networkupdate(network):
+            if readonly:
+                response.status = 403
+                return {}
+            data = request.json or request.forms
+            if data is None:
+                response.status = 400
+                return 'Invalid data'
+            parameters = {'name': network}
+            if 'dhcp' in data:
+                parameters['dhcp'] = bool(data['dhcp'])
+            if 'nat' in data:
+                parameters['nat'] = bool(data['nat'])
+            elif 'isolated' in data:
+                parameters['nat'] = not bool(data['isolated'])
+            if 'domain' in data:
+                parameters['domain'] = data['domain']
+            if 'plan' in data:
+                parameters['plan'] = data['plan']
+            if 'overrides' in data:
+                parameters['overrides'] = data['overrides']
+            config = Kconfig()
+            k = config.k
+            result = k.update_network(**parameters)
+            response.status = 200
+            return result
+
         # PLANS
 
         @app.route('/plancreateform')
@@ -381,8 +409,6 @@ class Kweb():
             response.status = 200
             return result
 
-        # HOSTS
-
         @app.route("/vms/<name>", method='DELETE')
         def vmdelete(name):
             if readonly:
@@ -391,6 +417,33 @@ class Kweb():
             config = Kconfig()
             k = config.k
             result = k.delete(name)
+            response.status = 200
+            return result
+
+        @app.route("/vms/<name>", method='UPDATE')
+        def vmupdate(name):
+            if readonly:
+                response.status = 403
+                return {}
+            data = request.json or request.forms
+            if data is None:
+                response.status = 400
+                return 'Invalid data'
+            config = Kconfig()
+            parameters = {}
+            for p in data:
+                key = p
+                value = data[p]
+                if p.startswith('parameters'):
+                    key = p.replace('parameters[', '').replace(']', '')
+                parameters[key] = value
+            if 'nets' in parameters:
+                if isinstance(parameters, str):
+                    parameters['nets'] = parameters['nets'].split(',')
+            if 'disks' in parameters:
+                if isinstance(parameters, str):
+                    parameters['disks'] = parameters['disks'].split(',')
+            result = config.update_vm(name, parameters)
             response.status = 200
             return result
 

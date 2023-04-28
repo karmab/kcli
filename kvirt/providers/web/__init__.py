@@ -167,26 +167,55 @@ class Kwebclient(object):
         print("not implemented")
 
     def update_metadata(self, name, metatype, metavalue, append=False):
-        print("not implemented")
+        vm_url = f"{self.base}/vms/{name}"
+        data = {metatype: metavalue}
+        data = json.dumps(data).encode('utf-8')
+        request = Request(vm_url, data=data, headers=self.headers, method='UPDATE')
+        response = json.loads(urlopen(request, context=self.context).read())
+        return response
 
     def update_memory(self, name, memory):
-        print("not implemented")
+        vm_url = f"{self.base}/vms/{name}"
+        data = {'memory': memory}
+        data = json.dumps(data).encode('utf-8')
+        request = Request(vm_url, data=data, headers=self.headers, method='UPDATE')
+        response = json.loads(urlopen(request, context=self.context).read())
+        return response
 
     def update_cpus(self, name, numcpus):
-        print("not implemented")
+        vm_url = f"{self.base}/vms/{name}"
+        data = {'numcpus': numcpus}
+        data = json.dumps(data).encode('utf-8')
+        request = Request(vm_url, data=data, headers=self.headers, method='UPDATE')
+        response = json.loads(urlopen(request, context=self.context).read())
+        return response
 
     def update_start(self, name, start=True):
-        print("not implemented")
+        vm_url = f"{self.base}/vms/{name}"
+        data = {'start': start}
+        data = json.dumps(data).encode('utf-8')
+        request = Request(vm_url, data=data, headers=self.headers, method='UPDATE')
+        response = json.loads(urlopen(request, context=self.context).read())
+        return response
 
     def update_information(self, name, information):
         self.update_metadata(name, 'information', information)
 
     def update_iso(self, name, iso):
-        print("not implemented")
+        vm_url = f"{self.base}/vms/{name}"
+        data = {'iso': iso}
+        data = json.dumps(data).encode('utf-8')
+        request = Request(vm_url, data=data, headers=self.headers, method='UPDATE')
+        response = json.loads(urlopen(request, context=self.context).read())
+        return response
 
     def update_flavor(self, name, flavor):
-        print("Not implemented")
-        return {'result': 'success'}
+        vm_url = f"{self.base}/vms/{name}"
+        data = {'flavor': flavor}
+        data = json.dumps(data).encode('utf-8')
+        request = Request(vm_url, data=data, headers=self.headers, method='UPDATE')
+        response = json.loads(urlopen(request, context=self.context).read())
+        return response
 
     def create_disk(self, name, size, pool=None, thin=True, image=None):
         print("not implemented")
@@ -381,11 +410,30 @@ class Kwebclient(object):
         print("not implemented")
 
     def update_nic(self, name, index, network):
-        print("not implemented")
+        vm_url = f"{self.base}/vms/{name}"
+        data = {'index': index, 'network': network}
+        data = json.dumps(data).encode('utf-8')
+        request = Request(vm_url, data=data, headers=self.headers, method='UPDATE')
+        response = json.loads(urlopen(request, context=self.context).read())
+        return response
 
     def update_network(self, name, dhcp=None, nat=None, domain=None, plan=None, overrides={}):
-        print("not implemented")
-        return {'result': 'success'}
+        network_url = f"{self.base}/networks/{name}"
+        data = {}
+        if dhcp is not None:
+            data['dhcp'] = dhcp
+        if nat is not None:
+            data['nat'] = nat
+        if domain is not None:
+            data['domain'] = domain
+        if plan is not None:
+            data['plan'] = plan
+        if overrides:
+            data['overrides'] = overrides
+        data = json.dumps(data).encode('utf-8')
+        request = Request(network_url, data=data, headers=self.headers, method='UPDATE')
+        response = json.loads(urlopen(request, context=self.context).read())
+        return response
 
     def list_security_groups(self, network=None):
         print("not implemented")
