@@ -546,6 +546,31 @@ paths:
               example:
                 nodes: info-about-nodes
                 version: info-about-version
+    delete:
+      description: Delete Cluster
+      parameters:
+      - name: name
+        in: path
+        description: Cluster name
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Successfully deleted cluster
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '400':
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+              example:
+                result: failure
+                reason: Invalid data
   /kubes/{name}/kubeconfig:
     get:
       description: Returns kubeconfig of a given cluster

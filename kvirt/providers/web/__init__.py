@@ -462,9 +462,9 @@ class Kwebclient(object):
         response = json.loads(urlopen(request, context=self.context).read())
         return response
 
-    def delete_kube(self, kube):
+    def delete_kube(self, kube, overrides={}):
         kubes_url = f"{self.base}/kubes/{kube}"
-        data = json.dumps({}).encode('utf-8')
+        data = json.dumps(overrides).encode('utf-8')
         request = Request(kubes_url, data=data, headers=self.headers, method='DELETE')
         response = json.loads(urlopen(request, context=self.context).read())
         return response

@@ -2914,6 +2914,7 @@ class Kconfig(Kbaseconfig):
             if cluster in cluster_baremetal_reservations:
                 del cluster_baremetal_reservations[cluster]
                 self.update_confpool(confpool, {'cluster_baremetal_reservations': cluster_baremetal_reservations})
+        return {'result': 'success'}
 
     def scale_kube(self, cluster, kubetype, overrides={}):
         if kubetype == 'generic':

@@ -893,6 +893,16 @@ class Kweb():
             response.status = 200
             return result
 
+        @app.route("/kubes/<kube>", method='DELETE')
+        def kubedelete(kube):
+            if readonly:
+                response.status = 403
+                return {}
+            config = Kconfig()
+            result = config.delete_kube(kube)
+            response.status = 200
+            return result
+
         @app.route('/hosts')
         def hostslist():
             baseconfig = Kbaseconfig()
