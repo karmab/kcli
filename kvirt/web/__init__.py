@@ -1059,7 +1059,7 @@ class Kweb():
             response.status = 200
             return result
 
-        @app.route("/container/<name>/delete", method='DELETE')
+        @app.route("/container/<name>", method='DELETE')
         def containerdelete(name):
             if readonly:
                 response.status = 403
