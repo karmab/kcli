@@ -784,14 +784,11 @@ class Kvirt(object):
                     index = subindex.pop() + 1
             cmds = cmds[:index] + gcmds + cmds[index:]
         if cloudinit:
-            openstack = False
             ignitiondata = None
+            openstack = False
             if image is not None and common.needs_ignition(image):
-                if 'openstack' in image:
-                    ignition = False
-                    openstack = True
-                else:
-                    ignition = True
+                ignition = 'qemu' in image
+                openstack = not ignition
                 localhosts = ['localhost', '127.0.0.1']
                 ignitiondir = '/var/lib/libvirt/images'
                 if self.protocol == 'ssh' and self.host not in localhosts:
