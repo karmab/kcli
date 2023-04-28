@@ -74,13 +74,14 @@ class Kbase(object):
     def restart(self, name):
         return self.start(name)
 
-    def report(self):
+    def info_host(self):
         print("not implemented")
+        return {}
 
     def status(self, name):
         print("not implemented")
 
-# should return a sorted list of name, state, ip, source, plan, profile, report
+# should return a sorted list of name, state, ip, source, plan, profile
     def list(self):
         print("not implemented")
         return []

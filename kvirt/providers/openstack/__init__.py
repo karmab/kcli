@@ -324,15 +324,14 @@ class Kopenstack(object):
         vm.reboot()
         return {'result': 'success'}
 
-    def report(self):
+    def info_host(self):
         print("not implemented")
-        return
+        return {}
 
     def status(self, name):
         print("not implemented")
         return
 
-# should return a sorted list of name, state, ip, source, plan, profile, report
     def list(self):
         vms = []
         nova = self.nova

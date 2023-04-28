@@ -1320,28 +1320,42 @@ class Ksphere:
                 return clu.host
         return []
 
-    def report(self):
+    def info_host(self):
+        data = {}
         si = self.si
         about = si.content.about
-        print(f"Vcenter: {self.vcip}")
-        print(f"Version: {about.version}")
-        print(f"Api Version: {about.apiVersion}")
-        print("")
+        data['vcenter'] = self.vcip
+        data['version'] = about.version
+        data['api_version'] = about.apiVersion
         rootFolder = self.rootFolder
         o = si.content.viewManager.CreateContainerView(rootFolder, [vim.Datacenter], True)
         view = o.view
         o.Destroy()
+        datacenters = []
         for datacenter in view:
-            print(f"Datacenter: {datacenter.name}")
+            new_datacenter = {}
+            new_datacenter['datacenter'] = datacenter.name
+            clusters = []
             for clu in datacenter.hostFolder.childEntity:
-                print(f"Cluster: {clu.name}")
+                new_clu = {}
+                new_clu['cluster'] = clu.name
+                datastores = []
                 for dts in clu.datastore:
-                    print(f"Pool: {dts.name}")
+                    datastores.append(dts.name)
+                new_clu['datastores'] = datastores
+                hosts = []
                 for h in clu.host:
-                    print(f"ESXI Host: {h.name}")
+                    hosts.append(h.name)
+                new_clu['datastores'] = datastores
+                networks = []
                 for n in clu.network:
-                    print(f"Network: {n.name}")
-            print("")
+                    networks.append(n.name)
+                new_clu['networks'] = networks
+                clusters.append(new_clu)
+            new_datacenter['clusters'] = clusters
+            datacenters.append(new_datacenter)
+        data['datacenters'] = datacenters
+        return data
 
     def delete_image(self, image, pool=None):
         si = self.si

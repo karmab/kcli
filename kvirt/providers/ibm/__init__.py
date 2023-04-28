@@ -330,11 +330,12 @@ class Kibm(object):
             return {'result': 'failure', 'reason': f'Unable to restart VM {name}. Hit {e}'}
         return {'result': 'success'}
 
-    def report(self):
-        print("Region:", self.region)
-        print("Zone:", self.zone)
-        print("VPC:", self.vpc)
-        return
+    def info_host(self):
+        data = {}
+        data['region'] = self.region
+        data['zone'] = self.zone
+        data['vpc'] = self.vpc
+        return data
 
     def status(self, name):
         try:

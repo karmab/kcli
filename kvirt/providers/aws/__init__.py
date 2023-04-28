@@ -369,9 +369,8 @@ class Kaws(object):
         conn.start_instances(InstanceIds=[instanceid])
         return {'result': 'success'}
 
-    def report(self):
-        print(f"Region: {self.region}")
-        return
+    def info_host(self):
+        return {"region": self.region}
 
     def status(self, name):
         conn = self.conn

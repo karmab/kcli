@@ -1491,15 +1491,16 @@ class Kvirt(object):
             usedmemory += mem
         return True if usedmemory + memory > totalmemory else False
 
-    def report(self):
+    def info_host(self):
+        data = {}
         conn = self.conn
         status = {0: 'down', 1: 'up'}
         hostname = conn.getHostname()
         cpus = conn.getCPUMap()[0]
         totalmemory = conn.getInfo()[1]
-        print(f"Connection: {self.url}")
-        print(f"Host: {hostname}")
-        print(f"Cpus: {cpus}")
+        data["connection"] = self.url
+        data["host"] = hostname
+        data["cpus"] = cpus
         totalvms = 0
         usedmemory = 0
         for vm in conn.listAllDomains(0):
@@ -1515,8 +1516,10 @@ class Kvirt(object):
                 memory = float(memory) / 1024
                 memory = int(memory)
             usedmemory += memory
-        print(f"Vms Running: {totalvms}")
-        print(f"Total Memory Assigned: {usedmemory}MB of {totalmemory}MB")
+        data["vms_running"] = totalvms
+        data["memory_used"] = usedmemory
+        data["memory_total"] = totalmemory
+        storage = []
         for pool in conn.listAllStoragePools(VIR_CONNECT_LIST_STORAGE_POOLS_ACTIVE):
             poolname = pool.name()
             poolxml = pool.XMLDesc(0)
@@ -1529,16 +1532,18 @@ class Kvirt(object):
             s = pool.info()
             used = "%.2f" % (float(s[2]) / GiB)
             avail = "%.2f" % (float(s[3]) / GiB)
-            # Type,Status, Total space in Gb, Available space in Gb
             used = float(used)
             avail = float(avail)
-            msg = f"Storage:{poolname} Type: {pooltype} Path:{poolpath} Used space: {used}GB Available space: {avail}GB"
-            print(msg)
+            new_data = f"storage: {poolname}, type: {pooltype}, path: {poolpath}, used_space: {used}GB,"
+            new_data += f" available_space: {avail}GB"
+            storage.append(new_data)
+        data['storage'] = storage
+        networks = []
         try:
             for interface in conn.listInterfaces():
                 if interface == 'lo':
                     continue
-                print(f"Network: {interface} Type: bridged")
+                networks.append(f"name: {interface}, type: bridged")
         except libvirtError as e:
             if 'this function is not supported by the connection driver: virConnectNumOfInterfaces' in str(e):
                 warning("Network: system interfaces are unavailable")
@@ -1566,7 +1571,9 @@ class Kvirt(object):
                 dhcp = True
             else:
                 dhcp = False
-            print(f"Network: {networkname} Type: routed Cidr: {cidr} Dhcp: {dhcp}")
+            networks.append(f"name: {networkname}, type: routed, cidr: {cidr}, dhcp: {dhcp}")
+        data['networks'] = networks
+        return data
 
     def status(self, name):
         conn = self.conn

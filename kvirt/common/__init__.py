@@ -1473,12 +1473,12 @@ def find_ignition_files(role, cluster):
         return None
 
 
-def pretty_print(o, value=False):
+def pretty_print(o, value=False, width=None):
     """
 
     :param o:
     """
-    data = yaml.dump(o, default_flow_style=False, indent=2, allow_unicode=True, Dumper=NoAliasDumper)
+    data = yaml.dump(o, default_flow_style=False, indent=2, allow_unicode=True, Dumper=NoAliasDumper, width=width)
     data = data.replace("'", '').replace('\n\n', '\n').replace('#cloud-config', '|\n            #cloud-config')
     if not value:
         print(data)

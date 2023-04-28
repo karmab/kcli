@@ -407,22 +407,28 @@ class KOvirt(object):
             vm.reboot()
         return {'result': 'success'}
 
-    def report(self):
+    def info_host(self):
+        data = {}
         api = self.conn.system_service().get()
         system_service = self.conn.system_service()
-        print(f"Version: {api.product_info.version.full_version}")
+        data['version'] = api.product_info.version.full_version
         if api.summary.vms is not None:
-            print(f"Vms Running: {api.summary.vms.total}")
+            data['vms_running'] = api.summary.vms.total
         if api.summary.hosts is not None:
-            print(f"Hosts: {api.summary.hosts.total}")
+            data['hosts_summary'] = api.summary.hosts.total
+        hosts = []
         hosts_service = self.conn.system_service().hosts_service()
         for host in hosts_service.list():
-            print(f"Host: {host.name}")
+            hosts.append(host.name)
+        data['hosts'] = hosts
+        storage = []
         if api.summary.storage_domains is not None:
-            print(f"Storage Domains: {api.summary.storage_domains.total}")
+            data['storage_summary'] = api.summary.storage_domains.total
         sds_service = system_service.storage_domains_service()
         for sd in sds_service.list():
-            print(f"Storage Domain: {sd.name}")
+            storage.append(f"Storage Domain: {sd.name}")
+        data['storage'] = storage
+        return data
 
     def status(self, name):
         print("not implemented")

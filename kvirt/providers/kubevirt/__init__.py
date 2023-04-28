@@ -542,15 +542,15 @@ class Kubevirt(Kubecommon):
     def restart(self, name):
         return self.start(name)
 
-    def report(self):
-        cdi = self.cdi
+    def info_host(self):
+        data = {}
         if self.token is not None:
-            print(f"Connection: https://{self.host}:{self.port}")
+            data['connection'] = f"https://{self.host}:{self.port}"
         else:
-            print(f"Context: {self.contextname}")
-        print(f"Namespace: {self.namespace}")
-        print(f"Cdi: {cdi}")
-        return
+            data['context'] = self.contextname
+        data['namespace'] = self.namespace
+        data['cdi'] = self.cdi
+        return data
 
     def status(self, name):
         crds = self.crds

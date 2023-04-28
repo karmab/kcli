@@ -77,6 +77,17 @@ components:
       example:
           nodes: mynodes
           version: myversion
+    Hostinfo:
+      type: object
+      properties:
+        connection:
+          type: string
+        host:
+          type: string
+      example:
+        connection: qemu:///system
+        host: hendrix
+        vms_running: 4
 paths:
   /containers:
     get:
@@ -277,6 +288,25 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Result'
+        '400':
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+              example:
+                result: failure
+                reason: Invalid data
+  /host:
+    get:
+      description: Returns info on current host
+      responses:
+        '200':
+          description: Successfully returned info on current host
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Hostinfo'
         '400':
           description: Invalid data
           content:

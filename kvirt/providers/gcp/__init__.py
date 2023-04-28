@@ -341,16 +341,17 @@ class Kgcp(object):
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         return {'result': 'success'}
 
-    def report(self):
+    def info_host(self):
+        data = {}
         resource = googleapiclient.discovery.build('cloudresourcemanager', 'v1')
         project = self.project
         zone = self.zone
-        print(f"Project: {project}")
+        data['project'] = project
         projectinfo = resource.projects().get(projectId=project).execute()
-        print(f"ProjectNumber: {projectinfo['projectNumber']}")
-        print(f"Creation Time: {projectinfo['createTime']}")
-        print(f"Zone: {zone}")
-        return
+        data['project_number'] = projectinfo['projectNumber']
+        data['project_creation_time'] = projectinfo['createTime']
+        data['zone'] = zone
+        return data
 
     def status(self, name):
         status = None

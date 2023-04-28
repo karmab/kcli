@@ -278,18 +278,19 @@ class Kpacket(object):
         else:
             return {'result': 'failure', 'reason': f"Node {name} not found"}
 
-    def report(self):
+    def info_host(self):
+        data = {}
         projects = [proj for proj in self.conn.list_projects() if proj.name == self.project or proj.id == self.project]
         if not projects:
             error(f"Project {self.project} not found")
-            return
+            return {}
         project = projects[0]
-        print(f"Project name: {project.name}")
-        print(f"Project id: {project.id}")
+        data['project_name'] = project.name
+        data['project_id'] = project.id
         if self.facility is not None:
-            print(f"Facility: {self.facility}")
-        print(f"Number of nodes Running: {len(self.conn.list_devices(self.project))}")
-        return
+            data['facility'] = self.facility
+        data['nodes_running'] = len(self.conn.list_devices(self.project))
+        return data
 
     def status(self, name):
         devices = [d for d in self.conn.list_devices(self.project) if d.hostname == name]

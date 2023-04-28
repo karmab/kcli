@@ -108,8 +108,11 @@ class Kwebclient(object):
     def restart(self, name):
         return self.start(name)
 
-    def report(self):
-        print(f"Url: {self.base}")
+    def info_host(self):
+        info_url = f"{self.base}/host"
+        request = Request(info_url, headers=self.headers)
+        result = json.loads(urlopen(request, context=self.context).read())
+        return result
 
     def status(self, name):
         url = f"{self.base}/vms/{name}"

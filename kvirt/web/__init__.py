@@ -479,6 +479,13 @@ class Kweb():
             response.status = 200
             return result
 
+        @app.route('/host')
+        def hostinfo():
+            config = Kconfig()
+            k = config.k
+            response.status = 200
+            return k.info_host()
+
         @app.route("/snapshots/<name>")
         def snapshotlist(name):
             config = Kconfig()

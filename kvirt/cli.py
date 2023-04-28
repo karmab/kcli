@@ -3272,7 +3272,7 @@ def info_host(args):
     client = args.host or args.client
     config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
-    k.report()
+    common.pretty_print(k.info_host(), width=100)
 
 
 def switch_host(args):
