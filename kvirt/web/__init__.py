@@ -416,7 +416,9 @@ class Kweb():
                 return {}
             config = Kconfig()
             k = config.k
-            result = k.delete(name)
+            data = request.json or request.forms
+            snapshots = True if data is not None and 'snapshots' in data and bool(data['snapshots']) else False
+            result = k.delete(name, snapshots=snapshots)
             response.status = 200
             return result
 

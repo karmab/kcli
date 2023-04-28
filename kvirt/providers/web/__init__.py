@@ -158,7 +158,7 @@ class Kwebclient(object):
 
     def delete(self, name, snapshots=False):
         vm_url = f"{self.base}/vms/{name}"
-        data = json.dumps({}).encode('utf-8')
+        data = json.dumps({'snapshots': snapshots}).encode('utf-8')
         request = Request(vm_url, data=data, headers=self.headers, method='DELETE')
         response = json.loads(urlopen(request, context=self.context).read())
         return response
