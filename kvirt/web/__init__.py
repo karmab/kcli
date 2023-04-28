@@ -838,10 +838,13 @@ class Kweb():
                 response.status = 400
                 return 'Invalid data'
             config = Kconfig()
-            _type = data['type']
+            _type = data.get('type') or data.get('kubetype')
             parameters = {}
             for key in data:
                 value = data[key]
+                if not isinstance(value, str):
+                    parameters[key] = value
+                    continue
                 if value.isdigit():
                     value = int(value)
                 elif value.lower() == 'true':

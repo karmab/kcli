@@ -2833,7 +2833,8 @@ class Kconfig(Kbaseconfig):
         dnsclient = None
         k = self.k
         if self.type == 'web' and self.k.localkube:
-            return k.delete_kube(cluster, overrides=overrides)
+            kubetype = overrides.get('kubetype', 'generic')
+            return k.delete_kube(cluster, kubetype, overrides=overrides)
         cluster = overrides.get('cluster', cluster)
         if cluster is None or cluster == '':
             cluster = 'mykube'
