@@ -2507,10 +2507,6 @@ class Kconfig(Kbaseconfig):
                 shortname = os.path.basename(url).split('?')[0]
                 if need_iso:
                     image = f'boot-{shortname}.iso'
-                rhcos_dependencies_base = 'https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos'
-                if url.startswith(rhcos_dependencies_base) and url.endswith('rhcos-openstack.x86_64.qcow2.gz'):
-                    tag = url.split('/')[7]
-                    image = f'rhcos-openstack-{tag}.x86_64.qcow2'
                 try:
                     result = k.add_image(url, pool, cmd=cmd, name=image, size=size)
                 except Exception as e:

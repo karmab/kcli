@@ -1936,7 +1936,6 @@ class Kvirt(object):
         conn = self.conn
         if self.get_capabilities()['arch'] == 'aarch64':
             IMAGES.update({i: IMAGES[i].replace('x86_64', 'aarch64').replace('amd64', 'arm64') for i in IMAGES})
-        default_images = list(IMAGES.keys())
         for pool in conn.listAllStoragePools(VIR_CONNECT_LIST_STORAGE_POOLS_ACTIVE):
             poolname = pool.name()
             try:
@@ -1953,12 +1952,12 @@ class Kvirt(object):
             if product:
                 thinpool = list(root.iter('product'))[0].get('name')
                 for volume in self.thinimages(poolpath, thinpool):
-                    if volume.endswith('qcow2') or volume.endswith('qc2') or volume in default_images:
+                    if volume.endswith('qcow2') or volume.endswith('qc2') or '.' not in volume:
                         images.extend(f"{poolpath}/{volume}")
             for volume in pool.listVolumes():
                 if volume.endswith('iso') or volume.endswith('fd'):
                     isos.append(f"{poolpath}/{volume}")
-                elif volume.endswith('qcow2') or volume.endswith('qc2') or volume in default_images:
+                elif volume.endswith('qcow2') or volume.endswith('qc2') or '.' not in volume:
                     images.append(f"{poolpath}/{volume}")
         if iso:
             return sorted(isos, key=lambda s: s.lower())
