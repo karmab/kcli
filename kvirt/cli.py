@@ -2319,6 +2319,9 @@ def info_plan(args):
 
 
 def info_kube(args):
+    if args.client == 'web':
+        info_web_kube(args)
+        return
     kubetype = args.kubetype
     output = args.global_output or args.output
     openshift = kubetype == 'openshift'
@@ -2350,6 +2353,24 @@ def info_kube(args):
             baseconfig.info_kube_kind(quiet=True)
         else:
             baseconfig.info_kube_generic(quiet=True)
+
+
+def info_web_kube(args):
+    output = args.global_output or args.output
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    status = config.k.info_specific_kube(args.cluster)
+    if status is None or not status:
+        return
+    elif output is not None:
+        _list_output(status, output)
+    else:
+        pprint(f"Providing information about cluster {args.cluster}")
+        kubetable = PrettyTable(["Name", "Status", "Role", "Age", "Version", "Ip"])
+        kubetable.title = f"{status['version'].strip()}"
+        for node in status['nodes']:
+            kubetable.add_row(node)
+        kubetable.align["Kube"] = "l"
+        print(kubetable)
 
 
 def info_generic_kube(args):
@@ -4331,7 +4352,7 @@ def cli():
     download_subparsers.add_parser('iso', parents=[isodownload_parser], description=isodownload_desc,
                                    help=isodownload_desc)
 
-    kubeconfigdownload_desc = 'Download Kubeconfig'
+    kubeconfigdownload_desc = 'Download Kubeconfig using web provider'
     kubeconfigdownload_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubeconfigdownload_parser.add_argument('kube', metavar='KUBE')
     kubeconfigdownload_parser.set_defaults(func=download_kubeconfig)

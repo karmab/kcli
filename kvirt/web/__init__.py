@@ -975,8 +975,10 @@ class Kweb():
         def kubeinfo(kube):
             config = Kconfig()
             data = {}
-            if kube in config.list_kubes():
-                data = config.info_specific_kube(kube)
+            kubes = config.list_kubes()
+            if kube in kubes:
+                openshift = kubes[kube]['type'] == 'openshift'
+                data = config.info_specific_kube(kube, openshift=openshift)
             return data
 
         @app.route('/kubeconfig/kubeconfig.<kube>')

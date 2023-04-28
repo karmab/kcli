@@ -466,9 +466,7 @@ class Kwebclient(object):
         data = json.dumps(overrides).encode('utf-8')
         request = Request(kubes_url, data=data, headers=self.headers)
         response = json.loads(urlopen(request, context=self.context).read())
-        if response['result'] == 'success':
-            success(f"Cluster {cluster} created")
-        else:
+        if response['result'] != 'success':
             error("Hit {response['reason']}")
         return response
 
@@ -498,3 +496,9 @@ class Kwebclient(object):
             return urlopen(request, context=self.context).read()
         except HTTPError:
             return None
+
+    def info_specific_kube(self, kube):
+        kube_url = f"{self.base}/kubes/{kube}"
+        request = Request(kube_url, headers=self.headers)
+        response = json.loads(urlopen(request, context=self.context).read())
+        return response

@@ -1936,7 +1936,6 @@ class Kbaseconfig:
                 kubeconfig = os.environ['KUBECONFIG']
                 warning(f"{kubeconfig} not found...Using KUBECONFIG instead")
             else:
-                kubeconfig = os.environ['KUBECONFIG']
                 warning("KUBECONFIG not set...Using .kube/config instead")
                 kubeconfig = os.path.expanduser('~/.kube/config')
         nodes = []
