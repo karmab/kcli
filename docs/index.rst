@@ -597,22 +597,6 @@ To use this provider with kcli rpm, you’ll need to install
 
    dnf -y install python3-pyvmomi python3-cryptography python3-requests
 
-Web
----
-
-This provider allows you to interact with a kweb instance using kcli commands
-
-::
-
-   myweb:
-    type: web
-    host: 127.0.0.1
-    port: 8000
-
-The following parameters are specific to the web provider:
-
--  ``localkube``. Defaults to true. Use REST calls when handling kubes
-
 Using hostgroups and vm-host rules
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -688,6 +672,22 @@ To use this provider with kcli rpm, you’ll need to install the following packe
    pip3 install ibm_vpc ibm-cos-sdk ibm-platform-services ibm-cloud-networking-services
    # optionally
    pip install cos-aspera
+
+Web
+---
+
+This provider allows you to interact with a kweb instance using kcli commands
+
+::
+
+   myweb:
+    type: web
+    host: 127.0.0.1
+    port: 8000
+
+The following parameters are specific to the web provider:
+
+-  ``localkube``. Defaults to true. Use REST calls when handling kubes
 
 Usage
 =====
