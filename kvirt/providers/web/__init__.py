@@ -3,11 +3,11 @@
 
 from inspect import signature
 from kvirt import common
-from kvirt.common import error
+from kvirt.common import pprint, error
 from urllib.request import urlopen, Request
-# import base64
 import json
 import ssl
+import webbrowser
 
 
 class Kwebclient(object):
@@ -125,7 +125,9 @@ class Kwebclient(object):
         return vms
 
     def console(self, name, tunnel=False, web=False):
-        print("not implemented")
+        url = f'{self.base}/vmconsole/{name}'
+        pprint(f"Opening web console {url}")
+        webbrowser.open(url, new=2, autoraise=True)
 
     def serialconsole(self, name, web=False):
         print("not implemented")
