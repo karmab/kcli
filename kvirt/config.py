@@ -514,7 +514,7 @@ class Kconfig(Kbaseconfig):
                    and customprofileimage not in [os.path.basename(v) for v in self.k.volumes()]:
                     pprint(f"Image {customprofileimage} not found. Downloading")
                     self.handle_host(pool=self.pool, image=customprofileimage, download=True)
-                    vmprofiles[profile]['image'] = os.path.basename(IMAGES[customprofileimage])
+                    vmprofiles[profile]['image'] = customprofileimage
             else:
                 pprint(f"Deploying vm {name} from profile {profile}...")
             if profile not in vmprofiles:

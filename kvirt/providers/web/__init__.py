@@ -3,7 +3,7 @@
 
 from inspect import signature
 from kvirt import common
-from kvirt.common import pprint, error
+from kvirt.common import pprint, error, success
 import os
 import json
 import ssl
@@ -465,14 +465,23 @@ class Kwebclient(object):
         data = json.dumps(overrides).encode('utf-8')
         request = Request(kubes_url, data=data, headers=self.headers)
         response = json.loads(urlopen(request, context=self.context).read())
+        if response['result'] == 'success':
+            success(f"Cluster {cluster} created")
+        else:
+            error("Hit {response['reason']}")
         return response
 
-    def delete_kube(self, kube, kubetype, overrides={}):
-        kubes_url = f"{self.base}/kubes/{kube}"
+    def delete_kube(self, cluster, kubetype, overrides={}):
+        pprint(f"Deleting cluster {cluster}")
+        kubes_url = f"{self.base}/kubes/{cluster}"
         overrides['kubetype'] = kubetype
         data = json.dumps(overrides).encode('utf-8')
         request = Request(kubes_url, data=data, headers=self.headers, method='DELETE')
         response = json.loads(urlopen(request, context=self.context).read())
+        if response['result'] == 'success':
+            success(f"Cluster {cluster} deleted")
+        else:
+            error("Hit {response['reason']}")
         return response
 
     def list_kubes(self):
