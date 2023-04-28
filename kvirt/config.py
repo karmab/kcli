@@ -2203,10 +2203,6 @@ class Kconfig(Kbaseconfig):
                             profile['image'] = entry[4]
                             currentoverrides['image'] = profile['image']
                             break
-                    imageprofile = profile['image']
-                    if imageprofile not in [os.path.basename(v) for v in self.k.volumes()] and imageprofile in IMAGES:
-                        pprint(f"Image {imageprofile} not found. Downloading")
-                        self.handle_host(pool=self.pool, image=imageprofile)
                 if threaded:
                     new_args = (name, profilename, currentoverrides, profile, z, plan, currentplandir, vmclient,
                                 onfly, onlyassets, newvms, failedvms, asyncwaitvms, newassets)
