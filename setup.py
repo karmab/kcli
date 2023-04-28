@@ -17,7 +17,7 @@ EXTRAS = ['pyghmi']
 ALL = ['docker>=2.0'] + ['podman'] + ['websockify'] + EXTRAS + AWS + GCP + KUBEVIRT + OPENSTACK + OVIRT\
     + PACKET + VSPHERE + IBMCLOUD
 
-description = 'Provisioner/Manager for Libvirt/Ovirt/Gcp/Aws/Openstack/Kubevirt/IBM Cloud and containers'
+description = 'Provisioner/Manager for Libvirt/Vsphere/Aws/Gcp/Kubevirt/Ovirt/Openstack/IBM Cloud and containers'
 long_description = description
 if os.path.exists('README.rst'):
     long_description = open('README.rst').read()

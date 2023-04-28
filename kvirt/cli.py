@@ -533,6 +533,22 @@ def delete_image(args):
     sys.exit(1 if 1 in codes else 0)
 
 
+def download_kubeconfig(args):
+    kube = args.kube
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    if config.type != 'web':
+        error("Downloading kubeconfig is only available for web provider")
+        sys.exit(1)
+    pprint(f"Generating kubeconfig.{kube}")
+    kubeconfig = config.k.download_kubeconfig(kube).decode("UTF-8")
+    if kubeconfig is not None:
+        with open(f'kubeconfig.{kube}', 'w') as f:
+            f.write(kubeconfig)
+    else:
+        error(f"Cluster {kube} was not found")
+        sys.exit(1)
+
+
 def create_clusterprofile(args):
     """Create Clusterprofile"""
     clusterprofile = args.clusterprofile
@@ -1406,7 +1422,7 @@ def list_cluster(args):
             output = args.global_output or args.output
             if output is not None:
                 _list_output(kubes, output)
-            for kubename in kubes:
+            for kubename in sorted(kubes):
                 kube = kubes[kubename]
                 kubetype = kube['type']
                 kubeplan = kube['plan']
@@ -1418,7 +1434,7 @@ def list_cluster(args):
         output = args.global_output or args.output
         if output is not None:
             _list_output(kubes, output)
-        for kubename in kubes:
+        for kubename in sorted(kubes):
             kube = kubes[kubename]
             kubetype = kube['type']
             kubevms = kube['vms']
@@ -4314,6 +4330,14 @@ def cli():
     isodownload_parser.set_defaults(func=download_iso)
     download_subparsers.add_parser('iso', parents=[isodownload_parser], description=isodownload_desc,
                                    help=isodownload_desc)
+
+    kubeconfigdownload_desc = 'Download Kubeconfig'
+    kubeconfigdownload_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
+    kubeconfigdownload_parser.add_argument('kube', metavar='KUBE')
+    kubeconfigdownload_parser.set_defaults(func=download_kubeconfig)
+    download_subparsers.add_parser('kubeconfig', parents=[kubeconfigdownload_parser],
+                                   description=kubeconfigdownload_desc,
+                                   help=kubeconfigdownload_desc)
 
     kubectldownload_desc = 'Download Kubectl'
     kubectldownload_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])

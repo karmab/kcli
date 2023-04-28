@@ -982,7 +982,6 @@ class Kweb():
         @app.route('/kubeconfig/kubeconfig.<kube>')
         def kubeconfigfile(kube):
             kubeconfig = os.path.expanduser(f'~/.kcli/clusters/{kube}/auth/kubeconfig')
-            print(kubeconfig)
             if os.path.exists(kubeconfig):
                 return static_file('kubeconfig', root=os.path.dirname(kubeconfig), mimetype='application/octet-stream')
             else:

@@ -8,6 +8,7 @@ import os
 import json
 import ssl
 from urllib.request import urlopen, Request
+from urllib.error import HTTPError
 import webbrowser
 
 
@@ -489,3 +490,11 @@ class Kwebclient(object):
         request = Request(kubes_url, headers=self.headers)
         response = json.loads(urlopen(request, context=self.context).read())
         return response['kubes']
+
+    def download_kubeconfig(self, kube):
+        kubeconfig_url = f"{self.base}/kubes/{kube}/kubeconfig"
+        request = Request(kubeconfig_url, headers=self.headers)
+        try:
+            return urlopen(request, context=self.context).read()
+        except HTTPError:
+            return None

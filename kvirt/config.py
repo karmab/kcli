@@ -510,14 +510,15 @@ class Kconfig(Kbaseconfig):
             if customprofile:
                 vmprofiles[profile] = customprofile
                 customprofileimage = customprofile.get('image')
-                if customprofileimage is not None\
+                if customprofileimage is not None and customprofileimage in IMAGES\
                    and customprofileimage not in [os.path.basename(v) for v in self.k.volumes()]:
                     pprint(f"Image {customprofileimage} not found. Downloading")
                     self.handle_host(pool=self.pool, image=customprofileimage, download=True)
                     vmprofiles[profile]['image'] = customprofileimage
-            else:
+            elif profile in vmprofiles:
                 pprint(f"Deploying vm {name} from profile {profile}...")
-            if profile not in vmprofiles:
+                vmprofiles[profile] = {'image': profile}
+            else:
                 if profile in IMAGES and profile not in [os.path.basename(v) for v in self.k.volumes()]\
                         and self.type not in ['aws', 'gcp', 'packet', 'vsphere', 'ibmcloud']:
                     pprint(f"Image {profile} not found. Downloading")
@@ -534,10 +535,6 @@ class Kconfig(Kbaseconfig):
                 else:
                     pprint(f"Profile {profile} not found. Using the image as profile...")
                     vmprofiles[profile] = {'image': profile}
-        elif customprofile:
-            vmprofiles[profile] = customprofile
-        else:
-            vmprofiles[profile] = {'image': profile}
         profilename = profile
         profile = vmprofiles[profile]
         if not customprofile:
