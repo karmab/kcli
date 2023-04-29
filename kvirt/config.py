@@ -75,6 +75,8 @@ sed -i "/.*node-labels*/a --node-ip=$IP --address=$IP \\" /etc/systemd/system/ku
 systemctl daemon-reload ;\
 fi'"""
 
+cloudplatforms = ['aws', 'gcp', 'packet', 'vsphere', 'ibmcloud']
+
 
 class Kconfig(Kbaseconfig):
     """
@@ -468,7 +470,7 @@ class Kconfig(Kbaseconfig):
         self.overrides.update(default_data)
         self.overrides.update(config_data)
 
-    def create_vm(self, name, profile, overrides={}, customprofile={}, k=None,
+    def create_vm(self, name, profile=None, overrides={}, customprofile={}, k=None,
                   plan='kvirt', basedir='.', client=None, onfly=None, onlyassets=False):
         overrides.update(self.overrides)
         wrong_overrides = [y for y in overrides if '-' in y]
@@ -493,39 +495,38 @@ class Kconfig(Kbaseconfig):
             if hasattr(k, 'region') and k.region not in k.zone:
                 k.region = custom_zone[:-2]
         tunnel = self.tunnel
-        if profile is None:
-            return {'result': 'failure', 'reason': "Missing profile"}
+        profile = profile or overrides.get('image', 'kvirt')
+        volumes = [os.path.basename(v) for v in self.k.volumes()]
         vmprofiles = {k: v for k, v in self.profiles.items() if 'type' not in v or v['type'] == 'vm'}
-        if not onlyassets:
-            if customprofile:
-                vmprofiles[profile] = customprofile
-                customprofileimage = customprofile.get('image')
-                if customprofileimage is not None and customprofileimage in IMAGES\
-                   and customprofileimage not in [os.path.basename(v) for v in self.k.volumes()]:
+        if customprofile:
+            vmprofiles[profile] = customprofile
+            customprofileimage = customprofile.get('image')
+            if customprofileimage is not None and customprofileimage in IMAGES and customprofileimage not in volumes:
+                if not onlyassets:
                     pprint(f"Image {customprofileimage} not found. Downloading")
                     self.handle_host(pool=self.pool, image=customprofileimage, download=True)
-                    vmprofiles[profile]['image'] = customprofileimage
-            elif profile in vmprofiles:
-                pprint(f"Deploying vm {name} from profile {profile}...")
-            else:
-                if profile in IMAGES and profile not in [os.path.basename(v) for v in self.k.volumes()]\
-                        and self.type not in ['aws', 'gcp', 'packet', 'vsphere', 'ibmcloud']:
-                    pprint(f"Image {profile} not found. Downloading")
-                    self.handle_host(pool=self.pool, image=profile, download=True)
-                    vmprofiles[profile] = {'image': profile}
-                elif profile.startswith('rhcos-4') and profile.endswith('qcow2')\
-                        and self.type in ['ovirt', 'openstack', 'kubevirt', 'kvm']\
-                        and profile not in [os.path.basename(v) for v in self.k.volumes()]:
-                    pprint(f"Image {profile} not found. Downloading")
-                    url = get_rhcos_url_from_file(profile, _type=self.type)
-                    image = profile.split('.')[0].replace('rhcos-4', 'rhcos4')
-                    self.handle_host(pool=self.pool, image=image, url=url, download=True)
-                    vmprofiles[profile] = {'image': profile}
-                elif profile != 'kvirt':
-                    pprint(f"Profile {profile} not found. Using the image as profile...")
-                    new_profile = os.path.basename(profile)
-                    vmprofiles[new_profile] = {'image': profile}
-                    profile = new_profile
+                vmprofiles[profile]['image'] = customprofileimage
+        elif profile in vmprofiles:
+            pprint(f"Deploying vm {name} from profile {profile}...")
+        elif profile in volumes:
+            pprint(f"Deploying vm {name} from image {profile}...")
+            new_profile = os.path.basename(profile)
+            vmprofiles[new_profile] = {'image': profile}
+            profile = new_profile
+        elif profile in IMAGES and self.type not in cloudplatforms:
+            if not onlyassets:
+                pprint(f"Image {profile} not found. Downloading")
+                self.handle_host(pool=self.pool, image=profile, download=True)
+            vmprofiles[profile] = {'image': profile}
+        elif profile.startswith('rhcos-4') and profile.endswith('qcow2') and self.type not in cloudplatforms:
+            if not onlyassets:
+                pprint(f"Image {profile} not found. Downloading")
+                url = get_rhcos_url_from_file(profile, _type=self.type)
+                image = profile.split('.')[0].replace('rhcos-4', 'rhcos4')
+                self.handle_host(pool=self.pool, image=image, url=url, download=True)
+            vmprofiles[profile] = {'image': profile}
+        else:
+            vmprofiles[profile] = {}
         profilename = profile
         profile = vmprofiles[profile]
         if not customprofile:
@@ -1037,7 +1038,8 @@ class Kconfig(Kbaseconfig):
                     error(f"No available ip in confpool {confpool}")
                     sys.exit(1)
         if onlyassets:
-            if image is not None and common.needs_ignition(image):
+            image = image or profilename
+            if common.needs_ignition(image):
                 version = common.ignition_version(image)
                 compact = True if overrides.get('compact') else False
                 data = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
@@ -3072,7 +3074,8 @@ class Kconfig(Kbaseconfig):
                     isoscript = f'{plandir}/iso.sh'
                 if os.path.exists('macs.txt'):
                     _files.append({"path": "/root/macs.txt", "origin": 'macs.txt'})
-                iso_overrides = {'scripts': [isoscript], 'files': _files, 'metal_url': metal_url, 'noname': True}
+                iso_overrides = {'scripts': [isoscript], 'files': _files, 'metal_url': metal_url, 'noname': True,
+                                 'image': 'rhcos4000'}
                 if metal_url is not None:
                     iso_overrides['need_network'] = True
                 iso_overrides.update(overrides)
@@ -3081,7 +3084,7 @@ class Kconfig(Kbaseconfig):
                     iso_overrides['noname'] = False
                 else:
                     iso_name = 'autoinstaller'
-                result = self.create_vm(iso_name, 'rhcos46', overrides=iso_overrides, onlyassets=True)
+                result = self.create_vm(iso_name, overrides=iso_overrides, onlyassets=True)
                 if 'reason' in result:
                     error(result['reason'])
                 else:

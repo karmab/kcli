@@ -1631,15 +1631,10 @@ def create_vm(args):
                     else:
                         error(f"Cant' parse {profilefile} as profile file")
                         sys.exit(1)
-    elif overrides or onlyassets:
-        profile = overrides.get('image', 'kvirt')
-        if profile not in IMAGES:
-            config.profiles[profile] = {}
-        else:
-            del overrides['image']
-    else:
-        error("You need to either provide a profile, an image or some parameters")
-        sys.exit(1)
+    elif not overrides:
+        vms = 'vms' if count > 0 else 'vm'
+        warning(f'Creating empty {vms}')
+        overrides = {'start': False}
     if count == 0:
         result = config.create_vm(name, profile, overrides=overrides, customprofile=customprofile,
                                   onlyassets=onlyassets)

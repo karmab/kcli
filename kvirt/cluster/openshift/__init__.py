@@ -1176,7 +1176,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             return {'result': 'failure', 'reason': msg}
         move(f"{clusterdir}/bootstrap-in-place-for-live-iso.ign", f"./{sno_name}.ign")
         with open("iso.ign", 'w') as f:
-            iso_overrides = {}
+            iso_overrides = {'image': 'rhcos4000'}
             extra_args = overrides.get('extra_args')
             _files = [{"path": "/root/sno-finish.service", "origin": f"{plandir}/sno-finish.service"},
                       {"path": "/usr/local/bin/sno-finish.sh", "origin": f"{plandir}/sno-finish.sh", "mode": 700}]
@@ -1184,7 +1184,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 _files.append({"path": "/root/kubeconfig", "origin": f'{clusterdir}/auth/kubeconfig'})
             iso_overrides['files'] = _files
             iso_overrides.update(data)
-            result = config.create_vm(sno_name, 'rhcos46', overrides=iso_overrides, onlyassets=True)
+            result = config.create_vm(sno_name, overrides=iso_overrides, onlyassets=True)
             pprint("Writing iso.ign to current dir")
             f.write(result['data'])
         if config.type == 'fake':
