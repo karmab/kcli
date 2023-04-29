@@ -75,7 +75,7 @@ sed -i "/.*node-labels*/a --node-ip=$IP --address=$IP \\" /etc/systemd/system/ku
 systemctl daemon-reload ;\
 fi'"""
 
-cloudplatforms = ['aws', 'gcp', 'packet', 'vsphere', 'ibmcloud']
+cloudplatforms = ['aws', 'gcp', 'packet', 'ibmcloud']
 
 
 class Kconfig(Kbaseconfig):
@@ -477,7 +477,7 @@ class Kconfig(Kbaseconfig):
         if wrong_overrides:
             for wrong_override in wrong_overrides:
                 error(f"Incorrect parameter {wrong_overrides}. Hyphens are not allowed")
-            sys.exit(1)
+            return {'result': 'failure', 'reason': 'Incorrect parameters found'}
         overrides['name'] = name
         kube = overrides.get('kube')
         kubetype = overrides.get('kubetype')
@@ -500,35 +500,32 @@ class Kconfig(Kbaseconfig):
         vmprofiles = {k: v for k, v in self.profiles.items() if 'type' not in v or v['type'] == 'vm'}
         if customprofile:
             vmprofiles[profile] = customprofile
-            customprofileimage = customprofile.get('image')
-            if customprofileimage is not None and customprofileimage in IMAGES and customprofileimage not in volumes:
-                if not onlyassets:
-                    pprint(f"Image {customprofileimage} not found. Downloading")
-                    self.handle_host(pool=self.pool, image=customprofileimage, download=True)
-                vmprofiles[profile]['image'] = customprofileimage
-        elif profile in vmprofiles:
+        elif profile in vmprofiles and not onlyassets:
             pprint(f"Deploying vm {name} from profile {profile}...")
         elif profile in volumes:
-            pprint(f"Deploying vm {name} from image {profile}...")
+            if not onlyassets:
+                pprint(f"Deploying vm {name} from image {profile}...")
             new_profile = os.path.basename(profile)
             vmprofiles[new_profile] = {'image': profile}
             profile = new_profile
-        elif profile in IMAGES and self.type not in cloudplatforms:
-            if not onlyassets:
-                pprint(f"Image {profile} not found. Downloading")
-                self.handle_host(pool=self.pool, image=profile, download=True)
+        elif profile in IMAGES:
             vmprofiles[profile] = {'image': profile}
         elif profile.startswith('rhcos-4') and profile.endswith('qcow2') and self.type not in cloudplatforms:
-            if not onlyassets:
-                pprint(f"Image {profile} not found. Downloading")
-                url = get_rhcos_url_from_file(profile, _type=self.type)
-                image = profile.split('.')[0].replace('rhcos-4', 'rhcos4')
-                self.handle_host(pool=self.pool, image=image, url=url, download=True)
             vmprofiles[profile] = {'image': profile}
-        else:
+        elif profile == 'kvirt':
             vmprofiles[profile] = {}
+        else:
+            return {'result': 'failure', 'reason': f'Image {profile} not found'}
         profilename = profile
         profile = vmprofiles[profile]
+        pimage = profile.get('image', 'XXX')
+        if not onlyassets and self.type not in cloudplatforms and pimage in IMAGES and pimage not in volumes:
+            pprint(f"Image {pimage} not found. Downloading")
+            pimage_data = {'pool': self.pool, 'image': pimage, 'download': True}
+            if profilename.startswith('rhcos-4') and profilename.endswith('qcow2'):
+                pimage_data['image'] = profilename.split('.')[0].replace('rhcos-4', 'rhcos4')
+                pimage_data['url'] = get_rhcos_url_from_file(profilename, _type=self.type)
+            self.handle_host(**pimage_data)
         if not customprofile:
             profile.update(overrides)
         if 'base' in profile:
