@@ -470,16 +470,6 @@ class Kconfig(Kbaseconfig):
 
     def create_vm(self, name, profile, overrides={}, customprofile={}, k=None,
                   plan='kvirt', basedir='.', client=None, onfly=None, onlyassets=False):
-        """
-
-        :param k:
-        :param plan:
-        :param name:
-        :param profile:
-        :param overrides:
-        :param customprofile:
-        :return:
-        """
         overrides.update(self.overrides)
         wrong_overrides = [y for y in overrides if '-' in y]
         if wrong_overrides:
@@ -517,7 +507,6 @@ class Kconfig(Kbaseconfig):
                     vmprofiles[profile]['image'] = customprofileimage
             elif profile in vmprofiles:
                 pprint(f"Deploying vm {name} from profile {profile}...")
-                vmprofiles[profile] = {'image': profile}
             else:
                 if profile in IMAGES and profile not in [os.path.basename(v) for v in self.k.volumes()]\
                         and self.type not in ['aws', 'gcp', 'packet', 'vsphere', 'ibmcloud']:
@@ -532,9 +521,11 @@ class Kconfig(Kbaseconfig):
                     image = profile.split('.')[0].replace('rhcos-4', 'rhcos4')
                     self.handle_host(pool=self.pool, image=image, url=url, download=True)
                     vmprofiles[profile] = {'image': profile}
-                else:
+                elif profile != 'kvirt':
                     pprint(f"Profile {profile} not found. Using the image as profile...")
-                    vmprofiles[profile] = {'image': profile}
+                    new_profile = os.path.basename(profile)
+                    vmprofiles[new_profile] = {'image': profile}
+                    profile = new_profile
         profilename = profile
         profile = vmprofiles[profile]
         if not customprofile:
