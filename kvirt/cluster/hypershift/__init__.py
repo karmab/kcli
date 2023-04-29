@@ -4,7 +4,7 @@ from base64 import b64encode
 from glob import glob
 from kvirt.common import success, error, pprint, info2, container_mode, warning
 from kvirt.common import get_oc, pwd_path, get_installer_rhcos, get_ssh_pub_key, boot_baremetal_hosts, olm_app
-from kvirt.common import virtual_baremetal, dell_baremetal
+from kvirt.common import virtual_baremetal, dell_baremetal, deploy_cloud_storage
 from kvirt.defaults import OPENSHIFT_TAG
 from kvirt.cluster.openshift import get_ci_installer, get_downstream_installer, get_installer_version
 from kvirt.cluster.openshift import same_release_images, process_apps, update_etc_hosts, offline_image
@@ -754,4 +754,7 @@ def create(config, plandir, cluster, overrides):
             call(scc_cmd, shell=True)
             autoscale_cmd = f"oc create -f {temp.name}"
             call(autoscale_cmd, shell=True)
+    if config.type in cloudplatforms and data.get('cloud_storage', True):
+        pprint("Deploying cloud storage class")
+        deploy_cloud_storage(config, cluster, apply=False)
     return {'result': 'success'}

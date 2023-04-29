@@ -1447,5 +1447,5 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             k._add_sno_security_group(cluster)
     if config.type in cloudplatforms and data.get('cloud_storage', True):
         pprint("Deploying cloud storage class")
-        deploy_cloud_storage(config, cluster)
+        deploy_cloud_storage(config, cluster, apply=False)
     return {'result': 'success'}

@@ -69,3 +69,4 @@ hosted_tag:
 autoscale: false
 assisted: false
 calico_version:
+cloud_storage: true
