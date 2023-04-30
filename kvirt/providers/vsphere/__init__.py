@@ -13,8 +13,8 @@ from pyVim import connect
 import json
 import os
 import re
-import requests
 import random
+import ssl
 from ssl import _create_unverified_context, get_server_certificate
 import sys
 import tarfile
@@ -22,6 +22,7 @@ from shutil import which
 from tempfile import TemporaryDirectory
 from threading import Thread
 import time
+import urllib.request
 import webbrowser
 from zipfile import ZipFile
 from kvirt.providers.vsphere.helpers import find, collectproperties, findvm, createfolder, changecd, convert, waitForMe
@@ -976,18 +977,19 @@ class Ksphere:
         cookie_value = client_cookie.split("=", 1)[1].split(";", 1)[0]
         cookie_path = client_cookie.split("=", 1)[1].split(";", 1)[1].split(";", 1)[0].lstrip()
         cookie_text = " " + cookie_value + "; $" + cookie_path
-        cookie = {cookie_name: cookie_text}
-        headers = {'Content-Type': 'application/octet-stream'}
+        headers = {'Content-Type': 'application/octet-stream', 'Cookie': f"{cookie_name}={cookie_text}"}
         with open(origin, "rb") as f:
-            if hasattr(requests.packages.urllib3, 'disable_warnings'):
-                requests.packages.urllib3.disable_warnings()
+            ssl._create_default_https_context = ssl._create_unverified_context
+            try:
+                req = urllib.request.Request(url, data=f, headers=headers, method='PUT')
+                urllib.request.urlopen(req)
+            except:
+                url = url.replace('/folder', '')
+                req = urllib.request.Request(url, data=f, headers=headers, method='PUT')
                 try:
-                    r = requests.put(url, data=f, headers=headers, cookies=cookie, verify=False)
-                except:
-                    url = url.replace('/folder', '')
-                    r = requests.put(url, data=f, headers=headers, cookies=cookie, verify=False)
-                if r.status_code not in [200, 201]:
-                    error(f"Got status {r.status_code} with reason: {r.reason}")
+                    urllib.request.urlopen(req)
+                except Exception as e:
+                    error(f"Hit issue with with reason: {e}")
 
     def get_pool_path(self, pool):
         return pool

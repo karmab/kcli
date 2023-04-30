@@ -16,7 +16,7 @@ Source:         {{{ git_dir_pack }}}
 AutoReq:        no
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildRequires:  python3-devel rubygem-ronn gzip python3-setuptools
-Requires:       python3 libvirt-python3 genisoimage nmap-ncat python3-prettytable python3-jinja2 python3-PyYAML python3-argcomplete python3-requests
+Requires:       python3 libvirt-python3 genisoimage nmap-ncat python3-prettytable python3-jinja2 python3-PyYAML python3-argcomplete
 
 %description
 Kcli is meant to interact with a local/remote libvirt, gcp, aws ovirt,

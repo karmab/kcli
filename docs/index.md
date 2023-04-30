@@ -568,7 +568,7 @@ Note that pool in Vsphere context refers to datastore.
 To use this provider with kcli rpm, you'll need to install
 
 ```
-dnf -y install python3-pyvmomi python3-cryptography python3-requests
+dnf -y install python3-pyvmomi python3-cryptography
 ```
 
 ### Using hostgroups and vm-host rules

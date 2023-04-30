@@ -13,7 +13,7 @@ Requires:       python3-boto3
 Requires:       python3-kubernetes
 Requires:       python3-ovirt-engine-sdk4
 Requires:       python3-keystoneclient python3-glanceclient python3-cinderclient python3-neutronclient python3-novaclient
-Requires:       python3-pyvmomi python3-requests
+Requires:       python3-pyvmomi
 
 BuildArch:       noarch
 
