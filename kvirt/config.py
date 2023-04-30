@@ -858,9 +858,9 @@ class Kconfig(Kbaseconfig):
             if rhnak is not None and rhnorg is not None:
                 rhncommands.append('subscription-manager register --serverurl=%s --force --activationkey=%s --org=%s'
                                    % (rhnserver, rhnak, rhnorg))
-                if image.startswith('rhel-8'):
+                if image.startswith('rhel-8') or image == 'rhel8':
                     rhncommands.append('subscription-manager repos --enable=rhel-8-for-x86_64-baseos-rpms')
-                elif not image.startswith('rhel-baseos-9') and not image.startswith('rhel9'):
+                elif image.startswith('rhel-server-7') or image == 'rhel7':
                     rhncommands.append('subscription-manager repos --enable=rhel-7-server-rpms')
             elif rhnuser is not None and rhnpassword is not None:
                 rhncommands.append('subscription-manager register --serverurl=%s --force --username=%s --password=%s'
