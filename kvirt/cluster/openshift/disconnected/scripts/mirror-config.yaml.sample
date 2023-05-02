@@ -11,28 +11,36 @@ mirror:
   #    maxVersion: 4.10.24
   #  graph: true
   operators: # Operators we want to mirror
-{% if disconnected_operators %}
+{% if disconnected_operators_all %}
+  - catalog: registry.redhat.io/redhat/redhat-operator-index:v${OCP_RELEASE}
+{% elif disconnected_operators %}
   - catalog: registry.redhat.io/redhat/redhat-operator-index:v${OCP_RELEASE}
     packages:
 {% for package in disconnected_operators %}
     - name: {{ package }}
 {% endfor %}
 {% endif %}
-{% if disconnected_certified_operators %}
+{% if disconnected_certified_operators_all %}
+  - catalog: registry.redhat.io/redhat/certified-operator-index:v${OCP_RELEASE}
+{% elif disconnected_certified_operators %}
   - catalog: registry.redhat.io/redhat/certified-operator-index:v${OCP_RELEASE}
     packages:
 {% for package in disconnected_certified_operators %}
     - name: {{ package }}
 {% endfor %}
 {% endif %}
-{% if disconnected_community_operators %}
+{% if disconnected_community_operators_all %}
+  - catalog: registry.redhat.io/redhat/community-operator-index:v${OCP_RELEASE}
+{% elif disconnected_community_operators %}
   - catalog: registry.redhat.io/redhat/community-operator-index:v${OCP_RELEASE}
     packages:
 {% for package in disconnected_community_operators %}
     - name: {{ package }}
 {% endfor %}
 {% endif %}
-{% if disconnected_marketplace_operators %}
+{% if disconnected_marketplace_operators_all %}
+  - catalog: registry.redhat.io/redhat/redhat-marketplace-index:v${OCP_RELEASE}
+{% elif disconnected_marketplace_operators %}
   - catalog: registry.redhat.io/redhat/redhat-marketplace-index:v${OCP_RELEASE}
     packages:
 {% for package in disconnected_marketplace_operators %}
