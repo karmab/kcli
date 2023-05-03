@@ -12,6 +12,7 @@ env:
 
 jobs:
     deploy-kubeadm:
+      if: github.repository == 'karmab/kcli'
       runs-on: libvirt
       steps:
        - uses: actions/checkout@v2

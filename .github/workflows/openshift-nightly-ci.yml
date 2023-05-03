@@ -11,6 +11,7 @@ env:
 
 jobs:
   deploy-openshift:
+    if: github.repository == 'karmab/kcli'
     strategy:
       fail-fast: false
       matrix:
