@@ -68,7 +68,8 @@ class Kweb():
         @view('vmcreate.html')
         def vmcreateform():
             config = Kconfig()
-            images = [os.path.basename(v) for v in config.k.volumes()]
+            profiles = list(config.profiles.keys())
+            profiles.extend([os.path.basename(v) for v in config.k.volumes()])
             disks = []
             for disk in config.disks:
                 if isinstance(disk, int):
@@ -84,7 +85,8 @@ class Kweb():
                     nets.append(net['name'])
             nets = ','.join(nets)
             parameters = {'memory': config.memory, 'numcpus': config.numcpus, 'disks': disks, 'nets': nets}
-            return {'title': 'CreateVm', 'images': images, 'parameters': parameters, 'client': config.client}
+            return {'title': 'CreateVm', 'profiles': sorted(profiles), 'parameters': parameters,
+                    'client': config.client}
 
         @app.route('/vmprofiles')
         def vmprofileslist():
