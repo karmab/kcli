@@ -95,21 +95,6 @@ def fetch(url, path):
 def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, files=[], enableroot=True,
               overrides={}, fqdn=False, storemetadata=True, image=None, ipv6=[],
               machine='pc', vmuser=None):
-    """
-
-    :param name:
-    :param keys:
-    :param cmds:
-    :param nets:
-    :param gateway:
-    :param dns:
-    :param domain:
-    :param files:
-    :param enableroot:
-    :param overrides:
-    :param iso:
-    :param fqdn:
-    """
     userdata, metadata, netdata = None, None, None
     default_gateway = gateway
     noname = overrides.get('noname', False)
@@ -384,12 +369,6 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
 
 
 def process_files(files=[], overrides={}, remediate=False):
-    """
-
-    :param files:
-    :param overrides:
-    :return:
-    """
     data = [] if remediate else ''
     todelete = []
     for directory in files:
@@ -497,12 +476,6 @@ def process_files(files=[], overrides={}, remediate=False):
 
 
 def process_ignition_files(files=[], overrides={}):
-    """
-
-    :param files:
-    :param overrides:
-    :return:
-    """
     filesdata = []
     unitsdata = []
     for directory in files:
@@ -575,12 +548,6 @@ def process_ignition_files(files=[], overrides={}):
 
 
 def process_cmds(cmds, overrides):
-    """
-
-    :param cmds:
-    :param overrides:
-    :return:
-    """
     data = ''
     for cmd in cmds:
         if cmd.startswith('#'):
@@ -596,12 +563,6 @@ def process_cmds(cmds, overrides):
 
 
 def process_ignition_cmds(cmds, overrides):
-    """
-
-    :param cmds:
-    :param overrides:
-    :return:
-    """
     path = '/usr/local/bin/first.sh'
     permissions = '700'
     content = ''
@@ -624,10 +585,6 @@ def process_ignition_cmds(cmds, overrides):
 
 
 def get_free_port():
-    """
-
-    :return:
-    """
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind(('localhost', 0))
     addr, port = s.getsockname()
@@ -661,16 +618,6 @@ def info2(text):
 
 
 def handle_response(result, name, quiet=False, element='', action='deployed', client=None):
-    """
-
-    :param result:
-    :param name:
-    :param quiet:
-    :param element:
-    :param action:
-    :param client:
-    :return:
-    """
     code = 0
     if not isinstance(result, dict):
         result = {'result': result.result, 'reason': result.reason}
@@ -689,11 +636,6 @@ def handle_response(result, name, quiet=False, element='', action='deployed', cl
 
 
 def confirm(message):
-    """
-
-    :param message:
-    :return:
-    """
     message = f"{message} [y/N]: "
     try:
         _input = input(message)
@@ -706,11 +648,6 @@ def confirm(message):
 
 
 def get_lastvm(client):
-    """
-
-    :param client:
-    :return:
-    """
     if 'HOME' not in os.environ:
         error("HOME variable not set")
         sys.exit(1)
@@ -730,13 +667,6 @@ def get_lastvm(client):
 
 
 def set_lastvm(name, client, delete=False):
-    """
-
-    :param name:
-    :param client:
-    :param delete:
-    :return:
-    """
     if 'HOME' not in os.environ:
         return
     configdir = f"{os.environ.get('HOME')}/.kcli"
@@ -762,11 +692,6 @@ def set_lastvm(name, client, delete=False):
 
 
 def remove_duplicates(oldlist):
-    """
-
-    :param oldlist:
-    :return:
-    """
     newlist = []
     for item in oldlist:
         if item not in newlist:
@@ -775,12 +700,6 @@ def remove_duplicates(oldlist):
 
 
 def get_overrides(paramfile=None, param=[]):
-    """
-
-    :param paramfile:
-    :param param:
-    :return:
-    """
     overrides = {}
     if paramfile is not None:
         if os.path.exists(os.path.expanduser(paramfile)):
@@ -799,6 +718,7 @@ def get_overrides(paramfile=None, param=[]):
     if param is not None:
         for x in param:
             if len(x.split('=')) < 2:
+                warning(f"Wrong parameter {x}. Should be key=value")
                 continue
             else:
                 if len(x.split('=')) == 2:
@@ -834,11 +754,6 @@ def get_overrides(paramfile=None, param=[]):
 
 
 def get_parameters(inputfile, planfile=False):
-    """
-
-    :param inputfile:
-    :return:
-    """
     results = {}
     with open(inputfile, 'r') as entries:
         try:
@@ -881,13 +796,6 @@ def get_parameters(inputfile, planfile=False):
 
 
 def print_info(yamlinfo, output='plain', fields=[], values=False, pretty=True):
-    """
-
-    :param yamlinfo:
-    :param output:
-    :param fields:
-    :param values:
-    """
     if fields:
         for key in list(yamlinfo):
             if key not in fields:
@@ -953,28 +861,6 @@ def print_info(yamlinfo, output='plain', fields=[], values=False, pretty=True):
 def ssh(name, ip='', user=None, local=None, remote=None, tunnel=False, tunnelhost=None, tunnelport=22,
         tunneluser='root', insecure=False, cmd=None, X=False, Y=False, debug=False, D=None, vmport=None,
         identityfile=None, password=True):
-    """
-
-    :param name:
-    :param ip:
-    :param host:
-    :param port:
-    :param user:
-    :param local:
-    :param remote:
-    :param tunnel:
-    :param tunnelhost:
-    :param tunnelport:
-    :param tunneluser:
-    :param insecure:
-    :param cmd:
-    :param X:
-    :param Y:
-    :param debug:
-    :param D:
-    :param vmport:
-    :return:
-    """
     if ip == '':
         return None
     else:
@@ -1025,23 +911,6 @@ def ssh(name, ip='', user=None, local=None, remote=None, tunnel=False, tunnelhos
 
 def scp(name, ip='', user=None, source=None, destination=None, recursive=None, tunnel=False, tunnelhost=None,
         tunnelport=22, tunneluser='root', debug=False, download=False, vmport=None, insecure=False, identityfile=None):
-    """
-
-    :param name:
-    :param ip:
-    :param user:
-    :param source:
-    :param destination:
-    :param recursive:
-    :param tunnel:
-    :param tunnelhost:
-    :param tunnelport:
-    :param tunneluser:
-    :param debug:
-    :param download:
-    :param vmport:
-    :return:
-    """
     if ip == '':
         print("No ip found. Cannot scp...")
     else:
@@ -1077,11 +946,6 @@ def scp(name, ip='', user=None, source=None, destination=None, recursive=None, t
 
 
 def get_user(image):
-    """
-
-    :param image:
-    :return:
-    """
     if 'centos-stream-genericcloud-8' in image.lower():
         user = 'centos'
     elif 'centos-stream' in image.lower():
@@ -1114,11 +978,6 @@ def get_user(image):
 
 
 def get_cloudinitfile(image):
-    """
-
-    :param image:
-    :return:
-    """
     lower = image.lower()
     cloudinitfile = '/var/log/cloud-init-output.log'
     if 'centos-7' in lower or 'centos7' in lower:
@@ -1129,22 +988,6 @@ def get_cloudinitfile(image):
 def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, files=[], enableroot=True,
              overrides={}, iso=True, fqdn=False, version='3.1.0', plan=None, compact=False, removetls=False, ipv6=[],
              image=None, vmuser=None):
-    """
-
-    :param name:
-    :param keys:
-    :param cmds:
-    :param nets:
-    :param gateway:
-    :param dns:
-    :param domain:
-    :param files:
-    :param enableroot:
-    :param overrides:
-    :param iso:
-    :param fqdn:
-    :return:
-    """
     noname = overrides.get('noname', False)
     nokeys = overrides.get('nokeys', False)
     separators = (',', ':') if compact else (',', ': ')
@@ -1474,10 +1317,6 @@ def find_ignition_files(role, cluster):
 
 
 def pretty_print(o, value=False, width=None):
-    """
-
-    :param o:
-    """
     data = yaml.dump(o, default_flow_style=False, indent=2, allow_unicode=True, Dumper=NoAliasDumper, width=width)
     data = data.replace("'", '').replace('\n\n', '\n').replace('#cloud-config', '|\n            #cloud-config')
     if not value:
@@ -1499,10 +1338,6 @@ def need_guest_agent(image):
 
 
 def create_host(data):
-    """
-
-    :param data:
-    """
     if data['name'] is None:
         if data['_type'] in ['kvm', 'ovirt']:
             name = data['host'] if 'host' not in ['localhost', '127.0.0.1'] else 'local'
@@ -1539,10 +1374,6 @@ def create_host(data):
 
 
 def delete_host(name):
-    """
-
-    :param name:
-    """
     path = os.path.expanduser('~/.kcli/config.yml')
     if not os.path.exists(path):
         pprint(f"Skipping non existing Host {name}")
