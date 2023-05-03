@@ -380,12 +380,12 @@ class Kweb():
                         key = p.replace('parameters[', '').replace(']', '')
                     parameters[key] = value
                 if 'nets' in parameters:
-                    if isinstance(parameters, str):
+                    if isinstance(parameters['nets'], str):
                         parameters['nets'] = parameters['nets'].split(',')
                 else:
                     parameters['nets'] = []
                 if 'disks' in parameters:
-                    if isinstance(parameters, str):
+                    if isinstance(parameters['disks'], str):
                         parameters['disks'] = parameters['disks'].split(',')
                 else:
                     parameters['disks'] = [10]
