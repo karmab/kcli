@@ -716,10 +716,11 @@ def get_overrides(paramfile=None, param=[]):
         error(f"Couldn't parse your parameters file {paramfile}. Leaving")
         sys.exit(1)
     if param is not None:
+        processed_keys = []
         for x in param:
             if len(x.split('=')) < 2:
-                warning(f"Wrong parameter {x}. Should be key=value")
-                continue
+                error(f"Wrong parameter {x}. Should be key=value")
+                sys.exit(1)
             else:
                 if len(x.split('=')) == 2:
                     key, value = x.split('=')
@@ -727,6 +728,11 @@ def get_overrides(paramfile=None, param=[]):
                     split = x.split('=')
                     key = split[0]
                     value = x.replace(f"{key}=", '')
+                if key in processed_keys:
+                    error(f"Repeated parameter {key}")
+                    sys.exit(1)
+                else:
+                    processed_keys.append(key)
                 if value.isdigit():
                     value = int(value)
                 elif value.lower() == 'true':
