@@ -584,6 +584,18 @@ def process_ignition_cmds(cmds, overrides):
         return data
 
 
+def process_combustion_cmds(cmds, overrides):
+    content = '#!/bin/bash\n' if cmds else ''
+    for cmd in cmds:
+        try:
+            newcmd = Environment(undefined=undefined).from_string(cmd).render(overrides)
+            content += f"{newcmd}\n"
+        except TemplateError as e:
+            error(f"Error rendering cmd {cmd}. Got: {e.message}")
+            sys.exit(1)
+    return content
+
+
 def get_free_port():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind(('localhost', 0))
@@ -1125,7 +1137,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
         if unitsdata:
             systemd["units"].extend(unitsdata)
     cmdunit = None
-    if cmds:
+    if cmds and not needs_combustion(image):
         cmdsdata = process_ignition_cmds(cmds, overrides)
         storage["files"].append(cmdsdata)
         firstpath = "/usr/local/bin/first.sh"
@@ -1138,7 +1150,8 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     data = {'ignition': {'version': version, 'config': {}}, 'storage': storage, 'systemd': systemd,
             'passwd': {'users': []}}
     if publickeys:
-        data['passwd']['users'] = [{'name': 'core', 'sshAuthorizedKeys': publickeys}]
+        user = 'root' if 'susemicro' in image else 'core'
+        data['passwd']['users'] = [{'name': user, 'sshAuthorizedKeys': publickeys}]
         if vmuser is not None:
             data['passwd']['users'].append({'name': vmuser, 'sshAuthorizedKeys': publickeys,
                                             'groups': ['sudo', 'wheel']})
@@ -1576,11 +1589,12 @@ def is_7(image):
 
 
 def needs_ignition(image):
-    if 'coreos' in image or 'rhcos' in image or 'fcos' in image or 'fedora-coreos' in image or\
-            ('openSUSE-MicroOS' in image and 'OpenStack' not in image):
-        return True
-    else:
-        return False
+    return 'coreos' in image or 'rhcos' in image or 'fcos' in image or 'fedora-coreos' in image\
+        or needs_combustion(image)
+
+
+def needs_combustion(image):
+    return 'susemicro' in image or 'SLE-Micro' in image
 
 
 def ignition_version(image):
@@ -1855,7 +1869,7 @@ def openshift_delete_app(config, appname, appdir, overrides={}):
     return result
 
 
-def make_iso(name, tmpdir, userdata, metadata, netdata, openstack=False):
+def make_iso(name, tmpdir, userdata, metadata, netdata, openstack=False, combustion=False):
     with open(f"{tmpdir}/user-data", 'w') as x:
         x.write(userdata)
     with open(f"{tmpdir}/meta-data", 'w') as y:
@@ -1865,7 +1879,14 @@ def make_iso(name, tmpdir, userdata, metadata, netdata, openstack=False):
         sys.exit(1)
     isocmd = 'genisoimage' if which('genisoimage') is not None else 'mkisofs'
     isocmd += f" --quiet -o {tmpdir}/{name}.ISO --volid cidata"
-    if openstack:
+    if combustion:
+        os.makedirs(f"{tmpdir}/root/ignition")
+        move(f"{tmpdir}/user-data", f"{tmpdir}/root/ignition/config.ign")
+        if os.path.exists(f"{tmpdir}/combustion_script"):
+            os.makedirs(f"{tmpdir}/root/combustion")
+            move(f"{tmpdir}/combustion_script", f"{tmpdir}/root/combustion/script")
+        isocmd += f" -V ignition --joliet --rock {tmpdir}/root"
+    elif openstack:
         os.makedirs(f"{tmpdir}/root/openstack/latest")
         move(f"{tmpdir}/user-data", f"{tmpdir}/root/openstack/latest/user_data")
         if os.path.getsize(f"{tmpdir}/meta-data") == 0:

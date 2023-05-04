@@ -788,6 +788,7 @@ class Kvirt(object):
             openstack = False
             if image is not None and common.needs_ignition(image):
                 ignition = 'qemu' in image
+                combustion = common.needs_combustion(image)
                 openstack = not ignition
                 localhosts = ['localhost', '127.0.0.1']
                 ignitiondir = '/var/lib/libvirt/images'
@@ -842,7 +843,14 @@ class Kvirt(object):
                                                                    image=image, ipv6=ipv6, machine=dest_machine,
                                                                    vmuser=vmuser)
                 with TemporaryDirectory() as tmpdir:
-                    common.make_iso(name, tmpdir, userdata, metadata, netdata, openstack=openstack)
+                    combustion = common.needs_combustion(image)
+                    if combustion:
+                        cmdsdata = common.process_combustion_cmds(cmds, overrides)
+                        if cmdsdata != '':
+                            with open(f'{tmpdir}/combustion_script', 'w') as combustionfile:
+                                combustionfile.write(cmdsdata)
+                    common.make_iso(name, tmpdir, userdata, metadata, netdata, openstack=openstack,
+                                    combustion=combustion)
                     self._uploadimage(name, pool=default_storagepool, origin=tmpdir)
         listen = '0.0.0.0' if self.host not in ['localhost', '127.0.0.1'] else '127.0.0.1'
         if aarch64:

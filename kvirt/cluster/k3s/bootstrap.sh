@@ -6,9 +6,7 @@
 systemctl enable --now gcp-hack
 ufw allow from any to any port 6443,2379,2380 proto tcp
 {% endif %}
-{% if 'opensuse' in image %}
-zypper -n install curl
-{% else %}
+{% if 'ubuntu' in image %}
 apt-get -y install curl
 {% endif %}
 

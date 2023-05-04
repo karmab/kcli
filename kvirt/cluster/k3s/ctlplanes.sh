@@ -6,7 +6,9 @@
 systemctl enable --now gcp-hack
 ufw allow from any to any port 6443,2379,2380 proto tcp
 {% endif %}
+{% if 'ubuntu' in image %}
 apt-get -y install curl
+{% endif %}
 {% if sdn != None and sdn == 'cilium' %}
 echo bpffs /sys/fs/bpf bpf defaults 0 0 >> /etc/fstab
 mount /sys/fs/bpf
