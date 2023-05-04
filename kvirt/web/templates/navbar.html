@@ -17,9 +17,12 @@
             <li class="dropdown">
                 <a data-toggle="dropdown" class="dropdown-toggle" href="#">Vms <b class="caret"></b></a>
                 <ul role="menu" class="dropdown-menu">
-                     <li><a href="/vmsindex">List</a></li>
-                     <li><a href="/vmprofilesindex">Profiles</a></li>
-{% if not readonly %}<li><a href="/vmcreateform">Create</a></li>{% endif %}
+                     <li><a href="/vmsindex">List Vms</a></li>
+{% if not readonly %}<li><a href="/vmcreateform">Create Vm</a></li>{% endif %}
+                     <li ><a href="/imagesindex">List Images</a></li>
+{% if not readonly %}<li ><a href="/imagecreateform">Download Images</a></li>{% endif %}
+                     <li><a href="/vmprofilesindex">List Profiles</a></li>
+                     <li ><a href="/isosindex">List Isos</a></li>
                 </ul>
             </li>
             <li class="dropdown">
@@ -32,7 +35,7 @@
             <li class="dropdown">
                 <a data-toggle="dropdown" class="dropdown-toggle" href="#">Clusters <b class="caret"></b></a>
                 <ul role="menu" class="dropdown-menu">
-                     <li><a href="/kubesindex">List</a></li>
+                     <li><a href="/kubesindex">List Clusters</a></li>
                      <li><a href="/kubeprofilesindex">Cluster Profiles</a></li>
 {% if not readonly %}<li><a href="/kubecreateform/generic">Create Generic Cluster</a></li>{% endif %}
 {% if not readonly %}<li><a href="/kubecreateform/k3s">Create K3s Cluster</a></li>{% endif %}
@@ -60,7 +63,7 @@
                 <a data-toggle="dropdown" class="dropdown-toggle" href="#">Containers <b class="caret"></b></a>
                 <ul role="menu" class="dropdown-menu">
                      <li><a href="/containersindex">List Containers</a></li>
-                     <li><a href="/containerprofilesindex">Profiles</a></li>
+                     <li><a href="/containerprofilesindex">List Container Profiles</a></li>
 {% if not readonly %}<li><a href="/containercreateform">Create Container</a></li>{% endif %}
                 </ul>
             </li>
@@ -81,9 +84,6 @@
                 <a data-toggle="dropdown" class="dropdown-toggle" href="#">Clients <b class="caret"></b></a>
                 <ul role="menu" class="dropdown-menu">
                      <li ><a href="/hostsindex">List Clients</a></li>
-                     <li ><a href="/imagesindex">List Images</a></li>
-                     <li ><a href="/isosindex">List Isos</a></li>
-{% if not readonly %}<li ><a href="/imagecreateform">Download Images</a></li>{% endif %}
                 </ul>
             </li>
         </ul>
