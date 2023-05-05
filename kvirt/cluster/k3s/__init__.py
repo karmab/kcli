@@ -10,7 +10,7 @@ from string import ascii_letters, digits
 from subprocess import call
 from tempfile import NamedTemporaryFile
 import yaml
-
+virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere']
 cloudplatforms = ['aws', 'gcp']
 
 
@@ -73,6 +73,8 @@ def create(config, plandir, cluster, overrides):
     data = {'kubetype': 'k3s', 'ctlplanes': 1, 'workers': 0, 'sdn': 'flannel', 'extra_scripts': [], 'autoscale': False,
             'network': 'default', 'cloud_lb': True}
     data.update(overrides)
+    if platform in virtplatforms and data['ctlplanes'] == 1:
+        data['cloud_lb'] = False
     data['cluster'] = overrides.get('cluster', cluster if cluster is not None else 'myk3s')
     plan = cluster if cluster is not None else data['cluster']
     data['kube'] = data['cluster']
