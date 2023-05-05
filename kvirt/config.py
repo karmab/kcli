@@ -2639,7 +2639,7 @@ class Kconfig(Kbaseconfig):
         pprint(f"Waiting for vm {name} to finish customisation")
         if waitcommand is not None and '2>' not in waitcommand:
             waitcommand += " 2>/dev/null"
-        if 'cos' in image:
+        if common.needs_ignition(image):
             cmd = waitcommand or 'journalctl --identifier=ignition --all --no-pager'
         else:
             cloudinitfile = common.get_cloudinitfile(image)
