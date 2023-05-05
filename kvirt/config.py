@@ -848,7 +848,7 @@ class Kconfig(Kbaseconfig):
                         return {'result': 'failure', 'reason': msg}
                     scriptlines = [line.strip() for line in scriptentries.split('\n') if line.strip() != '']
                     if scriptlines:
-                        scriptlines.insert(0, f"echo Running script {script}")
+                        scriptlines.insert(0, f"echo Running script {os.path.basename(script)}")
                         scriptcmds.extend(scriptlines)
         if cloudinit and image is not None and 'rhel' in image.lower():
             rhncommands = []
