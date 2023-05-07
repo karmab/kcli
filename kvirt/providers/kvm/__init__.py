@@ -3162,13 +3162,15 @@ class Kvirt(object):
                     continue
         return {'result': 'failure', 'reason': f'Image {image} not found'}
 
-    def add_image(self, url, pool, cmd=None, name=None, size=None):
+    def add_image(self, url, pool, cmd=None, name=None, size=None, convert=False):
         poolname = pool
         shortimage = os.path.basename(url).split('?')[0]
         need_uncompress = any(shortimage.endswith(suffix) for suffix in ['.gz', '.xz', '.bz2'])
         extension = os.path.splitext(shortimage)[1].replace('.', '') if need_uncompress else None
         if name is None:
             name = shortimage.replace('.gz', '').replace('.xz', '').replace('.bz2', '')
+        if convert:
+            name += '.raw'
         full_name = f"{name}.{extension}" if need_uncompress else name
         conn = self.conn
         volumes = []
@@ -3230,6 +3232,14 @@ class Kvirt(object):
                                                                                              self.port, self.user,
                                                                                              self.host, poolpath,
                                                                                              name, cmd)
+                os.system(cmd)
+        if convert:
+            name = name.replace('.raw', '')
+            cmd = f"qemu-img convert -O qcow2 {poolpath}/{name}.raw {poolpath}/{name}"
+            if self.host == 'localhost' or self.host == '127.0.0.1':
+                os.system(cmd)
+            elif self.protocol == 'ssh':
+                cmd = 'ssh %s -p %s %s@%s "%s"' % (self.identitycommand, self.port, self.user, self.host, cmd)
                 os.system(cmd)
         if pooltype in ['logical', 'zfs']:
             product = list(root.iter('product'))

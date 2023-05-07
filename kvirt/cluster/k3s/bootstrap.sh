@@ -2,12 +2,13 @@
 {% set extra_args = extra_ctlplane_args %}
 {% endif %}
 
+{% if 'ubuntu' in image %}
+apt-get -y install curl
+{% endif %}
+
 {% if config_type == 'gcp' %}
 systemctl enable --now gcp-hack
 ufw allow from any to any port 6443,2379,2380 proto tcp
-{% endif %}
-{% if 'ubuntu' in image %}
-apt-get -y install curl
 {% endif %}
 
 curl -sfL https://get.k3s.io | {{ install_k3s_args }} K3S_TOKEN={{ token }} sh -s - server {{ '--cluster-init' if ctlplanes > 1 else '' }} {{ extra_args|join(" ") }}

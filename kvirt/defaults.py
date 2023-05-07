@@ -78,6 +78,7 @@ IMAGES = {'almalinux9': f'{ALMA}/9.1/cloud/x86_64/images/AlmaLinux-9-GenericClou
           'opensuse153': f'{LEAP}/15.3/appliances/openSUSE-Leap-15.3-JeOS.x86_64-OpenStack-Cloud.qcow2',
           'opensuse154': f'{LEAP}/15.4/appliances/openSUSE-Leap-15.4-JeOS.x86_64-OpenStack-Cloud.qcow2',
           'tumbleweed': f'{OPENSUSE}/tumbleweed/appliances/openSUSE-Tumbleweed-JeOS.x86_64-OpenStack-Cloud.qcow2',
+          'opensusemicro': f'{LEAP_MIC}/5.4/appliances/openSUSE-Leap-Micro.x86_64-Default.raw.xz',
           'rhcos46': f'{RHCOS}/4.6',
           'rhcos47': f'{RHCOS}/4.7',
           'rhcos48': f'{RHCOS}/4.8',

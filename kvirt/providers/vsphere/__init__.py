@@ -190,21 +190,28 @@ class Ksphere:
                 extraconfig.append(opt)
             clonespec.config = confspec
             clonespec.powerOn = False
-            cloudinitiso = None
+            isofolder = self.isofolder if self.isofolder is not None else f"[{default_pool}]/{name}"
+            cloudinitiso = f"{isofolder}/{name}.ISO"
+            combustion = common.needs_combustion(image)
             if cloudinit:
                 if image is not None and common.needs_ignition(image):
                     version = common.ignition_version(image)
+                    meta, netdata = '', None
                     ignitiondata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                                    domain=domain, files=files, enableroot=enableroot,
                                                    overrides=overrides, version=version, plan=plan, image=image,
                                                    vmuser=vmuser)
-                    ignitionopt = vim.option.OptionValue()
-                    ignitionopt.key = 'guestinfo.ignition.config.data'
-                    ignitionopt.value = base64.b64encode(ignitiondata.encode()).decode()
-                    encodingopt = vim.option.OptionValue()
-                    encodingopt.key = 'guestinfo.ignition.config.data.encoding'
-                    encodingopt.value = 'base64'
-                    extraconfig.extend([ignitionopt, encodingopt])
+                    if combustion:
+                        userdata, meta, netdata = ignitiondata, '', None
+                    else:
+                        cloudinitiso = None
+                        ignitionopt = vim.option.OptionValue()
+                        ignitionopt.key = 'guestinfo.ignition.config.data'
+                        ignitionopt.value = base64.b64encode(ignitiondata.encode()).decode()
+                        encodingopt = vim.option.OptionValue()
+                        encodingopt.key = 'guestinfo.ignition.config.data.encoding'
+                        encodingopt.value = 'base64'
+                        extraconfig.extend([ignitionopt, encodingopt])
                 else:
                     gcmds = []
                     if image is not None and 'cos' not in image and 'fedora-coreos' not in image:
@@ -221,10 +228,6 @@ class Ksphere:
                         if subindex:
                             index = subindex.pop() + 1
                     cmds = cmds[:index] + gcmds + cmds[index:]
-                    # customspec = makecuspec(name, nets=nets, gateway=gateway, dns=dns, domain=domain)
-                    # clonespec.customization = customspec
-                    isofolder = self.isofolder if self.isofolder is not None else f"[{default_pool}]/{name}"
-                    cloudinitiso = f"{isofolder}/{name}.ISO"
                     userdata, meta, netdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets,
                                                                gateway=gateway, dns=dns, domain=domain,
                                                                files=files, enableroot=enableroot, overrides=overrides,
@@ -234,7 +237,6 @@ class Ksphere:
                 if key.startswith('guestinfo.'):
                     guestopt = vim.option.OptionValue()
                     guestopt.key = key
-                    # guestopt.value = base64.b64encode(overrides[key].encode()).decode()
                     guestopt.value = overrides[key]
                     extraconfig.append(guestopt)
             confspec.extraConfig = extraconfig
@@ -242,7 +244,12 @@ class Ksphere:
             waitForMe(t)
             if cloudinitiso is not None:
                 with TemporaryDirectory() as tmpdir:
-                    common.make_iso(name, tmpdir, userdata, meta, netdata)
+                    if combustion:
+                        cmdsdata = common.process_combustion_cmds(cmds, overrides)
+                        if cmdsdata != '':
+                            with open(f'{tmpdir}/combustion_script', 'w') as combustionfile:
+                                combustionfile.write(cmdsdata)
+                    common.make_iso(name, tmpdir, userdata, meta, netdata, openstack=False, combustion=combustion)
                     cloudinitisofile = f"{tmpdir}/{name}.ISO"
                     if self.isofolder is not None:
                         isofolder = self.isofolder.split('/')
@@ -967,7 +974,9 @@ class Ksphere:
         rootFolder = self.rootFolder
         datastore = find(si, rootFolder, vim.Datastore, pool)
         if not datastore:
-            return {'result': 'failure', 'reason': f"Pool {pool} not found"}
+            msg = f"Pool {pool} not found"
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
         destination = os.path.basename(origin)
         if isofolder is not None:
             directory = isofolder
@@ -1181,7 +1190,7 @@ class Ksphere:
     def vm_ports(self, name):
         return ['default']
 
-    def add_image(self, url, pool, short=None, cmd=None, name=None, size=None):
+    def add_image(self, url, pool, short=None, cmd=None, name=None, size=None, convert=False):
         downloaded = False
         si = self.si
         rootFolder = self.rootFolder

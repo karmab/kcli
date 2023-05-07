@@ -9,7 +9,7 @@ class Kfake():
     def volumes(self, iso=True):
         return glob.glob('*.iso')
 
-    def add_image(self, url, pool, cmd=None, name=None, size=None):
+    def add_image(self, url, pool, cmd=None, name=None, size=None, convert=False):
         os.system("curl -Lk %s > %s" % (url, os.path.basename(url)))
 
     def delete_image(self, image, pool=None):

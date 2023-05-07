@@ -2493,7 +2493,8 @@ class Kconfig(Kbaseconfig):
                 if need_iso:
                     image = f'boot-{shortname}.iso'
                 try:
-                    result = k.add_image(url, pool, cmd=cmd, name=image, size=size)
+                    convert = '.raw.' in url
+                    result = k.add_image(url, pool, cmd=cmd, name=image, size=size, convert=convert)
                 except Exception as e:
                     error(f"Got {e}")
                     error(f"Please run kcli delete image --yes {shortname}")
@@ -2640,10 +2641,9 @@ class Kconfig(Kbaseconfig):
         if waitcommand is not None and '2>' not in waitcommand:
             waitcommand += " 2>/dev/null"
         if common.needs_ignition(image):
-            cmd = waitcommand or 'journalctl --identifier=ignition --all --no-pager'
+            cmd = waitcommand or 'sudo journalctl --all --no-pager'
         else:
-            cloudinitfile = common.get_cloudinitfile(image)
-            cmd = waitcommand or f"sudo tail -n 50 {cloudinitfile}"
+            cmd = waitcommand or f"sudo tail -n 50 {common.get_cloudinitfile(image)}"
         user, ip, vmport = None, None, None
         hostip = None
         timeout = 0
@@ -2696,7 +2696,8 @@ class Kconfig(Kbaseconfig):
                 else:
                     pprint("Waiting for waitcommand to succeed...")
             else:
-                if 'kcli boot finished' in output:
+                if 'kcli boot finished' in output or 'Ignition finished successfully' in output or\
+                   'Finished Combustion' in output:
                     break
                 output = output.replace(oldoutput, '')
                 if not quiet:
