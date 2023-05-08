@@ -496,13 +496,14 @@ class Kconfig(Kbaseconfig):
                 k.region = custom_zone[:-2]
         tunnel = self.tunnel
         profile = profile or overrides.get('image', 'kvirt')
-        volumes = [os.path.basename(v) for v in self.k.volumes()]
+        full_volumes = self.k.volumes()
+        volumes = [os.path.basename(v) for v in full_volumes]
         vmprofiles = {k: v for k, v in self.profiles.items() if 'type' not in v or v['type'] == 'vm'}
         if customprofile:
             vmprofiles[profile] = customprofile
         elif profile in vmprofiles and not onlyassets:
             pprint(f"Deploying vm {name} from profile {profile}...")
-        elif profile in volumes:
+        elif (os.path.basename(profile) == profile and profile in volumes) or profile in full_volumes:
             if not onlyassets:
                 pprint(f"Deploying vm {name} from image {profile}...")
             new_profile = os.path.basename(profile)
