@@ -71,14 +71,13 @@ def scale(config, plandir, cluster, overrides):
 def create(config, plandir, cluster, overrides):
     platform = config.type
     data = {'kubetype': 'k3s', 'ctlplanes': 1, 'workers': 0, 'sdn': 'flannel', 'extra_scripts': [], 'autoscale': False,
-            'network': 'default', 'cloud_lb': True}
+            'network': 'default', 'cloud_lb': None}
     data.update(overrides)
-    if platform in virtplatforms and data['ctlplanes'] == 1:
-        data['cloud_lb'] = False
+    data['cloud_lb'] = overrides.get('cloud_lb', platform in cloudplatforms and data['ctlplanes'] > 1)
+    cloud_lb = data['cloud_lb']
     data['cluster'] = overrides.get('cluster', cluster if cluster is not None else 'myk3s')
     plan = cluster if cluster is not None else data['cluster']
     data['kube'] = data['cluster']
-    cloud_lb = data['cloud_lb']
     autoscale = data['autoscale']
     ctlplanes = data['ctlplanes']
     workers = data['workers']
@@ -186,7 +185,7 @@ def create(config, plandir, cluster, overrides):
     success(f"K3s cluster {cluster} deployed!!!")
     info2(f"export KUBECONFIG=$HOME/.kcli/clusters/{cluster}/auth/kubeconfig")
     info2("export PATH=$PWD:$PATH")
-    if config.type in cloudplatforms:
+    if config.type in cloudplatforms and cloud_lb:
         wait_cloud_dns(cluster, domain)
     os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
     apps = data.get('apps', [])
@@ -214,5 +213,6 @@ def create(config, plandir, cluster, overrides):
             call(autoscalecmd, shell=True)
     if config.type in cloudplatforms and data.get('cloud_storage', True):
         pprint("Deploying cloud storage class")
-        deploy_cloud_storage(config, cluster)
+        apply = config.type == 'aws'
+        deploy_cloud_storage(config, cluster, apply=apply)
     return {'result': 'success'}

@@ -44,5 +44,5 @@ auth_pass:
 virtual_router_id:
 autoscale: False
 apps: []
-cloud_lb: true
+cloud_lb:
 cloud_storage: true

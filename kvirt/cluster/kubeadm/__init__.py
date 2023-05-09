@@ -213,7 +213,7 @@ def create(config, plandir, cluster, overrides):
     success(f"Kubernetes cluster {cluster} deployed!!!")
     info2(f"export KUBECONFIG=$HOME/.kcli/clusters/{cluster}/auth/kubeconfig")
     info2("export PATH=$PWD:$PATH")
-    if config.type in cloudplatforms:
+    if config.type in cloudplatforms and cloud_lb:
         wait_cloud_dns(cluster, domain)
     os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
     apps = data.get('apps', [])
