@@ -2816,15 +2816,16 @@ class Kconfig(Kbaseconfig):
         hypershift = False
         assisted = False
         domain = overrides.get('domain', 'karmalabs.corp')
-        kubetype = 'generic'
+        kubetype = overrides.get('kubetype', 'generic')
         dnsclient = None
         k = self.k
         if self.type == 'web' and self.k.localkube:
-            kubetype = overrides.get('kubetype', 'generic')
             return k.delete_kube(cluster, kubetype, overrides=overrides)
         cluster = overrides.get('cluster', cluster)
         if cluster is None or cluster == '':
-            cluster = 'mykube'
+            default_clusters = {'generic': 'mykube', 'hypershift': 'myhypershift', 'openshift': 'myopenshift',
+                                'k3s': 'myk3s', 'microshift': 'mymicroshift'}
+            cluster = default_clusters[kubetype]
         clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
         if os.path.exists(clusterdir):
             parametersfile = f"{clusterdir}/kcli_parameters.yml"

@@ -1861,6 +1861,7 @@ def create_kube(args):
     config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
                      offline=offline)
     if overrides.get('force', args.force):
+        overrides['kubetype'] = kubetype
         config.delete_kube(cluster, overrides=overrides)
     confpool = overrides.get('namepool') or overrides.get('confpool')
     if cluster is None and confpool is not None:
