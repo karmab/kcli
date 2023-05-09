@@ -17,7 +17,7 @@ You can:
 
 Kubernetes clusters can also be deployed with the following type:
 
-* Kubeadm/Openshift/OKD/Hypershift/Microshift/K3s/Kind
+* Kubeadm/Openshift/OKD/Hypershift/Microshift/K3s
 
 # Installation
 
@@ -1414,7 +1414,7 @@ parameters:
 
 # Deploying Kubernetes/OpenShift clusters
 
-You can deploy generic Kubernetes (based on Kubeadm), K3s, Kind, OpenShift/OKD, Hypershift and Microshift on any platform and on an arbitrary number of control plane nodes and workers.
+You can deploy generic Kubernetes (based on Kubeadm), K3s, OpenShift/OKD, Hypershift and Microshift on any platform and on an arbitrary number of control plane nodes and workers.
 
 ## Benefits
 

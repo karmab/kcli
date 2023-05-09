@@ -18,7 +18,6 @@ from kvirt import nameutils
 from kvirt import common
 from kvirt.common import error, pprint, success, warning, generate_rhcos_iso, pwd_path, container_mode
 from kvirt.common import ssh, scp, _ssh_credentials, valid_ip, process_files, get_rhcos_url_from_file, get_free_port
-from kvirt.cluster import kind
 from kvirt.cluster import microshift
 from kvirt.cluster import k3s
 from kvirt.cluster import kubeadm
@@ -1945,7 +1944,7 @@ class Kconfig(Kbaseconfig):
                 if existing_ctlplanes:
                     pprint(f"Cluster {cluster} found. skipped!")
                     continue
-                if kubetype not in ['generic', 'openshift', 'hypershift', 'kind', 'microshift', 'k3s']:
+                if kubetype not in ['generic', 'openshift', 'hypershift', 'microshift', 'k3s']:
                     warning(f"Incorrect kubetype {kubetype} specified. skipped!")
                     continue
                 if kubethreaded:
@@ -2752,8 +2751,6 @@ class Kconfig(Kbaseconfig):
             result = self.create_kube_hypershift(cluster, overrides=overrides)
         elif kubetype == 'microshift':
             result = self.create_kube_microshift(cluster, overrides=overrides)
-        elif kubetype == 'kind':
-            result = self.create_kube_kind(cluster, overrides=overrides)
         elif kubetype == 'k3s':
             result = self.create_kube_k3s(cluster, overrides=overrides)
         else:
@@ -2767,14 +2764,6 @@ class Kconfig(Kbaseconfig):
             os.environ['PATH'] += ':%s' % os.getcwd()
         plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
         return kubeadm.create(self, plandir, cluster, overrides)
-
-    def create_kube_kind(self, cluster, overrides={}):
-        if container_mode():
-            os.environ['PATH'] += ':/workdir'
-        else:
-            os.environ['PATH'] += ':%s' % os.getcwd()
-        plandir = os.path.dirname(kind.create.__code__.co_filename)
-        return kind.create(self, plandir, cluster, overrides)
 
     def create_kube_microshift(self, cluster, overrides={}):
         if container_mode():

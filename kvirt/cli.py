@@ -8,7 +8,7 @@ from getpass import getuser
 from kvirt.config import Kconfig
 from kvirt.examples import plandatacreate, vmdatacreate, hostcreate, _list, plancreate, planinfo, productinfo, start
 from kvirt.examples import repocreate, isocreate, networkupdate
-from kvirt.examples import kubegenericcreate, kubek3screate, kubeopenshiftcreate, kubekindcreate, kubemicroshiftcreate
+from kvirt.examples import kubegenericcreate, kubek3screate, kubeopenshiftcreate, kubemicroshiftcreate
 from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsole, vmexport, niccreate, nicdelete
 from kvirt.examples import disconnectedcreate, appopenshiftcreate, plantemplatecreate, kubehypershiftcreate
 from kvirt.examples import workflowcreate, kubegenericscale, kubek3sscale, kubeopenshiftscale
@@ -1890,12 +1890,6 @@ def create_generic_kube(args):
     create_kube(args)
 
 
-def create_kind_kube(args):
-    """Create Kind kube"""
-    args.type = 'kind'
-    create_kube(args)
-
-
 def create_microshift_kube(args):
     """Create Microshift kube"""
     args.type = 'microshift'
@@ -1989,11 +1983,6 @@ def update_hypershift_kube(args):
 
 def update_openshift_kube(args):
     args.type = 'openshift'
-    update_kube(args)
-
-
-def update_kind_kube(args):
-    args.type = 'kind'
     update_kube(args)
 
 
@@ -2345,8 +2334,6 @@ def info_kube(args):
             baseconfig.info_kube_microshift(quiet=True)
         elif kubetype == 'k3s':
             baseconfig.info_kube_k3s(quiet=True)
-        elif kubetype == 'kind':
-            baseconfig.info_kube_kind(quiet=True)
         else:
             baseconfig.info_kube_generic(quiet=True)
 
@@ -2371,11 +2358,6 @@ def info_web_kube(args):
 
 def info_generic_kube(args):
     args.kubetype = 'generic'
-    info_kube(args)
-
-
-def info_kind_kube(args):
-    args.kubetype = 'kind'
     info_kube(args)
 
 
@@ -3711,18 +3693,6 @@ def cli():
                                      epilog=kubegenericcreate_epilog,
                                      formatter_class=rawhelp, aliases=['kubeadm'])
 
-    kubekindcreate_desc = 'Create Kind Kube'
-    kubekindcreate_epilog = f"examples:\n{kubekindcreate}"
-    kubekindcreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
-    kubekindcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
-    kubekindcreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
-    kubekindcreate_parser.set_defaults(func=create_kind_kube)
-    kubecreate_subparsers.add_parser('kind', parents=[kubekindcreate_parser],
-                                     description=kubekindcreate_desc,
-                                     help=kubekindcreate_desc,
-                                     epilog=kubekindcreate_epilog,
-                                     formatter_class=rawhelp)
-
     kubemicroshiftcreate_desc = 'Create Microshift Kube'
     kubemicroshiftcreate_epilog = f"examples:\n{kubemicroshiftcreate}"
     kubemicroshiftcreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
@@ -4509,12 +4479,6 @@ def cli():
                                                             parents=[output_parser])
     kubegenericinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubegenericinfo_parser.set_defaults(func=info_generic_kube)
-
-    kubekindinfo_desc = 'Info Kind Kube'
-    kubekindinfo_parser = kubeinfo_subparsers.add_parser('kind', description=kubekindinfo_desc, help=kubekindinfo_desc,
-                                                         parents=[output_parser])
-    kubekindinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
-    kubekindinfo_parser.set_defaults(func=info_kind_kube)
 
     kubemicroshiftinfo_desc = 'Info Microshift Kube'
     kubemicroshiftinfo_parser = kubeinfo_subparsers.add_parser('microshift', description=kubemicroshiftinfo_desc,

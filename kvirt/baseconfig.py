@@ -25,7 +25,6 @@ from random import choice
 from kvirt import common
 from kvirt.common import error, pprint, warning, container_mode, ssh, scp, NoAliasDumper
 from kvirt.jinjafilters import jinjafilters
-from kvirt.cluster import kind
 from kvirt.cluster import microshift
 from kvirt.cluster import k3s
 from kvirt.cluster import kubeadm
@@ -1316,11 +1315,6 @@ class Kbaseconfig:
     def info_kube_generic(self, quiet, web=False):
         plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
         inputfile = f'{plandir}/ctlplanes.yml'
-        return self.info_plan(inputfile, quiet=quiet, web=web)
-
-    def info_kube_kind(self, quiet, web=False):
-        plandir = os.path.dirname(kind.create.__code__.co_filename)
-        inputfile = f'{plandir}/kcli_plan.yml'
         return self.info_plan(inputfile, quiet=quiet, web=web)
 
     def info_kube_microshift(self, quiet, web=False):

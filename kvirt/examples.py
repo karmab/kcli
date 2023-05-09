@@ -159,16 +159,6 @@ $ kcli create kube generic -P ctlplanes=1 -P workers=2 mykube
 $ kcli create kube generic --paramfile=myparameters.yml mykube
 """
 
-kubekindcreate = """# Create a kube kind instance named mykube with default values
-$ kcli create kube kind mykind
-
-# Do the same with workers
-$ kcli create kube kind -P workers=2 mykind
-
-# Use a parameter file
-$ kcli create kube kind --paramfile=myparameters.yml mykind
-"""
-
 kubemicroshiftcreate = """# Create a kube microshift instance named mymicroshift with default values
 $ kcli create kube microshift mymicroshift
 
