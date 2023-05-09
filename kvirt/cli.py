@@ -2447,7 +2447,7 @@ def download_hypershift(args):
 def download_oc(args):
     """Download Oc"""
     overrides = handle_parameters(args.param, args.paramfile)
-    common.get_oc(version=overrides.get('version', 'latest'))
+    common.get_oc(version=overrides.get('version', 'stable'), tag=overrides.get('tag', '4.12'))
 
 
 def download_openshift_installer(args):
