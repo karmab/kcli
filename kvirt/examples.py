@@ -115,8 +115,14 @@ $ kcli create vm -i centos8stream -P memory=4096 -P numcpus=4 myvm
 # Pass disks, networks and even cmds
 $ kcli create vm -i centos8stream -P disks=[10,20] -P nets=[default] -P cmds=['yum -y install nc']
 
-# Use more advanced information for nets
+# Force root password
+$ kcli create vm -i centos8stream -P rootpassword=hendrix
+
+# Use more advanced information for nets, such as specifying the nic driver
 $ kcli create vm -i centos8stream -P nets=['{"name": "default", "type": "e1000"}']
+
+# Or force mac address
+$ kcli create vm -i centos8stream -P nets=['{"name": "default", "mac": "aa:aa:aa:bb:bb:90"}']
 
 # Or specify a custom mtu
 $ kcli create vm -i centos8stream -P nets=['{"name": "default", "mtu": 1400}']
