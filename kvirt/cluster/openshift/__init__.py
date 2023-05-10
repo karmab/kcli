@@ -571,7 +571,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     disconnected_url = data.get('disconnected_url')
     disconnected_user = data.get('disconnected_user')
     disconnected_password = data.get('disconnected_password')
-    disconnected_prefix = data.get('disconnected_prefix', 'ocp4')
+    disconnected_prefix_images = data.get('disconnected_prefix_images', 'openshift/release-images')
     ipsec = data.get('ipsec')
     ovn_hostrouting = data.get('ovn_hostrouting')
     metal3 = data.get('metal3')
@@ -756,7 +756,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             warning(f"Removing scheme from {disconnected_url}")
             disconnected_url = disconnected_url.replace('http://', '').replace('https://', '')
         if '/' not in str(tag):
-            tag = f'{disconnected_url}/{disconnected_prefix}:{tag}'
+            tag = f'{disconnected_url}/{disconnected_prefix_images}:{tag}'
             os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = tag
         pprint(f"Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to {tag}")
         data['openshift_release_image'] = {tag}
