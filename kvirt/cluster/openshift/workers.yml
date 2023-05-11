@@ -49,6 +49,10 @@
   - path: /etc/kubernetes/config.hcl.templ
     origin: config.hcl.templ
 {% endif %}
+{% if ipv6 %}
+  - path: /etc/NetworkManager/conf.d/kcli-ipv6.conf
+    origin: kcli-ipv6.conf.j2
+{% endif %}
 {% if files|default([]) %}
  extra_files: {{ files }}
 {% endif %}

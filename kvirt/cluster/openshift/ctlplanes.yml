@@ -60,6 +60,10 @@
   - path: /etc/kubernetes/keepalived.conf
     origin: keepalived.conf
 {% endif %}
+{% if ipv6 %}
+  - path: /etc/NetworkManager/conf.d/kcli-ipv6.conf
+    origin: kcli-ipv6.conf.j2
+{% endif %}
 {% if async and num == 0 %}
   - path: /etc/kubernetes/kubeconfig.{{ cluster }}
     origin: ~/.kcli/clusters/{{ cluster }}/auth/kubeconfig
