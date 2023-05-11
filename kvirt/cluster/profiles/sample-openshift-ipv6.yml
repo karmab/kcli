@@ -1,0 +1,9 @@
+ctlplanes: 3
+workers: 2
+version: stable
+memory: 32768
+numcpus: 16
+network: ipv6-network
+disconnected: True
+disconnected_deploy: True
+disconnected_keep: True
