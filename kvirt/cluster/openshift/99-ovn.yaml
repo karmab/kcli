@@ -10,7 +10,7 @@ spec:
 {% if ipsec %}
       ipsecConfig: {}
 {% endif %}
-{% if ovn_hostrouting %}
+{% if ovn_hostrouting or relocate %}
       gatewayConfig:
         routingViaHost: true
 {% endif %}

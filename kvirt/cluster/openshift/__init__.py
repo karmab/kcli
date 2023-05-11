@@ -1015,15 +1015,16 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             with TemporaryDirectory() as tmpdir:
                 contrail_data = {'tmpdir': tmpdir, 'clusterdir': clusterdir, 'uefi': data.get('uefi', False)}
                 contrail_data.update({key: data[key] for key in data if key.startswith('contrail')})
-                pullsecret_encoded = str(b64encode(data['pull_secret'].encode('utf-8')), 'utf-8')
-                contrail_data['pullsecret_encoded'] = pullsecret_encoded
+                contrail_data['auth'] = yaml.safe_load(open(pull_secret))['auths']['enterprise-hub.juniper.net']['auth']
                 contrail_script = config.process_inputfile('xxx', f'{plandir}/contrail.sh.j2', overrides=contrail_data)
                 with open(f"{tmpdir}/contrail.sh", 'w') as f:
                     f.write(contrail_script)
+                copy2(f'{plandir}/contrail.auth', tmpdir)
                 call(f'bash {tmpdir}/contrail.sh', shell=True)
-    if ipsec or ovn_hostrouting:
+    if ipsec or ovn_hostrouting or sno_relocate:
         ovn_data = config.process_inputfile(cluster, f"{plandir}/99-ovn.yaml",
-                                            overrides={'ipsec': ipsec, 'ovn_hostrouting': ovn_hostrouting})
+                                            overrides={'ipsec': ipsec, 'ovn_hostrouting': ovn_hostrouting,
+                                                       'relocate': sno_relocate})
         with open(f"{clusterdir}/openshift/99-ovn.yaml", 'w') as f:
             f.write(ovn_data)
     if workers == 0 or not mdns or kubevirt_api_service:
