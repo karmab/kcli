@@ -487,6 +487,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'sno_localhost_fix': False,
             'sno_disable_nics': [],
             'sno_cpuset': None,
+            'sno_relocate': False,
             'notify': False,
             'async': False,
             'kubevirt_api_service': False,
@@ -580,6 +581,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     mdns = data.get('mdns')
     sno_localhost_fix = data.get('sno_localhost_fix')
     sno_cpuset = data.get('sno_cpuset')
+    sno_relocate = data.get('sno_relocate')
     kubevirt_api_service, kubevirt_api_service_node_port = False, False
     kubevirt_ignore_node_port = data['kubevirt_ignore_node_port']
     version = data.get('version')
@@ -1152,8 +1154,13 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             pinning_data = config.process_inputfile(cluster, f"{plandir}/openshift-workload-pinning", overrides=data)
             sno_files.extend([{"path": "/etc/crio/crio.conf.d/01-workload-partitioning", "data": partitioning_data},
                               {"path": "/etc/kubernetes/openshift-workload-pinning", "data": pinning_data}])
+        if sno_relocate:
+            pprint("Enabling relocation")
+            relocate_script_data = config.process_inputfile(cluster, f"{plandir}/relocate-ip.sh", overrides=data)
+            sno_files.append({"path": "/usr/local/bin/relocate-ip.sh", "mode": 448, "data": relocate_script_data})
         if sno_files:
-            rendered = config.process_inputfile(cluster, f"{plandir}/99-sno.yaml", overrides={'files': sno_files})
+            rendered = config.process_inputfile(cluster, f"{plandir}/99-sno.yaml", overrides={'files': sno_files,
+                                                                                              'relocate': sno_relocate})
             with open(f"{clusterdir}/openshift/99-sno.yaml", 'w') as f:
                 f.write(rendered)
         if sno_localhost_fix:

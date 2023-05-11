@@ -107,6 +107,7 @@ sno_workers: false
 sno_wait: false
 sno_localhost_fix: false
 sno_cpuset:
+sno_relocate: false
 metal3: false
 baremetal_user: root
 baremetal_password: calvin
