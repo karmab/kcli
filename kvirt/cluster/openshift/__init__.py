@@ -636,7 +636,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if platform in virtplatforms and not sno and ':' in api_ip:
         ipv6 = True
     if ipv6:
-        if data.get('network_type', 'OpenShiftSDN') == 'OpenShiftSDN':
+        if data.get('network_type', 'OVNKubernetes') == 'OpenShiftSDN':
             warning("Forcing network_type to OVNKubernetes")
             data['network_type'] = 'OVNKubernetes'
         data['ipv6'] = True
@@ -1183,6 +1183,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                       {"path": "/usr/local/bin/sno-finish.sh", "origin": f"{plandir}/sno-finish.sh", "mode": 700}]
             if notify:
                 _files.append({"path": "/root/kubeconfig", "origin": f'{clusterdir}/auth/kubeconfig'})
+            if ipv6 or sno_disable_nics:
+                nm_data = config.process_inputfile(cluster, f"{plandir}/kcli-ipv6.conf.j2", overrides=data)
+                _files.append({'path': "/etc/NetworkManager/conf.d/kcli-ipv6.conf", 'content': nm_data})
             iso_overrides['files'] = _files
             iso_overrides.update(data)
             result = config.create_vm(sno_name, overrides=iso_overrides, onlyassets=True)
