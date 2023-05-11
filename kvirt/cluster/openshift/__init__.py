@@ -1117,13 +1117,15 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if ipv6 or sno_disable_nics:
             nm_data = config.process_inputfile(cluster, f"{plandir}/kcli-ipv6.conf.j2", overrides=data)
             sno_files.append({'path': "/etc/NetworkManager/conf.d/kcli-ipv6.conf", 'data': nm_data})
-        sno_dns = False
-        for entry in [f'api-int.{cluster}.{domain}', f'api.{cluster}.{domain}', f'xxx.apps.{cluster}.{domain}']:
-            try:
-                gethostbyname(entry)
-            except:
-                sno_dns = True
-        data['sno_dns'] = sno_dns
+        sno_dns = data.get('sno_dns')
+        if sno_dns is None:
+            sno_dns = False
+            for entry in [f'api-int.{cluster}.{domain}', f'api.{cluster}.{domain}', f'xxx.apps.{cluster}.{domain}']:
+                try:
+                    gethostbyname(entry)
+                except:
+                    sno_dns = True
+            data['sno_dns'] = sno_dns
         if sno_dns:
             warning("Injecting coredns static pod as some DNS records were missing")
             coredns_data = config.process_inputfile(cluster, f"{plandir}/staticpods/coredns.yml", overrides=data)
