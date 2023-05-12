@@ -23,13 +23,14 @@ class Kgcp(object):
     """
 
     """
-    def __init__(self, project, zone="europe-west1-b", region='europe-west1', debug=False):
+    def __init__(self, project, zone="europe-west1-b", region='europe-west1', debug=False, extra_projects=[]):
         self.conn = googleapiclient.discovery.build('compute', 'v1')
         self.conn_beta = googleapiclient.discovery.build('compute', 'beta')
         self.project = project
         self.zone = zone
         self.region = region
         self.debug = debug
+        self.extra_projects = extra_projects
         return
 
     def _wait_for_operation(self, operation):
@@ -116,6 +117,7 @@ class Kgcp(object):
         body = {'name': name, 'machineType': machine_type, 'networkInterfaces': []}
         foundnets = []
         for index, net in enumerate(nets):
+            network_project = self.project
             if isinstance(net, str):
                 netname = net
                 netpublic = True
@@ -125,6 +127,8 @@ class Kgcp(object):
                 ip = net.get('ip')
                 alias = net.get('alias')
                 netpublic = net.get('public', True)
+                if 'project' in net:
+                    network_project = net['project']
             if ips and len(ips) > index and ips[index] is not None:
                 ip = ips[index]
             if netname in foundnets:
@@ -135,7 +139,7 @@ class Kgcp(object):
             if netpublic and index == 0:
                 newnet['accessConfigs'] = [{'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}]
             if netname != 'default':
-                newnet['subnetwork'] = f'projects/{project}/regions/{region}/subnetworks/{netname}'
+                newnet['subnetwork'] = f'projects/{network_project}/regions/{region}/subnetworks/{netname}'
             if ip is not None:
                 newnet['networkIP'] = ip
             body['networkInterfaces'].append(newnet)
@@ -827,9 +831,8 @@ class Kgcp(object):
         print("not implemented")
         return []
 
-    def list_networks(self):
+    def list_project_networks(self, project):
         conn = self.conn
-        project = self.project
         region = self.region
         nets = conn.networks().list(project=project).execute()
         if 'items' not in nets:
@@ -852,6 +855,13 @@ class Kgcp(object):
             domainname = ''
             mode = ''
             networks[networkname] = {'cidr': cidr, 'dhcp': dhcp, 'domain': domainname, 'type': 'routed', 'mode': mode}
+        return networks
+
+    def list_networks(self):
+        networks = {}
+        projects = [self.project] + self.extra_projects
+        for project in projects:
+            networks.update(self.list_project_networks(project))
         return networks
 
     def info_network(self, name):
