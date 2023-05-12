@@ -1196,6 +1196,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             if ipv6 or sno_disable_nics:
                 nm_data = config.process_inputfile(cluster, f"{plandir}/kcli-ipv6.conf.j2", overrides=data)
                 _files.append({'path': "/etc/NetworkManager/conf.d/kcli-ipv6.conf", 'content': nm_data})
+            if sno_relocate:
+                relocate_script_data = config.process_inputfile(cluster, f"{plandir}/relocate-ip-bootstrap.sh",
+                                                                overrides=data)
+                _files.append({"path": "/usr/local/bin/relocate-ip.sh", "mode": 700, "content": relocate_script_data})
+                _files.append({"path": "/root/relocate-ip.service",
+                               "origin": f"{plandir}/relocate-ip-bootstrap.service"})
             iso_overrides['files'] = _files
             iso_overrides.update(data)
             result = config.create_vm(sno_name, overrides=iso_overrides, onlyassets=True)

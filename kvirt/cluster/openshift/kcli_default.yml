@@ -105,6 +105,7 @@ sno_disable_nics: []
 sno_ctplanes: false
 sno_workers: false
 sno_wait: false
+sno_nic:
 sno_localhost_fix: false
 sno_cpuset:
 sno_relocate: false
