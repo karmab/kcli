@@ -204,7 +204,7 @@ class Kgcp(object):
             user = common.get_user(image)
             if user == 'root':
                 user = getuser()
-            finalkeys = [f"{user}:{x}"for x in keys]
+            finalkeys = [f"{user}:{x}" for x in keys]
             if enableroot:
                 finalkeys.extend([f"root:{x}" for x in keys])
                 enablerootcmds = ['sed -i "s/.*PermitRootLogin.*/PermitRootLogin yes/" /etc/ssh/sshd_config',
@@ -242,7 +242,9 @@ class Kgcp(object):
         if 'kubetype' in metadata and metadata['kubetype'] in ["generic", "openshift", "k3s"]:
             kube = metadata['kube']
             kubetype = metadata['kubetype']
-            if not [r for r in conn.firewalls().list(project=project).execute()['items'] if r['name'] == kube]:
+            firewalls = conn.firewalls().list(project=project).execute()
+            firewalls = firewalls['items'] if 'items' in firewalls else []
+            if not firewalls or not [r for r in firewalls if r['name'] == kube]:
                 pprint(f"Adding vm to security group {kube}")
                 tcp_ports = [22, 443, 2379, 2380]
                 firewall_body = {"name": kube, "direction": "INGRESS", "targetTags": [kube],
