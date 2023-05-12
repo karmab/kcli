@@ -170,7 +170,7 @@ class Kgcp(object):
             else:
                 diskname = f"{name}-disk{index}"
                 diskpath = f'/compute/v1/projects/{project}/zones/{zone}/disks/{diskname}'
-                info = {'sizeGb': disksize, 'sourceDisk': f'zones/{zone}/diskTypes/pd-standard', 'name': diskname}
+                info = {'name': diskname, 'sizeGb': disksize}
                 conn.disks().insert(zone=zone, project=project, body=info).execute()
                 timeout = 0
                 while True:
@@ -695,7 +695,7 @@ class Kgcp(object):
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         numdisks = len(vm['disks']) + 1
         diskname = f"{name}-disk{numdisks}"
-        body = {'sizeGb': size, 'sourceDisk': f'zones/{zone}/diskTypes/pd-standard', 'name': diskname}
+        body = {'sizeGb': size, 'name': diskname}
         conn.disks().insert(zone=zone, project=project, body=body).execute()
         timeout = 0
         while True:
