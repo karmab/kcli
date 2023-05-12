@@ -14,6 +14,12 @@
 {% set machine_cidr_ipv6 = ["fc00::/48"] %}
 {% set machine_cidrs = machine_cidr_ipv4 + machine_cidr_ipv6 if dualstack|default(False) else machine_cidr_ipv6 if ipv6 else machine_cidr_ipv4 %}
 
+{% if sno_disk == None %}
+{% set sno_disk = '/dev/sda' %}
+{% elif '/dev/' not in sno_disk %}
+{% set sno_disk = '/dev/' + sno_disk|basename %}
+{% endif %}
+
 apiVersion: v1
 {% if fips %}
 fips: True
@@ -66,7 +72,7 @@ platform:
 {% endif %}
 {% if sno %}
 BootstrapInPlace:
-  InstallationDisk: /dev/{{ sno_disk | basename if sno_disk != None else 'sda' }}
+  InstallationDisk: {{ sno_disk }}
 {% endif %}
 {% if ca != None %}
 additionalTrustBundle: |
