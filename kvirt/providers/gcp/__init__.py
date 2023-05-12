@@ -23,15 +23,16 @@ class Kgcp(object):
     """
 
     """
-    def __init__(self, project, zone="europe-west1-b", region='europe-west1', debug=False, extra_projects=[]):
+    def __init__(self, project, zone="europe-west1-b", region='europe-west1', debug=False):
         self.conn = googleapiclient.discovery.build('compute', 'v1')
         self.conn_beta = googleapiclient.discovery.build('compute', 'beta')
         self.project = project
         self.zone = zone
         self.region = region
         self.debug = debug
-        self.extra_projects = extra_projects
-        return
+        request = self.conn.projects().getXpnHost(project=project)
+        response = request.execute()
+        self.xproject = response['name'] if response else None
 
     def _wait_for_operation(self, operation):
         selflink = operation['selfLink']
@@ -127,8 +128,8 @@ class Kgcp(object):
                 ip = net.get('ip')
                 alias = net.get('alias')
                 netpublic = net.get('public', True)
-                if 'project' in net:
-                    network_project = net['project']
+                if self.xproject is not None and 'shared' in net and isinstance(net['shared'], bool) and net['shared']:
+                    network_project = self.xproject
             if ips and len(ips) > index and ips[index] is not None:
                 ip = ips[index]
             if netname in foundnets:
@@ -859,7 +860,9 @@ class Kgcp(object):
 
     def list_networks(self):
         networks = {}
-        projects = [self.project] + self.extra_projects
+        projects = [self.project]
+        if self.xproject is not None:
+            projects.append(self.xproject)
         for project in projects:
             networks.update(self.list_project_networks(project))
         return networks
