@@ -1,8 +1,8 @@
 #!/bin/sh
 
 NIC=br-ex
-IP=192.168.7.10
-NETMASK=32
+IP={{ '2620:52:0:1309::10' if ipv6|default(False) else '192.168.7.10' }}
+NETMASK={{ 128 if ipv6|default(False) else 32 }}
 
 grep -q $IP /etc/NetworkManager/system-connections/* && exit 0
 
