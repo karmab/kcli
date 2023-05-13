@@ -47,3 +47,7 @@ jobs:
         name: Build And Push Controller Container
         run: .github/container_controller.sh
         shell: bash
+      - name: Push helper redfish library
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: ./.github/kfish.sh
+        shell: bash
