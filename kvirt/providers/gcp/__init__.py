@@ -128,7 +128,7 @@ class Kgcp(object):
                 ip = net.get('ip')
                 alias = net.get('alias')
                 netpublic = net.get('public', True)
-                if self.xproject is not None and 'shared' in net and isinstance(net['shared'], bool) and net['shared']:
+                if self.xproject is not None and netname in self.list_project_networks(self.xproject):
                     network_project = self.xproject
             if ips and len(ips) > index and ips[index] is not None:
                 ip = ips[index]
