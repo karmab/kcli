@@ -875,21 +875,25 @@ class Kgcp(object):
         if self.xproject is not None:
             projects.append(self.xproject)
         for project in projects:
-            subnets_data = conn.subnetworks().list(region=region, project=project).execute()['items']
-            for subnet in subnets_data:
-                subnetname = subnet['name']
-                networkname = os.path.basename(subnet['network'])
-                cidr = subnet['ipCidrRange']
-                subnets[subnetname] = {'cidr': cidr, 'az': project, 'network': networkname}
-            nets_data = conn.networks().list(project=project).execute()['items']
-            for net in nets_data:
-                networkname = net['name']
-                if 'subnetworks' in net:
-                    for subnet in net['subnetworks']:
-                        subnetname = os.path.basename(subnet)
-                        if subnetname not in subnets:
-                            cidr = subnets_data[subnetname]['ipCidrRange'] if subnetname in subnets_data else ''
-                            subnets[subnetname] = {'cidr': cidr, 'az': project, 'network': networkname}
+            response = conn.subnetworks().list(region=region, project=project).execute()
+            subnets_data = response.get('items', [])
+            if subnets_data:
+                for subnet in subnets_data:
+                    subnetname = subnet['name']
+                    networkname = os.path.basename(subnet['network'])
+                    cidr = subnet['ipCidrRange']
+                    subnets[subnetname] = {'cidr': cidr, 'az': project, 'network': networkname}
+            response = conn.networks().list(project=project).execute()
+            nets_data = response.get('items', [])
+            if nets_data:
+                for net in nets_data:
+                    networkname = net['name']
+                    if 'subnetworks' in net:
+                        for subnet in net['subnetworks']:
+                            subnetname = os.path.basename(subnet)
+                            if subnetname not in subnets:
+                                cidr = subnets_data[subnetname]['ipCidrRange'] if subnetname in subnets_data else ''
+                                subnets[subnetname] = {'cidr': cidr, 'az': project, 'network': networkname}
         return subnets
 
     def delete_pool(self, name, full=False):
