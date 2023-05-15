@@ -128,19 +128,24 @@ class Kgcp(object):
                 ip = net.get('ip')
                 alias = net.get('alias')
                 netpublic = net.get('public', True)
-                if self.xproject is not None and netname in self.list_project_networks(self.xproject):
-                    network_project = self.xproject
             if ips and len(ips) > index and ips[index] is not None:
                 ip = ips[index]
             if netname in foundnets:
                 continue
             else:
                 foundnets.append(netname)
-            newnet = {'network': f'global/networks/{netname}'}
+            newnet = {}
             if netpublic and index == 0:
                 newnet['accessConfigs'] = [{'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}]
-            if netname != 'default':
+            networks = self.list_networks()
+            subnets = self.list_subnets()
+            if netname in networks:
+                newnet['network'] = f'global/networks/{netname}'
+            elif netname in subnets:
+                network_project = subnets[netname]['az']
                 newnet['subnetwork'] = f'projects/{network_project}/regions/{region}/subnetworks/{netname}'
+            else:
+                return {'result': 'failure', 'reason': f'{netname} not in subnets'}
             if ip is not None:
                 newnet['networkIP'] = ip
             body['networkInterfaces'].append(newnet)
@@ -834,24 +839,15 @@ class Kgcp(object):
 
     def list_project_networks(self, project):
         conn = self.conn
-        region = self.region
         nets = conn.networks().list(project=project).execute()
         if 'items' not in nets:
             return {}
-        subnets = conn.subnetworks().list(region=region, project=project).execute()['items']
         networks = {}
         for net in nets['items']:
             if self.debug:
                 print(net)
             networkname = net['name']
             cidr = net['IPv4Range'] if 'IPv4Range' in net else ''
-            if 'subnetworks' in net:
-                for subnet in net['subnetworks']:
-                    subnetname = os.path.basename(subnet)
-                    for sub in subnets:
-                        if sub['name'] == subnetname:
-                            cidr = sub['ipCidrRange']
-                            break
             dhcp = True
             domainname = ''
             mode = ''
@@ -879,11 +875,21 @@ class Kgcp(object):
         if self.xproject is not None:
             projects.append(self.xproject)
         for project in projects:
-            for subnet in conn.subnetworks().list(region=region, project=project).execute()['items']:
+            subnets_data = conn.subnetworks().list(region=region, project=project).execute()['items']
+            for subnet in subnets_data:
                 subnetname = subnet['name']
-                az, networkname = os.path.basename(subnet['region']), os.path.basename(subnet['network'])
+                networkname = os.path.basename(subnet['network'])
                 cidr = subnet['ipCidrRange']
-                subnets[subnetname] = {'cidr': cidr, 'az': az, 'network': networkname}
+                subnets[subnetname] = {'cidr': cidr, 'az': project, 'network': networkname}
+            nets_data = conn.networks().list(project=project).execute()['items']
+            for net in nets_data:
+                networkname = net['name']
+                if 'subnetworks' in net:
+                    for subnet in net['subnetworks']:
+                        subnetname = os.path.basename(subnet)
+                        if subnetname not in subnets:
+                            cidr = subnets_data[subnetname]['ipCidrRange'] if subnetname in subnets_data else ''
+                            subnets[subnetname] = {'cidr': cidr, 'az': project, 'network': networkname}
         return subnets
 
     def delete_pool(self, name, full=False):
