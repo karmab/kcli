@@ -206,7 +206,7 @@ class Kgcp(object):
                     "you might have trouble accessing the vm")
         else:
             publickeyfile = open(publickeyfile).read()
-            keys = [publickeyfile] + keys if keys is not None else [publickeyfile]
+            keys = list(set([publickeyfile] + keys)) if not keys else [publickeyfile]
         if keys:
             user = common.get_user(image)
             if user == 'root':
