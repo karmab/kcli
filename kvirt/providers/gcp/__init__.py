@@ -116,9 +116,7 @@ class Kgcp(object):
             machine_type = flavor
         machine_type = f"zones/{zone}/machineTypes/{machine_type}"
         body = {'name': name, 'machineType': machine_type, 'networkInterfaces': []}
-        foundnets = []
         for index, net in enumerate(nets):
-            network_project = self.project
             if isinstance(net, str):
                 netname = net
                 netpublic = True
@@ -130,10 +128,6 @@ class Kgcp(object):
                 netpublic = net.get('public', True)
             if ips and len(ips) > index and ips[index] is not None:
                 ip = ips[index]
-            if netname in foundnets:
-                continue
-            else:
-                foundnets.append(netname)
             newnet = {}
             if netpublic and index == 0:
                 newnet['accessConfigs'] = [{'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}]
@@ -251,23 +245,27 @@ class Kgcp(object):
             body['metadata']['items'].append(newval)
         if 'kubetype' in metadata and metadata['kubetype'] in ["generic", "openshift", "k3s"]:
             kube = metadata['kube']
-            kubetype = metadata['kubetype']
-            firewalls = conn.firewalls().list(project=project).execute()
-            firewalls = firewalls['items'] if 'items' in firewalls else []
-            if not firewalls or not [r for r in firewalls if r['name'] == kube]:
-                pprint(f"Adding vm to security group {kube}")
-                tcp_ports = [22, 443, 2379, 2380]
-                firewall_body = {"name": kube, "direction": "INGRESS", "targetTags": [kube],
-                                 "allowed": [{"IPProtocol": "tcp", "ports": tcp_ports}]}
-                if kubetype == 'openshift':
-                    extra_tcp_ports = [80, 8080, 443, 5443, 8443, 22624, 4789, 6080, 6081, '30000-32767',
-                                       '10250-10259', '9000-9999']
-                    firewall_body['allowed'][0]['ports'].extend(extra_tcp_ports)
-                    udp_ports = ['4789', '6081', '30000-32767', '9000-9999']
-                    firewall_body['allowed'].append({"IPProtocol": "udp", "ports": udp_ports})
-                pprint(f"Creating firewall rule {kube}")
-                operation = conn.firewalls().insert(project=project, body=firewall_body).execute()
-                self._wait_for_operation(operation)
+            # The conditional is to avoid creating firewall rules
+            # in the case where a shared VPC is in use. As this is not
+            # supported on GCP.
+            if not network_project or project == "{network_project}":
+                kubetype = metadata['kubetype']
+                firewalls = conn.firewalls().list(project=project).execute()
+                firewalls = firewalls['items'] if 'items' in firewalls else []
+                if not firewalls or not [r for r in firewalls if r['name'] == kube]:
+                    pprint(f"Adding vm to security group {kube}")
+                    tcp_ports = [22, 443, 2379, 2380]
+                    firewall_body = {"name": kube, "direction": "INGRESS", "targetTags": [kube],
+                                     "allowed": [{"IPProtocol": "tcp", "ports": tcp_ports}]}
+                    if kubetype == 'openshift':
+                        extra_tcp_ports = [80, 8080, 443, 5443, 8443, 22624, 4789, 6080, 6081, '30000-32767',
+                                           '10250-10259', '9000-9999']
+                        firewall_body['allowed'][0]['ports'].extend(extra_tcp_ports)
+                        udp_ports = ['4789', '6081', '30000-32767', '9000-9999']
+                        firewall_body['allowed'].append({"IPProtocol": "udp", "ports": udp_ports})
+                    pprint(f"Creating firewall rule {kube}")
+                    operation = conn.firewalls().insert(project=project, body=firewall_body).execute()
+                    self._wait_for_operation(operation)
             tags.extend([kube])
         if tags:
             body['tags'] = {'items': tags}
