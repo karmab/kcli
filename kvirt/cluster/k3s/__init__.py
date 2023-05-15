@@ -111,7 +111,7 @@ def create(config, plandir, cluster, overrides):
             else:
                 msg = "You need to define api_ip in your parameters file"
                 return {'result': 'failure', 'reason': msg}
-        if data.get('virtual_router_id') is None:
+        if not cloud_lb and ctlplanes > 1 and data.get('virtual_router_id') is None:
             data['virtual_router_id'] = hash(data['cluster']) % 254 + 1
             pprint(f"Using keepalived virtual_router_id {data['virtual_router_id']}")
     virtual_router_id = data.get('virtual_router_id')
