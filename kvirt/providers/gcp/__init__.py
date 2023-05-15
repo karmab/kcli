@@ -116,6 +116,9 @@ class Kgcp(object):
             machine_type = flavor
         machine_type = f"zones/{zone}/machineTypes/{machine_type}"
         body = {'name': name, 'machineType': machine_type, 'networkInterfaces': []}
+        use_xproject = False
+        networks = self.list_networks()
+        subnets = self.list_subnets()
         for index, net in enumerate(nets):
             if isinstance(net, str):
                 netname = net
@@ -131,12 +134,12 @@ class Kgcp(object):
             newnet = {}
             if netpublic and index == 0:
                 newnet['accessConfigs'] = [{'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}]
-            networks = self.list_networks()
-            subnets = self.list_subnets()
             if netname in networks:
                 newnet['network'] = f'global/networks/{netname}'
             elif netname in subnets:
                 network_project = subnets[netname]['az']
+                if network_project == self.xproject:
+                    use_xproject = True
                 newnet['subnetwork'] = f'projects/{network_project}/regions/{region}/subnetworks/{netname}'
             else:
                 return {'result': 'failure', 'reason': f'{netname} not in subnets'}
@@ -243,29 +246,25 @@ class Kgcp(object):
                 body['metadata']['items'].append(newval)
             newval = {'key': 'user-data', 'value': userdata}
             body['metadata']['items'].append(newval)
-        if 'kubetype' in metadata and metadata['kubetype'] in ["generic", "openshift", "k3s"]:
+        if 'kubetype' in metadata and metadata['kubetype'] in ["generic", "openshift", "k3s"] and not use_xproject:
             kube = metadata['kube']
-            # The conditional is to avoid creating firewall rules
-            # in the case where a shared VPC is in use. As this is not
-            # supported on GCP.
-            if not network_project or project == "{network_project}":
-                kubetype = metadata['kubetype']
-                firewalls = conn.firewalls().list(project=project).execute()
-                firewalls = firewalls['items'] if 'items' in firewalls else []
-                if not firewalls or not [r for r in firewalls if r['name'] == kube]:
-                    pprint(f"Adding vm to security group {kube}")
-                    tcp_ports = [22, 443, 2379, 2380]
-                    firewall_body = {"name": kube, "direction": "INGRESS", "targetTags": [kube],
-                                     "allowed": [{"IPProtocol": "tcp", "ports": tcp_ports}]}
-                    if kubetype == 'openshift':
-                        extra_tcp_ports = [80, 8080, 443, 5443, 8443, 22624, 4789, 6080, 6081, '30000-32767',
-                                           '10250-10259', '9000-9999']
-                        firewall_body['allowed'][0]['ports'].extend(extra_tcp_ports)
-                        udp_ports = ['4789', '6081', '30000-32767', '9000-9999']
-                        firewall_body['allowed'].append({"IPProtocol": "udp", "ports": udp_ports})
-                    pprint(f"Creating firewall rule {kube}")
-                    operation = conn.firewalls().insert(project=project, body=firewall_body).execute()
-                    self._wait_for_operation(operation)
+            kubetype = metadata['kubetype']
+            firewalls = conn.firewalls().list(project=project).execute()
+            firewalls = firewalls['items'] if 'items' in firewalls else []
+            if not firewalls or not [r for r in firewalls if r['name'] == kube]:
+                pprint(f"Adding vm to security group {kube}")
+                tcp_ports = [22, 443, 2379, 2380]
+                firewall_body = {"name": kube, "direction": "INGRESS", "targetTags": [kube],
+                                 "allowed": [{"IPProtocol": "tcp", "ports": tcp_ports}]}
+                if kubetype == 'openshift':
+                    extra_tcp_ports = [80, 8080, 443, 5443, 8443, 22624, 4789, 6080, 6081, '30000-32767',
+                                       '10250-10259', '9000-9999']
+                    firewall_body['allowed'][0]['ports'].extend(extra_tcp_ports)
+                    udp_ports = ['4789', '6081', '30000-32767', '9000-9999']
+                    firewall_body['allowed'].append({"IPProtocol": "udp", "ports": udp_ports})
+                pprint(f"Creating firewall rule {kube}")
+                operation = conn.firewalls().insert(project=project, body=firewall_body).execute()
+                self._wait_for_operation(operation)
             tags.extend([kube])
         if tags:
             body['tags'] = {'items': tags}
