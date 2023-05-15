@@ -1149,59 +1149,35 @@ def list_iso(args):
     print(isostable)
 
 
-def list_network(args):
+def list_networks(args):
     """List networks"""
     short = args.short
-    subnets = args.subnets
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.client != 'all':
         k = config.k
-    if not subnets:
-        networks = k.list_networks()
-        output = args.global_output or args.output
-        if output is not None:
-            _list_output(networks, output)
-        pprint("Listing Networks...")
-        if short:
-            networkstable = PrettyTable(["Network"])
-            for network in sorted(networks):
-                networkstable.add_row([network])
-        else:
-            networkstable = PrettyTable(["Network", "Type", "Cidr", "Dhcp", "Domain", "Mode"])
-            for network in sorted(networks):
-                networktype = networks[network]['type']
-                cidr = networks[network]['cidr']
-                dhcp = networks[network]['dhcp']
-                mode = networks[network]['mode']
-                if 'domain' in networks[network]:
-                    domain = networks[network]['domain']
-                else:
-                    domain = 'N/A'
-                networkstable.add_row([network, networktype, cidr, dhcp, domain, mode])
-        networkstable.align["Network"] = "l"
-        print(networkstable)
+    networks = k.list_networks()
+    output = args.global_output or args.output
+    if output is not None:
+        _list_output(networks, output)
+    pprint("Listing Networks...")
+    if short:
+        networkstable = PrettyTable(["Network"])
+        for network in sorted(networks):
+            networkstable.add_row([network])
     else:
-        subnets = k.list_subnets()
-        output = args.global_output or args.output
-        if output is not None:
-            _list_output(subnets, output)
-        pprint("Listing Subnets...")
-        if short:
-            subnetstable = PrettyTable(["Subnets"])
-            for subnet in sorted(subnets):
-                subnetstable.add_row([subnet])
-        else:
-            subnetstable = PrettyTable(["Subnet", "Az", "Cidr", "Network"])
-            for subnet in sorted(subnets):
-                cidr = subnets[subnet]['cidr']
-                az = subnets[subnet]['az']
-                if 'network' in subnets[subnet]:
-                    network = subnets[subnet]['network']
-                else:
-                    network = 'N/A'
-                subnetstable.add_row([subnet, az, cidr, network])
-        subnetstable.align["Network"] = "l"
-        print(subnetstable)
+        networkstable = PrettyTable(["Network", "Type", "Cidr", "Dhcp", "Domain", "Mode"])
+        for network in sorted(networks):
+            networktype = networks[network]['type']
+            cidr = networks[network]['cidr']
+            dhcp = networks[network]['dhcp']
+            mode = networks[network]['mode']
+            if 'domain' in networks[network]:
+                domain = networks[network]['domain']
+            else:
+                domain = 'N/A'
+            networkstable.add_row([network, networktype, cidr, dhcp, domain, mode])
+    networkstable.align["Network"] = "l"
+    print(networkstable)
 
 
 def list_plan(args):
@@ -1239,6 +1215,34 @@ def list_plantypes(args):
     for _type in sorted(PLANTYPES):
         plantypestable.add_row([_type])
     print(plantypestable)
+
+
+def list_subnets(args):
+    short = args.short
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    if config.client != 'all':
+        k = config.k
+    subnets = k.list_subnets()
+    output = args.global_output or args.output
+    if output is not None:
+        _list_output(subnets, output)
+    pprint("Listing Subnets...")
+    if short:
+        subnetstable = PrettyTable(["Subnets"])
+        for subnet in sorted(subnets):
+            subnetstable.add_row([subnet])
+    else:
+        subnetstable = PrettyTable(["Subnet", "Az", "Cidr", "Network"])
+        for subnet in sorted(subnets):
+            cidr = subnets[subnet]['cidr']
+            az = subnets[subnet]['az']
+            if 'network' in subnets[subnet]:
+                network = subnets[subnet]['network']
+            else:
+                network = 'N/A'
+            subnetstable.add_row([subnet, az, cidr, network])
+    subnetstable.align["Network"] = "l"
+    print(subnetstable)
 
 
 def create_app_generic(args):
@@ -4694,8 +4698,7 @@ def cli():
     networklist_parser = list_subparsers.add_parser('network', description=networklist_desc, help=networklist_desc,
                                                     aliases=['net', 'nets', 'networks'], parents=[output_parser])
     networklist_parser.add_argument('--short', action='store_true')
-    networklist_parser.add_argument('-s', '--subnets', action='store_true')
-    networklist_parser.set_defaults(func=list_network)
+    networklist_parser.set_defaults(func=list_networks)
 
     planlist_desc = 'List Plans'
     planlist_parser = list_subparsers.add_parser('plan', description=planlist_desc, help=planlist_desc,
@@ -4742,6 +4745,12 @@ def cli():
                                                           parents=[output_parser])
     securitygrouplist_parser.add_argument('-n', '--network', help='Use the corresponding network', metavar='NETWORK')
     securitygrouplist_parser.set_defaults(func=list_securitygroups)
+
+    subnetlist_desc = 'List Subnets'
+    subnetlist_parser = list_subparsers.add_parser('subnet', description=subnetlist_desc, help=subnetlist_desc,
+                                                   aliases=['subnets'], parents=[output_parser])
+    subnetlist_parser.add_argument('--short', action='store_true')
+    subnetlist_parser.set_defaults(func=list_subnets)
 
     vmlist_desc = 'List Vms'
     vmlist_epilog = f"examples:\n{vmlist}"
