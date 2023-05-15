@@ -872,8 +872,19 @@ class Kgcp(object):
         return networkinfo
 
     def list_subnets(self):
-        print("not implemented")
-        return {}
+        subnets = {}
+        conn = self.conn
+        region = self.region
+        projects = [self.project]
+        if self.xproject is not None:
+            projects.append(self.xproject)
+        for project in projects:
+            for subnet in conn.subnetworks().list(region=region, project=project).execute()['items']:
+                subnetname = subnet['name']
+                az, networkname = os.path.basename(subnet['region']), os.path.basename(subnet['network'])
+                cidr = subnet['ipCidrRange']
+                subnets[subnetname] = {'cidr': cidr, 'az': az, 'network': networkname}
+        return subnets
 
     def delete_pool(self, name, full=False):
         print("not implemented")
