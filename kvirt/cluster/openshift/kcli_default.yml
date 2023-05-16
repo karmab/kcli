@@ -85,6 +85,7 @@ disconnected_marketplace_operators_all: false
 disconnected_marketplace_operators: []
 disconnected_ipv6_network: false
 disconnected_sync: true
+disconnected_mac:
 disconnected_prefix:
 disconnected_prefix_images:
 imagecontentsources: []
