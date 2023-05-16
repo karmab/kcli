@@ -437,7 +437,9 @@ def scale(config, plandir, cluster, overrides):
             svcport_cmd = 'oc get svc -n default httpd-kcli-svc -o yaml'
             svcport = yaml.safe_load(os.popen(svcport_cmd).read())['spec']['ports'][0]['nodePort']
             iso_url = f'http://{svcip}:{svcport}/{cluster}-worker.iso'
-        boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
+        result = boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
+        if result['result'] != 'success':
+            return result
         overrides['workers'] = overrides.get('workers', 0) - len(new_baremetal_hosts)
     for role in ['ctlplanes', 'workers']:
         overrides = data.copy()
@@ -1240,7 +1242,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if baremetal_hosts:
             iso_pool = data['pool'] or config.pool
             iso_url = handle_baremetal_iso_sno(config, plandir, cluster, data, baremetal_hosts, iso_pool)
-            boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
+            result = boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
+            if result['result'] != 'success':
+                return result
         if sno_wait:
             installcommand = f'openshift-install --dir={clusterdir} --log-level={log_level} wait-for install-complete'
             installcommand = ' || '.join([installcommand for x in range(retries)])
@@ -1403,7 +1407,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             if baremetal_hosts:
                 iso_pool = data.get('pool') or config.pool
                 iso_url = handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts, iso_pool)
-                boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
+                result = boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
+                if result['result'] != 'success':
+                    return result
             if overrides['workers'] > 0:
                 threaded = data.get('threaded', False) or data.get('workers_threaded', False)
                 result = config.plan(plan, inputfile=f'{plandir}/workers.yml', overrides=overrides, threaded=threaded)

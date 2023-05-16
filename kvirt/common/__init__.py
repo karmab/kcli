@@ -2142,11 +2142,14 @@ def boot_baremetal_hosts(baremetal_hosts, iso_url, overrides={}, debug=False):
                 try:
                     red.set_iso(iso_url)
                 except Exception as e:
-                    warning(f"Hit {e} when plugging iso to host {msg}")
+                    msg = f"Hit {e} when plugging iso to host {msg}"
+                    error(msg)
+                    return {'result': 'failure', 'reason': msg}
             else:
                 red.start()
         else:
             warning(f"Skipping entry {index} because either bmc_url, bmc_user or bmc_password is not set")
+    return {'result': 'success'}
 
 
 def info_baremetal_hosts(baremetal_hosts, overrides={}, debug=False, full=False):
