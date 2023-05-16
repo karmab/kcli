@@ -11,7 +11,7 @@
  - name: {{ network }}
    ipv6: {{ disconnected_ipv6_network }}
 {% if disconnected_mac != None %}
- - mac: {{ disconnected_mac }}
+   mac: {{ disconnected_mac }}
 {% endif %}
  - default
  disks:
