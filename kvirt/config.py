@@ -1969,8 +1969,10 @@ class Kconfig(Kbaseconfig):
                 baseinputfile = f"{basedir}/{basefile}"
                 if container_mode() and not os.path.isabs(basefile) and '/workdir' not in basedir:
                     baseinputfile = f"/workdir/{basedir}/{basefile}"
-                self.plan(plan, inputfile=baseinputfile, overrides=overrides, excludevms=vmnames, basemode=True,
-                          onlyassets=onlyassets)
+                result = self.plan(plan, inputfile=baseinputfile, overrides=overrides, excludevms=vmnames,
+                                   basemode=True, onlyassets=onlyassets)
+                if result['result'] != 'success':
+                    return result
                 baseplans.append(basefile)
             vmrules_strict = overrides.get('vmrules_strict', self.vmrules_strict)
             for name in vmentries:
