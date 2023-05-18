@@ -18,7 +18,6 @@ metadata:
   namespace: {{ namespace }}
 spec:
   clusterName: {{ cluster }}
-  replicas: 0
   management:
     autoRepair: false
     upgradeType: InPlace
