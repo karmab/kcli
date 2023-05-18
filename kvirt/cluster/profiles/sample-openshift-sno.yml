@@ -9,3 +9,4 @@ extra_disks:
 apps:
 - lvms-operator
 - users
+ovn_hostrouting: true
