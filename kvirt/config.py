@@ -1776,7 +1776,7 @@ class Kconfig(Kbaseconfig):
         if not dict_types:
             if basemode:
                 warning(f"{inputfile} doesn't look like a valid plan.Skipping....")
-                return
+                return {"result": "success"}
             else:
                 msg = f"{inputfile} doesn't look like a valid plan file. Maybe you provided a parameter file ?"
                 return {'result': 'failure', 'reason': msg}
