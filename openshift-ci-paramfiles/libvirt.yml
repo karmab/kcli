@@ -5,7 +5,7 @@ ovn_hostrouting: true
 ctlplanes: 3
 workers: 0
 version: stable
-tag: "4.12"
+tag: "4.13"
 api_ip: 10.19.135.112
 sslip: true
 network: baremetal

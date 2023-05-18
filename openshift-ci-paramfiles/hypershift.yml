@@ -1,6 +1,6 @@
 cluster: ci-hypershift
 version: ci
-tag: 4.13
+tag: 4.14
 network: baremetal
 ingress_ip: 10.19.135.130
 mce_assisted: true

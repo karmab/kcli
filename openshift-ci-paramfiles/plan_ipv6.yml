@@ -1,7 +1,7 @@
 parameters:
   cluster: marquez
   version: stable
-  tag: '4.12'
+  tag: '4.13'
   ctlplanes: 3
   workers: 0
   memory: 32768

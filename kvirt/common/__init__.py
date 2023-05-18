@@ -1670,7 +1670,7 @@ def get_kubectl(version='latest'):
     call(kubecmd, shell=True)
 
 
-def get_oc(version='stable', tag='4.12', macosx=False):
+def get_oc(version='stable', tag='4.13', macosx=False):
     SYSTEM = 'mac' if os.path.exists('/Users') else 'linux'
     arch = 'arm64' if os.uname().machine == 'aarch64' else 'x86_64'
     pprint("Downloading oc in current directory")

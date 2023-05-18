@@ -258,14 +258,14 @@ $ kcli create openshift-iso -P nets=['{"ip":"192.168.0.8","netmask":"24","gatewa
 $ kcli create openshift-iso -P extra_args="super_string_of_args" myopenshift.karmalabs.corp
 """
 
-disconnectedcreate = """# Generate an openshift disconnected vm for 4.12
-$ kcli create openshift-registry -P version=stable -P tag='4.12'
+disconnectedcreate = """# Generate an openshift disconnected vm for 4.13
+$ kcli create openshift-registry -P version=stable -P tag='4.13'
 
 # Do the same over an ipv4 network
-$ kcli create openshift-registry -P version=nightly -P tag='4.12' -P disconnected_ipv6_network=false
+$ kcli create openshift-registry -P version=nightly -P tag='4.13' -P disconnected_ipv6_network=false
 
-# Use specific version and add extra operators (from 4.13)
-$ kcli create openshift-registry -P version=nightly -P tag=4.13 -P disconnected_operators=[sriov-network-operator]
+# Use specific version and add extra operators (from 4.14)
+$ kcli create openshift-registry -P version=nightly -P tag=4.14 -P disconnected_operators=[sriov-network-operator]
 
 # Deploy registry without content
 $ kcli create openshift-registry -P disconnected_sync=false
@@ -436,27 +436,27 @@ $ bmc_url=http://192.168.122.1:9000/redfish/v1/Systems/local/vm1
 $ kcli info baremetal-host -P url=$bmc_url -P user=admin -P password=admin
 """
 
-ocdownload = """# Download 4.12 stable
-$ kcli download oc -P version=stable -P tag=4.12
+ocdownload = """# Download 4.13 stable
+$ kcli download oc -P version=stable -P tag=4.13
 
 # Download specific tag
 $ kcli download oc -P version=tag -P tag=4.11.16
 
 # Download nightly
-$ kcli download oc -P version=nightly -P tag=4.12
+$ kcli download oc -P version=nightly -P tag=4.14
 
 # Download older version from CI
 $ kcli download oc -P version=ci -P tag=4.10
 """
 
-openshiftdownload = """# Download 4.12 stable
-$ kcli download openshift-install -P version=stable -P tag=4.12
+openshiftdownload = """# Download 4.13 stable
+$ kcli download openshift-install -P version=stable -P tag=4.13
 
 # Download specific tag
 $ kcli download openshift-install -P version=tag -P tag=4.11.16
 
 # Download nightly
-$ kcli download openshift-install -P version=nightly -P tag=4.12
+$ kcli download openshift-install -P version=nightly -P tag=4.14
 
 # Download older version from CI
 $ kcli download openshift-install -P version=ci -P tag=4.10
