@@ -7,7 +7,7 @@ cluster: mymicroshift
 domain: karmalabs.corp
 version: stable
 tag: 4.13
-image: rhel8
+image: rhel9
 network: default
 memory: 4096
 numcpus: 4
