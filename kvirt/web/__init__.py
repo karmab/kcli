@@ -10,7 +10,6 @@ from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
 from kvirt.defaults import IMAGES, FAKECERT
 from kvirt import nameutils
-from kvirt import kind
 from kvirt import microshift
 from kvirt import k3s
 from kvirt import kubeadm
@@ -809,9 +808,6 @@ class Kweb():
             elif _type == 'k3s':
                 plandir = os.path.dirname(k3s.create.__code__.co_filename)
                 inputfile = f'{plandir}/kcli_default.yml'
-            elif _type == 'kind':
-                plandir = os.path.dirname(kind.create.__code__.co_filename)
-                inputfile = f'{plandir}/kcli_plan_defauly.yml'
             elif _type == 'openshift':
                 plandir = os.path.dirname(openshift.create.__code__.co_filename)
                 inputfile = f'{plandir}/kcli_default.yml'
@@ -892,9 +888,6 @@ class Kweb():
             elif _type == 'hypershift':
                 thread = Thread(target=config.create_kube_hypershift, kwargs={'cluster': cluster,
                                                                               'overrides': parameters})
-            elif _type == 'kind':
-                thread = Thread(target=config.create_kube_kind, kwargs={'cluster': cluster,
-                                                                        'overrides': parameters})
             thread.start()
             result = {'result': 'success'}
             response.status = 200
