@@ -1,0 +1,30 @@
+name: OPENSHIFT-NIGHTLY-IPV6-CI
+on:
+  schedule:
+    - cron: '23 21 * * *'
+
+env:
+ HOME: /root
+ PYTHONUNBUFFERED: true
+ PLAN: ci-ipv6
+ PULLSECRET: /root/openshift_pull.json
+ CLUSTERPROFILE: "sample-openshift-ipv6"
+ EXTRAPARAMS: ""
+ NETWORK: ipv6-network
+ NETWORK_CIDR: 2620:52:0:1306::/64
+ VERSION: stable
+ TAG: 4.13
+
+jobs:
+    deploy-openshift:
+      if: github.repository == 'karmab/kcli'
+      runs-on: libvirt
+      steps:
+       - uses: actions/checkout@v2
+       - run: git pull origin ${GITHUB_REF##*/}
+       - name: Install kcli
+         run: curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
+       - name: Deploy network if needed
+         run: kcli create network -c $NETWORK_CIDR $NETWORK || true
+       - name: Deploy Openshift on ipv6
+         run: kcli create cluster openshift -P clusterprofile=$CLUSTERPROFILE -P network=$NETWORK -P pull_secret=$PULLSECRET -P version=$VERSION -P tag="$TAG" $EXTRAPARAMS $PLAN --force

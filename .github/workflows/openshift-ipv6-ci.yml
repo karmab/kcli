@@ -1,0 +1,56 @@
+name: OPENSHIFT-CI-IPV6
+on:
+  workflow_dispatch:
+    inputs:
+      PLAN:
+        description: 'Plan Name'
+        required: true
+        default: ci-ipv6
+      EXTRAPARAMS:
+        description: 'Extra params'
+        default: ''
+      PULLSECRET:
+        description: 'Pull Secret'
+        required: false
+        default: /root/openshift_pull.json
+      VERSION:
+        description: 'version'
+        required: false
+        default: stable
+      TAG:
+        description: 'tag'
+        required: false
+        default: "4.13"
+      NETWORK:
+        description: 'network'
+        required: false
+        default: ipv6-network
+      NETWORK_CIDR:
+        description: 'network_cidr'
+        required: false
+        default: 2620:52:0:1306::/64
+
+env:
+ HOME: /root
+ PYTHONUNBUFFERED: true
+ PLAN: ${{github.event.inputs.PLAN}}
+ INPUTFILE: ${{github.event.inputs.INPUTFILE}}
+ EXTRAPARAMS: ${{github.event.inputs.EXTRAPARAMS}}
+ PULLSECRET: ${{github.event.inputs.PULLSECRET}}
+ VERSION: ${{github.event.inputs.VERSION}}
+ TAG: ${{github.event.inputs.TAG}}
+ NETWORK: ${{github.event.inputs.NETWORK}}
+ NETWORK_CIDR: ${{github.event.inputs.NETWORK_CIDR}}
+
+jobs:
+    deploy-openshift:
+      runs-on: libvirt
+      steps:
+       - uses: actions/checkout@v2
+       - run: git pull origin ${GITHUB_REF##*/}
+       - name: Install kcli
+         run: curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
+       - name: Deploy network if needed
+         run: kcli create network -c $NETWORK_CIDR $NETWORK || true
+       - name: Deploy Openshift on ipv6
+         run: kcli create cluster openshift -P clusterprofile=sample-openshift-ipv6 -P network=$NETWORK -P pull_secret=$PULLSECRET -P version=$VERSION -P tag="$TAG" $EXTRAPARAMS $PLAN --force
