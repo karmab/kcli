@@ -3810,9 +3810,10 @@ class Kvirt(object):
                     hostentry = f'<host ip="{ip}"><hostname>{name}</hostname></host>'
                     network.update(2, 10, 0, hostentry, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
                     if not allentries and len(currentries) != 1:
-                        others = ["f<hostname>{hostname}</hostname>" for hostname in currentries if hostname != name]
-                        newhostentry = '<host ip="%s">%s</host>' % (ip, ''.join(others))
-                        network.update(4, 10, 0, newhostentry, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
+                        others = [f"<hostname>{hostname}</hostname>" for hostname in currentries if hostname != name]
+                        if others:
+                            newhostentry = '<host ip="%s">%s</host>' % (ip, ''.join(others))
+                            network.update(4, 10, 0, newhostentry, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
                     pprint(f"Entry {name} with ip {iphost} deleted in network {netname}")
         else:
             network = conn.networkLookupByName(domain)
