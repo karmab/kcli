@@ -611,7 +611,14 @@ class Kubevirt(Kubecommon):
         time.sleep(5)
         if web:
             return f"vnc://127.0.0.1:{localport}"
-        consolecommand = f"remote-viewer vnc://127.0.0.1:{localport} &"
+        url = f"vnc://127.0.0.1:{localport}"
+        if os.path.exists('/Applications'):
+            if os.path.exists('/Applications/VNC Viewer.app'):
+                consolecommand = f"open -a 'VNC Viewer' --args {url.replace('vnc://', '')} &"
+            else:
+                consolecommand = f"open -a 'Screen Sharing' {url} &"
+        else:
+            consolecommand = f"remote-viewer {url} &"
         if self.debug:
             msg = f"Run the following command:\n{consolecommand}" if not self.debug else consolecommand
             pprint(msg)
