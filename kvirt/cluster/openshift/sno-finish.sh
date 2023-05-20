@@ -9,14 +9,14 @@ done
 for vg in $(vgs -o name --noheadings) ; do vgremove -y $vg ; done
 for pv in $(pvs -o name --noheadings) ; do pvremove -y $pv ; done
 {% if sno_disk != None %}
-install_device='/dev/{{ sno_disk | basename }}'
+install_device={{ '/dev/%s' % sno_disk|basename if '/dev/' not in sno_disk else sno_disk }}
 {% else %}
 install_device=/dev/$(lsblk | grep disk | head -1 | cut -d" " -f1)
-if [ "$install_device" == "/dev/" ]; then
-  echo "Can't find appropriate device to install to"
+{% endif %}
+if [ ! -b $install_device ]; then
+  echo "Can't find appropriate device to install to. $install_device not found"
   exit 1
 fi
-{% endif %}
 
 {% if sno_dns %}
 [ -f /opt/openshift/master.ign.ori ] || cp /opt/openshift/master.ign /opt/openshift/master.ign.ori
