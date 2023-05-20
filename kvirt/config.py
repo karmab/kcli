@@ -74,6 +74,25 @@ sed -i "/.*node-labels*/a --node-ip=$IP --address=$IP \\" /etc/systemd/system/ku
 systemctl daemon-reload ;\
 fi'"""
 
+kubevirt_hack_script = """#!/usr/bin/env bash
+PRIMARY_NIC=$(ls -1 /sys/class/net | grep -v lo | head -1)
+ip addr add 169.254.169.254/32 dev lo"""
+
+kubevirt_hack_service = """[Unit]
+Description=Add a fake 169.254.169.254 ip to avoid metadata server
+ConditionKernelCommandLine=|ignition.platform.id=openstack
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/kubevirt-hack.sh
+User=root
+RestartSec=10
+Restart=always
+
+[Install]
+WantedBy=multi-user.target"""
+
 cloudplatforms = ['aws', 'gcp', 'packet', 'ibmcloud']
 
 
@@ -979,6 +998,9 @@ class Kconfig(Kbaseconfig):
             if 'rhcos' in image and memory < 1024:
                 pprint("Adjusting memory to 1024Mb")
                 memory = 1024
+        if self.type == 'kubevirt' and image is not None and 'rhcos' in image:
+            files.append({'path': '/usr/local/bin/kubevirt-hack.sh', 'mode': 700, 'content': kubevirt_hack_script})
+            files.append({'path': '/etc/systemd/system/kubevirt-hack.service', 'content': kubevirt_hack_service})
         metadata = {'plan': plan, 'profile': profilename}
         if domain is not None and reservedns:
             metadata['domain'] = domain
