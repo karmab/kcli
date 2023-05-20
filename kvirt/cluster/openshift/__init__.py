@@ -794,7 +794,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             image = image_url
         else:
             image = os.path.basename(os.path.splitext(image_url)[0])
-            if platform == 'ibm':
+            if platform in ['ibm', 'kubevirt']:
                 image = image.replace('.', '-').replace('_', '-').lower()
             if platform == 'vsphere':
                 image = image.replace(f'.{arch}', '')
@@ -805,6 +805,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 if result['result'] != 'success':
                     return result
         pprint(f"Using image {image}")
+    elif config.type == 'kubevirt' and '/' in image:
+        warning(f"Assuming image {image} is available")
     else:
         pprint(f"Checking if image {image} is available")
         images = [v for v in k.volumes() if image in v]

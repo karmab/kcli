@@ -598,6 +598,8 @@ def create(config, plandir, cluster, overrides):
                         return result
             pprint(f"Using image {image}")
             data['image'] = image
+        elif config.type == 'kubevirt' and '/' in image:
+            warning(f"Assuming image {image} is available")
         else:
             pprint(f"Checking if image {image} is available")
             images = [v for v in k.volumes() if image in v]
