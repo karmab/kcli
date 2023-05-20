@@ -157,5 +157,3 @@ wait: Whether to wait for cloudinit/ignition to fully apply
 waitcommand: a specific command to use to validate that vm is ready
 waittimeout: Timeout when waiting for a vm to be ready. Default zero value means the wait wont timeout
 yamlinventory: Ansible generated inventory for single vms or for plans containing ansible entries will be yaml based.
-zerotier_kubelet: Whether to configure kubelet to use the first zerotier address as node ip
-zerotier_nets: Array of zerotier public networks where to join. Will trigger installation of zerotier on the node

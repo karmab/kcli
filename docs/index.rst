@@ -1525,8 +1525,6 @@ Parameter          Default Value                        Comments
 *mailserver*       None                                 Mail server where to send the notification (on port 25)
 *mailfrom*         None                                 Mail address to send mail from
 *mailto*           []                                   List of mail addresses to send mail to
-*zerotier_net*     []                                   List of zerotier public networks where to join. Will trigger installation of zerotier on the node
-*zerotier_kubelet* False                                Whether to configure kubelet to use the first zerotier address as node ip
 *playbook*         False                                Generates a playbook for the vm of the plan instead of creating it. Useful to run parts of a plan on baremetal
 *vmrules*          []                                   List of rules with an associated dict to apply for the corresponding entry, if a regex on the entry name is matched. The profile of the matching vm will be updated with the content of the rule
 *wait*             False                                Whether to wait for cloudinit/ignition to fully apply

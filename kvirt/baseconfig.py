@@ -16,10 +16,9 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             PUSHBULLETTOKEN, NOTIFYSCRIPT, SLACKTOKEN, NOTIFYCMD, NOTIFYMETHODS, SLACKCHANNEL,
                             SHAREDFOLDERS, KERNEL, INITRD, CMDLINE, PLACEMENT, YAMLINVENTORY, CPUHOTPLUG, MEMORYHOTPLUG,
                             CPUFLAGS, CPUPINNING, NUMAMODE, NUMA, PCIDEVICES, VIRTTYPE, MAILSERVER, MAILFROM, MAILTO,
-                            TPM, JENKINSMODE, RNG, ZEROTIER_NETS, ZEROTIER_KUBELET, VMPORT, VMUSER, VMRULES,
-                            VMRULES_STRICT, CACHE, SECURITYGROUPS, LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG, ROOTPASSWORD,
-                            WAIT, WAITCOMMAND, WAITTIMEOUT, TEMPKEY, BMC_USER, BMC_PASSWORD, BMC_MODEL, KSUSHYSERVICE,
-                            WEBSERVICE)
+                            TPM, JENKINSMODE, RNG, VMPORT, VMUSER, VMRULES, VMRULES_STRICT, CACHE, SECURITYGROUPS,
+                            LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG, ROOTPASSWORD, WAIT, WAITCOMMAND, WAITTIMEOUT, TEMPKEY,
+                            BMC_USER, BMC_PASSWORD, BMC_MODEL, KSUSHYSERVICE, WEBSERVICE)
 from ipaddress import ip_address, ip_network
 from random import choice
 from kvirt import common
@@ -212,8 +211,6 @@ class Kbaseconfig:
         defaults['virttype'] = default.get('virttype', VIRTTYPE)
         defaults['tpm'] = default.get('tpm', TPM)
         defaults['rng'] = default.get('rng', RNG)
-        defaults['zerotier_nets'] = default.get('zerotier_nets', ZEROTIER_NETS)
-        defaults['zerotier_kubelet'] = default.get('zerotier_kubelet', ZEROTIER_KUBELET)
         defaults['jenkinsmode'] = default.get('jenkinsmode', JENKINSMODE)
         defaults['vmuser'] = default.get('vmuser', VMUSER)
         defaults['vmport'] = default.get('vmport', VMPORT)
@@ -385,8 +382,6 @@ class Kbaseconfig:
         self.pcidevices = options.get('pcidevices', self.default['pcidevices'])
         self.tpm = options.get('tpm', self.default['tpm'])
         self.rng = options.get('rng', self.default['rng'])
-        self.zerotier_nets = options.get('zerotier_nets', self.default['zerotier_nets'])
-        self.zerotier_kubelet = options.get('zerotier_kubelet', self.default['zerotier_kubelet'])
         self.jenkinsmode = options.get('jenkinsmode', self.default['jenkinsmode'])
         self.numcpus = options.get('numcpus', self.default['numcpus'])
         self.memory = options.get('memory', self.default['memory'])

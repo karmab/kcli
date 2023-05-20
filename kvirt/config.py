@@ -42,38 +42,6 @@ from time import sleep
 import webbrowser
 import yaml
 
-zerotier_service = """[Unit]
-Description=Zero Tier service
-After=network-online.target
-Wants=network-online.target
-Before=kubelet.service
-[Service]
-Type=forking
-KillMode=none
-Restart=on-failure
-RemainAfterExit=yes
-ExecStartPre=modprobe tun
-ExecStartPre=podman pull quay.io/karmab/zerotier-cli
-ExecStartPre=podman create --name=zerotier -it --cap-add=NET_ADMIN --device=/dev/net/tun --cap-add=SYS_ADMIN \
---net=host --entrypoint=/bin/sh karmab/zerotier-cli -c "zerotier-one -d ; sleep 10 ; \
-{zerotier_join} ; \
-sleep infinity"
-ExecStart=podman start zerotier
-ExecStop=podman stop -t 10 zerotier
-ExecStopPost=podman rm zerotier
-{zerotier_kubelet_script}
-[Install]
-WantedBy=multi-user.target"""
-
-
-zerotier_kubelet_data = """ExecStartPost=/bin/bash -c 'sleep 20 ;\
-IP=$(ip -4 -o addr show ztppiqixar | cut -f7 -d" " | cut -d "/" -f 1 | head -1) ;\
-if [ "$(grep $IP /etc/systemd/system/kubelet.service)" == "" ] ; then \
-sed -i "/node-ip/d" /etc/systemd/system/kubelet.service ;\
-sed -i "/.*node-labels*/a --node-ip=$IP --address=$IP \\" /etc/systemd/system/kubelet.service ;\
-systemctl daemon-reload ;\
-fi'"""
-
 kubevirt_hack_script = """#!/usr/bin/env bash
 PRIMARY_NIC=$(ls -1 /sys/class/net | grep -v lo | head -1)
 ip addr add 169.254.169.254/32 dev lo"""
@@ -617,8 +585,6 @@ class Kconfig(Kbaseconfig):
             default_pcidevices = father.get('pcidevices', self.pcidevices)
             default_tpm = father.get('tpm', self.tpm)
             default_rng = father.get('rng', self.rng)
-            default_zerotier_nets = father.get('zerotier_nets', self.zerotier_nets)
-            default_zerotier_kubelet = father.get('zerotier_kubelet', self.zerotier_kubelet)
             default_virttype = father.get('virttype', self.virttype)
             default_securitygroups = father.get('securitygroups', self.securitygroups)
             default_rootpassword = father.get('rootpassword', self.rootpassword)
@@ -646,8 +612,6 @@ class Kconfig(Kbaseconfig):
             default_pcidevices = self.pcidevices
             default_tpm = self.tpm
             default_rng = self.rng
-            default_zerotier_nets = self.zerotier_nets
-            default_zerotier_kubelet = self.zerotier_kubelet
             default_disksize = self.disksize
             default_diskinterface = self.diskinterface
             default_diskthin = self.diskthin
@@ -717,8 +681,6 @@ class Kconfig(Kbaseconfig):
         pcidevices = profile.get('pcidevices', default_pcidevices)
         tpm = profile.get('tpm', default_tpm)
         rng = profile.get('rng', default_rng)
-        zerotier_nets = profile.get('zerotier_nets', default_zerotier_nets)
-        zerotier_kubelet = profile.get('zerotier_kubelet', default_zerotier_kubelet)
         securitygroups = profile.get('securitygroups', default_securitygroups)
         numcpus = profile.get('numcpus', default_numcpus)
         memory = profile.get('memory', default_memory)
@@ -900,21 +862,9 @@ class Kconfig(Kbaseconfig):
                 sharedfoldercmds.append(cmd2)
         if sharedfoldercmds:
             sharedfoldercmds.append("mount -a")
-        zerotiercmds = []
-        if zerotier_nets:
-            if image is not None and common.needs_ignition(image):
-                zerotier_join = ';'.join([' zerotier-cli join %s ' % entry for entry in zerotier_nets])
-                zerotier_kubelet_script = zerotier_kubelet_data if zerotier_kubelet else ''
-                zerotiercontent = zerotier_service.format(zerotier_join=zerotier_join,
-                                                          zerotier_kubelet_script=zerotier_kubelet_script)
-                files.append({'path': '/root/zerotier.service', 'content': zerotiercontent})
-            else:
-                zerotiercmds.append("curl -s https://install.zerotier.com | bash")
-                for entry in zerotier_nets:
-                    zerotiercmds.append(f"zerotier-cli join {entry}")
         networkwaitcommand = [f'sleep {networkwait}'] if networkwait > 0 else []
         rootcommand = [f'echo root:{rootpassword} | chpasswd'] if rootpassword is not None else []
-        cmds = rootcommand + networkwaitcommand + rhncommands + sharedfoldercmds + zerotiercmds + cmds + scriptcmds
+        cmds = rootcommand + networkwaitcommand + rhncommands + sharedfoldercmds + cmds + scriptcmds
         if notify and image is not None:
             if notifycmd is None and notifyscript is None:
                 if 'cos' in image:

@@ -207,8 +207,6 @@ oEO8BRcXIiXiQqW9KnF99fXOiQ/cKYh3kWBBPnuEOhC77Ke5aMlqMNOPULf3PMix
 2bqeJlbpLt7PkZBSawXeu6sAhRsqlpEmiPGn8ujH/oKwIAgm
 -----END CERTIFICATE-----"""
 VIRTTYPE = None
-ZEROTIER_NETS = []
-ZEROTIER_KUBELET = False
 METADATA_FIELDS = ['dnsclient', 'domain', 'image', 'kube', 'kubetype', 'loadbalancer', 'owner', 'plan', 'profile',
                    'user']
 VMRULES = []
