@@ -139,23 +139,16 @@ class Kubevirt(Kubecommon):
         datavolumes = self.datavolumes
         namespace = self.namespace
         if harvester:
-            images = {}
+            harvester_images = {}
             virtualimages = crds.list_namespaced_custom_object(HDOMAIN, HVERSION, namespace,
                                                                'virtualmachineimages')["items"]
             for img in virtualimages:
                 imagename = img['metadata']['name']
-                images[common.filter_compression_extension(os.path.basename(img['spec']['url']))] = imagename
-        elif cdi:
+                harvester_images[common.filter_compression_extension(os.path.basename(img['spec']['url']))] = imagename
+        elif not cdi:
             allpvc = core.list_namespaced_persistent_volume_claim(namespace)
-            images = {}
-            for p in core.list_namespaced_persistent_volume_claim(namespace).items:
-                if p.metadata.annotations is not None\
-                        and 'cdi.kubevirt.io/storage.import.endpoint' in p.metadata.annotations:
-                    images[p.metadata.name] = p.metadata.name
-        else:
-            allpvc = core.list_namespaced_persistent_volume_claim(namespace)
-            images = {p.metadata.annotations['kcli/image']: p.metadata.name for p in allpvc.items
-                      if p.metadata.annotations is not None and 'kcli/image' in p.metadata.annotations}
+            kcli_images = {p.metadata.annotations['kcli/image']: p.metadata.name for p in allpvc.items
+                           if p.metadata.annotations is not None and 'kcli/image' in p.metadata.annotations}
         final_tags = {}
         if tags:
             if isinstance(tags, dict):
@@ -336,7 +329,7 @@ class Kubevirt(Kubecommon):
                                                              'resources': {'requests': {'storage': f'{disksize}Gi'}}},
                    'apiVersion': 'v1', 'metadata': {'name': diskname}}
             if image is not None and index == 0 and image not in CONTAINERDISKS and cdi and not harvester:
-                annotation = f"{namespace}/{images[image]}"
+                annotation = f"{namespace}/{image}"
                 pvc['metadata']['annotations'] = {'k8s.io/CloneRequest': annotation}
                 pvc['metadata']['labels'] = {'app': 'Host-Assisted-Cloning'}
             pvcs.append(pvc)
@@ -431,13 +424,14 @@ class Kubevirt(Kubecommon):
                                                 'accessModes': pvc_access_mode,
                                                 'resources':
                                                 {'requests': {'storage': f'{pvcsize}Gi'}}},
-                                        'source': {'pvc': {'name': images[image], 'namespace': self.namespace}}},
+                                        'source': {'pvc': {'name': image, 'namespace': self.namespace}}},
                                'status': {}}
                         if harvester:
                             dvt['kind'] = 'DataVolume'
                             dvt['apiVersion'] = f"{CDIDOMAIN}/{CDIVERSION}"
-                            dvt['metadata']['annotations']['harvesterhci.io/imageId'] = f"{namespace}/{images[image]}"
-                            dvt['spec']['pvc']['storageClassName'] = f"longhorn-{images[image]}"
+                            harvester_image = harvester_images[image]
+                            dvt['metadata']['annotations']['harvesterhci.io/imageId'] = f"{namespace}/{harvester_image}"
+                            dvt['spec']['pvc']['storageClassName'] = f"longhorn-{harvester_image}"
                             dvt['spec']['source'] = {'blank': {}}
                             dvt['spec']['pvc']['volumeMode'] = 'Block'
                         vm['spec']['dataVolumeTemplates'] = [dvt]
@@ -451,7 +445,7 @@ class Kubevirt(Kubecommon):
                             error("Issue with cdi import")
                             return {'result': 'failure', 'reason': 'timeout waiting for cdi importer pod to complete'}
                 else:
-                    copy = self.copy_image(diskpool, images[image], diskname, size=int(pvcsize))
+                    copy = self.copy_image(diskpool, kcli_images[image], diskname, size=int(pvcsize))
                     if copy['result'] == 'failure':
                         reason = copy['reason']
                         error(reason)
