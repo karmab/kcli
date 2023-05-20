@@ -58,7 +58,6 @@ class Kconfig(Kbaseconfig):
                 if namespace is None:
                     namespace = self.options.get('namespace')
                 context = self.options.get('context')
-                cdi = self.options.get('cdi', True)
                 datavolumes = self.options.get('datavolumes', True)
                 readwritemany = self.options.get('readwritemany', False)
                 ca_file = self.options.get('ca_file')
@@ -99,7 +98,7 @@ class Kconfig(Kbaseconfig):
                 first_consumer = self.options.get('first_consumer', False)
                 from kvirt.providers.kubevirt import Kubevirt
                 k = Kubevirt(context=context, token=token, ca_file=ca_file, host=self.host,
-                             port=6443, user=self.user, debug=debug, namespace=namespace, cdi=cdi,
+                             port=6443, user=self.user, debug=debug, namespace=namespace,
                              datavolumes=datavolumes, disk_hotplug=disk_hotplug, readwritemany=readwritemany,
                              registry=registry, access_mode=access_mode, volume_mode=volume_mode,
                              volume_access=volume_access, harvester=harvester, embed_userdata=embed_userdata,

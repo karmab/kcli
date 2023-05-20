@@ -54,20 +54,18 @@ class Kubevirt(Kubecommon):
 
     """
     def __init__(self, token=None, ca_file=None, context=None, host='127.0.0.1', port=6443, user='root', debug=False,
-                 namespace=None, cdi=True, datavolumes=False, disk_hotplug=False, readwritemany=False, registry=None,
+                 namespace=None, datavolumes=False, disk_hotplug=False, readwritemany=False, registry=None,
                  access_mode='NodePort', volume_mode='Filesystem', volume_access='ReadWriteOnce', harvester=False,
                  embed_userdata=False, first_consumer=False, kubeconfig_file=None):
         Kubecommon.__init__(self, token=token, ca_file=ca_file, context=context, host=host, port=port,
                             namespace=namespace, readwritemany=readwritemany, kubeconfig_file=kubeconfig_file)
         self.crds = client.CustomObjectsApi(api_client=self.api_client)
         self.debug = debug
-        self.cdi = cdi
         self.datavolumes = datavolumes
         self.registry = registry
         self.access_mode = access_mode
         self.volume_mode = volume_mode
         self.volume_access = volume_access
-        self.cdi = cdi
         self.disk_hotplug = disk_hotplug
         self.harvester = harvester
         self.embed_userdata = embed_userdata
@@ -134,7 +132,6 @@ class Kubevirt(Kubecommon):
         default_pool = pool
         crds = self.crds
         core = self.core
-        cdi = self.cdi
         harvester = self.harvester
         datavolumes = self.datavolumes
         namespace = self.namespace
@@ -145,10 +142,6 @@ class Kubevirt(Kubecommon):
             for img in virtualimages:
                 imagename = img['metadata']['name']
                 harvester_images[common.filter_compression_extension(os.path.basename(img['spec']['url']))] = imagename
-        elif not cdi:
-            allpvc = core.list_namespaced_persistent_volume_claim(namespace)
-            kcli_images = {p.metadata.annotations['kcli/image']: p.metadata.name for p in allpvc.items
-                           if p.metadata.annotations is not None and 'kcli/image' in p.metadata.annotations}
         final_tags = {}
         if tags:
             if isinstance(tags, dict):
@@ -304,13 +297,10 @@ class Kubevirt(Kubecommon):
                 elif harvester:
                     myvolume['dataVolume'] = {'name': diskname}
                 else:
-                    if cdi and datavolumes:
-                        base_image_pvc = core.read_namespaced_persistent_volume_claim(image, namespace)
-                        disksize = base_image_pvc.spec.resources.requests['storage']
-                        volume_mode = base_image_pvc.spec.volume_mode
-                        myvolume['dataVolume'] = {'name': diskname}
-                    else:
-                        myvolume['persistentVolumeClaim'] = {'claimName': diskname}
+                    base_image_pvc = core.read_namespaced_persistent_volume_claim(image, namespace)
+                    disksize = base_image_pvc.spec.resources.requests['storage']
+                    volume_mode = base_image_pvc.spec.volume_mode
+                    myvolume['dataVolume'] = {'name': diskname}
             if index > 0 or image is None:
                 myvolume['persistentVolumeClaim'] = {'claimName': diskname}
             newdisk = {'disk': {'bus': diskinterface}, 'name': diskname}
@@ -328,7 +318,7 @@ class Kubevirt(Kubecommon):
                                                              'accessModes': [volume_access],
                                                              'resources': {'requests': {'storage': f'{disksize}Gi'}}},
                    'apiVersion': 'v1', 'metadata': {'name': diskname}}
-            if image is not None and index == 0 and image not in CONTAINERDISKS and cdi and not harvester:
+            if image is not None and index == 0 and image not in CONTAINERDISKS and not harvester:
                 annotation = f"{namespace}/{image}"
                 pvc['metadata']['annotations'] = {'k8s.io/CloneRequest': annotation}
                 pvc['metadata']['labels'] = {'app': 'Host-Assisted-Cloning'}
@@ -415,41 +405,34 @@ class Kubevirt(Kubecommon):
             pvc_volume_mode = pvc['spec']['volumeMode']
             pvc_access_mode = pvc['spec']['accessModes']
             if index == 0 and image is not None and image not in CONTAINERDISKS:
-                if cdi:
-                    if datavolumes:
-                        owners.pop()
-                        dvt = {'metadata': {'name': pvcname, 'annotations': {'sidecar.istio.io/inject': 'false'}},
-                               'spec': {'pvc': {'storageClassName': diskpool,
-                                                'volumeMode': pvc_volume_mode,
-                                                'accessModes': pvc_access_mode,
-                                                'resources':
-                                                {'requests': {'storage': f'{pvcsize}Gi'}}},
-                                        'source': {'pvc': {'name': image, 'namespace': self.namespace}}},
-                               'status': {}}
-                        if harvester:
-                            dvt['kind'] = 'DataVolume'
-                            dvt['apiVersion'] = f"{CDIDOMAIN}/{CDIVERSION}"
-                            harvester_image = harvester_images[image]
-                            dvt['metadata']['annotations']['harvesterhci.io/imageId'] = f"{namespace}/{harvester_image}"
-                            dvt['spec']['pvc']['storageClassName'] = f"longhorn-{harvester_image}"
-                            dvt['spec']['source'] = {'blank': {}}
-                            dvt['spec']['pvc']['volumeMode'] = 'Block'
-                        vm['spec']['dataVolumeTemplates'] = [dvt]
-                    else:
-                        core.create_namespaced_persistent_volume_claim(namespace, pvc)
-                        bound = self.pvc_bound(pvcname, namespace, first_consumer=self.first_consumer)
-                        if not bound:
-                            return {'result': 'failure', 'reason': f'timeout waiting for pvc {pvcname} to get bound'}
-                        completed = self.import_completed(pvcname, namespace)
-                        if not completed:
-                            error("Issue with cdi import")
-                            return {'result': 'failure', 'reason': 'timeout waiting for cdi importer pod to complete'}
+                if datavolumes:
+                    owners.pop()
+                    dvt = {'metadata': {'name': pvcname, 'annotations': {'sidecar.istio.io/inject': 'false'}},
+                           'spec': {'pvc': {'storageClassName': diskpool,
+                                            'volumeMode': pvc_volume_mode,
+                                            'accessModes': pvc_access_mode,
+                                            'resources':
+                                            {'requests': {'storage': f'{pvcsize}Gi'}}},
+                                    'source': {'pvc': {'name': image, 'namespace': self.namespace}}},
+                           'status': {}}
+                    if harvester:
+                        dvt['kind'] = 'DataVolume'
+                        dvt['apiVersion'] = f"{CDIDOMAIN}/{CDIVERSION}"
+                        harvester_image = harvester_images[image]
+                        dvt['metadata']['annotations']['harvesterhci.io/imageId'] = f"{namespace}/{harvester_image}"
+                        dvt['spec']['pvc']['storageClassName'] = f"longhorn-{harvester_image}"
+                        dvt['spec']['source'] = {'blank': {}}
+                        dvt['spec']['pvc']['volumeMode'] = 'Block'
+                    vm['spec']['dataVolumeTemplates'] = [dvt]
                 else:
-                    copy = self.copy_image(diskpool, kcli_images[image], diskname, size=int(pvcsize))
-                    if copy['result'] == 'failure':
-                        reason = copy['reason']
-                        error(reason)
-                        return {'result': 'failure', 'reason': reason}
+                    core.create_namespaced_persistent_volume_claim(namespace, pvc)
+                    bound = self.pvc_bound(pvcname, namespace, first_consumer=self.first_consumer)
+                    if not bound:
+                        return {'result': 'failure', 'reason': f'timeout waiting for pvc {pvcname} to get bound'}
+                    completed = self.import_completed(pvcname, namespace)
+                    if not completed:
+                        error("Issue with cdi import")
+                        return {'result': 'failure', 'reason': 'timeout waiting for cdi importer pod to complete'}
                 continue
             core.create_namespaced_persistent_volume_claim(namespace, pvc)
             bound = self.pvc_bound(pvcname, namespace, first_consumer=self.first_consumer)
@@ -544,7 +527,6 @@ class Kubevirt(Kubecommon):
         else:
             data['context'] = self.contextname
         data['namespace'] = self.namespace
-        data['cdi'] = self.cdi
         return data
 
     def status(self, name):
@@ -859,7 +841,6 @@ class Kubevirt(Kubecommon):
     def volumes(self, iso=False):
         core = self.core
         namespace = self.namespace
-        cdi = self.cdi
         crds = self.crds
         isos = []
         allimages = []
@@ -869,16 +850,12 @@ class Kubevirt(Kubecommon):
             virtualimages = crds.list_namespaced_custom_object(HDOMAIN, HVERSION, namespace,
                                                                'virtualmachineimages')["items"]
             allimages = [os.path.basename(image['spec']['url']) for image in virtualimages]
-        elif cdi:
+        else:
             pvc = core.list_namespaced_persistent_volume_claim(namespace)
             allimages = [p.metadata.name for p in pvc.items if p.metadata.annotations is not None and
                          'cdi.kubevirt.io/storage.import.endpoint' in p.metadata.annotations and
                          'cdi.kubevirt.io/storage.condition.running.reason' in p.metadata.annotations and
                          p.metadata.annotations['cdi.kubevirt.io/storage.condition.running.reason'] == 'Completed']
-        else:
-            pvc = core.list_namespaced_persistent_volume_claim(namespace)
-            allimages = [p.metadata.annotations['kcli/image'] for p in pvc.items
-                         if p.metadata.annotations is not None and 'kcli/image' in p.metadata.annotations]
         if iso:
             isos = [i for i in allimages if i.endswith('iso')]
             return isos
@@ -1189,7 +1166,7 @@ class Kubevirt(Kubecommon):
                 crds.delete_namespaced_custom_object(HDOMAIN, HVERSION, self.namespace, 'virtualmachineimages',
                                                      images[0])
                 return {'result': 'success'}
-        elif self.cdi:
+        else:
             pvc = core.list_namespaced_persistent_volume_claim(self.namespace)
             images = [p.metadata.name for p in pvc.items if p.metadata.annotations is not None and
                       'cdi.kubevirt.io/storage.import.endpoint' in p.metadata.annotations and
@@ -1198,26 +1175,16 @@ class Kubevirt(Kubecommon):
             if images:
                 core.delete_namespaced_persistent_volume_claim(images[0], self.namespace)
                 return {'result': 'success'}
-        else:
-            pvc = core.list_namespaced_persistent_volume_claim(self.namespace)
-            images = [p.metadata.name for p in pvc.items
-                      if p.metadata.annotations is not None and 'kcli/image' in p.metadata.annotations and
-                      p.metadata.annotations['kcli/image'] == image]
-            if images:
-                core.delete_namespaced_persistent_volume_claim(images[0], self.namespace)
-                return {'result': 'success'}
         return {'result': 'failure', 'reason': f'image {image} not found'}
 
     def add_image(self, url, pool, short=None, cmd=None, name=None, size=None, convert=False):
         if size is None:
             size = _base_image_size(url)
-            if self.cdi:
-                warning(f"Setting size of image to {size}G. This will be the size of primary disks using this")
+            warning(f"Setting size of image to {size}G. This will be the size of primary disks using this")
         core = self.core
         crds = self.crds
         pool = self.check_pool(pool)
         namespace = self.namespace
-        cdi = self.cdi
         harvester = self.harvester
         shortimage = os.path.basename(url).split('?')[0]
         uncompressed = shortimage.replace('.gz', '').replace('.xz', '').replace('.bz2', '')
@@ -1233,33 +1200,14 @@ class Kubevirt(Kubecommon):
             crds.create_namespaced_custom_object(HDOMAIN, HVERSION, self.namespace, 'virtualmachineimages',
                                                  virtualmachineimage)
             return {'result': 'success'}
-        now = datetime.datetime.now().strftime("%Y%M%d%H%M")
-        podname = f'{now}-{volname}-importer'
         pool, volume_mode, volume_access = self.get_default_storage(pool, self.volume_mode, self.volume_access)
         pvc = {'kind': 'PersistentVolumeClaim', 'spec': {'storageClassName': pool,
                                                          'volumeMode': volume_mode,
                                                          'accessModes': [volume_access],
                                                          'resources': {'requests': {'storage': f'{size}Gi'}}},
                'apiVersion': 'v1', 'metadata': {'name': volname, 'annotations': {'kcli/image': uncompressed}}}
-        if cdi:
-            pprint(f"Cloning in namespace {namespace}")
-            pvc['metadata']['annotations'] = {'cdi.kubevirt.io/storage.import.endpoint': url}
-        else:
-            container = {'image': 'kubevirtci/disk-importer', 'name': 'importer'}
-            if volume_mode == 'Filesystem':
-                container['volumeMounts'] = [{'mountPath': '/storage', 'name': 'storage1'}]
-                targetpath = '/storage/disk.img'
-            else:
-                container['volumeDevices'] = [{'devicePath': '/dev/block', 'name': 'storage1'}]
-                targetpath = '/dev/block'
-            container['env'] = [{'name': 'CURL_OPTS', 'value': '-L'},
-                                {'name': 'INSTALL_TO', 'value': targetpath},
-                                {'name': 'URL', 'value': url}]
-            pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'Never',
-                                           'containers': [container],
-                                           'volumes': [{'name': 'storage1',
-                                                        'persistentVolumeClaim': {'claimName': volname}}]},
-                   'apiVersion': 'v1', 'metadata': {'name': podname}}
+        pprint(f"Cloning in namespace {namespace}")
+        pvc['metadata']['annotations'] = {'cdi.kubevirt.io/storage.import.endpoint': url}
         try:
             core.read_namespaced_persistent_volume_claim(volname, namespace)
             pprint("Using existing pvc")
@@ -1268,67 +1216,16 @@ class Kubevirt(Kubecommon):
             bound = self.pvc_bound(volname, namespace, first_consumer=self.first_consumer)
             if not bound:
                 return {'result': 'failure', 'reason': 'timeout waiting for pvc to get bound'}
-        if cdi:
-            completed = self.import_completed(volname, namespace)
-            if not completed:
-                error("Issue with cdi import")
-                return {'result': 'failure', 'reason': 'timeout waiting for cdi importer pod to complete'}
-        else:
-            core.create_namespaced_pod(namespace, pod)
-            completed = self.pod_completed(podname, namespace)
-            if not completed:
-                error(f"Issue with pod {podname}. Leaving it for debugging purposes")
-                return {'result': 'failure', 'reason': 'timeout waiting for importer pod to complete'}
-            else:
-                core.delete_namespaced_pod(podname, namespace)
+        completed = self.import_completed(volname, namespace)
+        if not completed:
+            error("Issue with cdi import")
+            return {'result': 'failure', 'reason': 'timeout waiting for cdi importer pod to complete'}
         # if 'rhcos' in volname and 'openstack' in volname:
         #     pprint(f"Patching {volname} to address metadata server regression")
         #     bootfile = "/boot/loader/entries/ostree-1-rhcos.conf"
         #     target = '/storage' if self.volume_mode == 'Filesystem' else '/dev/storage'
         #     command = f"virt-edit -a {target} -m /dev/vda3 {bootfile} -e 's@openstack@kubevirt@'"
         #     self.patch_pvc(volname, command)
-        return {'result': 'success'}
-
-    def copy_image(self, pool, ori, dest, size=1):
-        core = self.core
-        namespace = self.namespace
-        now = datetime.datetime.now().strftime("%Y%M%d%H%M")
-        podname = f'{now}-{dest}-copy'
-        container = {'image': 'kubevirtci/disk-importer', 'name': 'copy', 'command': ['/bin/sh', '-c']}
-        if self.volume_mode == 'Filesystem':
-            container['volumeMounts'] = [{'mountPath': '/storage1', 'name': 'storage1'},
-                                         {'mountPath': '/storage2', 'name': 'storage2'}]
-            command = f'cp -u /storage1/disk.img /storage2 ; qemu-img resize /storage2/disk.img {size}G'
-        else:
-            container['volumeDevices'] = [{'devicePath': '/dev/ori', 'name': 'storage1'},
-                                          {'devicePath': '/dev/dest', 'name': 'storage2'}]
-            command = 'dd if=/dev/ori1 of=/dev/dest bs=4M status=progress'
-            command += '| dd if=/dev/ori of=/dev/dest bs=4M status=progress'
-            command += f'; qemu-img resize /dev/dest {size}G'
-        container['args'] = [command]
-        pvc = {'kind': 'PersistentVolumeClaim', 'spec': {'storageClassName': pool, 'accessModes': [self.volume_access],
-                                                         'volumeMode': self.volume_mode,
-                                                         'resources': {'requests': {'storage': f'{size}Gi'}}},
-               'apiVersion': 'v1', 'metadata': {'name': dest}}
-        pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'Never', 'containers': [container],
-                                       'volumes': [{'name': 'storage1', 'persistentVolumeClaim': {'claimName': ori}},
-                                                   {'name': 'storage2', 'persistentVolumeClaim': {'claimName': dest}}]},
-               'apiVersion': 'v1', 'metadata': {'name': podname}}
-        try:
-            core.read_namespaced_persistent_volume_claim(dest, namespace)
-            pprint("Using existing pvc")
-        except:
-            core.create_namespaced_persistent_volume_claim(namespace, pvc)
-            bound = self.pvc_bound(dest, namespace, first_consumer=self.first_consumer)
-            if not bound:
-                return {'result': 'failure', 'reason': 'timeout waiting for pvc to get bound'}
-        core.create_namespaced_pod(namespace, pod)
-        completed = self.pod_completed(podname, namespace)
-        if not completed:
-            error(f"Using with pod {podname}. Leaving it for debugging purposes")
-            return {'result': 'failure', 'reason': 'timeout waiting for copy to finish'}
-        else:
-            core.delete_namespaced_pod(podname, namespace)
         return {'result': 'success'}
 
     def patch_pvc(self, pvc, command, image="quay.io/karmab/curl", files=[]):
@@ -1534,28 +1431,6 @@ class Kubevirt(Kubecommon):
             pprint(f"Waiting for pod {podname} to complete...")
             podruntime += 5
         return True
-
-    def prepare_pvc(self, name, size=1):
-        core = self.core
-        namespace = self.namespace
-        now = datetime.datetime.now().strftime("%Y%M%d%H%M")
-        podname = f'{now}-{name}-prepare'
-        size = 1024 * int(size) - 48
-        pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'OnFailure',
-                                       'containers': [{'image': 'alpine', 'volumeMounts': [{'mountPath': '/storage1',
-                                                                                            'name': 'storage1'}],
-                                                       'name': 'prepare', 'command': ['fallocate'],
-                                                       'args': ['-l', f'{size}M', '/storage1/disk.img']}],
-                                       'volumes': [{'name': 'storage1', 'persistentVolumeClaim': {'claimName': name}}]},
-               'apiVersion': 'v1', 'metadata': {'name': podname}}
-        core.create_namespaced_pod(namespace, pod)
-        completed = self.pod_completed(podname, namespace)
-        if not completed:
-            error(f"Using with pod {podname}. Leaving it for debugging purposes")
-            return {'result': 'failure', 'reason': 'timeout waiting for preparation of disk to finish'}
-        else:
-            core.delete_namespaced_pod(podname, namespace)
-        return {'result': 'success'}
 
     def check_pool(self, pool):
         storageapi = self.storageapi

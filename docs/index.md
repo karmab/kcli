@@ -404,7 +404,6 @@ You can use additional parameters for the Kubevirt section:
 - `namespace` target namespace.
 - `token` token, either from user or service account.
 - `tags` additional list of tags in a key=value format to put to all created vms in their *nodeSelector*. Can be further indicated at profile or plan level in which case values are combined. This provides an easy way to force vms to run on specific nodes, by matching labels.
-- `cdi` whether to use cdi. Defaults to true. A check on whether cdi is actually present will be performed.
 - `registry` Registry where to pull containerdisk images. Defaults to none, in which case your configured registries will be used.
 - `access_mode` Way to access vms other ssh. Defaults to NodePort,in which case a svc with a nodeport pointing to the ssh port of the vm will be created. Otherpossible values are LoadBalancer to create a svc of type loadbalancer to point to the vm or External to connect using the sdn ip of the vm. If tunnel options are set, they take precedence
 - `volume_mode` Volume Mode. Defaults to Filesystem (Block can be specified instead).
