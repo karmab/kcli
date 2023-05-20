@@ -116,6 +116,8 @@ class Kubevirt(Kubecommon):
             return {'result': 'failure', 'reason': f"VM {name} already exists"}
         if image is not None:
             containerdisk = True if '/' in image else False
+            if not containerdisk:
+                image = image.replace('.', '-').replace('_', '-')
             if image not in self.volumes():
                 if image in ['alpine', 'cirros', 'fedora-cloud']:
                     image = f"kubevirt/{image}-container-disk-demo"
@@ -149,8 +151,7 @@ class Kubevirt(Kubecommon):
             for p in core.list_namespaced_persistent_volume_claim(namespace).items:
                 if p.metadata.annotations is not None\
                         and 'cdi.kubevirt.io/storage.import.endpoint' in p.metadata.annotations:
-                    cdiname = self.get_image_name(p.metadata.annotations['cdi.kubevirt.io/storage.import.endpoint'])
-                    images[common.filter_compression_extension(cdiname)] = p.metadata.name
+                    images[p.metadata.name] = p.metadata.name
         else:
             allpvc = core.list_namespaced_persistent_volume_claim(namespace)
             images = {p.metadata.annotations['kcli/image']: p.metadata.name for p in allpvc.items
@@ -311,7 +312,7 @@ class Kubevirt(Kubecommon):
                     myvolume['dataVolume'] = {'name': diskname}
                 else:
                     if cdi and datavolumes:
-                        base_image_pvc = core.read_namespaced_persistent_volume_claim(images[image], namespace)
+                        base_image_pvc = core.read_namespaced_persistent_volume_claim(image, namespace)
                         disksize = base_image_pvc.spec.resources.requests['storage']
                         volume_mode = base_image_pvc.spec.volume_mode
                         myvolume['dataVolume'] = {'name': diskname}
@@ -869,9 +870,7 @@ class Kubevirt(Kubecommon):
             allimages = [os.path.basename(image['spec']['url']) for image in virtualimages]
         elif cdi:
             pvc = core.list_namespaced_persistent_volume_claim(namespace)
-            allimages = [self.get_image_name(p.metadata.annotations['cdi.kubevirt.io/storage.import.endpoint'],
-                                             pvcname=p.metadata.name)
-                         for p in pvc.items if p.metadata.annotations is not None and
+            allimages = [p.metadata.name for p in pvc.items if p.metadata.annotations is not None and
                          'cdi.kubevirt.io/storage.import.endpoint' in p.metadata.annotations and
                          'cdi.kubevirt.io/storage.condition.running.reason' in p.metadata.annotations and
                          p.metadata.annotations['cdi.kubevirt.io/storage.condition.running.reason'] == 'Completed']
