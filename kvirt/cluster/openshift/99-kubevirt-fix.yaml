@@ -1,0 +1,25 @@
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  name: kubevirt-{{ role }}-fix
+  labels:
+    machineconfiguration.openshift.io/role: {{ role }}
+spec:
+  config:
+    ignition:
+      version: 3.2.0
+    systemd:
+      units:
+      - name: nodeip-configuration.service
+        enabled: true
+        contents: |
+          [Unit]
+          Description=Hacks IP address configuration so that kubelet and crio services select a valid node IP
+          Wants=NetworkManager-wait-online.service crio-wipe.service
+          After=NetworkManager-wait-online.service ignition-firstboot-complete.service crio-wipe.service
+          Before=kubelet.service crio.service ovs-configuration.service
+          [Service]
+          Type=oneshot
+          ExecStart=/bin/bash -c "exit 0"
+          [Install]
+          WantedBy=multi-user.target

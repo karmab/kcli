@@ -1220,12 +1220,6 @@ class Kubevirt(Kubecommon):
         if not completed:
             error("Issue with cdi import")
             return {'result': 'failure', 'reason': 'timeout waiting for cdi importer pod to complete'}
-        # if 'rhcos' in volname and 'openstack' in volname:
-        #     pprint(f"Patching {volname} to address metadata server regression")
-        #     bootfile = "/boot/loader/entries/ostree-1-rhcos.conf"
-        #     target = '/storage' if self.volume_mode == 'Filesystem' else '/dev/storage'
-        #     command = f"virt-edit -a {target} -m /dev/vda3 {bootfile} -e 's@openstack@kubevirt@'"
-        #     self.patch_pvc(volname, command)
         return {'result': 'success'}
 
     def patch_pvc(self, pvc, command, image="quay.io/karmab/curl", files=[]):

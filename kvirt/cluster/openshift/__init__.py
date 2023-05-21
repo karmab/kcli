@@ -1117,6 +1117,15 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if metal3:
         copy2(f"{plandir}/99-metal3-provisioning.yaml", f"{clusterdir}/openshift")
         copy2(f"{plandir}/99-metal3-fake-machine.yaml", f"{clusterdir}/openshift")
+    if config.type == 'kubevirt':
+        kubevirtctlplane = config.process_inputfile(cluster, f"{plandir}/99-kubevirt-fix.yaml",
+                                                    overrides={'role': 'master'})
+        with open(f"{clusterdir}/openshift/99-kubevirt-fix-ctlplane.yaml", 'w') as _f:
+            _f.write(kubevirtctlplane)
+        kubevirtworker = config.process_inputfile(cluster, f"{plandir}/99-kubevirt-fix.yaml",
+                                                  overrides={'role': 'worker'})
+        with open(f"{clusterdir}/openshift/99-kubevirt-fix-worker.yaml", 'w') as _f:
+            _f.write(kubevirtworker)
     if sno:
         sno_name = f"{cluster}-sno"
         sno_files = []
