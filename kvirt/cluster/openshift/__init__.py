@@ -1342,7 +1342,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         result = config.plan(plan, inputfile=f'{plandir}/ctlplanes.yml', overrides=overrides, threaded=threaded)
         if result['result'] != 'success':
             return result
-        todelete = [f"{cluster}-bootstrap"]
         if dnsconfig is not None:
             dns_overrides = {'api_ip': api_ip, 'ingress_ip': ingress_ip, 'cluster': cluster, 'domain': domain}
             result = dnsconfig.plan(plan, inputfile=f'{plandir}/cloud_dns.yml', overrides=dns_overrides)
@@ -1383,7 +1382,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_apps.yml', overrides=lb_overrides)
             if result['result'] != 'success':
                 return result
-        todelete = [f"{cluster}-bootstrap"]
     if not kubevirt_ignore_node_port and kubevirt_api_service and kubevirt_api_service_node_port:
         nodeport = k.get_node_ports(f'{cluster}-api', k.namespace)[6443]
         sedcmd = f'sed -i "s@:6443@:{nodeport}@" {clusterdir}/auth/kubeconfig'
@@ -1408,6 +1406,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             msg = "Leaving environment for debugging purposes. "
             msg += f"Delete it with kcli delete cluster --yes {cluster}"
             return {'result': 'failure', 'reason': msg}
+        pprint(f"Deleting {cluster}-bootstrap")
+        k.delete(f"{cluster}-bootstrap")
+        if dnsconfig is not None:
+            pprint(f"Deleting Dns entry for {cluster}-bootstrap in {domain}")
+            z = dnsconfig.k
+            z.delete_dns(f"{cluster}-bootstrap", domain)
     if workers > 0:
         if static_networking_worker:
             wait_for_ignition(cluster, domain, role='worker')
@@ -1454,13 +1458,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             msg = "Leaving environment for debugging purposes. "
             msg += f"Delete it with kcli delete cluster --yes {cluster}"
             return {'result': 'failure', 'reason': msg}
-    for vm in todelete:
-        pprint(f"Deleting {vm}")
-        k.delete(vm)
-        if dnsconfig is not None:
-            pprint(f"Deleting Dns entry for {vm} in {domain}")
-            z = dnsconfig.k
-            z.delete_dns(vm, domain)
     if platform in cloudplatforms:
         bucket = "%s-%s" % (cluster, domain.replace('.', '-'))
         config.k.delete_bucket(bucket)
