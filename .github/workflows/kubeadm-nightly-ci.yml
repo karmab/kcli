@@ -21,3 +21,5 @@ jobs:
          run: curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
        - name: Deploy Kubeadm on libvirt
          run: kcli create cluster generic -P clusterprofile=$CLUSTERPROFILE $EXTRAPARAMS $PLAN --force
+       - name: Clean everything after success
+         run:  kcli delete plan --yes $PLAN
