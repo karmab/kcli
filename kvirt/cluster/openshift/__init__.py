@@ -504,7 +504,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'autoscale': False,
             'upstream': False,
             'calico_version': None,
-            'contrail_version': '22.4',
+            'contrail_version': '23.1',
             'contrail_ctl_network': 'contrail-ctl',
             'contrail_ctl_create': True,
             'contrail_ctl_cidr': '10.40.1.0/24',
