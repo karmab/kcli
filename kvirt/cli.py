@@ -402,12 +402,11 @@ def delete_vm(args):
             if result['result'] == 'success':
                 success(f"{name} deleted")
                 codes.append(0)
-                common.set_lastvm(name, cli, delete=True)
             else:
                 reason = result['reason']
                 codes.append(1)
                 error(f"Could not delete {name} because {reason}")
-                common.set_lastvm(name, cli, delete=True)
+            common.delete_lastvm(name, cli)
             if dnsclient is not None and domain is not None:
                 pprint(f"Deleting Dns entry for {name} in {domain}")
                 if dnsclient in dnsclients:

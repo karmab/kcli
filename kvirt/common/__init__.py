@@ -678,21 +678,13 @@ def get_lastvm(client):
     sys.exit(1)
 
 
-def set_lastvm(name, client, delete=False):
+def set_lastvm(name, client):
     if 'HOME' not in os.environ:
         return
     configdir = f"{os.environ.get('HOME')}/.kcli"
     vmfile = f"{configdir}/vm"
     if not os.path.exists(configdir):
         os.mkdir(configdir)
-    if delete:
-        if not os.path.exists(vmfile):
-            return
-        else:
-            deletecmd = "sed -i ''" if os.path.exists('/Users') and 'gnu' not in which('sed') else "sed -i"
-            deletecmd += f" '/{client} {name}/d' {configdir}/vm"
-            os.system(deletecmd)
-        return
     if not os.path.exists(vmfile) or os.stat(vmfile).st_size == 0:
         with open(vmfile, 'w') as f:
             f.write(f"{client} {name}")
@@ -701,6 +693,17 @@ def set_lastvm(name, client, delete=False):
         data = original.read()
     with open(vmfile, 'w') as modified:
         modified.write(f"{client} {name}\n{data}")
+
+
+def delete_lastvm(name, client):
+    if 'HOME' not in os.environ:
+        return
+    configdir = f"{os.environ.get('HOME')}/.kcli"
+    vmfile = f"{configdir}/vm"
+    if os.path.exists(configdir) and os.path.exists(vmfile):
+        deletecmd = "sed -i ''" if os.path.exists('/Users') and 'gnu' not in which('sed') else "sed -i"
+        deletecmd += f" '/{client} {name}/d' {configdir}/vm"
+        os.system(deletecmd)
 
 
 def remove_duplicates(oldlist):

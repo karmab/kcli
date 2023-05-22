@@ -1481,7 +1481,7 @@ class Kconfig(Kbaseconfig):
                             z = Kconfig(client=dnsclient).k
                             dnsclients[dnsclient] = z
                         z.delete_dns(dnsclient, domain)
-                    common.set_lastvm(name, self.client, delete=True)
+                    common.delete_lastvm(name, self.client)
                     success(f"{name} deleted on {hypervisor}!")
                     deletedvms.append(name)
                     found = True
@@ -2799,7 +2799,7 @@ class Kconfig(Kbaseconfig):
                 currentcluster = vm.get('kube')
                 if currentcluster is not None and currentcluster == cluster:
                     c.delete(name, snapshots=True)
-                    common.set_lastvm(name, self.client, delete=True)
+                    common.delete_lastvm(name, self.client)
                     success(f"{name} deleted on {hypervisor}!")
         if self.type == 'kubevirt':
             if f"{cluster}-api" in k.list_services(k.namespace):

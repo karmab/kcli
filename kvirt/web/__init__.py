@@ -5,7 +5,7 @@ from ast import literal_eval
 import functools
 from kvirt.bottle import Bottle, request, static_file, jinja2_view, response, redirect
 from kvirt.config import Kconfig
-from kvirt.common import print_info, get_free_port, get_parameters
+from kvirt.common import print_info, get_free_port, get_parameters, delete_lastvm
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
 from kvirt.defaults import IMAGES, FAKECERT
@@ -420,6 +420,7 @@ class Kweb():
             data = request.json or request.forms
             snapshots = True if data is not None and 'snapshots' in data and bool(data['snapshots']) else False
             result = k.delete(name, snapshots=snapshots)
+            delete_lastvm(name, config.client)
             response.status = 200
             return result
 

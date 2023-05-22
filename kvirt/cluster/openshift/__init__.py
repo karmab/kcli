@@ -9,7 +9,7 @@ from ipaddress import ip_network
 from kvirt.common import error, pprint, success, warning, info2
 from kvirt.common import get_oc, pwd_path
 from kvirt.common import get_latest_fcos, generate_rhcos_iso, olm_app, get_commit_rhcos
-from kvirt.common import get_installer_rhcos, wait_cloud_dns
+from kvirt.common import get_installer_rhcos, wait_cloud_dns, delete_lastvm
 from kvirt.common import ssh, scp, _ssh_credentials, get_ssh_pub_key, boot_baremetal_hosts, deploy_cloud_storage
 from kvirt.defaults import LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG
 import re
@@ -1412,6 +1412,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             pprint(f"Deleting Dns entry for {cluster}-bootstrap in {domain}")
             z = dnsconfig.k
             z.delete_dns(f"{cluster}-bootstrap", domain)
+        delete_lastvm(f"{cluster}-bootstrap", config.client)
     if workers > 0:
         if static_networking_worker:
             wait_for_ignition(cluster, domain, role='worker')
