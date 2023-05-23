@@ -23,7 +23,7 @@ class Kgcp(object):
     """
 
     """
-    def __init__(self, project, zone="europe-west1-b", region='europe-west1', debug=False):
+    def __init__(self, project, zone="europe-west1-b", region='europe-west1', debug=False, public=True):
         self.conn = googleapiclient.discovery.build('compute', 'v1')
         self.conn_beta = googleapiclient.discovery.build('compute', 'beta')
         self.project = project
@@ -33,6 +33,7 @@ class Kgcp(object):
         request = self.conn.projects().getXpnHost(project=project)
         response = request.execute()
         self.xproject = response['name'] if response else None
+        self.public = public
 
     def _wait_for_operation(self, operation):
         selflink = operation['selfLink']
@@ -128,7 +129,7 @@ class Kgcp(object):
                 netname = net['name']
                 ip = net.get('ip')
                 alias = net.get('alias')
-                netpublic = net.get('public', True)
+                netpublic = net.get('public') or overrides.get('public') or self.public
             if ips and len(ips) > index and ips[index] is not None:
                 ip = ips[index]
             newnet = {}

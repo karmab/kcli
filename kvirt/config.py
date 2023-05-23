@@ -118,8 +118,9 @@ class Kconfig(Kbaseconfig):
                 zone = self.options.get('zone', 'europe-west1-b') if zone is None else zone
                 region = self.options.get('region') if region is None else region
                 region = zone[:-2] if region is None else region
+                public = self.options.get('public', True)
                 from kvirt.providers.gcp import Kgcp
-                k = Kgcp(project, zone=zone, region=region, debug=debug)
+                k = Kgcp(project, zone=zone, region=region, debug=debug, public=public)
                 self.overrides.update({'project': project})
             elif self.type == 'aws':
                 if len(self.options) == 1:
