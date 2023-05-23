@@ -995,7 +995,7 @@ class Kconfig(Kbaseconfig):
             else:
                 data = common.cloudinit(name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
                                         domain=domain, files=files, enableroot=enableroot, overrides=overrides,
-                                        image=image, storemetadata=False, vmuser=vmuser)[0]
+                                        image=image, storemetadata=storemetadata, vmuser=vmuser)[0]
             return {'result': 'success', 'data': data}
         result = k.create(name=name, virttype=virttype, plan=plan, profile=profilename, flavor=flavor,
                           cpumodel=cpumodel, cpuflags=cpuflags, cpupinning=cpupinning, numamode=numamode, numa=numa,
