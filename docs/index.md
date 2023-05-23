@@ -332,7 +332,7 @@ The following parameters are specific to Gcp:
 - `credentials` (pointing to a json service account file). if not specified, the environment variable *GOOGLE_APPLICATION_CREDENTIALS* will be used
 - `project` 
 - `zone`
-- `public` Whether the vms get an external/Public IP. Defaults to True
+- `public` Whether the vms get an external/public IP. Defaults to True. Can be overriden in a parameter file (or in the nets section of a vm)
 
 also note that Gcp provider supports creation of dns records for an existing domain and that your home public key will be uploaded if needed
 
