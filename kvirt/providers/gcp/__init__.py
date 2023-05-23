@@ -464,7 +464,7 @@ class Kgcp(object):
             yamlinfo['cpus'], yamlinfo['memory'] = machinetype.split('-')[1:]
         yamlinfo['autostart'] = vm['scheduling']['automaticRestart']
         first_nic = vm['networkInterfaces'][0]
-        if self.public and 'accessConfigs' in first_nic and 'natIP' in first_nic['accessConfigs'][0]:
+        if 'accessConfigs' in first_nic and 'natIP' in first_nic['accessConfigs'][0]:
             yamlinfo['ip'] = first_nic['accessConfigs'][0]['natIP']
         source = os.path.basename(vm['disks'][0]['source'])
         source = conn.disks().get(zone=zone, project=self.project, disk=source).execute()
@@ -519,7 +519,9 @@ class Kgcp(object):
         except:
             error(f"Vm {name} not found")
             return None
-        if 'natIP' not in vm['networkInterfaces'][0]['accessConfigs'][0]:
+        if not self.public:
+            return vm['networkInterfaces'][0]['networkIP']
+        elif 'natIP' not in vm['networkInterfaces'][0]['accessConfigs'][0]:
             return None
         else:
             ip = vm['networkInterfaces'][0]['accessConfigs'][0]['natIP']
