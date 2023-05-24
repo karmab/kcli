@@ -903,7 +903,16 @@ class Kgcp(object):
         return []
 
     def vm_ports(self, name):
-        return ['default']
+        subnets = []
+        try:
+            vm = self.conn.instances().get(zone=self.zone, project=self.project, instance=name).execute()
+        except:
+            error(f"VM {name} not found")
+            return []
+        for interface in vm['networkInterfaces']:
+            if 'subnet' in interface:
+                subnets.append(os.path.basename(interface['subnet']))
+        return subnets
 
     def get_pool_path(self, pool):
         print("not implemented")
@@ -1107,11 +1116,14 @@ class Kgcp(object):
         region = self.region
         instances = []
         vmpath = f"https://www.googleapis.com/compute/v1/projects/{project}/zones/{zone}/instances"
+        use_xproject = False
         if vms:
-            for vm in vms:
+            for index, vm in enumerate(vms):
                 update = self.update_metadata(vm, 'loadbalancer', sane_name, append=True)
                 if update == 0:
                     instances.append({"instance": f"{vmpath}/{vm}"})
+                if index == 0:
+                    use_xproject = self.xproject in [self.list_subnets()[n]['az'] for n in self.vm_ports(vm)]
         # add checkpath handling (and default to http when defined)
         health_check_body = {"checkIntervalSec": "10", "timeoutSec": "10", "unhealthyThreshold": 3,
                              "healthyThreshold": 3, "name": sane_name}
@@ -1167,7 +1179,7 @@ class Kgcp(object):
         pprint(f"Creating forwarding rule {forwarding_name}")
         operation = conn.forwardingRules().insert(project=project, region=region, body=forwarding_rule_body).execute()
         self._wait_for_operation(operation)
-        if not internal:
+        if not internal and not use_xproject:
             firewall_body = {"name": sane_name, "direction": "INGRESS",
                              "allowed": [{"IPProtocol": "tcp", "ports": ports}]}
             if sane_name.startswith('api-') or sane_name.startswith('apps-'):
