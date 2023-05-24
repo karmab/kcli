@@ -800,9 +800,20 @@ class Kvirt(object):
                                                domain=domain, files=files, enableroot=enableroot,
                                                overrides=overrides, version=version, plan=plan, ipv6=ipv6, image=image,
                                                vmuser=vmuser)
-                with open(f'{ignitiondir}/{name}.ign', 'w') as ignitionfile:
-                    ignitionfile.write(ignitiondata)
-                    identityfile = None
+                try:
+                    with open(f'{ignitiondir}/{name}.ign', 'w') as ignitionfile:
+                        ignitionfile.write(ignitiondata)
+                        identityfile = None
+                except PermissionError:
+                    pprint("Consider running the following command on the hypervisor:")
+                    setfacluser = self.user
+                    if self.host in ['localhost', '127.0.0.1']:
+                        if not os.path.exists("/i_am_a_container"):
+                            setfacluser = getpwuid(os.getuid()).pw_name
+                    else:
+                        setfacluser = "your_user"
+                    pprint(f"sudo setfacl -m u:{setfacluser}:rwx {ignitiondir}")
+                    return {'result': 'failure', 'reason': "Permission issues"}
                 if self.protocol == 'ssh' and self.host not in localhosts:
                     publickeyfile = get_ssh_pub_key()
                     if publickeyfile is not None:
