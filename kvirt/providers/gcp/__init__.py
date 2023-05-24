@@ -910,8 +910,8 @@ class Kgcp(object):
             error(f"VM {name} not found")
             return []
         for interface in vm['networkInterfaces']:
-            if 'subnet' in interface:
-                subnets.append(os.path.basename(interface['subnet']))
+            if 'subnetwork' in interface:
+                subnets.append(os.path.basename(interface['subnetwork']))
         return subnets
 
     def get_pool_path(self, pool):
