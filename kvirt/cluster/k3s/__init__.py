@@ -91,8 +91,9 @@ def create(config, plandir, cluster, overrides):
             if not cloud_lb:
                 msg = "Multiple ctlplanes require cloud_lb to be set to True"
                 return {'result': 'failure', 'reason': msg}
-            api_ip = f"api.{cluster}.{domain}"
-            data['api_ip'] = api_ip
+            elif api_ip is None:
+                api_ip = f"api.{cluster}.{domain}"
+                data['api_ip'] = api_ip
         elif api_ip is None:
             if network == 'default' and platform == 'kvm':
                 warning("Using 192.168.122.253 as api_ip")
