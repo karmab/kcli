@@ -42,7 +42,8 @@ keys: []
 tempkey: false
 auth_pass:
 virtual_router_id:
-autoscale: False
+autoscale: false
 apps: []
+cloud_api_internal: false
 cloud_lb:
 cloud_storage: true
