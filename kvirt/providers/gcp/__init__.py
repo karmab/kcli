@@ -101,6 +101,8 @@ class Kgcp(object):
         project = self.project
         zone = self.zone
         region = self.region
+        if self.exists(name):
+            return {'result': 'failure', 'reason': f"VM {name} already exists"}
         if flavor is None:
             if numcpus != 1 and numcpus % 2 != 0:
                 return {'result': 'failure', 'reason': "Number of cpus is not even"}
