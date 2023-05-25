@@ -1121,7 +1121,7 @@ class Kaws(object):
         return {'result': 'success'}
 
     def create_loadbalancer(self, name, ports=[], checkpath='/index.html', vms=[], domain=None, checkport=80, alias=[],
-                            internal=False, dnsclient=None, subnetid=None):
+                            internal=False, dnsclient=None, subnetid=None, ip=None):
         ports = [int(port) for port in ports]
         resource = self.resource
         conn = self.conn

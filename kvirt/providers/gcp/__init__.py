@@ -1105,7 +1105,7 @@ class Kgcp(object):
         return {'result': 'success'}
 
     def create_loadbalancer(self, name, ports=[], checkpath='/index.html', vms=[], domain=None, checkport=80, alias=[],
-                            internal=False, dnsclient=None, subnetid=None):
+                            internal=False, dnsclient=None, subnetid=None, ip=None):
         lb_scheme = 'INTERNAL' if internal else 'EXTERNAL'
         sane_name = name.replace('.', '-')
         ports = [int(port) for port in ports]
@@ -1154,13 +1154,16 @@ class Kgcp(object):
         operation = conn.regionBackendServices().insert(project=project, region=region, body=backend_body).execute()
         backendurl = operation['targetLink']
         self._wait_for_operation(operation)
-        address_body = {"name": sane_name, "addressType": lb_scheme}
-        pprint(f"Creating address {sane_name}")
-        operation = conn_beta.addresses().insert(project=project, region=region, body=address_body).execute()
-        ipurl = operation['targetLink']
-        self._wait_for_operation(operation)
-        address = conn_beta.addresses().get(project=project, region=region, address=sane_name).execute()
-        ip = address['address']
+        if ip is None:
+            address_body = {"name": sane_name, "addressType": lb_scheme}
+            pprint(f"Creating address {sane_name}")
+            operation = conn_beta.addresses().insert(project=project, region=region, body=address_body).execute()
+            ipurl = operation['targetLink']
+            self._wait_for_operation(operation)
+            address = conn_beta.addresses().get(project=project, region=region, address=sane_name).execute()
+            ip = address['address']
+        else:
+            ipurl = ip
         if domain is not None:
             labels = {"domain": domain.replace('.', '-')}
             if dnsclient is not None:

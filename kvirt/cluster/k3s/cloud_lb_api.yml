@@ -1,8 +1,11 @@
 api.{{ cluster }}:
  type: loadbalancer
- domain: {{ domain }}
  internal: {{ cloud_api_internal }}
- reservedns: {{ not cloud_api_internal }}
+{% if api_ip != None %}
+ ip: {{ api_ip }}
+{% else %}
+ domain: {{ domain }}
+{% endif %}
  checkport: 6443
 {% if config_type == 'aws' and network.startswith('subnet-') %}
  subnetid: {{ network }}
