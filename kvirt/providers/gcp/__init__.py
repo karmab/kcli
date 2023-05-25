@@ -1187,7 +1187,7 @@ class Kgcp(object):
         pprint(f"Creating forwarding rule {forwarding_name}")
         operation = conn.forwardingRules().insert(project=project, region=region, body=forwarding_rule_body).execute()
         self._wait_for_operation(operation)
-        if not internal and not use_xproject:
+        if not use_xproject:
             firewall_body = {"name": sane_name, "direction": "INGRESS",
                              "allowed": [{"IPProtocol": "tcp", "ports": ports}]}
             if sane_name.startswith('api-') or sane_name.startswith('apps-'):
