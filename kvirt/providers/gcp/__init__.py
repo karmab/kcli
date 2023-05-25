@@ -208,7 +208,7 @@ class Kgcp(object):
             warning("neither id_rsa, id_dsa nor id_ed25519 public keys found in your .ssh or .kcli directories, "
                     "you might have trouble accessing the vm")
         else:
-            publickeyfile = open(publickeyfile).read()
+            publickeyfile = open(publickeyfile).read().strip()
             keys = list(set([publickeyfile] + keys)) if not keys else [publickeyfile]
         if keys:
             user = common.get_user(image)
