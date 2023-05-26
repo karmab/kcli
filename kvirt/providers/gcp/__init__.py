@@ -1187,7 +1187,7 @@ class Kgcp(object):
             # using a GCP shared VPC Project for networking. Reflect this
             netname = vm_subnets[0]
             project_subnets = self.list_subnets()
-            project_network = project_subnets[netname]['az']
+            network_project = project_subnets[netname]['az']
             forwarding_rule_body["subnetwork"] = f'projects/{network_project}/regions/{region}/subnetworks/{netname}'
         pprint(f"Creating forwarding rule {forwarding_name}")
         operation = conn.forwardingRules().insert(project=project, region=region, body=forwarding_rule_body).execute()
