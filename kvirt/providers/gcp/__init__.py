@@ -13,6 +13,7 @@ from getpass import getuser
 import googleapiclient.discovery
 from google.cloud import dns, storage
 import os
+import re
 from time import sleep
 import webbrowser
 
@@ -103,6 +104,7 @@ class Kgcp(object):
         region = self.region
         if self.exists(name):
             return {'result': 'failure', 'reason': f"VM {name} already exists"}
+        kubetype = metadata.get('kubetype')
         if flavor is None:
             if numcpus != 1 and numcpus % 2 != 0:
                 return {'result': 'failure', 'reason': "Number of cpus is not even"}
@@ -224,6 +226,15 @@ class Kgcp(object):
             body['metadata']['items'].append(newval)
             newval = {'key': 'block-project-ssh-keys', 'value': 'TRUE'}
             body['metadata']['items'].append(newval)
+        ctlplane_node = kubetype is not None and 'ctlplane' in name
+        bootstrap_node = ctlplane_node and kubetype != 'openshift' and name.endswith('ctlplane-0')
+        need_gcp_hack = ctlplane_node and not bootstrap_node
+        if need_gcp_hack:
+            gcpdir = os.path.dirname(Kgcp.create.__code__.co_filename)
+            overrides['kube_service'] = 'k3s' if kubetype == 'k3s' else 'kubelet'
+            files.append({"path": "/usr/local/bin/gcp-hack.sh", "origin": f'{gcpdir}/gcp-hack.sh', "mode": 755})
+            files.append({"path": "/etc/systemd/system/gcp-hack.service",
+                          "origin": f'{gcpdir}/gcp-hack.service', "mode": 644})
         if cloudinit:
             if image is not None and common.needs_ignition(image):
                 version = common.ignition_version(image)
@@ -241,6 +252,8 @@ class Kgcp(object):
                 else:
                     pkgmgr = "yum"
                 startup_script = "test -f /root/.kcli_startup && exit 0\n"
+                if need_gcp_hack:
+                    startup_script += "systemctl start gcp-hack\n"
                 startup_script += "sleep 10\nwhich cloud-init && touch /root/.kcli_startup && exit 0\n"
                 startup_script += f"{pkgmgr} install -y cloud-init\n"
                 startup_script += "systemctl enable --now cloud-init\n"
@@ -249,9 +262,8 @@ class Kgcp(object):
                 body['metadata']['items'].append(newval)
             newval = {'key': 'user-data', 'value': userdata}
             body['metadata']['items'].append(newval)
-        if 'kubetype' in metadata and metadata['kubetype'] in ["generic", "openshift", "k3s"] and not use_xproject:
+        if kubetype is not None and kubetype in ["generic", "openshift", "k3s"] and not use_xproject:
             kube = metadata['kube']
-            kubetype = metadata['kubetype']
             firewalls = conn.firewalls().list(project=project).execute()
             firewalls = firewalls['items'] if 'items' in firewalls else []
             if not firewalls or not [r for r in firewalls if r['name'] == kube]:
@@ -382,14 +394,15 @@ class Kgcp(object):
         project = self.project
         zone = self.zone
         vms = []
-        results = conn.instances().list(project=project, zone=zone).execute()
-        if 'items' not in results:
-            return []
-        for vm in results['items']:
+        instances = conn.instances().list(project=project, zone=zone).execute()
+        instances_items = instances.get('items', [])
+        for vm in instances_items:
             try:
                 vms.append(self.info(vm['name'], vm=vm))
             except:
                 continue
+        if not vms:
+            return []
         return sorted(vms, key=lambda x: x['name'])
 
     def console(self, name, tunnel=False, web=False):
@@ -550,14 +563,14 @@ class Kgcp(object):
         images = []
         for project in projects:
             results = conn.images().list(project=project, orderBy="creationTimestamp desc").execute()
-            if 'items' in results:
-                for image in results['items']:
-                    if project == self.project:
-                        images.append(image['name'])
-                    elif 'family' not in image:
-                        continue
-                    elif image['family'] not in images:
-                        images.append(image['family'])
+            image_items = results.get('items', [])
+            for image in image_items:
+                if project == self.project:
+                    images.append(image['name'])
+                elif 'family' not in image:
+                    continue
+                elif image['family'] not in images:
+                    images.append(image['family'])
         return sorted(images)
 
     def delete(self, name, snapshots=False):
@@ -741,13 +754,13 @@ class Kgcp(object):
         project = self.project
         zone = self.zone
         alldisks = conn.disks().list(zone=zone, project=project).execute()
-        if 'items' in alldisks:
-            for disk in alldisks['items']:
-                if self.debug:
-                    print(disk)
-                diskname = disk['name']
-                pool = os.path.basename(disk['type'])
-                disks[diskname] = {'pool': pool, 'path': zone}
+        alldisks_items = alldisks.get('items', [])
+        for disk in alldisks_items:
+            if self.debug:
+                print(disk)
+            diskname = disk['name']
+            pool = os.path.basename(disk['type'])
+            disks[diskname] = {'pool': pool, 'path': zone}
         return disks
 
     def add_nic(self, name, network):
@@ -839,12 +852,11 @@ class Kgcp(object):
         return []
 
     def list_project_networks(self, project):
+        networks = {}
         conn = self.conn
         nets = conn.networks().list(project=project).execute()
-        if 'items' not in nets:
-            return {}
-        networks = {}
-        for net in nets['items']:
+        nets_items = nets.get('items', [])
+        for net in nets_items:
             if self.debug:
                 print(net)
             networkname = net['name']
@@ -1077,9 +1089,8 @@ class Kgcp(object):
         zone = self.zone
         flavors = []
         results = conn.machineTypes().list(project=project, zone=zone).execute()
-        if 'items' not in results:
-            return []
-        for flavor in results['items']:
+        flavors_items = results.get('items', [])
+        for flavor in flavors_items:
             if self.debug:
                 print(flavor)
             name = flavor['name']
@@ -1119,14 +1130,22 @@ class Kgcp(object):
         instances = []
         vmpath = f"https://www.googleapis.com/compute/v1/projects/{project}/zones/{zone}/instances"
         use_xproject, vm_subnets = False, []
-        if vms:
-            for index, vm in enumerate(vms):
-                update = self.update_metadata(vm, 'loadbalancer', sane_name, append=True)
-                if update == 0:
-                    instances.append({"instance": f"{vmpath}/{vm}"})
-                if index == 0:
-                    vm_subnets = self.vm_ports(vm)
-                    use_xproject = self.xproject in [self.list_subnets()[n]['az'] for n in vm_subnets]
+        if not vms:
+            msg = "Creating a load balancer requires to specify some vms"
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
+        for vm in vms:
+            if not self.exists(vm):
+                msg = f"Vm {vm} not found"
+                error(msg)
+                return {'result': 'failure', 'reason': msg}
+        for index, vm in enumerate(vms):
+            update = self.update_metadata(vm, 'loadbalancer', sane_name, append=True)
+            if update == 0:
+                instances.append({"instance": f"{vmpath}/{vm}"})
+            if index == 0:
+                vm_subnets = self.vm_ports(vm)
+                use_xproject = self.xproject in [self.list_subnets()[n]['az'] for n in vm_subnets]
         # add checkpath handling (and default to http when defined)
         health_check_body = {"checkIntervalSec": "10", "timeoutSec": "10", "unhealthyThreshold": 3,
                              "healthyThreshold": 3, "name": sane_name}
@@ -1195,8 +1214,9 @@ class Kgcp(object):
         if not use_xproject:
             firewall_body = {"name": sane_name, "direction": "INGRESS",
                              "allowed": [{"IPProtocol": "tcp", "ports": ports}]}
-            if sane_name.startswith('api-') or sane_name.startswith('apps-'):
-                kube = '-'.join(sane_name.split('-')[1:])
+            first_vm = vms[0]
+            if '-ctlplane-' in first_vm or '-worker-' in first_vm and re.search(r'\d+$', first_vm):
+                kube = first_vm.split('-')[0]
                 firewall_body["targetTags"] = [kube]
             pprint(f"Creating firewall rule {sane_name}")
             operation = conn.firewalls().insert(project=project, body=firewall_body).execute()
@@ -1217,35 +1237,35 @@ class Kgcp(object):
         zone = self.zone
         region = self.region
         firewall_rules = conn.firewalls().list(project=project).execute()
-        if 'items' in firewall_rules:
-            for firewall_rule in firewall_rules['items']:
-                firewall_rule_name = firewall_rule['name']
-                if firewall_rule_name == name:
-                    pprint(f"Deleting firewall rule {name}")
-                    operation = conn.firewalls().delete(project=project, firewall=name).execute()
-                    self._wait_for_operation(operation)
+        firewall_rules_items = firewall_rules.get('items', [])
+        for firewall_rule in firewall_rules_items:
+            firewall_rule_name = firewall_rule['name']
+            if firewall_rule_name == name:
+                pprint(f"Deleting firewall rule {name}")
+                operation = conn.firewalls().delete(project=project, firewall=name).execute()
+                self._wait_for_operation(operation)
         forwarding_rules = conn.forwardingRules().list(project=project, region=region).execute()
-        if 'items' in forwarding_rules:
-            for forwarding_rule in forwarding_rules['items']:
-                forwarding_rule_name = forwarding_rule['name']
-                if forwarding_rule_name == name or forwarding_rule_name.startswith(f'{name}-'):
-                    pprint(f"Deleting forwarding rule {forwarding_rule_name}")
-                    operation = conn.forwardingRules().delete(project=project, region=region,
-                                                              forwardingRule=forwarding_rule_name).execute()
-                    self._wait_for_operation(operation)
-                    pprint("Waiting to make sure forwarding rule is gone")
-                    timeout = 0
-                    deleted = False
-                    while not deleted:
-                        new_forwarding_rules = conn.forwardingRules().list(project=project, region=region).execute()
-                        if 'items' not in new_forwarding_rules:
-                            deleted = True
-                        elif [f['name'] for f in new_forwarding_rules['items'] if f['name'] == forwarding_rule_name]:
-                            sleep(5)
-                            timeout += 5
-                        elif timeout >= 60:
-                            warning("Timeout waiting for forwarding rule to be gone")
-                            break
+        forwarding_rules_items = forwarding_rules.get('items', [])
+        for forwarding_rule in forwarding_rules_items:
+            forwarding_rule_name = forwarding_rule['name']
+            if forwarding_rule_name == name or forwarding_rule_name.startswith(f'{name}-'):
+                pprint(f"Deleting forwarding rule {forwarding_rule_name}")
+                operation = conn.forwardingRules().delete(project=project, region=region,
+                                                          forwardingRule=forwarding_rule_name).execute()
+                self._wait_for_operation(operation)
+                pprint("Waiting to make sure forwarding rule is gone")
+                timeout = 0
+                while True:
+                    if timeout >= 60:
+                        warning("Timeout waiting for forwarding rule to be gone")
+                        break
+                    new_forwarding_rules = conn.forwardingRules().list(project=project, region=region).execute()
+                    items = new_forwarding_rules.get('items', [])
+                    if not items or not [f for f in items if f['name'] == forwarding_rule_name]:
+                        break
+                    else:
+                        sleep(5)
+                        timeout += 5
         try:
             address = conn_beta.addresses().get(project=project, region=region, address=name).execute()
             if 'labels' in address and 'domain' in address['labels'] and 'dnsclient' not in address['labels']:
@@ -1260,33 +1280,33 @@ class Kgcp(object):
                 print(e)
             pass
         backendservices = conn.regionBackendServices().list(project=project, region=region).execute()
-        if 'items' in backendservices:
-            for backendservice in backendservices['items']:
-                backendservice_name = backendservice['name']
-                if backendservice_name == name:
-                    internal = True if backendservice['loadBalancingScheme'] == 'INTERNAL' else False
-                    pprint(f"Deleting backend service {name}")
-                    operation = conn.regionBackendServices().delete(project=project, region=region,
-                                                                    backendService=name).execute()
+        backendservices_items = backendservices.get('items', [])
+        for backendservice in backendservices_items:
+            backendservice_name = backendservice['name']
+            if backendservice_name == name:
+                internal = True if backendservice['loadBalancingScheme'] == 'INTERNAL' else False
+                pprint(f"Deleting backend service {name}")
+                operation = conn.regionBackendServices().delete(project=project, region=region,
+                                                                backendService=name).execute()
+                self._wait_for_operation(operation)
+                for healthcheck in backendservice.get('healthChecks', []):
+                    healthcheck_short = os.path.basename(healthcheck)
+                    pprint(f"Deleting healthcheck {healthcheck_short}")
+                    if internal:
+                        operation = conn.healthChecks().delete(project=project,
+                                                               healthCheck=healthcheck_short).execute()
+                    else:
+                        operation = conn.regionHealthChecks().delete(project=project, region=region,
+                                                                     healthCheck=healthcheck_short).execute()
                     self._wait_for_operation(operation)
-                    for healthcheck in backendservice.get('healthChecks', []):
-                        healthcheck_short = os.path.basename(healthcheck)
-                        pprint(f"Deleting healthcheck {healthcheck_short}")
-                        if internal:
-                            operation = conn.healthChecks().delete(project=project,
-                                                                   healthCheck=healthcheck_short).execute()
-                        else:
-                            operation = conn.regionHealthChecks().delete(project=project, region=region,
-                                                                         healthCheck=healthcheck_short).execute()
-                        self._wait_for_operation(operation)
         instancegroups = conn.instanceGroups().list(project=project, zone=zone).execute()
-        if 'items' in instancegroups:
-            for instancegroup in instancegroups['items']:
-                instancegroup_name = instancegroup['name']
-                if instancegroup_name == name:
-                    pprint(f"Deleting instance group {name}")
-                    operation = conn.instanceGroups().delete(project=project, zone=zone, instanceGroup=name).execute()
-                    self._wait_for_operation(operation)
+        instancegroups_items = instancegroups.get('items', [])
+        for instancegroup in instancegroups_items:
+            instancegroup_name = instancegroup['name']
+            if instancegroup_name == name:
+                pprint(f"Deleting instance group {name}")
+                operation = conn.instanceGroups().delete(project=project, zone=zone, instanceGroup=name).execute()
+                self._wait_for_operation(operation)
         if dnsclient is not None:
             return dnsclient
         return {'result': 'success'}
@@ -1296,25 +1316,25 @@ class Kgcp(object):
         project = self.project
         region = self.region
         results = []
-        results1 = conn.globalForwardingRules().list(project=project).execute()
-        results2 = conn.forwardingRules().list(project=project, region=region).execute()
-        if 'items' in results1:
-            for lb in results1['items']:
-                name = lb['name']
-                ip = lb['IPAddress']
-                protocol = lb['IPProtocol']
-                port = lb['port']
-                target = os.path.basename(lb['target'])
-                results.append([name, ip, protocol, port, target])
-        if 'items' in results2:
-            for lb in results2['items']:
-                name = lb['name']
-                ip = lb['IPAddress']
-                protocol = lb['IPProtocol']
-                port = lb['portRange'] if 'portRange' in lb else ','.join(lb['ports'])
-                target = lb['target'] if 'target' in lb else lb['backendService']
-                target = os.path.basename(target)
-                results.append([name, ip, protocol, port, target])
+        global_forwarding_rules = conn.globalForwardingRules().list(project=project).execute()
+        global_forwarding_rules_items = global_forwarding_rules.get('items', [])
+        forwarding_rules = conn.forwardingRules().list(project=project, region=region).execute()
+        forwarding_rules_items = forwarding_rules.get('items', [])
+        for lb in global_forwarding_rules_items:
+            name = lb['name']
+            ip = lb['IPAddress']
+            protocol = lb['IPProtocol']
+            port = lb['port']
+            target = os.path.basename(lb['target'])
+            results.append([name, ip, protocol, port, target])
+        for lb in forwarding_rules_items:
+            name = lb['name']
+            ip = lb['IPAddress']
+            protocol = lb['IPProtocol']
+            port = lb['portRange'] if 'portRange' in lb else ','.join(lb['ports'])
+            target = lb['target'] if 'target' in lb else lb['backendService']
+            target = os.path.basename(target)
+            results.append([name, ip, protocol, port, target])
         return results
 
     def create_bucket(self, bucket, public=False):

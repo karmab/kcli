@@ -1,6 +1,3 @@
-{% if config_type == 'gcp' %}
-systemctl enable --now gcp-hack
-{% endif %}
 {% if 'ubuntu' in image %}
 apt-get -y install curl
 {% endif %}
