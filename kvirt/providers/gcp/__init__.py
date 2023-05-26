@@ -1118,15 +1118,15 @@ class Kgcp(object):
         region = self.region
         instances = []
         vmpath = f"https://www.googleapis.com/compute/v1/projects/{project}/zones/{zone}/instances"
-        use_xproject, subnets = False, []
+        use_xproject, vm_subnets = False, []
         if vms:
             for index, vm in enumerate(vms):
                 update = self.update_metadata(vm, 'loadbalancer', sane_name, append=True)
                 if update == 0:
                     instances.append({"instance": f"{vmpath}/{vm}"})
                 if index == 0:
-                    subnets = self.vm_ports(vm)
-                    use_xproject = self.xproject in [self.list_subnets()[n]['az'] for n in subnets]
+                    vm_subnets = self.vm_ports(vm)
+                    use_xproject = self.xproject in [self.list_subnets()[n]['az'] for n in vm_subnets]
         # add checkpath handling (and default to http when defined)
         health_check_body = {"checkIntervalSec": "10", "timeoutSec": "10", "unhealthyThreshold": 3,
                              "healthyThreshold": 3, "name": sane_name}
@@ -1183,7 +1183,12 @@ class Kgcp(object):
         forwarding_rule_body["ports"] = ports
         forwarding_rule_body["loadBalancingScheme"] = lb_scheme
         if use_xproject:
-            forwarding_rule_body["subnet"] = subnets[0]
+            # The load balancer is created for a project
+            # using a GCP shared VPC Project for networking. Reflect this
+            netname = vm_subnets[0]
+            project_subnets = self.list_subnets()
+            project_network = project_subnets[netname]['az']
+            forwarding_rule_body["subnetwork"] = f'projects/{network_project}/regions/{region}/subnetworks/{netname}'
         pprint(f"Creating forwarding rule {forwarding_name}")
         operation = conn.forwardingRules().insert(project=project, region=region, body=forwarding_rule_body).execute()
         self._wait_for_operation(operation)
