@@ -177,7 +177,8 @@ def create(config, plandir, cluster, overrides):
             threaded = data.get('threaded', False) or data.get('workers_threaded', False)
             config.plan(plan, inputfile=f'{plandir}/workers.yml', overrides=nodes_overrides, threaded=threaded)
     if cloud_lb and config.type in cloudplatforms:
-        config.k.delete_dns(f'api.{cluster}', domain=domain)
+        if data['cloud_api_internal']:
+            config.k.delete_dns(f'api.{cluster}', domain=domain)
         if config.type == 'aws':
             data['vpcid'] = config.k.get_vpcid_of_vm(f"{cluster}-ctlplane-0")
         result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_api.yml', overrides=data)
@@ -186,7 +187,7 @@ def create(config, plandir, cluster, overrides):
     success(f"K3s cluster {cluster} deployed!!!")
     info2(f"export KUBECONFIG=$HOME/.kcli/clusters/{cluster}/auth/kubeconfig")
     info2("export PATH=$PWD:$PATH")
-    if config.type in cloudplatforms and cloud_lb and api_ip is None:
+    if config.type in cloudplatforms and cloud_lb and not data['cloud_api_internal']:
         wait_cloud_dns(cluster, domain)
     os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
     apps = data.get('apps', [])
