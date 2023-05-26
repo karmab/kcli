@@ -434,6 +434,7 @@ class Kconfig(Kbaseconfig):
         default_user = getuser() if config_data['config_type'] == 'kvm'\
             and self.host in ['localhost', '127.0.0.1'] else 'root'
         config_data['config_user'] = config_data.get('config_user', default_user)
+        config_data['config_client'] = self.client
         self.overrides.update(default_data)
         self.overrides.update(config_data)
 

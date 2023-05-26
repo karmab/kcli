@@ -2527,6 +2527,7 @@ def render_file(args):
     default_user = getuser() if client_data['config_type'] == 'kvm'\
         and client_data['config_host'] in ['localhost', '127.0.0.1'] else 'root'
     client_data['config_user'] = client_data.get('config_user', default_user)
+    client_data['config_client'] = baseconfig.client
     config_data = default_data.copy()
     config_data.update(client_data)
     overrides.update(config_data)
