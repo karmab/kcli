@@ -19,7 +19,7 @@
  disks: {{ [disk_size] + extra_disks }}
  files:
  - join.sh
-{% if config_type == 'gcp' %}
+{% if config_type == 'gcp' and not cloud_api_internal %}
  - path: /usr/local/bin/gcp-hack.sh
    origin: gcp-hack.sh
    mode: 755
