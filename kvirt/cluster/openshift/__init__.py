@@ -1406,8 +1406,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             msg = "Leaving environment for debugging purposes. "
             msg += f"Delete it with kcli delete cluster --yes {cluster}"
             return {'result': 'failure', 'reason': msg}
-        pprint(f"Deleting {cluster}-bootstrap")
-        k.delete(f"{cluster}-bootstrap")
         if dnsconfig is not None:
             pprint(f"Deleting Dns entry for {cluster}-bootstrap in {domain}")
             z = dnsconfig.k
@@ -1459,6 +1457,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             msg = "Leaving environment for debugging purposes. "
             msg += f"Delete it with kcli delete cluster --yes {cluster}"
             return {'result': 'failure', 'reason': msg}
+    pprint(f"Deleting {cluster}-bootstrap")
+    k.delete(f"{cluster}-bootstrap")
     if platform in cloudplatforms:
         bucket = "%s-%s" % (cluster, domain.replace('.', '-'))
         config.k.delete_bucket(bucket)
