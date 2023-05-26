@@ -1,4 +1,4 @@
-{% if config_type == 'gcp' %}
+{% if config_type == 'gcp' and not cloud_api_internal %}
 systemctl enable --now gcp-hack
 {% endif %}
 {% if 'ubuntu' in image %}
