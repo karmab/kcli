@@ -6,11 +6,6 @@
 apt-get -y install curl
 {% endif %}
 
-{% if config_type == 'gcp' %}
-systemctl enable --now gcp-hack
-ufw allow from any to any port 6443,2379,2380 proto tcp
-{% endif %}
-
 export IP={{ api_ip if cloud_lb else "$(curl -s ifconfig.me)" if config_type in ['aws', 'gcp', 'ibmcloud'] else '$(hostname -I | cut -f1 -d" ")' }}
 curl -sfL https://get.k3s.io | {{ install_k3s_args }} K3S_TOKEN={{ token }} sh -s - server {{ '--cluster-init' if ctlplanes > 1 else '' }} {{ extra_args|join(" ") }} {{ '--tls-san $IP' if not cloud_lb and config_type in ['aws', 'gcp', 'ibmcloud'] else '' }}
 export K3S_TOKEN=$(cat /var/lib/rancher/k3s/server/node-token)

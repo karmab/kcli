@@ -21,14 +21,6 @@
    origin: pre_{{ 'ubuntu' if ubuntu|default(False) else 'el' }}.sh
  - deploy.sh
  - join.sh
-{% if config_type == 'gcp' %}
- - path: /usr/local/bin/gcp-hack.sh
-   origin: gcp-hack.sh
-   mode: 755
- - path: /usr/lib/systemd/system/gcp-hack.service
-   origin: gcp-hack.service
-   mode: 644
-{% endif %}
 {% if engine == 'containerd' %}
  - path: /etc/crictl.yaml
    content: |

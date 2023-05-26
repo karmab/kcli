@@ -21,13 +21,6 @@
 {% if config_type not in ['aws', 'gcp', 'ibm'] %}
  - keepalived.conf
  - keepalived.sh
-{% elif config_type == 'gcp' %}
- - path: /usr/local/bin/gcp-hack.sh
-   origin: gcp-hack.sh
-   mode: 755
- - path: /usr/lib/systemd/system/gcp-hack.service
-   origin: gcp-hack.service
-   mode: 644
 {% endif %}
  - path: /root/pre.sh
    origin: pre_{{ 'ubuntu' if ubuntu|default(False) else 'el' }}.sh
