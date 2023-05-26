@@ -226,7 +226,7 @@ class Kgcp(object):
             body['metadata']['items'].append(newval)
             newval = {'key': 'block-project-ssh-keys', 'value': 'TRUE'}
             body['metadata']['items'].append(newval)
-        ctlplane_node = kubetype is not None and 'ctlplane' in name
+        ctlplane_node = overrides.get('gcp_hack', True) and kubetype is not None and 'ctlplane' in name
         bootstrap_node = ctlplane_node and kubetype != 'openshift' and name.endswith('ctlplane-0')
         need_gcp_hack = ctlplane_node and not bootstrap_node
         if need_gcp_hack:
