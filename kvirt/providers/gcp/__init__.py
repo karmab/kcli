@@ -1284,21 +1284,26 @@ class Kgcp(object):
         for backendservice in backendservices_items:
             backendservice_name = backendservice['name']
             if backendservice_name == name:
-                internal = True if backendservice['loadBalancingScheme'] == 'INTERNAL' else False
                 pprint(f"Deleting backend service {name}")
                 operation = conn.regionBackendServices().delete(project=project, region=region,
                                                                 backendService=name).execute()
                 self._wait_for_operation(operation)
-                for healthcheck in backendservice.get('healthChecks', []):
-                    healthcheck_short = os.path.basename(healthcheck)
-                    pprint(f"Deleting healthcheck {healthcheck_short}")
-                    if internal:
-                        operation = conn.healthChecks().delete(project=project,
-                                                               healthCheck=healthcheck_short).execute()
-                    else:
-                        operation = conn.regionHealthChecks().delete(project=project, region=region,
-                                                                     healthCheck=healthcheck_short).execute()
-                    self._wait_for_operation(operation)
+        regionhealthchecks = conn.regionHealthChecks().list(project=project, region=region).execute()
+        regionhealthchecks_items = regionhealthchecks.get('items', [])
+        for healthcheck in regionhealthchecks_items:
+            healthcheck_name = healthcheck['name']
+            if healthcheck_name == name:
+                pprint(f"Deleting healthcheck {name}")
+                operation = conn.regionHealthChecks().delete(project=project, region=region, healthCheck=name).execute()
+                self._wait_for_operation(operation)
+        healthchecks = conn.healthChecks().list(project=project).execute()
+        healthchecks_items = healthchecks.get('items', [])
+        for healthcheck in healthchecks_items:
+            healthcheck_name = healthcheck['name']
+            if healthcheck_name == name:
+                pprint(f"Deleting healthcheck {name}")
+                operation = conn.healthChecks().delete(project=project, healthCheck=name).execute()
+                self._wait_for_operation(operation)
         instancegroups = conn.instanceGroups().list(project=project, zone=zone).execute()
         instancegroups_items = instancegroups.get('items', [])
         for instancegroup in instancegroups_items:
