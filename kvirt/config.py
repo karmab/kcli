@@ -906,6 +906,7 @@ class Kconfig(Kbaseconfig):
                         warning("Creating authorized_keys_file")
                         with open(authorized_keys_file, 'w') as f:
                             f.write(publickey)
+                            os.chmod(script, 0o600)
         if cmds and 'reboot' in cmds:
             while 'reboot' in cmds:
                 cmds.remove('reboot')
