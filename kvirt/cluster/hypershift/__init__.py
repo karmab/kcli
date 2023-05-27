@@ -406,6 +406,8 @@ def create(config, plandir, cluster, overrides):
         pprint(f"Setting domain to {domain}")
         ignore_hosts = False
     assetsdata = data.copy()
+    if data['network_type'] == 'Contrail':
+        assetsdata['network_type'] = 'Other'
     copy2(f'{kubeconfigdir}/{kubeconfig}', f"{clusterdir}/kubeconfig.mgmt")
     assetsdata['cidr'] = cidr
     pprint("Creating control plane assets")
@@ -451,40 +453,6 @@ def create(config, plandir, cluster, overrides):
         assisted_data = config.process_inputfile(cluster, f'{plandir}/assisted_ingress.yml', overrides=assisted_data)
         assisted_data = json.dumps(assisted_data)
         manifests.append({'name': f'assisted-ingress-{cluster}', 'data': assisted_data})
-    if data['network_type'] == 'Contrail':
-        if which('git') is None:
-            return {'result': 'failure', 'reason': "Git is needed when deploying with contrail"}
-        if 'enterprise-hub.juniper.net' not in data['pull_secret']:
-            return {'result': 'failure', 'reason': "A token for hub.juniper.net registry is needed"}
-        ctl_network_create = data['contrail_ctl_create']
-        ctl_network = data['contrail_ctl_network']
-        ctl_cidr = data['contrail_ctl_cidr']
-        networkinfo = k.info_network(ctl_network)
-        if not networkinfo:
-            if ctl_network_create:
-                result = k.create_network(ctl_network, cidr=ctl_cidr, plan=plan)
-                if result['result'] != 'success':
-                    return result
-            else:
-                msg = f"Issue getting contrail ctl network {ctl_network}"
-                return {'result': 'failure', 'reason': msg}
-        elif platform == 'kvm' and networkinfo['type'] == 'routed':
-            cidr = networkinfo['cidr']
-            if cidr == 'N/A':
-                msg = "Couldnt gather cidr from your specified contrail ctl network"
-                return {'result': 'failure', 'reason': msg}
-            elif cidr != ctl_cidr:
-                msg = "Contrail ctl network cidr doesnt match contrail_ctl_cidr"
-                return {'result': 'failure', 'reason': msg}
-        if 'uefi' in data and data['uefi']:
-            data['secureboot'] = True
-        contrail_data = {'uefi': data.get('uefi', False)}
-        contrail_data.update({key: data[key] for key in data if key.startswith('contrail')})
-        pullsecret_encoded = str(b64encode(data['pull_secret'].encode('utf-8')), 'utf-8')
-        contrail_data['pullsecret_encoded'] = pullsecret_encoded
-        contrail_script = config.process_inputfile('xxx', f'{plandir}/contrail.sh.j2', overrides=contrail_data)
-        with open(f"{clusterdir}/contrail.sh", 'w') as f:
-            f.write(contrail_script)
     if manifests:
         assetsdata['manifests'] = manifests
     async_files = []
@@ -675,16 +643,51 @@ def create(config, plandir, cluster, overrides):
         installparam['ipv6'] = ipv6
         installparam['original_domain'] = data['original_domain']
         yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
-    if 'network_type' in data:
-        if data['network_type'] == 'Calico':
-            calico_version = data['calico_version']
-            with TemporaryDirectory() as tmpdir:
-                calico_data = {'tmpdir': tmpdir, 'namespace': namespace, 'cluster': cluster, 'clusterdir': clusterdir,
-                               'calico_version': calico_version}
-                calico_script = config.process_inputfile('xxx', f'{plandir}/calico.sh.j2', overrides=calico_data)
-                with open(f"{tmpdir}/calico.sh", 'w') as f:
-                    f.write(calico_script)
-                call(f'bash {tmpdir}/calico.sh', shell=True)
+    if data['network_type'] == 'Calico':
+        calico_version = data['calico_version']
+        with TemporaryDirectory() as tmpdir:
+            calico_data = {'tmpdir': tmpdir, 'namespace': namespace, 'cluster': cluster, 'clusterdir': clusterdir,
+                           'calico_version': calico_version}
+            calico_script = config.process_inputfile('xxx', f'{plandir}/calico.sh.j2', overrides=calico_data)
+            with open(f"{tmpdir}/calico.sh", 'w') as f:
+                f.write(calico_script)
+            call(f'bash {tmpdir}/calico.sh', shell=True)
+    elif data['network_type'] == 'Contrail':
+        if which('git') is None:
+            return {'result': 'failure', 'reason': "Git is needed when deploying with contrail"}
+        if 'enterprise-hub.juniper.net' not in data['pull_secret']:
+            return {'result': 'failure', 'reason': "A token for hub.juniper.net registry is needed"}
+        ctl_network_create = data['contrail_ctl_create']
+        ctl_network = data['contrail_ctl_network']
+        ctl_cidr = data['contrail_ctl_cidr']
+        networkinfo = k.info_network(ctl_network)
+        if not networkinfo:
+            if ctl_network_create:
+                result = k.create_network(ctl_network, cidr=ctl_cidr, plan=plan)
+                if result['result'] != 'success':
+                    return result
+            else:
+                msg = f"Issue getting contrail ctl network {ctl_network}"
+                return {'result': 'failure', 'reason': msg}
+        elif platform == 'kvm' and networkinfo['type'] == 'routed':
+            cidr = networkinfo['cidr']
+            if cidr == 'N/A':
+                msg = "Couldnt gather cidr from your specified contrail ctl network"
+                return {'result': 'failure', 'reason': msg}
+            elif cidr != ctl_cidr:
+                msg = "Contrail ctl network cidr doesnt match contrail_ctl_cidr"
+                return {'result': 'failure', 'reason': msg}
+        if 'uefi' in data and data['uefi']:
+            data['secureboot'] = True
+        with TemporaryDirectory() as tmpdir:
+            contrail_data = {'tmpdir': tmpdir, 'clusterdir': clusterdir, 'uefi': data.get('uefi', False)}
+            contrail_data.update({key: data[key] for key in data if key.startswith('contrail')})
+            contrail_data['auth'] = yaml.safe_load(open(pull_secret))['auths']['enterprise-hub.juniper.net']['auth']
+            contrail_script = config.process_inputfile('xxx', f'{plandir}/contrail.sh.j2', overrides=contrail_data)
+            with open(f"{clusterdir}/contrail.sh", 'w') as f:
+                f.write(contrail_script)
+            copy2(f'{plandir}/contrail.auth', tmpdir)
+            call(f'bash {clusterdir}/contrail.sh', shell=True)
     nodepoolfile = config.process_inputfile(cluster, f"{plandir}/nodepool.yaml", overrides=assetsdata)
     with open(f"{clusterdir}/nodepool.yaml", 'w') as f:
         f.write(nodepoolfile)

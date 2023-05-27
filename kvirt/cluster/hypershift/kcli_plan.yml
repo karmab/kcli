@@ -44,14 +44,6 @@
 {% endfor %}
 {% endif %}
 
-{% if network_type == 'Contrail' and num == 0 %}
-{% set new_file = {'path': '/etc/kubernetes/kubeconfig.%s' % cluster, 'origin': '~/.kcli/clusters/%s/auth/kubeconfig' % cluster} %}
-{% set new_file = {'path': '/usr/local/bin/contrail.sh', 'origin': 'origin': '~/.kcli/clusters/%s/contrail.sh' % cluster , 'mode': 700} %}
-{% do files.append(new_file) %}
-{% set new_file = {'path': '/root/contrail.service', 'origin': 'contrail.service'} %}
-{% do files.append(new_file) %}
-{% do files.append(new_file) %}
-
 {{ cluster }}-worker-{{ num }}:
  domain: {{ original_domain|default('karmalabs.corp') }}
  image: {{ image }}
