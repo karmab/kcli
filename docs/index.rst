@@ -3,17 +3,11 @@
 About
 =====
 
-This tool is meant to ease interaction with the following virtualization providers:
+This tool is meant to provide a unified user experience when interacting with the following virtualization providers:
 
 -  Libvirt/Vsphere/Kubevirt/Aws/Gcp/Ibmcloud/oVirt/Openstack/Packet
 
-You can:
-
--  Manage vms (create/delete/list/info/ssh/start/stop/console/serialconsole/webconsole/create or delete disk/create or delete nic/clone/snapshot)
--  Deploy them using profiles
--  Define more complex workflows using *plans* and products.
-
-Kubernetes clusters can also be deployed with the following type:
+Beyond handling virtual machines, Kubernetes clusters can also be managed for the following types:
 
 -  Kubeadm/Openshift/OKD/Hypershift/Microshift/K3s
 
@@ -31,14 +25,6 @@ If you don’t have Libvirt installed on the target hypervisor, you can use the 
    sudo usermod -aG qemu,libvirt $(id -un)
    sudo newgrp libvirt
    sudo systemctl enable --now libvirtd
-
-(Optional) For interaction with your local docker daemon, you also need the following:
-
-.. code:: bash
-
-   sudo groupadd docker
-   sudo usermod -aG docker $(id -un)
-   sudo systemctl restart docker
 
 Supported installation methods
 ------------------------------
@@ -87,13 +73,10 @@ If using a debian based distribution, use this instead:
 
 The package based version doesn’t bundle the dependencies for anything else than Libvirt, so you have to install the extra packages for each additional cloud platforms, which are listed in the *Provider specifics* section.
 
-On Fedora, an additional meta package named kcli-all (python3-kcli-all in the debian case) that contains dependencies for all the providers.
+On Fedora, an additional metapackage named kcli-all (python3-kcli-all in the debian case) that contains dependencies for all the providers.
 
 Container install method
 ------------------------
-
--  The container image contains dependencies for all the providers.
--  The console/serial console functionality works better with the package version. In container mode, the graphical console/serial console only outputs the command to launch manually to get to the console.
 
 In the commands below, feel free to use docker instead
 
@@ -121,7 +104,7 @@ There are several recommended flags:
 -  ``-e HTTP_PROXY=your_proxy -e HTTPS_PROXY=your_proxy``
 -  ``-v ~/.kube:/root/.kube`` to share your kubeconfig.
 
-For accessing kweb, you can switch with ``-p 9000:9000 --entrypoint=/usr/bin/kweb`` and thus accessing to port 9000.
+For accessing kweb, change the entrypoint and map port 9000 with ``-p 9000:9000 --entrypoint=/usr/bin/kweb``.
 
 Here are typical aliases ready for use:
 
@@ -131,13 +114,16 @@ Here are typical aliases ready for use:
    alias kclishell='podman run --net host -it --rm --security-opt label=disable -v $HOME/.ssh:/root/.ssh -v $HOME/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir --entrypoint=/bin/bash quay.io/karmab/kcli'
    alias kweb='podman run -p 9000:9000 --net host -it --rm --security-opt label=disable -v $HOME/.ssh:/root/.ssh -v $HOME/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir --entrypoint=/usr/bin/kweb quay.io/karmab/kcli'
 
+-  The container image contains dependencies for all the providers.
+-  The console/serial console functionality works better with the package version. In container mode, the graphical console/serial console only outputs the command to launch manually to get to the console.
+
 Dev installation
 ----------------
 
 Generic platform
 ~~~~~~~~~~~~~~~~
 
-If only Libvirt provider will be used:
+If only Libvirt provider is to be used:
 
 .. code:: shell
 
@@ -163,7 +149,7 @@ For rhel based OS (*fedora*/*rhel or centos*), you can run this:
 
    sudo sudo dnf -y install kcli
 
-If using a debian based distribution, use this instead:
+If using a debian based distribution:
 
 .. code:: bash
 
@@ -189,7 +175,7 @@ Generic platform
 Configuration
 =============
 
-If you only use local Libvirt, *no additional configuration* is needed.
+If you plan to use local Libvirt, *no additional configuration* is needed.
 
 Kcli configuration is done in ~/.kcli directory, that you need to manually create. It will contain:
 
@@ -353,7 +339,7 @@ The following parameters are specific to Gcp:
 -  ``credentials`` (pointing to a json service account file). if not specified, the environment variable *GOOGLE_APPLICATION_CREDENTIALS* will be used
 -  ``project``
 -  ``zone``
--  ``public`` Whether the vms get an external/public IP. Defaults to True. Can be overriden in a parameter file (or in the nets section of a vm)
+-  ``public`` Whether vms get an external/public IP. Defaults to True. This can be overriden in a parameter file or in the nets section of a vm.
 
 also note that Gcp provider supports creation of dns records for an existing domain and that your home public key will be uploaded if needed
 
@@ -695,45 +681,179 @@ Usage
 Basic workflow
 --------------
 
-Cloud Images from common distros aim to be the primary source for your vms *kcli download image* can be used to download a specific cloud image. for instance, centos7:
+Your first vm
+~~~~~~~~~~~~~
+
+Cloud Images from common distros aim to be the primary source for your vms.
+
+You can list available cloud images ready for downloading with
 
 .. code:: shell
 
-   kcli download image centos7
+   kcli list available-images
 
-at this point, you can deploy vms directly from the template, using default settings for the vm:
+*kcli download image* can be used to download a specific cloud image. for instance, centos9:
 
 .. code:: shell
 
-   kcli create vm -i centos7 vm1
+   kcli download image centos9stream
 
-By default, your public key will be injected (using cloudinit) to the vm.
+At this point, you can deploy vms directly from the image, using default settings for the vm:
 
-You can then access the vm using *kcli ssh*.
+.. code:: shell
+
+   kcli create vm -i centos9stream vm1
+
+This create a vm with 2 numcpus and 512Mb of ram, and also inject your public key using cloudinit.
+
+The resulting vm can be accessed using *kcli ssh vm1*.
 
 Kcli uses the default ssh_user associated to the `cloud image <http://docs.openstack.org/image-guide/obtain-images.html>`__.
 
 To guess it, kcli checks the image name. So for example, your centos image must contain the term “centos” in the file name, otherwise “root” is used.
 
-If you are not able to ssh into the vm, Note you can always ``kcli console`` or ``kcli console --serial`` to access the VM
+For out of band access to the vm, ``kcli console`` or ``kcli console --serial`` can be used
 
-Using parameters, you can tweak the vm creation. All keywords can be used. For instance:
+Customizing the vm
+~~~~~~~~~~~~~~~~~~
 
-.. code:: shell
-
-   kcli create vm -i centos7 -P memory=2048 -P numcpus=2 vm1
-
-You can also pass disks, networks, cmds (or any keyword, really):
-
-.. code:: shell
-
-   kcli create vm -i centos7 -P disks=[10,20] -P nets=[default,default] -P cmds=[yum -y install nc] vm1
+Using parameters, you can tweak the vm creation. A full list of keywords can be used.
 
 You can use the following to get a list of available keywords, and their default value
 
 .. code:: shell
 
    kcli get keywords
+
+When creating a vm, you can then combine any of those keywords
+
+.. code:: shell
+
+   kcli create vm -P keyword1=value1 -P keyword2=value2 -P keyword2=value3 (....)
+
+Note that those parameters dont have to be only keyword. You can pass any key-value pair so that they are used when injecting files or commands.
+
+Cpus and Memory
+^^^^^^^^^^^^^^^
+
+Using such parameters, you can tweak the vm creation. For instance, the following customizes the number of cpus and memory of the vm.
+
+.. code:: shell
+
+   kcli create vm -i centos9stream -P memory=2048 -P numcpus=4 vm1
+
+Disks
+^^^^^
+
+You can also pass ``disks``. For instance to create a vm with 2 disks
+
+.. code:: shell
+
+   kcli create vm -i centos9stream -P disks=[10,20] vm1
+
+The disks keyword can either be a list of integers or we can pass a list of dictionaries to tweak even further. For instance, we can set the disk interface of one of the disk so that it uses SATA
+
+.. code:: shell
+
+   kcli create vm -i centos9stream -P disks=['{"size": 10, "interface": "sata"}'] vm1
+
+You can combine both syntaxes, as shown in the next example where we create a 2-disks vm where the second one is SATA
+
+.. code:: shell
+
+   kcli create vm -i centos9stream -P disks=['20,{"size": 10, "interface": "sata"}'] vm1
+
+Nets
+^^^^
+
+``nets`` keyword allows you to create vms with several nics and using specific networks. For instance, we can create a vm with two nics connected to the default network
+
+.. code:: shell
+
+   kcli create vm -i centos9stream -P nets=[default,default] vm1
+
+As with disks, we can tweak even further, for instance, to force the mac address of the vm
+
+.. code:: shell
+
+   kcli create vm -i centos9stream -P nets=['{"name": "default", "mac": "aa:aa:aa:bb:bb:90"}'] vm1
+
+Or change the nic driver
+
+.. code:: shell
+
+   kcli create vm -i centos9stream -P nets=['{"name": "default", "type": "e1000"}'] vm1
+
+Again, both syntaxes can be combined
+
+Injecting files
+^^^^^^^^^^^^^^^
+
+You can inject a list of ``files`` in your vms. For instance, to inject a file named myfile.txt, use
+
+.. code:: shell
+
+   kcli create vm -i centos9stream -P files=[myfile.txt] vm1
+
+The corresponding file will be located in /root
+
+Note that this file gets rendered first through jinja, by using any of the parameter provided in the command line.
+
+For instance, if myfile.txt contains:
+
+::
+
+   Welcome to the box {{ mybox }}
+
+When we launch ``kcli create vm -i centos9stream -P files=[myfile.txt] -P mybox=superbox``, the myfile.txt ends up with the following content:
+
+::
+
+   Welcome to the box superbox
+
+By using jinja constructs (whether variables, conditional or loops), we can customize completely the resulting vm
+
+Of course, we might not want all files to end up in /root. By using a more accurate spec in our files section, we can indicate where to create the file
+
+.. code:: shell
+
+   kcli create vm -i centos9stream -P nets=['{"path": "/etc/motd", "origin": "myfile.txt"}']
+
+We can also set a specific mode for the file
+
+.. code:: shell
+
+   kcli create vm -i centos9stream -P nets=['{"path": "/etc/motd", "origin": "myfile.txt", "mode": "644}']
+
+Injecting cmds/scripts
+^^^^^^^^^^^^^^^^^^^^^^
+
+You can inject a list of ``cmds`` in your vms. For instance, to install a specific package use
+
+.. code:: shell
+
+   kcli create vm -i centos9stream -P cmds=['yum -y install nc'] vm1
+
+Alternatively, you can use the keyword ``scripts`` to inject a list of script files from you current directory
+
+.. code:: shell
+
+   kcli create vm -i centos9stream -P scripts=[myscript.sh]  vm1
+
+This has the benefit that the scripts get rendered via jinja in the same way as files do, by leveraging additional parameters provided in the command line
+
+As always, both cmds and scripts can be specified, in which case cmds are run first.
+
+Empty vms
+~~~~~~~~~
+
+So far, our examples have used a cloud image by mean of the ``-i/--image`` flag but it’s not mandatory. For instance, we can create an empty vm with a complete spec
+
+.. code:: shell
+
+   kcli local create vm -P uefi=true -P start=false -P memory=20480 -P numcpus=16 -P disks=[50,50] -P nets=[default] vm2
+
+Note that when not using a cloud image, cloudinit/ignition wont be used so parameters such as cmds,scripts and files are pointless.
 
 Profiles configuration
 ----------------------
@@ -742,12 +862,12 @@ Instead of providing parameters on the command line, you can use profiles.
 
 Profiles are meant to help creating single vm with preconfigured settings (number of CPUS, memory, size of disk, network, which image to use, extra commands to run on start, whether reserving dns,….)
 
-You use the file *~/.kcli/profiles.yml* to declare your profiles. Here’s a snippet declaring the profile ``centos``:
+You use the file *~/.kcli/profiles.yml* to declare your profiles. Here’s a snippet declaring a profile named ``mycentos``:
 
 ::
 
    mycentos:
-    image: centos8stream
+    image: centos9stream
     numcpus: 2
     disks:
      - size: 10
@@ -762,8 +882,6 @@ With this section, you can use the following to create a vm
 .. code:: shell
 
    kcli create vm -p mycentos myvm
-
-Note that when you download a given cloud image, a minimal associated profile is created for you.
 
 Cloudinit/Ignition support
 --------------------------
@@ -780,36 +898,27 @@ To ease OpenShift deployment, when a node has a name in the $cluster-role-$num, 
 
 For ignition support on oVirt, you will need a version of ovirt >= 4.3.4
 
-Typical commands
-----------------
+Vm and Provider Handling
+------------------------
+
+Although the primary goal of kcli is to ease creation of vms, the tool is meant to make it easy to interact with the provider beyond that.
+
+Handling vms
+~~~~~~~~~~~~
+
+The following commands are typically used when dealing with vms
 
 -  List vms
 
    -  ``kcli list vm``
 
--  List images available for download
-
-   -  ``kcli list available-images``
-
 -  List install images
 
    -  ``kcli list images``
 
--  Create vm from a profile named base7
-
-   -  ``kcli create vm -p base7 myvm``
-
--  Create vm from profile base7 on a specific client/host named twix
-
-   -  ``kcli -C twix create vm -p base7 myvm``
-
 -  Delete vm
 
    -  ``kcli delete vm vm1``
-
--  Do the same without having to confirm
-
-   -  ``kcli delete vm vm1 --yes``
 
 -  Get detailed info on a specific vm
 
@@ -823,10 +932,6 @@ Typical commands
 
    -  ``kcli stop vm vm1``
 
--  Switch active client/host to bumblefoot
-
-   -  ``kcli switch host bumblefoot``
-
 -  Get remote-viewer console
 
    -  ``kcli console vm vm1``
@@ -834,14 +939,6 @@ Typical commands
 -  Get serial console (over TCP). Requires the vms to have been created with kcli and netcat client installed on hypervisor
 
    -  ``kcli console vm -s vm1``
-
--  Deploy multiple vms using plan x defined in x.yml file
-
-   -  ``kcli create plan -f x.yml x``
-
--  Delete all vm from plan x
-
-   -  ``kcli delete plan x``
 
 -  Add 5GB disk to vm1, using pool named images
 
@@ -863,14 +960,6 @@ Typical commands
 
    -  ``kcli ssh vm vm1``
 
--  Create a new network
-
-   -  ``kcli create network -c 192.168.7.0/24 mynet``
-
--  Create new pool
-
-   -  ``kcli create pool -t dir -p /hom/images images``
-
 -  Add a new nic from network default to vm1
 
    -  ``kcli create nic -n default vm1``
@@ -883,17 +972,19 @@ Typical commands
 
    -  ``kcli create snapshot vm -n vm1 snap1``
 
--  Get info on your kvm setup
-
-   -  ``kcli info host``
-
 -  Export vm:
 
    -  ``kcli export vm vm1``
 
--  Run workflow script named myworkflow.sh with some parameters:
+We can interact using the same constructs with other objects, such as network or (storage) pool
 
-   -  ``kcli create workflow myworkflow.sh -P xx=jimi``
+-  Create a new network
+
+   -  ``kcli create network -c 192.168.7.0/24 mynet``
+
+-  Create new pool
+
+   -  ``kcli create pool -t dir -p /hom/images images``
 
 Omitting vm’s name
 ------------------
@@ -916,7 +1007,7 @@ You can also use the following to list the vms of all your hosts/clients:
 plans
 =====
 
-You can also define *plan* which are files in yaml with a list of profiles, vms, disks, and networks and vms to deploy.
+a *plan* is a file in yaml with a list of profiles, vms, disks, and networks and vms to deploy.
 
 The following types can be used within a plan:
 
@@ -941,7 +1032,7 @@ Here’s a basic plan to get a feel of plan’s logic
 ::
 
    vm1:
-    image: centos8stream
+    image: centos9stream
     numcpus: 8
     memory: 2048
     files:
@@ -949,7 +1040,7 @@ Here’s a basic plan to get a feel of plan’s logic
       content: Welcome to the cruel world
 
    vm2:
-    image: centos8stream
+    image: centos9stream
     numcpus: 8
     memory: 2048
     cmds:
@@ -957,7 +1048,7 @@ Here’s a basic plan to get a feel of plan’s logic
 
 To run this plan, we save it as ``myplan.yml`` and we can then deploy it using ``kcli create plan -f myplan.yml``
 
-This will create two vms based on the centos8stream cloud image, with the specified hardware characteristics and injecting a specific file for vm1, or running a command to install httpd for vm2.
+This will create two vms based on the centos9stream cloud image, with the specified hardware characteristics and injecting a specific file for vm1, or running a command to install httpd for vm2.
 
 Additionally, your ssh public key gets automatically injected to the node, and the hostname of those vms get set, all through cloudinit.
 
@@ -974,7 +1065,7 @@ Let’s modify our plan to make it more dynamic
 ::
 
    parameters:
-    image: centos8stream
+    image: centos9stream
     numcpus: 8
     memory: 2048
     packages:
@@ -1591,7 +1682,7 @@ Architecture
 
 the generic cluster workflow leverages Kubeadm to create a cluster with the specified number of vms running either as ctlplanes or workers on any of the supported platforms.
 
-Those vms can either be centos8stream, fedora or ubuntu based (as per the official Kubeadm doc).
+Those vms can either be centos9stream, fedora or ubuntu based (as per the official Kubeadm doc).
 
 The first node is used for bootstrapping the cluster, through commands that run by rendering cloudinit data.
 
@@ -2029,13 +2120,13 @@ For vms, the confpool is typically specified in a nets section to consume ips. F
 
 ::
 
-   kcli create vm -i centos8stream -P nets=['{"name": "default", "confpool": "myconfpool"}']
+   kcli create vm -i centos9stream -P nets=['{"name": "default", "confpool": "myconfpool"}']
 
 You can also create a vm with a name from the previously created dbz name confpool with the following call
 
 ::
 
-   kcli create vm -i centos8stream -P confpool=dbzpool
+   kcli create vm -i centos9stream -P confpool=dbzpool
 
 In clusters
 ~~~~~~~~~~~
@@ -2059,7 +2150,7 @@ For instance, you could do something like
 
 ::
 
-   kcli create vm -i centos8stream -P ippool=ippool -P namepool=dbzpool
+   kcli create vm -i centos9stream -P ippool=ippool -P namepool=dbzpool
 
 
    ## How to use the web version

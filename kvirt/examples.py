@@ -106,33 +106,42 @@ $ kcli start plan X
 $ kcli start container mycontainer
 """
 
-vmcreate = """# Create a centos vm from image centos8stream with a random name
-$ kcli create vm -i centos8stream
+vmcreate = """# Create a centos vm from image centos9stream with a random name
+$ kcli create vm -i centos9stream
 
 # Create a centos vm named myvm customizing its memory and cpus
-$ kcli create vm -i centos8stream -P memory=4096 -P numcpus=4 myvm
+$ kcli create vm -i centos9stream -P memory=4096 -P numcpus=4 myvm
 
 # Pass disks, networks and even cmds
-$ kcli create vm -i centos8stream -P disks=[10,20] -P nets=[default] -P cmds=['yum -y install nc']
+$ kcli create vm -i centos9stream -P disks=[10,20] -P nets=[default] -P cmds=['yum -y install nc']
 
 # Force root password
-$ kcli create vm -i centos8stream -P rootpassword=hendrix
+$ kcli create vm -i centos9stream -P rootpassword=hendrix
 
 # Use more advanced information for nets, such as specifying the nic driver
-$ kcli create vm -i centos8stream -P nets=['{"name": "default", "type": "e1000"}']
+$ kcli create vm -i centos9stream -P nets=['{"name": "default", "type": "e1000"}']
 
 # Or force mac address
-$ kcli create vm -i centos8stream -P nets=['{"name": "default", "mac": "aa:aa:aa:bb:bb:90"}']
+$ kcli create vm -i centos9stream -P nets=['{"name": "default", "mac": "aa:aa:aa:bb:bb:90"}']
 
 # Or specify a custom mtu
-$ kcli create vm -i centos8stream -P nets=['{"name": "default", "mtu": 1400}']
+$ kcli create vm -i centos9stream -P nets=['{"name": "default", "mtu": 1400}']
 
 # Create a vm with static ip
-$ img=centos8stream
+$ img=centos9stream
 $ kcli create vm -i $img -P nets=['{"name":"default","ip":"192.168.122.250","netmask":"24","gateway":"192.168.122.1"}']
 
 # Use more advanced information for disks
-$ kcli create vm -i centos8stream -P disks=['{"size": 10, "interface": "sata"}']
+$ kcli create vm -i centos9stream -P disks=['{"size": 10, "interface": "sata"}']
+
+# Create a vm with a file /root/myfile.txt, rendered from current directory
+$ kcli create vm -i centos9stream -P files=[myfile.txt]
+
+# Use extra variables when rendering this file
+$ kcli create vm -i centos9stream -P nets=['{"path": "/etc/motd", "origin": "myfile.txt"}']
+
+# Create a vm with a file /root/myfile.txt, rendered from current directory
+$ kcli create vm -i centos9stream -P files=[myfile.txt]
 
 # Create a vm from a custom profile
 $ kcli create vm -p myprofile myvm
@@ -170,9 +179,6 @@ $ kcli create kube microshift mymicroshift
 
 # Create a kube microshift instance named mymicroshift providing rhn creds on the commandline
 $ kcli create kube microshift -P rhnuser=xxx@good.es -P rhnpassword=supercool mymicroshift
-
-# Create a kube microshift instance named mymicroshift based on centos8stream
-$ kcli create kube microshift -P image=cento8stream mymicroshift
 
 # Use a parameter file
 $ kcli create kube microshift --paramfile=myparameters.yml mymicroshift
@@ -221,7 +227,7 @@ $ kcli create vmdata -i rhcos46 myname
 $ kcli create vmdata -i rhcos -P scripts=[myscript.sh] -P files=[myfile.txt] zzz
 
 # Generate a cloudinit userdata
-$ kcli create vmdata -i centos8stream myname
+$ kcli create vmdata -i centos9stream myname
 """
 
 plandatacreate = """# Generate all the ignition/cloudinit userdatas from a plan file
