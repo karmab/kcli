@@ -1004,7 +1004,13 @@ You can also use the following to list the vms of all your hosts/clients:
 
 ``kcli -C all list vm``
 
-plans
+Networks
+========
+
+Storage
+=======
+
+Plans
 =====
 
 a *plan* is a file in yaml with a list of profiles, vms, disks, and networks and vms to deploy.
