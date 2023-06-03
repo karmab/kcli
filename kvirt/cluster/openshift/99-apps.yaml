@@ -19,8 +19,8 @@ spec:
       - "-c"
       - |
         #!/bin/sh
-        until [ "$UPGRADEABLE"" == "Upgradeable" ] ; do
-          UPGRADEABLE=$(oc get co operator-lifecycle-manager-catalog -o jsonpath='{.status.conditions[-1].type}')
+        until [ "$UPGRADEABLE" == "Upgradeable" ] ; do
+          UPGRADEABLE=$(kubectl get co operator-lifecycle-manager-catalog -o jsonpath='{.status.conditions[-1].type}')
           sleep 30
         done
     containers:
