@@ -304,6 +304,11 @@ def create(config, plandir, cluster, overrides):
             hypercmd += f" --hypershift-image {data['operator_image']}"
             call(hypercmd, shell=True)
             sleep(120)
+    management_image = os.popen("oc get clusterversion version -o jsonpath='{.status.desired.image}'").read()
+    prefixes = ['quay.io', 'registry.ci']
+    if not any(management_image.startswith(p) for p in prefixes):
+        call(f'bash {plandir}/disconnected.sh', shell=True)
+        os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = management_image
     data['basedir'] = '/workdir' if container_mode() else '.'
     supported_data = yaml.safe_load(os.popen("oc get cm/supported-versions -o yaml -n hypershift").read())['data']
     supported_versions = supported_versions = supported_data['supported-versions']

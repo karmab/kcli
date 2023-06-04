@@ -41,7 +41,6 @@ threaded: false
 workers_threaded: false
 tempkey: false
 namespace: clusters
-disconnected_url:
 api_lb: False
 ingress_ip:
 async: false
