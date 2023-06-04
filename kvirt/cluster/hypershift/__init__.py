@@ -218,7 +218,6 @@ def create(config, plandir, cluster, overrides):
             'operator_image': 'quay.io/hypershift/hypershift-operator:latest',
             'mce': True,
             'namespace': 'clusters',
-            'disconnected_url': None,
             'pull_secret': 'openshift_pull.json',
             'sslip': False,
             'kubevirt_ingress_service': False,
@@ -304,11 +303,14 @@ def create(config, plandir, cluster, overrides):
             hypercmd += f" --hypershift-image {data['operator_image']}"
             call(hypercmd, shell=True)
             sleep(120)
+    registry = 'quay.io'
     management_image = os.popen("oc get clusterversion version -o jsonpath='{.status.desired.image}'").read()
     prefixes = ['quay.io', 'registry.ci']
     if not any(management_image.startswith(p) for p in prefixes):
         call(f'bash {plandir}/disconnected.sh', shell=True)
         os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = management_image
+        data['registry'] = management_image.split('/')[0]
+    data['registry'] = registry
     data['basedir'] = '/workdir' if container_mode() else '.'
     supported_data = yaml.safe_load(os.popen("oc get cm/supported-versions -o yaml -n hypershift").read())['data']
     supported_versions = supported_versions = supported_data['supported-versions']
@@ -457,8 +459,6 @@ def create(config, plandir, cluster, overrides):
     async_tempdir = TemporaryDirectory()
     asyncdir = async_tempdir.name
     if notify:
-        # registry = disconnected_url or 'quay.io'
-        registry = 'quay.io'
         notifycmd = "cat /shared/results.txt"
         notifycmds, mailcontent = config.handle_notifications(cluster, notifymethods=config.notifymethods,
                                                               pushbullettoken=config.pushbullettoken,
@@ -479,8 +479,6 @@ def create(config, plandir, cluster, overrides):
                             'origin': f"{asyncdir}/99-notifications.yaml"})
     if async_install:
         if apps:
-            # registry = disconnected_url or 'quay.io'
-            registry = 'quay.io'
             autolabeller = False
             final_apps = []
             for a in apps:

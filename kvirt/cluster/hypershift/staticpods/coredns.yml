@@ -17,7 +17,7 @@ spec:
   - name: update-coredns-conf
     securityContext:
       privileged: true
-    image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/karmab/curl:{{ arch_tag }}
+    image: {{ registry }}/karmab/curl:{{ arch_tag }}
     command:
     - "/bin/sh"
     - "-c"
@@ -42,7 +42,7 @@ spec:
   - name: coredns
     securityContext:
       privileged: true
-    image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/karmab/origin-coredns:{{ arch_tag }}
+    image: {{ registry }}/karmab/origin-coredns:{{ arch_tag }}
     args:
     - "--conf"
     - "/etc/coredns/Corefile"

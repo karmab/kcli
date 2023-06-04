@@ -216,16 +216,14 @@ class Kgcp(object):
             user = common.get_user(image)
             if user == 'root':
                 user = getuser()
-            finalkeys = [f"{user}:{x}" for x in keys]
-            if enableroot:
-                finalkeys.extend([f"root:{x}" for x in keys])
-                enablerootcmds = ['sed -i "s/.*PermitRootLogin.*/PermitRootLogin yes/" /etc/ssh/sshd_config',
-                                  'systemctl restart sshd']
-                cmds = enablerootcmds + cmds
-            newval = {'key': 'ssh-keys', 'value': '\n'.join(finalkeys)}
+            newval = {'key': 'ssh-keys', 'value': f"{user}:{keys[0]}"}
             body['metadata']['items'].append(newval)
             newval = {'key': 'block-project-ssh-keys', 'value': 'TRUE'}
             body['metadata']['items'].append(newval)
+        if enableroot:
+            enablerootcmds = ['sed -i "s/.*PermitRootLogin.*/PermitRootLogin yes/" /etc/ssh/sshd_config',
+                              'systemctl restart sshd']
+            cmds = enablerootcmds + cmds
         ctlplane_node = overrides.get('gcp_hack', True) and kubetype is not None and 'ctlplane' in name
         bootstrap_node = ctlplane_node and kubetype != 'openshift' and name.endswith('ctlplane-0')
         need_gcp_hack = ctlplane_node and not bootstrap_node

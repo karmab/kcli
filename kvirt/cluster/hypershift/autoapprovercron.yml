@@ -31,7 +31,7 @@ spec:
                 echo $cert
                 kubectl certificate approve $cert
               done
-            image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/karmab/kubectl:{{ arch_tag }}
+            image: {{ registry }}/karmab/kubectl:{{ arch_tag }}
             imagePullPolicy: IfNotPresent
             name: autoapprover
             volumeMounts:
