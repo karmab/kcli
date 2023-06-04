@@ -307,9 +307,18 @@ def create(config, plandir, cluster, overrides):
     management_image = os.popen("oc get clusterversion version -o jsonpath='{.status.desired.image}'").read()
     prefixes = ['quay.io', 'registry.ci']
     if not any(management_image.startswith(p) for p in prefixes):
-        call(f'bash {plandir}/disconnected.sh', shell=True)
+        disconnected_url = management_image.split('/')[0]
+        data['registry'] = disconnected_url
+        hypershift_info = "oc adm release info --pullspecs | grep hypershift | awk '{print $2'} | cut -d@ -f2"
+        hypershift_tag = os.popen(hypershift_info).read().strip()
+        mco_info = "oc adm release info --pullspecs | grep machine-config-operator | awk '{print $2'} | cut -d@ -f2"
+        mco_tag = os.popen(mco_info).read().strip()
+        disconnected_data = {'disconnected_url': disconnected_url, 'hypershift_tag': hypershift_tag, 'mco_tag': mco_tag}
+        disconnectedfile = config.process_inputfile(cluster, f"{plandir}/disconnected.sh", overrides=disconnected_data)
+        with open(f"{clusterdir}/disconnected.sh", 'w') as f:
+            f.write(disconnectedfile)
+        call(f'bash {clusterdir}/disconnected.sh', shell=True)
         os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = management_image
-        data['registry'] = management_image.split('/')[0]
     data['registry'] = registry
     data['basedir'] = '/workdir' if container_mode() else '.'
     supported_data = yaml.safe_load(os.popen("oc get cm/supported-versions -o yaml -n hypershift").read())['data']
