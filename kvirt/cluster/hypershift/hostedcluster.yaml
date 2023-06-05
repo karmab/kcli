@@ -32,6 +32,10 @@ kind: HostedCluster
 metadata:
   name: {{ cluster }}
   namespace: {{ namespace }}
+{% if operator_image is defined %}
+  annotations:
+   hypershift.openshift.io/control-plane-operator-image: {{ operator_image }}
+{% endif %}
 spec:
   release:
     image: "{{ hostedcluster_image }}"
@@ -98,7 +102,8 @@ spec:
 {{ service() }}
 {% endif %}
 {% if ca is defined %}
-  additionalTrustBundle: disconnected-ca
+  additionalTrustBundle:
+    name: user-ca-bundle
 {% endif %}
 {% if imagecontentsources|default([]) %}
   imageContentSources:
@@ -114,10 +119,10 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   creationTimestamp: null
-  name: disconnected-ca
+  name: user-ca-bundle
   namespace: {{ namespace }}
 data:
-  config: |
-    {{ ca | certificate | replace('\n', '\n ') }}
+  ca-bundle.crt: |
+    {{ ca | certificate | replace('\n', '\n    ') }}
 ---
 {% endif %}
