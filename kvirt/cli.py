@@ -1652,7 +1652,10 @@ def create_vm(args):
         elif 'reason' in result:
             error(result['reason'])
         else:
-            print(result['data'])
+            print(result['userdata'])
+            if 'netdata' in result:
+                print("---")
+                print(result['netdata'])
     else:
         codes = []
         if 'plan' not in overrides:

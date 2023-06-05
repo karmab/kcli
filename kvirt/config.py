@@ -988,18 +988,23 @@ class Kconfig(Kbaseconfig):
                     sys.exit(1)
         if onlyassets:
             image = image or profilename
+            result = {'result': 'success'}
             if common.needs_ignition(image):
                 version = common.ignition_version(image)
                 compact = True if overrides.get('compact') else False
-                data = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
-                                       domain=domain, files=files, enableroot=enableroot, overrides=overrides,
-                                       version=version, plan=plan, image=image, compact=compact,
-                                       vmuser=vmuser)
+                userdata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
+                                           domain=domain, files=files, enableroot=enableroot, overrides=overrides,
+                                           version=version, plan=plan, image=image, compact=compact,
+                                           vmuser=vmuser)
             else:
-                data = common.cloudinit(name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
-                                        domain=domain, files=files, enableroot=enableroot, overrides=overrides,
-                                        image=image, storemetadata=storemetadata, vmuser=vmuser)[0]
-            return {'result': 'success', 'data': data}
+                userdata, metadata, netdata = common.cloudinit(name, keys=keys, cmds=cmds, nets=nets, gateway=gateway,
+                                                               dns=dns, domain=domain, files=files,
+                                                               enableroot=enableroot, overrides=overrides,
+                                                               image=image, storemetadata=storemetadata, vmuser=vmuser)
+                if netdata is not None:
+                    result['netdata'] = netdata
+            result['userdata'] = userdata
+            return result
         result = k.create(name=name, virttype=virttype, plan=plan, profile=profilename, flavor=flavor,
                           cpumodel=cpumodel, cpuflags=cpuflags, cpupinning=cpupinning, numamode=numamode, numa=numa,
                           numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool,
