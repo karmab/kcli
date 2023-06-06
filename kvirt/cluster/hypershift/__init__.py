@@ -321,7 +321,7 @@ def create(config, plandir, cluster, overrides):
         os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = management_image
         cacmd = "oc -n openshift-config get cm user-ca-bundle -o jsonpath='{.data.ca-bundle\\.crt}'"
         data['ca'] = os.popen(cacmd).read().strip()
-        data['operator_image'] = f'{disconnected_url}/openshift/release@{hypershift_tag}'
+        data['operator_disconnected_image'] = f'{disconnected_url}/openshift/release@{hypershift_tag}'
     data['registry'] = registry
     data['basedir'] = '/workdir' if container_mode() else '.'
     supported_data = yaml.safe_load(os.popen("oc get cm/supported-versions -o yaml -n hypershift").read())['data']

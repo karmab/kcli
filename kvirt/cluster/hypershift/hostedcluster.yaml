@@ -32,9 +32,9 @@ kind: HostedCluster
 metadata:
   name: {{ cluster }}
   namespace: {{ namespace }}
-{% if operator_image is defined %}
+{% if operator_disconnected_image is defined %}
   annotations:
-   hypershift.openshift.io/control-plane-operator-image: {{ operator_image }}
+   hypershift.openshift.io/control-plane-operator-image: {{ operator_disconnected_image }}
 {% endif %}
 spec:
   release:
