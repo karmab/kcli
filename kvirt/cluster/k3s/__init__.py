@@ -75,7 +75,7 @@ def create(config, plandir, cluster, overrides):
     data.update(overrides)
     data['cloud_lb'] = overrides.get('cloud_lb', platform in cloudplatforms and data['ctlplanes'] > 1)
     cloud_lb = data['cloud_lb']
-    data['cluster'] = overrides.get('cluster', cluster if cluster is not None else 'myk3s')
+    data['cluster'] = overrides.get('cluster') or cluster or 'myk3s'
     plan = cluster if cluster is not None else data['cluster']
     data['kube'] = data['cluster']
     autoscale = data['autoscale']

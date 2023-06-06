@@ -511,12 +511,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'contrail_ctl_gateway': '10.40.1.1',
             'retries': 2}
     data.update(overrides)
-    if 'cluster' in overrides:
-        clustervalue = overrides.get('cluster')
-    elif cluster is not None:
-        clustervalue = cluster
-    else:
-        clustervalue = 'myopenshift'
+    clustervalue = overrides.get('cluster') or cluster or 'myopenshift'
     if data['ctlplanes'] == 1 and data['workers'] == 0\
        and 'ctlplane_memory' not in overrides and 'memory' not in overrides:
         data['ctlplane_memory'] = 32768

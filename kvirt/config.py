@@ -1287,6 +1287,9 @@ class Kconfig(Kbaseconfig):
                     _type = installparam.get('kubetype', _type)
                     plan = installparam.get('plan', plan)
             kubes[kube] = {'type': _type, 'plan': plan, 'vms': []}
+        if self.type == 'gcp':
+            from kvirt.cluster import gke
+            kubes.update(gke.list(self))
         return kubes
 
     def create_product(self, name, repo=None, group=None, plan=None, latest=False, overrides={}):
@@ -1453,14 +1456,18 @@ class Kconfig(Kbaseconfig):
             deleteclients.update(self.extraclients)
         elif vmclients:
             deleteclients.update({cli: Kconfig(client=cli).k for cli in vmclients if cli != self.client})
+        gke = False
         hypershift = False
         assisted = False
+        clusterdir = "/fake/xxx"
         for hypervisor in deleteclients:
             c = deleteclients[hypervisor]
             for vm in sorted(c.list(), key=lambda x: x['name']):
                 name = vm['name']
                 description = vm.get('plan')
                 if description == plan:
+                    if vm.get('kubetype', 'generic') == 'gke':
+                        continue
                     if 'loadbalancer' in vm:
                         lbs = vm['loadbalancer'].split(',')
                         for lb in lbs:
@@ -1507,9 +1514,7 @@ class Kconfig(Kbaseconfig):
                                         assisted = clusterdata.get(assisted, False)
                                     domain = clusterdata.get('domain', domain)
                                     dnsclient = clusterdata.get('dnsclient')
-                            if not hypershift:
-                                pprint(f"Deleting directory {clusterdir}")
-                                rmtree(clusterdir, ignore_errors=True)
+                                    gke = kubetype == 'gke'
         if hypershift:
             kubeconfigmgmt = f"{clusterdir}/kubeconfig.mgmt"
             call(f'KUBECONFIG={kubeconfigmgmt} oc delete -f {clusterdir}/autoapprovercron.yml', shell=True)
@@ -1519,6 +1524,19 @@ class Kconfig(Kbaseconfig):
                 call('KUBECONFIG={kubeconfigmgmt} oc -n default delete all -l app=httpd-kcli', shell=True)
                 call('KUBECONFIG={kubeconfigmgmt} oc -n default delete svc httpd-kcli-svc', shell=True)
                 call('KUBECONFIG={kubeconfigmgmt} oc -n default delete pvc httpd-kcli-pvc', shell=True)
+        if gke:
+            gcpclient = None
+            if 'client' in clusterdata:
+                gcpclient = clusterdata['client']
+            elif self.type == 'gke':
+                gcpclient = self.client
+            else:
+                return {'result': 'failure', 'reason': "Deleting gke cluster requires to instantiate gcp provider"}
+            from kvirt.cluster import gke
+            currentconfig = Kconfig(client=gcpclient).k if gcpclient != self.client else self
+            zonal = clusterdata.get('zonal', True)
+            gke.delete(currentconfig, cluster, zonal)
+        if os.path.exists(clusterdir):
             pprint(f"Deleting directory {clusterdir}")
             rmtree(clusterdir, ignore_errors=True)
         if container:
@@ -1901,7 +1919,7 @@ class Kconfig(Kbaseconfig):
                 if existing_ctlplanes:
                     pprint(f"Cluster {cluster} found. skipped!")
                     continue
-                if kubetype not in ['generic', 'openshift', 'hypershift', 'microshift', 'k3s']:
+                if kubetype not in ['generic', 'openshift', 'hypershift', 'microshift', 'k3s', 'gke']:
                     warning(f"Incorrect kubetype {kubetype} specified. skipped!")
                     continue
                 if kubethreaded:
@@ -2713,6 +2731,8 @@ class Kconfig(Kbaseconfig):
             result = self.create_kube_microshift(cluster, overrides=overrides)
         elif kubetype == 'k3s':
             result = self.create_kube_k3s(cluster, overrides=overrides)
+        elif kubetype == 'gke':
+            result = self.create_kube_gke(cluster, overrides=overrides)
         else:
             result = self.create_kube_generic(cluster, overrides=overrides)
         return result
@@ -2724,6 +2744,14 @@ class Kconfig(Kbaseconfig):
             os.environ['PATH'] += ':%s' % os.getcwd()
         plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
         return kubeadm.create(self, plandir, cluster, overrides)
+
+    def create_kube_gke(self, cluster, overrides={}):
+        from kvirt.cluster import gke
+        if container_mode():
+            os.environ['PATH'] += ':/workdir'
+        else:
+            os.environ['PATH'] += ':%s' % os.getcwd()
+        return gke.create(self, cluster, overrides)
 
     def create_kube_microshift(self, cluster, overrides={}):
         if container_mode():
@@ -2764,6 +2792,7 @@ class Kconfig(Kbaseconfig):
     def delete_kube(self, cluster, overrides={}):
         hypershift = False
         assisted = False
+        gke = False
         domain = overrides.get('domain', 'karmalabs.corp')
         kubetype = overrides.get('kubetype', 'generic')
         dnsclient = None
@@ -2773,7 +2802,7 @@ class Kconfig(Kbaseconfig):
         cluster = overrides.get('cluster', cluster)
         if cluster is None or cluster == '':
             default_clusters = {'generic': 'mykube', 'hypershift': 'myhypershift', 'openshift': 'myopenshift',
-                                'k3s': 'myk3s', 'microshift': 'mymicroshift'}
+                                'k3s': 'myk3s', 'microshift': 'mymicroshift', 'gke': 'mygke'}
             cluster = default_clusters[kubetype]
         clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
         if os.path.exists(clusterdir):
@@ -2787,9 +2816,7 @@ class Kconfig(Kbaseconfig):
                         assisted = clusterdata.get('assisted', False)
                     domain = clusterdata.get('domain', domain)
                     dnsclient = clusterdata.get('dnsclient')
-            if not hypershift:
-                pprint(f"Deleting directory {clusterdir}")
-                rmtree(clusterdir)
+                    gke = kubetype == 'gke'
         deleteclients = {self.client: k}
         vmclients = []
         vmclients_file = os.path.expanduser(f'~/.kcli/vmclients_{cluster}')
@@ -2806,7 +2833,8 @@ class Kconfig(Kbaseconfig):
                 name = vm['name']
                 dnsclient = vm.get('dnsclient') or dnsclient
                 currentcluster = vm.get('kube')
-                if currentcluster is not None and currentcluster == cluster:
+                kubetype = vm.get('kubetype', 'generic')
+                if currentcluster is not None and currentcluster == cluster and kubetype != 'gke':
                     c.delete(name, snapshots=True)
                     common.delete_lastvm(name, self.client)
                     success(f"{name} deleted on {hypervisor}!")
@@ -2815,7 +2843,7 @@ class Kconfig(Kbaseconfig):
                 k.delete_service(f"{cluster}-api", k.namespace)
             if f"{cluster}-ingress" in k.list_services(k.namespace):
                 k.delete_service(f"{cluster}-ingress", k.namespace)
-        if self.type in ['aws', 'gcp', 'ibm']:
+        if self.type in ['aws', 'gcp', 'ibm'] and not gke:
             lbs = ['api']
             if kubetype not in ['k3s', 'generic']:
                 lbs.append('apps')
@@ -2837,8 +2865,20 @@ class Kconfig(Kbaseconfig):
             if not assisted and ('baremetal_iso' in clusterdata or 'baremetal_hosts' in clusterdata):
                 call(f'KUBECONFIG={kubeconfigmgmt} oc -n default delete all -l app=httpd-kcli', shell=True)
                 call(f'KUBECONFIG={kubeconfigmgmt} oc -n default delete pvc httpd-kcli-pvc', shell=True)
-            pprint(f"Deleting directory {clusterdir}")
-            rmtree(clusterdir)
+        if gke:
+            gcpclient = None
+            if 'client' in clusterdata:
+                gcpclient = clusterdata['client']
+            elif self.type == 'gcp':
+                gcpclient = self.client
+            else:
+                msg = "Deleting gke cluster requires to instantiate gcp provider"
+                error(msg)
+                return {'result': 'failure', 'reason': msg}
+            from kvirt.cluster import gke
+            currentconfig = Kconfig(client=gcpclient).k if gcpclient != self.client else self
+            zonal = clusterdata.get('zonal', True)
+            gke.delete(currentconfig, cluster, zonal)
         for confpool in self.confpools:
             ip_reservations = self.confpools[confpool].get('ip_reservations', {})
             if cluster in ip_reservations:
@@ -2852,6 +2892,9 @@ class Kconfig(Kbaseconfig):
             if cluster in cluster_baremetal_reservations:
                 del cluster_baremetal_reservations[cluster]
                 self.update_confpool(confpool, {'cluster_baremetal_reservations': cluster_baremetal_reservations})
+        if os.path.exists(clusterdir):
+            pprint(f"Deleting directory {clusterdir}")
+            rmtree(clusterdir)
         return {'result': 'success'}
 
     def scale_kube(self, cluster, kubetype, overrides={}):
@@ -2863,19 +2906,26 @@ class Kconfig(Kbaseconfig):
             result = self.scale_kube_openshift(cluster, overrides=overrides)
         elif kubetype == 'hypershift':
             result = self.scale_kube_hypershift(cluster, overrides=overrides)
+        elif kubetype == 'gke':
+            result = self.scale_kube_gke(cluster, overrides=overrides)
         return result
 
     def scale_kube_generic(self, cluster, overrides={}):
         plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
         return kubeadm.scale(self, plandir, cluster, overrides)
 
-    def scale_kube_k3s(self, cluster, overrides={}):
-        plandir = os.path.dirname(k3s.create.__code__.co_filename)
-        return k3s.scale(self, plandir, cluster, overrides)
+    def scale_kube_gke(self, cluster, overrides={}):
+        from kvirt.cluster import gke
+        plandir = os.path.dirname(gke.create.__code__.co_filename)
+        return gke.scale(self, plandir, cluster, overrides)
 
     def scale_kube_hypershift(self, cluster, overrides={}):
         plandir = os.path.dirname(hypershift.create.__code__.co_filename)
         return hypershift.scale(self, plandir, cluster, overrides)
+
+    def scale_kube_k3s(self, cluster, overrides={}):
+        plandir = os.path.dirname(k3s.create.__code__.co_filename)
+        return k3s.scale(self, plandir, cluster, overrides)
 
     def scale_kube_openshift(self, cluster, overrides={}):
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
@@ -3396,3 +3446,7 @@ class Kconfig(Kbaseconfig):
         t = threading.Thread(target=self.threaded_web_console, args=(port, name,))
         t.start()
         webbrowser.open(f"http://127.0.0.1:{port}", new=2, autoraise=True)
+
+    def info_kube_gke(self, cluster):
+        from kvirt.cluster.gke import info as gke_info
+        return gke_info(self, cluster, self.debug)

@@ -345,6 +345,8 @@ To use this provider with kcli rpm, you'll need to install (from pip):
 pip3 install google-api-python-client google-auth-httplib2 google-cloud-dns
 ```
 
+If you want to deploy GKE clusters, you will also need `google-cloud-container` library
+
 ## Aws
 
 ```
@@ -1517,11 +1519,11 @@ parameters:
 
 # Deploying Kubernetes/OpenShift clusters
 
-You can deploy generic Kubernetes (based on Kubeadm), K3s, OpenShift/OKD, Hypershift and Microshift on any platform and on an arbitrary number of control plane nodes and workers.
+You can deploy generic Kubernetes (based on Kubeadm), K3s, OpenShift/OKD, Hypershift, Microshift and GKE on any platform and on an arbitrary number of control plane nodes and workers.
 
 ## Benefits
 
-The main benefit is to abstract deployment details so that the same workflow can be used regardless of the 
+The main benefit is to abstract deployment details to have an unified workflow
 
 - create a parameter file
 - launch the deployment oneliner
@@ -1529,7 +1531,7 @@ The main benefit is to abstract deployment details so that the same workflow can
 
 Other benefits are:
 
-- easy tweaking  of vms hardware
+- easy tweaking of vms hardware
 - tuning the version to deploy
 - support for alternative CNIs
 - configuration of static networking for the nodes
@@ -1550,7 +1552,7 @@ For all the platforms, the workflow is the following:
 
 ## Getting information on available parameters
 
-For each supported platform, you can use `kcli info cluster`
+For each supported platform, you can use `kcli info cluster $clustertype`
 
 For instance, `kcli info cluster generic` will provide you all the parameters available for customization for generic Kubernetes clusters.
 
@@ -1832,6 +1834,14 @@ The procedure is the same independently of the type of cluster used.
 ```
 kcli delete kube $cluster
 ```
+
+## Deploying GKE cluster
+
+You can deploy GKE clusters using the same workflow.
+
+First, make sure your GCP provider is correctly defined then launch the workflow as usual
+
+Note that on GKE, we rely more on default values provided by the Platform
 
 ### Deploying applications on top of Kubernetes/OpenShift
 

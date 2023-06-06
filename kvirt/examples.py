@@ -174,6 +174,13 @@ $ kcli create kube generic -P ctlplanes=1 -P workers=2 mykube
 $ kcli create kube generic --paramfile=myparameters.yml mykube
 """
 
+kubegkecreate = """# Create a gke instance named mygke with default values
+$ kcli create kube gke mygke
+
+# Use a parameter file
+$ kcli create kube gke --paramfile=myparameters.yml mygke
+"""
+
 kubemicroshiftcreate = """# Create a kube microshift instance named mymicroshift with default values
 $ kcli create kube microshift mymicroshift
 
@@ -343,6 +350,14 @@ $ kcli scale cluster generic -P ctlplanes=3 -P workers=2 myclu
 
 # Alternative way to indicate workers
 $ kcli scale cluster generic --workers 3 myclu
+"""
+
+kubegkescale = """# Scale nodes from gke cluster mygke
+$ kcli scale cluster gke -P workers=3 mygke
+
+# Alternative way to indicate workers
+$ kcli scale cluster gke --workers 3 mygke
+
 """
 
 kubek3sscale = """# Scale workers from k3s cluster myclu
