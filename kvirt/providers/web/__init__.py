@@ -316,7 +316,7 @@ class Kwebclient(object):
         response = json.loads(urlopen(request, context=self.context).read())
         return response
 
-    def delete_network(self, name=None, cidr=None):
+    def delete_network(self, name=None, cidr=None, force=False):
         if name not in self.list_networks():
             return {'result': 'failure', 'reason': f"Network {name} not found"}
         machines = self.network_ports(name)

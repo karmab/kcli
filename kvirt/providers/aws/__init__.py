@@ -872,7 +872,7 @@ class Kaws(object):
             gateway.attach_to_vpc(VpcId=vpcid)
         return {'result': 'success'}
 
-    def delete_network(self, name=None, cidr=None):
+    def delete_network(self, name=None, cidr=None, force=False):
         conn = self.conn
         vpcid = None
         Filters = [{'Name': 'vpc-id', 'Values': [name]}]

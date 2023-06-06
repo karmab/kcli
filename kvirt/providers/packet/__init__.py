@@ -613,7 +613,7 @@ class Kpacket(object):
         else:
             return {'result': 'success'}
 
-    def delete_network(self, name=None, cidr=None):
+    def delete_network(self, name=None, cidr=None, force=False):
         networks = [network for network in self.conn.list_vlans(self.project) if network.id == name]
         if networks:
             networks[0].delete()

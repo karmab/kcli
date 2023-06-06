@@ -1180,7 +1180,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                                                    vlan=types.Vlan(vlan), usages=[types.NetworkUsage.VM], mtu=1500))
         return
 
-    def delete_network(self, name=None, cidr=None):
+    def delete_network(self, name=None, cidr=None, force=False):
         print("not implemented")
         return
 

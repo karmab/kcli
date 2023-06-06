@@ -897,7 +897,7 @@ class Kopenstack(object):
                 neutron.add_interface_router(router_id, {'subnet_id': subnet_id})
         return {'result': 'success'}
 
-    def delete_network(self, name=None, cidr=None):
+    def delete_network(self, name=None, cidr=None, force=False):
         neutron = self.neutron
         routers = [router for router in self.neutron.list_routers()['routers'] if router['name'] == 'kvirt']
         router_id = routers[0]['id'] if routers else None

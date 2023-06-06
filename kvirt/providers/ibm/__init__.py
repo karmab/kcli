@@ -858,7 +858,7 @@ class Kibm(object):
             return {'result': 'failure', 'reason': f'Unable to create network. Hit {e}'}
         return {'result': 'success'}
 
-    def delete_network(self, name=None, cidr=None):
+    def delete_network(self, name=None, cidr=None, force=False):
         try:
             subnets = self._get_subnets()
             for subnet in subnets:

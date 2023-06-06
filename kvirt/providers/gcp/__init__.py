@@ -822,7 +822,7 @@ class Kgcp(object):
         conn.firewalls().insert(project=project, body=firewall_body).execute()
         return {'result': 'success'}
 
-    def delete_network(self, name=None, cidr=None):
+    def delete_network(self, name=None, cidr=None, force=False):
         conn = self.conn
         project = self.project
         region = self.region

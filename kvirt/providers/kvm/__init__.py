@@ -3466,17 +3466,20 @@ class Kvirt(object):
             conn.nwfilterDefineXML(netfilterxml)
         return {'result': 'success'}
 
-    def delete_network(self, name=None, cidr=None):
+    def delete_network(self, name=None, cidr=None, force=False):
         conn = self.conn
         try:
             network = conn.networkLookupByName(name)
         except:
             return {'result': 'failure', 'reason': f"Network {name} not found"}
-        machines = self.network_ports(name)
+        vms = self.network_ports(name)
+        if vms:
+            if not force:
+                vms = ','.join(vms)
+                return {'result': 'failure', 'reason': f"Network {name} is being used by the following vms: {vms}"}
+            for vm in vms:
+                self.delete(vm)
         allowed_nets = self._get_allowed_nets(network)
-        if machines:
-            machines = ','.join(machines)
-            return {'result': 'failure', 'reason': f"Network {name} is being used by {machines}"}
         if network.isActive():
             network.destroy()
         network.undefine()

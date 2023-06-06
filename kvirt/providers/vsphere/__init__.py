@@ -1173,7 +1173,7 @@ class Ksphere:
             return {'result': 'failure', 'reason': "Not implemented yet for non dvs networks"}
         return {'result': 'success'}
 
-    def delete_network(self, name=None, cidr=None):
+    def delete_network(self, name=None, cidr=None, force=False):
         si = self.si
         rootFolder = self.rootFolder
         try:

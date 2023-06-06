@@ -1288,7 +1288,7 @@ class Kubevirt(Kubecommon):
                                              network)
         return {'result': 'success'}
 
-    def delete_network(self, name=None, cidr=None):
+    def delete_network(self, name=None, cidr=None, force=False):
         crds = self.crds
         namespace = self.namespace
         try:

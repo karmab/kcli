@@ -2912,7 +2912,7 @@ def delete_network(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     for name in names:
-        result = k.delete_network(name=name)
+        result = k.delete_network(name=name, force=args.force)
         common.handle_response(result, name, element='Network', action='deleted')
 
 
@@ -4166,6 +4166,7 @@ def cli():
     networkdelete_desc = 'Delete Network'
     networkdelete_parser = delete_subparsers.add_parser('network', description=networkdelete_desc,
                                                         help=networkdelete_desc, aliases=['net', 'nets', 'networks'])
+    networkdelete_parser.add_argument('-f', '--force', action='store_true', help='Delete any vms found on the network')
     networkdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     networkdelete_parser.add_argument('names', metavar='NETWORKS', nargs='+')
     networkdelete_parser.set_defaults(func=delete_network)
