@@ -475,6 +475,9 @@ class Kgcp(object):
         yamlinfo['flavor'] = machinetype
         if 'custom' in machinetype:
             yamlinfo['cpus'], yamlinfo['memory'] = machinetype.split('-')[1:]
+        else:
+            flavor_info = self.info_flavor(machinetype)
+            yamlinfo['cpus'], yamlinfo['memory'] = flavor_info['cpus'], flavor_info['memory']
         yamlinfo['autostart'] = vm['scheduling']['automaticRestart']
         first_nic = vm['networkInterfaces'][0]
         if self.public and 'accessConfigs' in first_nic and 'natIP' in first_nic['accessConfigs'][0]:
@@ -1080,6 +1083,13 @@ class Kgcp(object):
             for record in dnszone.list_resource_record_sets():
                 results.append([record.name, record.record_type, record.ttl, ','.join(record.rrdatas)])
         return results
+
+    def info_flavor(self, name):
+        conn = self.conn
+        project = self.project
+        zone = self.zone
+        flavor = conn.machineTypes().get(project=project, zone=zone, machineType=name).execute()
+        return {'cpus': flavor['guestCpus'], 'memory': flavor['memoryMb']}
 
     def list_flavors(self):
         conn = self.conn
