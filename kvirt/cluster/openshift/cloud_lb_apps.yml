@@ -8,5 +8,5 @@ apps.{{ cluster }}:
  - 443
  vms:
 {% for num in range(0, members) %}
- - {{ cluster }}-{{ role }}-{{ num }}
+ - {{ cluster }}-{{ role|default('ctlplane') }}-{{ num }}
 {% endfor %}

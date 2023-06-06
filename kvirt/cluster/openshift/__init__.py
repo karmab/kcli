@@ -1375,10 +1375,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_api.yml', overrides=overrides)
         if result['result'] != 'success':
             return result
-        lb_overrides = {'cluster': cluster, 'domain': domain, 'members': ctlplanes, 'role': 'master'}
-        if 'dnsclient' in overrides:
-            lb_overrides['dnsclient'] = overrides['dnsclient']
         if workers == 0:
+            lb_overrides = {'cluster': cluster, 'domain': domain, 'members': ctlplanes}
+            if 'dnsclient' in overrides:
+                lb_overrides['dnsclient'] = overrides['dnsclient']
             result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_apps.yml', overrides=lb_overrides)
             if result['result'] != 'success':
                 return result
