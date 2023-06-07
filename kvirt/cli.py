@@ -2795,7 +2795,8 @@ def ssh_vm(args):
                                 identityfile=identityfile)
     if sshcommand is not None:
         if which('ssh') is not None:
-            os.system(sshcommand)
+            code = os.WEXITSTATUS(os.system(sshcommand))
+            sys.exit(code)
         else:
             print(sshcommand)
     else:
