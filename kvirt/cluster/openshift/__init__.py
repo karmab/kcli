@@ -1219,7 +1219,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             iso_overrides.update(data)
             result = config.create_vm(sno_name, overrides=iso_overrides, onlyassets=True)
             pprint("Writing iso.ign to current dir")
-            f.write(result['data'])
+            f.write(result['userdata'])
         if config.type == 'fake':
             pprint("Storing generated iso in current dir")
             generate_rhcos_iso(k, f"{cluster}-sno", 'default', installer=True, extra_args=extra_args)
