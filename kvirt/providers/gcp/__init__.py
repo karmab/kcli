@@ -10,7 +10,11 @@ from kvirt.common import pprint, error, warning, get_ssh_pub_key
 from kvirt.defaults import UBUNTUS, METADATA_FIELDS
 from dateutil import parser as dateparser
 from getpass import getuser
-import googleapiclient.discovery
+from googleapiclient.discovery import build
+from googleapiclient.http import HttpRequest
+from google_auth_httplib2 import AuthorizedHttp
+from google.auth import default
+from httplib2 import Http
 from google.cloud import dns, storage
 import os
 import re
@@ -20,13 +24,18 @@ import webbrowser
 binary_types = ['bz2', 'deb', 'jpg', 'gz', 'jpeg', 'iso', 'png', 'rpm', 'tgz', 'zip']
 
 
-class Kgcp(object):
-    """
+def build_request(http, *args, **kwargs):
+    credentials = default(scopes=['https://www.googleapis.com/auth/cloud-platform'])[0]
+    new_http = AuthorizedHttp(credentials, http=Http())
+    return HttpRequest(new_http, *args, **kwargs)
 
-    """
+
+class Kgcp(object):
     def __init__(self, project, zone="europe-west1-b", region='europe-west1', debug=False, public=True):
-        self.conn = googleapiclient.discovery.build('compute', 'v1')
-        self.conn_beta = googleapiclient.discovery.build('compute', 'beta')
+        credentials = default(scopes=['https://www.googleapis.com/auth/cloud-platform'])[0]
+        authorized_http = AuthorizedHttp(credentials, http=Http())
+        self.conn = build('compute', 'v1', requestBuilder=build_request, http=authorized_http)
+        self.conn_beta = build('compute', 'beta', requestBuilder=build_request, http=authorized_http)
         self.project = project
         self.zone = zone
         self.region = region
@@ -371,7 +380,7 @@ class Kgcp(object):
 
     def info_host(self):
         data = {}
-        resource = googleapiclient.discovery.build('cloudresourcemanager', 'v1')
+        resource = build('cloudresourcemanager', 'v1')
         project = self.project
         zone = self.zone
         data['project'] = project
@@ -412,7 +421,7 @@ class Kgcp(object):
     def console(self, name, tunnel=False, web=False):
         project = self.project
         zone = self.zone
-        resource = googleapiclient.discovery.build('cloudresourcemanager', 'v1')
+        resource = build('cloudresourcemanager', 'v1')
         projectinfo = resource.projects().get(projectId=project).execute()
         projectnumber = projectinfo['projectNumber']
         url = f"{project}/zones/{zone}/instances/{name}?authuser=1&hl=en_US&projectNumber={projectnumber}"
