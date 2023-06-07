@@ -287,7 +287,7 @@ class Kgcp(object):
             # Enable IP Forwarding on the VM instance
             # This is needed for K8s on GCP to leverage
             # VPC native routing which is the default from
-            # K8s v1.21.0+. See: https://cloud.google.com/kubernetes-engine/docs/concepts/alias-ips#default_cluster_network_mode
+            # K8s v1.21.0+. See: https://tinyurl.com/canIpForward
             body['canIpForward'] = True
         if self.debug:
             print(body)
