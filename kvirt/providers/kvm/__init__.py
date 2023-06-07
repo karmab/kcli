@@ -1783,10 +1783,10 @@ class Kvirt(object):
         ifaces = {}
         if vm.isActive():
             try:
-                agentfaces = vm.interfaceAddresses(vir_src_agent, 0)
+                leasefaces = vm.interfaceAddresses(vir_src_lease, 0)
             except:
                 try:
-                    leasefaces = vm.interfaceAddresses(vir_src_lease, 0)
+                    agentfaces = vm.interfaceAddresses(vir_src_agent, 0)
                 except:
                     pass
             ifaces = {**agentfaces, **leasefaces}
@@ -1930,10 +1930,10 @@ class Kvirt(object):
             leasefaces = {}
             ifaces = {}
             try:
-                agentfaces = vm.interfaceAddresses(vir_src_agent, 0)
+                leasefaces = vm.interfaceAddresses(vir_src_lease, 0)
             except:
                 try:
-                    leasefaces = vm.interfaceAddresses(vir_src_lease, 0)
+                    agentfaces = vm.interfaceAddresses(vir_src_agent, 0)
                 except:
                     pass
             ifaces = {**agentfaces, **leasefaces}
