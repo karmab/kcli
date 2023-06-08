@@ -1452,6 +1452,8 @@ def list_pool(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     pools = k.list_pools()
+    if not short:
+        pools = [{'name': pool, 'path': k.get_pool_path(pool)} for pool in pools]
     output = args.global_output or args.output
     if output is not None:
         _list_output(pools, output)
@@ -1461,9 +1463,8 @@ def list_pool(args):
             poolstable.add_row([pool])
     else:
         poolstable = PrettyTable(["Pool", "Path"])
-        for pool in sorted(pools):
-            poolpath = k.get_pool_path(pool)
-            poolstable.add_row([pool, poolpath])
+        for pool in sorted(pools, key=lambda x: x['name']):
+            poolstable.add_row([pool['name'], pool['path']])
     poolstable.align["Pool"] = "l"
     print(poolstable)
 
