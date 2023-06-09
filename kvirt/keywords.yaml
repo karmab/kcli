@@ -2,10 +2,6 @@ autostart: Autostart vm (libvirt)
 base: |
   Allows you to point to a parent profile so that values are taken from parent when not found in the current profile.
   Scripts and commands are rather concatenated between default, father and children
-cache: |
-  Generates a list of vm and cache it in a file to speed up list and info vms.
-  The cache gets updated if using info vm against a vm not in the cache
-  Call delete cache to explictely clean it
 client: Allows to target a different client/host for the corresponding entry
 cloudinit: |
   Generate cloudinit data to inject to the vm.

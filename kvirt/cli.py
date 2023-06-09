@@ -67,26 +67,6 @@ def handle_parameters(parameters, paramfiles, cluster=False):
     return overrides
 
 
-def cache_vms(baseconfig, region, zone, namespace):
-    cache_file = f"{os.environ['HOME']}/.kcli/{baseconfig.client}_vms.yml"
-    if os.path.exists(cache_file):
-        with open(cache_file, 'r') as vms:
-            _list = yaml.safe_load(vms)
-        pprint("Using cache information...")
-    else:
-        config = Kconfig(client=baseconfig.client, debug=baseconfig.debug, region=region, zone=zone,
-                         namespace=namespace)
-        _list = config.k.list()
-        with open(cache_file, 'w') as c:
-            pprint(f"Caching results for {baseconfig.client}...")
-            try:
-                yaml.safe_dump(_list, c, default_flow_style=False, encoding='utf-8', allow_unicode=True,
-                               sort_keys=False)
-            except:
-                yaml.safe_dump(_list, c, default_flow_style=False, encoding='utf-8', allow_unicode=True)
-    return _list
-
-
 def valid_fqdn(name):
     if name is not None and '/' in name:
         msg = "Vm name can't include /"
@@ -171,20 +151,6 @@ def get_version(args):
 
 def get_changelog(args):
     common.get_changelog(args.diff)
-
-
-def delete_cache(args):
-    yes = args.yes
-    yes_top = args.yes_top
-    if not yes and not yes_top:
-        common.confirm("Are you sure?")
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-    cache_file = f"{os.environ['HOME']}/.kcli/{baseconfig.client}_vms.yml"
-    if os.path.exists(cache_file):
-        pprint(f"Deleting cache on {baseconfig.client}")
-        os.remove(cache_file)
-    else:
-        warning(f"No cache file found for {baseconfig.client}")
 
 
 def start_baremetal_hosts(args):
@@ -661,19 +627,10 @@ def info_vm(args):
     fields = args.fields.split(',') if args.fields is not None else []
     values = args.values
     config = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
-    if config.cache:
-        names = [common.get_lastvm(config.client)] if not args.names else args.names
-        _list = cache_vms(config, args.region, args.zone, args.namespace)
-        vms = {vm['name']: vm for vm in _list}
-    else:
-        config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
-                         namespace=args.namespace)
-        names = [common.get_lastvm(config.client)] if not args.names else args.names
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    names = [common.get_lastvm(config.client)] if not args.names else args.names
     for name in names:
-        if config.cache and name in vms:
-            data = vms[name]
-        else:
-            data = config.k.info(name, debug=args.debug)
+        data = config.k.info(name, debug=args.debug)
         if data:
             output = args.global_output or args.output
             print(common.print_info(data, output=output, fields=fields, values=values, pretty=True))
@@ -770,12 +727,9 @@ def list_vm(args):
         vmstable = PrettyTable(["Name", "Host", "Status", "Ips", "Source", "Plan", "Profile"])
         for client in args.client.split(','):
             config = Kbaseconfig(client=client, debug=args.debug, quiet=True)
-            if config.cache:
-                _list = cache_vms(config, args.region, args.zone, args.namespace)
-            else:
-                config = Kconfig(client=client, debug=args.debug, region=args.region,
-                                 zone=args.zone, namespace=args.namespace)
-                _list = config.k.list()
+            config = Kconfig(client=client, debug=args.debug, region=args.region,
+                             zone=args.zone, namespace=args.namespace)
+            _list = config.k.list()
             if output is not None:
                 _list_output(_list, output)
             for vm in _list:
@@ -802,12 +756,9 @@ def list_vm(args):
     else:
         vmstable = PrettyTable(["Name", "Status", "Ip", "Source", "Plan", "Profile"])
         config = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
-        if config.cache:
-            _list = cache_vms(config, args.region, args.zone, args.namespace)
-        else:
-            config = Kconfig(client=args.client, debug=args.debug, region=args.region,
-                             zone=args.zone, namespace=args.namespace)
-            _list = config.k.list()
+        config = Kconfig(client=args.client, debug=args.debug, region=args.region,
+                         zone=args.zone, namespace=args.namespace)
+        _list = config.k.list()
         if output is not None:
             _list_output(_list, output)
         for vm in _list:
@@ -2778,23 +2729,6 @@ def ssh_vm(args):
             and not os.path.exists("/root/.ssh/config"):
         insecure = True
     sshcommand = None
-    if baseconfig.cache:
-        _list = cache_vms(baseconfig, args.region, args.zone, args.namespace)
-        vms = [vm for vm in _list if vm['name'] == name]
-        if vms:
-            vm = vms[0]
-            ip = vm.get('ip')
-            if ip is None:
-                error(f"No ip found in cache for {name}...")
-            else:
-                if user is None:
-                    user = baseconfig.vmuser if baseconfig.vmuser is not None else vm.get('user')
-                if vmport is None:
-                    vmport = baseconfig.vmport if baseconfig.vmport is not None else vm.get('vmport')
-                sshcommand = common.ssh(name, ip=ip, user=user, local=local, remote=remote, tunnel=tunnel,
-                                        tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser,
-                                        insecure=insecure, cmd=cmd, X=X, Y=Y, D=D, debug=args.debug, vmport=vmport,
-                                        identityfile=identityfile)
     if sshcommand is None:
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
@@ -2862,23 +2796,6 @@ def scp_vm(args):
     else:
         pprint(f"Copying file {source} to {name}")
     scpcommand = None
-    if baseconfig.cache:
-        _list = cache_vms(baseconfig, args.region, args.zone, args.namespace)
-        vms = [vm for vm in _list if vm['name'] == name]
-        if vms:
-            vm = vms[0]
-            ip = vm.get('ip')
-            if ip is None:
-                error(f"No ip found in cache for {name}...")
-            else:
-                if user is None:
-                    user = baseconfig.vmuser if baseconfig.vmuser is not None else vm.get('user')
-                if vmport is None:
-                    vmport = baseconfig.vmport if baseconfig.vmport is not None else vm.get('vmport')
-                scpcommand = common.scp(name, ip=ip, user=user, source=source, destination=destination,
-                                        recursive=recursive, tunnel=tunnel, tunnelhost=tunnelhost,
-                                        tunnelport=tunnelport, tunneluser=tunneluser, debug=args.debug,
-                                        download=download, vmport=vmport, insecure=insecure, identityfile=identityfile)
     if scpcommand is None:
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
@@ -4123,11 +4040,6 @@ def cli():
     bucketdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     bucketdelete_parser.add_argument('buckets', metavar='BUCKETS', nargs='+')
     bucketdelete_parser.set_defaults(func=delete_bucket)
-
-    cachedelete_desc = 'Delete Cache'
-    cachedelete_parser = delete_subparsers.add_parser('cache', description=cachedelete_desc, help=cachedelete_desc)
-    cachedelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    cachedelete_parser.set_defaults(func=delete_cache)
 
     clusterprofiledelete_desc = 'Delete Clusterprofile'
     clusterprofiledelete_help = "Clusterprofile to delete"

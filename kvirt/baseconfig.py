@@ -16,7 +16,7 @@ from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
                             PUSHBULLETTOKEN, NOTIFYSCRIPT, SLACKTOKEN, NOTIFYCMD, NOTIFYMETHODS, SLACKCHANNEL,
                             SHAREDFOLDERS, KERNEL, INITRD, CMDLINE, PLACEMENT, YAMLINVENTORY, CPUHOTPLUG, MEMORYHOTPLUG,
                             CPUFLAGS, CPUPINNING, NUMAMODE, NUMA, PCIDEVICES, VIRTTYPE, MAILSERVER, MAILFROM, MAILTO,
-                            TPM, JENKINSMODE, RNG, VMPORT, VMUSER, VMRULES, VMRULES_STRICT, CACHE, SECURITYGROUPS,
+                            TPM, JENKINSMODE, RNG, VMPORT, VMUSER, VMRULES, VMRULES_STRICT, SECURITYGROUPS,
                             LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG, ROOTPASSWORD, WAIT, WAITCOMMAND, WAITTIMEOUT, TEMPKEY,
                             BMC_USER, BMC_PASSWORD, BMC_MODEL, KSUSHYSERVICE, WEBSERVICE)
 from ipaddress import ip_address, ip_network
@@ -216,7 +216,6 @@ class Kbaseconfig:
         defaults['vmport'] = default.get('vmport', VMPORT)
         defaults['vmrules'] = default.get('vmrules', VMRULES)
         defaults['vmrules_strict'] = default.get('vmrules_strict', VMRULES_STRICT)
-        defaults['cache'] = default.get('cache', CACHE)
         defaults['securitygroups'] = default.get('securitygroups', SECURITYGROUPS)
         defaults['rootpassword'] = default.get('rootpassword', ROOTPASSWORD)
         defaults['wait'] = default.get('wait', WAIT)
@@ -450,7 +449,6 @@ class Kbaseconfig:
         self.vmport = options.get('vmport', self.default['vmport'])
         self.vmrules = options.get('vmrules', self.default['vmrules'])
         self.vmrules_strict = options.get('vmrules_strict', self.default['vmrules_strict'])
-        self.cache = options.get('cache', self.default['cache'])
         self.securitygroups = options.get('securitygroups', self.default['securitygroups'])
         self.rootpassword = options.get('rootpassword', self.default['rootpassword'])
         self.wait = options.get('wait', self.default['wait'])
