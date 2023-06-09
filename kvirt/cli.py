@@ -629,11 +629,14 @@ def info_vm(args):
     config = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     names = [common.get_lastvm(config.client)] if not args.names else args.names
+    vm_found = False
     for name in names:
         data = config.k.info(name, debug=args.debug)
         if data:
+            vm_found = True
             output = args.global_output or args.output
             print(common.print_info(data, output=output, fields=fields, values=values, pretty=True))
+    sys.exit(0 if vm_found else 1)
 
 
 def enable_host(args):
