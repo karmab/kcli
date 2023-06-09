@@ -733,8 +733,8 @@ def _list_output(_list, output):
         print(json.dumps(_list, indent=2))
     elif output == 'name':
         if isinstance(_list, list):
-            for entry in sorted(_list, key=lambda x: x['name']):
-                print(entry['name'])
+            for entry in sorted(_list):
+                print(entry)
         else:
             for key in sorted(list(_list.keys())):
                 print(key)
