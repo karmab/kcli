@@ -8,10 +8,10 @@ from getpass import getuser
 from kvirt.config import Kconfig
 from kvirt.examples import plandatacreate, vmdatacreate, hostcreate, _list, plancreate, planinfo, productinfo, start
 from kvirt.examples import repocreate, isocreate, networkupdate
-from kvirt.examples import kubegenericcreate, kubek3screate, kubeopenshiftcreate, kubemicroshiftcreate
+from kvirt.examples import kubegenericcreate, kubek3screate, kubeopenshiftcreate, kubemicroshiftcreate, kubegkecreate
 from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsole, vmexport, niccreate, nicdelete
 from kvirt.examples import disconnectedcreate, appopenshiftcreate, plantemplatecreate, kubehypershiftcreate
-from kvirt.examples import workflowcreate, kubegenericscale, kubek3sscale, kubeopenshiftscale
+from kvirt.examples import workflowcreate, kubegenericscale, kubek3sscale, kubeopenshiftscale, kubegkescale
 from kvirt.examples import changelog, starthosts, stophosts, infohosts, ocdownload, openshiftdownload
 from kvirt.examples import networkcreate, securitygroupcreate, profilecreate, vmupdate, vmlist
 from kvirt.baseconfig import Kbaseconfig
@@ -1898,6 +1898,12 @@ def create_generic_kube(args):
     create_kube(args)
 
 
+def create_gke_kube(args):
+    """Create Gke kube"""
+    args.type = 'gke'
+    create_kube(args)
+
+
 def create_microshift_kube(args):
     """Create Microshift kube"""
     args.type = 'microshift'
@@ -1960,9 +1966,9 @@ def scale_generic_kube(args):
     scale_kube(args)
 
 
-def scale_k3s_kube(args):
-    """Scale k3s kube"""
-    args.type = 'k3s'
+def scale_gke_kube(args):
+    """Scale gke kube"""
+    args.type = 'gke'
     scale_kube(args)
 
 
@@ -1970,6 +1976,12 @@ def scale_hypershift_kube(args):
     """Scale hypershift kube"""
     args.type = 'hypershift'
     args.ctlplanes = 0
+    scale_kube(args)
+
+
+def scale_k3s_kube(args):
+    """Scale k3s kube"""
+    args.type = 'k3s'
     scale_kube(args)
 
 
@@ -2320,7 +2332,12 @@ def info_kube(args):
     openshift = kubetype == 'openshift'
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     if args.cluster is not None:
-        status = baseconfig.info_specific_kube(args.cluster, openshift)
+        if kubetype == 'gke':
+            config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
+                             namespace=args.namespace)
+            status = config.info_kube_gke(args.cluster)
+        else:
+            status = baseconfig.info_specific_kube(args.cluster, openshift)
         if status is None or not status:
             return
         elif output is not None:
@@ -2342,6 +2359,8 @@ def info_kube(args):
             baseconfig.info_kube_microshift(quiet=True)
         elif kubetype == 'k3s':
             baseconfig.info_kube_k3s(quiet=True)
+        elif kubetype == 'gke':
+            baseconfig.info_kube_gke(quiet=True)
         else:
             baseconfig.info_kube_generic(quiet=True)
 
@@ -2369,8 +2388,13 @@ def info_generic_kube(args):
     info_kube(args)
 
 
-def info_microshift_kube(args):
-    args.kubetype = 'microshift'
+def info_gke_kube(args):
+    args.kubetype = 'gke'
+    info_kube(args)
+
+
+def info_hypershift_kube(args):
+    args.kubetype = 'hypershift'
     info_kube(args)
 
 
@@ -2379,8 +2403,8 @@ def info_k3s_kube(args):
     info_kube(args)
 
 
-def info_hypershift_kube(args):
-    args.kubetype = 'hypershift'
+def info_microshift_kube(args):
+    args.kubetype = 'microshift'
     info_kube(args)
 
 
@@ -3703,16 +3727,26 @@ def cli():
                                      epilog=kubegenericcreate_epilog,
                                      formatter_class=rawhelp, aliases=['kubeadm'])
 
-    kubemicroshiftcreate_desc = 'Create Microshift Kube'
-    kubemicroshiftcreate_epilog = f"examples:\n{kubemicroshiftcreate}"
-    kubemicroshiftcreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
-    kubemicroshiftcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
-    kubemicroshiftcreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
-    kubemicroshiftcreate_parser.set_defaults(func=create_microshift_kube)
-    kubecreate_subparsers.add_parser('microshift', parents=[kubemicroshiftcreate_parser],
-                                     description=kubemicroshiftcreate_desc,
-                                     help=kubemicroshiftcreate_desc,
-                                     epilog=kubemicroshiftcreate_epilog,
+    kubegkecreate_desc = 'Create Gke Kube'
+    kubegkecreate_epilog = f"examples:\n{kubegkecreate}"
+    kubegkecreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
+    kubegkecreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
+    kubegkecreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
+    kubegkecreate_parser.set_defaults(func=create_gke_kube)
+    kubecreate_subparsers.add_parser('gke', parents=[kubegkecreate_parser], description=kubegkecreate_desc,
+                                     help=kubegkecreate_desc, epilog=kubegkecreate_epilog,
+                                     formatter_class=rawhelp)
+
+    kubehypershiftcreate_desc = 'Create Hypershift Kube'
+    kubehypershiftcreate_epilog = f"examples:\n{kubehypershiftcreate}"
+    kubehypershiftcreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
+    kubehypershiftcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
+    kubehypershiftcreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
+    kubehypershiftcreate_parser.set_defaults(func=create_hypershift_kube)
+    kubecreate_subparsers.add_parser('hypershift', parents=[kubehypershiftcreate_parser],
+                                     description=kubehypershiftcreate_desc,
+                                     help=kubehypershiftcreate_desc,
+                                     epilog=kubehypershiftcreate_epilog,
                                      formatter_class=rawhelp)
 
     kubek3screate_desc = 'Create K3s Kube'
@@ -3727,16 +3761,16 @@ def cli():
                                      epilog=kubek3screate_epilog,
                                      formatter_class=rawhelp)
 
-    kubehypershiftcreate_desc = 'Create Hypershift Kube'
-    kubehypershiftcreate_epilog = f"examples:\n{kubehypershiftcreate}"
-    kubehypershiftcreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
-    kubehypershiftcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
-    kubehypershiftcreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
-    kubehypershiftcreate_parser.set_defaults(func=create_hypershift_kube)
-    kubecreate_subparsers.add_parser('hypershift', parents=[kubehypershiftcreate_parser],
-                                     description=kubehypershiftcreate_desc,
-                                     help=kubehypershiftcreate_desc,
-                                     epilog=kubehypershiftcreate_epilog,
+    kubemicroshiftcreate_desc = 'Create Microshift Kube'
+    kubemicroshiftcreate_epilog = f"examples:\n{kubemicroshiftcreate}"
+    kubemicroshiftcreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
+    kubemicroshiftcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
+    kubemicroshiftcreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
+    kubemicroshiftcreate_parser.set_defaults(func=create_microshift_kube)
+    kubecreate_subparsers.add_parser('microshift', parents=[kubemicroshiftcreate_parser],
+                                     description=kubemicroshiftcreate_desc,
+                                     help=kubemicroshiftcreate_desc,
+                                     epilog=kubemicroshiftcreate_epilog,
                                      formatter_class=rawhelp)
 
     kubeopenshiftcreate_desc = 'Create Openshift Kube'
@@ -4492,18 +4526,12 @@ def cli():
     kubegenericinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubegenericinfo_parser.set_defaults(func=info_generic_kube)
 
-    kubemicroshiftinfo_desc = 'Info Microshift Kube'
-    kubemicroshiftinfo_parser = kubeinfo_subparsers.add_parser('microshift', description=kubemicroshiftinfo_desc,
-                                                               help=kubemicroshiftinfo_desc,
-                                                               parents=[output_parser])
-    kubemicroshiftinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
-    kubemicroshiftinfo_parser.set_defaults(func=info_microshift_kube)
-
-    kubek3sinfo_desc = 'Info K3s Kube'
-    kubek3sinfo_parser = kubeinfo_subparsers.add_parser('k3s', description=kubek3sinfo_desc, help=kubek3sinfo_desc,
+    kubegkeinfo_desc = 'Info Gke Kube'
+    kubegkeinfo_parser = kubeinfo_subparsers.add_parser('gke', description=kubegkeinfo_desc,
+                                                        help=kubegkeinfo_desc,
                                                         parents=[output_parser])
-    kubek3sinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
-    kubek3sinfo_parser.set_defaults(func=info_k3s_kube)
+    kubegkeinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
+    kubegkeinfo_parser.set_defaults(func=info_gke_kube)
 
     kubehypershiftinfo_desc = 'Info Hypershift Kube'
     kubehypershiftinfo_parser = kubeinfo_subparsers.add_parser('hypershift', description=kubehypershiftinfo_desc,
@@ -4511,6 +4539,19 @@ def cli():
                                                                parents=[output_parser])
     kubehypershiftinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubehypershiftinfo_parser.set_defaults(func=info_hypershift_kube)
+
+    kubek3sinfo_desc = 'Info K3s Kube'
+    kubek3sinfo_parser = kubeinfo_subparsers.add_parser('k3s', description=kubek3sinfo_desc, help=kubek3sinfo_desc,
+                                                        parents=[output_parser])
+    kubek3sinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
+    kubek3sinfo_parser.set_defaults(func=info_k3s_kube)
+
+    kubemicroshiftinfo_desc = 'Info Microshift Kube'
+    kubemicroshiftinfo_parser = kubeinfo_subparsers.add_parser('microshift', description=kubemicroshiftinfo_desc,
+                                                               help=kubemicroshiftinfo_desc,
+                                                               parents=[output_parser])
+    kubemicroshiftinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
+    kubemicroshiftinfo_parser.set_defaults(func=info_microshift_kube)
 
     kubeopenshiftinfo_desc = 'Info Openshift Kube'
     kubeopenshiftinfo_parser = kubeinfo_subparsers.add_parser('openshift', description=kubeopenshiftinfo_desc,
@@ -4839,15 +4880,14 @@ def cli():
                                     help=kubegenericscale_desc, aliases=['kubeadm'], epilog=kubegenericscale_epilog,
                                     formatter_class=rawhelp)
 
-    kubek3sscale_desc = 'Scale K3s Kube'
-    kubek3sscale_epilog = f"examples:\n{kubek3sscale}"
-    kubek3sscale_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
-    kubek3sscale_parser.add_argument('-c', '--ctlplanes', help='Total number of ctlplanes', type=int)
-    kubek3sscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
-    kubek3sscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='myk3s')
-    kubek3sscale_parser.set_defaults(func=scale_k3s_kube)
-    kubescale_subparsers.add_parser('k3s', parents=[kubek3sscale_parser], description=kubek3sscale_desc,
-                                    help=kubek3sscale_desc, epilog=kubek3sscale_epilog, formatter_class=rawhelp)
+    kubegkescale_desc = 'Scale Gke Kube'
+    kubegkescale_epilog = f"examples:\n{kubegkescale}"
+    kubegkescale_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
+    kubegkescale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
+    kubegkescale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='mykube')
+    kubegkescale_parser.set_defaults(func=scale_gke_kube)
+    kubescale_subparsers.add_parser('gke', parents=[kubegkescale_parser], description=kubegkescale_desc,
+                                    help=kubegkescale_desc, epilog=kubegkescale_epilog, formatter_class=rawhelp)
 
     kubehypershiftscale_desc = 'Scale Hypershift Kube'
     kubehypershiftscale_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
@@ -4857,6 +4897,16 @@ def cli():
     kubescale_subparsers.add_parser('hypershift', parents=[kubehypershiftscale_parser],
                                     description=kubehypershiftscale_desc,
                                     help=kubehypershiftscale_desc)
+
+    kubek3sscale_desc = 'Scale K3s Kube'
+    kubek3sscale_epilog = f"examples:\n{kubek3sscale}"
+    kubek3sscale_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
+    kubek3sscale_parser.add_argument('-c', '--ctlplanes', help='Total number of ctlplanes', type=int)
+    kubek3sscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
+    kubek3sscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='myk3s')
+    kubek3sscale_parser.set_defaults(func=scale_k3s_kube)
+    kubescale_subparsers.add_parser('k3s', parents=[kubek3sscale_parser], description=kubek3sscale_desc,
+                                    help=kubek3sscale_desc, epilog=kubek3sscale_epilog, formatter_class=rawhelp)
 
     kubeopenshiftscale_desc = 'Scale Openshift Kube'
     kubeopenshiftscale_epilog = f"examples:\n{kubeopenshiftscale}"

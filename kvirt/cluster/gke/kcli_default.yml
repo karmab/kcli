@@ -1,0 +1,14 @@
+info: |
+  Deploy kubernetes using gke on $nodes
+nodes: 2
+version:
+autoscaling: True
+alpha: False
+beta: False
+network: default
+flavor:
+disk_size:
+image_type:
+disk_type:
+zonal: True
+beta_apis: []

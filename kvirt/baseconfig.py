@@ -24,10 +24,10 @@ from random import choice
 from kvirt import common
 from kvirt.common import error, pprint, warning, container_mode, ssh, scp, NoAliasDumper
 from kvirt.jinjafilters import jinjafilters
-from kvirt.cluster import microshift
+from kvirt.cluster import hypershift
 from kvirt.cluster import k3s
 from kvirt.cluster import kubeadm
-from kvirt.cluster import hypershift
+from kvirt.cluster import microshift
 from kvirt.cluster import openshift
 import os
 from shutil import copytree, rmtree, which, copy2
@@ -1312,8 +1312,14 @@ class Kbaseconfig:
         inputfile = f'{plandir}/ctlplanes.yml'
         return self.info_plan(inputfile, quiet=quiet, web=web)
 
-    def info_kube_microshift(self, quiet, web=False):
-        plandir = os.path.dirname(microshift.create.__code__.co_filename)
+    def info_kube_gke(self, quiet, web=False):
+        from kvirt.cluster import gke
+        plandir = os.path.dirname(gke.create.__code__.co_filename)
+        inputfile = f'{plandir}/fake.yml'
+        return self.info_plan(inputfile, quiet=quiet, web=web)
+
+    def info_kube_hypershift(self, quiet, web=False):
+        plandir = os.path.dirname(hypershift.create.__code__.co_filename)
         inputfile = f'{plandir}/kcli_plan.yml'
         return self.info_plan(inputfile, quiet=quiet, web=web)
 
@@ -1322,8 +1328,8 @@ class Kbaseconfig:
         inputfile = f'{plandir}/ctlplanes.yml'
         return self.info_plan(inputfile, quiet=quiet, web=web)
 
-    def info_kube_hypershift(self, quiet, web=False):
-        plandir = os.path.dirname(hypershift.create.__code__.co_filename)
+    def info_kube_microshift(self, quiet, web=False):
+        plandir = os.path.dirname(microshift.create.__code__.co_filename)
         inputfile = f'{plandir}/kcli_plan.yml'
         return self.info_plan(inputfile, quiet=quiet, web=web)
 

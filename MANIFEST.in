@@ -7,6 +7,7 @@ recursive-include kvirt/web/static *
 recursive-include kvirt/web/templates *
 recursive-include kvirt/ksushy/templates *
 recursive-include kvirt/internalplans *
+recursive-include kvirt/cluster/gke *
 recursive-include kvirt/cluster/k3s *
 recursive-include kvirt/cluster/kubeadm *
 recursive-include kvirt/cluster/microshift *

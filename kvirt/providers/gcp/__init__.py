@@ -66,12 +66,11 @@ class Kgcp(object):
             else:
                 sleep(1)
                 timeout += 1
-        if 'httpErrorMessage' in check:
-            httperror = check['httpErrorMessage']
-            code = check['error']['errors'][0]["code"]
-            message = check['error']['errors'][0]["message"]
-            error(f"Got {httperror} Code {code} Error {message}")
-        return
+            if 'httpErrorMessage' in check:
+                httperror = check['httpErrorMessage']
+                code = check['error']['errors'][0]["code"]
+                message = check['error']['errors'][0]["message"]
+                error(f"Got {httperror} Code {code} Error {message}")
 
     def close(self):
         return
