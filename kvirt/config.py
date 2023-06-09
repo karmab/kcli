@@ -2916,8 +2916,7 @@ class Kconfig(Kbaseconfig):
 
     def scale_kube_gke(self, cluster, overrides={}):
         from kvirt.cluster import gke
-        plandir = os.path.dirname(gke.create.__code__.co_filename)
-        return gke.scale(self, plandir, cluster, overrides)
+        return gke.scale(self, cluster, overrides)
 
     def scale_kube_hypershift(self, cluster, overrides={}):
         plandir = os.path.dirname(hypershift.create.__code__.co_filename)

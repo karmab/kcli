@@ -20,9 +20,9 @@ def _wait_for_operation(client, location):
         if str(operation.status) == 'Status.DONE':
             done = True
         else:
+            pprint("Waiting for operation to complete")
             sleep(5)
             timeout += 5
-            pprint("Waiting for operation to complete")
         if operation.error.message != '':
             error(f"Got Error {operation.error.message}")
             break
@@ -72,7 +72,9 @@ def scale(config, cluster, overrides):
     cluster = overrides.get('cluster', cluster or 'mygke')
     project, region, zone = project_init(config)
     client = container_v1.ClusterManagerClient()
-    request = container_v1.SetNodePoolSizeRequest(node_count=workers)
+    zonal = overrides.get('zonal', True)
+    nodepool = f"projects/{project}/locations/{zone if zonal else region}/clusters/{cluster}/nodepools/{cluster}"
+    request = container_v1.SetNodePoolSizeRequest(name=nodepool, node_count=workers)
     operation = client.set_node_pool_size(request=request)
     _wait_for_operation(client, operation.self_link)
     return {'result': 'success'}

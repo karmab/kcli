@@ -1923,6 +1923,7 @@ def scale_generic_kube(args):
 def scale_gke_kube(args):
     """Scale gke kube"""
     args.type = 'gke'
+    args.ctlplanes = 0
     scale_kube(args)
 
 
