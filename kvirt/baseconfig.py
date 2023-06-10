@@ -1308,33 +1308,27 @@ class Kbaseconfig:
     def info_kube_generic(self, quiet, web=False):
         plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
         inputfile = f'{plandir}/ctlplanes.yml'
-        return self.info_plan(inputfile, quiet=quiet, web=web)
-
-    def info_kube_gke(self, quiet, web=False):
-        from kvirt.cluster import gke
-        plandir = os.path.dirname(gke.create.__code__.co_filename)
-        inputfile = f'{plandir}/fake.yml'
-        return self.info_plan(inputfile, quiet=quiet, web=web)
+        self.info_plan(inputfile, quiet=quiet, web=web)
 
     def info_kube_hypershift(self, quiet, web=False):
         plandir = os.path.dirname(hypershift.create.__code__.co_filename)
         inputfile = f'{plandir}/kcli_plan.yml'
-        return self.info_plan(inputfile, quiet=quiet, web=web)
+        self.info_plan(inputfile, quiet=quiet, web=web)
 
     def info_kube_k3s(self, quiet, web=False):
         plandir = os.path.dirname(k3s.create.__code__.co_filename)
         inputfile = f'{plandir}/ctlplanes.yml'
-        return self.info_plan(inputfile, quiet=quiet, web=web)
+        self.info_plan(inputfile, quiet=quiet, web=web)
 
     def info_kube_microshift(self, quiet, web=False):
         plandir = os.path.dirname(microshift.create.__code__.co_filename)
         inputfile = f'{plandir}/kcli_plan.yml'
-        return self.info_plan(inputfile, quiet=quiet, web=web)
+        self.info_plan(inputfile, quiet=quiet, web=web)
 
     def info_kube_openshift(self, quiet, web=False):
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
         inputfile = f'{plandir}/ctlplanes.yml'
-        return self.info_plan(inputfile, quiet=quiet, web=web)
+        self.info_plan(inputfile, quiet=quiet, web=web)
 
     def list_apps_generic(self, quiet=True):
         plandir = os.path.dirname(kubeadm.create.__code__.co_filename)

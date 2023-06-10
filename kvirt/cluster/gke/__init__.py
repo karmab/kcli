@@ -20,7 +20,7 @@ def _wait_for_operation(client, location):
         if str(operation.status) == 'Status.DONE':
             done = True
         else:
-            pprint("Waiting for operation to complete")
+            pprint("Waiting 5s for operation to complete")
             sleep(5)
             timeout += 5
         if operation.error.message != '':
@@ -48,7 +48,7 @@ def get_kubeconfig(config, cluster, zonal=True):
 
 def project_init(config):
     if config.type != 'gcp':
-        error("This workflow is only available for gcp provider")
+        error("This is only available for gcp provider")
         sys.exit(1)
     credentials = config.options.get('credentials')
     if credentials is not None:
@@ -211,3 +211,22 @@ def info(config, cluster, debug=False):
         # nodes = [f'node-{index}' for index in range(clusterinfo.current_node_count)]
         results = {'nodes': [], 'version': clusterinfo.node_pools[0].version}
     return results
+
+
+def info_service(config, zonal=True):
+    project, region, zone = project_init(config)
+    client = container_v1.ClusterManagerClient()
+    name = f"projects/{project}/locations/{zone if zonal else region}"
+    request = container_v1.GetServerConfigRequest(name=name)
+    response = client.get_server_config(request=request)
+    default_image_type = response.default_image_type
+    print(f"default_image_type: {default_image_type}")
+    valid_image_types = response.valid_image_types
+    print(f"valid_image_types: {valid_image_types}")
+    default_cluster_version = response.default_cluster_version
+    print(f"default_cluster_version: {default_cluster_version}")
+    valid_master_versions = response.valid_master_versions
+    print(f"valid_master_versions: {valid_master_versions}")
+    valid_node_versions = response.valid_node_versions
+    print(f"valid_node_versions: {valid_node_versions}")
+    return {}

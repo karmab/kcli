@@ -3446,6 +3446,13 @@ class Kconfig(Kbaseconfig):
         t.start()
         webbrowser.open(f"http://127.0.0.1:{port}", new=2, autoraise=True)
 
-    def info_kube_gke(self, cluster):
+    def info_specific_gke(self, cluster):
         from kvirt.cluster.gke import info as gke_info
         return gke_info(self, cluster, self.debug)
+
+    def info_kube_gke(self, quiet, web=False):
+        from kvirt.cluster import gke
+        plandir = os.path.dirname(gke.create.__code__.co_filename)
+        inputfile = f'{plandir}/fake.yml'
+        self.info_plan(inputfile, quiet=quiet, web=web)
+        gke.info_service(self)

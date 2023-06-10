@@ -2285,12 +2285,14 @@ def info_kube(args):
     kubetype = args.kubetype
     output = args.global_output or args.output
     openshift = kubetype == 'openshift'
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
+    if kubetype == 'gke':
+        baseconfig = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
+                             namespace=args.namespace)
+    else:
+        baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     if args.cluster is not None:
         if kubetype == 'gke':
-            config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
-                             namespace=args.namespace)
-            status = config.info_kube_gke(args.cluster)
+            status = baseconfig.info_specific_gke(args.cluster)
         else:
             status = baseconfig.info_specific_kube(args.cluster, openshift)
         if status is None or not status:
