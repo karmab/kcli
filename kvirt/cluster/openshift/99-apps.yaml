@@ -6,7 +6,7 @@ metadata:
   labels:
     app: kcli
 spec:
-  backoffLimit: 25
+  backoffLimit: 45
   template:
    spec:
     serviceAccountName: autoapprover
