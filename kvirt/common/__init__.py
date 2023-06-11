@@ -3,6 +3,7 @@
 
 from ast import literal_eval
 from datetime import datetime
+from getpass import getuser
 from hashlib import sha256
 from kvirt.jinjafilters import jinjafilters
 from kvirt.defaults import UBUNTUS, SSH_PUB_LOCATIONS
@@ -967,7 +968,9 @@ def scp(name, ip='', user=None, source=None, destination=None, recursive=None, t
 
 
 def get_user(image):
-    if 'centos-stream-genericcloud-8' in image.lower():
+    if 'gke' in image.lower():
+        user = getuser()
+    elif 'centos-stream-genericcloud-8' in image.lower():
         user = 'centos'
     elif 'centos-stream' in image.lower():
         user = 'cloud-user'
