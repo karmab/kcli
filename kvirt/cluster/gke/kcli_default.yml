@@ -2,13 +2,23 @@ info: |
   Deploy kubernetes using gke on $nodes
 nodes: 2
 version:
-autoscaling: True
+worker_version:
+autoscaling: False
+autoscaling_minimum: 
+autoscaling_maximum: 
+autopilot: False
 alpha: False
 beta: False
 network: default
 flavor:
 disk_size:
 image_type:
-disk_type:
+image:
+disk_type: pd-standard
+local_ssd_count:
 zonal: True
 beta_apis: []
+secureboot: false
+integritymonitoring: false
+confidential: false
+

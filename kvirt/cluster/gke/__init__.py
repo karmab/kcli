@@ -82,21 +82,39 @@ def scale(config, cluster, overrides):
 
 def create(config, cluster, overrides, dnsconfig=None):
     data = {'workers': 2,
-            'autoscaling': True,
+            'autoscaling': False,
+            'autoscaling_minimum': None,
+            'autoscaling_maximum': None,
+            'autopilot': False,
             'beta_apis': [],
             'network': 'default',
             'flavor': None,
             'disk_size': None,
+            'image': None,
             'image_type': None,
-            'disk_type': None,
+            'disk_type': 'pd-standard',
+            'local_ssd_count': None,
+            'spot': False,
+            'confidential': False,
+            'secureboot': False,
+            'integritymonitoring': False,
+            'preemptible': False,
             'alpha': False,
             'beta': False,
             'zonal': True,
-            'version': None}
+            'version': None,
+            'worker_version': None}
     data.update(overrides)
     workers = data['workers']
     zonal = data['zonal']
+    autopilot = data['autopilot']
+    autoscaling = data['autoscaling']
     beta_apis = data['beta_apis']
+    spot = data['spot']
+    secureboot = data['secureboot']
+    confidential = data['confidential']
+    preemptible = data['preemptible']
+    disk_type = data['disk_type']
     clustervalue = overrides.get('cluster') or cluster or 'mygke'
     plan = cluster if cluster is not None else clustervalue
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
@@ -116,9 +134,13 @@ def create(config, cluster, overrides, dnsconfig=None):
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     project, region, zone = project_init(config)
     clusterspec = {'name': cluster, 'enable_kubernetes_alpha': data['alpha']}
-    if beta_apis:
-        clusterspec['enable_k8s_beta_apis'] = beta_apis
     clusterspec['resource_labels'] = {'plan': cluster, 'kube': cluster, 'kubetype': 'gke'}
+    if 'version' in overrides:
+        clusterspec['initial_cluster_version'] = overrides['version']
+    if beta_apis:
+        clusterspec['enable_k8s_beta_apis'] = True
+    if autopilot:
+        clusterspec['autopilot'] = True
     network = data['network']
     if network != 'default':
         if network in config.k.list_networks():
@@ -128,27 +150,38 @@ def create(config, cluster, overrides, dnsconfig=None):
         else:
             msg = f'Invalid network {network}'
             return {'result': 'failure', 'reason': msg}
-    client = container_v1.ClusterManagerClient()
-    parent = f'projects/{project}/locations/{zone if zonal else region}'
-    node_pools = {'name': cluster, 'initial_node_count': workers}
-    if 'version' in overrides:
-        node_pools['initial_cluster_version'] = overrides['version']
-    nodepool_config = {}
+    nodepool = {'name': cluster, 'initial_node_count': workers}
+    worker_version = data['worker_version']
+    if worker_version is not None:
+        nodepool['version'] = overrides['worker_version']
+    if autoscaling:
+        min_node_count = data['autoscaling_minimum']
+        max_node_count = data['autoscaling_maximum']
+        nodepool['autoscaling'] = {'enable_node_autoprovisioning': True, 'min_node_count': min_node_count,
+                                   'max_node_count': max_node_count}
+    nodepool_config = {'preemptible': preemptible, 'spot': spot, 'disk_type': disk_type}
+    if secureboot:
+        integritymonitoring = data['integritymonitoring']
+        nodepool_config['shielded_instance_config'] = {'enable_secure_boot': True,
+                                                       'enable_integrity_monitoring': integritymonitoring}
+    if confidential:
+        nodepool_config['confidential_nodes'] = {'enabled': True}
     flavor = data['flavor']
     if flavor is not None:
         nodepool_config['machine_type'] = flavor
     disk_size = data['disk_size']
     if disk_size is not None:
         nodepool_config['disk_size_gb'] = disk_size
-    disk_type = data['disk_type']
-    if disk_type is not None:
-        nodepool_config['disk_type'] = disk_type
-    image_type = data['image_type']
-    if image_type is not None:
-        nodepool_config['image_type'] = image_type
-    if config:
-        node_pools['config'] = nodepool_config
-    clusterspec['node_pools'] = [node_pools]
+    image = data.get('image') or data.get('image_type')
+    if image is not None:
+        nodepool_config['image_type'] = image.upper()
+    local_ssd_count = data['local_ssd_count']
+    if local_ssd_count is not None:
+        nodepool_config['local_ssd_count'] = local_ssd_count
+    nodepool['config'] = nodepool_config
+    clusterspec['node_pools'] = [nodepool]
+    client = container_v1.ClusterManagerClient()
+    parent = f'projects/{project}/locations/{zone if zonal else region}'
     request = container_v1.CreateClusterRequest(parent=parent, cluster=clusterspec)
     operation = client.create_cluster(request=request)
     if config.debug:
@@ -226,7 +259,7 @@ def info_service(config, zonal=True):
     default_cluster_version = response.default_cluster_version
     print(f"default_cluster_version: {default_cluster_version}")
     valid_master_versions = response.valid_master_versions
-    print(f"valid_master_versions: {valid_master_versions}")
+    print(f"valid_cluster_versions: {valid_master_versions}")
     valid_node_versions = response.valid_node_versions
-    print(f"valid_node_versions: {valid_node_versions}")
+    print(f"valid_worker_versions: {valid_node_versions}")
     return {}
