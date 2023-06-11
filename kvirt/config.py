@@ -2804,6 +2804,7 @@ class Kconfig(Kbaseconfig):
             default_clusters = {'generic': 'mykube', 'hypershift': 'myhypershift', 'openshift': 'myopenshift',
                                 'k3s': 'myk3s', 'microshift': 'mymicroshift', 'gke': 'mygke'}
             cluster = default_clusters[kubetype]
+        clusterdata = {}
         clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
         if os.path.exists(clusterdir):
             parametersfile = f"{clusterdir}/kcli_parameters.yml"
@@ -2834,7 +2835,10 @@ class Kconfig(Kbaseconfig):
                 dnsclient = vm.get('dnsclient') or dnsclient
                 currentcluster = vm.get('kube')
                 kubetype = vm.get('kubetype', 'generic')
-                if currentcluster is not None and currentcluster == cluster and kubetype != 'gke':
+                if currentcluster is not None and currentcluster == cluster:
+                    if kubetype == 'gke':
+                        gke = True
+                        break
                     c.delete(name, snapshots=True)
                     common.delete_lastvm(name, self.client)
                     success(f"{name} deleted on {hypervisor}!")
