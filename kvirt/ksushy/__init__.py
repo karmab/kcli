@@ -94,12 +94,35 @@ class Ksushy():
         @app.route('/redfish/v1/Systems/<client>/<name>', method='PATCH')
         @auth_basic(credentials)
         def system_resource(client, name):
-            pprint('ignoring patch request')
+            if not self.bootonce:
+                return
             boot = request.json.get('Boot', {})
             if not boot:
                 response.status = 400
                 return 'PATCH only works for Boot'
-            return
+            target = boot.get('BootSourceOverrideTarget')
+            mode = boot.get('BootSourceOverrideMode')
+            if not target and not mode:
+                response.status = 400
+                return 'Missing the BootSourceOverrideTarget and/or BootSourceOverrideMode element'
+            else:
+                config = Kconfig(client)
+                k = config.k
+                info = k.info(name)
+                pprint('Forcing to boot from ISO by deleting primary disk')
+                try:
+                    pool = config.pool
+                    diskname = f"{name}_0.img"
+                    size = info['disks'][0]['size']
+                    interface = info['disks'][0]['format']
+                    k.stop(name)
+                    k.delete_disk(name=name, diskname=diskname, pool=pool)
+                    k.add_disk(name=name, size=size, pool=pool, interface=interface)
+                except Exception as e:
+                    response.status = 400
+                    return f'Failed to set boot from virtualcd once. Hit {e}'
+                response.status = 204
+                return ''
 
         @app.route('/redfish/v1/Systems/<client>/<name>/EthernetInterfaces')
         @auth_basic(credentials)
@@ -230,6 +253,7 @@ class Ksushy():
         self.debug = 'KSUSHY_DEBUG' in os.environ
         self.ipv6 = 'KSUSHY_IPV6' in os.environ
         self.host = '::' if self.ipv6 else '0.0.0.0'
+        self.bootonce = 'KSUSHY_BOOTONCE' in os.environ
 
     def run(self):
         data = {'host': self.host, 'port': self.port, 'debug': self.debug}
