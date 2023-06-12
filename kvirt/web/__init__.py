@@ -1255,7 +1255,7 @@ class Kweb():
                 return "consoleurl couldnt be evaluated"
 
         self.app = app
-        self.port = os.environ.get('PORT', 8000)
+        self.port = os.environ.get('KWEB_PORT', 8000)
         self.debug = 'KWEB_DEBUG' in os.environ
         self.ipv6 = 'KWEB_IPV6' in os.environ
         self.host = '::' if self.ipv6 else '0.0.0.0'

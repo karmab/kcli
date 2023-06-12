@@ -229,6 +229,7 @@ After=syslog.target
 [Service]
 Environment=HOME={home}
 Environment=PYTHONUNBUFFERED=true
+{port}
 {ipv6}
 {ssl}
 {user}
@@ -244,6 +245,7 @@ After=syslog.target
 [Service]
 Environment=HOME={home}
 Environment=PYTHONUNBUFFERED=true
+{port}
 {ipv6}
 Type=simple
 ExecStart=/usr/bin/kweb
