@@ -1814,7 +1814,7 @@ class Kbaseconfig:
                 call(cmcmd, shell=True)
         return {'result': 'success'}
 
-    def deploy_ksushy_service(self, port=9000, ssl=False, ipv6=False, user=None, password=None):
+    def deploy_ksushy_service(self, port=9000, ssl=False, ipv6=False, user=None, password=None, bootonce=False):
         if os.path.exists("/usr/lib/systemd/system/ksushy.service"):
             call("systemctl restart ksushy", shell=True)
             return
@@ -1826,7 +1826,9 @@ class Kbaseconfig:
         ipv6 = "Environment=KSUSHY_IPV6=true" if ipv6 else ''
         user = f"Environment=KSUSHY_USER={user}" if user is not None else ''
         password = f"Environment=KSUSHY_PASSWORD={password}" if password is not None else ''
-        sushydata = KSUSHYSERVICE.format(home=home, port=port, ipv6=ipv6, ssl=ssl, user=user, password=password)
+        bootonce = "Environment=KSUSHY_BOOTONCE=true" if bootonce else ''
+        sushydata = KSUSHYSERVICE.format(home=home, port=port, ipv6=ipv6, ssl=ssl, user=user, password=password,
+                                         bootonce=bootonce)
         with open("/usr/lib/systemd/system/ksushy.service", "w") as f:
             f.write(sushydata)
         call("systemctl enable --now ksushy", shell=True)

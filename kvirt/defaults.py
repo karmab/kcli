@@ -235,6 +235,7 @@ Environment=PYTHONUNBUFFERED=true
 {ssl}
 {user}
 {password}
+{bootonce}
 Type=simple
 ExecStart=/usr/bin/ksushy
 StandardOutput=syslog

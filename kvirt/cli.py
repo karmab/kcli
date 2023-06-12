@@ -3383,7 +3383,7 @@ def list_securitygroups(args):
 def create_ksushy_service(args):
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     baseconfig.deploy_ksushy_service(port=args.port, ipv6=args.ipv6, ssl=args.ssl, user=args.user,
-                                     password=args.password)
+                                     password=args.password, bootonce=args.bootonce)
 
 
 def create_web_service(args):
@@ -3954,6 +3954,7 @@ def cli():
     sushycreate_parser = create_subparsers.add_parser('sushy-service', description=sushycreate_desc,
                                                       help=sushycreate_desc, aliases=['sushy', 'ksushy',
                                                                                       'ksushy-service'])
+    sushycreate_parser.add_argument('-b', '--bootonce', action='store_true', help='Enable bootonce hack')
     sushycreate_parser.add_argument('-i', '--ipv6', action='store_true', help='Listen on ipv6')
     sushycreate_parser.add_argument('--port', help='Port where to listen', default=9000)
     sushycreate_parser.add_argument('-s', '--ssl', action='store_true', help='Enable ssl')
