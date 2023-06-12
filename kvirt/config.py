@@ -477,7 +477,7 @@ class Kconfig(Kbaseconfig):
             new_profile = os.path.basename(profile)
             vmprofiles[new_profile] = {'image': profile}
             profile = new_profile
-        elif profile in IMAGES:
+        elif profile in IMAGES or profile == 'rhcos4000':
             vmprofiles[profile] = {'image': profile}
         elif profile.startswith('rhcos-4') and profile.endswith('qcow2') and self.type not in cloudplatforms:
             vmprofiles[profile] = {'image': profile}
@@ -3090,7 +3090,7 @@ class Kconfig(Kbaseconfig):
                 if 'reason' in result:
                     error(result['reason'])
                 else:
-                    f.write(result['data'])
+                    f.write(result['userdata'])
         if iso:
             if self.type not in ['kvm', 'fake', 'kubevirt', 'vsphere', 'openstack']:
                 warning(f"Iso generation not supported on {self.type}")
