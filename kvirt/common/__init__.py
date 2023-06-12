@@ -101,14 +101,14 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
     noname = overrides.get('noname', False)
     legacy = True if image is not None and (is_7(image) or is_debian9(image)) else False
     prefix = 'eth'
-    if image is not None and (is_ubuntu(image) or is_debian10(image)):
+    if image is not None and (is_ubuntu(image) or is_debian_new(image)):
         if machine == 'pc':
             prefix = 'ens'
         elif machine == 'vsphere':
             prefix = 'ens19'
         else:
             prefix = 'enp1s'
-    dns_hack = True if image is not None and is_debian10(image) else False
+    dns_hack = True if image is not None and is_debian_new(image) else False
     netdata = {} if not legacy else ''
     bridges = {}
     vlans = {}
@@ -1567,17 +1567,11 @@ def get_values(data, element, field):
 
 
 def is_debian9(image):
-    if 'debian-9' in image.lower():
-        return True
-    else:
-        return False
+    return 'debian9' in image.lower()
 
 
-def is_debian10(image):
-    if 'debian-10' in image.lower():
-        return True
-    else:
-        return False
+def is_debian_new(image):
+    return 'debian10' in image.lower() or 'debian12' in image.lower()
 
 
 def is_ubuntu(image):
