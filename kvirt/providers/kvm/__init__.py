@@ -1953,9 +1953,12 @@ class Kvirt(object):
             poolname = pool.name()
             try:
                 pool.refresh(0)
-            except Exception as e:
-                warning(f"Hit {e} when refreshing pool {poolname}")
-                continue
+            except:
+                try:
+                    pool.refresh(0)
+                except Exception as e:
+                    warning(f"Hit {e} when refreshing pool {poolname}")
+                    continue
             poolxml = pool.XMLDesc(0)
             root = ET.fromstring(poolxml)
             for element in list(root.iter('path')):
