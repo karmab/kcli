@@ -297,6 +297,19 @@ class Kgcp(object):
             # VPC native routing which is the default from
             # K8s v1.21.0+. See: https://tinyurl.com/canIpForward
             body['canIpForward'] = True
+            serviceaccounts = []
+            for sa in overrides.get('serviceaccounts', []):
+                if isinstance(sa, str):
+                    email = f'{sa}@{self.project}.iam.gserviceaccount.com' if '@' not in sa else sa
+                    serviceaccounts.append({'email': email, 'scopes': ['https://www.googleapis.com/auth/compute']})
+                elif isinstance(sa, dict) and 'email' in sa:
+                    if 'scope' not in sa:
+                        sa['scopes'] = ['https://www.googleapis.com/auth/compute']
+                    serviceaccounts.append(sa)
+                else:
+                    warning(f"Skipping invalid sa {sa}")
+            if serviceaccounts:
+                body['serviceAccounts'] = serviceaccounts
         if self.debug:
             print(body)
         if storemetadata and overrides:
