@@ -232,15 +232,6 @@ class Kgcp(object):
             enablerootcmds = ['sed -i "s/.*PermitRootLogin.*/PermitRootLogin yes/" /etc/ssh/sshd_config',
                               'systemctl restart sshd']
             cmds = enablerootcmds + cmds
-        ctlplane_node = overrides.get('gcp_hack', True) and kubetype is not None and 'ctlplane' in name
-        bootstrap_node = ctlplane_node and kubetype != 'openshift' and name.endswith('ctlplane-0')
-        need_gcp_hack = ctlplane_node and not bootstrap_node
-        if need_gcp_hack:
-            gcpdir = os.path.dirname(Kgcp.create.__code__.co_filename)
-            overrides['kube_service'] = 'k3s' if kubetype == 'k3s' else 'kubelet'
-            files.append({"path": "/usr/local/bin/gcp-hack.sh", "origin": f'{gcpdir}/gcp-hack.sh', "mode": 755})
-            files.append({"path": "/etc/systemd/system/gcp-hack.service",
-                          "origin": f'{gcpdir}/gcp-hack.service', "mode": 644})
         if cloudinit:
             if image is not None and common.needs_ignition(image):
                 version = common.ignition_version(image)
@@ -258,8 +249,6 @@ class Kgcp(object):
                 else:
                     pkgmgr = "yum"
                 startup_script = "test -f /root/.kcli_startup && exit 0\n"
-                if need_gcp_hack:
-                    startup_script += "systemctl start gcp-hack\n"
                 startup_script += "sleep 10\nwhich cloud-init && touch /root/.kcli_startup && exit 0\n"
                 startup_script += f"{pkgmgr} install -y cloud-init\n"
                 startup_script += "systemctl enable --now cloud-init\n"
