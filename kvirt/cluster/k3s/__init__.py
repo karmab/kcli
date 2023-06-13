@@ -10,8 +10,8 @@ from string import ascii_letters, digits
 from subprocess import call
 from tempfile import NamedTemporaryFile
 import yaml
-virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere']
-cloudplatforms = ['aws', 'gcp']
+
+cloud_platforms = ['aws', 'gcp']
 
 
 def scale(config, plandir, cluster, overrides):
@@ -71,9 +71,10 @@ def scale(config, plandir, cluster, overrides):
 def create(config, plandir, cluster, overrides):
     platform = config.type
     data = {'kubetype': 'k3s', 'ctlplanes': 1, 'workers': 0, 'sdn': 'flannel', 'extra_scripts': [], 'autoscale': False,
-            'network': 'default', 'cloud_lb': None, 'cloud_api_internal': False, 'reservedns': True, 'gcp_hack': True}
+            'network': 'default', 'cloud_lb': None, 'cloud_api_internal': False, 'cloud_reservedns': True,
+            'gcp_hack': True}
     data.update(overrides)
-    data['cloud_lb'] = overrides.get('cloud_lb', platform in cloudplatforms and data['ctlplanes'] > 1)
+    data['cloud_lb'] = overrides.get('cloud_lb', platform in cloud_platforms and data['ctlplanes'] > 1)
     cloud_lb = data['cloud_lb']
     data['cluster'] = overrides.get('cluster') or cluster or 'myk3s'
     plan = cluster if cluster is not None else data['cluster']
@@ -82,13 +83,13 @@ def create(config, plandir, cluster, overrides):
     ctlplanes = data['ctlplanes']
     workers = data['workers']
     network = data['network']
-    reservedns = data['reservedns']
+    cloud_reservedns = data['cloud_reservedns']
     sdn = None if 'sdn' in overrides and overrides['sdn'] is None else data.get('sdn')
     domain = data.get('domain', 'karmalabs.corp')
     image = data.get('image', 'ubuntu2004')
     api_ip = data.get('api_ip')
     if ctlplanes > 1:
-        if platform in cloudplatforms:
+        if platform in cloud_platforms:
             if not cloud_lb:
                 msg = "Multiple ctlplanes require cloud_lb to be set to True"
                 return {'result': 'failure', 'reason': msg}
@@ -177,8 +178,8 @@ def create(config, plandir, cluster, overrides):
             os.chdir(os.path.expanduser("~/.kcli"))
             threaded = data.get('threaded', False) or data.get('workers_threaded', False)
             config.plan(plan, inputfile=f'{plandir}/workers.yml', overrides=nodes_overrides, threaded=threaded)
-    if cloud_lb and config.type in cloudplatforms:
-        if reservedns:
+    if cloud_lb and config.type in cloud_platforms:
+        if cloud_reservedns:
             config.k.delete_dns(f'api.{cluster}', domain=domain)
         if config.type == 'aws':
             data['vpcid'] = config.k.get_vpcid_of_vm(f"{cluster}-ctlplane-0")
@@ -188,7 +189,7 @@ def create(config, plandir, cluster, overrides):
     success(f"K3s cluster {cluster} deployed!!!")
     info2(f"export KUBECONFIG=$HOME/.kcli/clusters/{cluster}/auth/kubeconfig")
     info2("export PATH=$PWD:$PATH")
-    if config.type in cloudplatforms and cloud_lb and reservedns:
+    if config.type in cloud_platforms and cloud_lb and cloud_reservedns:
         wait_cloud_dns(cluster, domain)
     os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
     apps = data.get('apps', [])
@@ -214,7 +215,7 @@ def create(config, plandir, cluster, overrides):
             temp.write(autoscale_data)
             autoscalecmd = f"kubectl create -f {temp.name}"
             call(autoscalecmd, shell=True)
-    if config.type in cloudplatforms and data.get('cloud_storage', True):
+    if config.type in cloud_platforms and data.get('cloud_storage', True):
         pprint("Deploying cloud storage class")
         apply = config.type == 'aws'
         deploy_cloud_storage(config, cluster, apply=apply)
