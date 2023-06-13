@@ -132,12 +132,18 @@ def network_ip(network, num=0, version=False):
         sys.exit(1)
 
 
-def kcli_info(name, key=None):
+def kcli_info(name, key=None, client=None):
     if key is not None:
-        c = "kcli info vm -vf %s %s" % (key, name)
+        if client is not None:
+            c = "kcli --client %s info vm --values --fields %s %s" % (client, key, name)
+        else:
+            c = "kcli info vm --values --fields %s %s" % (key, name)
         result = os.popen(c).read().strip()
     else:
-        c = "kcli info vm -o yaml %s" % name
+        if client is not None:
+            c = "kcli --client %s info vm --output yaml %s" % (client, name)
+        else:
+            c = "kcli info vm --output yaml %s" % name
         result = yaml.load(os.popen(c).read())
     return result
 
