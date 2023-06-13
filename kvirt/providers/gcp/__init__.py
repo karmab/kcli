@@ -137,11 +137,13 @@ class Kgcp(object):
                 netname = net
                 netpublic = True
                 ip = None
+                dual_cidr = None
             elif isinstance(net, dict) and 'name' in net:
                 netname = net['name']
                 ip = net.get('ip')
                 alias = net.get('alias')
                 netpublic = net.get('public') or overrides.get('public') or self.public
+                dual_cidr = net.get('dual_cidr') or overrides.get('dual_cidr')
             if ips and len(ips) > index and ips[index] is not None:
                 ip = ips[index]
             newnet = {}
@@ -158,6 +160,8 @@ class Kgcp(object):
                 return {'result': 'failure', 'reason': f'{netname} not in subnets'}
             if ip is not None:
                 newnet['networkIP'] = ip
+            if dual_cidr is not None:
+                body["aliasIpRanges"] = [{"ipCidrRange": dual_cidr, "subnetworkRangeName": f"dual-{netname}"}]
             body['networkInterfaces'].append(newnet)
         body['disks'] = []
         for index, disk in enumerate(disks):
@@ -836,7 +840,6 @@ class Kgcp(object):
         operation = conn.networks().insert(project=project, body=body).execute()
         networkpath = operation["targetLink"]
         self._wait_for_operation(operation)
-        # sleep(20)
         if cidr is not None:
             try:
                 ip_network(cidr)
@@ -844,6 +847,13 @@ class Kgcp(object):
                 return {'result': 'failure', 'reason': f"Invalid Cidr {cidr}"}
             regionpath = f"https://www.googleapis.com/compute/v1/projects/{project}/regions/{region}"
             subnet_body = {'name': name, "ipCidrRange": cidr, 'network': networkpath, "region": regionpath}
+            if 'dual_cidr' in overrides:
+                dual_cidr = overrides['dual_cidr']
+                try:
+                    ip_network(dual_cidr)
+                except:
+                    return {'result': 'failure', 'reason': f"Invalid Dual Cidr {dual_cidr}"}
+                subnet_body['secondaryIpRanges'] = {"rangeName": f"dual-{name}", "ipCidrRange": dual_cidr}
             operation = conn.subnetworks().insert(region=region, project=project, body=subnet_body).execute()
             self._wait_for_operation(operation)
         allowed = {"IPProtocol": "tcp", "ports": ["22"]}
