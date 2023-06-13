@@ -1,7 +1,7 @@
 api.{{ cluster }}:
  type: loadbalancer
  internal: {{ cloud_api_internal }}
-{% if api_ip != None %}
+{% if api_ip != None and not api_ip.startswith('api') %}
  ip: {{ api_ip }}
 {% endif %}
 {% if cloud_reservedns %}
