@@ -970,9 +970,9 @@ def scp(name, ip='', user=None, source=None, destination=None, recursive=None, t
 def get_user(image):
     if 'gke' in image.lower():
         user = getuser()
-    elif 'centos-stream-genericcloud-8' in image.lower():
+    elif 'centos8stream' in image.lower():
         user = 'centos'
-    elif 'centos-stream' in image.lower():
+    elif 'centos9stream' in image.lower():
         user = 'cloud-user'
     elif 'centos' in image.lower() and not image.startswith('ibm'):
         user = 'centos'
