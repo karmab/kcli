@@ -149,19 +149,19 @@ class Kgcp(object):
             newnet = {}
             if netpublic and index == 0:
                 newnet['accessConfigs'] = [{'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}]
-            if netname in networks:
-                newnet['network'] = f'global/networks/{netname}'
-            elif netname in subnets:
+            if netname in subnets:
                 network_project = subnets[netname]['az']
                 if network_project == self.xproject:
                     use_xproject = True
                 newnet['subnetwork'] = f'projects/{network_project}/regions/{region}/subnetworks/{netname}'
+            elif netname in networks:
+                newnet['network'] = f'global/networks/{netname}'
             else:
-                return {'result': 'failure', 'reason': f'{netname} not in subnets'}
+                return {'result': 'failure', 'reason': f'{netname} not in subnets nor in networks'}
             if ip is not None:
                 newnet['networkIP'] = ip
             if dual_cidr is not None:
-                body["aliasIpRanges"] = [{"ipCidrRange": dual_cidr, "subnetworkRangeName": f"dual-{netname}"}]
+                newnet["aliasIpRanges"] = [{"ipCidrRange": dual_cidr, "subnetworkRangeName": f"dual-{netname}"}]
             body['networkInterfaces'].append(newnet)
         body['disks'] = []
         for index, disk in enumerate(disks):
