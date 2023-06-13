@@ -4,7 +4,7 @@ api.{{ cluster }}:
 {% if api_ip != None %}
  ip: {{ api_ip }}
 {% endif %}
-{% if reservedns %}
+{% if cloud_reservedns %}
  domain: {{ domain }}
 {% endif %}
  checkport: 6443

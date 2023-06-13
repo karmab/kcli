@@ -254,7 +254,9 @@ class Kvirt(object):
         if 'arch' not in overrides and image is not None and ('aarch64' in image or 'arm64' in image):
             overrides['arch'] = 'aarch64'
         capabilities = self.get_capabilities(overrides.get('arch'))
-        if 'emulator' not in capabilities:
+        if 'emulator' in overrides and which(overrides['emulator']) is not None:
+            emulator = which(overrides['emulator'])
+        elif 'emulator' not in capabilities:
             return {'result': 'failure', 'reason': "No valid emulator found for target arch"}
         else:
             emulator = capabilities['emulator']
@@ -679,7 +681,7 @@ class Kvirt(object):
                     mtuxml = f"<mtu size='{nets[index]['mtu']}'/>"
                 if 'vfio' in nets[index] and nets[index]['vfio']:
                     iommuxml = "<iommu model='intel'/>"
-                    ioapicxml = "<ioapic driver='qemu'/>"
+                    # ioapicxml = "<ioapic driver='qemu'/>"
                 if 'multiqueues' in nets[index]:
                     multiqueues = nets[index]['multiqueues']
                     if not isinstance(multiqueues, int):

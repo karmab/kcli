@@ -1206,15 +1206,15 @@ class Kgcp(object):
             self._wait_for_operation(operation)
             address = conn_beta.addresses().get(project=project, region=region, address=sane_name).execute()
             ip = address['address']
+            if domain is not None:
+                labels = {"domain": domain.replace('.', '-')}
+                if dnsclient is not None:
+                    labels["dnsclient"] = dnsclient
+                label_body = {"labelFingerprint": address['labelFingerprint'], "labels": labels}
+                conn_beta.addresses().setLabels(project=project, region=region,
+                                                resource=sane_name, body=label_body).execute()
         else:
             ipurl = ip
-        if domain is not None:
-            labels = {"domain": domain.replace('.', '-')}
-            if dnsclient is not None:
-                labels["dnsclient"] = dnsclient
-            label_body = {"labelFingerprint": address['labelFingerprint'], "labels": labels}
-            conn_beta.addresses().setLabels(project=project, region=region,
-                                            resource=sane_name, body=label_body).execute()
         pprint(f"Using load balancer ip {ip}")
         self._wait_for_operation(operation)
         forwarding_name = sane_name
