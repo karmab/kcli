@@ -3,7 +3,7 @@
 
 from kvirt.defaults import FAKECERT
 from kvirt.bottle import Bottle, request, response, jinja2_view, server_names, ServerAdapter, auth_basic
-from kvirt.common import pprint
+from kvirt.common import pprint, error
 from kvirt.config import Kconfig
 import os
 import subprocess
@@ -117,10 +117,12 @@ class Ksushy():
                     interface = info['disks'][0]['format']
                     k.stop(name)
                     k.delete_disk(name=name, diskname=diskname, pool=pool)
-                    k.add_disk(name=name, size=size, pool=pool, interface=interface)
+                    k.add_disk(name=name, size=size, pool=pool, interface=interface, diskname=diskname)
                 except Exception as e:
+                    msg = f'Failed to set boot from virtualcd once. Hit {e}'
+                    error(msg)
                     response.status = 400
-                    return f'Failed to set boot from virtualcd once. Hit {e}'
+                    return msg
                 response.status = 204
                 return ''
 

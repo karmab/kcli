@@ -1004,7 +1004,7 @@ class Ksphere:
         return pool
 
     def add_disk(self, name, size=1, pool=None, thin=True, image=None, shareable=False, existing=None,
-                 interface='virtio', novm=False, overrides={}):
+                 interface='virtio', novm=False, overrides={}, diskname=None):
         si = self.si
         dc = self.dc
         vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder

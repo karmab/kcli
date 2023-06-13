@@ -674,7 +674,7 @@ class Kibm(object):
         print("not implemented")
 
     def add_disk(self, name, size, pool=None, thin=True, image=None,
-                 shareable=False, existing=None, interface='virtio'):
+                 shareable=False, existing=None, interface='virtio', diskname=None):
         print("not implemented")
 
     def delete_disk(self, name, diskname, pool=None, novm=False):

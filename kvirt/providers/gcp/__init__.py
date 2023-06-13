@@ -726,7 +726,7 @@ class Kgcp(object):
         return
 
     def add_disk(self, name, size, pool=None, thin=True, image=None, shareable=False, existing=None,
-                 interface='virtio', novm=False, overrides={}):
+                 interface='virtio', novm=False, overrides={}, diskname=None):
         conn = self.conn
         project = self.project
         zone = self.zone

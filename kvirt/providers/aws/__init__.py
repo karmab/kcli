@@ -760,7 +760,7 @@ class Kaws(object):
         return
 
     def add_disk(self, name, size, pool=None, thin=True, image=None, shareable=False, existing=None,
-                 interface='virtio', novm=False, overrides={}):
+                 interface='virtio', novm=False, overrides={}, diskname=None):
         conn = self.conn
         df = {'InstanceIds': [name]} if name.startswith('i-') else {'Filters': [{'Name': "tag:Name", 'Values': [name]}]}
         try:

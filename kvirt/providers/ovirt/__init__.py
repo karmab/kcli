@@ -842,7 +842,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         return
 
     def add_disk(self, name, size, pool=None, thin=True, image=None,
-                 shareable=False, existing=None, interface='virtio', novm=False, overrides={}):
+                 shareable=False, existing=None, interface='virtio', novm=False, overrides={}, diskname=None):
         size *= 2**30
         system_service = self.conn.system_service()
         sds_service = system_service.storage_domains_service()

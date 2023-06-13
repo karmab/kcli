@@ -229,7 +229,7 @@ class Kwebclient(object):
         print("not implemented")
 
     def add_disk(self, name, size=1, pool=None, thin=True, image=None, shareable=False, existing=None,
-                 interface='virtio', novm=False, overrides={}):
+                 interface='virtio', novm=False, overrides={}, diskname=None):
         if not self.exists(name):
             error(f"VM {name} not found")
             return {'result': 'failure', 'reason': f"VM {name} not found"}

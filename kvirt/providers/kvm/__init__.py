@@ -2817,7 +2817,7 @@ class Kvirt(object):
         return diskpath
 
     def add_disk(self, name, size=1, pool=None, thin=True, image=None, shareable=False, existing=None,
-                 interface='virtio', novm=False, overrides={}):
+                 interface='virtio', novm=False, overrides={}, diskname=None):
         conn = self.conn
         diskformat = 'qcow2'
         diskbus = interface
@@ -2859,7 +2859,11 @@ class Kvirt(object):
             else:
                 virtio_index += 1
             currentdisk += 1
-        diskindex = currentdisk
+        if diskname is not None:
+            diskindex = int(os.path.splitext(diskname)[0].split('_')[-1])
+            virtio_index, scsi_index, ide_index = diskindex, diskindex, diskindex
+        else:
+            diskindex = currentdisk
         if interface == 'scsi':
             diskdev = f"sd{string.ascii_lowercase[scsi_index]}"
         elif interface == 'ide':

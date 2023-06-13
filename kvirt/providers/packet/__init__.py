@@ -509,7 +509,7 @@ class Kpacket(object):
         return volume.id
 
     def add_disk(self, name, size, pool=None, thin=True, image=None,
-                 shareable=False, existing=None, interface='virtio', novm=False, overrides={}):
+                 shareable=False, existing=None, interface='virtio', novm=False, overrides={}, diskname=None):
         devices = [d for d in self.conn.list_devices(self.project) if d.hostname == name]
         if devices:
             device = devices[0]
