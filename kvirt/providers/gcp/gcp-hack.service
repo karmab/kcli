@@ -1,9 +1,0 @@
-[Unit]
-Description=Update GCP routes for forwarded IPs.
-After=network.target
-
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/gcp-hack.sh
-[Install]
-WantedBy=multi-user.target
