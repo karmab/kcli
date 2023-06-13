@@ -853,7 +853,7 @@ class Kgcp(object):
                     ip_network(dual_cidr)
                 except:
                     return {'result': 'failure', 'reason': f"Invalid Dual Cidr {dual_cidr}"}
-                subnet_body['secondaryIpRanges'] = {"rangeName": f"dual-{name}", "ipCidrRange": dual_cidr}
+                subnet_body['secondaryIpRanges'] = [{"rangeName": f"dual-{name}", "ipCidrRange": dual_cidr}]
             operation = conn.subnetworks().insert(region=region, project=project, body=subnet_body).execute()
             self._wait_for_operation(operation)
         allowed = {"IPProtocol": "tcp", "ports": ["22"]}
@@ -895,8 +895,6 @@ class Kgcp(object):
         nets = conn.networks().list(project=project).execute()
         nets_items = nets.get('items', [])
         for net in nets_items:
-            if self.debug:
-                print(net)
             networkname = net['name']
             cidr = net['IPv4Range'] if 'IPv4Range' in net else ''
             dhcp = True
@@ -915,7 +913,22 @@ class Kgcp(object):
         return networks
 
     def info_network(self, name):
+        project = self.project
+        region = self.region
         networkinfo = common.info_network(self, name)
+        if self.debug and networkinfo:
+            network = self.conn.networks().get(project=project, network=name).execute()
+            print(network)
+        try:
+            subnet = self.conn.subnetworks().get(region=region, project=project, subnetwork=name).execute()
+            if self.debug:
+                print(subnet)
+            if networkinfo['cidr'] == '':
+                networkinfo['cidr'] = subnet['ipCidrRange']
+                if 'secondaryIpRanges' in subnet:
+                    networkinfo['dual_cidr'] = subnet['secondaryIpRanges'][0]['ipCidrRange']
+        except:
+            pass
         return networkinfo
 
     def list_subnets(self):
