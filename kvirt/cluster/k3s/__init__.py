@@ -71,8 +71,7 @@ def scale(config, plandir, cluster, overrides):
 def create(config, plandir, cluster, overrides):
     platform = config.type
     data = {'kubetype': 'k3s', 'ctlplanes': 1, 'workers': 0, 'sdn': 'flannel', 'extra_scripts': [], 'autoscale': False,
-            'network': 'default', 'cloud_lb': None, 'cloud_api_internal': False, 'cloud_reservedns': True,
-            'gcp_hack': True}
+            'network': 'default', 'cloud_lb': None, 'cloud_api_internal': False, 'cloud_reservedns': True}
     data.update(overrides)
     data['cloud_lb'] = overrides.get('cloud_lb', platform in cloud_platforms and data['ctlplanes'] > 1)
     cloud_lb = data['cloud_lb']
