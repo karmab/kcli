@@ -1778,20 +1778,9 @@ class Kvirt(object):
             yamlinfo['kubetype'] = kubetype
         if creationdate is not None:
             yamlinfo['creationdate'] = creationdate
-        agentfaces = {}
-        leasefaces = {}
-        ifaces = {}
-        if vm.isActive():
-            try:
-                agentfaces = vm.interfaceAddresses(vir_src_agent, 0)
-            except:
-                try:
-                    leasefaces = vm.interfaceAddresses(vir_src_lease, 0)
-                except:
-                    pass
-            ifaces = {**agentfaces, **leasefaces}
         interfaces = list(root.iter('interface'))
         macs = []
+        bridged = False
         for index, element in enumerate(interfaces):
             networktype = element.get('type').replace('network', 'routed')
             device = f"eth{index}"
@@ -1801,25 +1790,31 @@ class Kvirt(object):
                 network = 'user'
             elif networktype == 'bridge':
                 network = element.find('source').get('bridge')
+                bridged = True
             else:
                 network = element.find('source').get('network')
             yamlinfo['nets'].append({'device': device, 'mac': mac, 'net': network, 'type': networktype})
         all_ips = [ip] if ip is not None else []
-        if vm.isActive() and ifaces:
-            ips = []
-            for mac in macs:
-                for x in ifaces:
-                    if ifaces[x]['hwaddr'] == mac and ifaces[x]['addrs'] is not None:
-                        for entry in ifaces[x]['addrs']:
-                            if entry['addr'].startswith('fe80::') or entry['addr'].startswith('169.254.169'):
-                                continue
-                            ip = entry['addr']
-                            ips.append(ip)
-                            all_ips.append(ip)
-            if ips and 'ip' not in yamlinfo:
-                ip4s = [i for i in ips if ':' not in i]
-                ip6s = [i for i in ips if i not in ip4s]
-                yamlinfo['ip'] = ip4s[0] if ip4s else ip6s[0]
+        if vm.isActive():
+            try:
+                ifaces = vm.interfaceAddresses(vir_src_agent if bridged else vir_src_lease, 0)
+            except:
+                ifaces = {}
+            if ifaces:
+                ips = []
+                for mac in macs:
+                    for x in ifaces:
+                        if ifaces[x]['hwaddr'] == mac and ifaces[x]['addrs'] is not None:
+                            for entry in ifaces[x]['addrs']:
+                                if entry['addr'].startswith('fe80::') or entry['addr'].startswith('169.254.169'):
+                                    continue
+                                ip = entry['addr']
+                                ips.append(ip)
+                                all_ips.append(ip)
+                if ips and 'ip' not in yamlinfo:
+                    ip4s = [i for i in ips if ':' not in i]
+                    ip6s = [i for i in ips if i not in ip4s]
+                    yamlinfo['ip'] = ip4s[0] if ip4s else ip6s[0]
         if len(all_ips) > 1:
             yamlinfo['ips'] = all_ips
         pcidevices = []
@@ -1905,6 +1900,7 @@ class Kvirt(object):
             return None
         else:
             mac = None
+            bridged = False
             interfaces = list(root.iter('interface'))
             for element in interfaces:
                 networktype = element.get('type')
@@ -1914,6 +1910,7 @@ class Kvirt(object):
                     continue
                 if networktype == 'bridge':
                     network = element.find('source').get('bridge')
+                    bridged = True
                 else:
                     network = element.find('source').get('network')
                     try:
@@ -1926,17 +1923,10 @@ class Kvirt(object):
                                 return host.get('ip')
                     except:
                         continue
-            agentfaces = {}
-            leasefaces = {}
-            ifaces = {}
             try:
-                agentfaces = vm.interfaceAddresses(vir_src_agent, 0)
+                ifaces = vm.interfaceAddresses(vir_src_agent if bridged else vir_src_lease, 0)
             except:
-                try:
-                    leasefaces = vm.interfaceAddresses(vir_src_lease, 0)
-                except:
-                    pass
-            ifaces = {**agentfaces, **leasefaces}
+                ifaces = {}
             ips = []
             for x in ifaces:
                 if ifaces[x]['hwaddr'] == mac and ifaces[x]['addrs'] is not None:
