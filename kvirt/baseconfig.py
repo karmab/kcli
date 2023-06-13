@@ -1815,9 +1815,7 @@ class Kbaseconfig:
         return {'result': 'success'}
 
     def deploy_ksushy_service(self, port=9000, ssl=False, ipv6=False, user=None, password=None, bootonce=False):
-        if os.path.exists("/usr/lib/systemd/system/ksushy.service"):
-            call("systemctl restart ksushy", shell=True)
-            return
+        update = os.path.exists("/usr/lib/systemd/system/ksushy.service")
         home = os.environ.get('HOME', '/root')
         if ssl:
             warning("ssl support requires installing manually pyopenssl and cherrypy")
@@ -1831,19 +1829,19 @@ class Kbaseconfig:
                                          bootonce=bootonce)
         with open("/usr/lib/systemd/system/ksushy.service", "w") as f:
             f.write(sushydata)
-        call("systemctl enable --now ksushy", shell=True)
+        cmd = "systemctl restart ksushy" if update else "systemctl enable --now ksushy"
+        call(cmd, shell=True)
 
     def deploy_web_service(self, port=8000, ssl=False, ipv6=False):
-        if os.path.exists("/usr/lib/systemd/system/kweb.service"):
-            call("systemctl restart kweb", shell=True)
-            return
+        update = os.path.exists("/usr/lib/systemd/system/kweb.service")
         home = os.environ.get('HOME', '/root')
         port = f"Environment=KWEB_PORT={port}" if port != 8000 else ''
         ipv6 = "Environment=KWEB_IPV6=true" if ipv6 else ''
         webdata = WEBSERVICE.format(home=home, port=port, ipv6=ipv6, ssl=ssl)
         with open("/usr/lib/systemd/system/kweb.service", "w") as f:
             f.write(webdata)
-        call("systemctl enable --now kweb", shell=True)
+        cmd = "systemctl restart kweb" if update else "systemctl enable --now kweb"
+        call(cmd, shell=True)
 
     def get_vip_from_confpool(self, cluster, confpool, overrides):
         if confpool not in self.confpools:

@@ -2029,6 +2029,10 @@ you can check the [swagger spec](https://petstore.swagger.io/?url=https://raw.gi
 
 ksushy provides a REST interface to interact with vms using Redfish. This provides a functionality similar to sushy-emulator but extending it to more providers (typically Vsphere, Kubevirt and oVirt) and through more friendly urls.
 
+### requirements
+
+ksushy is bundled within kcli but ssl support requires installing manually cherrypy and pyopenssl package
+
 ### Deploy ksushy service
 
 ksushy can be launched manually for testing purposes but the following command creates a systemd unit instead, listening on port 9000. The call accepts different flags to:

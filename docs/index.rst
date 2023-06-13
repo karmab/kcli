@@ -2189,6 +2189,13 @@ ksushy
 
 ksushy provides a REST interface to interact with vms using Redfish. This provides a functionality similar to sushy-emulator but extending it to more providers (typically Vsphere, Kubevirt and oVirt) and through more friendly urls.
 
+.. _requirements-1:
+
+requirements
+~~~~~~~~~~~~
+
+ksushy is bundled within kcli but ssl support requires installing manually cherrypy and pyopenssl package
+
 Deploy ksushy service
 ~~~~~~~~~~~~~~~~~~~~~
 
