@@ -65,6 +65,7 @@ management_api_ip:
 management_ingress_ip:
 hosted_version:
 hosted_tag:
+hosted_ha: false
 autoscale: false
 assisted: false
 calico_version:

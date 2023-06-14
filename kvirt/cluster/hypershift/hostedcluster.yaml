@@ -38,7 +38,7 @@ metadata:
 {% endif %}
 spec:
   release:
-    image: "{{ hostedcluster_image }}"
+    image: "{{ hosted_image }}"
   dns:
     baseDomain: {{ domain }}
   etcd:
@@ -54,6 +54,8 @@ spec:
   sshKey:
     name: {{ cluster }}-ssh-key
   fips: {{ fips }}
+  controllerAvailabilityPolicy: {{ 'HighlyAvailable' if hosted_ha else 'SingleReplica' }}
+  infrastructureAvailabilityPolicy: {{ 'HighlyAvailable' if hosted_ha else 'SingleReplica' }}
   networking:
     clusterNetwork:
     - cidr: {{ cluster_network_ipv4 }}

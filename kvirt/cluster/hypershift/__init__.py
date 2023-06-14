@@ -228,6 +228,9 @@ def create(config, plandir, cluster, overrides):
             'mce_assisted': False,
             'assisted': False,
             'calico_version': None,
+            'hosted_tag': None,
+            'hosted_ha': False,
+            'hosted_version': None,
             'retries': 3}
     data.update(overrides)
     retries = data.get('retries')
@@ -556,12 +559,11 @@ def create(config, plandir, cluster, overrides):
         cmcmd = f"oc create -f {clusterdir}/assisted_infra.yml"
         call(cmcmd, shell=True)
     if 'OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE' in os.environ:
-        assetsdata['hostedcluster_image'] = os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE']
+        assetsdata['hosted_image'] = os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE']
     else:
-        hosted_version = data.get('hosted_version') or version
-        hosted_tag = data.get('hosted_tag') or tag
-        assetsdata['hostedcluster_image'] = offline_image(version=hosted_version, tag=hosted_tag,
-                                                          pull_secret=pull_secret)
+        hosted_version = data['hosted_version'] or version
+        hosted_tag = data['hosted_tag'] or tag
+        assetsdata['hosted_image'] = offline_image(version=hosted_version, tag=hosted_tag, pull_secret=pull_secret)
     hostedclusterfile = config.process_inputfile(cluster, f"{plandir}/hostedcluster.yaml", overrides=assetsdata)
     with open(f"{clusterdir}/hostedcluster.yaml", 'w') as f:
         f.write(hostedclusterfile)
