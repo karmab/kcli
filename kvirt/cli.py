@@ -1699,9 +1699,14 @@ def create_vmdisk(args):
         pprint(f"Adding disk to {name}...")
     if force:
         diskname = f"{name}_0.img"
-        pprint(f"Deleting primary disk {diskname}")
-        k.delete_disk(name=name, diskname=diskname, pool=pool, novm=novm)
-    k.add_disk(name=name, size=size, pool=pool, image=image, interface=interface, novm=novm, overrides=overrides)
+        info = k.info(name)
+        size = info['disks'][0]['size']
+        interface = info['disks'][0]['format']
+        pprint(f"Recreating primary disk {diskname}")
+        k.delete_disk(name=name, diskname=diskname, pool=pool)
+        k.add_disk(name=name, size=size, pool=pool, interface=interface, diskname=diskname)
+    else:
+        k.add_disk(name=name, size=size, pool=pool, image=image, interface=interface, novm=novm, overrides=overrides)
 
 
 def delete_vmdisk(args):
