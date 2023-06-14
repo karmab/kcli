@@ -1199,19 +1199,21 @@ class Kgcp(object):
             msg = "Creating a load balancer requires to specify some vms"
             error(msg)
             return {'result': 'failure', 'reason': msg}
-        for vm in vms:
-            if not self.exists(vm):
-                msg = f"Vm {vm} not found"
-                error(msg)
-                return {'result': 'failure', 'reason': msg}
+        instancegroup = None
         for index, vm in enumerate(vms):
-            update = self.update_metadata(vm, 'loadbalancer', sane_name, append=True)
-            if update == 0:
-                instances.append({"instance": f"{vmpath}/{vm}"})
+            info = self.info(vm)
+            if not info:
+                msg = f"Vm {vm} not found"
+                return {'result': 'failure', 'reason': msg}
+            if 'loadbalancer' in info:
+                instancegroup = info['loadbalancer']
+            else:
+                update = self.update_metadata(vm, 'loadbalancer', sane_name, append=True)
+                if update == 0:
+                    instances.append({"instance": f"{vmpath}/{vm}"})
             if index == 0:
                 vm_subnets = self.vm_ports(vm)
                 use_xproject = self.xproject in [self.list_subnets()[n]['az'] for n in vm_subnets]
-        # add checkpath handling (and default to http when defined)
         health_check_body = {"checkIntervalSec": "10", "timeoutSec": "10", "unhealthyThreshold": 3,
                              "healthyThreshold": 3, "name": sane_name}
         health_check_body["type"] = "TCP"
@@ -1224,17 +1226,21 @@ class Kgcp(object):
                                                          body=health_check_body).execute()
         healthurl = operation['targetLink']
         self._wait_for_operation(operation)
-        sane_name = name.replace('.', '-')
-        instances_group_body = {"name": sane_name, "healthChecks": [healthurl]}
-        pprint(f"Creating instances group {sane_name}")
-        operation = conn.instanceGroups().insert(project=project, zone=zone, body=instances_group_body).execute()
-        instances_group_url = operation['targetLink']
-        self._wait_for_operation(operation)
-        if instances:
-            instances_body = {"instances": instances}
-            operation = conn.instanceGroups().addInstances(project=project, zone=zone, instanceGroup=sane_name,
-                                                           body=instances_body).execute()
+        if instancegroup is None:
+            sane_name = name.replace('.', '-')
+            instances_group_body = {"name": sane_name, "healthChecks": [healthurl]}
+            pprint(f"Creating instances group {sane_name}")
+            operation = conn.instanceGroups().insert(project=project, zone=zone, body=instances_group_body).execute()
+            instances_group_url = operation['targetLink']
             self._wait_for_operation(operation)
+            if instances:
+                instances_body = {"instances": instances}
+                operation = conn.instanceGroups().addInstances(project=project, zone=zone, instanceGroup=sane_name,
+                                                               body=instances_body).execute()
+                self._wait_for_operation(operation)
+        else:
+            operation = conn.instanceGroups().get(project=project, zone=zone, instanceGroup=instancegroup).execute()
+            instances_group_url = operation['selfLink']
         backend_body = {"name": sane_name, "backends": [{"group": instances_group_url}],
                         "loadBalancingScheme": lb_scheme, "protocol": "TCP", "healthChecks": [healthurl]}
         pprint(f"Creating backend service {sane_name}")
@@ -1375,8 +1381,12 @@ class Kgcp(object):
             instancegroup_name = instancegroup['name']
             if instancegroup_name == name:
                 pprint(f"Deleting instance group {name}")
-                operation = conn.instanceGroups().delete(project=project, zone=zone, instanceGroup=name).execute()
-                self._wait_for_operation(operation)
+                try:
+                    operation = conn.instanceGroups().delete(project=project, zone=zone, instanceGroup=name).execute()
+                    self._wait_for_operation(operation)
+                except Exception as e:
+                    warning(f"Hit {e} when deleting instance group {name}")
+                    pass
         if dnsclient is not None:
             return dnsclient
         return {'result': 'success'}
