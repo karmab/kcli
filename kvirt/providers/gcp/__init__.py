@@ -891,6 +891,7 @@ class Kgcp(object):
 
     def list_project_networks(self, project):
         networks = {}
+        region = self.region
         conn = self.conn
         nets = conn.networks().list(project=project).execute()
         nets_items = nets.get('items', [])
@@ -900,6 +901,12 @@ class Kgcp(object):
             dhcp = True
             domainname = ''
             mode = ''
+            if cidr == '':
+                try:
+                    subnet = conn.subnetworks().get(region=region, project=project, subnetwork=networkname).execute()
+                    cidr = subnet['ipCidrRange']
+                except:
+                    pass
             networks[networkname] = {'cidr': cidr, 'dhcp': dhcp, 'domain': domainname, 'type': 'routed', 'mode': mode}
         return networks
 
