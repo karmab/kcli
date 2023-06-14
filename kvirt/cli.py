@@ -2834,9 +2834,9 @@ def create_network(args):
     name = args.name
     overrides = handle_parameters(args.param, args.paramfile)
     isolated = args.isolated
-    cidr = args.cidr
+    cidr = overrides.get('cidr') or args.cidr
     nodhcp = args.nodhcp
-    domain = overrides.get('domain', args.domain)
+    domain = overrides.get('domain') or args.domain
     plan = overrides.get('plan', 'kvirt')
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
