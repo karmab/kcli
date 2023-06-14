@@ -943,7 +943,9 @@ class Kconfig(Kbaseconfig):
             warning("Your nets definition contains nic key which won't be used")
         if 'owner' in profile or 'owner' in overrides:
             metadata['owner'] = profile.get('owner') or overrides.get('owner')
-        if 'user' in profile or 'user' in overrides:
+        if 'vmuser' in profile or 'vmuser' in overrides:
+            metadata['user'] = profile.get('vmuser') or overrides.get('vmuser')
+        elif 'user' in profile or 'user' in overrides:
             metadata['user'] = profile.get('user') or overrides.get('user')
         if kube is not None and kubetype is not None:
             metadata['kubetype'] = kubetype
