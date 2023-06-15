@@ -14,6 +14,26 @@ import yaml
 cloud_platforms = ['aws', 'gcp']
 
 
+def update_etc_hosts(cluster, domain, api_ip):
+    if not os.path.exists("/i_am_a_container"):
+        hosts = open("/etc/hosts").readlines()
+        wronglines = [e for e in hosts if not e.startswith('#') and f"api.{cluster}.{domain}" in e and api_ip not in e]
+        for wrong in wronglines:
+            warning(f"Cleaning wrong entry {wrong} in /etc/hosts")
+            call(f"sudo sed -i '/{wrong.strip()}/d' /etc/hosts", shell=True)
+        hosts = open("/etc/hosts").readlines()
+        correct = [e for e in hosts if not e.startswith('#') and f"api.{cluster}.{domain}" in e and api_ip in e]
+        if not correct:
+            call(f"sudo sh -c 'echo {api_ip} api.{cluster}.{domain} >> /etc/hosts'", shell=True)
+    else:
+        call(f"sh -c 'echo {api_ip} api.{cluster}.{domain} >> /etc/hosts'", shell=True)
+        if os.path.exists('/etcdir/hosts'):
+            call(f"sh -c 'echo {api_ip} api.{cluster}.{domain} >> /etcdir/hosts'", shell=True)
+        else:
+            warning("Make sure to have the following entry in your /etc/hosts")
+            warning(f"{api_ip} api.{cluster}.{domain}")
+
+
 def scale(config, plandir, cluster, overrides):
     plan = cluster
     data = {'cluster': cluster, 'kube': cluster, 'kubetype': 'k3s', 'image': 'ubuntu2004', 'sdn': 'flannel',
@@ -74,7 +94,7 @@ def scale(config, plandir, cluster, overrides):
 def create(config, plandir, cluster, overrides):
     platform = config.type
     data = {'kubetype': 'k3s', 'ctlplanes': 1, 'workers': 0, 'sdn': 'flannel', 'extra_scripts': [], 'autoscale': False,
-            'network': 'default', 'cloud_lb': None, 'cloud_api_internal': False, 'cloud_reservedns': True}
+            'network': 'default', 'cloud_lb': None, 'cloud_api_internal': False, 'cloud_dns': False}
     data.update(overrides)
     data['cloud_lb'] = overrides.get('cloud_lb', platform in cloud_platforms and data['ctlplanes'] > 1)
     cloud_lb = data['cloud_lb']
@@ -85,7 +105,7 @@ def create(config, plandir, cluster, overrides):
     ctlplanes = data['ctlplanes']
     workers = data['workers']
     network = data['network']
-    cloud_reservedns = data['cloud_reservedns']
+    cloud_dns = data['cloud_dns']
     sdn = None if 'sdn' in overrides and overrides['sdn'] is None else data.get('sdn')
     domain = data.get('domain', 'karmalabs.corp')
     image = data.get('image', 'ubuntu2004')
@@ -185,7 +205,7 @@ def create(config, plandir, cluster, overrides):
             threaded = data.get('threaded', False) or data.get('workers_threaded', False)
             config.plan(plan, inputfile=f'{plandir}/workers.yml', overrides=nodes_overrides, threaded=threaded)
     if cloud_lb and config.type in cloud_platforms:
-        if cloud_reservedns:
+        if cloud_dns:
             config.k.delete_dns(f'api.{cluster}', domain=domain)
         if config.type == 'aws':
             data['vpcid'] = config.k.get_vpcid_of_vm(f"{cluster}-ctlplane-0")
@@ -195,8 +215,15 @@ def create(config, plandir, cluster, overrides):
     success(f"K3s cluster {cluster} deployed!!!")
     info2(f"export KUBECONFIG=$HOME/.kcli/clusters/{cluster}/auth/kubeconfig")
     info2("export PATH=$PWD:$PATH")
-    if config.type in cloud_platforms and cloud_lb and cloud_reservedns:
-        wait_cloud_dns(cluster, domain)
+    if config.type in cloud_platforms and cloud_lb:
+        if cloud_dns:
+            wait_cloud_dns(cluster, domain)
+        elif api_ip is not None and api_ip == f'api.{cluster}.{domain}':
+            for lbentry in config.list_loadbalancers():
+                if lbentry[0] == f'api-{cluster}':
+                    lb_ip = lbentry[1]
+                    update_etc_hosts(cluster, domain, lb_ip)
+                    break
     os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
     apps = data.get('apps', [])
     if apps:
