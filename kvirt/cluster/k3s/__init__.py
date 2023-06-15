@@ -29,6 +29,9 @@ def scale(config, plandir, cluster, overrides):
     data.update(overrides)
     sdn = data['sdn']
     client = config.client
+    if 'first_ip' not in data:
+        first_info = config.k.info(f'{cluster}-ctlplane-0')
+        data['first_ip'] = first_info.get('private_ip') or first_info.get('ip')
     pprint(f"Scaling on client {client}")
     if os.path.exists(clusterdir):
         with open(f"{clusterdir}/kcli_parameters.yml", 'w') as paramfile:
@@ -71,8 +74,7 @@ def scale(config, plandir, cluster, overrides):
 def create(config, plandir, cluster, overrides):
     platform = config.type
     data = {'kubetype': 'k3s', 'ctlplanes': 1, 'workers': 0, 'sdn': 'flannel', 'extra_scripts': [], 'autoscale': False,
-            'network': 'default', 'cloud_lb': None, 'cloud_api_internal': False, 'cloud_reservedns': True,
-            'gcp_hack': True}
+            'network': 'default', 'cloud_lb': None, 'cloud_api_internal': False, 'cloud_reservedns': True}
     data.update(overrides)
     data['cloud_lb'] = overrides.get('cloud_lb', platform in cloud_platforms and data['ctlplanes'] > 1)
     cloud_lb = data['cloud_lb']
@@ -135,16 +137,6 @@ def create(config, plandir, cluster, overrides):
     if not os.path.exists(clusterdir):
         os.makedirs(clusterdir)
         os.mkdir(f"{clusterdir}/auth")
-        with open(f"{clusterdir}/kcli_parameters.yml", 'w') as p:
-            installparam = overrides.copy()
-            installparam['api_ip'] = api_ip
-            installparam['plan'] = plan
-            installparam['kubetype'] = 'k3s'
-            installparam['image'] = image
-            installparam['auth_pass'] = auth_pass
-            installparam['virtual_router_id'] = virtual_router_id
-            installparam['cluster'] = cluster
-            yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     for arg in data.get('extra_ctlplane_args', []):
         if arg.startswith('--data-dir='):
             data['data_dir'] = arg.split('=')[1]
@@ -159,6 +151,20 @@ def create(config, plandir, cluster, overrides):
     result = config.plan(plan, inputfile=f'{plandir}/bootstrap.yml', overrides=bootstrap_overrides)
     if result['result'] != "success":
         return result
+    first_info = config.k.info(f'{cluster}-ctlplane-0')
+    first_ip = first_info.get('private_ip') or first_info.get('ip')
+    data['first_ip'] = first_ip
+    with open(f"{clusterdir}/kcli_parameters.yml", 'w') as p:
+        installparam = overrides.copy()
+        installparam['api_ip'] = api_ip
+        installparam['plan'] = plan
+        installparam['kubetype'] = 'k3s'
+        installparam['image'] = image
+        installparam['auth_pass'] = auth_pass
+        installparam['virtual_router_id'] = virtual_router_id
+        installparam['cluster'] = cluster
+        installparam['first_ip'] = first_ip
+        yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     for role in ['ctlplanes', 'workers']:
         if (role == 'ctlplanes' and ctlplanes == 1) or (role == 'workers' and workers == 0):
             continue
