@@ -1,9 +1,3 @@
-{{ image }}:
-  type: image
-{% if kubevirt_disk_size != None and config_type == 'kubevirt' %}
-  size: {{ kubevirt_disk_size }}
-{% endif %}
-
 {% set all_files = files|default([]) %}
 {% set all_scripts = ["bootstrap.sh"] %}
 {% if config_type not in ['aws', 'gcp', 'ibm'] and api_ip != None %}
@@ -19,6 +13,9 @@
 {% endif %}
 {{cluster}}-ctlplane-0:
  image: {{ image }}
+{% if kubevirt_disk_size != None and config_type == 'kubevirt' %}
+ kubevirt_disk_size: {{ kubevirt_disk_size }}
+{% endif %}
  wait: true
  enableroot: true
  pool: {{ pool or config_pool }}

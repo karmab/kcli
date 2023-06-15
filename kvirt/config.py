@@ -491,6 +491,9 @@ class Kconfig(Kbaseconfig):
         if not onlyassets and self.type not in cloudplatforms and pimage in IMAGES and pimage not in volumes:
             pprint(f"Image {pimage} not found. Downloading")
             pimage_data = {'pool': self.pool, 'image': pimage, 'download': True}
+            pimage_size = profile.get('kubevirt_disk_size') or profile.get('size')
+            if pimage_size is not None:
+                pimage_data['size'] = pimage_size
             if profilename.startswith('rhcos-4') and profilename.endswith('qcow2'):
                 pimage_data['image'] = profilename.split('.')[0].replace('rhcos-4', 'rhcos4')
                 pimage_data['url'] = get_rhcos_url_from_file(profilename, _type=self.type)
