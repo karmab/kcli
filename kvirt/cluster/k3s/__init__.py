@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from kvirt.common import success, pprint, warning, get_kubectl, info2, container_mode, kube_create_app
-from kvirt.common import deploy_cloud_storage, wait_cloud_dns
+from kvirt.common import deploy_cloud_storage, wait_cloud_dns, update_etc_hosts
 import os
 import re
 from random import choice
@@ -12,26 +12,6 @@ from tempfile import NamedTemporaryFile
 import yaml
 
 cloud_platforms = ['aws', 'gcp']
-
-
-def update_etc_hosts(cluster, domain, api_ip):
-    if not os.path.exists("/i_am_a_container"):
-        hosts = open("/etc/hosts").readlines()
-        wronglines = [e for e in hosts if not e.startswith('#') and f"api.{cluster}.{domain}" in e and api_ip not in e]
-        for wrong in wronglines:
-            warning(f"Cleaning wrong entry {wrong} in /etc/hosts")
-            call(f"sudo sed -i '/{wrong.strip()}/d' /etc/hosts", shell=True)
-        hosts = open("/etc/hosts").readlines()
-        correct = [e for e in hosts if not e.startswith('#') and f"api.{cluster}.{domain}" in e and api_ip in e]
-        if not correct:
-            call(f"sudo sh -c 'echo {api_ip} api.{cluster}.{domain} >> /etc/hosts'", shell=True)
-    else:
-        call(f"sh -c 'echo {api_ip} api.{cluster}.{domain} >> /etc/hosts'", shell=True)
-        if os.path.exists('/etcdir/hosts'):
-            call(f"sh -c 'echo {api_ip} api.{cluster}.{domain} >> /etcdir/hosts'", shell=True)
-        else:
-            warning("Make sure to have the following entry in your /etc/hosts")
-            warning(f"{api_ip} api.{cluster}.{domain}")
 
 
 def scale(config, plandir, cluster, overrides):
@@ -94,10 +74,13 @@ def scale(config, plandir, cluster, overrides):
 def create(config, plandir, cluster, overrides):
     platform = config.type
     data = {'kubetype': 'k3s', 'ctlplanes': 1, 'workers': 0, 'sdn': 'flannel', 'extra_scripts': [], 'autoscale': False,
-            'network': 'default', 'cloud_lb': None, 'cloud_api_internal': False, 'cloud_dns': False}
+            'network': 'default', 'cloud_lb': None, 'cloud_api_internal': False, 'cloud_dns': False,
+            'cloud_storage': True}
     data.update(overrides)
+    cloud_dns = data['cloud_dns']
     data['cloud_lb'] = overrides.get('cloud_lb', platform in cloud_platforms and data['ctlplanes'] > 1)
     cloud_lb = data['cloud_lb']
+    cloud_storage = data['cloud_storage']
     data['cluster'] = overrides.get('cluster') or cluster or 'myk3s'
     plan = cluster if cluster is not None else data['cluster']
     data['kube'] = data['cluster']
@@ -105,7 +88,6 @@ def create(config, plandir, cluster, overrides):
     ctlplanes = data['ctlplanes']
     workers = data['workers']
     network = data['network']
-    cloud_dns = data['cloud_dns']
     sdn = None if 'sdn' in overrides and overrides['sdn'] is None else data.get('sdn')
     domain = data.get('domain', 'karmalabs.corp')
     image = data.get('image', 'ubuntu2004')
@@ -248,8 +230,9 @@ def create(config, plandir, cluster, overrides):
             temp.write(autoscale_data)
             autoscalecmd = f"kubectl create -f {temp.name}"
             call(autoscalecmd, shell=True)
-    if config.type in cloud_platforms and data.get('cloud_storage', True):
-        pprint("Deploying cloud storage class")
+    if config.type in cloud_platforms and cloud_storage:
         apply = config.type == 'aws'
+        if apply:
+            pprint("Deploying cloud storage class")
         deploy_cloud_storage(config, cluster, apply=apply)
     return {'result': 'success'}

@@ -2266,3 +2266,23 @@ def deploy_cloud_storage(config, cluster, apply=True):
     if apply:
         storagecmd = f"bash {clusterdir}/storage.sh"
         call(storagecmd, shell=True)
+
+
+def update_etc_hosts(cluster, domain, api_ip):
+    if not os.path.exists("/i_am_a_container"):
+        hosts = open("/etc/hosts").readlines()
+        wronglines = [e for e in hosts if not e.startswith('#') and f"api.{cluster}.{domain}" in e and api_ip not in e]
+        for wrong in wronglines:
+            warning(f"Cleaning wrong entry {wrong} in /etc/hosts")
+            call(f"sudo sed -i '/{wrong.strip()}/d' /etc/hosts", shell=True)
+        hosts = open("/etc/hosts").readlines()
+        correct = [e for e in hosts if not e.startswith('#') and f"api.{cluster}.{domain}" in e and api_ip in e]
+        if not correct:
+            call(f"sudo sh -c 'echo {api_ip} api.{cluster}.{domain} >> /etc/hosts'", shell=True)
+    else:
+        call(f"sh -c 'echo {api_ip} api.{cluster}.{domain} >> /etc/hosts'", shell=True)
+        if os.path.exists('/etcdir/hosts'):
+            call(f"sh -c 'echo {api_ip} api.{cluster}.{domain} >> /etcdir/hosts'", shell=True)
+        else:
+            warning("Make sure to have the following entry in your /etc/hosts")
+            warning(f"{api_ip} api.{cluster}.{domain}")

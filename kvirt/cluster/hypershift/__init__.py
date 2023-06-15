@@ -7,7 +7,7 @@ from kvirt.common import get_oc, pwd_path, get_installer_rhcos, get_ssh_pub_key,
 from kvirt.common import virtual_baremetal, dell_baremetal, deploy_cloud_storage
 from kvirt.defaults import OPENSHIFT_TAG
 from kvirt.cluster.openshift import get_ci_installer, get_downstream_installer, get_installer_version
-from kvirt.cluster.openshift import same_release_images, process_apps, update_etc_hosts, offline_image
+from kvirt.cluster.openshift import same_release_images, process_apps, update_openshift_etc_hosts, offline_image
 from ipaddress import ip_network
 import json
 import os
@@ -733,7 +733,7 @@ def create(config, plandir, cluster, overrides):
     if ignore_hosts:
         warning("Not updating /etc/hosts as per your request")
     else:
-        update_etc_hosts(cluster, domain, management_api_ip, ingress_ip)
+        update_openshift_etc_hosts(cluster, domain, management_api_ip, ingress_ip)
     if platform in cloudplatforms:
         result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_apps.yml', overrides=data)
         if result['result'] != 'success':

@@ -55,7 +55,7 @@ def backup_paramfile(installparam, clusterdir, cluster, plan, image, dnsconfig):
         yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
 
 
-def update_etc_hosts(cluster, domain, host_ip, ingress_ip=None):
+def update_openshift_etc_hosts(cluster, domain, host_ip, ingress_ip=None):
     if not os.path.exists("/i_am_a_container"):
         hosts = open("/etc/hosts").readlines()
         wronglines = [e for e in hosts if not e.startswith('#') and f"api.{cluster}.{domain}" in e and
@@ -1238,7 +1238,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if ignore_hosts:
             warning("Not updating /etc/hosts as per your request")
         elif api_ip is not None:
-            update_etc_hosts(cluster, domain, api_ip)
+            update_openshift_etc_hosts(cluster, domain, api_ip)
         elif sno_dns:
             warning("Add the following entry in /etc/hosts if needed")
             dnsentries = ['api', 'console-openshift-console.apps', 'oauth-openshift.apps',
@@ -1304,7 +1304,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if ignore_hosts or (not kubevirt_ignore_node_port and kubevirt_api_service and kubevirt_api_service_node_port):
             warning("Ignoring /etc/hosts")
         else:
-            update_etc_hosts(cluster, domain, host_ip, ingress_ip)
+            update_openshift_etc_hosts(cluster, domain, host_ip, ingress_ip)
     bucket_url = None
     if platform in cloudplatforms + ['openstack']:
         bucket = "%s-%s" % (cluster, domain.replace('.', '-'))
@@ -1392,7 +1392,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             kubeconfig = config.ini[config.client].get('kubeconfig') or os.environ['KUBECONFIG']
             hostip_cmd = f'KUBECONFIG={kubeconfig} oc get node {nodehost} -o yaml'
             hostip = yaml.safe_load(os.popen(hostip_cmd).read())['status']['addresses'][0]['address']
-            update_etc_hosts(cluster, domain, hostip)
+            update_openshift_etc_hosts(cluster, domain, hostip)
     if not async_install:
         bootstrapcommand = f'openshift-install --dir={clusterdir} --log-level={log_level} wait-for bootstrap-complete'
         bootstrapcommand = ' || '.join([bootstrapcommand for x in range(retries)])

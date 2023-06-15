@@ -63,3 +63,4 @@ calico_version: None
 autoscale: False
 token:
 async: false
+cloud_dns: false

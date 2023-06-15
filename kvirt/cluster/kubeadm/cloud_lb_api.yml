@@ -1,7 +1,8 @@
 api.{{ cluster }}:
  type: loadbalancer
+{% if cloud_dns %}
  domain: {{ domain }}
- reservedns: true
+{% endif %}
  checkport: 6443
 {% if config_type == 'aws' and network.startswith('subnet-') %}
  subnetid: {{ network }}
