@@ -4,6 +4,7 @@ pull_secret: openshift_pull.json
 acm_hypershift: true
 acm_mce_catalog:
 assisted: true
+assisted_converged_flow: false
 assisted_disable_validations: false
 assisted_download_images: false
 assisted_download_nic: eth0
