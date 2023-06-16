@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+echo IbmCloud platform currently not supported

@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+KUBECTL=$(which kubectl || which oc)
+TMPDIR=$(mktemp -d)
+export GOPATH=$TMPDIR
+git clone https://github.com/kubernetes-sigs/gcp-compute-persistent-disk-csi-driver $TMPDIR
+cd $TMPDIR
+cp {{ config_credentials }} cloud-sa.json
+export GCE_PD_SA_DIR=$TMPDIR
+./deploy/setup-project.sh
+rm -rf $TMPDIR
+echo """apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+ annotations:
+  storageclass.kubernetes.io/is-default-class: \"true\"
+ name: csi-gce-pd
+provisioner: pd.csi.storage.gke.io
+parameters:
+  type: pd-standard
+  replication-type: regional-pd
+volumeBindingMode: WaitForFirstConsumer""" | $KUBECTL create -f -

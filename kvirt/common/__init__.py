@@ -2260,7 +2260,7 @@ def wait_cloud_dns(cluster, domain):
 def deploy_cloud_storage(config, cluster, apply=True):
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     commondir = os.path.dirname(pprint.__code__.co_filename)
-    storage_data = config.process_inputfile('xxx', f"{commondir}/storage.sh.j2")
+    storage_data = config.process_inputfile('xxx', f"{commondir}/storage.sh.{config.type}")
     with open(f"{clusterdir}/storage.sh", 'w') as f:
         f.write(storage_data)
     if apply:
