@@ -10,7 +10,7 @@ from kvirt.common import error, pprint, success, warning, info2
 from kvirt.common import get_oc, pwd_path
 from kvirt.common import get_latest_fcos, generate_rhcos_iso, olm_app, get_commit_rhcos
 from kvirt.common import get_installer_rhcos, wait_cloud_dns, delete_lastvm
-from kvirt.common import ssh, scp, _ssh_credentials, get_ssh_pub_key, boot_baremetal_hosts, deploy_cloud_storage
+from kvirt.common import ssh, scp, _ssh_credentials, get_ssh_pub_key, boot_baremetal_hosts
 from kvirt.defaults import LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG
 import re
 from random import choice
@@ -1475,7 +1475,4 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         k.reserve_dns(f'apps.{cluster}', domain=domain, ip=api_ip, alias=['*'])
         if platform == 'ibm':
             k._add_sno_security_group(cluster)
-    if config.type in cloudplatforms and data.get('cloud_storage', True):
-        pprint("Deploying cloud storage class")
-        deploy_cloud_storage(config, cluster, apply=False)
     return {'result': 'success'}
