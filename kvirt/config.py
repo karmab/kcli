@@ -772,7 +772,8 @@ class Kconfig(Kbaseconfig):
                 else:
                     msg = "Rhn registration required but missing credentials. "
                     msg += "Define rhnuser/rhnpassword or rhnactivationkey/rhnorg"
-                    return {'result': 'failure', 'reason': msg}
+                    warning(msg)
+                    rhnregister = False
             else:
                 warning(f"{name} will require manual subscription to Red Hat Network")
         if image is not None and cloudinit and iso is not None:
