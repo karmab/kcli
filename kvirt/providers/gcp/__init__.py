@@ -138,12 +138,16 @@ class Kgcp(object):
                 netpublic = True
                 ip = None
                 dual_cidr = None
+                pod_cidr = None
+                service_cidr = None
             elif isinstance(net, dict) and 'name' in net:
                 netname = net['name']
                 ip = net.get('ip')
                 alias = net.get('alias')
                 netpublic = net.get('public') or overrides.get('public') or self.public
                 dual_cidr = net.get('dual_cidr') or overrides.get('dual_cidr')
+                pod_cidr = net.get('pod_cidr')
+                service_cidr = net.get('service_cidr')
             if ips and len(ips) > index and ips[index] is not None:
                 ip = ips[index]
             newnet = {}
@@ -160,8 +164,18 @@ class Kgcp(object):
                 return {'result': 'failure', 'reason': f'{netname} not in subnets nor in networks'}
             if ip is not None:
                 newnet['networkIP'] = ip
+            aliases = []
             if dual_cidr is not None:
-                newnet["aliasIpRanges"] = [{"ipCidrRange": dual_cidr, "subnetworkRangeName": f"dual-{netname}"}]
+                dual_name = net.get('dual_name') or f"dual-{netname}"
+                aliases.append({"ipCidrRange": dual_cidr, "subnetworkRangeName": dual_name})
+            if pod_cidr is not None:
+                pod_name = net.get('pod_name') or f"dual-{netname}"
+                aliases.append({"ipCidrRange": pod_cidr, "subnetworkRangeName": pod_name})
+            if service_cidr is not None:
+                service_name = net.get('service_name') or f"dual-{netname}"
+                aliases.append({"ipCidrRange": service_cidr, "subnetworkRangeName": service_name})
+            if aliases:
+                newnet["aliasIpRanges"] = aliases
             body['networkInterfaces'].append(newnet)
         body['disks'] = []
         for index, disk in enumerate(disks):
