@@ -540,6 +540,12 @@ $ kcli create network -P ovs=true br-ex
 
 # Create an ovs bridge br0 network (on libvirt)
 $ kcli create network -P ovs=true br0
+
+# Create a network on AWS and make it default vpc
+$ kcli create network -c 10.0.0.0/24 -P default=true my-default-vpc
+
+# Create a network on GCP with an alias/dual network and a specific name
+$ kcli create network -P cidr=192.168.123.0/24 -P dual_cidr=192.168.124.0/24 -P dual_name=podnetwork mynetwork
 """
 
 profilecreate = """# Create profile with specific image

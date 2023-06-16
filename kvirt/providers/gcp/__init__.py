@@ -865,7 +865,8 @@ class Kgcp(object):
                     ip_network(dual_cidr)
                 except:
                     return {'result': 'failure', 'reason': f"Invalid Dual Cidr {dual_cidr}"}
-                subnet_body['secondaryIpRanges'] = [{"rangeName": f"dual-{name}", "ipCidrRange": dual_cidr}]
+                dual_name = overrides.get('dual_name') or f"dual-{name}"
+                subnet_body['secondaryIpRanges'] = [{"rangeName": dual_name, "ipCidrRange": dual_cidr}]
             operation = conn.subnetworks().insert(region=region, project=project, body=subnet_body).execute()
             self._wait_for_operation(operation)
         allowed = {"IPProtocol": "tcp", "ports": ["22"]}
