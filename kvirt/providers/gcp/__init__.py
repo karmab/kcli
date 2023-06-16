@@ -97,7 +97,7 @@ class Kgcp(object):
     def disk_exists(self, pool, name):
         print("not implemented")
 
-    def create(self, name, virttype=None, profile='', flavor=None, plan='kvirt', cpumodel='Westmere', cpuflags=[],
+    def create(self, name, virttype=None, profile='', flavor=None, plan='kvirt', cpumodel='host-model', cpuflags=[],
                cpupinning=[], numcpus=2, memory=512, guestid='guestrhel764', pool='default', image=None,
                disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None,
                vnc=True, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=[],
@@ -129,6 +129,27 @@ class Kgcp(object):
             machine_type = flavor
         machine_type = f"zones/{zone}/machineTypes/{machine_type}"
         body = {'name': name, 'machineType': machine_type, 'networkInterfaces': []}
+        if cpumodel != 'host-model':
+            body['minCpuPlatform'] = cpumodel
+        if 'accelerators' in overrides and overrides['accelerators']:
+            accelerators = []
+            for accelerator in overrides['accelerator']:
+                if isinstance(accelerator, str):
+                    new_accelerator = {'acceleratorType': accelerator, 'acceleratorCount': 1}
+                elif isinstance(accelerator, dict):
+                    accelerator_type = accelerator.get('name') or accelerator.get('type')\
+                        or accelerator.get('acceleratorType')
+                    if accelerator_type is None:
+                        warning("Invalid accelerator {accelerator}")
+                        continue
+                    accelerator_count = accelerator.get('count') or accelerator.get('acceleratorCount') or 1
+                    new_accelerator = {'acceleratorType': accelerator_type, 'acceleratorCount': accelerator_count}
+                else:
+                    warning("Invalid accelerator {accelerator}")
+                    continue
+                accelerators.append(new_accelerator)
+            if accelerators:
+                body['guestAccelerators'] = accelerators
         use_xproject = False
         networks = self.list_networks()
         subnets = self.list_subnets()
@@ -336,8 +357,10 @@ class Kgcp(object):
                     body['metadata']['items'].append(newval)
         tpm, secureboot = overrides.get('tpm', False), overrides.get('secureboot', False)
         if tpm or secureboot:
-            body['shielded_instance_config'] = {'enable_integrity_monitoring': False, 'enable_vtpm': tpm,
-                                                'enable_secure_boot': secureboot}
+            body['shieldedInstanceConfig'] = {'enableIntegrityMonitoring': False, 'enableVtpm': tpm,
+                                              'enableSecureBoot': secureboot}
+        if 'confidential' in overrides and overrides['confidential']:
+            body['confidentialInstanceConfig'] = {'enableConfidentialCompute': True}
         try:
             conn.instances().insert(project=project, zone=zone, body=body).execute()
         except Exception as e:
