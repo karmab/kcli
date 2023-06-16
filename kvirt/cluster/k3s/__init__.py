@@ -231,8 +231,7 @@ def create(config, plandir, cluster, overrides):
             autoscalecmd = f"kubectl create -f {temp.name}"
             call(autoscalecmd, shell=True)
     if config.type in cloud_platforms and cloud_storage:
-        apply = config.type == 'aws'
-        if apply:
+        if config.type == 'aws':
             pprint("Deploying cloud storage class")
-        deploy_cloud_storage(config, cluster, apply=apply)
+            deploy_cloud_storage(config, cluster)
     return {'result': 'success'}

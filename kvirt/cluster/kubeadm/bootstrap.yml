@@ -8,7 +8,7 @@
 {{ cluster }}-ctlplane-0:
 {% set primary_network = {'name': network} %}
 {% if config_type in ['aws', 'gcp', 'ibm'] %}
-{% set _= primary_network.__setitem__("reservedns", True) %}
+{% set _= primary_network.__setitem__("reservedns", cloud_dns) %}
 {% set _= primary_network.__setitem__("alias", ["api.%s.%s" % (cluster,domain)]) %}
 {% endif %}
  image: {{ image }}
@@ -17,9 +17,6 @@
  numcpus: {{ ctlplane_numcpus | default(numcpus, numcpus) }}
  memory: {{ ctlplane_memory | default(memory, memory) }}
  enableroot: true
-{% if config_type in ['aws', 'gcp', 'ibm'] %}
- reservedns: true
-{% endif %}
  domain: {{ domain }}
  notify: {{ notify }}
  notifycmd: {{ notifycmd }}

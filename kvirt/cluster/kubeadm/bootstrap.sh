@@ -5,6 +5,7 @@ CIDR="10.244.0.0/16"
 
 {% if config_type in ['aws', 'gcp', 'ibm'] %}
 API_IP={{ "api.%s.%s" % (cluster, domain) }}
+echo $(hostname -I) api.{{ cluster }}.{{ domain }} >> /etc/hosts
 {% elif sslip|default(False) %}
 API_IP={{ "api.%s.sslip.io" % api_ip.replace('.', '-').replace(':', '-') }}
 {% else %}
