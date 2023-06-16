@@ -473,21 +473,8 @@ def delete_image(args):
             common.confirm("Are you sure?")
         codes = []
         for image in images:
-            clientprofile = f"{cli}_{image}"
-            imgprofiles = [p for p in config.profiles if 'image' in config.profiles[p] and
-                           config.profiles[p]['image'] == os.path.basename(image) and
-                           p.startswith(f'{cli}_')]
             pprint(f"Deleting image {image} on {cli}")
-            if clientprofile in config.profiles and 'image' in config.profiles[clientprofile]:
-                profileimage = config.profiles[clientprofile]['image']
-                config.delete_profile(clientprofile, quiet=True)
-                result = k.delete_image(profileimage, pool=pool)
-            elif imgprofiles:
-                imgprofile = imgprofiles[0]
-                config.delete_profile(imgprofile, quiet=True)
-                result = k.delete_image(image, pool=pool)
-            else:
-                result = k.delete_image(image, pool=pool)
+            result = k.delete_image(image, pool=pool)
             if result['result'] == 'success':
                 success(f"{image} deleted")
                 codes.append(0)
