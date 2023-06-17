@@ -98,6 +98,11 @@ def create(config, cluster, overrides, dnsconfig=None):
             'confidential': False,
             'secureboot': False,
             'integrity_monitoring': False,
+            'native': False,
+            'cluster_network': None,
+            'cluster_network_ipv4': "10.132.0.0/14",
+            'service_network': None,
+            'service_network_ipv4': "172.30.0.0/16",
             'preemptible': False,
             'alpha': False,
             'beta': False,
@@ -135,6 +140,20 @@ def create(config, cluster, overrides, dnsconfig=None):
     project, region, zone = project_init(config)
     clusterspec = {'name': cluster, 'enable_kubernetes_alpha': data['alpha']}
     clusterspec['resource_labels'] = {'plan': cluster, 'kube': cluster, 'kubetype': 'gke'}
+    native = data['native']
+    cluster_network, service_network = data['cluster_network'], data['service_network']
+    cluster_network_ipv4, service_network_ipv4 = data['cluster_network_ipv4'], data['service_network_ipv4']
+    if native:
+        if cluster_network is None or service_network is None:
+            msg = "you need to define cluster_network and service_network in native mode"
+            return {'result': 'failure', 'reason': msg}
+        else:
+            ip_allocation_policy = {'use_ip_aliases': True,
+                                    'cluster_secondary_range_name': cluster_network,
+                                    'cluster_ipv4_cidr_block': cluster_network_ipv4,
+                                    'services_secondary_range_name': service_network,
+                                    'services_ipv4_cidr_block': service_network_ipv4}
+            clusterspec['ip_allocation_policy'] = ip_allocation_policy
     if 'version' in overrides:
         clusterspec['initial_cluster_version'] = overrides['version']
     if beta_apis:

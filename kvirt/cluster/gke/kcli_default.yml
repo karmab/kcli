@@ -21,4 +21,8 @@ beta_apis: []
 secureboot: false
 integritymonitoring: false
 confidential: false
-
+native: false
+cluster_network_ipv4: "10.132.0.0/14"
+cluster_network:
+service_network_ipv4: "172.30.0.0/16"
+service_network:
