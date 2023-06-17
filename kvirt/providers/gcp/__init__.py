@@ -357,7 +357,8 @@ class Kgcp(object):
                     body['metadata']['items'].append(newval)
         tpm, secureboot = overrides.get('tpm', False), overrides.get('secureboot', False)
         if tpm or secureboot:
-            body['shieldedInstanceConfig'] = {'enableIntegrityMonitoring': False, 'enableVtpm': tpm,
+            integrity_monitoring = overrides.get('integrity_monitoring', False)
+            body['shieldedInstanceConfig'] = {'enableIntegrityMonitoring': integrity_monitoring, 'enableVtpm': tpm,
                                               'enableSecureBoot': secureboot}
         if 'confidential' in overrides and overrides['confidential']:
             body['confidentialInstanceConfig'] = {'enableConfidentialCompute': True}
@@ -966,10 +967,9 @@ class Kgcp(object):
             subnet = self.conn.subnetworks().get(region=region, project=project, subnetwork=name).execute()
             if self.debug:
                 print(subnet)
-            if networkinfo['cidr'] == '':
-                networkinfo['cidr'] = subnet['ipCidrRange']
-                if 'secondaryIpRanges' in subnet:
-                    networkinfo['dual_cidr'] = subnet['secondaryIpRanges'][0]['ipCidrRange']
+            if 'secondaryIpRanges' in subnet:
+                alias_ranges = subnet['secondaryIpRanges']
+                networkinfo['dual_cidr'] = alias_ranges[0]['ipCidrRange']
         except:
             pass
         return networkinfo

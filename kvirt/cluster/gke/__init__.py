@@ -97,7 +97,7 @@ def create(config, cluster, overrides, dnsconfig=None):
             'spot': False,
             'confidential': False,
             'secureboot': False,
-            'integritymonitoring': False,
+            'integrity_monitoring': False,
             'preemptible': False,
             'alpha': False,
             'beta': False,
@@ -160,10 +160,10 @@ def create(config, cluster, overrides, dnsconfig=None):
         nodepool['autoscaling'] = {'enable_node_autoprovisioning': True, 'min_node_count': min_node_count,
                                    'max_node_count': max_node_count}
     nodepool_config = {'preemptible': preemptible, 'spot': spot, 'disk_type': disk_type}
-    if secureboot:
-        integritymonitoring = data['integritymonitoring']
-        nodepool_config['shielded_instance_config'] = {'enable_secure_boot': True,
-                                                       'enable_integrity_monitoring': integritymonitoring}
+    integrity_monitoring = data['integrity_monitoring']
+    if secureboot or integrity_monitoring:
+        nodepool_config['shielded_instance_config'] = {'enable_secure_boot': secureboot,
+                                                       'enable_integrity_monitoring': integrity_monitoring}
     if confidential:
         nodepool_config['confidential_nodes'] = {'enabled': True}
     flavor = data['flavor']
