@@ -1568,3 +1568,20 @@ class Kgcp(object):
         operation = self.conn.firewalls().delete(project=self.project, firewall=name).execute()
         self._wait_for_operation(operation)
         return {'result': 'success'}
+
+    def update_aliases(self, name, cidr_name, cidr):
+        conn = self.conn
+        project = self.project
+        zone = self.zone
+        try:
+            vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
+        except:
+            msg = f"VM {name} not found"
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
+        fingerprint = vm['networkInterfaces'][0]['fingerprint']
+        body = {"aliasIpRanges": [{"ipCidrRange": cidr, "subnetworkRangeName": cidr_name}], "fingerprint": fingerprint}
+        operation = self.conn.instances().updateNetworkInterface(project=project, zone=zone, instance=name,
+                                                                 networkInterface='nic0', body=body).execute()
+        self._wait_for_operation(operation)
+        return {'result': 'success'}
