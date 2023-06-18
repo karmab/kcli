@@ -9,17 +9,34 @@ from shutil import which
 from string import ascii_letters, digits
 from subprocess import call
 from tempfile import NamedTemporaryFile
+from time import sleep
 import yaml
 
 cloud_platforms = ['aws', 'gcp']
 
 
+def cilium_update_ip_alias(config, cluster, nodes, overrides):
+    cmd = "kubectl get nodes -o name | grep -c ' Ready'"
+    while True:
+        pprint("Waiting 5s for {nodes} to be ready")
+        current_nodes = len(os.popen(cmd).readlines())
+        if current_nodes == nodes:
+            break
+        else:
+            sleep(5)
+    for node in yaml.safe_load(os.popen("kubectl get node -o yaml").read())['items']:
+        name, pod_cidr = node['metadata']['name'], node['metadata']['annotations']['io.cilium.network.ipv4-pod-cidr']
+        pod_cidr_name = overrides.get('pod_name') or f'dual-{overrides["network"]}'
+        config.k.update_aliases(name, pod_cidr_name, pod_cidr)
+
+
 def scale(config, plandir, cluster, overrides):
     plan = cluster
     data = {'cluster': cluster, 'kube': cluster, 'kubetype': 'k3s', 'image': 'ubuntu2004', 'sdn': 'flannel',
-            'extra_scripts': [], 'cloud_lb': True}
+            'extra_scripts': [], 'cloud_lb': True, 'cloud_native': False, 'ctlplanes': 1, 'workers': 0}
     data['basedir'] = '/workdir' if container_mode() else '.'
     cluster = data.get('cluster')
+    cloud_native = data.get('cloud_native')
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
         with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
@@ -27,7 +44,9 @@ def scale(config, plandir, cluster, overrides):
             data.update(installparam)
             plan = installparam.get('plan', plan)
     data.update(overrides)
-    sdn = data['sdn']
+    ctlplanes = data['ctlplanes']
+    workers = data['workers']
+    sdn = None if 'sdn' in overrides and overrides['sdn'] is None else data.get('sdn')
     client = config.client
     if 'first_ip' not in data:
         first_info = config.k.info(f'{cluster}-ctlplane-0')
@@ -48,14 +67,14 @@ def scale(config, plandir, cluster, overrides):
         overrides['scale'] = True
         threaded = data.get('threaded', False) or data.get(f'{role}_threaded', False)
         if role == 'ctlplanes':
-            if overrides.get('ctlplanes', 1) == 1:
+            if ctlplanes == 1:
                 continue
             if 'virtual_router_id' not in overrides or 'auth_pass' not in overrides:
                 warning("Scaling up of ctlplanes won't work without virtual_router_id and auth_pass")
             if sdn is None or sdn != 'flannel':
                 install_k3s_args.append("INSTALL_K3S_EXEC='--flannel-backend=none'")
             install_k3s_args = ' '.join(install_k3s_args)
-        if role == 'workers' and overrides.get('workers', 0) == 0:
+        if role == 'workers' and workers == 0:
             continue
         if vmrules_all_names:
             reg = re.compile(f'{cluster}-{role[:-1]}-[0-9]+')
@@ -68,6 +87,9 @@ def scale(config, plandir, cluster, overrides):
         result = config.plan(plan, inputfile=f'{plandir}/{role}.yml', overrides=overrides, threaded=threaded)
         if result['result'] != 'success':
             return result
+    if (cloud_native or (sdn is not None and sdn == 'cilium')) and config.type == 'gcp':
+        pprint("Updating ip alias ranges for cilium")
+        cilium_update_ip_alias(config, cluster, ctlplanes + workers)
     return {'result': 'success'}
 
 
@@ -75,12 +97,13 @@ def create(config, plandir, cluster, overrides):
     platform = config.type
     data = {'kubetype': 'k3s', 'ctlplanes': 1, 'workers': 0, 'sdn': 'flannel', 'extra_scripts': [], 'autoscale': False,
             'network': 'default', 'cloud_lb': None, 'cloud_api_internal': False, 'cloud_dns': False,
-            'cloud_storage': True}
+            'cloud_storage': True, 'cloud_native': False}
     data.update(overrides)
     cloud_dns = data['cloud_dns']
     data['cloud_lb'] = overrides.get('cloud_lb', platform in cloud_platforms and data['ctlplanes'] > 1)
     cloud_lb = data['cloud_lb']
     cloud_storage = data['cloud_storage']
+    cloud_native = data['cloud_native']
     data['cluster'] = overrides.get('cluster') or cluster or 'myk3s'
     plan = cluster if cluster is not None else data['cluster']
     data['kube'] = data['cluster']
@@ -230,8 +253,11 @@ def create(config, plandir, cluster, overrides):
             temp.write(autoscale_data)
             autoscalecmd = f"kubectl create -f {temp.name}"
             call(autoscalecmd, shell=True)
-    if config.type in cloud_platforms and cloud_storage:
-        if config.type == 'aws':
+    if config.type in cloud_platforms:
+        if cloud_storage and config.type == 'aws':
             pprint("Deploying cloud storage class")
             deploy_cloud_storage(config, cluster)
+        if (cloud_native or (sdn is not None and sdn == 'cilium')) and config.type == 'gcp':
+            pprint("Updating ip alias ranges")
+            cilium_update_ip_alias(config, cluster, ctlplanes + workers)
     return {'result': 'success'}
