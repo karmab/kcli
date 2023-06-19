@@ -1012,7 +1012,7 @@ class Kgcp(object):
             project = self.xproject
         response = conn.subnetworks().get(region=region, project=project, subnetwork=subnetwork).execute()
         if response:
-           subnet = response
+            subnet = response
         return subnet
 
     def delete_pool(self, name, full=False):
