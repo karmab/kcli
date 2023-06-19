@@ -212,6 +212,10 @@ class Kbase(object):
         networkinfo = common.info_network(self, name)
         return networkinfo
 
+    def info_subnet(self, name):
+        print("not implemented")
+        return {}
+
     def list_subnets(self):
         print("not implemented")
         return {}

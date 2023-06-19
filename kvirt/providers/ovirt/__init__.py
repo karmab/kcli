@@ -1340,3 +1340,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
     def delete_security_group(self, name):
         print("not implemented")
         return {'result': 'success'}
+
+    def info_subnet(self, name):
+        print("not implemented")
+        return {}

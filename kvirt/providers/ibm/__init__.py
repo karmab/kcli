@@ -1443,3 +1443,7 @@ class Kibm(object):
 
     def list_security_groups(self, network=None):
         return [x['name'] for x in self.conn.list_security_groups().result['security_groups']]
+
+    def info_subnet(self, name):
+        print("not implemented")
+        return {}

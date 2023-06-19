@@ -1263,3 +1263,7 @@ class Kopenstack(object):
     def provider_network(self, name):
         net = self.nova.neutron.find_network(name=name)
         return True if net.to_dict()['router:external'] else False
+
+    def info_subnet(self, name):
+        print("not implemented")
+        return {}

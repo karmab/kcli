@@ -502,3 +502,7 @@ class Kwebclient(object):
         request = Request(kube_url, headers=self.headers)
         response = json.loads(urlopen(request, context=self.context).read())
         return response
+
+    def info_subnet(self, name):
+        print("not implemented")
+        return {}

@@ -2392,6 +2392,18 @@ def info_plantype(args):
     return baseconfig.info_plantype(plantype)
 
 
+def info_subnet(args):
+    """Info subnet """
+    name = args.name
+    pprint(f"Providing information about subnet {name}...")
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    networkinfo = config.k.info_subnet(name)
+    if networkinfo:
+        common.pretty_print(networkinfo)
+    else:
+        sys.exit(1)
+
+
 def download_plan(args):
     """Download plan"""
     plan = args.plan
@@ -4527,6 +4539,12 @@ def cli():
     info_subparsers.add_parser('product', parents=[productinfo_parser], description=productinfo_desc,
                                help=productinfo_desc,
                                epilog=productinfo_epilog, formatter_class=rawhelp)
+
+    subnetinfo_desc = 'Info Subnet'
+    subnetinfo_parser = info_subparsers.add_parser('subnetwork', description=subnetinfo_desc, help=subnetinfo_desc,
+                                                   aliases=['subnet'])
+    subnetinfo_parser.add_argument('name', metavar='SUBNET')
+    subnetinfo_parser.set_defaults(func=info_subnet)
 
     vminfo_desc = 'Info Of Vms'
     vminfo_parser = info_subparsers.add_parser('vm', parents=[output_parser], description=vminfo_desc, help=vminfo_desc)

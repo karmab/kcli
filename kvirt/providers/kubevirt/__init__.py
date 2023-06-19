@@ -1658,3 +1658,7 @@ class Kubevirt(Kubecommon):
     def delete_security_group(self, name):
         print("not implemented")
         return {'result': 'success'}
+
+    def info_subnet(self, name):
+        print("not implemented")
+        return {}

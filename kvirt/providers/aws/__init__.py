@@ -1411,3 +1411,7 @@ class Kaws(object):
     def delete_security_group(self, name):
         self.conn.delete_security_group(GroupName=name)
         return {'result': 'success'}
+
+    def info_subnet(self, name):
+        print("not implemented")
+        return {}

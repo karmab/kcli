@@ -1614,3 +1614,7 @@ class Ksphere:
                 for datastore in clu.datastore:
                     datastores[datastore.name] = datacenter.name
         return datastores
+
+    def info_subnet(self, name):
+        print("not implemented")
+        return {}

@@ -958,20 +958,10 @@ class Kgcp(object):
 
     def info_network(self, name):
         project = self.project
-        region = self.region
         networkinfo = common.info_network(self, name)
         if self.debug and networkinfo:
             network = self.conn.networks().get(project=project, network=name).execute()
             print(network)
-        try:
-            subnet = self.conn.subnetworks().get(region=region, project=project, subnetwork=name).execute()
-            if self.debug:
-                print(subnet)
-            if 'secondaryIpRanges' in subnet:
-                alias_ranges = subnet['secondaryIpRanges']
-                networkinfo['dual_cidr'] = alias_ranges[0]['ipCidrRange']
-        except:
-            pass
         return networkinfo
 
     def list_subnets(self):
@@ -1601,3 +1591,22 @@ class Kgcp(object):
                                                                  networkInterface='nic0', body=body).execute()
         self._wait_for_operation(operation)
         return {'result': 'success'}
+
+    def info_subnet(self, name):
+        result = {}
+        project = self.project
+        region = self.region
+        try:
+            subnet = self.conn.subnetworks().get(region=region, project=project, subnetwork=name).execute()
+        except:
+            msg = f"Subnet {name} not found"
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
+        if self.debug:
+            print(subnet)
+        cidr = subnet['ipCidrRange']
+        result = {'cidr': cidr, 'az': project, 'network': os.path.basename(subnet['network'])}
+        dual_cidrs = [entry['ipCidrRange'] for entry in subnet.get('secondaryIpRanges', [])]
+        if dual_cidrs:
+            result['dual_cidrs'] = dual_cidrs
+        return result
