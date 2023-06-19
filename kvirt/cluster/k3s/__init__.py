@@ -15,17 +15,18 @@ import yaml
 cloud_platforms = ['aws', 'gcp']
 
 
-def cilium_update_ip_alias(config, cluster, nodes, overrides):
-    cmd = "kubectl get nodes -o name | grep -c ' Ready'"
+def update_ip_alias(config, cluster, nodes, overrides={}):
+    cmd = "kubectl get nodes -o name"
     while True:
-        pprint("Waiting 5s for {nodes} to be ready")
+        pprint(f"Waiting 5s for {nodes} nodes to be ready")
         current_nodes = len(os.popen(cmd).readlines())
         if current_nodes == nodes:
             break
         else:
             sleep(5)
     for node in yaml.safe_load(os.popen("kubectl get node -o yaml").read())['items']:
-        name, pod_cidr = node['metadata']['name'], node['metadata']['annotations']['io.cilium.network.ipv4-pod-cidr']
+        # name, pod_cidr = node['metadata']['name'], node['metadata']['annotations']['io.cilium.network.ipv4-pod-cidr']
+        name, pod_cidr = node['metadata']['name'], node['spec']['podCIDR']
         pod_cidr_name = overrides.get('pod_cidr_name') or f'dual-{overrides["network"]}'
         config.k.update_aliases(name.split(".")[0], pod_cidr_name, pod_cidr)
 
@@ -89,7 +90,7 @@ def scale(config, plandir, cluster, overrides):
             return result
     if (cloud_native or (sdn is not None and sdn == 'cilium')) and config.type == 'gcp':
         pprint("Updating ip alias ranges for cilium")
-        cilium_update_ip_alias(config, cluster, ctlplanes + workers)
+        update_ip_alias(config, cluster, ctlplanes + workers, overrides=data)
     return {'result': 'success'}
 
 
@@ -259,5 +260,5 @@ def create(config, plandir, cluster, overrides):
             deploy_cloud_storage(config, cluster)
         if (cloud_native or (sdn is not None and sdn == 'cilium')) and config.type == 'gcp':
             pprint("Updating ip alias ranges")
-            cilium_update_ip_alias(config, cluster, ctlplanes + workers)
+            update_ip_alias(config, cluster, ctlplanes + workers, overrides=data)
     return {'result': 'success'}
