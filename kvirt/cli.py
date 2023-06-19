@@ -1805,6 +1805,8 @@ def create_kube(args):
     overrides = handle_parameters(args.param, args.paramfile)
     cluster = args.cluster
     kubetype = args.type
+    if args.threaded:
+        overrides['threaded'] = args.threaded
     master_parameters = [key for key in overrides if 'master' in key]
     if master_parameters:
         master_parameters = ','.join(master_parameters)
@@ -2054,8 +2056,8 @@ def create_plan(args):
     container = args.container
     pre = not args.skippre
     post = not args.skippost
-    threaded = args.threaded
     overrides = handle_parameters(args.param, args.paramfile)
+    threaded = overrides.get('threaded') or args.threaded
     inputfile = overrides.get('inputfile') or args.inputfile or 'kcli_plan.yml'
     if container_mode():
         inputfile = f"/workdir/{inputfile}"
@@ -3637,6 +3639,7 @@ def cli():
     kubegenericcreate_epilog = f"examples:\n{kubegenericcreate}"
     kubegenericcreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubegenericcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
+    kubegenericcreate_parser.add_argument('-t', '--threaded', help='Run threaded', action='store_true')
     kubegenericcreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubegenericcreate_parser.set_defaults(func=create_generic_kube)
     kubecreate_subparsers.add_parser('generic', parents=[kubegenericcreate_parser],
@@ -3649,6 +3652,7 @@ def cli():
     kubegkecreate_epilog = f"examples:\n{kubegkecreate}"
     kubegkecreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubegkecreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
+    kubegkecreate_parser.add_argument('-t', '--threaded', help='Run threaded', action='store_true')
     kubegkecreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubegkecreate_parser.set_defaults(func=create_gke_kube)
     kubecreate_subparsers.add_parser('gke', parents=[kubegkecreate_parser], description=kubegkecreate_desc,
@@ -3659,6 +3663,7 @@ def cli():
     kubehypershiftcreate_epilog = f"examples:\n{kubehypershiftcreate}"
     kubehypershiftcreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubehypershiftcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
+    kubehypershiftcreate_parser.add_argument('-t', '--threaded', help='Run threaded', action='store_true')
     kubehypershiftcreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubehypershiftcreate_parser.set_defaults(func=create_hypershift_kube)
     kubecreate_subparsers.add_parser('hypershift', parents=[kubehypershiftcreate_parser],
@@ -3671,6 +3676,7 @@ def cli():
     kubek3screate_epilog = f"examples:\n{kubek3screate}"
     kubek3screate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubek3screate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
+    kubek3screate_parser.add_argument('-t', '--threaded', help='Run threaded', action='store_true')
     kubek3screate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubek3screate_parser.set_defaults(func=create_k3s_kube)
     kubecreate_subparsers.add_parser('k3s', parents=[kubek3screate_parser],
@@ -3683,6 +3689,7 @@ def cli():
     kubemicroshiftcreate_epilog = f"examples:\n{kubemicroshiftcreate}"
     kubemicroshiftcreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubemicroshiftcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
+    kubemicroshiftcreate_parser.add_argument('-t', '--threaded', help='Run threaded', action='store_true')
     kubemicroshiftcreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubemicroshiftcreate_parser.set_defaults(func=create_microshift_kube)
     kubecreate_subparsers.add_parser('microshift', parents=[kubemicroshiftcreate_parser],
@@ -3695,6 +3702,7 @@ def cli():
     kubeopenshiftcreate_epilog = f"examples:\n{kubeopenshiftcreate}"
     kubeopenshiftcreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubeopenshiftcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
+    kubeopenshiftcreate_parser.add_argument('-t', '--threaded', help='Run threaded', action='store_true')
     kubeopenshiftcreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubeopenshiftcreate_parser.set_defaults(func=create_openshift_kube)
     kubecreate_subparsers.add_parser('openshift', parents=[kubeopenshiftcreate_parser],
