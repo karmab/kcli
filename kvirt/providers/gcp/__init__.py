@@ -190,11 +190,11 @@ class Kgcp(object):
                 dual_name = net.get('dual_name') or f"dual-{netname}"
                 aliases.append({"ipCidrRange": dual_cidr, "subnetworkRangeName": dual_name})
             if pod_cidr is not None:
-                pod_name = net.get('pod_name') or f"dual-{netname}"
-                aliases.append({"ipCidrRange": pod_cidr, "subnetworkRangeName": pod_name})
+                pod_cidr_name = net.get('pod_cidr_name') or f"dual-{netname}"
+                aliases.append({"ipCidrRange": pod_cidr, "subnetworkRangeName": pod_cidr_name})
             if service_cidr is not None:
-                service_name = net.get('service_name') or f"dual-{netname}"
-                aliases.append({"ipCidrRange": service_cidr, "subnetworkRangeName": service_name})
+                service_cidr_name = net.get('service_cidr_name') or f"dual-{netname}"
+                aliases.append({"ipCidrRange": service_cidr, "subnetworkRangeName": service_cidr_name})
             if aliases:
                 newnet["aliasIpRanges"] = aliases
             body['networkInterfaces'].append(newnet)

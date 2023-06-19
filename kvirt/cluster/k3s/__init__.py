@@ -26,8 +26,8 @@ def cilium_update_ip_alias(config, cluster, nodes, overrides):
             sleep(5)
     for node in yaml.safe_load(os.popen("kubectl get node -o yaml").read())['items']:
         name, pod_cidr = node['metadata']['name'], node['metadata']['annotations']['io.cilium.network.ipv4-pod-cidr']
-        pod_cidr_name = overrides.get('pod_name') or f'dual-{overrides["network"]}'
-        config.k.update_aliases(name, pod_cidr_name, pod_cidr)
+        pod_cidr_name = overrides.get('pod_cidr_name') or f'dual-{overrides["network"]}'
+        config.k.update_aliases(name.split(".")[0], pod_cidr_name, pod_cidr)
 
 
 def scale(config, plandir, cluster, overrides):
