@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
-from kvirt.common import success, pprint, warning, get_kubectl, info2, container_mode, kube_create_app
+from kvirt.common import error, success, pprint, warning, get_kubectl, info2, container_mode, kube_create_app
 from kvirt.common import deploy_cloud_storage, wait_cloud_dns, update_etc_hosts
 import os
 import re
 from random import choice
 from shutil import which
 from string import ascii_letters, digits
-from subprocess import call
+from subprocess import call, run
 from tempfile import NamedTemporaryFile
 from time import sleep
 import yaml
@@ -15,20 +15,22 @@ import yaml
 cloud_platforms = ['aws', 'gcp']
 
 
-def update_ip_alias(config, cluster, nodes, overrides={}):
-    cmd = "kubectl get nodes -o name"
+def cilium_update_ip_alias(config, nodes):
+    cmd_one = ['kubectl', 'get', 'nodes', '-o=jsonpath={range .items[?(@.spec.podCIDR)]}{.metadata.name}{\'\\n\'}{end}']
     while True:
-        pprint(f"Waiting 5s for {nodes} nodes to be ready")
-        current_nodes = len(os.popen(cmd).readlines())
+        pprint(f"Waiting 5s for {nodes} nodes to have a Pod CIDR assigned")
+        result = run(cmd_one, capture_output=True, text=True)
+        current_nodes = len(result.stdout.splitlines())
         if current_nodes == nodes:
             break
         else:
             sleep(5)
     for node in yaml.safe_load(os.popen("kubectl get node -o yaml").read())['items']:
-        # name, pod_cidr = node['metadata']['name'], node['metadata']['annotations']['io.cilium.network.ipv4-pod-cidr']
-        name, pod_cidr = node['metadata']['name'], node['spec']['podCIDR']
-        pod_cidr_name = overrides.get('pod_cidr_name') or f'dual-{overrides["network"]}'
-        config.k.update_aliases(name.split(".")[0], pod_cidr_name, pod_cidr)
+        try:
+            name, pod_cidr = node['metadata']['name'], node['spec']['podCIDR']
+            config.k.update_aliases(name, pod_cidr)
+        except KeyError as e:
+            error(f"Hit Error: {e}")
 
 
 def scale(config, plandir, cluster, overrides):
@@ -90,7 +92,7 @@ def scale(config, plandir, cluster, overrides):
             return result
     if (cloud_native or (sdn is not None and sdn == 'cilium')) and config.type == 'gcp':
         pprint("Updating ip alias ranges for cilium")
-        update_ip_alias(config, cluster, ctlplanes + workers, overrides=data)
+        cilium_update_ip_alias(config, ctlplanes + workers)
     return {'result': 'success'}
 
 
@@ -260,5 +262,5 @@ def create(config, plandir, cluster, overrides):
             deploy_cloud_storage(config, cluster)
         if (cloud_native or (sdn is not None and sdn == 'cilium')) and config.type == 'gcp':
             pprint("Updating ip alias ranges")
-            update_ip_alias(config, cluster, ctlplanes + workers, overrides=data)
+            cilium_update_ip_alias(config, ctlplanes + workers)
     return {'result': 'success'}

@@ -1003,6 +1003,18 @@ class Kgcp(object):
                                 subnets[subnetname] = {'cidr': cidr, 'az': project, 'network': networkname}
         return subnets
 
+    def get_subnet(self, subnetwork):
+        subnet = {}
+        conn = self.conn
+        region = self.region
+        project = [self.project]
+        if self.xproject is not None:
+            project = self.xproject
+        response = conn.subnetworks().get(region=region, project=project, subnetwork=subnetwork).execute()
+        if response:
+            subnet = response
+        return subnet
+
     def delete_pool(self, name, full=False):
         print("not implemented")
         return
@@ -1569,7 +1581,7 @@ class Kgcp(object):
         self._wait_for_operation(operation)
         return {'result': 'success'}
 
-    def update_aliases(self, name, cidr_name, cidr):
+    def update_aliases(self, name, cidr):
         conn = self.conn
         project = self.project
         zone = self.zone
@@ -1580,6 +1592,10 @@ class Kgcp(object):
             error(msg)
             return {'result': 'failure', 'reason': msg}
         fingerprint = vm['networkInterfaces'][0]['fingerprint']
+        vm_subnetwork = vm['networkInterfaces'][0]['subnetwork']
+        vm_subnetwork_name = vm_subnetwork.split('/')[-1]
+        subnet = self.get_subnet(vm_subnetwork_name)
+        cidr_name = subnet['secondaryIpRanges'][0]['rangeName']
         body = {"aliasIpRanges": [{"ipCidrRange": cidr, "subnetworkRangeName": cidr_name}], "fingerprint": fingerprint}
         operation = self.conn.instances().updateNetworkInterface(project=project, zone=zone, instance=name,
                                                                  networkInterface='nic0', body=body).execute()
