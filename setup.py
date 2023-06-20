@@ -53,5 +53,6 @@ setup(
         klist.py=kvirt.klist:main
         ksushy=kvirt.ksushy.main:run
         ignitionmerger=kvirt.ignitionmerger:cli
+        ekstoken=kvirt.ekstoken:cli
     ''',
 )

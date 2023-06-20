@@ -1415,3 +1415,32 @@ class Kaws(object):
     def info_subnet(self, name):
         print("not implemented")
         return {}
+
+    def eks_get_network(self, netname):
+        conn = self.conn
+        vpcs = conn.describe_vpcs()
+        subnets = conn.describe_subnets()
+        if netname in [subnet['SubnetId'] for subnet in subnets['Subnets']]:
+            subnetid = netname
+            vpcid = [subnet['VpcId'] for subnet in subnets['Subnets'] if subnet['SubnetId'] == netname][0]
+        elif netname == 'default':
+            vpcid = [vpc['VpcId'] for vpc in vpcs['Vpcs'] if vpc['IsDefault']]
+            if not vpcid:
+                error("Couldn't find default vpc")
+                sys.exit(1)
+            vpcid = vpcid[0]
+            subnetid = [subnet['SubnetId'] for subnet in subnets['Subnets']
+                        if subnet['DefaultForAz'] and subnet['VpcId'] == vpcid][0]
+            pprint(f"Using subnet {subnetid} as default")
+        else:
+            vpcid = self.get_vpc_id(vpcs, netname) if not netname.startswith('vpc-') else netname
+            if vpcid is None:
+                error(f"Couldn't find vpc {netname}")
+                sys.exit(1)
+            subnetids = [subnet['SubnetId'] for subnet in subnets['Subnets'] if subnet['VpcId'] == vpcid]
+            if subnetids:
+                subnetid = subnetids[0]
+            else:
+                error(f"Couldn't find valid subnet for vpc {netname}")
+                sys.exit(1)
+        return vpcid, subnetid

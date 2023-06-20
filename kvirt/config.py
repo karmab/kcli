@@ -1300,6 +1300,9 @@ class Kconfig(Kbaseconfig):
         if self.type == 'gcp':
             from kvirt.cluster import gke
             kubes.update(gke.list(self))
+        elif self.type == 'aws':
+            from kvirt.cluster import eks
+            kubes.update(eks.list(self))
         return kubes
 
     def create_product(self, name, repo=None, group=None, plan=None, latest=False, overrides={}):
@@ -1466,9 +1469,10 @@ class Kconfig(Kbaseconfig):
             deleteclients.update(self.extraclients)
         elif vmclients:
             deleteclients.update({cli: Kconfig(client=cli).k for cli in vmclients if cli != self.client})
-        gke = False
         hypershift = False
         assisted = False
+        eks = False
+        gke = False
         clusterdir = "/fake/xxx"
         for hypervisor in deleteclients:
             c = deleteclients[hypervisor]
@@ -1476,7 +1480,7 @@ class Kconfig(Kbaseconfig):
                 name = vm['name']
                 description = vm.get('plan')
                 if description == plan:
-                    if vm.get('kubetype', 'generic') == 'gke':
+                    if vm.get('kubetype', 'generic') in ['eks', 'gke']:
                         continue
                     if 'loadbalancer' in vm:
                         lbs = vm['loadbalancer'].split(',')
@@ -1525,6 +1529,7 @@ class Kconfig(Kbaseconfig):
                                     domain = clusterdata.get('domain', domain)
                                     dnsclient = clusterdata.get('dnsclient')
                                     gke = kubetype == 'gke'
+                                    eks = kubetype == 'eks'
         if hypershift:
             kubeconfigmgmt = f"{clusterdir}/kubeconfig.mgmt"
             call(f'KUBECONFIG={kubeconfigmgmt} oc delete -f {clusterdir}/autoapprovercron.yml', shell=True)
@@ -1546,6 +1551,17 @@ class Kconfig(Kbaseconfig):
             currentconfig = Kconfig(client=gcpclient).k if gcpclient != self.client else self
             zonal = clusterdata.get('zonal', True)
             gke.delete(currentconfig, cluster, zonal)
+        elif eks:
+            eksclient = None
+            if 'client' in clusterdata:
+                eksclient = clusterdata['client']
+            elif self.type == 'aws':
+                eksclient = self.client
+            else:
+                return {'result': 'failure', 'reason': "Deleting eks cluster requires to instantiate gcp provider"}
+            from kvirt.cluster import eks
+            currentconfig = Kconfig(client=eksclient).k if eksclient != self.client else self
+            eks.delete(currentconfig, cluster)
         if os.path.exists(clusterdir):
             pprint(f"Deleting directory {clusterdir}")
             rmtree(clusterdir, ignore_errors=True)
@@ -1929,7 +1945,7 @@ class Kconfig(Kbaseconfig):
                 if existing_ctlplanes:
                     pprint(f"Cluster {cluster} found. skipped!")
                     continue
-                if kubetype not in ['generic', 'openshift', 'hypershift', 'microshift', 'k3s', 'gke']:
+                if kubetype not in ['generic', 'openshift', 'hypershift', 'microshift', 'k3s', 'gke', 'eks']:
                     warning(f"Incorrect kubetype {kubetype} specified. skipped!")
                     continue
                 if kubethreaded:
@@ -2743,9 +2759,19 @@ class Kconfig(Kbaseconfig):
             result = self.create_kube_k3s(cluster, overrides=overrides)
         elif kubetype == 'gke':
             result = self.create_kube_gke(cluster, overrides=overrides)
+        elif kubetype == 'eks':
+            result = self.create_kube_eks(cluster, overrides=overrides)
         else:
             result = self.create_kube_generic(cluster, overrides=overrides)
         return result
+
+    def create_kube_eks(self, cluster, overrides={}):
+        from kvirt.cluster import eks
+        if container_mode():
+            os.environ['PATH'] += ':/workdir'
+        else:
+            os.environ['PATH'] += ':%s' % os.getcwd()
+        return eks.create(self, cluster, overrides)
 
     def create_kube_generic(self, cluster, overrides={}):
         if container_mode():
@@ -2800,9 +2826,10 @@ class Kconfig(Kbaseconfig):
         return openshift.create(self, plandir, cluster, overrides, dnsconfig=dnsconfig)
 
     def delete_kube(self, cluster, overrides={}):
-        hypershift = False
+        hypershift = overrides.get('kubetype', 'xxx') == 'hypershift'
         assisted = False
-        gke = False
+        eks = overrides.get('kubetype', 'xxx') == 'eks'
+        gke = overrides.get('kubetype', 'gke') == 'gke'
         domain = overrides.get('domain', 'karmalabs.corp')
         kubetype = overrides.get('kubetype', 'generic')
         dnsclient = None
@@ -2812,7 +2839,7 @@ class Kconfig(Kbaseconfig):
         cluster = overrides.get('cluster', cluster)
         if cluster is None or cluster == '':
             default_clusters = {'generic': 'mykube', 'hypershift': 'myhypershift', 'openshift': 'myopenshift',
-                                'k3s': 'myk3s', 'microshift': 'mymicroshift', 'gke': 'mygke'}
+                                'k3s': 'myk3s', 'microshift': 'mymicroshift', 'gke': 'mygke', 'eks': 'myeks'}
             cluster = default_clusters[kubetype]
         clusterdata = {}
         clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
@@ -2828,6 +2855,7 @@ class Kconfig(Kbaseconfig):
                     domain = clusterdata.get('domain', domain)
                     dnsclient = clusterdata.get('dnsclient')
                     gke = kubetype == 'gke'
+                    eks = kubetype == 'eks'
         deleteclients = {self.client: k}
         vmclients = []
         vmclients_file = os.path.expanduser(f'~/.kcli/vmclients_{cluster}')
@@ -2849,6 +2877,9 @@ class Kconfig(Kbaseconfig):
                     if kubetype == 'gke':
                         gke = True
                         break
+                    elif kubetype == 'eks':
+                        eks = True
+                        break
                     c.delete(name, snapshots=True)
                     common.delete_lastvm(name, self.client)
                     success(f"{name} deleted on {hypervisor}!")
@@ -2857,7 +2888,7 @@ class Kconfig(Kbaseconfig):
                 k.delete_service(f"{cluster}-api", k.namespace)
             if f"{cluster}-ingress" in k.list_services(k.namespace):
                 k.delete_service(f"{cluster}-ingress", k.namespace)
-        if self.type in ['aws', 'gcp', 'ibm'] and not gke:
+        if self.type in ['aws', 'gcp', 'ibm'] and not gke and not eks:
             lbs = ['api']
             if kubetype not in ['k3s', 'generic']:
                 lbs.append('apps')
@@ -2893,6 +2924,19 @@ class Kconfig(Kbaseconfig):
             currentconfig = Kconfig(client=gcpclient).k if gcpclient != self.client else self
             zonal = clusterdata.get('zonal', True)
             gke.delete(currentconfig, cluster, zonal)
+        if eks:
+            eksclient = None
+            if 'client' in clusterdata:
+                eksclient = clusterdata['client']
+            elif self.type == 'aws':
+                eksclient = self.client
+            else:
+                msg = "Deleting gke cluster requires to instantiate gcp provider"
+                error(msg)
+                return {'result': 'failure', 'reason': msg}
+            from kvirt.cluster import eks
+            currentconfig = Kconfig(client=eksclient).k if eksclient != self.client else self
+            eks.delete(currentconfig, cluster)
         for confpool in self.confpools:
             ip_reservations = self.confpools[confpool].get('ip_reservations', {})
             if cluster in ip_reservations:
@@ -2922,7 +2966,13 @@ class Kconfig(Kbaseconfig):
             result = self.scale_kube_hypershift(cluster, overrides=overrides)
         elif kubetype == 'gke':
             result = self.scale_kube_gke(cluster, overrides=overrides)
+        elif kubetype == 'eks':
+            result = self.scale_kube_eks(cluster, overrides=overrides)
         return result
+
+    def scale_kube_eks(self, cluster, overrides={}):
+        from kvirt.cluster import eks
+        return eks.scale(self, cluster, overrides)
 
     def scale_kube_generic(self, cluster, overrides={}):
         plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
@@ -3460,8 +3510,19 @@ class Kconfig(Kbaseconfig):
         t.start()
         webbrowser.open(f"http://127.0.0.1:{port}", new=2, autoraise=True)
 
+    def info_specific_eks(self, cluster):
+        from kvirt.cluster.eks import info as eks_info
+        return eks_info(self, cluster, self.debug)
+
+    def info_kube_eks(self, quiet, web=False):
+        from kvirt.cluster import eks
+        plandir = os.path.dirname(eks.create.__code__.co_filename)
+        inputfile = f'{plandir}/fake.yml'
+        self.info_plan(inputfile, quiet=quiet, web=web)
+        eks.info_service(self)
+
     def info_specific_gke(self, cluster):
-        from kvirt.cluster.gke import info as gke_info
+        from kvirt.cluter.gke import info as gke_info
         return gke_info(self, cluster, self.debug)
 
     def info_kube_gke(self, quiet, web=False):
