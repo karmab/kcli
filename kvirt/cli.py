@@ -13,6 +13,7 @@ from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsol
 from kvirt.examples import disconnectedcreate, appopenshiftcreate, plantemplatecreate, kubehypershiftcreate
 from kvirt.examples import workflowcreate, kubegenericscale, kubek3sscale, kubeopenshiftscale, kubegkescale
 from kvirt.examples import changelog, starthosts, stophosts, infohosts, ocdownload, openshiftdownload, ocmirrordownload
+from kvirt.examples import kubeekscreate, kubeeksscale
 from kvirt.examples import networkcreate, securitygroupcreate, profilecreate, vmupdate, vmlist
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
@@ -1840,6 +1841,12 @@ def create_kube(args):
         sys.exit(1)
 
 
+def create_eks_kube(args):
+    """Create Eks kube"""
+    args.type = 'eks'
+    create_kube(args)
+
+
 def create_generic_kube(args):
     """Create Generic kube"""
     args.type = 'generic'
@@ -1906,6 +1913,13 @@ def scale_kube(args):
         if 'reason' in result:
             error(result['reason'])
         sys.exit(1)
+
+
+def scale_eks_kube(args):
+    """Scale eks kube"""
+    args.type = 'eks'
+    args.ctlplanes = 0
+    scale_kube(args)
 
 
 def scale_generic_kube(args):
@@ -2280,13 +2294,15 @@ def info_kube(args):
     kubetype = args.kubetype
     output = args.global_output or args.output
     openshift = kubetype == 'openshift'
-    if kubetype == 'gke':
+    if kubetype in ['eks', 'gke']:
         baseconfig = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                              namespace=args.namespace)
     else:
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     if args.cluster is not None:
-        if kubetype == 'gke':
+        if kubetype == 'eks':
+            status = baseconfig.info_specific_eks(args.cluster)
+        elif kubetype == 'gke':
             status = baseconfig.info_specific_gke(args.cluster)
         else:
             status = baseconfig.info_specific_kube(args.cluster, openshift)
@@ -2313,6 +2329,8 @@ def info_kube(args):
             baseconfig.info_kube_k3s(quiet=True)
         elif kubetype == 'gke':
             baseconfig.info_kube_gke(quiet=True)
+        elif kubetype == 'eks':
+            baseconfig.info_kube_eks(quiet=True)
         else:
             baseconfig.info_kube_generic(quiet=True)
 
@@ -2333,6 +2351,11 @@ def info_web_kube(args):
             kubetable.add_row(node)
         kubetable.align["Kube"] = "l"
         print(kubetable)
+
+
+def info_eks_kube(args):
+    args.kubetype = 'eks'
+    info_kube(args)
 
 
 def info_generic_kube(args):
@@ -3654,6 +3677,17 @@ def cli():
                                                      aliases=['cluster'])
     kubecreate_subparsers = kubecreate_parser.add_subparsers(metavar='', dest='subcommand_create_kube')
 
+    kubeekscreate_desc = 'Create Eks Kube'
+    kubeekscreate_epilog = f"examples:\n{kubeekscreate}"
+    kubeekscreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
+    kubeekscreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
+    kubeekscreate_parser.add_argument('-t', '--threaded', help='Run threaded', action='store_true')
+    kubeekscreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
+    kubeekscreate_parser.set_defaults(func=create_eks_kube)
+    kubecreate_subparsers.add_parser('eks', parents=[kubeekscreate_parser], description=kubeekscreate_desc,
+                                     help=kubeekscreate_desc, epilog=kubeekscreate_epilog,
+                                     formatter_class=rawhelp)
+
     kubegenericcreate_desc = 'Create Generic Kube'
     kubegenericcreate_epilog = f"examples:\n{kubegenericcreate}"
     kubegenericcreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
@@ -4472,6 +4506,13 @@ def cli():
                                                  aliases=['cluster'])
     kubeinfo_subparsers = kubeinfo_parser.add_subparsers(metavar='', dest='subcommand_info_kube')
 
+    kubeeksinfo_desc = 'Info Eks Kube'
+    kubeeksinfo_parser = kubeinfo_subparsers.add_parser('eks', description=kubeeksinfo_desc,
+                                                        help=kubeeksinfo_desc,
+                                                        parents=[output_parser])
+    kubeeksinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
+    kubeeksinfo_parser.set_defaults(func=info_eks_kube)
+
     kubegenericinfo_desc = 'Info Generic Kube'
     kubegenericinfo_parser = kubeinfo_subparsers.add_parser('generic', description=kubegenericinfo_desc,
                                                             help=kubegenericinfo_desc, aliases=['kubeadm'],
@@ -4827,6 +4868,15 @@ def cli():
     kubescale_parser = scale_subparsers.add_parser('kube', description=kubescale_desc, help=kubescale_desc,
                                                    aliases=['cluster'])
     kubescale_subparsers = kubescale_parser.add_subparsers(metavar='', dest='subcommand_scale_kube')
+
+    kubeeksscale_desc = 'Scale Eks Kube'
+    kubeeksscale_epilog = f"examples:\n{kubeeksscale}"
+    kubeeksscale_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
+    kubeeksscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
+    kubeeksscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='mykube')
+    kubeeksscale_parser.set_defaults(func=scale_eks_kube)
+    kubescale_subparsers.add_parser('eks', parents=[kubeeksscale_parser], description=kubeeksscale_desc,
+                                    help=kubeeksscale_desc, epilog=kubeeksscale_epilog, formatter_class=rawhelp)
 
     kubegenericscale_desc = 'Scale Generic Kube'
     kubegenericscale_epilog = f"examples:\n{kubegenericscale}"

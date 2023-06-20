@@ -170,6 +170,13 @@ vmexport = """# Export vm myvm with a specific name for the generated image
 $ kcli export -i myimage myvm
 """
 
+kubeekscreate = """# Create a gke instance named myeks with default values
+$ kcli create kube eks myeks
+
+# Use a parameter file
+$ kcli create kube eks --paramfile=myparameters.yml myeks
+"""
+
 kubegenericcreate = """# Create a kube instance named mykube with default values
 $ kcli create kube generic mykube
 
@@ -342,6 +349,14 @@ $ kcli run workflow myworkflow -P cmds=[hostname]
 
 # Only output assets to dir without running
 $ kcli run workflow myscript.sh -do mydir
+
+"""
+
+kubeeksscale = """# Scale nodes from eks cluster myeks
+$ kcli scale cluster eks -P workers=3 myeks
+
+# Alternative way to indicate workers
+$ kcli scale cluster eks --workers 3 myeks
 
 """
 

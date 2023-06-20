@@ -1,0 +1,13 @@
+info: |
+  Deploy kubernetes using eks on $nodes
+nodes: 2
+version:
+network: default
+extra_networks: []
+role:
+security_group:
+disk_size:
+flavor:
+ami_type:
+capacity_type:
+
