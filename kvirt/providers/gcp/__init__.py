@@ -1595,13 +1595,21 @@ class Kgcp(object):
     def info_subnet(self, name):
         result = {}
         project = self.project
+        xproject = self.xproject
         region = self.region
         try:
             subnet = self.conn.subnetworks().get(region=region, project=project, subnetwork=name).execute()
         except:
             msg = f"Subnet {name} not found"
-            error(msg)
-            return {'result': 'failure', 'reason': msg}
+            if xproject is not None:
+                try:
+                    subnet = self.conn.subnetworks().get(region=region, project=xproject, subnetwork=name).execute()
+                except:
+                    error(msg)
+                    return {'result': 'failure', 'reason': msg}
+            else:
+                error(msg)
+                return {'result': 'failure', 'reason': msg}
         if self.debug:
             print(subnet)
         cidr = subnet['ipCidrRange']
