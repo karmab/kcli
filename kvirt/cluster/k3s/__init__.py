@@ -15,7 +15,7 @@ import yaml
 cloud_platforms = ['aws', 'gcp']
 
 
-def cilium_update_ip_alias(config, nodes):
+def update_ip_alias(config, nodes):
     cmd_one = ['kubectl', 'get', 'nodes', '-o=jsonpath={range .items[?(@.spec.podCIDR)]}{.metadata.name}{\'\\n\'}{end}']
     while True:
         pprint(f"Waiting 5s for {nodes} nodes to have a Pod CIDR assigned")
@@ -90,9 +90,9 @@ def scale(config, plandir, cluster, overrides):
         result = config.plan(plan, inputfile=f'{plandir}/{role}.yml', overrides=overrides, threaded=threaded)
         if result['result'] != 'success':
             return result
-    if (cloud_native or (sdn is not None and sdn == 'cilium')) and config.type == 'gcp':
-        pprint("Updating ip alias ranges for cilium")
-        cilium_update_ip_alias(config, ctlplanes + workers)
+    if cloud_native and config.type == 'gcp':
+        pprint("Updating ip alias ranges")
+        update_ip_alias(config, ctlplanes + workers)
     return {'result': 'success'}
 
 
@@ -260,7 +260,7 @@ def create(config, plandir, cluster, overrides):
         if cloud_storage and config.type == 'aws':
             pprint("Deploying cloud storage class")
             deploy_cloud_storage(config, cluster)
-        if (cloud_native or (sdn is not None and sdn == 'cilium')) and config.type == 'gcp':
+        if cloud_native and config.type == 'gcp':
             pprint("Updating ip alias ranges")
-            cilium_update_ip_alias(config, ctlplanes + workers)
+            update_ip_alias(config, ctlplanes + workers)
     return {'result': 'success'}
