@@ -68,6 +68,7 @@ extra_ctlplane_networks: []
 extra_worker_networks: []
 disconnected_url:
 disconnected_deploy: false
+disconnected_update: false
 disconnected_haproxy: false
 disconnected_reuse: false
 bootstrap_mac:

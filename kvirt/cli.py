@@ -12,7 +12,7 @@ from kvirt.examples import kubegenericcreate, kubek3screate, kubeopenshiftcreate
 from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsole, vmexport, niccreate, nicdelete
 from kvirt.examples import disconnectedcreate, appopenshiftcreate, plantemplatecreate, kubehypershiftcreate
 from kvirt.examples import workflowcreate, kubegenericscale, kubek3sscale, kubeopenshiftscale, kubegkescale
-from kvirt.examples import changelog, starthosts, stophosts, infohosts, ocdownload, openshiftdownload
+from kvirt.examples import changelog, starthosts, stophosts, infohosts, ocdownload, openshiftdownload, ocmirrordownload
 from kvirt.examples import networkcreate, securitygroupcreate, profilecreate, vmupdate, vmlist
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
@@ -2442,7 +2442,13 @@ def download_hypershift(args):
 def download_oc(args):
     """Download Oc"""
     overrides = handle_parameters(args.param, args.paramfile)
-    common.get_oc(version=overrides.get('version', 'stable'), tag=overrides.get('tag', '4.12'))
+    common.get_oc(version=overrides.get('version', 'stable'), tag=overrides.get('tag', '4.13'))
+
+
+def download_oc_mirror(args):
+    """Download Oc Mirror"""
+    overrides = handle_parameters(args.param, args.paramfile)
+    common.get_oc_mirror(version=overrides.get('version', 'stable'), tag=overrides.get('tag', '4.13'))
 
 
 def download_openshift_installer(args):
@@ -4323,6 +4329,14 @@ def cli():
     download_subparsers.add_parser('oc', parents=[ocdownload_parser],
                                    description=ocdownload_desc,
                                    help=ocdownload_desc, epilog=ocdownload_epilog, formatter_class=rawhelp)
+
+    ocmirrordownload_desc = 'Download Oc Mirror'
+    ocmirrordownload_epilog = f"examples:\n{ocmirrordownload}"
+    ocmirrordownload_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
+    ocmirrordownload_parser.set_defaults(func=download_oc_mirror)
+    download_subparsers.add_parser('oc-mirror', parents=[ocmirrordownload_parser],
+                                   description=ocmirrordownload_desc,
+                                   help=ocmirrordownload_desc, epilog=ocmirrordownload_epilog, formatter_class=rawhelp)
 
     openshiftdownload_desc = 'Download Openshift Installer'
     openshiftdownload_epilog = f"examples:\n{openshiftdownload}"

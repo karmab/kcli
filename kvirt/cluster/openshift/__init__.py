@@ -7,7 +7,7 @@ import os
 import sys
 from ipaddress import ip_network
 from kvirt.common import error, pprint, success, warning, info2
-from kvirt.common import get_oc, pwd_path
+from kvirt.common import get_oc, pwd_path, get_oc_mirror
 from kvirt.common import get_latest_fcos, generate_rhcos_iso, olm_app, get_commit_rhcos
 from kvirt.common import get_installer_rhcos, wait_cloud_dns, delete_lastvm
 from kvirt.common import ssh, scp, _ssh_credentials, get_ssh_pub_key, boot_baremetal_hosts
@@ -561,6 +561,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     network = data.get('network')
     ipv6 = data['ipv6']
     disconnected_deploy = data.get('disconnected_deploy', False)
+    disconnected_update = data.get('disconnected_update', False)
     disconnected_reuse = data.get('disconnected_reuse', False)
     disconnected_operators = data.get('disconnected_operators', [])
     disconnected_certified_operators = data.get('disconnected_certified_operators', [])
@@ -758,7 +759,21 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             tag = f'{disconnected_url}/{disconnected_prefix_images}:{tag}'
             os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = tag
         pprint(f"Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to {tag}")
-        data['openshift_release_image'] = {tag}
+        data['openshift_release_image'] = tag
+        if disconnected_update:
+            pprint("Updating disconnected registry")
+            synccmd = f"oc adm release mirror -a {pull_secret} --from={tag} "
+            synccmd += f"--to-release-image={disconnected_url}/openshift/release-images:{os.path.basename(tag)} "
+            synccmd += f"--to={disconnected_url}/openshift/release"
+            call(synccmd, shell=True)
+            if which('oc-mirror') is None:
+                get_oc_mirror(version=overrides.get('version', 'stable'), tag=overrides.get('tag', '4.12'))
+            mirrorconfig = config.process_inputfile(cluster, f"{plandir}/disconnected/mirror-config.yaml.sample",
+                                                    overrides=data)
+            with open(f"{clusterdir}/mirror-config.yaml", 'w') as f:
+                f.write(mirrorconfig)
+            olmcmd = f"oc-mirror --config {clusterdir}/mirror-config.yaml docker://{disconnected_url}"
+            call(olmcmd, shell=True)
         if 'ca' not in data and 'quay.io' not in disconnected_url:
             pprint(f"Trying to gather registry ca cert from {disconnected_url}")
             cacmd = f"openssl s_client -showcerts -connect {disconnected_url} </dev/null 2>/dev/null|"

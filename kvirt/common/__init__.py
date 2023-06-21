@@ -1692,6 +1692,31 @@ def get_oc(version='stable', tag='4.13', macosx=False):
             move('oc', '/workdir/oc')
 
 
+def get_oc_mirror(version='stable', tag='4.13', macosx=False):
+    SYSTEM = 'mac' if os.path.exists('/Users') else 'linux'
+    if SYSTEM == 'mac':
+        error("oc-mirror is not available on Mac")
+        sys.exit(1)
+    arch = 'arm64' if os.uname().machine == 'aarch64' else 'x86_64'
+    pprint("Downloading oc-mirror in current directory")
+    mirrorcmd = "curl -s "
+    if str(tag).count('.') == 1:
+        tag = f'latest-{tag}'
+    mirrorcmd += f"https://mirror.openshift.com/pub/openshift-v4/{arch}/clients/ocp/{tag}/oc-mirror-{SYSTEM}.tar.gz"
+    mirrorcmd += "| tar zxf - oc-mirror"
+    mirrorcmd += "; chmod 700 oc-mirror"
+    call(mirrorcmd, shell=True)
+    if container_mode():
+        if macosx:
+            mirrorcmd += f"https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/{tag}/"
+            mirrorcmd += f"oc-mirror-{SYSTEM}.tar.gz"
+            mirrorcmd += "| tar zxf -C /workdir - oc-mirror"
+            mirrorcmd += "; chmod 700 /workdir/oc-mirror"
+            call(mirrorcmd, shell=True)
+        else:
+            move('oc-mirror', '/workdir/oc-mirror')
+
+
 def get_helm(version='latest'):
     SYSTEM = 'darwin' if os.path.exists('/Users') else 'linux'
     pprint("Downloading helm in current directory")
