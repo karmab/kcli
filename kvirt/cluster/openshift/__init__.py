@@ -382,6 +382,44 @@ def handle_baremetal_iso_sno(config, plandir, cluster, data, baremetal_hosts=[],
     return f'http://{host_ip}/{iso_name}'
 
 
+def mapping_to_icsp(config, plandir, output_dir, mirror_config, mapping_file='oc-mirror-workspace/mapping.txt'):
+    mirrors = []
+    index_images = []
+    for line in open(mapping_file, 'r').readlines():
+        result = re.search(r"(.+)=(.+)", line)
+        source_registry_image = result.group(1)
+        mirror_registry_image = result.group(2)
+        # If we find some index image, we add it to this list to generate a catalogsource for it later
+        if "index:v" in mirror_registry_image:
+            index_images.append(mirror_registry_image)
+        result = re.search(r"(.+)/", source_registry_image)
+        source_registry_namespace = result.group(1)
+        result = re.search(r"(.+)/", mirror_registry_image)
+        mirror_registry_namespace = result.group(1)
+        icsp_entry = {"source_registry_namespace": source_registry_namespace,
+                      "mirror_registry_namespace": mirror_registry_namespace}
+        mirrors.append(icsp_entry)
+    mirror_list = [dict(t) for t in {tuple(d.items()) for d in mirrors}]
+    if mirror_config is not None:
+        config_data = yaml.safe_load(open(mirror_config, 'r'))
+        mirror_registry = config_data['storageConfig']['registry']['imageURL'].split("/")[0]
+        for catalog in config_data['mirror']['operators']:
+            image_namespace = catalog['catalog'].split("/")[1]
+            image_name = catalog['catalog'].split("/")[2]
+            index_image = f"{mirror_registry}/{image_namespace}/{image_name}"
+            index_images.append(index_image)
+    # Remove duplicates from index images
+    index_images = list(dict.fromkeys(index_images))
+    catalogsource = config.process_inputfile('xxx', f"{plandir}/catalogsource.yml.j2",
+                                             overrides={'index_images': index_images})
+    with open(f"{output_dir}/catalogSource.yaml", 'w') as f:
+        f.write(catalogsource)
+    # Create ImageContentSourcePolicy file
+    icsp = config.process_inputfile('xxx', f"{plandir}/icsp.yml.j2", overrides={'mirror_list': mirror_list})
+    with open(f"{output_dir}/imageContentSourcePolicy.yaml", 'w') as f:
+        f.write(icsp)
+
+
 def scale(config, plandir, cluster, overrides):
     plan = cluster
     client = config.client
@@ -967,6 +1005,16 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             olmcmd = f"oc-mirror --config {clusterdir}/mirror-config.yaml docker://{disconnected_url}"
             pprint(f"Running {olmcmd}")
             call(olmcmd, shell=True)
+            catfilter = "oc-mirror-workspace/results-*/catalogSource*.yaml"
+            icspfilter = "oc-mirror-workspace/results-*/imageContentSourcePolicy.yaml"
+            if not glob(catfilter) and not glob(icspfilter):
+                olmcmd = f"oc-mirror --config {clusterdir}/mirror-config.yaml"
+                olmcmd += f" --max-per-registry 20 --ignore-history --dry-run docker://{disconnected_url}"
+                pprint(f"Running {olmcmd}")
+                call(olmcmd, shell=True)
+                mapping_to_icsp(config, plandir, f"{clusterdir}", f"{clusterdir}/mirror-config.yaml")
+            if os.path.exists("oc-mirror-workspace"):
+                rmtree("oc-mirror-workspace")
         key = f"{disconnected_user}:{disconnected_password}"
         key = str(b64encode(key.encode('utf-8')), 'utf-8')
         auths = {'auths': {disconnected_url: {'auth': key, 'email': 'jhendrix@karmalabs.corp'}}}
@@ -1019,13 +1067,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             warning(f"Skipping empty file {yamlfile}")
         elif 'catalogSource' in yamlfile or 'imageContentSourcePolicy' in yamlfile:
             copy2(yamlfile, f"{clusterdir}/openshift")
-    if disconnected_url is not None and disconnected_update:
-        for catalogsource in glob("oc-mirror-workspace/results-*/catalogSource*.yaml"):
-            pprint(f"Injecting catalogsource {catalogsource}")
-            copy2(catalogsource, f"{clusterdir}/openshift")
-        for icsp in glob("oc-mirror-workspace/results-*/imageContentSourcePolicy.yaml"):
-            pprint(f"Injecting icsp {icsp}")
-            copy2(icsp, f"{clusterdir}/openshift")
     if 'network_type' in data:
         if data['network_type'] == 'Calico':
             calico_version = data['calico_version']

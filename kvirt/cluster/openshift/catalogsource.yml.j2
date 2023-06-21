@@ -1,0 +1,11 @@
+{% for image in index_images %}
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: {{ image.split('/')[2].split(':')[0] }}
+  namespace: openshift-marketplace
+spec:
+  image: {{ image }}
+  sourceType: grpc
+{% endfor %}
