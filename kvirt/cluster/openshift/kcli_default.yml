@@ -77,17 +77,23 @@ disconnected_user:
 disconnected_password:
 disconnected_operators_all: false
 disconnected_operators: []
-disconnected_certified_operators: []
 disconnected_certified_operators_all: false
+disconnected_certified_operators: []
+disconnected_certified_operators_version:
 disconnected_community_operators_all: false
 disconnected_community_operators: []
+disconnected_community_operators_version:
 disconnected_marketplace_operators_all: false
 disconnected_marketplace_operators: []
+disconnected_marketplace_operators_version:
 disconnected_ipv6_network: false
 disconnected_sync: true
 disconnected_mac:
 disconnected_prefix:
 disconnected_prefix_images:
+disconnected_extra_images: []
+disconnected_extra_catalogs: []
+disconnected_extra_releases: []
 imagecontentsources: []
 ca:
 ipv6: false
