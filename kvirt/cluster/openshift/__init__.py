@@ -7,7 +7,7 @@ import os
 import sys
 from ipaddress import ip_network
 from kvirt.common import error, pprint, success, warning, info2
-from kvirt.common import get_oc, pwd_path
+from kvirt.common import get_oc, pwd_path, get_oc_mirror
 from kvirt.common import get_latest_fcos, generate_rhcos_iso, olm_app, get_commit_rhcos
 from kvirt.common import get_installer_rhcos, wait_cloud_dns, delete_lastvm
 from kvirt.common import ssh, scp, _ssh_credentials, get_ssh_pub_key, boot_baremetal_hosts
@@ -509,6 +509,22 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'contrail_ctl_create': True,
             'contrail_ctl_cidr': '10.40.1.0/24',
             'contrail_ctl_gateway': '10.40.1.1',
+            'disconnected_deploy': False,
+            'disconnected_update': False,
+            'disconnected_reuse': False,
+            'disconnected_operators_all': False,
+            'disconnected_operators': [],
+            'disconnected_operators_version': None,
+            'disconnected_certified_operators_all': False,
+            'disconnected_certified_operators': [],
+            'disconnected_certified_operators_version': None,
+            'disconnected_community_operators_all': False,
+            'disconnected_community_operators': [],
+            'disconnected_community_operators_version': None,
+            'disconnected_marketplace_operators_all': False,
+            'disconnected_marketplace_operators': [],
+            'disconnected_marketplace_operators_version': None,
+            'disconnected_extra_catalogs': [],
             'retries': 2}
     data.update(overrides)
     clustervalue = overrides.get('cluster') or cluster or 'myopenshift'
@@ -560,12 +576,13 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         return {'result': 'failure', 'reason': msg}
     network = data.get('network')
     ipv6 = data['ipv6']
-    disconnected_deploy = data.get('disconnected_deploy', False)
-    disconnected_reuse = data.get('disconnected_reuse', False)
+    disconnected_deploy = data['disconnected_deploy']
+    disconnected_update = data['disconnected_update']
+    disconnected_reuse = data['disconnected_reuse']
     disconnected_operators = data.get('disconnected_operators', [])
-    disconnected_certified_operators = data.get('disconnected_certified_operators', [])
-    disconnected_community_operators = data.get('disconnected_community_operators', [])
-    disconnected_marketplace_operators = data.get('disconnected_marketplace_operators', [])
+    disconnected_certified_operators = data['disconnected_certified_operators']
+    disconnected_community_operators = data['disconnected_community_operators']
+    disconnected_marketplace_operators = data['disconnected_marketplace_operators']
     disconnected_url = data.get('disconnected_url')
     disconnected_user = data.get('disconnected_user')
     disconnected_password = data.get('disconnected_password')
@@ -754,11 +771,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if disconnected_url.startswith('http'):
             warning(f"Removing scheme from {disconnected_url}")
             disconnected_url = disconnected_url.replace('http://', '').replace('https://', '')
+        ori_tag = tag
         if '/' not in str(tag):
             tag = f'{disconnected_url}/{disconnected_prefix_images}:{tag}'
             os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = tag
         pprint(f"Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to {tag}")
-        data['openshift_release_image'] = {tag}
+        data['openshift_release_image'] = tag
         if 'ca' not in data and 'quay.io' not in disconnected_url:
             pprint(f"Trying to gather registry ca cert from {disconnected_url}")
             cacmd = f"openssl s_client -showcerts -connect {disconnected_url} </dev/null 2>/dev/null|"
@@ -923,6 +941,32 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = disconnected_version
         pprint(f"Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to {disconnected_version}")
     if disconnected_url is not None:
+        if disconnected_update:
+            with open(f'{clusterdir}/ca.crt', 'w') as f:
+                f.write(data['ca'])
+            call(f'sudo cp {clusterdir}/ca.crt /etc/pki/ca-trust/source/anchors ; sudo update-ca-trust extract',
+                 shell=True)
+            pprint("Updating disconnected registry")
+            synccmd = f"oc adm release mirror -a {pull_secret} --from={get_release_image()} "
+            synccmd += f"--to-release-image={disconnected_url}/openshift/release-images:{ori_tag} "
+            synccmd += f"--to={disconnected_url}/openshift/release"
+            pprint(f"Running {synccmd}")
+            call(synccmd, shell=True)
+            if which('oc-mirror') is None:
+                get_oc_mirror(version=overrides.get('version', 'stable'), tag=overrides.get('tag', '4.12'))
+            mirror_data = data.copy()
+            mirror_data['tag'] = ori_tag
+            mirrorconf = config.process_inputfile(cluster, f"{plandir}/disconnected/scripts/mirror-config.yaml.sample",
+                                                  overrides=mirror_data)
+            with open(f"{clusterdir}/mirror-config.yaml", 'w') as f:
+                f.write(mirrorconf)
+            dockerdir = os.path.expanduser('~/.docker')
+            if not os.path.isdir(dockerdir):
+                os.mkdirs(dockerdir)
+            copy2(pull_secret, f"{dockerdir}/config.json")
+            olmcmd = f"oc-mirror --config {clusterdir}/mirror-config.yaml docker://{disconnected_url}"
+            pprint(f"Running {olmcmd}")
+            call(olmcmd, shell=True)
         key = f"{disconnected_user}:{disconnected_password}"
         key = str(b64encode(key.encode('utf-8')), 'utf-8')
         auths = {'auths': {disconnected_url: {'auth': key, 'email': 'jhendrix@karmalabs.corp'}}}
@@ -975,6 +1019,13 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             warning(f"Skipping empty file {yamlfile}")
         elif 'catalogSource' in yamlfile or 'imageContentSourcePolicy' in yamlfile:
             copy2(yamlfile, f"{clusterdir}/openshift")
+    if disconnected_url is not None and disconnected_update:
+        for catalogsource in glob("oc-mirror-workspace/results-*/catalogSource*.yaml"):
+            pprint(f"Injecting catalogsource {catalogsource}")
+            copy2(catalogsource, f"{clusterdir}/openshift")
+        for icsp in glob("oc-mirror-workspace/results-*/imageContentSourcePolicy.yaml"):
+            pprint(f"Injecting icsp {icsp}")
+            copy2(icsp, f"{clusterdir}/openshift")
     if 'network_type' in data:
         if data['network_type'] == 'Calico':
             calico_version = data['calico_version']
