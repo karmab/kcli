@@ -28,6 +28,19 @@ virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere']
 cloudplatforms = ['aws', 'gcp', 'ibm']
 
 
+def update_pull_secret(pull_secret, registry, user, password):
+    pull_secret = open(os.path.expanduser(pull_secret))
+    data = yaml.safe_load(pull_secret)
+    auths = data['auths']
+    if registry not in auths or auths[registry]['auth'].decode("utf-8").split(':') != (user, password):
+        pprint(f"Updating your pull secret with entry for {registry}")
+        key = f"{user}:{password}"
+        key = str(b64encode(key.encode('utf-8')), 'utf-8')
+        data['auths'][registry] = {'auth': key, 'email': 'jhendrix@karmalabs.corp'}
+        with open(pull_secret, 'w') as p:
+            json.dump(data, p)
+
+
 def create_ignition_files(config, plandir, cluster, domain, api_ip=None, bucket_url=None, ignition_version=None):
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     ignition_overrides = {'api_ip': api_ip, 'cluster': cluster, 'domain': domain, 'role': 'master'}
@@ -812,6 +825,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if disconnected_url.startswith('http'):
             warning(f"Removing scheme from {disconnected_url}")
             disconnected_url = disconnected_url.replace('http://', '').replace('https://', '')
+        update_pull_secret(pull_secret, disconnected_url, disconnected_user, disconnected_password)
         ori_tag = tag
         if '/' not in str(tag):
             tag = f'{disconnected_url}/{disconnected_prefix_images}:{tag}'
