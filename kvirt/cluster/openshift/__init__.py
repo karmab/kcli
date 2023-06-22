@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from base64 import b64encode
+from base64 import b64encode, b64decode
 from glob import glob
 import json
 import os
@@ -32,7 +32,7 @@ def update_pull_secret(pull_secret, registry, user, password):
     pull_secret = open(os.path.expanduser(pull_secret))
     data = yaml.safe_load(pull_secret)
     auths = data['auths']
-    if registry not in auths or auths[registry]['auth'].decode("utf-8").split(':') != (user, password):
+    if registry not in auths or b64decode(auths[registry]['auth']).decode("utf-8").split(':') != [user, password]:
         pprint(f"Updating your pull secret with entry for {registry}")
         key = f"{user}:{password}"
         key = str(b64encode(key.encode('utf-8')), 'utf-8')
