@@ -789,7 +789,7 @@ class Kopenstack(object):
             volumes[volume.name] = {'pool': volume.volume_type, 'path': volume.id}
         return volumes
 
-    def add_nic(self, name, network):
+    def add_nic(self, name, network, model='virtio'):
         print("not implemented")
 
     def delete_nic(self, name, interface):

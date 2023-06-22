@@ -2973,7 +2973,7 @@ class Kvirt(object):
                 volumes[volume.name()] = {'pool': poo.name(), 'path': volume.path()}
         return volumes
 
-    def add_nic(self, name, network):
+    def add_nic(self, name, network, model='virtio'):
         conn = self.conn
         networks = {}
         for interface in conn.listInterfaces():
@@ -2991,10 +2991,11 @@ class Kvirt(object):
         else:
             networktype = networks[network]
             source = f"<source {networktype}='{network}'/>"
+        modelxml = f"<model type='{model}'/>"
         nicxml = """<interface type='%s'>
                     %s
-                    <model type='virtio'/>
-                    </interface>""" % (networktype, source)
+                    %s
+                    </interface>""" % (networktype, modelxml, source)
         if vm.isActive() == 1:
             vm.attachDeviceFlags(nicxml, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
         else:

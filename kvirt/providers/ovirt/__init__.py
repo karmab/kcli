@@ -939,7 +939,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                 volumes[diskname] = {'pool': pool, 'path': path}
         return volumes
 
-    def add_nic(self, name, network):
+    def add_nic(self, name, network, model='virtio'):
         vmsearch = self.vms_service.list(search=f'name={name}')
         if not vmsearch:
             error(f"VM {name} not found")

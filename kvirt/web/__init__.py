@@ -152,7 +152,8 @@ class Kweb():
             config = Kconfig()
             k = config.k
             network = data['network']
-            result = k.add_nic(name, network)
+            model = data.get('model', 'virtio')
+            result = k.add_nic(name, network, model)
             return result
 
         @app.route("/nics/<name>", method='DELETE')

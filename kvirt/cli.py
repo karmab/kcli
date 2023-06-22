@@ -1665,13 +1665,13 @@ def create_vmdisk(args):
     name = args.name
     force = args.force
     novm = args.novm
-    size = args.size
+    size = overrides.get('size') or args.size
+    pool = overrides.get('pool') or args.pool
     image = args.image
-    interface = args.interface
+    interface = overrides.get('diskinterface') or args.interface
     if interface not in ['virtio', 'ide', 'scsi']:
         error("Incorrect disk interface. Choose between virtio, scsi or ide...")
         sys.exit(1)
-    pool = args.pool
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     if size is None:
@@ -1995,13 +1995,14 @@ def create_vmnic(args):
     """Add nic to vm"""
     name = args.name
     network = args.network
+    model = args.model
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     if network is None:
         error("Missing network. Leaving...")
         sys.exit(1)
     pprint(f"Adding nic to vm {name}...")
-    k.add_nic(name=name, network=network)
+    k.add_nic(name=name, network=network, model=model)
 
 
 def delete_vmnic(args):
@@ -3954,6 +3955,7 @@ def cli():
     create_vmnic_desc = 'Add Nic To Vm'
     create_vmnic_epilog = f"examples:\n{niccreate}"
     create_vmnic_parser = argparse.ArgumentParser(add_help=False)
+    create_vmnic_parser.add_argument('-m', '--model', help='MODEL', metavar='MODEL', default='virtio')
     create_vmnic_parser.add_argument('-n', '--network', help='Network', metavar='NETWORK')
     create_vmnic_parser.add_argument('name', metavar='VMNAME')
     create_vmnic_parser.set_defaults(func=create_vmnic)

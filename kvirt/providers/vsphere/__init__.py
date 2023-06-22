@@ -1062,7 +1062,7 @@ class Ksphere:
         error(msg)
         return {'result': 'failure', 'reason': error}
 
-    def add_nic(self, name, network):
+    def add_nic(self, name, network, model='virtio'):
         if network == 'default':
             network = 'VM Network'
         si = self.si

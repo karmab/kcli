@@ -1175,6 +1175,7 @@ class Kconfig(Kbaseconfig):
             if len(currentdisks) < len(disks):
                 pprint(f"Adding Disks to {name}")
                 for disk in disks[len(currentdisks):]:
+                    interface = None
                     if isinstance(disk, int):
                         size = disk
                         pool = self.pool
@@ -1184,28 +1185,31 @@ class Kconfig(Kbaseconfig):
                     elif isinstance(disk, dict):
                         size = disk.get('size', self.disksize)
                         pool = disk.get('pool', self.pool)
+                        interface = disk.get('interface') or overrides.get('diskinterface')
                     else:
                         continue
-                    k.add_disk(name=name, size=size, pool=pool)
+                    k.add_disk(name=name, size=size, pool=pool, interface=interface)
             if len(currentdisks) > len(disks):
                 pprint(f"Removing Disks of {name}")
                 for disk in currentdisks[len(currentdisks) - len(disks):]:
                     diskname = os.path.basename(disk['path'])
                     diskpool = os.path.dirname(disk['path'])
-                    k.delete_disk(name=name, diskname=diskname, pool=diskpool)
+                    k.delete_disk(name=name, diskname=diskname, pool=diskpool, interface=interface)
         if nets:
             pprint(f"Updating nets of vm {name}")
             if len(currentnets) < len(nets):
                 pprint(f"Adding Nics to {name}")
                 for net in nets[len(currentnets):]:
+                    model = 'virtio'
                     if isinstance(net, str):
                         network = net
                     elif isinstance(net, dict) and 'name' in net:
                         network = net['name']
+                        model = net.get('model', 'virtio')
                     else:
                         error(f"Skipping wrong nic spec for {name}")
                         continue
-                    k.add_nic(name, network)
+                    k.add_nic(name, network, model=model)
             if len(currentnets) > len(nets):
                 pprint(f"Removing Nics of {name}")
                 for net in range(len(currentnets), len(nets), -1):

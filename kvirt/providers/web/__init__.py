@@ -255,12 +255,12 @@ class Kwebclient(object):
         print("not implemented")
         return []
 
-    def add_nic(self, name, network):
+    def add_nic(self, name, network, model='virtio'):
         if not self.exists(name):
             error(f"VM {name} not found")
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         nic_url = f"{self.base}/nics/{name}"
-        data = {'network': network, 'name': name}
+        data = {'network': network, 'name': name, 'model': model}
         data = json.dumps(data).encode('utf-8')
         request = Request(nic_url, data=data, headers=self.headers)
         response = json.loads(urlopen(request, context=self.context).read())

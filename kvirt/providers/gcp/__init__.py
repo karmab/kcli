@@ -831,7 +831,7 @@ class Kgcp(object):
             disks[diskname] = {'pool': pool, 'path': zone}
         return disks
 
-    def add_nic(self, name, network):
+    def add_nic(self, name, network, model='virtio'):
         print("not implemented")
         return
 

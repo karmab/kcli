@@ -174,7 +174,7 @@ class Kbase(object):
         print("not implemented")
         return []
 
-    def add_nic(self, name, network):
+    def add_nic(self, name, network, model='virtio'):
         print("not implemented")
 
     def delete_nic(self, name, interface):

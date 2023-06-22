@@ -684,7 +684,7 @@ class Kibm(object):
         print("not implemented")
         return {}
 
-    def add_nic(self, name, network):
+    def add_nic(self, name, network, model='virtio'):
         try:
             vm = self._get_vm(name)
             if vm is None:

@@ -1117,7 +1117,7 @@ class Kubevirt(Kubecommon):
                 disks[name] = {'pool': storageclass, 'path': pv}
         return disks
 
-    def add_nic(self, name, network):
+    def add_nic(self, name, network, model='virtio'):
         crds = self.crds
         namespace = self.namespace
         try:

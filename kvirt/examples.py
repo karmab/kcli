@@ -65,6 +65,9 @@ $ kcli list host
 
 niccreate = """# Add a nic from default network to vm1
 $ kcli create nic -n default vm1
+
+# Add a nic with e1000 model
+$ kcli create nic -n default -m e1000 vm1
 """
 
 nicdelete = """# Delete nic named eth2 from vm1

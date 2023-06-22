@@ -540,7 +540,7 @@ class Kpacket(object):
             disks[v.name] = {'pool': 'default', 'path': path}
         return disks
 
-    def add_nic(self, name, network):
+    def add_nic(self, name, network, model='virtio'):
         devices = [d for d in self.conn.list_devices(self.project) if d.hostname == name]
         if devices:
             device = devices[0]
