@@ -234,7 +234,7 @@ def get_upstream_installer(tag, version='stable', debug=False):
 def get_ci_installer(pull_secret, tag=None, macosx=False, debug=False, nightly=False):
     arch = 'arm64' if os.uname().machine == 'aarch64' else None
     base = 'openshift'
-    if 'registry.ci.openshift.org' not in os.popen(os.path.expanduser(pull_secret)).read():
+    if 'registry.ci.openshift.org' not in open(os.path.expanduser(pull_secret)).read():
         error("entry for registry.ci.openshift.org missing in pull secret")
         return 1
     if tag is not None and nightly:
