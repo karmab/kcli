@@ -997,16 +997,20 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             extra_images = data['disconnected_extra_images']
             kcli_images = ['curl', 'haproxy', 'kubectl', 'mdns-publisher', 'origin-coredns',
                            'origin-keepalived-ipfailover']
-            kcli_images = ['quay.io/karmab/{image}:latest' for image in kcli_images]
+            kcli_images = [f'quay.io/karmab/{image}:latest' for image in kcli_images]
             extra_images.extend(kcli_images)
             if which('skopeo') is not None:
                 for image in extra_images:
                     target = '/'.join(image.split('/')[1:])
                     skopeocmd = f"skopeo copy docker://{image} docker://{disconnected_url}/{target} --all"
                     skopeocmd += f" --authfile {pull_secret}"
-                    call(skopeocmd, shell=True)
+                    run = call(skopeocmd, shell=True)
+                    if run != 0:
+                        return {'result': 'failure', 'reason': f'Hit issue when running {skopeocmd}'}
             else:
-                warning("skopeo is needed to sync the following extra_images: {extra_images.join(',')}")
+                msg = "skopeo is needed to sync the following extra_images: {extra_images.join(',')}"
+                error(msg)
+                return {'result': 'failure', 'reason': msg}
         key = f"{disconnected_user}:{disconnected_password}"
         key = str(b64encode(key.encode('utf-8')), 'utf-8')
         auths = {'auths': {disconnected_url: {'auth': key, 'email': 'jhendrix@karmalabs.corp'}}}
