@@ -975,6 +975,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 warning("Using oc-mirror from your PATH")
             mirror_data = data.copy()
             mirror_data['tag'] = ori_tag
+            extra_images = data['disconnected_extra_images']
+            kcli_images = ['curl', 'haproxy', 'kubectl', 'mdns-publisher', 'origin-coredns',
+                           'origin-keepalived-ipfailover']
+            kcli_images = [f'quay.io/karmab/{image}:latest' for image in kcli_images]
+            extra_images.extend(kcli_images)
+            mirror_data['extra_images'] = extra_images
             mirrorconf = config.process_inputfile(cluster, f"{plandir}/disconnected/scripts/mirror-config.yaml.sample",
                                                   overrides=mirror_data)
             with open(f"{clusterdir}/mirror-config.yaml", 'w') as f:
@@ -994,23 +1000,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 copy2(icsp, clusterdir)
             if os.path.exists("oc-mirror-workspace"):
                 rmtree("oc-mirror-workspace")
-            extra_images = data['disconnected_extra_images']
-            kcli_images = ['curl', 'haproxy', 'kubectl', 'mdns-publisher', 'origin-coredns',
-                           'origin-keepalived-ipfailover']
-            kcli_images = [f'quay.io/karmab/{image}:latest' for image in kcli_images]
-            extra_images.extend(kcli_images)
-            if which('skopeo') is not None:
-                for image in extra_images:
-                    target = '/'.join(image.split('/')[1:])
-                    skopeocmd = f"skopeo copy docker://{image} docker://{disconnected_url}/{target} --all"
-                    skopeocmd += f" --authfile {pull_secret}"
-                    run = call(skopeocmd, shell=True)
-                    if run != 0:
-                        return {'result': 'failure', 'reason': f'Hit issue when running {skopeocmd}'}
-            else:
-                msg = "skopeo is needed to sync the following extra_images: {extra_images.join(',')}"
-                error(msg)
-                return {'result': 'failure', 'reason': msg}
         key = f"{disconnected_user}:{disconnected_password}"
         key = str(b64encode(key.encode('utf-8')), 'utf-8')
         auths = {'auths': {disconnected_url: {'auth': key, 'email': 'jhendrix@karmalabs.corp'}}}

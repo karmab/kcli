@@ -10,6 +10,12 @@ mirror:
   #    minVersion: 4.10.24
   #    maxVersion: 4.10.24
   #  graph: true
+{% if extra_images is defined %}
+  additionalImages:
+{% for image in extra_images %}
+  - name: {{ image }}
+{% endfor %}
+{% endif %}
   operators: # Operators we want to mirror
 {% if disconnected_operators %}
 {% if disconnected_operators_version %}
