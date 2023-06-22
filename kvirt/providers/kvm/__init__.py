@@ -527,11 +527,13 @@ class Kvirt(object):
                 if index == 0 and diskmacosx:
                     macosx = True
                     machine = 'pc-q35-2.11'
-            if diskwwn is not None and diskbus == 'ide':
-                diskwwn = '0x%016x' % diskwwn
-                diskwwn = f"<wwn>{diskwwn}</wwn>"
-            else:
+            if diskwwn is None:
                 diskwwn = ''
+            elif diskbus not in ['ide', 'scsi']:
+                msg = f"Not setting disk wwn as disk uses {diskbus}"
+                return {'result': 'failure', 'reason': msg}
+            else:
+                diskwwn = f"<wwn>{diskwwn}</wwn>"
             diskserial = f'<serial>{diskserial}</serial>' if diskserial is not None else ''
             dtype = 'block' if diskpath.startswith('/dev') else 'file'
             dsource = 'dev' if diskpath.startswith('/dev') else 'file'

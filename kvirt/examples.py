@@ -137,6 +137,9 @@ $ kcli create vm -i $img -P nets=['{"name":"default","ip":"192.168.122.250","net
 # Use more advanced information for disks
 $ kcli create vm -i centos9stream -P disks=['{"size": 10, "interface": "sata"}']
 
+# Force wwn
+$ kcli create vm -i centos9stream -P disks=['{"size": 10, "interface": "scsi", "wwn": "5000c50015ea71ad"}']
+
 # Create a vm with a file /root/myfile.txt, rendered from current directory
 $ kcli create vm -i centos9stream -P files=[myfile.txt]
 
