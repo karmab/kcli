@@ -986,6 +986,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             olmcmd = f"oc-mirror --ignore-history --config {clusterdir}/mirror-config.yaml docker://{disconnected_url}"
             pprint(f"Running {olmcmd}")
             call(olmcmd, shell=True)
+            for catalogsource in glob("oc-mirror-workspace/results-*/catalogSource*.yaml"):
+                pprint(f"Injecting catalogsource {catalogsource}")
+                copy2(catalogsource, f"{clusterdir}/openshift")
+            for icsp in glob("oc-mirror-workspace/results-*/imageContentSourcePolicy.yaml"):
+                pprint(f"Injecting icsp {icsp}")
+                copy2(icsp, f"{clusterdir}/openshift")
             if os.path.exists("oc-mirror-workspace"):
                 rmtree("oc-mirror-workspace")
         key = f"{disconnected_user}:{disconnected_password}"
@@ -1040,13 +1046,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             warning(f"Skipping empty file {yamlfile}")
         elif 'catalogSource' in yamlfile or 'imageContentSourcePolicy' in yamlfile:
             copy2(yamlfile, f"{clusterdir}/openshift")
-    if disconnected_url is not None and disconnected_update:
-        for catalogsource in glob("oc-mirror-workspace/results-*/catalogSource*.yaml"):
-            pprint(f"Injecting catalogsource {catalogsource}")
-            copy2(catalogsource, f"{clusterdir}/openshift")
-        for icsp in glob("oc-mirror-workspace/results-*/imageContentSourcePolicy.yaml"):
-            pprint(f"Injecting icsp {icsp}")
-            copy2(icsp, f"{clusterdir}/openshift")
     if 'network_type' in data:
         if data['network_type'] == 'Calico':
             calico_version = data['calico_version']
