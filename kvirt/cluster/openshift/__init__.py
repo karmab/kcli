@@ -988,12 +988,25 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             call(olmcmd, shell=True)
             for catalogsource in glob("oc-mirror-workspace/results-*/catalogSource*.yaml"):
                 pprint(f"Injecting catalogsource {catalogsource}")
-                copy2(catalogsource, f"{clusterdir}/openshift")
+                copy2(catalogsource, clusterdir)
             for icsp in glob("oc-mirror-workspace/results-*/imageContentSourcePolicy.yaml"):
                 pprint(f"Injecting icsp {icsp}")
-                copy2(icsp, f"{clusterdir}/openshift")
+                copy2(icsp, clusterdir)
             if os.path.exists("oc-mirror-workspace"):
                 rmtree("oc-mirror-workspace")
+            extra_images = data['disconnected_extra_images']
+            kcli_images = ['curl', 'haproxy', 'kubectl', 'mdns-publisher', 'origin-coredns',
+                           'origin-keepalived-ipfailover']
+            kcli_images = ['quay.io/karmab/{image}:latest' for image in kcli_images]
+            extra_images.extend(kcli_images)
+            if which('skopeo') is not None:
+                for image in extra_images:
+                    target = '/'.join(image.split('/')[1:])
+                    skopeocmd = f"skopeo copy docker://{image} docker://{disconnected_url}/{target} --all"
+                    skopeocmd += f" --authfile {pull_secret}"
+                    call(skopeocmd, shell=True)
+            else:
+                warning("skopeo is needed to sync the following extra_images: {extra_images.join(',')}")
         key = f"{disconnected_user}:{disconnected_password}"
         key = str(b64encode(key.encode('utf-8')), 'utf-8')
         auths = {'auths': {disconnected_url: {'auth': key, 'email': 'jhendrix@karmalabs.corp'}}}
