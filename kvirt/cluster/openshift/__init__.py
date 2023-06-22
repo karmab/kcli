@@ -1003,7 +1003,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 f.write(mirrorconf)
             dockerdir = os.path.expanduser('~/.docker')
             if not os.path.isdir(dockerdir):
-                os.mkdirs(dockerdir)
+                os.mkdir(dockerdir)
             copy2(pull_secret, f"{dockerdir}/config.json")
             olmcmd = f"oc-mirror --config {clusterdir}/mirror-config.yaml docker://{disconnected_url}"
             pprint(f"Running {olmcmd}")
