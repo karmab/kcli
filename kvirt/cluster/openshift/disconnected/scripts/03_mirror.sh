@@ -29,12 +29,10 @@ export OPENSHIFT_RELEASE_IMAGE=$(grep 'Pull From: quay.io' /tmp/release.txt | aw
 export OCP_RELEASE=$(grep 'Name:' /tmp/release.txt | awk -F ' ' '{print $2}')-x86_64
 {% endif %}
 
-PREFIX={{ disconnected_prefix or "openshift/release" }}
-PREFIX_IMAGES={{ disconnected_prefix_images or "openshift/release-images" }}
 export LOCAL_REG="$REGISTRY_NAME:5000"
 KEY=$( echo -n $REGISTRY_USER:$REGISTRY_PASSWORD | base64)
 jq ".auths += {\"$REGISTRY_NAME:5000\": {\"auth\": \"$KEY\",\"email\": \"jhendrix@karmalabs.corp\"}}" < $PULL_SECRET > /root/temp.json
 cat /root/temp.json | tr -d [:space:] > $PULL_SECRET
-oc adm release mirror -a $PULL_SECRET --from=$OPENSHIFT_RELEASE_IMAGE  --to-release-image=${LOCAL_REG}/$PREFIX_IMAGES:${OCP_RELEASE} --to=${LOCAL_REG}/$PREFIX
+oc adm release mirror -a $PULL_SECRET --from=$OPENSHIFT_RELEASE_IMAGE  --to-release-image=${LOCAL_REG}/openshift/release-images:${OCP_RELEASE} --to=${LOCAL_REG}/openshift/release
 echo "{\"auths\": {\"$REGISTRY_NAME:5000\": {\"auth\": \"$KEY\", \"email\": \"jhendrix@karmalabs.corp\"}}}" > /root/temp.json
-echo $REGISTRY_NAME:5000/$PREFIX_IMAGES:$OCP_RELEASE > /root/version.txt
+echo $REGISTRY_NAME:5000/openshift/release-images:$OCP_RELEASE > /root/version.txt

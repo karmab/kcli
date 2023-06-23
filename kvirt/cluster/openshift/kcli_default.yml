@@ -91,8 +91,6 @@ disconnected_marketplace_operators_version:
 disconnected_ipv6_network: false
 disconnected_sync: true
 disconnected_mac:
-disconnected_prefix:
-disconnected_prefix_images:
 disconnected_extra_images: []
 disconnected_extra_catalogs: []
 disconnected_extra_releases: []
