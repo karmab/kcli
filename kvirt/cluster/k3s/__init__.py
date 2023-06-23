@@ -72,7 +72,7 @@ def scale(config, plandir, cluster, overrides):
         if role == 'ctlplanes':
             if ctlplanes == 1:
                 continue
-            if 'virtual_router_id' not in overrides or 'auth_pass' not in overrides:
+            if 'virtual_router_id' not in overrides or 'auth_pass' not in overrides and not cloud_lb:
                 warning("Scaling up of ctlplanes won't work without virtual_router_id and auth_pass")
             if sdn is None or sdn != 'flannel':
                 install_k3s_args.append("INSTALL_K3S_EXEC='--flannel-backend=none'")
@@ -144,10 +144,12 @@ def create(config, plandir, cluster, overrides):
             else:
                 msg = "You need to define api_ip in your parameters file"
                 return {'result': 'failure', 'reason': msg}
-        if not cloud_lb and ctlplanes > 1 and data.get('virtual_router_id') is None:
-            data['virtual_router_id'] = hash(data['cluster']) % 254 + 1
+        if not cloud_lb and ctlplanes > 1:
+            if data.get('virtual_router_id') is None:
+                data['virtual_router_id'] = hash(data['cluster']) % 254 + 1
+            else:
+                virtual_router_id = data.get('virtual_router_id')
             pprint(f"Using keepalived virtual_router_id {data['virtual_router_id']}")
-    virtual_router_id = data.get('virtual_router_id')
     if data.get('auth_pass') is None:
         auth_pass = ''.join(choice(ascii_letters + digits) for i in range(5))
         data['auth_pass'] = auth_pass
@@ -189,7 +191,8 @@ def create(config, plandir, cluster, overrides):
         installparam['kubetype'] = 'k3s'
         installparam['image'] = image
         installparam['auth_pass'] = auth_pass
-        installparam['virtual_router_id'] = virtual_router_id
+        if not cloud_lb:
+            installparam['virtual_router_id'] = virtual_router_id
         installparam['cluster'] = cluster
         installparam['first_ip'] = first_ip
         yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
