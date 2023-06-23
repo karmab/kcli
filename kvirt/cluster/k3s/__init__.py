@@ -36,10 +36,12 @@ def update_ip_alias(config, nodes):
 def scale(config, plandir, cluster, overrides):
     plan = cluster
     data = {'cluster': cluster, 'kube': cluster, 'kubetype': 'k3s', 'image': 'ubuntu2004', 'sdn': 'flannel',
-            'extra_scripts': [], 'cloud_lb': True, 'cloud_native': False, 'ctlplanes': 1, 'workers': 0}
+            'extra_scripts': [], 'cloud_lb': None, 'cloud_native': False, 'ctlplanes': 1, 'workers': 0}
     data['basedir'] = '/workdir' if container_mode() else '.'
     cluster = data.get('cluster')
     cloud_native = data.get('cloud_native')
+    data['cloud_lb'] = overrides.get('cloud_lb', platform in cloud_platforms and data['ctlplanes'] > 1)
+    cloud_lb = data['cloud_lb']
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
         with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
