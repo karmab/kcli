@@ -989,6 +989,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 os.mkdir(dockerdir)
             copy2(pull_secret, f"{dockerdir}/config.json")
             olmcmd = f"oc-mirror --ignore-history --config {clusterdir}/mirror-config.yaml docker://{disconnected_url}"
+            olmcmd = ' || '.join([olmcmd for x in range(3)])
             pprint(f"Running {olmcmd}")
             call(olmcmd, shell=True)
             for catalogsource in glob("oc-mirror-workspace/results-*/catalogSource*.yaml"):
