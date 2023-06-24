@@ -1108,9 +1108,12 @@ class Kvirt(object):
                     code = os.system(foldercmd)
         kernelxml = ""
         if kernel is not None:
+            existing_kernel = os.path.basename(kernel) in [os.path.basename(v) for v in self.volumes()]
             locationdir = os.path.basename(kernel)
             locationdir = f"{default_poolpath}/{locationdir}"
-            if self.host == 'localhost' or self.host == '127.0.0.1':
+            if existing_kernel:
+                pass
+            elif self.host == 'localhost' or self.host == '127.0.0.1':
                 os.mkdir(locationdir)
             elif self.protocol == 'ssh':
                 locationcmd = 'ssh %s -p %s %s@%s "mkdir %s"' % (self.identitycommand, self.port, self.user,
@@ -1119,7 +1122,9 @@ class Kvirt(object):
             else:
                 return {'result': 'failure', 'reason': "Couldn't create dir to hold kernel and initrd"}
             if kernel.startswith('http') or kernel.startswith('ftp'):
-                if 'rhcos' in kernel:
+                if existing_kernel:
+                    pass
+                elif 'rhcos' in kernel:
                     if self.host == 'localhost' or self.host == '127.0.0.1':
                         kernelcmd = f"curl -Lo {locationdir}/vmlinuz -f '{kernel}'"
                         initrdcmd = f"curl -Lo {locationdir}/initrd.img -f '{initrd}'"
@@ -1166,6 +1171,7 @@ class Kvirt(object):
                     code = os.system(kernelcmd)
             elif initrd is None:
                 return {'result': 'failure', 'reason': "Missing initrd"}
+            warning("kernel and initrd will only be available during first boot")
             kernel = f"{locationdir}/vmlinuz"
             initrd = f"{locationdir}/initrd.img"
             kernelxml = f"<kernel>{kernel}</kernel><initrd>{initrd}</initrd>"
@@ -1383,6 +1389,18 @@ class Kvirt(object):
         self.reserve_dns(name, nets=nets, domain=domain, alias=alias, force=True, primary=reservedns)
         if reservehost:
             self.reserve_host(name, nets, domain)
+        if '<kernel>' in xml:
+            root = ET.fromstring(xml)
+            os_tag = root.find('os')
+            kernel, initrd, cmdline = os_tag.find('kernel'), os_tag.find('initrd'), os_tag.find('cmdline')
+            if kernel is not None:
+                os_tag.remove(kernel)
+            if initrd is not None:
+                os_tag.remove(initrd)
+            if cmdline is not None:
+                os_tag.remove(cmdline)
+            newxml = ET.tostring(root)
+            conn.defineXML(newxml.decode("utf-8"))
         return {'result': 'success'}
 
     def start(self, name):
@@ -2514,7 +2532,7 @@ class Kvirt(object):
             error(f"VM {name} not found")
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         if vm.isActive() == 1:
-            warning("Machine up. Change will only appear upon next reboot")
+            warning("Machine up. Change will only appear after powerdown/powerup")
         metadata = root.find('metadata')
         kroot, kmeta = None, None
         for element in list(root.iter('{kvirt}info')):
