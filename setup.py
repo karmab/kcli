@@ -54,5 +54,6 @@ setup(
         ksushy=kvirt.ksushy.main:run
         ignitionmerger=kvirt.ignitionmerger:cli
         ekstoken=kvirt.ekstoken:cli
+        gketoken=kvirt.gketoken:cli
     ''',
 )

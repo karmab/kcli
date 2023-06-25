@@ -59,6 +59,7 @@ rm -rf %{buildroot}
 %attr(0755,root,root) %{_bindir}/ksushy
 %attr(0755,root,root) %{_bindir}/ignitionmerger
 %attr(0755,root,root) %{_bindir}/ekstoken
+%attr(0755,root,root) %{_bindir}/gketoken
 
 
 %changelog

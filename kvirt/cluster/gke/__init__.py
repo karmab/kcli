@@ -211,7 +211,6 @@ def create(config, cluster, overrides, dnsconfig=None):
         get_kubeconfig(config, cluster, zonal=zonal)
         sleep(5)
     success(f"Kubernetes cluster {cluster} deployed!!!")
-    info2(f"export GOOGLE_APPLICATION_CREDENTIALS={os.environ['GOOGLE_APPLICATION_CREDENTIALS']}")
     info2(f"export KUBECONFIG=$HOME/.kcli/clusters/{cluster}/auth/kubeconfig")
     info2("export PATH=$PWD:$PATH")
     return {'result': 'success'}
