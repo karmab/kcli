@@ -974,7 +974,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 warning("Using oc-mirror from your PATH")
             mirror_data = data.copy()
             mirror_data['tag'] = ori_tag
-            extra_images = data['disconnected_extra_images']
+            extra_images = data.get('disconnected_extra_images', [])
             kcli_images = ['curl', 'haproxy', 'kubectl', 'mdns-publisher', 'origin-coredns',
                            'origin-keepalived-ipfailover']
             kcli_images = [f'quay.io/karmab/{image}:latest' for image in kcli_images]
