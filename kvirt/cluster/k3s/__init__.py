@@ -34,12 +34,12 @@ def update_ip_alias(config, nodes):
 
 
 def scale(config, plandir, cluster, overrides):
+    platform = config.type
     plan = cluster
     data = {'cluster': cluster, 'kube': cluster, 'kubetype': 'k3s', 'image': 'ubuntu2004', 'sdn': 'flannel',
-            'extra_scripts': [], 'cloud_lb': True, 'cloud_native': False, 'ctlplanes': 1, 'workers': 0}
+            'extra_scripts': [], 'cloud_native': False, 'ctlplanes': 1, 'workers': 0}
     data['basedir'] = '/workdir' if container_mode() else '.'
     cluster = data.get('cluster')
-    cloud_native = data.get('cloud_native')
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
         with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
@@ -47,6 +47,8 @@ def scale(config, plandir, cluster, overrides):
             data.update(installparam)
             plan = installparam.get('plan', plan)
     data.update(overrides)
+    cloud_native = data.get('cloud_native')
+    cloud_lb = data.get('cloud_lb', platform in cloud_platforms and data['ctlplanes'] > 1)
     ctlplanes = data['ctlplanes']
     workers = data['workers']
     sdn = None if 'sdn' in overrides and overrides['sdn'] is None else data.get('sdn')
@@ -72,7 +74,7 @@ def scale(config, plandir, cluster, overrides):
         if role == 'ctlplanes':
             if ctlplanes == 1:
                 continue
-            if 'virtual_router_id' not in overrides or 'auth_pass' not in overrides:
+            if cloud_lb and 'virtual_router_id' not in overrides or 'auth_pass' not in overrides:
                 warning("Scaling up of ctlplanes won't work without virtual_router_id and auth_pass")
             if sdn is None or sdn != 'flannel':
                 install_k3s_args.append("INSTALL_K3S_EXEC='--flannel-backend=none'")
@@ -99,8 +101,8 @@ def scale(config, plandir, cluster, overrides):
 def create(config, plandir, cluster, overrides):
     platform = config.type
     data = {'kubetype': 'k3s', 'ctlplanes': 1, 'workers': 0, 'sdn': 'flannel', 'extra_scripts': [], 'autoscale': False,
-            'network': 'default', 'cloud_lb': None, 'cloud_api_internal': False, 'cloud_dns': False,
-            'cloud_storage': True, 'cloud_native': False}
+            'network': 'default', 'cloud_api_internal': False, 'cloud_dns': False, 'cloud_storage': True,
+            'cloud_native': False}
     data.update(overrides)
     cloud_dns = data['cloud_dns']
     data['cloud_lb'] = overrides.get('cloud_lb', platform in cloud_platforms and data['ctlplanes'] > 1)
@@ -144,13 +146,14 @@ def create(config, plandir, cluster, overrides):
             else:
                 msg = "You need to define api_ip in your parameters file"
                 return {'result': 'failure', 'reason': msg}
-        if not cloud_lb and ctlplanes > 1 and data.get('virtual_router_id') is None:
-            data['virtual_router_id'] = hash(data['cluster']) % 254 + 1
-            pprint(f"Using keepalived virtual_router_id {data['virtual_router_id']}")
-    virtual_router_id = data.get('virtual_router_id')
-    if data.get('auth_pass') is None:
-        auth_pass = ''.join(choice(ascii_letters + digits) for i in range(5))
-        data['auth_pass'] = auth_pass
+        if not cloud_lb and ctlplanes > 1:
+            if data.get('virtual_router_id') is None:
+                data['virtual_router_id'] = hash(data['cluster']) % 254 + 1
+                pprint(f"Using keepalived virtual_router_id {data['virtual_router_id']}")
+                virtual_router_id = data.get('virtual_router_id')
+            if data.get('auth_pass') is None:
+                auth_pass = ''.join(choice(ascii_letters + digits) for i in range(5))
+                data['auth_pass'] = auth_pass
     install_k3s_args = []
     for arg in data:
         if arg.startswith('install_k3s'):
@@ -184,14 +187,15 @@ def create(config, plandir, cluster, overrides):
     data['first_ip'] = first_ip
     with open(f"{clusterdir}/kcli_parameters.yml", 'w') as p:
         installparam = overrides.copy()
+        installparam['cluster'] = cluster
         installparam['api_ip'] = api_ip
+        installparam['first_ip'] = first_ip
         installparam['plan'] = plan
         installparam['kubetype'] = 'k3s'
         installparam['image'] = image
-        installparam['auth_pass'] = auth_pass
-        installparam['virtual_router_id'] = virtual_router_id
-        installparam['cluster'] = cluster
-        installparam['first_ip'] = first_ip
+        if not cloud_lb and ctlplanes > 1:
+            installparam['virtual_router_id'] = virtual_router_id
+            installparam['auth_pass'] = auth_pass
         yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     for role in ['ctlplanes', 'workers']:
         if (role == 'ctlplanes' and ctlplanes == 1) or (role == 'workers' and workers == 0):

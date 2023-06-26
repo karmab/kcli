@@ -45,7 +45,7 @@ virtual_router_id:
 autoscale: false
 apps: []
 cloud_api_internal: false
-cloud_lb:
+cloud_lb: False
 cloud_storage: true
 cloud_dns: false
 cloud_native: false
