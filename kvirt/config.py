@@ -3001,6 +3001,12 @@ class Kconfig(Kbaseconfig):
         planvms = []
         if plan is None:
             plan = cluster
+        if _type == 'eks':
+            self.scale_kube_eks(cluster, overrides=overrides)
+            return
+        if _type == 'gke':
+            self.scale_kube_gke(cluster, overrides=overrides)
+            return
         if _type == 'generic':
             roles = ['ctlplanes', 'workers']
             plandir = os.path.dirname(kubeadm.create.__code__.co_filename)

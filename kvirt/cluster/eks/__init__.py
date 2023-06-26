@@ -64,13 +64,29 @@ def scale(config, cluster, overrides):
             'version': None}
     data.update(overrides)
     cluster = overrides.get('cluster', cluster or 'mygke')
+    version = data['version']
     workers = data['workers']
+    disk_size = data['disk_size']
+    flavor = data['flavor']
+    ami_type = data['ami_type']
+    capacity_type = data['capacity_type']
     access_key_id, access_key_secret, session_token, region = project_init(config)
     eks = boto3.client('eks', aws_access_key_id=access_key_id, aws_secret_access_key=access_key_secret,
                        region_name=region, aws_session_token=session_token)
     pprint(f"Updating nodegroup {cluster}")
-    response = eks.update_nodegroup_config(clusterName=cluster, nodegroupName=cluster,
-                                           scalingConfig={'minSize': workers, 'maxSize': 50, 'desiredSize': workers})
+    nodegroup_data = {'clusterName': cluster, 'nodegroupName': cluster,
+                      'scalingConfig': {'minSize': workers, 'maxSize': 50, 'desiredSize': workers}}
+    if version is not None:
+        nodegroup_data['version'] = version
+    if disk_size is not None:
+        nodegroup_data['diskSize'] = disk_size
+    if flavor is not None:
+        nodegroup_data['instanceTypes'] = [flavor]
+    if ami_type is not None:
+        nodegroup_data['amiType'] = ami_type
+    if capacity_type is not None:
+        nodegroup_data['capacityType'] = capacity_type
+    response = eks.update_nodegroup_config(**nodegroup_data)
     if config.debug:
         print(response)
     return {'result': 'success'}
