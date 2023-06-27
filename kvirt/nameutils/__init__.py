@@ -33,7 +33,7 @@ right = ["albattani", "ablonde", "acid", "adark", "adebarre", "almeida", "alcara
          "tommyemmanuel", "thor", "mario", "walterwhite", "yuval", "5g", "5guys", "200k", "merletravis", "chetatkins",
          "fusilijerri", "joerobinson", "mog", "unity", "savannah", "soul", "mm93", "vcossart", "gruson", "patarin",
          "hichem", "regis", "elisa", "brais", "duncanmcleod", "mgourin", "mizu", "makio", "lois", "fender", "marshall",
-         "stratocaster", "telecaster", "tenshinhan", "jmartin", "dalridge", "paul", "john", "mellen"]
+         "stratocaster", "telecaster", "tenshinhan", "jmartin", "dalridge", "paul", "john", "mellen", "johnwick"]
 
 
 def get_random_name(sep='-'):
