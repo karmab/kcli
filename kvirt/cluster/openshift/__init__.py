@@ -28,6 +28,44 @@ virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere']
 cloudplatforms = ['aws', 'gcp', 'ibm']
 
 
+def mapping_to_icsp(config, plandir, output_dir, mirror_config, mapping_file='oc-mirror-workspace/mapping.txt'):
+    mirrors = []
+    index_images = []
+    for line in open(mapping_file, 'r').readlines():
+        result = re.search(r"(.+)=(.+)", line)
+        source_registry_image = result.group(1)
+        mirror_registry_image = result.group(2)
+        # If we find some index image, we add it to this list to generate a catalogsource for it later
+        if "index:v" in mirror_registry_image:
+            index_images.append(mirror_registry_image)
+        result = re.search(r"(.+)/", source_registry_image)
+        source_registry_namespace = result.group(1)
+        result = re.search(r"(.+)/", mirror_registry_image)
+        mirror_registry_namespace = result.group(1)
+        icsp_entry = {"source_registry_namespace": source_registry_namespace,
+                      "mirror_registry_namespace": mirror_registry_namespace}
+        mirrors.append(icsp_entry)
+    mirror_list = [dict(t) for t in {tuple(d.items()) for d in mirrors}]
+    if mirror_config is not None:
+        config_data = yaml.safe_load(open(mirror_config, 'r'))
+        mirror_registry = config_data['storageConfig']['registry']['imageURL'].split("/")[0]
+        for catalog in config_data['mirror']['operators']:
+            image_namespace = catalog['catalog'].split("/")[1]
+            image_name = catalog['catalog'].split("/")[2]
+            index_image = f"{mirror_registry}/{image_namespace}/{image_name}"
+            index_images.append(index_image)
+    # Remove duplicates from index images
+    index_images = list(dict.fromkeys(index_images))
+    catalogsource = config.process_inputfile('xxx', f"{plandir}/catalogsource.yml.j2",
+                                             overrides={'index_images': index_images})
+    with open(f"{output_dir}/catalogSource.yaml", 'w') as f:
+        f.write(catalogsource)
+    # Create ImageContentSourcePolicy file
+    icsp = config.process_inputfile('xxx', f"{plandir}/icsp.yml.j2", overrides={'mirror_list': mirror_list})
+    with open(f"{output_dir}/imageContentSourcePolicy.yaml", 'w') as f:
+        f.write(icsp)
+
+
 def update_pull_secret(pull_secret, registry, user, password):
     pull_secret = os.path.expanduser(pull_secret)
     data = json.load(open(pull_secret))
@@ -992,6 +1030,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             olmcmd = ' || '.join([olmcmd for x in range(3)])
             pprint(f"Running {olmcmd}")
             call(olmcmd, shell=True)
+            mapping_to_icsp(config, plandir, f"{clusterdir}", f"{clusterdir}/mirror-config.yaml")
             for catalogsource in glob("oc-mirror-workspace/results-*/catalogSource*.yaml"):
                 pprint(f"Injecting catalogsource {catalogsource}")
                 copy2(catalogsource, clusterdir)
