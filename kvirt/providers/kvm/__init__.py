@@ -1973,14 +1973,14 @@ class Kvirt(object):
             IMAGES.update({i: IMAGES[i].replace('x86_64', 'aarch64').replace('amd64', 'arm64') for i in IMAGES})
         for pool in conn.listAllStoragePools(VIR_CONNECT_LIST_STORAGE_POOLS_ACTIVE):
             poolname = pool.name()
-            try:
-                pool.refresh(0)
-            except:
+            refreshed = False
+            while not refreshed:
                 try:
                     pool.refresh(0)
+                    refreshed = True
                 except Exception as e:
                     warning(f"Hit {e} when refreshing pool {poolname}")
-                    continue
+                    time.sleep(2)
             poolxml = pool.XMLDesc(0)
             root = ET.fromstring(poolxml)
             for element in list(root.iter('path')):
