@@ -3427,6 +3427,9 @@ class Kvirt(object):
             forwarderxml = '\n'.join("<forwarder domain='%s' addr='%s'/>" % (entry['domain'],
                                                                              entry['address']) for entry in forwarders)
             dnsxml = f"<dns>{forwarderxml}</dns>"
+        elif 'dns' in overrides and isinstance(overrides['dns'], bool):
+            dnsvalue = 'yes' if overrides['dns'] else 'no'
+            dnsxml = f"<dns enable='{dnsvalue}' />"
         namespace = ''
         dnsmasqxml = ''
         dhcpoptions = {key: overrides[key] for key in overrides if key in DHCPKEYWORDS or key.isdigit()}
@@ -4046,12 +4049,22 @@ class Kvirt(object):
                     plan = ET.fromstring(f"<kvirt:plan>{plan}</kvirt:plan>")
                     root.find('{kvirt}info').append(plan)
                     modified = True
+        currentdns = root.find('dns')
+        dns = overrides.get('dns', True)
+        if currentdns is None and not dns:
+            root.append(ET.fromstring("<dns enable='no'/>"))
+            modified = True
+        elif currentdns is not None and dns and currentdns.attrib.get('enable', 'xxx') == 'no':
+            root.remove(currentdns)
+            modified = True
         if modified:
             warning("Network will be restarted")
             network.destroy()
             newxml = ET.tostring(root)
             conn.networkDefineXML(newxml.decode("utf-8"))
             network.create()
+        else:
+            return {'result': 'failure', 'reason': 'No changes needed'}
         return {'result': 'success'}
 
     def update_pool(self, name, pool):

@@ -537,6 +537,9 @@ $ kcli create network -c 192.168.123.0/24 -P dhcp_start=192.168.123.40 -P dhcp_e
 # Create a network without dhcp
 $ kcli create network -c 192.168.123.0/24 --nodhcp mynetwork
 
+# Create a network without dhcp nor dns
+$ kcli create network -c 192.168.123.0/24 -P dhcp=false -P dns=false mynetwork
+
 # Create an isolated network
 $ kcli create network -c 192.168.123.0/24 -i mynetwork
 
