@@ -28,6 +28,24 @@ virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere']
 cloudplatforms = ['aws', 'gcp', 'ibm']
 
 
+def aws_ipi_config(config):
+    if os.path.exists(os.path.expanduser('~/.aws/credentials')):
+        return
+    aws_dir = f'{os.environ["HOME"]}/.aws'
+    if not os.path.exists(aws_dir):
+        os.mkdir(aws_dir)
+    access_key_id = config.options.get('access_key_id')
+    access_key_secret = config.options.get('access_key_secret')
+    session_token = config.options.get('session_token')
+    with open(f"{aws_dir}/credentials", "w") as f:
+        data = """[default]
+aws_access_key_id={access_key_id}
+aws_secret_access_key={access_key_secret}""".format(access_key_id=access_key_id, access_key_secret=access_key_secret)
+        f.write(data)
+        if session_token is not None:
+            f.write(f"aws_session_token={session_token}")
+
+
 def mapping_to_icsp(config, plandir, output_dir, mirror_config, mapping_file='oc-mirror-workspace/mapping.txt'):
     mirrors = []
     index_images = []

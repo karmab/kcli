@@ -123,46 +123,11 @@ class Kconfig(Kbaseconfig):
                 k = Kgcp(project, zone=zone, region=region, debug=debug, public=public)
                 self.overrides.update({'project': project})
             elif self.type == 'aws':
-                if len(self.options) == 1:
-                    home = os.environ['HOME']
-                    access_key_id, access_key_secret, keypair, region, session_token = None, None, None, None, None
-                    import configparser
-                    if os.path.exists(f"{home}/.aws/credentials"):
-                        try:
-                            credconfig = configparser.ConfigParser()
-                            credconfig.read(f"{home}/.aws/credentials")
-                            if 'default' not in credconfig:
-                                error("Missing default section in ~/.aws/credentials file. Leaving")
-                                sys.exit(1)
-                            if 'aws_access_key_id' in credconfig['default']:
-                                access_key_id = credconfig['default']['aws_access_key_id']
-                            if 'aws_secret_access_key' in credconfig['default']:
-                                access_key_secret = credconfig['default']['aws_secret_access_key']
-                        except:
-                            error("Coudln't parse ~/.aws/credentials file. Leaving")
-                            sys.exit(1)
-                    if os.path.exists(f"{home}/.aws/config"):
-                        try:
-                            confconfig = configparser.ConfigParser()
-                            confconfig.read(f"{home}/.aws/config")
-                            if 'default' not in confconfig:
-                                error("Missing default section in ~/.aws/config file. Leaving")
-                                sys.exit(1)
-                            if 'aws_access_key_id' in confconfig['default']:
-                                access_key_id = confconfig['default']['aws_access_key_id']
-                            if 'aws_secret_access_key' in confconfig['default']:
-                                access_key_secret = confconfig['default']['aws_secret_access_key']
-                            if 'region' in confconfig['default']:
-                                region = confconfig['default']['region']
-                        except:
-                            error("Coudln't parse ~/.aws/config file. Leaving")
-                            sys.exit(1)
-                else:
-                    access_key_id = self.options.get('access_key_id')
-                    access_key_secret = self.options.get('access_key_secret')
-                    keypair = self.options.get('keypair')
-                    session_token = self.options.get('session_token')
-                    region = self.options.get('region') if region is None else region
+                access_key_id = self.options.get('access_key_id')
+                access_key_secret = self.options.get('access_key_secret')
+                keypair = self.options.get('keypair')
+                session_token = self.options.get('session_token')
+                region = self.options.get('region') if region is None else region
                 if region is None:
                     error("Missing region in the configuration. Leaving")
                     sys.exit(1)
