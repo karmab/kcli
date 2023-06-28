@@ -2829,7 +2829,7 @@ class Kconfig(Kbaseconfig):
         hypershift = overrides.get('kubetype', 'xxx') == 'hypershift'
         assisted = False
         eks = overrides.get('kubetype', 'xxx') == 'eks'
-        gke = overrides.get('kubetype', 'gke') == 'gke'
+        gke = overrides.get('kubetype', 'xxx') == 'gke'
         domain = overrides.get('domain', 'karmalabs.corp')
         kubetype = overrides.get('kubetype', 'generic')
         dnsclient = None
