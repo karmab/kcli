@@ -46,7 +46,8 @@ aws_secret_access_key={access_key_secret}""".format(access_key_id=access_key_id,
             f.write(f"aws_session_token={session_token}")
 
 
-def mapping_to_icsp(config, plandir, output_dir, mirror_config, mapping_file='oc-mirror-workspace/mapping.txt'):
+def mapping_to_icsp(config, plandir, output_dir, mirror_config):
+    mapping_file = glob("oc-mirror-workspace/results-*/mapping.txt")[0]
     mirrors = []
     index_images = []
     for line in open(mapping_file, 'r').readlines():
