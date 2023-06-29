@@ -4,7 +4,7 @@ metadata:
   name: autoapprover
   namespace: kcli-infra
 spec:
-  concurrencyPolicy: Replace
+  concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 0
   failedJobsHistoryLimit: 1
   jobTemplate:
