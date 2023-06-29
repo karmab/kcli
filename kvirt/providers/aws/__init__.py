@@ -112,6 +112,8 @@ class Kaws(object):
                    'Tags': [{'Key': 'Name', 'Value': name}, {'Key': 'hostname', 'Value': name}]}]
         for entry in [field for field in metadata if field in METADATA_FIELDS]:
             vmtags[0]['Tags'].append({'Key': entry, 'Value': metadata[entry]})
+        if 'kubetype' in metadata and metadata['kubetype'] == "openshift":
+            vmtags[0]['Tags'].append({'Key': f'kubernetes.io/cluster/{metadata["kube"]}', 'Value': 'owned'})
         if keypair is None:
             keypair = f'kvirt_{self.access_key_id}'
         keypairs = [k for k in conn.describe_key_pairs()['KeyPairs'] if k['KeyName'] == keypair]
@@ -313,11 +315,31 @@ class Kaws(object):
                     pprint("Waiting for instanceid associated to spot request to show up")
                     sleep(5)
         else:
-            conn.run_instances(ImageId=imageid, MinCount=1, MaxCount=1, InstanceType=flavor,
-                               KeyName=keypair, BlockDeviceMappings=blockdevicemappings,
-                               NetworkInterfaces=networkinterfaces, UserData=userdata, TagSpecifications=vmtags)
+            response = conn.run_instances(ImageId=imageid, MinCount=1, MaxCount=1, InstanceType=flavor,
+                                          KeyName=keypair, BlockDeviceMappings=blockdevicemappings,
+                                          NetworkInterfaces=networkinterfaces, UserData=userdata,
+                                          TagSpecifications=vmtags)
         if reservedns and domain is not None:
             self.reserve_dns(name, nets=nets, domain=domain, alias=alias, instanceid=name)
+        if 'kubetype' in metadata and metadata['kubetype'] == "openshift":
+            cluster = metadata['kube']
+            iam_role = cluster
+            instance_profiles = self.list_instance_profiles()
+            if cluster not in instance_profiles:
+                if iam_role not in self.list_roles():
+                    self.create_role(iam_role)
+                self.create_instance_profile(cluster, iam_role)
+                sleep(15)
+            arn = self.get_instance_profile(cluster)['Arn']
+            instance_id = response['Instances'][0]['InstanceId']
+            while True:
+                current_status = self.status(name)
+                if current_status == 'running':
+                    break
+                pprint(f"Waiting for vm {name} to be running to associate instance profile")
+                sleep(5)
+            conn.associate_iam_instance_profile(IamInstanceProfile={'Name': cluster, 'Arn': arn},
+                                                InstanceId=instance_id)
         return {'result': 'success'}
 
     def start(self, name):
@@ -1186,7 +1208,7 @@ class Kaws(object):
                     ip = gethostbyname(lb_dns_name)
                     break
                 except:
-                    pprint(f"Waiting 10s for {lb_dns_name} to get an ip resolution")
+                    pprint(f"Waiting 10s for {lb_dns_name} to resolve")
                     sleep(10)
             if dnsclient is not None:
                 return ip
@@ -1444,3 +1466,50 @@ class Kaws(object):
                 error(f"Couldn't find valid subnet for vpc {netname}")
                 sys.exit(1)
         return vpcid, subnetid
+
+    def create_instance_profile(self, name, role):
+        iam = boto3.client('iam', aws_access_key_id=self.access_key_id, aws_secret_access_key=self.access_key_secret,
+                           region_name=self.region)
+        iam.create_instance_profile(InstanceProfileName=name)
+        iam.add_role_to_instance_profile(InstanceProfileName=name, RoleName=role)
+
+    def delete_instance_profile(self, name, role):
+        iam = boto3.client('iam', aws_access_key_id=self.access_key_id, aws_secret_access_key=self.access_key_secret,
+                           region_name=self.region)
+        iam.remove_role_from_instance_profile(InstanceProfileName=name, RoleName=role)
+        iam.delete_instance_profile(InstanceProfileName=name)
+
+    def get_instance_profile(self, name):
+        iam = boto3.client('iam', aws_access_key_id=self.access_key_id, aws_secret_access_key=self.access_key_secret,
+                           region_name=self.region)
+        return iam.get_instance_profile(InstanceProfileName=name)['InstanceProfile']
+
+    def list_instance_profiles(self):
+        iam = boto3.client('iam', aws_access_key_id=self.access_key_id, aws_secret_access_key=self.access_key_secret,
+                           region_name=self.region)
+        response = iam.list_instance_profiles(MaxItems=1000)
+        return [instance_profile['InstanceProfileName'] for instance_profile in response['InstanceProfiles']]
+
+    def create_role(self, name, role='ctlplane'):
+        plandir = os.path.dirname(self.__init__.__code__.co_filename)
+        iam = boto3.client('iam', aws_access_key_id=self.access_key_id, aws_secret_access_key=self.access_key_secret,
+                           region_name=self.region)
+        rolepolicy_document = open(f'{plandir}/assume_policy.json').read()
+        tags = [{'Key': 'Name', 'Value': name}]
+        iam.create_role(RoleName=name, AssumeRolePolicyDocument=rolepolicy_document, Tags=tags)
+        document = open(f'{plandir}/{role}_policy.json').read()
+        iam.put_role_policy(RoleName=name, PolicyName=name, PolicyDocument=document)
+
+    def delete_role(self, name):
+        iam_resource = boto3.resource('iam', aws_access_key_id=self.access_key_id,
+                                      aws_secret_access_key=self.access_key_secret, region_name=self.region)
+        role = iam_resource.Role(name)
+        role_policy = iam_resource.RolePolicy(name, name)
+        role_policy.delete()
+        role.delete()
+
+    def list_roles(self):
+        iam = boto3.client('iam', aws_access_key_id=self.access_key_id, aws_secret_access_key=self.access_key_secret,
+                           region_name=self.region)
+        response = iam.list_roles(MaxItems=1000)
+        return [role['RoleName'] for role in response['Roles']]

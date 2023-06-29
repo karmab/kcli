@@ -2863,6 +2863,16 @@ class Kconfig(Kbaseconfig):
             if bucket in self.k.list_buckets():
                 pprint(f"Deleting bucket {bucket}")
                 k.delete_bucket(bucket)
+            if self.type == 'aws' and cluster in k.list_instance_profiles():
+                iam_role = clusterdata.get('role', cluster)
+                try:
+                    k.delete_instance_profile(cluster, iam_role)
+                except:
+                    pass
+                try:
+                    k.delete_role(iam_role)
+                except:
+                    pass
         elif dnsclient is not None:
             z = Kconfig(client=dnsclient).k
             z.delete_dns(f"api.{cluster}", domain)

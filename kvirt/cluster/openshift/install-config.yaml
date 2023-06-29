@@ -25,6 +25,9 @@ apiVersion: v1
 fips: True
 {% endif %}
 baseDomain: {{ domain }}
+{% if config_type == 'aws' %}
+credentialsMode: Mint
+{% endif %}
 {% if http_proxy != None %}
 proxy:
     httpProxy: {{ 'http://' + http_proxy if 'http' not in http_proxy else http_proxy }}
@@ -67,7 +70,10 @@ platform:
     datacenter: {{ config_datacenter }}
     defaultDatastore: {{ config_pool }}
     folder: /{{ config_datacenter}}/vm/{{ cluster }}
-{% else %} 
+{% elif config_type == 'aws' %}
+  aws:
+    region: {{ config_region }}
+{% else %}
   none: {}
 {% endif %}
 {% if sno %}

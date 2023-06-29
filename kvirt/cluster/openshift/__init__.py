@@ -28,7 +28,7 @@ virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere']
 cloudplatforms = ['aws', 'gcp', 'ibm']
 
 
-def aws_ipi_config(config):
+def aws_credentials(config):
     if os.path.exists(os.path.expanduser('~/.aws/credentials')):
         return
     aws_dir = f'{os.environ["HOME"]}/.aws'
@@ -1074,6 +1074,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         data['pull_secret'] = json.dumps(auths)
     else:
         data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
+    if config.type == 'aws':
+        aws_credentials(config)
     installconfig = config.process_inputfile(cluster, f"{plandir}/install-config.yaml", overrides=data)
     with open(f"{clusterdir}/install-config.yaml", 'w') as f:
         f.write(installconfig)
@@ -1084,6 +1086,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         msg = "Leaving environment for debugging purposes. "
         msg += f"Delete it with kcli delete kube --yes {cluster}"
         return {'result': 'failure', 'reason': msg}
+    for f in glob(f"{clusterdir}/openshift/99_openshift-cluster-api_master-machines-*.yaml"):
+        os.remove(f)
+    for f in glob(f"{clusterdir}/openshift/99_openshift-cluster-api_worker-machineset-*"):
+        os.remove(f)
+    for f in glob(f"{clusterdir}/openshift/99_openshift-machine-api_master-control-plane-machine-set.yaml"):
+        os.remove(f)
     ntp_server = data.get('ntp_server')
     if ntp_server is not None:
         ntp_data = config.process_inputfile(cluster, f"{plandir}/chrony.conf", overrides={'ntp_server': ntp_server})
@@ -1573,8 +1581,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             result = config.plan(plan, inputfile=f'{plandir}/cloud_workers.yml', overrides=overrides)
             if result['result'] != 'success':
                 return result
-            lb_overrides['role'] = 'worker'
-            lb_overrides['members'] = workers
+            lb_overrides = {'cluster': cluster, 'domain': domain, 'members': workers, 'role': 'worker'}
             result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_apps.yml', overrides=lb_overrides)
             if result['result'] != 'success':
                 return result

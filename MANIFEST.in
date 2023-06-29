@@ -18,5 +18,6 @@ recursive-include kvirt/cluster/profiles *
 recursive-include kvirt/version *
 recursive-include kvirt/common *
 recursive-include kvirt/expose *
+recursive-include kvirt/providers/aws *
 recursive-include kvirt/providers/gcp *
 include kvirt/keywords.yaml
