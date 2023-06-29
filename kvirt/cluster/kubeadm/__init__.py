@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from binascii import hexlify
+from ipaddress import ip_network
 from kvirt.common import success, pprint, warning, info2, container_mode, wait_cloud_dns, update_etc_hosts
 from kvirt.common import get_kubectl, kube_create_app, get_ssh_pub_key, _ssh_credentials, ssh, deploy_cloud_storage
 from kvirt.defaults import UBUNTUS
@@ -109,10 +110,20 @@ def create(config, plandir, cluster, overrides):
         domain = data.get('domain', 'karmalabs.corp')
         api_ip = f"{cluster}-ctlplane.{domain}"
     elif api_ip is None:
-        if network == 'default' and platform == 'kvm':
-            warning("Using 192.168.122.253 as api_ip")
-            data['api_ip'] = "192.168.122.253"
-            api_ip = "192.168.122.253"
+        network = data.get('network')
+        networkinfo = k.info_network(network)
+        if not networkinfo:
+            msg = f"Issue getting network {network}"
+            return {'result': 'failure', 'reason': msg}
+        if platform == 'kvm' and networkinfo['type'] == 'routed':
+            cidr = networkinfo['cidr']
+            if cidr == 'N/A':
+                msg = "Couldnt gather an api_ip from your specified network"
+                return {'result': 'failure', 'reason': msg}
+            api_index = 2 if ':' in cidr else -3
+            api_ip = str(ip_network(cidr)[api_index])
+            warning(f"Using {api_ip} as api_ip")
+            data['api_ip'] = api_ip
         elif platform == 'kubevirt':
             selector = {'kcli/plan': plan, 'kcli/role': 'ctlplane'}
             service_type = "LoadBalancer" if k.access_mode == 'LoadBalancer' else 'ClusterIP'
