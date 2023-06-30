@@ -25,7 +25,7 @@ apiVersion: v1
 fips: True
 {% endif %}
 baseDomain: {{ domain }}
-{% if config_type == 'aws' %}
+{% if config_type in ['aws', 'gcp'] %}
 credentialsMode: Mint
 {% endif %}
 {% if http_proxy != None %}
@@ -73,6 +73,10 @@ platform:
 {% elif config_type == 'aws' %}
   aws:
     region: {{ config_region }}
+{% elif config_type == 'gcp' %}
+  gcp:
+    projectID: {{ config_project }}
+    region: {{ config_zone[:-2] }}
 {% else %}
   none: {}
 {% endif %}

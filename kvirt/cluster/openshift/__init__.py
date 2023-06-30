@@ -1076,6 +1076,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
     if config.type == 'aws':
         aws_credentials(config)
+    elif config.type == 'gcp':
+        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = os.path.expanduser(config.options.get('credentials'))
     installconfig = config.process_inputfile(cluster, f"{plandir}/install-config.yaml", overrides=data)
     with open(f"{clusterdir}/install-config.yaml", 'w') as f:
         f.write(installconfig)

@@ -476,6 +476,16 @@ def process_files(files=[], overrides={}, remediate=False):
     return data
 
 
+def _unique_list_dict(a):
+    b = []
+    for e in a:
+        if e not in b:
+            b.append(e)
+        else:
+            continue
+    return b
+
+
 def process_ignition_files(files=[], overrides={}):
     filesdata = []
     unitsdata = []
@@ -545,7 +555,7 @@ def process_ignition_files(files=[], overrides={}):
             filesdata.append({'path': path, 'mode': permissions, 'overwrite': True,
                               "contents": {"source": f"data:text/plain;charset=utf-8;base64,{content}",
                                            "verification": {}}})
-    return filesdata, unitsdata
+    return _unique_list_dict(filesdata), _unique_list_dict(unitsdata)
 
 
 def process_cmds(cmds, overrides):
@@ -1918,28 +1928,6 @@ def make_iso(name, tmpdir, userdata, metadata, netdata, openstack=False, combust
             isocmd += f" {tmpdir}/network-config"
     isocmd += " >/dev/null 2>&1"
     os.system(isocmd)
-
-
-def patch_bootstrap(path, script_content, service_content, service_name):
-    separators = (',', ':')
-    indent = 0
-    warning(f"Patching bootkube in bootstrap ignition to include {service_name}")
-    with open(path, 'r') as ignition:
-        data = json.load(ignition)
-    script_base64 = base64.b64encode(script_content.encode()).decode("UTF-8")
-    script_source = f"data:text/plain;charset=utf-8;base64,{script_base64}"
-    script_entry = {"path": f"/usr/local/bin/{service_name}.sh",
-                    "contents": {"source": script_source, "verification": {}}, "mode": 448}
-    data['storage']['files'].append(script_entry)
-    data['systemd']['units'].append({"contents": service_content, "name": f'{service_name}.service',
-                                     "enabled": True})
-    try:
-        result = json.dumps(data, indent=indent, separators=separators, sort_keys=True)
-    except:
-        result = json.dumps(data, indent=indent, separators=separators)
-    with open(path, 'w') as ignition:
-        ignition.write(result)
-    return data
 
 
 def filter_compression_extension(name):

@@ -345,6 +345,9 @@ class Kgcp(object):
                     serviceaccounts.append(sa)
                 else:
                     warning(f"Skipping invalid sa {sa}")
+            if kubetype == 'openshift':
+                serviceaccounts.append({'email': 'default',
+                                        'scopes': ['https://www.googleapis.com/auth/cloud-platform']})
             if serviceaccounts:
                 body['serviceAccounts'] = serviceaccounts
         if self.debug:
