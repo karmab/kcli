@@ -2854,7 +2854,7 @@ class Kconfig(Kbaseconfig):
             if f"{cluster}-ingress" in k.list_services(k.namespace):
                 k.delete_service(f"{cluster}-ingress", k.namespace)
         if self.type in ['aws', 'gcp', 'ibm'] and not gke and not eks:
-            lbs = ['api']
+            lbs = ['api', 'apps']
             if kubetype not in ['k3s', 'generic']:
                 lbs.append('apps')
             for lb in lbs:
