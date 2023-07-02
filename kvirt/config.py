@@ -323,6 +323,36 @@ class Kconfig(Kbaseconfig):
                 k = Kpacket(auth_token, project, facility=facility, debug=debug,
                             tunnelhost=self.tunnelhost, tunneluser=self.tunneluser, tunnelport=self.tunnelport,
                             tunneldir=self.tunneldir)
+            elif self.type == 'proxmox':
+                warning("Proxmox provider is Work In Progress. Use at your own risk!")
+                user = self.options.get('user')
+                if user is None:
+                    error("Missing user in the configuration. Leaving")
+                    sys.exit(1)
+                auth_token_name = self.options.get('auth_token_name')
+                password = self.options.get('password') 
+                if not auth_token_name and not password:
+                    error("Missing auth_token_name or password in the configuration. Leaving")
+                    sys.exit(1)
+                auth_token_secret = self.options.get('auth_token_secret')
+                if auth_token_name and auth_token_secret is None:
+                    error("Missing auth_token_secret in the configuration. Leaving")
+                    sys.exit(1)
+                filtertag = self.options.get('filtertag')
+                node = self.options.get('node')
+                verify_ssl = self.options.get('verify_ssl')
+                from kvirt.providers.proxmox import Kproxmox
+                k = Kproxmox(
+                    host=self.host,
+                    port=None, 
+                    user=user,
+                    password=password,
+                    token_name=auth_token_name, 
+                    token_secret=auth_token_secret, 
+                    filtertag=filtertag, 
+                    node=node,
+                    verify_ssl=verify_ssl, 
+                    debug=False)
             elif self.type == 'web':
                 port = self.options.get('port', 8000)
                 localkube = self.options.get('localkube', True)
@@ -2427,7 +2457,11 @@ class Kconfig(Kbaseconfig):
                         error(f"Image {image} has no associated url")
                         return {'result': 'failure', 'reason': "Incorrect image"}
                     url = IMAGES[image]
-                    image_type = 'openstack' if kvm_openstack and self.type == 'kvm' else self.type
+                    image_type = self.type
+                    if kvm_openstack and self.type == 'kvm':
+                        image_type = 'openstack'
+                    if self.type == "proxmox":
+                        image_type = 'kvm'
                     if not kvm_openstack and self.type == 'kvm':
                         image += "-qemu"
                     if 'rhcos' in image and not image.endswith('qcow2.gz'):
