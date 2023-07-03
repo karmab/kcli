@@ -190,5 +190,8 @@ class Redfish(object):
         except:
             pass
         self.insert_iso(iso_url)
-        self.set_iso_once()
+        try:
+            self.set_iso_once()
+        except:
+            self.set_iso_once()
         self.restart()
