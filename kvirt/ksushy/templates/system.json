@@ -1,8 +1,8 @@
 {
     "@odata.type": "#ComputerSystem.v1_1_0.ComputerSystem",
-    "Id": "1",
+    "Id": "{{ uuid or 1 }}",
     "Name": "{{ name }}",
-    "UUID": "1",
+    "UUID": "{{ uuid or 1 }}",
     "Manufacturer": "{{ virt_type }}",
     "Status": {
         "State": "Enabled",

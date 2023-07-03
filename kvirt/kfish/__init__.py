@@ -4,36 +4,77 @@ import base64
 import json
 import ssl
 import sys
+from uuid import UUID
+
+
+def valid_uuid(uuid):
+    try:
+        UUID(uuid)
+        return True
+    except:
+        return False
+
+
+def virtual(url):
+    p = urlparse(url)
+    if not p.path.startswith('/redfish/v1/Systems'):
+        return False
+    path = p.path.replace('/redfish/v1/Systems/', '')
+    return valid_uuid(path) or len(path.split('/')) == 2
 
 
 class Redfish(object):
-    def __init__(self, url, user='root', password='calvin', insecure=True, model='dell', debug=False):
+    def __init__(self, url, user='root', password='calvin', insecure=True, debug=False, model=None):
         self.debug = debug
-        self.model = model.lower()
+        self.headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
+        self.context = ssl.create_default_context()
+        if insecure:
+            self.context.check_hostname = False
+            self.context.verify_mode = ssl.CERT_NONE
         url = url.replace('idrac-virtualmedia', 'https').replace('ilo5-virtualmedia', 'https')
+        if virtual(url):
+            self.model = 'fake'
+            if user is None or password is None:
+                user, password = 'fake', 'fake'
+        else:
+            self.model = model or self.get_model(url)
         if '://' not in url:
             if self.model in ['hp', 'hpe', 'supermicro']:
                 url = f"https://{url}/redfish/v1/Systems/1"
             elif self.model == 'dell':
                 url = f"https://{url}/redfish/v1/Systems/System.Embedded.1"
+                if user is None or password is None:
+                    user, password = 'root', 'calvin'
             else:
                 print(f"Invalid url {url}")
                 sys.exit(0)
-        p = urlparse(url)
         self.url = url
         if self.debug:
             print(f"Using base url {self.url}")
+        p = urlparse(url)
+        self.baseurl = f"{p.scheme}://{p.netloc}"
         self.user = user
         self.password = password
-        self.headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
         credentials = base64.b64encode(bytes(f'{user}:{password}', 'ascii')).decode('utf-8')
         self.headers["Authorization"] = f"Basic {credentials}"
-        self.baseurl = f"{p.scheme}://{p.netloc}"
         self.manager_url = None
-        self.context = ssl.create_default_context()
-        if insecure:
-            self.context.check_hostname = False
-            self.context.verify_mode = ssl.CERT_NONE
+
+    def get_model(self, url):
+        if '://' not in url:
+            url = f"https://{url}"
+        p = urlparse(url)
+        headers = {'Accept': 'application/json'}
+        request = Request(f"https://{p.netloc}/redfish/v1", headers=headers)
+        oem = json.loads(urlopen(request, context=self.context).read())['Oem']
+        if 'Dell' in oem:
+            model = "dell"
+        elif 'Hpe' in oem:
+            model = "hpe"
+        elif 'Supermicro' in oem:
+            model = "supermicro"
+        else:
+            model = 'N/A'
+        return model
 
     def get_manager_url(self):
         request = Request(self.url, headers=self.headers)

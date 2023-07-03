@@ -29,7 +29,6 @@ from subprocess import call
 from shutil import copy2, move, which
 from tempfile import TemporaryDirectory
 from time import sleep
-from uuid import UUID
 import yaml
 
 
@@ -2134,10 +2133,9 @@ def boot_baremetal_hosts(baremetal_hosts, iso_url, overrides={}, debug=False):
             or overrides.get('bmc_user') or overrides.get('bmc_username')\
             or overrides.get('user') or overrides.get('username')
         bmc_password = host.get('password') or host.get('bmc_password') or overrides.get('bmc_password')
-        bmc_model = host.get('model') or host.get('bmc_model') or overrides.get('bmc_model', 'dell')
         bmc_reset = host.get('reset') or host.get('bmc_reset') or overrides.get('bmc_reset', False)
-        if bmc_url is not None and bmc_user is not None and bmc_password is not None:
-            red = Redfish(bmc_url, bmc_user, bmc_password, model=bmc_model, debug=debug)
+        if bmc_url is not None:
+            red = Redfish(bmc_url, bmc_user, bmc_password, debug=debug)
             if bmc_reset:
                 red.reset()
                 sleep(240)
@@ -2162,9 +2160,8 @@ def info_baremetal_hosts(baremetal_hosts, overrides={}, debug=False, full=False)
         bmc_url = host.get('url') or host.get('bmc_url')
         bmc_user = host.get('user') or host.get('bmc_user') or overrides.get('bmc_user')
         bmc_password = host.get('password') or host.get('bmc_password') or overrides.get('bmc_password')
-        bmc_model = host.get('model') or host.get('bmc_model') or overrides.get('bmc_model', 'dell')
-        if bmc_url is not None and bmc_user is not None and bmc_password is not None:
-            red = Redfish(bmc_url, bmc_user, bmc_password, model=bmc_model, debug=debug)
+        if bmc_url is not None:
+            red = Redfish(bmc_url, bmc_user, bmc_password, debug=debug)
             msg = host['name'] if 'name' in host else f"with url {bmc_url}"
             pprint(f"Reporting info on Host {msg}")
             info = red.info()
@@ -2182,20 +2179,11 @@ def stop_baremetal_hosts(baremetal_hosts, overrides={}, debug=False):
         bmc_url = host.get('url') or host.get('bmc_url')
         bmc_user = host.get('user') or host.get('bmc_user') or overrides.get('bmc_user')
         bmc_password = host.get('password') or host.get('bmc_password') or overrides.get('bmc_password')
-        bmc_model = host.get('model') or host.get('bmc_model') or overrides.get('bmc_model', 'dell')
-        if bmc_url is not None and bmc_user is not None and bmc_password is not None:
-            red = Redfish(bmc_url, bmc_user, bmc_password, model=bmc_model, debug=debug)
+        if bmc_url is not None:
+            red = Redfish(bmc_url, bmc_user, bmc_password, debug=debug)
             msg = host['name'] if 'name' in host else f"with url {bmc_url}"
             pprint(f"Stopping Host {msg}")
             red.stop()
-
-
-def valid_uuid(uuid):
-    try:
-        UUID(uuid)
-        return True
-    except:
-        return False
 
 
 def get_changelog(diff, data=False):
@@ -2224,27 +2212,6 @@ def get_changelog(diff, data=False):
             return open(f"{tmpdir}/results.txt").read()
         else:
             call(cmd, shell=True)
-
-
-def virtual_baremetal(url, clients=[]):
-    if 'redfish/v1/Systems/' not in url:
-        return False
-    if valid_uuid(os.path.basename(url)):
-        return True
-    for cli in clients:
-        if f'redfish/v1/Systems/{cli}/' in url:
-            return True
-    if 'redfish/v1/Systems/local/' in url:
-        return True
-    return False
-
-
-def dell_baremetal(bmc_user, bmc_password):
-    if bmc_user is None:
-        bmc_user = 'root'
-    if bmc_password is None:
-        bmc_password = 'calvin'
-    return bmc_user, bmc_password
 
 
 def wait_cloud_dns(cluster, domain):

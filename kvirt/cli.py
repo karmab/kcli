@@ -27,7 +27,7 @@ from glob import glob
 import json
 from kvirt import common
 from kvirt.common import error, pprint, success, warning, ssh, _ssh_credentials, container_mode
-from kvirt.common import get_git_version, compare_git_versions, virtual_baremetal, dell_baremetal
+from kvirt.common import get_git_version, compare_git_versions
 from kvirt import nameutils
 import os
 import random
@@ -160,20 +160,15 @@ def start_baremetal_hosts(args):
     iso_url = overrides.get('iso_url')
     baremetal_hosts = overrides.get('baremetal_hosts', [])
     bmc_url = overrides.get('bmc_url') or overrides.get('url')
-    bmc_model = overrides.get('bmc_model') or overrides.get('model') or baseconfig.bmc_model or 'dell'
     bmc_user = overrides.get('bmc_user') or overrides.get('user') or overrides.get('bmc_username')\
         or overrides.get('username') or baseconfig.bmc_user
     bmc_password = overrides.get('bmc_password') or overrides.get('password') or baseconfig.bmc_password
-    if bmc_url is not None and virtual_baremetal(bmc_url, clients=baseconfig.clients):
-        bmc_user, bmc_password = 'fake', 'fake'
-    if bmc_model == 'dell':
-        bmc_user, bmc_password = dell_baremetal(bmc_user, bmc_password)
-    if not baremetal_hosts and bmc_url is not None and bmc_user is not None and bmc_password is not None:
-        baremetal_hosts = [{'bmc_url': bmc_url, 'bmc_user': bmc_user, 'bmc_password': bmc_password,
-                            'bmc_model': bmc_model}]
     if not baremetal_hosts:
-        error("Baremetal hosts need to be defined")
-        sys.exit(1)
+        if bmc_url is not None:
+            baremetal_hosts = [{'bmc_url': bmc_url, 'bmc_user': bmc_user, 'bmc_password': bmc_password}]
+        else:
+            error("Baremetal hosts need to be defined")
+            sys.exit(1)
     common.boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=args.debug)
 
 
@@ -182,19 +177,14 @@ def stop_baremetal_hosts(args):
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     baremetal_hosts = overrides.get('baremetal_hosts', [])
     bmc_url = overrides.get('bmc_url') or overrides.get('url')
-    bmc_model = overrides.get('bmc_model') or overrides.get('model') or baseconfig.bmc_model or 'dell'
     bmc_user = overrides.get('bmc_user') or overrides.get('user') or overrides.get('bmc_username')\
         or overrides.get('username') or baseconfig.bmc_user
     bmc_password = overrides.get('bmc_password') or overrides.get('password') or baseconfig.bmc_password
-    if bmc_url is not None and virtual_baremetal(bmc_url, clients=baseconfig.clients):
-        bmc_user, bmc_password = 'fake', 'fake'
-    if bmc_model == 'dell':
-        bmc_user, bmc_password = dell_baremetal(bmc_user, bmc_password)
-    if not baremetal_hosts and bmc_url is not None and bmc_user is not None and bmc_password is not None:
-        baremetal_hosts = [{'bmc_url': bmc_url, 'bmc_user': bmc_user, 'bmc_password': bmc_password,
-                            'bmc_model': bmc_model}]
     if not baremetal_hosts:
-        error("Baremetal hosts need to be defined")
+        if bmc_url is not None:
+            baremetal_hosts = [{'bmc_url': bmc_url, 'bmc_user': bmc_user, 'bmc_password': bmc_password}]
+        else:
+            error("Baremetal hosts need to be defined")
         sys.exit(1)
     common.stop_baremetal_hosts(baremetal_hosts, overrides=overrides, debug=args.debug)
 
@@ -3261,20 +3251,15 @@ def info_baremetal_host(args):
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     baremetal_hosts = overrides.get('baremetal_hosts', [])
     bmc_url = overrides.get('bmc_url') or overrides.get('url')
-    bmc_model = overrides.get('bmc_model') or overrides.get('model') or baseconfig.bmc_model or 'dell'
     bmc_user = overrides.get('bmc_user') or overrides.get('user') or overrides.get('bmc_username')\
         or overrides.get('username') or baseconfig.bmc_user
     bmc_password = overrides.get('bmc_password') or overrides.get('password') or baseconfig.bmc_password
-    if bmc_url is not None and virtual_baremetal(bmc_url, clients=baseconfig.clients):
-        bmc_user, bmc_password = 'fake', 'fake'
-    if bmc_model == 'dell':
-        bmc_user, bmc_password = dell_baremetal(bmc_user, bmc_password)
-    if not baremetal_hosts and bmc_url is not None and bmc_user is not None and bmc_password is not None:
-        baremetal_hosts = [{'bmc_url': bmc_url, 'bmc_user': bmc_user, 'bmc_password': bmc_password,
-                            'bmc_model': bmc_model}]
     if not baremetal_hosts:
-        error("Couldnt figure out baremetal_hosts list")
-        sys.exit(1)
+        if bmc_url is not None:
+            baremetal_hosts = [{'bmc_url': bmc_url, 'bmc_user': bmc_user, 'bmc_password': bmc_password}]
+        else:
+            error("Couldnt figure out baremetal_hosts list")
+            sys.exit(1)
     common.info_baremetal_hosts(baremetal_hosts, overrides=overrides, debug=args.debug, full=full)
 
 

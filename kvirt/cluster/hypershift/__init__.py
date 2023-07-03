@@ -4,7 +4,7 @@ from base64 import b64encode
 from glob import glob
 from kvirt.common import success, error, pprint, info2, container_mode, warning
 from kvirt.common import get_oc, pwd_path, get_installer_rhcos, get_ssh_pub_key, boot_baremetal_hosts, olm_app
-from kvirt.common import virtual_baremetal, dell_baremetal, deploy_cloud_storage
+from kvirt.common import deploy_cloud_storage
 from kvirt.defaults import OPENSHIFT_TAG
 from kvirt.cluster.openshift import get_ci_installer, get_downstream_installer, get_installer_version
 from kvirt.cluster.openshift import same_release_images, process_apps, update_openshift_etc_hosts, offline_image
@@ -39,32 +39,14 @@ def create_bmh_objects(config, plandir, cluster, namespace, baremetal_hosts, ove
                 or overrides.get('bmc_user') or overrides.get('bmc_username')\
                 or overrides.get('user') or overrides.get('username')
             bmc_password = host.get('password') or host.get('bmc_password') or overrides.get('bmc_password')
-            if virtual_baremetal(bmc_url, clients=config.clients):
-                bmc_user, bmc_password = 'fake', 'fake'
-                overrides['bmc_model'] = 'fake'
-            bmc_model = host.get('model') or host.get('bmc_model') or overrides.get('bmc_model', 'dell')
             bmc_mac = host.get('mac') or host.get('bmc_mac')
             if bmc_mac is None:
                 warning("Skipping entry {index} in baremetal_hosts array as it misses mac")
                 continue
-            if bmc_model == 'dell':
-                bmc_user, bmc_password = dell_baremetal(bmc_user, bmc_password)
-            if bmc_user is None:
-                warning("Skipping entry {index} in baremetal_hosts array as it misses user")
-                continue
-            if bmc_password is None:
-                warning("Skipping entry {index} in baremetal_hosts array as it misses password")
-                continue
             bmc_uefi = host.get('uefi') or host.get('bmc_uefi') or uefi
             bmc_name = host.get('name') or host.get('bmc_name') or f'{cluster}-node-{index}'
-            if bmc_model in ['hp', 'hpe', 'supermicro']:
-                bmc_url = bmc_url.replace('https://', 'redfish-virtualmedia')
-            elif bmc_model == 'dell':
-                bmc_url = bmc_url.replace('https://', 'idrac-virtualmedia')
-            elif bmc_model == 'fake':
-                bmc_url = bmc_url.replace('http', 'redfish-virtualmedia+http')
-            bmc_overrides = {'url': bmc_url, 'user': bmc_user, 'password': bmc_password, 'model': bmc_model,
-                             'name': bmc_name, 'uefi': bmc_uefi, 'namespace': namespace, 'cluster': cluster,
+            bmc_overrides = {'url': bmc_url, 'user': bmc_user, 'password': bmc_password, 'name': bmc_name,
+                             'uefi': bmc_uefi, 'namespace': namespace, 'cluster': cluster,
                              'mac': bmc_mac}
             bmc_data = config.process_inputfile(cluster, f"{plandir}/bmc.yml.j2", overrides=bmc_overrides)
             f.write(bmc_data)

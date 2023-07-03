@@ -89,6 +89,8 @@ class Ksushy():
             status = 'On' if info['status'] == 'up' else 'Off'
             data = {'client': client, 'name': name, 'status': status, 'memory': info['memory'], 'cpus': info['cpus'],
                     'virt_type': config.type}
+            if 'id' in info:
+                data['uuid'] = info['id']
             return data
 
         @app.route('/redfish/v1/Systems/<client>/<name>', method='PATCH')

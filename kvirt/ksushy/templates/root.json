@@ -3,7 +3,8 @@
     "Id": "KsushyService",
     "Name": "Kushy Service",
     "RedfishVersion": "1.5.0",
-    "UUID": "quite-production-ready",
+    "UUID": "production-ready",
+    "Oem": {"Kcli": {}},
     "Systems": {
         "@odata.id": "/redfish/v1/Systems"
     },
