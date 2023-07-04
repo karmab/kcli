@@ -1761,7 +1761,6 @@ For each entry you would specify:
 - url or bmc_url. This is the redfish url to use, which is specific to the hardware. You can also just specify the ip and set the model if you dont know what the exact url is.
 - user or bmc_user. bmc_user can also be set outside the array if you use the same user for all of your baremetal workers
 - password or bmc_password. bmc_password can also be set outside the array if you use the same password for all of your baremetal workers
-- Optionally model or bmc_model (either dell,hp, supermicro) to have the bmc_url evaluated for you (Only specify its ip in this case)
 
 As an example, the following array will boot 3 workers (based on kvm vms with ksushy)
 

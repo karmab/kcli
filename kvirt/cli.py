@@ -185,7 +185,7 @@ def stop_baremetal_hosts(args):
             baremetal_hosts = [{'bmc_url': bmc_url, 'bmc_user': bmc_user, 'bmc_password': bmc_password}]
         else:
             error("Baremetal hosts need to be defined")
-        sys.exit(1)
+            sys.exit(1)
     common.stop_baremetal_hosts(baremetal_hosts, overrides=overrides, debug=args.debug)
 
 
