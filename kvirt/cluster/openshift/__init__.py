@@ -10,7 +10,7 @@ from kvirt.common import error, pprint, success, warning, info2
 from kvirt.common import get_oc, pwd_path, get_oc_mirror
 from kvirt.common import get_latest_fcos, generate_rhcos_iso, olm_app, get_commit_rhcos
 from kvirt.common import get_installer_rhcos, wait_cloud_dns, delete_lastvm
-from kvirt.common import ssh, scp, _ssh_credentials, get_ssh_pub_key, boot_baremetal_hosts
+from kvirt.common import ssh, scp, _ssh_credentials, get_ssh_pub_key, boot_baremetal_hosts, separate_yamls
 from kvirt.defaults import LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG
 import re
 from random import choice
@@ -1066,6 +1066,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             for icsp in glob("oc-mirror-workspace/results-*/imageContentSourcePolicy.yaml"):
                 pprint(f"Injecting icsp {icsp}")
                 copy2(icsp, clusterdir)
+            if os.path.exists(f"{clusterdir}/imageContentSourcePolicy.yaml"):
+                separate_yamls(f"{clusterdir}/imageContentSourcePolicy.yaml")
             if os.path.exists("oc-mirror-workspace"):
                 rmtree("oc-mirror-workspace")
         key = f"{disconnected_user}:{disconnected_password}"

@@ -2258,3 +2258,14 @@ def update_etc_hosts(cluster, domain, api_ip):
         else:
             warning("Make sure to have the following entry in your /etc/hosts")
             warning(f"{api_ip} api.{cluster}.{domain}")
+
+
+def separate_yamls(origin):
+    basedir = os.path.dirname(origin)
+    target = os.path.basename(origin).replace('.yml', '').replace('.yaml', '')
+    with open(origin) as o:
+        data = yaml.safe_load_all(o)
+        for index, entry in enumerate(data):
+            with open(f'{basedir}/{target}-{index}.yaml', 'w') as t:
+                yaml.safe_dump(entry, t)
+    os.remove(origin)
