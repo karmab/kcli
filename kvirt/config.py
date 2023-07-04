@@ -1281,17 +1281,18 @@ class Kconfig(Kbaseconfig):
         for kube in kubes:
             kubes[kube]['vms'] = ','.join(kubes[kube]['vms'])
         clustersdir = os.path.expanduser('~/.kcli/clusters')
-        for kube in next(os.walk(clustersdir))[1]:
-            if kube in kubes:
-                continue
-            clusterdir = f'{clustersdir}/{kube}'
-            _type, plan = 'generic', kube
-            if os.path.exists(f'{clusterdir}/kcli_parameters.yml'):
-                with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
-                    installparam = yaml.safe_load(install)
-                    _type = installparam.get('kubetype', _type)
-                    plan = installparam.get('plan', plan)
-            kubes[kube] = {'type': _type, 'plan': plan, 'vms': []}
+        if os.path.exists(clustersdir):
+            for kube in next(os.walk(clustersdir))[1]:
+                if kube in kubes:
+                    continue
+                clusterdir = f'{clustersdir}/{kube}'
+                _type, plan = 'generic', kube
+                if os.path.exists(f'{clusterdir}/kcli_parameters.yml'):
+                    with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
+                        installparam = yaml.safe_load(install)
+                        _type = installparam.get('kubetype', _type)
+                        plan = installparam.get('plan', plan)
+                kubes[kube] = {'type': _type, 'plan': plan, 'vms': []}
         if self.type == 'gcp':
             from kvirt.cluster import gke
             kubes.update(gke.list(self))
