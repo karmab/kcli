@@ -1046,7 +1046,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                            'origin-keepalived-ipfailover']
             kcli_images = [f'quay.io/karmab/{image}:latest' for image in kcli_images]
             extra_images.extend(kcli_images)
-            mirror_data['extra_images'] = extra_images
+            mirror_data['extra_images'] = [*set(extra_images)]
             mirrorconf = config.process_inputfile(cluster, f"{plandir}/disconnected/scripts/mirror-config.yaml.sample",
                                                   overrides=mirror_data)
             with open(f"{clusterdir}/mirror-config.yaml", 'w') as f:
