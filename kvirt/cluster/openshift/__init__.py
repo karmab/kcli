@@ -613,7 +613,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     clustervalue = overrides.get('cluster') or cluster or 'myopenshift'
     if data['ctlplanes'] == 1 and data['workers'] == 0\
        and 'ctlplane_memory' not in overrides and 'memory' not in overrides:
-        data['ctlplane_memory'] = 32768
+        overrides['ctlplane_memory'] = 32768
         warning("Forcing memory of single ctlplane vm to 32G")
     retries = data.get('retries')
     data['cluster'] = clustervalue
