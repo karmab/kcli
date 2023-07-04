@@ -45,6 +45,13 @@ import yaml
 cloudplatforms = ['aws', 'gcp', 'packet', 'ibmcloud']
 
 
+def dependency_error(provider):
+    doc_page = "https://kcli.readthedocs.io/en/latest"
+    msg = f"Couldnt import {provider}. Check dependencies at {doc_page}/#{provider.capitalize()}"
+    error(msg)
+    sys.exit(1)
+
+
 class Kconfig(Kbaseconfig):
     """
 
@@ -96,7 +103,10 @@ class Kconfig(Kbaseconfig):
                 harvester = self.options.get('harvester', False)
                 embed_userdata = self.options.get('embed_userdata', False)
                 first_consumer = self.options.get('first_consumer', False)
-                from kvirt.providers.kubevirt import Kubevirt
+                try:
+                    from kvirt.providers.kubevirt import Kubevirt
+                except:
+                    dependency_error('kubevirt')
                 k = Kubevirt(context=context, token=token, ca_file=ca_file, host=self.host,
                              port=6443, user=self.user, debug=debug, namespace=namespace,
                              datavolumes=datavolumes, disk_hotplug=disk_hotplug, readwritemany=readwritemany,
@@ -119,7 +129,10 @@ class Kconfig(Kbaseconfig):
                 region = self.options.get('region') if region is None else region
                 region = zone[:-2] if region is None else region
                 public = self.options.get('public', True)
-                from kvirt.providers.gcp import Kgcp
+                try:
+                    from kvirt.providers.gcp import Kgcp
+                except:
+                    dependency_error('gcp')
                 k = Kgcp(project, zone=zone, region=region, debug=debug, public=public)
                 self.overrides.update({'project': project})
             elif self.type == 'aws':
@@ -137,7 +150,10 @@ class Kconfig(Kbaseconfig):
                 if access_key_secret is None:
                     error("Missing access_key_secret in the configuration. Leaving")
                     sys.exit(1)
-                from kvirt.providers.aws import Kaws
+                try:
+                    from kvirt.providers.aws import Kaws
+                except:
+                    dependency_error('aws')
                 k = Kaws(access_key_id=access_key_id, access_key_secret=access_key_secret, region=region,
                          debug=debug, keypair=keypair, session_token=session_token)
             elif self.type == 'ibm':
@@ -227,7 +243,10 @@ class Kconfig(Kbaseconfig):
                 filtervms = self.options.get('filtervms', False)
                 filteruser = self.options.get('filteruser', False)
                 filtertag = self.options.get('filtertag')
-                from kvirt.providers.ovirt import KOvirt
+                try:
+                    from kvirt.providers.ovirt import KOvirt
+                except:
+                    dependency_error('ovirt')
                 k = KOvirt(host=self.host, port=self.port, user=user, password=password,
                            debug=debug, datacenter=datacenter, cluster=cluster, ca_file=ca_file, org=org,
                            filtervms=filtervms, filteruser=filteruser, filtertag=filtertag)
@@ -266,7 +285,10 @@ class Kconfig(Kbaseconfig):
                     sys.exit(1)
                 if auth_type == 'token':
                     user, password, domain = None, None, None
-                from kvirt.providers.openstack import Kopenstack
+                try:
+                    from kvirt.providers.openstack import Kopenstack
+                except:
+                    dependency_error('openstack')
                 k = Kopenstack(host=self.host, port=self.port, user=user, password=password, version=version,
                                debug=debug, project=project, domain=domain, auth_url=auth_url, ca_file=ca_file,
                                external_network=external_network, region_name=region_name, glance_disk=glance_disk,
@@ -304,7 +326,10 @@ class Kconfig(Kbaseconfig):
                 import_network = self.options.get('import_network', 'VM Network')
                 timeout = self.options.get('timeout', 2700)
                 force_pool = self.options.get('force_pool', False)
-                from kvirt.providers.vsphere import Ksphere
+                try:
+                    from kvirt.providers.vsphere import Ksphere
+                except:
+                    dependency_error('vsphere')
                 k = Ksphere(self.host, user, password, datacenter, cluster, isofolder=isofolder, debug=debug,
                             filtervms=filtervms, filteruser=filteruser, filtertag=filtertag, category=category,
                             basefolder=basefolder, dvs=dvs, import_network=import_network, timeout=timeout,
@@ -319,7 +344,10 @@ class Kconfig(Kbaseconfig):
                     error("Missing project in the configuration. Leaving")
                     sys.exit(1)
                 facility = self.options.get('facility')
-                from kvirt.providers.packet import Kpacket
+                try:
+                    from kvirt.providers.packet import Kpacket
+                except:
+                    dependency_error('packet')
                 k = Kpacket(auth_token, project, facility=facility, debug=debug,
                             tunnelhost=self.tunnelhost, tunneluser=self.tunneluser, tunnelport=self.tunnelport,
                             tunneldir=self.tunneldir)
@@ -341,7 +369,10 @@ class Kconfig(Kbaseconfig):
                 filtertag = self.options.get('filtertag')
                 node = self.options.get('node')
                 verify_ssl = self.options.get('verify_ssl')
-                from kvirt.providers.proxmox import Kproxmox
+                try:
+                    from kvirt.providers.proxmox import Kproxmox
+                except:
+                    dependency_error('proxmox')
                 k = Kproxmox(
                     host=self.host,
                     port=None,
@@ -369,7 +400,10 @@ class Kconfig(Kbaseconfig):
                     sys.exit(1)
                 session = self.options.get('session', False)
                 remotednsmasq = self.options.get('remotednsmasq', False)
-                from kvirt.providers.kvm import Kvirt
+                try:
+                    from kvirt.providers.kvm import Kvirt
+                except:
+                    dependency_error('libvirt')
                 k = Kvirt(host=self.host, port=self.port, user=self.user, protocol=self.protocol, url=self.url,
                           debug=debug, insecure=self.insecure, session=session, remotednsmasq=remotednsmasq)
             if k.conn is None:
