@@ -7,7 +7,7 @@
 
 This tool is meant to provide a unified user experience when interacting with the following virtualization providers:
 
-* Libvirt/Vsphere/Kubevirt/Aws/Gcp/Ibmcloud/oVirt/Openstack/Packet
+* Libvirt/Vsphere/Kubevirt/Aws/Gcp/Ibmcloud/oVirt/Openstack/Packet/Proxmox
 
 Beyond handling virtual machines, Kubernetes clusters can also be managed for the following types:
 
@@ -631,6 +631,32 @@ To use this provider with kcli rpm, you'll need to install the following packets
 pip3 install ibm_vpc ibm-cos-sdk ibm-platform-services ibm-cloud-networking-services
 # optionally
 pip install cos-aspera
+```
+
+## Proxmox
+
+```
+myproxmox:
+ type: proxmox
+ host: pve.karmalabs.corp
+ user: root@pam
+ password: mypassword
+ pool: local
+```
+
+The following parameters are specific to proxmox:
+
+- `auth_token_name` and `auth_token_secret` (Optional). API Token used for authentification instead of password.
+- `filtertag` (Optional). Only manage VMs created by kcli with the corresponding tag.
+- `node` (Optional). Create VMs on specified PVE node in case of Proxmox cluster.
+- `verify_ssl` (Optional). Enable/Disable SSL verification. Default to True.
+
+Note that uploading images and cloud-init/ignition files requires ssh access to the Proxmox host. It's highly recommended to configure passwordless ssh authentification.
+
+To use this provider with kcli rpm, you'll need to install the following rpms 
+
+```
+pip3 install proxmoxer
 ```
 
 ## Web

@@ -46,6 +46,9 @@ $ kcli create host kubevirt mykubevirt
 # Add an ibm host
 $ kcli create host ibm --iam_api_key xyz --vpc myvpc --zone eu-de -r eu-de-2 myibm
 
+# Add a proxmox host
+$ kcil create host proxmox -H 192.168.1.4 --insecure -u root@pam -p pass --pool local-lvm myproxmox
+
 # Add a host group
 $ kcli create host group --members [hypervisor1,hypervisor2] --algorithm random mygroup
 """

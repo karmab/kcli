@@ -24,7 +24,7 @@ from urllib.request import urlopen, Request
 import yaml
 
 
-virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere']
+virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere', 'proxmox']
 cloudplatforms = ['aws', 'gcp', 'ibm']
 
 
@@ -871,7 +871,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if sno:
         pass
     elif image is None:
-        image_type = 'openstack' if data.get('kvm_openstack') and config.type == 'kvm' else config.type
+        image_type = config.type
+        if data.get('kvm_openstack') and config.type == 'kvm':
+            image_type = 'openstack'
+        if config.type == "proxmox":
+            image_type = 'kvm'
         region = config.k.region if config.type == 'aws' else None
         try:
             if upstream:
@@ -890,7 +894,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             image = image_url
         else:
             image = os.path.basename(os.path.splitext(image_url)[0])
-            if platform in ['ibm', 'kubevirt']:
+            if platform in ['ibm', 'kubevirt', 'proxmox']:
                 image = image.replace('.', '-').replace('_', '-').lower()
             if platform == 'vsphere':
                 image = image.replace(f'.{arch}', '')

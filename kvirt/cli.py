@@ -3062,6 +3062,26 @@ def create_host_vsphere(args):
         baseconfig.set_defaults()
 
 
+def create_host_proxmox(args):
+    """Create Proxmox Host"""
+    data = {}
+    data['name'] = args.name
+    data['_type'] = 'proxmox'
+    data['host'] = args.host
+    data['user'] = args.user
+    data['password'] = args.password
+    if args.insecure:
+        data['verify_ssl'] = False
+    if args.pool is not None:
+        data['pool'] = args.pool
+    if args.node is not None:
+        data['node'] = args.node
+    common.create_host(data)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
+    if len(baseconfig.clients) == 1:
+        baseconfig.set_defaults()
+
+
 def create_container(args):
     """Create container"""
     name = args.name
@@ -3657,6 +3677,20 @@ def cli():
     vspherehostcreate_parser.add_argument('--pool', help='Pool', metavar='POOL')
     vspherehostcreate_parser.add_argument('name', metavar='NAME')
     vspherehostcreate_parser.set_defaults(func=create_host_vsphere)
+
+    proxmoxhostcreate_desc = 'Create Proxmox Host'
+    proxmoxhostcreate_parser = hostcreate_subparsers.add_parser('proxmox', help=proxmoxhostcreate_desc,
+                                                                description=proxmoxhostcreate_desc)
+    proxmoxhostcreate_parser.add_argument('-H', '--host', help='Host to use', metavar='HOST', required=True)
+    proxmoxhostcreate_parser.add_argument('-u', '--user', help='User. Default to root@pam', metavar='USER',
+                                          default='root@pam')
+    proxmoxhostcreate_parser.add_argument('-p', '--password', help='Password', metavar='PASSWORD', required=True)
+    proxmoxhostcreate_parser.add_argument('--pool', help='Storage Name', metavar='POOL')
+    proxmoxhostcreate_parser.add_argument('--node', help='Cluster node where VMs will be created. Default to HOST',
+                                          metavar='NODE')
+    proxmoxhostcreate_parser.add_argument('-k', '--insecure', help='Disable SSL verification', action='store_true')
+    proxmoxhostcreate_parser.add_argument('name', metavar='NAME')
+    proxmoxhostcreate_parser.set_defaults(func=create_host_proxmox)
 
     kubecreate_desc = 'Create Kube'
     kubecreate_parser = create_subparsers.add_parser('kube', description=kubecreate_desc, help=kubecreate_desc,
