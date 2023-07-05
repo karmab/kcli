@@ -18,11 +18,53 @@ from shutil import which, copy2
 from subprocess import call
 from tempfile import TemporaryDirectory, NamedTemporaryFile
 from time import sleep
+from uuid import UUID
 from urllib.parse import urlparse
+from urllib.request import urlopen, Request
 import yaml
 
-virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere']
+virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere', 'proxmox']
 cloudplatforms = ['aws', 'gcp', 'ibm']
+
+
+def valid_uuid(uuid):
+    try:
+        UUID(uuid)
+        return True
+    except:
+        return False
+
+
+def get_info(url, user, password):
+    match = re.match('.*/redfish/v1/Systems/(.*)', url)
+    if '/redfish/v1/Systems' in url and\
+       (valid_uuid(os.path.basename(url)) or (match is not None and len(match.group(1).split('/')) == 2)):
+        model = 'virtual'
+        user = user or 'fake'
+        password = password or 'fake'
+        url = url.replace('http', 'redfish-virtualmedia+http')
+        return url, user, password
+    oem_url = f"https://{url}" if '://' not in url else url
+    p = urlparse(oem_url)
+    headers = {'Accept': 'application/json'}
+    request = Request(f"https://{p.netloc}/redfish/v1", headers=headers)
+    oem = json.loads(urlopen(request).read())['Oem']
+    model = "dell" if 'Dell' in oem else "hp" if 'Hpe' in oem else 'supermicro' if 'Supermicro' in oem else 'N/A'
+    if '://' not in url:
+        if model in ['hp', 'supermicro']:
+            url = f"https://{url}/redfish/v1/Systems/1"
+        elif model == 'dell':
+            url = f"https://{url}/redfish/v1/Systems/System.Embedded.1"
+            user = user or 'root'
+            password = password or 'calvin'
+        else:
+            print(f"Invalid url {url}")
+            sys.exit(0)
+    if model in ['hp', 'hpe', 'supermicro']:
+        url = url.replace('https://', 'redfish-virtualmedia')
+    elif model == 'dell':
+        url = url.replace('https://', 'idrac-virtualmedia')
+    return url, user, password
 
 
 def create_bmh_objects(config, plandir, cluster, namespace, baremetal_hosts, overrides={}):
@@ -45,6 +87,7 @@ def create_bmh_objects(config, plandir, cluster, namespace, baremetal_hosts, ove
                 continue
             bmc_uefi = host.get('uefi') or host.get('bmc_uefi') or uefi
             bmc_name = host.get('name') or host.get('bmc_name') or f'{cluster}-node-{index}'
+            bmc_url, bmc_user, bmc_password = get_info(bmc_url, bmc_user, bmc_password)
             bmc_overrides = {'url': bmc_url, 'user': bmc_user, 'password': bmc_password, 'name': bmc_name,
                              'uefi': bmc_uefi, 'namespace': namespace, 'cluster': cluster,
                              'mac': bmc_mac}

@@ -22,10 +22,8 @@ def get_info(url, user, password):
     if '/redfish/v1/Systems' in url and\
        (valid_uuid(os.path.basename(url)) or (match is not None and len(match.group(1).split('/')) == 2)):
         model = 'virtual'
-        if user is None:
-            user = 'fake'
-        if password is None:
-            password = 'fake'
+        user = user or 'fake'
+        password = password or 'fake'
         return model, url, user, password
     oem_url = f"https://{url}" if '://' not in url else url
     p = urlparse(oem_url)
@@ -38,10 +36,8 @@ def get_info(url, user, password):
             url = f"https://{url}/redfish/v1/Systems/1"
         elif model == 'dell':
             url = f"https://{url}/redfish/v1/Systems/System.Embedded.1"
-            if user is None:
-                user = 'root'
-            if password is None:
-                password = 'calvin'
+            user = user or 'root'
+            password = password or 'calvin'
         else:
             print(f"Invalid url {url}")
             sys.exit(0)
