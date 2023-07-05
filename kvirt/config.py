@@ -46,8 +46,7 @@ cloudplatforms = ['aws', 'gcp', 'packet', 'ibmcloud']
 
 
 def dependency_error(provider):
-    doc_page = "https://kcli.readthedocs.io/en/latest"
-    msg = f"Couldnt import {provider}. Check dependencies at {doc_page}/#{provider.capitalize()}"
+    msg = f"Couldnt import {provider}. Use kcli install provider {provider}"
     error(msg)
     sys.exit(1)
 

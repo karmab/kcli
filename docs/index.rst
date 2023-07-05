@@ -298,30 +298,31 @@ Add the following snippet in *.config/fish/config.fish*
 Provider specifics
 ==================
 
-Libvirt
--------
+Aws
+---
 
 ::
 
-   twix:
-    type: kvm
-    host: 192.168.1.6
+   aws:
+    type: aws
+    access_key_id: AKAAAAAAAAAAAAA
+    access_key_secret: xxxxxxxxxxyyyyyyyy
+    region: eu-west-3
+    keypair: mykey
 
-Without configuration, Libvirt provider tries to connect locally using qemu:///system.
+The following parameters are specific to aws:
 
-Additionally, remote hypervisors can be configured by indicating either a host, a port and protocol or a custom qemu url.
+-  ``access_key_id``
+-  ``access_key_secret``
+-  ``region``
+-  ``keypair``
+-  ``session_token``
 
-When using the host, port and protocol combination, default protocol uses ssh and as such assumes you are able to connect without password to your remote instance.
+To use this provider with kcli rpm, you’ll need to install
 
-If using tcp protocol instead, you will need to configure Libvirtd in your remote Libvirt hypervisor to accept insecure remote connections.
+::
 
-You will also likely want to indicate default Libvirt pool to use (although, as with any parameter, it can be done in the default section).
-
-The following parameters are specific to Libvirt:
-
--  ``url`` custom qemu uri.
--  ``session`` Defaults to ``False`` If you want to use qemu:///session (locally or remotely). Not recommended as it complicates access to the vm and is said to have lower performance.
--  ``remotednsmasq`` Defaults to ``False``. Allow to create entries in a dedicated dnsmasq instance running on a remote hypervisor to provide DNS resolution for vms using bridged networks.
+   dnf -y install python3-boto3
 
 Gcp
 ---
@@ -367,31 +368,60 @@ To use this provider with kcli rpm, you’ll need to install (from pip):
 
 If you want to deploy GKE clusters, you will also need ``google-cloud-container`` library
 
-Aws
----
+IBM Cloud
+---------
 
 ::
 
-   aws:
-    type: aws
-    access_key_id: AKAAAAAAAAAAAAA
-    access_key_secret: xxxxxxxxxxyyyyyyyy
-    region: eu-west-3
-    keypair: mykey
+   myibm:
+     type: ibm
+     iam_api_key: xxxx
+     region: eu-gb
+     zone: eu-gb-2
+     vpc: pruebak
 
-The following parameters are specific to aws:
+The following parameters are specific to ibm cloud:
 
--  ``access_key_id``
--  ``access_key_secret``
--  ``region``
--  ``keypair``
--  ``session_token``
+-  iam_api_key.
+-  region
+-  zone
+-  vpc. Default vpc
+-  cos_api_key. Optional Cloud object storage apikey
+-  cos_resource_instance_id. Optional Cloud object storage resource_instance_id (something like “crn:v1:bluemix:public:cloud-object-storage:global:a/yyy:xxxx::”). Alternatively you can provide the resource name
+-  cos_resource_instance_id. Optional Cis resource_instance_id used for DNS. Alternatively, you can provide the resource name
 
-To use this provider with kcli rpm, you’ll need to install
+To use this provider with kcli rpm, you’ll need to install the following packets (from pip):
 
 ::
 
-   dnf -y install python3-boto3
+   pip3 install ibm_vpc ibm-cos-sdk ibm-platform-services ibm-cloud-networking-services
+   # optionally
+   pip install cos-aspera
+
+KVM/Libvirt
+-----------
+
+::
+
+   twix:
+    type: kvm
+    host: 192.168.1.6
+
+Without configuration, Libvirt provider tries to connect locally using qemu:///system.
+
+Additionally, remote hypervisors can be configured by indicating either a host, a port and protocol or a custom qemu url.
+
+When using the host, port and protocol combination, default protocol uses ssh and as such assumes you are able to connect without password to your remote instance.
+
+If using tcp protocol instead, you will need to configure Libvirtd in your remote Libvirt hypervisor to accept insecure remote connections.
+
+You will also likely want to indicate default Libvirt pool to use (although, as with any parameter, it can be done in the default section).
+
+The following parameters are specific to Libvirt:
+
+-  ``url`` custom qemu uri.
+-  ``session`` Defaults to ``False`` If you want to use qemu:///session (locally or remotely). Not recommended as it complicates access to the vm and is said to have lower performance.
+-  ``remotednsmasq`` Defaults to ``False``. Allow to create entries in a dedicated dnsmasq instance running on a remote hypervisor to provide DNS resolution for vms using bridged networks.
 
 Kubevirt
 --------
@@ -462,6 +492,38 @@ To use this provider with kcli rpm, you’ll need to install
 
    dnf -y install python3-kubernetes
 
+Openstack
+---------
+
+::
+
+   myopenstack:
+    type: openstack
+    user: testk
+    password: testk
+    project: testk
+    domain: Default
+    auth_url: http://openstack:5000/v3
+    ca_file: ~/ca-trust.crt
+
+The following parameters are specific to openstack:
+
+-  ``auth_url``
+-  ``project``
+-  ``domain`` Defaults to *Default*
+-  ``ca_file`` (Optional)
+-  ``external_network`` (Optional). Indicates which network use for floating ips (useful when you have several ones)
+-  ``region_name`` (Optional). Used in OVH Openstack
+-  ``glance_disk`` (Optional). Prevents creating a disk from glance image. Defaults to false
+-  ``token`` (Optional). Keystone Token (That can be retrieved with ``openstack token issue -c id -f value``)
+
+To use this provider with kcli rpm, you’ll need to install the following rpms
+
+::
+
+   grep -q 'Red Hat' /etc/redhat-release && subscription-manager repos --enable openstack-16-tools-for-rhel-8-x86_64-rpms
+   dnf -y install python3-keystoneclient python3-glanceclient python3-cinderclient python3-neutronclient python3-novaclient python3-swiftclient
+
 oVirt
 -----
 
@@ -517,37 +579,58 @@ If you install manually from pip, you might need to install pycurl manually with
 
    pip install --no-cache-dir --global-option=build_ext --global-option="-L/usr/local/opt/openssl/lib" --global-option="-I/usr/local/opt/openssl/include"  pycurl
 
-Openstack
----------
+Packet
+------
 
 ::
 
-   myopenstack:
-    type: openstack
-    user: testk
-    password: testk
-    project: testk
-    domain: Default
-    auth_url: http://openstack:5000/v3
-    ca_file: ~/ca-trust.crt
+   myvpacket:
+     type: packet
+     auth_token: xxxx
+     project: kcli
+     facility: ams1
+     tunnelhost: wilibonka.mooo.com
 
-The following parameters are specific to openstack:
+The following parameters are specific to packet:
 
--  ``auth_url``
--  ``project``
--  ``domain`` Defaults to *Default*
--  ``ca_file`` (Optional)
--  ``external_network`` (Optional). Indicates which network use for floating ips (useful when you have several ones)
--  ``region_name`` (Optional). Used in OVH Openstack
--  ``glance_disk`` (Optional). Prevents creating a disk from glance image. Defaults to false
--  ``token`` (Optional). Keystone Token (That can be retrieved with ``openstack token issue -c id -f value``)
+-  auth_token.
+-  project
+-  facility. Can be omitted in which case you will have to specify on which facility to deploy vms.
+-  tunnelhost. Optional. When creating vms using ignition, the generated ignition file will be copied to the tunnelhost so it can be served (typically via web)
+-  tunneldir. Where to copy the ignition files when using a tunnelhost. Defaults to */var/www/html*
+
+To use this provider with kcli rpm, you’ll need to install packet-python (from pip):
+
+::
+
+   pip3 install packet-python
+
+Proxmox
+-------
+
+::
+
+   myproxmox:
+    type: proxmox
+    host: pve.karmalabs.corp
+    user: root@pam
+    password: mypassword
+    pool: local
+
+The following parameters are specific to proxmox:
+
+-  ``auth_token_name`` and ``auth_token_secret`` (Optional). API Token used for authentification instead of password.
+-  ``filtertag`` (Optional). Only manage VMs created by kcli with the corresponding tag.
+-  ``node`` (Optional). Create VMs on specified PVE node in case of Proxmox cluster.
+-  ``verify_ssl`` (Optional). Enable/Disable SSL verification. Default to True.
+
+Note that uploading images and cloud-init/ignition files requires ssh access to the Proxmox host. It’s highly recommended to configure passwordless ssh authentification.
 
 To use this provider with kcli rpm, you’ll need to install the following rpms
 
 ::
 
-   grep -q 'Red Hat' /etc/redhat-release && subscription-manager repos --enable openstack-16-tools-for-rhel-8-x86_64-rpms
-   dnf -y install python3-keystoneclient python3-glanceclient python3-cinderclient python3-neutronclient python3-novaclient python3-swiftclient
+   pip3 install proxmoxer
 
 Vsphere
 -------
@@ -604,89 +687,6 @@ Using vm anti affinity rules
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Within a plan, you can set the keyword ``antipeers`` to a list of vms which should never land on the same ESX host. When the last vm from this list gets created, the corresponding anti affinity rule will be created (and Vsphere will relocate the other vms accordingly)
-
-Packet
-------
-
-::
-
-   myvpacket:
-     type: packet
-     auth_token: xxxx
-     project: kcli
-     facility: ams1
-     tunnelhost: wilibonka.mooo.com
-
-The following parameters are specific to packet:
-
--  auth_token.
--  project
--  facility. Can be omitted in which case you will have to specify on which facility to deploy vms.
--  tunnelhost. Optional. When creating vms using ignition, the generated ignition file will be copied to the tunnelhost so it can be served (typically via web)
--  tunneldir. Where to copy the ignition files when using a tunnelhost. Defaults to */var/www/html*
-
-To use this provider with kcli rpm, you’ll need to install packet-python (from pip):
-
-::
-
-   pip3 install packet-python
-
-IBM Cloud
----------
-
-::
-
-   myibm:
-     type: ibm
-     iam_api_key: xxxx
-     region: eu-gb
-     zone: eu-gb-2
-     vpc: pruebak
-
-The following parameters are specific to ibm cloud:
-
--  iam_api_key.
--  region
--  zone
--  vpc. Default vpc
--  cos_api_key. Optional Cloud object storage apikey
--  cos_resource_instance_id. Optional Cloud object storage resource_instance_id (something like “crn:v1:bluemix:public:cloud-object-storage:global:a/yyy:xxxx::”). Alternatively you can provide the resource name
--  cos_resource_instance_id. Optional Cis resource_instance_id used for DNS. Alternatively, you can provide the resource name
-
-To use this provider with kcli rpm, you’ll need to install the following packets (from pip):
-
-::
-
-   pip3 install ibm_vpc ibm-cos-sdk ibm-platform-services ibm-cloud-networking-services
-   # optionally
-   pip install cos-aspera
-
-Proxmox
--------
-
-::
-
-   myproxmox:
-    type: proxmox
-    host: pve.karmalabs.corp
-    user: root@pam
-    password: mypassword
-    pool: local
-
-The following parameters are specific to proxmox:
-
--  ``auth_token_name`` and ``auth_token_secret`` (Optional). API Token used for authentification instead of password.
--  ``filtertag`` (Optional). Only manage VMs created by kcli with the corresponding tag.
--  ``node`` (Optional). Create VMs on specified PVE node in case of Proxmox cluster.
--  ``verify_ssl`` (Optional). Enable/Disable SSL verification. Default to True.
-
-Note that uploading images and cloud-init/ignition files requires ssh access to the Proxmox host. It’s highly recommended to configure passwordless ssh authentification.
-
-To use this provider with kcli rpm, you’ll need to install the following rpms
-
-::
-
-   pip3 install proxmoxer
 
 Web
 ---

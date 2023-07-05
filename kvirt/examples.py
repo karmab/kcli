@@ -53,6 +53,13 @@ $ kcil create host proxmox -H 192.168.1.4 --insecure -u root@pam -p pass --pool 
 $ kcli create host group --members [hypervisor1,hypervisor2] --algorithm random mygroup
 """
 
+providercreate = """# Install aws provider dependencies
+$ kcli install provider aws
+
+# Install vsphere provider dependencies through pip
+$ kcli install provider vsphere -p
+"""
+
 _list = """# Get list of vms
 $ kcli list vm
 

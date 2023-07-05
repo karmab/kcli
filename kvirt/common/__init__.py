@@ -2269,3 +2269,59 @@ def separate_yamls(origin):
             with open(f'{basedir}/{target}-{index}.yaml', 'w') as t:
                 yaml.safe_dump(entry, t)
     os.remove(origin)
+
+
+def install_provider(provider, pip=False):
+    if provider == 'kvm':
+        warning("Nothing needed")
+        sys.exit(0)
+    if os.path.exists('/Users'):
+        warning("Using pip")
+        pip = True
+    pkgmgr = None
+    if which('dnf') is not None:
+        pkgmgr = 'dnf'
+    elif which('yum') is not None:
+        pkgmgr = 'yum'
+    elif which('apt-get') is not None:
+        pkgmgr = 'apt-get'
+    if not pip and pkgmgr is None:
+        error("Package based installation requires either dnf or apt-get")
+        sys.exit(1)
+    if provider == 'aws':
+        cmd = 'pip3 install boto3' if pip else f'{pkgmgr} -y install python3-boto3'
+    elif provider == 'gcp':
+        if not pip:
+            warning("Using pip as this is the only way for this provider")
+        cmd = 'pip3 install google-api-python-client google-auth-httplib2 google-cloud-dns google-cloud-storage '
+        cmd += 'google-cloud-container'
+    elif provider == 'ibm':
+        if not pip:
+            warning("Using pip as this is the only way for this provider")
+        cmd = 'pip3 install ibm_vpc ibm-cos-sdk ibm-platform-services ibm-cloud-networking-services'
+    elif provider == 'kubevirt':
+        cmd = 'pip3 install kubernetes' if pip else f'{pkgmgr} -y install python3-kubernetes'
+    elif provider == 'openstack':
+        if pip:
+            cmd = 'pip3 install python-cinderclient python-neutronclient python-glanceclient python-keystoneclient '
+            cmd += 'python-novaclient python-swiftclient'
+        else:
+            cmd = f'{pkgmgr} -y install python3-keystoneclient python3-glanceclient python3-cinderclient '
+            cmd += 'python3-neutronclient python3-novaclient python3-swiftclient'
+    elif provider == 'ovirt':
+        cmd = 'pip3 install ovirt-engine-sdk-python' if pip else f'{pkgmgr} -y install python3-ovirt-engine-sdk4'
+    elif provider == 'packet':
+        if not pip:
+            warning("Using pip as this is the only way for this provider")
+        cmd = 'pip3 install packet-python'
+    elif provider == 'proxmox':
+        if not pip:
+            warning("Using pip as this is the only way for this provider")
+        cmd = 'pip3 install proxmoxer'
+    elif provider == 'vsphere':
+        if pip:
+            cmd = 'pip3 install pyvmomi cryptography'
+        else:
+            cmd = f'{pkgmgr} -y install python3-pyvmomi python3-cryptography'
+    pprint(f"Running {cmd}")
+    call(cmd, shell=True)

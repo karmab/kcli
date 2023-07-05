@@ -11,7 +11,7 @@ OPENSTACK = ['python-cinderclient', 'python-neutronclient', 'python-glanceclient
              'python-novaclient', 'python-swiftclient']
 OVIRT = ['ovirt-engine-sdk-python']
 PACKET = ['packet-python']
-VSPHERE = ['pyvmomi']
+VSPHERE = ['pyvmomi', 'cryptography']
 IBMCLOUD = ['google-crc32c==1.1.2', 'ibm_vpc', 'ibm-cos-sdk', 'ibm-platform-services', 'ibm-cloud-networking-services']
 #           'cos-aspera']
 EXTRAS = ['pyghmi']
