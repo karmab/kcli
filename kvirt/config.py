@@ -2600,9 +2600,10 @@ class Kconfig(Kbaseconfig):
                 dest.add_image(url, pool, cmd=cmd)
         return {'result': 'success'}
 
-    def delete_loadbalancer(self, name, domain=None):
+    def delete_loadbalancer(self, name, domain=None, quiet=False):
         k = self.k
-        pprint(f"Deleting loadbalancer {name}")
+        if not quiet:
+            pprint(f"Deleting loadbalancer {name}")
         if self.type in ['aws', 'gcp', 'ibm']:
             dnsclient = k.delete_loadbalancer(name)
             if domain is not None and dnsclient is not None and isinstance(dnsclient, str):
@@ -2926,7 +2927,7 @@ class Kconfig(Kbaseconfig):
             if kubetype not in ['k3s', 'generic']:
                 lbs.append('apps')
             for lb in lbs:
-                self.delete_loadbalancer(f"{lb}.{cluster}", domain=domain)
+                self.delete_loadbalancer(f"{lb}.{cluster}", domain=domain, quiet=True)
             bucket = f"{cluster}-{domain}"
             if bucket in self.k.list_buckets():
                 pprint(f"Deleting bucket {bucket}")
