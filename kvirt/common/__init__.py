@@ -2291,6 +2291,11 @@ def install_provider(provider, pip=False):
         sys.exit(1)
     if provider == 'aws':
         cmd = 'pip3 install boto3' if pip else f'{pkgmgr} -y install python3-boto3'
+    if provider == 'azure':
+        if not pip:
+            warning("Using pip as this is the only way for this provider")
+        cmd = 'pip3 install azure-mgmt-compute azure-mgmt-network azure-mgmt-resource azure-mgmt-core azure-identity'
+        cmd += ' azure-mgmt-marketplaceordering azure-storage-blob azure-mgmt-dns azure-mgmt-containerservice'
     elif provider == 'gcp':
         if not pip:
             warning("Using pip as this is the only way for this provider")

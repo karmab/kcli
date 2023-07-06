@@ -15,7 +15,7 @@ from tempfile import NamedTemporaryFile
 from time import sleep
 import yaml
 
-cloudplatforms = ['aws', 'gcp', 'ibm']
+cloudplatforms = ['aws', 'azure', 'gcp', 'ibm']
 
 
 def scale(config, plandir, cluster, overrides):

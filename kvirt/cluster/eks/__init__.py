@@ -63,7 +63,7 @@ def scale(config, cluster, overrides):
             'capacity_type': None,
             'version': None}
     data.update(overrides)
-    cluster = overrides.get('cluster', cluster or 'mygke')
+    cluster = overrides.get('cluster', cluster or 'myeks')
     version = data['version']
     workers = data['workers']
     disk_size = data['disk_size']

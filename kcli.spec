@@ -8,7 +8,7 @@ Name:           {{{ git_dir_name }}}
 Version:        99.{{{ git_custom_version }}}
 Release:        0%{?dist}
 Url:            http://github.com/karmab/kcli
-Summary:        Wrapper for libvirt,gcp,aws,ovirt,openstack,kubevirt and vsphere
+Summary:        Wrapper for libvirt, azure, aws, gcp, kubevirt, ovirt, openstack, packet, proxmox and vsphere
 License:        ASL 2.0
 Group:          Development/Languages/Python
 VCS:            {{{ git_dir_vcs }}}
@@ -19,8 +19,8 @@ BuildRequires:  python3-devel rubygem-ronn gzip python3-setuptools
 Requires:       python3 libvirt-python3 genisoimage nmap-ncat python3-prettytable python3-jinja2 python3-PyYAML python3-argcomplete
 
 %description
-Kcli is meant to interact with a local/remote libvirt, gcp, aws ovirt,
-openstack, vsphere and kubevirt and to easily deploy single vms from cloud images or several using plans
+Kcli is a wrapper for local/remote libvirt, aws, azure, gcp, kubevirt, ovirt, openstack, packet, proxmox and vsphere
+It easily deploy single vms from cloud images or several using plans or kubernetes clusters
 
 %global debug_package %{nil}
 

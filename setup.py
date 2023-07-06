@@ -4,6 +4,8 @@ from setuptools import setup, find_packages
 import os
 INSTALL = ['argcomplete', 'PyYAML', 'prettytable', 'jinja2', 'libvirt-python>=2.0.0']
 AWS = ['boto3']
+AZURE = ['azure-mgmt-compute', 'azure-mgmt-network', 'azure-mgmt-core', 'azure-identity', 'azure-mgmt-resource',
+         'azure-mgmt-marketplaceordering' 'azure-storage-blob', 'azure-mgmt-dns', 'azure-mgmt-containerservice']
 GCP = ['google-api-python-client', 'google-auth-httplib2', 'google-cloud-dns', 'google-cloud-storage',
        'google-cloud-container']
 KUBEVIRT = ['kubernetes']
@@ -11,12 +13,13 @@ OPENSTACK = ['python-cinderclient', 'python-neutronclient', 'python-glanceclient
              'python-novaclient', 'python-swiftclient']
 OVIRT = ['ovirt-engine-sdk-python']
 PACKET = ['packet-python']
+PROXMOX = ['proxmoxer']
 VSPHERE = ['pyvmomi', 'cryptography']
 IBMCLOUD = ['google-crc32c==1.1.2', 'ibm_vpc', 'ibm-cos-sdk', 'ibm-platform-services', 'ibm-cloud-networking-services']
 #           'cos-aspera']
 EXTRAS = ['pyghmi']
 ALL = ['docker>=2.0'] + ['podman'] + ['websockify'] + EXTRAS + AWS + GCP + KUBEVIRT + OPENSTACK + OVIRT\
-    + PACKET + VSPHERE + IBMCLOUD
+    + PACKET + VSPHERE + IBMCLOUD + AZURE
 
 description = 'Provisioner/Manager for Libvirt/Vsphere/Aws/Gcp/Kubevirt/Ovirt/Openstack/IBM Cloud and containers'
 long_description = description
@@ -39,12 +42,15 @@ setup(
     extras_require={
         'all': ALL,
         'aws': AWS,
+        'azure': AZURE,
         'gcp': GCP,
+        'ibm': IBMCLOUD,
         'kubevirt': KUBEVIRT,
         'openstack': OPENSTACK,
         'ovirt': OVIRT,
-        'vsphere': VSPHERE,
-        'ibm': IBMCLOUD,
+        'packet': PACKET,
+        'proxmox': PROXMOX,
+        'vsphere': VSPHERE
     },
     entry_points='''
         [console_scripts]

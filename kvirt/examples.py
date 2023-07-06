@@ -180,6 +180,13 @@ vmexport = """# Export vm myvm with a specific name for the generated image
 $ kcli export -i myimage myvm
 """
 
+kubeakscreate = """# Create an aks instance named myaks
+$ kcli create kube aks -P network=subnet-1 myaks
+
+# Use a parameter file
+$ kcli create kube aks --paramfile=myparameters.yml myaks
+"""
+
 kubeekscreate = """# Create an eks instance named myeks (specifying two subnets in different AZs)
 $ kcli create kube eks -P network=subnet-1 -P extra_networks=[subnet-2] myeks
 
@@ -362,6 +369,14 @@ $ kcli run workflow myworkflow -P cmds=[hostname]
 
 # Only output assets to dir without running
 $ kcli run workflow myscript.sh -do mydir
+
+"""
+
+kubeaksscale = """# Scale nodes from aks cluster myeks
+$ kcli scale cluster aks -P workers=3 myaks
+
+# Alternative way to indicate workers
+$ kcli scale cluster aks --workers 3 myaks
 
 """
 

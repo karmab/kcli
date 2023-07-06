@@ -1,0 +1,17 @@
+info: |
+  Deploy kubernetes using aks on $nodes
+  Network type defaults to azure, but can also be set to kubenet
+workers: 2
+autoscaling: True
+network:
+network_type:
+pub_key: 
+version:
+network: default
+disk_size: 0
+flavor: Standard_E2ds_v4
+fips: false
+# pod_cidr: 10.244.0.0/16
+# service_cidr: 10.0.0.0/16
+# dns_service_ip: 10.0.0.10
+# docker_bridge_cidr: 172.17.0.1/16

@@ -12,7 +12,7 @@ from tempfile import NamedTemporaryFile
 from time import sleep
 import yaml
 
-cloud_platforms = ['aws', 'gcp']
+cloud_platforms = ['aws', 'azure', 'gcp', 'ibm']
 
 
 def update_ip_alias(config, nodes):

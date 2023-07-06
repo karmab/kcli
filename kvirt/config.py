@@ -42,11 +42,13 @@ from time import sleep
 import webbrowser
 import yaml
 
-cloudplatforms = ['aws', 'gcp', 'packet', 'ibmcloud']
+cloudplatforms = ['aws', 'azure', 'gcp', 'packet', 'ibmcloud']
 
 
-def dependency_error(provider):
+def dependency_error(provider, exception=None):
     msg = f"Couldnt import {provider}. Use kcli install provider {provider}"
+    if exception is not None:
+        msg += f"\nHit {exception}"
     error(msg)
     sys.exit(1)
 
@@ -104,8 +106,9 @@ class Kconfig(Kbaseconfig):
                 first_consumer = self.options.get('first_consumer', False)
                 try:
                     from kvirt.providers.kubevirt import Kubevirt
-                except:
-                    dependency_error('kubevirt')
+                except Exception as e:
+                    exception = e if debug else None
+                    dependency_error('kubevirt', exception)
                 k = Kubevirt(context=context, token=token, ca_file=ca_file, host=self.host,
                              port=6443, user=self.user, debug=debug, namespace=namespace,
                              datavolumes=datavolumes, disk_hotplug=disk_hotplug, readwritemany=readwritemany,
@@ -130,10 +133,42 @@ class Kconfig(Kbaseconfig):
                 public = self.options.get('public', True)
                 try:
                     from kvirt.providers.gcp import Kgcp
-                except:
-                    dependency_error('gcp')
+                except Exception as e:
+                    exception = e if debug else None
+                    dependency_error('gcp', exception)
                 k = Kgcp(project, zone=zone, region=region, debug=debug, public=public)
                 self.overrides.update({'project': project})
+            elif self.type == 'azure':
+                try:
+                    from kvirt.providers.azure import Kazure
+                except Exception as e:
+                    exception = e if debug else None
+                    dependency_error('azure', exception)
+                admin_user = self.options.get('admin_user', 'superadmin')
+                admin_password = self.options.get('admin_password')
+                subscription_id = self.options.get('subscription_id')
+                tenant_id = self.options.get('tenant_id')
+                app_id = self.options.get('app_id')
+                secret = self.options.get('secret')
+                location = self.options.get('location', 'westus')
+                resource_group = self.options.get('resource_group', 'kcli')
+                mail = self.options.get('mail')
+                storageaccount = self.options.get('storageaccount')
+                if subscription_id is None:
+                    error("Missing subscription_id in the configuration. Leaving")
+                    sys.exit(1)
+                if tenant_id is None:
+                    error("Missing tenant_id in the configuration. Leaving")
+                    sys.exit(1)
+                if app_id is None:
+                    error("Missing app_id in the configuration. Leaving")
+                    sys.exit(1)
+                if secret is None:
+                    error("Missing secret in the configuration. Leaving")
+                    sys.exit(1)
+                k = Kazure(subscription_id=subscription_id, tenant_id=tenant_id, app_id=app_id, location=location,
+                           secret=secret, resource_group=resource_group, admin_user=admin_user,
+                           admin_password=admin_password, mail=mail, storageaccount=storageaccount, debug=debug)
             elif self.type == 'aws':
                 access_key_id = self.options.get('access_key_id')
                 access_key_secret = self.options.get('access_key_secret')
@@ -151,8 +186,9 @@ class Kconfig(Kbaseconfig):
                     sys.exit(1)
                 try:
                     from kvirt.providers.aws import Kaws
-                except:
-                    dependency_error('aws')
+                except Exception as e:
+                    exception = e if debug else None
+                    dependency_error('aws', exception)
                 k = Kaws(access_key_id=access_key_id, access_key_secret=access_key_secret, region=region,
                          debug=debug, keypair=keypair, session_token=session_token)
             elif self.type == 'ibm':
@@ -244,8 +280,9 @@ class Kconfig(Kbaseconfig):
                 filtertag = self.options.get('filtertag')
                 try:
                     from kvirt.providers.ovirt import KOvirt
-                except:
-                    dependency_error('ovirt')
+                except Exception as e:
+                    exception = e if debug else None
+                    dependency_error('ovirt', exception)
                 k = KOvirt(host=self.host, port=self.port, user=user, password=password,
                            debug=debug, datacenter=datacenter, cluster=cluster, ca_file=ca_file, org=org,
                            filtervms=filtervms, filteruser=filteruser, filtertag=filtertag)
@@ -286,8 +323,9 @@ class Kconfig(Kbaseconfig):
                     user, password, domain = None, None, None
                 try:
                     from kvirt.providers.openstack import Kopenstack
-                except:
-                    dependency_error('openstack')
+                except Exception as e:
+                    exception = e if debug else None
+                    dependency_error('openstack', exception)
                 k = Kopenstack(host=self.host, port=self.port, user=user, password=password, version=version,
                                debug=debug, project=project, domain=domain, auth_url=auth_url, ca_file=ca_file,
                                external_network=external_network, region_name=region_name, glance_disk=glance_disk,
@@ -327,8 +365,9 @@ class Kconfig(Kbaseconfig):
                 force_pool = self.options.get('force_pool', False)
                 try:
                     from kvirt.providers.vsphere import Ksphere
-                except:
-                    dependency_error('vsphere')
+                except Exception as e:
+                    exception = e if debug else None
+                    dependency_error('vsphere', exception)
                 k = Ksphere(self.host, user, password, datacenter, cluster, isofolder=isofolder, debug=debug,
                             filtervms=filtervms, filteruser=filteruser, filtertag=filtertag, category=category,
                             basefolder=basefolder, dvs=dvs, import_network=import_network, timeout=timeout,
@@ -345,8 +384,9 @@ class Kconfig(Kbaseconfig):
                 facility = self.options.get('facility')
                 try:
                     from kvirt.providers.packet import Kpacket
-                except:
-                    dependency_error('packet')
+                except Exception as e:
+                    exception = e if debug else None
+                    dependency_error('packet', exception)
                 k = Kpacket(auth_token, project, facility=facility, debug=debug,
                             tunnelhost=self.tunnelhost, tunneluser=self.tunneluser, tunnelport=self.tunnelport,
                             tunneldir=self.tunneldir)
@@ -370,8 +410,9 @@ class Kconfig(Kbaseconfig):
                 verify_ssl = self.options.get('verify_ssl')
                 try:
                     from kvirt.providers.proxmox import Kproxmox
-                except:
-                    dependency_error('proxmox')
+                except Exception as e:
+                    exception = e if debug else None
+                    dependency_error('proxmox', exception)
                 k = Kproxmox(
                     host=self.host,
                     port=None,
@@ -401,8 +442,9 @@ class Kconfig(Kbaseconfig):
                 remotednsmasq = self.options.get('remotednsmasq', False)
                 try:
                     from kvirt.providers.kvm import Kvirt
-                except:
-                    dependency_error('libvirt')
+                except Exception as e:
+                    exception = e if debug else None
+                    dependency_error('libvirt', exception)
                 k = Kvirt(host=self.host, port=self.port, user=self.user, protocol=self.protocol, url=self.url,
                           debug=debug, insecure=self.insecure, session=session, remotednsmasq=remotednsmasq)
             if k.conn is None:
@@ -499,6 +541,8 @@ class Kconfig(Kbaseconfig):
             vmprofiles[profile] = customprofile
         elif profile in vmprofiles:
             pprint(f"Deploying vm {name} from profile {profile}...")
+        elif self.type in cloudplatforms:
+            vmprofiles[profile] = {'image': profile}
         elif (os.path.basename(profile) == profile and profile in volumes) or profile in full_volumes:
             if not onlyassets:
                 pprint(f"Deploying vm {name} from image {profile}...")
@@ -1332,6 +1376,9 @@ class Kconfig(Kbaseconfig):
         elif self.type == 'aws':
             from kvirt.cluster import eks
             kubes.update(eks.list(self))
+        elif self.type == 'azure':
+            from kvirt.cluster import aks
+            kubes.update(aks.list(self))
         return kubes
 
     def create_product(self, name, repo=None, group=None, plan=None, latest=False, overrides={}):
@@ -1500,6 +1547,7 @@ class Kconfig(Kbaseconfig):
             deleteclients.update({cli: Kconfig(client=cli).k for cli in vmclients if cli != self.client})
         hypershift = False
         assisted = False
+        aks = False
         eks = False
         gke = False
         clusterdir = "/fake/xxx"
@@ -1509,7 +1557,7 @@ class Kconfig(Kbaseconfig):
                 name = vm['name']
                 description = vm.get('plan')
                 if description == plan:
-                    if vm.get('kubetype', 'generic') in ['eks', 'gke']:
+                    if vm.get('kubetype', 'generic') in ['aks', 'eks', 'gke']:
                         continue
                     if 'loadbalancer' in vm:
                         lbs = vm['loadbalancer'].split(',')
@@ -1559,6 +1607,7 @@ class Kconfig(Kbaseconfig):
                                     dnsclient = clusterdata.get('dnsclient')
                                     gke = kubetype == 'gke'
                                     eks = kubetype == 'eks'
+                                    aks = kubetype == 'aks'
         if hypershift:
             kubeconfigmgmt = f"{clusterdir}/kubeconfig.mgmt"
             call(f'KUBECONFIG={kubeconfigmgmt} oc delete -f {clusterdir}/autoapprovercron.yml', shell=True)
@@ -1587,10 +1636,21 @@ class Kconfig(Kbaseconfig):
             elif self.type == 'aws':
                 eksclient = self.client
             else:
-                return {'result': 'failure', 'reason': "Deleting eks cluster requires to instantiate gcp provider"}
+                return {'result': 'failure', 'reason': "Deleting eks cluster requires to instantiate aws provider"}
             from kvirt.cluster import eks
             currentconfig = Kconfig(client=eksclient).k if eksclient != self.client else self
             eks.delete(currentconfig, cluster)
+        elif aks:
+            aksclient = None
+            if 'client' in clusterdata:
+                aksclient = clusterdata['client']
+            elif self.type == 'azure':
+                eksclient = self.client
+            else:
+                return {'result': 'failure', 'reason': "Deleting aks cluster requires to instantiate azure provider"}
+            from kvirt.cluster import aks
+            currentconfig = Kconfig(client=aksclient).k if aksclient != self.client else self
+            aks.delete(currentconfig, cluster)
         if os.path.exists(clusterdir):
             pprint(f"Deleting directory {clusterdir}")
             rmtree(clusterdir, ignore_errors=True)
@@ -1624,7 +1684,7 @@ class Kconfig(Kbaseconfig):
         for ansiblefile in glob.glob("/tmp/%s*inv*" % plan):
             success(f"file {ansiblefile} from {plan} deleted!")
             os.remove(ansiblefile)
-        if deletedlbs and self.type in ['aws', 'gcp']:
+        if deletedlbs and self.type in ['aws', 'azure', 'gcp']:
             for lb in deletedlbs:
                 self.delete_loadbalancer(lb)
         if found:
@@ -1911,7 +1971,7 @@ class Kconfig(Kbaseconfig):
                         imageurl = None
                     cmd = imageprofile.get('cmd')
                     self.handle_host(pool=pool, image=image, download=True, cmd=cmd, url=imageurl, size=imagesize)
-        if bucketentries and not onlyassets and self.type in ['aws', 'gcp', 'openstack']:
+        if bucketentries and not onlyassets and self.type in ['aws', 'azure', 'gcp', 'openstack']:
             pprint("Deploying Bucket Entries...")
             for bucketentry in bucketentries:
                 bucketprofile = entries[bucketentry]
@@ -1974,7 +2034,7 @@ class Kconfig(Kbaseconfig):
                 if existing_ctlplanes:
                     pprint(f"Cluster {cluster} found. skipped!")
                     continue
-                if kubetype not in ['generic', 'openshift', 'hypershift', 'microshift', 'k3s', 'gke', 'eks']:
+                if kubetype not in ['generic', 'openshift', 'hypershift', 'microshift', 'k3s', 'gke', 'aks', 'eks']:
                     warning(f"Incorrect kubetype {kubetype} specified. skipped!")
                     continue
                 if kubethreaded:
@@ -2603,7 +2663,7 @@ class Kconfig(Kbaseconfig):
     def delete_loadbalancer(self, name, domain=None):
         k = self.k
         pprint(f"Deleting loadbalancer {name}")
-        if self.type in ['aws', 'gcp', 'ibm']:
+        if self.type in ['aws', 'azure', 'gcp', 'ibm']:
             dnsclient = k.delete_loadbalancer(name)
             if domain is not None and dnsclient is not None and isinstance(dnsclient, str):
                 if dnsclient in self.clients:
@@ -2619,7 +2679,7 @@ class Kconfig(Kbaseconfig):
         name = nameutils.get_random_name().replace('_', '-') if name is None else name
         pprint(f"Deploying loadbalancer {name}")
         k = self.k
-        if self.type in ['aws', 'gcp', 'ibm']:
+        if self.type in ['aws', 'azure', 'gcp', 'ibm']:
             lb_ip = k.create_loadbalancer(name, ports=ports, checkpath=checkpath, vms=vms, domain=domain,
                                           checkport=checkport, alias=alias, internal=internal,
                                           dnsclient=dnsclient, subnetid=subnetid, ip=ip)
@@ -2658,7 +2718,7 @@ class Kconfig(Kbaseconfig):
 
     def list_loadbalancers(self):
         k = self.k
-        if self.type not in ['aws', 'gcp', 'ibm']:
+        if self.type not in ['aws', 'azure', 'gcp', 'ibm']:
             results = []
             for vm in k.list():
                 if vm['profile'].startswith('loadbalancer') and len(vm['profile'].split('-')) == 2:
@@ -2794,9 +2854,19 @@ class Kconfig(Kbaseconfig):
             result = self.create_kube_gke(cluster, overrides=overrides)
         elif kubetype == 'eks':
             result = self.create_kube_eks(cluster, overrides=overrides)
+        elif kubetype == 'aks':
+            result = self.create_kube_aks(cluster, overrides=overrides)
         else:
             result = self.create_kube_generic(cluster, overrides=overrides)
         return result
+
+    def create_kube_aks(self, cluster, overrides={}):
+        from kvirt.cluster import aks
+        if container_mode():
+            os.environ['PATH'] += ':/workdir'
+        else:
+            os.environ['PATH'] += ':%s' % os.getcwd()
+        return aks.create(self, cluster, overrides)
 
     def create_kube_eks(self, cluster, overrides={}):
         from kvirt.cluster import eks
@@ -2861,6 +2931,7 @@ class Kconfig(Kbaseconfig):
     def delete_kube(self, cluster, overrides={}):
         hypershift = overrides.get('kubetype', 'xxx') == 'hypershift'
         assisted = False
+        aks = overrides.get('kubetype', 'xxx') == 'aks'
         eks = overrides.get('kubetype', 'xxx') == 'eks'
         gke = overrides.get('kubetype', 'xxx') == 'gke'
         domain = overrides.get('domain', 'karmalabs.corp')
@@ -2872,7 +2943,8 @@ class Kconfig(Kbaseconfig):
         cluster = overrides.get('cluster', cluster)
         if cluster is None or cluster == '':
             default_clusters = {'generic': 'mykube', 'hypershift': 'myhypershift', 'openshift': 'myopenshift',
-                                'k3s': 'myk3s', 'microshift': 'mymicroshift', 'gke': 'mygke', 'eks': 'myeks'}
+                                'k3s': 'myk3s', 'microshift': 'mymicroshift', 'gke': 'mygke', 'eks': 'myeks',
+                                'aks': 'myaks'}
             cluster = default_clusters[kubetype]
         clusterdata = {}
         clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
@@ -2889,6 +2961,7 @@ class Kconfig(Kbaseconfig):
                     dnsclient = clusterdata.get('dnsclient')
                     gke = kubetype == 'gke'
                     eks = kubetype == 'eks'
+                    aks = kubetype == 'aks'
         deleteclients = {self.client: k}
         vmclients = []
         vmclients_file = os.path.expanduser(f'~/.kcli/vmclients_{cluster}')
@@ -2913,6 +2986,9 @@ class Kconfig(Kbaseconfig):
                     elif kubetype == 'eks':
                         eks = True
                         break
+                    elif kubetype == 'aks':
+                        aks = True
+                        break
                     c.delete(name, snapshots=True)
                     common.delete_lastvm(name, self.client)
                     success(f"{name} deleted on {hypervisor}!")
@@ -2921,7 +2997,7 @@ class Kconfig(Kbaseconfig):
                 k.delete_service(f"{cluster}-api", k.namespace)
             if f"{cluster}-ingress" in k.list_services(k.namespace):
                 k.delete_service(f"{cluster}-ingress", k.namespace)
-        if self.type in ['aws', 'gcp', 'ibm'] and not gke and not eks:
+        if self.type in ['aws', 'azure', 'gcp', 'ibm'] and not gke and not eks and not aks:
             existing_lbs = [l[0] for l in self.list_loadbalancers() if l[0] in [f'api.{cluster}', f'apps.{cluster}']]
             for lb in existing_lbs:
                 self.delete_loadbalancer(lb, domain=domain)
@@ -2965,19 +3041,32 @@ class Kconfig(Kbaseconfig):
             currentconfig = Kconfig(client=gcpclient).k if gcpclient != self.client else self
             zonal = clusterdata.get('zonal', True)
             gke.delete(currentconfig, cluster, zonal)
-        if eks:
+        elif eks:
             eksclient = None
             if 'client' in clusterdata:
                 eksclient = clusterdata['client']
             elif self.type == 'aws':
                 eksclient = self.client
             else:
-                msg = "Deleting gke cluster requires to instantiate gcp provider"
+                msg = "Deleting eks cluster requires to instantiate aws provider"
                 error(msg)
                 return {'result': 'failure', 'reason': msg}
             from kvirt.cluster import eks
             currentconfig = Kconfig(client=eksclient).k if eksclient != self.client else self
             eks.delete(currentconfig, cluster)
+        elif aks:
+            aksclient = None
+            if 'client' in clusterdata:
+                aksclient = clusterdata['client']
+            elif self.type == 'azure':
+                aksclient = self.client
+            else:
+                msg = "Deleting aks cluster requires to instantiate azure provider"
+                error(msg)
+                return {'result': 'failure', 'reason': msg}
+            from kvirt.cluster import aks
+            currentconfig = Kconfig(client=aksclient).k if aksclient != self.client else self
+            aks.delete(currentconfig, cluster)
         for confpool in self.confpools:
             ip_reservations = self.confpools[confpool].get('ip_reservations', {})
             if cluster in ip_reservations:
@@ -3009,7 +3098,13 @@ class Kconfig(Kbaseconfig):
             result = self.scale_kube_gke(cluster, overrides=overrides)
         elif kubetype == 'eks':
             result = self.scale_kube_eks(cluster, overrides=overrides)
+        elif kubetype == 'aks':
+            result = self.scale_kube_aks(cluster, overrides=overrides)
         return result
+
+    def scale_kube_aks(self, cluster, overrides={}):
+        from kvirt.cluster import aks
+        return aks.scale(self, cluster, overrides)
 
     def scale_kube_eks(self, cluster, overrides={}):
         from kvirt.cluster import eks
@@ -3042,6 +3137,9 @@ class Kconfig(Kbaseconfig):
         planvms = []
         if plan is None:
             plan = cluster
+        if _type == 'aks':
+            self.scale_kube_aks(cluster, overrides=overrides)
+            return
         if _type == 'eks':
             self.scale_kube_eks(cluster, overrides=overrides)
             return
@@ -3057,7 +3155,9 @@ class Kconfig(Kbaseconfig):
                                                                                          'workers']
         else:
             plandir = os.path.dirname(openshift.create.__code__.co_filename)
-            roles = ['cloud_ctlplanes', 'cloud_workers'] if self.type in ['aws', 'gcp'] else ['ctlplanes', 'workers']
+            roles = ['ctlplanes', 'workers']
+            if self.type in ['aws', 'azure', 'gcp']:
+                roles = [f'cloud_{role}' for role in roles]
         if overrides.get('workers', 0) == 0:
             del roles[-1]
         if os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
@@ -3557,9 +3657,20 @@ class Kconfig(Kbaseconfig):
         t.start()
         webbrowser.open(f"http://127.0.0.1:{port}", new=2, autoraise=True)
 
+    def info_specific_aks(self, cluster):
+        from kvirt.cluster.aks import info as aks_info
+        return aks_info(self, cluster, self.debug)
+
     def info_specific_eks(self, cluster):
         from kvirt.cluster.eks import info as eks_info
         return eks_info(self, cluster, self.debug)
+
+    def info_kube_aks(self, quiet, web=False):
+        from kvirt.cluster import aks
+        plandir = os.path.dirname(aks.create.__code__.co_filename)
+        inputfile = f'{plandir}/fake.yml'
+        self.info_plan(inputfile, quiet=quiet, web=web)
+        aks.info_service(self)
 
     def info_kube_eks(self, quiet, web=False):
         from kvirt.cluster import eks

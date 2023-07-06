@@ -169,7 +169,7 @@ class Kbase(object):
     def delete_disk(self, name, diskname, pool=None, novm=False):
         print("not implemented")
 
-# should return a dict of {'pool': poolname, 'path': name}
+# should return a dict of {'diskname': {'pool': poolname, 'path': name}}
     def list_disks(self):
         print("not implemented")
         return []
@@ -195,7 +195,7 @@ class Kbase(object):
         print("not implemented")
         return {'result': 'success'}
 
-    def delete_network(self, name=None, cidr=None):
+    def delete_network(self, name=None, cidr=None, force=False):
         print("not implemented")
         return {'result': 'success'}
 
@@ -265,7 +265,7 @@ class Kbase(object):
         print("not implemented")
         return []
 
-    def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False):
+    def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False, instanceid=None):
         print("not implemented")
 
     def update_nic(self, name, index, network):
