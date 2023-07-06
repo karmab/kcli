@@ -24,7 +24,7 @@ from urllib.request import urlopen, Request
 import yaml
 
 virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere', 'proxmox']
-cloudplatforms = ['aws', 'gcp', 'ibm']
+cloudplatforms = ['aws', 'azure', 'gcp', 'ibm']
 
 
 def valid_uuid(uuid):

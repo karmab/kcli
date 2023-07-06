@@ -2854,8 +2854,7 @@ class Kvirt(object):
             diskformat = 'raw'
         if novm:
             try:
-                self.create_disk(name=name, size=size, pool=pool, thin=thin, image=image)
-                return {'result': 'success'}
+                return self.create_disk(name=name, size=size, pool=pool, thin=thin, image=image)
             except Exception as e:
                 error(f"Couldn't create disk. Hit {e}")
                 return {'result': 'failure', 'reason': f"Couldn't create disk. Hit {e}"}

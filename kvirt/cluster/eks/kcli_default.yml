@@ -1,6 +1,6 @@
 info: |
-  Deploy kubernetes using eks on $nodes
-nodes: 2
+  Deploy kubernetes using eks on $workers
+workers: 2
 version:
 network: default
 extra_networks: []

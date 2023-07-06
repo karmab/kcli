@@ -335,6 +335,7 @@ class Kibm(object):
         data['region'] = self.region
         data['zone'] = self.zone
         data['vpc'] = self.vpc
+        data['vms'] = len(self.list())
         return data
 
     def status(self, name):

@@ -443,6 +443,7 @@ class Kgcp(object):
         data['project_number'] = projectinfo['projectNumber']
         data['project_creation_time'] = projectinfo['createTime']
         data['zone'] = zone
+        data['vms'] = len(self.list())
         return data
 
     def status(self, name):
@@ -1134,7 +1135,7 @@ class Kgcp(object):
         changes.create()
         return {'result': 'success'}
 
-    def delete_dns(self, name, domain, allentries=False):
+    def delete_dns(self, name, domain, instanceid=None, allentries=False):
         project = self.project
         region = self.region
         client = dns.Client(project)

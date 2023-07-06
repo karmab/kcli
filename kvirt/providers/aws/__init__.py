@@ -392,7 +392,7 @@ class Kaws(object):
         return {'result': 'success'}
 
     def info_host(self):
-        return {"region": self.region}
+        return {"region": self.region, 'vms': len(self.list())}
 
     def status(self, name):
         conn = self.conn

@@ -13,7 +13,7 @@ from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsol
 from kvirt.examples import disconnectedcreate, appopenshiftcreate, plantemplatecreate, kubehypershiftcreate
 from kvirt.examples import workflowcreate, kubegenericscale, kubek3sscale, kubeopenshiftscale, kubegkescale
 from kvirt.examples import changelog, starthosts, stophosts, infohosts, ocdownload, openshiftdownload, ocmirrordownload
-from kvirt.examples import kubeekscreate, kubeeksscale
+from kvirt.examples import kubeekscreate, kubeeksscale, kubeakscreate, kubeaksscale
 from kvirt.examples import networkcreate, securitygroupcreate, profilecreate, vmupdate, vmlist, providercreate
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
@@ -1841,6 +1841,12 @@ def create_kube(args):
         sys.exit(1)
 
 
+def create_aks_kube(args):
+    """Create Aks kube"""
+    args.type = 'aks'
+    create_kube(args)
+
+
 def create_eks_kube(args):
     """Create Eks kube"""
     args.type = 'eks'
@@ -1913,6 +1919,13 @@ def scale_kube(args):
         if 'reason' in result:
             error(result['reason'])
         sys.exit(1)
+
+
+def scale_aks_kube(args):
+    """Scale aks kube"""
+    args.type = 'aks'
+    args.ctlplanes = 0
+    scale_kube(args)
 
 
 def scale_eks_kube(args):
@@ -2294,12 +2307,14 @@ def info_kube(args):
     kubetype = args.kubetype
     output = args.global_output or args.output
     openshift = kubetype == 'openshift'
-    if kubetype in ['eks', 'gke']:
+    if kubetype in ['aks', 'eks', 'gke']:
         baseconfig = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                              namespace=args.namespace)
     else:
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     if args.cluster is not None:
+        if kubetype == 'aks':
+            status = baseconfig.info_specific_aks(args.cluster)
         if kubetype == 'eks':
             status = baseconfig.info_specific_eks(args.cluster)
         elif kubetype == 'gke':
@@ -2329,6 +2344,8 @@ def info_kube(args):
             baseconfig.info_kube_k3s(quiet=True)
         elif kubetype == 'gke':
             baseconfig.info_kube_gke(quiet=True)
+        elif kubetype == 'aks':
+            baseconfig.info_kube_aks(quiet=True)
         elif kubetype == 'eks':
             baseconfig.info_kube_eks(quiet=True)
         else:
@@ -2351,6 +2368,11 @@ def info_web_kube(args):
             kubetable.add_row(node)
         kubetable.align["Kube"] = "l"
         print(kubetable)
+
+
+def info_aks_kube(args):
+    args.kubetype = 'aks'
+    info_kube(args)
 
 
 def info_eks_kube(args):
@@ -2997,6 +3019,24 @@ def create_host_aws(args):
         baseconfig.set_defaults()
 
 
+def create_host_azure(args):
+    """Create Azure Host"""
+    data = {}
+    data['name'] = args.name
+    data['_type'] = 'azure'
+    data['subscription_id'] = args.subscription_id
+    data['app_id'] = args.app_id
+    data['tenant_id'] = args.tenant_id
+    data['secret'] = args.secret
+    data['admin_password'] = args.admin_password
+    data['mail'] = args.mail
+    data['storageaccount'] = args.storageaccount
+    common.create_host(data)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
+    if len(baseconfig.clients) == 1:
+        baseconfig.set_defaults()
+
+
 def create_host_ibm(args):
     """"Create IBM Cloud host"""
     data = {}
@@ -3596,6 +3636,22 @@ def cli():
     awshostcreate_parser.add_argument('name', metavar='NAME')
     awshostcreate_parser.set_defaults(func=create_host_aws)
 
+    azurehostcreate_desc = 'Create Azure Host'
+    azurehostcreate_parser = hostcreate_subparsers.add_parser('azure', help=azurehostcreate_desc,
+                                                              description=azurehostcreate_desc)
+    azurehostcreate_parser.add_argument('--subscription_id', help='Subscription Id', metavar='SUBSCRIPTION_ID',
+                                        required=True)
+    azurehostcreate_parser.add_argument('--app_id', help='Application id', metavar='APPLICATION_ID', required=True)
+    azurehostcreate_parser.add_argument('--tenant_id', help='Tenant id', metavar='TENANT_ID', required=True)
+    azurehostcreate_parser.add_argument('-s', '--secret', help='Secret', metavar='SECRET', required=True)
+    azurehostcreate_parser.add_argument('--storageaccount', help='Storage Account', metavar='STORAGEACCOUNT',
+                                        required=True)
+    azurehostcreate_parser.add_argument('-a', '--admin_password', help='Admin Password', metavar='ADMINPASSWORD',
+                                        required=False)
+    azurehostcreate_parser.add_argument('-m', '--mail', help='Mail', metavar='MAIL', required=False)
+    azurehostcreate_parser.add_argument('name', metavar='NAME')
+    azurehostcreate_parser.set_defaults(func=create_host_azure)
+
     ibmhostcreate_desc = 'Create IBM Cloud Host'
     ibmhostcreate_parser = hostcreate_subparsers.add_parser('ibm', help=ibmhostcreate_desc,
                                                             description=ibmhostcreate_desc)
@@ -3712,6 +3768,16 @@ def cli():
     kubecreate_parser = create_subparsers.add_parser('kube', description=kubecreate_desc, help=kubecreate_desc,
                                                      aliases=['cluster'])
     kubecreate_subparsers = kubecreate_parser.add_subparsers(metavar='', dest='subcommand_create_kube')
+
+    kubeakscreate_desc = 'Create Aks Kube'
+    kubeakscreate_epilog = f"examples:\n{kubeakscreate}"
+    kubeakscreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
+    kubeakscreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
+    kubeakscreate_parser.add_argument('-t', '--threaded', help='Run threaded', action='store_true')
+    kubeakscreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
+    kubeakscreate_parser.set_defaults(func=create_aks_kube)
+    kubecreate_subparsers.add_parser('aks', parents=[kubeakscreate_parser], description=kubeakscreate_desc,
+                                     help=kubeakscreate_desc, epilog=kubeakscreate_epilog, formatter_class=rawhelp)
 
     kubeekscreate_desc = 'Create Eks Kube'
     kubeekscreate_epilog = f"examples:\n{kubeekscreate}"
@@ -3838,6 +3904,12 @@ def cli():
                                                                     description=awsprovidercreate_desc)
     awsprovidercreate_parser.add_argument('-p', '--pip', action='store_true', help='Force pip installation')
     awsprovidercreate_parser.set_defaults(func=install_provider)
+
+    azureprovidercreate_desc = 'Install Azure Provider'
+    azureprovidercreate_parser = providercreate_subparsers.add_parser('azure', help=azureprovidercreate_desc,
+                                                                      description=azureprovidercreate_desc)
+    azureprovidercreate_parser.add_argument('-p', '--pip', action='store_true', help='Force pip installation')
+    azureprovidercreate_parser.set_defaults(func=install_provider)
 
     gcpprovidercreate_desc = 'Install Gcp Provider'
     gcpprovidercreate_parser = providercreate_subparsers.add_parser('gcp', help=gcpprovidercreate_desc,
@@ -4611,6 +4683,13 @@ def cli():
                                                  aliases=['cluster'])
     kubeinfo_subparsers = kubeinfo_parser.add_subparsers(metavar='', dest='subcommand_info_kube')
 
+    kubeaksinfo_desc = 'Info Aks Kube'
+    kubeaksinfo_parser = kubeinfo_subparsers.add_parser('aks', description=kubeaksinfo_desc,
+                                                        help=kubeaksinfo_desc,
+                                                        parents=[output_parser])
+    kubeaksinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
+    kubeaksinfo_parser.set_defaults(func=info_aks_kube)
+
     kubeeksinfo_desc = 'Info Eks Kube'
     kubeeksinfo_parser = kubeinfo_subparsers.add_parser('eks', description=kubeeksinfo_desc,
                                                         help=kubeeksinfo_desc,
@@ -4974,11 +5053,20 @@ def cli():
                                                    aliases=['cluster'])
     kubescale_subparsers = kubescale_parser.add_subparsers(metavar='', dest='subcommand_scale_kube')
 
+    kubeaksscale_desc = 'Scale Aks Kube'
+    kubeaksscale_epilog = f"examples:\n{kubeaksscale}"
+    kubeaksscale_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
+    kubeaksscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
+    kubeaksscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='myaks')
+    kubeaksscale_parser.set_defaults(func=scale_aks_kube)
+    kubescale_subparsers.add_parser('aks', parents=[kubeaksscale_parser], description=kubeaksscale_desc,
+                                    help=kubeaksscale_desc, epilog=kubeaksscale_epilog, formatter_class=rawhelp)
+
     kubeeksscale_desc = 'Scale Eks Kube'
     kubeeksscale_epilog = f"examples:\n{kubeeksscale}"
     kubeeksscale_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubeeksscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
-    kubeeksscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='mykube')
+    kubeeksscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='myeks')
     kubeeksscale_parser.set_defaults(func=scale_eks_kube)
     kubescale_subparsers.add_parser('eks', parents=[kubeeksscale_parser], description=kubeeksscale_desc,
                                     help=kubeeksscale_desc, epilog=kubeeksscale_epilog, formatter_class=rawhelp)

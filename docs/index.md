@@ -7,7 +7,7 @@
 
 This tool is meant to provide a unified user experience when interacting with the following virtualization providers:
 
-* Libvirt/Vsphere/Kubevirt/Aws/Gcp/Ibmcloud/oVirt/Openstack/Packet/Proxmox
+* Libvirt/Vsphere/Kubevirt/Aws/Azure/Gcp/Ibmcloud/oVirt/Openstack/Packet/Proxmox
 
 Beyond handling virtual machines, Kubernetes clusters can also be managed for the following types:
 
@@ -305,6 +305,51 @@ To use this provider with kcli rpm, you'll need to install
 dnf -y install python3-boto3
 ```
 
+## Azure
+
+```
+azure:
+ type: azure
+ subscription_id: AKAAAAAAAAAAAAA
+ app_id: AKAAAAAAAAAAAAA
+ tenant_id: AKAAAAAAAAAAAAA
+ secret: xxxxxxxxxxyyyyyyyy
+ location: westus
+```
+
+The following parameters are specific to aws:
+
+- `subscription_id`
+- `app_id`
+- `tenant_id`
+- `secret` 
+- `location`
+- `admin_user`. Defaults to superadmin
+- `admin_password`. If specified, it need to be compliant with azure policy. When missing, a random one is generated (and printed) for each vm
+- `mail`. Optional, used only to access serial console of vms.
+- `storageaccount`. Optional, used for bucket related operations.
+
+The policy for password states that a valid password needs to satisfy at least 3 of the following requirements:
+
+- contain an uppercase character.
+- contain a lowercase character.
+- contain a numeric digit.
+- contain a special character.
+- not contain control characters.
+
+You can create a service principal using Azure UI and add Contributor (and Storage Blob Data Contributor) role from there, or using az command like this:
+
+```
+az ad sp create-for-rbac --role Contributor --name openshift-install --scope /subscriptions/${SUBSCRIPTION}
+az ad sp create-for-rbac --role "Storage Blob Data Contributor" --name openshift-install --scope /subscriptions/${SUBSCRIPTION}
+```
+
+To use this provider, you'll need to install (from pip):
+
+```
+pip3 install azure-mgmt-compute azure-mgmt-network azure-mgmt-resource azure-mgmt-core azure-identity
+```
+
 ## Gcp
 
 ```
@@ -340,7 +385,7 @@ To Create a dns zone:
 
 If accessing behind a proxy, be sure to set *HTTPS_PROXY* environment variable to `http://your_proxy:your_port`
 
-To use this provider with kcli rpm, you'll need to install (from pip):
+To use this provider, you'll need to install (from pip):
 
 ```
 pip3 install google-api-python-client google-auth-httplib2 google-cloud-dns
