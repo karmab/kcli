@@ -1794,6 +1794,16 @@ def delete_lb(args):
 def create_kube(args):
     """Create kube"""
     overrides = handle_parameters(args.param, args.paramfile)
+    disks = overrides.get('disks', [])
+    if disks:
+        overrides['disk_size'] = disks[0]['size'] if isinstance(disks[0], dict) else disks[0]
+        if len(disks) > 1:
+            overrides['extra_disks'] = disks[1:]
+    nets = overrides.get('nets', [])
+    if nets:
+        overrides['network'] = nets[0]['name'] if isinstance(nets[0], dict) else nets[0]
+        if len(nets) > 1:
+            overrides['extra_networks'] = nets[1:]
     cluster = args.cluster
     kubetype = args.type
     if args.threaded:
