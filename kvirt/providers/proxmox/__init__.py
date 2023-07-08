@@ -52,6 +52,7 @@ class Kproxmox(Kbase):
         filtertag=None,
         node=None,
         verify_ssl=True,
+        imagepool=None,
         debug=False,
     ):
         if not verify_ssl:
@@ -76,6 +77,8 @@ class Kproxmox(Kbase):
                     node = s["name"]
                     break
         self.node = node
+        self.imagepool = imagepool
+        # self.host = host
 
     def info_host(self):
         nodes = self.conn.cluster.resources.get(type="node")
@@ -158,28 +161,40 @@ class Kproxmox(Kbase):
         # return iso or vm templates
         vols = []
         if iso:
-            for node in self.conn.nodes.get():
-                if node["status"] == "online":
-                    # list isos
-                    storages = self.conn.nodes(node["node"]).storage.get(
-                        content="images"
-                    )
-                    for storage in storages:
-                        for volume in (
-                            self.conn.nodes(node["node"])
-                            .storage(storage["storage"])
-                            .content.get(content="iso")
-                        ):
-                            vols.append(volume["volid"])
-                    break
-
+            vols = [t["name"] for t in self._get_isos()]
         else:
-            # list vm templates
             vols = [t["name"] for t in self._get_templates()]
 
         return vols
 
+    def _check_node(self, node):
+        # Check target node
+        ret = None
+        cluster_status = self.conn.cluster.status.get()
+        for n in cluster_status:
+            if n["type"] == "node" and n["name"] == node:
+                ret = n
+                break
+        return ret
+
+    def _check_storage(self, pool, node=None):
+        if not node:
+            node = self.node
+        # Check that template storage is available on this node
+        storages = self.conn.nodes(node).storage.get(content="images")
+        ret = None
+        for s in storages:
+            if s["storage"] == pool:
+                ret = s
+        return ret
+
     def add_image(self, url, pool, cmd=None, name=None, size=None, convert=False):
+        if self.imagepool:
+            pool = self.imagepool
+
+        if url.endswith(".iso") or name.endswith(".iso"):
+            return self.add_iso(url, pool, name=name)
+
         if pool is None:
             return {"result": "failure", "reason": "No pool storage defined."}
 
@@ -208,12 +223,7 @@ class Kproxmox(Kbase):
             shortimage = Path(shortimage).with_suffix(".qcow2").name
 
         # Check target node
-        pve_node = None
-        cluster_status = self.conn.cluster.status.get()
-        for n in cluster_status:
-            if n["type"] == "node" and n["name"] == self.node:
-                pve_node = n
-                break
+        pve_node = self._check_node(self.node)
         if not pve_node:
             return {
                 "result": "failure",
@@ -221,12 +231,7 @@ class Kproxmox(Kbase):
             }
 
         # Check that template storage is available on this node
-        storages = self.conn.nodes(pve_node["name"]).storage.get(content="images")
-        storage = None
-        for s in storages:
-            if s["storage"] == pool:
-                storage = s
-        if not storage:
+        if not self._check_storage(pool, node=pve_node["name"]):
             return {
                 "result": "failure",
                 "reason": f"storage {pool} not found on {pve_node['name']}.",
@@ -284,6 +289,8 @@ class Kproxmox(Kbase):
         return {"result": "success"}
 
     def delete_image(self, image, pool=None):
+        if image.endswith(".iso"):
+            return self.delete_iso(image, pool=pool)
         # Check if template exists
         template = self._get_template_info(image)
         if not template:
@@ -292,6 +299,73 @@ class Kproxmox(Kbase):
         ok, status = self._wait_for(
             self.conn.nodes(template["node"]).qemu(template["vmid"]).delete()
         )
+        if not ok:
+            return {"result": "failure", "reason": status}
+        return {"result": "success"}
+
+    def delete_iso(self, image, pool=None):
+        if self.imagepool:
+            pool = self.imagepool
+
+        if pool is None:
+            return {"result": "failure", "reason": "No pool storage specified."}
+
+        isos = [i for i in self._get_isos() if i["name"] == image and i["pool"] == pool]
+        if not isos:
+            pprint(f"ISO {image} not found")
+            return {"result": "failure", "reason": f"ISO {image} not found"}
+
+        ok, status = self._wait_for(
+            self.conn.nodes(self.node).storage(pool).content(f"iso/{image}").delete()
+        )
+        if not ok:
+            return {"result": "failure", "reason": status}
+        return {"result": "success"}
+
+    def add_iso(self, url, pool, name=None):
+        if self.imagepool:
+            pool = self.imagepool
+        if pool is None:
+            return {"result": "failure", "reason": "No pool storage defined."}
+
+        # Check if iso already exists
+        isos = [i for i in self._get_isos() if i["name"] == name and i["pool"] == pool]
+        if isos:
+            pprint(f"ISO {name} already there")
+            return {"result": "success", "found": True}
+
+        # Check target node
+        pve_node = self.node
+        if not self._check_node(pve_node):
+            return {
+                "result": "failure",
+                "reason": f"node {pve_node} not found.",
+            }
+
+        # Check that template storage is available on this node
+        if not self._check_storage(pool, node=pve_node):
+            return {
+                "result": "failure",
+                "reason": f"storage {pool} not found on {pve_node}.",
+            }
+
+        # All good, upload ISO
+        if os.path.exists(url):
+            # is path
+            with open(url, "rb") as f:
+                pprint(f"uploading {name} to {pve_node}...")
+                ok, status = self._wait_for(
+                    self.conn.nodes(pve_node)
+                    .storage(pool)
+                    .upload.post(content="iso", filename=f)
+                )
+        else:
+            # is url
+            ok, status = self._wait_for(
+                self.conn.nodes(pve_node)
+                .storage(pool)("download-url")
+                .post(content="iso", filename=name, url=url)
+            )
         if not ok:
             return {"result": "failure", "reason": status}
         return {"result": "success"}
@@ -354,9 +428,6 @@ class Kproxmox(Kbase):
         securitygroups=[],
         vmuser=None,
     ):
-        """
-        'metadata': {'plan': 'kvirt', 'profile': 'myfedora', 'image': 'fedora38', 'user': 'fedora'}
-        """
         # pp(locals())
 
         # Check if vm already exists
@@ -366,14 +437,25 @@ class Kproxmox(Kbase):
 
         # Get next available ID
         new_vmid = self.conn.cluster.nextid.get()
+        imagepool = self.imagepool if self.imagepool else pool
 
-        # Get image template
-        template = self._get_template_info(image)
-        if not template:
-            return {
-                "result": "failure",
-                "reason": f"image {image} not found. Use kcli download image {image}.",
-            }
+        if image:
+            # Get image template
+            template = self._get_template_info(image)
+            if not template:
+                return {
+                    "result": "failure",
+                    "reason": f"image {image} not found. Use kcli download image {image}.",
+                }
+        if iso:
+            isos = [
+                i
+                for i in self._get_isos()
+                if i["name"] == iso and i["pool"] == imagepool
+            ]
+            if not isos:
+                pprint(f"ISO {iso} not found")
+                return {"result": "failure", "reason": f"ISO {iso} not found"}
 
         # Check target node
         new_vmnode = overrides.get("node") or self.node or template["node"]
@@ -389,10 +471,6 @@ class Kproxmox(Kbase):
             }
 
         # Check pool storage
-        linked_clone = True
-        if overrides.get("pool"):
-            linked_clone = False
-
         storages = self.conn.nodes(new_vmnode).storage.get(content="images")
         storage = None
         for s in storages:
@@ -404,22 +482,43 @@ class Kproxmox(Kbase):
                 "reason": f"storage {pool} not found on {new_vmnode}.",
             }
 
-        # Clone template
-        self._wait_for(
-            self.conn.nodes(template["node"])
-            .qemu(template["vmid"])
-            .clone.post(
-                newid=new_vmid,
-                name=name,
-                target=new_vmnode,
-                storage=pool if not linked_clone else None,
-                full=int(not linked_clone),
+        if image:
+            # Clone template
+            linked_clone = True
+            if (self.imagepool and self.imagepool != pool) or overrides.get("pool"):
+                linked_clone = False
+
+            self._wait_for(
+                self.conn.nodes(template["node"])
+                .qemu(template["vmid"])
+                .clone.post(
+                    newid=new_vmid,
+                    name=name,
+                    target=new_vmnode,
+                    storage=pool if not linked_clone else None,
+                    full=int(not linked_clone),
+                )
             )
-        )
+        elif iso:
+            # Create empty VM
+            ok, status = self._wait_for(
+                self.conn.nodes(new_vmnode).qemu.post(
+                    vmid=new_vmid,
+                    name=name,
+                    scsihw="virtio-scsi-pci",
+                    virtio0=f"file={pool}:{disksize},format=qcow2",
+                )
+            )
+            if not ok:
+                return {"result": "failure", "reason": status}
+        else:
+            return {"result": "failure", "reason": "No ISO or image specified."}
 
         new_vm = self.conn.nodes(new_vmnode).qemu(new_vmid)
-        # TODO: use filtertag tag instead
-        new_vm.config.post(tags="kcli")
+
+        # Add tag
+        if self.filtertag:
+            new_vm.config.post(tags=self.filtertag)
 
         # Metadata
         now = time.strftime("%d-%m-%Y %H:%M", time.gmtime())
@@ -432,47 +531,48 @@ class Kproxmox(Kbase):
         if metadata["user"] == "root":
             enableroot = True
 
-        if needs_ignition(image):
-            self._set_ignition(
-                vmid=new_vmid,
-                name=name,
-                node_name=new_vmnode,
-                node_ip=pve_node["ip"],
-                pool=pool,
-                keys=keys,
-                cmds=cmds,
-                nets=nets,
-                gateway=gateway,
-                dns=dns,
-                domain=domain,
-                files=files,
-                enableroot=enableroot,
-                overrides=overrides,
-                storemetadata=storemetadata,
-                image=image,
-                vmuser=vmuser,
-            )
-        else:
-            # Cloud-Init
-            self._set_cloudinit(
-                vmid=new_vmid,
-                name=name,
-                node_name=new_vmnode,
-                node_ip=pve_node["ip"],
-                pool=pool,
-                keys=keys,
-                cmds=cmds,
-                nets=nets,
-                gateway=gateway,
-                dns=dns,
-                domain=domain,
-                files=files,
-                enableroot=enableroot,
-                overrides=overrides,
-                storemetadata=storemetadata,
-                image=image,
-                vmuser=vmuser,
-            )
+        if image:
+            if needs_ignition(image):
+                self._set_ignition(
+                    vmid=new_vmid,
+                    name=name,
+                    node_name=new_vmnode,
+                    node_ip=pve_node["ip"],
+                    pool=pool,
+                    keys=keys,
+                    cmds=cmds,
+                    nets=nets,
+                    gateway=gateway,
+                    dns=dns,
+                    domain=domain,
+                    files=files,
+                    enableroot=enableroot,
+                    overrides=overrides,
+                    storemetadata=storemetadata,
+                    image=image,
+                    vmuser=vmuser,
+                )
+            else:
+                # Cloud-Init
+                self._set_cloudinit(
+                    vmid=new_vmid,
+                    name=name,
+                    node_name=new_vmnode,
+                    node_ip=pve_node["ip"],
+                    pool=pool,
+                    keys=keys,
+                    cmds=cmds,
+                    nets=nets,
+                    gateway=gateway,
+                    dns=dns,
+                    domain=domain,
+                    files=files,
+                    enableroot=enableroot,
+                    overrides=overrides,
+                    storemetadata=storemetadata,
+                    image=image,
+                    vmuser=vmuser,
+                )
 
         if cpumodel == "host-model":
             cpumodel = "host"
@@ -494,14 +594,16 @@ class Kproxmox(Kbase):
             net0.append(f"bridge={bridge}")
 
         # Configure VM
-        new_vm.config.post(
-            name=name,
-            cores=numcpus,
-            memory=memory,
-            cpu=cpumodel,
-            agent="enabled=1",
-            net0=",".join(net0),
-            description=dedent(description),
+        self._wait_for(
+            new_vm.config.post(
+                name=name,
+                cores=numcpus,
+                memory=memory,
+                cpu=cpumodel,
+                agent="enabled=1",
+                net0=",".join(net0),
+                description=dedent(description),
+            )
         )
 
         # Disks
@@ -518,7 +620,17 @@ class Kproxmox(Kbase):
                 # Extend main disk
                 new_vm.resize.put(disk=diskname, size=f"{disksize}G")
             else:
-                new_vm.config.post(**{diskname: f"file={pool}:{disksize},format=qcow2"})
+                self._wait_for(
+                    new_vm.config.post(
+                        **{diskname: f"file={pool}:{disksize},format=qcow2"}
+                    )
+                )
+
+        # Add ISO
+        if iso:
+            self._wait_for(
+                new_vm.config.post(cdrom=f"file={imagepool}:iso/{iso},media=cdrom")
+            )
 
         # Start VM
         if start:
@@ -712,8 +824,8 @@ class Kproxmox(Kbase):
                     ]
                 )
             else:
-                free_size = sizeof_fmt(storage['maxdisk'] - storage['disk'])
-                total_size = sizeof_fmt(storage['maxdisk'])
+                free_size = sizeof_fmt(storage["maxdisk"] - storage["disk"])
+                total_size = sizeof_fmt(storage["maxdisk"])
                 storages[storage_name] = {
                     "type": storage["plugintype"],
                     "node": storage["node"],
@@ -721,6 +833,9 @@ class Kproxmox(Kbase):
                 }
 
         return storages
+
+    def exists(self, name):
+        return True if self._get_vm(name) else False
 
     def _get_vm_info(self, name):
         all_vms = self._get_vms()
@@ -754,11 +869,38 @@ class Kproxmox(Kbase):
         all_vms = self.conn.cluster.resources.get(type="vm")
         return filter(lambda v: "template" in v and v["template"] == 1, all_vms)
 
-    def wait_for_task(self, task):
-        node = task.split(":")[1]
-        data = {"status": ""}
-        while data["status"] != "stopped":
-            data = self.conn.nodes(node).tasks(task).status.get()
+    def _get_isos(self):
+        isos = []
+        processed = []
+        for node in self.conn.nodes.get():
+            if node["status"] == "online":
+                # list iso storage
+                storages = self.conn.nodes(node["node"]).storage.get(content="iso")
+                for storage in storages:
+                    if storage["shared"] == 1:
+                        storage_name = storage["storage"]
+                    else:
+                        storage_name = f"{node['node']}-{storage['storage']}"
+                    if storage_name not in processed:
+                        for image in (
+                            self.conn.nodes(node["node"])
+                            .storage(storage["storage"])
+                            .content.get(content="iso")
+                        ):
+                            image["name"] = os.path.basename(
+                                image["volid"].split(":")[-1]
+                            )
+                            image["pool"] = storage["storage"]
+                            isos.append(image)
+                        processed.append(storage_name)
+        return isos
+
+    def _get_iso_info(self, name):
+        all_isos = self._get_isos()
+        for iso in all_isos:
+            if iso["name"] == name:
+                return iso
+        return None
 
     def _wait_for(self, task):
         ret = Tasks.blocking_status(self.conn, task, polling_interval=1)

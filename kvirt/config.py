@@ -366,6 +366,7 @@ class Kconfig(Kbaseconfig):
                     error("Missing auth_token_secret in the configuration. Leaving")
                     sys.exit(1)
                 filtertag = self.options.get('filtertag')
+                imagepool = self.options.get('imagepool')
                 node = self.options.get('node')
                 verify_ssl = self.options.get('verify_ssl')
                 try:
@@ -382,6 +383,7 @@ class Kconfig(Kbaseconfig):
                     filtertag=filtertag,
                     node=node,
                     verify_ssl=verify_ssl,
+                    imagepool=imagepool,
                     debug=False)
             elif self.type == 'web':
                 port = self.options.get('port', 8000)
