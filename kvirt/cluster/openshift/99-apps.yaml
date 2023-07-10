@@ -20,7 +20,7 @@ spec:
       - |
         #!/bin/sh
         until [ "$UPGRADABLE" == "Upgradeable" ] ; do
-          UPGRADABLE=$(kubectl get co console -o jsonpath='{.status.conditions[-1].type}')
+          UPGRADABLE=$(kubectl get co operator-lifecycle-manager-packageserver -o jsonpath='{.status.conditions[-1].type}')
           sleep 30
         done
     containers:
