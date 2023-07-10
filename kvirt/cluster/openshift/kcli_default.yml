@@ -122,6 +122,7 @@ baremetal_password: calvin
 kvm_openstack: true
 kvm_forcestack: false
 ipsec: false
+mtu: 1400
 ovn_hostrouting: false
 async: false
 notify: false

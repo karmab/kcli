@@ -563,6 +563,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'kvm_forcestack': False,
             'kvm_openstack': True,
             'ipsec': False,
+            'mtu': 1400,
             'ovn_hostrouting': False,
             'manifests': 'manifests',
             'sno': False,
@@ -670,6 +671,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     disconnected_user = data.get('disconnected_user')
     disconnected_password = data.get('disconnected_password')
     ipsec = data.get('ipsec')
+    mtu = data.get('mtu')
     ovn_hostrouting = data.get('ovn_hostrouting')
     metal3 = data.get('metal3')
     if not data.get('coredns'):
@@ -1181,10 +1183,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                     f.write(contrail_script)
                 copy2(f'{plandir}/contrail.auth', tmpdir)
                 call(f'bash {tmpdir}/contrail.sh', shell=True)
-    if ipsec or ovn_hostrouting or sno_relocate:
+    if ipsec or ovn_hostrouting or sno_relocate or mtu != 1400:
         ovn_data = config.process_inputfile(cluster, f"{plandir}/99-ovn.yaml",
                                             overrides={'ipsec': ipsec, 'ovn_hostrouting': ovn_hostrouting,
-                                                       'relocate': sno_relocate})
+                                                       'relocate': sno_relocate, 'mtu': mtu})
         with open(f"{clusterdir}/openshift/99-ovn.yaml", 'w') as f:
             f.write(ovn_data)
     if workers == 0 or not mdns or kubevirt_api_service:
