@@ -54,7 +54,7 @@ class Redfish(object):
         self.model, self.url, self.user, self.password = get_info(url, user, password)
         if self.debug:
             print(f"Using base url {self.url}")
-        p = urlparse(url)
+        p = urlparse(self.url)
         self.baseurl = f"{p.scheme}://{p.netloc}"
         credentials = base64.b64encode(bytes(f'{self.user}:{self.password}', 'ascii')).decode('utf-8')
         self.headers["Authorization"] = f"Basic {credentials}"
