@@ -6,7 +6,7 @@ spec:
   defaultNetwork:
     type: OVNKubernetes
     ovnKubernetesConfig:
-      mtu: {{ mtu }}
+      mtu: {{ 1354 if ipsec else mtu }}
 {% if ipsec %}
       ipsecConfig: {}
 {% endif %}
