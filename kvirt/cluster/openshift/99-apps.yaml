@@ -19,8 +19,8 @@ spec:
       - "-c"
       - |
         #!/bin/sh
-        until [ "$UPGRADABLE" == "Upgradeable" ] ; do
-          UPGRADABLE=$(kubectl get co operator-lifecycle-manager-packageserver -o jsonpath='{.status.conditions[-1].type}')
+        until [ "$CLUSTER_VERSION" == "Completed" ] ; do
+          CLUSTER_VERSION=$(kubectl get clusterversion version -o jsonpath='{.status.history[0].state}')
           sleep 30
         done
     containers:
