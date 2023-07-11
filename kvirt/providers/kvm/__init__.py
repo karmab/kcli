@@ -3944,7 +3944,7 @@ class Kvirt(object):
     def resize_disk(self, path, size):
         conn = self.conn
         volume = conn.storageVolLookupByPath(path)
-        size = int(size) * MiB
+        size = int(size) * GiB
         volume.resize(size)
 
     def update_nic(self, name, index, network):
