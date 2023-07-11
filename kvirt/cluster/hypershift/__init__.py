@@ -703,16 +703,16 @@ def create(config, plandir, cluster, overrides):
         call(f"until oc -n {namespace}-{cluster} get secret | grep {user_data} >/dev/null 2>&1 ; do sleep 1 ; done",
              shell=True)
         ignition_worker = f"{clusterdir}/nodepool.ign"
-        open(ignition_worker, 'a').close()
         timeout = 0
         while True:
-            if os.path.getsize(ignition_worker) != 0 and 'Token not found' not in open(ignition_worker).read():
+            if os.path.exists(ignition_worker):
                 break
-            sleep(30)
-            timeout += 30
-            if timeout > 300:
-                msg = "Timeout trying to retrieve worker ignition"
-                return {'result': 'failure', 'reason': msg}
+            else:
+                sleep(30)
+                timeout += 30
+                if timeout > 300:
+                    msg = "Timeout trying to retrieve worker ignition"
+                    return {'result': 'failure', 'reason': msg}
             call(f'bash {clusterdir}/ignition.sh', shell=True)
     if 'name' in data:
         del data['name']
