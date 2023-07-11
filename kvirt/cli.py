@@ -1508,10 +1508,10 @@ def create_vm(args):
     name = args.name
     onlyassets = True if 'assets' in vars(args) else False
     image = args.image
-    profile = args.profile
     count = args.count
-    profilefile = args.profilefile
     overrides = handle_parameters(args.param, args.paramfile)
+    profile = overrides.get('profile') or args.profile
+    profilefile = args.profilefile
     console = args.console
     serial = args.serial
     if args.wait:
@@ -2562,7 +2562,6 @@ def render_file(args):
 def create_vmdata(args):
     """Create cloudinit/ignition data for vm"""
     args.assets = True
-    args.profile = None
     args.profilefile = None
     args.wait = False
     args.console = None
@@ -4071,6 +4070,7 @@ def cli():
                                                        help=vmdatacreate_desc, parents=[parent_parser],
                                                        epilog=vmdatacreate_epilog, formatter_class=rawhelp)
     vmdatacreate_parser.add_argument('-i', '--image', help='Image to use', metavar='IMAGE')
+    vmdatacreate_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
     vmdatacreate_parser.add_argument('name', metavar='VMNAME', nargs='?', type=valid_fqdn)
     vmdatacreate_parser.set_defaults(func=create_vmdata)
 

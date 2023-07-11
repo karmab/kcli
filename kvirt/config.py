@@ -497,7 +497,7 @@ class Kconfig(Kbaseconfig):
         vmprofiles = {k: v for k, v in self.profiles.items() if 'type' not in v or v['type'] == 'vm'}
         if customprofile:
             vmprofiles[profile] = customprofile
-        elif profile in vmprofiles and not onlyassets:
+        elif profile in vmprofiles:
             pprint(f"Deploying vm {name} from profile {profile}...")
         elif (os.path.basename(profile) == profile and profile in volumes) or profile in full_volumes:
             if not onlyassets:
