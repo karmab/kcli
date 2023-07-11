@@ -15,6 +15,6 @@ MANAGEMENT_INGRESS_DOMAIN={{ management_ingress_domain }}
 curl -k -H "Authorization: $TOKEN" https://ignition-server-$NAMESPACE.$MANAGEMENT_INGRESS_DOMAIN/ignition > $CLUSTERDIR/nodepool.ign
 {% endif %}
 
-if [ ! -s $CLUSTERDIR/nodepool.ign ] || [ "$(grep 'Token not found' $CLUSTERDIR/nodepool.ign" != "" ] || [ "$(grep '503 Service Unavailable' $CLUSTERDIR/nodepool.ign" != "" ] ; then
+if [ ! -s $CLUSTERDIR/nodepool.ign ] || [ "$(grep 'Token not found' $CLUSTERDIR/nodepool.ign)" != "" ] || [ "$(grep '503 Service Unavailable' $CLUSTERDIR/nodepool.ign)" != "" ] ; then
   rm -f $CLUSTERDIR/nodepool.ign
 fi
