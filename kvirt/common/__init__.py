@@ -1897,10 +1897,11 @@ def make_iso(name, tmpdir, userdata, metadata, netdata, openstack=False, combust
         x.write(userdata)
     with open(f"{tmpdir}/meta-data", 'w') as y:
         y.write(metadata)
-    if which('mkisofs') is None and which('genisoimage') is None:
-        error("mkisofs or genisoimage are required in order to create cloudinit iso")
+    if which('mkisofs') is None and which('genisoimage') and which('xorrisofs') is None:
+        error("mkisofs, genisoimage or xorrisofs are required in order to create cloudinit iso")
         sys.exit(1)
-    isocmd = 'genisoimage' if which('genisoimage') is not None else 'mkisofs'
+    isocmd = 'genisoimage' if which('genisoimage') is not None else 'mkisofs' if which('mkisofs') is not None\
+        else 'xorrisofs'
     isocmd += f" --quiet -o {tmpdir}/{name}.ISO --volid cidata"
     if combustion:
         os.makedirs(f"{tmpdir}/root/ignition")

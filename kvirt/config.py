@@ -714,8 +714,8 @@ class Kconfig(Kbaseconfig):
         vnc = profile.get('vnc', default_vnc)
         cloudinit = profile.get('cloudinit', default_cloudinit)
         if cloudinit and self.type == 'kvm' and\
-                which('mkisofs') is None and which('genisoimage') is None:
-            return {'result': 'failure', 'reason': "Missing mkisofs/genisoimage needed for cloudinit"}
+                which('mkisofs') is None and which('genisoimage') and which('xorrisofs') is None:
+            return {'result': 'failure', 'reason': "Missing mkisofs/genisoimage/xorrisofs needed for cloudinit"}
         reserveip = profile.get('reserveip', default_reserveip)
         reservedns = profile.get('reservedns', default_reservedns)
         reservehost = profile.get('reservehost', default_reservehost)
