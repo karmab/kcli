@@ -939,10 +939,21 @@ class Kvirt(object):
                     cellid = cell.get('id', index)
                     cellcpus = cell.get('vcpus')
                     cellmemory = cell.get('memory')
+                    siblings = cell.get('sibling', [])
                     if cellcpus is None or cellmemory is None:
                         msg = f"Can't properly use cell {index} in numa block"
                         return {'result': 'failure', 'reason': msg}
-                    numaxml += f"<cell id='{cellid}' cpus='{cellcpus}' memory='{cellmemory}' unit='MiB'/>"
+                    numaxml += f"<cell id='{cellid}' cpus='{cellcpus}' memory='{cellmemory}' unit='MiB'>"
+                    if siblings:
+                        numaxml += "<distances>"
+                        for sibling in siblings:
+                            if not isinstance(sibling, dict) or 'id' not in sibling or 'value' not in sibling:
+                                warning("Wrong sibling entry in cell {cellid}, ignoring")
+                                continue
+                            sibling_id, sibling_value = sibling['id'], sibling['value']
+                            numaxml += f"<sibling id='{sibling_id}' value='{sibling_value}'/>"
+                        numaxml += "</distances>"
+                    numaxml += '</cell>'
                     numamemory += int(cellmemory)
                     if "q35" in machine:
                         busindex = expanderinfo[cellid]['index']
