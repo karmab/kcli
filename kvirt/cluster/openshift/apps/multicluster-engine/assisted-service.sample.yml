@@ -44,7 +44,7 @@ spec:
       - ReadWriteOnce
     resources:
       requests:
-        storage: 40Gi
+        storage: {{ assisted_pvc_size }}Gi
 {% if disconnected_url != None %}
   mirrorRegistryRef:
     name: "custom-registries"
