@@ -1,0 +1,13 @@
+apiVersion: operator.openshift.io/v1alpha1
+kind: ImageContentSourcePolicy
+metadata:
+  labels:
+    operators.openshift.org/catalog: "true"
+  name: operator-0
+spec:
+  repositoryDigestMirrors:
+{% for mirror in mirror_list %}
+  - mirrors:
+    - {{ mirror['mirror_registry_namespace'] }}
+    source: {{ mirror['source_registry_namespace'] }}
+{% endfor %}

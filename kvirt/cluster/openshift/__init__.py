@@ -961,12 +961,13 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         disconnected_overrides = data.copy()
         disconnected_overrides['kube'] = f"{cluster}-reuse" if disconnected_reuse else cluster
         disconnected_overrides['openshift_version'] = INSTALLER_VERSION
-        disconnected_overrides['disconnected_operators_version'] = '.'.join(INSTALLER_VERSION.split('.')[:-1])
+        disconnected_overrides['disconnected_operators_version'] = 'v' + '.'.join(INSTALLER_VERSION.split('.')[:-1])
         disconnected_overrides['openshift_release_image'] = get_release_image()
         data['openshift_release_image'] = disconnected_overrides['openshift_release_image']
         x_apps = ['users', 'autolabeller', 'metal3', 'nfs']
+        disconnected_operators_2 = [o['name'] for o in disconnected_operators if isinstance(o, dict) and 'name' in o]
         for app in apps:
-            if app not in x_apps and app not in disconnected_operators:
+            if app not in x_apps and app not in disconnected_operators and app not in disconnected_operators_2:
                 warning(f"Adding app {app} to disconnected_operators array")
                 disconnected_operators.append(app)
         disconnected_overrides['disconnected_operators'] = disconnected_operators
