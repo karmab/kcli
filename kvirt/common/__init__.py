@@ -1946,6 +1946,7 @@ def generate_rhcos_iso(k, cluster, pool, version='latest', podman=False, install
     kubevirt = 'kubevirt' in str(type(k))
     openstack = 'openstack' in str(type(k))
     vsphere = 'vsphere' in str(type(k))
+    proxmox = 'proxmox' in str(type(k))
     name = f'{cluster}-iso' if kubevirt else f'{cluster}.iso'
     if name in [os.path.basename(iso) for iso in k.volumes(iso=True)]:
         warning(f"Deleting old iso {name}")
@@ -1958,16 +1959,18 @@ def generate_rhcos_iso(k, cluster, pool, version='latest', podman=False, install
         k.patch_pvc(pvc, isocmd, image="quay.io/coreos/coreos-installer:release", files=['iso.ign'])
         k.update_cdi_endpoint(pvc, f'{cluster}.iso')
         return
-    if openstack or vsphere:
+    if openstack or vsphere or proxmox:
         pprint(f"Creating iso {name}")
         baseisocmd = f"curl -L {liveiso} -o /tmp/{os.path.basename(liveiso)}"
         call(baseisocmd, shell=True)
         copy2('iso.ign', '/tmp')
         isocmd = create_embed_ignition_cmd(name, '/tmp', baseiso, podman=podman, extra_args=extra_args)
         os.system(isocmd)
-        k.add_image(f'/tmp/{name}', pool, name=name)
+        result = k.add_image(f'/tmp/{name}', pool, name=name)
         os.remove(f'/tmp/{os.path.basename(liveiso)}')
         os.remove(f'/tmp/{name}')
+        if result['result'] != 'success':
+            error(result['reason'])
         return
     if baseiso not in k.volumes(iso=True):
         pprint(f"Downloading {liveiso}")

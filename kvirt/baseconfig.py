@@ -1852,7 +1852,14 @@ class Kbaseconfig:
             currentconfpool = self.confpools[confpool]
             ip_reservations = currentconfpool.get('ip_reservations', {})
             reserved_ips = list(ip_reservations.values())
-            if 'ips' in currentconfpool and self.type in ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere']:
+            if "ips" in currentconfpool and self.type in [
+                "kvm",
+                "kubevirt",
+                "ovirt",
+                "openstack",
+                "vsphere",
+                "proxmox",
+            ]:
                 ips = currentconfpool['ips']
                 if '/' in ips:
                     ips = [str(i) for i in ip_network(ips)[1:.1]]

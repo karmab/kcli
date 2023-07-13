@@ -639,6 +639,7 @@ The following parameters are specific to proxmox:
 - `auth_token_name` and `auth_token_secret` (Optional). API Token used for authentification instead of password.
 - `filtertag` (Optional). Only manage VMs created by kcli with the corresponding tag.
 - `node` (Optional). Create VMs on specified PVE node in case of Proxmox cluster.
+- `imagepool` (Optional). Storage pool for images and ISOs.
 - `verify_ssl` (Optional). Enable/Disable SSL verification. Default to True.
 
 Note that uploading images and cloud-init/ignition files requires ssh access to the Proxmox host. It's highly recommended to configure passwordless ssh authentification.
