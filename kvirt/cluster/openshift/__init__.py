@@ -46,6 +46,20 @@ aws_secret_access_key={access_key_secret}""".format(access_key_id=access_key_id,
             f.write(f"aws_session_token={session_token}")
 
 
+def azure_credentials(config):
+    if os.path.exists(os.path.expanduser('~/.azure/osServicePrincipal.json')):
+        return
+    azure_dir = f'{os.environ["HOME"]}/.azure'
+    if not os.path.exists(azure_dir):
+        os.mkdir(azure_dir)
+    data = {'subscriptionId': config.k.subscription_id,
+            'clientId': config.k.app_id,
+            "tenantId": config.k.tenant_id,
+            'clientSecret': config.k.secret}
+    with open(f'{azure_dir}/osServicePrincipal.json', 'w') as dest_file:
+        yaml.safe_dump(data, dest_file)
+
+
 def mapping_to_icsp(config, plandir, output_dir, mirror_config):
     mapping_file = glob("oc-mirror-workspace/results-*/mapping.txt")[0]
     mirrors = []
@@ -1086,6 +1100,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         aws_credentials(config)
     elif config.type == 'gcp':
         os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = os.path.expanduser(config.options.get('credentials'))
+    elif config.type == 'azure':
+        azure_credentials(config)
     installconfig = config.process_inputfile(cluster, f"{plandir}/install-config.yaml", overrides=data)
     with open(f"{clusterdir}/install-config.yaml", 'w') as f:
         f.write(installconfig)

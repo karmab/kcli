@@ -77,6 +77,12 @@ platform:
   gcp:
     projectID: {{ config_project }}
     region: {{ config_zone[:-2] }}
+{% elif config_type == 'azure' %}
+  azure:
+    osDisk:
+      diskSizeGB: 1024
+      diskType: Premium_LRS
+    type: Standard_D8s_v3
 {% else %}
   none: {}
 {% endif %}

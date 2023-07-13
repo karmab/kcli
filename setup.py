@@ -5,7 +5,7 @@ import os
 INSTALL = ['argcomplete', 'PyYAML', 'prettytable', 'jinja2', 'libvirt-python>=2.0.0']
 AWS = ['boto3']
 AZURE = ['azure-mgmt-compute', 'azure-mgmt-network', 'azure-mgmt-core', 'azure-identity', 'azure-mgmt-resource',
-         'azure-mgmt-marketplaceordering' 'azure-storage-blob', 'azure-mgmt-dns', 'azure-mgmt-containerservice']
+         'azure-mgmt-marketplaceordering', 'azure-storage-blob', 'azure-mgmt-dns', 'azure-mgmt-containerservice']
 GCP = ['google-api-python-client', 'google-auth-httplib2', 'google-cloud-dns', 'google-cloud-storage',
        'google-cloud-container']
 KUBEVIRT = ['kubernetes']
