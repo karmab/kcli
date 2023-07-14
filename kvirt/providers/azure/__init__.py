@@ -1005,8 +1005,6 @@ class Kazure(object):
         public_ip = public_ip.result()
         frontend_ip_configurations = [{'name': name, 'public_ip_address': {'id': public_ip.id}}]
         backend_address_pools = [{'name': name}]
-        # probes = [{'name': name, 'protocol': 'Http', 'port': checkport, 'interval_in_seconds': 15,
-        #           'number_of_probes': 4, 'request_path': checkpath}]
         probes = [{'name': name, 'protocol': 'tcp', 'port': checkport, 'interval_in_seconds': 15,
                    'number_of_probes': 4}]
         lb_data = {'location': self.location,
@@ -1017,28 +1015,16 @@ class Kazure(object):
         lb = network_client.load_balancers.begin_create_or_update(self.resource_group, name, lb_data).result()
         frontend_id = lb.frontend_ip_configurations[0].id
         backend_id = lb.backend_address_pools[0].id
-        probe_id = lb.probes[0].id
-        port = ports[0]
-        lb.load_balancing_rules = [{'name': name, 'protocol': 'tcp', 'frontend_port': port, 'backend_port': port,
-                                    'idle_timeout_in_minutes': 5, 'enable_floating_ip': True,
-                                    'frontend_ip_configuration': {'id': frontend_id},
-                                    'backend_address_pool': {'id': backend_id},
-                                    'probe': {'id': probe_id},
-                                    'disable_outbound_snat': True,
-                                    'load_distribution': 'Default'}]
+        inbound_nat_rules = [{'name': f"{name}-rule{index}", 'protocol': 'tcp',
+                              'backend_address_pool': {'id': backend_id}, 'backend_port': port,
+                              'frontend_port_range_start': port, 'frontend_port_range_end': port + 500,
+                              'enable_floating_ip': False, 'idle_timeout_in_minutes': 4,
+                              'frontend_ip_configuration': {'id': frontend_id}} for index, port in enumerate(ports)]
+        lb.inbound_nat_rules = inbound_nat_rules
         lb = network_client.load_balancers.begin_create_or_update(self.resource_group, name, lb).result()
-        # inbound_nat_rules = []
-        # for index, port in enumerate(ports):
-        #     inbound_nat_rules.append({'name': f"{name}-rule{index}", 'protocol': 'tcp', 'frontend_port': port,
-        #                              'backend_port': port, 'enable_floating_ip': False,
-        #                               'idle_timeout_in_minutes': 4, 'frontend_ip_configuration': {'id': frontend_id}})
-        # lb.inbound_nat_rules = inbound_nat_rules
-        # lb = network_client.load_balancers.begin_create_or_update(self.resource_group, name, lb).result()
-        # natrule_id = lb.inbound_nat_rules[0].id
         if self.debug:
             print(lb)
         for index, vm in enumerate(vms):
-            # self.set_loadbalancer(vm, backend_id, natrule_id)
             self.set_loadbalancer(vm, backend_id, ports)
             self.update_metadata(vm, 'loadbalancer', name)
         if domain is not None:
@@ -1068,13 +1054,12 @@ class Kazure(object):
             ip = network_client.public_ip_addresses.get(self.resource_group,
                                                         os.path.basename(public_address.id)).ip_address
             protocol, ports, target = 'N/A', 'N/A', 'N/A'
-            if lb.load_balancing_rules:
-                rule = lb.load_balancing_rules[0]
-                protocol, ports = rule.protocol, rule.frontend_port
+            rule = lb.inbound_nat_rules[0] if lb.inbound_nat_rules else lb.load_balancing_rules[0]
+            protocol = rule.protocol
+            ports = rule.frontend_port_range_start if lb.inbound_nat_rules else rule.frontend_port
             results.append([lb.name, ip, protocol, ports, target])
         return results
 
-    # def set_loadbalancer(self, name, backend_id, natrule_id):
     def set_loadbalancer(self, name, backend_id, ports):
         try:
             vm = self.compute_client.virtual_machines.get(self.resource_group, name)
@@ -1083,7 +1068,7 @@ class Kazure(object):
             return {'result': 'success'}
         device = os.path.basename(vm.network_profile.network_interfaces[0].id)
         nic_data = self.network_client.network_interfaces.get(self.resource_group, device)
-        nic_data.load_balancer_backend_address_pools = [{'id': backend_id}]
+        nic_data.ip_configurations[0].load_balancer_backend_address_pools = [{'id': backend_id}]
         result = self.network_client.network_interfaces.begin_create_or_update(self.resource_group, device, nic_data)
         result.wait()
         ports = [22] + ports
