@@ -1,3 +1,7 @@
+# kfish
+
+![Screenshot](kfish.png)
+
 This is a side class created to interact with redfish without a need for extra libraries and used in [kcli](https://github.com/karmab/kcli) and [aicli](https://github.com/karmab/aicli) projects
 
 ## Installation
