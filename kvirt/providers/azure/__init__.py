@@ -178,6 +178,67 @@ class Kazure(object):
                                                         'version': version}}}
         if need_agreement:
             data['plan'] = {'publisher': publisher, 'name': offer, 'product': sku}
+        sg_data = {'id': f"{name}-sg", 'location': self.location}
+        sg = network_client.network_security_groups.begin_create_or_update(self.resource_group, f"{name}-sg", sg_data)
+        sg = sg.result()
+        if 'kubetype' in metadata and metadata['kubetype'] == "openshift":
+            for port in [80, 443, 2379, 2380, 4789, 8080, 5443, 6081, 6443, 8443, 22624]:
+                rule_data = SecurityRule(protocol='Tcp', source_address_prefix='*',
+                                         destination_address_prefix='*', access='Allow',
+                                         direction='Inbound', description=f'tcp {port}',
+                                         source_port_range='*', destination_port_ranges=[f"{port}"],
+                                         priority=100, name=f"tcp-{port}")
+                network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-sg",
+                                                                     f"tcp-{port}", rule_data)
+                rule_data = SecurityRule(protocol='Udp', source_address_prefix='*',
+                                         destination_address_prefix='*', access='Allow',
+                                         direction='Inbound', description='udp 4789',
+                                         source_port_range='*', destination_port_ranges=["4789"],
+                                         priority=100, name="udp-4789")
+                network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-sg",
+                                                                     "udp-4789", rule_data)
+                rule_data = SecurityRule(protocol='Udp', source_address_prefix='*',
+                                         destination_address_prefix='*', access='Allow',
+                                         direction='Inbound', description='udp 6081',
+                                         source_port_range='*', destination_port_ranges=["6081"],
+                                         priority=100, name="udp-6081")
+                network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-sg",
+                                                                     "udp-6081", rule_data)
+                rule_data = SecurityRule(protocol='Tcp', source_address_prefix='*',
+                                         destination_address_prefix='*', access='Allow',
+                                         direction='Inbound', description='tcp 30000-32767',
+                                         source_port_range='*', destination_port_ranges=["30000", "32767"],
+                                         priority=100, name="tcp-30000-32767")
+                network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-sg",
+                                                                     "tcp-30000-32767", rule_data)
+                rule_data = SecurityRule(protocol='Ucp', source_address_prefix='*',
+                                         destination_address_prefix='*', access='Allow',
+                                         direction='Inbound', description='udp 30000-32767',
+                                         source_port_range='*', destination_port_ranges=["30000", "32767"],
+                                         priority=100, name="udp-30000-32767")
+                network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-sg",
+                                                                     "udp-30000-32767", rule_data)
+                rule_data = SecurityRule(protocol='Tcp', source_address_prefix='*',
+                                         destination_address_prefix='*', access='Allow',
+                                         direction='Inbound', description='udp 10250-10259',
+                                         source_port_range='*', destination_port_ranges=["10250", "10259"],
+                                         priority=100, name="tcp-10250-10259")
+                network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-sg",
+                                                                     "tcp-10250-10259", rule_data)
+                rule_data = SecurityRule(protocol='Tcp', source_address_prefix='*',
+                                         destination_address_prefix='*', access='Allow',
+                                         direction='Inbound', description='tcp 9000-9999',
+                                         source_port_range='*', destination_port_ranges=["9000", "9999"],
+                                         priority=100, name="tcp-9000-9999")
+                network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-sg",
+                                                                     "tcp-9000-9999", rule_data)
+                rule_data = SecurityRule(protocol='Udp', source_address_prefix='*',
+                                         destination_address_prefix='*', access='Allow',
+                                         direction='Inbound', description='udp 9000-9999',
+                                         source_port_range='*', destination_port_ranges=["9000", "9999"],
+                                         priority=100, name="udp-9000-9999")
+                network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-sg",
+                                                                     "udp-9000-9999", rule_data)
         network_interfaces = []
         subnets = self.list_subnets()
         for index, net in enumerate(nets):
@@ -194,30 +255,26 @@ class Kazure(object):
             if netname not in subnets:
                 return {'result': 'failure', 'reason': f'Subnet {netname} not found'}
             else:
-                if netpublic and index == 0:
-                    ip_data = {"location": self.location, "sku": {"name": "Standard"},
-                               "public_ip_allocation_method": "Static", "public_ip_address_version": "IPV4"}
-                    ip = network_client.public_ip_addresses.begin_create_or_update(self.resource_group, f'{name}-ip',
-                                                                                   ip_data)
-
-                    public_ip = ip.result()
-                    sg_data = {'id': f"{name}-sg", 'location': self.location}
-                    sg = network_client.network_security_groups.begin_create_or_update(self.resource_group,
-                                                                                       f"{name}-sg", sg_data)
-                    sg = sg.result()
-                    rule_data = SecurityRule(protocol='Tcp', source_address_prefix='*',
-                                             destination_address_prefix='*', access='Allow',
-                                             direction='Inbound', description='port 22', source_port_range='*',
-                                             destination_port_ranges=["22"], priority=100, name="port-22")
-                    network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-sg",
-                                                                         "port-22", rule_data)
                 subnet_id = subnets[netname]['az']
                 nic_data = {'location': self.location,
                             'ip_configurations': [{'name': nic_name, 'subnet': {'id': subnet_id}}]}
-                if public_ip is not None:
-                    nic_data['ip_configurations'][0]['public_ip_address'] = {"id": public_ip.id,
-                                                                             'delete_option': 'Delete'}
+                if index == 0:
                     nic_data['network_security_group'] = {"id": sg.id}
+                    if netpublic:
+                        ip_data = {"location": self.location, "sku": {"name": "Standard"},
+                                   "public_ip_allocation_method": "Static", "public_ip_address_version": "IPV4"}
+                        ip = network_client.public_ip_addresses.begin_create_or_update(self.resource_group,
+                                                                                       f'{name}-ip', ip_data)
+
+                        public_ip = ip.result()
+                        rule_data = SecurityRule(protocol='Tcp', source_address_prefix='*',
+                                                 destination_address_prefix='*', access='Allow',
+                                                 direction='Inbound', description='tcp 22', source_port_range='*',
+                                                 destination_port_ranges=["22"], priority=100, name="tcp-22")
+                        network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-sg",
+                                                                             "tcp-22", rule_data)
+                        nic_data['ip_configurations'][0]['public_ip_address'] = {"id": public_ip.id,
+                                                                                 'delete_option': 'Delete'}
                 nic = network_client.network_interfaces.begin_create_or_update(self.resource_group, nic_name, nic_data)
                 nic_id = nic.result().id
                 nic_reference = {'id': nic_id, 'delete_option': 'Delete', 'primary': True if index == 0 else False}
@@ -661,11 +718,9 @@ class Kazure(object):
         print("not implemented")
 
     def delete_image(self, image, pool=None):
-        print("not implemented")
         return {'result': 'success'}
 
     def add_image(self, url, pool, short=None, cmd=None, name=None, size=None, convert=False):
-        print("not implemented")
         return {'result': 'success'}
 
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
@@ -680,9 +735,7 @@ class Kazure(object):
         result.wait()
         return {'result': 'success'}
 
-# should return a list of pools
     def list_pools(self):
-        print("not implemented")
         return []
 
     def list_networks(self):
@@ -731,10 +784,8 @@ class Kazure(object):
         print("not implemented")
 
     def vm_ports(self, name):
-        print("not implemented")
         return ['default']
 
-# returns the path of the pool, if it makes sense. used by kcli list --pools
     def get_pool_path(self, pool):
         print("not implemented")
 
@@ -742,7 +793,6 @@ class Kazure(object):
         vm_sizes = self.compute_client.virtual_machine_sizes.list(self.location)
         return [[e.name, e.number_of_cores, e.memory_in_mb] for e in vm_sizes]
 
-# export the primary disk of the corresponding instance so it's available as a image
     def export(self, name, image=None):
         print("not implemented")
 
