@@ -67,7 +67,7 @@ extra_networks: []
 extra_ctlplane_networks: []
 extra_worker_networks: []
 disconnected_url:
-disconnected_deploy: false
+disconnected_vm: false
 disconnected_update: false
 disconnected_haproxy: false
 disconnected_reuse: false

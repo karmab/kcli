@@ -607,7 +607,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'contrail_ctl_create': True,
             'contrail_ctl_cidr': '10.40.1.0/24',
             'contrail_ctl_gateway': '10.40.1.1',
-            'disconnected_deploy': False,
+            'disconnected_vm': False,
             'disconnected_update': False,
             'disconnected_reuse': False,
             'disconnected_operators_all': False,
@@ -674,7 +674,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         return {'result': 'failure', 'reason': msg}
     network = data.get('network')
     ipv6 = data['ipv6']
-    disconnected_deploy = data['disconnected_deploy']
+    disconnected_vm = data['disconnected_vm']
     disconnected_update = data['disconnected_update']
     disconnected_reuse = data['disconnected_reuse']
     disconnected_operators = data.get('disconnected_operators', [])
@@ -756,10 +756,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         data['ipv6'] = True
         overrides['ipv6'] = True
         data['disconnected_ipv6_network'] = True
-        if not disconnected_deploy and disconnected_url is None:
-            warning("Forcing disconnected_deploy to True as no disconnected_url was provided")
-            data['disconnected_deploy'] = True
-            disconnected_deploy = True
+        if not disconnected_vm and disconnected_url is None:
+            warning("Forcing disconnected_vm to True as no disconnected_url was provided")
+            data['disconnected_vm'] = True
+            disconnected_vm = True
         if sno and not data['dualstack'] and 'extra_args' not in overrides:
             warning("Forcing extra_args to ip=dhcp6 for sno to boot with ipv6")
             data['extra_args'] = 'ip=dhcp6'
@@ -953,7 +953,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     overrides['cluster'] = cluster
     if not os.path.exists(clusterdir):
         os.makedirs(clusterdir)
-    if platform in virtplatforms and disconnected_deploy:
+    if platform in virtplatforms and disconnected_vm:
         disconnected_vm = f"{data.get('disconnected_reuse_name', cluster)}-disconnected"
         pprint(f"Deploying disconnected vm {disconnected_vm}")
         data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
