@@ -28,6 +28,8 @@ MULTUSDOMAIN = 'k8s.cni.cncf.io'
 MULTUSVERSION = 'v1'
 HDOMAIN = "harvesterhci.io"
 HVERSION = "v1beta1"
+SRIOVDOMAIN = 'sriovnetwork.openshift.io'
+SRIOVVERSION = 'v1'
 CONTAINERDISKS = ['quay.io/kubevirt/alpine-container-disk-demo', 'quay.io/kubevirt/cirros-container-disk-demo',
                   'quay.io/karmab/debian-container-disk-demo', 'quay.io/karmab/freebsd-container-disk-demo',
                   'quay.io/kubevirt/fedora-cloud-container-disk-demo',
@@ -142,6 +144,9 @@ class Kubevirt(Kubecommon):
             for img in virtualimages:
                 imagename = img['metadata']['name']
                 harvester_images[common.filter_compression_extension(os.path.basename(img['spec']['url']))] = imagename
+        confidential = 'confidential' in overrides and overrides['confidential']
+        if confidential:
+            uefi, secureboot = True, False
         final_tags = {}
         if tags:
             if isinstance(tags, dict):
@@ -166,6 +171,10 @@ class Kubevirt(Kubecommon):
                                                                       'devices': {'disks': []}}, 'volumes': []}}},
               'apiVersion': f'kubevirt.io/{VERSION}', 'metadata': {'name': name, 'namespace': namespace,
                                                                    'labels': labels, 'annotations': {}}}
+        if confidential:
+            vm['spec']['template']['spec']['domain']['launchSecurity'] = {'sev': {}}
+        if 'vsock' in overrides and overrides['vsock']:
+            vm['spec']['template']['spec']['domain']['devices']['autoattachVSOCK'] = True
         kube = False
         for entry in sorted([field for field in metadata if field in METADATA_FIELDS]):
             vm['metadata']['annotations'][f'kcli/{entry}'] = metadata[entry]
@@ -186,6 +195,37 @@ class Kubevirt(Kubecommon):
             warning(f"Forcing machine type to {machine}")
             machine = overrides['machine']
         vm['spec']['template']['spec']['domain']['machine'] = {'type': machine}
+        if cpumodel != 'host-model':
+            vm['spec']['template']['spec']['domain']['cpu']['model'] = cpumodel
+        if 'rng' in overrides and overrides['rng']:
+            vm['spec']['template']['spec']['domain']['devices']['rng'] = {}
+        if numa:
+            vm['spec']['template']['spec']['domain']['cpu']['dedicatedCpuPlacement'] = True
+            vm['spec']['template']['spec']['domain']['cpu']['numa'] = {'guestMappingPassthrough': {}}
+        if 'realtime' in overrides and overrides['realtime']:
+            vm['spec']['template']['spec']['domain']['cpu']['realtime'] = True
+        if 'hugepages' in overrides:
+            hugepages = overrides['hugepages']
+            if isinstance(hugepages, int):
+                hugepages = f"{hugepages}Mi"
+            if 'i' not in hugepages:
+                hugepages = f"{hugepages}Mi"
+            vm['spec']['template']['spec']['domain']['memory'] = {'hugepages': {'pageSize': hugepages}}
+        if pcidevices:
+            gpus, host_devices = [], []
+            for pcidevice in pcidevices:
+                if isinstance(pcidevice, str):
+                    entry_name, device_name = os.path.basename(pcidevice), pcidevice
+                else:
+                    entry_name, device_name = pcidevice['name'], pcidevice['deviceName']
+                if 'nvidia.com' in device_name or 'gpu' in entry_name:
+                    gpus.append({'name': entry_name, 'deviceName': device_name})
+                else:
+                    host_devices.append({'name': entry_name, 'deviceName': device_name})
+            if gpus:
+                vm['spec']['template']['spec']['domain']['gpus'] = gpus
+            if host_devices:
+                vm['spec']['template']['spec']['domain']['hostDevices'] = host_devices
         uefi = overrides.get('uefi', False)
         secureboot = overrides.get('secureboot', False)
         if uefi or secureboot:
@@ -211,7 +251,8 @@ class Kubevirt(Kubecommon):
             vm['spec']['template']['spec']['nodeSelector'] = node_selector
         interfaces = []
         networks = []
-        allnetworks = {}
+        allnetworks = self.list_networks()
+        sriovnetworks = self.list_sriov_networks()
         for index, net in enumerate(nets):
             newif = {'bridge': {}}
             newnet = {}
@@ -229,7 +270,7 @@ class Kubevirt(Kubecommon):
                     newnet['name'] = netname
                 if 'mac' in net:
                     newif['macAddress'] = net['mac']
-                if 'sriov' in net and net['sriov']:
+                if netname in sriovnetworks or ('sriov' in net and net['sriov']):
                     newif['sriov'] = {}
                     del newif['bridge']
                 elif 'macvtap' in net and net['macvtap']:
@@ -249,12 +290,11 @@ class Kubevirt(Kubecommon):
                     if 'ip' in nets[index]:
                         vm['metadata']['annotations']['kcli/ip'] = nets[index]['ip']
             if netname != 'default':
-                if not allnetworks:
-                    allnetworks = self.list_networks()
                 if netname not in allnetworks:
                     return {'result': 'failure', 'reason': f"network {netname} not found"}
-                newnet['multus'] = {'networkName': netname}
-                guestagent = True
+                else:
+                    newnet['multus'] = {'networkName': netname}
+                    guestagent = True
             else:
                 newnet['pod'] = {}
             interfaces.append(newif)
@@ -266,6 +306,7 @@ class Kubevirt(Kubecommon):
         sizes = []
         for index, disk in enumerate(disks):
             existingpvc = False
+            lun = False
             diskname = f'{name}-disk{index}'
             volume_mode = self.volume_mode
             volume_access = self.volume_access
@@ -287,6 +328,7 @@ class Kubevirt(Kubecommon):
                 diskinterface = disk.get('interface', default_diskinterface)
                 volume_mode = disk.get('volume_mode', volume_mode)
                 volume_access = disk.get('volume_access', volume_access)
+                lun = disk.get('lun', False)
                 if 'name' in disk:
                     existingpvc = True
             myvolume = {'name': diskname}
@@ -303,7 +345,11 @@ class Kubevirt(Kubecommon):
                     myvolume['dataVolume'] = {'name': diskname}
             if index > 0 or image is None:
                 myvolume['persistentVolumeClaim'] = {'claimName': diskname}
-            newdisk = {'disk': {'bus': diskinterface}, 'name': diskname}
+            newdisk = {'disk': {}, 'name': diskname}
+            if lun:
+                newdisk['disk']['lun'] = {}
+            else:
+                newdisk['disk']['bus'] = diskinterface
             if index == 0:
                 newdisk['bootOrder'] = 1
             vm['spec']['template']['spec']['domain']['devices']['disks'].append(newdisk)
@@ -1662,3 +1708,13 @@ class Kubevirt(Kubecommon):
     def info_subnet(self, name):
         print("not implemented")
         return {}
+
+    def list_sriov_networks(self):
+        namespace = self.namespace
+        crds = self.crds
+        try:
+            items = crds.list_namespaced_custom_object(SRIOVDOMAIN, SRIOVVERSION, namespace, 'sriovnetworks')["items"]
+            sriov_networks = [n['metadata']['name'] for n in items]
+        except:
+            sriov_networks = []
+        return sriov_networks
