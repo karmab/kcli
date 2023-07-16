@@ -38,7 +38,6 @@ BSD += '/bsd-cloud-image.org/images/dragonflybsd'
 CENTOS = 'https://cloud.centos.org/centos'
 DEBIAN = 'https://cdimage.debian.org/cdimage'
 FEDORA = 'http://mirror.uv.es/mirror/fedora/linux/releases'
-FEDORA_ARCHIVE = 'https://archives.fedoraproject.org/pub/archive/fedora/linux/releases'
 GENTOO = 'https://gentoo.osuosl.org/experimental/amd64/openstack'
 OPENSUSE = 'https://download.opensuse.org'
 LEAP = f'{OPENSUSE}/distribution/leap'
@@ -52,17 +51,10 @@ IMAGES = {'almalinux9': f'{ALMA}/9.1/cloud/x86_64/images/AlmaLinux-9-GenericClou
           'centos8stream': f'{CENTOS}/8-stream/x86_64/images/CentOS-Stream-GenericCloud-8-latest.x86_64.qcow2',
           'centos9stream': f'{CENTOS}/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-latest.x86_64.qcow2',
           'cirros': 'http://download.cirros-cloud.net/0.5.2/cirros-0.5.2-x86_64-disk.img',
-          'debian8': f'{DEBIAN}/openstack/archive/8.11.0/debian-8.11.0-openstack-amd64.qcow2',
-          'debian9': f'{DEBIAN}/openstack/current-9/debian-9-openstack-amd64.qcow2',
           'debian10': f'{DEBIAN}/openstack/current-10/debian-10-openstack-amd64.qcow2',
           'debian11': f'{DEBIAN}/cloud/bullseye/latest/debian-11-generic-amd64.qcow2',
           'debian12': f'{DEBIAN}/cloud/bookworm/latest/debian-12-generic-amd64.qcow2',
           'fcos': 'https://builds.coreos.fedoraproject.org/streams/stable.json',
-          'fedora32': f'{FEDORA_ARCHIVE}/32/Cloud/x86_64/images/Fedora-Cloud-Base-32-1.6.x86_64.qcow2',
-          'fedora33': f'{FEDORA_ARCHIVE}/33/Cloud/x86_64/images/Fedora-Cloud-Base-33-1.2.x86_64.qcow2',
-          'fedora34': f'{FEDORA_ARCHIVE}/34/Cloud/x86_64/images/Fedora-Cloud-Base-34-1.2.x86_64.qcow2',
-          'fedora35': f'{FEDORA_ARCHIVE}/35/Cloud/x86_64/images/Fedora-Cloud-Base-35-1.2.x86_64.qcow2',
-          'fedora36': f'{FEDORA_ARCHIVE}/36/Cloud/x86_64/images/Fedora-Cloud-Base-36-1.5.x86_64.qcow2',
           'fedora37': f'{FEDORA}/37/Cloud/x86_64/images/Fedora-Cloud-Base-37-1.7.x86_64.qcow2',
           'fedora38': f'{FEDORA}/38/Cloud/x86_64/images/Fedora-Cloud-Base-38-1.6.x86_64.qcow2',
           'fedoralatest': 'https://alt.fedoraproject.org/cloud',
@@ -75,15 +67,7 @@ IMAGES = {'almalinux9': f'{ALMA}/9.1/cloud/x86_64/images/AlmaLinux-9-GenericClou
           'dragonflybsd601': f'{BSD}/dragonflybsd/6.0.1/2021-12-11/dragonflybsd-6.0.1-hammer2.qcow2',
           'dragonflybsd622': f'{BSD}/dragonflybsd/6.2.2/2022-09-06/hammer2/dragonflybsd-6.2.2-hammer2-2022-09-06.qcow2',
           'gentoo': f'{GENTOO}/gentoo-openstack-amd64-default-latest.qcow2',
-          'opensuse152': f'{LEAP}/15.2/appliances/openSUSE-Leap-15.2-JeOS.x86_64-OpenStack-Cloud.qcow2',
-          'opensuse153': f'{LEAP}/15.3/appliances/openSUSE-Leap-15.3-JeOS.x86_64-OpenStack-Cloud.qcow2',
           'opensuse154': f'{LEAP}/15.4/appliances/openSUSE-Leap-15.4-JeOS.x86_64-OpenStack-Cloud.qcow2',
-          'tumbleweed': f'{OPENSUSE}/tumbleweed/appliances/openSUSE-Tumbleweed-JeOS.x86_64-OpenStack-Cloud.qcow2',
-          'opensusemicro': f'{LEAP_MIC}/5.4/appliances/openSUSE-Leap-Micro.x86_64-Default.raw.xz',
-          'rhcos46': f'{RHCOS}/4.6',
-          'rhcos47': f'{RHCOS}/4.7',
-          'rhcos48': f'{RHCOS}/4.8',
-          'rhcos49': f'{RHCOS}/4.9',
           'rhcos410': f'{RHCOS}/4.10',
           'rhcos411': f'{RHCOS}/4.11',
           'rhcos412': f'{RHCOS}/4.12',
@@ -92,15 +76,6 @@ IMAGES = {'almalinux9': f'{ALMA}/9.1/cloud/x86_64/images/AlmaLinux-9-GenericClou
           'rhel7': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7',
           'rhel8': 'https://access.redhat.com/downloads/content/479/ver=/rhel---8',
           'rhel9': 'https://access.redhat.com/downloads/content/479/ver=/rhel---9',
-          'ubuntu1804': f'{UBUNTU}/18.04/release/ubuntu-18.04-server-cloudimg-amd64.img',
-          'ubuntu1810': f'{UBUNTU}/18.10/release/ubuntu-18.10-server-cloudimg-amd64.img',
-          'ubuntu1904': f'{UBUNTU}/19.04/release/ubuntu-19.04-server-cloudimg-amd64.img',
-          'ubuntu1910': f'{UBUNTU}/19.10/release/ubuntu-19.10-server-cloudimg-amd64.img',
-          'ubuntu2004': f'{UBUNTU}/20.04/release/ubuntu-20.04-server-cloudimg-amd64.img',
-          'ubuntu2010': f'{UBUNTU}/20.10/release/ubuntu-20.10-server-cloudimg-amd64.img',
-          'ubuntu2104': f'{UBUNTU}/21.04/release/ubuntu-21.04-server-cloudimg-amd64.img',
-          'ubuntu2110': f'{UBUNTU}/21.10/release/ubuntu-21.10-server-cloudimg-amd64.img',
-          'ubuntu2204': f'{UBUNTU}/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img',
           'ubuntu2210': f'{UBUNTU}/22.10/release/ubuntu-22.10-server-cloudimg-amd64.img',
           'ubuntu2304': f'{UBUNTU}/23.04/release/ubuntu-23.04-server-cloudimg-amd64.img',
           'rockylinux8': f'{ROCKY}/8/images/Rocky-8-GenericCloud.latest.x86_64.qcow2',
