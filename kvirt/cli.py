@@ -3894,92 +3894,6 @@ def cli():
     lbcreate_parser.add_argument('name', metavar='NAME', nargs='?')
     lbcreate_parser.set_defaults(func=create_lb)
 
-    profilecreate_desc = 'Create Profile'
-    profilecreate_epilog = f"examples:\n{profilecreate}"
-    profilecreate_parser = argparse.ArgumentParser(add_help=False)
-    profilecreate_parser.add_argument('-i', '--image', help='Image to use', metavar='IMAGE')
-    profilecreate_parser.add_argument('-P', '--param', action='append',
-                                      help='specify parameter or keyword for rendering (can specify multiple)',
-                                      metavar='PARAM')
-    profilecreate_parser.add_argument('profile', metavar='PROFILE')
-    profilecreate_parser.set_defaults(func=create_profile)
-    create_subparsers.add_parser('profile', parents=[profilecreate_parser], description=profilecreate_desc,
-                                 help=profilecreate_desc, epilog=profilecreate_epilog, formatter_class=rawhelp)
-
-    providercreate_desc = 'Install Provider'
-    providercreate_epilog = f"examples:\n{providercreate}"
-    providercreate_parser = create_subparsers.add_parser('provider', help=providercreate_desc,
-                                                         description=providercreate_desc, epilog=providercreate_epilog,
-                                                         formatter_class=rawhelp)
-    providercreate_subparsers = providercreate_parser.add_subparsers(metavar='', dest='subcommand_create_provider')
-
-    awsprovidercreate_desc = 'Install Aws Provider'
-    awsprovidercreate_parser = providercreate_subparsers.add_parser('aws', help=awsprovidercreate_desc,
-                                                                    description=awsprovidercreate_desc)
-    awsprovidercreate_parser.add_argument('-p', '--pip', action='store_true', help='Force pip installation')
-    awsprovidercreate_parser.set_defaults(func=install_provider)
-
-    azureprovidercreate_desc = 'Install Azure Provider'
-    azureprovidercreate_parser = providercreate_subparsers.add_parser('azure', help=azureprovidercreate_desc,
-                                                                      description=azureprovidercreate_desc)
-    azureprovidercreate_parser.add_argument('-p', '--pip', action='store_true', help='Force pip installation')
-    azureprovidercreate_parser.set_defaults(func=install_provider)
-
-    gcpprovidercreate_desc = 'Install Gcp Provider'
-    gcpprovidercreate_parser = providercreate_subparsers.add_parser('gcp', help=gcpprovidercreate_desc,
-                                                                    description=gcpprovidercreate_desc)
-    gcpprovidercreate_parser.add_argument('-p', '--pip', action='store_true', help='Force pip installation')
-    gcpprovidercreate_parser.set_defaults(func=install_provider)
-
-    ibmprovidercreate_desc = 'Install IBM Cloud Provider'
-    ibmprovidercreate_parser = providercreate_subparsers.add_parser('ibm', help=ibmprovidercreate_desc,
-                                                                    description=ibmprovidercreate_desc)
-    ibmprovidercreate_parser.add_argument('-p', '--pip', action='store_true', help='Force pip installation')
-    ibmprovidercreate_parser.set_defaults(func=install_provider)
-
-    kvmprovidercreate_desc = 'Install Kvm Provider'
-    kvmprovidercreate_parser = providercreate_subparsers.add_parser('kvm', help=kvmprovidercreate_desc,
-                                                                    description=kvmprovidercreate_desc)
-    kvmprovidercreate_parser.add_argument('-p', '--pip', action='store_true', help='Force pip installation')
-    kvmprovidercreate_parser.set_defaults(func=install_provider)
-
-    kubevirtprovidercreate_desc = 'Install Kubevirt Provider'
-    kubevirtprovidercreate_parser = providercreate_subparsers.add_parser('kubevirt', help=kubevirtprovidercreate_desc,
-                                                                         description=kubevirtprovidercreate_desc)
-    kubevirtprovidercreate_parser.add_argument('-p', '--pip', action='store_true', help='Force pip installation')
-    kubevirtprovidercreate_parser.set_defaults(func=install_provider)
-
-    openstackprovidercreate_desc = 'Install Openstack Provider'
-    openstackprovidercreate_parser = providercreate_subparsers.add_parser('openstack',
-                                                                          help=openstackprovidercreate_desc,
-                                                                          description=openstackprovidercreate_desc)
-    openstackprovidercreate_parser.add_argument('-p', '--pip', action='store_true', help='Force pip installation')
-    openstackprovidercreate_parser.set_defaults(func=install_provider)
-
-    ovirtprovidercreate_desc = 'Install Ovirt Provider'
-    ovirtprovidercreate_parser = providercreate_subparsers.add_parser('ovirt', help=ovirtprovidercreate_desc,
-                                                                      description=ovirtprovidercreate_desc)
-    ovirtprovidercreate_parser.add_argument('-p', '--pip', action='store_true', help='Force pip installation')
-    ovirtprovidercreate_parser.set_defaults(func=install_provider)
-
-    packetprovidercreate_desc = 'Install Packet Provider'
-    packetprovidercreate_parser = providercreate_subparsers.add_parser('packet', help=packetprovidercreate_desc,
-                                                                       description=packetprovidercreate_desc)
-    packetprovidercreate_parser.add_argument('-p', '--pip', action='store_true', help='Force pip installation')
-    packetprovidercreate_parser.set_defaults(func=install_provider)
-
-    proxmoxprovidercreate_desc = 'Install Proxmox Provider'
-    proxmoxprovidercreate_parser = providercreate_subparsers.add_parser('proxmox', help=proxmoxprovidercreate_desc,
-                                                                        description=proxmoxprovidercreate_desc)
-    proxmoxprovidercreate_parser.add_argument('-p', '--pip', action='store_true', help='Force pip installation')
-    proxmoxprovidercreate_parser.set_defaults(func=install_provider)
-
-    vsphereprovidercreate_desc = 'Install Vsphere Provider'
-    vsphereprovidercreate_parser = providercreate_subparsers.add_parser('vsphere', help=vsphereprovidercreate_desc,
-                                                                        description=vsphereprovidercreate_desc)
-    vsphereprovidercreate_parser.add_argument('-p', '--pip', action='store_true', help='Force pip installation')
-    vsphereprovidercreate_parser.set_defaults(func=install_provider)
-
     networkcreate_desc = 'Create Network'
     networkcreate_epilog = f"examples:\n{networkcreate}"
     networkcreate_parser = create_subparsers.add_parser('network', description=networkcreate_desc,
@@ -4136,6 +4050,92 @@ def cli():
     productcreate_parser.add_argument('product', metavar='PRODUCT')
     productcreate_parser.set_defaults(func=create_product)
 
+    profilecreate_desc = 'Create Profile'
+    profilecreate_epilog = f"examples:\n{profilecreate}"
+    profilecreate_parser = argparse.ArgumentParser(add_help=False)
+    profilecreate_parser.add_argument('-i', '--image', help='Image to use', metavar='IMAGE')
+    profilecreate_parser.add_argument('-P', '--param', action='append',
+                                      help='specify parameter or keyword for rendering (can specify multiple)',
+                                      metavar='PARAM')
+    profilecreate_parser.add_argument('profile', metavar='PROFILE')
+    profilecreate_parser.set_defaults(func=create_profile)
+    create_subparsers.add_parser('profile', parents=[profilecreate_parser], description=profilecreate_desc,
+                                 help=profilecreate_desc, epilog=profilecreate_epilog, formatter_class=rawhelp)
+
+    providercreate_desc = 'Install Provider'
+    providercreate_epilog = f"examples:\n{providercreate}"
+    providercreate_parser = create_subparsers.add_parser('provider', help=providercreate_desc,
+                                                         description=providercreate_desc, epilog=providercreate_epilog,
+                                                         formatter_class=rawhelp)
+    providercreate_subparsers = providercreate_parser.add_subparsers(metavar='', dest='subcommand_create_provider')
+
+    awsprovidercreate_desc = 'Install Aws Provider'
+    awsprovidercreate_parser = providercreate_subparsers.add_parser('aws', help=awsprovidercreate_desc,
+                                                                    description=awsprovidercreate_desc)
+    awsprovidercreate_parser.add_argument('-p', '--pip', action='store_true', help='Force pip installation')
+    awsprovidercreate_parser.set_defaults(func=install_provider)
+
+    azureprovidercreate_desc = 'Install Azure Provider'
+    azureprovidercreate_parser = providercreate_subparsers.add_parser('azure', help=azureprovidercreate_desc,
+                                                                      description=azureprovidercreate_desc)
+    azureprovidercreate_parser.add_argument('-p', '--pip', action='store_true', help='Force pip installation')
+    azureprovidercreate_parser.set_defaults(func=install_provider)
+
+    gcpprovidercreate_desc = 'Install Gcp Provider'
+    gcpprovidercreate_parser = providercreate_subparsers.add_parser('gcp', help=gcpprovidercreate_desc,
+                                                                    description=gcpprovidercreate_desc)
+    gcpprovidercreate_parser.add_argument('-p', '--pip', action='store_true', help='Force pip installation')
+    gcpprovidercreate_parser.set_defaults(func=install_provider)
+
+    ibmprovidercreate_desc = 'Install IBM Cloud Provider'
+    ibmprovidercreate_parser = providercreate_subparsers.add_parser('ibm', help=ibmprovidercreate_desc,
+                                                                    description=ibmprovidercreate_desc)
+    ibmprovidercreate_parser.add_argument('-p', '--pip', action='store_true', help='Force pip installation')
+    ibmprovidercreate_parser.set_defaults(func=install_provider)
+
+    kvmprovidercreate_desc = 'Install Kvm Provider'
+    kvmprovidercreate_parser = providercreate_subparsers.add_parser('kvm', help=kvmprovidercreate_desc,
+                                                                    description=kvmprovidercreate_desc)
+    kvmprovidercreate_parser.add_argument('-p', '--pip', action='store_true', help='Force pip installation')
+    kvmprovidercreate_parser.set_defaults(func=install_provider)
+
+    kubevirtprovidercreate_desc = 'Install Kubevirt Provider'
+    kubevirtprovidercreate_parser = providercreate_subparsers.add_parser('kubevirt', help=kubevirtprovidercreate_desc,
+                                                                         description=kubevirtprovidercreate_desc)
+    kubevirtprovidercreate_parser.add_argument('-p', '--pip', action='store_true', help='Force pip installation')
+    kubevirtprovidercreate_parser.set_defaults(func=install_provider)
+
+    openstackprovidercreate_desc = 'Install Openstack Provider'
+    openstackprovidercreate_parser = providercreate_subparsers.add_parser('openstack',
+                                                                          help=openstackprovidercreate_desc,
+                                                                          description=openstackprovidercreate_desc)
+    openstackprovidercreate_parser.add_argument('-p', '--pip', action='store_true', help='Force pip installation')
+    openstackprovidercreate_parser.set_defaults(func=install_provider)
+
+    ovirtprovidercreate_desc = 'Install Ovirt Provider'
+    ovirtprovidercreate_parser = providercreate_subparsers.add_parser('ovirt', help=ovirtprovidercreate_desc,
+                                                                      description=ovirtprovidercreate_desc)
+    ovirtprovidercreate_parser.add_argument('-p', '--pip', action='store_true', help='Force pip installation')
+    ovirtprovidercreate_parser.set_defaults(func=install_provider)
+
+    packetprovidercreate_desc = 'Install Packet Provider'
+    packetprovidercreate_parser = providercreate_subparsers.add_parser('packet', help=packetprovidercreate_desc,
+                                                                       description=packetprovidercreate_desc)
+    packetprovidercreate_parser.add_argument('-p', '--pip', action='store_true', help='Force pip installation')
+    packetprovidercreate_parser.set_defaults(func=install_provider)
+
+    proxmoxprovidercreate_desc = 'Install Proxmox Provider'
+    proxmoxprovidercreate_parser = providercreate_subparsers.add_parser('proxmox', help=proxmoxprovidercreate_desc,
+                                                                        description=proxmoxprovidercreate_desc)
+    proxmoxprovidercreate_parser.add_argument('-p', '--pip', action='store_true', help='Force pip installation')
+    proxmoxprovidercreate_parser.set_defaults(func=install_provider)
+
+    vsphereprovidercreate_desc = 'Install Vsphere Provider'
+    vsphereprovidercreate_parser = providercreate_subparsers.add_parser('vsphere', help=vsphereprovidercreate_desc,
+                                                                        description=vsphereprovidercreate_desc)
+    vsphereprovidercreate_parser.add_argument('-p', '--pip', action='store_true', help='Force pip installation')
+    vsphereprovidercreate_parser.set_defaults(func=install_provider)
+
     repocreate_desc = 'Create Repo'
     repocreate_epilog = f"examples:\n{repocreate}"
     repocreate_parser = create_subparsers.add_parser('repo', description=repocreate_desc, help=repocreate_desc,
@@ -4144,6 +4144,28 @@ def cli():
     repocreate_parser.add_argument('-u', '--url', help='URL of the repo', metavar='URL', type=valid_url)
     repocreate_parser.add_argument('repo')
     repocreate_parser.set_defaults(func=create_repo)
+
+    securitygroupcreate_desc = 'Create Security Group'
+    securitygroupcreate_epilog = f"examples:\n{securitygroupcreate}"
+    securitygroupcreate_desc = 'Create Security Group'
+    securitygroupcreate_parser = create_subparsers.add_parser('security-group', description=securitygroupcreate_desc,
+                                                              help=securitygroupcreate_desc, parents=[parent_parser],
+                                                              aliases=['sg'], epilog=securitygroupcreate_epilog,
+                                                              formatter_class=rawhelp)
+    securitygroupcreate_parser.add_argument('securitygroup')
+    securitygroupcreate_parser.set_defaults(func=create_securitygroup)
+
+    sushycreate_desc = 'Create Ksushy service'
+    sushycreate_parser = create_subparsers.add_parser('sushy-service', description=sushycreate_desc,
+                                                      help=sushycreate_desc, aliases=['sushy', 'ksushy',
+                                                                                      'ksushy-service'])
+    sushycreate_parser.add_argument('-b', '--bootonce', action='store_true', help='Enable bootonce hack')
+    sushycreate_parser.add_argument('-i', '--ipv6', action='store_true', help='Listen on ipv6')
+    sushycreate_parser.add_argument('--port', help='Port where to listen', default=9000)
+    sushycreate_parser.add_argument('-s', '--ssl', action='store_true', help='Enable ssl')
+    sushycreate_parser.add_argument('-u', '--user', help='User for authentication')
+    sushycreate_parser.add_argument('-p', '--password', help='Password for authentication')
+    sushycreate_parser.set_defaults(func=create_ksushy_service)
 
     vmcreate_desc = 'Create Vm'
     vmcreate_epilog = f"examples:\n{vmcreate}"
@@ -4198,28 +4220,6 @@ def cli():
     create_subparsers.add_parser('vm-nic', parents=[create_vmnic_parser], description=create_vmnic_desc,
                                  help=create_vmnic_desc, aliases=['nic'],
                                  epilog=create_vmnic_epilog, formatter_class=rawhelp)
-
-    securitygroupcreate_desc = 'Create Security Group'
-    securitygroupcreate_epilog = f"examples:\n{securitygroupcreate}"
-    securitygroupcreate_desc = 'Create Security Group'
-    securitygroupcreate_parser = create_subparsers.add_parser('security-group', description=securitygroupcreate_desc,
-                                                              help=securitygroupcreate_desc, parents=[parent_parser],
-                                                              aliases=['sg'], epilog=securitygroupcreate_epilog,
-                                                              formatter_class=rawhelp)
-    securitygroupcreate_parser.add_argument('securitygroup')
-    securitygroupcreate_parser.set_defaults(func=create_securitygroup)
-
-    sushycreate_desc = 'Create Ksushy service'
-    sushycreate_parser = create_subparsers.add_parser('sushy-service', description=sushycreate_desc,
-                                                      help=sushycreate_desc, aliases=['sushy', 'ksushy',
-                                                                                      'ksushy-service'])
-    sushycreate_parser.add_argument('-b', '--bootonce', action='store_true', help='Enable bootonce hack')
-    sushycreate_parser.add_argument('-i', '--ipv6', action='store_true', help='Listen on ipv6')
-    sushycreate_parser.add_argument('--port', help='Port where to listen', default=9000)
-    sushycreate_parser.add_argument('-s', '--ssl', action='store_true', help='Enable ssl')
-    sushycreate_parser.add_argument('-u', '--user', help='User for authentication')
-    sushycreate_parser.add_argument('-p', '--password', help='Password for authentication')
-    sushycreate_parser.set_defaults(func=create_ksushy_service)
 
     vmsnapshotcreate_desc = 'Create Snapshot Of Vm'
     vmsnapshotcreate_parser = create_subparsers.add_parser('vm-snapshot', description=vmsnapshotcreate_desc,
