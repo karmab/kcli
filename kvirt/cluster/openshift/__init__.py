@@ -241,8 +241,11 @@ def same_release_images(version='stable', tag='4.13', pull_secret='openshift_pul
        and not existing.startswith('registry.ci.openshift.org/ocp/release'):
         warning("Assuming your disconnected openshift-install has the correct version")
         return True
-    offline = offline_image(version=version, tag=tag, pull_secret=pull_secret)
-    return offline == existing
+    try:
+        offline = offline_image(version=version, tag=tag, pull_secret=pull_secret)
+        return offline == existing
+    except:
+        return False
 
 
 def get_installer_minor(installer_version):
