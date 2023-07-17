@@ -254,6 +254,18 @@ $ kcli create kube openshift -P ctlplanes=1 -P workers=2 myopenshift
 $ kcli create kube openshift --paramfile=myparameters.yml myopenshift
 """
 
+openshiftsnocreate = """# Create an SNO openshift iso named mysno with default values
+$ kcli create openshift-sno myopenshift
+
+# Do the same but wait for install
+$ kcli create openshift-sno -P sno_wait=true myopenshift
+
+# Inject an extra vip in the ISO
+$ kcli create openshift-sno -P api_ip=192.168.1.251 myopenshift
+
+$ kcli create openshift-sno --paramfile=myparameters.yml myopenshift
+"""
+
 vmdatacreate = """# Generate a basic ignition file for rhcos4.6
 $ kcli create vmdata -i rhcos46
 

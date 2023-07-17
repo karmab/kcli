@@ -13,7 +13,7 @@ from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsol
 from kvirt.examples import disconnectedcreate, appopenshiftcreate, plantemplatecreate, kubehypershiftcreate
 from kvirt.examples import workflowcreate, kubegenericscale, kubek3sscale, kubeopenshiftscale, kubegkescale
 from kvirt.examples import changelog, starthosts, stophosts, infohosts, ocdownload, openshiftdownload, ocmirrordownload
-from kvirt.examples import kubeekscreate, kubeeksscale, kubeakscreate, kubeaksscale
+from kvirt.examples import kubeekscreate, kubeeksscale, kubeakscreate, kubeaksscale, openshiftsnocreate
 from kvirt.examples import networkcreate, securitygroupcreate, profilecreate, vmupdate, vmlist, providercreate
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
@@ -1814,7 +1814,8 @@ def create_kube(args):
         error(f"parameters that contain master word need to be replaced with ctlplane. Found {master_parameters}")
         sys.exit(1)
     client = overrides.get('client', args.client)
-    offline = kubetype == 'openshift' and 'sno' in overrides and (client == 'fake' or common.need_fake())
+    sno_type = kubetype == 'openshift-sno' or (kubetype == 'openshift' and 'sno' in overrides and overrides['sno'])
+    offline = sno_type and (client == 'fake' or common.need_fake())
     config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
                      offline=offline)
     if overrides.get('force', args.force):
@@ -1886,6 +1887,12 @@ def create_hypershift_kube(args):
 def create_openshift_kube(args):
     """Create Openshift kube"""
     args.type = 'openshift'
+    create_kube(args)
+
+
+def create_openshift_sno(args):
+    """Create Openshift sno"""
+    args.type = 'openshift-sno'
     create_kube(args)
 
 
@@ -2336,6 +2343,8 @@ def info_kube(args):
     else:
         if kubetype == 'openshift':
             baseconfig.info_kube_openshift(quiet=True)
+        if kubetype == 'openshift-sno':
+            baseconfig.info_openshift_sno(quiet=True)
         elif kubetype == 'hypershift':
             baseconfig.info_kube_hypershift(quiet=True)
         elif kubetype == 'microshift':
@@ -2407,6 +2416,11 @@ def info_microshift_kube(args):
 
 def info_openshift_kube(args):
     args.kubetype = 'openshift'
+    info_kube(args)
+
+
+def info_openshift_sno(args):
+    args.kubetype = 'openshift-sno'
     info_kube(args)
 
 
@@ -4001,6 +4015,17 @@ def cli():
     create_subparsers.add_parser('openshift-iso', parents=[isocreate_parser], description=isocreate_desc,
                                  help=isocreate_desc, epilog=isocreate_epilog, formatter_class=rawhelp)
 
+    openshiftsnocreate_desc = 'Create Openshift SNO'
+    openshiftsnocreate_epilog = f"examples:\n{openshiftsnocreate}"
+    openshiftsnocreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
+    openshiftsnocreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
+    openshiftsnocreate_parser.add_argument('-t', '--threaded', help='Run threaded', action='store_true')
+    openshiftsnocreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
+    openshiftsnocreate_parser.set_defaults(func=create_openshift_sno)
+    create_subparsers.add_parser('openshift-sno', parents=[openshiftsnocreate_parser],
+                                 description=openshiftsnocreate_desc, help=openshiftsnocreate_desc,
+                                 epilog=openshiftsnocreate_epilog, formatter_class=rawhelp)
+
     pipelinecreate_desc = 'Create Pipeline'
     pipelinecreate_parser = create_subparsers.add_parser('pipeline', description=pipelinecreate_desc,
                                                          help=pipelinecreate_desc)
@@ -4743,6 +4768,12 @@ def cli():
                                                     aliases=['net'])
     networkinfo_parser.add_argument('name', metavar='NETWORK')
     networkinfo_parser.set_defaults(func=info_network)
+
+    openshiftsnoinfo_desc = 'Info Openshift SNO'
+    openshiftsnoinfo_parser = info_subparsers.add_parser('openshift-sno', description=openshiftsnoinfo_desc,
+                                                         help=openshiftsnoinfo_desc, parents=[output_parser])
+    openshiftsnoinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
+    openshiftsnoinfo_parser.set_defaults(func=info_openshift_sno)
 
     plantypeinfo_desc = 'Info Plan Type'
     plantypeinfo_parser = info_subparsers.add_parser('plan-type', description=plantypeinfo_desc, help=plantypeinfo_desc,

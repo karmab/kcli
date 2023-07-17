@@ -708,7 +708,8 @@ class Kbaseconfig:
             if not quiet:
                 pprint("Parsing kcli_default.yml for default parameters")
             parameters.update(common.get_parameters(parameterfile))
-        inputfile_default = "%s_default%s" % os.path.splitext(inputfile)
+        inputfile_split = os.path.splitext(os.path.basename(inputfile))
+        inputfile_default = f"{inputfile_split[0]}_default{inputfile_split[1]}"
         if os.path.exists(f"{basedir}/{inputfile_default}"):
             parameterfile = f"{basedir}/{inputfile_default}"
             parameters.update(common.get_parameters(parameterfile))
@@ -1329,6 +1330,11 @@ class Kbaseconfig:
     def info_kube_openshift(self, quiet, web=False):
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
         inputfile = f'{plandir}/ctlplanes.yml'
+        self.info_plan(inputfile, quiet=quiet, web=web)
+
+    def info_openshift_sno(self, quiet, web=False):
+        plandir = os.path.dirname(openshift.create.__code__.co_filename)
+        inputfile = f'{plandir}/sno/kcli_default.yml'
         self.info_plan(inputfile, quiet=quiet, web=web)
 
     def list_apps_generic(self, quiet=True):

@@ -1,0 +1,25 @@
+info: |
+    Deploys an openshift SNO ISO using openshift-install, particularly suited at Baremetal
+    With sno_wait, we wait for installation to finish
+    This typically requires to be able to reach the cluster API through DNS
+    a VIP can be added to the ISO to ease connection.
+    The baremetal_hosts array can be used to use redfish to start the node using an iso
+    This assumes a web server such as apache/nging to be running where this process is launched from.
+    baremetal options exist to only copy the ISO to a given place (useful if you run the web server using a container by yourself)
+sno_disk:
+sno_cloud_remove_lb: true
+sno_disable_nics: []
+sno_ctplanes: false
+sno_workers: false
+sno_wait: false
+sno_nic:
+sno_localhost_fix: false
+sno_cpuset:
+sno_relocate: false
+baremetal_user: root
+baremetal_password: calvin
+baremetal_hosts: []
+baremetal_web: true
+baremetal_web_port: 80
+baremetal_web_dir: /var/www/html
+baremetal_sub_dir:

@@ -2846,6 +2846,9 @@ class Kconfig(Kbaseconfig):
             self.get_baremetal_hosts_from_confpool(cluster, baremetalpool, overrides=overrides)
         if kubetype == 'openshift':
             result = self.create_kube_openshift(cluster, overrides=overrides)
+        elif kubetype == 'openshift-sno':
+            overrides['sno'] = True
+            result = self.create_kube_openshift(cluster, overrides=overrides)
         elif kubetype == 'hypershift':
             result = self.create_kube_hypershift(cluster, overrides=overrides)
         elif kubetype == 'microshift':
