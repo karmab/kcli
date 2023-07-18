@@ -885,16 +885,26 @@ class Kaws(object):
         vpc = conn.create_vpc(**vpcargs)
         vpcid = vpc['Vpc']['VpcId']
         conn.create_tags(Resources=[vpcid], Tags=Tags)
+        routetableid = None
         if overrides.get('create_subnet', True):
             vpcargs['VpcId'] = vpcid
             subnet = conn.create_subnet(**vpcargs)
             subnetid = subnet['Subnet']['SubnetId']
             conn.create_tags(Resources=[subnetid], Tags=Tags)
+            response = conn.describe_route_tables(Filters=[{'Name': 'vpc-id', 'Values': [vpcid]}])
+            routetableid = response['RouteTables'][0]['RouteTableId']
         if nat:
             gateway = conn.create_internet_gateway()
             gatewayid = gateway['InternetGateway']['InternetGatewayId']
             gateway = self.resource.InternetGateway(gatewayid)
             gateway.attach_to_vpc(VpcId=vpcid)
+            conn.create_tags(Resources=[gatewayid], Tags=Tags)
+            if routetableid is not None:
+                conn.create_route(DestinationCidrBlock='0.0.0.0/0', GatewayId=gatewayid, RouteTableId=routetableid)
+            response = conn.describe_security_groups(Filters=[{'Name': 'vpc-id', 'Values': [vpcid]}])
+            sgid = response['SecurityGroups'][0]['GroupId']
+            conn.authorize_security_group_ingress(CidrIp='0.0.0.0/0', GroupId=sgid, IpProtocol='-1',
+                                                  FromPort=0, ToPort=65535)
         return {'result': 'success'}
 
     def delete_network(self, name=None, cidr=None, force=False):
@@ -936,6 +946,8 @@ class Kaws(object):
         networks = {}
         vpcs = conn.describe_vpcs()
         for vpc in vpcs['Vpcs']:
+            if self.debug:
+                print(vpc)
             plan = None
             vpcid = vpc['VpcId']
             networkname = vpcid
@@ -966,6 +978,8 @@ class Kaws(object):
             Filters = [{'Name': 'vpc-id', 'Values': [networkname]}]
             subnets = conn.describe_subnets(Filters=Filters)
             for subnet in subnets['Subnets']:
+                if self.debug:
+                    print(subnet)
                 subnetid = subnet['SubnetId']
                 cidr = subnet['CidrBlock']
                 az = subnet['AvailabilityZone']
