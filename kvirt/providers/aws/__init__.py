@@ -145,6 +145,7 @@ class Kaws(object):
         vpcs = conn.describe_vpcs()
         subnets = conn.describe_subnets()
         for index, net in enumerate(nets):
+            netpublic = overrides.get('public', True)
             networkinterface = {'DeleteOnTermination': True, 'Description': f"eth{index}", 'DeviceIndex': index,
                                 'Groups': ['string'], 'SubnetId': 'string'}
             ip = None
@@ -155,10 +156,12 @@ class Kaws(object):
                 netname = net['name']
                 ip = net.get('ip')
                 alias = net.get('alias')
-                netpublic = net.get('public', True)
-            # if securitygroups:
-            #    netpublic = False
-            networkinterface['AssociatePublicIpAddress'] = netpublic if index == 0 else False
+                netpublic = net.get('public', netpublic)
+            if index == 0:
+                if netpublic and len(nets) > 1:
+                    warning("Forcing netpublic to false as you have more than one nic")
+                    netpublic = False
+                networkinterface['AssociatePublicIpAddress'] = netpublic
             if netname in [subnet['SubnetId'] for subnet in subnets['Subnets']]:
                 vpcid = [subnet['VpcId'] for subnet in subnets['Subnets'] if subnet['SubnetId'] == netname][0]
             elif netname == 'default':
@@ -544,7 +547,6 @@ class Kaws(object):
         yamlinfo['name'] = name
         yamlinfo['status'] = state
         yamlinfo['az'] = az
-        yamlinfo['ip'] = vm.get('PublicIpAddress')
         machinetype = vm['InstanceType']
         flavor = conn.describe_instance_types(InstanceTypes=[machinetype])['InstanceTypes'][0]
         yamlinfo['cpus'] = flavor['VCpuInfo']['DefaultVCpus']
@@ -561,9 +563,9 @@ class Kaws(object):
             private_ip = interface['PrivateIpAddresses'][0]['PrivateIpAddress']
             nets.append({'device': device, 'mac': mac, 'net': network, 'type': private_ip})
             yamlinfo['private_ip'] = private_ip
-
         if nets:
             yamlinfo['nets'] = nets
+        yamlinfo['ip'] = vm.get('PublicIpAddress') or yamlinfo.get('private_ip')
         disks = []
         for index, disk in enumerate(vm['BlockDeviceMappings']):
             devname = disk['DeviceName']
@@ -1171,6 +1173,7 @@ class Kaws(object):
         for port in ports:
             sg.authorize_ingress(GroupId=sgid, FromPort=port, ToPort=port, IpProtocol='tcp', CidrIp="0.0.0.0/0")
         lbinfo = {"LoadBalancerName": clean_name, "Listeners": Listeners, "SecurityGroups": [sgid]}
+        lbinfo['Scheme'] = 'internal' if internal else 'internet-facing'
         if subnetid is not None:
             lbinfo['Subnets'] = [subnetid]
         else:
