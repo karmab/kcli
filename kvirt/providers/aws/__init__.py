@@ -883,10 +883,11 @@ class Kaws(object):
         vpc = conn.create_vpc(**vpcargs)
         vpcid = vpc['Vpc']['VpcId']
         conn.create_tags(Resources=[vpcid], Tags=Tags)
-        vpcargs['VpcId'] = vpcid
-        subnet = conn.create_subnet(**vpcargs)
-        subnetid = subnet['Subnet']['SubnetId']
-        conn.create_tags(Resources=[subnetid], Tags=Tags)
+        if overrides.get('create_subnet', True):
+            vpcargs['VpcId'] = vpcid
+            subnet = conn.create_subnet(**vpcargs)
+            subnetid = subnet['Subnet']['SubnetId']
+            conn.create_tags(Resources=[subnetid], Tags=Tags)
         if nat:
             gateway = conn.create_internet_gateway()
             gatewayid = gateway['InternetGateway']['InternetGatewayId']
@@ -1435,8 +1436,15 @@ class Kaws(object):
         return {'result': 'success'}
 
     def info_subnet(self, name):
-        print("not implemented")
-        return {}
+        subnets = self.conn.describe_subnets()
+        for subnet in subnets['Subnets']:
+            subnetid = subnet['SubnetId']
+            tags = [tag for tag in subnet.get('Tags', []) if tag['Key'] == 'Name' and tag['Value'] == name]
+            if subnetid == name or tags:
+                return subnet
+        msg = f"Subnet {name} not found"
+        error(msg)
+        return {'result': 'failure', 'reason': msg}
 
     def eks_get_network(self, netname):
         conn = self.conn
@@ -1513,3 +1521,46 @@ class Kaws(object):
                            region_name=self.region)
         response = iam.list_roles(MaxItems=1000)
         return [role['RoleName'] for role in response['Roles']]
+
+    def create_subnet(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
+        conn = self.conn
+        try:
+            subnet = ip_network(cidr)
+        except:
+            return {'result': 'failure', 'reason': f"Invalid Cidr {cidr}"}
+        if str(subnet.version) == "6":
+            msg = 'Primary cidr needs to be ipv4 in aws. Use dual to inject ipv6 or set aws_ipv6 parameter'
+            return {'result': 'failure', 'reason': msg}
+        network = overrides.get('network', 'default')
+        nets = self.list_networks()
+        if network == 'default':
+            networks = [n for n in nets if nets[n]['mode'] == 'default']
+        else:
+            networks = [n for n in nets if n == network or nets[n]['domain'] == network]
+        if not networks:
+            msg = f'Network {network} not found'
+            return {'result': 'failure', 'reason': msg}
+        else:
+            vpcid = networks[0]
+        Tags = [{"Key": "Name", "Value": name}, {"Key": "Plan", "Value": plan}]
+        args = {"CidrBlock": cidr, 'VpcId': vpcid}
+        if 'dual_cidr' in overrides:
+            args["Ipv6CidrBlock"] = overrides['dual_cidr']
+            args["Ipv6Pool"] = overrides['dual_cidr']
+        if 'aws_ipv6' in overrides and overrides['aws_ipv6']:
+            args["AmazonProvidedIpv6CidrBlock"] = True
+        subnet = conn.create_subnet(**args)
+        subnetid = subnet['Subnet']['SubnetId']
+        conn.create_tags(Resources=[subnetid], Tags=Tags)
+        return {'result': 'success'}
+
+    def delete_subnet(self, name):
+        conn = self.conn
+        subnets = conn.describe_subnets()
+        for subnet in subnets['Subnets']:
+            subnetid = subnet['SubnetId']
+            tags = [tag for tag in subnet.get('Tags', []) if tag['Key'] == 'Name' and tag['Value'] == name]
+            if subnetid == name or tags:
+                conn.delete_subnet(SubnetId=subnetid)
+                return {'result': 'success'}
+        return {'result': 'failure', 'reason': f"Subnet {name} not found"}

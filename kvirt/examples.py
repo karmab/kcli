@@ -621,6 +621,9 @@ $ kcli create network -c 10.0.0.0/24 -P default=true my-default-vpc
 
 # Create a network on GCP with an alias/dual network and a specific name
 $ kcli create network -P cidr=192.168.123.0/24 -P dual_cidr=192.168.124.0/24 -P dual_name=podnetwork mynetwork
+
+# Create a network on AZURE without an associated subnet
+$ kcli create network -P cidr=11.0.0.0.0/16 -P create_subnet=False mynetwork
 """
 
 profilecreate = """# Create profile with specific image
@@ -631,6 +634,19 @@ $ kcli create profile -P image=ubuntu-22.10-server-cloudimg-amd64.img -P memory=
 
 # Create a profile without image, with uefi and without startingthe corresponding vm
 $ kcli create profile -P uefi=true -P start=false -P memory=4096 -P disks=[20,30] myprofile
+"""
+
+subnetcreate = """# Create a subnet
+$ kcli create subnet -c 192.168.123.0/24 myubnet
+
+# Create a network with specific dhcp range
+$ kcli create subnet -c 192.168.123.0/24 -P dhcp_start=192.168.123.40 -P dhcp_end=192.168.123.60 mysubnet
+
+# Create a network on AWS and make it default vpc
+$ kcli create subnet -c 10.0.0.0/24 -P default=true my-default-vpc
+
+# Create a network on GCP with an alias/dual network and a specific name
+$ kcli create subnet  -P cidr=192.168.123.0/24 -P dual_cidr=192.168.124.0/24 -P dual_name=podnetwork mysubnet
 """
 
 vmupdate = """# Update memory and cpu of a vm

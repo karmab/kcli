@@ -878,25 +878,26 @@ class Kgcp(object):
         region = self.region
         body = {'name': name, 'autoCreateSubnetworks': True if cidr is None else False}
         operation = conn.networks().insert(project=project, body=body).execute()
-        networkpath = operation["targetLink"]
         self._wait_for_operation(operation)
-        if cidr is not None:
-            try:
-                ip_network(cidr)
-            except:
-                return {'result': 'failure', 'reason': f"Invalid Cidr {cidr}"}
-            regionpath = f"https://www.googleapis.com/compute/v1/projects/{project}/regions/{region}"
-            subnet_body = {'name': name, "ipCidrRange": cidr, 'network': networkpath, "region": regionpath}
-            if 'dual_cidr' in overrides:
-                dual_cidr = overrides['dual_cidr']
+        if overrides.get('create_subnet', True):
+            if cidr is not None:
                 try:
-                    ip_network(dual_cidr)
+                    ip_network(cidr)
                 except:
-                    return {'result': 'failure', 'reason': f"Invalid Dual Cidr {dual_cidr}"}
-                dual_name = overrides.get('dual_name') or f"dual-{name}"
-                subnet_body['secondaryIpRanges'] = [{"rangeName": dual_name, "ipCidrRange": dual_cidr}]
-            operation = conn.subnetworks().insert(region=region, project=project, body=subnet_body).execute()
-            self._wait_for_operation(operation)
+                    return {'result': 'failure', 'reason': f"Invalid Cidr {cidr}"}
+                networkpath = operation["targetLink"]
+                regionpath = f"https://www.googleapis.com/compute/v1/projects/{project}/regions/{region}"
+                subnet_body = {'name': name, "ipCidrRange": cidr, 'network': networkpath, "region": regionpath}
+                if 'dual_cidr' in overrides:
+                    dual_cidr = overrides['dual_cidr']
+                    try:
+                        ip_network(dual_cidr)
+                    except:
+                        return {'result': 'failure', 'reason': f"Invalid Dual Cidr {dual_cidr}"}
+                    dual_name = overrides.get('dual_name') or f"dual-{name}"
+                    subnet_body['secondaryIpRanges'] = [{"rangeName": dual_name, "ipCidrRange": dual_cidr}]
+                operation = conn.subnetworks().insert(region=region, project=project, body=subnet_body).execute()
+                self._wait_for_operation(operation)
         allowed = {"IPProtocol": "tcp", "ports": ["22"]}
         firewall_body = {'name': f'allow-ssh-{name}', 'network': f'global/networks/{name}',
                          'sourceRanges': ['0.0.0.0/0'], 'allowed': [allowed]}
@@ -1622,3 +1623,42 @@ class Kgcp(object):
         if dual_cidrs:
             result['dual_cidrs'] = dual_cidrs
         return result
+
+    def create_subnet(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
+        conn = self.conn
+        project = self.project
+        region = self.region
+        network = overrides.get('network', name)
+        if network not in self.list_networks():
+            msg = f'Network {network} not found'
+            return {'result': 'failure', 'reason': msg}
+        try:
+            ip_network(cidr)
+        except:
+            return {'result': 'failure', 'reason': f"Invalid Cidr {cidr}"}
+        networkpath = self.conn.networks().get(project=project, network=network).execute()['selfLink']
+        regionpath = f"https://www.googleapis.com/compute/v1/projects/{project}/regions/{region}"
+        subnet_body = {'name': name, "ipCidrRange": cidr, 'network': networkpath, "region": regionpath}
+        if 'dual_cidr' in overrides:
+            dual_cidr = overrides['dual_cidr']
+            try:
+                ip_network(dual_cidr)
+            except:
+                return {'result': 'failure', 'reason': f"Invalid Dual Cidr {dual_cidr}"}
+            dual_name = overrides.get('dual_name') or f"dual-{name}"
+            subnet_body['secondaryIpRanges'] = [{"rangeName": dual_name, "ipCidrRange": dual_cidr}]
+        operation = conn.subnetworks().insert(region=region, project=project, body=subnet_body).execute()
+        self._wait_for_operation(operation)
+        return {'result': 'success'}
+
+    def delete_subnet(self, name):
+        conn = self.conn
+        project = self.project
+        region = self.region
+        subnets = self.list_subnets()
+        if name not in subnets:
+            msg = f'Subnet {name} not found'
+            return {'result': 'failure', 'reason': msg}
+        operation = conn.subnetworks().delete(region=region, project=project, subnetwork=name).execute()
+        self._wait_for_operation(operation)
+        return {'result': 'success'}

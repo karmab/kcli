@@ -1344,3 +1344,11 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
     def info_subnet(self, name):
         print("not implemented")
         return {}
+
+    def create_subnet(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
+        print("not implemented")
+        return {'result': 'success'}
+
+    def delete_subnet(self, name):
+        print("not implemented")
+        return {'result': 'success'}

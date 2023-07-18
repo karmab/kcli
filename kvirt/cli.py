@@ -13,7 +13,7 @@ from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsol
 from kvirt.examples import disconnectedcreate, appopenshiftcreate, plantemplatecreate, kubehypershiftcreate
 from kvirt.examples import workflowcreate, kubegenericscale, kubek3sscale, kubeopenshiftscale, kubegkescale
 from kvirt.examples import changelog, starthosts, stophosts, infohosts, ocdownload, openshiftdownload, ocmirrordownload
-from kvirt.examples import kubeekscreate, kubeeksscale, kubeakscreate, kubeaksscale, openshiftsnocreate
+from kvirt.examples import kubeekscreate, kubeeksscale, kubeakscreate, kubeaksscale, openshiftsnocreate, subnetcreate
 from kvirt.examples import networkcreate, securitygroupcreate, profilecreate, vmupdate, vmlist, providercreate
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
@@ -3504,6 +3504,48 @@ def create_web_service(args):
     baseconfig.deploy_web_service(port=args.port, ipv6=args.ipv6, ssl=args.ssl)
 
 
+def create_subnet(args):
+    """Create Subnet"""
+    name = args.name
+    overrides = handle_parameters(args.param, args.paramfile)
+    isolated = overrides.get('isolated') or args.isolated
+    cidr = overrides.get('cidr') or args.cidr
+    if cidr is None:
+        error("Missing Cidr")
+        sys.exit(1)
+    dhcp = overrides.get('dhcp')
+    nodhcp = not dhcp if dhcp is not None else args.nodhcp
+    domain = overrides.get('domain') or args.domain
+    plan = overrides.get('plan', 'kvirt')
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    k = config.k
+    if name is None:
+        error("Missing Subnet name")
+        sys.exit(1)
+    nat = not isolated
+    dhcp = not nodhcp
+    if args.dual is not None:
+        overrides['dual_cidr'] = args.dual
+    if args.dualname is not None:
+        overrides['dual_name'] = args.dualname
+    result = k.create_subnet(name, cidr, dhcp=dhcp, nat=nat, domain=domain, overrides=overrides, plan=plan)
+    common.handle_response(result, name, element='Subnet')
+
+
+def delete_subnet(args):
+    """Delete Subnet"""
+    yes = args.yes
+    yes_top = args.yes_top
+    if not yes and not yes_top:
+        common.confirm("Are you sure?")
+    names = args.names
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    k = config.k
+    for name in names:
+        result = k.delete_subnet(name=name)
+        common.handle_response(result, name, element='Subnet', action='deleted')
+
+
 def cli():
     """
 
@@ -4155,6 +4197,21 @@ def cli():
     securitygroupcreate_parser.add_argument('securitygroup')
     securitygroupcreate_parser.set_defaults(func=create_securitygroup)
 
+    subnetcreate_desc = 'Create Subnet'
+    subnetcreate_epilog = f"examples:\n{subnetcreate}"
+    subnetcreate_parser = create_subparsers.add_parser('subnet', description=subnetcreate_desc,
+                                                       help=subnetcreate_desc, parents=[parent_parser],
+                                                       epilog=subnetcreate_epilog, formatter_class=rawhelp,
+                                                       aliases=['subnet'])
+    subnetcreate_parser.add_argument('-i', '--isolated', action='store_true', help='Isolated Subnet')
+    subnetcreate_parser.add_argument('-c', '--cidr', help='Cidr of the net', metavar='CIDR')
+    subnetcreate_parser.add_argument('--domain', help='DNS domain. Defaults to subnet name')
+    subnetcreate_parser.add_argument('-d', '--dual', help='Cidr of dual net', metavar='DUAL')
+    subnetcreate_parser.add_argument('--dualname', help='Dual/Alias name. Gcp specific')
+    subnetcreate_parser.add_argument('--nodhcp', action='store_true', help='Disable dhcp on the net')
+    subnetcreate_parser.add_argument('name', metavar='NETWORK')
+    subnetcreate_parser.set_defaults(func=create_subnet)
+
     sushycreate_desc = 'Create Ksushy service'
     sushycreate_parser = create_subparsers.add_parser('sushy-service', description=sushycreate_desc,
                                                       help=sushycreate_desc, aliases=['sushy', 'ksushy',
@@ -4425,6 +4482,14 @@ def cli():
     repodelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     repodelete_parser.add_argument('repo')
     repodelete_parser.set_defaults(func=delete_repo)
+
+    subnetdelete_desc = 'Delete Subnet'
+    subnetdelete_parser = delete_subparsers.add_parser('subnet', description=subnetdelete_desc,
+                                                       help=subnetdelete_desc,
+                                                       aliases=['subnetwork', 'subnetworks', 'subnets'])
+    subnetdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    subnetdelete_parser.add_argument('names', metavar='SUBNETS', nargs='+')
+    subnetdelete_parser.set_defaults(func=delete_subnet)
 
     vmdelete_desc = 'Delete Vm'
     vmdelete_parser = argparse.ArgumentParser(add_help=False)

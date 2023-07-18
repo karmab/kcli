@@ -1448,3 +1448,11 @@ class Kibm(object):
     def info_subnet(self, name):
         print("not implemented")
         return {}
+
+    def create_subnet(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
+        print("not implemented")
+        return {'result': 'success'}
+
+    def delete_subnet(self, name):
+        print("not implemented")
+        return {'result': 'success'}

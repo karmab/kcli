@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from base64 import b64encode
+from ipaddress import ip_network
 from kvirt import common
 from kvirt.defaults import IMAGES, METADATA_FIELDS
 from kvirt.common import error, warning, pprint
@@ -724,10 +725,20 @@ class Kazure(object):
         return {'result': 'success'}
 
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
+        if cidr is not None:
+            try:
+                ip_network(cidr)
+            except:
+                return {'result': 'failure', 'reason': f"Invalid Cidr {cidr}"}
+        else:
+            return {'result': 'failure', 'reason': "Cidr needed"}
         data = {'location': self.location, 'address_space': {'address_prefixes': [cidr]}, 'tags': {'plan': plan}}
         result = self.network_client.virtual_networks.begin_create_or_update(self.resource_group, name, data)
         result.wait()
-        self.network_client.subnets.begin_create_or_update(self.resource_group, name, name, {'address_prefix': cidr})
+        if overrides.get('create_subnet', True):
+            subnet = name
+            self.network_client.subnets.begin_create_or_update(self.resource_group, name,
+                                                               subnet, {'address_prefix': cidr})
         return {'result': 'success'}
 
     def delete_network(self, name=None, cidr=None, force=False):
@@ -739,11 +750,12 @@ class Kazure(object):
         return []
 
     def list_networks(self):
+        resource_group = self.resource_group
         networks = {}
         network_client = self.network_client
-        for network in network_client.virtual_networks.list(self.resource_group):
+        for network in network_client.virtual_networks.list(resource_group):
             networkname = network.name
-            cidr = ''
+            cidr = network_client.virtual_networks.get(resource_group, networkname).address_space.address_prefixes[0]
             dhcp = True
             domain = network.resource_guid
             mode = ''
@@ -1123,4 +1135,28 @@ class Kazure(object):
         result.wait()
         ports = [22] + ports
         self.create_security_group(f'{name}-sg', overrides={'ports': ports})
+        return {'result': 'success'}
+
+    def create_subnet(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
+        try:
+            ip_network(cidr)
+        except:
+            return {'result': 'failure', 'reason': f"Invalid Cidr {cidr}"}
+        data = {'address_prefix': cidr, 'tags': {'plan': plan}}
+        network = overrides.get('network', name)
+        if network not in self.list_networks():
+            msg = f'Network {network} not found'
+            return {'result': 'failure', 'reason': msg}
+        self.network_client.subnets.begin_create_or_update(self.resource_group, network, name, data)
+        return {'result': 'success'}
+
+    def delete_subnet(self, name):
+        subnets = self.list_subnets()
+        if name not in subnets:
+            msg = f'Subnet {name} not found'
+            return {'result': 'failure', 'reason': msg}
+        else:
+            network = os.path.basename(subnets[name]['network'])
+        result = self.network_client.subnets.begin_delete(self.resource_group, network, name)
+        result.wait()
         return {'result': 'success'}
