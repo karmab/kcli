@@ -937,18 +937,18 @@ class Kaws(object):
         vpcs = conn.describe_vpcs()
         for vpc in vpcs['Vpcs']:
             plan = None
-            networkname = vpc['VpcId']
+            vpcid = vpc['VpcId']
+            networkname = vpcid
             cidr = vpc['CidrBlock']
-            domain = ''
             if 'Tags' in vpc:
                 for tag in vpc['Tags']:
                     if tag['Key'] == 'Name':
-                        domain = tag['Value']
+                        networkname = tag['Value']
                     if tag['Key'] == 'Plan':
                         plan = tag['Value']
             mode = 'default' if vpc['IsDefault'] else 'N/A'
             dhcp = vpc['DhcpOptionsId']
-            networks[networkname] = {'cidr': cidr, 'dhcp': dhcp, 'domain': domain, 'type': 'routed', 'mode': mode}
+            networks[networkname] = {'cidr': cidr, 'dhcp': dhcp, 'domain': vpcid, 'type': 'routed', 'mode': mode}
             if plan is not None:
                 networks[networkname]['plan'] = plan
         return networks
