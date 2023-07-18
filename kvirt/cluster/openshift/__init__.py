@@ -875,7 +875,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         update_pull_secret(pull_secret, disconnected_url, disconnected_user, disconnected_password)
         ori_tag = tag
         if '/' not in str(tag):
-            tag = f'{disconnected_url}/openshift/release-images:{tag}'
+            tag = f'{disconnected_url}/openshift/release-images:{tag}-{arch}'
             os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = tag
         pprint(f"Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to {tag}")
         data['openshift_release_image'] = tag
@@ -1055,12 +1055,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                  shell=True)
             pprint("Updating disconnected registry")
             synccmd = f"oc adm release mirror -a {pull_secret} --from={get_release_image()} "
-            synccmd += f"--to-release-image={disconnected_url}/openshift/release-images:{ori_tag} "
+            synccmd += f"--to-release-image={disconnected_url}/openshift/release-images:{ori_tag}-{arch} "
             synccmd += f"--to={disconnected_url}/openshift/release"
             pprint(f"Running {synccmd}")
             call(synccmd, shell=True)
             if which('oc-mirror') is None:
-                get_oc_mirror(version=overrides.get('version', 'stable'), tag=overrides.get('tag', '4.12'))
+                get_oc_mirror(version=overrides.get('version', 'stable'), tag=ori_tag)
             else:
                 warning("Using oc-mirror from your PATH")
             mirror_data = data.copy()
