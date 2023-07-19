@@ -110,7 +110,6 @@ def create(config, plandir, cluster, overrides):
         domain = data.get('domain', 'karmalabs.corp')
         api_ip = f"{cluster}-ctlplane.{domain}"
     elif api_ip is None:
-        network = data.get('network')
         networkinfo = k.info_network(network)
         if not networkinfo:
             msg = f"Issue getting network {network}"
