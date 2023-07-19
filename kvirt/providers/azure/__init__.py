@@ -784,7 +784,10 @@ class Kazure(object):
         network_client = self.network_client
         for network in network_client.virtual_networks.list(self.resource_group):
             for subnet in network_client.subnets.list(self.resource_group, network.name):
-                cidr = subnet.address_prefix
+                if self.debug:
+                    print(subnet)
+                address_prefixes = subnet.address_prefixes or [None]
+                cidr = subnet.address_prefix or address_prefixes[0]
                 az = subnet.id
                 subnets[subnet.name] = {'cidr': cidr, 'az': az, 'network': network.name}
         return subnets

@@ -1022,7 +1022,12 @@ class Kaws(object):
                 subnetid = subnet['SubnetId']
                 cidr = subnet['CidrBlock']
                 az = subnet['AvailabilityZone']
-                results[subnetid] = {'cidr': cidr, 'az': az, 'network': networkname}
+                subnetname = subnetid
+                for tag in subnet.get('Tags', []):
+                    if tag['Key'] == 'Name':
+                        subnetname = tag['Value']
+                        break
+                results[subnetname] = {'cidr': cidr, 'az': az, 'network': networkname, 'id': subnetid}
         return results
 
     def delete_pool(self, name, full=False):

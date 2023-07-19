@@ -1155,15 +1155,13 @@ def list_subnets(args):
         for subnet in sorted(subnets):
             subnetstable.add_row([subnet])
     else:
-        subnetstable = PrettyTable(["Subnet", "Az", "Cidr", "Network"])
+        subnetstable = PrettyTable(["Subnet", "Az", "Cidr", "Id", "Network"])
         for subnet in sorted(subnets):
             cidr = subnets[subnet]['cidr']
             az = subnets[subnet]['az']
-            if 'network' in subnets[subnet]:
-                network = subnets[subnet]['network']
-            else:
-                network = 'N/A'
-            subnetstable.add_row([subnet, az, cidr, network])
+            network = subnets[subnet]['network'] if 'network' in subnets[subnet] else 'N/A'
+            _id = subnets[subnet]['id'] if 'id' in subnets[subnet] else 'N/A'
+            subnetstable.add_row([subnet, az, cidr, _id, network])
     subnetstable.align["Network"] = "l"
     print(subnetstable)
 
