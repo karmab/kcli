@@ -155,8 +155,7 @@ class Kaws(object):
         subnets = conn.describe_subnets()
         for index, net in enumerate(nets):
             netpublic = overrides.get('public', True)
-            networkinterface = {'DeleteOnTermination': True, 'Description': f"eth{index}", 'DeviceIndex': index,
-                                'Groups': ['string'], 'SubnetId': 'string'}
+            networkinterface = {'DeleteOnTermination': True, 'Description': f"eth{index}", 'DeviceIndex': index}
             ip = None
             if isinstance(net, str):
                 netname = net
@@ -1564,12 +1563,12 @@ class Kaws(object):
         if network == 'default':
             networks = [n for n in nets if nets[n]['mode'] == 'default']
         else:
-            networks = [n for n in nets if n == network or nets[n]['domain'] == network]
+            networks = [nets[n] for n in nets if n == network or nets[n]['domain'] == network]
         if not networks:
             msg = f'Network {network} not found'
             return {'result': 'failure', 'reason': msg}
         else:
-            vpcid = networks[0]
+            vpcid = networks[0]['domain']
         Tags = [{"Key": "Name", "Value": name}, {"Key": "Plan", "Value": plan}]
         args = {"CidrBlock": cidr, 'VpcId': vpcid}
         if 'dual_cidr' in overrides:
