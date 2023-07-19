@@ -115,6 +115,8 @@ class Kaws(object):
                 pprint(f"Using instance type {flavor}")
             else:
                 return {'result': 'failure', 'reason': 'Couldnt find instance type matching requirements'}
+        elif flavor not in [f[0] for f in self.list_flavors()]:
+            return {'result': 'failure', 'reason': f'Invalid instance type {flavor}'}
         vmtags = [{'ResourceType': 'instance',
                    'Tags': [{'Key': 'Name', 'Value': name}, {'Key': 'hostname', 'Value': name}]}]
         for entry in [field for field in metadata if field in METADATA_FIELDS]:
