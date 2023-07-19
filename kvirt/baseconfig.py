@@ -5,30 +5,17 @@ Kvirt config class
 """
 
 from getpass import getuser
-from kvirt.defaults import (NETS, POOL, CPUMODEL, NUMCPUS, MEMORY, DISKS,
-                            DISKSIZE, DISKINTERFACE, DISKTHIN, GUESTID,
-                            VNC, CLOUDINIT, RESERVEIP, RESERVEDNS, RESERVEHOST,
-                            START, AUTOSTART, NESTED, TUNNEL, TUNNELHOST, TUNNELPORT, TUNNELUSER, TUNNELDIR,
-                            INSECURE, KEYS, CMDS, DNS, DOMAIN, SCRIPTS, FILES, ISO,
-                            NETMASKS, GATEWAY, SHAREDKEY, IMAGE, ENABLEROOT,
-                            PRIVATEKEY, TAGS, RHNREGISTER, RHNUNREGISTER, RHNSERVER, RHNUSER, RHNPASSWORD, RHNAK,
-                            RHNORG, RHNPOOL, NETWORKWAIT, FLAVOR, KEEP_NETWORKS, DNSCLIENT, STORE_METADATA, NOTIFY,
-                            PUSHBULLETTOKEN, NOTIFYSCRIPT, SLACKTOKEN, NOTIFYCMD, NOTIFYMETHODS, SLACKCHANNEL,
-                            SHAREDFOLDERS, KERNEL, INITRD, CMDLINE, PLACEMENT, YAMLINVENTORY, CPUHOTPLUG, MEMORYHOTPLUG,
-                            CPUFLAGS, CPUPINNING, NUMAMODE, NUMA, PCIDEVICES, VIRTTYPE, MAILSERVER, MAILFROM, MAILTO,
-                            TPM, JENKINSMODE, RNG, VMPORT, VMUSER, VMRULES, VMRULES_STRICT, SECURITYGROUPS,
-                            LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG, ROOTPASSWORD, WAIT, WAITCOMMAND, WAITTIMEOUT, TEMPKEY,
-                            BMC_USER, BMC_PASSWORD, BMC_MODEL, KSUSHYSERVICE, WEBSERVICE)
 from ipaddress import ip_address, ip_network
 from random import choice
-from kvirt import common
-from kvirt.common import error, pprint, warning, container_mode, ssh, scp, NoAliasDumper
-from kvirt.jinjafilters import jinjafilters
 from kvirt.cluster import hypershift
 from kvirt.cluster import k3s
 from kvirt.cluster import kubeadm
 from kvirt.cluster import microshift
 from kvirt.cluster import openshift
+from kvirt import common
+from kvirt.common import error, pprint, warning, container_mode, ssh, scp, NoAliasDumper
+from kvirt import defaults as kdefaults
+from kvirt.jinjafilters import jinjafilters
 import os
 from shutil import copytree, rmtree, which, copy2
 import yaml
@@ -135,97 +122,97 @@ class Kbaseconfig:
         self.clients = [e for e in self.ini if e != 'default']
         defaults = {}
         default = self.ini['default']
-        defaults['nets'] = default.get('nets', NETS)
-        defaults['pool'] = default.get('pool', POOL)
-        defaults['image'] = default.get('image', IMAGE)
-        defaults['numcpus'] = int(default.get('numcpus', NUMCPUS))
-        defaults['cpumodel'] = default.get('cpumodel', CPUMODEL)
-        defaults['cpuflags'] = default.get('cpuflags', CPUFLAGS)
-        defaults['cpupinning'] = default.get('cpupinning', CPUPINNING)
-        defaults['numa'] = default.get('numa', NUMA)
-        defaults['numamode'] = default.get('numamode', NUMAMODE)
-        defaults['pcidevices'] = default.get('pcidevides', PCIDEVICES)
-        defaults['memory'] = int(default.get('memory', MEMORY))
-        defaults['disks'] = default.get('disks', DISKS)
-        defaults['disksize'] = default.get('disksize', DISKSIZE)
-        defaults['diskinterface'] = default.get('diskinterface', DISKINTERFACE)
-        defaults['diskthin'] = default.get('diskthin', DISKTHIN)
-        defaults['guestid'] = default.get('guestid', GUESTID)
-        defaults['vnc'] = bool(default.get('vnc', VNC))
-        defaults['cloudinit'] = bool(default.get('cloudinit', CLOUDINIT))
-        defaults['reserveip'] = bool(default.get('reserveip', RESERVEIP))
-        defaults['reservedns'] = bool(default.get('reservedns', RESERVEDNS))
-        defaults['reservehost'] = bool(default.get('reservehost', RESERVEHOST))
-        defaults['nested'] = bool(default.get('nested', NESTED))
-        defaults['start'] = bool(default.get('start', START))
-        defaults['autostart'] = bool(default.get('autostart', AUTOSTART))
-        defaults['tunnel'] = bool(default.get('tunnel', TUNNEL))
-        defaults['tunnelhost'] = default.get('tunnelhost', TUNNELHOST)
-        defaults['tunnelport'] = default.get('tunnelport', TUNNELPORT)
-        defaults['tunneluser'] = default.get('tunneluser', TUNNELUSER)
-        defaults['tunneldir'] = default.get('tunneldir', TUNNELDIR)
-        defaults['insecure'] = bool(default.get('insecure', INSECURE))
-        defaults['keys'] = default.get('keys', KEYS)
-        defaults['cmds'] = default.get('cmds', CMDS)
-        defaults['dns'] = default.get('dns', DNS)
-        defaults['domain'] = default.get('file', DOMAIN)
-        defaults['scripts'] = default.get('script', SCRIPTS)
-        defaults['files'] = default.get('files', FILES)
-        defaults['iso'] = default.get('iso', ISO)
-        defaults['netmasks'] = default.get('netmasks', NETMASKS)
-        defaults['gateway'] = default.get('gateway', GATEWAY)
-        defaults['sharedkey'] = default.get('sharedkey', SHAREDKEY)
-        defaults['enableroot'] = default.get('enableroot', ENABLEROOT)
-        defaults['privatekey'] = default.get('privatekey', PRIVATEKEY)
-        defaults['networkwait'] = default.get('networkwait', NETWORKWAIT)
-        defaults['rhnregister'] = default.get('rhnregister', RHNREGISTER)
-        defaults['rhnunregister'] = default.get('rhnunregister', RHNUNREGISTER)
-        defaults['rhnserver'] = default.get('rhnserver', RHNSERVER)
-        defaults['rhnuser'] = default.get('rhnuser', RHNUSER)
-        defaults['rhnpassword'] = default.get('rhnpassword', RHNPASSWORD)
-        defaults['rhnactivationkey'] = default.get('rhnactivationkey', RHNAK)
-        defaults['rhnorg'] = default.get('rhnorg', RHNORG)
-        defaults['rhnpool'] = default.get('rhnpool', RHNPOOL)
-        defaults['tags'] = default.get('tags', TAGS)
-        defaults['flavor'] = default.get('flavor', FLAVOR)
-        defaults['keep_networks'] = default.get('keep_networks', KEEP_NETWORKS)
-        defaults['dnsclient'] = default.get('dnsclient', DNSCLIENT)
-        defaults['storemetadata'] = default.get('storemetadata', STORE_METADATA)
-        defaults['notify'] = default.get('notify', NOTIFY)
-        defaults['slacktoken'] = default.get('slacktoken', SLACKTOKEN)
-        defaults['pushbullettoken'] = default.get('pushbullettoken', PUSHBULLETTOKEN)
-        defaults['notifycmd'] = default.get('notifycmd', NOTIFYCMD)
-        defaults['notifyscript'] = default.get('notifyscript', NOTIFYSCRIPT)
-        defaults['notifymethods'] = default.get('notifymethods', NOTIFYMETHODS)
-        defaults['slackchannel'] = default.get('slackchannel', SLACKCHANNEL)
-        defaults['mailserver'] = default.get('mailserver', MAILSERVER)
-        defaults['mailfrom'] = default.get('mailfrom', MAILFROM)
-        defaults['mailto'] = default.get('mailto', MAILTO)
-        defaults['sharedfolders'] = default.get('sharedfolders', SHAREDFOLDERS)
-        defaults['kernel'] = default.get('kernel', KERNEL)
-        defaults['initrd'] = default.get('initrd', INITRD)
-        defaults['cmdline'] = default.get('cmdline', CMDLINE)
-        defaults['placement'] = default.get('placement', PLACEMENT)
-        defaults['yamlinventory'] = default.get('yamlinventory', YAMLINVENTORY)
-        defaults['cpuhotplug'] = bool(default.get('cpuhotplug', CPUHOTPLUG))
-        defaults['memoryhotplug'] = bool(default.get('memoryhotplug', MEMORYHOTPLUG))
-        defaults['virttype'] = default.get('virttype', VIRTTYPE)
-        defaults['tpm'] = default.get('tpm', TPM)
-        defaults['rng'] = default.get('rng', RNG)
-        defaults['jenkinsmode'] = default.get('jenkinsmode', JENKINSMODE)
-        defaults['vmuser'] = default.get('vmuser', VMUSER)
-        defaults['vmport'] = default.get('vmport', VMPORT)
-        defaults['vmrules'] = default.get('vmrules', VMRULES)
-        defaults['vmrules_strict'] = default.get('vmrules_strict', VMRULES_STRICT)
-        defaults['securitygroups'] = default.get('securitygroups', SECURITYGROUPS)
-        defaults['rootpassword'] = default.get('rootpassword', ROOTPASSWORD)
-        defaults['wait'] = default.get('wait', WAIT)
-        defaults['waitcommand'] = default.get('waitcommand', WAITCOMMAND)
-        defaults['waittimeout'] = default.get('waittimeout', WAITTIMEOUT)
-        defaults['tempkey'] = default.get('tempkey', TEMPKEY)
-        defaults['bmc_user'] = default.get('bmc_user', BMC_USER)
-        defaults['bmc_password'] = default.get('bmc_password', BMC_PASSWORD)
-        defaults['bmc_model'] = default.get('bmc_model', BMC_MODEL)
+        defaults['nets'] = default.get('nets', kdefaults.NETS)
+        defaults['pool'] = default.get('pool', kdefaults.POOL)
+        defaults['image'] = default.get('image', kdefaults.IMAGE)
+        defaults['numcpus'] = int(default.get('numcpus', kdefaults.NUMCPUS))
+        defaults['cpumodel'] = default.get('cpumodel', kdefaults.CPUMODEL)
+        defaults['cpuflags'] = default.get('cpuflags', kdefaults.CPUFLAGS)
+        defaults['cpupinning'] = default.get('cpupinning', kdefaults.CPUPINNING)
+        defaults['numa'] = default.get('numa', kdefaults.NUMA)
+        defaults['numamode'] = default.get('numamode', kdefaults.NUMAMODE)
+        defaults['pcidevices'] = default.get('pcidevides', kdefaults.PCIDEVICES)
+        defaults['memory'] = int(default.get('memory', kdefaults.MEMORY))
+        defaults['disks'] = default.get('disks', kdefaults.DISKS)
+        defaults['disksize'] = default.get('disksize', kdefaults.DISKSIZE)
+        defaults['diskinterface'] = default.get('diskinterface', kdefaults.DISKINTERFACE)
+        defaults['diskthin'] = default.get('diskthin', kdefaults.DISKTHIN)
+        defaults['guestid'] = default.get('guestid', kdefaults.GUESTID)
+        defaults['vnc'] = bool(default.get('vnc', kdefaults.VNC))
+        defaults['cloudinit'] = bool(default.get('cloudinit', kdefaults.CLOUDINIT))
+        defaults['reserveip'] = bool(default.get('reserveip', kdefaults.RESERVEIP))
+        defaults['reservedns'] = bool(default.get('reservedns', kdefaults.RESERVEDNS))
+        defaults['reservehost'] = bool(default.get('reservehost', kdefaults.RESERVEHOST))
+        defaults['nested'] = bool(default.get('nested', kdefaults.NESTED))
+        defaults['start'] = bool(default.get('start', kdefaults.START))
+        defaults['autostart'] = bool(default.get('autostart', kdefaults.AUTOSTART))
+        defaults['tunnel'] = bool(default.get('tunnel', kdefaults.TUNNEL))
+        defaults['tunnelhost'] = default.get('tunnelhost', kdefaults.TUNNELHOST)
+        defaults['tunnelport'] = default.get('tunnelport', kdefaults.TUNNELPORT)
+        defaults['tunneluser'] = default.get('tunneluser', kdefaults.TUNNELUSER)
+        defaults['tunneldir'] = default.get('tunneldir', kdefaults.TUNNELDIR)
+        defaults['insecure'] = bool(default.get('insecure', kdefaults.INSECURE))
+        defaults['keys'] = default.get('keys', kdefaults.KEYS)
+        defaults['cmds'] = default.get('cmds', kdefaults.CMDS)
+        defaults['dns'] = default.get('dns', kdefaults.DNS)
+        defaults['domain'] = default.get('file', kdefaults.DOMAIN)
+        defaults['scripts'] = default.get('script', kdefaults.SCRIPTS)
+        defaults['files'] = default.get('files', kdefaults.FILES)
+        defaults['iso'] = default.get('iso', kdefaults.ISO)
+        defaults['netmasks'] = default.get('netmasks', kdefaults.NETMASKS)
+        defaults['gateway'] = default.get('gateway', kdefaults.GATEWAY)
+        defaults['sharedkey'] = default.get('sharedkey', kdefaults.SHAREDKEY)
+        defaults['enableroot'] = default.get('enableroot', kdefaults.ENABLEROOT)
+        defaults['privatekey'] = default.get('privatekey', kdefaults.PRIVATEKEY)
+        defaults['networkwait'] = default.get('networkwait', kdefaults.NETWORKWAIT)
+        defaults['rhnregister'] = default.get('rhnregister', kdefaults.RHNREGISTER)
+        defaults['rhnunregister'] = default.get('rhnunregister', kdefaults.RHNUNREGISTER)
+        defaults['rhnserver'] = default.get('rhnserver', kdefaults.RHNSERVER)
+        defaults['rhnuser'] = default.get('rhnuser', kdefaults.RHNUSER)
+        defaults['rhnpassword'] = default.get('rhnpassword', kdefaults.RHNPASSWORD)
+        defaults['rhnactivationkey'] = default.get('rhnactivationkey', kdefaults.RHNAK)
+        defaults['rhnorg'] = default.get('rhnorg', kdefaults.RHNORG)
+        defaults['rhnpool'] = default.get('rhnpool', kdefaults.RHNPOOL)
+        defaults['tags'] = default.get('tags', kdefaults.TAGS)
+        defaults['flavor'] = default.get('flavor', kdefaults.FLAVOR)
+        defaults['keep_networks'] = default.get('keep_networks', kdefaults.KEEP_NETWORKS)
+        defaults['dnsclient'] = default.get('dnsclient', kdefaults.DNSCLIENT)
+        defaults['storemetadata'] = default.get('storemetadata', kdefaults.STORE_METADATA)
+        defaults['notify'] = default.get('notify', kdefaults.NOTIFY)
+        defaults['slacktoken'] = default.get('slacktoken', kdefaults.SLACKTOKEN)
+        defaults['pushbullettoken'] = default.get('pushbullettoken', kdefaults.PUSHBULLETTOKEN)
+        defaults['notifycmd'] = default.get('notifycmd', kdefaults.NOTIFYCMD)
+        defaults['notifyscript'] = default.get('notifyscript', kdefaults.NOTIFYSCRIPT)
+        defaults['notifymethods'] = default.get('notifymethods', kdefaults.NOTIFYMETHODS)
+        defaults['slackchannel'] = default.get('slackchannel', kdefaults.SLACKCHANNEL)
+        defaults['mailserver'] = default.get('mailserver', kdefaults.MAILSERVER)
+        defaults['mailfrom'] = default.get('mailfrom', kdefaults.MAILFROM)
+        defaults['mailto'] = default.get('mailto', kdefaults.MAILTO)
+        defaults['sharedfolders'] = default.get('sharedfolders', kdefaults.SHAREDFOLDERS)
+        defaults['kernel'] = default.get('kernel', kdefaults.KERNEL)
+        defaults['initrd'] = default.get('initrd', kdefaults.INITRD)
+        defaults['cmdline'] = default.get('cmdline', kdefaults.CMDLINE)
+        defaults['placement'] = default.get('placement', kdefaults.PLACEMENT)
+        defaults['yamlinventory'] = default.get('yamlinventory', kdefaults.YAMLINVENTORY)
+        defaults['cpuhotplug'] = bool(default.get('cpuhotplug', kdefaults.CPUHOTPLUG))
+        defaults['memoryhotplug'] = bool(default.get('memoryhotplug', kdefaults.MEMORYHOTPLUG))
+        defaults['virttype'] = default.get('virttype', kdefaults.VIRTTYPE)
+        defaults['tpm'] = default.get('tpm', kdefaults.TPM)
+        defaults['rng'] = default.get('rng', kdefaults.RNG)
+        defaults['jenkinsmode'] = default.get('jenkinsmode', kdefaults.JENKINSMODE)
+        defaults['vmuser'] = default.get('vmuser', kdefaults.VMUSER)
+        defaults['vmport'] = default.get('vmport', kdefaults.VMPORT)
+        defaults['vmrules'] = default.get('vmrules', kdefaults.VMRULES)
+        defaults['vmrules_strict'] = default.get('vmrules_strict', kdefaults.VMRULES_STRICT)
+        defaults['securitygroups'] = default.get('securitygroups', kdefaults.SECURITYGROUPS)
+        defaults['rootpassword'] = default.get('rootpassword', kdefaults.ROOTPASSWORD)
+        defaults['wait'] = default.get('wait', kdefaults.WAIT)
+        defaults['waitcommand'] = default.get('waitcommand', kdefaults.WAITCOMMAND)
+        defaults['waittimeout'] = default.get('waittimeout', kdefaults.WAITTIMEOUT)
+        defaults['tempkey'] = default.get('tempkey', kdefaults.TEMPKEY)
+        defaults['bmc_user'] = default.get('bmc_user', kdefaults.BMC_USER)
+        defaults['bmc_password'] = default.get('bmc_password', kdefaults.BMC_PASSWORD)
+        defaults['bmc_model'] = default.get('bmc_model', kdefaults.BMC_MODEL)
         currentplanfile = f"{os.environ.get('HOME')}/.kcli/plan"
         if os.path.exists(currentplanfile):
             self.currentplan = open(currentplanfile).read().strip()
@@ -1378,21 +1365,21 @@ class Kbaseconfig:
 
     def create_app_openshift(self, app, overrides={}, outputdir=None):
         appdir = f"{os.path.dirname(openshift.create.__code__.co_filename)}/apps"
-        if app in LOCAL_OPENSHIFT_APPS:
+        if app in kdefaults.LOCAL_OPENSHIFT_APPS:
             common.kube_create_app(self, app, appdir, overrides=overrides, outputdir=outputdir)
         else:
             common.openshift_create_app(self, app, appdir, overrides=overrides, outputdir=outputdir)
 
     def delete_app_openshift(self, app, overrides={}):
         appdir = f"{os.path.dirname(openshift.create.__code__.co_filename)}/apps"
-        if app in LOCAL_OPENSHIFT_APPS:
+        if app in kdefaults.LOCAL_OPENSHIFT_APPS:
             common.kube_delete_app(self, app, appdir, overrides=overrides)
         else:
             common.openshift_delete_app(self, app, appdir, overrides=overrides)
 
     def info_app_openshift(self, app):
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
-        if app not in LOCAL_OPENSHIFT_APPS:
+        if app not in kdefaults.LOCAL_OPENSHIFT_APPS:
             name, source, defaultchannel, csv, description, target_namespace, channels, crd = common.olm_app(app)
             if name is None:
                 warning(f"Couldn't find any app matching {app}")
@@ -1415,7 +1402,7 @@ class Kbaseconfig:
         pull_secret = overrides.get('pull_secret', 'openshift_pull.json')
         version = overrides.get('version', 'stable')
         upstream = overrides.get('upstream', False)
-        tag = overrides.get('tag', OPENSHIFT_TAG)
+        tag = overrides.get('tag', kdefaults.OPENSHIFT_TAG)
         macosx = os.path.exists('/Users')
         if upstream:
             run = openshift.get_upstream_installer(tag, version=version, debug=self.debug)
@@ -1832,8 +1819,8 @@ class Kbaseconfig:
         user = f"Environment=KSUSHY_USER={user}" if user is not None else ''
         password = f"Environment=KSUSHY_PASSWORD={password}" if password is not None else ''
         bootonce = "Environment=KSUSHY_BOOTONCE=true" if bootonce else ''
-        sushydata = KSUSHYSERVICE.format(home=home, port=port, ipv6=ipv6, ssl=ssl, user=user, password=password,
-                                         bootonce=bootonce)
+        sushydata = kdefaults.KSUSHYSERVICE.format(home=home, port=port, ipv6=ipv6, ssl=ssl, user=user,
+                                                   password=password, bootonce=bootonce)
         with open("/usr/lib/systemd/system/ksushy.service", "w") as f:
             f.write(sushydata)
         cmd = "systemctl restart ksushy" if update else "systemctl enable --now ksushy"
@@ -1844,7 +1831,7 @@ class Kbaseconfig:
         home = os.environ.get('HOME', '/root')
         port = f"Environment=KWEB_PORT={port}" if port != 8000 else ''
         ipv6 = "Environment=KWEB_IPV6=true" if ipv6 else ''
-        webdata = WEBSERVICE.format(home=home, port=port, ipv6=ipv6, ssl=ssl)
+        webdata = kdefaults.WEBSERVICE.format(home=home, port=port, ipv6=ipv6, ssl=ssl)
         with open("/usr/lib/systemd/system/kweb.service", "w") as f:
             f.write(webdata)
         cmd = "systemctl restart kweb" if update else "systemctl enable --now kweb"
@@ -1963,3 +1950,29 @@ class Kbaseconfig:
             pass
         results = {'nodes': nodes, 'version': version}
         return results
+
+    def update_openshift_disconnected(self, cluster, overrides={}):
+        os.environ["PATH"] = f'{os.getcwd()}:{os.environ["PATH"]}'
+        data = {}
+        clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}") if cluster is not None else '.'
+        if os.path.exists(clusterdir) and os.path.exists(f'{clusterdir}/kcli_parameters.yml'):
+            with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
+                installparam = yaml.safe_load(install)
+                data.update(installparam)
+        data.update(overrides)
+        pull_secret = os.path.expanduser(data.get('pull_secret', 'openshift_pull.json'))
+        if not os.path.exists(pull_secret):
+            error(f"pull_secret {pull_secret} not found")
+            sys.exit(1)
+        data['pull_secret'] = pull_secret
+        if data.get('disconnected_url') is None:
+            error("It is mandatory to set disconnected_url")
+            sys.exit(1)
+        if 'version' not in data:
+            data['version'] = 'stable'
+        if 'tag' not in data:
+            data['tag'] = kdefaults.OPENSHIFT_TAG
+        if which('openshift-install') is None:
+            self.download_openshift_installer(data)
+        plandir = os.path.dirname(openshift.create.__code__.co_filename)
+        openshift.update_disconnected_registry(self, plandir, cluster, data)

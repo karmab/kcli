@@ -329,6 +329,13 @@ $ kcli create openshift-registry -P version=nightly -P tag=4.14 -P disconnected_
 $ kcli create openshift-registry -P disconnected_sync=false
 """
 
+disconnectedupdate = """# Update openshift disconnected registry for 4.13
+$ kcli update openshift-registry -P version=stable -P tag='4.13' -P disconnected_url=192.168.122.200.sslip.io:5000 myreg
+
+# Update openshift disconnected registry taking parameter from existing cluster install named myopenshift
+$ kcli update openshift-registry -P tag='4.13.4' myopenshift
+"""
+
 appopenshiftcreate = """# Deploy sriov network operator
 $ kcli create app openshift sriov-network-operator
 

@@ -122,6 +122,65 @@ def update_pull_secret(pull_secret, registry, user, password):
             json.dump(data, p)
 
 
+def update_disconnected_registry(config, plandir, cluster, data):
+    disconnected_url = data['disconnected_url']
+    pull_secret = data['pull_secret']
+    version = data['version']
+    tag = data.get('ori_tag') or data.get('tag')
+    arch = data.get('arch', 'x86_64')
+    clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}") if cluster is not None else '.'
+    if 'ca' not in data and 'quay.io' not in disconnected_url:
+        pprint(f"Trying to gather registry ca cert from {disconnected_url}")
+        cacmd = f"openssl s_client -showcerts -connect {disconnected_url} </dev/null 2>/dev/null|"
+        cacmd += "openssl x509 -outform PEM"
+        data['ca'] = os.popen(cacmd).read()
+    with open(f'{clusterdir}/ca.crt', 'w') as f:
+        f.write(data['ca'])
+    call(f'sudo cp {clusterdir}/ca.crt /etc/pki/ca-trust/source/anchors ; sudo update-ca-trust extract',
+         shell=True)
+    pprint("Updating disconnected registry")
+    synccmd = f"oc adm release mirror -a {pull_secret} --from={get_release_image()} "
+    synccmd += f"--to-release-image={disconnected_url}/openshift/release-images:{tag}-{arch} "
+    synccmd += f"--to={disconnected_url}/openshift/release"
+    pprint(f"Running {synccmd}")
+    call(synccmd, shell=True)
+    if which('oc-mirror') is None:
+        get_oc_mirror(version=version, tag=tag)
+    else:
+        warning("Using oc-mirror from your PATH")
+    mirror_data = data.copy()
+    mirror_data['tag'] = tag
+    extra_images = data.get('disconnected_extra_images', [])
+    kcli_images = ['curl', 'haproxy', 'kubectl', 'mdns-publisher', 'origin-coredns',
+                   'origin-keepalived-ipfailover']
+    kcli_images = [f'quay.io/karmab/{image}:latest' for image in kcli_images]
+    extra_images.extend(kcli_images)
+    mirror_data['extra_images'] = [*set(extra_images)]
+    mirrorconf = config.process_inputfile(cluster, f"{plandir}/disconnected/scripts/mirror-config.yaml.sample",
+                                          overrides=mirror_data)
+    with open(f"{clusterdir}/mirror-config.yaml", 'w') as f:
+        f.write(mirrorconf)
+    dockerdir = os.path.expanduser('~/.docker')
+    if not os.path.isdir(dockerdir):
+        os.mkdir(dockerdir)
+    copy2(pull_secret, f"{dockerdir}/config.json")
+    olmcmd = f"oc-mirror --ignore-history --config {clusterdir}/mirror-config.yaml docker://{disconnected_url}"
+    olmcmd = ' || '.join([olmcmd for x in range(3)])
+    pprint(f"Running {olmcmd}")
+    call(olmcmd, shell=True)
+    mapping_to_icsp(config, plandir, f"{clusterdir}", f"{clusterdir}/mirror-config.yaml")
+    for catalogsource in glob("oc-mirror-workspace/results-*/catalogSource*.yaml"):
+        pprint(f"Injecting catalogsource {catalogsource}")
+        copy2(catalogsource, clusterdir)
+    for icsp in glob("oc-mirror-workspace/results-*/imageContentSourcePolicy.yaml"):
+        pprint(f"Injecting icsp {icsp}")
+        copy2(icsp, clusterdir)
+    if os.path.exists(f"{clusterdir}/imageContentSourcePolicy.yaml"):
+        separate_yamls(f"{clusterdir}/imageContentSourcePolicy.yaml")
+    if os.path.exists("oc-mirror-workspace"):
+        rmtree("oc-mirror-workspace")
+
+
 def create_ignition_files(config, plandir, cluster, domain, api_ip=None, bucket_url=None, ignition_version=None):
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     ignition_overrides = {'api_ip': api_ip, 'cluster': cluster, 'domain': domain, 'role': 'master'}
@@ -873,7 +932,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             warning(f"Removing scheme from {disconnected_url}")
             disconnected_url = disconnected_url.replace('http://', '').replace('https://', '')
         update_pull_secret(pull_secret, disconnected_url, disconnected_user, disconnected_password)
-        ori_tag = tag
+        data['ori_tag'] = tag
         if '/' not in str(tag):
             tag = f'{disconnected_url}/openshift/release-images:{tag}-{arch}'
             os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = tag
@@ -1049,51 +1108,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         pprint(f"Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to {disconnected_version}")
     if disconnected_url is not None:
         if disconnected_update:
-            with open(f'{clusterdir}/ca.crt', 'w') as f:
-                f.write(data['ca'])
-            call(f'sudo cp {clusterdir}/ca.crt /etc/pki/ca-trust/source/anchors ; sudo update-ca-trust extract',
-                 shell=True)
-            pprint("Updating disconnected registry")
-            synccmd = f"oc adm release mirror -a {pull_secret} --from={get_release_image()} "
-            synccmd += f"--to-release-image={disconnected_url}/openshift/release-images:{ori_tag}-{arch} "
-            synccmd += f"--to={disconnected_url}/openshift/release"
-            pprint(f"Running {synccmd}")
-            call(synccmd, shell=True)
-            if which('oc-mirror') is None:
-                get_oc_mirror(version=overrides.get('version', 'stable'), tag=ori_tag)
-            else:
-                warning("Using oc-mirror from your PATH")
-            mirror_data = data.copy()
-            mirror_data['tag'] = ori_tag
-            extra_images = data.get('disconnected_extra_images', [])
-            kcli_images = ['curl', 'haproxy', 'kubectl', 'mdns-publisher', 'origin-coredns',
-                           'origin-keepalived-ipfailover']
-            kcli_images = [f'quay.io/karmab/{image}:latest' for image in kcli_images]
-            extra_images.extend(kcli_images)
-            mirror_data['extra_images'] = [*set(extra_images)]
-            mirrorconf = config.process_inputfile(cluster, f"{plandir}/disconnected/scripts/mirror-config.yaml.sample",
-                                                  overrides=mirror_data)
-            with open(f"{clusterdir}/mirror-config.yaml", 'w') as f:
-                f.write(mirrorconf)
-            dockerdir = os.path.expanduser('~/.docker')
-            if not os.path.isdir(dockerdir):
-                os.mkdir(dockerdir)
-            copy2(pull_secret, f"{dockerdir}/config.json")
-            olmcmd = f"oc-mirror --ignore-history --config {clusterdir}/mirror-config.yaml docker://{disconnected_url}"
-            olmcmd = ' || '.join([olmcmd for x in range(3)])
-            pprint(f"Running {olmcmd}")
-            call(olmcmd, shell=True)
-            mapping_to_icsp(config, plandir, f"{clusterdir}", f"{clusterdir}/mirror-config.yaml")
-            for catalogsource in glob("oc-mirror-workspace/results-*/catalogSource*.yaml"):
-                pprint(f"Injecting catalogsource {catalogsource}")
-                copy2(catalogsource, clusterdir)
-            for icsp in glob("oc-mirror-workspace/results-*/imageContentSourcePolicy.yaml"):
-                pprint(f"Injecting icsp {icsp}")
-                copy2(icsp, clusterdir)
-            if os.path.exists(f"{clusterdir}/imageContentSourcePolicy.yaml"):
-                separate_yamls(f"{clusterdir}/imageContentSourcePolicy.yaml")
-            if os.path.exists("oc-mirror-workspace"):
-                rmtree("oc-mirror-workspace")
+            update_disconnected_registry(config, plandir, cluster, data)
         key = f"{disconnected_user}:{disconnected_password}"
         key = str(b64encode(key.encode('utf-8')), 'utf-8')
         auths = {'auths': {disconnected_url: {'auth': key, 'email': 'jhendrix@karmalabs.corp'}}}

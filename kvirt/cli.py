@@ -2,34 +2,26 @@
 # PYTHON_ARGCOMPLETE_OK
 # coding=utf-8
 
-from copy import deepcopy
-from filecmp import cmp
-from getpass import getuser
-from kvirt.config import Kconfig
-from kvirt.examples import plandatacreate, vmdatacreate, hostcreate, _list, plancreate, planinfo, productinfo, start
-from kvirt.examples import repocreate, isocreate, networkupdate
-from kvirt.examples import kubegenericcreate, kubek3screate, kubeopenshiftcreate, kubemicroshiftcreate, kubegkecreate
-from kvirt.examples import dnscreate, diskcreate, diskdelete, vmcreate, vmconsole, vmexport, niccreate, nicdelete
-from kvirt.examples import disconnectedcreate, appopenshiftcreate, plantemplatecreate, kubehypershiftcreate
-from kvirt.examples import workflowcreate, kubegenericscale, kubek3sscale, kubeopenshiftscale, kubegkescale
-from kvirt.examples import changelog, starthosts, stophosts, infohosts, ocdownload, openshiftdownload, ocmirrordownload
-from kvirt.examples import kubeekscreate, kubeeksscale, kubeakscreate, kubeaksscale, openshiftsnocreate, subnetcreate
-from kvirt.examples import networkcreate, securitygroupcreate, profilecreate, vmupdate, vmlist, providercreate
-from kvirt.baseconfig import Kbaseconfig
-from kvirt.containerconfig import Kcontainerconfig
-from kvirt.defaults import IMAGES, VERSION, LOCAL_OPENSHIFT_APPS, SSH_PUB_LOCATIONS, PLANTYPES
-from prettytable import PrettyTable
 import argcomplete
 import argparse
 from argparse import RawDescriptionHelpFormatter as rawhelp
-from ipaddress import ip_address
+from copy import deepcopy
+from filecmp import cmp
+from getpass import getuser
 from glob import glob
+from ipaddress import ip_address
 import json
 from kvirt import common
+from kvirt import examples
+from kvirt import nameutils
+from kvirt.baseconfig import Kbaseconfig
 from kvirt.common import error, pprint, success, warning, ssh, _ssh_credentials, container_mode
 from kvirt.common import get_git_version, compare_git_versions
-from kvirt import nameutils
+from kvirt.config import Kconfig
+from kvirt.containerconfig import Kcontainerconfig
+from kvirt.defaults import IMAGES, VERSION, LOCAL_OPENSHIFT_APPS, SSH_PUB_LOCATIONS, PLANTYPES
 import os
+from prettytable import PrettyTable
 import random
 import re
 from shutil import which, copy2
@@ -2774,6 +2766,12 @@ def create_product(args):
     config.create_product(product, repo=repo, group=group, plan=plan, latest=latest, overrides=overrides)
 
 
+def update_openshift_disconnected(args):
+    overrides = handle_parameters(args.param, args.paramfile)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
+    baseconfig.update_openshift_disconnected(args.plan, overrides=overrides)
+
+
 def ssh_vm(args):
     """Ssh into vm"""
     local = args.L
@@ -3577,7 +3575,7 @@ def cli():
     containerconsole_parser.set_defaults(func=console_container)
 
     changelog_desc = 'Changelog'
-    changelog_epilog = f"examples:\n{changelog}"
+    changelog_epilog = f"examples:\n{examples.changelog}"
     changelog_parser = argparse.ArgumentParser(add_help=False)
     changelog_parser.add_argument('diff', metavar='DIFF', nargs=argparse.REMAINDER)
     changelog_parser.set_defaults(func=get_changelog)
@@ -3605,7 +3603,7 @@ def cli():
     appgenericcreate_parser.set_defaults(func=create_app_generic)
 
     appopenshiftcreate_desc = 'Create Kube App Openshift'
-    appopenshiftcreate_epilog = f"examples:\n{appopenshiftcreate}"
+    appopenshiftcreate_epilog = f"examples:\n{examples.appopenshiftcreate}"
     appopenshiftcreate_parser = createapp_subparsers.add_parser('openshift', description=appopenshiftcreate_desc,
                                                                 help=appopenshiftcreate_desc,
                                                                 parents=[parent_parser],
@@ -3661,7 +3659,7 @@ def cli():
     containercreate_parser.set_defaults(func=create_container)
 
     dnscreate_desc = 'Create Dns Entries'
-    dnscreate_epilog = f"examples:\n{dnscreate}"
+    dnscreate_epilog = f"examples:\n{examples.dnscreate}"
     dnscreate_parser = create_subparsers.add_parser('dns', description=dnscreate_desc, help=dnscreate_desc,
                                                     epilog=dnscreate_epilog,
                                                     formatter_class=rawhelp)
@@ -3675,7 +3673,7 @@ def cli():
     dnscreate_parser.set_defaults(func=create_dns)
 
     hostcreate_desc = 'Create Host'
-    hostcreate_epilog = f"examples:\n{hostcreate}"
+    hostcreate_epilog = f"examples:\n{examples.hostcreate}"
     hostcreate_parser = create_subparsers.add_parser('host', help=hostcreate_desc, description=hostcreate_desc,
                                                      aliases=['client'], epilog=hostcreate_epilog,
                                                      formatter_class=rawhelp)
@@ -3826,7 +3824,7 @@ def cli():
     kubecreate_subparsers = kubecreate_parser.add_subparsers(metavar='', dest='subcommand_create_kube')
 
     kubeakscreate_desc = 'Create Aks Kube'
-    kubeakscreate_epilog = f"examples:\n{kubeakscreate}"
+    kubeakscreate_epilog = f"examples:\n{examples.kubeakscreate}"
     kubeakscreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubeakscreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
     kubeakscreate_parser.add_argument('-t', '--threaded', help='Run threaded', action='store_true')
@@ -3836,7 +3834,7 @@ def cli():
                                      help=kubeakscreate_desc, epilog=kubeakscreate_epilog, formatter_class=rawhelp)
 
     kubeekscreate_desc = 'Create Eks Kube'
-    kubeekscreate_epilog = f"examples:\n{kubeekscreate}"
+    kubeekscreate_epilog = f"examples:\n{examples.kubeekscreate}"
     kubeekscreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubeekscreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
     kubeekscreate_parser.add_argument('-t', '--threaded', help='Run threaded', action='store_true')
@@ -3847,7 +3845,7 @@ def cli():
                                      formatter_class=rawhelp)
 
     kubegenericcreate_desc = 'Create Generic Kube'
-    kubegenericcreate_epilog = f"examples:\n{kubegenericcreate}"
+    kubegenericcreate_epilog = f"examples:\n{examples.kubegenericcreate}"
     kubegenericcreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubegenericcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
     kubegenericcreate_parser.add_argument('-t', '--threaded', help='Run threaded', action='store_true')
@@ -3860,7 +3858,7 @@ def cli():
                                      formatter_class=rawhelp, aliases=['kubeadm'])
 
     kubegkecreate_desc = 'Create Gke Kube'
-    kubegkecreate_epilog = f"examples:\n{kubegkecreate}"
+    kubegkecreate_epilog = f"examples:\n{examples.kubegkecreate}"
     kubegkecreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubegkecreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
     kubegkecreate_parser.add_argument('-t', '--threaded', help='Run threaded', action='store_true')
@@ -3871,7 +3869,7 @@ def cli():
                                      formatter_class=rawhelp)
 
     kubehypershiftcreate_desc = 'Create Hypershift Kube'
-    kubehypershiftcreate_epilog = f"examples:\n{kubehypershiftcreate}"
+    kubehypershiftcreate_epilog = f"examples:\n{examples.kubehypershiftcreate}"
     kubehypershiftcreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubehypershiftcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
     kubehypershiftcreate_parser.add_argument('-t', '--threaded', help='Run threaded', action='store_true')
@@ -3884,7 +3882,7 @@ def cli():
                                      formatter_class=rawhelp)
 
     kubek3screate_desc = 'Create K3s Kube'
-    kubek3screate_epilog = f"examples:\n{kubek3screate}"
+    kubek3screate_epilog = f"examples:\n{examples.kubek3screate}"
     kubek3screate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubek3screate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
     kubek3screate_parser.add_argument('-t', '--threaded', help='Run threaded', action='store_true')
@@ -3897,7 +3895,7 @@ def cli():
                                      formatter_class=rawhelp)
 
     kubemicroshiftcreate_desc = 'Create Microshift Kube'
-    kubemicroshiftcreate_epilog = f"examples:\n{kubemicroshiftcreate}"
+    kubemicroshiftcreate_epilog = f"examples:\n{examples.kubemicroshiftcreate}"
     kubemicroshiftcreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubemicroshiftcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
     kubemicroshiftcreate_parser.add_argument('-t', '--threaded', help='Run threaded', action='store_true')
@@ -3910,7 +3908,7 @@ def cli():
                                      formatter_class=rawhelp)
 
     kubeopenshiftcreate_desc = 'Create Openshift Kube'
-    kubeopenshiftcreate_epilog = f"examples:\n{kubeopenshiftcreate}"
+    kubeopenshiftcreate_epilog = f"examples:\n{examples.kubeopenshiftcreate}"
     kubeopenshiftcreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubeopenshiftcreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
     kubeopenshiftcreate_parser.add_argument('-t', '--threaded', help='Run threaded', action='store_true')
@@ -3937,7 +3935,7 @@ def cli():
     lbcreate_parser.set_defaults(func=create_lb)
 
     networkcreate_desc = 'Create Network'
-    networkcreate_epilog = f"examples:\n{networkcreate}"
+    networkcreate_epilog = f"examples:\n{examples.networkcreate}"
     networkcreate_parser = create_subparsers.add_parser('network', description=networkcreate_desc,
                                                         help=networkcreate_desc, parents=[parent_parser],
                                                         epilog=networkcreate_epilog, formatter_class=rawhelp,
@@ -3952,7 +3950,7 @@ def cli():
     networkcreate_parser.set_defaults(func=create_network)
 
     disconnectedcreate_desc = 'Create a disconnected registry vm for openshift'
-    disconnectedcreate_epilog = f"examples:\n{disconnectedcreate}"
+    disconnectedcreate_epilog = f"examples:\n{examples.disconnectedcreate}"
     disconnectedcreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     disconnectedcreate_parser.add_argument('plan', metavar='PLAN', help='Plan', nargs='?')
     disconnectedcreate_parser.set_defaults(func=create_openshift_disconnected)
@@ -3962,7 +3960,7 @@ def cli():
                                  aliases=['openshift-disconnected'])
 
     isocreate_desc = 'Create an iso ignition for baremetal install'
-    isocreate_epilog = f"examples:\n{isocreate}"
+    isocreate_epilog = f"examples:\n{examples.isocreate}"
     isocreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     isocreate_parser.add_argument('-d', '--direct', action='store_true', help='Embed directly target ignition in iso')
     isocreate_parser.add_argument('-f', '--ignitionfile', help='Ignition file')
@@ -3972,7 +3970,7 @@ def cli():
                                  help=isocreate_desc, epilog=isocreate_epilog, formatter_class=rawhelp)
 
     openshiftsnocreate_desc = 'Create Openshift SNO'
-    openshiftsnocreate_epilog = f"examples:\n{openshiftsnocreate}"
+    openshiftsnocreate_epilog = f"examples:\n{examples.openshiftsnocreate}"
     openshiftsnocreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     openshiftsnocreate_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
     openshiftsnocreate_parser.add_argument('-t', '--threaded', help='Run threaded', action='store_true')
@@ -4018,7 +4016,7 @@ def cli():
     tektonpipelinecreate_parser.set_defaults(func=create_pipeline_tekton)
 
     plancreate_desc = 'Create Plan'
-    plancreate_epilog = f"examples:\n{plancreate}"
+    plancreate_epilog = f"examples:\n{examples.plancreate}"
     plancreate_parser = create_subparsers.add_parser('plan', description=plancreate_desc, help=plancreate_desc,
                                                      parents=[parent_parser], epilog=plancreate_epilog,
                                                      formatter_class=rawhelp)
@@ -4036,7 +4034,7 @@ def cli():
     plancreate_parser.set_defaults(func=create_plan)
 
     plandatacreate_desc = 'Create Cloudinit/Ignition from plan file'
-    plandatacreate_epilog = f"examples:\n{plandatacreate}"
+    plandatacreate_epilog = f"examples:\n{examples.plandatacreate}"
     plandatacreate_parser = create_subparsers.add_parser('plan-data', description=plandatacreate_desc,
                                                          help=plandatacreate_desc, parents=[parent_parser],
                                                          epilog=plandatacreate_epilog, formatter_class=rawhelp)
@@ -4047,7 +4045,7 @@ def cli():
     plandatacreate_parser.set_defaults(func=create_plandata)
 
     plantemplatecreate_desc = 'Create plan template'
-    plantemplatecreate_epilog = f"examples:\n{plantemplatecreate}"
+    plantemplatecreate_epilog = f"examples:\n{examples.plantemplatecreate}"
     plantemplatecreate_parser = create_subparsers.add_parser('plan-template', description=plantemplatecreate_desc,
                                                              help=plantemplatecreate_desc, parents=[parent_parser],
                                                              epilog=plantemplatecreate_epilog, formatter_class=rawhelp)
@@ -4093,7 +4091,7 @@ def cli():
     productcreate_parser.set_defaults(func=create_product)
 
     profilecreate_desc = 'Create Profile'
-    profilecreate_epilog = f"examples:\n{profilecreate}"
+    profilecreate_epilog = f"examples:\n{examples.profilecreate}"
     profilecreate_parser = argparse.ArgumentParser(add_help=False)
     profilecreate_parser.add_argument('-i', '--image', help='Image to use', metavar='IMAGE')
     profilecreate_parser.add_argument('-P', '--param', action='append',
@@ -4105,7 +4103,7 @@ def cli():
                                  help=profilecreate_desc, epilog=profilecreate_epilog, formatter_class=rawhelp)
 
     providercreate_desc = 'Install Provider'
-    providercreate_epilog = f"examples:\n{providercreate}"
+    providercreate_epilog = f"examples:\n{examples.providercreate}"
     providercreate_parser = create_subparsers.add_parser('provider', help=providercreate_desc,
                                                          description=providercreate_desc, epilog=providercreate_epilog,
                                                          formatter_class=rawhelp)
@@ -4179,7 +4177,7 @@ def cli():
     vsphereprovidercreate_parser.set_defaults(func=install_provider)
 
     repocreate_desc = 'Create Repo'
-    repocreate_epilog = f"examples:\n{repocreate}"
+    repocreate_epilog = f"examples:\n{examples.repocreate}"
     repocreate_parser = create_subparsers.add_parser('repo', description=repocreate_desc, help=repocreate_desc,
                                                      epilog=repocreate_epilog,
                                                      formatter_class=rawhelp)
@@ -4188,7 +4186,7 @@ def cli():
     repocreate_parser.set_defaults(func=create_repo)
 
     securitygroupcreate_desc = 'Create Security Group'
-    securitygroupcreate_epilog = f"examples:\n{securitygroupcreate}"
+    securitygroupcreate_epilog = f"examples:\n{examples.securitygroupcreate}"
     securitygroupcreate_desc = 'Create Security Group'
     securitygroupcreate_parser = create_subparsers.add_parser('security-group', description=securitygroupcreate_desc,
                                                               help=securitygroupcreate_desc, parents=[parent_parser],
@@ -4198,7 +4196,7 @@ def cli():
     securitygroupcreate_parser.set_defaults(func=create_securitygroup)
 
     subnetcreate_desc = 'Create Subnet'
-    subnetcreate_epilog = f"examples:\n{subnetcreate}"
+    subnetcreate_epilog = f"examples:\n{examples.subnetcreate}"
     subnetcreate_parser = create_subparsers.add_parser('subnet', description=subnetcreate_desc,
                                                        help=subnetcreate_desc, parents=[parent_parser],
                                                        epilog=subnetcreate_epilog, formatter_class=rawhelp,
@@ -4225,7 +4223,7 @@ def cli():
     sushycreate_parser.set_defaults(func=create_ksushy_service)
 
     vmcreate_desc = 'Create Vm'
-    vmcreate_epilog = f"examples:\n{vmcreate}"
+    vmcreate_epilog = f"examples:\n{examples.vmcreate}"
     vmcreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     vmcreate_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
     vmcreate_parser.add_argument('--console', help='Directly switch to console after creation', action='store_true')
@@ -4241,7 +4239,7 @@ def cli():
                                  epilog=vmcreate_epilog, formatter_class=rawhelp)
 
     vmdatacreate_desc = 'Create Cloudinit/Ignition for a single vm'
-    vmdatacreate_epilog = f"examples:\n{vmdatacreate}"
+    vmdatacreate_epilog = f"examples:\n{examples.vmdatacreate}"
     vmdatacreate_parser = create_subparsers.add_parser('vm-data', description=vmdatacreate_desc,
                                                        help=vmdatacreate_desc, parents=[parent_parser],
                                                        epilog=vmdatacreate_epilog, formatter_class=rawhelp)
@@ -4251,7 +4249,7 @@ def cli():
     vmdatacreate_parser.set_defaults(func=create_vmdata)
 
     vmdiskadd_desc = 'Add Disk To Vm'
-    diskcreate_epilog = f"examples:\n{diskcreate}"
+    diskcreate_epilog = f"examples:\n{examples.diskcreate}"
     vmdiskadd_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     vmdiskadd_parser.add_argument('-f', '--force', action='store_true', help='Delete existing primary disk first')
     vmdiskadd_parser.add_argument('-s', '--size', type=int, help='Size of the disk to add, in GB', metavar='SIZE',
@@ -4268,7 +4266,7 @@ def cli():
                                  formatter_class=rawhelp)
 
     create_vmnic_desc = 'Add Nic To Vm'
-    create_vmnic_epilog = f"examples:\n{niccreate}"
+    create_vmnic_epilog = f"examples:\n{examples.niccreate}"
     create_vmnic_parser = argparse.ArgumentParser(add_help=False)
     create_vmnic_parser.add_argument('-m', '--model', help='MODEL', metavar='MODEL', default='virtio')
     create_vmnic_parser.add_argument('-n', '--network', help='Network', metavar='NETWORK')
@@ -4294,7 +4292,7 @@ def cli():
     webcreate_parser.set_defaults(func=create_web_service)
 
     workflowcreate_desc = 'Create Workflow'
-    workflowcreate_epilog = f"examples:\n{workflowcreate}"
+    workflowcreate_epilog = f"examples:\n{examples.workflowcreate}"
     workflowcreate_parser = create_subparsers.add_parser('workflow', description=workflowcreate_desc,
                                                          help=workflowcreate_desc, parents=[parent_parser],
                                                          epilog=workflowcreate_epilog, formatter_class=rawhelp)
@@ -4314,7 +4312,7 @@ def cli():
     vmclone_parser.set_defaults(func=clone_vm)
 
     vmconsole_desc = 'Vm Console (vnc/serial/web)'
-    vmconsole_epilog = f"examples:\n{vmconsole}"
+    vmconsole_epilog = f"examples:\n{examples.vmconsole}"
     vmconsole_parser = argparse.ArgumentParser(add_help=False)
     vmconsole_parser.add_argument('-s', '--serial', action='store_true')
     vmconsole_parser.add_argument('-w', '--web', action='store_true')
@@ -4501,7 +4499,7 @@ def cli():
     delete_subparsers.add_parser('vm', parents=[vmdelete_parser], description=vmdelete_desc, help=vmdelete_desc)
 
     vmdiskdelete_desc = 'Delete Vm Disk'
-    diskdelete_epilog = f"examples:\n{diskdelete}"
+    diskdelete_epilog = f"examples:\n{examples.diskdelete}"
     vmdiskdelete_parser = argparse.ArgumentParser(add_help=False)
     vmdiskdelete_parser.add_argument('-n', '--novm', action='store_true', help='Dont try to locate vm')
     vmdiskdelete_parser.add_argument('--vm', help='Name of the vm', metavar='VMNAME')
@@ -4514,7 +4512,7 @@ def cli():
                                  formatter_class=rawhelp)
 
     delete_vmnic_desc = 'Delete Nic From vm'
-    delete_vmnic_epilog = f"examples:\n{nicdelete}"
+    delete_vmnic_epilog = f"examples:\n{examples.nicdelete}"
     delete_vmnic_parser = argparse.ArgumentParser(add_help=False)
     delete_vmnic_parser.add_argument('-i', '--interface', help='Interface name', metavar='INTERFACE')
     delete_vmnic_parser.add_argument('-n', '--network', help='Network', metavar='NETWORK')
@@ -4626,7 +4624,7 @@ def cli():
                                    help=kubectldownload_desc)
 
     ocdownload_desc = 'Download Oc'
-    ocdownload_epilog = f"examples:\n{ocdownload}"
+    ocdownload_epilog = f"examples:\n{examples.ocdownload}"
     ocdownload_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     ocdownload_parser.set_defaults(func=download_oc)
     download_subparsers.add_parser('oc', parents=[ocdownload_parser],
@@ -4634,7 +4632,7 @@ def cli():
                                    help=ocdownload_desc, epilog=ocdownload_epilog, formatter_class=rawhelp)
 
     ocmirrordownload_desc = 'Download Oc Mirror'
-    ocmirrordownload_epilog = f"examples:\n{ocmirrordownload}"
+    ocmirrordownload_epilog = f"examples:\n{examples.ocmirrordownload}"
     ocmirrordownload_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     ocmirrordownload_parser.set_defaults(func=download_oc_mirror)
     download_subparsers.add_parser('oc-mirror', parents=[ocmirrordownload_parser],
@@ -4642,7 +4640,7 @@ def cli():
                                    help=ocmirrordownload_desc, epilog=ocmirrordownload_epilog, formatter_class=rawhelp)
 
     openshiftdownload_desc = 'Download Openshift Installer'
-    openshiftdownload_epilog = f"examples:\n{openshiftdownload}"
+    openshiftdownload_epilog = f"examples:\n{examples.openshiftdownload}"
     openshiftdownload_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     openshiftdownload_parser.set_defaults(func=download_openshift_installer)
     download_subparsers.add_parser('openshift-installer', parents=[openshiftdownload_parser],
@@ -4669,7 +4667,7 @@ def cli():
     hostenable_parser.set_defaults(func=enable_host)
 
     vmexport_desc = 'Export Vm'
-    vmexport_epilog = f"examples:\n{vmexport}"
+    vmexport_epilog = f"examples:\n{examples.vmexport}"
     vmexport_parser = subparsers.add_parser('export', description=vmexport_desc, help=vmexport_desc,
                                             epilog=vmexport_epilog,
                                             formatter_class=rawhelp)
@@ -4726,7 +4724,7 @@ def cli():
     appopenshiftinfo_parser.set_defaults(func=info_openshift_app)
 
     baremetalhostinfo_desc = 'Report info about Baremetal Host'
-    baremetalhostinfo_epilog = f"examples:\n{infohosts}"
+    baremetalhostinfo_epilog = f"examples:\n{examples.infohosts}"
     baremetalhostinfo_parser = info_subparsers.add_parser('baremetal-host', description=baremetalhostinfo_desc,
                                                           help=baremetalhostinfo_desc, parents=[parent_parser],
                                                           epilog=baremetalhostinfo_epilog, formatter_class=rawhelp)
@@ -4852,7 +4850,7 @@ def cli():
     profileinfo_parser.set_defaults(func=info_profile)
 
     planinfo_desc = 'Info Plan'
-    planinfo_epilog = f"examples:\n{planinfo}"
+    planinfo_epilog = f"examples:\n{examples.planinfo}"
     planinfo_parser = info_subparsers.add_parser('plan', description=planinfo_desc, help=planinfo_desc,
                                                  epilog=planinfo_epilog,
                                                  formatter_class=rawhelp, parents=[output_parser])
@@ -4865,7 +4863,7 @@ def cli():
     planinfo_parser.set_defaults(func=info_plan)
 
     productinfo_desc = 'Info Of Product'
-    productinfo_epilog = f"examples:\n{productinfo}"
+    productinfo_epilog = f"examples:\n{examples.productinfo}"
     productinfo_parser = argparse.ArgumentParser(add_help=False)
     productinfo_parser.set_defaults(func=info_product)
     productinfo_parser.add_argument('-g', '--group', help='Only Display products of the indicated group',
@@ -4892,7 +4890,7 @@ def cli():
     vminfo_parser.set_defaults(func=info_vm)
 
     list_desc = 'List Object'
-    list_epilog = f"examples:\n{_list}"
+    list_epilog = f"examples:\n{examples._list}"
     list_parser = subparsers.add_parser('list', description=list_desc, help=list_desc, aliases=['get'],
                                         epilog=list_epilog,
                                         formatter_class=rawhelp)
@@ -5082,7 +5080,7 @@ def cli():
     subnetlist_parser.set_defaults(func=list_subnets)
 
     vmlist_desc = 'List Vms'
-    vmlist_epilog = f"examples:\n{vmlist}"
+    vmlist_epilog = f"examples:\n{examples.vmlist}"
     vmlist_parser = list_subparsers.add_parser('vm', parents=[parent_parser, output_parser], description=vmlist_desc,
                                                help=vmlist_desc, aliases=['vms'], epilog=vmlist_epilog,
                                                formatter_class=rawhelp)
@@ -5150,7 +5148,7 @@ def cli():
     kubescale_subparsers = kubescale_parser.add_subparsers(metavar='', dest='subcommand_scale_kube')
 
     kubeaksscale_desc = 'Scale Aks Kube'
-    kubeaksscale_epilog = f"examples:\n{kubeaksscale}"
+    kubeaksscale_epilog = f"examples:\n{examples.kubeaksscale}"
     kubeaksscale_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubeaksscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
     kubeaksscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='myaks')
@@ -5159,7 +5157,7 @@ def cli():
                                     help=kubeaksscale_desc, epilog=kubeaksscale_epilog, formatter_class=rawhelp)
 
     kubeeksscale_desc = 'Scale Eks Kube'
-    kubeeksscale_epilog = f"examples:\n{kubeeksscale}"
+    kubeeksscale_epilog = f"examples:\n{examples.kubeeksscale}"
     kubeeksscale_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubeeksscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
     kubeeksscale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='myeks')
@@ -5168,7 +5166,7 @@ def cli():
                                     help=kubeeksscale_desc, epilog=kubeeksscale_epilog, formatter_class=rawhelp)
 
     kubegenericscale_desc = 'Scale Generic Kube'
-    kubegenericscale_epilog = f"examples:\n{kubegenericscale}"
+    kubegenericscale_epilog = f"examples:\n{examples.kubegenericscale}"
     kubegenericscale_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubegenericscale_parser.add_argument('-c', '--ctlplanes', help='Total number of ctlplanes', type=int)
     kubegenericscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
@@ -5179,7 +5177,7 @@ def cli():
                                     formatter_class=rawhelp)
 
     kubegkescale_desc = 'Scale Gke Kube'
-    kubegkescale_epilog = f"examples:\n{kubegkescale}"
+    kubegkescale_epilog = f"examples:\n{examples.kubegkescale}"
     kubegkescale_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubegkescale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
     kubegkescale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='mykube')
@@ -5197,7 +5195,7 @@ def cli():
                                     help=kubehypershiftscale_desc)
 
     kubek3sscale_desc = 'Scale K3s Kube'
-    kubek3sscale_epilog = f"examples:\n{kubek3sscale}"
+    kubek3sscale_epilog = f"examples:\n{examples.kubek3sscale}"
     kubek3sscale_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubek3sscale_parser.add_argument('-c', '--ctlplanes', help='Total number of ctlplanes', type=int)
     kubek3sscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
@@ -5207,7 +5205,7 @@ def cli():
                                     help=kubek3sscale_desc, epilog=kubek3sscale_epilog, formatter_class=rawhelp)
 
     kubeopenshiftscale_desc = 'Scale Openshift Kube'
-    kubeopenshiftscale_epilog = f"examples:\n{kubeopenshiftscale}"
+    kubeopenshiftscale_epilog = f"examples:\n{examples.kubeopenshiftscale}"
     kubeopenshiftscale_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubeopenshiftscale_parser.add_argument('-c', '--ctlplanes', help='Total number of ctlplanes', type=int)
     kubeopenshiftscale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
@@ -5248,7 +5246,7 @@ def cli():
                           formatter_class=rawhelp)
 
     start_desc = 'Start Vm/Plan/Container'
-    start_epilog = f"examples:\n{start}"
+    start_epilog = f"examples:\n{examples.start}"
     start_parser = subparsers.add_parser('start', description=start_desc, help=start_desc, epilog=start_epilog,
                                          formatter_class=rawhelp)
     start_subparsers = start_parser.add_subparsers(metavar='', dest='subcommand_start')
@@ -5265,7 +5263,7 @@ def cli():
     planstart_parser.set_defaults(func=start_plan)
 
     starthosts_desc = 'Start Baremetal Hosts'
-    starthosts_epilog = f"examples:\n{starthosts}"
+    starthosts_epilog = f"examples:\n{examples.starthosts}"
     starthosts_parser = start_subparsers.add_parser('baremetal-host', description=starthosts_desc, help=starthosts_desc,
                                                     parents=[parent_parser], epilog=starthosts_epilog,
                                                     formatter_class=rawhelp, aliases=['baremetal-hosts'])
@@ -5295,7 +5293,7 @@ def cli():
     planstop_parser.set_defaults(func=stop_plan)
 
     stophosts_desc = 'Stop Baremetal Hosts'
-    stophosts_epilog = f"examples:\n{stophosts}"
+    stophosts_epilog = f"examples:\n{examples.stophosts}"
     stophosts_parser = stop_subparsers.add_parser('baremetal-host', description=stophosts_desc, help=stophosts_desc,
                                                   parents=[parent_parser], epilog=stophosts_epilog,
                                                   formatter_class=rawhelp, aliases=['baremetal-hosts'])
@@ -5399,7 +5397,7 @@ def cli():
     profileupdate_parser.set_defaults(func=update_profile)
 
     networkupdate_desc = 'Update Network'
-    networkupdate_epilog = f"examples:\n{networkupdate}"
+    networkupdate_epilog = f"examples:\n{examples.networkupdate}"
     networkupdate_parser = update_subparsers.add_parser('network', description=networkupdate_desc,
                                                         epilog=networkupdate_epilog, formatter_class=rawhelp,
                                                         help=networkupdate_desc, parents=[parent_parser],
@@ -5423,13 +5421,23 @@ def cli():
     planupdate_parser.add_argument('plan', metavar='PLAN')
     planupdate_parser.set_defaults(func=update_plan)
 
+    disconnectedupdate_desc = 'Update disconnected registry for openshift'
+    disconnectedupdate_epilog = f"examples:\n{examples.disconnectedupdate}"
+    disconnectedupdate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
+    disconnectedupdate_parser.add_argument('plan', metavar='PLAN', nargs='?')
+    disconnectedupdate_parser.set_defaults(func=update_openshift_disconnected)
+    update_subparsers.add_parser('openshift-registry', parents=[disconnectedupdate_parser],
+                                 description=disconnectedupdate_desc, help=disconnectedupdate_desc,
+                                 epilog=disconnectedupdate_epilog, formatter_class=rawhelp,
+                                 aliases=['openshift-disconnected'])
+
     repoupdate_desc = 'Update Repo'
     repoupdate_parser = update_subparsers.add_parser('repo', description=repoupdate_desc, help=repoupdate_desc)
     repoupdate_parser.add_argument('repo')
     repoupdate_parser.set_defaults(func=update_repo)
 
     vmupdate_desc = 'Update Vm\'s Ip, Memory Or Numcpus'
-    vmupdate_epilog = f"examples:\n{vmupdate}"
+    vmupdate_epilog = f"examples:\n{examples.vmupdate}"
     vmupdate_parser = update_subparsers.add_parser('vm', description=vmupdate_desc, help=vmupdate_desc,
                                                    parents=[parent_parser], epilog=vmupdate_epilog,
                                                    formatter_class=rawhelp)
