@@ -25,6 +25,13 @@ staticf = {'t2.nano': {'cpus': 1, 'memory': 512}, 't2.micro': {'cpus': 1, 'memor
            }
 
 
+def tag_name(obj):
+    for tag in obj.get('Tags', []):
+        if tag['Key'] == 'Name':
+            return tag['Value']
+    return ''
+
+
 class Kaws(object):
     """
 
@@ -1176,10 +1183,13 @@ class Kaws(object):
         clean_name = name.replace('.', '-')
         sg_data = {'GroupName': name, 'Description': name}
         if subnetid is not None:
-            vpcid = [sub['VpcId'] for sub in conn.describe_subnets()['Subnets'] if sub['SubnetId'] == subnetid][0]
-            sg_data['VpcId'] = vpcid
-        else:
-            vpcid = None
+            subnets = conn.describe_subnets()['Subnets']
+            subnets = [sub for sub in subnets if sub['SubnetId'] == subnetid or tag_name(sub) == subnetid]
+            if not subnets:
+                error(f"Invalid subnetid {subnetid}")
+                return
+            sg_data['VpcId'] = subnets[0]['VpcId']
+            subnetid = subnets[0]['SubnetId']
         sg = resource.create_security_group(**sg_data)
         sgid = sg.id
         sgtags = [{"Key": "Name", "Value": name}]
@@ -1456,8 +1466,7 @@ class Kaws(object):
         subnets = self.conn.describe_subnets()
         for subnet in subnets['Subnets']:
             subnetid = subnet['SubnetId']
-            tags = [tag for tag in subnet.get('Tags', []) if tag['Key'] == 'Name' and tag['Value'] == name]
-            if subnetid == name or tags:
+            if subnetid == name or tag_name(subnet) == name:
                 return subnet
         msg = f"Subnet {name} not found"
         error(msg)
@@ -1576,8 +1585,7 @@ class Kaws(object):
         subnets = conn.describe_subnets()
         for subnet in subnets['Subnets']:
             subnetid = subnet['SubnetId']
-            tags = [tag for tag in subnet.get('Tags', []) if tag['Key'] == 'Name' and tag['Value'] == name]
-            if subnetid == name or tags:
+            if subnetid == name or tag_name(subnet) == name:
                 conn.delete_subnet(SubnetId=subnetid)
                 return {'result': 'success'}
         return {'result': 'failure', 'reason': f"Subnet {name} not found"}
