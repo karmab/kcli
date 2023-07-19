@@ -872,6 +872,12 @@ class Kaws(object):
             if str(network.version) == "6":
                 msg = 'Primary cidr needs to be ipv4 in aws. Use dual to inject ipv6 or set aws_ipv6 parameter'
                 return {'result': 'failure', 'reason': msg}
+        subnet_cidr = overrides.get('subnet_cidr')
+        if subnet_cidr is not None:
+            try:
+                network = ip_network(subnet_cidr)
+            except:
+                return {'result': 'failure', 'reason': f"Invalid Cidr {subnet_cidr}"}
         default = 'default' in overrides and overrides['default']
         Tags = [{"Key": "Name", "Value": name}, {"Key": "Plan", "Value": plan}]
         vpcargs = {"CidrBlock": cidr}
@@ -893,26 +899,41 @@ class Kaws(object):
         vpc = conn.create_vpc(**vpcargs)
         vpcid = vpc['Vpc']['VpcId']
         conn.create_tags(Resources=[vpcid], Tags=Tags)
+        gateway = conn.create_internet_gateway()
+        gatewayid = gateway['InternetGateway']['InternetGatewayId']
+        gateway = self.resource.InternetGateway(gatewayid)
+        gateway.attach_to_vpc(VpcId=vpcid)
+        conn.create_tags(Resources=[gatewayid], Tags=Tags)
         routetableid = None
-        if overrides.get('create_subnet', True):
+        create_subnet = overrides.get('create_subnet', True)
+        if create_subnet:
             vpcargs['VpcId'] = vpcid
+            vpcargs['CidrBlock'] = subnet_cidr or cidr
             subnet = conn.create_subnet(**vpcargs)
             subnetid = subnet['Subnet']['SubnetId']
             conn.create_tags(Resources=[subnetid], Tags=Tags)
             response = conn.describe_route_tables(Filters=[{'Name': 'vpc-id', 'Values': [vpcid]}])
             routetableid = response['RouteTables'][0]['RouteTableId']
-        if nat:
-            gateway = conn.create_internet_gateway()
-            gatewayid = gateway['InternetGateway']['InternetGatewayId']
-            gateway = self.resource.InternetGateway(gatewayid)
-            gateway.attach_to_vpc(VpcId=vpcid)
-            conn.create_tags(Resources=[gatewayid], Tags=Tags)
-            if routetableid is not None:
-                conn.create_route(DestinationCidrBlock='0.0.0.0/0', GatewayId=gatewayid, RouteTableId=routetableid)
-            response = conn.describe_security_groups(Filters=[{'Name': 'vpc-id', 'Values': [vpcid]}])
-            sgid = response['SecurityGroups'][0]['GroupId']
-            conn.authorize_security_group_ingress(CidrIp='0.0.0.0/0', GroupId=sgid, IpProtocol='-1',
-                                                  FromPort=0, ToPort=65535)
+            if not nat:
+                response = conn.allocate_address(Domain='vpc')
+                allocationid = response['AllocationId']
+                conn.create_tags(Resources=[allocationid], Tags=Tags)
+                nat_gateway = conn.create_nat_gateway(SubnetId=subnetid, AllocationId=allocationid)
+                nat_gatewayid = nat_gateway['NatGateway']['NatGatewayId']
+                waiter = conn.get_waiter('nat_gateway_available')
+                waiter.wait(NatGatewayIds=[nat_gatewayid])
+                conn.create_tags(Resources=[nat_gatewayid], Tags=Tags)
+        if routetableid is not None:
+            data = {'DestinationCidrBlock': '0.0.0.0/0', 'RouteTableId': routetableid}
+            if nat:
+                data['GatewayId'] = gatewayid
+            else:
+                data['NatGatewayId'] = nat_gatewayid
+            conn.create_route(**data)
+        response = conn.describe_security_groups(Filters=[{'Name': 'vpc-id', 'Values': [vpcid]}])
+        sgid = response['SecurityGroups'][0]['GroupId']
+        conn.authorize_security_group_ingress(CidrIp='0.0.0.0/0', GroupId=sgid, IpProtocol='-1',
+                                              FromPort=0, ToPort=65535)
         return {'result': 'success'}
 
     def delete_network(self, name=None, cidr=None, force=False):
@@ -931,9 +952,14 @@ class Kaws(object):
             return {'result': 'failure', 'reason': f"Network {name} not found"}
         Filters = [{'Name': 'vpc-id', 'Values': [vpcid]}]
         subnets = conn.describe_subnets(Filters=Filters)
-        for subnet in subnets['Subnets']:
-            subnetid = subnet['SubnetId']
-            conn.delete_subnet(SubnetId=subnetid)
+        for gateway in conn.describe_nat_gateways()['NatGateways']:
+            if gateway['VpcId'] == vpcid or tag_name(gateway) == name:
+                gateway_id = gateway['NatGatewayId']
+                conn.delete_nat_gateway(NatGatewayId=gateway_id)
+        for address in conn.describe_addresses()['Addresses']:
+            if tag_name(address) == name:
+                allocation_id = address['AllocationId']
+                conn.release_address(AllocationId=allocation_id)
         for gateway in conn.describe_internet_gateways()['InternetGateways']:
             attachments = gateway['Attachments']
             for attachment in attachments:
@@ -942,6 +968,9 @@ class Kaws(object):
                     gateway = self.resource.InternetGateway(gatewayid)
                     gateway.detach_from_vpc(VpcId=vpcid)
                     gateway.delete()
+        for subnet in subnets['Subnets']:
+            subnetid = subnet['SubnetId']
+            conn.delete_subnet(SubnetId=subnetid)
         conn.delete_vpc(VpcId=vpcid)
         return {'result': 'success'}
 
