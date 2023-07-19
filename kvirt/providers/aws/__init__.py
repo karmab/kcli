@@ -866,7 +866,7 @@ class Kaws(object):
         conn = self.conn
         if cidr is not None:
             try:
-                network = ip_network(cidr)
+                network = ip_network(cidr, strict=False)
             except:
                 return {'result': 'failure', 'reason': f"Invalid Cidr {cidr}"}
             if str(network.version) == "6":
@@ -875,9 +875,11 @@ class Kaws(object):
         subnet_cidr = overrides.get('subnet_cidr')
         if subnet_cidr is not None:
             try:
-                network = ip_network(subnet_cidr)
+                subnet = ip_network(subnet_cidr, strict=False)
             except:
                 return {'result': 'failure', 'reason': f"Invalid Cidr {subnet_cidr}"}
+            if not subnet.subnet_of(network):
+                return {'result': 'failure', 'reason': f"{subnet_cidr} isnt part of {cidr}"}
         default = 'default' in overrides and overrides['default']
         Tags = [{"Key": "Name", "Value": name}, {"Key": "Plan", "Value": plan}]
         vpcargs = {"CidrBlock": cidr}
@@ -1581,7 +1583,7 @@ class Kaws(object):
     def create_subnet(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
         conn = self.conn
         try:
-            subnet = ip_network(cidr)
+            subnet = ip_network(cidr, strict=False)
         except:
             return {'result': 'failure', 'reason': f"Invalid Cidr {cidr}"}
         if str(subnet.version) == "6":
@@ -1598,6 +1600,9 @@ class Kaws(object):
             return {'result': 'failure', 'reason': msg}
         else:
             vpcid = networks[0]['domain']
+            network_cidr = ip_network(networks[0]['cidr'])
+            if not subnet.subnet_of(network_cidr):
+                return {'result': 'failure', 'reason': f"{cidr} isnt part of {network_cidr}"}
         Tags = [{"Key": "Name", "Value": name}, {"Key": "Plan", "Value": plan}]
         args = {"CidrBlock": cidr, 'VpcId': vpcid}
         if 'dual_cidr' in overrides:

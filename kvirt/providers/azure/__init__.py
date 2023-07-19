@@ -727,7 +727,7 @@ class Kazure(object):
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
         if cidr is not None:
             try:
-                ip_network(cidr)
+                ip_network(cidr, strict=False)
             except:
                 return {'result': 'failure', 'reason': f"Invalid Cidr {cidr}"}
         else:
@@ -1139,7 +1139,7 @@ class Kazure(object):
 
     def create_subnet(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
         try:
-            ip_network(cidr)
+            ip_network(cidr, strict=False)
         except:
             return {'result': 'failure', 'reason': f"Invalid Cidr {cidr}"}
         data = {'address_prefix': cidr, 'tags': {'plan': plan}}
