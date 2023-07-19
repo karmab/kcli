@@ -152,7 +152,7 @@ class Kaws(object):
         blockdevicemappings = []
         privateips = []
         vpcs = conn.describe_vpcs()
-        subnets = conn.describe_subnets()
+        subnets = conn.describe_subnets()['Subnets']
         for index, net in enumerate(nets):
             netpublic = overrides.get('public', True)
             networkinterface = {'DeleteOnTermination': True, 'Description': f"eth{index}", 'DeviceIndex': index}
@@ -170,8 +170,10 @@ class Kaws(object):
                     warning("Forcing netpublic to false as you have more than one nic")
                     netpublic = False
                 networkinterface['AssociatePublicIpAddress'] = netpublic
-            if netname in [subnet['SubnetId'] for subnet in subnets['Subnets']]:
-                vpcid = [subnet['VpcId'] for subnet in subnets['Subnets'] if subnet['SubnetId'] == netname][0]
+            matching_subnets = [sub for sub in subnets if sub['SubnetId'] == netname or tag_name(sub) == netname]
+            if matching_subnets:
+                vpcid = matching_subnets[0]['VpcId']
+                netname = matching_subnets[0]['SubnetId']
             elif netname == 'default':
                 if defaultsubnetid is not None:
                     netname = defaultsubnetid
@@ -543,6 +545,7 @@ class Kaws(object):
         state = vm['State']['Name']
         amid = vm['ImageId']
         az = vm['Placement']['AvailabilityZone']
+        yamlinfo['vpcid'] = vm['VpcId']
         image = resource.Image(amid)
         source = os.path.basename(image.image_location)
         yamlinfo['plan'] = ''
@@ -565,13 +568,18 @@ class Kaws(object):
         yamlinfo['instanceid'] = instanceid
         nets = []
         for interface in vm['NetworkInterfaces']:
-            network = interface['VpcId']
-            device = interface['NetworkInterfaceId']
+            subnetid = interface['SubnetId']
+            subnet = self.info_subnet(subnetid)
+            subnet_name = tag_name(subnet)
+            if subnet_name != '':
+                subnetid = subnet_name
+            device = interface['Description']
             mac = interface['MacAddress']
             private_ip = interface['PrivateIpAddresses'][0]['PrivateIpAddress']
-            nets.append({'device': device, 'mac': mac, 'net': network, 'type': private_ip})
+            nets.append({'device': device, 'mac': mac, 'net': subnetid, 'type': private_ip})
             yamlinfo['private_ip'] = private_ip
         if nets:
+            nets.reverse()
             yamlinfo['nets'] = nets
         yamlinfo['ip'] = vm.get('PublicIpAddress') or yamlinfo.get('private_ip')
         disks = []
