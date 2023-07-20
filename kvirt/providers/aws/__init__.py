@@ -929,29 +929,25 @@ class Kaws(object):
         routetableid = None
         create_subnet = overrides.get('create_subnet', True)
         if create_subnet:
+            pprint(f"Creating first subnet {name}-subnet1 as public")
             vpcargs['VpcId'] = vpcid
             vpcargs['CidrBlock'] = subnet_cidr or cidr
             subnet = conn.create_subnet(**vpcargs)
             subnetid = subnet['Subnet']['SubnetId']
+            Tags = [{"Key": "Name", "Value": f"{name}-subnet1"}, {"Key": "Plan", "Value": plan}]
             conn.create_tags(Resources=[subnetid], Tags=Tags)
             response = conn.describe_route_tables(Filters=[{'Name': 'vpc-id', 'Values': [vpcid]}])
             routetableid = response['RouteTables'][0]['RouteTableId']
-            if not nat:
-                response = conn.allocate_address(Domain='vpc')
-                allocationid = response['AllocationId']
-                conn.create_tags(Resources=[allocationid], Tags=Tags)
-                nat_gateway = conn.create_nat_gateway(SubnetId=subnetid, AllocationId=allocationid)
-                nat_gatewayid = nat_gateway['NatGateway']['NatGatewayId']
-                waiter = conn.get_waiter('nat_gateway_available')
-                waiter.wait(NatGatewayIds=[nat_gatewayid])
-                conn.create_tags(Resources=[nat_gatewayid], Tags=Tags)
-        if routetableid is not None:
-            data = {'DestinationCidrBlock': '0.0.0.0/0', 'RouteTableId': routetableid}
-            if nat:
-                data['GatewayId'] = gatewayid
-            else:
-                data['NatGatewayId'] = nat_gatewayid
+            data = {'DestinationCidrBlock': '0.0.0.0/0', 'RouteTableId': routetableid, 'GatewayId': gatewayid}
             conn.create_route(**data)
+            response = conn.allocate_address(Domain='vpc')
+            allocationid = response['AllocationId']
+            conn.create_tags(Resources=[allocationid], Tags=Tags)
+            nat_gateway = conn.create_nat_gateway(SubnetId=subnetid, AllocationId=allocationid)
+            nat_gatewayid = nat_gateway['NatGateway']['NatGatewayId']
+            waiter = conn.get_waiter('nat_gateway_available')
+            waiter.wait(NatGatewayIds=[nat_gatewayid])
+            conn.create_tags(Resources=[nat_gatewayid], Tags=Tags)
         response = conn.describe_security_groups(Filters=[{'Name': 'vpc-id', 'Values': [vpcid]}])
         sgid = response['SecurityGroups'][0]['GroupId']
         conn.authorize_security_group_ingress(CidrIp='0.0.0.0/0', GroupId=sgid, IpProtocol='-1',
@@ -1638,6 +1634,18 @@ class Kaws(object):
         subnet = conn.create_subnet(**args)
         subnetid = subnet['Subnet']['SubnetId']
         conn.create_tags(Resources=[subnetid], Tags=Tags)
+        if not nat:
+            response = conn.create_route_table(VpcId=vpcid)
+            route_table_id = response['RouteTable']['RouteTableId']
+            conn.create_tags(Resources=[route_table_id], Tags=Tags)
+            conn.associate_route_table(SubnetId=subnetid, RouteTableId=route_table_id)
+            nat_gateways = conn.describe_nat_gateways(Filters=[{'Name': 'vpc-id', 'Values': [vpcid]}])['NatGateways']
+            matching_nats = [n for n in nat_gateways if tag_name(n) == network]
+            if matching_nats:
+                nat_gateway_id = matching_nats[0]['NatGatewayId']
+                data = {'DestinationCidrBlock': '0.0.0.0/0', 'RouteTableId': route_table_id,
+                        'NatGatewayId': nat_gateway_id}
+                conn.create_route(**data)
         return {'result': 'success'}
 
     def delete_subnet(self, name):
