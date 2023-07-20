@@ -660,25 +660,15 @@ class Kaws(object):
     def volumes(self, iso=False):
         conn = self.conn
         images = []
-        oses = ['CentOS Linux 7*', 'CentOS Stream*', 'CentOS Linux 8*', 'RHEL-7*', 'RHEL-8.*', 'rhcos-4*',
-                'fedora-coreos*', 'Debian*', 'Ubuntu*']
+        oses = ['amzn2*', 'CentOS Stream*', 'CentOS Linux 8*', 'RHEL-7*', 'RHEL-8.*', 'Debian*', 'Ubuntu*']
         Filters = [{'Name': 'name', 'Values': oses}]
-        rhcos = {}
         allimages = conn.describe_images(Filters=Filters)
         for image in allimages['Images']:
             name = image['Name']
-            if name.startswith('rhcos') and 'devel' in name:
-                continue
-            elif 'beta' in name.lower():
-                continue
-            elif name.startswith('rhcos-4'):
-                number = name[6:8]
-                rhcos[number] = [name]
+            if 'beta' in name.lower():
                 continue
             else:
                 images.append(name)
-        for value in rhcos.values():
-            images.append(value[0])
         return sorted(images, key=str.lower)
 
     def delete(self, name, snapshots=False):
