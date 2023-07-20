@@ -183,7 +183,7 @@ class Kaws(object):
                         error("Couldn't find default vpc")
                         sys.exit(1)
                     vpcid = vpcid[0]
-                    subnetid = [subnet['SubnetId'] for subnet in subnets['Subnets']
+                    subnetid = [subnet['SubnetId'] for subnet in subnets
                                 if subnet['DefaultForAz'] and subnet['VpcId'] == vpcid][0]
                     netname = subnetid
                     defaultsubnetid = netname
@@ -193,7 +193,7 @@ class Kaws(object):
                 if vpcid is None:
                     error(f"Couldn't find vpc {netname}")
                     sys.exit(1)
-                subnetids = [subnet['SubnetId'] for subnet in subnets['Subnets'] if subnet['VpcId'] == vpcid]
+                subnetids = [subnet['SubnetId'] for subnet in subnets if subnet['VpcId'] == vpcid]
                 if subnetids:
                     netname = subnetids[0]
                 else:
