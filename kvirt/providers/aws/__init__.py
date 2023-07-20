@@ -228,7 +228,7 @@ class Kaws(object):
                         warning("Forcing netpublic to false as you have more than one nic")
                         netpublic = False
                     elif [s for s in all_subnets if all_subnets[s]['id'] == netname and all_subnets[s]['private']]:
-                        warning("Forcing netpublic to false as subnet {netname} is private")
+                        warning(f"Forcing netpublic to false as subnet {netname} is private")
                         netpublic = False
                 networkinterface['AssociatePublicIpAddress'] = netpublic
                 SecurityGroupIds = []
@@ -920,40 +920,38 @@ class Kaws(object):
                 msg = f"network {default_network[0]} is already default"
                 return {'result': 'failure', 'reason': msg}
             vpc = conn.create_default_vpc(**vpcargs)
-            vpcid = vpc['Vpc']['VpcId']
-            conn.create_tags(Resources=[vpcid], Tags=Tags)
+            vpc_id = vpc['Vpc']['VpcId']
+            conn.create_tags(Resources=[vpc_id], Tags=Tags)
             return {'result': 'success'}
         vpc = conn.create_vpc(**vpcargs)
-        vpcid = vpc['Vpc']['VpcId']
-        conn.create_tags(Resources=[vpcid], Tags=Tags)
+        vpc_id = vpc['Vpc']['VpcId']
+        conn.create_tags(Resources=[vpc_id], Tags=Tags)
         gateway = conn.create_internet_gateway()
-        gatewayid = gateway['InternetGateway']['InternetGatewayId']
-        gateway = self.resource.InternetGateway(gatewayid)
-        gateway.attach_to_vpc(VpcId=vpcid)
-        conn.create_tags(Resources=[gatewayid], Tags=Tags)
-        routetableid = None
-        create_subnet = overrides.get('create_subnet', True)
-        if create_subnet:
-            pprint(f"Creating first subnet {name}-subnet1 as public")
-            vpcargs['VpcId'] = vpcid
-            vpcargs['CidrBlock'] = subnet_cidr or cidr
-            subnet = conn.create_subnet(**vpcargs)
-            subnetid = subnet['Subnet']['SubnetId']
-            Tags = [{"Key": "Name", "Value": f"{name}-subnet1"}, {"Key": "Plan", "Value": plan}]
-            conn.create_tags(Resources=[subnetid], Tags=Tags)
-            response = conn.describe_route_tables(Filters=[{'Name': 'vpc-id', 'Values': [vpcid]}])
-            routetableid = response['RouteTables'][0]['RouteTableId']
-            data = {'DestinationCidrBlock': '0.0.0.0/0', 'RouteTableId': routetableid, 'GatewayId': gatewayid}
-            conn.create_route(**data)
-            response = conn.allocate_address(Domain='vpc')
-            allocationid = response['AllocationId']
-            conn.create_tags(Resources=[allocationid], Tags=Tags)
-            nat_gateway = conn.create_nat_gateway(SubnetId=subnetid, AllocationId=allocationid)
-            nat_gatewayid = nat_gateway['NatGateway']['NatGatewayId']
-            waiter = conn.get_waiter('nat_gateway_available')
-            waiter.wait(NatGatewayIds=[nat_gatewayid])
-            conn.create_tags(Resources=[nat_gatewayid], Tags=Tags)
-        response = conn.describe_security_groups(Filters=[{'Name': 'vpc-id', 'Values': [vpcid]}])
+        gateway_id = gateway['InternetGateway']['InternetGatewayId']
+        gateway = self.resource.InternetGateway(gateway_id)
+        gateway.attach_to_vpc(VpcId=vpc_id)
+        conn.create_tags(Resources=[gateway_id], Tags=Tags)
+        pprint(f"Creating first subnet {name}-subnet1 as public")
+        vpcargs['VpcId'] = vpc_id
+        vpcargs['CidrBlock'] = subnet_cidr or cidr
+        subnet = conn.create_subnet(**vpcargs)
+        subnet_id = subnet['Subnet']['SubnetId']
+        Tags = [{"Key": "Name", "Value": f"{name}-subnet1"}, {"Key": "Plan", "Value": plan}]
+        conn.create_tags(Resources=[subnet_id], Tags=Tags)
+        response = conn.describe_route_tables(Filters=[{'Name': 'vpc-id', 'Values': [vpc_id]}])
+        route_table_id = response['RouteTables'][0]['RouteTableId']
+        data = {'DestinationCidrBlock': '0.0.0.0/0', 'RouteTableId': route_table_id, 'GatewayId': gateway_id}
+        conn.create_route(**data)
+        conn.create_tags(Resources=[route_table_id], Tags=Tags)
+        response = conn.allocate_address(Domain='vpc')
+        allocation_id = response['AllocationId']
+        conn.create_tags(Resources=[allocation_id], Tags=Tags)
+        nat_gateway = conn.create_nat_gateway(SubnetId=subnet_id, AllocationId=allocation_id)
+        nat_gateway_id = nat_gateway['NatGateway']['NatGatewayId']
+        waiter = conn.get_waiter('nat_gateway_available')
+        waiter.wait(NatGatewayIds=[nat_gateway_id])
+        conn.create_tags(Resources=[nat_gateway_id], Tags=Tags)
+        response = conn.describe_security_groups(Filters=[{'Name': 'vpc-id', 'Values': [vpc_id]}])
         sgid = response['SecurityGroups'][0]['GroupId']
         conn.authorize_security_group_ingress(CidrIp='0.0.0.0/0', GroupId=sgid, IpProtocol='-1',
                                               FromPort=0, ToPort=65535)
