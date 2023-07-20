@@ -178,6 +178,7 @@ class Kconfig(Kbaseconfig):
                 if region is None:
                     error("Missing region in the configuration. Leaving")
                     sys.exit(1)
+                zone = self.options.get('zone') if zone is None else zone
                 if access_key_id is None:
                     error("Missing access_key_id in the configuration. Leaving")
                     sys.exit(1)
@@ -190,7 +191,7 @@ class Kconfig(Kbaseconfig):
                     exception = e if debug else None
                     dependency_error('aws', exception)
                 k = Kaws(access_key_id=access_key_id, access_key_secret=access_key_secret, region=region,
-                         debug=debug, keypair=keypair, session_token=session_token)
+                         debug=debug, keypair=keypair, session_token=session_token, zone=zone)
             elif self.type == 'ibm':
                 if len(self.options) == 1:
                     home = os.environ['HOME']
@@ -1299,6 +1300,8 @@ class Kconfig(Kbaseconfig):
                     k.update_nic(name, index, targetnetname)
         if extra_metadata:
             for key in extra_metadata:
+                if key in ['ena', 'EnaSupport', 'sriov', 'SriovNetSupport']:
+                    continue
                 value = extra_metadata[key]
                 pprint(f"Updating {key} of vm {name} to {value}...")
                 k.update_metadata(name, key, value)
@@ -1316,13 +1319,24 @@ class Kconfig(Kbaseconfig):
             if cpuflags:
                 pprint(f"Updating cpuflags of vm {name}")
                 k.update_cpuflags(name, cpuflags, disable)
-        if self.type == 'vsphere' and template is not None and isinstance(template, bool):
+        elif self.type == 'vsphere' and template is not None and isinstance(template, bool):
             target = 'template' if template else 'vm'
             pprint(f"Updating vm {name} to {target}...")
             if template:
                 k.convert_to_template(name)
             else:
                 k.convert_to_vm(name)
+        elif self.type == 'aws':
+            ena = overrides.get('ena') or overrides.get('EnaSupport')
+            if ena is not None:
+                k.update_attribute(name, 'EnaSupport', ena)
+            sriov = overrides.get('sriov') or overrides.get('SriovNetSupport')
+            if sriov is not None:
+                if isinstance(sriov, bool) and not sriov:
+                    warning("SriovNetSupport can't be disabled")
+                else:
+                    sriov = 'simple'
+                    k.update_attribute(name, 'SriovNetSupport', sriov)
         return {'result': 'success'}
 
     def list_plans(self):

@@ -37,7 +37,7 @@ class Kaws(object):
 
     """
     def __init__(self, access_key_id=None, access_key_secret=None, debug=False,
-                 region='eu-west-3', keypair=None, session_token=None):
+                 region='eu-west-3', keypair=None, session_token=None, zone=None):
         self.ami_date = 20195
         self.debug = debug
         self.conn = boto3.client('ec2', aws_access_key_id=access_key_id, aws_secret_access_key=access_key_secret,
@@ -53,6 +53,7 @@ class Kaws(object):
         self.access_key_id = access_key_id
         self.access_key_secret = access_key_secret
         self.region = region
+        self.zone = zone
         self.keypair = keypair
         return
 
@@ -108,6 +109,9 @@ class Kaws(object):
             else:
                 return {'result': 'failure', 'reason': f'Invalid image {image}'}
         defaultsubnetid = None
+        az = overrides.get('az') or overrides.get('availability_zone') or overrides.get('zone') or self.zone
+        if az is not None and not az.startswith(self.region):
+            return {'result': 'failure', 'reason': f'Invalid az {az}'}
         if flavor is None:
             matching = [f for f in staticf if staticf[f]['cpus'] >= numcpus and staticf[f]['memory'] >= memory]
             if matching:
@@ -172,6 +176,7 @@ class Kaws(object):
                 networkinterface['AssociatePublicIpAddress'] = netpublic
             matching_subnets = [sub for sub in subnets if sub['SubnetId'] == netname or tag_name(sub) == netname]
             if matching_subnets:
+                subnet_az = matching_subnets[0]['AvailabilityZone']
                 vpcid = matching_subnets[0]['VpcId']
                 netname = matching_subnets[0]['SubnetId']
             elif netname == 'default':
@@ -183,8 +188,18 @@ class Kaws(object):
                         error("Couldn't find default vpc")
                         sys.exit(1)
                     vpcid = vpcid[0]
-                    subnetid = [subnet['SubnetId'] for subnet in subnets
-                                if subnet['DefaultForAz'] and subnet['VpcId'] == vpcid][0]
+                    default_subnets = [sub for sub in subnets if sub['DefaultForAz'] and sub['VpcId'] == vpcid]
+                    if az is None:
+                        default_subnet = default_subnets[0]
+                    else:
+                        az_subnets = [sub for sub in default_subnets if sub['AvailabilityZone'] == az]
+                        if not az_subnets:
+                            error("Couldn't find default subnet in specified AZ")
+                            sys.exit(1)
+                        else:
+                            default_subnet = az_subnets[0]
+                    subnetid = default_subnet['SubnetId']
+                    subnet_az = default_subnet['AvailabilityZone']
                     netname = subnetid
                     defaultsubnetid = netname
                     pprint(f"Using subnet {defaultsubnetid} as default")
@@ -193,12 +208,16 @@ class Kaws(object):
                 if vpcid is None:
                     error(f"Couldn't find vpc {netname}")
                     sys.exit(1)
-                subnetids = [subnet['SubnetId'] for subnet in subnets if subnet['VpcId'] == vpcid]
-                if subnetids:
-                    netname = subnetids[0]
+                vpc_subnets = [sub for sub in subnets if sub['VpcId'] == vpcid]
+                if vpc_subnets:
+                    netname = vpc_subnets[0]['SubnetId']
+                    subnet_az = vpc_subnets[0]['AvailabilityZone']
                 else:
                     error(f"Couldn't find valid subnet for vpc {netname}")
                     sys.exit(1)
+            if az is not None and subnet_az != az:
+                error(f"Selected subnet doesnt belong to AZ {az}")
+                sys.exit(1)
             if ips and len(ips) > index and ips[index] is not None:
                 ip = ips[index]
                 if index == 0:
@@ -328,10 +347,13 @@ class Kaws(object):
                     pprint("Waiting for instanceid associated to spot request to show up")
                     sleep(5)
         else:
-            response = conn.run_instances(ImageId=imageid, MinCount=1, MaxCount=1, InstanceType=flavor,
-                                          KeyName=keypair, BlockDeviceMappings=blockdevicemappings,
-                                          NetworkInterfaces=networkinterfaces, UserData=userdata,
-                                          TagSpecifications=vmtags)
+            data = {'ImageId': imageid, 'MinCount': 1, 'MaxCount': 1, 'InstanceType': flavor,
+                    'KeyName': keypair, 'BlockDeviceMappings': blockdevicemappings,
+                    'NetworkInterfaces': networkinterfaces, 'UserData': userdata,
+                    'TagSpecifications': vmtags}
+            if az is not None:
+                data['Placement'] = {'AvailabilityZone': az}
+            response = conn.run_instances(**data)
         if reservedns and domain is not None:
             self.reserve_dns(name, nets=nets, domain=domain, alias=alias, instanceid=name)
         if 'kubetype' in metadata and metadata['kubetype'] == "openshift":
@@ -1637,3 +1659,22 @@ class Kaws(object):
                 conn.delete_subnet(SubnetId=subnetid)
                 return {'result': 'success'}
         return {'result': 'failure', 'reason': f"Subnet {name} not found"}
+
+    def update_attribute(self, name, attribute, value):
+        conn = self.conn
+        df = {'InstanceIds': [name]} if name.startswith('i-') else {'Filters': [{'Name': "tag:Name", 'Values': [name]}]}
+        try:
+            vm = conn.describe_instances(**df)['Reservations'][0]['Instances'][0]
+        except:
+            msg = f"VM {name} not found"
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
+        state = vm['State']['Name']
+        if state != 'stopped':
+            error(f"Can't update attribute of VM {name} while up")
+            return {'result': 'failure', 'reason': f"VM {name} up"}
+        instanceid = vm['InstanceId']
+        data = {'InstanceId': instanceid}
+        data[attribute] = {'Value': value}
+        conn.modify_instance_attribute(**data)
+        return {'result': 'success'}
