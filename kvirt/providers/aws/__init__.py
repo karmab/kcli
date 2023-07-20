@@ -157,6 +157,7 @@ class Kaws(object):
         privateips = []
         vpcs = conn.describe_vpcs()
         subnets = conn.describe_subnets()['Subnets']
+        subnet_azs = []
         for index, net in enumerate(nets):
             netpublic = overrides.get('public', True)
             networkinterface = {'DeleteOnTermination': True, 'Description': f"eth{index}", 'DeviceIndex': index}
@@ -177,6 +178,7 @@ class Kaws(object):
             matching_subnets = [sub for sub in subnets if sub['SubnetId'] == netname or tag_name(sub) == netname]
             if matching_subnets:
                 subnet_az = matching_subnets[0]['AvailabilityZone']
+                subnet_azs.append(subnet_az)
                 vpcid = matching_subnets[0]['VpcId']
                 netname = matching_subnets[0]['SubnetId']
             elif netname == 'default':
@@ -185,8 +187,7 @@ class Kaws(object):
                 else:
                     vpcid = [vpc['VpcId'] for vpc in vpcs['Vpcs'] if vpc['IsDefault']]
                     if not vpcid:
-                        error("Couldn't find default vpc")
-                        sys.exit(1)
+                        return {'result': 'failure', 'reason': "Couldn't find default vpc"}
                     vpcid = vpcid[0]
                     default_subnets = [sub for sub in subnets if sub['DefaultForAz'] and sub['VpcId'] == vpcid]
                     if az is None:
@@ -194,30 +195,28 @@ class Kaws(object):
                     else:
                         az_subnets = [sub for sub in default_subnets if sub['AvailabilityZone'] == az]
                         if not az_subnets:
-                            error("Couldn't find default subnet in specified AZ")
-                            sys.exit(1)
+                            return {'result': 'failure', 'reason': "Couldn't find default subnet in specified AZ"}
                         else:
                             default_subnet = az_subnets[0]
                     subnetid = default_subnet['SubnetId']
                     subnet_az = default_subnet['AvailabilityZone']
+                    subnet_azs.append(subnet_az)
                     netname = subnetid
                     defaultsubnetid = netname
                     pprint(f"Using subnet {defaultsubnetid} as default")
             else:
                 vpcid = self.get_vpc_id(vpcs, netname) if not netname.startswith('vpc-') else netname
                 if vpcid is None:
-                    error(f"Couldn't find vpc {netname}")
-                    sys.exit(1)
+                    return {'result': 'failure', 'reason': f"Couldn't find vpc {netname}"}
                 vpc_subnets = [sub for sub in subnets if sub['VpcId'] == vpcid]
                 if vpc_subnets:
                     netname = vpc_subnets[0]['SubnetId']
                     subnet_az = vpc_subnets[0]['AvailabilityZone']
+                    subnet_azs.append(subnet_az)
                 else:
-                    error(f"Couldn't find valid subnet for vpc {netname}")
-                    sys.exit(1)
+                    return {'result': 'failure', 'reason': f"Couldn't find valid subnet for vpc {netname}"}
             if az is not None and subnet_az != az:
-                error(f"Selected subnet doesnt belong to AZ {az}")
-                sys.exit(1)
+                return {'result': 'failure', 'reason': f"Selected subnet doesnt belong to AZ {az}"}
             if ips and len(ips) > index and ips[index] is not None:
                 ip = ips[index]
                 if index == 0:
@@ -303,6 +302,8 @@ class Kaws(object):
                     SecurityGroupIds.append(kubesgid)
                 networkinterface['Groups'] = SecurityGroupIds
             networkinterfaces.append(networkinterface)
+        if len(list(dict.fromkeys(subnet_azs))) > 1:
+            return {'result': 'failure', 'reason': "Subnets of multinic instance need to belong to a single AZ"}
         if len(privateips) > 1:
             networkinterface['PrivateIpAddresses'] = privateips
         for index, disk in enumerate(disks):
