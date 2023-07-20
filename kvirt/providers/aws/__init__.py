@@ -1602,6 +1602,9 @@ class Kaws(object):
         return [role['RoleName'] for role in response['Roles']]
 
     def create_subnet(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
+        az = overrides.get('az') or overrides.get('availability_zone') or overrides.get('zone') or self.zone
+        if az is not None and not az.startswith(self.region):
+            return {'result': 'failure', 'reason': f'Invalid az {az}'}
         conn = self.conn
         try:
             subnet = ip_network(cidr, strict=False)
@@ -1631,6 +1634,8 @@ class Kaws(object):
             args["Ipv6Pool"] = overrides['dual_cidr']
         if 'aws_ipv6' in overrides and overrides['aws_ipv6']:
             args["AmazonProvidedIpv6CidrBlock"] = True
+        if az is not None:
+            args['AvailabilityZone'] = az
         subnet = conn.create_subnet(**args)
         subnetid = subnet['Subnet']['SubnetId']
         conn.create_tags(Resources=[subnetid], Tags=Tags)
