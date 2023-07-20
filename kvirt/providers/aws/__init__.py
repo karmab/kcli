@@ -170,11 +170,6 @@ class Kaws(object):
                 ip = net.get('ip')
                 alias = net.get('alias')
                 netpublic = net.get('public', netpublic)
-            if index == 0:
-                if netpublic and len(nets) > 1:
-                    warning("Forcing netpublic to false as you have more than one nic")
-                    netpublic = False
-                networkinterface['AssociatePublicIpAddress'] = netpublic
             matching_subnets = [sub for sub in subnets if sub['SubnetId'] == netname or tag_name(sub) == netname]
             if matching_subnets:
                 subnet_az = matching_subnets[0]['AvailabilityZone']
@@ -227,6 +222,15 @@ class Kaws(object):
                 privateips.append(privateip)
             networkinterface['SubnetId'] = netname
             if index == 0:
+                all_subnets = self.list_subnets()
+                if netpublic:
+                    if len(nets) > 1:
+                        warning("Forcing netpublic to false as you have more than one nic")
+                        netpublic = False
+                    elif [s for s in all_subnets if all_subnets[s]['id'] == netname and all_subnets[s]['private']]:
+                        warning("Forcing netpublic to false as subnet {netname} is private")
+                        netpublic = False
+                networkinterface['AssociatePublicIpAddress'] = netpublic
                 SecurityGroupIds = []
                 for sg in securitygroups:
                     sgid = self.get_security_group_id(sg, vpcid)
@@ -1044,7 +1048,11 @@ class Kaws(object):
                     if tag['Key'] == 'Name':
                         subnetname = tag['Value']
                         break
-                results[subnetname] = {'cidr': cidr, 'az': az, 'network': networkname, 'id': subnetid}
+                private = False
+                if conn.describe_route_tables(Filters=[{'Name': 'tag:Name', 'Values': [subnetname]}])['RouteTables']:
+                    private = True
+                results[subnetname] = {'cidr': cidr, 'az': az, 'network': networkname, 'id': subnetid,
+                                       'private': private}
         return results
 
     def delete_pool(self, name, full=False):
