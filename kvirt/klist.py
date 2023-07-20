@@ -9,17 +9,10 @@ import argparse
 
 
 def empty():
-    """
-
-    :return:
-    """
     return {'_meta': {'hostvars': {}}}
 
 
 class KcliInventory(object):
-    """
-
-    """
     def __init__(self):
         self.inventory = {}
         self.read_cli_args()
@@ -96,18 +89,20 @@ class KcliInventory(object):
         tunnel = self.tunnel
         metadata = {}
         vm = k.info(name)
-        for entry in ['name', 'template', 'plan', 'profile', 'ip']:
+        if not vm:
+            return metadata
+        for entry in ['name', 'image', 'plan', 'profile', 'ip']:
             metadata[entry] = vm.get(entry)
         if metadata['plan'] == '':
             metadata['plan'] = 'kvirt'
         if tunnel and self.type in ['kvm', 'kubevirt']:
             metadata['ansible_ssh_common_args'] = \
                 "-o ProxyCommand='ssh -p %s -W %%h:%%p %s@%s'" % (self.port, self.user, self.host)
-        ip = metadata['ip']
-        if ip != '':
+        ip = metadata.get('ip')
+        if ip is not None:
             metadata['ansible_host'] = ip
-            image = metadata['image']
-            if image != '':
+            image = metadata.get('image')
+            if image is not None:
                 user = get_user(image)
                 metadata['ansible_user'] = user
         return metadata
