@@ -3017,7 +3017,8 @@ class Kconfig(Kbaseconfig):
             if f"{cluster}-ingress" in k.list_services(k.namespace):
                 k.delete_service(f"{cluster}-ingress", k.namespace)
         if self.type in ['aws', 'azure', 'gcp', 'ibm'] and not gke and not eks and not aks:
-            existing_lbs = [l[0] for l in self.list_loadbalancers() if l[0] in [f'api.{cluster}', f'apps.{cluster}']]
+            existing_lbs = [l[0] for l in self.list_loadbalancers() if l[0].endswith(cluster) and
+                            (l[0].startswith('api') or l[0].startswith('apps'))]
             for lb in existing_lbs:
                 self.delete_loadbalancer(lb, domain=domain)
             bucket = f"{cluster}-{domain}"
