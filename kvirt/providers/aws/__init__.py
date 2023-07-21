@@ -1047,8 +1047,11 @@ class Kaws(object):
                         subnetname = tag['Value']
                         break
                 private = False
-                if conn.describe_route_tables(Filters=[{'Name': 'tag:Name', 'Values': [subnetname]}])['RouteTables']:
-                    private = True
+                for route_table in conn.describe_route_tables(Filters=[{'Name': 'tag:Name',
+                                                                        'Values': [subnetname]}])['RouteTables']:
+                    for route in route_table.get('Routes'):
+                        if route['DestinationCidrBlock'] == '0.0.0.0/0' and 'GatewayId' not in route:
+                            private = True
                 results[subnetname] = {'cidr': cidr, 'az': az, 'network': networkname, 'id': subnetid,
                                        'private': private}
         return results
