@@ -1239,9 +1239,24 @@ class Kaws(object):
 
     def create_loadbalancer(self, name, ports=[], checkpath='/index.html', vms=[], domain=None, checkport=80, alias=[],
                             internal=False, dnsclient=None, subnetid=None, ip=None):
+        for vm in vms:
+            if not self.exists(vm):
+                error(f"Vm {vm} not found")
+                return
+            if subnetid is None:
+                subnets = self.list_subnets()
+                vpcid = self.info(vm)['vpcid']
+                matching_subnets = [sub for sub in subnets if subnets[sub]['network'] == vpcid]
+                if not internal:
+                    matching_subnets = [sub for sub in matching_subnets if not subnets[sub]['private']]
+                if matching_subnets:
+                    subnetname = matching_subnets[0]
+                    subnetid = subnets[subnetname]['id']
+                else:
+                    error("Couldn't find a valid subnet in vpc {vpcid}")
+                    return
         ports = [int(port) for port in ports]
         resource = self.resource
-        conn = self.conn
         elb = self.elb
         protocols = {}
         Listeners = []
@@ -1302,7 +1317,7 @@ class Kaws(object):
                 if name not in sgnames:
                     sgids = [x['GroupId'] for x in sgs]
                     sgids.append(sgid)
-                    conn.modify_instance_attribute(InstanceId=instanceid, Groups=sgids)
+                    self.conn.modify_instance_attribute(InstanceId=instanceid, Groups=sgids)
             if Instances:
                 elb.register_instances_with_load_balancer(LoadBalancerName=clean_name, Instances=Instances)
         if domain is not None:
@@ -1378,6 +1393,8 @@ class Kaws(object):
         elb = self.elb
         lbs = elb.describe_load_balancers()
         for lb in lbs['LoadBalancerDescriptions']:
+            if self.debug:
+                print(lb)
             ports = []
             name = lb['LoadBalancerName']
             ip = lb['DNSName']
