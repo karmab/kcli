@@ -1253,14 +1253,19 @@ class Kaws(object):
         AvailabilityZones = [f"{self.region}{i}" for i in ['a', 'b', 'c']]
         clean_name = name.replace('.', '-')
         sg_data = {'GroupName': name, 'Description': name}
+        subnets = self.list_subnets()
         if subnetid is not None:
-            subnets = conn.describe_subnets()['Subnets']
-            subnets = [sub for sub in subnets if sub['SubnetId'] == subnetid or tag_name(sub) == subnetid]
-            if not subnets:
+            matching_subnets = [s for s in subnets if subnets[s]['id'] == subnetid or s == subnetid]
+            if not matching_subnets:
                 error(f"Invalid subnetid {subnetid}")
                 return
-            sg_data['VpcId'] = subnets[0]['VpcId']
-            subnetid = subnets[0]['SubnetId']
+            else:
+                subnet = matching_subnets[0]
+                subnetid = subnets[subnet]['id']
+                sg_data['VpcId'] = subnets[subnet]['network']
+                if subnets[subnet]['private'] and not internal:
+                    warning(f"Marking the loadbalancer as private since Subnet {subnet} isn't public")
+                    internal = True
         sg = resource.create_security_group(**sg_data)
         sgid = sg.id
         sgtags = [{"Key": "Name", "Value": name}]
