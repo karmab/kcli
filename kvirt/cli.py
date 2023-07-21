@@ -1778,7 +1778,8 @@ def delete_lb(args):
     if not yes and not yes_top:
         common.confirm("Are you sure?")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.delete_loadbalancer(args.name)
+    for name in args.names:
+        config.delete_loadbalancer(name)
 
 
 def create_kube(args):
@@ -4430,7 +4431,7 @@ def cli():
     lbdelete_parser = delete_subparsers.add_parser('lb', description=lbdelete_desc, help=lbdelete_desc,
                                                    aliases=['loadbalancer'])
     lbdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    lbdelete_parser.add_argument('name', metavar='NAME')
+    lbdelete_parser.add_argument('names', metavar='LBS', nargs='+')
     lbdelete_parser.set_defaults(func=delete_lb)
 
     networkdelete_desc = 'Delete Network'
