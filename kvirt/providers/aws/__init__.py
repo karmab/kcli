@@ -204,9 +204,17 @@ class Kaws(object):
                 if vpcid is None:
                     return {'result': 'failure', 'reason': f"Couldn't find vpc {netname}"}
                 vpc_subnets = [sub for sub in subnets if sub['VpcId'] == vpcid]
+                if az is not None:
+                    vpc_subnets = [sub for sub in vpc_subnets if sub['AvailabilityZone'] == az]
                 if vpc_subnets:
-                    netname = vpc_subnets[0]['SubnetId']
-                    subnet_az = vpc_subnets[0]['AvailabilityZone']
+                    subnet = vpc_subnets[0]
+                    netname = subnet['SubnetId']
+                    subnet_name = tag_name(subnet)
+                    if subnet_name != '':
+                        pprint(f"Using subnet {subnet_name}")
+                    else:
+                        pprint(f"Using subnet {netname}")
+                    subnet_az = subnet['AvailabilityZone']
                     subnet_azs.append(subnet_az)
                 else:
                     return {'result': 'failure', 'reason': f"Couldn't find valid subnet for vpc {netname}"}
