@@ -2487,11 +2487,10 @@ class Kconfig(Kbaseconfig):
                 lbvms = details.get('vms', [])
                 lbnets = details.get('nets', ['default'])
                 internal = details.get('internal')
-                subnetid = details.get('subnetid')
                 ip = details.get('ip')
                 self.create_loadbalancer(lbentry, nets=lbnets, ports=ports, checkpath=checkpath, vms=lbvms,
                                          domain=domain, plan=plan, checkport=checkport, alias=alias,
-                                         internal=internal, dnsclient=dnsclient, subnetid=subnetid, ip=ip)
+                                         internal=internal, dnsclient=dnsclient, ip=ip)
         if sgs and not onlyassets:
             pprint("Deploying SecurityGroups...")
             for sg in sgs:
@@ -2691,14 +2690,14 @@ class Kconfig(Kbaseconfig):
             k.delete(name)
 
     def create_loadbalancer(self, name, nets=['default'], ports=[], checkpath='/', vms=[], domain=None,
-                            plan=None, checkport=80, alias=[], internal=False, dnsclient=None, subnetid=None, ip=None):
+                            plan=None, checkport=80, alias=[], internal=False, dnsclient=None, ip=None):
         name = nameutils.get_random_name().replace('_', '-') if name is None else name
         pprint(f"Deploying loadbalancer {name}")
         k = self.k
         if self.type in ['aws', 'azure', 'gcp', 'ibm']:
             lb_ip = k.create_loadbalancer(name, ports=ports, checkpath=checkpath, vms=vms, domain=domain,
                                           checkport=checkport, alias=alias, internal=internal,
-                                          dnsclient=dnsclient, subnetid=subnetid, ip=ip)
+                                          dnsclient=dnsclient, ip=ip)
             if dnsclient is not None:
                 if dnsclient in self.clients:
                     z = Kconfig(client=dnsclient).k

@@ -1056,7 +1056,7 @@ class Kazure(object):
             return None, None, None, None
 
     def create_loadbalancer(self, name, ports=[], checkpath='/index.html', vms=[], domain=None, checkport=80, alias=[],
-                            internal=False, dnsclient=None, subnetid=None, ip=None):
+                            internal=False, dnsclient=None, ip=None):
         # if not vms:
         #    msg = "Creating a load balancer requires to specify some vms"
         #    error(msg)

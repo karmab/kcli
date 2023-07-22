@@ -1757,7 +1757,6 @@ def create_lb(args):
     ports = args.ports
     domain = args.domain
     internal = args.internal
-    subnetid = args.subnetid
     if args.vms is None:
         vms = []
     else:
@@ -1768,7 +1767,7 @@ def create_lb(args):
     name = nameutils.get_random_name().replace('_', '-') if args.name is None else args.name
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     config.create_loadbalancer(name, ports=ports, checkpath=checkpath, vms=vms, domain=domain, checkport=checkport,
-                               internal=internal, subnetid=subnetid, ip=ip)
+                               internal=internal, ip=ip)
 
 
 def delete_lb(args):
@@ -3929,7 +3928,6 @@ def cli():
     lbcreate_parser.add_argument('--ip', help='Specific ip to associate the load balancer to')
     lbcreate_parser.add_argument('-p', '--ports', default='443', help='Load Balancer Ports. Defaults to 443')
     lbcreate_parser.add_argument('-v', '--vms', help='Vms to add to the pool. Can also be a list of ips')
-    lbcreate_parser.add_argument('--subnetid', help='Subnet id. Specific to AWS')
     lbcreate_parser.add_argument('name', metavar='NAME', nargs='?')
     lbcreate_parser.set_defaults(func=create_lb)
 

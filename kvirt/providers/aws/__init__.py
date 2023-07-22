@@ -233,10 +233,10 @@ class Kaws(object):
                 all_subnets = self.list_subnets()
                 if netpublic:
                     if len(nets) > 1:
-                        warning("Forcing netpublic to false as you have more than one nic")
+                        warning("Disabling netpublic as vm has multiple nics")
                         netpublic = False
                     elif [s for s in all_subnets if all_subnets[s]['id'] == netname and all_subnets[s]['private']]:
-                        warning(f"Forcing netpublic to false as subnet {netname} is private")
+                        warning(f"Disabling netpublic as {netname} is private")
                         netpublic = False
                 networkinterface['AssociatePublicIpAddress'] = netpublic
                 SecurityGroupIds = []
@@ -1238,23 +1238,26 @@ class Kaws(object):
         return {'result': 'success'}
 
     def create_loadbalancer(self, name, ports=[], checkpath='/index.html', vms=[], domain=None, checkport=80, alias=[],
-                            internal=False, dnsclient=None, subnetid=None, ip=None):
+                            internal=False, dnsclient=None, ip=None):
+        vpcid = None
+        if not vms:
+            error(f"Vms for loadbalancer {name} need to be specified")
+            return
         for vm in vms:
             if not self.exists(vm):
                 error(f"Vm {vm} not found")
                 return
-            if subnetid is None:
-                subnets = self.list_subnets()
+            if vpcid is None:
                 vpcid = self.info(vm)['vpcid']
-                matching_subnets = [sub for sub in subnets if subnets[sub]['network'] == vpcid]
-                if not internal:
-                    matching_subnets = [sub for sub in matching_subnets if not subnets[sub]['private']]
-                if matching_subnets:
-                    subnetname = matching_subnets[0]
-                    subnetid = subnets[subnetname]['id']
-                else:
-                    error("Couldn't find a valid subnet in vpc {vpcid}")
-                    return
+        subnets = self.list_subnets()
+        availability_zones = []
+        lb_subnets = []
+        for sub in subnets:
+            az = subnets[sub]['az']
+            if subnets[sub]['network'] == vpcid and not subnets[sub]['private'] and az not in availability_zones:
+                pprint(f"Adding subnet {sub} from AZ {az}")
+                lb_subnets.append(subnets[sub]['id'])
+                availability_zones.append(az)
         ports = [int(port) for port in ports]
         resource = self.resource
         elb = self.elb
@@ -1265,34 +1268,17 @@ class Kaws(object):
             Listener = {'Protocol': protocol, 'LoadBalancerPort': port, 'InstanceProtocol': protocol,
                         'InstancePort': port}
             Listeners.append(Listener)
-        AvailabilityZones = [f"{self.region}{i}" for i in ['a', 'b', 'c']]
         clean_name = name.replace('.', '-')
-        sg_data = {'GroupName': name, 'Description': name}
-        subnets = self.list_subnets()
-        if subnetid is not None:
-            matching_subnets = [s for s in subnets if subnets[s]['id'] == subnetid or s == subnetid]
-            if not matching_subnets:
-                error(f"Invalid subnetid {subnetid}")
-                return
-            else:
-                subnet = matching_subnets[0]
-                subnetid = subnets[subnet]['id']
-                sg_data['VpcId'] = subnets[subnet]['network']
-                if subnets[subnet]['private'] and not internal:
-                    warning(f"Marking the loadbalancer as private since Subnet {subnet} isn't public")
-                    internal = True
+        sg_data = {'GroupName': name, 'Description': name, 'VpcId': vpcid}
         sg = resource.create_security_group(**sg_data)
         sgid = sg.id
         sgtags = [{"Key": "Name", "Value": name}]
         sg.create_tags(Tags=sgtags)
         for port in ports:
             sg.authorize_ingress(GroupId=sgid, FromPort=port, ToPort=port, IpProtocol='tcp', CidrIp="0.0.0.0/0")
-        lbinfo = {"LoadBalancerName": clean_name, "Listeners": Listeners, "SecurityGroups": [sgid]}
+        lbinfo = {"LoadBalancerName": clean_name, "Listeners": Listeners, "SecurityGroups": [sgid],
+                  'Subnets': lb_subnets}
         lbinfo['Scheme'] = 'internal' if internal else 'internet-facing'
-        if subnetid is not None:
-            lbinfo['Subnets'] = [subnetid]
-        else:
-            lbinfo['AvailabilityZones'] = AvailabilityZones
         if domain is not None:
             lbinfo['Tags'] = [{"Key": "domain", "Value": domain}]
             if dnsclient is not None:
