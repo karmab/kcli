@@ -944,8 +944,8 @@ class Kaws(object):
         vpcargs['CidrBlock'] = subnet_cidr or cidr
         subnet = conn.create_subnet(**vpcargs)
         subnet_id = subnet['Subnet']['SubnetId']
-        Tags = [{"Key": "Name", "Value": f"{name}-subnet1"}, {"Key": "Plan", "Value": plan}]
-        conn.create_tags(Resources=[subnet_id], Tags=Tags)
+        subnet_tags = [{"Key": "Name", "Value": f"{name}-subnet1"}, {"Key": "Plan", "Value": plan}]
+        conn.create_tags(Resources=[subnet_id], Tags=subnet_tags)
         response = conn.describe_route_tables(Filters=[{'Name': 'vpc-id', 'Values': [vpc_id]}])
         route_table_id = response['RouteTables'][0]['RouteTableId']
         data = {'DestinationCidrBlock': '0.0.0.0/0', 'RouteTableId': route_table_id, 'GatewayId': gateway_id}
@@ -1670,10 +1670,10 @@ class Kaws(object):
             route_table_id = response['RouteTable']['RouteTableId']
             conn.create_tags(Resources=[route_table_id], Tags=Tags)
             conn.associate_route_table(SubnetId=subnetid, RouteTableId=route_table_id)
-            nat_gateways = conn.describe_nat_gateways(Filters=[{'Name': 'vpc-id', 'Values': [vpcid]}])['NatGateways']
-            matching_nats = [n for n in nat_gateways if tag_name(n) == network]
-            if matching_nats:
-                nat_gateway_id = matching_nats[0]['NatGatewayId']
+            Filters = [{'Name': "tag:Name", 'Values': [network]}, {'Name': 'vpc-id', 'Values': [vpcid]}]
+            nat_gateways = conn.describe_nat_gateways(Filters=Filters)['NatGateways']
+            if nat_gateways:
+                nat_gateway_id = nat_gateways[0]['NatGatewayId']
                 data = {'DestinationCidrBlock': '0.0.0.0/0', 'RouteTableId': route_table_id,
                         'NatGatewayId': nat_gateway_id}
                 conn.create_route(**data)
