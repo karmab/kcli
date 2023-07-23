@@ -694,7 +694,7 @@ class Kaws(object):
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         if vm['State']['Name'] not in ['pending', 'running']:
             return {'result': 'success'}
-        instanceid = vm['InstanceId']
+        instance_id = vm['InstanceId']
         kubetype, kube = None, None
         if 'Tags' in vm:
             for tag in vm['Tags']:
@@ -707,10 +707,11 @@ class Kaws(object):
                 if tag['Key'] == 'kube':
                     kube = tag['Value']
             if kubetype is not None and kubetype == 'openshift':
-                vpcid = vm['NetworkInterfaces'][0]['VpcId']
-                defaultsgid = self.get_default_security_group_id(vpcid)
-                conn.modify_instance_attribute(InstanceId=instanceid, Groups=[defaultsgid])
-        vm = conn.terminate_instances(InstanceIds=[instanceid])
+                vpc_id = vm['NetworkInterfaces'][0]['VpcId']
+                default_sgid = self.get_default_security_group_id(vpc_id)
+                nic_id = vm['NetworkInterfaces'][0]['NetworkInterfaceId']
+                conn.modify_network_interface_attribute(NetworkInterfaceId=nic_id, Groups=[default_sgid])
+        vm = conn.terminate_instances(InstanceIds=[instance_id])
         if domain is not None and dnsclient is None:
             self.delete_dns(name, domain, name)
         if kubetype is not None and kubetype == 'openshift':
