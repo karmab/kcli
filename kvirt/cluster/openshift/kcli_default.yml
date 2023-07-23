@@ -100,8 +100,7 @@ ipv6: false
 dualstack: false
 forcestack: false
 cloud_tag:
-cloud_scale: false
-cloud_api_internal: false
+cloud_internal: false
 virtual_router_id:
 http_proxy:
 no_proxy:

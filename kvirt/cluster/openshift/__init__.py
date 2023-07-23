@@ -685,6 +685,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'disconnected_marketplace_operators': [],
             'disconnected_marketplace_operators_version': None,
             'disconnected_extra_catalogs': [],
+            'cloud_internal': False,
+            'cloud_lb': True,
             'retries': 2}
     data.update(overrides)
     clustervalue = overrides.get('cluster') or cluster or 'myopenshift'

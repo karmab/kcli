@@ -1274,7 +1274,7 @@ class Kaws(object):
         sgid = sg.id
         sgtags = [{"Key": "Name", "Value": name}]
         sg.create_tags(Tags=sgtags)
-        for port in ports:
+        for port in list(set(port + [checkport])):
             sg.authorize_ingress(GroupId=sgid, FromPort=port, ToPort=port, IpProtocol='tcp', CidrIp="0.0.0.0/0")
         lbinfo = {"LoadBalancerName": clean_name, "Listeners": Listeners, "SecurityGroups": [sgid],
                   'Subnets': lb_subnets}
@@ -1284,7 +1284,7 @@ class Kaws(object):
             if dnsclient is not None:
                 lbinfo['Tags'].append({"Key": "dnsclient", "Value": dnsclient})
         lb = elb.create_load_balancer(**lbinfo)
-        HealthTarget = f'{protocol}:{port}'
+        HealthTarget = f'{protocol}:{checkport}'
         HealthCheck = {'Interval': 20, 'Target': HealthTarget, 'Timeout': 3, 'UnhealthyThreshold': 10,
                        'HealthyThreshold': 2}
         elb.configure_health_check(LoadBalancerName=clean_name, HealthCheck=HealthCheck)

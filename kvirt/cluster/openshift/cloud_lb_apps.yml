@@ -1,6 +1,7 @@
 apps.{{ cluster }}:
  type: loadbalancer
  domain: {{ domain }}
+ internal: {{ cloud_internal }}
  checkport: 80
  alias: ['*']
  ports:
