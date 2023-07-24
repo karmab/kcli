@@ -881,12 +881,81 @@ class Kaws(object):
         return
 
     def add_nic(self, name, network, model='virtio'):
-        print("not implemented")
-        return
+        conn = self.conn
+        df = {'InstanceIds': [name]} if name.startswith('i-') else {'Filters': [{'Name': "tag:Name", 'Values': [name]}]}
+        try:
+            vm = conn.describe_instances(**df)['Reservations'][0]['Instances'][0]
+        except:
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
+        index = len(vm['NetworkInterfaces'])
+        az = vm['Placement']['AvailabilityZone']
+        vpcid = vm['VpcId']
+        vpcs = conn.describe_vpcs()['Vpcs']
+        subnets = conn.describe_subnets()['Subnets']
+        matching_subnets = [sub for sub in subnets if sub['SubnetId'] == network or tag_name(sub) == network]
+        if matching_subnets:
+            subnet_az = matching_subnets[0]['AvailabilityZone']
+            if subnet_az != az:
+                return {'result': 'failure', 'reason': "Couldn't find valid subnet in specified AZ"}
+            subnet_vpcid = matching_subnets[0]['VpcId']
+            if subnet_vpcid != vpcid:
+                return {'result': 'failure', 'reason': "Couldn't find valid subnet in VPC"}
+            netname = matching_subnets[0]['SubnetId']
+        elif network == 'default':
+            default_subnets = [sub for sub in subnets if sub['DefaultForAz'] and sub['VpcId'] == vpcid]
+            az_subnets = [sub for sub in default_subnets if sub['AvailabilityZone'] == az]
+            if not az_subnets:
+                return {'result': 'failure', 'reason': "Couldn't find default subnet in specified AZ"}
+            else:
+                default_subnet = az_subnets[0]
+            subnetid = default_subnet['SubnetId']
+            subnet_az = default_subnet['AvailabilityZone']
+            netname = subnetid
+            defaultsubnetid = netname
+            pprint(f"Using subnet {defaultsubnetid} as default")
+        else:
+            vpcid = self.get_vpc_id(vpcs, network) if not network.startswith('vpc-') else network
+            if vpcid is None:
+                return {'result': 'failure', 'reason': f"Couldn't find vpc {network}"}
+            vpc_subnets = [sub for sub in subnets if sub['VpcId'] == vpcid]
+            vpc_subnets = [sub for sub in vpc_subnets if sub['AvailabilityZone'] == az]
+            if vpc_subnets:
+                subnet = vpc_subnets[0]
+                netname = subnet['SubnetId']
+                subnet_name = tag_name(subnet)
+                if subnet_name != '':
+                    pprint(f"Using subnet {subnet_name}")
+                else:
+                    pprint(f"Using subnet {netname}")
+            else:
+                return {'result': 'failure', 'reason': f"Couldn't find valid subnet for vpc {netname}"}
+        networkinterface = {'SubnetId': netname, 'Description': f'eth{index}'}
+        nic = conn.create_network_interface(**networkinterface)
+        nic_id = nic['NetworkInterface']['NetworkInterfaceId']
+        instance_id = vm['InstanceId']
+        conn.attach_network_interface(DeviceIndex=index, InstanceId=instance_id, NetworkInterfaceId=nic_id)
+        return {'result': 'success'}
 
     def delete_nic(self, name, interface):
-        print("not implemented")
-        return
+        conn = self.conn
+        df = {'InstanceIds': [name]} if name.startswith('i-') else {'Filters': [{'Name': "tag:Name", 'Values': [name]}]}
+        try:
+            vm = conn.describe_instances(**df)['Reservations'][0]['Instances'][0]
+        except:
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
+        for entry in vm['NetworkInterfaces']:
+            attachment = entry['Attachment']
+            if interface in [entry['Description'], f"eth{attachment['DeviceIndex']}"]:
+                network_interface_id = entry['NetworkInterfaceId']
+                attachment_id = entry['Attachment']['AttachmentId']
+                conn.detach_network_interface(AttachmentId=attachment_id)
+                waiter = conn.get_waiter('network_interface_available')
+                waiter.wait(NetworkInterfaceIds=[network_interface_id])
+                conn.delete_network_interface(NetworkInterfaceId=network_interface_id)
+                return {'result': 'success'}
+        return {'result': 'failure', 'reason': f"Nic {interface} not found in {name}"}
 
     def create_pool(self, name, poolpath, pooltype='dir', user='qemu', thinpool=None):
         print("not implemented")
