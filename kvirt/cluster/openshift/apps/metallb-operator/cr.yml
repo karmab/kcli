@@ -14,7 +14,9 @@ spec:
   protocol: layer2
   autoAssign: {{ metallb_autoassign }}
   addresses:
+{% for metallb_range in metallb_ranges %}
     - {{ metallb_range }}
+{% endfor %}
 ---
 apiVersion: metallb.io/v1beta1
 kind: L2Advertisement
