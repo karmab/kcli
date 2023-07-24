@@ -1324,7 +1324,7 @@ class Kaws(object):
         sgid = sg.id
         sgtags = [{"Key": "Name", "Value": name}]
         sg.create_tags(Tags=sgtags)
-        for port in list(set(port + [checkport])):
+        for port in list(set(ports + [checkport])):
             sg.authorize_ingress(GroupId=sgid, FromPort=port, ToPort=port, IpProtocol='tcp', CidrIp="0.0.0.0/0")
         lbinfo = {"LoadBalancerName": clean_name, "Listeners": Listeners, "SecurityGroups": [sgid],
                   'Subnets': lb_subnets}
