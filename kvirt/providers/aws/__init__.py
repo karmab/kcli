@@ -1091,10 +1091,38 @@ class Kaws(object):
         return
 
     def network_ports(self, name):
-        return []
+        machines = []
+        for reservation in self.conn.describe_instances()['Reservations']:
+            for vm in reservation['Instances']:
+                for interface in vm['NetworkInterfaces']:
+                    subnet_id = interface['SubnetId']
+                    subnet = self.info_subnet(subnet_id)
+                    subnet_name = tag_name(subnet)
+                    if subnet_name == name or subnet_id == name:
+                        vm_name = vm['InstanceId']
+                        vm_tag_name = tag_name(vm)
+                        if vm_tag_name != '':
+                            vm_name = vm_tag_name
+                        machines.append(vm_name)
+        return machines
 
     def vm_ports(self, name):
-        return []
+        networks = []
+        conn = self.conn
+        df = {'InstanceIds': [name]} if name.startswith('i-') else {'Filters': [{'Name': "tag:Name", 'Values': [name]}]}
+        try:
+            vm = conn.describe_instances(**df)['Reservations'][0]['Instances'][0]
+        except:
+            error(f"VM {name} not found")
+            return networks
+        for interface in vm['NetworkInterfaces']:
+            subnet_id = interface['SubnetId']
+            subnet = self.info_subnet(subnet_id)
+            subnet_name = tag_name(subnet)
+            if subnet_name != '':
+                subnet_id = subnet_name
+            networks.append(subnet_id)
+        return networks
 
     def get_pool_path(self, pool):
         print("not implemented")
