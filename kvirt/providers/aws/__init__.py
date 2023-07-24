@@ -951,7 +951,7 @@ class Kaws(object):
         route_table_id = response['RouteTables'][0]['RouteTableId']
         data = {'DestinationCidrBlock': '0.0.0.0/0', 'RouteTableId': route_table_id, 'GatewayId': gateway_id}
         conn.create_route(**data)
-        conn.create_tags(Resources=[route_table_id], Tags=Tags)
+        conn.create_tags(Resources=[route_table_id], Tags=subnet_tags)
         response = conn.allocate_address(Domain='vpc')
         allocation_id = response['AllocationId']
         conn.create_tags(Resources=[allocation_id], Tags=Tags)
@@ -968,40 +968,61 @@ class Kaws(object):
 
     def delete_network(self, name=None, cidr=None, force=False):
         conn = self.conn
-        vpcid = None
+        vpc_id = None
         Filters = [{'Name': 'vpc-id', 'Values': [name]}]
         vpcs = conn.describe_vpcs(Filters=Filters)['Vpcs']
         if vpcs:
-            vpcid = vpcs[0]['VpcId']
+            vpc_id = vpcs[0]['VpcId']
         else:
             Filters = [{'Name': "tag:Name", 'Values': [name]}]
             vpcs = conn.describe_vpcs(Filters=Filters)['Vpcs']
             if vpcs:
-                vpcid = vpcs[0]['VpcId']
-        if vpcid is None:
+                vpc_id = vpcs[0]['VpcId']
+        if vpc_id is None:
             return {'result': 'failure', 'reason': f"Network {name} not found"}
-        Filters = [{'Name': 'vpc-id', 'Values': [vpcid]}]
+        Filters = [{'Name': 'vpc-id', 'Values': [vpc_id]}]
+        for nat_gateway in conn.describe_nat_gateways()['NatGateways']:
+            if nat_gateway['VpcId'] == vpc_id:
+                nat_gateway_id = nat_gateway['NatGatewayId']
+                nat_gateway_tag_name = tag_name(nat_gateway)
+                nat_gateway_name = nat_gateway_tag_name if nat_gateway_tag_name != '' else nat_gateway_id
+                pprint(f"Deleting nat_gateway {nat_gateway_name}")
+                conn.delete_nat_gateway(NatGatewayId=nat_gateway_id)
+                waiter = conn.get_waiter('nat_gateway_deleted')
+                waiter.wait(NatGatewayIds=[nat_gateway_id])
         subnets = conn.describe_subnets(Filters=Filters)
-        for gateway in conn.describe_nat_gateways()['NatGateways']:
-            if gateway['VpcId'] == vpcid or tag_name(gateway) == name:
-                gateway_id = gateway['NatGatewayId']
-                conn.delete_nat_gateway(NatGatewayId=gateway_id)
+        for subnet in subnets['Subnets']:
+            subnet_id = subnet['SubnetId']
+            subnet_tag_name = tag_name(subnet)
+            subnet_name = subnet_tag_name if subnet_tag_name != '' else subnet_id
+            pprint(f"Deleting subnet {subnet_name}")
+            tables = conn.describe_route_tables(Filters=[{'Name': 'tag:Name', 'Values': [subnet_name]}])['RouteTables']
+            conn.delete_subnet(SubnetId=subnet_id)
+            if tables:
+                main = False
+                route_table = tables[0]
+                for association in route_table['Associations']:
+                    if association['Main']:
+                        main = True
+                        break
+                if not main:
+                    route_table_id = route_table['RouteTableId']
+                    conn.delete_route_table(RouteTableId=route_table_id)
         for address in conn.describe_addresses()['Addresses']:
             if tag_name(address) == name:
                 allocation_id = address['AllocationId']
+                pprint(f"Deleting address {name}")
                 conn.release_address(AllocationId=allocation_id)
         for gateway in conn.describe_internet_gateways()['InternetGateways']:
             attachments = gateway['Attachments']
             for attachment in attachments:
-                if attachment['VpcId'] == vpcid:
-                    gatewayid = gateway['InternetGatewayId']
-                    gateway = self.resource.InternetGateway(gatewayid)
-                    gateway.detach_from_vpc(VpcId=vpcid)
+                if attachment['VpcId'] == vpc_id:
+                    gateway_id = gateway['InternetGatewayId']
+                    gateway = self.resource.InternetGateway(gateway_id)
+                    gateway.detach_from_vpc(VpcId=vpc_id)
+                    pprint(f"Deleting internet gateway {gateway_id}")
                     gateway.delete()
-        for subnet in subnets['Subnets']:
-            subnetid = subnet['SubnetId']
-            conn.delete_subnet(SubnetId=subnetid)
-        conn.delete_vpc(VpcId=vpcid)
+        conn.delete_vpc(VpcId=vpc_id)
         return {'result': 'success'}
 
     def list_pools(self):
