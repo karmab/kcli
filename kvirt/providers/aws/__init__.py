@@ -532,6 +532,15 @@ class Kaws(object):
             return None
         return vm['InstanceId']
 
+    def get_nic_id(self, name):
+        conn = self.conn
+        df = {'InstanceIds': [name]} if name.startswith('i-') else {'Filters': [{'Name': "tag:Name", 'Values': [name]}]}
+        try:
+            vm = conn.describe_instances(**df)['Reservations'][0]['Instances'][0]
+        except:
+            return None
+        return vm['NetworkInterfaces'][0]['NetworkInterfaceId']
+
     def get_security_groups(self, name):
         conn = self.conn
         df = {'InstanceIds': [name]} if name.startswith('i-') else {'Filters': [{'Name': "tag:Name", 'Values': [name]}]}
@@ -709,7 +718,7 @@ class Kaws(object):
             if kubetype is not None and kubetype == 'openshift':
                 vpc_id = vm['NetworkInterfaces'][0]['VpcId']
                 default_sgid = self.get_default_security_group_id(vpc_id)
-                nic_id = vm['NetworkInterfaces'][0]['NetworkInterfaceId']
+                nic_id = self.get_nic_id(name)
                 conn.modify_network_interface_attribute(NetworkInterfaceId=nic_id, Groups=[default_sgid])
         vm = conn.terminate_instances(InstanceIds=[instance_id])
         if domain is not None and dnsclient is None:
@@ -1353,7 +1362,8 @@ class Kaws(object):
                 if name not in sgnames:
                     sgids = [x['GroupId'] for x in sgs]
                     sgids.append(sgid)
-                    self.conn.modify_instance_attribute(InstanceId=instanceid, Groups=sgids)
+                    nic_id = self.get_nic_id(vm)
+                    self.conn.modify_network_interface_attribute(NetworkInterfaceId=nic_id, Groups=sgids)
             if Instances:
                 elb.register_instances_with_load_balancer(LoadBalancerName=clean_name, Instances=Instances)
         if domain is not None:
@@ -1391,7 +1401,6 @@ class Kaws(object):
             pass
         vms = [v['name'] for v in self.list() if 'loadbalancer' in v and name in v['loadbalancer']]
         for vm in vms:
-            instanceid = self.get_id(vm)
             sgs = self.get_security_groups(vm)
             sgids = []
             for sg in sgs:
@@ -1399,7 +1408,8 @@ class Kaws(object):
                     sgids.append(sg['GroupId'])
             if sgids:
                 pprint(f"Removing {vm} from security group {name}")
-                conn.modify_instance_attribute(InstanceId=instanceid, Groups=sgids)
+                nic_id = self.get_nic_id(vm)
+                conn.modify_network_interface_attribute(NetworkInterfaceId=nic_id, Groups=sgids)
         matching_lbs = [lb['LoadBalancerName'] for lb in elb.describe_load_balancers()['LoadBalancerDescriptions']
                         if lb['LoadBalancerName'] == clean_name]
         if matching_lbs:

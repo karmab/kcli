@@ -1571,10 +1571,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if result['result'] != 'success':
             return result
         if workers == 0:
-            lb_overrides = {'cluster': cluster, 'domain': domain, 'members': ctlplanes}
-            if 'dnsclient' in overrides:
-                lb_overrides['dnsclient'] = overrides['dnsclient']
-            result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_apps.yml', overrides=lb_overrides)
+            result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_apps.yml', overrides=overrides)
             if result['result'] != 'success':
                 return result
     if not kubevirt_ignore_node_port and kubevirt_api_service and kubevirt_api_service_node_port:
