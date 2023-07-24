@@ -1625,8 +1625,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             result = config.plan(plan, inputfile=f'{plandir}/cloud_workers.yml', overrides=overrides)
             if result['result'] != 'success':
                 return result
-            lb_overrides = {'cluster': cluster, 'domain': domain, 'members': workers, 'role': 'worker'}
-            result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_apps.yml', overrides=lb_overrides)
+            result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_apps.yml', overrides=overrides)
             if result['result'] != 'success':
                 return result
     if async_install:

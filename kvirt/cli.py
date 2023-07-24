@@ -147,7 +147,7 @@ def get_changelog(args):
 
 
 def start_baremetal_hosts(args):
-    overrides = common.get_overrides(param=args.param)
+    overrides = handle_parameters(args.param, args.paramfile)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     iso_url = overrides.get('iso_url')
     baremetal_hosts = overrides.get('baremetal_hosts', [])
@@ -165,7 +165,7 @@ def start_baremetal_hosts(args):
 
 
 def stop_baremetal_hosts(args):
-    overrides = common.get_overrides(param=args.param)
+    overrides = handle_parameters(args.param, args.paramfile)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     baremetal_hosts = overrides.get('baremetal_hosts', [])
     bmc_url = overrides.get('bmc_url') or overrides.get('url')
@@ -3331,7 +3331,7 @@ def download_bucketfile(args):
 
 def info_baremetal_host(args):
     """Report info about host"""
-    overrides = common.get_overrides(param=args.param)
+    overrides = handle_parameters(args.param, args.paramfile)
     full = overrides.get('full', args.full)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     baremetal_hosts = overrides.get('baremetal_hosts', [])
@@ -4724,7 +4724,8 @@ def cli():
     baremetalhostinfo_epilog = f"examples:\n{examples.infohosts}"
     baremetalhostinfo_parser = info_subparsers.add_parser('baremetal-host', description=baremetalhostinfo_desc,
                                                           help=baremetalhostinfo_desc, parents=[parent_parser],
-                                                          epilog=baremetalhostinfo_epilog, formatter_class=rawhelp)
+                                                          epilog=baremetalhostinfo_epilog, formatter_class=rawhelp,
+                                                          aliases=['baremetal-hosts'])
     baremetalhostinfo_parser.add_argument('-f', '--full', action='store_true', help='Provide entire output')
     baremetalhostinfo_parser.set_defaults(func=info_baremetal_host)
 
