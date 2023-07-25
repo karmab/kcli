@@ -623,8 +623,7 @@ class Kaws(object):
             nets.append({'device': device, 'mac': mac, 'net': subnetid, 'type': private_ip})
             yamlinfo['private_ip'] = private_ip
         if nets:
-            nets.reverse()
-            yamlinfo['nets'] = nets
+            yamlinfo['nets'] = sorted(nets, key=lambda x: x['device'])
         yamlinfo['ip'] = vm.get('PublicIpAddress') or yamlinfo.get('private_ip')
         disks = []
         for index, disk in enumerate(vm['BlockDeviceMappings']):
@@ -637,7 +636,7 @@ class Kaws(object):
             path = volumeid
             disks.append({'device': devname, 'size': disksize, 'format': diskformat, 'type': drivertype, 'path': path})
         if disks:
-            yamlinfo['disks'] = disks
+            yamlinfo['disks'] = sorted(disks, key=lambda x: x['device'])
         if debug:
             yamlinfo['debug'] = vm
         return yamlinfo
