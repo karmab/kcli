@@ -200,7 +200,7 @@ class Kaws(object):
                     defaultsubnetid = netname
                     pprint(f"Using subnet {defaultsubnetid} as default")
             else:
-                vpcid = self.get_vpc_id(vpcs, netname) if not netname.startswith('vpc-') else netname
+                vpcid = self.get_vpc_id(netname, vpcs) if not netname.startswith('vpc-') else netname
                 if vpcid is None:
                     return {'result': 'failure', 'reason': f"Couldn't find vpc {netname}"}
                 vpc_subnets = [sub for sub in subnets if sub['VpcId'] == vpcid]
@@ -563,7 +563,9 @@ class Kaws(object):
             if sg['VpcId'] == vpcid and (sg['GroupName'] == 'default'):
                 return sg['GroupId']
 
-    def get_vpc_id(self, vpcs, name):
+    def get_vpc_id(self, name, vpcs=None):
+        if vpcs is None:
+            vpcs = self.conn.describe_vpcs()
         vpcid = None
         for vpc in vpcs['Vpcs']:
             if 'Tags' in vpc:
@@ -914,7 +916,7 @@ class Kaws(object):
             defaultsubnetid = netname
             pprint(f"Using subnet {defaultsubnetid} as default")
         else:
-            vpcid = self.get_vpc_id(vpcs, network) if not network.startswith('vpc-') else network
+            vpcid = self.get_vpc_id(network, vpcs) if not network.startswith('vpc-') else network
             if vpcid is None:
                 return {'result': 'failure', 'reason': f"Couldn't find vpc {network}"}
             vpc_subnets = [sub for sub in subnets if sub['VpcId'] == vpcid]
@@ -1604,7 +1606,7 @@ class Kaws(object):
         vpcid = None
         vpcs = self.conn.describe_vpcs()
         if network is not None:
-            vpcid = self.get_vpc_id(vpcs, network) if not network.startswith('vpc-') else network
+            vpcid = self.get_vpc_id(network, vpcs) if not network.startswith('vpc-') else network
         else:
             vpcid = [vpc['VpcId'] for vpc in vpcs['Vpcs'] if vpc['IsDefault']][0]
         if vpcid is None:
@@ -1637,7 +1639,7 @@ class Kaws(object):
                 defaultsubnetid = network
                 pprint(f"Using subnet {defaultsubnetid} as default")
         else:
-            vpcid = self.get_vpc_id(vpcs, network) if not network .startswith('vpc-') else network
+            vpcid = self.get_vpc_id(network, vpcs) if not network .startswith('vpc-') else network
             if vpcid is None:
                 error(f"Couldn't find vpc {network}")
                 sys.exit(1)
@@ -1697,7 +1699,7 @@ class Kaws(object):
                         if subnet['DefaultForAz'] and subnet['VpcId'] == vpcid][0]
             pprint(f"Using subnet {subnetid} as default")
         else:
-            vpcid = self.get_vpc_id(vpcs, netname) if not netname.startswith('vpc-') else netname
+            vpcid = self.get_vpc_id(netname, vpcs) if not netname.startswith('vpc-') else netname
             if vpcid is None:
                 error(f"Couldn't find vpc {netname}")
                 sys.exit(1)
