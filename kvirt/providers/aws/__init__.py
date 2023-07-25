@@ -1667,8 +1667,11 @@ class Kaws(object):
         return {'result': 'success'}
 
     def delete_security_group(self, name):
-        self.conn.delete_security_group(GroupName=name)
-        return {'result': 'success'}
+        for sg in self.conn.describe_security_groups()['SecurityGroups']:
+            if sg['GroupName'] == name:
+                self.conn.delete_security_group(GroupName=name, GroupId=sg['GroupId'])
+                return {'result': 'success'}
+        return {'result': 'failure', 'reason': f"security group {name} not found"}
 
     def info_subnet(self, name):
         subnets = self.conn.describe_subnets()
