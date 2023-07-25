@@ -1842,18 +1842,18 @@ class Kaws(object):
         conn.modify_instance_attribute(**data)
         return {'result': 'success'}
 
-    def spread_cluster_tag(self, cluster, vpc):
+    def spread_cluster_tag(self, cluster, subnet):
         conn = self.conn
-        vpc_id = self.get_vpc_id(vpc)
         clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
         cluster_id = safe_load(open(f'{clusterdir}/metadata.json'))['infraID']
+        subnets = self.list_subnets()
+        vpc_id = subnets[subnet]['network']
         pprint(f"Tagging vpc with cluster_id {cluster_id}")
-        Tags = [{"Key": f'kubernetes.io/cluster/{cluster}', "Value": 'owned'}]
+        Tags = [{"Key": f'kubernetes.io/cluster/{cluster_id}', "Value": 'owned'}]
         conn.create_tags(Resources=[vpc_id], Tags=Tags)
         Tags.append({"Key": 'KubernetesCluster', "Value": cluster})
         sg_id = self.get_security_group_id(cluster, vpc_id)
         conn.create_tags(Resources=[sg_id], Tags=Tags)
-        subnets = self.list_subnets()
         matching_subnets = [subnets[subnet]['id'] for subnet in subnets if subnets[subnet]['network'] == vpc_id]
         if matching_subnets:
             self.conn.create_tags(Resources=matching_subnets, Tags=Tags)

@@ -1657,10 +1657,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             pprint("Creating secret for aws-load-balancer-operator")
             lbcmd = "oc create secret generic aws-load-balancer-operator -n openshift-operators "
             lbcmd += f"--from-file=credentials={os.path.expanduser('~/.aws/credentials')}"
+            call(lbcmd, shell=True)
             if 'aws-load-balancer-operator' not in apps:
                 apps.append('aws-load-balancer-operator')
-            pprint("Creating secret for aws-load-balancer-operator")
-            call(lbcmd, shell=True)
     if original_domain is not None:
         overrides['domain'] = original_domain
     if config.type in cloudplatforms:
