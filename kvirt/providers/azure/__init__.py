@@ -923,7 +923,7 @@ class Kazure(object):
             dns_client.record_sets.create_or_update(self.resource_group, domain, alias_entry, 'CNAME', dns_data)
         return {'result': 'success'}
 
-    def delete_dns(self, name, domain, instanceid=None, allentries=False):
+    def delete_dns(self, name, domain, allentries=False):
         cluster = None
         fqdn = f"{name}.{domain}"
         if fqdn.split('-')[0] == fqdn.split('.')[1]:

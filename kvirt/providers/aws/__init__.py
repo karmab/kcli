@@ -1281,7 +1281,7 @@ class Kaws(object):
         dns.change_resource_record_sets(HostedZoneId=zoneid, ChangeBatch={'Changes': changes})
         return {'result': 'success'}
 
-    def delete_dns(self, name, domain, instanceid=None, allentries=False):
+    def delete_dns(self, name, domain, allentries=False):
         dns = self.dns
         cluster = None
         fqdn = f"{name}.{domain}"
@@ -1297,10 +1297,6 @@ class Kaws(object):
         zoneid = zone[0]
         dnsentry = name if cluster is None else f"{name}.{cluster}"
         entry = f"{dnsentry}.{domain}."
-        ip = self.ip(instanceid)
-        if ip is None:
-            error(f"Couldn't Get DNS Ip for {name}")
-            return
         recs = []
         clusterdomain = f"{cluster}.{domain}"
         for record in dns.list_resource_record_sets(HostedZoneId=zoneid)['ResourceRecordSets']:
@@ -1857,3 +1853,7 @@ class Kaws(object):
         Tags.append({"Key": 'KubernetesCluster', "Value": cluster})
         sg_id = self.get_security_group_id(cluster, vpc_id)
         conn.create_tags(Resources=[sg_id], Tags=Tags)
+        subnets = self.list_subnets()
+        matching_subnets = [subnets[subnet]['id'] for subnet in subnets if subnets[subnet]['network'] == vpc_id]
+        if matching_subnets:
+            self.conn.create_tags(Resources=matching_subnets, Tags=Tags)

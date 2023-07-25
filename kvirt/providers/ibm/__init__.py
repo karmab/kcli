@@ -1280,7 +1280,7 @@ class Kibm(object):
     def create_dns(self):
         print("not implemented")
 
-    def delete_dns(self, name, domain, instanceid=None, allentries=False):
+    def delete_dns(self, name, domain, allentries=False):
         dnszone = self._get_dns_zone(domain)
         if dnszone is None:
             return
