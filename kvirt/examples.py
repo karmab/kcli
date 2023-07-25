@@ -646,14 +646,17 @@ $ kcli create profile -P uefi=true -P start=false -P memory=4096 -P disks=[20,30
 subnetcreate = """# Create a subnet
 $ kcli create subnet -c 192.168.123.0/24 myubnet
 
-# Create a network with specific dhcp range
+# Create a subnet with specific dhcp range
 $ kcli create subnet -c 192.168.123.0/24 -P dhcp_start=192.168.123.40 -P dhcp_end=192.168.123.60 mysubnet
 
-# Create a network on AWS and make it default vpc
-$ kcli create subnet -c 10.0.0.0/24 -P default=true my-default-vpc
+# Create a subnet on AWS and specify network
+$ kcli create subnet -c 10.0.1.0/24 -P network=my-network mysubnet
 
-# Create a network on GCP with an alias/dual network and a specific name
-$ kcli create subnet  -P cidr=192.168.123.0/24 -P dual_cidr=192.168.124.0/24 -P dual_name=podnetwork mysubnet
+# Create a subnet on AWS and make it totally isolated
+$ kcli create subnet -c 10.0.1.0/24 -P network=my-network -P gateway=false mysubnet
+
+# Create a subnet on GCP with an alias/dual network with specific name
+$ kcli create subnet -P cidr=192.168.123.0/24 -P dual_cidr=192.168.124.0/24 -P dual_name=podnetwork mysubnet
 """
 
 vmupdate = """# Update memory and cpu of a vm

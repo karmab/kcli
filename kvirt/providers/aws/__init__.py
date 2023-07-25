@@ -1493,11 +1493,9 @@ class Kaws(object):
         try:
             if lb_found:
                 sleep(30)
-            matching_sgs = [sg['GroupId'] for sg in self.conn.describe_security_groups()['SecurityGroups']
-                            if sg['GroupName'] == clean_name]
-            if matching_sgs:
-                for sgid in matching_sgs:
-                    conn.delete_security_group(GroupId=sgid)
+            for sg in self.conn.describe_security_groups()['SecurityGroups']:
+                if sg['GroupName'] == clean_name:
+                    conn.delete_security_group(GroupName=clean_name, GroupId=sg['GroupId'])
         except Exception as e:
             warning(f"Couldn't remove security group {name}. Got {e}")
         if dnsclient is not None:
@@ -1797,18 +1795,20 @@ class Kaws(object):
         subnet = conn.create_subnet(**args)
         subnetid = subnet['Subnet']['SubnetId']
         conn.create_tags(Resources=[subnetid], Tags=Tags)
-        if not nat:
+        gateway = overrides.get('gateway', True)
+        if not nat or not gateway:
             response = conn.create_route_table(VpcId=vpcid)
             route_table_id = response['RouteTable']['RouteTableId']
             conn.create_tags(Resources=[route_table_id], Tags=Tags)
             conn.associate_route_table(SubnetId=subnetid, RouteTableId=route_table_id)
-            Filters = [{'Name': "tag:Name", 'Values': [network]}, {'Name': 'vpc-id', 'Values': [vpcid]}]
-            nat_gateways = conn.describe_nat_gateways(Filters=Filters)['NatGateways']
-            if nat_gateways:
-                nat_gateway_id = nat_gateways[0]['NatGatewayId']
-                data = {'DestinationCidrBlock': '0.0.0.0/0', 'RouteTableId': route_table_id,
-                        'NatGatewayId': nat_gateway_id}
-                conn.create_route(**data)
+            if gateway:
+                Filters = [{'Name': "tag:Name", 'Values': [network]}, {'Name': 'vpc-id', 'Values': [vpcid]}]
+                nat_gateways = conn.describe_nat_gateways(Filters=Filters)['NatGateways']
+                if nat_gateways:
+                    nat_gateway_id = nat_gateways[0]['NatGatewayId']
+                    data = {'DestinationCidrBlock': '0.0.0.0/0', 'RouteTableId': route_table_id,
+                            'NatGatewayId': nat_gateway_id}
+                    conn.create_route(**data)
         return {'result': 'success'}
 
     def delete_subnet(self, name):
