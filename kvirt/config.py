@@ -523,13 +523,6 @@ class Kconfig(Kbaseconfig):
         kube = overrides.get('kube')
         kubetype = overrides.get('kubetype')
         k = self.k if k is None else k
-        custom_region = next((e for e in [customprofile.get('region'), overrides.get('region')] if e is not None), None)
-        if custom_region is not None and hasattr(k, 'region'):
-            k.region = custom_region
-            if hasattr(k, 'zone') and custom_region not in k.zone:
-                k.zone = f"{custom_region}-2"
-            if self.type == 'ibm':
-                k.conn.set_service_url(f"https://{custom_region}.iaas.cloud.ibm.com/v1")
         custom_zone = next((e for e in [customprofile.get('zone'), overrides.get('zone')] if e is not None), None)
         if custom_zone is not None and hasattr(k, 'zone'):
             k.zone = custom_zone

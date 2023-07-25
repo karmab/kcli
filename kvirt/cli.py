@@ -1511,8 +1511,10 @@ def create_vm(args):
         sys.exit(1)
     customprofile = {}
     client = overrides.get('client', args.client)
+    region = overrides.get('region', args.region)
+    zone = overrides.get('zone', args.zone)
     confpool = overrides.get('namepool') or overrides.get('confpool')
-    config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=client, debug=args.debug, region=region, zone=zone, namespace=args.namespace)
     for key in overrides:
         if key in vars(config) and vars(config)[key] is not None and type(overrides[key]) != type(vars(config)[key]):
             key_type = str(type(vars(config)[key]))
@@ -1804,9 +1806,11 @@ def create_kube(args):
         error(f"parameters that contain master word need to be replaced with ctlplane. Found {master_parameters}")
         sys.exit(1)
     client = overrides.get('client', args.client)
+    region = overrides.get('region', args.region)
+    zone = overrides.get('zone', args.zone)
     sno_type = kubetype == 'openshift-sno' or (kubetype == 'openshift' and 'sno' in overrides and overrides['sno'])
     offline = sno_type and (client == 'fake' or common.need_fake())
-    config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+    config = Kconfig(client=client, debug=args.debug, region=region, zone=zone, namespace=args.namespace,
                      offline=offline)
     if overrides.get('force', args.force):
         overrides['kubetype'] = kubetype
@@ -2096,7 +2100,9 @@ def create_plan(args):
             else:
                 pprint("Current kcli version compatible with this plan")
     client = overrides.get('client', args.client)
-    config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    region = overrides.get('region', args.region)
+    zone = overrides.get('zone', args.zone)
+    config = Kconfig(client=client, debug=args.debug, region=region, zone=zone, namespace=args.namespace)
     _type = config.ini[config.client].get('type', 'kvm')
     overrides.update({'type': _type})
     plan = overrides.get('plan', args.plan)
