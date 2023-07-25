@@ -1652,6 +1652,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if platform in cloudplatforms:
         bucket = "%s-%s" % (cluster, domain.replace('.', '-'))
         config.k.delete_bucket(bucket)
+        if platform == 'aws':
+            config.k.spread_cluster_tag(cluster, network)
     if original_domain is not None:
         overrides['domain'] = original_domain
     if config.type in cloudplatforms:

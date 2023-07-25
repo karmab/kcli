@@ -16,6 +16,7 @@ from socket import gethostbyname
 from string import ascii_lowercase
 from time import sleep
 import webbrowser
+from yaml import safe_load
 
 staticf = {'t2.nano': {'cpus': 1, 'memory': 512}, 't2.micro': {'cpus': 1, 'memory': 1024},
            't2.small': {'cpus': 1, 'memory': 2048}, 't2.medium': {'cpus': 2, 'memory': 4096},
@@ -1024,7 +1025,8 @@ class Kaws(object):
         vpcargs['CidrBlock'] = subnet_cidr or cidr
         subnet = conn.create_subnet(**vpcargs)
         subnet_id = subnet['Subnet']['SubnetId']
-        subnet_tags = [{"Key": "Name", "Value": f"{name}-subnet1"}, {"Key": "Plan", "Value": plan}]
+        subnet_tags = [{"Key": "Name", "Value": f"{name}-subnet1"}, {"Key": "Plan", "Value": plan},
+                       {"Key": "kubernetes.io/role/elb", "Value": '1'}]
         conn.create_tags(Resources=[subnet_id], Tags=subnet_tags)
         response = conn.describe_route_tables(Filters=[{'Name': 'vpc-id', 'Values': [vpc_id]}])
         route_table_id = response['RouteTables'][0]['RouteTableId']
@@ -1759,6 +1761,7 @@ class Kaws(object):
         return [role['RoleName'] for role in response['Roles']]
 
     def create_subnet(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
+        gateway = overrides.get('gateway', True)
         az = overrides.get('az') or overrides.get('availability_zone') or overrides.get('zone') or self.zone
         if az is not None and not az.startswith(self.region):
             return {'result': 'failure', 'reason': f'Invalid az {az}'}
@@ -1785,6 +1788,9 @@ class Kaws(object):
             if not subnet.subnet_of(network_cidr):
                 return {'result': 'failure', 'reason': f"{cidr} isnt part of {network_cidr}"}
         Tags = [{"Key": "Name", "Value": name}, {"Key": "Plan", "Value": plan}]
+        alb_key = 'internal-elb' if not nat or not gateway else 'elb'
+        alb_tag = {"Key": f"kubernetes.io/role/{alb_key}", "Value": "1"}
+        Tags.append(alb_tag)
         args = {"CidrBlock": cidr, 'VpcId': vpcid}
         if 'dual_cidr' in overrides:
             args["Ipv6CidrBlock"] = overrides['dual_cidr']
@@ -1796,7 +1802,6 @@ class Kaws(object):
         subnet = conn.create_subnet(**args)
         subnetid = subnet['Subnet']['SubnetId']
         conn.create_tags(Resources=[subnetid], Tags=Tags)
-        gateway = overrides.get('gateway', True)
         if not nat or not gateway:
             response = conn.create_route_table(VpcId=vpcid)
             route_table_id = response['RouteTable']['RouteTableId']
@@ -1840,3 +1845,15 @@ class Kaws(object):
         data[attribute] = {'Value': value}
         conn.modify_instance_attribute(**data)
         return {'result': 'success'}
+
+    def spread_cluster_tag(self, cluster, vpc):
+        conn = self.conn
+        vpc_id = self.get_vpc_id(vpc)
+        clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
+        cluster_id = safe_load(open(f'{clusterdir}/metadata.json'))['infraID']
+        pprint(f"Tagging vpc with cluster_id {cluster_id}")
+        Tags = [{"Key": f'kubernetes.io/cluster/{cluster}', "Value": 'owned'}]
+        conn.create_tags(Resources=[vpc_id], Tags=Tags)
+        Tags.append({"Key": 'KubernetesCluster', "Value": cluster})
+        sg_id = self.get_security_group_id(cluster, vpc_id)
+        conn.create_tags(Resources=[sg_id], Tags=Tags)
