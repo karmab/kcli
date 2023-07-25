@@ -4,10 +4,18 @@ metadata:
   name: multiclusterengine
 {% if mce_hypershift %}
 spec:
+{% if not mce_ha_config %}
+  availabilityConfig: Basic
+{% endif %}
   overrides:
     components:
     - name: hypershift-preview
       enabled: true
 {% else %}
+{% if not mce_ha_config %}
+spec:
+  availabilityConfig: Basic
+{% else %}
 spec: {}
+{% endif %}
 {% endif %}
