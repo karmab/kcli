@@ -1297,6 +1297,8 @@ class Kaws(object):
         zoneid = zone[0]
         dnsentry = name if cluster is None else f"{name}.{cluster}"
         entry = f"{dnsentry}.{domain}."
+        if not entry.startswith('api-int') and (entry.startswith('api-') or entry.startswith('apps-')):
+            entry = entry.replace('api-', 'api.').replace('apps-', 'apps.')
         recs = []
         clusterdomain = f"{cluster}.{domain}"
         for record in dns.list_resource_record_sets(HostedZoneId=zoneid)['ResourceRecordSets']:
@@ -1307,11 +1309,9 @@ class Kaws(object):
                     for rrdata in record['ResourceRecords']:
                         if name in rrdata['Value']:
                             recs.append(record)
-        changes = [{'Action': 'DELETE', 'ResourceRecordSet': record} for record in recs]
-        try:
+        if recs:
+            changes = [{'Action': 'DELETE', 'ResourceRecordSet': record} for record in recs]
             dns.change_resource_record_sets(HostedZoneId=zoneid, ChangeBatch={'Changes': changes})
-        except:
-            pass
         return {'result': 'success'}
 
     def list_dns(self, domain):
