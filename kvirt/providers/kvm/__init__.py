@@ -705,6 +705,8 @@ class Kvirt(object):
                 sourcexml = f"<source network='{netname}'/>"
                 if netname in forward_bridges:
                     guestagent = True
+                if index == 0 and not allnetworks[netname]['dhcp']:
+                    metadataxml += "\n<kvirt:nodhcp>True</kvirt:nodhcp>"
             elif netname in bridges or ovs:
                 if netname in bridges and 'ip' in allnetworks[netname] and 'config_host' not in overrides:
                     overrides['config_host'] = allnetworks[netname]['ip']
@@ -1765,6 +1767,7 @@ class Kvirt(object):
         plan, profile, image, ip, creationdate = '', None, None, None, None
         nvmedisks = []
         kube, kubetype = None, None
+        nodhcp = False
         for element in list(root.iter('{kvirt}info')):
             e = element.find('{kvirt}plan')
             if e is not None:
@@ -1801,6 +1804,9 @@ class Kvirt(object):
             e = element.find('{kvirt}nvmedisks')
             if e is not None:
                 nvmedisks = e.text.split(',')
+            e = element.find('{kvirt}nodhcp')
+            if e is not None:
+                nodhcp = True
         if image is not None:
             yamlinfo['image'] = image
         yamlinfo['plan'] = plan
@@ -1830,7 +1836,7 @@ class Kvirt(object):
         all_ips = [ip] if ip is not None else []
         if vm.isActive():
             try:
-                ifaces = vm.interfaceAddresses(vir_src_agent if bridged else vir_src_lease, 0)
+                ifaces = vm.interfaceAddresses(vir_src_agent if bridged or nodhcp else vir_src_lease, 0)
             except:
                 ifaces = {}
             if ifaces:
