@@ -1493,8 +1493,8 @@ class Kaws(object):
             if lb_found:
                 sleep(30)
             for sg in self.conn.describe_security_groups()['SecurityGroups']:
-                if sg['GroupName'] == clean_name:
-                    conn.delete_security_group(GroupName=clean_name, GroupId=sg['GroupId'])
+                if sg['GroupName'] == name:
+                    conn.delete_security_group(GroupName=name, GroupId=sg['GroupId'])
         except Exception as e:
             warning(f"Couldn't remove security group {name}. Got {e}")
         if dnsclient is not None:

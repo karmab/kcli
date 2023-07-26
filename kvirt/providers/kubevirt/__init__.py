@@ -171,6 +171,8 @@ class Kubevirt(Kubecommon):
                                                                       'devices': {'disks': []}}, 'volumes': []}}},
               'apiVersion': f'kubevirt.io/{VERSION}', 'metadata': {'name': name, 'namespace': namespace,
                                                                    'labels': labels, 'annotations': {}}}
+        if 'annotations' in overrides:
+            vm['metadata']['annotations'] = overrides['annotations']
         if confidential:
             vm['spec']['template']['spec']['domain']['launchSecurity'] = {'sev': {}}
         if 'vsock' in overrides and overrides['vsock']:
