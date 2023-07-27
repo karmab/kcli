@@ -55,6 +55,8 @@ def scale(config, plandir, cluster, overrides):
     client = config.client
     if 'first_ip' not in data:
         first_info = config.k.info(f'{cluster}-ctlplane-0')
+        if not first_info:
+            first_info = config.k.info(f'{cluster}-master-0')
         data['first_ip'] = first_info.get('private_ip') or first_info.get('ip')
     pprint(f"Scaling on client {client}")
     if os.path.exists(clusterdir):
