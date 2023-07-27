@@ -1651,7 +1651,7 @@ class Kgcp(object):
         self._wait_for_operation(operation)
         return {'result': 'success'}
 
-    def delete_subnet(self, name):
+    def delete_subnet(self, name, force=False):
         conn = self.conn
         project = self.project
         region = self.region

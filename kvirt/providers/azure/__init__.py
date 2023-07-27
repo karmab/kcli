@@ -1153,7 +1153,7 @@ class Kazure(object):
         self.network_client.subnets.begin_create_or_update(self.resource_group, network, name, data)
         return {'result': 'success'}
 
-    def delete_subnet(self, name):
+    def delete_subnet(self, name, force=False):
         subnets = self.list_subnets()
         if name not in subnets:
             msg = f'Subnet {name} not found'

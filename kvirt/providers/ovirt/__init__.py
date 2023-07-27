@@ -1349,6 +1349,6 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         print("not implemented")
         return {'result': 'success'}
 
-    def delete_subnet(self, name):
+    def delete_subnet(self, name, force=False):
         print("not implemented")
         return {'result': 'success'}

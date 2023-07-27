@@ -1725,6 +1725,6 @@ class Kubevirt(Kubecommon):
         print("not implemented")
         return {'result': 'success'}
 
-    def delete_subnet(self, name):
+    def delete_subnet(self, name, force=False):
         print("not implemented")
         return {'result': 'success'}

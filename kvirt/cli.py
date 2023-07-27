@@ -3544,7 +3544,7 @@ def delete_subnet(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     for name in names:
-        result = k.delete_subnet(name=name)
+        result = k.delete_subnet(name=name, force=args.force)
         common.handle_response(result, name, element='Subnet', action='deleted')
 
 
@@ -4488,6 +4488,7 @@ def cli():
     subnetdelete_parser = delete_subparsers.add_parser('subnet', description=subnetdelete_desc,
                                                        help=subnetdelete_desc,
                                                        aliases=['subnetwork', 'subnetworks', 'subnets'])
+    subnetdelete_parser.add_argument('-f', '--force', action='store_true', help='Delete any vms found on the network')
     subnetdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     subnetdelete_parser.add_argument('names', metavar='SUBNETS', nargs='+')
     subnetdelete_parser.set_defaults(func=delete_subnet)

@@ -230,13 +230,16 @@ class Kaws(object):
                     privateip = {'Primary': False, 'PrivateIpAddress': ip}
                 privateips.append(privateip)
             networkinterface['SubnetId'] = netname
+            all_subnets = self.list_subnets()
+            current_subnet = [all_subnets[s] for s in all_subnets if all_subnets[s]['id'] == netname][0]
+            if ':' in current_subnet['cidr']:
+                networkinterface['Ipv6AddressCount'] = 1
             if index == 0:
-                all_subnets = self.list_subnets()
                 if netpublic:
                     if len(nets) > 1:
                         warning("Disabling netpublic as vm has multiple nics")
                         netpublic = False
-                    elif [s for s in all_subnets if all_subnets[s]['id'] == netname and all_subnets[s]['private']]:
+                    elif current_subnet['private']:
                         warning(f"Disabling netpublic as {netname} is private")
                         netpublic = False
                 networkinterface['AssociatePublicIpAddress'] = netpublic
@@ -314,6 +317,7 @@ class Kaws(object):
                                              CidrIp="0.0.0.0/0")
                     SecurityGroupIds.append(kubesgid)
                 networkinterface['Groups'] = SecurityGroupIds
+            print(networkinterface)
             networkinterfaces.append(networkinterface)
         if len(list(dict.fromkeys(subnet_azs))) > 1:
             return {'result': 'failure', 'reason': "Subnets of multinic instance need to belong to a single AZ"}
@@ -614,7 +618,8 @@ class Kaws(object):
         yamlinfo['user'] = common.get_user(yamlinfo['image'])
         yamlinfo['instanceid'] = instanceid
         nets = []
-        for interface in vm['NetworkInterfaces']:
+        ips = []
+        for index, interface in enumerate(vm['NetworkInterfaces']):
             subnetid = interface['SubnetId']
             subnet = self.info_subnet(subnetid)
             subnet_name = tag_name(subnet)
@@ -624,10 +629,16 @@ class Kaws(object):
             mac = interface['MacAddress']
             private_ip = interface['PrivateIpAddresses'][0]['PrivateIpAddress']
             nets.append({'device': device, 'mac': mac, 'net': subnetid, 'type': private_ip})
-            yamlinfo['private_ip'] = private_ip
+            if index == 0:
+                yamlinfo['private_ip'] = private_ip
+            ips.append(private_ip)
+            if 'Ipv6Addresses' in interface:
+                ips.append(interface['Ipv6Addresses'][0]['Ipv6Address'])
         if nets:
             yamlinfo['nets'] = sorted(nets, key=lambda x: x['device'])
         yamlinfo['ip'] = vm.get('PublicIpAddress') or yamlinfo.get('private_ip')
+        if len(ips) > 1:
+            yamlinfo['ips'] = ips
         disks = []
         for index, disk in enumerate(vm['BlockDeviceMappings']):
             devname = disk['DeviceName']
@@ -977,14 +988,19 @@ class Kaws(object):
         return {'result': 'success'}
 
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
+        ipv6 = False
         conn = self.conn
+        networks = self.list_networks()
+        if name in networks:
+            msg = f"Network {name} already exists"
+            return {'result': 'failure', 'reason': msg}
         if cidr is not None:
             try:
                 network = ip_network(cidr, strict=False)
             except:
                 return {'result': 'failure', 'reason': f"Invalid Cidr {cidr}"}
             if str(network.version) == "6":
-                msg = 'Primary cidr needs to be ipv4 in aws. Use dual to inject ipv6 or set aws_ipv6 parameter'
+                msg = 'Primary cidr needs to be ipv4 in aws. Set ipv6 to true to enable it'
                 return {'result': 'failure', 'reason': msg}
         subnet_cidr = overrides.get('subnet_cidr')
         if subnet_cidr is not None:
@@ -998,10 +1014,15 @@ class Kaws(object):
         Tags = [{"Key": "Name", "Value": name}, {"Key": "Plan", "Value": plan}]
         vpcargs = {"CidrBlock": cidr}
         if 'dual_cidr' in overrides:
-            vpcargs["Ipv6CidrBlock"] = overrides['dual_cidr']
-            vpcargs["Ipv6Pool"] = overrides['dual_cidr']
-        if 'aws_ipv6' in overrides and overrides['aws_ipv6']:
+            if 'ipv6_pool' in overrides:
+                vpcargs["Ipv6Pool"] = overrides['ipv6_pool']
+                vpcargs["Ipv6CidrBlock"] = overrides['dual_cidr']
+            else:
+                warning("Using AmazonProvidedIpv6CidrBlock since ipv6_pool wasnt specified")
+                overrides['ipv6'] = True
+        if 'ipv6' in overrides and overrides['ipv6']:
             vpcargs["AmazonProvidedIpv6CidrBlock"] = True
+            ipv6 = True
         if default:
             networks = self.list_networks()
             default_network = [n for n in networks if networks[n]['mode'] == 'default']
@@ -1023,6 +1044,8 @@ class Kaws(object):
         pprint(f"Creating first subnet {name}-subnet1 as public")
         vpcargs['VpcId'] = vpc_id
         vpcargs['CidrBlock'] = subnet_cidr or cidr
+        if 'AmazonProvidedIpv6CidrBlock' in vpcargs:
+            del vpcargs['AmazonProvidedIpv6CidrBlock']
         subnet = conn.create_subnet(**vpcargs)
         subnet_id = subnet['Subnet']['SubnetId']
         subnet_tags = [{"Key": "Name", "Value": f"{name}-subnet1"}, {"Key": "Plan", "Value": plan},
@@ -1045,6 +1068,11 @@ class Kaws(object):
         sgid = response['SecurityGroups'][0]['GroupId']
         conn.authorize_security_group_ingress(CidrIp='0.0.0.0/0', GroupId=sgid, IpProtocol='-1',
                                               FromPort=0, ToPort=65535)
+        if ipv6:
+            Filters = [{'Name': 'vpc-id', 'Values': [vpc_id]}]
+            vpcs = conn.describe_vpcs(Filters=Filters)['Vpcs']
+            ipv6_cidr = vpcs[0]['Ipv6CidrBlockAssociationSet'][0]['Ipv6CidrBlock']
+            pprint(f"Using {ipv6_cidr} as IPV6 main cidr")
         return {'result': 'success'}
 
     def delete_network(self, name=None, cidr=None, force=False):
@@ -1132,6 +1160,9 @@ class Kaws(object):
             networks[networkname] = {'cidr': cidr, 'dhcp': dhcp, 'domain': vpcid, 'type': 'routed', 'mode': mode}
             if plan is not None:
                 networks[networkname]['plan'] = plan
+            ipv6_associations = vpc.get('Ipv6CidrBlockAssociationSet', [])
+            if ipv6_associations:
+                networks[networkname]['dual_cidr'] = ipv6_associations[0]['Ipv6CidrBlock']
         return networks
 
     def info_network(self, name):
@@ -1150,19 +1181,22 @@ class Kaws(object):
                 if self.debug:
                     print(subnet)
                 subnetid = subnet['SubnetId']
-                cidr = subnet['CidrBlock']
+                if subnet.get('Ipv6CidrBlockAssociationSet', []):
+                    cidr = subnet['Ipv6CidrBlockAssociationSet'][0]['Ipv6CidrBlock']
+                else:
+                    cidr = subnet['CidrBlock']
                 az = subnet['AvailabilityZone']
                 subnetname = subnetid
                 for tag in subnet.get('Tags', []):
                     if tag['Key'] == 'Name':
                         subnetname = tag['Value']
                         break
-                private = False
+                private = True
                 for route_table in conn.describe_route_tables(Filters=[{'Name': 'tag:Name',
                                                                         'Values': [subnetname]}])['RouteTables']:
                     for route in route_table.get('Routes'):
-                        if route['DestinationCidrBlock'] == '0.0.0.0/0' and 'GatewayId' not in route:
-                            private = True
+                        if route.get('DestinationCidrBlock', '') == '0.0.0.0/0' and 'GatewayId' in route:
+                            private = False
                 results[subnetname] = {'cidr': cidr, 'az': az, 'network': networkname, 'id': subnetid,
                                        'private': private}
         return results
@@ -1758,17 +1792,24 @@ class Kaws(object):
 
     def create_subnet(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
         gateway = overrides.get('gateway', True)
+        dual_cidr = overrides.get('dual_cidr')
         az = overrides.get('az') or overrides.get('availability_zone') or overrides.get('zone') or self.zone
         if az is not None and not az.startswith(self.region):
             return {'result': 'failure', 'reason': f'Invalid az {az}'}
         conn = self.conn
         try:
             subnet = ip_network(cidr, strict=False)
+            if str(subnet.version) == '6' and dual_cidr is None:
+                return {'result': 'failure', 'reason': "dual_cidr is required for ipv6"}
         except:
             return {'result': 'failure', 'reason': f"Invalid Cidr {cidr}"}
-        if str(subnet.version) == "6":
-            msg = 'Primary cidr needs to be ipv4 in aws. Use dual to inject ipv6 or set aws_ipv6 parameter'
-            return {'result': 'failure', 'reason': msg}
+        if dual_cidr is not None:
+            try:
+                dual_subnet = ip_network(dual_cidr, strict=False)
+                if dual_subnet.version == subnet.version:
+                    return {'result': 'failure', 'reason': "cidr and dual_cidr must be of different types"}
+            except:
+                return {'result': 'failure', 'reason': f"Invalid Dual Cidr {dual_cidr}"}
         network = overrides.get('network', 'default')
         nets = self.list_networks()
         if network == 'default':
@@ -1780,17 +1821,32 @@ class Kaws(object):
             return {'result': 'failure', 'reason': msg}
         else:
             vpcid = networks[0]['domain']
-            network_cidr = ip_network(networks[0]['cidr'])
-            if not subnet.subnet_of(network_cidr):
-                return {'result': 'failure', 'reason': f"{cidr} isnt part of {network_cidr}"}
+            found = False
+            if dual_cidr is not None:
+                dual_found = False
+            else:
+                dual_found = True
+            for network in networks:
+                network_cidr = ip_network(network['cidr'])
+                dual_network_cidr = ip_network(network['dual_cidr']) if 'dual_cidr' in network else None
+                if not found and network_cidr.version == subnet.version and subnet.subnet_of(network_cidr):
+                    found = True
+                if not dual_found and dual_cidr is not None and dual_network_cidr is not None:
+                    if dual_network_cidr.version == dual_subnet.version and dual_subnet.subnet_of(dual_network_cidr):
+                        dual_found = True
+            if not found:
+                return {'result': 'failure', 'reason': f"{cidr} isnt part of any VPC cidrs"}
+            if not dual_found:
+                return {'result': 'failure', 'reason': f"{dual_cidr} isnt part of any VPC cidrs"}
         Tags = [{"Key": "Name", "Value": name}, {"Key": "Plan", "Value": plan}]
         alb_key = 'internal-elb' if not nat or not gateway else 'elb'
         alb_tag = {"Key": f"kubernetes.io/role/{alb_key}", "Value": "1"}
         Tags.append(alb_tag)
-        args = {"CidrBlock": cidr, 'VpcId': vpcid}
-        if 'dual_cidr' in overrides:
-            args["Ipv6CidrBlock"] = overrides['dual_cidr']
-            args["Ipv6Pool"] = overrides['dual_cidr']
+        block = 'Ipv6CidrBlock' if str(subnet.version) == "6" else 'CidrBlock'
+        dual_block = 'Ipv6CidrBlock' if block == 'CidrBlock' else 'CidrBlock'
+        args = {block: cidr, 'VpcId': vpcid}
+        if dual_cidr is not None:
+            args[dual_block] = overrides['dual_cidr']
         if 'aws_ipv6' in overrides and overrides['aws_ipv6']:
             args["AmazonProvidedIpv6CidrBlock"] = True
         if az is not None:
@@ -1813,15 +1869,23 @@ class Kaws(object):
                     conn.create_route(**data)
         return {'result': 'success'}
 
-    def delete_subnet(self, name):
+    def delete_subnet(self, name, force=False):
         conn = self.conn
         subnets = conn.describe_subnets()
-        for subnet in subnets['Subnets']:
-            subnetid = subnet['SubnetId']
-            if subnetid == name or tag_name(subnet) == name:
-                conn.delete_subnet(SubnetId=subnetid)
-                return {'result': 'success'}
-        return {'result': 'failure', 'reason': f"Subnet {name} not found"}
+        matching = [subnet for subnet in subnets['Subnets'] if subnet['SubnetId'] == name or tag_name(subnet) == name]
+        if not matching:
+            return {'result': 'failure', 'reason': f"Subnet {name} not found"}
+        subnet_id = matching[0]['SubnetId']
+        vms = self.network_ports(name)
+        if vms:
+            if not force:
+                vms = ','.join(vms)
+                return {'result': 'failure', 'reason': f"Subnet {name} is being used by the following vms: {vms}"}
+            for vm in vms:
+                self.delete(vm)
+            sleep(15)
+        conn.delete_subnet(SubnetId=subnet_id)
+        return {'result': 'success'}
 
     def update_attribute(self, name, attribute, value):
         conn = self.conn
