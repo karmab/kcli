@@ -1,5 +1,5 @@
 {{ disconnected_reuse_name or cluster }}-disconnected:
- image: centos8stream
+ image: {{ disconnected_image or "centos8stream" }}
  pool: {{ pool or config_pool }}
  wait: true
  enableroot: true

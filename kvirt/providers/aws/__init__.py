@@ -317,7 +317,6 @@ class Kaws(object):
                                              CidrIp="0.0.0.0/0")
                     SecurityGroupIds.append(kubesgid)
                 networkinterface['Groups'] = SecurityGroupIds
-            print(networkinterface)
             networkinterfaces.append(networkinterface)
         if len(list(dict.fromkeys(subnet_azs))) > 1:
             return {'result': 'failure', 'reason': "Subnets of multinic instance need to belong to a single AZ"}
@@ -632,7 +631,7 @@ class Kaws(object):
             if index == 0:
                 yamlinfo['private_ip'] = private_ip
             ips.append(private_ip)
-            if 'Ipv6Addresses' in interface:
+            if interface['Ipv6Addresses']:
                 ips.append(interface['Ipv6Addresses'][0]['Ipv6Address'])
         if nets:
             yamlinfo['nets'] = sorted(nets, key=lambda x: x['device'])
