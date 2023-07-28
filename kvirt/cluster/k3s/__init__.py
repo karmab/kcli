@@ -36,10 +36,11 @@ def update_ip_alias(config, nodes):
 def scale(config, plandir, cluster, overrides):
     platform = config.type
     plan = cluster
-    data = {'cluster': cluster, 'kube': cluster, 'kubetype': 'k3s', 'image': 'ubuntu2004', 'sdn': 'flannel',
-            'extra_scripts': [], 'cloud_native': False, 'ctlplanes': 1, 'workers': 0}
+    data = {'cluster': cluster, 'domain': 'karmalabs.corp', 'image': 'ubuntu2004', 'kube': cluster, 'kubetype': 'k3s',
+            'sdn': 'flannel', 'extra_scripts': [], 'cloud_native': False, 'ctlplanes': 1, 'workers': 0}
     data['basedir'] = '/workdir' if container_mode() else '.'
-    cluster = data.get('cluster')
+    cluster = data['cluster']
+    domain = data['domain']
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
         with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
@@ -54,10 +55,9 @@ def scale(config, plandir, cluster, overrides):
     sdn = None if 'sdn' in overrides and overrides['sdn'] is None else data.get('sdn')
     client = config.client
     if 'first_ip' not in data:
-        first_info = config.k.info(f'{cluster}-ctlplane-0')
-        if not first_info:
-            first_info = config.k.info(f'{cluster}-master-0')
-        data['first_ip'] = first_info.get('private_ip') or first_info.get('ip')
+        first_info = config.k.info(f'{cluster}-ctlplane-0') or config.k.info(f'{cluster}-master-0')
+        api_ip = data.get('api_ip')
+        data['first_ip'] = first_info.get('private_ip') or first_info.get('ip') or api_ip or f'api.{cluster}.{domain}'
     pprint(f"Scaling on client {client}")
     if os.path.exists(clusterdir):
         with open(f"{clusterdir}/kcli_parameters.yml", 'w') as paramfile:
@@ -102,9 +102,9 @@ def scale(config, plandir, cluster, overrides):
 
 def create(config, plandir, cluster, overrides):
     platform = config.type
-    data = {'kubetype': 'k3s', 'ctlplanes': 1, 'workers': 0, 'sdn': 'flannel', 'extra_scripts': [], 'autoscale': False,
-            'network': 'default', 'cloud_api_internal': False, 'cloud_dns': False, 'cloud_storage': True,
-            'cloud_native': False}
+    data = {'kubetype': 'k3s', 'domain': 'karmalabs.corp', 'image': 'ubuntu2004', 'ctlplanes': 1, 'workers': 0,
+            'sdn': 'flannel', 'extra_scripts': [], 'autoscale': False, 'network': 'default',
+            'cloud_api_internal': False, 'cloud_dns': False, 'cloud_storage': True, 'cloud_native': False}
     data.update(overrides)
     cloud_dns = data['cloud_dns']
     data['cloud_lb'] = overrides.get('cloud_lb', platform in cloud_platforms and data['ctlplanes'] > 1)
@@ -119,8 +119,8 @@ def create(config, plandir, cluster, overrides):
     workers = data['workers']
     network = data['network']
     sdn = None if 'sdn' in overrides and overrides['sdn'] is None else data.get('sdn')
-    domain = data.get('domain', 'karmalabs.corp')
-    image = data.get('image', 'ubuntu2004')
+    domain = data['karmalabs.corp']
+    image = data['image']
     api_ip = data.get('api_ip')
     if ctlplanes > 1:
         if platform in cloud_platforms:
