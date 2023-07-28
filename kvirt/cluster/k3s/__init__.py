@@ -54,7 +54,7 @@ def scale(config, plandir, cluster, overrides):
     workers = data['workers']
     sdn = None if 'sdn' in overrides and overrides['sdn'] is None else data.get('sdn')
     client = config.client
-    if 'first_ip' not in data:
+    if 'first_ip' not in data or data['first_ip'] is None:
         first_info = config.k.info(f'{cluster}-ctlplane-0') or config.k.info(f'{cluster}-master-0')
         api_ip = data.get('api_ip')
         data['first_ip'] = first_info.get('private_ip') or first_info.get('ip') or api_ip or f'api.{cluster}.{domain}'
