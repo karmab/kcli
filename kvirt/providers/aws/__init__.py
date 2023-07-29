@@ -120,8 +120,8 @@ class Kaws(object):
                 pprint(f"Using instance type {flavor}")
             else:
                 return {'result': 'failure', 'reason': 'Couldnt find instance type matching requirements'}
-        elif flavor not in [f[0] for f in self.list_flavors()]:
-            return {'result': 'failure', 'reason': f'Invalid instance type {flavor}'}
+        # elif flavor not in [f[0] for f in self.list_flavors()]:
+        #    return {'result': 'failure', 'reason': f'Invalid instance type {flavor}'}
         vmtags = [{'ResourceType': 'instance',
                    'Tags': [{'Key': 'Name', 'Value': name}, {'Key': 'hostname', 'Value': name}]}]
         for entry in [field for field in metadata if field in METADATA_FIELDS]:
@@ -626,16 +626,27 @@ class Kaws(object):
                 subnetid = subnet_name
             device = interface['Description']
             mac = interface['MacAddress']
-            private_ip = interface['PrivateIpAddresses'][0]['PrivateIpAddress']
-            nets.append({'device': device, 'mac': mac, 'net': subnetid, 'type': private_ip})
-            if index == 0:
-                yamlinfo['private_ip'] = private_ip
-            ips.append(private_ip)
+            private_ip, private_ipv6 = None, None
+            if interface['PrivateIpAddresses']:
+                private_ip = interface['PrivateIpAddresses'][0]['PrivateIpAddress']
             if interface['Ipv6Addresses']:
-                ips.append(interface['Ipv6Addresses'][0]['Ipv6Address'])
+                private_ipv6 = interface['Ipv6Addresses'][0]['Ipv6Address']
+            net_ip = private_ip or private_ipv6
+            nets.append({'device': device, 'mac': mac, 'net': subnetid, 'type': net_ip})
+            if index == 0:
+                yamlinfo['private_ip'] = private_ip or private_ipv6
+            if private_ip is not None:
+                ips.append(private_ip)
+            if private_ipv6 is not None:
+                ips.append(private_ipv6)
         if nets:
             yamlinfo['nets'] = sorted(nets, key=lambda x: x['device'])
-        yamlinfo['ip'] = vm.get('PublicIpAddress') or yamlinfo.get('private_ip')
+        if 'PublicIpAddress' in vm:
+            yamlinfo['ip'] = vm.get('PublicIpAddress')
+        elif ips:
+            ip4s = [i for i in ips if ':' not in i]
+            ip6s = [i for i in ips if i not in ip4s]
+            yamlinfo['ip'] = ip4s[0] if ip4s else ip6s[0]
         if len(ips) > 1:
             yamlinfo['ips'] = ips
         disks = []
@@ -1798,8 +1809,8 @@ class Kaws(object):
         conn = self.conn
         try:
             subnet = ip_network(cidr, strict=False)
-            if str(subnet.version) == '6' and dual_cidr is None:
-                return {'result': 'failure', 'reason': "dual_cidr is required for ipv6"}
+            if str(subnet.version) == '6' and subnet.prefixlen != 64:
+                return {'result': 'failure', 'reason': "Cidr needs to have a 64 prefix"}
         except:
             return {'result': 'failure', 'reason': f"Invalid Cidr {cidr}"}
         if dual_cidr is not None:
@@ -1807,6 +1818,8 @@ class Kaws(object):
                 dual_subnet = ip_network(dual_cidr, strict=False)
                 if dual_subnet.version == subnet.version:
                     return {'result': 'failure', 'reason': "cidr and dual_cidr must be of different types"}
+                if str(dual_subnet.version) == '6' and dual_subnet.prefixlen != 64:
+                    return {'result': 'failure', 'reason': "Dual Cidr needs to have a 64 prefix"}
             except:
                 return {'result': 'failure', 'reason': f"Invalid Dual Cidr {dual_cidr}"}
         network = overrides.get('network', 'default')
@@ -1821,14 +1834,14 @@ class Kaws(object):
         else:
             vpcid = networks[0]['domain']
             found = False
-            if dual_cidr is not None:
-                dual_found = False
-            else:
-                dual_found = True
-            for network in networks:
-                network_cidr = ip_network(network['cidr'])
-                dual_network_cidr = ip_network(network['dual_cidr']) if 'dual_cidr' in network else None
+            dual_found = dual_cidr is None
+            for net in networks:
+                network_cidr = ip_network(net['cidr'])
+                dual_network_cidr = ip_network(net['dual_cidr']) if 'dual_cidr' in net else None
                 if not found and network_cidr.version == subnet.version and subnet.subnet_of(network_cidr):
+                    found = True
+                if dual_cidr is None and dual_network_cidr.version == subnet.version\
+                   and subnet.subnet_of(dual_network_cidr):
                     found = True
                 if not dual_found and dual_cidr is not None and dual_network_cidr is not None:
                     if dual_network_cidr.version == dual_subnet.version and dual_subnet.subnet_of(dual_network_cidr):
@@ -1846,8 +1859,8 @@ class Kaws(object):
         args = {block: cidr, 'VpcId': vpcid}
         if dual_cidr is not None:
             args[dual_block] = overrides['dual_cidr']
-        if 'aws_ipv6' in overrides and overrides['aws_ipv6']:
-            args["AmazonProvidedIpv6CidrBlock"] = True
+        elif block == 'Ipv6CidrBlock':
+            args['Ipv6Native'] = True
         if az is not None:
             args['AvailabilityZone'] = az
         subnet = conn.create_subnet(**args)

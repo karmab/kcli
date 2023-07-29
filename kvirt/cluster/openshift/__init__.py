@@ -670,6 +670,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'contrail_ctl_cidr': '10.40.1.0/24',
             'contrail_ctl_gateway': '10.40.1.1',
             'disconnected_vm': False,
+            'disconnected_image': 'centos8stream',
+            'dosconnected_default_network': 'default',
             'disconnected_update': False,
             'disconnected_reuse': False,
             'disconnected_operators_all': False,

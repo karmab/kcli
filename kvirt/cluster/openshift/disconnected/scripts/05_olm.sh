@@ -3,7 +3,7 @@
 cd /root
 export PATH=/root/bin:$PATH
 export OCP_PULLSECRET_AUTHFILE='/root/openshift_pull.json'
-IP=$(ip -o addr show eth0 |head -1 | awk '{print $4}' | cut -d'/' -f1)
+IP=$(ip -o addr show eth0 | grep -v 169.254 | head -1 | awk '{print $4}' | cut -d'/' -f1)
 REGISTRY_NAME=$(echo $IP | sed 's/\./-/g' | sed 's/:/-/g').sslip.io
 export LOCAL_REGISTRY=$REGISTRY_NAME:5000
 export IMAGE_TAG=olm

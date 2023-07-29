@@ -1,5 +1,5 @@
 {{ disconnected_reuse_name or cluster }}-disconnected:
- image: {{ disconnected_image or "centos8stream" }}
+ image: {{ disconnected_image }}
  pool: {{ pool or config_pool }}
  wait: true
  enableroot: true
@@ -13,7 +13,7 @@
 {% if disconnected_mac != None %}
    mac: {{ disconnected_mac }}
 {% endif %}
- - default
+ - {{ disconnected_default_network }}
  disks:
  - {{ disconnected_disk_size }}
  files:

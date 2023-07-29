@@ -3,7 +3,7 @@ export PULL_SECRET=/root/openshift_pull.json
 export REGISTRY_IMAGE=quay.io/karmab/registry:latest
 echo "fastestmirror=1" >> /etc/dnf/dnf.conf
 dnf -y install podman httpd httpd-tools jq skopeo libseccomp-devel
-IP=$(ip -o addr show eth0 |head -1 | awk '{print $4}' | cut -d'/' -f1)
+IP=$(ip -o addr show eth0 | grep -v 169.254 | head -1 | awk '{print $4}' | cut -d'/' -f1)
 REGISTRY_NAME=$(echo $IP | sed 's/\./-/g' | sed 's/:/-/g').sslip.io
 echo $REGISTRY_NAME:5000 > /root/url.txt
 REGISTRY_USER={{ disconnected_user if disconnected_user != None else 'dummy' }}
