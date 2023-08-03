@@ -14,6 +14,7 @@ import os
 import sys
 from socket import gethostbyname
 from string import ascii_lowercase
+from tempfile import TemporaryDirectory
 from time import sleep
 import webbrowser
 from yaml import safe_load
@@ -151,6 +152,17 @@ class Kaws(object):
                                             domain=domain, files=files, enableroot=enableroot,
                                             overrides=overrides, fqdn=True, storemetadata=storemetadata,
                                             vmuser=vmuser)[0]
+                if sys.getsizeof(userdata) > 16000:
+                    warning("Storing cloudinit data in s3 as it's over 16k")
+                    self.create_bucket(name)
+                    with TemporaryDirectory() as tmpdir:
+                        with open(f"{tmpdir}/cloudinit", 'w') as f:
+                            f.write(userdata)
+                        self.upload_to_bucket(name, f'{tmpdir}/cloudinit', public=True)
+                    bucket_url = self.public_bucketfile_url(name, 'cloudinit')
+                    userdata = '#!/bin/bash\ntest -f /etc/cloud/cloud.cfg.d/99-manual.cfg && exit 0\n'
+                    userdata += f'curl -Lk {bucket_url} -o /etc/cloud/cloud.cfg.d/99-manual.cfg\n'
+                    userdata += 'cloud-init clean --logs\nreboot'
         else:
             userdata = ''
         networkinterfaces = []
@@ -751,6 +763,8 @@ class Kaws(object):
                 conn.delete_security_group(GroupName=kube)
             except:
                 pass
+        if name in self.list_buckets():
+            self.delete_bucket(name)
         return {'result': 'success'}
 
     def clone(self, old, new, full=False, start=False):
