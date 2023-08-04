@@ -140,31 +140,6 @@ class Kaws(object):
                 return {'result': 'failure', 'reason': 'No public key found'}
             publickeyfile = open(publickeyfile).read()
             conn.import_key_pair(KeyName=keypair, PublicKeyMaterial=publickeyfile)
-        if cloudinit:
-            if image is not None and common.needs_ignition(image):
-                version = common.ignition_version(image)
-                userdata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
-                                           domain=domain, files=files, enableroot=enableroot,
-                                           overrides=overrides, version=version, plan=plan, image=image,
-                                           vmuser=vmuser)
-            else:
-                userdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
-                                            domain=domain, files=files, enableroot=enableroot,
-                                            overrides=overrides, fqdn=True, storemetadata=storemetadata,
-                                            vmuser=vmuser)[0]
-                if sys.getsizeof(userdata) > 16000:
-                    warning("Storing cloudinit data in s3 as it's over 16k")
-                    self.create_bucket(name)
-                    with TemporaryDirectory() as tmpdir:
-                        with open(f"{tmpdir}/cloudinit", 'w') as f:
-                            f.write(userdata)
-                        self.upload_to_bucket(name, f'{tmpdir}/cloudinit', public=True)
-                    bucket_url = self.public_bucketfile_url(name, 'cloudinit')
-                    userdata = '#!/bin/bash\ntest -f /etc/cloud/cloud.cfg.d/99-manual.cfg && exit 0\n'
-                    userdata += f'curl -Lk {bucket_url} -o /etc/cloud/cloud.cfg.d/99-manual.cfg\n'
-                    userdata += 'cloud-init clean --logs\nreboot'
-        else:
-            userdata = ''
         networkinterfaces = []
         blockdevicemappings = []
         privateips = []
@@ -347,6 +322,31 @@ class Kaws(object):
                 blockdevicemapping['Ebs']['VolumeType'] = disk.get('type', 'standard')
             blockdevicemapping['Ebs']['VolumeSize'] = disksize
             blockdevicemappings.append(blockdevicemapping)
+        if cloudinit:
+            if image is not None and common.needs_ignition(image):
+                version = common.ignition_version(image)
+                userdata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
+                                           domain=domain, files=files, enableroot=enableroot,
+                                           overrides=overrides, version=version, plan=plan, image=image,
+                                           vmuser=vmuser)
+            else:
+                userdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
+                                            domain=domain, files=files, enableroot=enableroot,
+                                            overrides=overrides, fqdn=True, storemetadata=storemetadata,
+                                            vmuser=vmuser)[0]
+                if sys.getsizeof(userdata) > 16000:
+                    warning("Storing cloudinit data in s3 as it's over 16k")
+                    self.create_bucket(name)
+                    with TemporaryDirectory() as tmpdir:
+                        with open(f"{tmpdir}/cloudinit", 'w') as f:
+                            f.write(userdata)
+                        self.upload_to_bucket(name, f'{tmpdir}/cloudinit', public=True)
+                    bucket_url = self.public_bucketfile_url(name, 'cloudinit')
+                    userdata = '#!/bin/bash\ntest -f /etc/cloud/cloud.cfg.d/99-manual.cfg && exit 0\n'
+                    userdata += f'curl -Lk {bucket_url} -o /etc/cloud/cloud.cfg.d/99-manual.cfg\n'
+                    userdata += 'cloud-init clean --logs\nreboot'
+        else:
+            userdata = ''
         if overrides.get('spot', False):
             userdata_encode = (b64encode(userdata.encode())).decode("utf-8")
             LaunchSpecification = {'SecurityGroups': SecurityGroupIds,
