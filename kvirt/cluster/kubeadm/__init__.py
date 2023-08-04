@@ -2,7 +2,7 @@
 
 from binascii import hexlify
 from ipaddress import ip_network
-from kvirt.common import success, pprint, warning, info2, container_mode, wait_cloud_dns, update_etc_hosts
+from kvirt.common import success, pprint, warning, info2, container_mode, wait_cloud_dns, update_etc_hosts, fix_typos
 from kvirt.common import get_kubectl, kube_create_app, get_ssh_pub_key, _ssh_credentials, ssh, deploy_cloud_storage
 from kvirt.defaults import UBUNTUS
 import os
@@ -87,6 +87,7 @@ def create(config, plandir, cluster, overrides):
             'cloud_dns': False, 'cloud_storage': True}
     async_install = data['async']
     data.update(overrides)
+    fix_typos(data)
     if 'keys' not in overrides and get_ssh_pub_key() is None:
         msg = "No usable public key found, which is required for the deployment. Create one using ssh-keygen"
         return {'result': 'failure', 'reason': msg}

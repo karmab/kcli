@@ -6,7 +6,7 @@ import json
 import os
 import sys
 from ipaddress import ip_network
-from kvirt.common import error, pprint, success, warning, info2
+from kvirt.common import error, pprint, success, warning, info2, fix_typos
 from kvirt.common import get_oc, pwd_path, get_oc_mirror
 from kvirt.common import get_latest_fcos, generate_rhcos_iso, olm_app, get_commit_rhcos
 from kvirt.common import get_installer_rhcos, wait_cloud_dns, delete_lastvm
@@ -701,6 +701,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'cloud_lb': True,
             'retries': 2}
     data.update(overrides)
+    fix_typos(data)
     clustervalue = overrides.get('cluster') or cluster or 'myopenshift'
     if data['ctlplanes'] == 1 and data['workers'] == 0\
        and 'ctlplane_memory' not in overrides and 'memory' not in overrides:

@@ -2334,3 +2334,12 @@ def install_provider(provider, pip=False):
             cmd = f'{pkgmgr} -y install python3-pyvmomi python3-cryptography'
     pprint(f"Running {cmd}")
     call(cmd, shell=True)
+
+
+def fix_typos(data):
+    if 'ctlplane' in data and 'ctlplanes' not in data:
+        warning("Assuming you meant ctlplanes")
+        data['ctlplanes'] = data['ctlplane']
+    if 'worker' in data and 'ctlplanes' not in data:
+        warning("Assuming you meant workers")
+        data['workers'] = data['worker']

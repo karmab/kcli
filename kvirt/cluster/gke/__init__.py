@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from google.cloud import container_v1
-from kvirt.common import error, success, info2, pprint
+from kvirt.common import error, success, info2, pprint, fix_typos
 import os
 from time import sleep
 import sys
@@ -110,6 +110,7 @@ def create(config, cluster, overrides, dnsconfig=None):
             'version': None,
             'worker_version': None}
     data.update(overrides)
+    fix_typos(data)
     workers = data['workers']
     zonal = data['zonal']
     autopilot = data['autopilot']

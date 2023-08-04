@@ -2,7 +2,7 @@
 
 from base64 import b64encode
 from glob import glob
-from kvirt.common import success, error, pprint, info2, container_mode, warning
+from kvirt.common import success, error, pprint, info2, container_mode, warning, fix_typos
 from kvirt.common import get_oc, pwd_path, get_installer_rhcos, get_ssh_pub_key, boot_baremetal_hosts, olm_app
 from kvirt.common import deploy_cloud_storage
 from kvirt.defaults import OPENSHIFT_TAG
@@ -258,6 +258,7 @@ def create(config, plandir, cluster, overrides):
             'hosted_version': None,
             'retries': 3}
     data.update(overrides)
+    fix_typos(data)
     retries = data.get('retries')
     if 'cluster' in overrides:
         clustervalue = overrides.get('cluster')

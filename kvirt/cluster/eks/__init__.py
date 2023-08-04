@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import boto3
-from kvirt.common import success, info2, pprint, error
+from kvirt.common import success, info2, pprint, error, fix_typos
 import os
 import yaml
 
@@ -105,6 +105,7 @@ def create(config, cluster, overrides, dnsconfig=None):
             'capacity_type': None,
             'version': None}
     data.update(overrides)
+    fix_typos(data)
     k = config.k
     version = data['version']
     workers = data['workers']

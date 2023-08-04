@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from kvirt.common import error, success, pprint, warning, get_kubectl, info2, container_mode, kube_create_app
-from kvirt.common import deploy_cloud_storage, wait_cloud_dns, update_etc_hosts
+from kvirt.common import deploy_cloud_storage, wait_cloud_dns, update_etc_hosts, fix_typos
 import os
 import re
 from random import choice
@@ -106,6 +106,7 @@ def create(config, plandir, cluster, overrides):
             'sdn': 'flannel', 'extra_scripts': [], 'autoscale': False, 'network': 'default',
             'cloud_api_internal': False, 'cloud_dns': False, 'cloud_storage': True, 'cloud_native': False}
     data.update(overrides)
+    fix_typos(data)
     cloud_dns = data['cloud_dns']
     data['cloud_lb'] = overrides.get('cloud_lb', platform in cloud_platforms and data['ctlplanes'] > 1)
     cloud_lb = data['cloud_lb']

@@ -28,8 +28,7 @@ curl -s https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
 Deploy your first vm with:
 
 ```
-kcli download image centos7
-kcli create vm -i centos7 myvm
+kcli create vm -i centos8stream myvm
 kcli list vm
 # wait 5-10 seconds for vm to grab an ip
 kcli ssh myvm

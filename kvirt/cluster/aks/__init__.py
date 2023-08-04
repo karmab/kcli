@@ -2,7 +2,7 @@
 
 from azure.identity import ClientSecretCredential
 from azure.mgmt.containerservice import ContainerServiceClient
-from kvirt.common import success, info2, pprint, error, get_ssh_pub_key, warning
+from kvirt.common import success, info2, pprint, error, get_ssh_pub_key, warning, fix_typos
 import os
 import yaml
 
@@ -73,6 +73,7 @@ def create(config, cluster, overrides, dnsconfig=None):
             'fips': False,
             'version': None}
     data.update(overrides)
+    fix_typos(data)
     network = data['network']
     version = data['version']
     workers = data['workers']
