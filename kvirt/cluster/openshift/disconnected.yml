@@ -13,7 +13,9 @@
 {% if disconnected_mac != None %}
    mac: {{ disconnected_mac }}
 {% endif %}
+{% if disconnected_default_network != None %}
  - {{ disconnected_default_network }}
+{% endif %}
  disks:
  - {{ disconnected_disk_size }}
  files:
