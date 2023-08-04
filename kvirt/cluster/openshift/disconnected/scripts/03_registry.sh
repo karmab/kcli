@@ -33,7 +33,7 @@ compatibility:
     enabled: true
 EOF
 openssl req -newkey rsa:4096 -nodes -sha256 -keyout /opt/registry/certs/domain.key -x509 -days 3650 -out /opt/registry/certs/domain.crt -subj "/C=US/ST=Madrid/L=Chamberi/O=Karmalabs/OU=Guitar/CN=$REGISTRY_NAME" -addext "subjectAltName=DNS:$REGISTRY_NAME"
-if [ "$(which dnf)" != ""] ; then
+if [ "$(which dnf)" != "" ] ; then
  cp /opt/registry/certs/domain.crt /etc/pki/ca-trust/source/anchors/
  update-ca-trust extract
 else

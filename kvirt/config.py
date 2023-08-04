@@ -3348,19 +3348,17 @@ class Kconfig(Kbaseconfig):
         result = self.plan(disconnected_plan, inputfile=f'{plandir}/disconnected.yml', overrides=data)
         if result['result'] != 'success':
             sys.exit(1)
-        else:
-            name = data.get('disconnected_reuse_name') or cluster
-            ip, vmport = _ssh_credentials(self.k, f'{name}-disconnected')[1:]
+        name = data.get('disconnected_reuse_name') or cluster
+        ip, vmport = _ssh_credentials(self.k, f'{name}-disconnected')[1:]
         if disconnected_sync:
             pprint("Use the following OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE")
             cmd = "cat /root/version.txt"
         else:
             pprint("Use the following disconnected_url")
             cmd = "cat /root/url.txt"
-            sshcmd = ssh(name, ip=ip, user='root', tunnel=self.tunnel,
-                         tunnelhost=self.tunnelhost, tunnelport=self.tunnelport,
-                         tunneluser=self.tunneluser, insecure=True, cmd=cmd, vmport=vmport)
-            os.system(sshcmd)
+        sshcmd = ssh(name, ip=ip, user='root', tunnel=self.tunnel, tunnelhost=self.tunnelhost,
+                     tunnelport=self.tunnelport, tunneluser=self.tunneluser, insecure=True, cmd=cmd, vmport=vmport)
+        os.system(sshcmd)
 
     def handle_finishfiles(self, name, finishfiles, identityfile=None, vmclient=None):
         config = Kconfig(client=vmclient) if vmclient is not None else self
