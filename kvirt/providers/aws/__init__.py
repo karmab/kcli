@@ -1060,6 +1060,7 @@ class Kaws(object):
         vpc = conn.create_vpc(**vpcargs)
         vpc_id = vpc['Vpc']['VpcId']
         conn.create_tags(Resources=[vpc_id], Tags=Tags)
+        conn.modify_vpc_attribute(VpcId=vpc_id, EnableDnsHostnames={'Value': True})
         gateway = conn.create_internet_gateway()
         gateway_id = gateway['InternetGateway']['InternetGatewayId']
         gateway = self.resource.InternetGateway(gateway_id)
