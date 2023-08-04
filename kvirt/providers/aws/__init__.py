@@ -582,14 +582,14 @@ class Kaws(object):
     def get_vpc_id(self, name, vpcs=None):
         if vpcs is None:
             vpcs = self.conn.describe_vpcs()
-        vpcid = None
+        vpc_id = None
         for vpc in vpcs['Vpcs']:
             if 'Tags' in vpc:
                 for tag in vpc['Tags']:
                     if tag['Key'] == 'Name' and tag['Value'] == name:
-                        vpcid = vpc['VpcId']
+                        vpc_id = vpc['VpcId']
                         break
-        return vpcid
+        return vpc_id
 
     def info(self, name, vm=None, debug=False):
         yamlinfo = {}
@@ -1425,7 +1425,8 @@ class Kaws(object):
 
     def create_loadbalancer(self, name, ports=[], checkpath='/index.html', vms=[], domain=None, checkport=80, alias=[],
                             internal=False, dnsclient=None, ip=None):
-        vpcid = None
+        vpc_id = None
+        dual = False
         if not vms:
             error(f"Vms for loadbalancer {name} need to be specified")
             return
@@ -1433,14 +1434,16 @@ class Kaws(object):
             if not self.exists(vm):
                 error(f"Vm {vm} not found")
                 return
-            if vpcid is None:
-                vpcid = self.info(vm)['vpcid']
+            if vpc_id is None:
+                vm_info = self.info(vm)
+                vpc_id = vm_info['vpcid']
+                dual = any([':' in ip for ip in vm_info.get('ips', [])])
         subnets = self.list_subnets()
         availability_zones = []
         lb_subnets = []
         for sub in subnets:
             az = subnets[sub]['az']
-            if subnets[sub]['network'] == vpcid and not subnets[sub]['private'] and az not in availability_zones:
+            if subnets[sub]['network'] == vpc_id and not subnets[sub]['private'] and az not in availability_zones:
                 pprint(f"Adding subnet {sub} from AZ {az}")
                 lb_subnets.append(subnets[sub]['id'])
                 availability_zones.append(az)
@@ -1455,16 +1458,18 @@ class Kaws(object):
                         'InstancePort': port}
             Listeners.append(Listener)
         clean_name = name.replace('.', '-')
-        sg_data = {'GroupName': name, 'Description': name, 'VpcId': vpcid}
+        sg_data = {'GroupName': name, 'Description': name, 'VpcId': vpc_id}
         sg = resource.create_security_group(**sg_data)
-        sgid = sg.id
+        sg_id = sg.id
         sgtags = [{"Key": "Name", "Value": name}]
         sg.create_tags(Tags=sgtags)
         for port in list(set(ports + [checkport])):
-            sg.authorize_ingress(GroupId=sgid, FromPort=port, ToPort=port, IpProtocol='tcp', CidrIp="0.0.0.0/0")
-        lbinfo = {"LoadBalancerName": clean_name, "Listeners": Listeners, "SecurityGroups": [sgid],
+            sg.authorize_ingress(GroupId=sg_id, FromPort=port, ToPort=port, IpProtocol='tcp', CidrIp="0.0.0.0/0")
+        lbinfo = {"LoadBalancerName": clean_name, "Listeners": Listeners, "SecurityGroups": [sg_id],
                   'Subnets': lb_subnets}
         lbinfo['Scheme'] = 'internal' if internal else 'internet-facing'
+        if dual:
+            lbinfo['IpAddressType'] = 'dualstack'
         if domain is not None:
             lbinfo['Tags'] = [{"Key": "domain", "Value": domain}]
             if dnsclient is not None:
@@ -1481,16 +1486,16 @@ class Kaws(object):
                 update = self.update_metadata(vm, 'loadbalancer', name, append=True)
                 if domain is not None:
                     self.update_metadata(vm, 'domain', domain)
-                instanceid = self.get_id(vm)
-                if update == 0 and instanceid is not None:
-                    Instances.append({"InstanceId": instanceid})
+                instance_id = self.get_id(vm)
+                if update == 0 and instance_id is not None:
+                    Instances.append({"InstanceId": instance_id})
                 sgs = self.get_security_groups(vm)
-                sgnames = [x['GroupName'] for x in sgs]
-                if name not in sgnames:
-                    sgids = [x['GroupId'] for x in sgs]
-                    sgids.append(sgid)
+                sg_names = [x['GroupName'] for x in sgs]
+                if name not in sg_names:
+                    sg_ids = [x['GroupId'] for x in sgs]
+                    sg_ids.append(sg_id)
                     nic_id = self.get_nic_id(vm)
-                    self.conn.modify_network_interface_attribute(NetworkInterfaceId=nic_id, Groups=sgids)
+                    self.conn.modify_network_interface_attribute(NetworkInterfaceId=nic_id, Groups=sg_ids)
             if Instances:
                 elb.register_instances_with_load_balancer(LoadBalancerName=clean_name, Instances=Instances)
         if domain is not None:
