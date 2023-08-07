@@ -1424,7 +1424,6 @@ class Kaws(object):
     def create_loadbalancer(self, name, ports=[], checkpath='/index.html', vms=[], domain=None, checkport=80, alias=[],
                             internal=False, dnsclient=None, ip=None):
         vpc_id = None
-        dual = False
         if not vms:
             error(f"Vms for loadbalancer {name} need to be specified")
             return
@@ -1435,7 +1434,6 @@ class Kaws(object):
             if vpc_id is None:
                 vm_info = self.info(vm)
                 vpc_id = vm_info['vpcid']
-                dual = any([':' in ip for ip in vm_info.get('ips', [])])
         subnets = self.list_subnets()
         availability_zones = []
         lb_subnets = []
@@ -1466,8 +1464,6 @@ class Kaws(object):
         lbinfo = {"LoadBalancerName": clean_name, "Listeners": Listeners, "SecurityGroups": [sg_id],
                   'Subnets': lb_subnets}
         lbinfo['Scheme'] = 'internal' if internal else 'internet-facing'
-        if dual:
-            lbinfo['IpAddressType'] = 'dualstack'
         if domain is not None:
             lbinfo['Tags'] = [{"Key": "domain", "Value": domain}]
             if dnsclient is not None:
