@@ -318,6 +318,8 @@ def same_release_images(version='stable', tag='4.13', pull_secret='openshift_pul
 
 
 def get_installer_minor(installer_version):
+    if '.' not in installer_version:
+        return 100
     return int(installer_version.split('.')[1])
 
 
