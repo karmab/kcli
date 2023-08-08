@@ -153,3 +153,5 @@ contrail_ctl_gateway: 10.40.1.1
 calico_version:
 cloud_lb: true
 cloud_storage: true
+minimal_capability: False
+additional_capabilities: []
