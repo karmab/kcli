@@ -5,7 +5,10 @@ info: |
     a VIP can be added to the ISO to ease connection.
     The baremetal_hosts array can be used to use redfish to start the node using an iso
     This assumes a web server such as apache/nging to be running where this process is launched from.
-    baremetal options exist to only copy the ISO to a given place (useful if you run the web server using a container by yourself)
+    baremetal options exist to only copy the ISO to a given place (useful if you run the web server using a container by yourself).
+    You can set sno_vm to true to deploy a vm using the ISO and wait for install to finish which is handy if your hypervisor is short on resources
+    and can handle having a temporary bootstrap vm such as the one used in regular kcli create cluster openshift workflow
+    You can use all the parameters available in the regular workflow, in particular you can set an api_ip to use in the SNO (to ease access)
 sno_disk:
 sno_cloud_remove_lb: true
 sno_disable_nics: []
@@ -16,6 +19,7 @@ sno_nic:
 sno_localhost_fix: false
 sno_cpuset:
 sno_relocate: false
+sno_vm: false
 baremetal_user: root
 baremetal_password: calvin
 baremetal_hosts: []

@@ -662,6 +662,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'sno_disable_nics': [],
             'sno_cpuset': None,
             'sno_relocate': False,
+            'sno_vm': False,
             'notify': False,
             'async': False,
             'kubevirt_api_service': False,
@@ -731,12 +732,13 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     installparam = overrides.copy()
     installparam['cluster'] = clustervalue
     sno = data.get('sno', False)
+    sno_disk = data.get('sno_disk')
+    sno_ctlplanes = data.get('sno_ctlplanes')
+    sno_workers = data.get('sno_workers')
+    sno_vm = data.get('sno_vm')
+    sno_wait = data.get('api_ip') is not None or sno_vm or data.get('sno_wait')
     ignore_hosts = data.get('ignore_hosts', False)
     if sno:
-        sno_ctlplanes = data.get('sno_ctlplanes')
-        sno_workers = data.get('sno_workers')
-        sno_wait = data.get('sno_wait')
-        sno_disk = data.get('sno_disk')
         if sno_disk is None:
             warning("sno_disk will be discovered")
         ctlplanes = 1
@@ -1450,10 +1452,20 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             worker_overrides['role'] = 'worker'
             worker_overrides['image'] = 'rhcos410'
             config.create_openshift_iso(cluster, overrides=worker_overrides, installer=True)
+        sno_vm_ip = None
+        if sno_vm:
+            result = config.plan(plan, inputfile=f'{plandir}/sno/kcli_plan.yml', overrides=overrides)
+            if result['result'] != 'success':
+                return result
+            if api_ip is None:
+                while sno_vm_ip is None:
+                    sno_vm_ip = k.info('{cluster}-sno').get('ip')
+                    pprint("Waiting for sno vm to get an ip")
+                    sleep(5)
         if ignore_hosts:
             warning("Not updating /etc/hosts as per your request")
-        elif api_ip is not None:
-            update_openshift_etc_hosts(cluster, domain, api_ip)
+        elif api_ip is not None or sno_vm_ip is not None:
+            update_openshift_etc_hosts(cluster, domain, api_ip or sno_vm_ip)
         elif sno_dns:
             warning("Add the following entry in /etc/hosts if needed")
             dnsentries = ['api', 'console-openshift-console.apps', 'oauth-openshift.apps',
