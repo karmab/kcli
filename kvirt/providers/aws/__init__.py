@@ -8,7 +8,7 @@ from base64 import b64encode
 from ipaddress import ip_network
 from kvirt import common
 from kvirt.common import pprint, error, warning, get_ssh_pub_key
-from kvirt.defaults import METADATA_FIELDS
+from kvirt.defaults import IMAGES, METADATA_FIELDS
 import boto3
 import os
 import sys
@@ -32,6 +32,25 @@ def tag_name(obj):
         if tag['Key'] == 'Name':
             return tag['Value']
     return ''
+
+
+def figure_image(image):
+    if image == 'centos8stream':
+        return 'CentOS Stream 8 x86_64'
+    elif image == 'centos9stream':
+        return 'CentOS Stream 9 x86_64 20230807'
+    elif 'debian' in image:
+        return 'Debian 12-prod-p3klrdq5ydktc'
+    elif image == 'ubuntu2210':
+        return 'Ubuntu 22.04'
+    elif image == 'ubuntu2304':
+        return 'Ubuntu 23.04 -873b1a26-f96b-4b0c-bf2c-3c8d8f2c8157'
+    elif image == 'rhel7':
+        return 'RHEL-7.9_HVM_GA-20200917-x86_64-0-Access2-GP2'
+    elif image == 'rhel8':
+        return 'RHEL-8.8.0_HVM-20230623-x86_64-3-Hourly2-GP2'
+    elif image == 'rhel9':
+        return 'RHEL-9.2.0_HVM-20230726-x86_64-61-Hourly2-GP2'
 
 
 class Kaws(object):
@@ -99,8 +118,13 @@ class Kaws(object):
         if image is None:
             return {'result': 'failure', 'reason': 'An image (or amid) is required'}
         else:
-            _filter = 'image-id' if image.startswith('ami-') else 'name'
-            Filters = [{'Name': _filter, 'Values': [image]}]
+            if image in IMAGES:
+                _filter = 'name'
+                images = [f'{figure_image(image)}*']
+                Filters = [{'Name': _filter, 'Values': images}, {'Name': 'architecture', 'Values': ['x86_64']}]
+            else:
+                _filter = 'image-id' if image.startswith('ami-') else 'name'
+                Filters = [{'Name': _filter, 'Values': [image]}]
             images = conn.describe_images(Filters=Filters)
             if 'Images' in images and images['Images']:
                 imageinfo = images['Images'][0]
@@ -717,8 +741,8 @@ class Kaws(object):
     def volumes(self, iso=False):
         conn = self.conn
         images = []
-        oses = ['amzn2*', 'CentOS Stream*', 'CentOS Linux 8*', 'RHEL-7*', 'RHEL-8.*', 'Debian*', 'Ubuntu*']
-        Filters = [{'Name': 'name', 'Values': oses}]
+        oses = ['CentOS Stream*', 'CentOS Linux 8*', 'RHEL-7*', 'RHEL-8.*', 'RHEL-9.*', 'Debian*', 'Ubuntu*']
+        Filters = [{'Name': 'name', 'Values': oses}, {'Name': 'architecture', 'Values': ['x86_64']}]
         allimages = conn.describe_images(Filters=Filters)
         for image in allimages['Images']:
             name = image['Name']
