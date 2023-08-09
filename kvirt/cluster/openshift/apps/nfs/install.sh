@@ -44,7 +44,7 @@ sed -i -e "s@registry.k8s.io/nfs-subdir-external-provisioner@storage.io/nfs@" -e
 echo 'apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-   name: nfs
+  name: nfs
 {% if nfs_default_storageclass %}
   annotations:
     storageclass.kubernetes.io/is-default-class: "true"
