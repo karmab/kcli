@@ -1878,7 +1878,7 @@ class Kaws(object):
                 dual_network_cidr = ip_network(net['dual_cidr']) if 'dual_cidr' in net else None
                 if not found and network_cidr.version == subnet.version and subnet.subnet_of(network_cidr):
                     found = True
-                if dual_cidr is None and dual_network_cidr.version == subnet.version\
+                if dual_cidr is None and dual_network_cidr is not None and dual_network_cidr.version == subnet.version\
                    and subnet.subnet_of(dual_network_cidr):
                     found = True
                 if not dual_found and dual_cidr is not None and dual_network_cidr is not None:
