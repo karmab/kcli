@@ -1976,3 +1976,9 @@ class Kbaseconfig:
             self.download_openshift_installer(data)
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
         openshift.update_disconnected_registry(self, plandir, cluster, data)
+
+
+def interactive_kube(_type):
+    overrides = {}
+    # version = input("Input version: {default_version"
+    return overrides

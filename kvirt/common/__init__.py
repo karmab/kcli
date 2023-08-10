@@ -6,7 +6,7 @@ from datetime import datetime
 from getpass import getuser
 from hashlib import sha256
 from kvirt.jinjafilters import jinjafilters
-from kvirt.defaults import UBUNTUS, SSH_PUB_LOCATIONS
+from kvirt.defaults import UBUNTUS, SSH_PUB_LOCATIONS, OPENSHIFT_TAG
 from kvirt.kfish import Redfish
 from kvirt import version
 from ipaddress import ip_address
@@ -2343,3 +2343,26 @@ def fix_typos(data):
     if 'worker' in data and 'ctlplanes' not in data:
         warning("Assuming you meant workers")
         data['workers'] = data['worker']
+
+
+def interactive_vm():
+    overrides = {}
+    default_parameters = {'image': 'centos8stream', 'numcpus': 2, 'memory': 512, 'pool': 'default', 'disks': [10],
+                          'nets': ['default']}
+    pprint("Override the following items or accept default values")
+    for key in default_parameters:
+        overrides[key] = input(f"{key}: ({default_parameters[key]}) ") or default_parameters[key]
+    return overrides
+
+
+def interactive_kube(_type):
+    overrides = {}
+    default_parameters = {'domain': 'karmalabs.corp', 'network': 'default', 'version': None,
+                          'ctlplanes': 1, 'workers': 0}
+    if _type == 'openshift':
+        default_parameters.update({'version': 'stable', 'tag': OPENSHIFT_TAG, 'ctlplanes': 3, 'workers': 0,
+                                   'pull_secret': 'openshift_pull.json'})
+    pprint("Override the following items or accept default values")
+    for key in default_parameters:
+        overrides[key] = input(f"Indicate {key}: ({default_parameters[key]}) ") or default_parameters[key]
+    return overrides

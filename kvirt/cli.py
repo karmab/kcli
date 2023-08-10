@@ -16,7 +16,7 @@ from kvirt import examples
 from kvirt import nameutils
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.common import error, pprint, success, warning, ssh, _ssh_credentials, container_mode
-from kvirt.common import get_git_version, compare_git_versions
+from kvirt.common import get_git_version, compare_git_versions, interactive_kube, interactive_vm
 from kvirt.config import Kconfig
 from kvirt.containerconfig import Kcontainerconfig
 from kvirt.defaults import IMAGES, VERSION, LOCAL_OPENSHIFT_APPS, SSH_PUB_LOCATIONS, PLANTYPES
@@ -1500,6 +1500,9 @@ def create_vm(args):
     image = args.image
     count = args.count
     overrides = handle_parameters(args.param, args.paramfile)
+    if not overrides:
+        pprint("Launching vm interactive mode")
+        overrides = interactive_vm(args.type)
     profile = overrides.get('profile') or args.profile
     profilefile = args.profilefile
     console = args.console
@@ -1786,6 +1789,9 @@ def delete_lb(args):
 def create_kube(args):
     """Create kube"""
     overrides = handle_parameters(args.param, args.paramfile)
+    if not overrides:
+        pprint(f"Launching {args.type} interactive mode")
+        overrides = interactive_kube(args.type)
     disks = overrides.get('disks', [])
     if disks:
         overrides['disk_size'] = disks[0]['size'] if isinstance(disks[0], dict) else disks[0]
