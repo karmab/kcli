@@ -246,7 +246,7 @@ def create(config, plandir, cluster, overrides):
         apps.append('ingress')
     if data.get('policy_as_code', False) and 'policy_as_code' not in apps:
         apps.append('policy_as_code')
-    if data.get('autolabeller', False) and 'autolabeller' not in apps:
+    if data.get('autolabeller', True) and 'autolabeller' not in apps:
         apps.append('autolabeller')
     if apps:
         appdir = f"{plandir}/apps"
