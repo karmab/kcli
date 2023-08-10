@@ -1321,7 +1321,7 @@ class Kbaseconfig:
 
     def info_openshift_sno(self, quiet, web=False):
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
-        inputfile = f'{plandir}/sno/kcli_default.yml'
+        inputfile = f'{plandir}/sno.yml'
         self.info_plan(inputfile, quiet=quiet, web=web)
 
     def list_apps_generic(self, quiet=True):
