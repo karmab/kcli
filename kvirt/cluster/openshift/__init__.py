@@ -1454,7 +1454,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             config.create_openshift_iso(cluster, overrides=worker_overrides, installer=True)
         sno_vm_ip = None
         if sno_vm:
-            result = config.plan(plan, inputfile=f'{plandir}/sno/kcli_plan.yml', overrides=overrides)
+            result = config.plan(plan, inputfile=f'{plandir}/sno.yml', overrides=overrides)
             if result['result'] != 'success':
                 return result
             if api_ip is None:
