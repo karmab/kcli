@@ -1219,33 +1219,33 @@ class Kaws(object):
     def list_subnets(self):
         conn = self.conn
         results = {}
+        private_subnets = []
+        for route_table in conn.describe_route_tables()['RouteTables']:
+            for association in (route_table['Associations']):
+                if 'SubnetId' in association:
+                    private_subnets.append(association['SubnetId'])
         vpcs = conn.describe_vpcs()
         for vpc in vpcs['Vpcs']:
             networkname = vpc['VpcId']
             Filters = [{'Name': 'vpc-id', 'Values': [networkname]}]
             subnets = conn.describe_subnets(Filters=Filters)
             for subnet in subnets['Subnets']:
-                if self.debug:
-                    print(subnet)
-                subnetid = subnet['SubnetId']
+                subnet_id = subnet['SubnetId']
                 if subnet.get('Ipv6CidrBlockAssociationSet', []):
                     cidr = subnet['Ipv6CidrBlockAssociationSet'][0]['Ipv6CidrBlock']
                 else:
                     cidr = subnet['CidrBlock']
                 az = subnet['AvailabilityZone']
-                subnetname = subnetid
+                subnet_name = subnet_id
                 for tag in subnet.get('Tags', []):
                     if tag['Key'] == 'Name':
-                        subnetname = tag['Value']
+                        subnet_name = tag['Value']
                         break
-                private = True
-                for route_table in conn.describe_route_tables(Filters=[{'Name': 'tag:Name',
-                                                                        'Values': [subnetname]}])['RouteTables']:
-                    for route in route_table.get('Routes'):
-                        if route.get('DestinationCidrBlock', '') == '0.0.0.0/0' and 'GatewayId' in route:
-                            private = False
-                results[subnetname] = {'cidr': cidr, 'az': az, 'network': networkname, 'id': subnetid,
-                                       'private': private}
+                private = subnet_id in private_subnets
+                new_subnet = {'cidr': cidr, 'az': az, 'network': networkname, 'id': subnet_id, 'private': private}
+                if self.debug:
+                    print(subnet_name, new_subnet)
+                results[subnet_name] = new_subnet
         return results
 
     def delete_pool(self, name, full=False):
