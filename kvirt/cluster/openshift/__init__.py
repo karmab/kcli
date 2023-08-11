@@ -1459,8 +1459,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 return result
             if api_ip is None:
                 while sno_vm_ip is None:
-                    sno_vm_ip = k.info('{cluster}-sno').get('ip')
-                    pprint("Waiting for sno vm to get an ip")
+                    sno_vm_ip = k.info(f'{cluster}-sno').get('ip')
+                    pprint(f"Waiting for VM {cluster}-sno to get an ip")
                     sleep(5)
         if ignore_hosts:
             warning("Not updating /etc/hosts as per your request")
