@@ -1814,8 +1814,9 @@ def create_kube(args):
     client = overrides.get('client', args.client)
     region = overrides.get('region', args.region)
     zone = overrides.get('zone', args.zone)
-    sno_type = kubetype == 'openshift-sno' or (kubetype == 'openshift' and 'sno' in overrides and overrides['sno'])
-    offline = sno_type and (client == 'fake' or common.need_fake())
+    sno = kubetype == 'openshift-sno' or (kubetype == 'openshift' and 'sno' in overrides and overrides['sno'])
+    sno_vm = overrides.get('sno_vm', False)
+    offline = sno and not sno_vm and (client == 'fake' or common.need_fake())
     config = Kconfig(client=client, debug=args.debug, region=region, zone=zone, namespace=args.namespace,
                      offline=offline)
     if overrides.get('force', args.force):
