@@ -2358,10 +2358,14 @@ def interactive_vm():
 def interactive_kube(_type):
     overrides = {}
     default_parameters = {'domain': 'karmalabs.corp', 'network': 'default', 'version': None,
-                          'ctlplanes': 1, 'workers': 0}
+                          'ctlplanes': 1, 'workers': 0, 'memory': 6144, 'numcpus': 4, 'disk_size': 30}
     if _type == 'openshift':
-        default_parameters.update({'version': 'stable', 'tag': OPENSHIFT_TAG, 'ctlplanes': 3, 'workers': 0,
-                                   'pull_secret': 'openshift_pull.json'})
+        default_parameters.update({'pull_secret': 'openshift_pull.json', 'version': 'stable', 'tag': OPENSHIFT_TAG,
+                                   'ctlplanes': 3, 'workers': 0, 'memory': 16384})
+    elif _type == 'openshift-sno':
+        default_parameters.update({'pull_secret': 'openshift_pull.json', 'version': 'stable', 'tag': OPENSHIFT_TAG,
+                                   'memory': 20480, 'sno_disk': None, 'sno_vm': False, 'sno_wait': False,
+                                   'sno_cpuset': None})
     pprint("Override the following items or accept default values")
     for key in default_parameters:
         overrides[key] = input(f"Indicate {key}: ({default_parameters[key]}) ") or default_parameters[key]
