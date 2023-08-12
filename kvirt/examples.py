@@ -596,9 +596,6 @@ $ kcli create -c 2620:52:0:1302::/64 mynetwork
 # Create a dual network
 $ kcli create -c 192.168.123.0/24 -d 2620:52:0:1302::/64 mynetwork
 
-# Create a network allowing specific networks communication
-$ kcli create network -c 192.168.123.0/24 -P allowed_nets=[default,mynetwork2] mynetwork
-
 # Create a network with a forward bridge
 $ kcli create network -P bridge=true br0
 

@@ -718,13 +718,6 @@ class Kvirt(object):
                     cmds = cmds[:index] + [dnscmd] + cmds[index:]
             else:
                 return {'result': 'failure', 'reason': f"Invalid network {netname}"}
-            if filterxml == "":
-                for target_net in allnetworks:
-                    if 'allowed_nets' in allnetworks[target_net] and netname in allnetworks[target_net]['allowed_nets']:
-                        filterxml = f'<filterref filter="kcli-{target_net}"/>'
-                        break
-                if 'allowed_nets' in allnetworks[netname]:
-                    filterxml = f'<filterref filter="kcli-{netname}"/>'
             if netname in ipv6networks:
                 ipv6.append(netname)
             if ovs:
@@ -3405,18 +3398,12 @@ class Kvirt(object):
             bridgexml = f"<bridge name='{bridgename}' stp='on' delay='0'/>"
         else:
             return {'result': 'failure', 'reason': f"network {name} is more than 16 characters"}
-        allowed_nets = overrides.get('allowed_nets')
-        allowed_nets_xml = ""
-        if allowed_nets:
-            allowed_nets_xml = f"<kvirt:allowed_nets>{','.join(allowed_nets)}</kvirt:allowed_nets>"
-            cidr_net, cidr_prefix = cidr.split('/')
         prefix = cidr.split('/')[1]
         metadata = """<metadata>
         <kvirt:info xmlns:kvirt="kvirt">
         <kvirt:plan>{plan}</kvirt:plan>
-        {allowed_nets_xml}
         </kvirt:info>
-        </metadata>""".format(plan=plan, allowed_nets_xml=allowed_nets_xml)
+        </metadata>""".format(plan=plan)
         mtuxml = f'<mtu size="{overrides["mtu"]}"/>'if 'mtu' in overrides else ''
         dualxml = ''
         if 'dual_cidr' in overrides:
@@ -3480,29 +3467,6 @@ class Kvirt(object):
         new_net = conn.networkDefineXML(networkxml)
         new_net.setAutostart(True)
         new_net.create()
-        if allowed_nets:
-            netfilterxml = f"<filter name='kcli-{name}' chain='ipv4' priority='-700'>"
-            for dest in allowed_nets:
-                if '/' in dest:
-                    dest_net, dest_prefix = dest.split('/')
-                elif dest not in networks:
-                    warning(f"Network {dest} not found. Filter rule won't be created")
-                    continue
-                else:
-                    dest_net, dest_prefix = networks[dest]['cidr'].split('/')
-                outrule = "<rule action='accept' direction='out' priority='500'>"
-                outcomment = f'kcli {name}-{dest}'
-                outrule += f"<all srcipaddr='{cidr_net}' srcipmask='{cidr_prefix}' "
-                outrule += f"dstipaddr='{dest_net}' dstipmask='{dest_prefix}' comment='{outcomment}'/>"
-                outrule += "</rule>"
-                inrule = "<rule action='accept' direction='in' priority='500'>"
-                incomment = f'kcli {dest}-{name}'
-                inrule += f"<all srcipaddr='{dest_net}' srcipmask='{dest_prefix}' "
-                inrule += f"dstipaddr='{cidr_net}' dstipmask='{cidr_prefix}' comment='{incomment}'/>"
-                inrule += "</rule>"
-                netfilterxml += f"{outrule}{inrule}"
-            netfilterxml += "</filter>"
-            conn.nwfilterDefineXML(netfilterxml)
         return {'result': 'success'}
 
     def delete_network(self, name=None, cidr=None, force=False):
@@ -3518,16 +3482,9 @@ class Kvirt(object):
                 return {'result': 'failure', 'reason': f"Network {name} is being used by the following vms: {vms}"}
             for vm in vms:
                 self.delete(vm)
-        allowed_nets = self._get_allowed_nets(network)
         if network.isActive():
             network.destroy()
         network.undefine()
-        if allowed_nets:
-            try:
-                nwfilter = conn.nwfilterLookupByName(f"kcli-{name}")
-                nwfilter.undefine()
-            except:
-                pass
         return {'result': 'success'}
 
     def list_pools(self):
@@ -3580,9 +3537,6 @@ class Kvirt(object):
                 e = element.find('{kvirt}plan')
                 if e is not None:
                     plan = e.text
-                e = element.find('{kvirt}allowed_nets')
-                if e is not None:
-                    networks[networkname]['allowed_nets'] = e.text
             networks[networkname]['plan'] = plan
         try:
             interfaces = conn.listInterfaces()
@@ -3946,15 +3900,6 @@ class Kvirt(object):
 
     def list_bucketfiles(self, bucket):
         print("not implemented")
-        return []
-
-    def _get_allowed_nets(self, network):
-        netxml = network.XMLDesc()
-        root = ET.fromstring(netxml)
-        for element in list(root.iter('{kvirt}info')):
-            e = element.find('{kvirt}allowed_nets')
-            if e is not None:
-                return e.text.split(',')
         return []
 
     def resize_disk(self, path, size):
