@@ -742,7 +742,9 @@ class Kaws(object):
         conn = self.conn
         images = []
         oses = ['CentOS Stream*', 'CentOS Linux 8*', 'RHEL-7*', 'RHEL-8.*', 'RHEL-9.*', 'Debian*', 'Ubuntu*']
-        Filters = [{'Name': 'name', 'Values': oses}, {'Name': 'architecture', 'Values': ['x86_64']}]
+        Filters = [{'Name': 'name', 'Values': oses},
+                   {'Name': 'architecture', 'Values': ['x86_64']},
+                   {'Name': 'is-public', 'Values': ['true']}]
         allimages = conn.describe_images(Filters=Filters)
         for image in allimages['Images']:
             name = image['Name']
