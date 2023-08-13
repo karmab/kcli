@@ -346,6 +346,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             if data != '':
                 userdata += "runcmd:\n"
                 userdata += data
+                userdata += "package_update: false\npackage_upgrade: false\n"
         userdata += 'ssh_pwauth: True\n'
         if storemetadata and overrides:
             storeoverrides = {key: overrides[key] for key in overrides if not key.startswith('config_')}
