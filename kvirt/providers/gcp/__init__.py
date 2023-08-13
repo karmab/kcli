@@ -890,6 +890,7 @@ class Kgcp(object):
         ipv6 = overrides.get('ipv6', False)
         dual_cidr = None
         subnet_body = {}
+        cidr = overrides.get('subnet_cidr') or cidr
         if cidr is not None:
             try:
                 network = ip_network(cidr, strict=False)
@@ -935,6 +936,7 @@ class Kgcp(object):
             subnet_body['ipv6AccessType'] = 'INTERNAL'
         if not subnet_body:
             return {'result': 'success'}
+        pprint(f"Creating first subnet {name}-subnet1")
         networkpath = operation["targetLink"]
         regionpath = f"https://www.googleapis.com/compute/v1/projects/{project}/regions/{region}"
         subnet_body.update({'network': networkpath, "region": regionpath})
