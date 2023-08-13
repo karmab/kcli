@@ -1046,7 +1046,7 @@ class Kaws(object):
             except:
                 return {'result': 'failure', 'reason': f"Invalid Cidr {cidr}"}
             if str(network.version) == "6":
-                msg = 'Primary cidr needs to be ipv4 in aws. Set ipv6 to true to enable it'
+                msg = 'Primary cidr needs to be ipv4 in AWS. Set ipv6 to true to enable it'
                 return {'result': 'failure', 'reason': msg}
         subnet_cidr = overrides.get('subnet_cidr')
         if subnet_cidr is not None:

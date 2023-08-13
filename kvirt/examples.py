@@ -591,10 +591,10 @@ $ kcli create network -c 192.168.123.0/24 -i mynetwork
 $ kcli create network -c 192.168.123.0/24 -P pxe=192.168.123.2 mynetwork
 
 # Create an ipv6 network
-$ kcli create -c 2620:52:0:1302::/64 mynetwork
+$ kcli create network -c 2620:52:0:1302::/64 mynetwork
 
 # Create a dual network
-$ kcli create -c 192.168.123.0/24 -d 2620:52:0:1302::/64 mynetwork
+$ kcli create network -c 192.168.123.0/24 -d 2620:52:0:1302::/64 mynetwork
 
 # Create a network with a forward bridge
 $ kcli create network -P bridge=true br0
@@ -623,11 +623,17 @@ $ kcli create network -P ovs=true br0
 # Create a network on AWS and make it default vpc
 $ kcli create network -c 10.0.0.0/24 -P default=true my-default-vpc
 
-# Create a network on GCP with an alias/dual network and a specific name
-$ kcli create network -P cidr=192.168.123.0/24 -P dual_cidr=192.168.124.0/24 -P dual_name=podnetwork mynetwork
+# Create a network on GCP with an alias/secondary network and a specific name
+$ kcli create network -P cidr=192.168.123.0/24 -P secondary_cidr=192.168.124.0/24 -P secondary_name=podnetwork mynetwork
 
 # Create a network on AZURE without an associated subnet
 $ kcli create network -P cidr=11.0.0.0.0/16 -P create_subnet=False mynetwork
+
+# Create a dual stack network on AWS
+$ kcli create network -P cidr=11.0.0/16 -P subnet_cidr=11.0.1.0/24 -P ipv6=true ipv6
+
+# Create a dual stack network on GCP
+$ kcli create network -P cidr=11.0.0.0.0/16 -P ipv6=true mynetwork
 """
 
 profilecreate = """# Create profile with specific image

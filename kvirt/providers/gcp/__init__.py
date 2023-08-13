@@ -4,7 +4,7 @@
 Gcp Provider Class
 """
 
-from ipaddress import ip_network
+from ipaddress import ip_network, IPv6Network
 from kvirt import common
 from kvirt.common import pprint, error, warning, get_ssh_pub_key
 from kvirt.defaults import UBUNTUS, METADATA_FIELDS
@@ -28,6 +28,10 @@ def build_request(http, *args, **kwargs):
     credentials = default(scopes=['https://www.googleapis.com/auth/cloud-platform'])[0]
     new_http = AuthorizedHttp(credentials, http=Http())
     return HttpRequest(new_http, *args, **kwargs)
+
+
+def is_ula(cidr):
+    return IPv6Network(cidr).network_address in IPv6Network("fc00::/7")
 
 
 class Kgcp(object):
@@ -158,7 +162,7 @@ class Kgcp(object):
                 netname = net
                 netpublic = True
                 ip = None
-                dual_cidr = None
+                secondary_cidr = None
                 pod_cidr = None
                 service_cidr = None
             elif isinstance(net, dict) and 'name' in net:
@@ -166,7 +170,7 @@ class Kgcp(object):
                 ip = net.get('ip')
                 alias = net.get('alias')
                 netpublic = net.get('public') or overrides.get('public') or self.public
-                dual_cidr = net.get('dual_cidr') or overrides.get('dual_cidr')
+                secondary_cidr = net.get('secondary_cidr') or overrides.get('secondary_cidr')
                 pod_cidr = net.get('pod_cidr')
                 service_cidr = net.get('service_cidr')
             if ips and len(ips) > index and ips[index] is not None:
@@ -179,6 +183,8 @@ class Kgcp(object):
                 if network_project == self.xproject:
                     use_xproject = True
                 newnet['subnetwork'] = f'projects/{network_project}/regions/{region}/subnetworks/{netname}'
+                if ':' in subnets[netname]['cidr']:
+                    newnet["stackType"] = "IPV4_IPV6"
             elif netname in networks:
                 newnet['network'] = f'global/networks/{netname}'
             else:
@@ -186,14 +192,14 @@ class Kgcp(object):
             if ip is not None:
                 newnet['networkIP'] = ip
             aliases = []
-            if dual_cidr is not None:
-                dual_name = net.get('dual_name') or f"dual-{netname}"
-                aliases.append({"ipCidrRange": dual_cidr, "subnetworkRangeName": dual_name})
+            if secondary_cidr is not None:
+                secondary_name = net.get('secondary_name') or f"secondary-{netname}"
+                aliases.append({"ipCidrRange": secondary_cidr, "subnetworkRangeName": secondary_name})
             if pod_cidr is not None:
-                pod_cidr_name = net.get('pod_cidr_name') or f"dual-{netname}"
+                pod_cidr_name = net.get('pod_cidr_name') or f"secondary-{netname}"
                 aliases.append({"ipCidrRange": pod_cidr, "subnetworkRangeName": pod_cidr_name})
             if service_cidr is not None:
-                service_cidr_name = net.get('service_cidr_name') or f"dual-{netname}"
+                service_cidr_name = net.get('service_cidr_name') or f"secondary-{netname}"
                 aliases.append({"ipCidrRange": service_cidr, "subnetworkRangeName": service_cidr_name})
             if aliases:
                 newnet["aliasIpRanges"] = aliases
@@ -563,6 +569,7 @@ class Kgcp(object):
             yamlinfo['user'] = common.get_user(yamlinfo['image'])
         yamlinfo['creationdate'] = dateparser.parse(vm['creationTimestamp']).strftime("%d-%m-%Y %H:%M")
         nets = []
+        ips = []
         for interface in vm['networkInterfaces']:
             network = os.path.basename(interface['network'])
             device = interface['name']
@@ -570,10 +577,17 @@ class Kgcp(object):
             yamlinfo['private_ip'] = private_ip
             if 'ip' not in yamlinfo and private_ip != 'N/A':
                 yamlinfo['ip'] = private_ip
-            network_type = ''
+            ips.append(private_ip)
+            private_ipv6 = interface.get('ipv6Address')
+            if private_ipv6 is not None:
+                ips.append(private_ipv6)
+            network_type = 'dualstack' if private_ipv6 is not None else 'ipv4'
             nets.append({'device': device, 'mac': private_ip, 'net': network, 'type': network_type})
         if nets:
             yamlinfo['nets'] = nets
+        if len(ips) > 1:
+            yamlinfo['ips'] = ips
+
         disks = []
         for index, disk in enumerate(vm['disks']):
             devname = disk['deviceName']
@@ -873,35 +887,67 @@ class Kgcp(object):
         return {'result': 'success'}
 
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
+        ipv6 = overrides.get('ipv6', False)
+        dual_cidr = None
+        subnet_body = {}
+        if cidr is not None:
+            try:
+                network = ip_network(cidr, strict=False)
+            except:
+                return {'result': 'failure', 'reason': f"Invalid Cidr {cidr}"}
+            if str(network.version) == "6":
+                msg = 'Primary cidr needs to be ipv4 in GCP. Set ipv6 to true to enable it'
+                return {'result': 'failure', 'reason': msg}
+            subnet_body = {'name': f'{name}-subnet1', 'ipCidrRange': cidr}
+            if 'dual_cidr' in overrides:
+                dual_cidr = overrides['dual_cidr']
+                try:
+                    dual_network = ip_network(dual_cidr, strict=False)
+                    dual_cidr_version = str(dual_network.version)
+                    if dual_cidr_version == "4":
+                        return {'result': 'failure', 'reason': "cidr and dual_cidr must be of different types"}
+                except:
+                    return {'result': 'failure', 'reason': f"Invalid Dual Cidr {dual_cidr}"}
+                subnet_body["ipv6_cidr_range"] = dual_cidr
+                subnet_body['stack_type'] = 'IPV4_IPV6'
+                subnet_body['ipv6AccessType'] = 'INTERNAL' if is_ula(dual_cidr) else 'EXTERNAL'
         conn = self.conn
         project = self.project
         region = self.region
-        body = {'name': name, 'autoCreateSubnetworks': True if cidr is None else False}
+        networks = self.list_networks()
+        if name in networks:
+            msg = f"Network {name} already exists"
+            return {'result': 'failure', 'reason': msg}
+        body = {'name': name, 'autoCreateSubnetworks': cidr is None}
+        body['enableUlaInternalIpv6'] = ipv6 or (dual_cidr is not None and is_ula(dual_cidr))
         operation = conn.networks().insert(project=project, body=body).execute()
         self._wait_for_operation(operation)
-        if overrides.get('create_subnet', True):
-            if cidr is not None:
-                try:
-                    ip_network(cidr)
-                except:
-                    return {'result': 'failure', 'reason': f"Invalid Cidr {cidr}"}
-                networkpath = operation["targetLink"]
-                regionpath = f"https://www.googleapis.com/compute/v1/projects/{project}/regions/{region}"
-                subnet_body = {'name': name, "ipCidrRange": cidr, 'network': networkpath, "region": regionpath}
-                if 'dual_cidr' in overrides:
-                    dual_cidr = overrides['dual_cidr']
-                    try:
-                        ip_network(dual_cidr)
-                    except:
-                        return {'result': 'failure', 'reason': f"Invalid Dual Cidr {dual_cidr}"}
-                    dual_name = overrides.get('dual_name') or f"dual-{name}"
-                    subnet_body['secondaryIpRanges'] = [{"rangeName": dual_name, "ipCidrRange": dual_cidr}]
-                operation = conn.subnetworks().insert(region=region, project=project, body=subnet_body).execute()
-                self._wait_for_operation(operation)
         allowed = {"IPProtocol": "tcp", "ports": ["22"]}
         firewall_body = {'name': f'allow-ssh-{name}', 'network': f'global/networks/{name}',
                          'sourceRanges': ['0.0.0.0/0'], 'allowed': [allowed]}
         conn.firewalls().insert(project=project, body=firewall_body).execute()
+        if ipv6 and dual_cidr is None:
+            ipv6_cidr = conn.networks().get(project=project, network=name).execute()['internalIpv6Range']
+            ipv6_subnet_cidr = ipv6_cidr.replace('/48', '/64')
+            pprint(f"Using {ipv6_cidr} as IPV6 main cidr")
+            subnet_body["ipv6_cidr_range"] = ipv6_subnet_cidr
+            subnet_body['stack_type'] = 'IPV4_IPV6'
+            subnet_body['ipv6AccessType'] = 'INTERNAL'
+        if not subnet_body:
+            return {'result': 'success'}
+        networkpath = operation["targetLink"]
+        regionpath = f"https://www.googleapis.com/compute/v1/projects/{project}/regions/{region}"
+        subnet_body.update({'network': networkpath, "region": regionpath})
+        if 'secondary_cidr' in overrides:
+            secondary_cidr = overrides['secondary_cidr']
+            try:
+                ip_network(secondary_cidr)
+            except:
+                return {'result': 'failure', 'reason': f"Invalid Secondary Cidr {secondary_cidr}"}
+            secondary_name = overrides.get('secondary_name') or f"secondary-{name}"
+            subnet_body['secondaryIpRanges'] = [{"rangeName": secondary_name, "ipCidrRange": secondary_cidr}]
+        operation = conn.subnetworks().insert(region=region, project=project, body=subnet_body).execute()
+        self._wait_for_operation(operation)
         return {'result': 'success'}
 
     def delete_network(self, name=None, cidr=None, force=False):
@@ -926,7 +972,6 @@ class Kgcp(object):
         self._wait_for_operation(operation)
         return {'result': 'success'}
 
-# should return a dict of pool strings
     def list_pools(self):
         print("not implemented")
         return []
@@ -983,7 +1028,7 @@ class Kgcp(object):
                 for subnet in subnets_data:
                     subnetname = subnet['name']
                     networkname = os.path.basename(subnet['network'])
-                    cidr = subnet['ipCidrRange']
+                    cidr = subnet.get('internalIpv6Prefix') or subnet['ipCidrRange']
                     subnets[subnetname] = {'cidr': cidr, 'az': project, 'network': networkname}
             response = conn.networks().list(project=project).execute()
             nets_data = response.get('items', [])
@@ -1617,36 +1662,62 @@ class Kgcp(object):
                 return {'result': 'failure', 'reason': msg}
         if self.debug:
             print(subnet)
-        cidr = subnet['ipCidrRange']
+        primary_range = 'ipCidrRange'
+        cidr = subnet.get('ipCidrRange')
+        if cidr is None:
+            primary_range = 'internalIpv6Prefix'
+            cidr = subnet.get(primary_range)
         result = {'cidr': cidr, 'az': project, 'network': os.path.basename(subnet['network'])}
-        dual_cidrs = [entry['ipCidrRange'] for entry in subnet.get('secondaryIpRanges', [])]
-        if dual_cidrs:
-            result['dual_cidrs'] = dual_cidrs
+        dual_cidr = subnet.get('internalIpv6Prefix' if primary_range == 'ipCidrRange' else 'ipCidrRange')
+        if dual_cidr is not None:
+            result['dual_cidr'] = dual_cidr
+        secondary_cidrs = [entry['ipCidrRange'] for entry in subnet.get('secondaryIpRanges', [])]
+        if secondary_cidrs:
+            result['secondary_cidrs'] = secondary_cidrs
         return result
 
     def create_subnet(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
         conn = self.conn
         project = self.project
         region = self.region
-        network = overrides.get('network', name)
-        if network not in self.list_networks():
-            msg = f'Network {network} not found'
+        network_name = overrides.get('network', name)
+        if network_name not in self.list_networks():
+            msg = f'Network {network_name} not found'
             return {'result': 'failure', 'reason': msg}
         try:
-            ip_network(cidr)
+            network = ip_network(cidr)
+            cidr_version = str(network.version)
         except:
             return {'result': 'failure', 'reason': f"Invalid Cidr {cidr}"}
-        networkpath = self.conn.networks().get(project=project, network=network).execute()['selfLink']
+        networkpath = self.conn.networks().get(project=project, network=network_name).execute()['selfLink']
         regionpath = f"https://www.googleapis.com/compute/v1/projects/{project}/regions/{region}"
-        subnet_body = {'name': name, "ipCidrRange": cidr, 'network': networkpath, "region": regionpath}
+        cidr_type = "ipv6_cidr_range" if cidr_version == '6' else "ipCidrRange"
+        subnet_body = {'name': name, cidr_type: cidr, 'network': networkpath, "region": regionpath}
         if 'dual_cidr' in overrides:
             dual_cidr = overrides['dual_cidr']
             try:
-                ip_network(dual_cidr)
+                dual_network = ip_network(dual_cidr, strict=False)
+                dual_cidr_version = str(dual_network.version)
+                if dual_cidr_version == cidr_version:
+                    return {'result': 'failure', 'reason': "cidr and dual_cidr must be of different types"}
             except:
                 return {'result': 'failure', 'reason': f"Invalid Dual Cidr {dual_cidr}"}
-            dual_name = overrides.get('dual_name') or f"dual-{name}"
-            subnet_body['secondaryIpRanges'] = [{"rangeName": dual_name, "ipCidrRange": dual_cidr}]
+            dual_cidr_type = "ipv6_cidr_range" if cidr_type == 'ipCidrRange' else "ipCidrRange"
+            subnet_body[dual_cidr_type] = dual_cidr
+            subnet_body['stack_type'] = 'IPV4_IPV6'
+        if 'ipCidrRange' not in subnet_body:
+            return {'result': 'failure', 'reason': "Missing Ipv4 Cidr. GCP doesnt support IPV6 only subnets"}
+        ipv6 = cidr_type == 'ipv6_cidr_range' or ('dual_cidr' in overrides and dual_cidr_type == "ipv6_cidr_range")
+        if ipv6:
+            subnet_body['ipv6AccessType'] = 'INTERNAL' if is_ula(dual_cidr) else 'EXTERNAL'
+        if 'secondary_cidr' in overrides:
+            secondary_cidr = overrides['secondary_cidr']
+            try:
+                ip_network(secondary_cidr)
+            except:
+                return {'result': 'failure', 'reason': f"Invalid Secondary Cidr {secondary_cidr}"}
+            secondary_name = overrides.get('secondary_name') or f"secondary-{name}"
+            subnet_body['secondaryIpRanges'] = [{"rangeName": secondary_name, "ipCidrRange": secondary_cidr}]
         operation = conn.subnetworks().insert(region=region, project=project, body=subnet_body).execute()
         self._wait_for_operation(operation)
         return {'result': 'success'}
