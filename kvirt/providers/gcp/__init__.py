@@ -158,6 +158,7 @@ class Kgcp(object):
         subnets = self.list_subnets()
         for index, net in enumerate(nets):
             netpublic = overrides.get('public', True)
+            nettype = 'virtio'
             if isinstance(net, str):
                 netname = net
                 ip = None
@@ -166,6 +167,7 @@ class Kgcp(object):
                 service_cidr = None
             elif isinstance(net, dict) and 'name' in net:
                 netname = net['name']
+                nettype = net.get('type', nettype)
                 ip = net.get('ip')
                 alias = net.get('alias')
                 netpublic = net.get('public') or netpublic
@@ -202,6 +204,8 @@ class Kgcp(object):
                 aliases.append({"ipCidrRange": service_cidr, "subnetworkRangeName": service_cidr_name})
             if aliases:
                 newnet["aliasIpRanges"] = aliases
+            if nettype.lower() == 'gvnic':
+                newnet["nic_type"] = 'gVNIC'
             body['networkInterfaces'].append(newnet)
         body['disks'] = []
         for index, disk in enumerate(disks):
