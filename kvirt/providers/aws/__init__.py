@@ -746,10 +746,11 @@ class Kaws(object):
         allimages = conn.describe_images(Filters=Filters)
         for image in allimages['Images']:
             name = image['Name']
+            _id = image['ImageId']
             if 'beta' in name.lower():
                 continue
             else:
-                images.append(name)
+                images.append(f"{name} - {_id}")
         return sorted(images, key=str.lower)
 
     def delete(self, name, snapshots=False):
