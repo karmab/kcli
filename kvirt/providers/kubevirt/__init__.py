@@ -22,6 +22,8 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 DOMAIN = "kubevirt.io"
 CDIDOMAIN = "cdi.kubevirt.io"
 CDIVERSION = "v1beta1"
+FLAVORDOMAIN = "instancetype.kubevirt.io"
+FLAVORVERSION = "v1alpha2"
 KUBEVIRTNAMESPACE = "kube-system"
 VERSION = 'v1'
 MULTUSDOMAIN = 'k8s.cni.cncf.io'
@@ -171,6 +173,13 @@ class Kubevirt(Kubecommon):
                                                                       'devices': {'disks': []}}, 'volumes': []}}},
               'apiVersion': f'kubevirt.io/{VERSION}', 'metadata': {'name': name, 'namespace': namespace,
                                                                    'labels': labels, 'annotations': {}}}
+        if flavor is not None:
+            if flavor not in [f[0] for f in self.list_flavors()]:
+                return {'result': 'failure', 'reason': f"Invalid flavor/instance type {flavor}"}
+            else:
+                vm['spec']['instancetype'] = {'name': flavor}
+                del vm['spec']['template']['spec']['domain']['cpu']
+                del vm['spec']['template']['spec']['domain']['resources']
         if 'annotations' in overrides:
             vm['metadata']['annotations'] = overrides['annotations']
         if confidential:
@@ -781,6 +790,10 @@ class Kubevirt(Kubecommon):
             if harvester:
                 memory = 1024 * memory
             yamlinfo['memory'] = memory
+        if 'instancetype' in spec and spec['instancetype']['kind'] == 'virtualmachineclusterinstancetype':
+            flavor = spec['instancetype']['name']
+            yamlinfo['flavor'] = flavor
+            yamlinfo['numcpus'], yamlinfo['memory'] = [f for f in self.list_flavors() if f[0] == flavor][0][1:]
         if image != 'N/A':
             yamlinfo['image'] = image
             yamlinfo['user'] = common.get_user(image)
@@ -1484,7 +1497,10 @@ class Kubevirt(Kubecommon):
         return None
 
     def list_flavors(self):
-        return []
+        crds = self.crds
+        flavors = crds.list_cluster_custom_object(FLAVORDOMAIN, FLAVORVERSION,
+                                                  'virtualmachineclusterinstancetypes')["items"]
+        return [[f['metadata']['name'], f['spec']['cpu']['guest'], f['spec']['memory']['guest']] for f in flavors]
 
     def get_image_name(self, name, pvcname=None):
         if name.endswith('.gz'):

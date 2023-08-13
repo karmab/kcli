@@ -4996,7 +4996,8 @@ def cli():
 
     flavorlist_desc = 'List Flavors'
     flavorlist_parser = list_subparsers.add_parser('flavor', description=flavorlist_desc, help=flavorlist_desc,
-                                                   aliases=['flavors'], parents=[output_parser])
+                                                   aliases=['flavors', 'instance-type', 'instance-types'],
+                                                   parents=[output_parser])
     flavorlist_parser.add_argument('--short', action='store_true')
     flavorlist_parser.set_defaults(func=list_flavors)
 
