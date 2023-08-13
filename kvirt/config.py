@@ -130,13 +130,12 @@ class Kconfig(Kbaseconfig):
                 zone = self.options.get('zone', 'europe-west1-b') if zone is None else zone
                 region = self.options.get('region') if region is None else region
                 region = zone[:-2] if region is None else region
-                public = self.options.get('public', True)
                 try:
                     from kvirt.providers.gcp import Kgcp
                 except Exception as e:
                     exception = e if debug else None
                     dependency_error('gcp', exception)
-                k = Kgcp(project, zone=zone, region=region, debug=debug, public=public)
+                k = Kgcp(project, zone=zone, region=region, debug=debug)
                 self.overrides.update({'project': project})
             elif self.type == 'azure':
                 try:

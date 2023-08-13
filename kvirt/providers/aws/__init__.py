@@ -176,12 +176,11 @@ class Kaws(object):
             ip = None
             if isinstance(net, str):
                 netname = net
-                netpublic = True
             elif isinstance(net, dict) and 'name' in net:
                 netname = net['name']
                 ip = net.get('ip')
                 alias = net.get('alias')
-                netpublic = net.get('public', netpublic)
+                netpublic = net.get('public') or netpublic
             matching_subnets = [sub for sub in subnets if sub['SubnetId'] == netname or tag_name(sub) == netname]
             if matching_subnets:
                 subnet_az = matching_subnets[0]['AvailabilityZone']

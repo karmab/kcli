@@ -35,7 +35,7 @@ def is_ula(cidr):
 
 
 class Kgcp(object):
-    def __init__(self, project, zone="europe-west1-b", region='europe-west1', debug=False, public=True):
+    def __init__(self, project, zone="europe-west1-b", region='europe-west1', debug=False):
         credentials = default(scopes=['https://www.googleapis.com/auth/cloud-platform'])[0]
         authorized_http = AuthorizedHttp(credentials, http=Http())
         self.conn = build('compute', 'v1', requestBuilder=build_request, http=authorized_http)
@@ -47,7 +47,6 @@ class Kgcp(object):
         request = self.conn.projects().getXpnHost(project=project)
         response = request.execute()
         self.xproject = response['name'] if response else None
-        self.public = public
 
     def _wait_for_operation(self, operation):
         selflink = operation['selfLink']
@@ -158,9 +157,9 @@ class Kgcp(object):
         networks = self.list_networks()
         subnets = self.list_subnets()
         for index, net in enumerate(nets):
+            netpublic = overrides.get('public', True)
             if isinstance(net, str):
                 netname = net
-                netpublic = True
                 ip = None
                 secondary_cidr = None
                 pod_cidr = None
@@ -169,7 +168,7 @@ class Kgcp(object):
                 netname = net['name']
                 ip = net.get('ip')
                 alias = net.get('alias')
-                netpublic = net.get('public') or overrides.get('public') or self.public
+                netpublic = net.get('public') or netpublic
                 secondary_cidr = net.get('secondary_cidr') or overrides.get('secondary_cidr')
                 pod_cidr = net.get('pod_cidr')
                 service_cidr = net.get('service_cidr')
