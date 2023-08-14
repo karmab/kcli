@@ -731,12 +731,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     overrides['kube'] = data['cluster']
     installparam = overrides.copy()
     installparam['cluster'] = clustervalue
-    sno = data.get('sno', False)
-    sno_disk = data.get('sno_disk')
-    sno_ctlplanes = data.get('sno_ctlplanes')
-    sno_workers = data.get('sno_workers')
-    sno_vm = data.get('sno_vm')
-    sno_wait = data.get('api_ip') is not None or sno_vm or data.get('sno_wait')
+    sno_vm = data['sno_vm']
+    sno = sno_vm or data['sno']
+    sno_wait = data.get('api_ip') is not None or sno_vm or data['sno_wait']
+    sno_disk = data['sno_disk']
+    sno_ctlplanes = data['sno_ctlplanes']
+    sno_workers = data['sno_workers']
     ignore_hosts = data.get('ignore_hosts', False)
     if sno:
         if sno_disk is None:
