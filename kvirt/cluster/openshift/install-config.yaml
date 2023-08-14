@@ -41,10 +41,10 @@ proxy:
 {% endif %}
 compute:
 - name: worker
-  replicas: {{ 0 if sno else workers }}
+  replicas: {{ 0 if sno or sno_vm else workers }}
 controlPlane:
   name: master
-  replicas: {{ 1 if sno else ctlplanes }}
+  replicas: {{ 1 if sno or sno_vm else ctlplanes }}
 metadata:
   name: {{ cluster }}
 networking:
@@ -89,7 +89,7 @@ platform:
 {% else %}
   none: {}
 {% endif %}
-{% if sno %}
+{% if sno or sno_vm %}
 BootstrapInPlace:
   InstallationDisk: {{ sno_disk }}
 {% endif %}
