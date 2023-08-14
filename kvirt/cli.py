@@ -2325,7 +2325,7 @@ def info_kube(args):
     if args.cluster is not None:
         if kubetype == 'aks':
             status = baseconfig.info_specific_aks(args.cluster)
-        if kubetype == 'eks':
+        elif kubetype == 'eks':
             status = baseconfig.info_specific_eks(args.cluster)
         elif kubetype == 'gke':
             status = baseconfig.info_specific_gke(args.cluster)
@@ -2346,7 +2346,7 @@ def info_kube(args):
     else:
         if kubetype == 'openshift':
             baseconfig.info_kube_openshift(quiet=True)
-        if kubetype == 'openshift-sno':
+        elif kubetype == 'openshift-sno':
             baseconfig.info_openshift_sno(quiet=True)
         elif kubetype == 'hypershift':
             baseconfig.info_kube_hypershift(quiet=True)
