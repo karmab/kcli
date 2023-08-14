@@ -3583,8 +3583,9 @@ class Kconfig(Kbaseconfig):
                     updated_files.append(destination)
         return updated_files
 
-    def info_specific_plan(self, plan):
-        pprint(f"Providing information about plan {plan}")
+    def info_specific_plan(self, plan, quiet=False):
+        if not quiet:
+            pprint(f"Providing information about plan {plan}")
         k = self.k
         results = []
         for vm in k.list():

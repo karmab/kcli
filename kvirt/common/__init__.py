@@ -670,7 +670,7 @@ def confirm(message):
     return
 
 
-def get_lastvm(client):
+def get_lastvm(client, quiet=False):
     if 'HOME' not in os.environ:
         error("HOME variable not set")
         sys.exit(1)
@@ -683,7 +683,8 @@ def get_lastvm(client):
             cli = line[0].strip()
             vm = line[1].strip()
             if cli == client:
-                pprint(f"Using {vm} from {cli} as vm")
+                if not quiet:
+                    pprint(f"Using {vm} from {cli} as vm")
                 return vm
     error("Missing Vm's name")
     sys.exit(1)

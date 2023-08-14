@@ -594,17 +594,18 @@ def update_profile(args):
 
 def info_vm(args):
     """Get info on vm"""
+    output = args.global_output or args.output
+    common_quiet = output is not None
     fields = args.fields.split(',') if args.fields is not None else []
     values = args.values
     config = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    names = [common.get_lastvm(config.client)] if not args.names else args.names
+    names = [common.get_lastvm(config.client, quiet=common_quiet)] if not args.names else args.names
     vm_found = False
     for name in names:
         data = config.k.info(name, debug=args.debug)
         if data:
             vm_found = True
-            output = args.global_output or args.output
             print(common.print_info(data, output=output, fields=fields, values=values, pretty=True))
     sys.exit(0 if vm_found else 1)
 
@@ -2296,7 +2297,8 @@ def info_plan(args):
     if args.plan is not None:
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
-        _list = config.info_specific_plan(args.plan)
+        info_quiet = output is not None
+        _list = config.info_specific_plan(args.plan, quiet=info_quiet)
         if output is not None:
             _list_output(_list, output)
         else:
