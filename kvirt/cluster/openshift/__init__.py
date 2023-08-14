@@ -655,6 +655,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'ovn_hostrouting': False,
             'manifests': 'manifests',
             'sno': False,
+            'sno_disk': None,
             'sno_ctlplanes': False,
             'sno_workers': False,
             'sno_wait': False,
