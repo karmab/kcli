@@ -270,7 +270,9 @@ def get_installer_version():
 
 
 def offline_image(version='stable', tag='4.13', pull_secret='openshift_pull.json'):
-    tag = str(tag).split(':')[-1].split('-')[0]
+    tag = str(tag).split(':')[-1]
+    for arch in ['x86_64', 'amd64', 'arm64', 'ppc64le', 's390x', 'x86_64']:
+        tag.replace(f'-{arch}', '')
     offline = 'xxx'
     if version in ['ci', 'nightly']:
         if version == "nightly":
