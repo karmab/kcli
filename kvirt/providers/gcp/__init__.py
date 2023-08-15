@@ -47,12 +47,18 @@ class Kgcp(object):
         response = request.execute()
         self.xproject = response['name'] if response else None
         if zone is None:
+            self.specific_zone = False
             for z in self.conn.zones().list(project=project).execute()['items']:
                 if z['region'].endswith(region):
                     self.zone = z['name']
                     break
         else:
             self.zone = zone
+            self.specific_zone = True
+
+    def list_zones(self, project):
+        return [z['name'] for z in self.conn.zones().list(project=project).execute()['items']
+                if z['region'].endswith(self.region)]
 
     def _wait_for_operation(self, operation):
         selflink = operation['selfLink']
@@ -478,15 +484,16 @@ class Kgcp(object):
     def list(self):
         conn = self.conn
         project = self.project
-        zone = self.zone
         vms = []
-        instances = conn.instances().list(project=project, zone=zone).execute()
-        instances_items = instances.get('items', [])
-        for vm in instances_items:
-            try:
-                vms.append(self.info(vm['name'], vm=vm))
-            except:
-                continue
+        zones = [self.zone] if self.specific_zone else self.list_zones(self.project)
+        for zone in zones:
+            instances = conn.instances().list(project=project, zone=zone).execute()
+            instances_items = instances.get('items', [])
+            for vm in instances_items:
+                try:
+                    vms.append(self.info(vm['name'], vm=vm))
+                except:
+                    continue
         if not vms:
             return []
         return sorted(vms, key=lambda x: x['name'])
@@ -550,13 +557,13 @@ class Kgcp(object):
         yamlinfo = {}
         conn = self.conn
         project = self.project
-        zone = self.zone
         if vm is None:
             try:
-                vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
+                vm = conn.instances().get(zone=self.zone, project=project, instance=name).execute()
             except:
                 error(f"VM {name} not found")
                 return {}
+        zone = os.path.basename(vm['zone'])
         yamlinfo['name'] = vm['name']
         yamlinfo['status'] = vm['status']
         machinetype = os.path.basename(vm['machineType'])
@@ -567,7 +574,7 @@ class Kgcp(object):
             flavor_info = self.info_flavor(machinetype)
             yamlinfo['cpus'], yamlinfo['memory'] = flavor_info['cpus'], flavor_info['memory']
         yamlinfo['autostart'] = vm['scheduling']['automaticRestart']
-        yamlinfo['az'] = os.path.basename(vm['zone'])
+        yamlinfo['az'] = zone
         first_nic = vm['networkInterfaces'][0]
         if 'accessConfigs' in first_nic and 'natIP' in first_nic['accessConfigs'][0]:
             yamlinfo['ip'] = first_nic['accessConfigs'][0]['natIP']
@@ -599,7 +606,6 @@ class Kgcp(object):
             yamlinfo['nets'] = nets
         if len(ips) > 1:
             yamlinfo['ips'] = ips
-
         disks = []
         for index, disk in enumerate(vm['disks']):
             devname = disk['deviceName']

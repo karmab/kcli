@@ -732,6 +732,8 @@ def list_vm(args):
         config = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
         config = Kconfig(client=args.client, debug=args.debug, region=args.region,
                          zone=args.zone, namespace=args.namespace)
+        if config.type == 'gcp' and config.k.zone is None:
+            vmstable.add_column(['Zone'])
         _list = config.k.list()
         if output is not None:
             _list_output(_list, output)
@@ -743,6 +745,8 @@ def list_vm(args):
             plan = vm.get('plan', '')
             profile = vm.get('profile', '')
             vminfo = [name, status, ip, source, plan, profile]
+            if config.type == 'gcp' and config.k.zone is None:
+                vminfo.append(vm['az'])
             if overrides:
                 match = True
                 for key in overrides:
