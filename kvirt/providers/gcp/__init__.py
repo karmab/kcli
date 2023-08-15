@@ -707,6 +707,19 @@ class Kgcp(object):
         print("not implemented")
         return
 
+    def add_network_tag(self, name, tags):
+        conn = self.conn
+        project = self.project
+        zone = self.zone
+        try:
+            vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
+        except Exception:
+            error(f"VM {name} not found")
+            return 1
+        tags_body = {"labelFingerprint": vm['labelFingerprint'], "items": tags}
+        conn.instances().setTags(project=project, zone=zone, instance=name, body=tags_body).execute()
+        return 0
+
     def update_metadata(self, name, metatype, metavalue, append=False):
         conn = self.conn
         project = self.project
@@ -1321,6 +1334,7 @@ class Kgcp(object):
                 update = self.update_metadata(vm, 'loadbalancer', sane_name, append=True)
                 if update == 0:
                     instances.append({"instance": f"{vmpath}/{vm}"})
+                self.add_network_tag(vm, [sane_name])
             if index == 0:
                 vm_subnets = self.vm_ports(vm)
                 use_xproject = self.xproject in [self.list_subnets()[n]['id'] for n in vm_subnets]
@@ -1393,12 +1407,11 @@ class Kgcp(object):
         operation = conn.forwardingRules().insert(project=project, region=region, body=forwarding_rule_body).execute()
         self._wait_for_operation(operation)
         if not use_xproject:
-            firewall_body = {"name": sane_name, "direction": "INGRESS",
-                             "allowed": [{"IPProtocol": "tcp", "ports": ports}]}
-            first_vm = vms[0]
-            if '-ctlplane-' in first_vm or '-worker-' in first_vm and re.search(r'\d+$', first_vm):
-                kube = first_vm.split('-')[0]
-                firewall_body["targetTags"] = [kube]
+            allowed_ports = ports
+            if checkport not in allowed_ports:
+                allowed_ports.append(checkport)
+            firewall_body = {"name": sane_name, "direction": "INGRESS", "targetTags": [sane_name],
+                             "allowed": [{"IPProtocol": "tcp", "ports": allowed_ports}]}
             pprint(f"Creating firewall rule {sane_name}")
             operation = conn.firewalls().insert(project=project, body=firewall_body).execute()
             self._wait_for_operation(operation)
