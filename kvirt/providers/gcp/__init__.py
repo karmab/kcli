@@ -35,18 +35,24 @@ def is_ula(cidr):
 
 
 class Kgcp(object):
-    def __init__(self, project, zone="europe-west1-b", region='europe-west1', debug=False):
+    def __init__(self, project, region='europe-west1', zone=None, debug=False):
         credentials = default(scopes=['https://www.googleapis.com/auth/cloud-platform'])[0]
         authorized_http = AuthorizedHttp(credentials, http=Http())
         self.conn = build('compute', 'v1', requestBuilder=build_request, http=authorized_http)
         self.conn_beta = build('compute', 'beta', requestBuilder=build_request, http=authorized_http)
         self.project = project
-        self.zone = zone
         self.region = region
         self.debug = debug
         request = self.conn.projects().getXpnHost(project=project)
         response = request.execute()
         self.xproject = response['name'] if response else None
+        if zone is None:
+            for z in self.conn.zones().list(project=project).execute()['items']:
+                if z['region'].endswith(region):
+                    self.zone = z['name']
+                    break
+        else:
+            self.zone = zone
 
     def _wait_for_operation(self, operation):
         selflink = operation['selfLink']
@@ -111,7 +117,6 @@ class Kgcp(object):
                metadata={}, securitygroups=[], vmuser=None):
         conn = self.conn
         project = self.project
-        zone = self.zone
         region = self.region
         if self.exists(name):
             return {'result': 'failure', 'reason': f"VM {name} already exists"}
@@ -130,6 +135,7 @@ class Kgcp(object):
                 machine_type = 'f1-micro'
         else:
             machine_type = flavor
+        zone = overrides.get('az') or overrides.get('availability_zone') or overrides.get('zone') or self.zone
         machine_type = f"zones/{zone}/machineTypes/{machine_type}"
         body = {'name': name, 'machineType': machine_type, 'networkInterfaces': []}
         if cpumodel != 'host-model':
@@ -180,12 +186,15 @@ class Kgcp(object):
             if netpublic and index == 0:
                 newnet['accessConfigs'] = [{'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}]
             if netname in subnets:
-                network_project = subnets[netname]['az']
+                network_project = subnets[netname]['id']
                 if network_project == self.xproject:
                     use_xproject = True
                 newnet['subnetwork'] = f'projects/{network_project}/regions/{region}/subnetworks/{netname}'
                 if ':' in subnets[netname]['cidr']:
                     newnet["stackType"] = "IPV4_IPV6"
+                subnet_region = subnets[netname]['az']
+                if region != self.region:
+                    return {'result': 'failure', 'reason': f'{netname} is in region {subnet_region}, not {region}'}
             elif netname in networks:
                 newnet['network'] = f'global/networks/{netname}'
             else:
@@ -319,7 +328,7 @@ class Kgcp(object):
             firewalls = conn.firewalls().list(project=project).execute()
             firewalls = firewalls['items'] if 'items' in firewalls else []
             if not firewalls or not [r for r in firewalls if r['name'] == kube]:
-                pprint(f"Adding vm to security group {kube}")
+                pprint(f"Creating firewall {kube}")
                 tcp_ports = [22, 443, 2379, 2380]
                 firewall_body = {"name": kube, "direction": "INGRESS", "targetTags": [kube],
                                  "allowed": [{"IPProtocol": "tcp", "ports": tcp_ports}]}
@@ -329,7 +338,6 @@ class Kgcp(object):
                     firewall_body['allowed'][0]['ports'].extend(extra_tcp_ports)
                     udp_ports = ['4789', '6081', '30000-32767', '9000-9999']
                     firewall_body['allowed'].append({"IPProtocol": "udp", "ports": udp_ports})
-                pprint(f"Creating firewall rule {kube}")
                 operation = conn.firewalls().insert(project=project, body=firewall_body).execute()
                 self._wait_for_operation(operation)
             tags.extend([kube])
@@ -559,6 +567,7 @@ class Kgcp(object):
             flavor_info = self.info_flavor(machinetype)
             yamlinfo['cpus'], yamlinfo['memory'] = flavor_info['cpus'], flavor_info['memory']
         yamlinfo['autostart'] = vm['scheduling']['automaticRestart']
+        yamlinfo['az'] = os.path.basename(vm['zone'])
         first_nic = vm['networkInterfaces'][0]
         if 'accessConfigs' in first_nic and 'natIP' in first_nic['accessConfigs'][0]:
             yamlinfo['ip'] = first_nic['accessConfigs'][0]['natIP']
@@ -1032,7 +1041,8 @@ class Kgcp(object):
                     subnetname = subnet['name']
                     networkname = os.path.basename(subnet['network'])
                     cidr = subnet.get('internalIpv6Prefix') or subnet['ipCidrRange']
-                    subnets[subnetname] = {'cidr': cidr, 'az': project, 'network': networkname}
+                    region = os.path.basename(subnet['region'])
+                    subnets[subnetname] = {'cidr': cidr, 'az': region, 'id': project, 'network': networkname}
             response = conn.networks().list(project=project).execute()
             nets_data = response.get('items', [])
             if nets_data:
@@ -1041,9 +1051,12 @@ class Kgcp(object):
                     if 'subnetworks' in net:
                         for subnet in net['subnetworks']:
                             subnetname = os.path.basename(subnet)
+                            region = re.match('.*regions/(.*)/subnetworks.*', subnet).group(1)
                             if subnetname not in subnets:
-                                cidr = subnets_data[subnetname]['ipCidrRange'] if subnetname in subnets_data else ''
-                                subnets[subnetname] = {'cidr': cidr, 'az': project, 'network': networkname}
+                                subnet_data = conn.subnetworks().get(region=region, project=project,
+                                                                     subnetwork=subnetname).execute()
+                                subnets[subnetname] = {'cidr': subnet_data['ipCidrRange'], 'id': project, 'az': region,
+                                                       'network': networkname}
         return subnets
 
     def get_subnet(self, subnetwork):
@@ -1304,7 +1317,7 @@ class Kgcp(object):
                     instances.append({"instance": f"{vmpath}/{vm}"})
             if index == 0:
                 vm_subnets = self.vm_ports(vm)
-                use_xproject = self.xproject in [self.list_subnets()[n]['az'] for n in vm_subnets]
+                use_xproject = self.xproject in [self.list_subnets()[n]['id'] for n in vm_subnets]
         health_check_body = {"checkIntervalSec": "10", "timeoutSec": "10", "unhealthyThreshold": 3,
                              "healthyThreshold": 3, "name": sane_name}
         health_check_body["type"] = "TCP"
@@ -1368,7 +1381,7 @@ class Kgcp(object):
             # using a GCP shared VPC Project for networking. Reflect this
             netname = vm_subnets[0]
             project_subnets = self.list_subnets()
-            network_project = project_subnets[netname]['az']
+            network_project = project_subnets[netname]['id']
             forwarding_rule_body["subnetwork"] = f'projects/{network_project}/regions/{region}/subnetworks/{netname}'
         pprint(f"Creating forwarding rule {forwarding_name}")
         operation = conn.forwardingRules().insert(project=project, region=region, body=forwarding_rule_body).execute()
@@ -1670,7 +1683,7 @@ class Kgcp(object):
         if cidr is None:
             primary_range = 'internalIpv6Prefix'
             cidr = subnet.get(primary_range)
-        result = {'cidr': cidr, 'az': project, 'network': os.path.basename(subnet['network'])}
+        result = {'cidr': cidr, 'id': project, 'network': os.path.basename(subnet['network'])}
         dual_cidr = subnet.get('internalIpv6Prefix' if primary_range == 'ipCidrRange' else 'ipCidrRange')
         if dual_cidr is not None:
             result['dual_cidr'] = dual_cidr

@@ -315,6 +315,7 @@ The following parameters are specific to aws:
 -  ``access_key_id``
 -  ``access_key_secret``
 -  ``region``
+-  ``zone`` (Optional)
 -  ``keypair``
 -  ``session_token``
 
@@ -379,13 +380,14 @@ Gcp
     type: gcp
     credentials: ~/myproject.json
     project: myproject
-    zone: europe-west1-b
+    region: europe-west1
 
 The following parameters are specific to Gcp:
 
 -  ``credentials`` (pointing to a json service account file). if not specified, the environment variable *GOOGLE_APPLICATION_CREDENTIALS* will be used
 -  ``project``
--  ``zone``
+-  ``region``
+-  ``zone`` (Optional)
 
 also note that Gcp provider supports creation of dns records for an existing domain and that your home public key will be uploaded if needed
 

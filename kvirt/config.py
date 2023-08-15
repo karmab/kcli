@@ -127,15 +127,16 @@ class Kconfig(Kbaseconfig):
                 if project is None:
                     error("Missing project in the configuration. Leaving")
                     sys.exit(1)
-                zone = self.options.get('zone', 'europe-west1-b') if zone is None else zone
-                region = self.options.get('region') if region is None else region
-                region = zone[:-2] if region is None else region
+                if region is None:
+                    region = self.options.get('region', 'europe-west1')
+                if zone is None:
+                    zone = self.options.get('zone')
                 try:
                     from kvirt.providers.gcp import Kgcp
                 except Exception as e:
                     exception = e if debug else None
                     dependency_error('gcp', exception)
-                k = Kgcp(project, zone=zone, region=region, debug=debug)
+                k = Kgcp(project, region=region, zone=zone, debug=debug)
                 self.overrides.update({'project': project})
             elif self.type == 'azure':
                 try:
@@ -145,23 +146,23 @@ class Kconfig(Kbaseconfig):
                     dependency_error('azure', exception)
                 admin_user = self.options.get('admin_user', 'superadmin')
                 admin_password = self.options.get('admin_password')
-                subscription_id = self.options.get('subscription_id')
-                tenant_id = self.options.get('tenant_id')
-                app_id = self.options.get('app_id')
-                secret = self.options.get('secret')
                 location = self.options.get('location', 'westus')
                 resource_group = self.options.get('resource_group', 'kcli')
                 mail = self.options.get('mail')
                 storageaccount = self.options.get('storageaccount')
+                subscription_id = self.options.get('subscription_id')
                 if subscription_id is None:
                     error("Missing subscription_id in the configuration. Leaving")
                     sys.exit(1)
+                tenant_id = self.options.get('tenant_id')
                 if tenant_id is None:
                     error("Missing tenant_id in the configuration. Leaving")
                     sys.exit(1)
+                app_id = self.options.get('app_id')
                 if app_id is None:
                     error("Missing app_id in the configuration. Leaving")
                     sys.exit(1)
+                secret = self.options.get('secret')
                 if secret is None:
                     error("Missing secret in the configuration. Leaving")
                     sys.exit(1)
@@ -169,21 +170,20 @@ class Kconfig(Kbaseconfig):
                            secret=secret, resource_group=resource_group, admin_user=admin_user,
                            admin_password=admin_password, mail=mail, storageaccount=storageaccount, debug=debug)
             elif self.type == 'aws':
-                access_key_id = self.options.get('access_key_id')
-                access_key_secret = self.options.get('access_key_secret')
-                keypair = self.options.get('keypair')
-                session_token = self.options.get('session_token')
-                region = self.options.get('region') if region is None else region
                 if region is None:
-                    error("Missing region in the configuration. Leaving")
-                    sys.exit(1)
-                zone = self.options.get('zone') if zone is None else zone
+                    region = self.options.get('region', 'eu-west-3')
+                if zone is None:
+                    zone = self.options.get('zone')
+                access_key_id = self.options.get('access_key_id')
                 if access_key_id is None:
                     error("Missing access_key_id in the configuration. Leaving")
                     sys.exit(1)
+                access_key_secret = self.options.get('access_key_secret')
                 if access_key_secret is None:
                     error("Missing access_key_secret in the configuration. Leaving")
                     sys.exit(1)
+                keypair = self.options.get('keypair')
+                session_token = self.options.get('session_token')
                 try:
                     from kvirt.providers.aws import Kaws
                 except Exception as e:
@@ -192,64 +192,18 @@ class Kconfig(Kbaseconfig):
                 k = Kaws(access_key_id=access_key_id, access_key_secret=access_key_secret, region=region,
                          debug=debug, keypair=keypair, session_token=session_token, zone=zone)
             elif self.type == 'ibm':
-                if len(self.options) == 1:
-                    home = os.environ['HOME']
-                    iam_api_key, region, zone, vpc = None, None, None, None
-                    cos_api_key, cos_resource_instance_id, cis_resource_instance_id = None, None, None
-                    import configparser
-                    if os.path.exists(f"{home}/.ibm/credentials"):
-                        try:
-                            credconfig = configparser.ConfigParser()
-                            credconfig.read(f"{home}/.ibm/credentials")
-                            if 'default' not in credconfig:
-                                error(
-                                    "Missing default section in ~/.ibm/credentials file. Leaving")
-                                sys.exit(1)
-                            if 'iam_api_key' in credconfig['default']:
-                                iam_api_key = credconfig['default']['iam_api_key']
-                            if 'access_key_id' in credconfig['default']:
-                                cos_api_key = credconfig['default']['access_key_id']
-                            if 'secret_access_key' in credconfig['default']:
-                                cos_resource_instance_id = credconfig['default']['secret_access_key']
-                        except:
-                            error("Coudln't parse ~/.ibm/credentials file. Leaving")
-                            sys.exit(1)
-                    if os.path.exists(f"{home}/.ibm/config"):
-                        try:
-                            confconfig = configparser.ConfigParser()
-                            confconfig.read(f"{home}/.ibm/config")
-                            if 'default' not in confconfig:
-                                error(
-                                    "Missing default section in ~/.ibm/config file. Leaving")
-                                sys.exit(1)
-                            if 'iam_api_key' in confconfig['default']:
-                                iam_api_key = confconfig['default']['iam_api_key']
-                            if 'access_key_id' in confconfig['default']:
-                                cos_api_key = confconfig['default']['access_key_id']
-                            if 'secret_access_key' in confconfig['default']:
-                                cos_resource_instance_id = confconfig['default']['secret_access_key']
-                            if 'region' in confconfig['default']:
-                                region = confconfig['default']['region']
-                            if 'zone' in confconfig['default']:
-                                zone = confconfig['default']['zone']
-                            if 'vpc' in confconfig['default']:
-                                zone = confconfig['default']['vpc']
-                        except:
-                            error("Coudln't parse ~/.ibm/config file. Leaving")
-                            sys.exit(1)
-                else:
-                    iam_api_key = self.options.get('iam_api_key')
-                    cos_api_key = self.options.get('cos_api_key')
-                    cos_resource_instance_id = self.options.get('cos_resource_instance_id')
-                    cis_resource_instance_id = self.options.get('cis_resource_instance_id')
-                    region = self.options.get('region') if region is None else region
-                    zone = self.options.get('zone') if zone is None else zone
-                    vpc = self.options.get('vpc')
+                iam_api_key = self.options.get('iam_api_key')
+                cos_api_key = self.options.get('cos_api_key')
+                cos_resource_instance_id = self.options.get('cos_resource_instance_id')
+                cis_resource_instance_id = self.options.get('cis_resource_instance_id')
+                region = self.options.get('region')
+                if region is None:
+                    region = self.options.get('region', 'eu-gb')
+                if zone is None:
+                    zone = self.options.get('zone')
+                vpc = self.options.get('vpc')
                 if iam_api_key is None:
                     error("Missing iam_api_key in the configuration. Leaving")
-                    sys.exit(1)
-                if region is None:
-                    error("Missing region in the configuration. Leaving")
                     sys.exit(1)
                 from kvirt.providers.ibm import Kibm
                 k = Kibm(iam_api_key=iam_api_key, region=region, zone=zone, vpc=vpc, debug=debug,
@@ -522,11 +476,6 @@ class Kconfig(Kbaseconfig):
         kube = overrides.get('kube')
         kubetype = overrides.get('kubetype')
         k = self.k if k is None else k
-        custom_zone = next((e for e in [customprofile.get('zone'), overrides.get('zone')] if e is not None), None)
-        if custom_zone is not None and hasattr(k, 'zone'):
-            k.zone = custom_zone
-            if hasattr(k, 'region') and k.region not in k.zone:
-                k.region = custom_zone[:-2]
         tunnel = self.tunnel
         profile = profile or overrides.get('image', 'kvirt')
         full_volumes = self.k.volumes()

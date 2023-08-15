@@ -256,7 +256,7 @@ class Kazure(object):
             if netname not in subnets:
                 return {'result': 'failure', 'reason': f'Subnet {netname} not found'}
             else:
-                subnet_id = subnets[netname]['az']
+                subnet_id = subnets[netname]['id']
                 nic_data = {'location': self.location,
                             'ip_configurations': [{'name': nic_name, 'subnet': {'id': subnet_id}}]}
                 if index == 0:
@@ -788,8 +788,8 @@ class Kazure(object):
                     print(subnet)
                 address_prefixes = subnet.address_prefixes or [None]
                 cidr = subnet.address_prefix or address_prefixes[0]
-                az = subnet.id
-                subnets[subnet.name] = {'cidr': cidr, 'az': az, 'network': network.name}
+                subnet_id = subnet.id
+                subnets[subnet.name] = {'cidr': cidr, 'id': subnet_id, 'network': network.name}
         return subnets
 
     def delete_pool(self, name, full=False):
