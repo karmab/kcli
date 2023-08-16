@@ -1160,7 +1160,8 @@ def list_subnets(args):
         for subnet in sorted(subnets):
             subnetstable.add_row([subnet])
     else:
-        subnetstable = PrettyTable(["Subnet", "Zone", "Cidr", "Id", "Network"])
+        zone_field = "Region" if config.type == 'gcp' else 'Zone'
+        subnetstable = PrettyTable(["Subnet", zone_field, "Cidr", "Id", "Network"])
         for subnet in sorted(subnets):
             cidr = subnets[subnet]['cidr']
             _id = subnets[subnet]['id'] if 'id' in subnets[subnet] else 'N/A'

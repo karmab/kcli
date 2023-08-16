@@ -727,11 +727,12 @@ class Kgcp(object):
         except Exception:
             error(f"VM {name} not found")
             return 1
-        labels = vm.get('labels')
-        if labels is None:
-            labels = {}
+        labels = vm.get('labels', {})
         if metatype not in labels or labels[metatype] != metavalue:
-            labels[metatype] = metavalue
+            if metatype in labels and metavalue is None:
+                del labels[metatype]
+            else:
+                labels[metatype] = metavalue
             label_body = {"labelFingerprint": vm['labelFingerprint'], "labels": [labels]}
             conn.instances().setLabels(project=project, zone=zone, instance=name, body=label_body).execute()
         return 0
@@ -1055,6 +1056,8 @@ class Kgcp(object):
             subnets_data = response.get('items', [])
             if subnets_data:
                 for subnet in subnets_data:
+                    if self.debug:
+                        print(subnet)
                     subnetname = subnet['name']
                     networkname = os.path.basename(subnet['network'])
                     cidr = subnet.get('internalIpv6Prefix') or subnet['ipCidrRange']
@@ -1067,6 +1070,8 @@ class Kgcp(object):
                     networkname = net['name']
                     if 'subnetworks' in net:
                         for subnet in net['subnetworks']:
+                            if self.debug:
+                                print(subnet)
                             subnetname = os.path.basename(subnet)
                             region = re.match('.*regions/(.*)/subnetworks.*', subnet).group(1)
                             if subnetname not in subnets:
@@ -1317,10 +1322,11 @@ class Kgcp(object):
         vmpath = f"https://www.googleapis.com/compute/v1/projects/{project}/zones/{zone}/instances"
         use_xproject, vm_subnets = False, []
         if not vms:
-            msg = "Creating a load balancer requires to specify some vms"
+            msg = "Creating a load balancer requires to specify vms"
             error(msg)
             return {'result': 'failure', 'reason': msg}
         instancegroup = None
+        need_subnet = False
         for index, vm in enumerate(vms):
             info = self.info(vm)
             if not info:
@@ -1335,7 +1341,14 @@ class Kgcp(object):
                 self.set_tags(vm, [sane_name])
             if index == 0:
                 vm_subnets = self.vm_ports(vm)
-                use_xproject = self.xproject in [self.list_subnets()[n]['id'] for n in vm_subnets]
+                subnet = vm_subnets[0]
+                network_project = self.list_subnets()[subnet]['id']
+                use_xproject = self.xproject == network_project
+                if use_xproject:
+                    subnet = f'projects/{network_project}/regions/{region}/subnetworks/{subnet}'
+                elif subnet != 'default':
+                    subnet = f"projects/{project}/regions/{region}/subnetworks/{subnet}"
+                need_subnet = lb_scheme == 'INTERNAL' and subnet != 'default'
         health_check_body = {"checkIntervalSec": "10", "timeoutSec": "10", "unhealthyThreshold": 3,
                              "healthyThreshold": 3, "name": sane_name}
         health_check_body["type"] = "TCP"
@@ -1365,12 +1378,16 @@ class Kgcp(object):
             instances_group_url = operation['selfLink']
         backend_body = {"name": sane_name, "backends": [{"group": instances_group_url}],
                         "loadBalancingScheme": lb_scheme, "protocol": "TCP", "healthChecks": [healthurl]}
+        if need_subnet:
+            backend_body['subnetwork'] = subnet
         pprint(f"Creating backend service {sane_name}")
         operation = conn.regionBackendServices().insert(project=project, region=region, body=backend_body).execute()
         backendurl = operation['targetLink']
         self._wait_for_operation(operation)
         if ip is None:
             address_body = {"name": sane_name, "addressType": lb_scheme}
+            if need_subnet:
+                address_body['subnetwork'] = subnet
             pprint(f"Creating address {sane_name}")
             operation = conn_beta.addresses().insert(project=project, region=region, body=address_body).execute()
             ipurl = operation['targetLink']
@@ -1394,13 +1411,8 @@ class Kgcp(object):
         forwarding_rule_body["IPProtocol"] = "TCP"
         forwarding_rule_body["ports"] = ports
         forwarding_rule_body["loadBalancingScheme"] = lb_scheme
-        if use_xproject:
-            # The load balancer is created for a project
-            # using a GCP shared VPC Project for networking. Reflect this
-            netname = vm_subnets[0]
-            project_subnets = self.list_subnets()
-            network_project = project_subnets[netname]['id']
-            forwarding_rule_body["subnetwork"] = f'projects/{network_project}/regions/{region}/subnetworks/{netname}'
+        if use_xproject or need_subnet:
+            forwarding_rule_body["subnetwork"] = subnet
         pprint(f"Creating forwarding rule {forwarding_name}")
         operation = conn.forwardingRules().insert(project=project, region=region, body=forwarding_rule_body).execute()
         self._wait_for_operation(operation)
