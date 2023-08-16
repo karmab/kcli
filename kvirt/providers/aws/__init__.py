@@ -763,7 +763,7 @@ class Kaws(object):
         except:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         instance_id = vm['InstanceId']
-        kubetype, kube = None, None
+        kubetype = None
         if 'Tags' in vm:
             for tag in vm['Tags']:
                 if tag['Key'] == 'domain':
@@ -772,8 +772,6 @@ class Kaws(object):
                     dnsclient = tag['Value']
                 if tag['Key'] == 'kubetype':
                     kubetype = tag['Value']
-                if tag['Key'] == 'kube':
-                    kube = tag['Value']
             if kubetype is not None and kubetype == 'openshift':
                 vpc_id = vm['NetworkInterfaces'][0]['VpcId']
                 default_sgid = self.get_default_security_group_id(vpc_id)
@@ -782,11 +780,6 @@ class Kaws(object):
         vm = conn.terminate_instances(InstanceIds=[instance_id])
         if domain is not None and dnsclient is None:
             self.delete_dns(name, domain, name)
-        if kubetype is not None and kubetype == 'openshift':
-            try:
-                conn.delete_security_group(GroupName=kube)
-            except:
-                pass
         if name in self.list_buckets():
             self.delete_bucket(name)
         return {'result': 'success'}

@@ -683,24 +683,16 @@ class Kgcp(object):
             vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
         except:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
-        domain, dnsclient, kube = None, None, None
+        domain, dnsclient = None, None
         if 'labels' in vm:
             for key in vm['labels']:
                 if key == 'domain':
                     domain = vm['labels'][key].replace('-', '.')
                 if key == 'dnsclient':
                     dnsclient = vm['labels'][key]
-                if key == 'kube':
-                    kube = vm['labels'][key]
         if domain is not None and dnsclient is None:
             self.delete_dns(name, domain)
         conn.instances().delete(zone=zone, project=project, instance=name).execute()
-        if kube is not None:
-            try:
-                operation = conn.firewalls().delete(project=project, firewall=kube).execute()
-                self._wait_for_operation(operation)
-            except Exception:
-                pass
         return {'result': 'success'}
 
     def clone(self, old, new, full=False, start=False):

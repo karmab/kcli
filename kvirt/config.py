@@ -2975,6 +2975,11 @@ class Kconfig(Kbaseconfig):
                     k.delete_role(iam_role)
                 except:
                     pass
+            if self.type in ['aws', 'gcp']:
+                try:
+                    self.k.delete_security_group(cluster)
+                except:
+                    pass
         elif dnsclient is not None:
             z = Kconfig(client=dnsclient).k
             z.delete_dns(f"api.{cluster}", domain)
