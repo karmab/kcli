@@ -1498,8 +1498,11 @@ class Kubevirt(Kubecommon):
 
     def list_flavors(self):
         crds = self.crds
-        flavors = crds.list_cluster_custom_object(FLAVORDOMAIN, FLAVORVERSION,
-                                                  'virtualmachineclusterinstancetypes')["items"]
+        try:
+            flavors = crds.list_cluster_custom_object(FLAVORDOMAIN, FLAVORVERSION,
+                                                      'virtualmachineclusterinstancetypes')["items"]
+        except:
+            return []
         return [[f['metadata']['name'], f['spec']['cpu']['guest'], f['spec']['memory']['guest']] for f in flavors]
 
     def get_image_name(self, name, pvcname=None):

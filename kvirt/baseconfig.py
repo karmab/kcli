@@ -1713,7 +1713,7 @@ class Kbaseconfig:
                 keywords_info = yaml.safe_load(f)
                 if keyword in keywords_info and keywords_info[keyword] is not None:
                     pprint("Detailed information:")
-                    pprint(keywords_info[keyword].strip())
+                    print(keywords_info[keyword].strip())
         return 0
 
     def info_plantype(self, plantype):

@@ -34,7 +34,8 @@ enableroot: Allow ssh access as root in cloudinit
 files: |
   Array of files to inject to the vm. For each of them, you can specify path, owner ( root by default) , permissions (600 by default ) and either origin or content to gather content data directly or from specified origin.
   When specifying a directory as origin, all the files it contains will be parsed and added
-flavor: Flavor (Specific to gcp, aws, openstack and packet)
+flavor: |
+  Flavor, represents machine-type in GCP, instancetype in AWS, virtualmachineclusterinstancetypes in Kubevirt, plans in Packet or flavors in Openstack
 gateway: Gateway server to use in cloudinit/ignition with static networking
 guestid: Guest id (libvirt)
 image: |
