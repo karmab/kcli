@@ -716,7 +716,7 @@ class Kgcp(object):
         except Exception:
             error(f"VM {name} not found")
             return 1
-        tags_body = {"labelFingerprint": vm['labelFingerprint'], "items": tags}
+        tags_body = {"fingerprint": vm['fingerprint'], "items": tags}
         conn.instances().setTags(project=project, zone=zone, instance=name, body=tags_body).execute()
         return 0
 

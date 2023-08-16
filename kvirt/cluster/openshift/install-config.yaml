@@ -79,7 +79,7 @@ platform:
 {% elif config_type == 'gcp' %}
   gcp:
     projectID: {{ config_project }}
-    region: {{ config_zone[:-2] }}
+    region: {{ config_region }}
 {% elif config_type == 'azure' %}
   azure:
     osDisk:
