@@ -1502,12 +1502,7 @@ class Kconfig(Kbaseconfig):
             deleteclients.update(self.extraclients)
         elif vmclients:
             deleteclients.update({cli: Kconfig(client=cli).k for cli in vmclients if cli != self.client})
-        hypershift = False
-        assisted = False
-        aks = False
-        eks = False
-        gke = False
-        clusterdir = "/fake/xxx"
+        deleted_clusters = []
         for hypervisor in deleteclients:
             c = deleteclients[hypervisor]
             for vm in sorted(c.list(), key=lambda x: x['name']):
@@ -1549,68 +1544,10 @@ class Kconfig(Kbaseconfig):
                     deletedvms.append(name)
                     found = True
                     cluster = vm.get('kube')
-                    if cluster is not None and cluster != '':
-                        clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
-                        if os.path.exists(clusterdir):
-                            parametersfile = f"{clusterdir}/kcli_parameters.yml"
-                            if os.path.exists(parametersfile):
-                                with open(parametersfile) as f:
-                                    clusterdata = yaml.safe_load(f)
-                                    kubetype = clusterdata.get('kubetype', 'generic')
-                                    if kubetype == 'hypershift':
-                                        hypershift = True
-                                        assisted = clusterdata.get(assisted, False)
-                                    domain = clusterdata.get('domain', domain)
-                                    dnsclient = clusterdata.get('dnsclient')
-                                    gke = kubetype == 'gke'
-                                    eks = kubetype == 'eks'
-                                    aks = kubetype == 'aks'
-        if hypershift:
-            kubeconfigmgmt = f"{clusterdir}/kubeconfig.mgmt"
-            call(f'KUBECONFIG={kubeconfigmgmt} oc delete -f {clusterdir}/autoapprovercron.yml', shell=True)
-            call(f'KUBECONFIG={kubeconfigmgmt} oc delete -f {clusterdir}/nodepool.yaml', shell=True)
-            call(f'KUBECONFIG={kubeconfigmgmt} oc delete -f {clusterdir}/hostedcluster.yaml', shell=True)
-            if not assisted and ('baremetal_iso' in clusterdata or 'baremetal_hosts' in clusterdata):
-                call('KUBECONFIG={kubeconfigmgmt} oc -n default delete all -l app=httpd-kcli', shell=True)
-                call('KUBECONFIG={kubeconfigmgmt} oc -n default delete svc httpd-kcli-svc', shell=True)
-                call('KUBECONFIG={kubeconfigmgmt} oc -n default delete pvc httpd-kcli-pvc', shell=True)
-        if gke:
-            gcpclient = None
-            if 'client' in clusterdata:
-                gcpclient = clusterdata['client']
-            elif self.type == 'gke':
-                gcpclient = self.client
-            else:
-                return {'result': 'failure', 'reason': "Deleting gke cluster requires to instantiate gcp provider"}
-            from kvirt.cluster import gke
-            currentconfig = Kconfig(client=gcpclient).k if gcpclient != self.client else self
-            zonal = clusterdata.get('zonal', True)
-            gke.delete(currentconfig, cluster, zonal)
-        elif eks:
-            eksclient = None
-            if 'client' in clusterdata:
-                eksclient = clusterdata['client']
-            elif self.type == 'aws':
-                eksclient = self.client
-            else:
-                return {'result': 'failure', 'reason': "Deleting eks cluster requires to instantiate aws provider"}
-            from kvirt.cluster import eks
-            currentconfig = Kconfig(client=eksclient).k if eksclient != self.client else self
-            eks.delete(currentconfig, cluster)
-        elif aks:
-            aksclient = None
-            if 'client' in clusterdata:
-                aksclient = clusterdata['client']
-            elif self.type == 'azure':
-                eksclient = self.client
-            else:
-                return {'result': 'failure', 'reason': "Deleting aks cluster requires to instantiate azure provider"}
-            from kvirt.cluster import aks
-            currentconfig = Kconfig(client=aksclient).k if aksclient != self.client else self
-            aks.delete(currentconfig, cluster)
-        if os.path.exists(clusterdir):
-            pprint(f"Deleting directory {clusterdir}")
-            rmtree(clusterdir, ignore_errors=True)
+                    if cluster is not None and cluster != '' and cluster not in deleted_clusters:
+                        pprint(f"Deleting cluster {cluster}")
+                        self.delete_kube(cluster)
+                        deleted_clusters.append(cluster)
         if container:
             cont = Kcontainerconfig(self, client=self.containerclient).cont
             for conta in sorted(cont.list_containers(k)):
