@@ -707,7 +707,7 @@ class Kgcp(object):
         print("not implemented")
         return
 
-    def add_network_tag(self, name, tags):
+    def set_tags(self, name, tags):
         conn = self.conn
         project = self.project
         zone = self.zone
@@ -716,8 +716,14 @@ class Kgcp(object):
         except Exception:
             error(f"VM {name} not found")
             return 1
-        tags_body = {"fingerprint": vm['fingerprint'], "items": tags}
-        conn.instances().setTags(project=project, zone=zone, instance=name, body=tags_body).execute()
+        new_tags = vm['tags'].get('items', [])
+        old_tags_number = len(new_tags)
+        new_tags.extend(tags)
+        new_tags = list(set(new_tags))
+        new_tags_number = len(new_tags)
+        if new_tags_number != old_tags_number:
+            tags_body = {"fingerprint": vm['tags']['fingerprint'], "items": new_tags}
+            conn.instances().setTags(project=project, zone=zone, instance=name, body=tags_body).execute()
         return 0
 
     def update_metadata(self, name, metatype, metavalue, append=False):
@@ -1334,7 +1340,7 @@ class Kgcp(object):
                 update = self.update_metadata(vm, 'loadbalancer', sane_name, append=True)
                 if update == 0:
                     instances.append({"instance": f"{vmpath}/{vm}"})
-                self.add_network_tag(vm, [sane_name])
+                self.set_tags(vm, [sane_name])
             if index == 0:
                 vm_subnets = self.vm_ports(vm)
                 use_xproject = self.xproject in [self.list_subnets()[n]['id'] for n in vm_subnets]
