@@ -1511,6 +1511,14 @@ class Kconfig(Kbaseconfig):
                 if description == plan:
                     if vm.get('kubetype', 'generic') in ['aks', 'eks', 'gke']:
                         continue
+                    cluster = vm.get('kube')
+                    if cluster is not None and cluster != '':
+                        if cluster not in deleted_clusters:
+                            pprint(f"Deleting cluster {cluster}")
+                            self.delete_kube(cluster)
+                            deleted_clusters.append(cluster)
+                        else:
+                            continue
                     if 'loadbalancer' in vm:
                         lbs = vm['loadbalancer'].split(',')
                         for lb in lbs:
@@ -1543,11 +1551,6 @@ class Kconfig(Kbaseconfig):
                     success(f"{name} deleted on {hypervisor}!")
                     deletedvms.append(name)
                     found = True
-                    cluster = vm.get('kube')
-                    if cluster is not None and cluster != '' and cluster not in deleted_clusters:
-                        pprint(f"Deleting cluster {cluster}")
-                        self.delete_kube(cluster)
-                        deleted_clusters.append(cluster)
         if container:
             cont = Kcontainerconfig(self, client=self.containerclient).cont
             for conta in sorted(cont.list_containers(k)):
