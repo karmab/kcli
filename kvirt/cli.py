@@ -1506,10 +1506,10 @@ def create_vm(args):
     image = args.image
     count = args.count
     overrides = handle_parameters(args.param, args.paramfile)
-    if image is None and not overrides:
+    profile = overrides.get('profile') or args.profile
+    if image is None and profile is None and not overrides:
         pprint("Launching vm interactive mode")
         overrides = interactive_vm()
-    profile = overrides.get('profile') or args.profile
     profilefile = args.profilefile
     console = args.console
     serial = args.serial
