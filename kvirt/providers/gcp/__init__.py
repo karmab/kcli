@@ -1349,7 +1349,7 @@ class Kgcp(object):
             else:
                 self.update_metadata(vm, 'loadbalancer', sane_name)
                 instances.append({"instance": f"{vmpath}/{vm}"})
-                self.set_tags(vm, [sane_name])
+            self.set_tags(vm, [sane_name])
             if index == 0:
                 network = info['nets'][0]['net']
                 subnet = info['nets'][0]['type']
