@@ -15,7 +15,7 @@ from googleapiclient.http import HttpRequest
 from google_auth_httplib2 import AuthorizedHttp
 from google.auth import default
 from httplib2 import Http
-from google.cloud import dns, storage
+from google.cloud import dns, storage, compute_v1
 import os
 import re
 from time import sleep
@@ -55,6 +55,7 @@ class Kgcp(object):
         else:
             self.zone = zone
             self.specific_zone = True
+        self.router_client = compute_v1.RoutersClient(credentials=credentials)
 
     def list_zones(self, project):
         return [z['name'] for z in self.conn.zones().list(project=project).execute()['items']
@@ -591,6 +592,7 @@ class Kgcp(object):
         ips = []
         for interface in vm['networkInterfaces']:
             network = os.path.basename(interface['network'])
+            subnet = os.path.basename(interface['subnetwork'])
             device = interface['name']
             private_ip = interface['networkIP'] if 'networkIP' in interface else 'N/A'
             yamlinfo['private_ip'] = private_ip
@@ -600,8 +602,7 @@ class Kgcp(object):
             private_ipv6 = interface.get('ipv6Address')
             if private_ipv6 is not None:
                 ips.append(private_ipv6)
-            network_type = 'dualstack' if private_ipv6 is not None else 'ipv4'
-            nets.append({'device': device, 'mac': private_ip, 'net': network, 'type': network_type})
+            nets.append({'device': device, 'mac': private_ip, 'net': network, 'type': subnet})
         if nets:
             yamlinfo['nets'] = nets
         if len(ips) > 1:
@@ -978,6 +979,13 @@ class Kgcp(object):
             subnet_body['secondaryIpRanges'] = [{"rangeName": secondary_name, "ipCidrRange": secondary_cidr}]
         operation = conn.subnetworks().insert(region=region, project=project, body=subnet_body).execute()
         self._wait_for_operation(operation)
+        subnet = f"projects/{project}/regions/{region}/subnetworks/{name}-subnet1"
+        router_resource = {"name": name, "network": f"projects/{project}/global/networks/{name}", "region": region,
+                           "nats": [{"name": name, "nat_ip_allocate_option": "AUTO_ONLY",
+                                     "source_subnetwork_ip_ranges_to_nat": "LIST_OF_SUBNETWORKS",
+                                     "subnetworks": [{'name': subnet}]}]}
+        operation = self.router_client.insert(project=project, region=region, router_resource=router_resource)
+        operation.result()
         return {'result': 'success'}
 
     def delete_network(self, name=None, cidr=None, force=False):
@@ -988,11 +996,13 @@ class Kgcp(object):
             network = conn.networks().get(project=project, network=name).execute()
         except:
             return {'result': 'failure', 'reason': f"Network {name} not found"}
+        if name in [r.name for r in self.router_client.list(project=project, region=region)]:
+            operation = self.router_client.delete(project=project, region=region, router=name)
+            operation.result()
         if not network['autoCreateSubnetworks'] and 'subnetworks' in network:
             for subnet in network['subnetworks']:
                 subnetwork = os.path.basename(subnet)
-                operation = conn.subnetworks().delete(region=region, project=project, subnetwork=subnetwork).execute()
-                self._wait_for_operation(operation)
+                self.delete_subnet(subnetwork)
         try:
             operation = conn.firewalls().delete(project=project, firewall=f'allow-ssh-{name}').execute()
             self._wait_for_operation(operation)
@@ -1320,28 +1330,29 @@ class Kgcp(object):
         region = self.region
         instances = []
         vmpath = f"https://www.googleapis.com/compute/v1/projects/{project}/zones/{zone}/instances"
-        use_xproject, vm_subnets = False, []
+        use_xproject = False
         if not vms:
             msg = "Creating a load balancer requires to specify vms"
             error(msg)
             return {'result': 'failure', 'reason': msg}
         instancegroup = None
-        need_subnet = False
+        instancegroups = [n['name'] for n in conn.instanceGroups().list(project=project,
+                                                                        zone=zone).execute().get('items', [])]
         for index, vm in enumerate(vms):
             info = self.info(vm)
             if not info:
                 msg = f"Vm {vm} not found"
                 return {'result': 'failure', 'reason': msg}
-            if 'loadbalancer' in info:
-                instancegroup = info['loadbalancer']
+            loadbalancer = info.get('loadbalancer')
+            if loadbalancer is not None and loadbalancer in instancegroups:
+                instancegroup = loadbalancer
             else:
-                update = self.update_metadata(vm, 'loadbalancer', sane_name, append=True)
-                if update == 0:
-                    instances.append({"instance": f"{vmpath}/{vm}"})
+                self.update_metadata(vm, 'loadbalancer', sane_name)
+                instances.append({"instance": f"{vmpath}/{vm}"})
                 self.set_tags(vm, [sane_name])
             if index == 0:
-                vm_subnets = self.vm_ports(vm)
-                subnet = vm_subnets[0]
+                network = info['nets'][0]['net']
+                subnet = info['nets'][0]['type']
                 network_project = self.list_subnets()[subnet]['id']
                 use_xproject = self.xproject == network_project
                 if use_xproject:
@@ -1420,7 +1431,8 @@ class Kgcp(object):
             allowed_ports = ports
             if checkport not in allowed_ports:
                 allowed_ports.append(checkport)
-            firewall_body = {"name": sane_name, "direction": "INGRESS", "targetTags": [sane_name],
+            network = f"global/networks/{network}"
+            firewall_body = {"name": sane_name, "network": network, "direction": "INGRESS", "targetTags": [sane_name],
                              "allowed": [{"IPProtocol": "tcp", "ports": allowed_ports}]}
             pprint(f"Creating firewall rule {sane_name}")
             operation = conn.firewalls().insert(project=project, body=firewall_body).execute()
@@ -1765,6 +1777,13 @@ class Kgcp(object):
             subnet_body['secondaryIpRanges'] = [{"rangeName": secondary_name, "ipCidrRange": secondary_cidr}]
         operation = conn.subnetworks().insert(region=region, project=project, body=subnet_body).execute()
         self._wait_for_operation(operation)
+        if nat and network_name in [r.name for r in self.router_client.list(project=project, region=region)]:
+            subnet = f"projects/{project}/regions/{region}/subnetworks/{name}"
+            router_resource = self.router_client.get(project=project, region=region, router=network_name)
+            router_resource.nats[0].subnetworks.append({'name': subnet})
+            operation = self.router_client.update(project=project, region=region, router=network_name,
+                                                  router_resource=router_resource)
+            operation.result()
         return {'result': 'success'}
 
     def delete_subnet(self, name, force=False):
@@ -1775,6 +1794,15 @@ class Kgcp(object):
         if name not in subnets:
             msg = f'Subnet {name} not found'
             return {'result': 'failure', 'reason': msg}
+        network_name = subnets[name]['network']
+        if network_name in [r.name for r in self.router_client.list(project=project, region=region)]:
+            subnet = f"projects/{project}/regions/{region}/subnetworks/{name}"
+            router_resource = self.router_client.get(project=project, region=region, router=network_name)
+            current_subnetworks = router_resource.nats[0].subnetworks
+            router_resource.nats[0].subnetworks = [s for s in current_subnetworks if not s.name.endswith(subnet)]
+            operation = self.router_client.update(project=project, region=region, router=network_name,
+                                                  router_resource=router_resource)
+            operation.result()
         operation = conn.subnetworks().delete(region=region, project=project, subnetwork=name).execute()
         self._wait_for_operation(operation)
         return {'result': 'success'}
