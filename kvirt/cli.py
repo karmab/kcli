@@ -1658,6 +1658,7 @@ def create_vmdisk(args):
     force = args.force
     novm = args.novm
     size = overrides.get('size') or args.size
+    thin = overrides.get('thin', False)
     pool = overrides.get('pool') or args.pool
     image = args.image
     interface = overrides.get('diskinterface') or args.interface
@@ -1683,9 +1684,10 @@ def create_vmdisk(args):
         interface = info['disks'][0]['format']
         pprint(f"Recreating primary disk {diskname}")
         k.delete_disk(name=name, diskname=diskname, pool=pool)
-        k.add_disk(name=name, size=size, pool=pool, interface=interface, diskname=diskname)
+        k.add_disk(name=name, size=size, pool=pool, interface=interface, diskname=diskname, thin=thin)
     else:
-        k.add_disk(name=name, size=size, pool=pool, image=image, interface=interface, novm=novm, overrides=overrides)
+        k.add_disk(name=name, size=size, pool=pool, image=image, interface=interface, novm=novm, overrides=overrides,
+                   thin=thin)
 
 
 def delete_vmdisk(args):

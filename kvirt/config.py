@@ -2217,6 +2217,7 @@ class Kconfig(Kbaseconfig):
             template = profile.get('template')
             image = profile.get('image', template)
             size = int(profile.get('size', 10))
+            thin = profile.get('thin', False)
             if pool is None:
                 error(f"Missing Key Pool for disk section {disk}. Not creating it...")
                 continue
@@ -2231,9 +2232,9 @@ class Kconfig(Kbaseconfig):
                 for vm in vms:
                     pprint(f"Adding disk {disk} to {vm}")
                     k.add_disk(name=vm, size=size, pool=pool, image=image, shareable=shareable, existing=newdisk,
-                               thin=False)
+                               thin=thin)
             else:
-                newdisk = k.create_disk(disk, size=size, pool=pool, image=image, thin=False)
+                newdisk = k.create_disk(disk, size=size, pool=pool, image=image, thin=thin)
                 if newdisk is None:
                     error(f"Disk {disk} not deployed. It won't be added to any vm")
                 else:
@@ -2241,7 +2242,7 @@ class Kconfig(Kbaseconfig):
                     for vm in vms:
                         pprint(f"Adding disk {disk} to {vm}")
                         k.add_disk(name=vm, size=size, pool=pool, image=image, shareable=shareable,
-                                   existing=newdisk, thin=False)
+                                   existing=newdisk, thin=thin)
         if containerentries and not onlyassets:
             cont = Kcontainerconfig(self, client=self.containerclient).cont
             pprint("Deploying Containers...")
