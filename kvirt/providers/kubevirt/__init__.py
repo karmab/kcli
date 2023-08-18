@@ -173,7 +173,7 @@ class Kubevirt(Kubecommon):
                                                                       'devices': {'disks': []}}, 'volumes': []}}},
               'apiVersion': f'kubevirt.io/{VERSION}', 'metadata': {'name': name, 'namespace': namespace,
                                                                    'labels': labels, 'annotations': {}}}
-        if flavor is not None:
+        if flavor is not None and flavor not in ['', 'None']:
             if flavor not in [f[0] for f in self.list_flavors()]:
                 return {'result': 'failure', 'reason': f"Invalid flavor/instance type {flavor}"}
             else:
