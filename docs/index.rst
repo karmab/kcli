@@ -960,6 +960,13 @@ With this section, you can use the following to create a vm
 
    kcli create vm -p mycentos myvm
 
+You can inherit settings from a base profile like this
+
+::
+
+   profile2:
+    base: profile1
+
 Cloudinit/Ignition support
 --------------------------
 

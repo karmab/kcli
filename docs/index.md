@@ -919,6 +919,13 @@ With this section, you can use the following to create a vm
 kcli create vm -p mycentos myvm
 ```
 
+You can inherit settings from a base profile like this
+
+```
+profile2:
+ base: profile1
+```
+
 ## Cloudinit/Ignition support
 
 Cloudinit is enabled by default and handles static networking configuration, hostname setting, injecting ssh keys and running specific commands and entire scripts, and copying entire files.
