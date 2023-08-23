@@ -1517,6 +1517,7 @@ class Kconfig(Kbaseconfig):
                             pprint(f"Deleting cluster {cluster}")
                             self.delete_kube(cluster)
                             deleted_clusters.append(cluster)
+                            found = True
                         continue
                     if 'loadbalancer' in vm:
                         lbs = vm['loadbalancer'].split(',')
