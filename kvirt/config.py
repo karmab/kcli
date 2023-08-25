@@ -1907,11 +1907,11 @@ class Kconfig(Kbaseconfig):
                 self.plan(plan, ansible=False, url=planurl, path=path, container=False, inputfile=inputfile,
                           overrides=overrides, embedded=embedded, download=download)
         if kubeentries and not onlyassets:
-            pprint("Deploying Kube Entries...")
+            pprint("Deploying Cluster entries...")
             dnsclients = {}
-            kubethreaded = True if len(kubeentries) > 1 else False
+            kubethreaded = len(kubeentries) > 1
             if kubethreaded:
-                warning("Launching each cluster in a thread as there is more than one entry...")
+                warning("Launching each cluster in a thread as there is more than one...")
             for cluster in kubeentries:
                 pprint(f"Deploying Cluster {cluster}...")
                 kubeprofile = entries[cluster]
@@ -1941,7 +1941,9 @@ class Kconfig(Kbaseconfig):
                     threads.append(t)
                     t.start()
                 else:
-                    currentconfig.create_kube(plan, kubetype, overrides=kube_overrides)
+                    result = currentconfig.create_kube(plan, kubetype, overrides=kube_overrides)
+                    if 'result' in result and result['result'] != 'success':
+                        error(result['reason'])
         vmclients = []
         if vmentries:
             if not onlyassets:
