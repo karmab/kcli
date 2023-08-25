@@ -1837,7 +1837,7 @@ class Kconfig(Kbaseconfig):
                 domain = netprofile.get('domain')
                 result = k.create_network(name=net, cidr=cidr, dhcp=dhcp, nat=nat, domain=domain, plan=plan,
                                           overrides=netprofile)
-                common.handle_response(result, net, element='Network ')
+                common.handle_response(result, net, element='Network')
         if poolentries and not onlyassets:
             pprint("Deploying Pools...")
             pools = k.list_pools()
