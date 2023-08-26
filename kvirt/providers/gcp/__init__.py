@@ -56,6 +56,7 @@ class Kgcp(object):
             self.zone = zone
             self.specific_zone = True
         self.router_client = compute_v1.RoutersClient(credentials=credentials)
+        self.iam = build('iam', 'v1', credentials=credentials)
 
     def list_zones(self, project):
         return [z['name'] for z in self.conn.zones().list(project=project).execute()['items']
@@ -1809,3 +1810,10 @@ class Kgcp(object):
         operation = conn.subnetworks().delete(region=region, project=project, subnetwork=name).execute()
         self._wait_for_operation(operation)
         return {'result': 'success'}
+
+    def delete_service_accounts(self, name):
+        iam = self.iam
+        accounts = iam.projects().serviceAccounts().list(name=f'projects/{self.project}').execute().get('accounts', [])
+        for account in accounts:
+            if account['name'].startswith(f'projects/{self.project}/serviceAccounts/{name}'):
+                iam.projects().serviceAccounts().delete(name=account['name']).execute()

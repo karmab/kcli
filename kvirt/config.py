@@ -2918,6 +2918,11 @@ class Kconfig(Kbaseconfig):
                     k.delete_role(iam_role)
                 except:
                     pass
+            if self.type == 'gcp' and kubetype == 'openshift':
+                try:
+                    k.delete_service_accounts(cluster)
+                except:
+                    pass
             if self.type in ['aws', 'gcp']:
                 try:
                     self.k.delete_security_group(cluster)
