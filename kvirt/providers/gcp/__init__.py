@@ -190,8 +190,10 @@ class Kgcp(object):
             if ips and len(ips) > index and ips[index] is not None:
                 ip = ips[index]
             newnet = {}
-            if netpublic and index == 0:
-                newnet['accessConfigs'] = [{'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}]
+            if index == 0:
+                first_net = netname
+                if netpublic:
+                    newnet['accessConfigs'] = [{'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}]
             if netname in subnets:
                 network_project = subnets[netname]['id']
                 if network_project == self.xproject:
@@ -336,8 +338,9 @@ class Kgcp(object):
             firewalls = firewalls['items'] if 'items' in firewalls else []
             if not firewalls or not [r for r in firewalls if r['name'] == kube]:
                 pprint(f"Creating firewall {kube}")
+                network = f"global/networks/{first_net if first_net in networks else subnets[first_net]['network']}"
                 tcp_ports = [22, 443, 2379, 2380]
-                firewall_body = {"name": kube, "direction": "INGRESS", "targetTags": [kube],
+                firewall_body = {"name": kube, "network": network, "direction": "INGRESS", "targetTags": [kube],
                                  "allowed": [{"IPProtocol": "tcp", "ports": tcp_ports}]}
                 if kubetype == 'openshift':
                     extra_tcp_ports = [80, 8080, 443, 5443, 8443, 22624, 4789, 6080, 6081, '30000-32767',
