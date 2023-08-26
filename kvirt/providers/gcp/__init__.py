@@ -592,7 +592,7 @@ class Kgcp(object):
         ips = []
         for interface in vm['networkInterfaces']:
             network = os.path.basename(interface['network'])
-            subnet = os.path.basename(interface['subnetwork'])
+            subnet = os.path.basename(interface['subnetwork']) if 'subnetwork' in interface else 'N/A'
             device = interface['name']
             private_ip = interface['networkIP'] if 'networkIP' in interface else 'N/A'
             yamlinfo['private_ip'] = private_ip
