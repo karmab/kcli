@@ -150,9 +150,10 @@ class Kgcp(object):
             body['minCpuPlatform'] = cpumodel
         if 'accelerators' in overrides and overrides['accelerators']:
             accelerators = []
-            for accelerator in overrides['accelerator']:
+            for accelerator in overrides['accelerators']:
                 if isinstance(accelerator, str):
-                    new_accelerator = {'acceleratorType': accelerator, 'acceleratorCount': 1}
+                    accelerator_type = accelerator
+                    accelerator_count = 1
                 elif isinstance(accelerator, dict):
                     accelerator_type = accelerator.get('name') or accelerator.get('type')\
                         or accelerator.get('acceleratorType')
@@ -160,13 +161,16 @@ class Kgcp(object):
                         warning("Invalid accelerator {accelerator}")
                         continue
                     accelerator_count = accelerator.get('count') or accelerator.get('acceleratorCount') or 1
-                    new_accelerator = {'acceleratorType': accelerator_type, 'acceleratorCount': accelerator_count}
                 else:
                     warning("Invalid accelerator {accelerator}")
                     continue
+                if self.project not in accelerator_type:
+                    accelerator_type = f"projects/{project}/zones/{zone}/acceleratorTypes/{accelerator_type}"
+                new_accelerator = {'accelerator_type': accelerator_type, 'accelerator_count': accelerator_count}
                 accelerators.append(new_accelerator)
             if accelerators:
                 body['guestAccelerators'] = accelerators
+                body['scheduling'] = {'preemptible': False, 'onHostMaintenance': 'TERMINATE'}
         use_xproject = False
         networks = self.list_networks()
         subnets = self.list_subnets()
@@ -629,6 +633,13 @@ class Kgcp(object):
                     yamlinfo[key] = vm['labels'][key]
         if 'tags' in vm and 'items' in vm['tags']:
             yamlinfo['tags'] = ','.join(vm['tags']['items'])
+        if 'guestAccelerators' in vm:
+            accelerators = []
+            for accelerator in vm['guestAccelerators']:
+                accelerator_type = os.path.basename(accelerator['acceleratorType'])
+                accelerator_count = accelerator['acceleratorCount']
+                accelerators.append(f"{accelerator_count} {accelerator_type}")
+            yamlinfo['accelerators'] = accelerators
         if debug:
             yamlinfo['debug'] = vm
         return yamlinfo
