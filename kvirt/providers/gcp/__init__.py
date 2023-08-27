@@ -1815,5 +1815,6 @@ class Kgcp(object):
         iam = self.iam
         accounts = iam.projects().serviceAccounts().list(name=f'projects/{self.project}').execute().get('accounts', [])
         for account in accounts:
-            if account['name'].startswith(f'projects/{self.project}/serviceAccounts/{name}'):
+            if account['name'].startswith(f'projects/{self.project}/serviceAccounts/{name}')\
+               and account['displayName'].startswith(name) and account['email'].startswith(name):
                 iam.projects().serviceAccounts().delete(name=account['name']).execute()

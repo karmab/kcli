@@ -1,0 +1,8 @@
+- op: add
+  path: /spec/clusterNetwork/-
+  value: 
+    cidr: {{ cluster_network_ipv6 }}
+    hostPrefix: 64
+- op: add
+  path: /spec/serviceNetwork/-
+  value: {{ service_network_ipv6 }}

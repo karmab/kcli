@@ -650,6 +650,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'fips': False,
             'apps': [],
             'dualstack': False,
+            'cluster_network_ipv6': "fd01::/48",
+            'service_network_ipv6': "fd02::/112",
             'kvm_forcestack': False,
             'kvm_openstack': True,
             'ipsec': False,
@@ -757,6 +759,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         msg = "Invalid number of ctlplanes"
         return {'result': 'failure', 'reason': msg}
     network = data.get('network')
+    post_dualstack = False
+    data['dualstack']
+    if data['dualstack'] and platform in cloudplatforms:
+        warning("Dual stack will be enabled at the end of the install")
+        data['dualstack'] = False
+        post_dualstack = True
     ipv6 = data['ipv6']
     disconnected_vm = data['disconnected_vm']
     disconnected_update = data['disconnected_update']
@@ -1708,4 +1716,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         k.reserve_dns(f'apps.{cluster}', domain=domain, ip=api_ip, alias=['*'])
         if platform == 'ibm':
             k._add_sno_security_group(cluster)
+    if post_dualstack:
+        with TemporaryDirectory() as tmpdir:
+            patch_ipv6 = config.process_inputfile('xxx', f'{plandir}/patch_ipv6.yml', overrides=data)
+            with open(f"{tmpdir}/patch_ipv6.yml", 'w') as f:
+                f.write(patch_ipv6)
+            call("oc patch network.config.openshift.io cluster --type='json' --patch-file patch_ipv6.yml", shell=True)
     return {'result': 'success'}
