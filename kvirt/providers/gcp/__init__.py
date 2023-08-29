@@ -172,6 +172,7 @@ class Kgcp(object):
                 body['guestAccelerators'] = accelerators
                 body['scheduling'] = {'preemptible': False, 'onHostMaintenance': 'TERMINATE'}
         use_xproject = False
+        vm_networks = []
         networks = self.list_networks()
         subnets = self.list_subnets()
         for index, net in enumerate(nets):
@@ -209,10 +210,16 @@ class Kgcp(object):
                 subnet_region = subnets[netname]['az']
                 if region != self.region:
                     return {'result': 'failure', 'reason': f'{netname} is in region {subnet_region}, not {region}'}
+                current_network = subnets[netname]['network']
             elif netname in networks:
                 newnet['network'] = f'global/networks/{netname}'
+                current_network = netname
             else:
                 return {'result': 'failure', 'reason': f'{netname} not in subnets nor in networks'}
+            if current_network in vm_networks:
+                return {'result': 'failure', 'reason': f'vm has several nics in network {current_network}'}
+            else:
+                vm_networks.append(current_network)
             if ip is not None:
                 newnet['networkIP'] = ip
             aliases = []
