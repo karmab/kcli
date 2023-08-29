@@ -32,12 +32,14 @@ kind: HostedCluster
 metadata:
   name: {{ cluster }}
   namespace: {{ namespace }}
+{% if operator_disconnected_image is defined or image_overrides %}
+  annotations:
 {% if operator_disconnected_image is defined %}
-  annotations:
    hypershift.openshift.io/control-plane-operator-image: {{ operator_disconnected_image }}
-{% elif image_overrides != None %}
-  annotations:
+{% endif %}
+{% if image_overrides != None %}
     hypershift.openshift.io/image-overrides: {{ image_overrides }}
+{% endif %}
 {% endif %}
 spec:
   release:
