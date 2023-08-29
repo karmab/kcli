@@ -70,3 +70,4 @@ autoscale: false
 assisted: false
 calico_version:
 cloud_storage: true
+image_overrides:

@@ -256,6 +256,7 @@ def create(config, plandir, cluster, overrides):
             'hosted_tag': None,
             'hosted_ha': False,
             'hosted_version': None,
+            'image_overrides': None,
             'retries': 3}
     data.update(overrides)
     fix_typos(data)
