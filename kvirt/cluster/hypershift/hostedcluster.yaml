@@ -38,7 +38,7 @@ metadata:
    hypershift.openshift.io/control-plane-operator-image: {{ operator_disconnected_image }}
 {% endif %}
 {% if image_overrides != None %}
-    hypershift.openshift.io/image-overrides: {{ image_overrides }}
+   hypershift.openshift.io/image-overrides: {{ image_overrides }}
 {% endif %}
 {% endif %}
 spec:
