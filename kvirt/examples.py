@@ -165,6 +165,9 @@ $ kcli create vm -p myprofile myvm
 # Boot an empty vm from a given iso
 $ kcli create vm -P iso=xxx.iso myvm
 
+# Create a GCP vm with 2 nvidia-tesla-t4 gpus
+$ kcli create vm -i ubuntu-minimal-2204-lts -P gpus=['{"type": "nvidia-tesla-t4", "count": 2}'] myvm
+
 # Create 3 vm to emulate baremetal
 $ kcli create vm -P start=false -P memory=20480 -P numcpus=16 -P disks=[200] -P uefi=true -P nets=[default] -c 3 myclu
 """

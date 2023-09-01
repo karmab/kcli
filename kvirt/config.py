@@ -1241,7 +1241,7 @@ class Kconfig(Kbaseconfig):
                     k.update_nic(name, index, targetnetname)
         if extra_metadata:
             for key in extra_metadata:
-                if key in ['ena', 'EnaSupport', 'sriov', 'SriovNetSupport']:
+                if key in ['ena', 'EnaSupport', 'sriov', 'SriovNetSupport', 'gpus', 'accelerators']:
                     continue
                 value = extra_metadata[key]
                 pprint(f"Updating {key} of vm {name} to {value}...")
@@ -1278,6 +1278,10 @@ class Kconfig(Kbaseconfig):
                 else:
                     sriov = 'simple'
                     k.update_attribute(name, 'SriovNetSupport', sriov)
+        elif self.type == 'gcp':
+            accelerators = overrides.get('accelerators') or overrides.get('gpus') or []
+            if accelerators:
+                k.update_gpus(name, accelerators)
         return {'result': 'success'}
 
     def list_plans(self):

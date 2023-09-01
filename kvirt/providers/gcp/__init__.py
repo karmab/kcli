@@ -148,9 +148,12 @@ class Kgcp(object):
         body = {'name': name, 'machineType': machine_type, 'networkInterfaces': []}
         if cpumodel != 'host-model':
             body['minCpuPlatform'] = cpumodel
-        if 'accelerators' in overrides and overrides['accelerators']:
+        gpus = overrides.get('accelerators') or overrides.get('gpus') or []
+        if gpus:
+            if len(gpus) > 1:
+                return {'result': 'failure', 'reason': 'only a single accelerator type can be specified'}
             accelerators = []
-            for accelerator in overrides['accelerators']:
+            for accelerator in gpus:
                 if isinstance(accelerator, str):
                     accelerator_type = accelerator
                     accelerator_count = 1
@@ -842,6 +845,46 @@ class Kgcp(object):
     def update_iso(self, name, iso):
         print("not implemented")
         return
+
+    def update_gpus(self, name, gpus):
+        project = self.project
+        zone = self.zone
+        conn = self.conn
+        project = self.project
+        zone = self.zone
+        try:
+            vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
+        except Exception:
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
+        if 'scheduling' not in vm:
+            body = {'scheduling': {'preemptible': False, 'onHostMaintenance': 'TERMINATE'}}
+            conn.instances().setScheduling(project=project, zone=zone, instance=name, body=body).execute()
+        accelerators = []
+        if len(gpus) > 1:
+            return {'result': 'failure', 'reason': 'only a single accelerator type can be specified'}
+        for accelerator in gpus:
+            if isinstance(accelerator, str):
+                accelerator_type = accelerator
+                accelerator_count = 1
+            elif isinstance(accelerator, dict):
+                accelerator_type = accelerator.get('name') or accelerator.get('type')\
+                    or accelerator.get('acceleratorType')
+                if accelerator_type is None:
+                    warning("Invalid accelerator {accelerator}")
+                    continue
+                accelerator_count = accelerator.get('count') or accelerator.get('acceleratorCount') or 1
+            else:
+                warning("Invalid accelerator {accelerator}")
+                continue
+            if self.project not in accelerator_type:
+                accelerator_type = f"projects/{project}/zones/{zone}/acceleratorTypes/{accelerator_type}"
+            new_accelerator = {'accelerator_type': accelerator_type, 'accelerator_count': accelerator_count}
+            accelerators.append(new_accelerator)
+        if accelerators:
+            body = {'guestAccelerators': accelerators}
+            conn.instances().setMachineResources(project=project, zone=zone, instance=name, body=body).execute()
+        return {'result': 'success'}
 
     def create_disk(self, name, size, pool=None, thin=True, image=None):
         print("not implemented")
