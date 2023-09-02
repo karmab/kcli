@@ -873,6 +873,9 @@ class Kgcp(object):
         except Exception:
             error(f"VM {name} not found")
             return {'result': 'failure', 'reason': f"VM {name} not found"}
+        if vm['status'] in ['RUNNING', 'STOPPING']:
+            error(f"Can't update gpus of VM {name} while up")
+            return {'result': 'failure', 'reason': f"VM {name} up"}
         if 'scheduling' not in vm:
             body = {'scheduling': {'preemptible': False, 'onHostMaintenance': 'TERMINATE'}}
             conn.instances().setScheduling(project=project, zone=zone, instance=name, body=body).execute()
