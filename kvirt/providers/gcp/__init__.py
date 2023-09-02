@@ -180,6 +180,7 @@ class Kgcp(object):
         subnets = self.list_subnets()
         for index, net in enumerate(nets):
             netpublic = overrides.get('public', True)
+            reserveip = overrides.get('reserveip', False)
             nettype = 'virtio'
             if isinstance(net, str):
                 netname = net
@@ -202,7 +203,16 @@ class Kgcp(object):
             if index == 0:
                 first_net = netname
                 if netpublic:
-                    newnet['accessConfigs'] = [{'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}]
+                    access_config = {'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}
+                    if reserveip or (reservedns and domain is not None):
+                        address_body = {"name": f'{name}-ip', "addressType": 'EXTERNAL'}
+                        operation = self.conn_beta.addresses().insert(project=project,
+                                                                      region=region, body=address_body).execute()
+                        self._wait_for_operation(operation)
+                        address = self.conn_beta.addresses().get(project=project, region=region,
+                                                                 address=f'{name}-ip').execute()
+                        access_config['natIP'] = address['address']
+                    newnet['accessConfigs'] = [access_config]
             if netname in subnets:
                 network_project = subnets[netname]['id']
                 if network_project == self.xproject:
@@ -705,6 +715,7 @@ class Kgcp(object):
         conn = self.conn
         project = self.project
         zone = self.zone
+        region = self.region
         try:
             vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
         except:
@@ -719,6 +730,11 @@ class Kgcp(object):
         if domain is not None and dnsclient is None:
             self.delete_dns(name, domain)
         conn.instances().delete(zone=zone, project=project, instance=name).execute()
+        try:
+            operation = conn.addresses().delete(project=project, region=region, address=f'{name}-ip').execute()
+            self._wait_for_operation(operation)
+        except:
+            pass
         return {'result': 'success'}
 
     def clone(self, old, new, full=False, start=False):
