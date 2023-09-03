@@ -1281,7 +1281,11 @@ class Kconfig(Kbaseconfig):
         elif self.type == 'gcp':
             accelerators = overrides.get('accelerators') or overrides.get('gpus') or []
             if accelerators:
+                pprint(f"Updating gpus of vm {name}")
                 k.update_gpus(name, accelerators)
+            if overrides.get('reserveip', False):
+                pprint(f"Updating reserveip of vm {name}")
+                k.update_reserveip(name)
         return {'result': 'success'}
 
     def list_plans(self):

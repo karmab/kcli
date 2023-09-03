@@ -863,8 +863,6 @@ class Kgcp(object):
         return
 
     def update_gpus(self, name, gpus):
-        project = self.project
-        zone = self.zone
         conn = self.conn
         project = self.project
         zone = self.zone
@@ -903,6 +901,34 @@ class Kgcp(object):
         if accelerators:
             body = {'guestAccelerators': accelerators}
             conn.instances().setMachineResources(project=project, zone=zone, instance=name, body=body).execute()
+        return {'result': 'success'}
+
+    def update_reserveip(self, name):
+        conn = self.conn
+        project = self.project
+        region = self.region
+        zone = self.zone
+        try:
+            vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
+        except Exception:
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
+        if vm['status'] in ['RUNNING', 'STOPPING']:
+            error(f"Can't update cpus of VM {name} while up")
+            return {'result': 'failure', 'reason': f"VM {name} up"}
+        nic = vm['networkInterfaces'][0]
+        access_config = nic['accessConfigs'][0]
+        access_config_name = access_config['name']
+        nic = nic['name']
+        address_body = {"name": f'{name}-ip', "addressType": 'EXTERNAL'}
+        operation = self.conn_beta.addresses().insert(project=project, region=region, body=address_body).execute()
+        self._wait_for_operation(operation)
+        address = self.conn_beta.addresses().get(project=project, region=region, address=f'{name}-ip').execute()
+        access_config['natIP'] = address['address']
+        conn.instances().deleteAccessConfig(project=project, zone=zone, instance=name, networkInterface=nic,
+                                            accessConfig=access_config_name).execute()
+        conn.instances().addAccessConfig(project=project, zone=zone, instance=name, networkInterface=nic,
+                                         body=access_config).execute()
         return {'result': 'success'}
 
     def create_disk(self, name, size, pool=None, thin=True, image=None):
