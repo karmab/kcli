@@ -1406,8 +1406,8 @@ class Kbaseconfig:
         macosx = os.path.exists('/Users')
         if upstream:
             run = openshift.get_upstream_installer(tag, version=version, debug=self.debug)
-        elif version in ['ci', 'ci-nightly']:
-            nightly = version == 'ci-nightly'
+        elif version in ['ci', 'nightly']:
+            nightly = version == 'nightly'
             run = openshift.get_ci_installer(pull_secret, tag=tag, macosx=macosx, debug=self.debug, nightly=nightly)
         elif version == 'dev-preview':
             run = openshift.get_downstream_installer(devpreview=True, tag=tag, macosx=macosx, debug=self.debug,

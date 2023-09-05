@@ -394,9 +394,10 @@ def get_ci_installer(pull_secret, tag=None, macosx=False, debug=False, nightly=F
     if 'registry.ci.openshift.org' not in open(os.path.expanduser(pull_secret)).read():
         error("entry for registry.ci.openshift.org missing in pull secret")
         return 1
-    if tag is not None and nightly:
-        nightly_url = f"https://amd64.ocp.releases.ci.openshift.org/api/v1/releasestream/{tag}.0-0.nightly/latest"
-        tag = json.loads(urlopen(nightly_url).read())['pullSpec']
+    if tag is not None and str(tag).find('.') == 1:
+        _type = 'nightly' if nightly else 'ci'
+        ci_url = f"https://amd64.ocp.releases.ci.openshift.org/api/v1/releasestream/{tag}.0-0.{_type}/latest"
+        tag = json.loads(urlopen(ci_url).read())['pullSpec']
     if tag is None:
         tags = []
         r = urlopen(f"https://{base}-release.ci.openshift.org/graph?format=dot").readlines()
@@ -922,14 +923,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             rmtree(clusterdir)
     os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
     if version == 'ci':
-        if '/' not in str(tag):
+        if '/' not in str(tag) and str(tag).find('.') != 1:
             if arch in ['aarch64', 'arm64']:
                 tag = f'registry.ci.openshift.org/ocp-arm64/release-arm64:{tag}'
             else:
                 basetag = 'ocp'
                 tag = f'registry.ci.openshift.org/{basetag}/release:{tag}'
-        os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = tag
-        pprint(f"Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to {tag}")
     which_openshift = which('openshift-install')
     openshift_dir = os.path.dirname(which_openshift) if which_openshift is not None else '.'
     if upstream:
