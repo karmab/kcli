@@ -38,7 +38,7 @@ spec:
       - ReadWriteOnce
     resources:
       requests:
-        storage: 40Gi
+        storage: {{ assisted_pvc_size }}Gi
   filesystemStorage:
     accessModes:
       - ReadWriteOnce
