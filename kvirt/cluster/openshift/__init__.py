@@ -935,7 +935,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         run = get_upstream_installer(tag, version=version)
     elif not same_release_images(version=version, tag=tag, pull_secret=pull_secret, path=openshift_dir):
         if version in ['ci', 'nightly'] or '/' in str(tag):
-            nightly = version == 'nigthly'
+            nightly = version == 'nightly'
             run = get_ci_installer(pull_secret, tag=tag, nightly=nightly)
         elif version == 'dev-preview':
             run = get_downstream_installer(devpreview=True, tag=tag, pull_secret=pull_secret)
