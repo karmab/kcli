@@ -28,10 +28,13 @@
  - deploy.sh
 {% if engine == 'containerd' %}
  - path: /etc/crictl.yaml
-   content: |
-     runtime-endpoint: unix:///run/containerd/containerd.sock
-     image-endpoint: unix:///run/containerd/containerd.sock
-     timeout: 10
+   origin: crictl.yaml
+{% endif %}
+{% if sdn == 'flannel' %}
+ - path: /etc/systemd/network/10-flannel.link
+   origin: 10-flannel.link
+ - path: /etc/udev/rules.d/90-flannel.rules
+   origin: 90-flannel.rules
 {% endif %}
  cmds:
  - bash /root/deploy.sh

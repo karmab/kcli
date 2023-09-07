@@ -1,0 +1,2 @@
+SUBSYSTEM=="net", ACTION=="add|change|move", ENV{INTERFACE}=="flannel.1", RUN+="/bin/bash -c \"/usr/sbin/ethtool -K flannel.1 tx-checksum-ip-generic off\""
+SUBSYSTEM=="net", ACTION=="add|change|move", ENV{INTERFACE}=="cni0", RUN+="/bin/bash -c \"/usr/sbin/ethtool -K cni0 tx-checksum-ip-generic off\""
