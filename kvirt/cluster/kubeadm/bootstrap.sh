@@ -63,8 +63,14 @@ cp -i /etc/kubernetes/admin.conf /root/.kube/config
 chown root:root /root/.kube/config
 
 {% if multus %}
-/root/multus.sh
+kubectl apply -f https://raw.githubusercontent.com/k8snetworkplumbingwg/multus-cni/master/deployments/multus-daemonset-thick.yml
 {% endif %}
+
 {% if nfs %}
 /root/nfs.sh
+{% endif %}
+
+{% if registry %}
+kubectl create -f /root/registry.yml
+echo $API_IP > /etc/containers/registries.conf.d/003-{{ cluster }}.conf
 {% endif %}

@@ -11,7 +11,7 @@ IP="{{ api_ip }}"
 IP=$(hostname -I | cut -d" " -f1)
 {% endif%}
 
-{% if nfs_sc %}
+{% if nfs_dynamic %}
 
 mkdir /var/nfsshare
 chcon -t svirt_sandbox_file_t /var/nfsshare
@@ -41,7 +41,7 @@ parameters:
 kubectl create -f $BASEDIR/deploy/deployment.yaml -f $BASEDIR/deploy/class.yaml
 {% else %}
 
-for i in `seq -f "%03g" 1 20` ; do
+for i in `seq -f "%03g" 1 30` ; do
 mkdir /pv${i}
 echo "/pv$i *(rw,no_root_squash)" >> /etc/exports
 chcon -t svirt_sandbox_file_t /pv${i}
@@ -51,4 +51,5 @@ exportfs -r
 
 sed -i "s/IP/$IP/" /root/nfs.yml
 for i in `seq 1 20` ; do j=`printf "%03d" ${i}` ; sed "s/001/$j/" /root/nfs.yml | kubectl create -f - ; done
+for i in `seq 21 30` ; do j=`printf "%03d" ${i}` ; sed "s/001/$j/" /root/nfs.yml | sed "s/ReadWriteOnce/ReadWriteMany/" |  kubectl create -f - ; done
 {% endif %}

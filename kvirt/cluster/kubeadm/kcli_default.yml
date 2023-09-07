@@ -31,7 +31,7 @@ ctlplane_memory:
 worker_memory:
 disk_size: 30
 nfs: true
-nfs_sc: false
+nfs_dynamic: false
 nfs_pv_size: 30
 sdn: flannel
 ingress: true
@@ -66,3 +66,4 @@ autoscale: False
 token:
 async: false
 cloud_dns: false
+registry: false

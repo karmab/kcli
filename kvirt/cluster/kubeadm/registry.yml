@@ -3,20 +3,18 @@ kind: Namespace
 metadata:
   name: registry
 ---
-{% if registry_pvc %}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: registry-claim
+  name: registry-pvc
   namespace: registry
 spec:
   accessModes:
-  - ReadWriteOnce
+  - ReadWriteMany
   volumeMode: Filesystem
   resources:
     requests:
-      storage: 10Gi
-{% endif %}
+      storage: 20Gi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -26,7 +24,7 @@ metadata:
   labels:
     app: registry
 spec:
-  replicas: 1
+  replicas: {{ ctlplanes }}
   selector:
     matchLabels:
       app: registry
@@ -35,61 +33,30 @@ spec:
       labels:
         app: registry
     spec:
+      hostNetwork: true
       volumes:
-      - name: certs-vol
-        hostPath:
-          path: /opt/registry/certs
-          type: Directory
-      - name: data-vol
-{% if registry_pvc %}
+      - name: data
         persistentVolumeClaim:
-          claimName: registry-claim
-{% else %}
-        hostPath:
-          path: /opt/registry/data
-          type: Directory
-{% endif %}
-      - name: auth-vol
-        hostPath:
-          path: /opt/registry/auth
-          type: Directory
+          claimName: registry-pvc
       containers:
-        - image: quay.io/saledort/registry:2
+        - image: quay.io/karmab/registry:amd64
           name: registry
           imagePullPolicy: IfNotPresent
-          env:
-          - name: REGISTRY_HTTP_TLS_CERTIFICATE
-            value: "/certs/domain.crt"
-          - name: REGISTRY_HTTP_TLS_KEY
-            value: "/certs/domain.key"
-          - name: REGISTRY_AUTH
-            value: "htpasswd"
-          - name: REGISTRY_AUTH_HTPASSWD_REALM
-            value: "Registry"
-          - name: REGISTRY_HTTP_SECRET
-            value: "ALongRandomSecretForRegistry"
-          - name: REGISTRY_AUTH_HTPASSWD_PATH
-            value: "/auth/htpasswd"
           ports:
             - containerPort: 5000
           volumeMounts:
-          - name: certs-vol
-            mountPath: /certs
-          - name: data-vol
+          - name: data
             mountPath: /var/lib/registry
-          - name: auth-vol
-            mountPath: /auth
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - registry
+            topologyKey: kubernetes.io/hostname
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: ""
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: registry-service
-  namespace: registry
-spec:
-  selector:
-    app: registry
-  ports:
-    - protocol: TCP
-      port: 5000
-      targetPort: 5000
-  type: {{ 'LoadBalancer' if metallb else 'NodePort' }} 

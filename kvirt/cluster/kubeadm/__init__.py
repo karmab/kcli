@@ -84,7 +84,7 @@ def create(config, plandir, cluster, overrides):
     k = config.k
     data = {'kubetype': 'generic', 'sslip': False, 'domain': 'karmalabs.corp', 'wait_ready': False, 'extra_scripts': [],
             'calico_version': None, 'autoscale': False, 'token': None, 'async': False, 'cloud_lb': True,
-            'cloud_dns': False, 'cloud_storage': True}
+            'cloud_dns': False, 'cloud_storage': True, 'registry': False}
     async_install = data['async']
     data.update(overrides)
     fix_typos(data)

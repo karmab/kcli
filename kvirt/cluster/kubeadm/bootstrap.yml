@@ -33,9 +33,6 @@
  - keepalived.conf
  - keepalived.sh
 {% endif %}
-{% if multus %}
- - multus.sh
-{% endif %}
 {% if nfs %}
  - nfs.yml
  - nfs.sh
@@ -54,5 +51,6 @@
  - path: /etc/udev/rules.d/90-flannel.rules
    origin: 90-flannel.rules
 {% endif %}
+ - registry.yml
  cmds:
  - bash /root/deploy.sh
