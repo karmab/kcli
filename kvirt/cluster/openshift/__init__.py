@@ -394,7 +394,7 @@ def get_ci_installer(pull_secret, tag=None, macosx=False, debug=False, nightly=F
     if 'registry.ci.openshift.org' not in open(os.path.expanduser(pull_secret)).read():
         error("entry for registry.ci.openshift.org missing in pull secret")
         return 1
-    if tag is not None and str(tag).find('.') == 1:
+    if tag is not None and str(tag).count('.') == 1:
         _type = 'nightly' if nightly else 'ci'
         ci_url = f"https://amd64.ocp.releases.ci.openshift.org/api/v1/releasestream/{tag}.0-0.{_type}/latest"
         tag = json.loads(urlopen(ci_url).read())['pullSpec']
@@ -923,7 +923,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             rmtree(clusterdir)
     os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
     if version == 'ci':
-        if '/' not in str(tag) and str(tag).find('.') != 1:
+        if '/' not in str(tag) and str(tag).count('.') != 1:
             if arch in ['aarch64', 'arm64']:
                 tag = f'registry.ci.openshift.org/ocp-arm64/release-arm64:{tag}'
             else:
