@@ -275,9 +275,9 @@ def offline_image(version='stable', tag='4.13', pull_secret='openshift_pull.json
         tag.replace(f'-{arch}', '')
     offline = 'xxx'
     if version in ['ci', 'nightly']:
-        if version == "nightly":
+        if version == "nightly" and str(tag).count('.') == 1:
             nightly_url = f"https://amd64.ocp.releases.ci.openshift.org/api/v1/releasestream/{tag}.0-0.nightly/latest"
-            tag = json.loads(urlopen(nightly_url).read())['pullSpec']
+            tag = json.loads(urlopen(nightly_url).read())['name']
         cmd = f"oc adm release info registry.ci.openshift.org/ocp/release:{tag} -a {pull_secret}"
         for line in os.popen(cmd).readlines():
             if 'Pull From: ' in str(line):
