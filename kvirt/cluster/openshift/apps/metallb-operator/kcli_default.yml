@@ -1,4 +1,7 @@
-metallb_pool: kcli-pool
 metallb_ranges:
 - 192.168.122.240-192.168.122.250
 metallb_autoassign: true
+metallb_bgp: false
+metallb_asn: 64520
+metallb_peer_asn: 64521
+metallb_peer_address:

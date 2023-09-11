@@ -1,29 +1,9 @@
----
-apiVersion: metallb.io/v1beta1
-kind: MetalLB
-metadata:
-  name: metallb
-  namespace: openshift-operators
----
-apiVersion: metallb.io/v1beta1
-kind: IPAddressPool
-metadata:
-  name: kcli-pool
-  namespace: openshift-operators
-spec:
-  protocol: {{ 'bgp' if metallb_bgp else 'layer2' }}
-  autoAssign: {{ metallb_autoassign }}
-  addresses:
-{% for metallb_range in metallb_ranges %}
-  - {{ metallb_range }}
-{% endfor %}
----
 {% if metallb_bgp %}
 apiVersion: metallb.io/v1beta1
 kind: BFDProfile
 metadata:
   name: kcli-bfd-prof
-  namespace: openshift-operators
+  namespace: metallb-system
 spec:
   detectMultiplier: 37
   echoMode: true
@@ -37,7 +17,7 @@ apiVersion: metallb.io/v1beta1
 kind: BGPPeer
 metadata:
   name: kcli-peer
-  namespace: openshift-operators
+  namespace: metallb-system
 spec:
   bfdProfile: kcli-bfd-prof
   myASN: {{ metallb_asn }}
@@ -49,13 +29,13 @@ apiVersion: metallb.io/v1beta1
 kind: BGPAdvertisement
 metadata:
   name: kcli-advertisement
-  namespace: openshift-operators
+  namespace: metallb-system
 {% else %}
 apiVersion: metallb.io/v1beta1
 kind: L2Advertisement
 metadata:
   name: kcli-advertisement
-  namespace: openshift-operators
+  namespace: metallb-system
 spec:
   ipAddressPools:
   - kcli-pool
