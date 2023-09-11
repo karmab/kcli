@@ -221,8 +221,8 @@ def backup_paramfile(installparam, clusterdir, cluster, plan, image, dnsconfig):
 def update_openshift_etc_hosts(cluster, domain, host_ip, ingress_ip=None):
     if not os.path.exists("/i_am_a_container"):
         hosts = open("/etc/hosts").readlines()
-        wronglines = [e for e in hosts if not e.startswith('#') and f"api.{cluster}.{domain}" in e and
-                      host_ip not in e]
+        wronglines = [e for e in hosts if not e.startswith('#') and (f"api.{cluster}.{domain}" in e and
+                      host_ip not in e) or (host_ip in e and 'api.' in e and cluster not in e)]
         if ingress_ip is not None:
             o = f"oauth-openshift.apps.{cluster}.{domain}"
             wrongingresses = [e for e in hosts if not e.startswith('#') and o in e and ingress_ip not in e]
