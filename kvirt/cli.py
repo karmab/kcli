@@ -1839,9 +1839,11 @@ def create_kube(args):
             error(f"Clusterprofile {clusterprofile} not found")
             sys.exit(1)
         else:
+            initial_apps = overrides.get('apps', [])
             clusterprofile = config.clusterprofiles[clusterprofile]
             clusterprofile.update(overrides)
             overrides = clusterprofile
+            overrides.extend(initial_apps)
     result = config.create_kube(cluster, kubetype, overrides=overrides)
     if 'result' in result and result['result'] == 'success':
         sys.exit(0)
