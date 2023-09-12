@@ -1843,7 +1843,8 @@ def create_kube(args):
             clusterprofile = config.clusterprofiles[clusterprofile]
             clusterprofile.update(overrides)
             overrides = clusterprofile
-            overrides.extend(initial_apps)
+            if 'apps' in overrides:
+                overrides['apps'].extend(initial_apps)
     result = config.create_kube(cluster, kubetype, overrides=overrides)
     if 'result' in result and result['result'] == 'success':
         sys.exit(0)
