@@ -334,7 +334,6 @@ class Kvirt(object):
         machine = 'pc'
         if 'machine' in overrides:
             machine = overrides['machine']
-            warning(f"Forcing machine type to {machine}")
         uefi = overrides.get('uefi', False)
         uefi_legacy = overrides.get('uefi_legacy', False)
         secureboot = overrides.get('secureboot', False)
