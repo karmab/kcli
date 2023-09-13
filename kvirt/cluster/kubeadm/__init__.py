@@ -49,9 +49,12 @@ def scale(config, plandir, cluster, overrides):
                          tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
                          insecure=True, cmd=certkeycmd, vmport=first_vmport)
         data['cert_key'] = os.popen(certkeycmd).read().strip().split('=')[1]
+    if 'api_ip' not in data:
+        data['api_ip'] = None
     if 'first_ip' not in data:
         first_info = config.k.info(f'{cluster}-ctlplane-0')
         first_ip = first_info.get('private_ip') or first_info.get('ip')
+        data['first_ip'] = first_ip
     if os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
         with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
             installparam = yaml.safe_load(install)

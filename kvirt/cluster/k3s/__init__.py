@@ -40,7 +40,6 @@ def scale(config, plandir, cluster, overrides):
             'sdn': 'flannel', 'extra_scripts': [], 'cloud_native': False, 'ctlplanes': 1, 'workers': 0}
     data['basedir'] = '/workdir' if container_mode() else '.'
     cluster = data['cluster']
-    domain = data['domain']
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
         with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
@@ -54,10 +53,11 @@ def scale(config, plandir, cluster, overrides):
     workers = data['workers']
     sdn = None if 'sdn' in overrides and overrides['sdn'] is None else data.get('sdn')
     client = config.client
+    if 'api_ip' not in data:
+        data['api_ip'] = None
     if 'first_ip' not in data or data['first_ip'] is None:
         first_info = config.k.info(f'{cluster}-ctlplane-0') or config.k.info(f'{cluster}-master-0')
-        api_ip = data.get('api_ip')
-        data['first_ip'] = first_info.get('private_ip') or first_info.get('ip') or api_ip or f'api.{cluster}.{domain}'
+        data['first_ip'] = first_info.get('private_ip') or first_info.get('ip')
     pprint(f"Scaling on client {client}")
     if os.path.exists(clusterdir):
         with open(f"{clusterdir}/kcli_parameters.yml", 'w') as paramfile:
