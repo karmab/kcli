@@ -11,7 +11,6 @@ metadata:
   name: kcli-pool
   namespace: openshift-operators
 spec:
-  protocol: {{ 'bgp' if metallb_bgp else 'layer2' }}
   autoAssign: {{ metallb_autoassign }}
   addresses:
 {% for metallb_range in metallb_ranges %}
