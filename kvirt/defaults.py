@@ -76,6 +76,7 @@ IMAGES = {'almalinux9': f'{ALMA}/9.1/cloud/x86_64/images/AlmaLinux-9-GenericClou
           'rhel7': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7',
           'rhel8': 'https://access.redhat.com/downloads/content/479/ver=/rhel---8',
           'rhel9': 'https://access.redhat.com/downloads/content/479/ver=/rhel---9',
+          'ubuntu2204': f'{UBUNTU}/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img',
           'ubuntu2210': f'{UBUNTU}/22.10/release/ubuntu-22.10-server-cloudimg-amd64.img',
           'ubuntu2304': f'{UBUNTU}/23.04/release/ubuntu-23.04-server-cloudimg-amd64.img',
           'rockylinux8': f'{ROCKY}/8/images/Rocky-8-GenericCloud.latest.x86_64.qcow2',
