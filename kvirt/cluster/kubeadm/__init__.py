@@ -30,7 +30,6 @@ def scale(config, plandir, cluster, overrides):
         overrides['cluster'] = cluster
         first_vm = f"{cluster}-ctlplane-0"
         first_ip, first_vmport = _ssh_credentials(config.k, first_vm)[1:]
-        data['first_ip'] = first_ip
         domain = overrides.get('domain')
         if domain is None:
             domaincmd = "grep DOMAIN= /root/bootstrap.sh"
@@ -49,9 +48,6 @@ def scale(config, plandir, cluster, overrides):
                          tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
                          insecure=True, cmd=certkeycmd, vmport=first_vmport)
         data['cert_key'] = os.popen(certkeycmd).read().strip().split('=')[1]
-    if 'first_ip' not in data:
-        first_info = config.k.info(f'{cluster}-ctlplane-0')
-        first_ip = first_info.get('private_ip') or first_info.get('ip')
     if os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
         with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
             installparam = yaml.safe_load(install)
@@ -178,9 +174,6 @@ def create(config, plandir, cluster, overrides):
     result = config.plan(plan, inputfile=f'{plandir}/bootstrap.yml', overrides=data)
     if result['result'] != "success":
         return result
-    first_info = config.k.info(f'{cluster}-ctlplane-0')
-    first_ip = first_info.get('private_ip') or first_info.get('ip')
-    data['first_ip'] = first_ip
     with open(f"{clusterdir}/kcli_parameters.yml", 'w') as p:
         installparam = overrides.copy()
         installparam['api_ip'] = api_ip
@@ -195,7 +188,6 @@ def create(config, plandir, cluster, overrides):
         installparam['kubetype'] = 'generic'
         installparam['image'] = image
         installparam['ubuntu'] = 'ubuntu' in image.lower() or len([u for u in UBUNTUS if u in image]) > 1
-        installparam['first_ip'] = first_ip
         yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     if ctlplanes > 1:
         ctlplane_threaded = data.get('threaded', False) or data.get('ctlplanes_threaded', False)

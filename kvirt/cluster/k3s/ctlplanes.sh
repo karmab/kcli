@@ -9,4 +9,9 @@ apt-get -y install curl
 echo bpffs /sys/fs/bpf bpf defaults 0 0 >> /etc/fstab
 mount /sys/fs/bpf
 {% endif %}
-curl -sfL https://get.k3s.io | {{ install_k3s_args|default("") }} K3S_TOKEN={{ token }} sh -s - server --server https://{{ first_ip }}:6443 {{ extra_args|join(" ") }}
+
+{% if api_ip != None %}
+echo {{ api_ip }} api.{{ cluster }}.{{ domain }} >> /etc/hosts
+{% endif %}
+
+curl -sfL https://get.k3s.io | {{ install_k3s_args|default("") }} K3S_TOKEN={{ token }} sh -s - server --server https://api.{{ cluster }}.{{ domain }}:6443 {{ extra_args|join(" ") }}
