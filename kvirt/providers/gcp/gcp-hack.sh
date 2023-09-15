@@ -1,6 +1,6 @@
 #!/bin/bash
 
-KUBESERVICE={{ kube_service }}
+KUBESERVICE=kubelet
 
 while true ; do
   ip route show dev ens4 table local proto 66 | while read route ; do

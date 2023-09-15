@@ -326,7 +326,6 @@ class Kgcp(object):
         need_gcp_hack = kubetype is not None and kubetype == 'openshift' and 'ctlplane' in name
         if need_gcp_hack:
             gcpdir = os.path.dirname(Kgcp.create.__code__.co_filename)
-            overrides['kube_service'] = 'kubelet'
             files.append({"path": "/usr/local/bin/gcp-hack.sh", "origin": f'{gcpdir}/gcp-hack.sh', "mode": 755})
             files.append({"path": "/etc/systemd/system/gcp-hack.service",
                           "origin": f'{gcpdir}/gcp-hack.service', "mode": 644})
