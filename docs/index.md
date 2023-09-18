@@ -179,7 +179,7 @@ kcli create host kvm -H 127.0.0.1 local
 Or indicate a different target host:
 
 ```Shell
-kcli create host -H 192.168.0.6 host1
+kcli create host kvm -H 192.168.0.6 host1
 ```
 
 On most distributions, default network and storage pool for Libvirt are already defined.
