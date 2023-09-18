@@ -951,16 +951,22 @@ class Kaws(object):
         if matching_subnets:
             subnet_az = matching_subnets[0]['AvailabilityZone']
             if subnet_az != az:
-                return {'result': 'failure', 'reason': "Couldn't find valid subnet in specified AZ"}
+                msg = "Couldn't find valid subnet in specified AZ"
+                error(msg)
+                return {'result': 'failure', 'reason': msg}
             subnet_vpcid = matching_subnets[0]['VpcId']
             if subnet_vpcid != vpcid:
-                return {'result': 'failure', 'reason': "Couldn't find valid subnet in VPC"}
+                msg = "Couldn't find valid subnet in VPC"
+                error(msg)
+                return {'result': 'failure', 'reason': msg}
             netname = matching_subnets[0]['SubnetId']
         elif network == 'default':
             default_subnets = [sub for sub in subnets if sub['DefaultForAz'] and sub['VpcId'] == vpcid]
             az_subnets = [sub for sub in default_subnets if sub['AvailabilityZone'] == az]
             if not az_subnets:
-                return {'result': 'failure', 'reason': "Couldn't find default subnet in specified AZ"}
+                msg = "Couldn't find default subnet in specified AZ"
+                error(msg)
+                return {'result': 'failure', 'reason': msg}
             else:
                 default_subnet = az_subnets[0]
             subnetid = default_subnet['SubnetId']
@@ -971,7 +977,9 @@ class Kaws(object):
         else:
             vpcid = self.get_vpc_id(network, vpcs) if not network.startswith('vpc-') else network
             if vpcid is None:
-                return {'result': 'failure', 'reason': f"Couldn't find vpc {network}"}
+                msg = f"Couldn't find vpc {network}"
+                error(msg)
+                return {'result': 'failure', 'reason': msg}
             vpc_subnets = [sub for sub in subnets if sub['VpcId'] == vpcid]
             vpc_subnets = [sub for sub in vpc_subnets if sub['AvailabilityZone'] == az]
             if vpc_subnets:
@@ -983,7 +991,9 @@ class Kaws(object):
                 else:
                     pprint(f"Using subnet {netname}")
             else:
-                return {'result': 'failure', 'reason': f"Couldn't find valid subnet for vpc {netname}"}
+                msg = f"Couldn't find valid subnet for vpc {netname}"
+                error(msg)
+                return {'result': 'failure', 'reason': msg}
         networkinterface = {'SubnetId': netname, 'Description': f'eth{index}'}
         nic = conn.create_network_interface(**networkinterface)
         nic_id = nic['NetworkInterface']['NetworkInterfaceId']
