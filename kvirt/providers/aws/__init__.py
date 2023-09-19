@@ -1247,7 +1247,9 @@ class Kaws(object):
                         subnet_name = tag['Value']
                         break
                 private = subnet_id in private_subnets
-                new_subnet = {'cidr': cidr, 'az': az, 'network': networkname, 'id': subnet_id, 'private': private}
+                default = subnet['DefaultForAz']
+                new_subnet = {'cidr': cidr, 'az': az, 'network': networkname, 'id': subnet_id, 'private': private,
+                              'default': default}
                 if self.debug:
                     print(subnet_name, new_subnet)
                 results[subnet_name] = new_subnet
@@ -1966,7 +1968,11 @@ class Kaws(object):
         clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
         cluster_id = safe_load(open(f'{clusterdir}/metadata.json'))['infraID']
         subnets = self.list_subnets()
-        vpc_id = subnets[subnet]['network']
+        if subnet == 'default':
+            default_subnets = [subnets[sub] for sub in subnets if subnets[sub]['default']]
+            vpc_id = default_subnets[0]['network']
+        else:
+            vpc_id = subnets[subnet]['network']
         pprint(f"Tagging vpc with cluster_id {cluster_id}")
         Tags = [{"Key": f'kubernetes.io/cluster/{cluster_id}', "Value": 'owned'}]
         conn.create_tags(Resources=[vpc_id], Tags=Tags)
