@@ -188,7 +188,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                         netdata += f"  gateway {gateway}\n"
                     else:
                         netdata[nicname][gateway_name] = gateway
-                dns = net.get('dns')
+                dns = net.get('dns', gateway)
                 if not legacy:
                     netdata[nicname]['nameservers'] = {}
                 if dns is not None:
