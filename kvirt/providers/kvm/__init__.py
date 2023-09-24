@@ -3228,12 +3228,12 @@ class Kvirt(object):
             pprint(f"Image {name} already there.Leaving...")
             return {'result': 'success', 'found': True}
         if self.host == 'localhost' or self.host == '127.0.0.1':
-            downloadcmd = f"curl -Lko {downloadpath}/{full_name} -f '{url}'"
+            downloadcmd = f"curl -C - -Lko {downloadpath}/{full_name} -f '{url}'"
         elif self.protocol == 'ssh':
             host = self.host.replace('[', '').replace(']', '')
-            downloadcmd = 'ssh %s -p %s %s@%s "curl -Lko %s/%s -f \'%s\'"' % (self.identitycommand, self.port,
-                                                                              self.user, host, downloadpath,
-                                                                              full_name, url)
+            downloadcmd = 'ssh %s -p %s %s@%s "curl -C - -Lko %s/%s -f \'%s\'"' % (self.identitycommand, self.port,
+                                                                                   self.user, host, downloadpath,
+                                                                                   full_name, url)
         code = call(downloadcmd, shell=True)
         if code == 23:
             pprint("Consider running the following command on the hypervisor:")

@@ -2494,7 +2494,7 @@ class Kconfig(Kbaseconfig):
                 pprint(f"Grabbing image {image} from url {url}")
                 need_iso = 'api/assisted-images/images' in url
                 shortname = os.path.basename(url).split('?')[0]
-                if need_iso:
+                if need_iso and image is None:
                     image = f'boot-{shortname}.iso'
                 try:
                     convert = '.raw.' in url
