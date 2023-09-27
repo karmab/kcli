@@ -86,10 +86,10 @@ def defaultnodes(replicas, cluster, domain, ctlplanes, workers):
     nodes = []
     for num in range(workers):
         if len(nodes) < replicas:
-            nodes.append('%s-worker-%d.%s' % (cluster, num, domain))
+            nodes.append(f'{cluster}-worker-{num}.{domain}')
     for num in range(ctlplanes):
         if len(nodes) < replicas:
-            nodes.append('%s-ctlplane-%d.%s' % (cluster, num, domain))
+            nodes.append(f'{cluster}-ctlplane-{num}.{domain}')
     return nodes
 
 
@@ -166,10 +166,18 @@ def ipv6_wrap(name):
         return name
 
 
+def has_ctlplane(_list):
+    for entry in _list:
+        if 'ctlplane' in entry or 'master' in entry:
+            return True
+    return False
+
+
 jinjafilters = {'basename': basename, 'dirname': dirname, 'ocpnodes': ocpnodes, 'none': none, 'type': _type,
                 'certificate': certificate, 'base64': base64, 'github_version': github_version,
                 'defaultnodes': defaultnodes, 'waitcrd': waitcrd, 'local_ip': local_ip, 'network_ip': network_ip,
-                'kcli_info': kcli_info, 'find_manifests': find_manifests, 'exists': exists, 'ipv6_wrap': ipv6_wrap}
+                'kcli_info': kcli_info, 'find_manifests': find_manifests, 'exists': exists, 'ipv6_wrap': ipv6_wrap,
+                'has_ctlplane': has_ctlplane}
 
 
 class FilterModule(object):

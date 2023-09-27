@@ -2,7 +2,7 @@ odf_disksize: 60
 odf_nodes: []
 odf_devicesets: 1
 odf_storageclass: localstorage-sc
-odf_replicas:
+odf_replicas: 3
 odf_accessmode: ReadWriteOnce
 odf_portable: false
 odf_deploycluster: true
