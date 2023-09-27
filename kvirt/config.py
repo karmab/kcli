@@ -54,9 +54,6 @@ def dependency_error(provider, exception=None):
 
 
 class Kconfig(Kbaseconfig):
-    """
-
-    """
     def __init__(self, client=None, debug=False, quiet=False, region=None, zone=None, namespace=None, offline=False):
         Kbaseconfig.__init__(self, client=client, debug=debug, quiet=quiet, offline=offline)
         if not self.enabled:
@@ -1347,7 +1344,6 @@ class Kconfig(Kbaseconfig):
         return kubes
 
     def create_product(self, name, repo=None, group=None, plan=None, latest=False, overrides={}):
-        """Create product"""
         if repo is not None and group is not None:
             products = [product for product in self.list_products()
                         if product['name'] == name and product['repo'] == repo and product['group'] == group]
@@ -1642,7 +1638,6 @@ class Kconfig(Kbaseconfig):
     def plan(self, plan, ansible=False, url=None, path=None, container=False, inputfile=None, inputstring=None,
              overrides={}, info=False, update=False, embedded=False, download=False, quiet=False, doc=False,
              onlyassets=False, pre=True, post=True, excludevms=[], basemode=False, threaded=False):
-        """Manage plan file"""
         k = self.k
         no_overrides = not overrides
         threads = []

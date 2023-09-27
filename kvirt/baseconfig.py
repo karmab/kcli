@@ -38,9 +38,6 @@ def other_client(profile, clients):
 
 
 class Kbaseconfig:
-    """
-
-    """
     def __init__(self, client=None, containerclient=None, debug=False, quiet=False, offline=False):
         self.debug = debug
         homedir = os.environ.get('HOME')
@@ -449,11 +446,6 @@ class Kbaseconfig:
         self.overrides = {}
 
     def switch_host(self, client):
-        """
-
-        :param client:
-        :return:
-        """
         if client not in self.clients:
             error(f"Client {client} not found in config.Leaving....")
             return {'result': 'failure', 'reason': f"Client {client} not found in config"}
@@ -473,11 +465,6 @@ class Kbaseconfig:
         return {'result': 'success'}
 
     def enable_host(self, client):
-        """
-
-        :param client:
-        :return:
-        """
         if client not in self.clients:
             error(f"Client {client} not found in config.Leaving....")
             return {'result': 'failure', 'reason': f"Client {client} not found in config"}
@@ -493,11 +480,6 @@ class Kbaseconfig:
         return {'result': 'success'}
 
     def disable_host(self, client):
-        """
-
-        :param client:
-        :return:
-        """
         if client not in self.clients:
             error(f"Client {client} not found in config.Leaving....")
             return {'result': 'failure', 'reason': f"Client {client} not found in config"}
@@ -516,9 +498,6 @@ class Kbaseconfig:
         return {'result': 'success'}
 
     def set_defaults(self):
-        """
-
-        """
         default = {}
         for key in sorted(self.default):
             if self.default[key] is None or (isinstance(self.default[key], list) and not self.default[key]):
@@ -539,19 +518,12 @@ class Kbaseconfig:
                 yaml.safe_dump(self.ini, conf_file, default_flow_style=False, encoding='utf-8', allow_unicode=True)
 
     def list_keywords(self):
-        """
-
-        """
         results = {}
         for keyword in self.default:
             results[keyword] = vars(self)[keyword] if keyword in vars(self) else self.default[keyword]
         return results
 
     def list_repos(self):
-        """
-
-        :return:
-        """
         repos = {}
         plansdir = "%s/.kcli/plans" % os.environ.get('HOME')
         if not os.path.exists(plansdir):
@@ -567,12 +539,6 @@ class Kbaseconfig:
         return repos
 
     def list_products(self, group=None, repo=None):
-        """
-
-        :param group:
-        :param repo:
-        :return:
-        """
         plansdir = "%s/.kcli/plans" % os.environ.get('HOME')
         if not os.path.exists(plansdir):
             return []
@@ -611,12 +577,6 @@ class Kbaseconfig:
             return products
 
     def create_repo(self, name, url):
-        """
-
-        :param name:
-        :param url:
-        :return:
-        """
         reponame = name if name is not None else os.path.basename(url)
         repodir = "%s/.kcli/plans/%s" % (os.environ.get('HOME'), reponame)
         if not os.path.exists(repodir):
@@ -639,12 +599,6 @@ class Kbaseconfig:
         sys.exit(1)
 
     def update_repo(self, name, url=None):
-        """
-
-        :param name:
-        :param url:
-        :return:
-        """
         repodir = "%s/.kcli/plans/%s" % (os.environ.get('HOME'), name)
         if not os.path.exists(repodir):
             return {'result': 'failure', 'reason': f'repo {name} not found'}
@@ -657,23 +611,12 @@ class Kbaseconfig:
         return {'result': 'success'}
 
     def delete_repo(self, name):
-        """
-
-        :param name:
-        :return:
-        """
         repodir = "%s/.kcli/plans/%s" % (os.environ.get('HOME'), name)
         if os.path.exists(repodir) and os.path.isdir(repodir):
             rmtree(repodir)
             return {'result': 'success'}
 
     def info_plan(self, inputfile, quiet=False, web=False, onfly=None, doc=False):
-        """
-
-        :param inputfile:
-        :param quiet:
-        :return:
-        """
         inputfile = os.path.expanduser(inputfile) if inputfile is not None else 'kcli_plan.yml'
         basedir = os.path.dirname(inputfile)
         if basedir == "":
@@ -742,7 +685,6 @@ class Kbaseconfig:
         return self.info_plan(inputfile)
 
     def info_product(self, name, repo=None, group=None, web=False):
-        """Info product"""
         if repo is not None and group is not None:
             products = [product for product in self.list_products
                         if product['name'] == name and product['repo'] == repo and product['group'] == group]
@@ -873,10 +815,6 @@ class Kbaseconfig:
         return entries, overrides, basefile, basedir
 
     def list_profiles(self):
-        """
-
-        :return:
-        """
         default_disksize = '10'
         default = self.default
         results = []
@@ -964,10 +902,6 @@ class Kbaseconfig:
         return self.confpools
 
     def list_flavors(self):
-        """
-
-        :return:
-        """
         results = []
         for flavor in self.flavors:
             info = self.flavors[flavor]
@@ -979,10 +913,6 @@ class Kbaseconfig:
         return sorted(results, key=lambda x: x[0])
 
     def list_containerprofiles(self):
-        """
-
-        :return:
-        """
         results = []
         for profile in sorted(self.profiles):
             info = self.profiles[profile]
