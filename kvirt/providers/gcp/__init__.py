@@ -619,7 +619,7 @@ class Kgcp(object):
         ips = []
         for interface in vm['networkInterfaces']:
             network = os.path.basename(interface['network'])
-            subnet = os.path.basename(interface['subnetwork']) if 'subnetwork' in interface else 'N/A'
+            subnet = os.path.basename(interface['subnetwork']) if 'subnetwork' in interface else 'default'
             device = interface['name']
             private_ip = interface['networkIP'] if 'networkIP' in interface else 'N/A'
             yamlinfo['private_ip'] = private_ip
@@ -1444,6 +1444,7 @@ class Kgcp(object):
             msg = "Creating a load balancer requires to specify vms"
             error(msg)
             return {'result': 'failure', 'reason': msg}
+        need_subnet = False
         instancegroup = None
         instancegroups = [n['name'] for n in conn.instanceGroups().list(project=project,
                                                                         zone=zone).execute().get('items', [])]
@@ -1462,13 +1463,13 @@ class Kgcp(object):
             if index == 0:
                 network = info['nets'][0]['net']
                 subnet = info['nets'][0]['type']
-                network_project = self.list_subnets()[subnet]['id']
-                use_xproject = self.xproject == network_project
-                if use_xproject:
-                    subnet = f'projects/{network_project}/regions/{region}/subnetworks/{subnet}'
-                elif subnet != 'default':
-                    subnet = f"projects/{project}/regions/{region}/subnetworks/{subnet}"
-                need_subnet = lb_scheme == 'INTERNAL' and subnet != 'default'
+                if subnet != 'default':
+                    network_project = self.list_subnets()[subnet]['id']
+                    if self.xproject == network_project:
+                        subnet = f'projects/{network_project}/regions/{region}/subnetworks/{subnet}'
+                    else:
+                        subnet = f"projects/{project}/regions/{region}/subnetworks/{subnet}"
+                    need_subnet = lb_scheme == 'INTERNAL'
         health_check_body = {"checkIntervalSec": "10", "timeoutSec": "10", "unhealthyThreshold": 3,
                              "healthyThreshold": 3, "name": sane_name}
         health_check_body["type"] = "TCP"

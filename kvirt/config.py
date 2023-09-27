@@ -2921,7 +2921,7 @@ class Kconfig(Kbaseconfig):
                     k.delete_role(iam_role)
                 except:
                     pass
-            if self.type == 'gcp' and kubetype == 'openshift':
+            if self.type == 'gcp' and kubetype == 'openshift' and os.path.exists(f'{clusterdir}/metadata.json'):
                 cluster_id = yaml.safe_load(open(f'{clusterdir}/metadata.json'))['infraID']
                 k.delete_service_accounts(cluster_id)
             if self.type in ['aws', 'gcp']:
