@@ -339,7 +339,7 @@ def get_downstream_installer(devpreview=False, macosx=False, tag=None, debug=Fal
     elif str(tag).count('.') == 1:
         repo += f'/latest-{tag}'
     else:
-        repo += '/%s' % tag.replace('-x86_64', '')
+        repo += f"/{tag.replace('-x86_64', '')}"
     INSTALLSYSTEM = 'mac' if os.path.exists('/Users') or macosx else 'linux'
     url = f"https://mirror.openshift.com/pub/openshift-v4/clients/{repo}"
     msg = f'Downloading openshift-install from {url}'
@@ -864,7 +864,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         overrides['ingress_ip'] = None
     if sslip and platform in virtplatforms:
         original_domain = domain
-        domain = '%s.sslip.io' % api_ip.replace('.', '-').replace(':', '-')
+        domain = f"{api_ip.replace('.', '-').replace(':', '-')}.sslip.io"
         data['domain'] = domain
         pprint(f"Setting domain to {domain}")
         ignore_hosts = False
@@ -1381,7 +1381,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             pprint(f"Using keepalived virtual_router_id {virtual_router_id}")
             data['auth_pass'] = ''.join(choice(ascii_letters + digits) for i in range(5))
             vips = [api_ip, ingress_ip] if ingress_ip is not None else [api_ip]
-            pprint("Injecting keepalived static pod with %s" % ','.join(vips))
+            pprint(f"Injecting keepalived static pod with {','.join(vips)}")
             keepalived_data = config.process_inputfile(cluster, f"{plandir}/staticpods/keepalived.yml", overrides=data)
             keepalivedconf_data = config.process_inputfile(cluster, f"{plandir}/keepalived.conf", overrides=data)
             sno_files.extend([{"path": "/etc/kubernetes/manifests/keepalived.yml", "data": keepalived_data},
@@ -1546,7 +1546,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             update_openshift_etc_hosts(cluster, domain, host_ip, ingress_ip)
     bucket_url = None
     if platform in cloudplatforms + ['openstack']:
-        bucket = "%s-%s" % (cluster, domain.replace('.', '-'))
+        bucket = f"{cluster}-{domain.replace('.', '-')}"
         if bucket not in config.k.list_buckets():
             config.k.create_bucket(bucket)
         config.k.upload_to_bucket(bucket, f"{clusterdir}/bootstrap.ign", public=True)
@@ -1689,7 +1689,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     pprint(f"Deleting {cluster}-bootstrap")
     k.delete(f"{cluster}-bootstrap")
     if platform in cloudplatforms:
-        bucket = "%s-%s" % (cluster, domain.replace('.', '-'))
+        bucket = f"{cluster}-{domain.replace('.', '-')}"
         config.k.delete_bucket(bucket)
         if platform == 'aws':
             config.k.spread_cluster_tag(cluster, network)

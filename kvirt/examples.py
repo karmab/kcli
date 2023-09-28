@@ -630,7 +630,7 @@ $ kcli create network -c 10.0.0.0/24 -P default=true my-default-vpc
 $ kcli create network -P cidr=192.168.123.0/24 -P secondary_cidr=192.168.124.0/24 -P secondary_name=podnetwork mynetwork
 
 # Create a network on AZURE without an associated subnet
-$ kcli create network -P cidr=11.0.0.0.0/16 -P create_subnet=False mynetwork
+$ kcli create network -P cidr=11.0.0.0/16 -P create_subnet=False mynetwork
 
 # Create a dual stack network on AWS
 $ kcli create network -P cidr=11.0.0/16 -P subnet_cidr=11.0.1.0/24 -P ipv6=true ipv6
