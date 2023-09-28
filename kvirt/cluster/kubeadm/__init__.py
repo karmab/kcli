@@ -27,6 +27,7 @@ def scale(config, plandir, cluster, overrides):
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if not os.path.exists(clusterdir):
         warning(f"Creating {clusterdir} from your input (auth creds will be missing)")
+        data['client'] = config.client
         overrides['cluster'] = cluster
         first_vm = f"{cluster}-ctlplane-0"
         first_ip, first_vmport = _ssh_credentials(config.k, first_vm)[1:]
@@ -191,6 +192,7 @@ def create(config, plandir, cluster, overrides):
             installparam['virtual_router_id'] = data['virtual_router_id']
         if 'auth_pass' in data:
             installparam['auth_pass'] = auth_pass
+        installparam['client'] = config.client
         installparam['plan'] = plan
         installparam['token'] = token
         installparam['cert_key'] = cert_key

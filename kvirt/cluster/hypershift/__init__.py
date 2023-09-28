@@ -154,6 +154,7 @@ def scale(config, plandir, cluster, overrides):
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if not os.path.exists(clusterdir):
         warning(f"Creating {clusterdir} from your input (auth creds will be missing)")
+        data['client'] = config.client
         overrides['cluster'] = cluster
         overrides['clusterdir'] = clusterdir
         plan = overrides.get('plan') or plan
@@ -664,6 +665,7 @@ def create(config, plandir, cluster, overrides):
         sleep(120)
     with open(f"{clusterdir}/kcli_parameters.yml", 'w') as p:
         installparam = overrides.copy()
+        installparam['client'] = config.client
         installparam['plan'] = plan
         installparam['cluster'] = cluster
         installparam['kubetype'] = 'hypershift'

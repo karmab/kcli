@@ -2793,6 +2793,7 @@ class Kconfig(Kbaseconfig):
         return openshift.create(self, plandir, cluster, overrides, dnsconfig=dnsconfig)
 
     def delete_kube(self, cluster, overrides={}):
+        k = self.k
         hypershift = overrides.get('kubetype', 'xxx') == 'hypershift'
         assisted = False
         aks = overrides.get('kubetype', 'xxx') == 'aks'
@@ -2801,8 +2802,7 @@ class Kconfig(Kbaseconfig):
         domain = overrides.get('domain', 'karmalabs.corp')
         kubetype = overrides.get('kubetype', 'generic')
         dnsclient = None
-        k = self.k
-        if self.type == 'web' and self.k.localkube:
+        if self.type == 'web' and k.localkube:
             return k.delete_kube(cluster, kubetype, overrides=overrides)
         cluster = overrides.get('cluster', cluster)
         if cluster is None or cluster == '':
@@ -2826,6 +2826,9 @@ class Kconfig(Kbaseconfig):
                     gke = kubetype == 'gke'
                     eks = kubetype == 'eks'
                     aks = kubetype == 'aks'
+                    if 'client' in clusterdata and clusterdata['client'] != self.client:
+                        self.__init__(client=clusterdata['client'])
+                        k = self.k
         deleteclients = {self.client: k}
         vmclients = []
         vmclients_file = os.path.expanduser(f'~/.kcli/vmclients_{cluster}')

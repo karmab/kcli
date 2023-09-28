@@ -46,6 +46,8 @@ def scale(config, plandir, cluster, overrides):
             installparam = yaml.safe_load(install)
             data.update(installparam)
             plan = installparam.get('plan', plan)
+    else:
+        data['client'] = config.client
     data.update(overrides)
     cloud_native = data.get('cloud_native')
     cloud_lb = data.get('cloud_lb', platform in cloud_platforms and data['ctlplanes'] > 1)
@@ -190,6 +192,7 @@ def create(config, plandir, cluster, overrides):
     data['first_ip'] = first_ip
     with open(f"{clusterdir}/kcli_parameters.yml", 'w') as p:
         installparam = overrides.copy()
+        installparam['client'] = config.client
         installparam['cluster'] = cluster
         installparam['api_ip'] = api_ip
         installparam['first_ip'] = first_ip

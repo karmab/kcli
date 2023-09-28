@@ -208,8 +208,9 @@ def create_ignition_files(config, plandir, cluster, domain, api_ip=None, bucket_
             f.write(bootstrap_ignition)
 
 
-def backup_paramfile(installparam, clusterdir, cluster, plan, image, dnsconfig):
+def backup_paramfile(client, installparam, clusterdir, cluster, plan, image, dnsconfig):
     with open(f"{clusterdir}/kcli_parameters.yml", 'w') as p:
+        installparam['client'] = client
         installparam['cluster'] = cluster
         installparam['plan'] = plan
         installparam['image'] = image
@@ -567,6 +568,7 @@ def scale(config, plandir, cluster, overrides):
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if not os.path.exists(clusterdir):
         warning(f"Creating {clusterdir} from your input (auth creds will be missing)")
+        data['client'] = config.client
         overrides['cluster'] = cluster
         api_ip = overrides.get('api_ip')
         if config.type not in cloudplatforms and api_ip is None:
@@ -1510,7 +1512,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 pprint(f"Plug {cluster}-master.iso to get additional ctlplanes")
             if sno_workers:
                 pprint(f"Plug {cluster}-worker.iso to get additional workers")
-        backup_paramfile(installparam, clusterdir, cluster, plan, image, dnsconfig)
+        backup_paramfile(config.client, installparam, clusterdir, cluster, plan, image, dnsconfig)
         os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
         if sno_wait:
             process_apps(config, clusterdir, apps, overrides)
@@ -1556,7 +1558,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         installparam['ignition_version'] = ignition_version
     create_ignition_files(config, plandir, cluster, domain, api_ip=api_ip, bucket_url=bucket_url,
                           ignition_version=ignition_version)
-    backup_paramfile(installparam, clusterdir, cluster, plan, image, dnsconfig)
+    backup_paramfile(config.client, installparam, clusterdir, cluster, plan, image, dnsconfig)
     if platform in virtplatforms:
         if platform == 'vsphere':
             pprint(f"Creating vm folder /vm/{cluster}")
