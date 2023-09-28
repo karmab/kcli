@@ -636,8 +636,8 @@ def create(config, plandir, cluster, overrides):
                     image = image.replace('.', '-').replace('_', '-').lower()
                 images = [v for v in k.volumes() if image in v]
                 if not images:
-                    result = config.handle_host(pool=config.pool, image=image, download=True,
-                                                url=image_url, size=data.get('kubevirt_disk_size'))
+                    result = config.download_image(pool=config.pool, image=image, url=image_url,
+                                                   size=data.get('kubevirt_disk_size'))
                     if result['result'] != 'success':
                         return result
             pprint(f"Using image {image}")

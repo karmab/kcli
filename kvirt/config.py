@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-Kvirt config class
-"""
 
 import base64
 from datetime import datetime
@@ -503,14 +500,14 @@ class Kconfig(Kbaseconfig):
         pimage = profile.get('image', 'XXX')
         if not onlyassets and self.type not in cloudplatforms and pimage in IMAGES and pimage not in volumes:
             pprint(f"Image {pimage} not found. Downloading")
-            pimage_data = {'pool': self.pool, 'image': pimage, 'download': True}
+            pimage_data = {'pool': self.pool, 'image': pimage}
             pimage_size = profile.get('kubevirt_disk_size') or profile.get('size')
             if pimage_size is not None:
                 pimage_data['size'] = pimage_size
             if profilename.startswith('rhcos-4') and profilename.endswith('qcow2'):
                 pimage_data['image'] = profilename.split('.')[0].replace('rhcos-4', 'rhcos4')
                 pimage_data['url'] = get_rhcos_url_from_file(profilename, _type=self.type)
-            self.handle_host(**pimage_data)
+            self.download_image(**pimage_data)
         if not customprofile:
             profile.update(overrides)
         if 'base' in profile:
@@ -1870,7 +1867,7 @@ class Kconfig(Kbaseconfig):
                     if isinstance(imageurl, str) and imageurl == "None":
                         imageurl = None
                     cmd = imageprofile.get('cmd')
-                    self.handle_host(pool=pool, image=image, download=True, cmd=cmd, url=imageurl, size=imagesize)
+                    self.download_image(pool=pool, image=image, cmd=cmd, url=imageurl, size=imagesize)
         if bucketentries and not onlyassets and self.type in ['aws', 'azure', 'gcp', 'openstack']:
             pprint("Deploying Bucket Entries...")
             for bucketentry in bucketentries:
@@ -2436,130 +2433,92 @@ class Kconfig(Kbaseconfig):
             overrides.get('tempkeydir').cleanup()
         return returndata
 
-    def handle_host(self, pool=None, image=None, switch=None, download=False,
-                    url=None, cmd=None, sync=False, size=None, arch='x86_64',
-                    kvm_openstack=True, rhcos_commit=None, rhcos_installer=False):
-        if download:
-            k = self.k
-            if pool is None:
-                pool = self.pool
-                pprint(f"Using pool {pool}")
-            if image is not None:
-                if url is None:
-                    if arch != 'x86_64':
-                        IMAGES.update({i: IMAGES[i].replace('x86_64', arch).replace('amd64', arch)
-                                       for i in IMAGES})
-                    if image not in IMAGES:
-                        error(f"Image {image} has no associated url")
-                        return {'result': 'failure', 'reason': "Incorrect image"}
-                    url = IMAGES[image]
-                    image_type = self.type
-                    if kvm_openstack and self.type == 'kvm':
-                        image_type = 'openstack'
-                    if self.type == "proxmox":
-                        image_type = 'kvm'
-                    if not kvm_openstack and self.type == 'kvm':
-                        image += "-qemu"
-                    if 'rhcos' in image and not image.endswith('qcow2.gz'):
-                        if rhcos_commit is not None:
-                            url = common.get_commit_rhcos(rhcos_commit, _type=image_type)
-                        elif rhcos_installer:
-                            os.environ['PATH'] += f':{os.getcwd()}'
-                            url = common.get_installer_rhcos(_type=image_type, arch=arch)
-                        else:
-                            if arch != 'x86_64':
-                                url += f'-{arch}'
-                            url = common.get_latest_rhcos(url, _type=image_type, arch=arch)
-                    if 'fcos' in image:
-                        url = common.get_latest_fcos(url, _type=image_type)
-                    if image == 'fedoralatest':
-                        url = common.get_latest_fedora(url)
-                    image = os.path.basename(image)
-                    if image.startswith('rhel'):
-                        if 'web' in sys.argv[0]:
-                            return {'result': 'failure', 'reason': "Missing url"}
-                        pprint(f"Opening url {url} for you to grab complete url for {image} kvm guest image")
-                        webbrowser.open(url, new=2, autoraise=True)
-                        url = input("Copy Url:\n")
-                        if url.strip() == '':
-                            error("Missing proper url.Leaving...")
-                            return {'result': 'failure', 'reason': "Missing image"}
-                if cmd is None and image != '' and image in IMAGESCOMMANDS:
-                    cmd = IMAGESCOMMANDS[image]
-                pprint(f"Grabbing image {image} from url {url}")
-                need_iso = 'api/assisted-images/images' in url
-                shortname = os.path.basename(url).split('?')[0]
-                if need_iso and image is None:
-                    image = f'boot-{shortname}.iso'
-                try:
-                    convert = '.raw.' in url
-                    result = k.add_image(url, pool, cmd=cmd, name=image, size=size, convert=convert)
-                except Exception as e:
-                    error(f"Got {e}")
-                    error(f"Please run kcli delete image --yes {shortname}")
-                    return {'result': 'failure', 'reason': "User interruption"}
-                found = 'found' in result
-                if found:
-                    return {'result': 'success'}
-                common.handle_response(result, image, element='Image', action='Added')
-                if result['result'] != 'success':
-                    return {'result': 'failure', 'reason': result['reason']}
-            return {'result': 'success'}
-        elif switch:
-            if switch not in self.clients:
-                error(f"Client {switch} not found in config.Leaving....")
-                return {'result': 'failure', 'reason': f"Client {switch} not found in config"}
-            enabled = self.ini[switch].get('enabled', True)
-            if not enabled:
-                error(f"Client {switch} is disabled.Leaving....")
-                return {'result': 'failure', 'reason': f"Client {switch} is disabled"}
-            pprint(f"Switching to client {switch}...")
-            inifile = "%s/.kcli/config.yml" % os.environ.get('HOME')
-            if os.path.exists(inifile):
-                newini = ''
-                for line in open(inifile).readlines():
-                    if 'client' in line:
-                        newini += f" client: {switch}\n"
+    def download_image(self, pool=None, image=None, url=None, cmd=None, size=None, arch='x86_64',
+                       kvm_openstack=True, rhcos_commit=None, rhcos_installer=False, name=None):
+        k = self.k
+        if pool is None:
+            pool = self.pool
+            pprint(f"Using pool {pool}")
+        if image is not None:
+            if url is None:
+                if arch != 'x86_64':
+                    IMAGES.update({i: IMAGES[i].replace('x86_64', arch).replace('amd64', arch)
+                                   for i in IMAGES})
+                if image not in IMAGES:
+                    error(f"Image {image} has no associated url")
+                    return {'result': 'failure', 'reason': "Incorrect image"}
+                url = IMAGES[image]
+                image_type = self.type
+                if kvm_openstack and self.type == 'kvm':
+                    image_type = 'openstack'
+                if self.type == "proxmox":
+                    image_type = 'kvm'
+                if not kvm_openstack and self.type == 'kvm':
+                    image += "-qemu"
+                if 'rhcos' in image and not image.endswith('qcow2.gz'):
+                    if rhcos_commit is not None:
+                        url = common.get_commit_rhcos(rhcos_commit, _type=image_type)
+                    elif rhcos_installer:
+                        os.environ['PATH'] += f':{os.getcwd()}'
+                        url = common.get_installer_rhcos(_type=image_type, arch=arch)
                     else:
-                        newini += line
-                open(inifile, 'w').write(newini)
-            return {'result': 'success'}
-        elif sync:
-            k = self.k
-            if not self.extraclients:
-                warning("Nothing to do. Leaving...")
-                return {'result': 'success'}
-            for cli in self.extraclients:
-                dest = self.extraclients[cli]
-                pprint(f"syncing client images from {self.client} to {cli}")
-                warning("Note rhel images are currently not synced")
-            for vol in k.volumes():
-                image = os.path.basename(vol)
-                if image in [os.path.basename(v) for v in dest.volumes()]:
-                    warning(f"Ignoring {image} as it's already there")
-                    continue
-                url = None
-                for n in list(IMAGES.values()):
-                    if n is None:
-                        continue
-                    elif n.split('/')[-1] == image:
-                        url = n
-                if url is None:
-                    return {'result': 'failure', 'reason': "image not in default list"}
+                        if arch != 'x86_64':
+                            url += f'-{arch}'
+                        url = common.get_latest_rhcos(url, _type=image_type, arch=arch)
+                if 'fcos' in image:
+                    url = common.get_latest_fcos(url, _type=image_type)
+                if image == 'fedoralatest':
+                    url = common.get_latest_fedora(url)
+                image = os.path.basename(image)
                 if image.startswith('rhel'):
                     if 'web' in sys.argv[0]:
                         return {'result': 'failure', 'reason': "Missing url"}
-                    pprint(f"Opening url {url} for you to grab complete url for {vol} kvm guest image")
+                    pprint(f"Opening url {url} for you to grab complete url for {image} kvm guest image")
                     webbrowser.open(url, new=2, autoraise=True)
                     url = input("Copy Url:\n")
                     if url.strip() == '':
                         error("Missing proper url.Leaving...")
                         return {'result': 'failure', 'reason': "Missing image"}
-                cmd = None
-                if vol in IMAGESCOMMANDS:
-                    cmd = IMAGESCOMMANDS[image]
-                pprint(f"Grabbing image {image}...")
-                dest.add_image(url, pool, cmd=cmd)
+            if cmd is None and image != '' and image in IMAGESCOMMANDS:
+                cmd = IMAGESCOMMANDS[image]
+            pprint(f"Grabbing image {image} from url {url}")
+            need_iso = 'api/assisted-images/images' in url
+            shortname = os.path.basename(url).split('?')[0]
+            if need_iso and name is None:
+                image = f'boot-{shortname}.iso'
+            try:
+                convert = '.raw.' in url
+                result = k.add_image(url, pool, cmd=cmd, name=image, size=size, convert=convert)
+            except Exception as e:
+                error(f"Got {e}")
+                error(f"Please run kcli delete image --yes {shortname}")
+                return {'result': 'failure', 'reason': "User interruption"}
+            found = 'found' in result
+            if found:
+                return {'result': 'success'}
+            common.handle_response(result, image, element='Image', action='Added')
+            if result['result'] != 'success':
+                return {'result': 'failure', 'reason': result['reason']}
+        return {'result': 'success'}
+
+    def switch_host(self, switch):
+        if switch not in self.clients:
+            error(f"Client {switch} not found in config.Leaving....")
+            return {'result': 'failure', 'reason': f"Client {switch} not found in config"}
+        enabled = self.ini[switch].get('enabled', True)
+        if not enabled:
+            error(f"Client {switch} is disabled.Leaving....")
+            return {'result': 'failure', 'reason': f"Client {switch} is disabled"}
+        pprint(f"Switching to client {switch}...")
+        inifile = "%s/.kcli/config.yml" % os.environ.get('HOME')
+        if os.path.exists(inifile):
+            newini = ''
+            for line in open(inifile).readlines():
+                if 'client' in line:
+                    newini += f" client: {switch}\n"
+                else:
+                    newini += line
+            open(inifile, 'w').write(newini)
         return {'result': 'success'}
 
     def delete_loadbalancer(self, name, domain=None):

@@ -39,19 +39,12 @@ class KcliInventory(object):
 
     # Read the command line args passed to the script.
     def read_cli_args(self):
-        """
-
-        """
         parser = argparse.ArgumentParser()
         parser.add_argument('--list', action='store_true')
         parser.add_argument('--host', action='store')
         self.args = parser.parse_args()
 
     def _list(self):
-        """
-
-        :return:
-        """
         k = self.k
         tunnel = self.tunnel
         metadata = {'_meta': {'hostvars': {}}}
@@ -81,10 +74,6 @@ class KcliInventory(object):
         return metadata
 
     def get(self, name):
-        """
-
-        :return:
-        """
         k = self.k
         tunnel = self.tunnel
         metadata = {}

@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-kubernetes utilites
-"""
 
 import os
 from kvirt.cluster.kubecommon import Kubecommon
@@ -13,10 +10,6 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 class Kubernetes():
-    """
-
-    """
-
     def __init__(self, host='127.0.0.1', user='root', port=443, token=None, ca_file=None, context=None,
                  namespace='default', readwritemany=False, debug=False, insecure=False):
         Kubecommon.__init__(self, token=token, ca_file=ca_file, context=context, host=host, port=port,
@@ -115,11 +108,6 @@ class Kubernetes():
         return {'result': 'success'}
 
     def delete_container(self, name):
-        """
-        :param self:
-        :param name:
-        :return:
-        """
         try:
             pods = []
             rsname = None
@@ -153,38 +141,18 @@ class Kubernetes():
         return {'result': 'success'}
 
     def start_container(self, name):
-        """
-        :param self:
-        :param name:
-
-        :return:
-        """
         return {'result': 'success'}
 
     def stop_container(self, name):
-        """
-        :param self:
-        :param name:
-        :return:
-        """
         self.core.delete_namespaced_pod(name, self.namespace, client.V1DeleteOptions())
         return {'result': 'success'}
 
     def console_container(self, name):
-        """
-        :param self:
-        :param name:
-        :return:
-        """
         command = "kubectl exec -it %s /bin/sh" % name
         os.system(command)
         return {'result': 'success'}
 
     def list_containers(self):
-        """
-        :param self:
-        :return:
-        """
         containers = []
         for pod in self.core.list_namespaced_pod(self.namespace).items:
             name = pod.metadata.name
@@ -215,20 +183,11 @@ class Kubernetes():
         return containers
 
     def exists_container(self, name):
-        """
-        :param self:
-        :param name:
-        :return:
-        """
         for pod in self.core.list_namespaced_pod(self.namespace).items:
             if pod.metadata.name == name:
                 return True
         return False
 
     def list_images(self):
-        """
-        :param self:
-        :return:
-        """
         images = []
         return sorted(images)

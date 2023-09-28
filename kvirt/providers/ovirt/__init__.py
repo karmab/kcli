@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-Ovirt Provider Class
-"""
 
 from kvirt import common
 from kvirt.common import error, pprint, warning, get_ssh_pub_key
@@ -41,9 +38,6 @@ oimages = {'CentOS-6-x86_64-GenericCloud.qcow2': 'CentOS 6 Generic Cloud Image',
 
 
 class KOvirt(object):
-    """
-
-    """
     def __init__(self, host='127.0.0.1', port=22, user='admin@internal',
                  password=None, insecure=True, ca_file=None, org=None, debug=False,
                  cluster='Default', datacenter='Default', ssh_user='root', filtervms=False, filteruser=False,
@@ -546,11 +540,6 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         return
 
     def serialconsole(self, name, web=False):
-        """
-
-        :param name:
-        :return:
-        """
         system_service = self.conn.system_service()
         users_service = system_service.users_service()
         user = users_service.list(search=f'usrname={self.user}-authz')[0]

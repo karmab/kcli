@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-Kubevirt Provider Class
-"""
 
 import base64
 from ipaddress import ip_address
@@ -660,11 +657,6 @@ class Kubevirt(Kubecommon):
         return
 
     def serialconsole(self, name, web=False):
-        """
-
-        :param name:
-        :return:
-        """
         kubectl = common.get_binary('kubectl', KUBECTL_LINUX, KUBECTL_MACOSX, compressed=True)
         crds = self.crds
         core = self.core

@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""provide random names"""
 
 import random
 
@@ -37,11 +36,6 @@ right = ["albattani", "ablonde", "acid", "adark", "adebarre", "almeida", "alcara
 
 
 def get_random_name(sep='-'):
-    """
-
-    :param sep:
-    :return:
-    """
     r = random.SystemRandom()
     while 1:
         name = '%s%s%s' % (r.choice(left), sep, r.choice(right))
@@ -49,10 +43,6 @@ def get_random_name(sep='-'):
 
 
 def random_ip():
-    """
-
-    :return:
-    """
     ip = ".".join(map(str, (random.randint(0, 255) for _ in range(4))))
     return ip
 

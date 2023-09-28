@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-Aws Provider Class
-"""
 
 from base64 import b64encode
 from ipaddress import ip_network

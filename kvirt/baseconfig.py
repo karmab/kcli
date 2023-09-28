@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-Kvirt config class
-"""
 
 from getpass import getuser
 from ipaddress import ip_address, ip_network

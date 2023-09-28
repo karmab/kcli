@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-Openstack Provider Class
-"""
 
 from kvirt import common
 from kvirt.common import pprint, error, warning, get_ssh_pub_key

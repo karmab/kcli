@@ -1,18 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-container utilites
-"""
 
 import os
 from shutil import which
 
 
 class Kcontainer():
-    """
-
-    """
-
     def __init__(self, host='127.0.0.1', user='root', port=22, engine='podman', debug=False, insecure=False):
         self.host = host
         self.user = user
@@ -42,19 +35,6 @@ class Kcontainer():
 
     def create_container(self, name, image, nets=None, cmds=[], ports=[], volumes=[], environment=[], label=None,
                          overrides={}):
-        """
-        :param self:
-        :param name:
-        :param image:
-        :param nets:
-        :param cmds:
-        :param ports:
-        :param volumes:
-        :param environment:
-        :param label:
-        :param overrides:
-        :return:
-        """
         engine = self.engine
         if self.containermode:
             finalvolumes = {}
@@ -175,11 +155,6 @@ class Kcontainer():
         return {'result': 'success'}
 
     def delete_container(self, name):
-        """
-        :param self:
-        :param name:
-        :return:
-        """
         engine = self.engine
         if self.containermode:
             containers = [container for container in self.d.containers.list() if container.name == name]
@@ -194,11 +169,6 @@ class Kcontainer():
         return {'result': 'success'}
 
     def start_container(self, name):
-        """
-        :param self:
-        :param name:
-        :return:
-        """
         engine = self.engine
         if self.containermode:
             containers = [container for container in self.d.containers.list(all=True) if container.name == name]
@@ -213,11 +183,6 @@ class Kcontainer():
         return {'result': 'success'}
 
     def stop_container(self, name):
-        """
-        :param self:
-        :param name:
-        :return:
-        """
         engine = self.engine
         if self.containermode:
             containers = [container for container in self.d.containers.list() if container.name == name]
@@ -232,11 +197,6 @@ class Kcontainer():
         return {'result': 'success'}
 
     def console_container(self, name):
-        """
-        :param self:
-        :param name:
-        :return:
-        """
         engine = self.engine
         if self.containermode:
             attachcommand = "%s attach %s" % (engine, name)
@@ -249,10 +209,6 @@ class Kcontainer():
         return {'result': 'success'}
 
     def list_containers(self):
-        """
-        :param self:
-        :return:
-        """
         engine = self.engine
         containers = []
         if self.containermode:
@@ -320,11 +276,6 @@ class Kcontainer():
         return containers
 
     def exists_container(self, name):
-        """
-        :param self:
-        :param name:
-        :return:
-        """
         engine = self.engine
         if self.containermode:
             containers = [container.id for container in self.d.containers.list(all=True) if container.name == name]
@@ -342,10 +293,6 @@ class Kcontainer():
         return False
 
     def list_images(self):
-        """
-        :param self:
-        :return:
-        """
         engine = self.engine
         if self.containermode:
             images = []

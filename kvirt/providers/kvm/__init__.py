@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-Kvm Provider class
-"""
 
 from getpass import getuser
 # from urllib.request import urlopen, urlretrieve
@@ -82,12 +79,6 @@ states = {VIR_DOMAIN_NOSTATE: 'nostate', VIR_DOMAIN_RUNNING: 'up',
 
 
 def libvirt_callback(ignore, err):
-    """
-
-    :param ignore:
-    :param err:
-    :return:
-    """
     return
 
 
@@ -95,9 +86,6 @@ registerErrorHandler(f=libvirt_callback, ctx=None)
 
 
 class Kvirt(object):
-    """
-
-    """
     def __init__(self, host='127.0.0.1', port=None, user='root', protocol='ssh', url=None, debug=False, insecure=False,
                  session=False, remotednsmasq=False):
         if url is None:
@@ -2256,13 +2244,6 @@ class Kvirt(object):
         return volume
 
     def clone(self, old, new, full=False, start=False):
-        """
-
-        :param old:
-        :param new:
-        :param full:
-        :param start:
-        """
         conn = self.conn
         try:
             oldvm = conn.lookupByName(old)

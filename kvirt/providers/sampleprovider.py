@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-Base Kvirt serving as interface for the virtualisation providers
-"""
 
 from kvirt import common
 

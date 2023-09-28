@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-Gcp Provider Class
-"""
 
 from ipaddress import ip_network, IPv6Network
 from kvirt import common

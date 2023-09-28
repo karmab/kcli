@@ -182,7 +182,6 @@ def stop_baremetal_hosts(args):
 
 
 def start_vm(args):
-    """Start vms"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     names = [common.get_lastvm(config.client)] if not args.names else args.names
     k = config.k
@@ -196,7 +195,6 @@ def start_vm(args):
 
 
 def start_container(args):
-    """Start containers"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     names = [common.get_lastvm(config.client)] if not args.names else args.names
     cont = Kcontainerconfig(config, client=args.containerclient).cont
@@ -206,7 +204,6 @@ def start_container(args):
 
 
 def stop_vm(args):
-    """Stop vms"""
     soft = args.soft
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     names = [common.get_lastvm(config.client)] if not args.names else args.names
@@ -227,7 +224,6 @@ def stop_vm(args):
 
 
 def stop_container(args):
-    """Stop containers"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     names = [common.get_lastvm(config.client)] if not args.names else args.names
     if config.extraclients:
@@ -243,7 +239,6 @@ def stop_container(args):
 
 
 def restart_vm(args):
-    """Restart vms"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     names = [common.get_lastvm(config.client)] if not args.names else args.names
     k = config.k
@@ -257,7 +252,6 @@ def restart_vm(args):
 
 
 def restart_container(args):
-    """Restart containers"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     names = [common.get_lastvm(config.client)] if not args.names else args.names
     cont = Kcontainerconfig(config, client=args.containerclient).cont
@@ -268,7 +262,6 @@ def restart_container(args):
 
 
 def console_vm(args):
-    """Vnc/Serial/Web Vm console"""
     serial = args.serial
     web = args.web
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -287,7 +280,6 @@ def console_vm(args):
 
 
 def console_container(args):
-    """Container console"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     name = common.get_lastvm(config.client) if not args.name else args.name
     cont = Kcontainerconfig(config, client=args.containerclient).cont
@@ -295,7 +287,6 @@ def console_container(args):
 
 
 def delete_vm(args):
-    """Delete vm"""
     yes = args.yes
     yes_top = args.yes_top
     snapshots = args.snapshots
@@ -385,7 +376,6 @@ def delete_vm(args):
 
 
 def delete_container(args):
-    """Delete container"""
     yes = args.yes
     yes_top = args.yes_top
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -408,8 +398,8 @@ def delete_container(args):
 
 
 def download_image(args):
-    """Download Image"""
     pool = args.pool
+    name = args.name
     image = args.image
     cmd = args.cmd
     url = args.url
@@ -418,8 +408,8 @@ def download_image(args):
     rhcos_installer = args.installer
     kvm_openstack = not args.qemu
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    result = config.handle_host(pool=pool, image=image, download=True, cmd=cmd, url=url, size=size, arch=arch,
-                                kvm_openstack=kvm_openstack, rhcos_installer=rhcos_installer)
+    result = config.download_image(pool=pool, image=image, cmd=cmd, url=url, size=size, arch=arch,
+                                   kvm_openstack=kvm_openstack, rhcos_installer=rhcos_installer, name=name)
     if result['result'] == 'success':
         sys.exit(0)
     else:
@@ -427,12 +417,11 @@ def download_image(args):
 
 
 def download_iso(args):
-    """Download ISO"""
     pool = args.pool
     url = args.url
     iso = args.iso if args.iso is not None else os.path.basename(url)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    result = config.handle_host(pool=pool, image=iso, download=True, url=url)
+    result = config.download_image(pool=pool, image=iso, url=url)
     if result['result'] == 'success':
         sys.exit(0)
     else:
@@ -485,7 +474,6 @@ def download_kubeconfig(args):
 
 
 def create_clusterprofile(args):
-    """Create Clusterprofile"""
     clusterprofile = args.clusterprofile
     overrides = handle_parameters(args.param, args.paramfile)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
@@ -496,7 +484,6 @@ def create_clusterprofile(args):
 
 
 def create_confpool(args):
-    """Create Confpool"""
     confpool = args.confpool
     overrides = handle_parameters(args.param, args.paramfile)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
@@ -506,7 +493,6 @@ def create_confpool(args):
 
 
 def create_profile(args):
-    """Create profile"""
     image = args.image
     profile = args.profile
     overrides = common.get_overrides(param=args.param)
@@ -519,7 +505,6 @@ def create_profile(args):
 
 
 def delete_clusterprofile(args):
-    """Delete clusterprofile"""
     yes = args.yes
     yes_top = args.yes_top
     if not yes and not yes_top:
@@ -534,7 +519,6 @@ def delete_clusterprofile(args):
 
 
 def delete_confpool(args):
-    """Delete confpool"""
     yes = args.yes
     yes_top = args.yes_top
     if not yes and not yes_top:
@@ -548,7 +532,6 @@ def delete_confpool(args):
 
 
 def delete_profile(args):
-    """Delete profile"""
     yes = args.yes
     yes_top = args.yes_top
     if not yes and not yes_top:
@@ -562,7 +545,6 @@ def delete_profile(args):
 
 
 def update_clusterprofile(args):
-    """Update clusterprofile"""
     clusterprofile = args.clusterprofile
     overrides = handle_parameters(args.param, args.paramfile)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
@@ -573,7 +555,6 @@ def update_clusterprofile(args):
 
 
 def update_confpool(args):
-    """Update confpool"""
     confpool = args.confpool
     overrides = handle_parameters(args.param, args.paramfile)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
@@ -583,7 +564,6 @@ def update_confpool(args):
 
 
 def update_profile(args):
-    """Update profile"""
     profile = args.profile
     overrides = common.get_overrides(param=args.param)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
@@ -593,7 +573,6 @@ def update_profile(args):
 
 
 def info_vm(args):
-    """Get info on vm"""
     output = args.global_output or args.output
     common_quiet = output is not None
     fields = args.fields.split(',') if args.fields is not None else []
@@ -611,7 +590,6 @@ def info_vm(args):
 
 
 def enable_host(args):
-    """Enable host"""
     host = args.name
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     result = baseconfig.enable_host(host)
@@ -622,7 +600,6 @@ def enable_host(args):
 
 
 def disable_host(args):
-    """Disable host"""
     host = args.name
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     result = baseconfig.disable_host(host)
@@ -633,7 +610,6 @@ def disable_host(args):
 
 
 def delete_host(args):
-    """Delete host"""
     yes = args.yes
     yes_top = args.yes_top
     if not yes and not yes_top:
@@ -641,16 +617,7 @@ def delete_host(args):
     common.delete_host(args.name)
 
 
-def sync_host(args):
-    """Sync host"""
-    hosts = args.names
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    result = config.handle_host(sync=hosts)
-    sys.exit(0 if result['result'] == 'success' else 1)
-
-
 def sync_config(args):
-    """Sync config"""
     network = args.net
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     result = baseconfig.import_in_kube(network=network, secure=args.secure)
@@ -687,7 +654,6 @@ def _parse_vms_list(_list):
 
 
 def list_vm(args):
-    """List vms"""
     output = args.global_output or args.output
     overrides = handle_parameters(args.param, args.paramfile)
     filter_keys = ['name', 'ip', 'status', 'image', 'plan', 'profile']
@@ -763,7 +729,6 @@ def list_vm(args):
 
 
 def list_clusterprofile(args):
-    """List clusterprofiles"""
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     clusterprofiles = baseconfig.list_clusterprofiles()
     output = args.global_output or args.output
@@ -777,7 +742,6 @@ def list_clusterprofile(args):
 
 
 def list_confpool(args):
-    """List confpools"""
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     confpools = baseconfig.list_confpools()
     output = args.global_output or args.output
@@ -791,7 +755,6 @@ def list_confpool(args):
 
 
 def list_container(args):
-    """List containers"""
     filters = args.filters
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     cont = Kcontainerconfig(config, client=args.containerclient).cont
@@ -812,7 +775,6 @@ def list_container(args):
 
 
 def profilelist_container(args):
-    """List container profiles"""
     short = args.short
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     profiles = baseconfig.list_containerprofiles()
@@ -833,7 +795,6 @@ def profilelist_container(args):
 
 
 def list_containerimage(args):
-    """List container images"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.type != 'kvm':
         error("Operation not supported on this kind of client.Leaving...")
@@ -851,7 +812,6 @@ def list_containerimage(args):
 
 
 def list_host(args):
-    """List hosts"""
     clientstable = PrettyTable(["Client", "Type", "Enabled", "Current"])
     clientstable.align["Client"] = "l"
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
@@ -883,7 +843,6 @@ def list_kubeconfig(args):
 
 
 def list_lb(args):
-    """List lbs"""
     short = args.short
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     lbs = config.list_loadbalancers()
@@ -952,7 +911,6 @@ def info_profile(args):
 
 
 def list_profile(args):
-    """List profiles"""
     short = args.short
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     profiles = baseconfig.list_profiles()
@@ -976,7 +934,6 @@ def list_profile(args):
 
 
 def list_dns(args):
-    """List dns"""
     short = args.short
     domain = args.domain
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -999,7 +956,6 @@ def list_dns(args):
 
 
 def list_flavors(args):
-    """List flavors"""
     short = args.short
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
@@ -1021,7 +977,6 @@ def list_flavors(args):
 
 
 def list_available_images(args):
-    """List images"""
     full = args.full
     output = args.global_output or args.output
     if output is not None:
@@ -1046,7 +1001,6 @@ def list_available_images(args):
 
 
 def list_image(args):
-    """List images"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.client != 'all':
         k = config.k
@@ -1062,7 +1016,6 @@ def list_image(args):
 
 
 def list_iso(args):
-    """List isos"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.client != 'all':
         k = config.k
@@ -1078,7 +1031,6 @@ def list_iso(args):
 
 
 def list_networks(args):
-    """List networks"""
     short = args.short
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.client != 'all':
@@ -1109,7 +1061,6 @@ def list_networks(args):
 
 
 def list_plan(args):
-    """List plans"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.extraclients:
         allclients = config.extraclients.copy()
@@ -1307,7 +1258,6 @@ def delete_app_openshift(args):
 
 
 def list_apps_generic(args):
-    """List generic kube apps"""
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     apps = baseconfig.list_apps_generic(quiet=True)
     output = args.global_output or args.output
@@ -1320,7 +1270,6 @@ def list_apps_generic(args):
 
 
 def list_apps_openshift(args):
-    """List openshift kube apps"""
     if which('oc') is None:
         error("You need oc to list apps")
         sys.exit(1)
@@ -1340,7 +1289,6 @@ def list_apps_openshift(args):
 
 
 def list_cluster(args):
-    """List clusters"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.extraclients:
         kubestable = PrettyTable(["Cluster", "Type", "Plan", "Host", "Vms"])
@@ -1375,7 +1323,6 @@ def list_cluster(args):
 
 
 def list_pool(args):
-    """List pools"""
     short = args.short
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
@@ -1398,7 +1345,6 @@ def list_pool(args):
 
 
 def list_product(args):
-    """List products"""
     group = args.group
     repo = args.repo
     search = args.search
@@ -1443,7 +1389,6 @@ def list_product(args):
 
 
 def list_repo(args):
-    """List repos"""
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     repostable = PrettyTable(["Repo", "Url"])
     repostable.align["Repo"] = "l"
@@ -1458,7 +1403,6 @@ def list_repo(args):
 
 
 def list_vmdisk(args):
-    """List vm disks"""
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     pprint("Listing disks...")
@@ -1500,7 +1444,6 @@ def create_openshift_disconnected(args):
 
 
 def create_vm(args):
-    """Create vms"""
     name = args.name
     onlyassets = True if 'assets' in vars(args) else False
     image = args.image
@@ -1629,7 +1572,6 @@ def create_vm(args):
 
 
 def clone_vm(args):
-    """Clone existing vm"""
     name = args.name
     base = args.base
     full = args.full
@@ -1643,7 +1585,6 @@ def clone_vm(args):
 
 
 def update_vm(args):
-    """Update ip, memory or numcpus"""
     overrides = handle_parameters(args.param, args.paramfile)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     names = [common.get_lastvm(config.client)] if not args.names else args.names
@@ -1652,7 +1593,6 @@ def update_vm(args):
 
 
 def create_vmdisk(args):
-    """Add disk to vm"""
     overrides = handle_parameters(args.param, args.paramfile)
     name = args.name
     force = args.force
@@ -1691,7 +1631,6 @@ def create_vmdisk(args):
 
 
 def delete_vmdisk(args):
-    """Delete disk of vm"""
     yes = args.yes
     yes_top = args.yes_top
     if not yes and not yes_top:
@@ -1708,7 +1647,6 @@ def delete_vmdisk(args):
 
 
 def create_dns(args):
-    """Create dns entries"""
     names = args.names
     net = args.net
     domain = args.domain
@@ -1727,7 +1665,6 @@ def create_dns(args):
 
 
 def delete_dns(args):
-    """Delete dns entries"""
     yes = args.yes
     yes_top = args.yes_top
     if not yes and not yes_top:
@@ -1744,7 +1681,6 @@ def delete_dns(args):
 
 
 def export_vm(args):
-    """Export a vm"""
     image = args.image
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     names = [common.get_lastvm(config.client)] if not args.names else args.names
@@ -1763,7 +1699,6 @@ def export_vm(args):
 
 
 def create_lb(args):
-    """Create loadbalancer"""
     checkpath = args.checkpath
     checkport = args.checkport
     ip = args.ip
@@ -1784,7 +1719,6 @@ def create_lb(args):
 
 
 def delete_lb(args):
-    """Delete loadbalancer"""
     yes = args.yes
     yes_top = args.yes_top
     if not yes and not yes_top:
@@ -1795,7 +1729,6 @@ def delete_lb(args):
 
 
 def create_kube(args):
-    """Create kube"""
     overrides = handle_parameters(args.param, args.paramfile)
     if not overrides:
         pprint(f"Launching {args.type} interactive mode")
@@ -1855,61 +1788,51 @@ def create_kube(args):
 
 
 def create_aks_kube(args):
-    """Create Aks kube"""
     args.type = 'aks'
     create_kube(args)
 
 
 def create_eks_kube(args):
-    """Create Eks kube"""
     args.type = 'eks'
     create_kube(args)
 
 
 def create_generic_kube(args):
-    """Create Generic kube"""
     args.type = 'generic'
     create_kube(args)
 
 
 def create_gke_kube(args):
-    """Create Gke kube"""
     args.type = 'gke'
     create_kube(args)
 
 
 def create_microshift_kube(args):
-    """Create Microshift kube"""
     args.type = 'microshift'
     create_kube(args)
 
 
 def create_k3s_kube(args):
-    """Create K3s kube"""
     args.type = 'k3s'
     create_kube(args)
 
 
 def create_hypershift_kube(args):
-    """Create Hypershift kube"""
     args.type = 'hypershift'
     create_kube(args)
 
 
 def create_openshift_kube(args):
-    """Create Openshift kube"""
     args.type = 'openshift'
     create_kube(args)
 
 
 def create_openshift_sno(args):
-    """Create Openshift sno"""
     args.type = 'openshift-sno'
     create_kube(args)
 
 
 def delete_kube(args):
-    """Delete kube"""
     clusters = args.cluster if args.cluster else ['mykube']
     yes = args.yes
     yes_top = args.yes_top
@@ -1922,7 +1845,6 @@ def delete_kube(args):
 
 
 def scale_kube(args):
-    """Scale kube"""
     kubetype = args.type
     overrides = handle_parameters(args.param, args.paramfile)
     cluster = overrides.get('cluster', args.cluster)
@@ -1941,47 +1863,40 @@ def scale_kube(args):
 
 
 def scale_aks_kube(args):
-    """Scale aks kube"""
     args.type = 'aks'
     args.ctlplanes = 0
     scale_kube(args)
 
 
 def scale_eks_kube(args):
-    """Scale eks kube"""
     args.type = 'eks'
     args.ctlplanes = 0
     scale_kube(args)
 
 
 def scale_generic_kube(args):
-    """Scale generic kube"""
     args.type = 'generic'
     scale_kube(args)
 
 
 def scale_gke_kube(args):
-    """Scale gke kube"""
     args.type = 'gke'
     args.ctlplanes = 0
     scale_kube(args)
 
 
 def scale_hypershift_kube(args):
-    """Scale hypershift kube"""
     args.type = 'hypershift'
     args.ctlplanes = 0
     scale_kube(args)
 
 
 def scale_k3s_kube(args):
-    """Scale k3s kube"""
     args.type = 'k3s'
     scale_kube(args)
 
 
 def scale_openshift_kube(args):
-    """Scale openshift kube"""
     args.type = 'openshift'
     scale_kube(args)
 
@@ -2012,7 +1927,6 @@ def update_k3s_kube(args):
 
 
 def update_kube(args):
-    """Update kube"""
     cluster = args.cluster
     _type = args.type
     data = {'kube': cluster, 'kubetype': _type}
@@ -2038,7 +1952,6 @@ def update_kube(args):
 
 
 def create_vmnic(args):
-    """Add nic to vm"""
     name = args.name
     network = args.network
     model = args.model
@@ -2052,7 +1965,6 @@ def create_vmnic(args):
 
 
 def delete_vmnic(args):
-    """Delete nic of vm"""
     yes = args.yes
     yes_top = args.yes_top
     if not yes and not yes_top:
@@ -2066,7 +1978,6 @@ def delete_vmnic(args):
 
 
 def create_pool(args):
-    """Create/Delete pool"""
     pool = args.pool
     pooltype = args.pooltype
     path = args.path
@@ -2081,7 +1992,6 @@ def create_pool(args):
 
 
 def delete_pool(args):
-    """Delete pool"""
     yes = args.yes
     yes_top = args.yes_top
     if not yes and not yes_top:
@@ -2096,7 +2006,6 @@ def delete_pool(args):
 
 
 def create_plan(args):
-    """Create plan"""
     ansible = args.ansible
     url = args.url
     path = args.path
@@ -2144,7 +2053,6 @@ def create_plan(args):
 
 
 def create_playbook(args):
-    """Create plan"""
     store = args.store
     overrides = handle_parameters(args.param, args.paramfile)
     inputfile = overrides.get('inputfile') or args.inputfile or 'kcli_plan.yml'
@@ -2180,7 +2088,6 @@ def update_plan(args):
 
 
 def delete_plan(args):
-    """Delete plan"""
     yes = args.yes
     yes_top = args.yes_top
     if not yes and not yes_top:
@@ -2235,7 +2142,6 @@ def expose_plan(args):
 
 
 def start_plan(args):
-    """Start plan"""
     plans = args.plans
     codes = []
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -2249,7 +2155,6 @@ def start_plan(args):
 
 
 def stop_plan(args):
-    """Stop plan"""
     plans = args.plans
     codes = []
     soft = args.soft
@@ -2264,7 +2169,6 @@ def stop_plan(args):
 
 
 def restart_plan(args):
-    """Restart plan"""
     soft = args.soft
     plans = args.plans
     codes = []
@@ -2440,7 +2344,6 @@ def info_openshift_sno(args):
 
 
 def info_network(args):
-    """Info network """
     name = args.name
     pprint(f"Providing information about network {name}...")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -2452,7 +2355,6 @@ def info_network(args):
 
 
 def info_keyword(args):
-    """Info keyword"""
     keyword = args.keyword
     pprint(f"Providing information about keyword {keyword}...")
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
@@ -2460,7 +2362,6 @@ def info_keyword(args):
 
 
 def info_plantype(args):
-    """Info plantype"""
     plantype = args.plantype
     pprint(f"Providing keywords available with plantype {plantype}...")
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
@@ -2468,7 +2369,6 @@ def info_plantype(args):
 
 
 def info_subnet(args):
-    """Info subnet """
     name = args.name
     pprint(f"Providing information about subnet {name}...")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -2480,7 +2380,6 @@ def info_subnet(args):
 
 
 def download_plan(args):
-    """Download plan"""
     plan = args.plan
     url = args.url
     if plan is None:
@@ -2491,50 +2390,42 @@ def download_plan(args):
 
 
 def download_coreos_installer(args):
-    """Download Coreos Installer"""
     overrides = handle_parameters(args.param, args.paramfile)
     common.get_coreos_installer(version=overrides.get('version', 'latest'), arch=overrides.get('arch'))
 
 
 def download_kubectl(args):
-    """Download Kubectl"""
     overrides = handle_parameters(args.param, args.paramfile)
     common.get_kubectl(version=overrides.get('version', 'latest'))
 
 
 def download_helm(args):
-    """Download Helm"""
     overrides = handle_parameters(args.param, args.paramfile)
     common.get_helm(version=overrides.get('version', 'latest'))
 
 
 def download_hypershift(args):
-    """Download Hypershift"""
     overrides = handle_parameters(args.param, args.paramfile)
     common.get_hypershift(version=overrides.get('version', 'latest'))
 
 
 def download_oc(args):
-    """Download Oc"""
     overrides = handle_parameters(args.param, args.paramfile)
     common.get_oc(version=overrides.get('version', 'stable'), tag=overrides.get('tag', '4.13'))
 
 
 def download_oc_mirror(args):
-    """Download Oc Mirror"""
     overrides = handle_parameters(args.param, args.paramfile)
     common.get_oc_mirror(version=overrides.get('version', 'stable'), tag=overrides.get('tag', '4.13'))
 
 
 def download_openshift_installer(args):
-    """Download Openshift Installer"""
     overrides = handle_parameters(args.param, args.paramfile)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     return baseconfig.download_openshift_installer(overrides)
 
 
 def create_pipeline_github(args):
-    """Create Github Pipeline"""
     plan = args.plan
     kube = args.kube
     script = args.script
@@ -2550,7 +2441,6 @@ def create_pipeline_github(args):
 
 
 def create_pipeline_jenkins(args):
-    """Create Jenkins Pipeline"""
     plan = args.plan
     kube = args.kube
     overrides = handle_parameters(args.param, args.paramfile)
@@ -2566,7 +2456,6 @@ def create_pipeline_jenkins(args):
 
 
 def create_pipeline_tekton(args):
-    """Create Tekton Pipeline"""
     overrides = handle_parameters(args.param, args.paramfile)
     inputfile = overrides.get('inputfile') or args.inputfile or 'kcli_plan.yml'
     if container_mode():
@@ -2580,7 +2469,6 @@ def create_pipeline_tekton(args):
 
 
 def render_file(args):
-    """Render file"""
     plan = None
     ignore = args.ignore
     overrides = {}
@@ -2611,7 +2499,6 @@ def render_file(args):
 
 
 def create_vmdata(args):
-    """Create cloudinit/ignition data for vm"""
     args.assets = True
     args.profilefile = None
     args.wait = False
@@ -2622,7 +2509,6 @@ def create_vmdata(args):
 
 
 def create_plandata(args):
-    """Create cloudinit/ignition data"""
     plan = None
     pre = not args.skippre
     outputdir = args.outputdir
@@ -2679,7 +2565,6 @@ def create_plandata(args):
 
 
 def create_plantemplate(args):
-    """Create plan template"""
     skipfiles = args.skipfiles
     skipscripts = args.skipscripts
     directory = args.directory
@@ -2689,7 +2574,6 @@ def create_plantemplate(args):
 
 
 def create_snapshot_plan(args):
-    """Snapshot plan"""
     plan = args.plan
     snapshot = args.snapshot
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -2697,7 +2581,6 @@ def create_snapshot_plan(args):
 
 
 def delete_snapshot_plan(args):
-    """Snapshot plan"""
     yes = args.yes
     yes_top = args.yes_top
     if not yes and not yes_top:
@@ -2714,7 +2597,6 @@ def delete_snapshot_plan(args):
 
 
 def revert_snapshot_plan(args):
-    """Revert snapshot of plan"""
     plan = args.plan
     snapshot = args.snapshot
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -2722,7 +2604,6 @@ def revert_snapshot_plan(args):
 
 
 def create_repo(args):
-    """Create repo"""
     repo = args.repo
     url = args.url
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
@@ -2737,7 +2618,6 @@ def create_repo(args):
 
 
 def delete_repo(args):
-    """Delete repo"""
     yes = args.yes
     yes_top = args.yes_top
     if not yes and not yes_top:
@@ -2752,7 +2632,6 @@ def delete_repo(args):
 
 
 def update_repo(args):
-    """Update repo"""
     repo = args.repo
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     if repo is None:
@@ -2767,7 +2646,6 @@ def update_repo(args):
 
 
 def info_product(args):
-    """Info product"""
     repo = args.repo
     product = args.product
     group = args.group
@@ -2777,7 +2655,6 @@ def info_product(args):
 
 
 def create_product(args):
-    """Create product"""
     repo = args.repo
     product = args.product
     latest = args.latest
@@ -2796,7 +2673,6 @@ def update_openshift_disconnected(args):
 
 
 def ssh_vm(args):
-    """Ssh into vm"""
     local = args.L
     remote = args.R
     D = args.D
@@ -2861,7 +2737,6 @@ def ssh_vm(args):
 
 
 def scp_vm(args):
-    """Scp into vm"""
     identityfile = args.identityfile
     recursive = args.recursive
     source = args.source[0]
@@ -2922,7 +2797,6 @@ def scp_vm(args):
 
 
 def create_network(args):
-    """Create Network"""
     name = args.name
     overrides = handle_parameters(args.param, args.paramfile)
     isolated = overrides.get('isolated') or args.isolated
@@ -2947,7 +2821,6 @@ def create_network(args):
 
 
 def delete_network(args):
-    """Delete Network"""
     yes = args.yes
     yes_top = args.yes_top
     if not yes and not yes_top:
@@ -2961,7 +2834,6 @@ def delete_network(args):
 
 
 def update_network(args):
-    """Update Network"""
     name = args.name
     overrides = handle_parameters(args.param, args.paramfile)
     nat = False if 'isolated' in args else overrides.get('nat')
@@ -2975,7 +2847,6 @@ def update_network(args):
 
 
 def create_host_group(args):
-    """Generate Host group"""
     data = {}
     data['_type'] = 'group'
     data['name'] = args.name
@@ -2988,7 +2859,6 @@ def create_host_group(args):
 
 
 def create_host_kvm(args):
-    """Generate Kvm Host"""
     data = {}
     data['_type'] = 'kvm'
     data['name'] = args.name
@@ -3005,7 +2875,6 @@ def create_host_kvm(args):
 
 
 def create_host_ovirt(args):
-    """Create Ovirt Host"""
     data = {}
     data['name'] = args.name
     data['_type'] = 'ovirt'
@@ -3026,7 +2895,6 @@ def create_host_ovirt(args):
 
 
 def create_host_gcp(args):
-    """Create Gcp Host"""
     data = {}
     data['name'] = args.name
     data['credentials'] = args.credentials
@@ -3040,7 +2908,6 @@ def create_host_gcp(args):
 
 
 def create_host_aws(args):
-    """Create Aws Host"""
     data = {}
     data['name'] = args.name
     data['_type'] = 'aws'
@@ -3055,7 +2922,6 @@ def create_host_aws(args):
 
 
 def create_host_azure(args):
-    """Create Azure Host"""
     data = {}
     data['name'] = args.name
     data['_type'] = 'azure'
@@ -3073,7 +2939,6 @@ def create_host_azure(args):
 
 
 def create_host_ibm(args):
-    """"Create IBM Cloud host"""
     data = {}
     data['name'] = args.name
     data['_type'] = 'ibm'
@@ -3090,7 +2955,6 @@ def create_host_ibm(args):
 
 
 def create_host_openstack(args):
-    """Create Openstack Host"""
     data = {}
     data['name'] = args.name
     data['_type'] = 'openstack'
@@ -3106,7 +2970,6 @@ def create_host_openstack(args):
 
 
 def create_host_kubevirt(args):
-    """Create Kubevirt Host"""
     data = {}
     data['name'] = args.name
     data['_type'] = 'kubevirt'
@@ -3129,7 +2992,6 @@ def create_host_kubevirt(args):
 
 
 def create_host_vsphere(args):
-    """Create Vsphere Host"""
     data = {}
     data['name'] = args.name
     data['_type'] = 'vsphere'
@@ -3147,7 +3009,6 @@ def create_host_vsphere(args):
 
 
 def create_host_proxmox(args):
-    """Create Proxmox Host"""
     data = {}
     data['name'] = args.name
     data['_type'] = 'proxmox'
@@ -3167,13 +3028,11 @@ def create_host_proxmox(args):
 
 
 def install_provider(args):
-    """Install Provider"""
     provider = args.subcommand_create_provider
     common.install_provider(provider, pip=args.pip)
 
 
 def create_container(args):
-    """Create container"""
     name = args.name
     image = args.image
     profile = args.profile
@@ -3211,7 +3070,6 @@ def create_container(args):
 
 
 def snapshotcreate_vm(args):
-    """Create snapshot"""
     snapshot = args.snapshot
     name = args.name
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -3223,7 +3081,6 @@ def snapshotcreate_vm(args):
 
 
 def snapshotdelete_vm(args):
-    """Delete snapshot"""
     snapshot = args.snapshot
     name = args.name
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -3235,7 +3092,6 @@ def snapshotdelete_vm(args):
 
 
 def snapshotrevert_vm(args):
-    """Revert snapshot of vm"""
     snapshot = args.snapshot
     name = args.name
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -3247,7 +3103,6 @@ def snapshotrevert_vm(args):
 
 
 def snapshotlist_vm(args):
-    """List snapshots of vm"""
     name = args.name
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
@@ -3262,7 +3117,6 @@ def snapshotlist_vm(args):
 
 
 def create_bucket(args):
-    """Create bucket"""
     buckets = args.buckets
     public = args.public
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -3273,7 +3127,6 @@ def create_bucket(args):
 
 
 def delete_bucket(args):
-    """Delete bucket"""
     yes = args.yes
     yes_top = args.yes_top
     if not yes and not yes_top:
@@ -3287,7 +3140,6 @@ def delete_bucket(args):
 
 
 def list_bucket(args):
-    """List buckets"""
     pprint("Listing buckets...")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
@@ -3303,7 +3155,6 @@ def list_bucket(args):
 
 
 def list_bucketfiles(args):
-    """List bucket files"""
     bucket = args.bucket
     pprint(f"Listing bucket files of bucket {bucket}...")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -3355,7 +3206,6 @@ def download_bucketfile(args):
 
 
 def info_baremetal_host(args):
-    """Report info about host"""
     overrides = handle_parameters(args.param, args.paramfile)
     full = overrides.get('full', args.full)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
@@ -3374,7 +3224,6 @@ def info_baremetal_host(args):
 
 
 def info_host(args):
-    """Report info about host"""
     client = args.host or args.client
     config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
@@ -3382,7 +3231,6 @@ def info_host(args):
 
 
 def switch_host(args):
-    """Handle host"""
     host = args.name
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     result = baseconfig.switch_host(host)
@@ -3419,7 +3267,6 @@ def switch_kubeconfig(args):
 
 
 def list_keyword(args):
-    """List keywords"""
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     default = baseconfig.default
     keywordstable = PrettyTable(["Keyword", "Default Value", "Current Value"])
@@ -3436,7 +3283,6 @@ def list_keyword(args):
 
 
 def create_workflow(args):
-    """Create workflow"""
     outputdir = args.outputdir
     if outputdir is not None:
         if container_mode() and not outputdir.startswith('/'):
@@ -3475,7 +3321,6 @@ def create_workflow(args):
 
 
 def create_securitygroup(args):
-    """Create securitygroup"""
     securitygroup = args.securitygroup
     overrides = handle_parameters(args.param, args.paramfile)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
@@ -3485,7 +3330,6 @@ def create_securitygroup(args):
 
 
 def delete_securitygroup(args):
-    """Delete securitygroup"""
     yes = args.yes
     yes_top = args.yes_top
     if not yes and not yes_top:
@@ -3499,7 +3343,6 @@ def delete_securitygroup(args):
 
 
 def list_securitygroups(args):
-    """List securitygroup"""
     pprint("Listing securitygroups...")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
@@ -3526,7 +3369,6 @@ def create_web_service(args):
 
 
 def create_subnet(args):
-    """Create Subnet"""
     name = args.name
     overrides = handle_parameters(args.param, args.paramfile)
     isolated = overrides.get('isolated') or args.isolated
@@ -3554,7 +3396,6 @@ def create_subnet(args):
 
 
 def delete_subnet(args):
-    """Delete Subnet"""
     yes = args.yes
     yes_top = args.yes_top
     if not yes and not yes_top:
@@ -3568,9 +3409,6 @@ def delete_subnet(args):
 
 
 def cli():
-    """
-
-    """
     parent_parser = argparse.ArgumentParser(add_help=False)
     parent_parser.add_argument('-P', '--param', action='append',
                                help='specify parameter or keyword for rendering (multiple can be specified)',
@@ -4598,6 +4436,7 @@ def cli():
     imagedownload_parser.add_argument('-c', '--cmd', help='Extra command to launch after downloading', metavar='CMD')
     imagedownload_parser.add_argument('-i', '--installer', help='Get rhcos url from openshift-installer',
                                       action='store_true')
+    imagedownload_parser.add_argument('-n', '--name', help='Store image with a specific name', metavar='NAME')
     imagedownload_parser.add_argument('-q', '--qemu', help='Use qemu variant for rhcos (kvm specific)',
                                       action='store_true')
     imagedownload_parser.add_argument('-p', '--pool', help='Pool to use. Defaults to default', metavar='POOL')
@@ -5361,12 +5200,6 @@ def cli():
                                    default='default', metavar='NET')
     configsync_parser.add_argument('-s', '--secure', action='store_true', help='Generate dedicated ssh keypair')
     configsync_parser.set_defaults(func=sync_config)
-
-    hostsync_desc = 'Sync Host'
-    hostsync_parser = sync_subparsers.add_parser('host', description=hostsync_desc, help=hostsync_desc,
-                                                 aliases=['client'])
-    hostsync_parser.add_argument('names', help='NAMES', nargs='*')
-    hostsync_parser.set_defaults(func=sync_host)
 
     update_desc = 'Update Vm/Plan/Repo'
     update_parser = subparsers.add_parser('update', description=update_desc, help=update_desc)

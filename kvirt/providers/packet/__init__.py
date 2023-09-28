@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-Packet provider class
-"""
 
 from packet import Manager
 from packet.baseapi import Error

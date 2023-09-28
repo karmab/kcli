@@ -1154,7 +1154,7 @@ class Kweb():
                         url = None
                     if cmd == '':
                         cmd = None
-                    result = config.handle_host(pool=pool, image=image, download=True, url=url, cmd=cmd)
+                    result = config.download_image(pool=pool, image=image, url=url, cmd=cmd)
                     response.status = 200
                 else:
                     result = {'result': 'failure', 'reason': "Invalid Action"}

@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-IBM Cloud provider class
-"""
 
 from ipaddress import ip_network
 from kvirt import common

@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-interact with a local/remote libvirt daemon
-"""
 
 import os
 import time
@@ -78,12 +75,6 @@ def play(k, name, playbook, variables=[], verbose=False, user=None, tunnel=False
 
 
 def vm_inventory(k, name, user=None, yamlinventory=False):
-    """
-
-    :param self:
-    :param name:
-    :return:
-    """
     if user is None:
         info = k.info(name, debug=False)
         user = info.get('user', 'root')

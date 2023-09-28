@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-Proxmox provider
-"""
 
 from kvirt.common import (
     pprint,
@@ -647,18 +644,6 @@ class Kproxmox(Kbase):
         return {"result": "success"}
 
     def info(self, name, output="plain", fields=[], values=False, vm=None, debug=False):
-        """
-        # name
-        # autostart
-        # plan
-        # profile
-        # image
-        # ip
-        # 'memory'
-        # cpus
-        # creationdate
-        user
-        """
         vm_info = self._get_vm_info(name)
         if not vm_info:
             return {"result": "failure", "reason": f"VM {name} does not exists."}
