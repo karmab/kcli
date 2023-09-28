@@ -952,7 +952,7 @@ class Kazure(object):
         results = []
         if domain not in [os.path.basename(d.id) for d in self.dns_client.zones.list()]:
             error(f"Domain {domain} not found")
-            return
+            return results
         for entry in self.dns_client.record_sets.list_all_by_dns_zone(self.resource_group, domain):
             name, _type, ttl = entry.name, os.path.basename(entry.type), entry.ttl
             data = ''
@@ -1163,3 +1163,6 @@ class Kazure(object):
         result = self.network_client.subnets.begin_delete(self.resource_group, network, name)
         result.wait()
         return {'result': 'success'}
+
+    def list_dns_zones(self):
+        return [os.path.basename(z.id) for z in self.dns_client.zones.list()]

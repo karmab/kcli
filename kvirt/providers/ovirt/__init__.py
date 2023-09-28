@@ -1341,3 +1341,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
     def delete_subnet(self, name, force=False):
         print("not implemented")
         return {'result': 'success'}
+
+    def list_dns_zones(self):
+        print("not implemented")
+        return []

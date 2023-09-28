@@ -1979,3 +1979,7 @@ class Kaws(object):
         matching_subnets = [subnets[subnet]['id'] for subnet in subnets if subnets[subnet]['network'] == vpc_id]
         if matching_subnets:
             self.conn.create_tags(Resources=matching_subnets, Tags=Tags)
+
+    def list_dns_zones(self):
+        dns = self.dns
+        return [z['Name'] for z in dns.list_hosted_zones_by_name()['HostedZones']]

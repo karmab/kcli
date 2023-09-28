@@ -4082,3 +4082,16 @@ class Kvirt(object):
     def delete_subnet(self, name, force=False):
         print("not implemented")
         return {'result': 'success'}
+
+    def list_dns_zones(self):
+        results = []
+        conn = self.conn
+        for network in conn.listAllNetworks():
+            netxml = network.XMLDesc(0)
+            netxml = network.XMLDesc()
+            netroot = ET.fromstring(netxml)
+            for host in list(netroot.iter('host')):
+                for hostname in list(host.iter('hostname')):
+                    if len(hostname.text.split('.')) > 1 and hostname.text.partition('.')[2] not in results:
+                        results.append(hostname.text.partition('.')[2])
+        return results

@@ -1453,3 +1453,6 @@ class Kibm(object):
     def delete_subnet(self, name, force=False):
         print("not implemented")
         return {'result': 'success'}
+
+    def list_dns_zones(self):
+        return [d['name'] for d in self.dns.list_zones().get_result()['result']]

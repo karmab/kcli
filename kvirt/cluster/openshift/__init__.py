@@ -721,6 +721,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     retries = data.get('retries')
     data['cluster'] = clustervalue
     domain = data.get('domain')
+    # if platform in cloudplatforms:
+    #    CHECK IF DOMAIN IS VALID
+    #    IF NOT RESERVE VIPS
     original_domain = None
     async_install = data.get('async')
     upstream = data.get('upstream')
@@ -763,7 +766,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         return {'result': 'failure', 'reason': msg}
     network = data.get('network')
     post_dualstack = False
-    data['dualstack']
     if data['dualstack'] and platform in cloudplatforms:
         warning("Dual stack will be enabled at the end of the install")
         data['dualstack'] = False

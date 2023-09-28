@@ -933,9 +933,12 @@ def list_profile(args):
     print(profilestable)
 
 
-def list_dns(args):
+def list_dns_entries(args):
     short = args.short
     domain = args.domain
+    if domain is None:
+        pprint("Listing zones as no domain was specified")
+        return list_dns_zones(args)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     entries = k.list_dns(domain)
@@ -953,6 +956,20 @@ def list_dns(args):
             dnstable.add_row(entry)
     dnstable.align["Flavor"] = "l"
     print(dnstable)
+
+
+def list_dns_zones(args):
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    k = config.k
+    zones = k.list_dns_zones()
+    output = args.global_output or args.output
+    if output is not None:
+        _list_output(zones, output)
+    zonetable = PrettyTable(["Zone"])
+    for zone in sorted(zones):
+        zonetable.add_row([zone])
+    zonetable.align["Flavor"] = "l"
+    print(zonetable)
 
 
 def list_flavors(args):
@@ -4838,12 +4855,19 @@ def cli():
                                                    help=vmdisklist_desc, aliases=['disks'])
     vmdisklist_parser.set_defaults(func=list_vmdisk)
 
-    dnslist_desc = 'List Dns Entries'
-    dnslist_parser = list_subparsers.add_parser('dns', parents=[output_parser], description=dnslist_desc,
-                                                help=dnslist_desc)
-    dnslist_parser.add_argument('--short', action='store_true')
-    dnslist_parser.add_argument('domain', metavar='DOMAIN', help='Domain where to list entry (network for libvirt)')
-    dnslist_parser.set_defaults(func=list_dns)
+    dnsentrylist_desc = 'List Dns Entries'
+    dnsentrylist_parser = list_subparsers.add_parser('dns-entry', parents=[output_parser],
+                                                     description=dnsentrylist_desc, help=dnsentrylist_desc,
+                                                     aliases=['dns-entries', 'dns-records', 'dns'])
+    dnsentrylist_parser.add_argument('--short', action='store_true')
+    dnsentrylist_parser.add_argument('domain', metavar='DOMAIN',
+                                     help='Domain where to check entries (network for libvirt)', nargs='?')
+    dnsentrylist_parser.set_defaults(func=list_dns_entries)
+
+    dnszonelist_desc = 'List Dns zones'
+    dnszonelist_parser = list_subparsers.add_parser('dns-zone', parents=[output_parser], description=dnszonelist_desc,
+                                                    help=dnszonelist_desc, aliases=['dns-zones'])
+    dnszonelist_parser.set_defaults(func=list_dns_zones)
 
     flavorlist_desc = 'List Flavors'
     flavorlist_parser = list_subparsers.add_parser('flavor', description=flavorlist_desc, help=flavorlist_desc,

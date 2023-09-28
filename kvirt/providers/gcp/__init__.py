@@ -1921,3 +1921,8 @@ class Kgcp(object):
             if account['name'].startswith(f'projects/{self.project}/serviceAccounts/{name}')\
                and account['displayName'].startswith(name) and account['email'].startswith(name):
                 iam.projects().serviceAccounts().delete(name=account['name']).execute()
+
+    def list_dns_zones(self):
+        project = self.project
+        client = dns.Client(project)
+        return [z.dns_name for z in client.list_zones()]

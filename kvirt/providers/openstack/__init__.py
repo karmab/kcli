@@ -1272,3 +1272,7 @@ class Kopenstack(object):
     def delete_subnet(self, name, force=False):
         print("not implemented")
         return {'result': 'success'}
+
+    def list_dns_zones(self):
+        print("not implemented")
+        return []
