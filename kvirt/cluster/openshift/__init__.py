@@ -721,9 +721,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     retries = data.get('retries')
     data['cluster'] = clustervalue
     domain = data.get('domain')
-    # if platform in cloudplatforms:
-    #    CHECK IF DOMAIN IS VALID
-    #    IF NOT RESERVE VIPS
+    dns_k = dnsconfig.k if dnsconfig is not None else k
+    if platform in cloudplatforms and domain not in dns_k.list_dns_zones():
+        return {'result': 'failure', 'reason': f'domain {domain} needs to exist'}
     original_domain = None
     async_install = data.get('async')
     upstream = data.get('upstream')
@@ -761,7 +761,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             warning("Forcing network_type to OVNKubernetes")
             data['network_type'] = 'OVNKubernetes'
     ctlplanes = data.get('ctlplanes', 1)
-    if ctlplanes == 0:
+    if ctlplanes <= 0:
         msg = "Invalid number of ctlplanes"
         return {'result': 'failure', 'reason': msg}
     network = data.get('network')

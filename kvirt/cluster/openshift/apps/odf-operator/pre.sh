@@ -9,7 +9,7 @@ exit 1
 {% endif %}
 
 {% if odf_nodes|has_ctlplane %}
-echo "marking ctlplane as schedulable since one of the node is to be used as ODF one"
+echo "Marking all ctlplane nodes as schedulable since one of them will be used for storage"
 oc patch scheduler cluster -p '{"spec":{"mastersSchedulable": true}}' --type merge
 {% endif %}
 
