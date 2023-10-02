@@ -845,15 +845,18 @@ class Kazure(object):
             download_file.write(container_client.download_blob(blob_name).readall())
 
     def upload_to_bucket(self, bucket, path, overrides={}, temp_url=False, public=False):
-        if not os.path.exists(os.path.expanduser(path)):
-            error(f"Path {path} doesn't exist")
-            return
         if bucket not in self.list_buckets():
             error(f"Bucket {bucket} doesn't exist")
             return
         blob_client = self.blob_service_client.get_blob_client(bucket, os.path.basename(path))
-        with open(file=os.path.expanduser(path), mode="rb") as data:
-            blob_client.upload_blob(data)
+        if path.startswith('http'):
+            blob_client.upload_blob_from_url(path)
+        elif not os.path.exists(os.path.expanduser(path)):
+            error(f"Path {path} doesn't exist")
+            return
+        else:
+            with open(file=os.path.expanduser(path), mode="rb") as data:
+                blob_client.upload_blob(data)
 
     def list_buckets(self):
         return [bucket.name for bucket in self.blob_service_client.list_containers()]

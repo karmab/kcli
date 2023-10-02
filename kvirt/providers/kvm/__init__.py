@@ -232,8 +232,6 @@ class Kvirt(object):
             metadata['ip'] = userport
         if self.exists(name):
             return {'result': 'failure', 'reason': f"VM {name} already exists"}
-        # if start and self.no_memory(memory):
-        #    return {'result': 'failure', 'reason': "Not enough memory to run this vm"}
         default_diskinterface = diskinterface
         default_diskthin = diskthin
         default_disksize = disksize
@@ -323,11 +321,10 @@ class Kvirt(object):
         if 'machine' in overrides:
             machine = overrides['machine']
         uefi = overrides.get('uefi', False)
-        uefi_legacy = overrides.get('uefi_legacy', False)
+        uefi_legacy = uefi and self._rhel_legacy(capabilities['machines'])
         secureboot = overrides.get('secureboot', False)
         if machine == 'pc' and (uefi or uefi_legacy or secureboot or aarch64 or enableiommu):
             machine = 'q35'
-        # sysinfo = "<smbios mode='sysinfo'/>"
         disksxml = ''
         fixqcow2path, fixqcow2backing = None, None
         volsxml = {}
@@ -4095,3 +4092,12 @@ class Kvirt(object):
                     if len(hostname.text.split('.')) > 1 and hostname.text.partition('.')[2] not in results:
                         results.append(hostname.text.partition('.')[2])
         return results
+
+    def _rhel_legacy(self, machines):
+        rhel7 = False
+        for m in machines:
+            if 'rhel7' in m:
+                rhel7 = True
+            elif 'rhel9' in m:
+                return False
+        return rhel7
