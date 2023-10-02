@@ -1056,9 +1056,12 @@ class Kconfig(Kbaseconfig):
                     z.reserve_dns(name=name, nets=[domain], domain=domain, ip=ip, force=True)
             else:
                 warning(f"Client {dnsclient} not found. Skipping")
-        if os.access(os.path.expanduser('~/.kcli'), os.W_OK):
-            client = client if client is not None else self.client
-            common.set_lastvm(name, client)
+        homedir = os.path.expanduser('~')
+        if os.access(homedir, os.W_OK):
+            if not os.path.exists(f'{homedir}/.kcli'):
+                os.mkdir(f'{homedir}/.kcli')
+            if os.access(f'{homedir}/.kcli', os.W_OK):
+                common.set_lastvm(name, client or self.client)
         ansibleprofile = profile.get('ansible')
         if ansibleprofile is not None:
             if which('ansible-playbook') is None:
