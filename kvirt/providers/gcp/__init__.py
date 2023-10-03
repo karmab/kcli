@@ -1463,7 +1463,8 @@ class Kgcp(object):
                 subnet = info['nets'][0]['type']
                 if subnet != 'default':
                     network_project = self.list_subnets()[subnet]['id']
-                    if self.xproject == network_project:
+                    if network_project == self.xproject:
+                        use_xproject = True
                         subnet = f'projects/{network_project}/regions/{region}/subnetworks/{subnet}'
                     else:
                         subnet = f"projects/{project}/regions/{region}/subnetworks/{subnet}"
