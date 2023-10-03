@@ -190,7 +190,8 @@ class Kgcp(object):
                 nettype = net.get('type', nettype)
                 ip = net.get('ip')
                 alias = net.get('alias')
-                netpublic = net.get('public') or netpublic
+                if 'public' in net:
+                    netpublic = net.get('public')
                 secondary_cidr = net.get('secondary_cidr') or overrides.get('secondary_cidr')
                 pod_cidr = net.get('pod_cidr')
                 service_cidr = net.get('service_cidr')
