@@ -1333,14 +1333,23 @@ class Kconfig(Kbaseconfig):
                         plan = installparam.get('plan', plan)
                 kubes[kube] = {'type': _type, 'plan': plan, 'vms': []}
         if self.type == 'gcp':
-            from kvirt.cluster import gke
-            kubes.update(gke.list(self))
+            try:
+                from kvirt.cluster import gke
+                kubes.update(gke.list(self))
+            except:
+                pass
         elif self.type == 'aws':
-            from kvirt.cluster import eks
-            kubes.update(eks.list(self))
+            try:
+                from kvirt.cluster import eks
+                kubes.update(eks.list(self))
+            except:
+                pass
         elif self.type == 'azure':
-            from kvirt.cluster import aks
-            kubes.update(aks.list(self))
+            try:
+                from kvirt.cluster import aks
+                kubes.update(aks.list(self))
+            except:
+                pass
         return kubes
 
     def create_product(self, name, repo=None, group=None, plan=None, latest=False, overrides={}):
