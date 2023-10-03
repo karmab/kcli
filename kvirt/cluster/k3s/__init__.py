@@ -122,7 +122,7 @@ def create(config, plandir, cluster, overrides):
     workers = data['workers']
     network = data['network']
     sdn = None if 'sdn' in overrides and overrides['sdn'] is None else data.get('sdn')
-    domain = data['karmalabs.corp']
+    domain = data['domain']
     image = data['image']
     api_ip = data.get('api_ip')
     if ctlplanes > 1:
