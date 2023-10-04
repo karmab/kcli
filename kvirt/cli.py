@@ -811,7 +811,7 @@ def list_containerimage(args):
     print(imagestable)
 
 
-def list_host(args):
+def list_client(args):
     clientstable = PrettyTable(["Client", "Type", "Enabled", "Current"])
     clientstable.align["Client"] = "l"
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
@@ -4811,6 +4811,11 @@ def cli():
     bucketfileslist_parser.add_argument('bucket', metavar='BUCKET')
     bucketfileslist_parser.set_defaults(func=list_bucketfiles)
 
+    clientlist_desc = 'List Clients'
+    clientlist_parser = list_subparsers.add_parser('client', description=clientlist_desc, help=clientlist_desc,
+                                                   aliases=['clients', 'host', 'hosts'], parents=[output_parser])
+    clientlist_parser.set_defaults(func=list_client)
+
     clusterlist_desc = 'List Clusters'
     clusterlist_parser = list_subparsers.add_parser('cluster', description=clusterlist_desc, help=clusterlist_desc,
                                                     aliases=['clusters', 'kube', 'kubes'], parents=[output_parser])
@@ -4875,11 +4880,6 @@ def cli():
                                                    parents=[output_parser])
     flavorlist_parser.add_argument('--short', action='store_true')
     flavorlist_parser.set_defaults(func=list_flavors)
-
-    hostlist_desc = 'List Hosts'
-    hostlist_parser = list_subparsers.add_parser('host', description=hostlist_desc, help=hostlist_desc,
-                                                 aliases=['hosts', 'client', 'clients'], parents=[output_parser])
-    hostlist_parser.set_defaults(func=list_host)
 
     imagelist_desc = 'List Images'
     imagelist_parser = list_subparsers.add_parser('image', description=imagelist_desc, help=imagelist_desc,

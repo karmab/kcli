@@ -4,6 +4,7 @@
 from kvirt.defaults import FAKECERT
 from kvirt.bottle import Bottle, request, response, jinja2_view, server_names, ServerAdapter, auth_basic
 from kvirt.common import pprint, error
+from kvirt.baseconfig import Kbaseconfig
 from kvirt.config import Kconfig
 import os
 import subprocess
@@ -69,17 +70,35 @@ class Ksushy():
         @auth_basic(credentials)
         @view('systems.json')
         def system_collection_resource():
-            config = Kconfig()
+            clients = []
+            baseconfig = Kbaseconfig()
+            for client in baseconfig.clients:
+                clients.append({"@odata.id": f"/redfish/v1/Systems/{client}"})
+            return {'vms': clients, 'count': len(clients)}
+
+        @app.route('/redfish/v1/Systems/<client>')
+        @auth_basic(credentials)
+        @view('systems.json')
+        def system_collection_client_resource(client):
+            baseconfig = Kbaseconfig()
+            if client not in baseconfig.clients:
+                response.status = 404
+                return f'Client {client} not found'
+            config = Kconfig(client)
             k = config.k
             vms = []
             for vm in k.list():
-                vms.append({"@odata.id": f"/redfish/v1/Systems/{config.client}/{vm['name']}"})
+                vms.append({"@odata.id": f"/redfish/v1/Systems/{client}/{vm['name']}"})
             return {'vms': vms, 'count': len(vms)}
 
         @app.route('/redfish/v1/Systems/<client>/<name>')
         @auth_basic(credentials)
         @view('system.json')
         def system_resource_get(client, name):
+            baseconfig = Kbaseconfig()
+            if client not in baseconfig.clients:
+                response.status = 404
+                return f'Client {client} not found'
             config = Kconfig(client)
             k = config.k
             info = k.info(name)
@@ -108,6 +127,10 @@ class Ksushy():
                 response.status = 400
                 return 'Missing the BootSourceOverrideTarget and/or BootSourceOverrideMode element'
             else:
+                baseconfig = Kbaseconfig()
+                if client not in baseconfig.clients:
+                    response.status = 404
+                    return f'Client {client} not found'
                 config = Kconfig(client)
                 k = config.k
                 info = k.info(name)
@@ -132,6 +155,10 @@ class Ksushy():
         @auth_basic(credentials)
         @view('interfaces.json')
         def manage_interfaces(client, name):
+            baseconfig = Kbaseconfig()
+            if client not in baseconfig.clients:
+                response.status = 404
+                return f'Client {client} not found'
             config = Kconfig(client)
             k = config.k
             info = k.info(name)
@@ -159,6 +186,10 @@ class Ksushy():
         @app.route('/redfish/v1/Systems/<client>/<name>/Actions/ComputerSystem.Reset', method='POST')
         @auth_basic(credentials)
         def system_reset_action(client, name):
+            baseconfig = Kbaseconfig()
+            if client not in baseconfig.clients:
+                response.status = 404
+                return f'Client {client} not found'
             config = Kconfig(client)
             k = config.k
             reset_type = request.json.get('ResetType', 'On')
@@ -189,6 +220,10 @@ class Ksushy():
         @auth_basic(credentials)
         @view('virtualmedia_cd.json')
         def virtualmedia_cd_resource(client, name):
+            baseconfig = Kbaseconfig()
+            if client not in baseconfig.clients:
+                response.status = 404
+                return f'Client {client} not found'
             config = Kconfig(client)
             info = config.k.info(name)
             if not info:
@@ -204,6 +239,10 @@ class Ksushy():
                    method='POST')
         @auth_basic(credentials)
         def virtualmedia_insert(client, name):
+            baseconfig = Kbaseconfig()
+            if client not in baseconfig.clients:
+                response.status = 404
+                return f'Client {client} not found'
             config = Kconfig(client)
             if not config.k.exists(name):
                 response.status = 404
@@ -232,6 +271,10 @@ class Ksushy():
                    method='POST')
         @auth_basic(credentials)
         def virtualmedia_eject(client, name):
+            baseconfig = Kbaseconfig()
+            if client not in baseconfig.clients:
+                response.status = 404
+                return f'Client {client} not found'
             config = Kconfig(client)
             if not config.k.exists(name):
                 response.status = 404
