@@ -3359,10 +3359,15 @@ class Kvirt(object):
             dhcpxml = f"{dhcpxml}</dhcp>"
         else:
             dhcpxml = ''
-        if nat:
-            natxml = "<forward mode='nat'><nat><port start='1024' end='65535'/></nat></forward>"
+        if 'forward_mode' in overrides:
+            forward_mode = overrides['forward_mode']
+            if forward_mode not in ['open', 'route']:
+                return {'result': 'failure', 'reason': f"Invalid forward_mode {forward_mode}"}
+            forwardxml = f"<forward mode='{forward_mode}'></forward>"
+        elif nat:
+            forwardxml = "<forward mode='nat'><nat><port start='1024' end='65535'/></nat></forward>"
         else:
-            natxml = ''
+            forwardxml = ''
         localdomain = "no"
         if 'localdomain' in overrides and overrides['localdomain']:
             localdomain = "yes"
@@ -3427,7 +3432,7 @@ class Kvirt(object):
                     {dnsmasqxml}
                     {metadata}
                     {mtuxml}
-                    {natxml}
+                    {forwardxml}
                     {bridgexml}
                     {domainxml}
                     {dnsxml}
@@ -3435,7 +3440,7 @@ class Kvirt(object):
                     {dhcpxml}
                     </ip>
                     {dualxml}
-                    </network>""".format(name=name, metadata=metadata, mtuxml=mtuxml, natxml=natxml,
+                    </network>""".format(name=name, metadata=metadata, mtuxml=mtuxml, forwardxml=forwardxml,
                                          bridgexml=bridgexml, domainxml=domainxml, dnsxml=dnsxml, gateway=gateway,
                                          prefix=prefix, family=family, dhcpxml=dhcpxml, dualxml=dualxml,
                                          namespace=namespace, dnsmasqxml=dnsmasqxml)

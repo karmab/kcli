@@ -593,6 +593,9 @@ $ kcli create network -c 192.168.123.0/24 -i mynetwork
 # Create a network with a dedicated pxe server
 $ kcli create network -c 192.168.123.0/24 -P pxe=192.168.123.2 mynetwork
 
+# Create a network with forward mode set to route
+$ kcli create network -c 192.168.123.0/24 -P forward_mode=route mynetwork
+
 # Create an ipv6 network
 $ kcli create network -c 2620:52:0:1302::/64 mynetwork
 
