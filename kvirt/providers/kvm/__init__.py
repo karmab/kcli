@@ -440,6 +440,8 @@ class Kvirt(object):
                 diskimage = image
                 firstdisk = diskpath
             if diskimage is not None:
+                if index != 0 and diskimage.endswith('qcow2'):
+                    image = diskimage
                 manual_disk_path = False
                 try:
                     if diskthinpool is not None:

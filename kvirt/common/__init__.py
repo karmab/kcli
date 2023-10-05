@@ -273,7 +273,9 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             netdata = ''
     else:
         netdata = None
-    existing = f"/workdir/{name}.cloudinit" if container_mode() else f"{name}.cloudinit"
+    existing = overrides.get('cloudinit_file', f"{name}.cloudinit")
+    if container_mode():
+        existing = f"/workdir/{existing}"
     if os.path.exists(existing):
         pprint(f"using cloudinit from existing {existing} for {name}")
         userdata = open(existing).read()
@@ -1190,7 +1192,9 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     if os.path.exists(planpath):
         ignitionextrapath = planpath
         data = mergeignition(name, ignitionextrapath, data)
-    namepath = f"/workdir/{name}.ign" % name if container_mode() else f"{name}.ign"
+    namepath = overrides.get('ignition_file', f"{name}.ign")
+    if container_mode():
+        namepath = f"/workdir/{namepath}"
     if os.path.exists(namepath):
         ignitionextrapath = namepath
         data = mergeignition(name, ignitionextrapath, data)
