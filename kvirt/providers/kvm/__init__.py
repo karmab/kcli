@@ -321,7 +321,7 @@ class Kvirt(object):
         if 'machine' in overrides:
             machine = overrides['machine']
         uefi = overrides.get('uefi', False)
-        uefi_legacy = uefi and self._rhel_legacy(capabilities['machines'])
+        uefi_legacy = overrides.get('uefi_legacy', False) or (uefi and self._rhel_legacy(capabilities['machines']))
         secureboot = overrides.get('secureboot', False)
         if machine == 'pc' and (uefi or uefi_legacy or secureboot or aarch64 or enableiommu):
             machine = 'q35'
