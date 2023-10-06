@@ -2515,60 +2515,37 @@ class Kvirt(object):
         ET.register_namespace('kvirt', 'kvirt')
         conn = self.conn
         vm = conn.lookupByName(name)
-        xml = vm.XMLDesc(0)
-        root = ET.fromstring(xml)
         if not vm:
             error(f"VM {name} not found")
             return {'result': 'failure', 'reason': f"VM {name} not found"}
-        if vm.isActive() == 1:
-            warning("Machine up. Change will only appear after powerdown/powerup")
-        metadata = root.find('metadata')
+        flags = VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG if vm.isActive() == 1 else VIR_DOMAIN_AFFECT_CONFIG
+        try:
+            metadataxml = vm.metadata(2, 'kvirt', 0)
+        except:
+            return {'result': 'failure', 'reason': f"missing metadata field in VM {name} xml"}
+        root = ET.fromstring(metadataxml)
         kroot, kmeta = None, None
-        for element in list(root.iter('{kvirt}info')):
+        for element in list(root.iter('info')):
             kroot = element
             break
-        for element in list(root.iter('{kvirt}%s' % metatype)):
+        for element in list(root.iter(metatype)):
             kmeta = element
             break
-        if metadata is None:
-            metadata = ET.Element("metadata")
-            kroot = ET.Element("kvirt:info")
-            kroot.set("xmlns:kvirt", "kvirt")
-            kmeta = ET.Element(f"kvirt:{metatype}")
-            root.append(metadata)
-            metadata.append(kroot)
-            kroot.append(kmeta)
-        elif kroot is None:
-            kroot = ET.Element("kvirt:info")
-            kroot.set("xmlns:kvirt", "kvirt")
-            kmeta = ET.Element(f"kvirt:{metatype}")
-            metadata.append(kroot)
-            kroot.append(kmeta)
-        elif kmeta is None:
-            kmeta = ET.Element(f"kvirt:{metatype}")
+        if kmeta is None:
+            kmeta = ET.Element(metatype)
             kroot.append(kmeta)
         if append and kmeta.text is not None:
             kmeta.text += f",{str(metavalue)}"
         else:
             kmeta.text = str(metavalue)
-        newxml = ET.tostring(root)
-        conn.defineXML(newxml.decode("utf-8"))
+        metadataxml = ET.tostring(root).decode("utf-8")
+        vm.setMetadata(2, metadataxml, 'kvirt', 'kvirt', flags=flags)
         return {'result': 'success'}
 
     def update_information(self, name, information):
         conn = self.conn
         vm = conn.lookupByName(name)
-        xml = vm.XMLDesc(0)
-        root = ET.fromstring(xml)
-        description = root.find('description')
-        if not description:
-            description = ET.Element("description")
-            description.text = information
-            root.append(description)
-        else:
-            description.text = information
-        newxml = ET.tostring(root)
-        conn.defineXML(newxml.decode("utf-8"))
+        vm.setMetadata(0, information, None, None)
         return {'result': 'success'}
 
     def update_cpus(self, name, numcpus):
