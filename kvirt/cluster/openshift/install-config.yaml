@@ -82,10 +82,8 @@ platform:
     region: {{ config_region }}
 {% elif config_type == 'azure' %}
   azure:
-    osDisk:
-      diskSizeGB: 1024
-      diskType: Premium_LRS
-    type: Standard_D8s_v3
+    baseDomainResourceGroupName: kcli
+    region: {{ config_location }}
 {% else %}
   none: {}
 {% endif %}

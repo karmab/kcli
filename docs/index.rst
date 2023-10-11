@@ -348,7 +348,7 @@ The following parameters are specific to aws:
 -  ``admin_user``. Defaults to superadmin
 -  ``admin_password``. If specified, it need to be compliant with azure policy. When missing, a random one is generated (and printed) for each vm
 -  ``mail``. Optional, used only to access serial console of vms.
--  ``storageaccount``. Optional, used for bucket related operations.
+-  ``storage_account``. Optional, used for bucket related operations.
 
 The policy for password states that a valid password needs to satisfy at least 3 of the following requirements:
 

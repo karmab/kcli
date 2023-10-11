@@ -5,7 +5,7 @@
 {% endif %}
 
 {{ cluster }}-worker-{{ num }}:
- domain: {{ domain }} 
+ domain: {{ domain if config_type != 'azure' else '' }}
  enableroot: false
  image: {{ image }}
  pool: {{ pool or config_pool }}

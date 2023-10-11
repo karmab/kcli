@@ -143,7 +143,7 @@ class Kconfig(Kbaseconfig):
                 location = self.options.get('location', 'westus')
                 resource_group = self.options.get('resource_group', 'kcli')
                 mail = self.options.get('mail')
-                storageaccount = self.options.get('storageaccount')
+                storage_account = self.options.get('storage_account')
                 subscription_id = self.options.get('subscription_id')
                 if subscription_id is None:
                     error("Missing subscription_id in the configuration. Leaving")
@@ -162,7 +162,7 @@ class Kconfig(Kbaseconfig):
                     sys.exit(1)
                 k = Kazure(subscription_id=subscription_id, tenant_id=tenant_id, app_id=app_id, location=location,
                            secret=secret, resource_group=resource_group, admin_user=admin_user,
-                           admin_password=admin_password, mail=mail, storageaccount=storageaccount, debug=debug)
+                           admin_password=admin_password, mail=mail, storage_account=storage_account, debug=debug)
             elif self.type == 'aws':
                 if region is None:
                     region = self.options.get('region', 'eu-west-3')

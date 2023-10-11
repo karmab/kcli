@@ -403,6 +403,12 @@ def download_image(args):
     image = args.image
     cmd = args.cmd
     url = args.url
+    if image is None:
+        if url is not None:
+            image = os.path.basename(url)
+        else:
+            error("An image or url needs to be specified")
+            sys.exit(1)
     size = args.size
     arch = args.arch
     rhcos_installer = args.installer
@@ -410,22 +416,16 @@ def download_image(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     result = config.download_image(pool=pool, image=image, cmd=cmd, url=url, size=size, arch=arch,
                                    kvm_openstack=kvm_openstack, rhcos_installer=rhcos_installer, name=name)
-    if result['result'] == 'success':
-        sys.exit(0)
-    else:
-        sys.exit(1)
+    sys.exit(0 if result['result'] == 'success' else 1)
 
 
 def download_iso(args):
     pool = args.pool
     url = args.url
-    iso = args.iso if args.iso is not None else os.path.basename(url)
+    iso = args.iso or os.path.basename(url)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     result = config.download_image(pool=pool, image=iso, url=url)
-    if result['result'] == 'success':
-        sys.exit(0)
-    else:
-        sys.exit(1)
+    sys.exit(0 if result['result'] == 'success' else 1)
 
 
 def delete_image(args):
@@ -4459,7 +4459,7 @@ def cli():
     imagedownload_parser.add_argument('-p', '--pool', help='Pool to use. Defaults to default', metavar='POOL')
     imagedownload_parser.add_argument('-u', '--url', help='Url to use', metavar='URL', type=valid_url)
     imagedownload_parser.add_argument('--size', help='Disk size (kubevirt specific)', type=int, metavar='SIZE')
-    imagedownload_parser.add_argument('image', help=imagedownload_help, metavar='IMAGE')
+    imagedownload_parser.add_argument('image', help=imagedownload_help, metavar='IMAGE', nargs='?')
     imagedownload_parser.set_defaults(func=download_image)
     download_subparsers.add_parser('image', parents=[imagedownload_parser], description=imagedownload_desc,
                                    help=imagedownload_desc)

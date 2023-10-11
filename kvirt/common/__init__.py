@@ -1284,6 +1284,8 @@ def get_installer_rhcos(_type='kvm', region=None, arch='x86_64'):
     data = json.loads(INSTALLER_COREOS)
     if _type == 'aws':
         return data['architectures'][arch]['images']['aws']['regions'][region]['image']
+    elif _type == 'azure':
+        return data['architectures'][arch]['rhel-coreos-extensions']['azure-disk']['url']
     elif _type == 'gcp':
         return data['architectures'][arch]['images']['gcp']['name']
     else:

@@ -9,7 +9,7 @@
 {% endif %}
 
 {{ cluster }}-ctlplane-{{ num }}:
- domain: {{ domain }} 
+ domain: {{ domain if config_type != 'azure' else '' }}
  image: {{ image }}
  pool: {{ pool or config_pool }}
 {% if flavor != None %}

@@ -57,7 +57,7 @@ def azure_credentials(config):
             "tenantId": config.k.tenant_id,
             'clientSecret': config.k.secret}
     with open(f'{azure_dir}/osServicePrincipal.json', 'w') as dest_file:
-        yaml.safe_dump(data, dest_file)
+        json.dump(data, dest_file)
 
 
 def mapping_to_icsp(config, plandir, output_dir, mirror_config):
@@ -1004,7 +1004,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if platform in ['aws', 'gcp']:
             image = image_url
         else:
-            image = os.path.basename(os.path.splitext(image_url)[0])
+            if image_url.endswith('.vhd'):
+                image = os.path.basename(image_url)
+            else:
+                image = os.path.basename(os.path.splitext(image_url)[0])
             if platform in ['ibm', 'kubevirt', 'proxmox']:
                 image = image.replace('.', '-').replace('_', '-').lower()
             if platform == 'vsphere':

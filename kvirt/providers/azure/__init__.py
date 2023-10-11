@@ -5,7 +5,7 @@ from base64 import b64encode
 from ipaddress import ip_network
 from kvirt import common
 from kvirt.defaults import IMAGES, METADATA_FIELDS
-from kvirt.common import error, warning, pprint
+from kvirt.common import error, warning, pprint, success
 from azure.identity import ClientSecretCredential
 from azure.mgmt.marketplaceordering import MarketplaceOrderingAgreements
 from azure.mgmt.resource import ResourceManagementClient
@@ -13,39 +13,15 @@ from azure.mgmt.network import NetworkManagementClient
 from azure.mgmt.network.models import SecurityRule
 from azure.mgmt.compute import ComputeManagementClient
 from azure.mgmt.compute.models import DiskCreateOption
-from azure.storage.blob import BlobServiceClient
+from azure.mgmt.storage import StorageManagementClient
+from azure.storage.blob import BlobServiceClient, BlobSasPermissions, generate_container_sas
 from azure.mgmt.dns import DnsManagementClient
+from datetime import datetime, timezone, timedelta
 import os
 from random import choice
 from string import ascii_letters, digits
 from time import sleep
-from urllib.request import urlopen
 import webbrowser
-
-URNS = [
-    'OpenLogic:CentOS:7.5:latest',
-    'OpenLogic:CentOS:8_5-gen2:latest'
-    'Debian:debian-10:10:latest',
-    'Debian:debian-11:11-backports-gen2:latest',
-    'kinvolk:flatcar-container-linux-free:stable:latest',
-    'kinvolk:flatcar-container-linux-free:stable-gen2:latest',
-    'SUSE:opensuse-leap-15-3:gen2:latest',
-    'SUSE:openSUSE-leap-15-4:gen2:latest',
-    'RedHat:RHEL:7-LVM:latest',
-    'RedHat:RHEL:8-lvm-gen2:latest',
-    'RedHat:RHEL:9_2:latest',
-    'SUSE:sles-15-sp3:gen2:latest',
-    'SUSE:sles-15-sp3:gen2:latest',
-    'Canonical:UbuntuServer:18.04-LTS:latest',
-    'Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:latest',
-    'MicrosoftWindowsServer:WindowsServer:2022-Datacenter:latest',
-    'MicrosoftWindowsServer:WindowsServer:2022-datacenter-azure-edition-core:latest',
-    'MicrosoftWindowsServer:WindowsServer:2019-Datacenter:latest',
-    'MicrosoftWindowsServer:WindowsServer:2016-Datacenter:latest',
-    'MicrosoftWindowsServer:WindowsServer:2012-R2-Datacenter:latest',
-    'MicrosoftWindowsServer:WindowsServer:2012-Datacenter:latest',
-    'MicrosoftWindowsServer:WindowsServer:2008-R2-SP1:latest'
-]
 
 
 def valid_password(password):
@@ -55,15 +31,21 @@ def valid_password(password):
 
 class Kazure(object):
     def __init__(self, subscription_id, tenant_id, app_id, secret, location='westus', resource_group='kcli',
-                 admin_user='superadmin', admin_password=None, mail=None, storageaccount=None, debug=False):
-        credential = ClientSecretCredential(tenant_id=tenant_id, client_id=app_id, client_secret=secret)
+                 admin_user='superadmin', admin_password=None, mail=None, storage_account=None, debug=False):
+        credentials = ClientSecretCredential(tenant_id=tenant_id, client_id=app_id, client_secret=secret)
+        self.tenant_id = tenant_id
+        self.app_id = app_id
+        self.secret = secret
         self.subscription_id = subscription_id
-        self.resource_client = ResourceManagementClient(credential, subscription_id)
-        self.compute_client = ComputeManagementClient(credential, subscription_id)
+        self.resource_client = ResourceManagementClient(credentials, subscription_id)
+        self.compute_client = ComputeManagementClient(credentials, subscription_id)
         self.conn = self.compute_client
-        self.network_client = NetworkManagementClient(credential, subscription_id)
-        self.agreements = MarketplaceOrderingAgreements(credential, subscription_id)
-        self.resource_client.resource_groups.create_or_update(resource_group, {'location': location})
+        self.network_client = NetworkManagementClient(credentials, subscription_id)
+        self.agreements = MarketplaceOrderingAgreements(credentials, subscription_id)
+        try:
+            self.resource_client.resource_groups.create(resource_group, {'location': location})
+        except:
+            pass
         self.location = location
         self.resource_group = resource_group
         self.debug = debug
@@ -75,11 +57,15 @@ class Kazure(object):
         else:
             self.admin_password = admin_password
         self.mail = mail
-        if storageaccount is not None:
-            self.blob_service_client = BlobServiceClient(f"https://{storageaccount}.blob.core.windows.net",
-                                                         credential=credential)
-            self.storageaccount = storageaccount
-        self.dns_client = DnsManagementClient(credential, subscription_id)
+        if storage_account is not None:
+            self.blob_service_client = BlobServiceClient(f"https://{storage_account}.blob.core.windows.net",
+                                                         credential=credentials)
+            storage_client = StorageManagementClient(credentials, subscription_id)
+            self.storage_location = storage_client.storage_accounts.get_properties(resource_group,
+                                                                                   storage_account).primary_location
+            self.account_key = storage_client.storage_accounts.list_keys(resource_group, storage_account).keys[0].value
+            self.storage_account = storage_account
+        self.dns_client = DnsManagementClient(credentials, subscription_id)
 
     def close(self):
         print("not implemented")
@@ -128,21 +114,25 @@ class Kazure(object):
             publisher, offer, sku, version = self.__evaluate_image(image)
             if publisher is None:
                 return {'result': 'failure', 'reason': 'Only rhel, suse and ubuntu images are supported'}
-        elif ':' in image and image.count(':') == 3:
-            publisher, offer, sku, version = image.split(':')
+        elif ':' in image and image.count(':') == 2:
+            publisher, offer, sku = image.split(':')
+            version = 'latest'
+        elif image in self.volumes():
+            publisher, offer, sku, version = None, None, None, None
         else:
             return {'result': 'failure', 'reason': f'Invalid image {image}'}
         need_agreement = False
         image_product, image_plan = None, None
-        try:
-            images = compute_client.virtual_machine_images.list(self.location, publisher, offer, sku)
-            plan_id = os.path.basename(images[0].id)
-            image_info = compute_client.virtual_machine_images.get(self.location, publisher, offer, sku, plan_id)
-            if image_info.plan is not None:
-                need_agreement = True
-                image_product, image_plan = image_info.plan.product, image_info.plan.name
-        except Exception as e:
-            return {'result': 'failure', 'reason': f'Hit {e}'}
+        if publisher is not None:
+            try:
+                images = compute_client.virtual_machine_images.list(self.location, publisher, offer, sku)
+                plan_id = os.path.basename(images[0].id)
+                image_info = compute_client.virtual_machine_images.get(self.location, publisher, offer, sku, plan_id)
+                if image_info.plan is not None:
+                    need_agreement = True
+                    image_product, image_plan = image_info.plan.product, image_info.plan.name
+            except Exception as e:
+                return {'result': 'failure', 'reason': f'Hit {e}'}
         if need_agreement:
             agreement = self.agreements.marketplace_agreements.get(publisher_id=publisher, offer_id=offer,
                                                                    plan_id=image_plan, offer_type='virtualmachine')
@@ -170,94 +160,101 @@ class Kazure(object):
         os_disk = {'name': f'{name}-disk-0', 'create_option': 'FromImage', 'delete_option': 'Delete'}
         if disk_size > 30:
             os_disk['disk_size_gb'] = disk_size
+        storage_profile = {'os_disk': os_disk}
+        if ':' in image:
+            storage_profile.update({'image_reference': {'publisher': publisher, 'offer': offer, 'sku': sku,
+                                                        'version': version}})
+
+        else:
+            image_id = self.compute_client.images.get(self.resource_group, image).id
+            storage_profile.update({'image_reference': {'id': image_id}})
         data = {'location': self.location, 'os_profile': {'computer_name': name, 'admin_username': self.admin_user,
                                                           'admin_password': admin_password},
                 'tags': tags,
                 'hardware_profile': {'vm_size': flavor},
                 'diagnostics_profile': {'boot_diagnostics': {'enabled': True, 'storage_uri': None}},
-                'storage_profile': {'os_disk': os_disk,
-                                    'image_reference': {'publisher': publisher, 'offer': offer, 'sku': sku,
-                                                        'version': version}}}
+                'storage_profile': storage_profile}
         if need_agreement:
             data['plan'] = {'publisher': publisher, 'name': offer, 'product': sku}
         sg_data = {'id': f"{name}-sg", 'location': self.location}
         sg = network_client.network_security_groups.begin_create_or_update(self.resource_group, f"{name}-sg", sg_data)
         sg = sg.result()
-        if 'kubetype' in metadata and metadata['kubetype'] == "openshift":
-            for port in [80, 443, 2379, 2380, 4789, 8080, 5443, 6081, 6443, 8443, 22624]:
+        openshift_node = 'kubetype' in metadata and metadata['kubetype'] == "openshift"
+        if openshift_node:
+            for index, port in enumerate([80, 443, 2379, 2380, 4789, 8080, 5443, 6081, 6443, 8443, 22624]):
                 rule_data = SecurityRule(protocol='Tcp', source_address_prefix='*',
                                          destination_address_prefix='*', access='Allow',
                                          direction='Inbound', description=f'tcp {port}',
                                          source_port_range='*', destination_port_ranges=[f"{port}"],
-                                         priority=100, name=f"tcp-{port}")
+                                         priority=101 + index, name=f"tcp-{port}")
                 network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-sg",
                                                                      f"tcp-{port}", rule_data)
-                rule_data = SecurityRule(protocol='Udp', source_address_prefix='*',
-                                         destination_address_prefix='*', access='Allow',
-                                         direction='Inbound', description='udp 4789',
-                                         source_port_range='*', destination_port_ranges=["4789"],
-                                         priority=100, name="udp-4789")
-                network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-sg",
-                                                                     "udp-4789", rule_data)
-                rule_data = SecurityRule(protocol='Udp', source_address_prefix='*',
-                                         destination_address_prefix='*', access='Allow',
-                                         direction='Inbound', description='udp 6081',
-                                         source_port_range='*', destination_port_ranges=["6081"],
-                                         priority=100, name="udp-6081")
-                network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-sg",
-                                                                     "udp-6081", rule_data)
-                rule_data = SecurityRule(protocol='Tcp', source_address_prefix='*',
-                                         destination_address_prefix='*', access='Allow',
-                                         direction='Inbound', description='tcp 30000-32767',
-                                         source_port_range='*', destination_port_ranges=["30000", "32767"],
-                                         priority=100, name="tcp-30000-32767")
-                network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-sg",
-                                                                     "tcp-30000-32767", rule_data)
-                rule_data = SecurityRule(protocol='Ucp', source_address_prefix='*',
-                                         destination_address_prefix='*', access='Allow',
-                                         direction='Inbound', description='udp 30000-32767',
-                                         source_port_range='*', destination_port_ranges=["30000", "32767"],
-                                         priority=100, name="udp-30000-32767")
-                network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-sg",
-                                                                     "udp-30000-32767", rule_data)
-                rule_data = SecurityRule(protocol='Tcp', source_address_prefix='*',
-                                         destination_address_prefix='*', access='Allow',
-                                         direction='Inbound', description='udp 10250-10259',
-                                         source_port_range='*', destination_port_ranges=["10250", "10259"],
-                                         priority=100, name="tcp-10250-10259")
-                network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-sg",
-                                                                     "tcp-10250-10259", rule_data)
-                rule_data = SecurityRule(protocol='Tcp', source_address_prefix='*',
-                                         destination_address_prefix='*', access='Allow',
-                                         direction='Inbound', description='tcp 9000-9999',
-                                         source_port_range='*', destination_port_ranges=["9000", "9999"],
-                                         priority=100, name="tcp-9000-9999")
-                network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-sg",
-                                                                     "tcp-9000-9999", rule_data)
-                rule_data = SecurityRule(protocol='Udp', source_address_prefix='*',
-                                         destination_address_prefix='*', access='Allow',
-                                         direction='Inbound', description='udp 9000-9999',
-                                         source_port_range='*', destination_port_ranges=["9000", "9999"],
-                                         priority=100, name="udp-9000-9999")
-                network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-sg",
-                                                                     "udp-9000-9999", rule_data)
+            rule_data = SecurityRule(protocol='Udp', source_address_prefix='*',
+                                     destination_address_prefix='*', access='Allow',
+                                     direction='Inbound', description='udp 4789',
+                                     source_port_range='*', destination_port_ranges=["4789"],
+                                     priority=112, name="udp-4789")
+            network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-sg",
+                                                                 "udp-4789", rule_data)
+            rule_data = SecurityRule(protocol='Udp', source_address_prefix='*',
+                                     destination_address_prefix='*', access='Allow',
+                                     direction='Inbound', description='udp 6081',
+                                     source_port_range='*', destination_port_ranges=["6081"],
+                                     priority=113, name="udp-6081")
+            network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-sg",
+                                                                 "udp-6081", rule_data)
+            rule_data = SecurityRule(protocol='Tcp', source_address_prefix='*',
+                                     destination_address_prefix='*', access='Allow',
+                                     direction='Inbound', description='tcp 30000-32767',
+                                     source_port_range='*', destination_port_ranges=["30000", "32767"],
+                                     priority=114, name="tcp-30000-32767")
+            network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-sg",
+                                                                 "tcp-30000-32767", rule_data)
+            rule_data = SecurityRule(protocol='Udp', source_address_prefix='*',
+                                     destination_address_prefix='*', access='Allow',
+                                     direction='Inbound', description='udp 30000-32767',
+                                     source_port_range='*', destination_port_ranges=["30000", "32767"],
+                                     priority=115, name="udp-30000-32767")
+            network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-sg",
+                                                                 "udp-30000-32767", rule_data)
+            rule_data = SecurityRule(protocol='Tcp', source_address_prefix='*',
+                                     destination_address_prefix='*', access='Allow',
+                                     direction='Inbound', description='udp 10250-10259',
+                                     source_port_range='*', destination_port_ranges=["10250", "10259"],
+                                     priority=116, name="tcp-10250-10259")
+            network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-sg",
+                                                                 "tcp-10250-10259", rule_data)
+            rule_data = SecurityRule(protocol='Tcp', source_address_prefix='*',
+                                     destination_address_prefix='*', access='Allow',
+                                     direction='Inbound', description='tcp 9000-9999',
+                                     source_port_range='*', destination_port_ranges=["9000", "9999"],
+                                     priority=117, name="tcp-9000-9999")
+            network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-sg",
+                                                                 "tcp-9000-9999", rule_data)
+            rule_data = SecurityRule(protocol='Udp', source_address_prefix='*',
+                                     destination_address_prefix='*', access='Allow',
+                                     direction='Inbound', description='udp 9000-9999',
+                                     source_port_range='*', destination_port_ranges=["9000", "9999"],
+                                     priority=118, name="udp-9000-9999")
+            network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-sg",
+                                                                 "udp-9000-9999", rule_data)
         network_interfaces = []
         subnets = self.list_subnets()
         for index, net in enumerate(nets):
             nic_name = f'{name}-eth{index}'
+            netpublic = overrides.get('public', True)
             public_ip = None
             if isinstance(net, str):
                 netname = net
-                netpublic = True
                 alias = []
             elif isinstance(net, dict) and 'name' in net:
                 netname = net['name']
                 alias = net.get('alias', [])
-                netpublic = net.get('public', True)
-            if netname not in subnets:
-                return {'result': 'failure', 'reason': f'Subnet {netname} not found'}
-            else:
-                subnet_id = subnets[netname]['id']
+                if 'public' in net:
+                    netpublic = net.get('public')
+            matching_subnets = [sub for sub in subnets if sub == netname or subnets[sub]['network'] == netname]
+            if matching_subnets:
+                subnet_id = subnets[matching_subnets[0]]['id']
                 nic_data = {'location': self.location,
                             'ip_configurations': [{'name': nic_name, 'subnet': {'id': subnet_id}}]}
                 if index == 0:
@@ -281,6 +278,8 @@ class Kazure(object):
                 nic_id = nic.result().id
                 nic_reference = {'id': nic_id, 'delete_option': 'Delete', 'primary': True if index == 0 else False}
                 network_interfaces.append(nic_reference)
+            else:
+                return {'result': 'failure', 'reason': f'Subnet {netname} not found'}
         data['network_profile'] = {'network_interfaces': network_interfaces}
         data_disks = []
         for index, disk in enumerate(disks):
@@ -320,7 +319,8 @@ class Kazure(object):
         if self.debug:
             print(data)
         result = compute_client.virtual_machines.begin_create_or_update(self.resource_group, name, data)
-        result.wait()
+        if not openshift_node or 'bootstrap' in name:
+            result.wait()
         if reservedns and domain is not None:
             self.reserve_dns(name, nets=nets, domain=domain, alias=alias, instanceid=name)
         return {'result': 'success'}
@@ -458,14 +458,17 @@ class Kazure(object):
         yamlinfo['nets'] = nets
         if len(ips) > 1:
             yamlinfo['ips'] = ips
-        tags = vm.tags
-        if 'plan' in tags:
-            yamlinfo['plan'] = tags['plan']
-        if 'profile' in tags:
-            yamlinfo['profile'] = tags['profile']
+        for key in vm.tags:
+            if key in METADATA_FIELDS:
+                yamlinfo[key] = vm.tags[key]
         storage_profile = vm.storage_profile
         image_reference = storage_profile.image_reference
-        yamlinfo['image'] = f"{image_reference.offer}-{image_reference.sku}-{image_reference.version}"
+        if image_reference.offer is not None:
+            image = f"{image_reference.offer}-{image_reference.sku}-{image_reference.version}"
+        else:
+            image = os.path.basename(image_reference.id)
+        yamlinfo['image'] = image
+        yamlinfo['user'] = common.get_user(yamlinfo['image'])
         disks = []
         for index, disk in enumerate([storage_profile.os_disk] + storage_profile.data_disks):
             device, disksize, diskformat = f'disk{index}', disk.disk_size_gb, disk.caching
@@ -493,10 +496,17 @@ class Kazure(object):
         return public_address or private_ip
 
     def volumes(self, iso=False):
+        publishers = ['RedHat', 'Suse', 'Canonical', 'Debian', 'MicrosoftWindowsServer', 'OpenLogic']
+        images = []
         if iso:
             return []
-        else:
-            return sorted(URNS)
+        images.extend([image.name for image in self.compute_client.images.list()])
+        for publisher in publishers:
+            for o in self.compute_client.virtual_machine_images.list_offers(self.location, publisher):
+                offer = o.name
+                for s in self.compute_client.virtual_machine_images.list_skus(self.location, publisher, offer):
+                    images.append(f"{publisher}:{offer}:{s.name}")
+        return sorted(images)
 
     def delete(self, name, snapshots=False):
         compute_client = self.compute_client
@@ -539,8 +549,7 @@ class Kazure(object):
             vm.tags = {metatype: metavalue}
         else:
             vm.tags[metatype] = metavalue
-        result = self.compute_client.virtual_machines.begin_create_or_update(self.resource_group, name, vm)
-        result.wait()
+        self.compute_client.virtual_machines.begin_create_or_update(self.resource_group, name, vm)
 
     def update_memory(self, name, memory):
         try:
@@ -720,9 +729,34 @@ class Kazure(object):
         print("not implemented")
 
     def delete_image(self, image, pool=None):
-        return {'result': 'success'}
+        if image in [i.name for i in self.compute_client.images.list()]:
+            result = self.compute_client.images.begin_delete(self.resource_group, image)
+            result.wait()
+            return {'result': 'success'}
+        else:
+            return {'result': 'failure', 'reason': f'Image {image} not found'}
 
     def add_image(self, url, pool, short=None, cmd=None, name=None, size=None, convert=False):
+        bucket = None
+        # if 'blob.core.windows.net' not in url:
+        if self.storage_account not in url:
+            bucket = f"kcli-import-{''.join(choice(digits) for _ in range(4))}"
+            self.blob_service_client.create_container(bucket)
+            url = self.upload_to_bucket(bucket, url)
+        shortimage = os.path.basename(url).split('?')[0]
+        image = name or shortimage
+        image_data = {'location': self.storage_location,
+                      'storage_profile': {'osDisk': {'osType': 'Linux', 'blobUri': url, 'osState': 'generalized'}},
+                      'hyper_v_generation': 'V1'}
+        result = self.compute_client.images.begin_create_or_update(self.resource_group, image, image_data)
+        result.wait()
+        succeeded = 'Nope'
+        while succeeded != 'Succeeded':
+            sleep(5)
+            pprint(f"Waiting for image {image} to be available")
+            succeeded = self.compute_client.images.get(self.resource_group, image).provisioning_state
+        if bucket is not None:
+            self.blob_service_client.delete_container(bucket)
         return {'result': 'success'}
 
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
@@ -737,9 +771,10 @@ class Kazure(object):
         result = self.network_client.virtual_networks.begin_create_or_update(self.resource_group, name, data)
         result.wait()
         if overrides.get('create_subnet', True):
-            subnet = name
-            self.network_client.subnets.begin_create_or_update(self.resource_group, name,
-                                                               subnet, {'address_prefix': cidr})
+            pprint(f"Creating first subnet {name}-subnet1")
+            subnet_cidr = overrides.get('subnet_cidr') or cidr
+            self.network_client.subnets.begin_create_or_update(self.resource_group, name, f'{name}-subnet1',
+                                                               {'address_prefix': subnet_cidr})
         return {'result': 'success'}
 
     def delete_network(self, name=None, cidr=None, force=False):
@@ -806,8 +841,13 @@ class Kazure(object):
         print("not implemented")
 
     def list_flavors(self):
+        flavors = []
         vm_sizes = self.compute_client.virtual_machine_sizes.list(self.location)
-        return [[e.name, e.number_of_cores, e.memory_in_mb] for e in vm_sizes]
+        for e in vm_sizes:
+            if self.debug:
+                print(e)
+            flavors.append([e.name, e.number_of_cores, e.memory_in_mb])
+        return flavors
 
     def export(self, name, image=None):
         print("not implemented")
@@ -851,18 +891,26 @@ class Kazure(object):
         if bucket not in self.list_buckets():
             error(f"Bucket {bucket} doesn't exist")
             return
+        blob_client = self.blob_service_client.get_blob_client(bucket, file_name)
         if path.startswith('http'):
-            response = urlopen(path)
-            file_path = file_name
-            with open(file_name, 'wb') as f:
-                f.write(response.read())
-        if not os.path.exists(file_path):
+            blob_client.start_copy_from_url(path)
+            status = 'pending'
+            while status == 'pending':
+                sleep(5)
+                pprint("Waiting for copy to finish")
+                copy_blob = blob_client.get_blob_properties()
+                status = copy_blob['copy']['status']
+            if status == 'success':
+                success("Copy operation completed successfully.")
+            else:
+                error(f"Copy operation status: {status}")
+        elif not os.path.exists(file_path):
             error(f"Path {path} doesn't exist")
             return
         else:
-            blob_client = self.blob_service_client.get_blob_client(bucket, file_name)
             with open(file=file_path, mode="rb") as data:
-                blob_client.upload_blob(data)
+                blob_client.upload_blob(data, overwrite=True)
+        return blob_client.url
 
     def list_buckets(self):
         return [bucket.name for bucket in self.blob_service_client.list_containers()]
@@ -872,7 +920,14 @@ class Kazure(object):
         return [blob.name for blob in container_client.list_blobs()]
 
     def public_bucketfile_url(self, bucket, path):
-        return f"https://{self.storageaccount}.blob.core.windows.net/{bucket}/{path}"
+        start_time = datetime.now(timezone.utc)
+        expiry_time = start_time + timedelta(days=1)
+        account_key = self.account_key
+        sas_token = generate_container_sas(account_name=self.storage_account, account_key=account_key,
+                                           container_name=bucket, permission=BlobSasPermissions(read=True),
+                                           expiry=expiry_time, start=start_time, protocol='https')
+        sas_token = sas_token.replace('%3A', ':')
+        return f"https://{self.storage_account}.blob.core.windows.net/{bucket}/{path}?{sas_token}"
 
     def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False, instanceid=None):
         dns_client = self.dns_client
@@ -927,7 +982,7 @@ class Kazure(object):
                 else:
                     alias_entry = f'*.{name}'
             else:
-                alias_entry = a
+                alias_entry = a.replace(f'.{domain}', '')
             dns_data = {"ttl": 300, "cname_Record": {'cname': f"{entry}.{domain}"}}
             dns_client.record_sets.create_or_update(self.resource_group, domain, alias_entry, 'CNAME', dns_data)
         return {'result': 'success'}
@@ -943,11 +998,13 @@ class Kazure(object):
             error(f"Domain {domain} not found")
             return {'result': 'failure', 'reason': f"Domain {domain} not found"}
         entry = name if cluster is None else f"{name}.{cluster}"
-        # clusterdomain = f"{cluster}.{domain}"
         found = False
         for record in self.dns_client.record_sets.list_all_by_dns_zone(self.resource_group, domain):
-            # if entry in record.name or ('ctlplane-0' in name and record.name.endswith(f"{clusterdomain}.")):
             if entry in record.name:
+                found = True
+                _type = os.path.basename(record.type)
+                self.dns_client.record_sets.delete(self.resource_group, domain, record.name, _type)
+            elif record.cname_record is not None and entry in str(record.cname_record):
                 found = True
                 _type = os.path.basename(record.type)
                 self.dns_client.record_sets.delete(self.resource_group, domain, record.name, _type)
@@ -1038,8 +1095,7 @@ class Kazure(object):
                 if destport is None:
                     warning(f"Missing to in {ports}. Skipping")
                     continue
-            pprint(f"Adding rule to {protocol}/{destport} in sg {name}")
-            priority = 100 + index
+            priority = 200 + index
             rule_data = SecurityRule(protocol=protocol, source_address_prefix='*',
                                      destination_address_prefix='*', access='Allow',
                                      direction='Inbound', description=f'port {destport}', source_port_range='*',
@@ -1066,11 +1122,8 @@ class Kazure(object):
 
     def create_loadbalancer(self, name, ports=[], checkpath='/index.html', vms=[], domain=None, checkport=80, alias=[],
                             internal=False, dnsclient=None, ip=None):
-        # if not vms:
-        #    msg = "Creating a load balancer requires to specify some vms"
-        #    error(msg)
-        #    return {'result': 'failure', 'reason': msg}
         ports = [int(port) for port in ports]
+        ports = list(dict.fromkeys(ports))
         network_client = self.network_client
         ip_data = {"location": self.location, "sku": {"name": "Standard"},
                    "public_ip_allocation_method": "Static", "public_ip_address_version": "IPV4"}
@@ -1086,15 +1139,23 @@ class Kazure(object):
                    'frontend_ip_configurations': frontend_ip_configurations,
                    'backend_address_pools': backend_address_pools,
                    'probes': probes}
+        tags = {}
+        if domain is not None:
+            tags['domain'] = domain
+        if dnsclient is not None:
+            tags['dnsclient'] = dnsclient
+        if tags:
+            lb_data['tags'] = tags
         lb = network_client.load_balancers.begin_create_or_update(self.resource_group, name, lb_data).result()
         frontend_id = lb.frontend_ip_configurations[0].id
         backend_id = lb.backend_address_pools[0].id
-        inbound_nat_rules = [{'name': f"{name}-rule{index}", 'protocol': 'tcp',
-                              'backend_address_pool': {'id': backend_id}, 'backend_port': port,
-                              'frontend_port_range_start': port, 'frontend_port_range_end': port + 500,
-                              'enable_floating_ip': False, 'idle_timeout_in_minutes': 4,
-                              'frontend_ip_configuration': {'id': frontend_id}} for index, port in enumerate(ports)]
-        lb.inbound_nat_rules = inbound_nat_rules
+        probe_id = lb.probes[0].id
+        load_balancing_rules = [{'name': f"{name}-rule-{index}", 'protocol': 'tcp',
+                                 'backend_address_pool': {'id': backend_id}, 'backend_port': port,
+                                 'frontend_port': port, 'enable_floating_ip': False, 'idle_timeout_in_minutes': 4,
+                                 'probe': {'id': probe_id},
+                                 'frontend_ip_configuration': {'id': frontend_id}} for index, port in enumerate(ports)]
+        lb.load_balancing_rules = load_balancing_rules
         lb = network_client.load_balancers.begin_create_or_update(self.resource_group, name, lb).result()
         if self.debug:
             print(lb)
@@ -1102,7 +1163,7 @@ class Kazure(object):
             self.set_loadbalancer(vm, backend_id, ports)
             self.update_metadata(vm, 'loadbalancer', name)
         if domain is not None:
-            ip = lb.frontend_ip_configurations[0].public_ip_address
+            ip = network_client.public_ip_addresses.get(self.resource_group, os.path.basename(public_ip.id)).ip_address
             self.reserve_dns(name, ip=ip, domain=domain, alias=alias)
         return {'result': 'success'}
 
@@ -1110,12 +1171,24 @@ class Kazure(object):
         network_client = self.network_client
         for lb in network_client.load_balancers.list(self.resource_group):
             if lb.name == name:
+                domain, dnsclient = None, None
+                tags = lb.tags or {}
+                if 'dnsclient' in tags:
+                    dnsclient = tags['dnsclient']
+                if 'domain' in tags:
+                    domain = tags['domain']
+                    pprint(f"Using found domain {domain}")
                 public_address = lb.frontend_ip_configurations[0].public_ip_address
                 result = network_client.load_balancers.begin_delete(self.resource_group, name)
                 result.wait()
                 result = network_client.public_ip_addresses.begin_delete(self.resource_group,
                                                                          os.path.basename(public_address.id))
                 result.wait()
+                if domain is not None and dnsclient is None:
+                    warning(f"Deleting DNS {name}.{domain}")
+                    self.delete_dns(name, domain, name)
+                elif dnsclient is not None:
+                    return dnsclient
                 return {'result': 'success'}
         error(f"Loadbalancer {name} not found")
         return {'result': 'success'}
@@ -1124,13 +1197,16 @@ class Kazure(object):
         network_client = self.network_client
         results = []
         for lb in network_client.load_balancers.list(self.resource_group):
+            if self.debug:
+                print(lb)
             public_address = lb.frontend_ip_configurations[0].public_ip_address
             ip = network_client.public_ip_addresses.get(self.resource_group,
                                                         os.path.basename(public_address.id)).ip_address
             protocol, ports, target = 'N/A', 'N/A', 'N/A'
-            rule = lb.inbound_nat_rules[0] if lb.inbound_nat_rules else lb.load_balancing_rules[0]
-            protocol = rule.protocol
-            ports = rule.frontend_port_range_start if lb.inbound_nat_rules else rule.frontend_port
+            if lb.inbound_nat_rules or lb.load_balancing_rules:
+                rule = lb.inbound_nat_rules[0] if lb.inbound_nat_rules else lb.load_balancing_rules[0]
+                protocol = rule.protocol
+                ports = rule.frontend_port_range_start if lb.inbound_nat_rules else rule.frontend_port
             results.append([lb.name, ip, protocol, ports, target])
         return results
 
