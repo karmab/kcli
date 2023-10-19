@@ -407,8 +407,11 @@ class Kazure(object):
             vm.diagnostics_profile = {'boot_diagnostics': {'enabled': True, 'storage_uri': None}}
             result = self.compute_client.virtual_machines.begin_create_or_update(self.resource_group, name, vm)
             result.wait()
-        user = f"{self.mail.split('@')[0]}{''.join(self.mail.split('@')[1].split('.')[:-1])}.onmicrosoft."
-        user += self.mail.split('@')[1].split('.')[-1]
+        if '@' in self.mail:
+            user = f"{self.mail.split('@')[0]}{''.join(self.mail.split('@')[1].split('.')[:-1])}.onmicrosoft."
+            user += self.mail.split('@')[1].split('.')[-1]
+        else:
+            user = f"{self.mail}.onmicrosoft.com"
         url = f"https://portal.azure.com/?quickstart=true#@{user}/"
         url += f"resource/subscriptions/{self.subscription_id}/resourceGroups/kcli/providers/"
         url += f"Microsoft.Compute/virtualMachines/{name}/serialConsole"
@@ -431,7 +434,8 @@ class Kazure(object):
             error(f"VM {name} not found")
             return {}
         yamlinfo['name'] = vm.name
-        yamlinfo['status'] = os.path.basename(vm.instance_view.statuses[1].code)
+        status = vm.instance_view.statuses
+        yamlinfo['status'] = os.path.basename(status[1].code) if len(status) > 1 else 'N/A'
         yamlinfo['id'] = vm.vm_id
         hardware_profile = vm.hardware_profile
         flavor = hardware_profile.vm_size
@@ -770,16 +774,37 @@ class Kazure(object):
         data = {'location': self.location, 'address_space': {'address_prefixes': [cidr]}, 'tags': {'plan': plan}}
         result = self.network_client.virtual_networks.begin_create_or_update(self.resource_group, name, data)
         result.wait()
+        ip_data = {'location': self.location, "sku": {"name": "Standard"},
+                   "public_ip_allocation_method": "Static", "public_ip_address_version": "IPV4"}
+        public_ip_name = f'network-{name}-ip'
+        public_ip = self.network_client.public_ip_addresses.begin_create_or_update(self.resource_group, public_ip_name,
+                                                                                   ip_data)
+        public_ip = public_ip.result()
+        public_ip_id = public_ip.id
+        public_ip = public_ip.ip_address
+        nat_gateway_data = {'location': self.location, "sku": {"name": "Standard"},
+                            'public_ip_addresses': [{"id": public_ip_id, 'delete_option': 'Delete'}]}
+        nat_gateway = self.network_client.nat_gateways.begin_create_or_update(self.resource_group, f'nat-{name}',
+                                                                              nat_gateway_data)
+        nat_gateway = nat_gateway.result()
+        nat_gateway_id = nat_gateway.id
+        public_ip_id = public_ip.id
         if overrides.get('create_subnet', True):
             pprint(f"Creating first subnet {name}-subnet1")
             subnet_cidr = overrides.get('subnet_cidr') or cidr
+            subnet_data = {'address_prefix': subnet_cidr}
+            if not nat:
+                data['nat_gateway'] = {'id': nat_gateway_id}
             self.network_client.subnets.begin_create_or_update(self.resource_group, name, f'{name}-subnet1',
-                                                               {'address_prefix': subnet_cidr})
+                                                               subnet_data)
         return {'result': 'success'}
 
     def delete_network(self, name=None, cidr=None, force=False):
         result = self.network_client.virtual_networks.begin_delete(self.resource_group, name)
         result.wait()
+        for n in self.network_client.nat_gateways.list(self.resource_group):
+            if n.name == f'nat-{name}':
+                self.network_client.nat_gateways.begin_delete(self.resource_group, f'nat-{name}')
         return {'result': 'success'}
 
     def list_pools(self):
@@ -1122,16 +1147,36 @@ class Kazure(object):
 
     def create_loadbalancer(self, name, ports=[], checkpath='/index.html', vms=[], domain=None, checkport=80, alias=[],
                             internal=False, dnsclient=None, ip=None):
+        if not vms:
+            msg = "Creating a load balancer requires to specify vms"
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
+        subnet_id, backend_pool = None, None
+        for index, vm in enumerate(vms):
+            info = self.info(vm)
+            if not info:
+                msg = f"Vm {vm} not found"
+                return {'result': 'failure', 'reason': msg}
+            loadbalancer = info.get('loadbalancer')
+            if loadbalancer is not None:
+                backend_pool = loadbalancer
+            if index == 0 and internal:
+                subnet_id = self.list_subnets()[info['nets'][0]['net']]['id']
         ports = [int(port) for port in ports]
         ports = list(dict.fromkeys(ports))
         network_client = self.network_client
         ip_data = {"location": self.location, "sku": {"name": "Standard"},
                    "public_ip_allocation_method": "Static", "public_ip_address_version": "IPV4"}
-        public_ip = network_client.public_ip_addresses.begin_create_or_update(self.resource_group, f'{name}-ip',
-                                                                              ip_data)
-        public_ip = public_ip.result()
-        frontend_ip_configurations = [{'name': name, 'public_ip_address': {'id': public_ip.id}}]
-        backend_address_pools = [{'name': name}]
+        if not internal:
+            public_ip = network_client.public_ip_addresses.begin_create_or_update(self.resource_group, f'{name}-ip',
+                                                                                  ip_data)
+            public_ip = public_ip.result()
+            frontend_ip_configuration = {'name': name, 'public_ip_address': {'id': public_ip.id}}
+        else:
+            frontend_ip_configuration = {'name': name, 'private_ip_address_allocation': 'Dynamic',
+                                         'subnet': {'id': subnet_id}}
+        frontend_ip_configurations = [frontend_ip_configuration]
+        backend_address_pools = [{'name': backend_pool or name}]
         probes = [{'name': name, 'protocol': 'tcp', 'port': checkport, 'interval_in_seconds': 15,
                    'number_of_probes': 4}]
         lb_data = {'location': self.location,
@@ -1163,7 +1208,11 @@ class Kazure(object):
             self.set_loadbalancer(vm, backend_id, ports)
             self.update_metadata(vm, 'loadbalancer', name)
         if domain is not None:
-            ip = network_client.public_ip_addresses.get(self.resource_group, os.path.basename(public_ip.id)).ip_address
+            if not internal:
+                public_ip_id = os.path.basename(public_ip.id)
+                ip = network_client.public_ip_addresses.get(self.resource_group, public_ip_id).ip_address
+            else:
+                ip = lb.frontend_ip_configurations[0].private_ip_address
             self.reserve_dns(name, ip=ip, domain=domain, alias=alias)
         return {'result': 'success'}
 
@@ -1181,9 +1230,10 @@ class Kazure(object):
                 public_address = lb.frontend_ip_configurations[0].public_ip_address
                 result = network_client.load_balancers.begin_delete(self.resource_group, name)
                 result.wait()
-                result = network_client.public_ip_addresses.begin_delete(self.resource_group,
-                                                                         os.path.basename(public_address.id))
-                result.wait()
+                if public_address is not None:
+                    result = network_client.public_ip_addresses.begin_delete(self.resource_group,
+                                                                             os.path.basename(public_address.id))
+                    result.wait()
                 if domain is not None and dnsclient is None:
                     warning(f"Deleting DNS {name}.{domain}")
                     self.delete_dns(name, domain, name)
@@ -1200,8 +1250,11 @@ class Kazure(object):
             if self.debug:
                 print(lb)
             public_address = lb.frontend_ip_configurations[0].public_ip_address
-            ip = network_client.public_ip_addresses.get(self.resource_group,
-                                                        os.path.basename(public_address.id)).ip_address
+            if public_address is not None:
+                ip = network_client.public_ip_addresses.get(self.resource_group,
+                                                            os.path.basename(public_address.id)).ip_address
+            else:
+                ip = lb.frontend_ip_configurations[0].private_ip_address
             protocol, ports, target = 'N/A', 'N/A', 'N/A'
             if lb.inbound_nat_rules or lb.load_balancing_rules:
                 rule = lb.inbound_nat_rules[0] if lb.inbound_nat_rules else lb.load_balancing_rules[0]
@@ -1235,6 +1288,10 @@ class Kazure(object):
         if network not in self.list_networks():
             msg = f'Network {network} not found'
             return {'result': 'failure', 'reason': msg}
+        if not nat:
+            nat_gateway = f'nat-{network}'
+            nat_gateway = self.network_client.nat_gateways.get(self.resource_group, nat_gateway)
+            data['nat_gateway'] = {'id': nat_gateway.id}
         self.network_client.subnets.begin_create_or_update(self.resource_group, network, name, data)
         return {'result': 'success'}
 
