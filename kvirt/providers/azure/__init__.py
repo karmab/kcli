@@ -174,6 +174,9 @@ class Kazure(object):
                 'hardware_profile': {'vm_size': flavor},
                 'diagnostics_profile': {'boot_diagnostics': {'enabled': True, 'storage_uri': None}},
                 'storage_profile': storage_profile}
+        zone = overrides.get('az') or overrides.get('availability_zone') or overrides.get('zone')
+        if zone is not None:
+            data['zones'] = [str(zone)]
         if need_agreement:
             data['plan'] = {'publisher': publisher, 'name': offer, 'product': sku}
         sg_data = {'id': f"{name}-sg", 'location': self.location}
@@ -437,6 +440,8 @@ class Kazure(object):
         status = vm.instance_view.statuses
         yamlinfo['status'] = os.path.basename(status[1].code) if len(status) > 1 else 'N/A'
         yamlinfo['id'] = vm.vm_id
+        if vm.zones is not None:
+            yamlinfo['az'] = vm.zones[0]
         hardware_profile = vm.hardware_profile
         flavor = hardware_profile.vm_size
         yamlinfo['flavor'] = flavor
@@ -866,13 +871,8 @@ class Kazure(object):
         print("not implemented")
 
     def list_flavors(self):
-        flavors = []
         vm_sizes = self.compute_client.virtual_machine_sizes.list(self.location)
-        for e in vm_sizes:
-            if self.debug:
-                print(e)
-            flavors.append([e.name, e.number_of_cores, e.memory_in_mb])
-        return flavors
+        return [[e.name, e.number_of_cores, e.memory_in_mb] for e in vm_sizes]
 
     def export(self, name, image=None):
         print("not implemented")
