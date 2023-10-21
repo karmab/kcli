@@ -771,34 +771,57 @@ class Kazure(object):
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
         if cidr is not None:
             try:
-                ip_network(cidr, strict=False)
+                network = ip_network(cidr, strict=False)
             except:
                 return {'result': 'failure', 'reason': f"Invalid Cidr {cidr}"}
+            network_ipv6 = str(network.version) == "6"
         else:
             return {'result': 'failure', 'reason': "Cidr needed"}
+        dual_cidr = overrides.get('dual_cidr')
+        if dual_cidr is not None:
+            try:
+                dual_network = ip_network(dual_cidr, strict=False)
+            except:
+                return {'result': 'failure', 'reason': f"Invalid Dual Cidr {cidr}"}
+            dual_ipv6 = str(dual_network.version) == "6"
+            if network_ipv6 == dual_ipv6:
+                return {'result': 'failure', 'reason': "cidr and dual_cidr must be of different types"}
         data = {'location': self.location, 'address_space': {'address_prefixes': [cidr]}, 'tags': {'plan': plan}}
+        if dual_cidr is not None:
+            data['address_space']['address_prefixes'].append(dual_cidr)
         result = self.network_client.virtual_networks.begin_create_or_update(self.resource_group, name, data)
         result.wait()
         ip_data = {'location': self.location, "sku": {"name": "Standard"},
-                   "public_ip_allocation_method": "Static", "public_ip_address_version": "IPV4"}
-        public_ip_name = f'network-{name}-ip'
-        public_ip = self.network_client.public_ip_addresses.begin_create_or_update(self.resource_group, public_ip_name,
-                                                                                   ip_data)
-        public_ip = public_ip.result()
-        public_ip_id = public_ip.id
-        public_ip = public_ip.ip_address
-        nat_gateway_data = {'location': self.location, "sku": {"name": "Standard"},
-                            'public_ip_addresses': [{"id": public_ip_id, 'delete_option': 'Delete'}]}
-        nat_gateway = self.network_client.nat_gateways.begin_create_or_update(self.resource_group, f'nat-{name}',
-                                                                              nat_gateway_data)
-        nat_gateway = nat_gateway.result()
-        nat_gateway_id = nat_gateway.id
-        public_ip_id = public_ip.id
+                   "public_ip_allocation_method": "Static"}
+        ip_data['public_ip_address_version'] = 'IPV6' if network_ipv6 and dual_cidr is None else 'IPV4'
+        if not network_ipv6 or dual_cidr is not None:
+            public_ip_name = f'network-{name}-ip'
+            public_ip = self.network_client.public_ip_addresses.begin_create_or_update(self.resource_group,
+                                                                                       public_ip_name, ip_data)
+            public_ip = public_ip.result()
+            public_ip_id = public_ip.id
+            public_ip = public_ip.ip_address
+            nat_gateway_data = {'location': self.location, "sku": {"name": "Standard"},
+                                'public_ip_addresses': [{"id": public_ip_id, 'delete_option': 'Delete'}]}
+            nat_gateway = self.network_client.nat_gateways.begin_create_or_update(self.resource_group, f'nat-{name}',
+                                                                                  nat_gateway_data)
+            nat_gateway = nat_gateway.result()
+            nat_gateway_id = nat_gateway.id
         if overrides.get('create_subnet', True):
             pprint(f"Creating first subnet {name}-subnet1")
-            subnet_cidr = overrides.get('subnet_cidr') or cidr
+            subnet_cidr = overrides.get('subnet_cidr')
+            if subnet_cidr is not None:
+                try:
+                    subnet = ip_network(subnet_cidr, strict=False)
+                except:
+                    return {'result': 'failure', 'reason': f"Invalid Cidr {subnet_cidr}"}
+                if not subnet.subnet_of(network):
+                    return {'result': 'failure', 'reason': f"{subnet_cidr} isnt part of {cidr}"}
+            else:
+                subnet_cidr = cidr
             subnet_data = {'address_prefix': subnet_cidr}
-            if not nat:
+            subnet_ipv6 = ':' in subnet_cidr
+            if not nat and not subnet_ipv6:
                 data['nat_gateway'] = {'id': nat_gateway_id}
             self.network_client.subnets.begin_create_or_update(self.resource_group, name, f'{name}-subnet1',
                                                                subnet_data)
@@ -809,6 +832,7 @@ class Kazure(object):
         result.wait()
         for n in self.network_client.nat_gateways.list(self.resource_group):
             if n.name == f'nat-{name}':
+                pprint(f"Deleting nat_gateway nat-{name}")
                 self.network_client.nat_gateways.begin_delete(self.resource_group, f'nat-{name}')
         return {'result': 'success'}
 
@@ -852,10 +876,12 @@ class Kazure(object):
             for subnet in network_client.subnets.list(self.resource_group, network.name):
                 if self.debug:
                     print(subnet)
-                address_prefixes = subnet.address_prefixes or [None]
-                cidr = subnet.address_prefix or address_prefixes[0]
+                address_prefixes = subnet.address_prefixes or [subnet.address_prefix]
+                cidr = address_prefixes[0]
                 subnet_id = subnet.id
                 subnets[subnet.name] = {'cidr': cidr, 'id': subnet_id, 'network': network.name}
+                if len(address_prefixes) > 1:
+                    subnets[subnet.name]['dual_cidr'] = address_prefixes[1]
         return subnets
 
     def delete_pool(self, name, full=False):
@@ -1280,15 +1306,27 @@ class Kazure(object):
 
     def create_subnet(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
         try:
-            ip_network(cidr, strict=False)
+            subnet = ip_network(cidr, strict=False)
         except:
             return {'result': 'failure', 'reason': f"Invalid Cidr {cidr}"}
-        data = {'address_prefix': cidr, 'tags': {'plan': plan}}
+        subnet_ipv6 = str(subnet.version) == "6"
+        dual_cidr = overrides.get('dual_cidr')
+        if dual_cidr is not None:
+            try:
+                dual_network = ip_network(dual_cidr, strict=False)
+            except:
+                return {'result': 'failure', 'reason': f"Invalid Dual Cidr {cidr}"}
+            dual_ipv6 = str(dual_network.version) == "6"
+            if subnet_ipv6 == dual_ipv6:
+                return {'result': 'failure', 'reason': "cidr and dual_cidr must be of different types"}
+        data = {'address_prefixes': [cidr], 'tags': {'plan': plan}}
+        if dual_cidr is not None:
+            data['address_prefixes'].append(dual_cidr)
         network = overrides.get('network', name)
         if network not in self.list_networks():
             msg = f'Network {network} not found'
             return {'result': 'failure', 'reason': msg}
-        if not nat:
+        if not nat and not subnet_ipv6:
             nat_gateway = f'nat-{network}'
             nat_gateway = self.network_client.nat_gateways.get(self.resource_group, nat_gateway)
             data['nat_gateway'] = {'id': nat_gateway.id}
