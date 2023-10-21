@@ -659,10 +659,13 @@ $ kcli create subnet -c 192.168.123.0/24 myubnet
 $ kcli create subnet -c 192.168.123.0/24 -P dhcp_start=192.168.123.40 -P dhcp_end=192.168.123.60 mysubnet
 
 # Create a subnet on AWS and specify network
-$ kcli create subnet -c 10.0.1.0/24 -P network=my-network mysubnet
+$ kcli create subnet -c 10.0.1.0/24 -P network=mynetwork mysubnet
+
+# Create a subnet on AWS but get network from the subnet name
+$ kcli create subnet -c 10.0.1.0/24 mynetwork-mysubnet
 
 # Create a subnet on AWS and make it totally isolated
-$ kcli create subnet -c 10.0.1.0/24 -P network=my-network -P gateway=false mysubnet
+$ kcli create subnet -c 10.0.1.0/24 -P network=mynetwork -P gateway=false mysubnet
 
 # Create a subnet on GCP with an alias/dual network with specific name
 $ kcli create subnet -P cidr=192.168.123.0/24 -P dual_cidr=192.168.124.0/24 -P dual_name=podnetwork mysubnet

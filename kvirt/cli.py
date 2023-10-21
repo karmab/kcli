@@ -3389,6 +3389,11 @@ def create_subnet(args):
     name = args.name
     overrides = handle_parameters(args.param, args.paramfile)
     isolated = overrides.get('isolated') or args.isolated
+    network = overrides.get('network') or args.network
+    if network is None and '-' in name:
+        network = name.split('-')[1]
+    if network is not None:
+        overrides['network'] = network
     cidr = overrides.get('cidr') or args.cidr
     if cidr is None:
         error("Missing Cidr")
@@ -4083,6 +4088,7 @@ def cli():
     subnetcreate_parser.add_argument('--domain', help='DNS domain. Defaults to subnet name')
     subnetcreate_parser.add_argument('-d', '--dual', help='Cidr of dual net', metavar='DUAL')
     subnetcreate_parser.add_argument('--dualname', help='Dual/Alias name. Gcp specific')
+    subnetcreate_parser.add_argument('--network', help='Network where to create this subnet')
     subnetcreate_parser.add_argument('--nodhcp', action='store_true', help='Disable dhcp on the net')
     subnetcreate_parser.add_argument('name', metavar='NETWORK')
     subnetcreate_parser.set_defaults(func=create_subnet)
