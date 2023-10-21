@@ -257,9 +257,15 @@ class Kazure(object):
                     netpublic = net.get('public')
             matching_subnets = [sub for sub in subnets if sub == netname or subnets[sub]['network'] == netname]
             if matching_subnets:
-                subnet_id = subnets[matching_subnets[0]]['id']
-                nic_data = {'location': self.location,
-                            'ip_configurations': [{'name': nic_name, 'subnet': {'id': subnet_id}}]}
+                subnet = subnets[matching_subnets[0]]
+                subnet_id = subnet['id']
+                subnet_cidr = subnet['cidr']
+                ip_configurations = [{'name': nic_name, 'subnet': {'id': subnet_id}}]
+                if ':' in subnet_cidr or subnet.get('dual_cidr') is not None:
+                    ip_configuration = {'name': f'{nic_name}-ipv6', 'subnet': {'id': subnet_id},
+                                        'private_ip_address_version': 'IPv6'}
+                    ip_configurations.append(ip_configuration)
+                nic_data = {'location': self.location, 'ip_configurations': ip_configurations}
                 if index == 0:
                     nic_data['network_security_group'] = {"id": sg.id}
                     if netpublic:
@@ -454,14 +460,15 @@ class Kazure(object):
             if self.debug:
                 print(nic_data)
             mac = nic_data.mac_address
+            for entry in nic_data.ip_configurations:
+                ips.append(entry.private_ip_address)
             private_ip = nic_data.ip_configurations[0].private_ip_address
-            ips.append(private_ip)
-            public_address = nic_data.ip_configurations[0].public_ip_address
-            if public_address is not None:
-                public_address = network_client.public_ip_addresses.get(self.resource_group,
-                                                                        os.path.basename(public_address.id)).ip_address
+            public_ip = nic_data.ip_configurations[0].public_ip_address
+            if public_ip is not None:
+                public_ip = network_client.public_ip_addresses.get(self.resource_group,
+                                                                   os.path.basename(public_ip.id)).ip_address
             if index == 0:
-                yamlinfo['ip'] = public_address or private_ip
+                yamlinfo['ip'] = public_ip or private_ip
             subnet_name = os.path.basename(nic_data.ip_configurations[0].subnet.id)
             nets.append({'device': device, 'mac': mac, 'net': subnet_name, 'type': private_ip})
         yamlinfo['nets'] = nets
@@ -786,6 +793,8 @@ class Kazure(object):
             dual_ipv6 = str(dual_network.version) == "6"
             if network_ipv6 == dual_ipv6:
                 return {'result': 'failure', 'reason': "cidr and dual_cidr must be of different types"}
+        elif network_ipv6:
+            return {'result': 'failure', 'reason': "ipv6 requires dual_cidr to be set"}
         data = {'location': self.location, 'address_space': {'address_prefixes': [cidr]}, 'tags': {'plan': plan}}
         if dual_cidr is not None:
             data['address_space']['address_prefixes'].append(dual_cidr)
