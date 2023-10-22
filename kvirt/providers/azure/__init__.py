@@ -97,6 +97,8 @@ class Kazure(object):
                initrd=None, cmdline=None, placement=[], autostart=False, cpuhotplug=False, memoryhotplug=False,
                numamode=None, numa=[], pcidevices=[], tpm=False, rng=False, metadata={}, securitygroups=[],
                vmuser=None):
+        if self.exists(name):
+            return {'result': 'failure', 'reason': f"VM {name} already exists"}
         if flavor is None:
             matching = [f for f in self.list_flavors() if f[1] >= numcpus and f[2] >= memory]
             if matching:
@@ -1196,7 +1198,9 @@ class Kazure(object):
             if loadbalancer is not None:
                 backend_pool = loadbalancer
             if index == 0 and internal:
-                subnet_id = self.list_subnets()[info['nets'][0]['net']]['id']
+                subnet = self.list_subnets()[info['nets'][0]['net']]
+                subnet_id = subnet['id']
+                dual = 'dual_cidr' in subnet
         ports = [int(port) for port in ports]
         ports = list(dict.fromkeys(ports))
         network_client = self.network_client
@@ -1206,12 +1210,16 @@ class Kazure(object):
             public_ip = network_client.public_ip_addresses.begin_create_or_update(self.resource_group, f'{name}-ip',
                                                                                   ip_data)
             public_ip = public_ip.result()
-            frontend_ip_configuration = {'name': name, 'public_ip_address': {'id': public_ip.id}}
+            frontend_ip_configurations = [{'name': name, 'public_ip_address': {'id': public_ip.id}}]
         else:
-            frontend_ip_configuration = {'name': name, 'private_ip_address_allocation': 'Dynamic',
-                                         'subnet': {'id': subnet_id}}
-        frontend_ip_configurations = [frontend_ip_configuration]
+            frontend_ip_configurations = [{'name': name, 'private_ip_address_allocation': 'Dynamic',
+                                           'subnet': {'id': subnet_id}}]
+            if dual:
+                frontend_ip_configuration = {'name': f'{name}-ipv6', 'private_ip_address_allocation': 'Dynamic',
+                                             'subnet': {'id': subnet_id}, 'private_ip_address_version': 'IPv6'}
+                frontend_ip_configurations.append(frontend_ip_configuration)
         backend_address_pools = [{'name': backend_pool or name}]
+        checkport = ports[0]
         probes = [{'name': name, 'protocol': 'tcp', 'port': checkport, 'interval_in_seconds': 15,
                    'number_of_probes': 4}]
         lb_data = {'location': self.location,
@@ -1235,6 +1243,14 @@ class Kazure(object):
                                  'frontend_port': port, 'enable_floating_ip': False, 'idle_timeout_in_minutes': 4,
                                  'probe': {'id': probe_id},
                                  'frontend_ip_configuration': {'id': frontend_id}} for index, port in enumerate(ports)]
+        if dual:
+            frontend_id = lb.frontend_ip_configurations[1].id
+            dual_rules = [{'name': f"{name}-ipv6-rule-{index}", 'protocol': 'tcp',
+                           'backend_address_pool': {'id': backend_id}, 'backend_port': port,
+                           'frontend_port': port, 'enable_floating_ip': False, 'idle_timeout_in_minutes': 4,
+                           'probe': {'id': probe_id},
+                           'frontend_ip_configuration': {'id': frontend_id}} for index, port in enumerate(ports)]
+            load_balancing_rules.extend(dual_rules)
         lb.load_balancing_rules = load_balancing_rules
         lb = network_client.load_balancers.begin_create_or_update(self.resource_group, name, lb).result()
         if self.debug:
