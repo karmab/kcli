@@ -139,6 +139,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             noconf = net.get('noconf')
             vips = net.get('vips', [])
             enableipv6 = net.get('ipv6', False)
+            dualstack = index == 0 and (net.get('dualstack', False) or overrides.get('dualstack', False))
             vlan = net.get('vlan')
             bridge = net.get('bridge', False)
             bridgename = net.get('bridgename', netname)
@@ -228,7 +229,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                     if not bridge:
                         netdata += f"  iface {nicname} inet dhcp\n"
                 else:
-                    if enableipv6 or netname in ipv6:
+                    if dualstack or enableipv6 or netname in ipv6:
                         targetfamily = 'dhcp6'
                         if net.get('ipv6_stateless', False):
                             nmcontent = "[main]\nrc-manager=file\n[connection]\nipv6.dhcp-duid=ll\nipv6.dhcp-iaid=mac"
@@ -237,8 +238,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                     else:
                         targetfamily = 'dhcp4'
                     netdata[nicname] = {targetfamily: True}
-                    if net.get('dualstack', False) or\
-                       'dualstack' in overrides and overrides['dualstack'] and index == 0:
+                    if dualstack:
                         dualfamily = 'dhcp6' if targetfamily == 'dhcp4' else 'dhcp4'
                         netdata[nicname][dualfamily] = True
             if bridge and not legacy:
