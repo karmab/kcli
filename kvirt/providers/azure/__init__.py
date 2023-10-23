@@ -1218,7 +1218,10 @@ class Kazure(object):
                 frontend_ip_configuration = {'name': f'{name}-ipv6', 'private_ip_address_allocation': 'Dynamic',
                                              'subnet': {'id': subnet_id}, 'private_ip_address_version': 'IPv6'}
                 frontend_ip_configurations.append(frontend_ip_configuration)
-        backend_address_pools = [{'name': backend_pool or name}]
+        backend_name = backend_pool or name
+        backend_address_pools = [{'name': backend_name}]
+        if dual:
+            backend_address_pools.append({'name': f'{backend_name}-ipv6'})
         checkport = ports[0]
         probes = [{'name': name, 'protocol': 'tcp', 'port': checkport, 'interval_in_seconds': 15,
                    'number_of_probes': 4}]
@@ -1243,10 +1246,12 @@ class Kazure(object):
                                  'frontend_port': port, 'enable_floating_ip': False, 'idle_timeout_in_minutes': 4,
                                  'probe': {'id': probe_id},
                                  'frontend_ip_configuration': {'id': frontend_id}} for index, port in enumerate(ports)]
+        backend_id_dual = None
         if dual:
             frontend_id = lb.frontend_ip_configurations[1].id
+            backend_id_dual = lb.backend_address_pools[1].id
             dual_rules = [{'name': f"{name}-ipv6-rule-{index}", 'protocol': 'tcp',
-                           'backend_address_pool': {'id': backend_id}, 'backend_port': port,
+                           'backend_address_pool': {'id': backend_id_dual}, 'backend_port': port,
                            'frontend_port': port, 'enable_floating_ip': False, 'idle_timeout_in_minutes': 4,
                            'probe': {'id': probe_id},
                            'frontend_ip_configuration': {'id': frontend_id}} for index, port in enumerate(ports)]
@@ -1256,7 +1261,7 @@ class Kazure(object):
         if self.debug:
             print(lb)
         for index, vm in enumerate(vms):
-            self.set_loadbalancer(vm, backend_id, ports)
+            self.set_loadbalancer(vm, backend_id, ports, backend_id_dual=backend_id_dual)
             self.update_metadata(vm, 'loadbalancer', name)
         if domain is not None:
             if not internal:
@@ -1306,7 +1311,15 @@ class Kazure(object):
                                                             os.path.basename(public_address.id)).ip_address
             else:
                 ip = lb.frontend_ip_configurations[0].private_ip_address
-            protocol, ports, target = 'N/A', 'N/A', 'N/A'
+            dual_ip = None
+            if len(lb.frontend_ip_configurations) > 1:
+                dual_public_address = lb.frontend_ip_configurations[1].public_ip_address
+                if dual_public_address is not None:
+                    dual_ip = network_client.public_ip_addresses.get(self.resource_group,
+                                                                     os.path.basename(public_address.id)).ip_address
+                else:
+                    dual_ip = lb.frontend_ip_configurations[1].private_ip_address
+            protocol, ports, target = 'N/A', 'N/A', dual_ip or 'N/A'
             if lb.inbound_nat_rules or lb.load_balancing_rules:
                 rule = lb.inbound_nat_rules[0] if lb.inbound_nat_rules else lb.load_balancing_rules[0]
                 protocol = rule.protocol
@@ -1314,7 +1327,7 @@ class Kazure(object):
             results.append([lb.name, ip, protocol, ports, target])
         return results
 
-    def set_loadbalancer(self, name, backend_id, ports):
+    def set_loadbalancer(self, name, backend_id, ports, backend_id_dual=None):
         try:
             vm = self.compute_client.virtual_machines.get(self.resource_group, name)
         except:
@@ -1323,6 +1336,8 @@ class Kazure(object):
         device = os.path.basename(vm.network_profile.network_interfaces[0].id)
         nic_data = self.network_client.network_interfaces.get(self.resource_group, device)
         nic_data.ip_configurations[0].load_balancer_backend_address_pools = [{'id': backend_id}]
+        if backend_id_dual is not None:
+            nic_data.ip_configurations[1].load_balancer_backend_address_pools = [{'id': backend_id_dual}]
         result = self.network_client.network_interfaces.begin_create_or_update(self.resource_group, device, nic_data)
         result.wait()
         ports = [22] + ports
