@@ -82,7 +82,8 @@ platform:
     region: {{ config_region }}
 {% elif config_type == 'azure' %}
   azure:
-    baseDomainResourceGroupName: kcli
+    baseDomainResourceGroupName: {{ config_resourcegroup|default('kcli') }}
+    ResourceGroupName: {{ config_resourcegroup|default('kcli') }}
     region: {{ config_location }}
 {% else %}
   none: {}
