@@ -115,7 +115,7 @@ class Kazure(object):
         elif image in IMAGES:
             publisher, offer, sku, version = self.__evaluate_image(image)
             if publisher is None:
-                return {'result': 'failure', 'reason': 'Only rhel, suse and ubuntu images are supported'}
+                return {'result': 'failure', 'reason': 'Only centos, rhel, suse and ubuntu images are supported'}
         elif ':' in image and image.count(':') == 2:
             publisher, offer, sku = image.split(':')
             version = 'latest'
@@ -1171,7 +1171,11 @@ class Kazure(object):
         return {'result': 'success'}
 
     def __evaluate_image(self, image):
-        if image.startswith('rhel'):
+        if image.startswith('centos'):
+            return 'OpenLogic', 'CentOS', '8_5', 'latest'
+        elif image.startswith('rhel8'):
+            return 'RedHat', 'RHEL', '8_8', 'latest'
+        elif image.startswith('rhel9'):
             return 'RedHat', 'RHEL', '9_2', 'latest'
         elif image.startswith('rhcos'):
             return 'redhat-limited', 'rh-ocp-worker', 'rh-ocp-worker', 'latest'
