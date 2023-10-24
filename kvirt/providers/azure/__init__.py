@@ -191,6 +191,9 @@ class Kazure(object):
         openshift_node = 'kubetype' in metadata and metadata['kubetype'] == "openshift"
         if openshift_node:
             for index, port in enumerate([80, 443, 2379, 2380, 4789, 8080, 5443, 6081, 6443, 8443, 22624]):
+                cluster = metadata['kube']
+                if cluster not in self.list_security_groups():
+                    self.create_security_group(f"{cluster}-nsg")
                 rule_data = SecurityRule(protocol='Tcp', source_address_prefix='*',
                                          destination_address_prefix='*', access='Allow',
                                          direction='Inbound', description=f'tcp {port}',
@@ -247,7 +250,6 @@ class Kazure(object):
                                      priority=118, name="udp-9000-9999")
             network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-sg",
                                                                  "udp-9000-9999", rule_data)
-            cluster = metadata['kube']
             msi_client = self.msi_client
             auth_client = self.auth_client
             identities = [i.name for i in msi_client.user_assigned_identities.list_by_subscription()]
