@@ -1157,6 +1157,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = os.path.expanduser(config.options.get('credentials'))
     elif config.type == 'azure':
         azure_credentials(config)
+        if '-' in network:
+            vnet = network.split('-')[0]
+            data['machine_cidr'] = k.info_network(vnet)['cidr']
     installconfig = config.process_inputfile(cluster, f"{plandir}/install-config.yaml", overrides=data)
     with open(f"{clusterdir}/install-config.yaml", 'w') as f:
         f.write(installconfig)
@@ -1170,11 +1173,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if config.type == 'azure':
         prefix = safe_load(open(f'{clusterdir}/openshift/99_cloud-creds-secret.yaml'))['data']['azure_resource_prefix']
         new_prefix = b64encode(bytes(cluster, 'utf-8')).decode('utf-8')
-        print(prefix, new_prefix)
         sedcmd = f'sed -i "s@{prefix}@{new_prefix}@" {clusterdir}/openshift/99_cloud-creds-secret.yaml'
         call(sedcmd, shell=True)
         old_prefix = b64decode(bytes(prefix, 'utf-8')).decode('utf-8')
-        print(old_prefix, cluster)
         sedcmd = f'sed -i "s@{old_prefix}@{cluster}@" {clusterdir}/openshift/* {clusterdir}/manifests/*'
         call(sedcmd, shell=True)
     for f in glob(f"{clusterdir}/openshift/99_openshift-cluster-api_master-machines-*.yaml"):

@@ -2903,6 +2903,11 @@ class Kconfig(Kbaseconfig):
                     self.k.delete_security_group(cluster)
                 except:
                     pass
+            if self.type == 'azure':
+                try:
+                    self.k.delete_identity(f'kcli-{cluster}')
+                except:
+                    pass
         elif dnsclient is not None:
             z = Kconfig(client=dnsclient).k
             z.delete_dns(f"api.{cluster}", domain)

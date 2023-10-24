@@ -8,7 +8,7 @@
 {% set service_network_ipv6 = [service_network_ipv6] %}
 {% set service_networks = service_network_ipv4 + service_network_ipv6 if dualstack|default(False) else service_network_ipv6 if ipv6 else service_network_ipv4 %}
 {% endif %}
-{% set machine_cidr_ipv4 = ["10.0.0.0/16"] %}
+{% set machine_cidr_ipv4 = [machine_cidr|default("10.0.0.0/16")] %}
 {% set machine_cidr_ipv6 = ["fc00::/48"] %}
 {% set machine_cidrs = machine_cidr_ipv4 + machine_cidr_ipv6 if dualstack|default(False) else machine_cidr_ipv6 if ipv6 else machine_cidr_ipv4 %}
 {% if sno_disk == None %}
@@ -84,6 +84,13 @@ platform:
   azure:
     baseDomainResourceGroupName: {{ config_resourcegroup|default('kcli') }}
     ResourceGroupName: {{ config_resourcegroup|default('kcli') }}
+{% if '-' in network %}
+{% set vnet = network.split('-')[0] %}
+    networkResourceGroupName: {{ config_resourcegroup|default('kcli') }}
+    VirtualNetwork: {{ vnet }}
+    ControlPlaneSubnet: {{ subnet_ctlplane|default(network) }}
+    ComputeSubnet: {{ subnet_worker|default(network) }}
+{% endif %}
     region: {{ config_location }}
 {% else %}
   none: {}

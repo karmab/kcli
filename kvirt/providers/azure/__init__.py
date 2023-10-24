@@ -7,15 +7,17 @@ from kvirt import common
 from kvirt.defaults import IMAGES, METADATA_FIELDS
 from kvirt.common import error, warning, pprint, success
 from azure.identity import ClientSecretCredential
-from azure.mgmt.marketplaceordering import MarketplaceOrderingAgreements
-from azure.mgmt.resource import ResourceManagementClient
-from azure.mgmt.network import NetworkManagementClient
-from azure.mgmt.network.models import SecurityRule
+from azure.mgmt.authorization import AuthorizationManagementClient
 from azure.mgmt.compute import ComputeManagementClient
 from azure.mgmt.compute.models import DiskCreateOption
+from azure.mgmt.marketplaceordering import MarketplaceOrderingAgreements
+from azure.mgmt.network.models import SecurityRule
+from azure.mgmt.network import NetworkManagementClient
+from azure.mgmt.resource import ResourceManagementClient
 from azure.mgmt.storage import StorageManagementClient
-from azure.storage.blob import BlobServiceClient, BlobSasPermissions, generate_container_sas
+from azure.mgmt.msi import ManagedServiceIdentityClient
 from azure.mgmt.dns import DnsManagementClient
+from azure.storage.blob import BlobServiceClient, BlobSasPermissions, generate_container_sas
 from datetime import datetime, timezone, timedelta
 import os
 from random import choice
@@ -66,6 +68,8 @@ class Kazure(object):
             self.account_key = storage_client.storage_accounts.list_keys(resource_group, storage_account).keys[0].value
             self.storage_account = storage_account
         self.dns_client = DnsManagementClient(credentials, subscription_id)
+        self.msi_client = ManagedServiceIdentityClient(credentials, subscription_id)
+        self.auth_client = AuthorizationManagementClient(credentials, subscription_id)
 
     def close(self):
         print("not implemented")
@@ -243,6 +247,23 @@ class Kazure(object):
                                      priority=118, name="udp-9000-9999")
             network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-sg",
                                                                  "udp-9000-9999", rule_data)
+            cluster = metadata['kube']
+            msi_client = self.msi_client
+            auth_client = self.auth_client
+            identities = [i.name for i in msi_client.user_assigned_identities.list_by_subscription()]
+            if cluster not in identities:
+                identity_data = {'location': self.location}
+                identity = msi_client.user_assigned_identities.create_or_update(self.resource_group, f"kcli-{cluster}",
+                                                                                identity_data)
+                principal_id = identity.principal_id
+                scope = f"/subscriptions/{self.subscription_id}/resourceGroups/{self.resource_group}"
+                role_id = [d.id for d in auth_client.role_definitions.list(scope) if d.role_name == 'Contributor'][0]
+                role_data = {'role_definition_id': role_id, 'principal_id': principal_id,
+                             'principal_type': 'ServicePrincipal'}
+                auth_client.role_assignments.create(scope, principal_id, role_data)
+            identity = f'/subscriptions/{self.subscription_id}/resourceGroups/{self.resource_group}/providers/'
+            identity += f'Microsoft.ManagedIdentity/userAssignedIdentities/kcli-{cluster}'
+            data['identity'] = {'type': 'userAssigned', 'userAssignedIdentities': {identity: {}}}
         network_interfaces = []
         subnets = self.list_subnets()
         for index, net in enumerate(nets):
@@ -1390,3 +1411,6 @@ class Kazure(object):
 
     def list_dns_zones(self):
         return [os.path.basename(z.id) for z in self.dns_client.zones.list()]
+
+    def delete_identity(self, identity):
+        self.msi_client.user_assigned_identities.delete(self.resource_group, identity)
