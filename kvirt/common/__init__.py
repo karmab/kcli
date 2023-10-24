@@ -2357,9 +2357,18 @@ def interactive_vm():
     overrides = {}
     default_parameters = {'image': 'centos8stream', 'numcpus': 2, 'memory': 512, 'pool': 'default', 'disks': [10],
                           'nets': ['default']}
-    pprint("Override the following items or accept default values")
+    pprint("Override the following items or accept default values:")
     for key in default_parameters:
-        overrides[key] = input(f"{key}: ({default_parameters[key]}) ") or default_parameters[key]
+        value = input(f"{key}: ({default_parameters[key]}) ")
+        if value is None:
+            value = default_parameters[key]
+        elif value == 'None':
+            value = None
+        elif isinstance(key, list):
+            value = [value]
+        elif isinstance(key, int):
+            value = int(value)
+        overrides[key] = value
     return overrides
 
 
@@ -2374,7 +2383,16 @@ def interactive_kube(_type):
         default_parameters.update({'pull_secret': 'openshift_pull.json', 'version': 'stable', 'tag': OPENSHIFT_TAG,
                                    'memory': 20480, 'sno_disk': None, 'sno_vm': False, 'sno_wait': False,
                                    'sno_cpuset': None})
-    pprint("Override the following items or accept default values")
+    pprint("Override the following items or accept default values:")
     for key in default_parameters:
-        overrides[key] = input(f"Indicate {key}: ({default_parameters[key]}) ") or default_parameters[key]
+        value = input(f"{key}: ({default_parameters[key]}) ")
+        if value is None:
+            value = default_parameters[key]
+        elif value == 'None':
+            value = None
+        elif isinstance(key, list):
+            value = [value]
+        elif isinstance(key, int):
+            value = int(value)
+        overrides[key] = value
     return overrides
