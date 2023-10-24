@@ -2359,14 +2359,15 @@ def interactive_vm():
                           'nets': ['default']}
     pprint("Override the following items or accept default values:")
     for key in default_parameters:
-        value = input(f"{key}: ({default_parameters[key]}) ")
-        if value is None:
-            value = default_parameters[key]
+        default_value = default_parameters[key]
+        value = input(f"{key}: ({default_value}) ")
+        if value is None or value == '':
+            value = default_value
         elif value == 'None':
             value = None
-        elif isinstance(key, list):
-            value = [value]
-        elif isinstance(key, int):
+        elif isinstance(default_value, list):
+            value = value.split(',') if '[' in value else [value]
+        elif isinstance(default_value, int):
             value = int(value)
         overrides[key] = value
     return overrides
@@ -2385,14 +2386,15 @@ def interactive_kube(_type):
                                    'sno_cpuset': None})
     pprint("Override the following items or accept default values:")
     for key in default_parameters:
-        value = input(f"{key}: ({default_parameters[key]}) ")
-        if value is None:
+        default_value = default_parameters[key]
+        value = input(f"{key}: ({default_value}) ")
+        if value is None or value == '':
             value = default_parameters[key]
         elif value == 'None':
             value = None
-        elif isinstance(key, list):
-            value = [value]
-        elif isinstance(key, int):
+        elif isinstance(default_value, list):
+            value = value.split(',') if '[' in value else [value]
+        elif isinstance(default_value, int):
             value = int(value)
         overrides[key] = value
     return overrides
