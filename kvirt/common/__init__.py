@@ -8,6 +8,7 @@ from hashlib import sha256
 from kvirt.jinjafilters import jinjafilters
 from kvirt.defaults import UBUNTUS, SSH_PUB_LOCATIONS, OPENSHIFT_TAG
 from kvirt.kfish import Redfish
+from kvirt.nameutils import get_random_name
 from kvirt import version
 from ipaddress import ip_address
 from random import randint
@@ -2355,8 +2356,8 @@ def fix_typos(data):
 
 def interactive_vm():
     overrides = {}
-    default_parameters = {'image': 'centos8stream', 'numcpus': 2, 'memory': 512, 'pool': 'default', 'disks': [10],
-                          'nets': ['default']}
+    default_parameters = {'name': get_random_name(), 'image': 'centos8stream', 'numcpus': 2, 'memory': 512,
+                          'pool': 'default', 'disks': [10], 'nets': ['default']}
     pprint("Override the following items or accept default values:")
     for key in default_parameters:
         default_value = default_parameters[key]
@@ -2366,7 +2367,7 @@ def interactive_vm():
         elif value == 'None':
             value = None
         elif isinstance(default_value, list):
-            value = value.split(',') if '[' in value else [value]
+            value = json.loads(value) if '[' in value else [value]
         elif isinstance(default_value, int):
             value = int(value)
         overrides[key] = value
@@ -2375,8 +2376,8 @@ def interactive_vm():
 
 def interactive_kube(_type):
     overrides = {}
-    default_parameters = {'domain': 'karmalabs.corp', 'network': 'default', 'version': None,
-                          'ctlplanes': 1, 'workers': 0, 'memory': 6144, 'numcpus': 4, 'disk_size': 30}
+    default_parameters = {'cluster': get_random_name(), 'domain': 'karmalabs.corp', 'network': 'default',
+                          'version': None, 'ctlplanes': 1, 'workers': 0, 'memory': 6144, 'numcpus': 4, 'disk_size': 30}
     if _type == 'openshift':
         default_parameters.update({'pull_secret': 'openshift_pull.json', 'version': 'stable', 'tag': OPENSHIFT_TAG,
                                    'ctlplanes': 3, 'workers': 0, 'memory': 16384})
@@ -2393,7 +2394,7 @@ def interactive_kube(_type):
         elif value == 'None':
             value = None
         elif isinstance(default_value, list):
-            value = value.split(',') if '[' in value else [value]
+            value = json.loads(value) if '[' in value else [value]
         elif isinstance(default_value, int):
             value = int(value)
         overrides[key] = value

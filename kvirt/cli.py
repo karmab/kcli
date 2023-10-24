@@ -13,7 +13,7 @@ from ipaddress import ip_address
 import json
 from kvirt import common
 from kvirt import examples
-from kvirt import nameutils
+from kvirt.nameutils import get_random_name
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.common import error, pprint, success, warning, ssh, _ssh_credentials, container_mode
 from kvirt.common import get_git_version, compare_git_versions, interactive_kube, interactive_vm
@@ -1451,7 +1451,7 @@ def create_openshift_iso(args):
 def create_openshift_disconnected(args):
     plan = args.plan
     if plan is None:
-        plan = nameutils.get_random_name()
+        plan = get_random_name()
         pprint(f"Using {plan} as name of the plan")
     overrides = handle_parameters(args.param, args.paramfile)
     if 'cluster' not in overrides:
@@ -1501,7 +1501,7 @@ def create_vm(args):
     if 'name' in overrides:
         name = overrides['name']
     if name is None:
-        name = config.get_name_from_confpool(confpool) if confpool is not None else nameutils.get_random_name()
+        name = config.get_name_from_confpool(confpool) if confpool is not None else get_random_name()
         if config.type in ['gcp', 'kubevirt']:
             name = name.replace('_', '-')
         if config.type != 'aws' and not onlyassets:
@@ -1729,7 +1729,7 @@ def create_lb(args):
         vms = [v.strip() for v in good_vms.split(',')]
     good_ports = args.ports[1:-1] if args.ports.startswith('[') and args.ports.endswith(']') else args.ports
     ports = [p.strip() for p in good_ports.split(',')]
-    name = nameutils.get_random_name().replace('_', '-') if args.name is None else args.name
+    name = get_random_name().replace('_', '-') if args.name is None else args.name
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     config.create_loadbalancer(name, ports=ports, checkpath=checkpath, vms=vms, domain=domain, checkport=checkport,
                                internal=internal, ip=ip)
@@ -2051,7 +2051,7 @@ def create_plan(args):
     overrides.update({'type': _type})
     plan = overrides.get('plan', args.plan)
     if plan is None:
-        plan = nameutils.get_random_name()
+        plan = get_random_name()
         pprint(f"Using {plan} as name of the plan")
     if overrides.get('force', args.force):
         if plan is None:
@@ -2124,7 +2124,7 @@ def delete_plan(args):
 def expose_cluster(args):
     plan = args.cluster
     if plan is None:
-        plan = nameutils.get_random_name()
+        plan = get_random_name()
         pprint(f"Using {plan} as name of the plan")
     port = args.port
     overrides = handle_parameters(args.param, None)
@@ -2147,7 +2147,7 @@ def expose_cluster(args):
 def expose_plan(args):
     plan = args.plan
     if plan is None:
-        plan = nameutils.get_random_name()
+        plan = get_random_name()
         pprint(f"Using {plan} as name of the plan")
     port = args.port
     overrides = handle_parameters(args.param, args.paramfile)
@@ -2400,7 +2400,7 @@ def download_plan(args):
     plan = args.plan
     url = args.url
     if plan is None:
-        plan = nameutils.get_random_name()
+        plan = get_random_name()
         pprint(f"Using {plan} as name of the plan")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     config.plan(plan, url=url, download=True)
@@ -3058,7 +3058,7 @@ def create_container(args):
     cont = Kcontainerconfig(config, client=args.containerclient).cont
     containerprofiles = {k: v for k, v in config.profiles.items() if 'type' in v and v['type'] == 'container'}
     if name is None:
-        name = nameutils.get_random_name()
+        name = get_random_name()
         if config.type == 'kubevirt':
             name = name.replace('_', '-')
     if image is not None:
@@ -3312,7 +3312,7 @@ def create_workflow(args):
         pprint(f"Saving rendered assets in {outputdir}")
     workflow = args.workflow
     if workflow is None:
-        workflow = nameutils.get_random_name()
+        workflow = get_random_name()
         pprint(f"Using {workflow} as name of the workflow")
     overrides = handle_parameters(args.param, args.paramfile)
     config = None
