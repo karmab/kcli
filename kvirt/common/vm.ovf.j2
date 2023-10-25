@@ -9,7 +9,7 @@
   </DiskSection>
   <NetworkSection>
     <Info>The list of logical networks</Info>
-    <Network ovf:name="VM Network">
+    <Network ovf:name="{import_network}">
       <Description>The VM Network network</Description>
     </Network>
   </NetworkSection>
@@ -80,7 +80,7 @@
       <Item>
         <rasd:AddressOnParent>0</rasd:AddressOnParent>
         <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
-        <rasd:Connection>VM Network</rasd:Connection>
+        <rasd:Connection>{import_network}</rasd:Connection>
         <rasd:ElementName>Network adapter 1</rasd:ElementName>
         <rasd:InstanceID>7</rasd:InstanceID>
         <rasd:ResourceSubType>VmxNet3</rasd:ResourceSubType>

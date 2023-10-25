@@ -1273,7 +1273,8 @@ class Ksphere:
             virtual_size = vmdk_info['virtual-size']
             actual_size = vmdk_info['actual-size']
             ovfcontent = open(f"{commondir}/vm.ovf.j2").read().format(name=shortimage, virtual_size=virtual_size,
-                                                                      actual_size=actual_size, vmdk_file=vmdk_file)
+                                                                      actual_size=actual_size, vmdk_file=vmdk_file,
+                                                                      import_network=self.import_network)
             with open(ovf_path, 'w') as f:
                 f.write(ovfcontent)
         ovfd = open(ovf_path).read()
