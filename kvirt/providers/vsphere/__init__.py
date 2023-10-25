@@ -1287,7 +1287,8 @@ class Ksphere:
                 network = networks[0]
                 break
         if network is None:
-            error("Couldnt find a esxi host in the cluster to run the import")
+            error("Couldn't find any esxi host in the cluster with network {self.import_network}")
+            error("Set import_network to a valid value")
             sys.exit(1)
         networkmapping = vim.OvfManager.NetworkMapping.Array()
         nm = vim.OvfManager.NetworkMapping(name=self.import_network, network=network)
