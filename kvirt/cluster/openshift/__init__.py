@@ -1577,11 +1577,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     backup_paramfile(config.client, installparam, clusterdir, cluster, plan, image, dnsconfig)
     if platform in virtplatforms:
         if platform == 'vsphere':
-            try:
-                pprint(f"Creating vm folder /vm/{cluster}")
-                k.create_vm_folder(cluster)
-            except:
-                warning(f"Couldnt create folder /vm/{cluster}. Native Storage wont work")
+            vmfolder = '/vm'
+            if 'basefolder' in config.options:
+                vmfolder += f'/{config.options["basefolder"]}'
+            pprint(f"Creating vm folder {vmfolder}/{cluster}")
+            k.create_vm_folder(cluster)
         pprint("Deploying bootstrap")
         result = config.plan(plan, inputfile=f'{plandir}/bootstrap.yml', overrides=overrides)
         if result['result'] != 'success':
