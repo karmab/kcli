@@ -35,7 +35,7 @@ from uuid import UUID
 class Ksphere:
     def __init__(self, host, user, password, datacenter, cluster, debug=False, isofolder=None,
                  filtervms=False, filteruser=False, filtertag=None, category='kcli', basefolder=None, dvs=True,
-                 import_network='VM Network', timeout=2700, force_pool=False):
+                 import_network='VM Network', timeout=2700, force_pool=False, restricted=False):
         if timeout < 1:
             smart_stub = connect.SmartStubAdapter(host=host, port=443, sslContext=_create_unverified_context(),
                                                   connectionPoolTimeout=0)
@@ -69,9 +69,19 @@ class Ksphere:
         self.networks = []
         self.dvs = dvs
         self.portgs = {}
-        self.basefolder = basefolder
+        self.restricted = restricted
         self.import_network = import_network
         self.force_pool = force_pool
+        if basefolder is not None:
+            if not self.restricted:
+                createfolder(si, self.dc.vmFolder, basefolder)
+            self.basefolder = find(si, self.dc.vmFolder, vim.Folder, basefolder)
+            if self.basefolder is None:
+                error("Couldnt find basefolder {basefolder}")
+                self.conn = None
+                return
+        else:
+            self.basefolder = self.dc.vmFolder
 
     def set_networks(self):
         si = self.si
@@ -122,19 +132,17 @@ class Ksphere:
         numcpus = int(numcpus)
         si = self.si
         basefolder = self.basefolder
+        restricted = self.restricted
         rootFolder = self.rootFolder
-        if basefolder is not None:
-            createfolder(si, dc.vmFolder, basefolder)
-            basefolder = find(si, dc.vmFolder, vim.Folder, basefolder)
-        else:
-            basefolder = dc.vmFolder
+        basefolder = self.basefolder
         cluster = overrides.get('cluster')
-        if cluster is not None:
-            createfolder(si, basefolder, cluster)
-            vmfolder = find(si, basefolder, vim.Folder, cluster)
-        elif plan != 'kvirt':
-            createfolder(si, basefolder, plan)
-            vmfolder = find(si, basefolder, vim.Folder, plan)
+        if not restricted:
+            if cluster is not None:
+                createfolder(si, basefolder, cluster)
+                vmfolder = find(si, basefolder, vim.Folder, cluster)
+            elif plan != 'kvirt':
+                createfolder(si, basefolder, plan)
+                vmfolder = find(si, basefolder, vim.Folder, plan)
         else:
             vmfolder = basefolder
         si = self.si
@@ -511,8 +519,7 @@ class Ksphere:
 
     def start(self, name):
         si = self.si
-        dc = self.dc
-        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vmFolder = self.basefolder
         vm, info = findvm2(si, vmFolder, name)
         if vm is None:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
@@ -524,8 +531,7 @@ class Ksphere:
 
     def stop(self, name, soft=False):
         si = self.si
-        dc = self.dc
-        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vmFolder = self.basefolder
         vm, info = findvm2(si, vmFolder, name)
         if vm is None:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
@@ -537,8 +543,7 @@ class Ksphere:
 
     def restart(self, name):
         si = self.si
-        dc = self.dc
-        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vmFolder = self.basefolder
         vm, info = findvm2(si, vmFolder, name)
         if vm is None:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
@@ -550,8 +555,7 @@ class Ksphere:
 
     def status(self, name):
         si = self.si
-        dc = self.dc
-        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vmFolder = self.basefolder
         vm, info = findvm2(si, vmFolder, name)
         runtime = info['runtime']
         return runtime.powerState if vm is not None else ''
@@ -559,7 +563,7 @@ class Ksphere:
     def delete(self, name, snapshots=False):
         si = self.si
         dc = self.dc
-        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vmFolder = self.basefolder
         vm, info = findvm2(si, vmFolder, name)
         if vm is None:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
@@ -607,8 +611,7 @@ class Ksphere:
     def console(self, name, tunnel=False, web=False):
         si = self.si
         vcip = self.vcip
-        dc = self.dc
-        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vmFolder = self.basefolder
         vm, info = findvm2(si, vmFolder, name)
         if vm is None:
             print(f"VM {name} not found")
@@ -672,9 +675,7 @@ class Ksphere:
         si = self.si
         if vm is None:
             listinfo = False
-            dc = self.dc
-            basefolder = self.basefolder
-            vmFolder = find(si, dc.vmFolder, vim.Folder, basefolder) if basefolder is not None else dc.vmFolder
+            vmFolder = self.basefolder
             obj, vm = findvm2(si, vmFolder, name)
             if vm is None:
                 error(f"VM {name} not found")
@@ -752,11 +753,10 @@ class Ksphere:
 
     def list(self):
         si = self.si
-        dc = self.dc
         content = si.content
         vms = []
-        folder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
-        all_vms = get_all_obj(content, [vim.VirtualMachine], folder=folder)
+        vmFolder = self.basefolder
+        all_vms = get_all_obj(content, [vim.VirtualMachine], folder=vmFolder)
         if not all_vms:
             return vms
         prop_collector = content.propertyCollector
@@ -1006,8 +1006,7 @@ class Ksphere:
     def add_disk(self, name, size=1, pool=None, thin=True, image=None, shareable=False, existing=None,
                  interface='virtio', novm=False, overrides={}, diskname=None):
         si = self.si
-        dc = self.dc
-        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vmFolder = self.basefolder
         vm, info = findvm2(si, vmFolder, name)
         if vm is None:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
@@ -1040,8 +1039,7 @@ class Ksphere:
 
     def delete_disk(self, name=None, diskname=None, pool=None, novm=False):
         si = self.si
-        dc = self.dc
-        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vmFolder = self.basefolder
         vm, info = findvm2(si, vmFolder, name)
         if vm is None:
             msg = f"VM {name} not found"
@@ -1066,8 +1064,7 @@ class Ksphere:
         if network == 'default':
             network = 'VM Network'
         si = self.si
-        dc = self.dc
-        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vmFolder = self.basefolder
         vm, info = findvm2(si, vmFolder, name)
         if vm is None:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
@@ -1084,8 +1081,7 @@ class Ksphere:
 
     def delete_nic(self, name, interface):
         si = self.si
-        dc = self.dc
-        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vmFolder = self.basefolder
         vm, info = findvm2(si, vmFolder, name)
         if vm is None:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
@@ -1372,8 +1368,7 @@ class Ksphere:
 
     def delete_image(self, image, pool=None):
         si = self.si
-        dc = self.dc
-        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vmFolder = self.basefolder
         vm, info = findvm2(si, vmFolder, image)
         if vm is None or not info['config'].template:
             return {'result': 'failure', 'reason': f'Image {image} not found'}
@@ -1384,8 +1379,7 @@ class Ksphere:
 
     def export(self, name, image=None):
         si = self.si
-        dc = self.dc
-        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vmFolder = self.basefolder
         vm, info = findvm2(si, vmFolder, name)
         if vm is None:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
@@ -1449,26 +1443,19 @@ class Ksphere:
         return {'result': 'success'}
 
     def clone(self, old, new, full=False, start=False):
-        dc = self.dc
         si = self.si
-        basefolder = self.basefolder
+        restricted = self.restricted
         rootFolder = self.rootFolder
-        if basefolder is not None:
-            createfolder(si, dc.vmFolder, basefolder)
-            basefolder = find(si, dc.vmFolder, vim.Folder, basefolder)
-        else:
-            basefolder = dc.vmFolder
-        vmfolder = basefolder
+        vmFolder = self.basefolder
         old_info = self.info(old)
         plan, cluster = old_info.get('plan'), old_info.get('cluster')
-        if cluster is not None:
-            createfolder(si, basefolder, cluster)
-            vmfolder = find(si, basefolder, vim.Folder, cluster)
-        elif plan != 'kvirt':
-            createfolder(si, basefolder, plan)
-            vmfolder = find(si, basefolder, vim.Folder, plan)
-        else:
-            vmfolder = basefolder
+        if not restricted:
+            if cluster is not None:
+                createfolder(si, vmFolder, cluster)
+                vmFolder = find(si, vmFolder, vim.Folder, cluster)
+            elif plan != 'kvirt':
+                createfolder(si, vmFolder, plan)
+                vmFolder = find(si, vmFolder, vim.Folder, plan)
         si = self.si
         clu = find(si, rootFolder, vim.ComputeResource, self.clu)
         resourcepool = clu.resourcePool
@@ -1481,14 +1468,13 @@ class Ksphere:
         extraconfig = []
         clonespec.powerOn = start
         confspec.extraConfig = extraconfig
-        t = imageobj.CloneVM_Task(folder=vmfolder, name=new, spec=clonespec)
+        t = imageobj.CloneVM_Task(folder=vmFolder, name=new, spec=clonespec)
         waitForMe(t)
         return {'result': 'success'}
 
     def create_snapshot(self, name, base):
         si = self.si
-        dc = self.dc
-        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vmFolder = self.basefolder
         vm, info = findvm2(si, vmFolder, base)
         if vm is None:
             return {'result': 'failure', 'reason': f"VM {base} not found"}
@@ -1501,8 +1487,7 @@ class Ksphere:
 
     def delete_snapshot(self, name, base):
         si = self.si
-        dc = self.dc
-        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vmFolder = self.basefolder
         vm, info = findvm2(si, vmFolder, base)
         if vm is None:
             return {'result': 'failure', 'reason': f"VM {base} not found"}
@@ -1516,8 +1501,7 @@ class Ksphere:
 
     def list_snapshots(self, base):
         si = self.si
-        dc = self.dc
-        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vmFolder = self.basefolder
         vm, info = findvm2(si, vmFolder, base)
         if vm is None:
             return {'result': 'failure', 'reason': f"VM {base} not found"}
@@ -1526,8 +1510,7 @@ class Ksphere:
 
     def revert_snapshot(self, name, base):
         si = self.si
-        dc = self.dc
-        vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder) if self.basefolder is not None else dc.vmFolder
+        vmFolder = self.basefolder
         vm, info = findvm2(si, vmFolder, base)
         if vm is None:
             return {'result': 'failure', 'reason': f"VM {base} not found"}
@@ -1542,9 +1525,7 @@ class Ksphere:
     def ip(self, name):
         result = None
         si = self.si
-        dc = self.dc
-        basefolder = self.basefolder
-        vmFolder = find(si, dc.vmFolder, vim.Folder, basefolder) if basefolder is not None else dc.vmFolder
+        vmFolder = self.basefolder
         obj, vm = findvm2(si, vmFolder, name)
         guest = vm['guest']
         if vm is not None:
@@ -1559,12 +1540,7 @@ class Ksphere:
 
     def create_vm_folder(self, name):
         si = self.si
-        dc = self.dc
-        if self.basefolder is not None:
-            createfolder(si, dc.vmFolder, self.basefolder)
-            vmFolder = find(si, dc.vmFolder, vim.Folder, self.basefolder)
-        else:
-            vmFolder = dc.vmFolder
+        vmFolder = self.basefolder
         if find(si, vmFolder, vim.Folder, name) is None:
             createfolder(si, vmFolder, name)
 

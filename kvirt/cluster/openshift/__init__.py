@@ -1577,12 +1577,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     backup_paramfile(config.client, installparam, clusterdir, cluster, plan, image, dnsconfig)
     if platform in virtplatforms:
         if platform == 'vsphere':
-            basefolder = config.options.get("basefolder")
-            basefolder_cluster = overrides.get("basefolder_cluster", False)
+            basefolder = config.options.get('basefolder')
+            restricted = config.options.get('restricted', False)
             vmfolder = '/vm'
             if basefolder is not None:
                 vmfolder += f'/{basefolder}'
-            if not basefolder_cluster:
+            if not restricted:
                 vmfolder += '/{cluster}'
                 pprint(f"Creating vm folder {vmfolder}")
                 k.create_vm_folder(cluster)

@@ -663,7 +663,6 @@ myvsphere:
  cluster: xxx
  filtervms: true
  pool: mysuperdatastore
-
 ```
 
 The following parameters are specific to Vsphere:
@@ -678,6 +677,7 @@ The following parameters are specific to Vsphere:
 - `import_network` Defaults to 'VM Network'. Network to use as part of the template created when downloading image
 - `timeout` Defaults to 2700. Custom connectionPooltimeout
 - `force_pool` Defaults to False. Whether to check source pool of image and relocate when it doesn't match specified pool
+- `restricted` Defaults to False. Prevents create folder operations
 
 Note that pool in Vsphere context refers to datastore.
 
