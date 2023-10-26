@@ -272,11 +272,13 @@ class Kazure(object):
             nic_name = f'{name}-eth{index}'
             netpublic = overrides.get('public', True)
             public_ip = None
+            ip = None
             if isinstance(net, str):
                 netname = net
                 alias = []
             elif isinstance(net, dict) and 'name' in net:
                 netname = net['name']
+                ip = net.get('ip')
                 alias = net.get('alias', [])
                 if 'public' in net:
                     netpublic = net.get('public')
@@ -285,7 +287,11 @@ class Kazure(object):
                 subnet = subnets[matching_subnets[0]]
                 subnet_id = subnet['id']
                 subnet_cidr = subnet['cidr']
-                ip_configurations = [{'name': nic_name, 'subnet': {'id': subnet_id}}]
+                ip_configuration = {'name': nic_name, 'subnet': {'id': subnet_id}}
+                if ip is not None:
+                    ip_configuration['private_ip_allocation_method'] = 'Static'
+                    ip_configuration['private_ip_address'] = ip
+                ip_configurations = [ip_configuration]
                 if ':' in subnet_cidr or subnet.get('dual_cidr') is not None:
                     ip_configuration = {'name': f'{nic_name}-ipv6', 'subnet': {'id': subnet_id},
                                         'private_ip_address_version': 'IPv6'}
