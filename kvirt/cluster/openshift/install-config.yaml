@@ -67,13 +67,16 @@ networking:
 platform:
 {% if config_type == 'vsphere' %}
 {% set folder = 'vm/' + config_basefolder if config_basefolder is defined else 'vm' %}
+{% if not basefolder_cluster|default(False) %}
+{% set folder = folder + '/' + cluster %}
+{% endif  %}
   vsphere:
     vcenter: {{ config_host }}
     username: {{ config_user }}
     password: {{ config_password }}
     datacenter: {{ config_datacenter }}
     defaultDatastore: {{ config_pool }}
-    folder: /{{ config_datacenter}}/{{ folder }}/{{ cluster }}
+    folder: /{{ config_datacenter}}/{{ folder }}
 {% elif config_type == 'aws' %}
   aws:
     region: {{ config_region }}
