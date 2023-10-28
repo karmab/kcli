@@ -24,6 +24,7 @@ from kvirt.expose import Kexposer
 from kvirt.internalplans import haproxy as haproxyplan
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
+from kvirt import defaults as kdefaults
 from kvirt.miniconsole import Kminiconsole
 from getpass import getuser
 import glob
@@ -53,25 +54,26 @@ def dependency_error(provider, exception=None):
 class Kconfig(Kbaseconfig):
     def __init__(self, client=None, debug=False, quiet=False, region=None, zone=None, namespace=None, offline=False):
         Kbaseconfig.__init__(self, client=client, debug=debug, quiet=quiet, offline=offline)
+        options = self.options
         if not self.enabled:
             k = None
         else:
             if self.type == 'kubevirt':
                 if namespace is None:
-                    namespace = self.options.get('namespace')
-                context = self.options.get('context')
-                datavolumes = self.options.get('datavolumes', True)
-                readwritemany = self.options.get('readwritemany', False)
-                ca_file = self.options.get('ca_file')
+                    namespace = options.get('namespace')
+                context = options.get('context')
+                datavolumes = options.get('datavolumes', kdefaults.KUBEVIRT['datavolumes'])
+                readwritemany = options.get('readwritemany', kdefaults.KUBEVIRT['readwritemany'])
+                ca_file = options.get('ca_file')
                 if ca_file is not None:
                     ca_file = os.path.expanduser(ca_file)
                     if not os.path.exists(ca_file):
                         error(f"Ca file {ca_file} doesn't exist. Leaving")
                         sys.exit(1)
-                disk_hotplug = self.options.get('disk_hotplug', False)
-                kubeconfig_file = self.options.get('kubeconfig')
-                token = self.options.get('token')
-                token_file = self.options.get('token_file')
+                disk_hotplug = options.get('disk_hotplug', kdefaults.KUBEVIRT['disk_hotplug'])
+                kubeconfig_file = options.get('kubeconfig')
+                token = options.get('token')
+                token_file = options.get('token_file')
                 if token_file is not None:
                     token_file = os.path.expanduser(token_file)
                     if not os.path.exists(token_file):
@@ -79,25 +81,25 @@ class Kconfig(Kbaseconfig):
                         sys.exit(1)
                     else:
                         token = open(token_file).read()
-                registry = self.options.get('registry')
-                access_mode = self.options.get('access_mode', 'NodePort')
+                registry = options.get('registry')
+                access_mode = options.get('access_mode', kdefaults.KUBEVIRT['access_mode'])
                 if access_mode not in ['External', 'LoadBalancer', 'NodePort']:
                     msg = f"Incorrect access_mode {access_mode}. Should be External, NodePort or LoadBalancer"
                     error(msg)
                     sys.exit(1)
-                volume_mode = self.options.get('volume_mode', 'Filesystem')
+                volume_mode = options.get('volume_mode', kdefaults.KUBEVIRT['volume_mode'])
                 if volume_mode not in ['Filesystem', 'Block']:
                     msg = f"Incorrect volume_mode {volume_mode}. Should be Filesystem or Block"
                     error(msg)
                     sys.exit(1)
-                volume_access = self.options.get('volume_access', 'ReadWriteOnce')
+                volume_access = options.get('volume_access', kdefaults.KUBEVIRT['volume_access'])
                 if volume_access not in ['ReadWriteMany', 'ReadWriteOnce']:
                     msg = f"Incorrect volume_access {volume_access}. Should be ReadWriteOnce or ReadWriteOnce"
                     error(msg)
                     sys.exit(1)
-                harvester = self.options.get('harvester', False)
-                embed_userdata = self.options.get('embed_userdata', False)
-                first_consumer = self.options.get('first_consumer', False)
+                harvester = options.get('harvester', kdefaults.KUBEVIRT['harvester'])
+                embed_userdata = options.get('embed_userdata', kdefaults.KUBEVIRT['embed_userdata'])
+                first_consumer = options.get('first_consumer', kdefaults.KUBEVIRT['first_consumer'])
                 try:
                     from kvirt.providers.kubevirt import Kubevirt
                 except Exception as e:
@@ -111,20 +113,20 @@ class Kconfig(Kbaseconfig):
                              first_consumer=first_consumer, kubeconfig_file=kubeconfig_file)
                 self.host = k.host
             elif self.type == 'gcp':
-                credentials = self.options.get('credentials')
+                credentials = options.get('credentials')
                 if credentials is not None:
                     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = os.path.expanduser(credentials)
                 elif 'GOOGLE_APPLICATION_CREDENTIALS' not in os.environ:
                     error("set GOOGLE_APPLICATION_CREDENTIALS variable.Leaving...")
                     sys.exit(1)
-                project = self.options.get('project')
+                project = options.get('project')
                 if project is None:
                     error("Missing project in the configuration. Leaving")
                     sys.exit(1)
                 if region is None:
-                    region = self.options.get('region', 'europe-west1')
+                    region = options.get('region', kdefaults.GCP['region'])
                 if zone is None:
-                    zone = self.options.get('zone')
+                    zone = options.get('zone')
                 try:
                     from kvirt.providers.gcp import Kgcp
                 except Exception as e:
@@ -138,25 +140,25 @@ class Kconfig(Kbaseconfig):
                 except Exception as e:
                     exception = e if debug else None
                     dependency_error('azure', exception)
-                admin_user = self.options.get('admin_user', 'superadmin')
-                admin_password = self.options.get('admin_password')
-                location = self.options.get('location', 'westus')
-                resource_group = self.options.get('resource_group', 'kcli')
-                mail = self.options.get('mail')
-                storage_account = self.options.get('storage_account')
-                subscription_id = self.options.get('subscription_id')
+                admin_user = options.get('admin_user', kdefaults.AZURE['admin_user'])
+                admin_password = options.get('admin_password')
+                location = options.get('location', kdefaults.AZURE['location'])
+                resource_group = options.get('resource_group', kdefaults.AZURE['resource_group'])
+                mail = options.get('mail')
+                storage_account = options.get('storage_account')
+                subscription_id = options.get('subscription_id')
                 if subscription_id is None:
                     error("Missing subscription_id in the configuration. Leaving")
                     sys.exit(1)
-                tenant_id = self.options.get('tenant_id')
+                tenant_id = options.get('tenant_id')
                 if tenant_id is None:
                     error("Missing tenant_id in the configuration. Leaving")
                     sys.exit(1)
-                app_id = self.options.get('app_id')
+                app_id = options.get('app_id')
                 if app_id is None:
                     error("Missing app_id in the configuration. Leaving")
                     sys.exit(1)
-                secret = self.options.get('secret')
+                secret = options.get('secret')
                 if secret is None:
                     error("Missing secret in the configuration. Leaving")
                     sys.exit(1)
@@ -165,19 +167,19 @@ class Kconfig(Kbaseconfig):
                            admin_password=admin_password, mail=mail, storage_account=storage_account, debug=debug)
             elif self.type == 'aws':
                 if region is None:
-                    region = self.options.get('region', 'eu-west-3')
+                    region = options.get('region', kdefaults.AWS['region'])
                 if zone is None:
-                    zone = self.options.get('zone')
-                access_key_id = self.options.get('access_key_id')
+                    zone = options.get('zone')
+                access_key_id = options.get('access_key_id')
                 if access_key_id is None:
                     error("Missing access_key_id in the configuration. Leaving")
                     sys.exit(1)
-                access_key_secret = self.options.get('access_key_secret')
+                access_key_secret = options.get('access_key_secret')
                 if access_key_secret is None:
                     error("Missing access_key_secret in the configuration. Leaving")
                     sys.exit(1)
-                keypair = self.options.get('keypair')
-                session_token = self.options.get('session_token')
+                keypair = options.get('keypair')
+                session_token = options.get('session_token')
                 try:
                     from kvirt.providers.aws import Kaws
                 except Exception as e:
@@ -186,16 +188,16 @@ class Kconfig(Kbaseconfig):
                 k = Kaws(access_key_id=access_key_id, access_key_secret=access_key_secret, region=region,
                          debug=debug, keypair=keypair, session_token=session_token, zone=zone)
             elif self.type == 'ibm':
-                iam_api_key = self.options.get('iam_api_key')
-                cos_api_key = self.options.get('cos_api_key')
-                cos_resource_instance_id = self.options.get('cos_resource_instance_id')
-                cis_resource_instance_id = self.options.get('cis_resource_instance_id')
-                region = self.options.get('region')
+                iam_api_key = options.get('iam_api_key')
+                cos_api_key = options.get('cos_api_key')
+                cos_resource_instance_id = options.get('cos_resource_instance_id')
+                cis_resource_instance_id = options.get('cis_resource_instance_id')
+                region = options.get('region')
                 if region is None:
-                    region = self.options.get('region', 'eu-gb')
+                    region = options.get('region', kdefaults.IBM['region'])
                 if zone is None:
-                    zone = self.options.get('zone')
-                vpc = self.options.get('vpc')
+                    zone = options.get('zone')
+                vpc = options.get('vpc')
                 if iam_api_key is None:
                     error("Missing iam_api_key in the configuration. Leaving")
                     sys.exit(1)
@@ -204,18 +206,18 @@ class Kconfig(Kbaseconfig):
                          cos_api_key=cos_api_key, cos_resource_instance_id=cos_resource_instance_id,
                          cis_resource_instance_id=cis_resource_instance_id)
             elif self.type == 'ovirt':
-                datacenter = self.options.get('datacenter', 'Default')
-                cluster = self.options.get('cluster', 'Default')
-                user = self.options.get('user', 'admin@internal')
-                password = self.options.get('password')
+                datacenter = options.get('datacenter', kdefaults.OVIRT['datacenter'])
+                cluster = options.get('cluster', kdefaults.OVIRT['cluster'])
+                user = options.get('user', kdefaults.OVIRT['user'])
+                password = options.get('password')
                 if password is None:
                     error("Missing password in the configuration. Leaving")
                     sys.exit(1)
-                org = self.options.get('org')
+                org = options.get('org')
                 if org is None:
                     error("Missing org in the configuration. Leaving")
                     sys.exit(1)
-                ca_file = self.options.get('ca_file')
+                ca_file = options.get('ca_file')
                 if ca_file is None:
                     error("Missing ca_file in the configuration. Leaving")
                     sys.exit(1)
@@ -223,9 +225,9 @@ class Kconfig(Kbaseconfig):
                 if not os.path.exists(ca_file):
                     error("Ca file path doesn't exist. Leaving")
                     sys.exit(1)
-                filtervms = self.options.get('filtervms', False)
-                filteruser = self.options.get('filteruser', False)
-                filtertag = self.options.get('filtertag')
+                filtervms = options.get('filtervms', kdefaults.OVIRT['filtervms'])
+                filteruser = options.get('filteruser', kdefaults.OVIRT['filteruser'])
+                filtertag = options.get('filtertag')
                 try:
                     from kvirt.providers.ovirt import KOvirt
                 except Exception as e:
@@ -235,33 +237,35 @@ class Kconfig(Kbaseconfig):
                            debug=debug, datacenter=datacenter, cluster=cluster, ca_file=ca_file, org=org,
                            filtervms=filtervms, filteruser=filteruser, filtertag=filtertag)
             elif self.type == 'openstack':
-                version = self.options.get('version', '2')
-                domain = next((e for e in [self.options.get('domain'),
-                                           os.environ.get("OS_USER_DOMAIN_NAME")] if e is not None), 'Default')
-                auth_url = next((e for e in [self.options.get('auth_url'),
+                version = options.get('version', kdefaults.OPENSTACK['version'])
+                domain = next((e for e in [options.get('domain'),
+                                           os.environ.get("OS_USER_DOMAIN_NAME")] if e is not None),
+                              kdefaults.OPENSTACK['domain'])
+                auth_url = next((e for e in [options.get('auth_url'),
                                              os.environ.get("OS_AUTH_URL")] if e is not None),
                                 None)
                 if auth_url is None:
                     error("Missing auth_url in the configuration. Leaving")
                     sys.exit(1)
-                user = next((e for e in [self.options.get('user'),
-                                         os.environ.get("OS_USERNAME")] if e is not None), 'admin')
-                project = next((e for e in [self.options.get('project'),
-                                            os.environ.get("OS_PROJECT_NAME")] if e is not None), 'admin')
-                password = next((e for e in [self.options.get('password'),
+                user = next((e for e in [options.get('user'),
+                                         os.environ.get("OS_USERNAME")] if e is not None), kdefaults.OPENSTACK['user'])
+                project = next((e for e in [options.get('project'),
+                                            os.environ.get("OS_PROJECT_NAME")] if e is not None),
+                               kdefaults.OPENSTACK['project'])
+                password = next((e for e in [options.get('password'),
                                              os.environ.get("OS_PASSWORD")] if e is not None), None)
-                ca_file = next((e for e in [self.options.get('ca_file'),
+                ca_file = next((e for e in [options.get('ca_file'),
                                             os.environ.get("OS_CACERT")] if e is not None), None)
-                region_name = next((e for e in [self.options.get('region_name'),
+                region_name = next((e for e in [options.get('region_name'),
                                     os.environ.get("OS_REGION_NAME")] if e is not None), None)
-                external_network = self.options.get('external_network')
+                external_network = options.get('external_network')
                 if auth_url.endswith('v2.0'):
                     domain = None
                 if ca_file is not None and not os.path.exists(os.path.expanduser(ca_file)):
                     error(f"Indicated ca_file {ca_file} not found. Leaving")
                     sys.exit(1)
-                glance_disk = self.options.get('glance_disk', False)
-                auth_token = next((e for e in [self.options.get('token'),
+                glance_disk = options.get('glance_disk', False)
+                auth_token = next((e for e in [options.get('token'),
                                                os.environ.get("OS_TOKEN")] if e is not None), None)
                 auth_type = 'token' if auth_token is not None else 'password'
                 if auth_type == 'password' and password is None:
@@ -279,21 +283,21 @@ class Kconfig(Kbaseconfig):
                                external_network=external_network, region_name=region_name, glance_disk=glance_disk,
                                auth_type=auth_type, auth_token=auth_token)
             elif self.type == 'vsphere':
-                user = self.options.get('user')
+                user = options.get('user')
                 if user is None:
                     error("Missing user in the configuration. Leaving")
                     sys.exit(1)
-                password = self.options.get('password')
+                password = options.get('password')
                 if password is None:
                     error("Missing password in the configuration. Leaving")
                     sys.exit(1)
-                cluster = self.options.get('cluster')
+                cluster = options.get('cluster')
                 if cluster is None:
                     error("Missing cluster in the configuration. Leaving")
-                datacenter = self.options.get('datacenter')
+                datacenter = options.get('datacenter')
                 if datacenter is None:
                     error("Missing datacenter in the configuration. Leaving")
-                isofolder = self.options.get('isofolder')
+                isofolder = options.get('isofolder')
                 if isofolder is not None:
                     if '/' not in isofolder:
                         isopool = self.pool
@@ -302,16 +306,17 @@ class Kconfig(Kbaseconfig):
                         isopool = isofolder[0]
                         isofolder = isofolder[1:]
                     isofolder = f'[{isopool}]/{isofolder}'
-                filtervms = self.options.get('filtervms', False)
-                filteruser = self.options.get('filteruser', False)
-                filtertag = self.options.get('filtertag')
-                category = self.options.get('category', 'kcli')
-                basefolder = self.options.get('basefolder')
-                dvs = self.options.get('dvs', True)
-                import_network = self.options.get('import_network', 'VM Network')
-                timeout = self.options.get('timeout', 2700)
-                force_pool = self.options.get('force_pool', False)
-                restricted = self.options.get('restricted', False)
+                filtervms = options.get('filtervms', kdefaults.VSPHERE['filtervms'])
+                filtervms = options.get('filteruser', kdefaults.VSPHERE['filteruser'])
+                filteruser = options.get('filteruser', kdefaults.VSPHERE['filteruser'])
+                filtertag = options.get('filtertag')
+                category = options.get('category', kdefaults.VSPHERE['category'])
+                basefolder = options.get('basefolder')
+                dvs = options.get('dvs', kdefaults.VSPHERE['dvs'])
+                import_network = options.get('import_network', kdefaults.VSPHERE['import_network'])
+                timeout = options.get('timeout', kdefaults.VSPHERE['timeout'])
+                force_pool = options.get('force_pool', kdefaults.VSPHERE['force_pool'])
+                restricted = options.get('restricted', kdefaults.VSPHERE['restricted'])
                 try:
                     from kvirt.providers.vsphere import Ksphere
                 except Exception as e:
@@ -322,15 +327,15 @@ class Kconfig(Kbaseconfig):
                             basefolder=basefolder, dvs=dvs, import_network=import_network, timeout=timeout,
                             force_pool=force_pool, restricted=restricted)
             elif self.type == 'packet':
-                auth_token = self.options.get('auth_token')
+                auth_token = options.get('auth_token')
                 if auth_token is None:
                     error("Missing auth_token in the configuration. Leaving")
                     sys.exit(1)
-                project = self.options.get('project')
+                project = options.get('project')
                 if project is None:
                     error("Missing project in the configuration. Leaving")
                     sys.exit(1)
-                facility = self.options.get('facility')
+                facility = options.get('facility')
                 try:
                     from kvirt.providers.packet import Kpacket
                 except Exception as e:
@@ -341,23 +346,23 @@ class Kconfig(Kbaseconfig):
                             tunneldir=self.tunneldir)
             elif self.type == 'proxmox':
                 warning("Proxmox provider is Work In Progress. Use at your own risk!")
-                user = self.options.get('user')
+                user = options.get('user')
                 if user is None:
                     error("Missing user in the configuration. Leaving")
                     sys.exit(1)
-                auth_token_name = self.options.get('auth_token_name')
-                password = self.options.get('password')
+                auth_token_name = options.get('auth_token_name')
+                password = options.get('password')
                 if not auth_token_name and not password:
                     error("Missing auth_token_name or password in the configuration. Leaving")
                     sys.exit(1)
-                auth_token_secret = self.options.get('auth_token_secret')
+                auth_token_secret = options.get('auth_token_secret')
                 if auth_token_name and auth_token_secret is None:
                     error("Missing auth_token_secret in the configuration. Leaving")
                     sys.exit(1)
-                filtertag = self.options.get('filtertag')
-                imagepool = self.options.get('imagepool')
-                node = self.options.get('node')
-                verify_ssl = self.options.get('verify_ssl')
+                filtertag = options.get('filtertag')
+                imagepool = options.get('imagepool')
+                node = options.get('node')
+                verify_ssl = options.get('verify_ssl')
                 try:
                     from kvirt.providers.proxmox import Kproxmox
                 except Exception as e:
@@ -376,8 +381,8 @@ class Kconfig(Kbaseconfig):
                     imagepool=imagepool,
                     debug=False)
             elif self.type == 'web':
-                port = self.options.get('port', 8000)
-                localkube = self.options.get('localkube', True)
+                port = options.get('port', 8000)
+                localkube = options.get('localkube', True)
                 from kvirt.providers.web import Kwebclient
                 k = Kwebclient(self.host, port, localkube=localkube, debug=debug)
                 self.type = 'web'
@@ -389,8 +394,8 @@ class Kconfig(Kbaseconfig):
                 if self.host is None:
                     error("Problem parsing your configuration file")
                     sys.exit(1)
-                session = self.options.get('session', False)
-                remotednsmasq = self.options.get('remotednsmasq', False)
+                session = options.get('session', False)
+                remotednsmasq = options.get('remotednsmasq', False)
                 try:
                     from kvirt.providers.kvm import Kvirt
                 except Exception as e:
@@ -511,160 +516,83 @@ class Kconfig(Kbaseconfig):
             self.download_image(**pimage_data)
         if not customprofile:
             profile.update(overrides)
-        if 'base' in profile:
-            father = vmprofiles[profile['base']]
-            default_numcpus = father.get('numcpus', self.numcpus)
-            default_memory = father.get('memory', self.memory)
-            default_pool = father.get('pool', self.pool)
-            default_disks = father.get('disks', self.disks)
-            default_nets = father.get('nets', self.nets)
-            default_image = father.get('image', self.image)
-            default_cloudinit = father.get('cloudinit', self.cloudinit)
-            default_nested = father.get('nested', self.nested)
-            default_reservedns = father.get('reservedns', self.reservedns)
-            default_reservehost = father.get('reservehost', self.reservehost)
-            default_cpumodel = father.get('cpumodel', self.cpumodel)
-            default_cpuflags = father.get('cpuflags', self.cpuflags)
-            default_cpupinning = father.get('cpupinning', self.cpupinning)
-            default_disksize = father.get('disksize', self.disksize)
-            default_diskinterface = father.get('diskinterface', self.diskinterface)
-            default_diskthin = father.get('diskthin', self.diskthin)
-            default_guestid = father.get('guestid', self.guestid)
-            default_iso = father.get('iso', self.iso)
-            default_vnc = father.get('vnc', self.vnc)
-            default_reserveip = father.get('reserveip', self.reserveip)
-            default_start = father.get('start', self.start)
-            default_autostart = father.get('autostart', self.autostart)
-            default_keys = father.get('keys', self.keys)
-            default_netmasks = father.get('netmasks', self.netmasks)
-            default_gateway = father.get('gateway', self.gateway)
-            default_dns = father.get('dns', self.dns)
-            default_domain = father.get('domain', self.domain)
-            default_files = father.get('files', self.files)
-            default_enableroot = father.get('enableroot', self.enableroot)
-            default_privatekey = father.get('privatekey', self.privatekey)
-            default_networkwait = father.get('networkwait', self.networkwait)
-            default_rhnregister = father.get('rhnregister', self.rhnregister)
-            default_rhnserver = father.get('rhnserver', self.rhnserver)
-            default_rhnuser = father.get('rhnuser', self.rhnuser)
-            default_rhnpassword = father.get('rhnpassword', self.rhnpassword)
-            default_rhnak = father.get('rhnactivationkey', self.rhnak)
-            default_rhnorg = father.get('rhnorg', self.rhnorg)
-            default_rhnpool = father.get('rhnpool', self.rhnpool)
-            default_tags = father.get('tags', self.tags)
-            default_flavor = father.get('flavor', self.flavor)
-            default_cmds = common.remove_duplicates(self.cmds + father.get('cmds', []))
-            default_scripts = common.remove_duplicates(self.scripts + father.get('scripts', []))
-            default_dnsclient = father.get('dnsclient', self.dnsclient)
-            default_storemetadata = father.get('storemetadata', self.storemetadata)
-            default_notify = father.get('notify', self.notify)
-            default_pushbullettoken = father.get('pushbullettoken', self.pushbullettoken)
-            default_mailserver = father.get('mailserver', self.mailserver)
-            default_mailfrom = father.get('mailfrom', self.mailfrom)
-            default_mailto = father.get('mailto', self.mailto)
-            default_notifycmd = father.get('notifycmd', self.notifycmd)
-            default_notifyscript = father.get('notifyscript', self.notifyscript)
-            default_notifymethods = father.get('notifymethods', self.notifymethods)
-            default_slackchannel = father.get('slackchannel', self.slackchannel)
-            default_pushbullettoken = father.get('pushbullettoken', self.pushbullettoken)
-            default_slacktoken = father.get('slacktoken', self.slacktoken)
-            default_sharedfolders = father.get('sharedfolders', self.sharedfolders)
-            default_kernel = father.get('kernel', self.kernel)
-            default_initrd = father.get('initrd', self.initrd)
-            default_cmdline = father.get('cmdline', self.cmdline)
-            default_placement = father.get('placement', self.placement)
-            default_yamlinventory = father.get('yamlinventory', self.yamlinventory)
-            default_cpuhotplug = father.get('cpuhotplug', self.cpuhotplug)
-            default_memoryhotplug = father.get('memoryhotplug', self.memoryhotplug)
-            default_numa = father.get('numa', self.numa)
-            default_numamode = father.get('numamode', self.numamode)
-            default_pcidevices = father.get('pcidevices', self.pcidevices)
-            default_tpm = father.get('tpm', self.tpm)
-            default_rng = father.get('rng', self.rng)
-            default_virttype = father.get('virttype', self.virttype)
-            default_securitygroups = father.get('securitygroups', self.securitygroups)
-            default_rootpassword = father.get('rootpassword', self.rootpassword)
-            default_tempkey = father.get('tempkey', self.tempkey)
-            default_vmuser = father.get('vmuser', self.vmuser)
-            default_wait = father.get('wait', self.wait)
-            default_waitcommand = father.get('waitcommand', self.waitcommand)
-            default_waittimeout = father.get('waittimeout', self.waittimeout)
-        else:
-            default_numcpus = self.numcpus
-            default_memory = self.memory
-            default_pool = self.pool
-            default_disks = self.disks
-            default_nets = self.nets
-            default_image = self.image
-            default_cloudinit = self.cloudinit
-            default_nested = self.nested
-            default_reservedns = self.reservedns
-            default_reservehost = self.reservehost
-            default_cpumodel = self.cpumodel
-            default_cpuflags = self.cpuflags
-            default_cpupinning = self.cpupinning
-            default_numamode = self.numamode
-            default_numa = self.numa
-            default_pcidevices = self.pcidevices
-            default_tpm = self.tpm
-            default_rng = self.rng
-            default_disksize = self.disksize
-            default_diskinterface = self.diskinterface
-            default_diskthin = self.diskthin
-            default_guestid = self.guestid
-            default_iso = self.iso
-            default_vnc = self.vnc
-            default_reserveip = self.reserveip
-            default_start = self.start
-            default_autostart = self.autostart
-            default_keys = self.keys
-            default_netmasks = self.netmasks
-            default_gateway = self.gateway
-            default_dns = self.dns
-            default_domain = self.domain
-            default_files = self.files
-            default_enableroot = self.enableroot
-            default_tags = self.tags
-            default_flavor = self.flavor
-            default_privatekey = self.privatekey
-            default_networkwait = self.networkwait
-            default_rhnregister = self.rhnregister
-            default_rhnserver = self.rhnserver
-            default_rhnuser = self.rhnuser
-            default_rhnpassword = self.rhnpassword
-            default_rhnak = self.rhnak
-            default_rhnorg = self.rhnorg
-            default_rhnpool = self.rhnpool
-            default_cmds = self.cmds
-            default_scripts = self.scripts
-            default_dnsclient = self.dnsclient
-            default_storemetadata = self.storemetadata
-            default_notify = self.notify
-            default_pushbullettoken = self.pushbullettoken
-            default_slacktoken = self.slacktoken
-            default_mailserver = self.mailserver
-            default_mailfrom = self.mailfrom
-            default_mailto = self.mailto
-            default_notifycmd = self.notifycmd
-            default_notifyscript = self.notifyscript
-            default_notifymethods = self.notifymethods
-            default_slackchannel = self.slackchannel
-            default_sharedfolders = self.sharedfolders
-            default_kernel = self.kernel
-            default_initrd = self.initrd
-            default_cmdline = self.cmdline
-            default_placement = self.placement
-            default_yamlinventory = self.yamlinventory
-            default_cpuhotplug = self.cpuhotplug
-            default_memoryhotplug = self.memoryhotplug
-            default_virttype = self.virttype
-            default_securitygroups = self.securitygroups
-            default_rootpassword = self.rootpassword
-            default_tempkey = self.tempkey
-            default_vmuser = self.vmuser
-            default_wait = self.wait
-            default_waitcommand = self.waitcommand
-            default_waittimeout = self.waittimeout
+        father = vmprofiles[profile['base']] if 'base' in profile else {}
+        default_numcpus = father.get('numcpus', self.numcpus)
+        default_memory = father.get('memory', self.memory)
+        default_pool = father.get('pool', self.pool)
+        default_disks = father.get('disks', self.disks)
+        default_nets = father.get('nets', self.nets)
+        default_image = father.get('image', self.image)
+        default_cloudinit = father.get('cloudinit', self.cloudinit)
+        default_nested = father.get('nested', self.nested)
+        default_reservedns = father.get('reservedns', self.reservedns)
+        default_reservehost = father.get('reservehost', self.reservehost)
+        default_cpumodel = father.get('cpumodel', self.cpumodel)
+        default_cpuflags = father.get('cpuflags', self.cpuflags)
+        default_cpupinning = father.get('cpupinning', self.cpupinning)
+        default_disksize = father.get('disksize', self.disksize)
+        default_diskinterface = father.get('diskinterface', self.diskinterface)
+        default_diskthin = father.get('diskthin', self.diskthin)
+        default_guestid = father.get('guestid', self.guestid)
+        default_iso = father.get('iso', self.iso)
+        default_vnc = father.get('vnc', self.vnc)
+        default_reserveip = father.get('reserveip', self.reserveip)
+        default_start = father.get('start', self.start)
+        default_autostart = father.get('autostart', self.autostart)
+        default_keys = father.get('keys', self.keys)
+        default_netmasks = father.get('netmasks', self.netmasks)
+        default_gateway = father.get('gateway', self.gateway)
+        default_dns = father.get('dns', self.dns)
+        default_domain = father.get('domain', self.domain)
+        default_files = father.get('files', self.files)
+        default_enableroot = father.get('enableroot', self.enableroot)
+        default_privatekey = father.get('privatekey', self.privatekey)
+        default_networkwait = father.get('networkwait', self.networkwait)
+        default_rhnregister = father.get('rhnregister', self.rhnregister)
+        default_rhnserver = father.get('rhnserver', self.rhnserver)
+        default_rhnuser = father.get('rhnuser', self.rhnuser)
+        default_rhnpassword = father.get('rhnpassword', self.rhnpassword)
+        default_rhnak = father.get('rhnactivationkey', self.rhnak)
+        default_rhnorg = father.get('rhnorg', self.rhnorg)
+        default_rhnpool = father.get('rhnpool', self.rhnpool)
+        default_tags = father.get('tags', self.tags)
+        default_flavor = father.get('flavor', self.flavor)
+        default_cmds = common.remove_duplicates(self.cmds + father.get('cmds', []))
+        default_scripts = common.remove_duplicates(self.scripts + father.get('scripts', []))
+        default_dnsclient = father.get('dnsclient', self.dnsclient)
+        default_storemetadata = father.get('storemetadata', self.storemetadata)
+        default_notify = father.get('notify', self.notify)
+        default_pushbullettoken = father.get('pushbullettoken', self.pushbullettoken)
+        default_mailserver = father.get('mailserver', self.mailserver)
+        default_mailfrom = father.get('mailfrom', self.mailfrom)
+        default_mailto = father.get('mailto', self.mailto)
+        default_notifycmd = father.get('notifycmd', self.notifycmd)
+        default_notifyscript = father.get('notifyscript', self.notifyscript)
+        default_notifymethods = father.get('notifymethods', self.notifymethods)
+        default_slackchannel = father.get('slackchannel', self.slackchannel)
+        default_pushbullettoken = father.get('pushbullettoken', self.pushbullettoken)
+        default_slacktoken = father.get('slacktoken', self.slacktoken)
+        default_sharedfolders = father.get('sharedfolders', self.sharedfolders)
+        default_kernel = father.get('kernel', self.kernel)
+        default_initrd = father.get('initrd', self.initrd)
+        default_cmdline = father.get('cmdline', self.cmdline)
+        default_placement = father.get('placement', self.placement)
+        default_yamlinventory = father.get('yamlinventory', self.yamlinventory)
+        default_cpuhotplug = father.get('cpuhotplug', self.cpuhotplug)
+        default_memoryhotplug = father.get('memoryhotplug', self.memoryhotplug)
+        default_numa = father.get('numa', self.numa)
+        default_numamode = father.get('numamode', self.numamode)
+        default_pcidevices = father.get('pcidevices', self.pcidevices)
+        default_tpm = father.get('tpm', self.tpm)
+        default_rng = father.get('rng', self.rng)
+        default_virttype = father.get('virttype', self.virttype)
+        default_securitygroups = father.get('securitygroups', self.securitygroups)
+        default_rootpassword = father.get('rootpassword', self.rootpassword)
+        default_tempkey = father.get('tempkey', self.tempkey)
+        default_vmuser = father.get('vmuser', self.vmuser)
+        default_wait = father.get('wait', self.wait)
+        default_waitcommand = father.get('waitcommand', self.waitcommand)
+        default_waittimeout = father.get('waittimeout', self.waittimeout)
         plan = profile.get('plan', plan)
         template = profile.get('template', default_image)
         image = profile.get('image', template)
@@ -1802,7 +1730,9 @@ class Kconfig(Kbaseconfig):
         keywords = self.list_keywords()
         for key in sorted(overrides):
             if key in keywords:
-                key_value = getattr(self, key)
+                key_value = getattr(self, key, 'not_default')
+                if key_value == 'not_default':
+                    continue
                 key_type = type(key_value)
                 override_key_type = type(overrides[key])
                 if key_value is not None and overrides[key] is not None and key_type != override_key_type:

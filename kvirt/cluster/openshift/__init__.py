@@ -1583,7 +1583,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             if basefolder is not None:
                 vmfolder += f'/{basefolder}'
             if not restricted:
-                vmfolder += '/{cluster}'
+                vmfolder += f'/{cluster}'
                 pprint(f"Creating vm folder {vmfolder}")
                 k.create_vm_folder(cluster)
         pprint("Deploying bootstrap")

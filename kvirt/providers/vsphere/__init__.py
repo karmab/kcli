@@ -77,7 +77,7 @@ class Ksphere:
                 createfolder(si, self.dc.vmFolder, basefolder)
             self.basefolder = find(si, self.dc.vmFolder, vim.Folder, basefolder)
             if self.basefolder is None:
-                error("Couldnt find basefolder {basefolder}")
+                error(f"Couldnt find basefolder {basefolder}")
                 self.conn = None
                 return
         else:
