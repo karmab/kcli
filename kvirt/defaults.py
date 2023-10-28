@@ -232,3 +232,23 @@ StandardError=syslog"""
 
 PLANTYPES = ['ansible', 'bucket', 'cluster', 'container', 'disk', 'dns', 'image', 'kube', 'loadbalancer', 'network',
              'plan', 'pool', 'profile', 'securitygroup', 'vm', 'workflow']
+
+AZURE = {'admin_user': 'superadmin', 'location': 'westus', 'resource_group': 'kcli'}
+
+AWS = {'region': 'eu-west-3'}
+
+IBM = {'region': 'eu-gb'}
+
+GCP = {'region': 'europe-west1'}
+
+KUBEVIRT = {'datavolumes': True, 'readwritemany': False, 'disk_hotplug': False, 'access_mode': 'NodePort',
+            'volume_mode': 'Filesystem', 'volume_access': 'ReadWriteOnce', 'harvester': False, 'embed_userdata': False,
+            'first_consumer': False}
+
+OPENSTACK = {'version': '2', 'domain': 'Default', 'user': 'admin', 'project': 'admin'}
+
+OVIRT = {'datacenter': 'Default', 'cluster': 'Default', 'user': 'admin@internal', 'filtervms': False,
+         'filteruser': False}
+
+VSPHERE = {'force_pool': False, 'dvs': True, 'restricted': False, 'import_network': 'VM Network',
+           'filtervms': False, 'filteruser': False, 'category': 'kcli', 'timeout': 2700}
