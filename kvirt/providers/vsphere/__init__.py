@@ -73,13 +73,31 @@ class Ksphere:
         self.import_network = import_network
         self.force_pool = force_pool
         if basefolder is not None:
-            if not self.restricted:
-                createfolder(si, self.dc.vmFolder, basefolder)
-            self.basefolder = find(si, self.dc.vmFolder, vim.Folder, basefolder)
+            if '/' in basefolder:
+                topfolder = os.path.dirname(basefolder)
+                vmFolder = find(si, self.dc.vmFolder, vim.Folder, topfolder)
+                if vmFolder is None:
+                    error(f"Couldnt find topfolder {topfolder}")
+                    self.conn = None
+                    return
+                lowFolder = os.path.basename(basefolder)
+            else:
+                vmFolder = self.dc.vmFolder
+                lowFolder = basefolder
+            self.basefolder = find(si, vmFolder, vim.Folder, lowFolder)
             if self.basefolder is None:
-                error(f"Couldnt find basefolder {basefolder}")
-                self.conn = None
-                return
+                if not self.restricted:
+                    try:
+                        createfolder(si, vmFolder, lowFolder)
+                        self.basefolder = find(si, vmFolder, vim.Folder, lowFolder)
+                    except Exception as e:
+                        error(f"Couldnt create basefolder {basefolder}. Hit {e}")
+                        self.conn = None
+                        return
+                else:
+                    error(f"Couldnt find basefolder {basefolder}")
+                    self.conn = None
+                    return
         else:
             self.basefolder = self.dc.vmFolder
 
