@@ -1306,7 +1306,7 @@ class Ksphere:
             error("Set import_network to a valid value")
             sys.exit(1)
         networkmapping = vim.OvfManager.NetworkMapping.Array()
-        nm = vim.OvfManager.NetworkMapping(name="VM Network", network=self.import_network)
+        nm = vim.OvfManager.NetworkMapping(name="VM Network", network=network)
         networkmapping.append(nm)
         spec_params = vim.OvfManager.CreateImportSpecParams(diskProvisioning="thin", networkMapping=networkmapping,
                                                             hostSystem=host)
