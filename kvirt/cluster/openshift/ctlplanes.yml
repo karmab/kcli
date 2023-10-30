@@ -54,7 +54,7 @@
   - path: /etc/sysctl.d/nonlocalbind.conf
     origin: nonlocalbind.conf
 {% endif %}
-{% if not kubevirt_api_service %}
+{% if keepalived and not kubevirt_api_service %}
   - path: /etc/kubernetes/manifests/keepalived.yml
     origin: staticpods/keepalived.yml
   - path: /etc/kubernetes/keepalived.conf

@@ -679,6 +679,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'baremetal_web_dir': '/var/www/html',
             'baremetal_web_port': 80,
             'baremetal_cidr': None,
+            'keepalived': True,
             'coredns': True,
             'mdns': True,
             'sslip': False,
@@ -787,6 +788,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     metal3 = data.get('metal3')
     if not data.get('coredns'):
         warning("You will need to provide DNS records for api and ingress on your own")
+    keepalived = data.get('keepalived')
+    if not keepalived:
+        warning("You will need to provide LB for api and ingress on your own")
     mdns = data.get('mdns')
     sno_localhost_fix = data.get('sno_localhost_fix')
     sno_cpuset = data.get('sno_cpuset')
@@ -810,7 +814,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     image = data.get('image')
     api_ip = data.get('api_ip')
     cidr = None
-    if platform in virtplatforms and not sno and api_ip is None:
+    if platform in virtplatforms and keepalived and not sno and api_ip is None:
         network = data.get('network')
         networkinfo = k.info_network(network)
         if not networkinfo:
@@ -844,7 +848,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         else:
             msg = "You need to define api_ip in your parameters file"
             return {'result': 'failure', 'reason': msg}
-    if platform in virtplatforms and not sno and ':' in api_ip:
+    if platform in virtplatforms and keepalived and not sno and ':' in api_ip:
         ipv6 = True
     if ipv6:
         if data.get('network_type', 'OVNKubernetes') == 'OpenShiftSDN':
@@ -881,7 +885,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     macosx = data.get('macosx')
     if macosx and not os.path.exists('/i_am_a_container'):
         macosx = False
-    if platform == 'openstack' and not sno:
+    if platform == 'openstack' and keepalived and not sno:
         if data.get('flavor') is None:
             msg = "Missing flavor in parameter file"
             return {'result': 'failure', 'reason': msg}
@@ -1546,7 +1550,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         msg += ". Leaving environment for debugging purposes, "
         msg += f"Delete it with kcli delete kube --yes {cluster}"
         return {'result': 'failure', 'reason': msg}
-    if platform in virtplatforms:
+    if platform in virtplatforms and keepalived:
         overrides['virtual_router_id'] = data.get('virtual_router_id') or hash(cluster) % 254 + 1
         virtual_router_id = overrides['virtual_router_id']
         pprint(f"Using keepalived virtual_router_id {virtual_router_id}")
@@ -1599,7 +1603,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         result = config.plan(plan, inputfile=f'{plandir}/ctlplanes.yml', overrides=overrides, threaded=threaded)
         if result['result'] != 'success':
             return result
-        if dnsconfig is not None:
+        if dnsconfig is not None and keepalived:
             dns_overrides = {'api_ip': api_ip, 'ingress_ip': ingress_ip, 'cluster': cluster, 'domain': domain}
             result = dnsconfig.plan(plan, inputfile=f'{plandir}/cloud_dns.yml', overrides=dns_overrides)
             if result['result'] != 'success':

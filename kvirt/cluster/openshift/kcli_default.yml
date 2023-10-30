@@ -48,6 +48,7 @@ memory: 16384
 bootstrap_memory: 8192
 ctlplane_memory:
 worker_memory:
+keepalived: true
 coredns: true
 mdns: true
 ignore_hosts: false
