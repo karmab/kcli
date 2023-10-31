@@ -31,7 +31,7 @@ TUNNELDIR = '/var/www/html'
 TUNNELPORT = 22
 VMUSER = None
 VMPORT = None
-OPENSHIFT_TAG = '4.13'
+OPENSHIFT_TAG = '4.14'
 ALMA = 'http://repo.ifca.es/almalinux'
 BSD = 'https://object-storage.public.mtl1.vexxhost.net/swift/v1/1dbafeefbd4f4c80864414a441e72dd2'
 BSD += '/bsd-cloud-image.org/images/dragonflybsd'
@@ -72,7 +72,8 @@ IMAGES = {'almalinux9': f'{ALMA}/9.1/cloud/x86_64/images/AlmaLinux-9-GenericClou
           'rhcos411': f'{RHCOS}/4.11',
           'rhcos412': f'{RHCOS}/4.12',
           'rhcos413': f'{RHCOS}/4.13',
-          'rhcoslatest': f'{RHCOS}/4.13',
+          'rhcos414': f'{RHCOS}/4.14',
+          'rhcoslatest': f'{RHCOS}/4.14',
           'rhel7': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7',
           'rhel8': 'https://access.redhat.com/downloads/content/479/ver=/rhel---8',
           'rhel9': 'https://access.redhat.com/downloads/content/479/ver=/rhel---9',
