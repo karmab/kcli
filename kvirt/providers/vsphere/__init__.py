@@ -1210,7 +1210,7 @@ class Ksphere:
         rootFolder = self.rootFolder
         clu = find(si, rootFolder, vim.ComputeResource, self.clu)
         resourcepool = clu.resourcePool
-        vmFolder = self.dc.vmFolder
+        vmFolder = self.basefolder
         manager = si.content.ovfManager
         shortimage = os.path.basename(url).split('?')[0]
         name = name.replace('.ova', '').replace('.x86_64', '') if name is not None else shortimage
@@ -1275,6 +1275,14 @@ class Ksphere:
                     return {'result': 'failure', 'reason': "Incorrect ova file"}
                 tar.extractall('/tmp')
         else:
+            need_uncompress = any(shortimage.endswith(suffix) for suffix in ['.gz', '.xz', '.bz2', '.zst'])
+            if need_uncompress:
+                extension = os.path.splitext(shortimage)[1].replace('.', '')
+                executable = {'xz': 'unxz -f', 'gz': 'gunzip -f', 'bz2': 'bunzip2 -f', 'zst': 'zstd --decompress'}
+                executable = executable[extension]
+                uncompresscmd = f"{executable} /tmp/{shortimage}"
+                os.system(uncompresscmd)
+                shortimage = shortimage.replace(f'.{extension}', '')
             extension = os.path.splitext(shortimage)[1].replace('.', '')
             vmdk_file = shortimage.replace(extension, 'vmdk')
             vmdk_path = f"/tmp/{vmdk_file}"
@@ -1385,6 +1393,8 @@ class Ksphere:
         return data
 
     def delete_image(self, image, pool=None):
+        if '/' in image:
+            pool, image = image.split('/')
         si = self.si
         vmFolder = self.basefolder
         vm, info = findvm2(si, vmFolder, image)

@@ -1039,7 +1039,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                 pprint(f"Using found /tmp/{shortimage}")
             BUF_SIZE = 128 * 1024
             image_path = os.path.abspath(url) if os.path.exists(url) else f'/tmp/{shortimage}'
-            extensions = {'bz2': 'bunzip2', 'gz': 'gunzip', 'xz': 'unxz'}
+            extensions = {'bz2': 'bunzip2 -f', 'gz': 'gunzip -f', 'xz': 'unxz -f', 'zst': 'zstd --decompress'}
             for extension in extensions:
                 if shortimage.endswith(extension):
                     executable = extensions[extension]

@@ -821,15 +821,19 @@ class Kopenstack(object):
             if code != 0:
                 return {'result': 'failure', 'reason': "Unable to download indicated image"}
         image_path = os.path.abspath(url) if os.path.exists(url) else f'/tmp/{shortimage}'
-        if shortimage.endswith('gz'):
-            if which('gunzip') is not None:
-                uncompresscmd = f"gunzip {image_path}"
+        need_uncompress = any(shortimage.endswith(suffix) for suffix in ['.gz', '.xz', '.bz2', '.zst'])
+        if need_uncompress:
+            extension = os.path.splitext(shortimage)[1].replace('.', '')
+            executable = {'xz': 'unxz -f', 'gz': 'gunzip -f', 'bz2': 'bunzip2 -f', 'zst': 'zstd --decompress'}
+            executable = executable[extension]
+            if which(executable) is not None:
+                uncompresscmd = f"{executable} {image_path}"
                 os.system(uncompresscmd)
             else:
-                error("gunzip not found. Can't uncompress image")
-                return {'result': 'failure', 'reason': "gunzip not found. Can't uncompress image"}
-            shortimage = shortimage.replace('.gz', '')
-            image_path = image_path.replace('.gz', '')
+                error(f"{executable} not found. Can't uncompress image")
+                return {'result': 'failure', 'reason': f"{executable} not found. Can't uncompress image"}
+            shortimage = shortimage.replace('.gz', '').replace('.xz', '').replace('.bz2', '').replace('.zst', '')
+            image_path = image_path.replace('.gz', '').replace('.xz', '').replace('.bz2', '').replace('.zst', '')
         disk_format = 'iso' if shortimage.endswith('iso') else 'qcow2'
         if cmd is not None:
             pprint(f"Running {cmd} on {image_path}")

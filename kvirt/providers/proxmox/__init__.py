@@ -205,7 +205,7 @@ class Kproxmox(Kbase):
 
         is_valid = False
         uncompresscmd = None
-        compressed = {"bz2": "bunzip2", "gz": "gunzip", "xz": "unxz"}
+        compressed = {"bz2": "bunzip2 -f", "gz": "gunzip -f", "xz": "unxz -f", "zst": "zstd --decompress"}
         for ext in reversed(shortimage.split(".")[-2:]):
             if ext in compressed.keys():
                 uncompresscmd = compressed[ext]
@@ -214,7 +214,7 @@ class Kproxmox(Kbase):
                 is_valid = True
             break
         if not is_valid:
-            return {"result": "failure", "reason": "Image format unsupported."}
+            return {"result": "failure", "reason": "Image format unsupported"}
 
         if shortimage.endswith(".img"):
             shortimage = Path(shortimage).with_suffix(".qcow2").name

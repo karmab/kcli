@@ -3161,10 +3161,10 @@ class Kvirt(object):
     def add_image(self, url, pool, cmd=None, name=None, size=None, convert=False):
         poolname = pool
         shortimage = os.path.basename(url).split('?')[0]
-        need_uncompress = any(shortimage.endswith(suffix) for suffix in ['.gz', '.xz', '.bz2'])
+        need_uncompress = any(shortimage.endswith(suffix) for suffix in ['.gz', '.xz', '.bz2', '.zst'])
         extension = os.path.splitext(shortimage)[1].replace('.', '') if need_uncompress else None
         if name is None:
-            name = shortimage.replace('.gz', '').replace('.xz', '').replace('.bz2', '')
+            name = shortimage.replace('.gz', '').replace('.xz', '').replace('.bz2', '').replace('.zst', '')
         if convert:
             name += '.raw'
         full_name = f"{name}.{extension}" if need_uncompress else name
@@ -3205,11 +3205,11 @@ class Kvirt(object):
         elif code != 0:
             return {'result': 'failure', 'reason': "Unable to download indicated image"}
         if need_uncompress:
-            executable = {'xz': 'unxz', 'gz': 'gunzip', 'bz2': 'bunzip2'}
+            executable = {'xz': 'unxz -f', 'gz': 'gunzip -f', 'bz2': 'bunzip2 -f', 'zst': 'zstd --decompress'}
             executable = executable[extension]
             if self.host == 'localhost' or self.host == '127.0.0.1':
                 if which(executable) is not None:
-                    uncompresscmd = f"{executable} -f {poolpath}/{full_name}"
+                    uncompresscmd = f"{executable} {poolpath}/{full_name}"
                     os.system(uncompresscmd)
                 else:
                     error(f"{executable} not found. Can't uncompress image")

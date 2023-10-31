@@ -1240,7 +1240,7 @@ class Kubevirt(Kubecommon):
         namespace = self.namespace
         harvester = self.harvester
         shortimage = os.path.basename(url).split('?')[0]
-        uncompressed = shortimage.replace('.gz', '').replace('.xz', '').replace('.bz2', '')
+        uncompressed = shortimage.replace('.gz', '').replace('.xz', '').replace('.bz2', '').replace('.zst', '')
         if name is not None:
             volname = name.replace('_', '-').replace('.', '-').lower()
         elif url in IMAGES.values():
