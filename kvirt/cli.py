@@ -1850,7 +1850,7 @@ def create_openshift_sno(args):
 
 
 def delete_kube(args):
-    clusters = args.cluster if args.cluster else ['mykube']
+    clusters = args.cluster
     yes = args.yes
     yes_top = args.yes_top
     if not yes and not yes_top:
@@ -4306,7 +4306,7 @@ def cli():
     kubedelete_desc = 'Delete Kube'
     kubedelete_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubedelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    kubedelete_parser.add_argument('cluster', metavar='CLUSTER', nargs='*')
+    kubedelete_parser.add_argument('cluster', metavar='CLUSTER', nargs='+')
     kubedelete_parser.set_defaults(func=delete_kube)
     delete_subparsers.add_parser('kube', parents=[kubedelete_parser], description=kubedelete_desc, help=kubedelete_desc,
                                  aliases=['cluster'])
