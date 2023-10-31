@@ -826,7 +826,8 @@ class Kazure(object):
                 return {'result': 'failure', 'reason': "cidr and dual_cidr must be of different types"}
         elif network_ipv6:
             return {'result': 'failure', 'reason': "ipv6 requires dual_cidr to be set"}
-        data = {'location': self.location, 'address_space': {'address_prefixes': [cidr]}, 'tags': {'plan': plan}}
+        data = {'location': self.location, 'address_space': {'address_prefix': cidr, 'address_prefixes': [cidr]},
+                'tags': {'plan': plan}}
         if dual_cidr is not None:
             data['address_space']['address_prefixes'].append(dual_cidr)
         result = self.network_client.virtual_networks.begin_create_or_update(self.resource_group, name, data)
@@ -859,7 +860,7 @@ class Kazure(object):
                     return {'result': 'failure', 'reason': f"{subnet_cidr} isnt part of {cidr}"}
             else:
                 subnet_cidr = cidr
-            subnet_data = {'address_prefix': subnet_cidr}
+            subnet_data = {'address_prefix': subnet_cidr, 'address_prefixes': [subnet_cidr]}
             subnet_ipv6 = ':' in subnet_cidr
             if not nat and not subnet_ipv6:
                 data['nat_gateway'] = {'id': nat_gateway_id}
@@ -1409,7 +1410,7 @@ class Kazure(object):
             dual_ipv6 = str(dual_network.version) == "6"
             if subnet_ipv6 == dual_ipv6:
                 return {'result': 'failure', 'reason': "cidr and dual_cidr must be of different types"}
-        data = {'address_prefixes': [cidr], 'tags': {'plan': plan}}
+        data = {'address_prefix': cidr, 'address_prefixes': [cidr], 'tags': {'plan': plan}}
         if dual_cidr is not None:
             data['address_prefixes'].append(dual_cidr)
         network = overrides.get('network', name)

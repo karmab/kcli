@@ -87,13 +87,13 @@ platform:
 {% elif config_type == 'azure' %}
   azure:
     baseDomainResourceGroupName: {{ config_resourcegroup|default('kcli') }}
-    ResourceGroupName: {{ config_resourcegroup|default('kcli') }}
+    resourceGroupName: {{ config_resourcegroup|default('kcli') }}
 {% if '-' in network %}
 {% set vnet = network.split('-')[0] %}
     networkResourceGroupName: {{ config_resourcegroup|default('kcli') }}
-    VirtualNetwork: {{ vnet }}
-    ControlPlaneSubnet: {{ subnet_ctlplane|default(network) }}
-    ComputeSubnet: {{ subnet_worker|default(network) }}
+    virtualNetwork: {{ vnet }}
+    controlPlaneSubnet: {{ subnet_ctlplane|default(network) }}
+    computeSubnet: {{ subnet_worker|default(network) }}
 {% endif %}
     region: {{ config_location }}
 {% else %}
