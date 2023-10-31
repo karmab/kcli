@@ -358,9 +358,9 @@ def get_downstream_installer(devpreview=False, macosx=False, tag=None, debug=Fal
         error("Couldn't find version")
         return 1
     if arch == 'arm64':
-        cmd = f"curl -s https://mirror.openshift.com/pub/openshift-v4/{arch}/clients/{repo}/"
+        cmd = f"curl -Ls https://mirror.openshift.com/pub/openshift-v4/{arch}/clients/{repo}/"
     else:
-        cmd = f"curl -s https://mirror.openshift.com/pub/openshift-v4/clients/{repo}/"
+        cmd = f"curl -Ls https://mirror.openshift.com/pub/openshift-v4/clients/{repo}/"
     cmd += f"openshift-install-{INSTALLSYSTEM}-{version}.tar.gz "
     cmd += "| tar zxf - openshift-install"
     cmd += "; chmod 700 openshift-install"

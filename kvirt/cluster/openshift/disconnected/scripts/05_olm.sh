@@ -9,7 +9,7 @@ export LOCAL_REGISTRY=$REGISTRY_NAME:5000
 export IMAGE_TAG=olm
 
 # Add extra registry keys
-curl -o /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-isv https://www.redhat.com/security/data/55A34A82.txt
+curl -Lo /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-isv https://www.redhat.com/security/data/55A34A82.txt
 jq ".transports.docker += {\"registry.redhat.io/redhat/certified-operator-index\": [{\"type\": \"signedBy\",\"keyType\": \"GPGKeys\",\"keyPath\": \"/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-isv\"}], \"registry.redhat.io/redhat/community-operator-index\": [{\"type\": \"signedBy\",\"keyType\": \"GPGKeys\",\"keyPath\": \"/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-isv\"}], \"registry.redhat.io/redhat/redhat-marketplace-operator-index\": [{\"type\": \"signedBy\",\"keyType\": \"GPGKeys\",\"keyPath\": \"/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-isv\"}]}" < /etc/containers/policy.json > /etc/containers/policy.json.new
 mv /etc/containers/policy.json.new /etc/containers/policy.json
 
@@ -25,7 +25,7 @@ podman login -u "$RHN_USER" -p "$RHN_PASSWORD" registry.redhat.io
 
 which oc-mirror >/dev/null 2>&1
 if [ "$?" != "0" ] ; then
-  curl -sL https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/4.13.12/oc-mirror.tar.gz | tar xvz -C /usr/bin
+  curl -Ls https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/4.13.12/oc-mirror.tar.gz | tar xvz -C /usr/bin
   chmod +x /usr/bin/oc-mirror
 fi
 

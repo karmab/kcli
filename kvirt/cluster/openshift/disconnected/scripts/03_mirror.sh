@@ -20,11 +20,11 @@ TAG={{"latest-" + tag }}
 TAG={{"stable-" + tag }}
 {% endif %}
 OCP_REPO={{ 'ocp-dev-preview' if version == 'nightly' else 'ocp' }}
-curl -s https://mirror.openshift.com/pub/openshift-v4/clients/$OCP_REPO/$TAG/release.txt > /tmp/release.txt
+curl -Ls https://mirror.openshift.com/pub/openshift-v4/clients/$OCP_REPO/$TAG/release.txt > /tmp/release.txt
 export OPENSHIFT_RELEASE_IMAGE=$(grep 'Pull From: quay.io' /tmp/release.txt | awk -F ' ' '{print $3}')
 export OCP_RELEASE=$(grep 'Name:' /tmp/release.txt | awk -F ' ' '{print $2}')-x86_64
 {% else %}
-curl -s https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ version }}-{{ tag }}/release.txt > /tmp/release.txt
+curl -Ls https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ version }}-{{ tag }}/release.txt > /tmp/release.txt
 export OPENSHIFT_RELEASE_IMAGE=$(grep 'Pull From: quay.io' /tmp/release.txt | awk -F ' ' '{print $3}')
 export OCP_RELEASE=$(grep 'Name:' /tmp/release.txt | awk -F ' ' '{print $2}')-x86_64
 {% endif %}

@@ -1692,7 +1692,7 @@ def get_oc(version='stable', tag='4.13', macosx=False):
     SYSTEM = 'mac' if os.path.exists('/Users') else 'linux'
     arch = 'arm64' if os.uname().machine == 'aarch64' else 'x86_64'
     pprint("Downloading oc in current directory")
-    occmd = "curl -s "
+    occmd = "curl -Ls "
     if str(tag).count('.') == 1:
         tag = f'latest-{tag}'
     occmd += f"https://mirror.openshift.com/pub/openshift-v4/{arch}/clients/ocp/{tag}/openshift-client-{SYSTEM}.tar.gz"
@@ -1716,7 +1716,7 @@ def get_oc_mirror(version='stable', tag='4.13', macosx=False):
         sys.exit(1)
     arch = 'arm64' if os.uname().machine == 'aarch64' else 'x86_64'
     pprint("Downloading oc-mirror in current directory")
-    mirrorcmd = "curl -s "
+    mirrorcmd = "curl -Ls "
     if str(tag).count('.') == 1:
         tag = f'latest-{tag}'
     mirrorcmd += f"https://mirror.openshift.com/pub/openshift-v4/{arch}/clients/ocp/{tag}/oc-mirror.tar.gz"
@@ -1734,7 +1734,7 @@ def get_helm(version='latest'):
         version = jinjafilters.github_version('helm/helm')
     elif not version.startswith('v'):
         version = f"v{version}"
-    helmcmd = f"curl -s https://get.helm.sh/helm-{version}-{SYSTEM}-amd64.tar.gz |"
+    helmcmd = f"curl -Ls https://get.helm.sh/helm-{version}-{SYSTEM}-amd64.tar.gz |"
     helmcmd += f"tar zxf - --strip-components 1 {SYSTEM}-amd64/helm;"
     helmcmd += "chmod 700 helm"
     call(helmcmd, shell=True)
