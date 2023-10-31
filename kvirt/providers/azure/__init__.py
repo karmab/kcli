@@ -868,6 +868,13 @@ class Kazure(object):
         return {'result': 'success'}
 
     def delete_network(self, name=None, cidr=None, force=False):
+        vms = self.network_ports(name)
+        if vms:
+            if not force:
+                vms = ','.join(vms)
+                return {'result': 'failure', 'reason': f"Network {name} is being used by the following vms: {vms}"}
+            for vm in vms:
+                self.delete(vm)
         result = self.network_client.virtual_networks.begin_delete(self.resource_group, name)
         result.wait()
         for n in self.network_client.nat_gateways.list(self.resource_group):
@@ -928,7 +935,17 @@ class Kazure(object):
         print("not implemented")
 
     def network_ports(self, name):
-        print("not implemented")
+        results = []
+        all_subnets = self.list_subnets()
+        subnets = [s for s in all_subnets if all_subnets[s]['network'] == name]
+        for nic in self.network_client.network_interfaces.list(self.resource_group):
+            ip_configurations = nic.ip_configurations or []
+            for ip_configuration in ip_configurations:
+                subnet_id = ip_configuration.subnet.id
+                if subnet_id is not None and [s for s in subnets if all_subnets[s]['id'] == subnet_id]:
+                    new_name = os.path.basename(nic.virtual_machine.id) if nic.virtual_machine is not None else nic.name
+                    results.append(new_name)
+        return results
 
     def vm_ports(self, name):
         return ['default']
