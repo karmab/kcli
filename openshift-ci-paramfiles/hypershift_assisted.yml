@@ -1,6 +1,6 @@
 assisted: true
 version: stable
-tag: 4.13
+tag: 4.14
 network: default
 ingress_ip: 192.168.122.248
 workers: 3
