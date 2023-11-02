@@ -1127,7 +1127,10 @@ class Kgcp(object):
         networks = {}
         region = self.region
         conn = self.conn
-        nets = conn.networks().list(project=project).execute()
+        try:
+            nets = conn.networks().list(project=project).execute()
+        except:
+            return {}
         nets_items = nets.get('items', [])
         for net in nets_items:
             networkname = net['name']
@@ -1169,7 +1172,10 @@ class Kgcp(object):
         if self.xproject is not None:
             projects.append(self.xproject)
         for project in projects:
-            response = conn.subnetworks().list(region=region, project=project).execute()
+            try:
+                response = conn.subnetworks().list(region=region, project=project).execute()
+            except:
+                continue
             subnets_data = response.get('items', [])
             if subnets_data:
                 for subnet in subnets_data:
