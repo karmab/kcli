@@ -9,7 +9,7 @@ until oc get crd/clusterimagesets.hive.openshift.io >/dev/null 2>&1 ; do sleep 1
 
 if [ "$(which openshift-install)" == "" ] ; then 
   VERSION={{ version|default('stable') }}
-  TAG={{ tag|default('4.12') }}
+  TAG={{ tag|default('4.13') }}
   kcli download openshift-install -P version=$VERSION -P tag=$TAG
   export PATH=.:$PATH
 fi
