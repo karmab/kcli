@@ -824,10 +824,11 @@ class Kopenstack(object):
         need_uncompress = any(shortimage.endswith(suffix) for suffix in ['.gz', '.xz', '.bz2', '.zst'])
         if need_uncompress:
             extension = os.path.splitext(shortimage)[1].replace('.', '')
-            executable = {'xz': 'unxz -f', 'gz': 'gunzip -f', 'bz2': 'bunzip2 -f', 'zst': 'zstd --decompress'}
+            executable = {'xz': 'unxz', 'gz': 'gunzip', 'bz2': 'bunzip2', 'zst': 'zstd'}
+            flag = '--decompress' if extension == 'zstd' else '-f'
             executable = executable[extension]
             if which(executable) is not None:
-                uncompresscmd = f"{executable} {image_path}"
+                uncompresscmd = f"{executable} {flag} {image_path}"
                 os.system(uncompresscmd)
             else:
                 error(f"{executable} not found. Can't uncompress image")

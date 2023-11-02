@@ -1041,13 +1041,14 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             image_path = os.path.abspath(url) if os.path.exists(url) else f'/tmp/{shortimage}'
             extensions = {'bz2': 'bunzip2 -f', 'gz': 'gunzip -f', 'xz': 'unxz -f', 'zst': 'zstd --decompress'}
             for extension in extensions:
+                flag = '--decompress' if extension == 'zstd' else '-f'
                 if shortimage.endswith(extension):
                     executable = extensions[extension]
                     if which(executable) is None:
                         pprint(f"{executable} not found. Can't uncompress image")
                         sys.exit(1)
                     else:
-                        uncompresscmd = f"{executable} {image_path}"
+                        uncompresscmd = f"{executable} {flag} {image_path}"
                         os.system(uncompresscmd)
                         shortimage = shortimage.replace(f".{extension}", '')
                         image_path = f'/tmp/{shortimage}'

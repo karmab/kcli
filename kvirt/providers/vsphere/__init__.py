@@ -1278,9 +1278,10 @@ class Ksphere:
             need_uncompress = any(shortimage.endswith(suffix) for suffix in ['.gz', '.xz', '.bz2', '.zst'])
             if need_uncompress:
                 extension = os.path.splitext(shortimage)[1].replace('.', '')
-                executable = {'xz': 'unxz -f', 'gz': 'gunzip -f', 'bz2': 'bunzip2 -f', 'zst': 'zstd --decompress'}
+                executable = {'xz': 'unxz', 'gz': 'gunzip', 'bz2': 'bunzip2', 'zst': 'zstd'}
+                flag = '--decompress' if extension == 'zstd' else '-f'
                 executable = executable[extension]
-                uncompresscmd = f"{executable} /tmp/{shortimage}"
+                uncompresscmd = f"{executable} {flag} /tmp/{shortimage}"
                 os.system(uncompresscmd)
                 shortimage = shortimage.replace(f'.{extension}', '')
             extension = os.path.splitext(shortimage)[1].replace('.', '')

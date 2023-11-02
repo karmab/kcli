@@ -3205,18 +3205,19 @@ class Kvirt(object):
         elif code != 0:
             return {'result': 'failure', 'reason': "Unable to download indicated image"}
         if need_uncompress:
-            executable = {'xz': 'unxz -f', 'gz': 'gunzip -f', 'bz2': 'bunzip2 -f', 'zst': 'zstd --decompress'}
+            executable = {'xz': 'unxz', 'gz': 'gunzip', 'bz2': 'bunzip2', 'zst': 'zstd'}
+            flag = '--decompress' if extension == 'zstd' else '-f'
             executable = executable[extension]
             if self.host == 'localhost' or self.host == '127.0.0.1':
                 if which(executable) is not None:
-                    uncompresscmd = f"{executable} {poolpath}/{full_name}"
+                    uncompresscmd = f"{executable} {flag} {poolpath}/{full_name}"
                     os.system(uncompresscmd)
                 else:
                     error(f"{executable} not found. Can't uncompress image")
                     return {'result': 'failure', 'reason': f"{executable} not found. Can't uncompress image"}
             elif self.protocol == 'ssh':
-                uncompresscmd = 'ssh %s -p %s %s@%s "%s -f %s/%s"' % (self.identitycommand, self.port, self.user,
-                                                                      self.host, executable, poolpath, full_name)
+                uncompresscmd = 'ssh %s -p %s %s@%s "%s %s %s/%s"' % (self.identitycommand, self.port, self.user,
+                                                                      self.host, executable, flag, poolpath, full_name)
                 os.system(uncompresscmd)
         if cmd is not None:
             if self.host == 'localhost' or self.host == '127.0.0.1':
