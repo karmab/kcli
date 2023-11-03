@@ -56,4 +56,4 @@ jobs:
       runs-on: libvirt
       steps:
       - name: Deploy hypershift cluster
-        run: kcli create cluster hypershift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET $PLAN --force
+        run: kcli create cluster hypershift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET -P version=$VERSION -P tag="$TAG" $EXTRAPARAMS $PLAN --force
