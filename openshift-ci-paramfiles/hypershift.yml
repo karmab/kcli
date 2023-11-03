@@ -1,5 +1,5 @@
 cluster: ci-hypershift
-version: stable
+version: latest
 tag: 4.14
 network: baremetal
 ingress_ip: 10.19.135.130
