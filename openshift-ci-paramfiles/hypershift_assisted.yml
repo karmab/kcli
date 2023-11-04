@@ -1,5 +1,5 @@
 assisted: true
-version: stable
+version: latest
 tag: 4.13
 network: default
 ingress_ip: 192.168.122.248
