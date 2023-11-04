@@ -314,7 +314,8 @@ def create(config, plandir, cluster, overrides):
     kubeconfig = os.environ.get('KUBECONFIG')
     kubeconfigdir = os.path.dirname(kubeconfig) if kubeconfig is not None else os.path.expanduser("~/.kube")
     kubeconfig = os.path.basename(kubeconfig) if kubeconfig is not None else 'config'
-    if yaml.safe_load(os.popen('oc get crd hostedclusters.hypershift.openshift.io -o yaml 2>/dev/null').read()) is None:
+    hosted_crd_cmd = 'oc get crd hostedclusters.hypershift.openshift.io -o yaml 2>/dev/null'
+    if yaml.safe_load(os.popen(hosted_crd_cmd).read()) is None:
         warning("Hypershift not installed. Installing it for you")
         if data['mce'] or assisted:
             mce_assisted = assisted or data['mce_assisted']
@@ -334,6 +335,18 @@ def create(config, plandir, cluster, overrides):
             hypercmd += f" --hypershift-image {data['operator_image']}"
             call(hypercmd, shell=True)
             sleep(120)
+    assisted_crd_cmd = 'oc get crd infraenvs.agent-install.openshift.io -o yaml 2>/dev/null'
+    if assisted and yaml.safe_load(os.popen(assisted_crd_cmd).read()) is None:
+        warning("Assisted not installed. Installing it for you")
+        assisted_dir = f"{os.path.dirname(get_ci_installer.__code__.co_filename)}/apps/multicluster-engine"
+        with TemporaryDirectory() as tmpdir:
+            assisted_data = yaml.safe_load(open(f"{assisted_dir}/kcli_default.yml"))
+            assisted_data.update(overrides)
+            assisted_script = config.process_inputfile('xxx', f'{assisted_dir}/assisted-service.sh',
+                                                       overrides=assisted_data)
+            with open(f"{tmpdir}/assisted.sh", 'w') as f:
+                f.write(assisted_script)
+            call(f'bash {tmpdir}/assisted.sh', shell=True)
     registry = 'quay.io'
     management_image = os.popen("oc get clusterversion version -o jsonpath='{.status.desired.image}'").read()
     prefixes = ['quay.io', 'registry.ci']

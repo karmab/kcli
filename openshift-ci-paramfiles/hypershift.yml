@@ -3,7 +3,6 @@ version: latest
 tag: 4.14
 network: baremetal
 ingress_ip: 10.19.135.130
-mce_assisted: true
 workers: 2
 numcpus: 16
 memory: 16384
