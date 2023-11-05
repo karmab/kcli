@@ -10,8 +10,6 @@ env:
  PULLSECRET: /root/openshift_pull.json
  KUBECONFIG: /root/.kcli/clusters/ci-libvirt/auth/kubeconfig
  PARAMFILE: openshift-ci-paramfiles/hypershift_assisted.yml
- VERSION: stable
- TAG: "4.14"
 
 jobs:
  requirements:
@@ -46,7 +44,7 @@ jobs:
    steps:
    - name: Deploy HYPERSHIFT ASSISTED
      run: |
-       kcli create cluster hypershift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET -P version=$VERSION -P tag="$TAG" $CLUSTER
+       kcli create cluster hypershift --pf $PARAMFILE -P pull_secret=$PULLSECRET $CLUSTER
 
  clean-up:
    needs: deploy-hypershift

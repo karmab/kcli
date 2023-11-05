@@ -10,6 +10,7 @@ env:
  PLAN: ci-hypershift
  PULLSECRET: /root/openshift_pull.json
  KUBECONFIG: /root/.kcli/clusters/ci-libvirt/auth/kubeconfig
+ PARAMFILE: openshift-ci-paramfiles/hypershift.yml
 
 jobs:
     requirements:
@@ -30,4 +31,4 @@ jobs:
       runs-on: libvirt
       steps:
       - name: Deploy hypershift cluster
-        run: kcli create cluster hypershift --paramfile openshift-ci-paramfiles/hypershift.yml -P pull_secret=$PULLSECRET $PLAN --force
+        run: kcli create cluster hypershift --pf $PARAMFILE -P pull_secret=$PULLSECRET $PLAN --force
