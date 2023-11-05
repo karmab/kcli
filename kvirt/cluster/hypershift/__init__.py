@@ -346,6 +346,8 @@ def create(config, plandir, cluster, overrides):
                                                        overrides=assisted_data)
             with open(f"{tmpdir}/assisted.sh", 'w') as f:
                 f.write(assisted_script)
+            copy2(f'{assisted_dir}/99-metal3-provisioning.yaml', '.')
+            copy2(f'{assisted_dir}/assisted-service.sample.yml', '.')
             call(f'bash {tmpdir}/assisted.sh', shell=True)
     registry = 'quay.io'
     management_image = os.popen("oc get clusterversion version -o jsonpath='{.status.desired.image}'").read()
