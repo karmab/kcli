@@ -335,7 +335,7 @@ def create(config, plandir, cluster, overrides):
             hypercmd += f" --hypershift-image {data['operator_image']}"
             call(hypercmd, shell=True)
             sleep(120)
-    assisted_crd_cmd = 'oc get crd infraenvs.agent-install.openshift.io -o yaml 2>/dev/null'
+    assisted_crd_cmd = 'oc -n multicluster-engine get pod -l app=assisted-service -o name 2>/dev/null'
     if assisted and yaml.safe_load(os.popen(assisted_crd_cmd).read()) is None:
         warning("Assisted not installed. Installing it for you")
         assisted_dir = f"{os.path.dirname(get_ci_installer.__code__.co_filename)}/apps/multicluster-engine"
