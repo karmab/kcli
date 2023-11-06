@@ -1744,7 +1744,7 @@ kcli create kube openshift --paramfile parameters.yml $cluster
 
 ### Storage support
 
-By default, no storage provider is deployed but you can leverage easily leverage lso, lvms or odf or a test environment I usually use lvms. For instance, to use lvms, add the following to your parameter  file
+By default, no storage provider is deployed but you can easily leverage LSO, LVMS or ODF. For instance, to use lvms, add the following to your parameter  file
 
 ```
 extra_disks:
@@ -1763,7 +1763,7 @@ apps:
 - odf-operator
 ```
 
-An other option is to use nfs provisioner, by indicating the following:
+An other option is to use nfs provisioner, which gets installed indicating the following:
 
 ```
 apps:
