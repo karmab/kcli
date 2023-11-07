@@ -315,8 +315,10 @@ def create(config, plandir, cluster, overrides):
     kubeconfigdir = os.path.dirname(kubeconfig) if kubeconfig is not None else os.path.expanduser("~/.kube")
     kubeconfig = os.path.basename(kubeconfig) if kubeconfig is not None else 'config'
     hosted_crd_cmd = 'oc get crd hostedclusters.hypershift.openshift.io -o yaml 2>/dev/null'
-    if yaml.safe_load(os.popen(hosted_crd_cmd).read()) is None:
-        warning("Hypershift not installed. Installing it for you")
+    assisted_crd_cmd = 'oc -n multicluster-engine get pod -l app=assisted-service -o name 2>/dev/null'
+    if yaml.safe_load(os.popen(hosted_crd_cmd).read()) is None\
+       or (assisted and yaml.safe_load(os.popen(assisted_crd_cmd).read()) is None):
+        warning("Hypershift not fully installed. Installing it for you")
         if data['mce'] or assisted:
             mce_assisted = assisted or data['mce_assisted']
             app_name, source, channel, csv, description, x_namespace, channels, crd = olm_app('multicluster-engine')
@@ -335,23 +337,6 @@ def create(config, plandir, cluster, overrides):
             hypercmd += f" --hypershift-image {data['operator_image']}"
             call(hypercmd, shell=True)
             sleep(120)
-    assisted_crd_cmd = 'oc -n multicluster-engine get pod -l app=assisted-service -o name 2>/dev/null'
-    if assisted and yaml.safe_load(os.popen(assisted_crd_cmd).read()) is None:
-        warning("Assisted not installed. Installing it for you")
-        assisted_dir = f"{os.path.dirname(get_ci_installer.__code__.co_filename)}/apps/multicluster-engine"
-        with TemporaryDirectory() as tmpdir:
-            assisted_data = yaml.safe_load(open(f"{assisted_dir}/kcli_default.yml"))
-            assisted_data.update(overrides)
-            assisted_script = config.process_inputfile('xxx', f'{assisted_dir}/assisted-service.sh',
-                                                       overrides=assisted_data)
-            with open(f"{tmpdir}/assisted.sh", 'w') as f:
-                f.write(assisted_script)
-            assisted_sample = config.process_inputfile('xxx', f'{assisted_dir}/assisted-service.sample.yml',
-                                                       overrides=assisted_data)
-            with open(f"{tmpdir}/assisted-service.sample.yml", 'w') as f:
-                f.write(assisted_sample)
-            copy2(f'{assisted_dir}/99-metal3-provisioning.yaml', '.')
-            call(f'bash {tmpdir}/assisted.sh', shell=True)
     registry = 'quay.io'
     management_image = os.popen("oc get clusterversion version -o jsonpath='{.status.desired.image}'").read()
     prefixes = ['quay.io', 'registry.ci']
