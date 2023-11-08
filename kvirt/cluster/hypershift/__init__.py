@@ -8,7 +8,6 @@ from kvirt.common import deploy_cloud_storage
 from kvirt.defaults import OPENSHIFT_TAG
 from kvirt.cluster.openshift import get_ci_installer, get_downstream_installer, get_installer_version
 from kvirt.cluster.openshift import same_release_images, process_apps, update_openshift_etc_hosts, offline_image
-from ipaddress import ip_network
 import json
 import os
 import re
@@ -431,48 +430,28 @@ def create(config, plandir, cluster, overrides):
         return {'result': 'failure', 'reason': msg}
     network = data.get('network')
     ingress_ip = data.get('ingress_ip')
-    cidr = '192.168.122.0/24'
-    ipv6 = False
     virtual_router_id = None
-    if config.type in virtplatforms and not kubevirt:
-        if ingress_ip is None:
-            networkinfo = k.info_network(network)
-            if config.type == 'kubevirt':
-                selector = {'kcli/plan': plan, 'kcli/role': 'worker'}
-                service_type = "LoadBalancer" if k.access_mode == 'LoadBalancer' else 'NodePort'
-                ingress_ip = k.create_service(f"{cluster}-ingress", k.namespace, selector, _type=service_type,
-                                              ports=[80, 443])
-                if ingress_ip is None:
-                    msg = "Couldnt gather an ingress_ip from your specified network"
-                    return {'result': 'failure', 'reason': msg}
-                else:
-                    pprint(f"Using ingress_ip {ingress_ip}")
-                    data['ingress_ip'] = ingress_ip
-                    data['kubevirt_ingress_service'] = True
-            elif config.type == 'kvm' and networkinfo['type'] == 'routed':
-                cidr = networkinfo['cidr']
-                ingress_index = 3 if ':' in cidr else -4
-                ingress_ip = str(ip_network(cidr)[ingress_index])
-                warning(f"Using {ingress_ip} as ingress_ip")
-                data['ingress_ip'] = ingress_ip
-            else:
-                msg = "You need to define ingress_ip in your parameters file"
-                return {'result': 'failure', 'reason': msg}
+    if ingress_ip is None:
+        cmcmd = "oc patch ingresscontroller -n openshift-ingress-operator default --type=json -p "
+        cmcmd += "'[{ \"op\": \"add\", \"path\": \"/spec/routeAdmission\", "
+        cmcmd += "\"value\": {wildcardPolicy: \"WildcardsAllowed\"}}]'"
+        call(cmcmd, shell=True)
+    else:
         if data.get('virtual_router_id') is None:
             virtual_router_id = hash(cluster) % 254 + 1
             data['virtual_router_id'] = virtual_router_id
             pprint(f"Using keepalived virtual_router_id {virtual_router_id}")
-        if ':' in cidr:
-            ipv6 = True
-        data['ipv6'] = ipv6
-    if sslip and config.type in virtplatforms:
-        domain = '%s.sslip.io' % ingress_ip.replace('.', '-').replace(':', '-')
-        data['domain'] = domain
-        pprint(f"Setting domain to {domain}")
-        ignore_hosts = False
+        if sslip and config.type in virtplatforms:
+            domain = '%s.sslip.io' % ingress_ip.replace('.', '-').replace(':', '-')
+            data['domain'] = domain
+            pprint(f"Setting domain to {domain}")
+            ignore_hosts = False
     assetsdata = data.copy()
     copy2(f'{kubeconfigdir}/{kubeconfig}', f"{clusterdir}/kubeconfig.mgmt")
+    cidr = data.get('cidr', '192.168.122.0/24')
     assetsdata['cidr'] = cidr
+    ipv6 = ':' in cidr
+    data['ipv6'] = ipv6
     pprint("Creating control plane assets")
     cmcmd = f"oc create ns {namespace} -o yaml --dry-run=client | oc apply -f -"
     call(cmcmd, shell=True)
