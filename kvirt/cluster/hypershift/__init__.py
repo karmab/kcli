@@ -358,14 +358,18 @@ def create(config, plandir, cluster, overrides):
         data['operator_disconnected_image'] = f'{disconnected_url}/openshift/release@{hypershift_tag}'
     data['registry'] = registry
     data['basedir'] = '/workdir' if container_mode() else '.'
-    supported_data = yaml.safe_load(os.popen("oc get cm/supported-versions -o yaml -n hypershift").read())['data']
-    supported_versions = supported_versions = supported_data['supported-versions']
-    versions = yaml.safe_load(supported_versions)['versions']
-    if version == 'latest':
-        tag = versions[0]
-    elif str(tag) not in versions:
-        msg = f"Invalid tag {tag}. Choose between {','.join(versions)}"
-        return {'result': 'failure', 'reason': msg}
+    supported_data = yaml.safe_load(os.popen("oc get cm/supported-versions -o yaml -n hypershift").read())
+    if supported_data is not None:
+        supported_data = supported_data['data']
+        supported_versions = supported_versions = supported_data['supported-versions']
+        versions = yaml.safe_load(supported_versions)['versions']
+        if version == 'latest':
+            tag = versions[0]
+        elif str(tag) not in versions:
+            msg = f"Invalid tag {tag}. Choose between {','.join(versions)}"
+            return {'result': 'failure', 'reason': msg}
+    else:
+        warning("Couldnt verify whether {tag} is a valid tag")
     management_cmd = "oc get ingresscontroller -n openshift-ingress-operator default -o jsonpath='{.status.domain}'"
     management_ingress_domain = os.popen(management_cmd).read()
     data['management_ingress_domain'] = management_ingress_domain
