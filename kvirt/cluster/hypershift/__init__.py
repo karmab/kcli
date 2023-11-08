@@ -362,7 +362,7 @@ def create(config, plandir, cluster, overrides):
     supported_versions = supported_versions = supported_data['supported-versions']
     versions = yaml.safe_load(supported_versions)['versions']
     if version == 'latest':
-        tag = versions[-1]
+        tag = versions[0]
     elif str(tag) not in versions:
         msg = f"Invalid tag {tag}. Choose between {','.join(versions)}"
         return {'result': 'failure', 'reason': msg}
