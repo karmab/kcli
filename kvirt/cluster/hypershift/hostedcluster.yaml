@@ -75,6 +75,10 @@ spec:
     agent:
       agentNamespace: {{ namespace }}-{{ cluster }}
     type: Agent
+{% elif kubevirt %}
+    kubevirt:
+      baseDomainPassthrough: true
+    type: KubeVirt
 {% else %}
     type: None
 {% endif %}

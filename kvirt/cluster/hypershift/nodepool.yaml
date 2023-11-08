@@ -22,7 +22,19 @@ spec:
     autoRepair: false
     upgradeType: InPlace
   platform:
+{% if kubevirt %}
+    kubevirt:
+      compute:
+        cores: {{ numcpus|default(8) }}
+        memory: {{ memory|default(6144) }}Mi
+      rootVolume:
+        persistent:
+          size: {{ disk_size|default(30) }}Gi
+        type: Persistent
+    type: KubeVirt
+{% else %}
     type: {{ 'Agent' if assisted else 'None' }}
+{% endif %}
   release:
     image: "{{ nodepool_image }}"
   replicas: {{ workers }}

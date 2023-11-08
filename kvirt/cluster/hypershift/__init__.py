@@ -147,7 +147,8 @@ def handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts=[]):
 
 def scale(config, plandir, cluster, overrides):
     plan = cluster
-    data = {'cluster': cluster, 'kube': cluster, 'kubetype': 'hypershift', 'namespace': 'clusters', 'assisted': False}
+    data = {'cluster': cluster, 'kube': cluster, 'kubetype': 'hypershift', 'namespace': 'clusters', 'assisted': False,
+            'kubevirt': False}
     data['basedir'] = '/workdir' if container_mode() else '.'
     cluster = data['cluster']
     namespace = data['namespace']
@@ -179,11 +180,18 @@ def scale(config, plandir, cluster, overrides):
             plan = installparam.get('plan', plan)
     data.update(overrides)
     assisted = data['assisted']
+    kubevirt = data['kubevirt']
     with open(f"{clusterdir}/kcli_parameters.yml", 'w') as paramfile:
         yaml.safe_dump(data, paramfile)
     pprint(f"Scaling on client {config.client}")
     worker_overrides = data.copy()
     workers = worker_overrides.get('workers', 2)
+    if kubevirt:
+        # kubeconfig = data['kubeconfig']
+        # os.environ['KUBECONFIG'] = kubeconfig
+        cmcmd = f"oc -n {namespace}-{cluster} scale nodepool {cluster} --replicas {workers}"
+        call(cmcmd, shell=True)
+        return {'result': 'success'}
     os.chdir(os.path.expanduser("~/.kcli"))
     old_baremetal_hosts = installparam.get('baremetal_hosts', [])
     new_baremetal_hosts = overrides.get('baremetal_hosts', [])
@@ -253,6 +261,7 @@ def create(config, plandir, cluster, overrides):
             'mce': True,
             'mce_assisted': False,
             'assisted': False,
+            'kubevirt': False,
             'calico_version': None,
             'hosted_tag': None,
             'hosted_ha': False,
@@ -286,6 +295,8 @@ def create(config, plandir, cluster, overrides):
     workers = data.get('workers')
     version = data.get('version')
     assisted = data.get('assisted')
+    kubevirt = data.get('kubevirt')
+    none_platform = not assisted and not kubevirt
     coredns = data.get('coredns')
     tag = data.get('tag')
     if str(tag) == '4.1':
@@ -423,16 +434,10 @@ def create(config, plandir, cluster, overrides):
     cidr = '192.168.122.0/24'
     ipv6 = False
     virtual_router_id = None
-    if config.type in virtplatforms:
+    if config.type in virtplatforms and not kubevirt:
         if ingress_ip is None:
             networkinfo = k.info_network(network)
-            if config.type == 'kvm' and networkinfo['type'] == 'routed':
-                cidr = networkinfo['cidr']
-                ingress_index = 3 if ':' in cidr else -4
-                ingress_ip = str(ip_network(cidr)[ingress_index])
-                warning(f"Using {ingress_ip} as ingress_ip")
-                data['ingress_ip'] = ingress_ip
-            elif config.type == 'kubevirt':
+            if config.type == 'kubevirt':
                 selector = {'kcli/plan': plan, 'kcli/role': 'worker'}
                 service_type = "LoadBalancer" if k.access_mode == 'LoadBalancer' else 'NodePort'
                 ingress_ip = k.create_service(f"{cluster}-ingress", k.namespace, selector, _type=service_type,
@@ -444,6 +449,12 @@ def create(config, plandir, cluster, overrides):
                     pprint(f"Using ingress_ip {ingress_ip}")
                     data['ingress_ip'] = ingress_ip
                     data['kubevirt_ingress_service'] = True
+            elif config.type == 'kvm' and networkinfo['type'] == 'routed':
+                cidr = networkinfo['cidr']
+                ingress_index = 3 if ':' in cidr else -4
+                ingress_ip = str(ip_network(cidr)[ingress_index])
+                warning(f"Using {ingress_ip} as ingress_ip")
+                data['ingress_ip'] = ingress_ip
             else:
                 msg = "You need to define ingress_ip in your parameters file"
                 return {'result': 'failure', 'reason': msg}
@@ -632,7 +643,19 @@ def create(config, plandir, cluster, overrides):
     else:
         nodepool_image = os.popen("openshift-install version | grep 'release image' | cut -f3 -d' '").read().strip()
         assetsdata['nodepool_image'] = nodepool_image
-    if not assisted:
+    if assisted:
+        create_bmh_objects(config, plandir, cluster, namespace, baremetal_hosts, overrides)
+        agents = len(baremetal_hosts)
+        if not agents:
+            warning("No baremetal hosts were defined. Setting agent count to 2")
+            agents = 2
+        pprint(f"Waiting for {agents} agents to appear")
+        agent_ns = f"{namespace}-{cluster}"
+        call(f'until [ "$(oc -n {agent_ns} get agent -o name | wc -l | xargs)" -eq "{agents}" ] ; do sleep 1 ; done',
+             shell=True)
+        pprint("Waiting 2mn to avoid race conditions when creating nodepool")
+        sleep(120)
+    elif not kubevirt:
         image = data.get('image')
         if image is None:
             image_type = 'openstack' if data.get('kvm_openstack', True) and config.type == 'kvm' else config.type
@@ -660,18 +683,6 @@ def create(config, plandir, cluster, overrides):
             if not images:
                 msg = f"Missing {image}. Indicate correct image in your parameters file..."
                 return {'result': 'failure', 'reason': msg}
-    else:
-        create_bmh_objects(config, plandir, cluster, namespace, baremetal_hosts, overrides)
-        agents = len(baremetal_hosts)
-        if not agents:
-            warning("No baremetal hosts were defined. Setting agent count to 2")
-            agents = 2
-        pprint(f"Waiting for {agents} agents to appear")
-        agent_ns = f"{namespace}-{cluster}"
-        call(f'until [ "$(oc -n {agent_ns} get agent -o name | wc -l | xargs)" -eq "{agents}" ] ; do sleep 1 ; done',
-             shell=True)
-        pprint("Waiting 2mn to avoid race conditions when creating nodepool")
-        sleep(120)
     with open(f"{clusterdir}/kcli_parameters.yml", 'w') as p:
         installparam = overrides.copy()
         installparam['client'] = config.client
@@ -685,8 +696,9 @@ def create(config, plandir, cluster, overrides):
             installparam['ingress_ip'] = ingress_ip
         if virtual_router_id is not None:
             installparam['virtual_router_id'] = virtual_router_id
+        installparam['kubevirt'] = kubevirt
         installparam['assisted'] = assisted
-        if not assisted:
+        if none_platform:
             installparam['image'] = image
         installparam['ipv6'] = ipv6
         installparam['original_domain'] = data['original_domain']
@@ -707,7 +719,7 @@ def create(config, plandir, cluster, overrides):
     cmcmd = f"oc create -f {clusterdir}/nodepool.yaml"
     call(cmcmd, shell=True)
     assetsdata['clusterdir'] = clusterdir
-    if not assisted:
+    if none_platform:
         ignitionscript = config.process_inputfile(cluster, f"{plandir}/ignition.sh", overrides=assetsdata)
         with open(f"{clusterdir}/ignition.sh", 'w') as f:
             f.write(ignitionscript)
@@ -734,7 +746,7 @@ def create(config, plandir, cluster, overrides):
     with open(autoapproverpath, 'w') as f:
         f.write(autoapprover)
     call(f"oc apply -f {autoapproverpath}", shell=True)
-    if not assisted:
+    if none_platform:
         if platform in cloudplatforms + ['openstack']:
             copy2(f"{clusterdir}/nodepool.ign", f"{clusterdir}/nodepool.ign.ori")
             bucket = f"{cluster}-{domain.replace('.', '-')}"
@@ -763,7 +775,7 @@ def create(config, plandir, cluster, overrides):
     kubeadmin = os.popen(f"oc extract -n {namespace} secret/{cluster}-kubeadmin-password --to=-").read()
     with open(kubeadminpath, 'w') as f:
         f.write(kubeadmin)
-    if not assisted and data['workers'] > 0:
+    if none_platform and data['workers'] > 0:
         pprint("Deploying workers")
         worker_threaded = data.get('threaded', False) or data.get('workers_threaded', False)
         config.plan(plan, inputfile=f'{plandir}/kcli_plan.yml', overrides=data, threaded=worker_threaded)

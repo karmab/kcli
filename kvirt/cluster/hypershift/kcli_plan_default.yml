@@ -68,6 +68,7 @@ hosted_tag:
 hosted_ha: false
 autoscale: false
 assisted: false
+kubevirt: false
 calico_version:
 cloud_storage: true
 image_overrides:
