@@ -2,6 +2,7 @@
 
 from base64 import b64encode
 from glob import glob
+from ipaddress import ip_network
 from kvirt.common import success, error, pprint, info2, container_mode, warning, fix_typos
 from kvirt.common import get_oc, pwd_path, get_installer_rhcos, get_ssh_pub_key, boot_baremetal_hosts, olm_app
 from kvirt.common import deploy_cloud_storage
@@ -432,20 +433,41 @@ def create(config, plandir, cluster, overrides):
     ingress_ip = data.get('ingress_ip')
     virtual_router_id = None
     if ingress_ip is None:
-        cmcmd = "oc patch ingresscontroller -n openshift-ingress-operator default --type=json -p "
-        cmcmd += "'[{ \"op\": \"add\", \"path\": \"/spec/routeAdmission\", "
-        cmcmd += "\"value\": {wildcardPolicy: \"WildcardsAllowed\"}}]'"
-        call(cmcmd, shell=True)
-    else:
-        if data.get('virtual_router_id') is None:
-            virtual_router_id = hash(cluster) % 254 + 1
-            data['virtual_router_id'] = virtual_router_id
-            pprint(f"Using keepalived virtual_router_id {virtual_router_id}")
-        if sslip and config.type in virtplatforms:
-            domain = '%s.sslip.io' % ingress_ip.replace('.', '-').replace(':', '-')
-            data['domain'] = domain
-            pprint(f"Setting domain to {domain}")
-            ignore_hosts = False
+        networkinfo = k.info_network(network)
+        if kubevirt:
+            try:
+                cmcmd = "oc patch ingresscontroller -n openshift-ingress-operator default --type=json -p "
+                cmcmd += "'[{ \"op\": \"add\", \"path\": \"/spec/routeAdmission\", "
+                cmcmd += "\"value\": {wildcardPolicy: \"WildcardsAllowed\"}}]'"
+                call(cmcmd, shell=True)
+            except:
+                warning("Couldnt patch ingresscontroller to support wildcards. Assuming it's configured properly")
+        elif config.type == 'kubevirt':
+            selector = {'kcli/plan': plan, 'kcli/role': 'worker'}
+            service_type = "LoadBalancer" if k.access_mode == 'LoadBalancer' else 'NodePort'
+            ingress_ip = k.create_service(f"{cluster}-ingress", k.namespace, selector, _type=service_type,
+                                          ports=[80, 443])
+            if ingress_ip is None:
+                msg = f"Couldnt gather an ingress_ip from network {network}"
+                return {'result': 'failure', 'reason': msg}
+        elif config.type == 'kvm' and networkinfo['type'] == 'routed':
+            cidr = networkinfo['cidr']
+            ingress_index = 3 if ':' in cidr else -4
+            ingress_ip = str(ip_network(cidr)[ingress_index])
+            warning(f"Using {ingress_ip} as ingress_ip")
+            data['ingress_ip'] = ingress_ip
+        else:
+            msg = "You need to define ingress_ip in your parameters file"
+            return {'result': 'failure', 'reason': msg}
+    if ingress_ip is not None and data.get('virtual_router_id') is None:
+        virtual_router_id = hash(cluster) % 254 + 1
+        data['virtual_router_id'] = virtual_router_id
+        pprint(f"Using keepalived virtual_router_id {virtual_router_id}")
+    if ingress_ip is not None and sslip and config.type in virtplatforms:
+        domain = f"{ingress_ip.replace('.', '-').replace(':', '-')}.sslip.io"
+        data['domain'] = domain
+        pprint(f"Setting domain to {domain}")
+        ignore_hosts = False
     assetsdata = data.copy()
     copy2(f'{kubeconfigdir}/{kubeconfig}', f"{clusterdir}/kubeconfig.mgmt")
     cidr = data.get('cidr', '192.168.122.0/24')
