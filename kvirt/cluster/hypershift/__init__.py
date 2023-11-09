@@ -434,7 +434,10 @@ def create(config, plandir, cluster, overrides):
     virtual_router_id = None
     if ingress_ip is None:
         networkinfo = k.info_network(network)
-        if kubevirt:
+        if config.type == 'kubevirt' or kubevirt:
+            domain = management_ingress_domain
+            data['domain'] = domain
+            pprint(f"Setting domain to {domain}")
             try:
                 cmcmd = "oc patch ingresscontroller -n openshift-ingress-operator default --type=json -p "
                 cmcmd += "'[{ \"op\": \"add\", \"path\": \"/spec/routeAdmission\", "
@@ -442,14 +445,20 @@ def create(config, plandir, cluster, overrides):
                 call(cmcmd, shell=True)
             except:
                 warning("Couldnt patch ingresscontroller to support wildcards. Assuming it's configured properly")
-        elif config.type == 'kubevirt':
-            selector = {'kcli/plan': plan, 'kcli/role': 'worker'}
-            service_type = "LoadBalancer" if k.access_mode == 'LoadBalancer' else 'NodePort'
-            ingress_ip = k.create_service(f"{cluster}-ingress", k.namespace, selector, _type=service_type,
-                                          ports=[80, 443])
-            if ingress_ip is None:
-                msg = f"Couldnt gather an ingress_ip from network {network}"
-                return {'result': 'failure', 'reason': msg}
+            if not kubevirt:
+                call(f"oc create ns {k.namespace}", shell=True)
+                selector = {'kcli/plan': plan, 'kcli/role': 'worker'}
+                service_type = "LoadBalancer" if k.access_mode == 'LoadBalancer' else 'NodePort'
+                ingress_ip = k.create_service(f"{cluster}-ingress", k.namespace, selector, _type=service_type,
+                                              ports=[80, 443])
+                if service_type == 'NodePort':
+                    hostname = f"http.apps.{cluster}.{management_ingress_domain}"
+                    route_cmd = f"oc -n {k.namespace} create route passthrough --service={cluster}-ingress "
+                    route_cmd += f"--hostname={hostname} --wildcard-policy=Subdomain --port=443"
+                    call(route_cmd, shell=True)
+                elif ingress_ip is None:
+                    msg = f"Couldnt gather an ingress_ip from network {network}"
+                    return {'result': 'failure', 'reason': msg}
         elif config.type == 'kvm' and networkinfo['type'] == 'routed':
             cidr = networkinfo['cidr']
             ingress_index = 3 if ':' in cidr else -4
@@ -459,6 +468,8 @@ def create(config, plandir, cluster, overrides):
         else:
             msg = "You need to define ingress_ip in your parameters file"
             return {'result': 'failure', 'reason': msg}
+    elif kubevirt:
+        warning(f"Note that ingress_ip {ingress_ip} won't be configured as you're using kubevirt platform")
     if ingress_ip is not None and data.get('virtual_router_id') is None:
         virtual_router_id = hash(cluster) % 254 + 1
         data['virtual_router_id'] = virtual_router_id
