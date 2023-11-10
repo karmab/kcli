@@ -329,6 +329,23 @@ def delete_vm(args):
                     os.system(sshcmd)
                 else:
                     warning(f"vm {name} doesnt appear as a rhel box. Skipping unregistration")
+            match = re.match(r'(.*)-(ctlplane|worker)-[0-9]', name)
+            cluster = match.group(1) if match is not None else None
+            clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
+            if cluster is not None and os.path.exists(clusterdir):
+                os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
+                if os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
+                    with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
+                        installparam = yaml.safe_load(install)
+                        kubetype = installparam.get('kubetype', 'generic')
+                        binary = 'oc' if kubetype == 'openshift' else 'kubectl'
+                        nodescmd = f'{binary} get node -o name'
+                        nodes = [n.strip().replace('node/', '') for n in os.popen(nodescmd).readlines()]
+                        for node in nodes:
+                            if node.split('.')[0] == name:
+                                pprint(f"Deleting node {node} from your {kubetype} cluster")
+                                call(f'{binary} delete node {node}', shell=True)
+                                break
             for confpool in config.confpools:
                 ip_reservations = config.confpools[confpool].get('ip_reservations', {})
                 if name in ip_reservations:
@@ -355,23 +372,6 @@ def delete_vm(args):
                     z = Kconfig(client=dnsclient).k
                     dnsclients[dnsclient] = z
                 z.delete_dns(name, domain)
-            match = re.match(r'(.*)-(ctlplane|worker)-[0-9]', name)
-            cluster = match.group(1) if match is not None else None
-            clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
-            if cluster is not None and os.path.exists(clusterdir):
-                os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
-                if os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
-                    with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
-                        installparam = yaml.safe_load(install)
-                        kubetype = installparam.get('kubetype', 'generic')
-                        binary = 'oc' if kubetype == 'openshift' else 'kubectl'
-                        nodescmd = f'{binary} get node -o name'
-                        nodes = [n.strip().replace('node/', '') for n in os.popen(nodescmd).readlines()]
-                        for node in nodes:
-                            if node.split('.')[0] == name:
-                                pprint(f"Deleting node {node} from your cluster")
-                                call(f'{binary} delete node {node}', shell=True)
-                                break
     sys.exit(1 if 1 in codes else 0)
 
 
