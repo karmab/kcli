@@ -114,7 +114,7 @@ class Kubevirt(Kubecommon):
         if self.exists(name):
             return {'result': 'failure', 'reason': f"VM {name} already exists"}
         if image is not None:
-            containerdisk = True if '/' in image else False
+            containerdisk = '/' in image and 'ocp-v4.0-art-dev' not in image
             if not containerdisk:
                 image = image.replace('.', '-').replace('_', '-')
             if image not in self.volumes():
@@ -200,8 +200,8 @@ class Kubevirt(Kubecommon):
         features = {}
         machine = 'q35'
         if 'machine' in overrides:
-            warning(f"Forcing machine type to {machine}")
             machine = overrides['machine']
+            warning(f"Forcing machine type to {machine}")
         vm['spec']['template']['spec']['domain']['machine'] = {'type': machine}
         if cpumodel != 'host-model':
             vm['spec']['template']['spec']['domain']['cpu']['model'] = cpumodel
@@ -340,8 +340,12 @@ class Kubevirt(Kubecommon):
                 if 'name' in disk:
                     existingpvc = True
             myvolume = {'name': diskname}
+            hypershift = False
             if image is not None and index == 0:
-                if image in CONTAINERDISKS or '/' in image:
+                if 'ocp-v4-0-art-dev' in image:
+                    hypershift = True
+                    myvolume['dataVolume'] = {'name': diskname}
+                elif image in CONTAINERDISKS or '/' in image:
                     containerdiskimage = f"{self.registry}/{image}" if self.registry is not None else image
                     myvolume['containerDisk'] = {'image': containerdiskimage}
                 elif harvester:
@@ -459,7 +463,7 @@ class Kubevirt(Kubecommon):
             pvc_volume_mode = pvc['spec']['volumeMode']
             pvc_access_mode = pvc['spec']['accessModes']
             if index == 0 and image is not None and image not in CONTAINERDISKS:
-                if datavolumes:
+                if datavolumes or 'ocp-v4-0-art-dev' in image:
                     owners.pop()
                     dvt = {'metadata': {'name': pvcname, 'annotations': {'sidecar.istio.io/inject': 'false'}},
                            'spec': {'pvc': {'storageClassName': diskpool,
@@ -477,6 +481,12 @@ class Kubevirt(Kubecommon):
                         dvt['spec']['pvc']['storageClassName'] = f"longhorn-{harvester_image}"
                         dvt['spec']['source'] = {'blank': {}}
                         dvt['spec']['pvc']['volumeMode'] = 'Block'
+                    elif hypershift:
+                        dvt['kind'] = 'DataVolume'
+                        dvt['apiVersion'] = f"{CDIDOMAIN}/{CDIVERSION}"
+                        del dvt['spec']['pvc']
+                        dvt['spec']['source'] = {'registry': {'pullMethod': 'node', 'url': f"docker://{image}"}}
+                        dvt['spec']['storage'] = {'resources': {'requests': {'storage': f'{pvcsize}Gi'}}}
                     vm['spec']['dataVolumeTemplates'] = [dvt]
                 else:
                     core.create_namespaced_persistent_volume_claim(namespace, pvc)

@@ -499,6 +499,8 @@ class Kconfig(Kbaseconfig):
             vmprofiles[profile] = {'image': profile}
         elif profile == 'kvirt':
             vmprofiles[profile] = {}
+        elif self.type == 'kubevirt' and '/' in profile:
+            vmprofiles[profile] = {'image': profile}
         else:
             return {'result': 'failure', 'reason': f'Image {profile} not found'}
         profilename = profile
