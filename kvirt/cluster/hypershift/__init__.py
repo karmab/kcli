@@ -446,19 +446,26 @@ def create(config, plandir, cluster, overrides):
             except:
                 warning("Couldnt patch ingresscontroller to support wildcards. Assuming it's configured properly")
             if not kubevirt:
-                call(f"oc create ns {k.namespace}", shell=True)
+                hosted_namespace = f"{namespace}-{cluster}"
+                call(f"oc create ns {hosted_namespace}", shell=True)
                 selector = {'kcli/plan': plan, 'kcli/role': 'worker'}
                 service_type = "LoadBalancer" if k.access_mode == 'LoadBalancer' else 'NodePort'
-                ingress_ip = k.create_service(f"{cluster}-ingress", k.namespace, selector, _type=service_type,
+                ingress_ip = k.create_service(f"{cluster}-ingress", hosted_namespace, selector, _type=service_type,
                                               ports=[80, 443])
                 if service_type == 'NodePort':
                     hostname = f"http.apps.{cluster}.{management_ingress_domain}"
-                    route_cmd = f"oc -n {k.namespace} create route passthrough --service={cluster}-ingress "
+                    route_cmd = f"oc -n {hosted_namespace} create route passthrough --service={cluster}-ingress "
                     route_cmd += f"--hostname={hostname} --wildcard-policy=Subdomain --port=443"
                     call(route_cmd, shell=True)
                 elif ingress_ip is None:
                     msg = f"Couldnt gather an ingress_ip from network {network}"
                     return {'result': 'failure', 'reason': msg}
+                secret_cmd = f"oc -n {hosted_namespace} create secret generic pull-secret "
+                secret_cmd += f"--from-file=.dockerconfigjson={pull_secret}"
+                call(secret_cmd, shell=True)
+                sa_cmd = f"oc -n {hosted_namespace} patch sa default "
+                sa_cmd += "-p '{\"imagePullSecrets\": [{\"name\": \"pull-secret\"}]}'"
+                call(sa_cmd, shell=True)
         elif config.type == 'kvm' and networkinfo['type'] == 'routed':
             cidr = networkinfo['cidr']
             ingress_index = 3 if ':' in cidr else -4

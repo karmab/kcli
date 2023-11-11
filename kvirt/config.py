@@ -2853,9 +2853,6 @@ class Kconfig(Kbaseconfig):
             if not assisted and ('baremetal_iso' in clusterdata or 'baremetal_hosts' in clusterdata):
                 call(f'KUBECONFIG={kubeconfigmgmt} oc -n default delete all -l app=httpd-kcli', shell=True)
                 call(f'KUBECONFIG={kubeconfigmgmt} oc -n default delete pvc httpd-kcli-pvc', shell=True)
-            ingress_ip = clusterdata.get('ingress_ip')
-            if self.type == 'kubevirt' and not clusterdata.get('kubevirt', False) and ingress_ip is None:
-                call(f'KUBECONFIG={kubeconfigmgmt} oc -n {k.namespace} delete route {cluster}-ingress', shell=True)
         if gke:
             gcpclient = None
             if 'client' in clusterdata:
