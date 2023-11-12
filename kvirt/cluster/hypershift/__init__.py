@@ -446,8 +446,6 @@ def create(config, plandir, cluster, overrides):
             except:
                 warning("Couldnt patch ingresscontroller to support wildcards. Assuming it's configured properly")
             if not kubevirt:
-                k.namespace = f"{namespace}-{cluster}"
-                call(f"oc create ns {k.namespace}", shell=True)
                 selector = {'kcli/plan': plan, 'kcli/role': 'worker'}
                 service_type = "LoadBalancer" if k.access_mode == 'LoadBalancer' else 'NodePort'
                 ingress_ip = k.create_service(f"{cluster}-ingress", k.namespace, selector, _type=service_type,

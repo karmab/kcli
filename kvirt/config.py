@@ -1174,13 +1174,10 @@ class Kconfig(Kbaseconfig):
                 value = extra_metadata[key]
                 pprint(f"Updating {key} of vm {name} to {value}...")
                 k.update_metadata(name, key, value)
-        if overrides.get('files', []):
-            if overrides.get('skip_files_remediation', False):
-                pprint(f"Skipping Remediation files of {name}")
-            else:
-                newfiles = overrides['files']
-                pprint(f"Remediating files of {name}")
-                self.remediate_files(name, newfiles, overrides)
+        if overrides.get('files', []) and not overrides.get('skip_files_remediation', False):
+            newfiles = overrides['files']
+            pprint(f"Remediating files of {name}")
+            self.remediate_files(name, newfiles, overrides)
         if self.type == 'kvm':
             pool = overrides.get('pool')
             if pool is not None:
@@ -2036,7 +2033,7 @@ class Kconfig(Kbaseconfig):
                             updated = True
                             pprint(f"Updating autostart of {name} to {profile['autostart']}")
                             z.update_start(name, profile['autostart'])
-                        if 'flavor' in profile and currentflavor != profile['flavor']:
+                        if 'flavor' in profile and str(currentflavor) != str(profile['flavor']):
                             updated = True
                             pprint(f"Updating flavor of {name} to {profile['flavor']}")
                             z.update_flavor(name, profile['flavor'])
@@ -2092,9 +2089,8 @@ class Kconfig(Kbaseconfig):
                                 for net in range(len(currentnets), len(profile['nets']), -1):
                                     interface = f"eth{net -1}"
                                     z.delete_nic(name, interface)
-                        if overrides.get('skip_files_remediation', False):
-                            pprint(f"Skipping Remediation files of {name}")
-                        elif self.remediate_files(name, profile.get('files', []), overrides, inputdir=inputdir):
+                        if profile.get('files', []) and not overrides.get('skip_files_remediation', False)\
+                           and self.remediate_files(name, profile.get('files', []), overrides, inputdir=inputdir):
                             updated = True
                         if not updated:
                             pprint(f"{name} skipped on {vmclient}!")
