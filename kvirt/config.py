@@ -62,7 +62,6 @@ class Kconfig(Kbaseconfig):
                 if namespace is None:
                     namespace = options.get('namespace')
                 context = options.get('context')
-                datavolumes = options.get('datavolumes', kdefaults.KUBEVIRT['datavolumes'])
                 readwritemany = options.get('readwritemany', kdefaults.KUBEVIRT['readwritemany'])
                 ca_file = options.get('ca_file')
                 if ca_file is not None:
@@ -81,7 +80,6 @@ class Kconfig(Kbaseconfig):
                         sys.exit(1)
                     else:
                         token = open(token_file).read()
-                registry = options.get('registry')
                 access_mode = options.get('access_mode', kdefaults.KUBEVIRT['access_mode'])
                 if access_mode not in ['External', 'LoadBalancer', 'NodePort']:
                     msg = f"Incorrect access_mode {access_mode}. Should be External, NodePort or LoadBalancer"
@@ -107,8 +105,8 @@ class Kconfig(Kbaseconfig):
                     dependency_error('kubevirt', exception)
                 k = Kubevirt(context=context, token=token, ca_file=ca_file, host=self.host,
                              port=6443, user=self.user, debug=debug, namespace=namespace,
-                             datavolumes=datavolumes, disk_hotplug=disk_hotplug, readwritemany=readwritemany,
-                             registry=registry, access_mode=access_mode, volume_mode=volume_mode,
+                             disk_hotplug=disk_hotplug, readwritemany=readwritemany,
+                             access_mode=access_mode, volume_mode=volume_mode,
                              volume_access=volume_access, harvester=harvester, embed_userdata=embed_userdata,
                              first_consumer=first_consumer, kubeconfig_file=kubeconfig_file)
                 self.host = k.host

@@ -242,7 +242,7 @@ IBM = {'region': 'eu-gb'}
 
 GCP = {'region': 'europe-west1'}
 
-KUBEVIRT = {'datavolumes': True, 'readwritemany': False, 'disk_hotplug': False, 'access_mode': 'NodePort',
+KUBEVIRT = {'readwritemany': False, 'disk_hotplug': False, 'access_mode': 'NodePort',
             'volume_mode': 'Filesystem', 'volume_access': 'ReadWriteOnce', 'harvester': False, 'embed_userdata': False,
             'first_consumer': False}
 
