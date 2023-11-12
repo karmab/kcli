@@ -115,7 +115,7 @@ class Kubevirt(Kubecommon):
             return {'result': 'failure', 'reason': f"VM {name} already exists"}
         if image is not None:
             containerdisk = '/' in image and 'ocp-v4.0-art-dev' not in image
-            if not containerdisk:
+            if ':' not in image:
                 image = image.replace('.', '-').replace('_', '-')
             if image not in self.volumes():
                 if image in ['alpine', 'cirros', 'fedora-cloud']:
