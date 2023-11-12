@@ -984,6 +984,8 @@ def scp(name, ip='', user=None, source=None, destination=None, recursive=None, t
 def get_user(image):
     if 'gke' in image.lower():
         user = getuser()
+    elif 'fedora' in image.lower():
+        user = 'fedora'
     elif 'centos8stream' in image.lower():
         user = 'centos'
     elif 'centos9stream' in image.lower():
@@ -996,8 +998,6 @@ def get_user(image):
         user = 'cirros'
     elif [x for x in UBUNTUS if x in image.lower()] or 'ubuntu' in image.lower():
         user = 'ubuntu'
-    elif 'fedora' in image.lower():
-        user = 'fedora'
     elif 'rhel' in image.lower():
         user = 'cloud-user'
     elif 'debian' in image.lower():
@@ -1170,7 +1170,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     data = {'ignition': {'version': version, 'config': {}}, 'storage': storage, 'systemd': systemd,
             'passwd': {'users': []}}
     if publickeys:
-        user = 'root' if 'susemicro' in image else 'core'
+        user = 'root' if 'susemicro' in image else 'fedora' if 'fedora' in image else 'core'
         data['passwd']['users'] = [{'name': user, 'sshAuthorizedKeys': publickeys}]
         if vmuser is not None:
             data['passwd']['users'].append({'name': vmuser, 'sshAuthorizedKeys': publickeys,
@@ -1608,7 +1608,7 @@ def is_7(image):
 
 def needs_ignition(image):
     return 'coreos' in image or 'rhcos' in image or 'fcos' in image or 'fedora-coreos' in image\
-        or needs_combustion(image)
+        or needs_combustion(image) or 'art-dev' in image
 
 
 def needs_combustion(image):

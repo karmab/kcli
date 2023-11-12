@@ -51,19 +51,14 @@ def _base_image_size(image):
 
 
 class Kubevirt(Kubecommon):
-    """
-
-    """
     def __init__(self, token=None, ca_file=None, context=None, host='127.0.0.1', port=6443, user='root', debug=False,
-                 namespace=None, datavolumes=False, disk_hotplug=False, readwritemany=False, registry=None,
-                 access_mode='NodePort', volume_mode='Filesystem', volume_access='ReadWriteOnce', harvester=False,
-                 embed_userdata=False, first_consumer=False, kubeconfig_file=None):
+                 namespace=None, disk_hotplug=False, readwritemany=False, access_mode='NodePort',
+                 volume_mode='Filesystem', volume_access='ReadWriteOnce', harvester=False, embed_userdata=False,
+                 first_consumer=False, kubeconfig_file=None):
         Kubecommon.__init__(self, token=token, ca_file=ca_file, context=context, host=host, port=port,
                             namespace=namespace, readwritemany=readwritemany, kubeconfig_file=kubeconfig_file)
         self.crds = client.CustomObjectsApi(api_client=self.api_client)
         self.debug = debug
-        self.datavolumes = datavolumes
-        self.registry = registry
         self.access_mode = access_mode
         self.volume_mode = volume_mode
         self.volume_access = volume_access
@@ -110,12 +105,12 @@ class Kubevirt(Kubecommon):
                cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False,
                metadata={}, securitygroups=[], vmuser=None):
         owners = []
+        container_disk = overrides.get('container_disk', False)
         guestagent = False
         if self.exists(name):
             return {'result': 'failure', 'reason': f"VM {name} already exists"}
         if image is not None:
-            containerdisk = '/' in image and 'ocp-v4.0-art-dev' not in image
-            if ':' not in image:
+            if '/' not in image:
                 image = image.replace('.', '-').replace('_', '-')
             if image not in self.volumes():
                 if image in ['alpine', 'cirros', 'fedora-cloud']:
@@ -134,7 +129,6 @@ class Kubevirt(Kubecommon):
         crds = self.crds
         core = self.core
         harvester = self.harvester
-        datavolumes = self.datavolumes
         namespace = self.namespace
         if harvester:
             harvester_images = {}
@@ -340,14 +334,12 @@ class Kubevirt(Kubecommon):
                 if 'name' in disk:
                     existingpvc = True
             myvolume = {'name': diskname}
-            hypershift = False
             if image is not None and index == 0:
-                if 'ocp-v4-0-art-dev' in image:
-                    hypershift = True
-                    myvolume['dataVolume'] = {'name': diskname}
-                elif image in CONTAINERDISKS or '/' in image:
-                    containerdiskimage = f"{self.registry}/{image}" if self.registry is not None else image
-                    myvolume['containerDisk'] = {'image': containerdiskimage}
+                if '/' in image:
+                    if container_disk:
+                        myvolume['containerDisk'] = {'image': image}
+                    else:
+                        myvolume['dataVolume'] = {'name': diskname}
                 elif harvester:
                     myvolume['dataVolume'] = {'name': diskname}
                 else:
@@ -366,7 +358,7 @@ class Kubevirt(Kubecommon):
                 newdisk['bootOrder'] = 1
             vm['spec']['template']['spec']['domain']['devices']['disks'].append(newdisk)
             vm['spec']['template']['spec']['volumes'].append(myvolume)
-            if index == 0 and image is not None and containerdisk:
+            if index == 0 and image is not None and '/' in image and container_disk:
                 continue
             if existingpvc:
                 continue
@@ -462,41 +454,31 @@ class Kubevirt(Kubecommon):
             pvcsize = pvc['spec']['resources']['requests']['storage'].replace('Gi', '')
             pvc_volume_mode = pvc['spec']['volumeMode']
             pvc_access_mode = pvc['spec']['accessModes']
-            if index == 0 and image is not None and image not in CONTAINERDISKS:
-                if datavolumes or 'ocp-v4-0-art-dev' in image:
-                    owners.pop()
-                    dvt = {'metadata': {'name': pvcname, 'annotations': {'sidecar.istio.io/inject': 'false'}},
-                           'spec': {'pvc': {'storageClassName': diskpool,
-                                            'volumeMode': pvc_volume_mode,
-                                            'accessModes': pvc_access_mode,
-                                            'resources':
-                                            {'requests': {'storage': f'{pvcsize}Gi'}}},
-                                    'source': {'pvc': {'name': image, 'namespace': self.namespace}}},
-                           'status': {}}
-                    if harvester:
-                        dvt['kind'] = 'DataVolume'
-                        dvt['apiVersion'] = f"{CDIDOMAIN}/{CDIVERSION}"
-                        harvester_image = harvester_images[image]
-                        dvt['metadata']['annotations']['harvesterhci.io/imageId'] = f"{namespace}/{harvester_image}"
-                        dvt['spec']['pvc']['storageClassName'] = f"longhorn-{harvester_image}"
-                        dvt['spec']['source'] = {'blank': {}}
-                        dvt['spec']['pvc']['volumeMode'] = 'Block'
-                    elif hypershift:
-                        dvt['kind'] = 'DataVolume'
-                        dvt['apiVersion'] = f"{CDIDOMAIN}/{CDIVERSION}"
-                        del dvt['spec']['pvc']
-                        dvt['spec']['source'] = {'registry': {'pullMethod': 'node', 'url': f"docker://{image}"}}
-                        dvt['spec']['storage'] = {'resources': {'requests': {'storage': f'{pvcsize}Gi'}}}
-                    vm['spec']['dataVolumeTemplates'] = [dvt]
-                else:
-                    core.create_namespaced_persistent_volume_claim(namespace, pvc)
-                    bound = self.pvc_bound(pvcname, namespace, first_consumer=self.first_consumer)
-                    if not bound:
-                        return {'result': 'failure', 'reason': f'timeout waiting for pvc {pvcname} to get bound'}
-                    completed = self.import_completed(pvcname, namespace)
-                    if not completed:
-                        error("Issue with cdi import")
-                        return {'result': 'failure', 'reason': 'timeout waiting for cdi importer pod to complete'}
+            if index == 0 and image is not None:
+                owners.pop()
+                dvt = {'metadata': {'name': pvcname, 'annotations': {'sidecar.istio.io/inject': 'false'}},
+                       'spec': {'pvc': {'storageClassName': diskpool,
+                                        'volumeMode': pvc_volume_mode,
+                                        'accessModes': pvc_access_mode,
+                                        'resources':
+                                        {'requests': {'storage': f'{pvcsize}Gi'}}},
+                                'source': {'pvc': {'name': image, 'namespace': self.namespace}}},
+                       'status': {}}
+                if harvester:
+                    dvt['kind'] = 'DataVolume'
+                    dvt['apiVersion'] = f"{CDIDOMAIN}/{CDIVERSION}"
+                    harvester_image = harvester_images[image]
+                    dvt['metadata']['annotations']['harvesterhci.io/imageId'] = f"{namespace}/{harvester_image}"
+                    dvt['spec']['pvc']['storageClassName'] = f"longhorn-{harvester_image}"
+                    dvt['spec']['source'] = {'blank': {}}
+                    dvt['spec']['pvc']['volumeMode'] = 'Block'
+                elif not container_disk:
+                    dvt['kind'] = 'DataVolume'
+                    dvt['apiVersion'] = f"{CDIDOMAIN}/{CDIVERSION}"
+                    del dvt['spec']['pvc']
+                    dvt['spec']['source'] = {'registry': {'pullMethod': 'node', 'url': f"docker://{image}"}}
+                    dvt['spec']['storage'] = {'resources': {'requests': {'storage': f'{pvcsize}Gi'}}}
+                vm['spec']['dataVolumeTemplates'] = [dvt]
                 continue
             core.create_namespaced_persistent_volume_claim(namespace, pvc)
             bound = self.pvc_bound(pvcname, namespace, first_consumer=self.first_consumer)
