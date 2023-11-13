@@ -197,6 +197,10 @@ class Kubevirt(Kubecommon):
             machine = overrides['machine']
             warning(f"Forcing machine type to {machine}")
         vm['spec']['template']['spec']['domain']['machine'] = {'type': machine}
+        if overrides.get('guest_memory', False):
+            del vm['spec']['template']['spec']['domain']['resources']['requests']
+            del vm['spec']['template']['spec']['domain']['resources']['limits']
+            vm['spec']['template']['spec']['domain']['memory'] = {'guest': f'{memory}Mi'}
         if cpumodel != 'host-model':
             vm['spec']['template']['spec']['domain']['cpu']['model'] = cpumodel
         if 'rng' in overrides and overrides['rng']:
@@ -767,12 +771,20 @@ class Kubevirt(Kubecommon):
         if 'cpu' in spectemplate['spec']['domain']:
             numcpus = spectemplate['spec']['domain']['cpu']['cores']
             yamlinfo['cpus'] = numcpus
+        memory = None
         if 'resources' in spectemplate['spec']['domain'] and 'requests' in spectemplate['spec']['domain']['resources']:
             memory = spectemplate['spec']['domain']['resources']['requests']['memory'].replace('M', '').replace('G', '')
             memory = memory.replace('Mi', 'Mi').replace('Gi', '').replace('i', '')
             memory = int(memory)
             if harvester:
-                memory = 1024 * memory
+                memory = memory * 1024
+        elif 'memory' in spectemplate['spec']['domain']:
+            memory = spectemplate['spec']['domain']['memory']['guest']
+            if memory.endswith('Gi'):
+                memory = int(memory.replace('Gi', '')) * 1024
+            else:
+                memory = int(memory.replace('Mi', ''))
+        if memory is not None:
             yamlinfo['memory'] = memory
         if 'instancetype' in spec and spec['instancetype']['kind'] == 'virtualmachineclusterinstancetype':
             flavor = spec['instancetype']['name']
