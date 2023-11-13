@@ -23,8 +23,8 @@ from urllib.parse import urlparse
 from urllib.request import urlopen, Request
 import yaml
 
-virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere', 'proxmox']
-cloudplatforms = ['aws', 'azure', 'gcp', 'ibm']
+virt_providers = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere', 'proxmox']
+cloud_providers = ['aws', 'azure', 'gcp', 'ibm']
 
 
 def valid_uuid(uuid):
@@ -146,6 +146,7 @@ def handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts=[]):
 
 
 def scale(config, plandir, cluster, overrides):
+    provider = config.type
     plan = cluster
     data = {'cluster': cluster, 'kube': cluster, 'kubetype': 'hypershift', 'namespace': 'clusters', 'assisted': False,
             'kubevirt': False}
@@ -159,7 +160,7 @@ def scale(config, plandir, cluster, overrides):
         overrides['cluster'] = cluster
         overrides['clusterdir'] = clusterdir
         plan = overrides.get('plan') or plan
-        if 'ingress_ip' not in overrides and config.type != 'kubevirt':
+        if 'ingress_ip' not in overrides and provider != 'kubevirt':
             msg = "Missing ingress_ip..."
             return {'result': 'failure', 'reason': msg}
         domain = overrides.get('domain')
@@ -222,8 +223,8 @@ def scale(config, plandir, cluster, overrides):
 def create(config, plandir, cluster, overrides):
     log_level = 'debug' if config.debug else 'info'
     k = config.k
-    platform = config.type
-    arch = k.get_capabilities()['arch'] if config.type == 'kvm' else 'x86_64'
+    provider = config.type
+    arch = k.get_capabilities()['arch'] if provider == 'kvm' else 'x86_64'
     arch_tag = 'arm64' if arch in ['aarch64', 'arm64'] else 'latest'
     overrides['arch_tag'] = arch_tag
     if 'KUBECONFIG' not in os.environ:
@@ -235,6 +236,7 @@ def create(config, plandir, cluster, overrides):
             return {'result': 'failure', 'reason': msg}
     data = {'kubetype': 'hypershift',
             'domain': 'karmalabs.corp',
+            'platform': None,
             'baremetal_iso': False,
             'baremetal_hosts': [],
             'coredns': True,
@@ -260,8 +262,6 @@ def create(config, plandir, cluster, overrides):
             'autoscale': False,
             'mce': True,
             'mce_assisted': False,
-            'assisted': False,
-            'kubevirt': False,
             'calico_version': None,
             'hosted_tag': None,
             'hosted_ha': False,
@@ -282,6 +282,14 @@ def create(config, plandir, cluster, overrides):
     ignore_hosts = data.get('ignore_hosts', False)
     pprint(f"Deploying cluster {clustervalue}")
     plan = cluster if cluster is not None else clustervalue
+    platform = data.get('platform')
+    assisted = platform == 'assisted'
+    data['assisted'] = assisted
+    kubevirt = platform == 'kubevirt'
+    data['kubevirt'] = kubevirt
+    if platform not in [None, 'kubevirt', 'assisted']:
+        msg = "Incorrect platform. Choose between None, kubevirt and assisted"
+        return {'result': 'failure', 'reason': msg}
     baremetal_iso = data.get('baremetal_iso', False)
     baremetal_hosts = data.get('baremetal_hosts')
     async_install = data.get('async')
@@ -294,9 +302,6 @@ def create(config, plandir, cluster, overrides):
     apps = overrides.get('apps', [])
     workers = data.get('workers')
     version = data.get('version')
-    assisted = data.get('assisted')
-    kubevirt = data.get('kubevirt')
-    none_platform = not assisted and not kubevirt
     coredns = data.get('coredns')
     tag = data.get('tag')
     if str(tag) == '4.1':
@@ -434,7 +439,7 @@ def create(config, plandir, cluster, overrides):
     virtual_router_id = None
     if ingress_ip is None:
         networkinfo = k.info_network(network)
-        if config.type == 'kubevirt' or kubevirt:
+        if provider == 'kubevirt' or kubevirt:
             domain = management_ingress_domain
             data['domain'] = domain
             pprint(f"Setting domain to {domain}")
@@ -458,7 +463,7 @@ def create(config, plandir, cluster, overrides):
                 elif ingress_ip is None:
                     msg = f"Couldnt gather an ingress_ip from network {network}"
                     return {'result': 'failure', 'reason': msg}
-        elif config.type == 'kvm' and networkinfo['type'] == 'routed':
+        elif provider == 'kvm' and networkinfo['type'] == 'routed':
             cidr = networkinfo['cidr']
             ingress_index = 3 if ':' in cidr else -4
             ingress_ip = str(ip_network(cidr)[ingress_index])
@@ -468,12 +473,12 @@ def create(config, plandir, cluster, overrides):
             msg = "You need to define ingress_ip in your parameters file"
             return {'result': 'failure', 'reason': msg}
     elif kubevirt:
-        warning(f"Note that ingress_ip {ingress_ip} won't be configured as you're using kubevirt platform")
+        warning(f"Note that ingress_ip {ingress_ip} won't be configured as you're using kubevirt provider")
     if ingress_ip is not None and data.get('virtual_router_id') is None:
         virtual_router_id = hash(cluster) % 254 + 1
         data['virtual_router_id'] = virtual_router_id
         pprint(f"Using keepalived virtual_router_id {virtual_router_id}")
-    if ingress_ip is not None and sslip and config.type in virtplatforms:
+    if ingress_ip is not None and sslip and provider in virt_providers:
         domain = f"{ingress_ip.replace('.', '-').replace(':', '-')}.sslip.io"
         data['domain'] = domain
         pprint(f"Setting domain to {domain}")
@@ -669,14 +674,14 @@ def create(config, plandir, cluster, overrides):
     elif not kubevirt:
         image = data.get('image')
         if image is None:
-            image_type = 'openstack' if data.get('kvm_openstack', True) and config.type == 'kvm' else config.type
-            region = config.k.region if config.type == 'aws' else None
+            image_type = 'openstack' if data.get('kvm_openstack', True) and provider == 'kvm' else provider
+            region = config.k.region if provider == 'aws' else None
             image_url = get_installer_rhcos(_type=image_type, region=region, arch=arch)
-            if platform in ['aws', 'gcp']:
+            if provider in ['aws', 'gcp']:
                 image = image_url
             else:
                 image = os.path.basename(os.path.splitext(image_url)[0])
-                if platform == 'ibm':
+                if provider == 'ibm':
                     image = image.replace('.', '-').replace('_', '-').lower()
                 images = [v for v in k.volumes() if image in v]
                 if not images:
@@ -686,7 +691,7 @@ def create(config, plandir, cluster, overrides):
                         return result
             pprint(f"Using image {image}")
             data['image'] = image
-        elif config.type == 'kubevirt' and '/' in image:
+        elif provider == 'kubevirt' and '/' in image:
             warning(f"Assuming image {image} is available")
         else:
             pprint(f"Checking if image {image} is available")
@@ -707,9 +712,8 @@ def create(config, plandir, cluster, overrides):
             installparam['ingress_ip'] = ingress_ip
         if virtual_router_id is not None:
             installparam['virtual_router_id'] = virtual_router_id
-        installparam['kubevirt'] = kubevirt
-        installparam['assisted'] = assisted
-        if none_platform:
+        installparam['platform'] = platform
+        if platform is None:
             installparam['image'] = image
         installparam['ipv6'] = ipv6
         installparam['original_domain'] = data['original_domain']
@@ -730,7 +734,7 @@ def create(config, plandir, cluster, overrides):
     cmcmd = f"oc create -f {clusterdir}/nodepool.yaml"
     call(cmcmd, shell=True)
     assetsdata['clusterdir'] = clusterdir
-    if none_platform:
+    if platform is None:
         ignitionscript = config.process_inputfile(cluster, f"{plandir}/ignition.sh", overrides=assetsdata)
         with open(f"{clusterdir}/ignition.sh", 'w') as f:
             f.write(ignitionscript)
@@ -757,8 +761,8 @@ def create(config, plandir, cluster, overrides):
     with open(autoapproverpath, 'w') as f:
         f.write(autoapprover)
     call(f"oc apply -f {autoapproverpath}", shell=True)
-    if none_platform:
-        if platform in cloudplatforms + ['openstack']:
+    if platform is None:
+        if provider in cloud_providers + ['openstack']:
             copy2(f"{clusterdir}/nodepool.ign", f"{clusterdir}/nodepool.ign.ori")
             bucket = f"{cluster}-{domain.replace('.', '-')}"
             if bucket not in config.k.list_buckets():
@@ -786,7 +790,7 @@ def create(config, plandir, cluster, overrides):
     kubeadmin = os.popen(f"oc extract -n {namespace} secret/{cluster}-kubeadmin-password --to=-").read()
     with open(kubeadminpath, 'w') as f:
         f.write(kubeadmin)
-    if none_platform and data['workers'] > 0:
+    if platform is None and data['workers'] > 0:
         pprint("Deploying workers")
         worker_threaded = data.get('threaded', False) or data.get('workers_threaded', False)
         config.plan(plan, inputfile=f'{plandir}/kcli_plan.yml', overrides=data, threaded=worker_threaded)
@@ -795,7 +799,7 @@ def create(config, plandir, cluster, overrides):
         warning("Not updating /etc/hosts as per your request")
     else:
         update_openshift_etc_hosts(cluster, domain, management_api_ip, ingress_ip)
-    if platform in cloudplatforms:
+    if provider in cloud_providers:
         result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_apps.yml', overrides=data)
         if result['result'] != 'success':
             return result
@@ -812,7 +816,7 @@ def create(config, plandir, cluster, overrides):
             msg = "Leaving environment for debugging purposes. "
             msg += f"Delete it with kcli delete kube --yes {cluster}"
             return {'result': 'failure', 'reason': msg}
-    if platform in cloudplatforms:
+    if provider in cloud_providers:
         bucket = f"{cluster}-{domain.replace('.', '-')}"
         config.k.delete_bucket(bucket)
     os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
@@ -834,7 +838,7 @@ def create(config, plandir, cluster, overrides):
             call(scc_cmd, shell=True)
             autoscale_cmd = f"oc create -f {temp.name}"
             call(autoscale_cmd, shell=True)
-    if config.type in cloudplatforms and data.get('cloud_storage', True):
+    if provider in cloud_providers and data.get('cloud_storage', True):
         pprint("Deploying cloud storage class")
         deploy_cloud_storage(config, cluster, apply=False)
     return {'result': 'success'}

@@ -24,8 +24,8 @@ from urllib.request import urlopen, Request
 from yaml import safe_load, safe_dump
 
 
-virtplatforms = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere', 'proxmox']
-cloudplatforms = ['aws', 'azure', 'gcp', 'ibm']
+virt_providers = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere', 'proxmox']
+cloud_providers = ['aws', 'azure', 'gcp', 'ibm']
 
 
 def aws_credentials(config):
@@ -560,7 +560,7 @@ def handle_baremetal_iso_sno(config, plandir, cluster, data, baremetal_hosts=[],
 def scale(config, plandir, cluster, overrides):
     plan = cluster
     client = config.client
-    platform = config.type
+    provider = config.type
     k = config.k
     data = {}
     installparam = {}
@@ -571,7 +571,7 @@ def scale(config, plandir, cluster, overrides):
         data['client'] = config.client
         overrides['cluster'] = cluster
         api_ip = overrides.get('api_ip')
-        if config.type not in cloudplatforms and api_ip is None:
+        if provider not in cloud_providers and api_ip is None:
             msg = 'Missing api_ip...'
             return {'result': 'failure', 'reason': msg}
         domain = overrides.get('domain')
@@ -622,12 +622,12 @@ def scale(config, plandir, cluster, overrides):
         threaded = data.get('threaded', False) or data.get(f'{role}_threaded', False)
         if overrides.get(role, 0) <= 0:
             continue
-        if platform in virtplatforms:
+        if provider in virt_providers:
             os.chdir(os.path.expanduser("~/.kcli"))
             if role == 'ctlplanes' and ('virtual_router_id' not in overrides or 'auth_pass' not in overrides):
                 warning("Scaling up of ctlplanes won't work without virtual_router_id and auth_pass")
             result = config.plan(plan, inputfile=f'{plandir}/{role}.yml', overrides=overrides, threaded=threaded)
-        elif platform in cloudplatforms:
+        elif provider in cloud_providers:
             result = config.plan(plan, inputfile=f'{plandir}/cloud_{role}.yml', overrides=overrides, threaded=threaded)
         if result['result'] != 'success':
             return result
@@ -638,8 +638,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     k = config.k
     log_level = 'debug' if config.debug else 'info'
     client = config.client
-    platform = config.type
-    arch = k.get_capabilities()['arch'] if platform == 'kvm' else 'x86_64'
+    provider = config.type
+    arch = k.get_capabilities()['arch'] if provider == 'kvm' else 'x86_64'
     pprint(f"Deploying on client {client}")
     data = {'domain': 'karmalabs.corp',
             'network': 'default',
@@ -723,7 +723,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     data['cluster'] = clustervalue
     domain = data.get('domain')
     dns_k = dnsconfig.k if dnsconfig is not None else k
-    if platform in cloudplatforms and domain not in dns_k.list_dns_zones():
+    if provider in cloud_providers and domain not in dns_k.list_dns_zones():
         return {'result': 'failure', 'reason': f'domain {domain} needs to exist'}
     original_domain = None
     async_install = data.get('async')
@@ -767,7 +767,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         return {'result': 'failure', 'reason': msg}
     network = data.get('network')
     post_dualstack = False
-    if data['dualstack'] and platform in cloudplatforms:
+    if data['dualstack'] and provider in cloud_providers:
         warning("Dual stack will be enabled at the end of the install")
         data['dualstack'] = False
         post_dualstack = True
@@ -814,13 +814,13 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     image = data.get('image')
     api_ip = data.get('api_ip')
     cidr = None
-    if platform in virtplatforms and keepalived and not sno and api_ip is None:
+    if provider in virt_providers and keepalived and not sno and api_ip is None:
         network = data.get('network')
         networkinfo = k.info_network(network)
         if not networkinfo:
             msg = f"Issue getting network {network}"
             return {'result': 'failure', 'reason': msg}
-        if platform == 'kvm' and networkinfo['type'] == 'routed':
+        if provider == 'kvm' and networkinfo['type'] == 'routed':
             cidr = networkinfo['cidr']
             if cidr == 'N/A':
                 msg = "Couldnt gather an api_ip from your specified network"
@@ -829,7 +829,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             api_ip = str(ip_network(cidr)[api_index])
             warning(f"Using {api_ip} as api_ip")
             overrides['api_ip'] = api_ip
-        elif platform == 'kubevirt':
+        elif provider == 'kubevirt':
             selector = {'kcli/plan': plan, 'kcli/role': 'ctlplane'}
             service_type = "LoadBalancer" if k.access_mode == 'LoadBalancer' else 'NodePort'
             if service_type == 'NodePort':
@@ -848,7 +848,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         else:
             msg = "You need to define api_ip in your parameters file"
             return {'result': 'failure', 'reason': msg}
-    if platform in virtplatforms and keepalived and not sno and ':' in api_ip:
+    if provider in virt_providers and keepalived and not sno and ':' in api_ip:
         ipv6 = True
     if ipv6:
         if data.get('network_type', 'OVNKubernetes') == 'OpenShiftSDN':
@@ -868,7 +868,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if ingress_ip is not None and api_ip is not None and ingress_ip == api_ip:
         ingress_ip = None
         overrides['ingress_ip'] = None
-    if sslip and platform in virtplatforms:
+    if sslip and provider in virt_providers:
         original_domain = domain
         domain = f"{api_ip.replace('.', '-').replace(':', '-')}.sslip.io"
         data['domain'] = domain
@@ -885,7 +885,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     macosx = data.get('macosx')
     if macosx and not os.path.exists('/i_am_a_container'):
         macosx = False
-    if platform == 'openstack' and keepalived and not sno:
+    if provider == 'openstack' and keepalived and not sno:
         if data.get('flavor') is None:
             msg = "Missing flavor in parameter file"
             return {'result': 'failure', 'reason': msg}
@@ -986,12 +986,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if sno:
         pass
     elif image is None:
-        image_type = config.type
-        if data.get('kvm_openstack') and config.type == 'kvm':
+        image_type = provider
+        if data.get('kvm_openstack') and provider == 'kvm':
             image_type = 'openstack'
-        if config.type == "proxmox":
+        if provider == "proxmox":
             image_type = 'kvm'
-        region = config.k.region if config.type == 'aws' else None
+        region = config.k.region if provider == 'aws' else None
         try:
             if upstream:
                 fcos_url = 'https://builds.coreos.fedoraproject.org/streams/stable.json'
@@ -1002,19 +1002,19 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 except:
                     image_url = get_commit_rhcos(COMMIT_ID, _type=image_type, region=region)
         except:
-            msg = f"Couldn't gather the {config.type} image associated to commit {COMMIT_ID}. "
+            msg = f"Couldn't gather the {provider} image associated to commit {COMMIT_ID}. "
             msg += "Force an image in your parameter file"
             return {'result': 'failure', 'reason': msg}
-        if platform in ['aws', 'gcp']:
+        if provider in ['aws', 'gcp']:
             image = image_url
         else:
             if image_url.endswith('.vhd'):
                 image = os.path.basename(image_url)
             else:
                 image = os.path.basename(os.path.splitext(image_url)[0])
-            if platform in ['ibm', 'kubevirt', 'proxmox']:
+            if provider in ['ibm', 'kubevirt', 'proxmox']:
                 image = image.replace('.', '-').replace('_', '-').lower()
-            if platform == 'vsphere':
+            if provider == 'vsphere':
                 image = image.replace(f'.{arch}', '')
             images = [v for v in k.volumes() if image in v]
             if not images:
@@ -1023,7 +1023,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 if result['result'] != 'success':
                     return result
         pprint(f"Using image {image}")
-    elif config.type == 'kubevirt' and '/' in image:
+    elif provider == 'kubevirt' and '/' in image:
         warning(f"Assuming image {image} is available")
     else:
         pprint(f"Checking if image {image} is available")
@@ -1055,7 +1055,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     overrides['cluster'] = cluster
     if not os.path.exists(clusterdir):
         os.makedirs(clusterdir)
-    if platform in virtplatforms and disconnected_vm:
+    if provider in virt_providers and disconnected_vm:
         disconnected_vm = f"{data.get('disconnected_reuse_name', cluster)}-disconnected"
         pprint(f"Deploying disconnected vm {disconnected_vm}")
         data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
@@ -1155,11 +1155,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         data['pull_secret'] = json.dumps(auths)
     else:
         data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
-    if config.type == 'aws':
+    if provider == 'aws':
         aws_credentials(config)
-    elif config.type == 'gcp':
+    elif provider == 'gcp':
         os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = os.path.expanduser(config.options.get('credentials'))
-    elif config.type == 'azure':
+    elif provider == 'azure':
         azure_credentials(config)
         if '-' in network:
             vnet = network.split('-')[0]
@@ -1174,7 +1174,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         msg = "Leaving environment for debugging purposes. "
         msg += f"Delete it with kcli delete kube --yes {cluster}"
         return {'result': 'failure', 'reason': msg}
-    if config.type == 'azure':
+    if provider == 'azure':
         prefix = safe_load(open(f'{clusterdir}/openshift/99_cloud-creds-secret.yaml'))['data']['azure_resource_prefix']
         new_prefix = b64encode(bytes(cluster, 'utf-8')).decode('utf-8')
         sedcmd = f'sed -i "s@{prefix}@{new_prefix}@" {clusterdir}/openshift/99_cloud-creds-secret.yaml'
@@ -1250,7 +1250,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 else:
                     msg = f"Issue getting contrail ctl network {ctl_network}"
                     return {'result': 'failure', 'reason': msg}
-            elif platform == 'kvm' and networkinfo['type'] == 'routed':
+            elif provider == 'kvm' and networkinfo['type'] == 'routed':
                 cidr = networkinfo['cidr']
                 if cidr == 'N/A':
                     msg = "Couldnt gather cidr from your specified contrail ctl network"
@@ -1297,7 +1297,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if '99-ingress-controller.yaml' in f:
             ingressrole = 'master' if workers == 0 or not mdns or kubevirt_api_service else 'worker'
             replicas = 1 if sno else ctlplanes if workers == 0 or not mdns or kubevirt_api_service else workers
-            if platform in virtplatforms and sslip and ingress_ip is None:
+            if provider in virt_providers and sslip and ingress_ip is None:
                 replicas = ctlplanes
                 ingressrole = 'master'
                 warning("Forcing router pods on ctlplanes since sslip is set and api_ip will be used for ingress")
@@ -1361,7 +1361,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if metal3:
         copy2(f"{plandir}/99-metal3-provisioning.yaml", f"{clusterdir}/openshift")
         copy2(f"{plandir}/99-metal3-fake-machine.yaml", f"{clusterdir}/openshift")
-    if config.type == 'kubevirt':
+    if provider == 'kubevirt':
         kubevirtctlplane = config.process_inputfile(cluster, f"{plandir}/99-kubevirt-fix.yaml",
                                                     overrides={'role': 'master'})
         with open(f"{clusterdir}/openshift/99-kubevirt-fix-ctlplane.yaml", 'w') as _f:
@@ -1464,7 +1464,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             result = config.create_vm(sno_name, overrides=iso_overrides, onlyassets=True)
             pprint("Writing iso.ign to current dir")
             f.write(result['userdata'])
-        if config.type == 'fake':
+        if provider == 'fake':
             pprint("Storing generated iso in current dir")
             generate_rhcos_iso(k, f"{cluster}-sno", 'default', installer=True, extra_args=extra_args)
         else:
@@ -1550,7 +1550,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         msg += ". Leaving environment for debugging purposes, "
         msg += f"Delete it with kcli delete kube --yes {cluster}"
         return {'result': 'failure', 'reason': msg}
-    if platform in virtplatforms and keepalived:
+    if provider in virt_providers and keepalived:
         overrides['virtual_router_id'] = data.get('virtual_router_id') or hash(cluster) % 254 + 1
         virtual_router_id = overrides['virtual_router_id']
         pprint(f"Using keepalived virtual_router_id {virtual_router_id}")
@@ -1559,13 +1559,13 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         overrides['auth_pass'] = auth_pass
         installparam['auth_pass'] = auth_pass
         pprint(f"Using {api_ip} for api vip....")
-        host_ip = api_ip if platform != "openstack" or provider_network else public_api_ip
+        host_ip = api_ip if provider != "openstack" or provider_network else public_api_ip
         if ignore_hosts or (not kubevirt_ignore_node_port and kubevirt_api_service and kubevirt_api_service_node_port):
             warning("Ignoring /etc/hosts")
         else:
             update_openshift_etc_hosts(cluster, domain, host_ip, ingress_ip)
     bucket_url = None
-    if platform in cloudplatforms + ['openstack']:
+    if provider in cloud_providers + ['openstack']:
         bucket = f"{cluster}-{domain.replace('.', '-')}"
         if bucket not in config.k.list_buckets():
             config.k.create_bucket(bucket)
@@ -1579,8 +1579,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     create_ignition_files(config, plandir, cluster, domain, api_ip=api_ip, bucket_url=bucket_url,
                           ignition_version=ignition_version)
     backup_paramfile(config.client, installparam, clusterdir, cluster, plan, image, dnsconfig)
-    if platform in virtplatforms:
-        if platform == 'vsphere':
+    if provider in virt_providers:
+        if provider == 'vsphere':
             basefolder = config.options.get('basefolder')
             restricted = config.options.get('restricted', False)
             vmfolder = '/vm'
@@ -1613,7 +1613,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         result = config.plan(plan, inputfile=f'{plandir}/cloud_bootstrap.yml', overrides=overrides)
         if result['result'] != 'success':
             return result
-        if platform == 'ibm':
+        if provider == 'ibm':
             while api_ip is None:
                 api_ip = k.info(f"{cluster}-bootstrap").get('private_ip')
                 pprint("Gathering bootstrap private ip")
@@ -1625,7 +1625,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         result = config.plan(plan, inputfile=f'{plandir}/cloud_ctlplanes.yml', overrides=overrides, threaded=threaded)
         if result['result'] != 'success':
             return result
-        if platform == 'ibm':
+        if provider == 'ibm':
             first_ctlplane_ip = None
             while first_ctlplane_ip is None:
                 first_ctlplane_ip = k.info(f"{cluster}-ctlplane-0").get('private_ip')
@@ -1675,7 +1675,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         pprint("Deploying workers")
         if 'name' in overrides:
             del overrides['name']
-        if platform in virtplatforms:
+        if provider in virt_providers:
             if baremetal_hosts:
                 iso_pool = data.get('pool') or config.pool
                 iso_url = handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts, iso_pool)
@@ -1687,7 +1687,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 result = config.plan(plan, inputfile=f'{plandir}/workers.yml', overrides=overrides, threaded=threaded)
                 if result['result'] != 'success':
                     return result
-        elif platform in cloudplatforms:
+        elif provider in cloud_providers:
             result = config.plan(plan, inputfile=f'{plandir}/cloud_workers.yml', overrides=overrides)
             if result['result'] != 'success':
                 return result
@@ -1715,10 +1715,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             return {'result': 'failure', 'reason': msg}
     pprint(f"Deleting {cluster}-bootstrap")
     k.delete(f"{cluster}-bootstrap")
-    if platform in cloudplatforms:
+    if provider in cloud_providers:
         bucket = f"{cluster}-{domain.replace('.', '-')}"
         config.k.delete_bucket(bucket)
-        if platform == 'aws':
+        if provider == 'aws':
             config.k.spread_cluster_tag(cluster, network)
             pprint("Creating secret for aws-load-balancer-operator")
             lbcmd = "oc create secret generic aws-load-balancer-operator -n openshift-operators "
@@ -1728,12 +1728,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 apps.append('aws-load-balancer-operator')
     if original_domain is not None:
         overrides['domain'] = original_domain
-    if config.type in cloudplatforms:
+    if provider in cloud_providers:
         wait_cloud_dns(cluster, domain)
     os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
     process_apps(config, clusterdir, apps, overrides)
     process_postscripts(clusterdir, postscripts)
-    if platform in cloudplatforms and ctlplanes == 1 and workers == 0 and data.get('sno_cloud_remove_lb', True):
+    if provider in cloud_providers and ctlplanes == 1 and workers == 0 and data.get('sno_cloud_remove_lb', True):
         pprint("Removing loadbalancers as there is a single ctlplane")
         k.delete_loadbalancer(f"api.{cluster}")
         k.delete_loadbalancer(f"apps.{cluster}")
@@ -1742,7 +1742,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         k.reserve_dns(f'api.{cluster}', domain=domain, ip=api_ip)
         k.delete_dns(f'apps.{cluster}', domain=domain)
         k.reserve_dns(f'apps.{cluster}', domain=domain, ip=api_ip, alias=['*'])
-        if platform == 'ibm':
+        if provider == 'ibm':
             k._add_sno_security_group(cluster)
     if post_dualstack:
         with TemporaryDirectory() as tmpdir:

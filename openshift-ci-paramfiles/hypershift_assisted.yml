@@ -1,4 +1,4 @@
-assisted: true
+platform: assisted
 version: latest
 tag: 4.13
 network: default

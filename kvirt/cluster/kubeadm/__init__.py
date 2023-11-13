@@ -15,7 +15,7 @@ from tempfile import NamedTemporaryFile
 from time import sleep
 import yaml
 
-cloudplatforms = ['aws', 'azure', 'gcp', 'ibm']
+cloud_providers = ['aws', 'azure', 'gcp', 'ibm']
 
 
 def scale(config, plandir, cluster, overrides):
@@ -84,7 +84,7 @@ def scale(config, plandir, cluster, overrides):
 
 
 def create(config, plandir, cluster, overrides):
-    platform = config.type
+    provider = config.type
     k = config.k
     data = {'kubetype': 'generic', 'sslip': False, 'domain': 'karmalabs.corp', 'wait_ready': False, 'extra_scripts': [],
             'calico_version': None, 'autoscale': False, 'token': None, 'async': False, 'cloud_lb': True,
@@ -106,12 +106,12 @@ def create(config, plandir, cluster, overrides):
     if ctlplanes == 0:
         msg = "Invalid number of ctlplanes"
         return {'result': 'failure', 'reason': msg}
-    if ctlplanes > 1 and platform in cloudplatforms and not cloud_lb:
+    if ctlplanes > 1 and provider in cloud_providers and not cloud_lb:
         msg = "Multiple ctlplanes require cloud_lb to be set to True"
         return {'result': 'failure', 'reason': msg}
     network = data.get('network', 'default')
     api_ip = data.get('api_ip')
-    if platform in cloudplatforms:
+    if provider in cloud_providers:
         domain = data.get('domain', 'karmalabs.corp')
         api_ip = f"{cluster}-ctlplane.{domain}"
     elif api_ip is None:
@@ -119,7 +119,7 @@ def create(config, plandir, cluster, overrides):
         if not networkinfo:
             msg = f"Issue getting network {network}"
             return {'result': 'failure', 'reason': msg}
-        if platform == 'kvm' and networkinfo['type'] == 'routed':
+        if provider == 'kvm' and networkinfo['type'] == 'routed':
             cidr = networkinfo['cidr']
             if cidr == 'N/A':
                 msg = "Couldnt gather an api_ip from your specified network"
@@ -128,7 +128,7 @@ def create(config, plandir, cluster, overrides):
             api_ip = str(ip_network(cidr)[api_index])
             warning(f"Using {api_ip} as api_ip")
             data['api_ip'] = api_ip
-        elif platform == 'kubevirt':
+        elif provider == 'kubevirt':
             selector = {'kcli/plan': plan, 'kcli/role': 'ctlplane'}
             service_type = "LoadBalancer" if k.access_mode == 'LoadBalancer' else 'ClusterIP'
             api_ip = config.k.create_service(f"{cluster}-api", config.k.namespace, selector, _type=service_type,
@@ -142,7 +142,7 @@ def create(config, plandir, cluster, overrides):
         else:
             msg = "You need to define api_ip in your parameters file"
             return {'result': 'failure', 'reason': msg}
-    if platform not in cloudplatforms:
+    if provider not in cloud_providers:
         if data.get('virtual_router_id') is None:
             data['virtual_router_id'] = hash(data['cluster']) % 254 + 1
         virtual_router_id = data['virtual_router_id']
@@ -207,9 +207,9 @@ def create(config, plandir, cluster, overrides):
         result = config.plan(plan, inputfile=f'{plandir}/ctlplanes.yml', overrides=data, threaded=ctlplane_threaded)
         if result['result'] != "success":
             return result
-    if cloud_lb and config.type in cloudplatforms:
+    if cloud_lb and provider in cloud_providers:
         config.k.delete_dns(f'api.{cluster}', domain=domain)
-        if config.type == 'aws':
+        if provider == 'aws':
             data['vpcid'] = config.k.get_vpcid_of_vm(f"{cluster}-ctlplane-0")
         result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_api.yml', overrides=data)
         if result['result'] != 'success':
@@ -233,7 +233,7 @@ def create(config, plandir, cluster, overrides):
     success(f"Kubernetes cluster {cluster} deployed!!!")
     info2(f"export KUBECONFIG=$HOME/.kcli/clusters/{cluster}/auth/kubeconfig")
     info2("export PATH=$PWD:$PATH")
-    if config.type in cloudplatforms and cloud_lb:
+    if provider in cloud_providers and cloud_lb:
         if cloud_dns:
             wait_cloud_dns(cluster, domain)
         # elif api_ip is not None and api_ip == f'api.{cluster}.{domain}':
@@ -282,8 +282,8 @@ def create(config, plandir, cluster, overrides):
             temp.write(autoscale_data)
             autoscalecmd = f"kubectl create -f {temp.name}"
             call(autoscalecmd, shell=True)
-    if config.type in cloudplatforms and cloud_storage:
-        if config.type == 'aws':
+    if provider in cloud_providers and cloud_storage:
+        if provider == 'aws':
             pprint("Deploying cloud storage class")
             deploy_cloud_storage(config, cluster)
     return {'result': 'success'}

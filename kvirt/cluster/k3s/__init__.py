@@ -12,7 +12,7 @@ from tempfile import NamedTemporaryFile
 from time import sleep
 import yaml
 
-cloud_platforms = ['aws', 'azure', 'gcp', 'ibm']
+cloud_providers = ['aws', 'azure', 'gcp', 'ibm']
 
 
 def update_ip_alias(config, nodes):
@@ -34,7 +34,7 @@ def update_ip_alias(config, nodes):
 
 
 def scale(config, plandir, cluster, overrides):
-    platform = config.type
+    provider = config.type
     plan = cluster
     data = {'cluster': cluster, 'domain': 'karmalabs.corp', 'image': 'ubuntu2004', 'kube': cluster, 'kubetype': 'k3s',
             'sdn': 'flannel', 'extra_scripts': [], 'cloud_native': False, 'ctlplanes': 1, 'workers': 0}
@@ -50,7 +50,7 @@ def scale(config, plandir, cluster, overrides):
         data['client'] = config.client
     data.update(overrides)
     cloud_native = data.get('cloud_native')
-    cloud_lb = data.get('cloud_lb', platform in cloud_platforms and data['ctlplanes'] > 1)
+    cloud_lb = data.get('cloud_lb', provider in cloud_providers and data['ctlplanes'] > 1)
     ctlplanes = data['ctlplanes']
     workers = data['workers']
     sdn = None if 'sdn' in overrides and overrides['sdn'] is None else data.get('sdn')
@@ -96,21 +96,21 @@ def scale(config, plandir, cluster, overrides):
         result = config.plan(plan, inputfile=f'{plandir}/{role}.yml', overrides=overrides, threaded=threaded)
         if result['result'] != 'success':
             return result
-    if cloud_native and config.type == 'gcp':
+    if cloud_native and provider == 'gcp':
         pprint("Updating ip alias ranges")
         update_ip_alias(config, ctlplanes + workers)
     return {'result': 'success'}
 
 
 def create(config, plandir, cluster, overrides):
-    platform = config.type
+    provider = config.type
     data = {'kubetype': 'k3s', 'domain': 'karmalabs.corp', 'image': 'ubuntu2004', 'ctlplanes': 1, 'workers': 0,
             'sdn': 'flannel', 'extra_scripts': [], 'autoscale': False, 'network': 'default',
             'cloud_api_internal': False, 'cloud_dns': False, 'cloud_storage': True, 'cloud_native': False}
     data.update(overrides)
     fix_typos(data)
     cloud_dns = data['cloud_dns']
-    data['cloud_lb'] = overrides.get('cloud_lb', platform in cloud_platforms and data['ctlplanes'] > 1)
+    data['cloud_lb'] = overrides.get('cloud_lb', provider in cloud_providers and data['ctlplanes'] > 1)
     cloud_lb = data['cloud_lb']
     cloud_storage = data['cloud_storage']
     cloud_native = data['cloud_native']
@@ -126,7 +126,7 @@ def create(config, plandir, cluster, overrides):
     image = data['image']
     api_ip = data.get('api_ip')
     if ctlplanes > 1:
-        if platform in cloud_platforms:
+        if provider in cloud_providers:
             if not cloud_lb:
                 msg = "Multiple ctlplanes require cloud_lb to be set to True"
                 return {'result': 'failure', 'reason': msg}
@@ -134,11 +134,11 @@ def create(config, plandir, cluster, overrides):
                 api_ip = f"api.{cluster}.{domain}"
                 data['api_ip'] = api_ip
         elif api_ip is None:
-            if network == 'default' and platform == 'kvm':
+            if network == 'default' and provider == 'kvm':
                 warning("Using 192.168.122.253 as api_ip")
                 data['api_ip'] = "192.168.122.253"
                 api_ip = "192.168.122.253"
-            elif platform == 'kubevirt':
+            elif provider == 'kubevirt':
                 selector = {'kcli/plan': plan, 'kcli/role': 'ctlplane'}
                 api_ip = config.k.create_service(f"{cluster}-api", config.k.namespace, selector,
                                                  _type="LoadBalancer", ports=[6443])
@@ -222,10 +222,10 @@ def create(config, plandir, cluster, overrides):
             os.chdir(os.path.expanduser("~/.kcli"))
             threaded = data.get('threaded', False) or data.get('workers_threaded', False)
             config.plan(plan, inputfile=f'{plandir}/workers.yml', overrides=nodes_overrides, threaded=threaded)
-    if cloud_lb and config.type in cloud_platforms:
+    if cloud_lb and provider in cloud_providers:
         if cloud_dns:
             config.k.delete_dns(f'api.{cluster}', domain=domain)
-        if config.type == 'aws':
+        if provider == 'aws':
             data['vpcid'] = config.k.get_vpcid_of_vm(f"{cluster}-ctlplane-0")
         result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_api.yml', overrides=data)
         if result['result'] != 'success':
@@ -233,7 +233,7 @@ def create(config, plandir, cluster, overrides):
     success(f"K3s cluster {cluster} deployed!!!")
     info2(f"export KUBECONFIG=$HOME/.kcli/clusters/{cluster}/auth/kubeconfig")
     info2("export PATH=$PWD:$PATH")
-    if config.type in cloud_platforms and cloud_lb:
+    if provider in cloud_providers and cloud_lb:
         if cloud_dns:
             wait_cloud_dns(cluster, domain)
         elif api_ip is not None and api_ip == f'api.{cluster}.{domain}':
@@ -266,11 +266,11 @@ def create(config, plandir, cluster, overrides):
             temp.write(autoscale_data)
             autoscalecmd = f"kubectl create -f {temp.name}"
             call(autoscalecmd, shell=True)
-    if config.type in cloud_platforms:
-        if cloud_storage and config.type == 'aws':
+    if provider in cloud_providers:
+        if cloud_storage and provider == 'aws':
             pprint("Deploying cloud storage class")
             deploy_cloud_storage(config, cluster)
-        if cloud_native and config.type == 'gcp':
+        if cloud_native and provider == 'gcp':
             pprint("Updating ip alias ranges")
             update_ip_alias(config, ctlplanes + workers)
     return {'result': 'success'}

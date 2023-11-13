@@ -8,9 +8,10 @@ info: |
     ingress_ip is required for virt platforms to provide a way to access apps from the outside.
     The vip will be running through a dedicated keepalived static pod.
     For deploying with baremetal workers, a baremetal_hosts array needs to be configured
-    Optionally, the boolean assisted allows to drive deployment using agent based approach
+    Although the default platform uses the None workflow, you can set it to assisted or kubevirt
 version: stable
 tag: '4.13'
+platform: None
 pull_secret: openshift_pull.json
 image: rhcos413
 network: default
@@ -67,8 +68,6 @@ hosted_version:
 hosted_tag:
 hosted_ha: false
 autoscale: false
-assisted: false
-kubevirt: false
 calico_version:
 cloud_storage: true
 image_overrides:
