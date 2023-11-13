@@ -1198,7 +1198,7 @@ def create_app_openshift(args):
             if app == 'users' and args.subcommand_create_app == 'hypershift':
                 app_data['hypershift'] = True
         else:
-            name, source, channel, csv, description, namespace, channels, crd = common.olm_app(app)
+            name, source, channel, csv, description, namespace, channels, crds = common.olm_app(app)
             if name is None:
                 error(f"Couldn't find any app matching {app}. Skipping...")
                 continue
@@ -1211,7 +1211,7 @@ def create_app_openshift(args):
                     channel = overrides_channel
             if 'namespace' in overrides:
                 namespace = overrides['namespace']
-            app_data = {'source': source, 'channel': channel, 'namespace': namespace, 'crd': crd}
+            app_data = {'source': source, 'channel': channel, 'namespace': namespace, 'crds': crds}
             app_data.update(overrides)
         pprint(f"Adding app {app}")
         baseconfig.create_app_openshift(name, app_data, outputdir=outputdir)
@@ -1264,11 +1264,11 @@ def delete_app_openshift(args):
             if app == 'users' and args.subcommand_delete_app == 'hypershift':
                 app_data['hypershift'] = True
         else:
-            name, source, channel, csv, description, namespace, channels, crd = common.olm_app(app)
+            name, source, channel, csv, description, namespace, channels, crds = common.olm_app(app)
             if name is None:
                 error(f"Couldn't find any app matching {app}. Skipping...")
                 continue
-            app_data = {'source': source, 'channel': channel, 'namespace': namespace, 'crd': crd}
+            app_data = {'source': source, 'channel': channel, 'namespace': namespace, 'crds': crds}
             app_data.update(overrides)
         pprint(f"Deleting app {name}")
         baseconfig.delete_app_openshift(app, app_data)

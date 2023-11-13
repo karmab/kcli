@@ -1309,7 +1309,7 @@ class Kbaseconfig:
     def info_app_openshift(self, app):
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
         if app not in kdefaults.LOCAL_OPENSHIFT_APPS:
-            name, source, defaultchannel, csv, description, target_namespace, channels, crd = common.olm_app(app)
+            name, source, defaultchannel, csv, description, target_namespace, channels, crds = common.olm_app(app)
             if name is None:
                 warning(f"Couldn't find any app matching {app}")
             else:

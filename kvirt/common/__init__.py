@@ -1842,12 +1842,8 @@ def openshift_create_app(config, appname, appdir, overrides={}, outputdir=None):
             if os.path.exists(f"{appdir}/{appname}/pre.sh"):
                 f.write("bash pre.sh\n")
             if install_cr and os.path.exists(f"{appdir}/{appname}/cr.yml"):
-                crd = overrides.get('crd')
-                for line in open(f"{appdir}/{appname}/cr.yml", 'r').readlines():
-                    if 'kind' in line:
-                        crd = line.split(':')[1].strip()
-                        break
-                rendered = config.process_inputfile(cluster, f"{appdir}/cr.sh", overrides={'crd': crd})
+                crds = overrides.get('crds')
+                rendered = config.process_inputfile(cluster, f"{appdir}/cr.sh", overrides={'crds': crds})
                 f.write(rendered)
             if os.path.exists(f"{appdir}/{appname}/post.sh"):
                 f.write("\nbash post.sh\n")
@@ -2016,7 +2012,7 @@ def generate_rhcos_iso(k, cluster, pool, version='latest', podman=False, install
 def olm_app(package):
     os.environ["PATH"] += f":{os.getcwd()}"
     own = True
-    name, source, defaultchannel, csv, description, installmodes, crd = None, None, None, None, None, None, None
+    name, source, defaultchannel, csv, description, installmodes, crds = None, None, None, None, None, None, []
     target_namespace = None
     channels = []
     manifestscmd = f"oc get packagemanifest -n openshift-marketplace {package} -o yaml 2>/dev/null"
@@ -2043,8 +2039,9 @@ def olm_app(package):
                 if own and 'operatorframework.io/suggested-namespace' in csvdescannotations:
                     target_namespace = csvdescannotations['operatorframework.io/suggested-namespace']
                 if 'customresourcedefinitions' in csvdesc and 'owned' in csvdesc['customresourcedefinitions']:
-                    crd = csvdesc['customresourcedefinitions']['owned'][0]['name']
-    return name, source, defaultchannel, csv, description, target_namespace, channels, crd
+                    for crd in csvdesc['customresourcedefinitions']['owned']:
+                        crds.append(crd['name'])
+    return name, source, defaultchannel, csv, description, target_namespace, channels, crds
 
 
 def need_fake():
