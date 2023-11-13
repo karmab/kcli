@@ -992,7 +992,7 @@ def get_user(image):
         user = 'cloud-user'
     elif 'centos' in image.lower() and not image.startswith('ibm'):
         user = 'centos'
-    elif 'coreos' in image.lower() or 'rhcos' in image.lower() or 'fcos' in image.lower():
+    elif 'coreos' in image.lower() or 'rhcos' in image.lower() or 'fcos' in image.lower() or 'ocp-v4' in image:
         user = 'core'
     elif 'cirros' in image.lower():
         user = 'cirros'
