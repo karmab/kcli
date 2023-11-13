@@ -2997,21 +2997,24 @@ class Kconfig(Kbaseconfig):
             pprint(f"Updating vms with {role} role")
             plandata = self.plan(plan, inputfile=f'{plandir}/{role}.yml', overrides=overrides, update=True)
             planvms.extend(plandata['newvms'] + plandata['existingvms'])
-        os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
-        binary = 'oc' if which('oc') is not None else 'kubectl'
-        nodescmd = f'{binary} get node -o name'
-        nodes = [n.strip().replace('node/', '') for n in os.popen(nodescmd).readlines()]
-        for vm in self.k.list():
-            vmname = vm['name']
-            vmplan = vm.get('plan', 'kvirt')
-            if vmplan == plan and vmname not in planvms:
-                pprint(f"Deleting vm {vmname}")
-                self.k.delete(vmname)
-                for node in nodes:
-                    if node.split('.')[0] == vmname:
-                        pprint(f"Deleting node {node} from your cluster")
-                        call(f'{binary} delete node {node}', shell=True)
-                        break
+        existing_ctlplanes = len([v for v in planvms if v.startswith(f'{cluster}-ctlplane-')])
+        existing_workers = len([v for v in planvms if v.startswith(f'{cluster}-worker-')])
+        if data['ctlplanes'] != existing_ctlplanes or data['workers'] != existing_workers:
+            os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
+            binary = 'oc' if which('oc') is not None else 'kubectl'
+            nodescmd = f'{binary} get node -o name'
+            nodes = [n.strip().replace('node/', '') for n in os.popen(nodescmd).readlines()]
+            for vm in self.k.list():
+                vmname = vm['name']
+                vmplan = vm.get('plan', 'kvirt')
+                if vmplan == plan and vmname not in planvms:
+                    pprint(f"Deleting vm {vmname}")
+                    for node in nodes:
+                        if node.split('.')[0] == vmname:
+                            pprint(f"Deleting node {node} from your cluster")
+                            call(f'{binary} delete node {node}', shell=True)
+                            break
+                    self.k.delete(vmname)
 
     def expose_plan(self, plan, inputfile=None, overrides={}, port=9000, pfmode=False, cluster=False):
         inputfile = os.path.expanduser(inputfile)
