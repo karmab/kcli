@@ -70,6 +70,7 @@ apt-get update
 apt-get install -y containerd.io
 mkdir -p /etc/containerd
 containerd config default > /etc/containerd/config.toml
+sed -i '/SystemdCgroup/s/false/true/' /etc/containerd/config.toml
 {% if HTTP_PROXY is defined %}
 mkdir /etc/systemd/system/containerd.service.d
 cat > /etc/systemd/system/containerd.service.d/http_proxy.conf << EOF
