@@ -43,7 +43,8 @@ SUSE = 'https://download.opensuse.org'
 RHCOS = 'https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos'
 ROCKY = 'https://dl.rockylinux.org/pub/rocky/'
 UBUNTU = 'https://cloud-images.ubuntu.com/releases'
-IMAGES = {'almalinux9': f'{ALMA}/9.1/cloud/x86_64/images/AlmaLinux-9-GenericCloud-latest.x86_64.qcow2',
+IMAGES = {'almalinux8': f'{ALMA}/8.8/cloud/x86_64/images/AlmaLinux-8-GenericCloud-latest.x86_64.qcow2',
+          'almalinux9': f'{ALMA}/9.1/cloud/x86_64/images/AlmaLinux-9-GenericCloud-latest.x86_64.qcow2',
           'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-image-bootstrap.qcow2',
           'centos7': f'{CENTOS}/7/images/CentOS-7-x86_64-GenericCloud.qcow2',
           'centos8stream': f'{CENTOS}/8-stream/x86_64/images/CentOS-Stream-GenericCloud-8-latest.x86_64.qcow2',
