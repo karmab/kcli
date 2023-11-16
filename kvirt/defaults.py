@@ -39,9 +39,7 @@ CENTOS = 'https://cloud.centos.org/centos'
 DEBIAN = 'https://cdimage.debian.org/cdimage'
 FEDORA = 'http://mirror.uv.es/mirror/fedora/linux/releases'
 GENTOO = 'https://gentoo.osuosl.org/experimental/amd64/openstack'
-OPENSUSE = 'https://download.opensuse.org'
-LEAP = f'{OPENSUSE}/distribution/leap'
-LEAP_MIC = f'{OPENSUSE}/distribution/leap-micro'
+SUSE = 'https://download.opensuse.org'
 RHCOS = 'https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos'
 ROCKY = 'https://dl.rockylinux.org/pub/rocky/'
 UBUNTU = 'https://cloud-images.ubuntu.com/releases'
@@ -67,7 +65,7 @@ IMAGES = {'almalinux9': f'{ALMA}/9.1/cloud/x86_64/images/AlmaLinux-9-GenericClou
           'dragonflybsd601': f'{BSD}/dragonflybsd/6.0.1/2021-12-11/dragonflybsd-6.0.1-hammer2.qcow2',
           'dragonflybsd622': f'{BSD}/dragonflybsd/6.2.2/2022-09-06/hammer2/dragonflybsd-6.2.2-hammer2-2022-09-06.qcow2',
           'gentoo': f'{GENTOO}/gentoo-openstack-amd64-default-latest.qcow2',
-          'opensuse154': f'{LEAP}/15.4/appliances/openSUSE-Leap-15.4-JeOS.x86_64-OpenStack-Cloud.qcow2',
+          'opensuse155': f'{SUSE}/repositories/Cloud:/Images:/Leap_15.5/images/openSUSE-Leap-15.5.x86_64-NoCloud.qcow2',
           'rhcos410': f'{RHCOS}/4.10',
           'rhcos411': f'{RHCOS}/4.11',
           'rhcos412': f'{RHCOS}/4.12',
