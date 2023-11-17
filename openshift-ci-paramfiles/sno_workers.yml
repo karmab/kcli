@@ -1,0 +1,23 @@
+cluster: sno-worker
+domain: karmalabs.corp
+sno_vm: true
+version: stable
+tag: "4.14"
+network: default
+numcpus: 16
+memory: 28672
+disk_size: 80
+api_ip: 192.168.122.247
+sno_workers: true
+workers: 2
+vmrules:
+ - sno-worker-worker-0:
+    nets:
+    - name: default
+      ip: 192.168.122.220
+      reserveip: true
+ - sno-worker-worker-1:
+    nets:
+    - name: default
+      ip: 192.168.122.221
+      reserveip: true

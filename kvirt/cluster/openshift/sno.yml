@@ -9,11 +9,11 @@
 {% endif %}
 
 {{ cluster }}-sno:
- domain: {{ domain }} 
+ domain: {{ domain }}
  iso: {{ cluster }}-sno.iso
  pool: {{ pool or config_pool }}
  image:
- enableroot: false 
+ enableroot: false
  flavor: {{ flavor }}
  keys: {{ keys }}
  numcpus: {{ ctlplane_numcpus | default(numcpus, numcpus) }}
@@ -21,3 +21,21 @@
  autostart: {{ autostart }}
  nets: {{ [network] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
+
+{% if sno_workers %}
+{% for num in range(0, workers|int) %}
+{{ cluster }}-worker-{{ num }}
+ domain: {{ domain }}
+ iso: {{ cluster }}-worker.iso
+ pool: {{ pool or config_pool }}
+ image:
+ enableroot: false
+ flavor: {{ flavor }}
+ keys: {{ keys }}
+ numcpus: {{ worker_numcpus | default(numcpus, numcpus) }}
+ memory: {{ worker_memory | default(memory, memory) }}
+ autostart: {{ autostart }}
+ nets: {{ [network] + extra_networks }}
+ disks: {{ [disk_size] + extra_disks }}
+{% endfor %}
+{% endif %}
