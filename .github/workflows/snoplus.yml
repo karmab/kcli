@@ -1,0 +1,58 @@
+name: SNOPLUS
+on:
+  workflow_dispatch:
+    inputs:
+      CLUSTER:
+        description: 'Cluster'
+        required: true
+        default: snoplus
+      PARAMFILE:
+        description: 'paramfile'
+        required: false
+        default: openshift-ci-paramfiles/snoplus.yml
+      EXTRAPARAMS:
+        description: 'Extra params'
+        default: ''
+      PULLSECRET:
+        description: 'Pull Secret'
+        required: false
+        default: /root/openshift_pull.json
+      VERSION:
+        description: 'version'
+        required: false
+        default: stable
+      TAG:
+        description: 'tag'
+        required: false
+        default: "4.14"
+
+env:
+ HOME: /root
+ PYTHONUNBUFFERED: true
+ CLUSTER: ${{github.event.inputs.CLUSTER}}
+ INPUTFILE: ${{github.event.inputs.INPUTFILE}}
+ PARAMFILE: ${{github.event.inputs.PARAMFILE}}
+ EXTRAPARAMS: ${{github.event.inputs.EXTRAPARAMS}}
+ PULLSECRET: ${{github.event.inputs.PULLSECRET}}
+ VERSION: ${{github.event.inputs.VERSION}}
+ TAG: ${{github.event.inputs.TAG}}
+
+jobs:
+    requirements:
+      runs-on: libvirt
+      steps:
+       - uses: actions/checkout@v2
+       - run: git pull origin ${GITHUB_REF##*/}
+       - name: Install kcli
+         run: |
+           curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
+           kcli create sushy-service
+       - name: Delete old install
+         run: kcli delete cluster --yes $CLUSTER || true
+
+    deploy-openshift:
+      runs-on: libvirt
+      steps:
+      - name: Deploy SNO and workers
+        run: |
+          kcli create cluster openshift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET -P version=$VERSION -P tag="$TAG" $EXTRAPARAMS $CLUSTER

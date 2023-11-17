@@ -1,4 +1,4 @@
-cluster: sno-worker
+cluster: snoplus
 domain: karmalabs.corp
 sno_vm: true
 version: stable
@@ -11,12 +11,12 @@ api_ip: 192.168.122.247
 sno_workers: true
 workers: 2
 vmrules:
- - sno-worker-worker-0:
+ - snoplus-worker-0:
     nets:
     - name: default
       ip: 192.168.122.220
       reserveip: true
- - sno-worker-worker-1:
+ - snoplus-worker-1:
     nets:
     - name: default
       ip: 192.168.122.221

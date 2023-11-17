@@ -24,7 +24,7 @@
 
 {% if sno_workers %}
 {% for num in range(0, workers|int) %}
-{{ cluster }}-worker-{{ num }}
+{{ cluster }}-worker-{{ num }}:
  domain: {{ domain }}
  iso: {{ cluster }}-worker.iso
  pool: {{ pool or config_pool }}
