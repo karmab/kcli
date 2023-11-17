@@ -1827,8 +1827,10 @@ class Kvirt(object):
                                 if entry['addr'].startswith('fe80::') or entry['addr'].startswith('169.254.169'):
                                     continue
                                 ip = entry['addr']
-                                ips.append(ip)
-                                all_ips.append(ip)
+                                if ip not in ips:
+                                    ips.append(ip)
+                                if ip not in all_ips:
+                                    all_ips.append(ip)
                 if ips and 'ip' not in yamlinfo:
                     ip4s = [i for i in ips if ':' not in i]
                     ip6s = [i for i in ips if i not in ip4s]
