@@ -2137,8 +2137,13 @@ def get_rhcos_url_from_file(filename, _type='kvm'):
 
 
 def boot_baremetal_hosts(baremetal_hosts, iso_url, overrides={}, debug=False):
+    sno = iso_url.endswith('-sno.iso')
     for index, host in enumerate(baremetal_hosts):
+        index_iso_url = iso_url
         bmc_url = host.get('url') or host.get('bmc_url')
+        if sno and index > 1:
+            role = host.get('role', 'worker')
+            index_iso_url = iso_url.replace('-sno.iso', f'-{role}.iso')
         bmc_user = host.get('username') or host.get('user') or host.get('bmc_username') or host.get('bmc_user')\
             or overrides.get('bmc_user') or overrides.get('bmc_username')\
             or overrides.get('user') or overrides.get('username')
@@ -2153,7 +2158,7 @@ def boot_baremetal_hosts(baremetal_hosts, iso_url, overrides={}, debug=False):
             pprint(f"Booting Host {msg} with {iso_url}")
             if iso_url is not None:
                 try:
-                    red.set_iso(iso_url)
+                    red.set_iso(index_iso_url)
                 except Exception as e:
                     msg = f"Hit {e} when plugging iso to host {msg}"
                     error(msg)

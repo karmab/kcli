@@ -528,7 +528,6 @@ def handle_baremetal_iso(config, plandir, cluster, overrides, baremetal_hosts=[]
 
 
 def handle_baremetal_iso_sno(config, plandir, cluster, data, baremetal_hosts=[], iso_pool=None):
-    iso_name = f"{cluster}-sno.iso"
     baremetal_web = data.get('baremetal_web', True)
     baremetal_web_dir = data.get('baremetal_web_dir', '/var/www/html')
     baremetal_web_subdir = data.get('baremetal_web_subdir')
@@ -537,21 +536,20 @@ def handle_baremetal_iso_sno(config, plandir, cluster, data, baremetal_hosts=[],
     baremetal_web_port = data.get('baremetal_web_port', 80)
     iso_pool_path = config.k.get_pool_path(iso_pool)
     if baremetal_web:
-        if os.path.exists(f"{baremetal_web_dir}/{iso_name}"):
-            call(f"sudo rm {baremetal_web_dir}/{iso_name}", shell=True)
-            call(f"sudo rm {baremetal_web_dir}/{iso_name}", shell=True)
-        call(f'sudo cp {iso_pool_path}/{iso_name} {baremetal_web_dir}/{iso_name}', shell=True)
+        call(f"sudo rm {baremetal_web_dir}/{cluster}-*.iso", shell=True)
+        call(f'sudo cp {iso_pool_path}/{cluster}-*.iso {baremetal_web_dir}', shell=True)
         if baremetal_web_dir == '/var/www/html':
-            call(f"sudo chown apache:apache {baremetal_web_dir}/{iso_name}", shell=True)
+            call(f"sudo chown apache:apache {baremetal_web_dir}/{cluster}-*.iso", shell=True)
             if which('getenforce') is not None and os.popen('getenforce').read().strip() == 'Enforcing':
-                call(f"sudo restorecon -Frvv {baremetal_web_dir}/{iso_name}", shell=True)
+                call(f"sudo restorecon -Frvv {baremetal_web_dir}/{cluster}-*.iso", shell=True)
     else:
-        call(f"sudo chmod a+r {iso_pool_path}/{iso_name}", shell=True)
+        call(f"sudo chmod a+r {iso_pool_path}/{cluster}-*.iso", shell=True)
     nic = os.popen('ip r | grep default | cut -d" " -f5 | head -1').read().strip()
     ip_cmd = f"ip -o addr show {nic} | awk '{{print $4}}' | cut -d '/' -f 1 | head -1"
     host_ip = os.popen(ip_cmd).read().strip()
     if baremetal_web_port != 80:
         host_ip += f":{baremetal_web_port}"
+    iso_name = f"{cluster}-sno.iso"
     if baremetal_web_subdir is not None:
         iso_name = f'{baremetal_web_subdir}/{iso_name}'
     return f'http://{host_ip}/{iso_name}'
