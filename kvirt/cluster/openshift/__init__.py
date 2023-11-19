@@ -1474,7 +1474,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 warning("sno ctlplanes requires api vip to be defined. Skipping")
             else:
                 ctlplane_overrides = overrides.copy()
-                ctlplane_overrides['role'] = 'master'
+                ctlplane_overrides['role'] = 'ctlplane'
                 ctlplane_overrides['image'] = 'rhcos410'
                 config.create_openshift_iso(cluster, overrides=ctlplane_overrides, installer=True)
         if sno_workers:

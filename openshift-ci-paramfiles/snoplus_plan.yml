@@ -1,7 +1,8 @@
 parameters:
+ api_ip: 192.168.122.247
  kube: snoplus
  kubetype: openshift
- role: worker
+ role: ctlplane
  vmrules:
  - snoplus-node-1:
     nets:
@@ -13,6 +14,21 @@ parameters:
     - name: default
       ip: 192.168.122.221
       reserveip: true
+
+api:
+ type: dns
+ net: default
+ ip: {{ api_ip }}
+ alias:
+ - api.snoplus.karmalabs.local
+ - api-int.snoplus.karmalabs.local
+ - console-openshift-console.apps.snoplus.karmalabs.local
+ - oauth-openshift.apps.snoplus.karmalabs.local
+ - prometheus-k8s-openshift-monitoring.apps.snoplus.karmalabs.local
+ - canary-openshift-ingress-canary.apps.snoplus.karmalabs.local
+ - assisted-service-multicluster-engine.snoplus.karmalabs.local
+ - assisted-service-assisted-installer.snoplus.karmalabs.local
+ - assisted-image-service-multicluster-engine.snoplus.karmalabs.local
 
 {% for num in range(0,3) %}
 snoplus-node-{{ num }}:
