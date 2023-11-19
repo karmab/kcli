@@ -1,0 +1,25 @@
+parameters:
+ kube: snoplus
+ kubetype: openshift
+ role: worker
+ vmrules:
+ - snoplus-node-1:
+    nets:
+    - name: default
+      ip: 192.168.122.220
+      reserveip: true
+ - snoplus-node-2:
+    nets:
+    - name: default
+      ip: 192.168.122.221
+      reserveip: true
+
+{% for num in range(0,3) %}
+snoplus-node-{{ num }}:
+ numcpus: 16
+ memory: 28672
+ nets: [default]
+ disks: [80]
+ uefi: true
+ start: false
+{% endfor %}

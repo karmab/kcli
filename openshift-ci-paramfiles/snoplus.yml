@@ -1,23 +1,14 @@
 cluster: snoplus
 domain: karmalabs.corp
-sno_vm: true
 version: stable
 tag: "4.14"
-network: default
-numcpus: 16
-memory: 28672
-disk_size: 80
 api_ip: 192.168.122.247
+sno: true
+sno_wait: true
 sno_workers: true
-workers: 2
-vmrules:
- - snoplus-worker-0:
-    nets:
-    - name: default
-      ip: 192.168.122.220
-      reserveip: true
- - snoplus-worker-1:
-    nets:
-    - name: default
-      ip: 192.168.122.221
-      reserveip: true
+bmc_user: admin
+bmc_password: admin
+baremetal_hosts:
+- bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/snoplus-node-0
+- bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/snoplus-node-1
+- bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/snoplus-node-2

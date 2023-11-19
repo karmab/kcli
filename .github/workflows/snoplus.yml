@@ -36,6 +36,7 @@ env:
  PULLSECRET: ${{github.event.inputs.PULLSECRET}}
  VERSION: ${{github.event.inputs.VERSION}}
  TAG: ${{github.event.inputs.TAG}}
+ PLAN_FILE: openshift-ci-paramfiles/snoplus_plan.yml
 
 jobs:
     requirements:
@@ -50,9 +51,16 @@ jobs:
        - name: Delete old install
          run: kcli delete cluster --yes $CLUSTER || true
 
-    deploy-openshift:
+    deploy-baremetal-like-vms:
+      needs: requirements
       runs-on: libvirt
       steps:
-      - name: Deploy SNO and workers
-        run: |
-          kcli create cluster openshift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET -P version=$VERSION -P tag="$TAG" $EXTRAPARAMS $CLUSTER
+      - name: Deploy Baremetal like vms
+        run: kcli create plan -f $PLAN_FILE $CLUSTER
+     
+    deploy-openshift:
+      needs: deploy-baremetal-like-vms
+      runs-on: libvirt
+      steps:
+      - name: Deploy SNO and additional nodes
+        run: kcli create cluster openshift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET -P version=$VERSION -P tag="$TAG" $EXTRAPARAMS $CLUSTER

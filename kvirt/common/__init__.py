@@ -2141,8 +2141,8 @@ def boot_baremetal_hosts(baremetal_hosts, iso_url, overrides={}, debug=False):
     for index, host in enumerate(baremetal_hosts):
         index_iso_url = iso_url
         bmc_url = host.get('url') or host.get('bmc_url')
-        if sno and index > 1:
-            role = host.get('role', 'worker')
+        if sno and index > 0:
+            role = host.get('role') or overrides.get('role') or 'worker'
             index_iso_url = iso_url.replace('-sno.iso', f'-{role}.iso')
         bmc_user = host.get('username') or host.get('user') or host.get('bmc_username') or host.get('bmc_user')\
             or overrides.get('bmc_user') or overrides.get('bmc_username')\
@@ -2155,7 +2155,7 @@ def boot_baremetal_hosts(baremetal_hosts, iso_url, overrides={}, debug=False):
                 red.reset()
                 sleep(240)
             msg = host['name'] if 'name' in host else f"with url {bmc_url}"
-            pprint(f"Booting Host {msg} with {iso_url}")
+            pprint(f"Booting Host {msg} with {index_iso_url}")
             if iso_url is not None:
                 try:
                     red.set_iso(index_iso_url)
