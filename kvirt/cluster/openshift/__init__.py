@@ -721,8 +721,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     data['cluster'] = clustervalue
     domain = data.get('domain')
     dns_k = dnsconfig.k if dnsconfig is not None else k
-    if provider in cloud_providers and domain not in dns_k.list_dns_zones():
-        return {'result': 'failure', 'reason': f'domain {domain} needs to exist'}
+    if provider in cloud_providers:
+        dns_zones = dns_k.list_dns_zones()
+        if domain not in dns_zones and f'{domain}.' not in dns_zones:
+            return {'result': 'failure', 'reason': f'domain {domain} needs to exist'}
     original_domain = None
     async_install = data.get('async')
     upstream = data.get('upstream')
