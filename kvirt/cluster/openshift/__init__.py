@@ -1505,6 +1505,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if baremetal_hosts:
             iso_pool = data['pool'] or config.pool
             iso_url = handle_baremetal_iso_sno(config, plandir, cluster, data, baremetal_hosts, iso_pool)
+            if len(baremetal_hosts) > 0:
+                overrides['role'] = 'ctlplane' if sno_ctlplanes else 'worker'
             result = boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
             if result['result'] != 'success':
                 return result

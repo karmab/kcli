@@ -5,7 +5,7 @@ tag: "4.14"
 api_ip: 192.168.122.247
 sno: true
 sno_wait: true
-sno_workers: true
+sno_ctlplanes: true
 bmc_user: admin
 bmc_password: admin
 baremetal_hosts:
