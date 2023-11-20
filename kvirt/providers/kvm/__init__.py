@@ -1526,27 +1526,23 @@ class Kvirt(object):
         conn = self.conn
         status = {0: 'down', 1: 'up'}
         hostname = conn.getHostname()
-        cpus = conn.getCPUMap()[0]
+        totalcpus = conn.getCPUMap()[0]
         totalmemory = conn.getInfo()[1]
         data["connection"] = self.url
         data["host"] = hostname
-        data["cpus"] = cpus
         totalvms = 0
+        usedcpus = 0
         usedmemory = 0
         for vm in conn.listAllDomains(0):
             if status[vm.isActive()] == "down":
                 continue
             totalvms += 1
-            xml = vm.XMLDesc(0)
-            root = ET.fromstring(xml)
-            memory = list(root.iter('memory'))[0]
-            unit = memory.attrib['unit']
-            memory = memory.text
-            if unit == 'KiB':
-                memory = float(memory) / 1024
-                memory = int(memory)
-            usedmemory += memory
+            memory, numcpus = vm.info()[2:4]
+            usedcpus += numcpus
+            usedmemory += int(float(memory) / 1024)
         data["vms_running"] = totalvms
+        data["cpus_total"] = totalcpus
+        data["cpus_used"] = usedcpus
         data["memory_used"] = usedmemory
         data["memory_total"] = totalmemory
         storage = []
