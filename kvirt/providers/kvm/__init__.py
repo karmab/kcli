@@ -586,6 +586,7 @@ class Kvirt(object):
 <target dev='hdc' bus='%s'/>
 <readonly/>
 %s
+<address type='drive' controller='0' bus='0' target='0' unit='20'/>
 </disk>""" % (isosourcexml, isobus, bootdevxml)
         floppyxml = ''
         floppy = overrides.get('floppy')
@@ -2696,6 +2697,7 @@ class Kvirt(object):
 <driver name='qemu' type='raw'/>
 <source file='%s'/>
 <target dev='hdc' bus='sata'/>
+<address type='drive' controller='0' bus='0' target='0' unit='20'/>
 <readonly/>
 </disk>""" % iso
             base = list(root.iter('devices'))[-1]
