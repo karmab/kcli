@@ -67,7 +67,7 @@ systemctl enable crio
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key --keyring /etc/apt/trusted.gpg.d/docker.gpg add -
 add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 apt-get update
-apt-get install -y containerd.io
+apt-get install -y containerd || apt-get install -y containerd.io
 mkdir -p /etc/containerd
 containerd config default > /etc/containerd/config.toml
 sed -i '/SystemdCgroup/s/false/true/' /etc/containerd/config.toml
