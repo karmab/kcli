@@ -104,7 +104,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
     if image is not None and (is_ubuntu(image) or is_debian_new(image)):
         if machine == 'pc':
             prefix = 'ens'
-        if machine == 's390-ccw-virtio':
+        elif machine == 's390-ccw-virtio':
             prefix = 'enc'
         elif machine == 'vsphere':
             prefix = 'ens19'
