@@ -534,6 +534,10 @@ class Kvirt(object):
             if not nvme:
                 bootdevxml = f'<boot order="{bootdev}"/>' if boot_order else ''
                 bootdev += 1
+                if diskinterface in ['scsi', 'sata']:
+                    addressxml = f"<address type='drive' controller='0' bus='0' target='0' unit='{scsi_index}'/>"
+                else:
+                    addressxml = ''
                 disksxml = """%s<disk type='%s' device='disk'>
 <driver name='qemu' type='%s' %s/>
 <source %s='%s'/>
@@ -542,8 +546,9 @@ class Kvirt(object):
 %s
 %s
 %s
+%s
 </disk>""" % (disksxml, dtype, diskformat, dextra, dsource, diskpath, backingxml, diskdev, diskbus, diskwwn, diskserial,
-                    bootdevxml)
+                    bootdevxml, addressxml)
             else:
                 nvmedisks.append(diskpath)
         if iso is not None:
@@ -592,7 +597,7 @@ class Kvirt(object):
 <target dev='hdc' bus='%s'/>
 <readonly/>
 %s
-<address type='drive' controller='0' bus='0' target='0' unit='20'/>
+<address type='drive' controller='0' bus='0' target='0' unit='0'/>
 </disk>""" % (isosourcexml, isobus, bootdevxml)
         floppyxml = ''
         floppy = overrides.get('floppy')
