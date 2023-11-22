@@ -83,7 +83,9 @@ class Ksushy():
             baseconfig = Kbaseconfig()
             if client not in baseconfig.clients:
                 response.status = 404
-                return f'Client {client} not found'
+                msg = f'Client {client} not found'
+                error(msg)
+                return msg
             config = Kconfig(client)
             k = config.k
             vms = []
@@ -98,13 +100,17 @@ class Ksushy():
             baseconfig = Kbaseconfig()
             if client not in baseconfig.clients:
                 response.status = 404
-                return f'Client {client} not found'
+                msg = f'Client {client} not found'
+                error(msg)
+                return msg
             config = Kconfig(client)
             k = config.k
             info = k.info(name)
             if not info:
                 response.status = 404
-                return f'VM {name} not found'
+                msg = f'VM {name} not found'
+                error(msg)
+                return msg
             status = 'On' if info['status'] == 'up' else 'Off'
             data = {'client': client, 'name': name, 'status': status, 'memory': info['memory'], 'cpus': info['cpus'],
                     'virt_type': config.type}
@@ -120,17 +126,23 @@ class Ksushy():
             boot = request.json.get('Boot', {})
             if not boot:
                 response.status = 400
-                return 'PATCH only works for Boot'
+                msg = 'PATCH only works for Boot'
+                error(msg)
+                return msg
             target = boot.get('BootSourceOverrideTarget')
             mode = boot.get('BootSourceOverrideMode')
             if not target and not mode:
                 response.status = 400
-                return 'Missing the BootSourceOverrideTarget and/or BootSourceOverrideMode element'
+                msg = 'Missing the BootSourceOverrideTarget and/or BootSourceOverrideMode element'
+                error(msg)
+                return msg
             else:
                 baseconfig = Kbaseconfig()
                 if client not in baseconfig.clients:
                     response.status = 404
-                    return f'Client {client} not found'
+                    msg = f'Client {client} not found'
+                    error(msg)
+                    return msg
                 config = Kconfig(client)
                 k = config.k
                 info = k.info(name)
@@ -158,13 +170,17 @@ class Ksushy():
             baseconfig = Kbaseconfig()
             if client not in baseconfig.clients:
                 response.status = 404
-                return f'Client {client} not found'
+                msg = f'Client {client} not found'
+                error(msg)
+                return msg
             config = Kconfig(client)
             k = config.k
             info = k.info(name)
             if not info:
                 response.status = 404
-                return f'VM {name} not found'
+                msg = f'VM {name} not found'
+                error(msg)
+                return msg
             macs = []
             for nic in info.get('nets', []):
                 mac = nic['mac']
@@ -189,7 +205,9 @@ class Ksushy():
             baseconfig = Kbaseconfig()
             if client not in baseconfig.clients:
                 response.status = 404
-                return f'Client {client} not found'
+                msg = f'Client {client} not found'
+                error(msg)
+                return msg
             config = Kconfig(client)
             k = config.k
             reset_type = request.json.get('ResetType', 'On')
@@ -197,14 +215,16 @@ class Ksushy():
                 try:
                     pprint(f"Starting vm {name}")
                     k.start(name)
-                except subprocess.CalledProcessError:
+                except subprocess.CalledProcessError as e:
+                    error(e)
                     response.status = 400
                     return 'Failed to poweron the server'
             else:
                 try:
                     pprint(f"Stopping vm {name}")
                     k.stop(name)
-                except subprocess.CalledProcessError:
+                except subprocess.CalledProcessError as e:
+                    error(e)
                     response.status = 400
                     return 'Failed to poweroff the server'
             response.status = 204
@@ -223,12 +243,16 @@ class Ksushy():
             baseconfig = Kbaseconfig()
             if client not in baseconfig.clients:
                 response.status = 404
-                return f'Client {client} not found'
+                msg = f'Client {client} not found'
+                error(msg)
+                return msg
             config = Kconfig(client)
             info = config.k.info(name)
             if not info:
                 response.status = 404
-                return f'VM {name} not found'
+                msg = f'VM {name} not found'
+                error(msg)
+                return msg
             inserted, image_url = False, ''
             if 'iso' in info:
                 inserted = True
@@ -242,15 +266,21 @@ class Ksushy():
             baseconfig = Kbaseconfig()
             if client not in baseconfig.clients:
                 response.status = 404
-                return f'Client {client} not found'
+                msg = f'Client {client} not found'
+                error(msg)
+                return msg
             config = Kconfig(client)
             if not config.k.exists(name):
                 response.status = 404
-                return f'VM {name} not found'
+                msg = f'VM {name} not found'
+                error(msg)
+                return msg
             image = request.json.get('Image')
             if image is None:
                 response.status = 400
-                return 'POST only works for Image'
+                msg = 'POST only works for Image'
+                error(msg)
+                return msg
             try:
                 pprint(f"Setting iso of vm {name} to {image}")
                 iso = os.path.basename(image)
@@ -261,7 +291,8 @@ class Ksushy():
                 if iso not in isos:
                     config.download_image(pool=config.pool, image=iso, url=image)
                 config.update_vm(name, {'iso': iso})
-            except subprocess.CalledProcessError:
+            except subprocess.CalledProcessError as e:
+                error(e)
                 response.status = 400
                 return 'Failed to mount virtualcd'
             response.status = 204
@@ -274,17 +305,22 @@ class Ksushy():
             baseconfig = Kbaseconfig()
             if client not in baseconfig.clients:
                 response.status = 404
-                return f'Client {client} not found'
+                msg = f'Client {client} not found'
+                error(msg)
+                return msg
             config = Kconfig(client)
             if not config.k.exists(name):
                 response.status = 404
-                return f'VM {name} not found'
+                msg = f'VM {name} not found'
+                error(msg)
+                return msg
             try:
                 pprint(f"Setting iso of vm {name} to None")
                 info = config.k.info(name)
                 if 'iso' in info:
                     config.update_vm(name, {'iso': None})
-            except subprocess.CalledProcessError:
+            except subprocess.CalledProcessError as e:
+                error(e)
                 return ('Failed to unmount virtualcd', 400)
             response.status = 204
             return ''
