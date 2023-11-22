@@ -4454,7 +4454,7 @@ def cli():
     images_list = '\n'.join(IMAGES.keys())
     imagedownload_help = f"Image to download. Choose between \n{images_list}"
     imagedownload_parser = argparse.ArgumentParser(add_help=False)
-    imagedownload_parser.add_argument('-a', '--arch', help='Target arch', choices=['x86_64', 'aarch64', 'ppc64le'],
+    imagedownload_parser.add_argument('-a', '--arch', help='Arch', choices=['x86_64', 'aarch64', 'ppc64le', 's390x'],
                                       default='x86_64')
     imagedownload_parser.add_argument('-c', '--cmd', help='Extra command to launch after downloading', metavar='CMD')
     imagedownload_parser.add_argument('-i', '--installer', help='Get rhcos url from openshift-installer',

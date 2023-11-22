@@ -237,8 +237,11 @@ class Kvirt(object):
         default_disksize = disksize
         default_pool = pool
         conn = self.conn
-        if 'arch' not in overrides and image is not None and ('aarch64' in image or 'arm64' in image):
-            overrides['arch'] = 'aarch64'
+        if 'arch' not in overrides and image is not None:
+            if ('aarch64' in image or 'arm64' in image):
+                overrides['arch'] = 'aarch64'
+            elif 's390x' in image:
+                overrides['arch'] = 's390x'
         capabilities = self.get_capabilities(overrides.get('arch'))
         if 'emulator' in overrides and which(overrides['emulator']) is not None:
             emulator = which(overrides['emulator'])
@@ -249,8 +252,9 @@ class Kvirt(object):
         if 'machine' in overrides and overrides['machine'] not in capabilities['machines']:
             machines = ','.join(sorted(capabilities['machines']))
             return {'result': 'failure', 'reason': f"Incorrect machine. Choose between {machines}"}
-        aarch64 = True if capabilities['arch'] == 'aarch64' else False
-        aarch64_full = True if aarch64 and capabilities['kvm'] else False
+        aarch64 = capabilities['arch'] == 'aarch64'
+        aarch64_full = aarch64 and capabilities['kvm']
+        as390x = capabilities['arch'] == 's390x'
         if aarch64 and not aarch64_full:
             if 'machine' not in overrides:
                 virtmachines = [m for m in sorted(capabilities['machines']) if m.startswith('virt-')]
@@ -325,6 +329,8 @@ class Kvirt(object):
         secureboot = overrides.get('secureboot', False)
         if machine == 'pc' and (uefi or uefi_legacy or secureboot or aarch64 or enableiommu):
             machine = 'q35'
+        if as390x:
+            machine = 's390-ccw-virtio'
         disksxml = ''
         fixqcow2path, fixqcow2backing = None, None
         volsxml = {}
@@ -576,7 +582,7 @@ class Kvirt(object):
                 else:
                     isovolume = volumes[iso]['object']
                     iso = isovolume.path()
-        isobus = 'scsi' if aarch64_full else 'sata'
+        isobus = 'scsi' if (aarch64_full or as390x) else 'sata'
         isosourcexml = f"<source file='{iso}'/>" if iso is not None else ''
         bootdevxml = f'<boot order="{bootdev}"/>' if boot_order else ''
         bootdev_iso = bootdev
@@ -821,6 +827,7 @@ class Kvirt(object):
                 dtype = 'block' if diskpath.startswith('/dev') else 'file'
                 dsource = 'dev' if diskpath.startswith('/dev') else 'file'
                 isobus = 'scsi' if aarch64_full else 'sata'
+                isobus = 'scsi' if (aarch64_full or as390x) else 'sata'
                 bootdevxml = f'<boot order="{bootdev_iso}"/>' if boot_order else ''
                 isoxml = """<disk type='%s' device='cdrom'>
 <driver name='qemu' type='raw'/>
@@ -1520,7 +1527,7 @@ class Kvirt(object):
                 mem = float(mem) / 1024
                 mem = int(mem)
             usedmemory += mem
-        return True if usedmemory + memory > totalmemory else False
+        return usedmemory + memory > totalmemory
 
     def info_host(self):
         data = {}
@@ -2311,7 +2318,7 @@ class Kvirt(object):
             ip = net.get('ip')
             netname = net.get('name')
             mac = macs[index]
-            reserveip = True if index == 0 and primary else False
+            reserveip = index == 0 and primary
             reserveip = net.get('reserveip', reserveip)
             if not reserveip or ip is None or netname is None:
                 continue
@@ -2368,7 +2375,7 @@ class Kvirt(object):
             if isinstance(net, str):
                 netname = net
                 net = {'name': netname}
-            reservedns = True if index == 0 and primary else False
+            reservedns = index == 0 and primary
             reservedns = net.get('reservedns', reservedns)
             if not reservedns:
                 continue
