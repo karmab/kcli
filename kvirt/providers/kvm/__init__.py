@@ -862,7 +862,7 @@ class Kvirt(object):
                                     combustion=combustion)
                     self._uploadimage(name, pool=default_storagepool, origin=tmpdir)
         listen = '0.0.0.0' if self.host not in ['localhost', '127.0.0.1'] else '127.0.0.1'
-        if aarch64:
+        if aarch64 or as390x:
             displayxml = ''
             display = 'vnc'
         else:
