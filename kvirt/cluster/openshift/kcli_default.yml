@@ -157,3 +157,4 @@ cloud_lb: true
 cloud_storage: true
 minimal_capability: False
 additional_capabilities: []
+autologin: false

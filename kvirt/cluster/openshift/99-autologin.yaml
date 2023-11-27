@@ -1,0 +1,20 @@
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  labels:
+    machineconfiguration.openshift.io/role: {{ "master" if role == 'ctlplane' else 'worker' }}
+  name: autologin-{{ role }}
+spec:
+  config:
+    ignition:
+      version: 3.2.0
+    storage:
+      files:
+      - contents:
+          source: "data:text/plain;charset=utf-8;base64,ZXhwb3J0IFNZU1RFTURfUEFHRVI9Y2F0Cg=="
+        mode: 420
+        path: /etc/profile.d/systemd-pager.sh
+      - contents:
+          source: "data:text/plain;charset=utf-8;base64,W1NlcnZpY2VdCiAgVHlwZT1zaW1wbGUKICBFeGVjU3RhcnQ9CiAgRXhlY1N0YXJ0PS0vc2Jpbi9hZ2V0dHkgLS1hdXRvbG9naW4gY29yZSAtLW5vY2xlYXIgJUkgMzg0MDAgbGludXgK"
+        mode: 420
+        path: /etc/systemd/system/getty@tty1.service.d/override.conf

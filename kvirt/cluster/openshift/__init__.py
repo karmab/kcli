@@ -785,7 +785,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     ipsec = data.get('ipsec')
     mtu = data.get('mtu')
     ovn_hostrouting = data.get('ovn_hostrouting')
-    metal3 = data.get('metal3')
+    metal3 = data.get('metal3', False)
+    autologin = data.get('autologin', False)
     if not data.get('coredns'):
         warning("You will need to provide DNS records for api and ingress on your own")
     keepalived = data.get('keepalived')
@@ -1361,6 +1362,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if metal3:
         copy2(f"{plandir}/99-metal3-provisioning.yaml", f"{clusterdir}/openshift")
         copy2(f"{plandir}/99-metal3-fake-machine.yaml", f"{clusterdir}/openshift")
+    if autologin:
+        for role in ['ctlplane', 'worker']:
+            autologinfile = config.process_inputfile(cluster, f"{plandir}/99-autologin.yaml", overrides={'role': role})
+            with open(f"{clusterdir}/openshift/99-autologin-{role}.yaml", 'w') as _f:
+                _f.write(autologinfile)
     if provider == 'kubevirt':
         kubevirtctlplane = config.process_inputfile(cluster, f"{plandir}/99-kubevirt-fix.yaml",
                                                     overrides={'role': 'master'})
