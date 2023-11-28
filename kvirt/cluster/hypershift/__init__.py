@@ -338,7 +338,7 @@ def create(config, plandir, cluster, overrides):
         if data['mce'] or assisted:
             mce_assisted = assisted or data['mce_assisted']
             app_name, source, channel, csv, description, x_namespace, channels, crds = olm_app('multicluster-engine')
-            app_data = {'name': app_name, 'source': source, 'channel': channel, 'namespace': x_namespace, 'crds': crds,
+            app_data = {'name': app_name, 'source': source, 'channel': channel, 'namespace': x_namespace, 'csv': csv,
                         'mce_hypershift': True, 'assisted': mce_assisted, 'version': version, 'tag': tag}
             config.create_app_openshift(app_name, app_data)
             sleep(240)
