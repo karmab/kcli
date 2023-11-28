@@ -70,7 +70,9 @@ yum-config-manager --add-repo https://download.docker.com/linux/$TARGET/docker-c
 dnf install -y containerd.io
 mkdir -p /etc/containerd
 containerd config default > /etc/containerd/config.toml
-[ "$TARGET" == 'fedora' ] && sed -i 's/SystemdCgroup = .*/SystemdCgroup = true/' /etc/containerd/config.toml
+{% if 'fedora' in image|lower or 'centos9stream' in image|lower %}
+sed -i 's/SystemdCgroup = .*/SystemdCgroup = true/' /etc/containerd/config.toml
+{% endif %
 {% if HTTP_PROXY is defined %}
 mkdir /etc/systemd/system/containerd.service.d
 cat > /etc/systemd/system/containerd.service.d/http_proxy.conf << EOF
