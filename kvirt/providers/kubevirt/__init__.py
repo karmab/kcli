@@ -476,7 +476,7 @@ class Kubevirt(Kubecommon):
                     dvt['spec']['pvc']['storageClassName'] = f"longhorn-{harvester_image}"
                     dvt['spec']['source'] = {'blank': {}}
                     dvt['spec']['pvc']['volumeMode'] = 'Block'
-                elif not container_disk:
+                elif not container_disk and '/' in image and ':' in image:
                     dvt['kind'] = 'DataVolume'
                     dvt['apiVersion'] = f"{CDIDOMAIN}/{CDIVERSION}"
                     del dvt['spec']['pvc']
