@@ -353,6 +353,12 @@ def create(config, plandir, cluster, overrides):
             hypercmd += f" --hypershift-image {data['operator_image']}"
             call(hypercmd, shell=True)
             sleep(120)
+    if yaml.safe_load(os.popen(hosted_crd_cmd).read()) is None:
+        msg = "Couldnt install hypershift properly"
+        return {'result': 'failure', 'reason': msg}
+    elif assisted and yaml.safe_load(os.popen(assisted_crd_cmd).read()) is None:
+        msg = "Couldnt install assisted properly"
+        return {'result': 'failure', 'reason': msg}
     registry = 'quay.io'
     management_image = os.popen("oc get clusterversion version -o jsonpath='{.status.desired.image}'").read()
     prefixes = ['quay.io', 'registry.ci']
@@ -385,7 +391,7 @@ def create(config, plandir, cluster, overrides):
             msg = f"Invalid tag {tag}. Choose between {','.join(versions)}"
             return {'result': 'failure', 'reason': msg}
     else:
-        warning("Couldnt verify whether {tag} is a valid tag")
+        warning(f"Couldnt verify whether {tag} is a valid tag")
     management_cmd = "oc get ingresscontroller -n openshift-ingress-operator default -o jsonpath='{.status.domain}'"
     management_ingress_domain = os.popen(management_cmd).read()
     data['management_ingress_domain'] = management_ingress_domain
