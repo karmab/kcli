@@ -449,7 +449,7 @@ def process_apps(config, clusterdir, apps, overrides):
             if name is None:
                 error(f"Couldn't find any app matching {app}. Skipping...")
                 continue
-            app_data = {'name': name, 'source': source, 'channel': channel, 'namespace': namespace, 'crds': crds}
+            app_data = {'name': name, 'source': source, 'channel': channel, 'namespace': namespace, 'csv': csv}
             app_data.update(base_data)
         pprint(f"Adding app {name}")
         config.create_app_openshift(name, app_data)
