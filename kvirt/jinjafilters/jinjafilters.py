@@ -93,7 +93,7 @@ def defaultnodes(replicas, cluster, domain, ctlplanes, workers):
     return nodes
 
 
-def waitcrd(crd, timeout=120):
+def wait_crd(crd, timeout=120):
     result = """timeout=0
 ready=false
 while [ "$timeout" -lt "%s" ] ; do
@@ -103,9 +103,25 @@ while [ "$timeout" -lt "%s" ] ; do
   timeout=$(($timeout + 5))
 done
 if [ "$ready" == "false" ] ; then
- echo timeout waiting for CRD %s
+ echo Timeout waiting for CRD %s
  exit 1
 fi """ % (timeout, crd.lower(), crd, crd)
+    return result
+
+
+def wait_csv(csv, namespace, timeout=360):
+    result = """timeout=0
+ready=false
+while [ "$timeout" -lt "%s" ] ; do
+  [ "$(oc get csv -n %s %s -o jsonpath='{.status.phase}')" == "Succeeded" ] && ready=true && break;
+  echo "Waiting for CSV %s to be created"
+  sleep 5
+  timeout=$(($timeout + 5))
+done
+if [ "$ready" == "false" ] ; then
+ echo Timeout waiting for CSV %s
+ exit 1
+fi """ % (timeout, namespace, csv, csv, csv)
     return result
 
 
@@ -175,9 +191,9 @@ def has_ctlplane(_list):
 
 jinjafilters = {'basename': basename, 'dirname': dirname, 'ocpnodes': ocpnodes, 'none': none, 'type': _type,
                 'certificate': certificate, 'base64': base64, 'github_version': github_version,
-                'defaultnodes': defaultnodes, 'waitcrd': waitcrd, 'local_ip': local_ip, 'network_ip': network_ip,
+                'defaultnodes': defaultnodes, 'wait_crd': wait_crd, 'local_ip': local_ip, 'network_ip': network_ip,
                 'kcli_info': kcli_info, 'find_manifests': find_manifests, 'exists': exists, 'ipv6_wrap': ipv6_wrap,
-                'has_ctlplane': has_ctlplane}
+                'has_ctlplane': has_ctlplane, 'wait_csv': wait_csv}
 
 
 class FilterModule(object):

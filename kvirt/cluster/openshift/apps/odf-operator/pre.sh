@@ -1,4 +1,4 @@
-{{ "storagecluster" | waitcrd }}
+{{ "storagecluster" | wait_crd }}
 sleep 10
 {% if not odf_nodes %}
 {% set odf_nodes = odf_replicas|defaultnodes(cluster, domain, ctlplanes, workers) %}

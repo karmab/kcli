@@ -1846,8 +1846,9 @@ def openshift_create_app(config, appname, appdir, overrides={}, outputdir=None):
             if os.path.exists(f"{appdir}/{appname}/pre.sh"):
                 f.write("bash pre.sh\n")
             if install_cr and os.path.exists(f"{appdir}/{appname}/cr.yml"):
-                crds = overrides.get('crds')
-                rendered = config.process_inputfile(cluster, f"{appdir}/cr.sh", overrides={'crds': crds})
+                namespace = appdefault.get('namespace') or overrides.get('namespace')
+                cr_overrides = {'csv': overrides.get('csv'), 'namespace': namespace}
+                rendered = config.process_inputfile(cluster, f"{appdir}/cr.sh", overrides=cr_overrides)
                 f.write(rendered)
             if os.path.exists(f"{appdir}/{appname}/post.sh"):
                 f.write("\nbash post.sh\n")

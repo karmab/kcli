@@ -1,4 +1,3 @@
-{% for crd in crds %}
-{{ crd | waitcrd }}
-{% endfor %}
+{{ csv | wait_csv(namespace) }}
+
 oc create -f cr.yml
