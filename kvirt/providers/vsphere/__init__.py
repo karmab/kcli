@@ -154,6 +154,7 @@ class Ksphere:
         rootFolder = self.rootFolder
         basefolder = self.basefolder
         cluster = overrides.get('cluster')
+        vmfolder = basefolder
         if not restricted:
             if cluster is not None:
                 createfolder(si, basefolder, cluster)
@@ -161,8 +162,6 @@ class Ksphere:
             elif plan != 'kvirt':
                 createfolder(si, basefolder, plan)
                 vmfolder = find(si, basefolder, vim.Folder, plan)
-        else:
-            vmfolder = basefolder
         si = self.si
         clu = find(si, rootFolder, vim.ComputeResource, self.clu)
         if 'resourcepool' in overrides:
