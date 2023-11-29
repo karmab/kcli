@@ -1347,9 +1347,13 @@ def get_latest_rhcos_metal(url):
             return kernel, initrd, metal
 
 
-def get_latest_fedora(url='https://alt.fedoraproject.org/cloud'):
-    LINE = os.popen(f'curl -sLk {url} | grep download | grep cow | head -1').read()
-    return re.sub('.*href="(.*)">Download.*', r'\1', LINE).strip()
+def get_latest_fedora(arch='x86_64'):
+    request = Request('https://fedoraproject.org/cloud/download/_payload.json', headers={'Accept': 'application/json'})
+    for entry in json.loads(urlopen(request).read()):
+        if isinstance(entry, str) and entry.startswith('Cloud') and f'{arch}.qcow2' in entry:
+            short = os.path.basename(entry)
+            major = short.replace('Fedora-Cloud-Base-', '').split('-')[0]
+            return f"https://download.fedoraproject.org/pub/fedora/linux/releases/{major}/Cloud/{arch}/images/{short}"
 
 
 def find_ignition_files(role, cluster):
