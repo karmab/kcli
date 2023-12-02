@@ -35,6 +35,7 @@ CONTAINERDISKS = ['quay.io/kubevirt/alpine-container-disk-demo', 'quay.io/kubevi
                   'quay.io/karmab/fedora-coreos-container-disk-demo', 'quay.io/karmab/gentoo-container-disk-demo',
                   'quay.io/karmab/ubuntu-container-disk-demo', 'quay.io/repository/containerdisks/rhcos',
                   'quay.io/containerdisks/fedora']
+CONTAINERDISKS = [f'{container}:latest' for container in CONTAINERDISKS]
 KUBECTL_LINUX = "https://storage.googleapis.com/kubernetes-release/release/v1.16.1/bin/linux/amd64/kubectl"
 KUBECTL_MACOSX = KUBECTL_LINUX.replace('linux', 'darwin')
 DEFAULT_SC = 'storageclass.kubernetes.io/is-default-class'
