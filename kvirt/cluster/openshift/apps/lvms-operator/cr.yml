@@ -11,3 +11,10 @@ spec:
         name: {{ lvms_vg }}-thin-pool
         sizePercent: {{ lvms_thinpool_percent }}
         overprovisionRatio: {{ lvms_thinpool_overprovisionratio }}
+{% if lvms_devices|default([]) %}
+      deviceSelector:
+        paths:
+{% for device in lvms_devices %}
+        - {{ '/dev/%s' % device|basename if '/dev/' not in device else device }}
+{% endfor %}
+{% endif %}
