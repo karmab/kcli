@@ -1672,7 +1672,7 @@ The benefits of deploying OpenShift with this workflow are:
      - swift available on the install.
      - a flavor. You can create a dedicated one with `openstack flavor create --id 6 --ram 32768 --vcpus 16 --disk 30 m1.openshift`
      - a port on target network mapped to a floating ip. If not specified with api_ip and public_api_ip parameters, the second-to-last ip from the network will be used.
-- For ipv6, you need to run the following sysctl `net.ipv6.conf.all.accept_ra=2`
+- For ipv6, you need to run the following: `sysctl -w net.ipv6.conf.all.accept_ra=2`
 
 ### How to Use
 
