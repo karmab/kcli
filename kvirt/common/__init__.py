@@ -1940,8 +1940,8 @@ def make_iso(name, tmpdir, userdata, metadata, netdata, openstack=False, combust
             move(f"{tmpdir}/network-config", f"{tmpdir}/root/openstack/latest/network_config.json")
         else:
             isocmd += f" {tmpdir}/network-config"
-    isocmd += " >/dev/null 2>&1"
-    os.system(isocmd)
+    isocmd += f" >/dev/null 2>{tmpdir}/error.log"
+    return os.system(isocmd)
 
 
 def filter_compression_extension(name):

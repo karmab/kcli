@@ -858,8 +858,12 @@ class Kvirt(object):
                         if cmdsdata != '':
                             with open(f'{tmpdir}/combustion_script', 'w') as combustionfile:
                                 combustionfile.write(cmdsdata)
-                    common.make_iso(name, tmpdir, userdata, metadata, netdata, openstack=openstack,
-                                    combustion=combustion)
+                    result = common.make_iso(name, tmpdir, userdata, metadata, netdata, openstack=openstack,
+                                             combustion=combustion)
+                    if result != 0:
+                        error("Hit issue when creating user data iso")
+                        msg = open(f'{tmpdir}/error.log').read()
+                        return {'result': 'failure', 'reason': msg}
                     self._uploadimage(name, pool=default_storagepool, origin=tmpdir)
         listen = '0.0.0.0' if self.host not in ['localhost', '127.0.0.1'] else '127.0.0.1'
         if aarch64 or as390x:
