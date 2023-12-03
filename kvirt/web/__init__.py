@@ -10,10 +10,10 @@ from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
 from kvirt.defaults import IMAGES, FAKECERT
 from kvirt import nameutils
-from kvirt import microshift
-from kvirt import k3s
-from kvirt import kubeadm
-from kvirt import hypershift
+from kvirt.cluster import microshift
+from kvirt.cluster import k3s
+from kvirt.cluster import kubeadm
+from kvirt.cluster import hypershift
 from kvirt import openshift
 import os
 from shutil import which
