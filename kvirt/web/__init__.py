@@ -14,7 +14,7 @@ from kvirt.cluster import microshift
 from kvirt.cluster import k3s
 from kvirt.cluster import kubeadm
 from kvirt.cluster import hypershift
-from kvirt import openshift
+from kvirt.cluster import openshift
 import os
 from shutil import which
 from time import sleep
