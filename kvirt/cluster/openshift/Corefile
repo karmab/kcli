@@ -4,7 +4,7 @@
 {% if mdns %}
     mdns {{ cluster }}.{{ domain }} {{ ctlplanes if 'bootstrap' in name else '0' }} {{ cluster }}
 {% endif %}
-    forward . NAMESERVER
+    forward . {{ coredns_nameserver or "NAMESERVER" }}
     cache 30
     reload
     hosts {{ cluster }}.{{ domain }} {

@@ -158,3 +158,4 @@ cloud_storage: true
 minimal_capability: False
 additional_capabilities: []
 autologin: false
+coredns_nameserver:
