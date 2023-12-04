@@ -23,7 +23,8 @@ spec:
     - "-c"
     - |
       #/bin/sh
-      NAMESERVER=$(grep nameserver /etc/resolv.conf | grep -v 'fe80::' | grep -v '#coredns'| head -1 | sed 's/nameserver //')
+      [ -f /etc/coredns/resolv.conf.ori ] && exit 0
+      NAMESERVER=$(grep nameserver /etc/resolv.conf | grep -v 'fe80::' | head -1 | sed 's/nameserver //')
       [ "$NAMESERVER" == "" ] && exit 1
       [ ! -f /etc/coredns/Corefile ] && [ -f /etc/coredns/Corefile.template ] && cp /etc/coredns/Corefile.template /etc/coredns/Corefile
       grep -q "NAMESERVER" /etc/coredns/Corefile || exit 0
@@ -38,6 +39,7 @@ spec:
       {% endif %}
       sed -i "s@None@$IP@" /etc/coredns/Corefile
       {% endif %}
+      cp /etc/resolv.conf /etc/coredns/resolv.conf.ori
     resources: {}
     volumeMounts:
     - name: conf-dir
