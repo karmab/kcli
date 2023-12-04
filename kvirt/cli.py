@@ -1467,7 +1467,7 @@ def create_vm(args):
     count = args.count
     overrides = handle_parameters(args.param, args.paramfile)
     profile = overrides.get('profile') or args.profile
-    if image is None and profile is None and not overrides:
+    if name is None and image is None and profile is None and not overrides:
         pprint("Launching vm interactive mode")
         overrides = interactive_vm()
     profilefile = args.profilefile
@@ -1746,8 +1746,9 @@ def delete_lb(args):
 
 
 def create_kube(args):
+    cluster = args.cluster
     overrides = handle_parameters(args.param, args.paramfile)
-    if not overrides:
+    if cluster is None and not overrides:
         pprint(f"Launching {args.type} interactive mode")
         overrides = interactive_kube(args.type)
     disks = overrides.get('disks', [])
@@ -1760,7 +1761,6 @@ def create_kube(args):
         overrides['network'] = nets[0]['name'] if isinstance(nets[0], dict) else nets[0]
         if len(nets) > 1:
             overrides['extra_networks'] = nets[1:]
-    cluster = args.cluster
     kubetype = args.type
     if args.threaded:
         overrides['threaded'] = args.threaded
