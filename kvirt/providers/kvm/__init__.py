@@ -27,6 +27,7 @@ import os
 from subprocess import call
 import re
 import string
+import sys
 from shutil import which
 from tempfile import TemporaryDirectory
 import time
@@ -3742,7 +3743,13 @@ class Kvirt(object):
         return {'result': 'success'}
 
     def _create_host_entry(self, name, ip, netname, domain):
-        hostsfile = '/etcdir/hosts' if os.path.exists("/i_am_a_container") else '/etc/hosts'
+        if os.path.exists("/i_am_a_container"):
+            if not os.path.exists('/etcdir'):
+                error("Missing -v /etcdir:/etc in your container alias")
+                sys.exit(1)
+            hostsfile = '/etcdir/hosts'
+        else:
+            hostsfile = '/etc/hosts'
         hosts = f"{ip} {name} {name}.{netname}"
         if domain is not None and domain != netname:
             hosts = f"{hosts} {name}.{domain}"

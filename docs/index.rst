@@ -103,6 +103,7 @@ There are several recommended flags:
 -  ``-v $HOME:/root`` to share your entire home directory, useful if you want to share secret files, ``~/register.sh`` for instance).
 -  ``-e HTTP_PROXY=your_proxy -e HTTPS_PROXY=your_proxy``
 -  ``-v ~/.kube:/root/.kube`` to share your kubeconfig.
+-  ``-v /etc:/etcdir`` to share your /etc directory, which is needed for ``reservehost``.
 
 For accessing kweb, change the entrypoint and map port 9000 with ``-p 9000:9000 --entrypoint=/usr/bin/kweb``.
 
