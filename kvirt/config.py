@@ -13,7 +13,7 @@ from kvirt import ansibleutils
 from kvirt.jinjafilters import jinjafilters
 from kvirt import nameutils
 from kvirt import common
-from kvirt.common import error, pprint, success, warning, generate_rhcos_iso, pwd_path, container_mode
+from kvirt.common import error, pprint, success, warning, generate_rhcos_iso, pwd_path, container_mode, get_user
 from kvirt.common import ssh, scp, _ssh_credentials, valid_ip, process_files, get_rhcos_url_from_file, get_free_port
 from kvirt.cluster import microshift
 from kvirt.cluster import k3s
@@ -830,9 +830,10 @@ class Kconfig(Kbaseconfig):
             if privatekeyfile is not None and publickeyfile is not None:
                 privatekey = open(privatekeyfile).read().strip()
                 publickey = open(publickeyfile).read().strip()
-                warning(f"Injecting private key for {name}")
+                warning(f"Injecting private key in {name}")
                 files.append({'path': '/root/.ssh/id_rsa', 'content': privatekey})
                 files.append({'path': '/root/.ssh/id_rsa.pub', 'content': publickey})
+                files.append({'path': f'/home/{get_user(image)}/.ssh/id_rsa', 'content': privatekey})
                 if self.host in ['127.0.0.1', 'localhost']:
                     authorized_keys_file = os.path.expanduser('~/.ssh/authorized_keys')
                     found = False
