@@ -6,7 +6,8 @@ ctlplanes: 3
 workers: 0
 version: stable
 tag: "4.14"
-api_ip: 10.19.135.112
+#api_ip: 10.19.135.112
+api_ip: 10.1.98.87
 sslip: true
 network: baremetal
 numcpus: 32

@@ -15,7 +15,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        provider: [libvirt, kubevirt, vsphere]
+        # provider: [libvirt, kubevirt, vsphere]
+        provider: [libvirt]
     runs-on: ${{ matrix.provider }}
     steps:
      - uses: actions/checkout@v2
