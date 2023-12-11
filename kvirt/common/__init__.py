@@ -2146,7 +2146,7 @@ def get_rhcos_url_from_file(filename, _type='kvm'):
 
 
 def boot_baremetal_hosts(baremetal_hosts, iso_url, overrides={}, debug=False):
-    sno = iso_url.endswith('-sno.iso')
+    sno = iso_url is not None and iso_url.endswith('-sno.iso')
     for index, host in enumerate(baremetal_hosts):
         index_iso_url = iso_url
         bmc_url = host.get('url') or host.get('bmc_url')
