@@ -843,11 +843,11 @@ class Kconfig(Kbaseconfig):
                                 found = True
                                 break
                         if not found:
-                            warning(f"Adding public key to authorized_keys_file for {name}")
+                            warning(f"Adding public key to {authorized_keys_file} for {name}")
                             with open(authorized_keys_file, 'a') as f:
                                 f.write(f"\n{publickey}")
                     else:
-                        warning("Creating authorized_keys_file")
+                        warning(f"Creating {authorized_keys_file}")
                         with open(authorized_keys_file, 'w') as f:
                             f.write(publickey)
                             os.chmod(script, 0o600)
