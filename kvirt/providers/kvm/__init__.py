@@ -342,55 +342,30 @@ class Kvirt(object):
         ssddisks = []
         nvmedisks = []
         for index, disk in enumerate(disks):
-            if disk is None:
-                disksize = default_disksize
-                diskthin = default_diskthin
-                diskinterface = default_diskinterface
-                diskpool = default_pool
-                diskpooltype = default_pooltype
-                diskpoolpath = default_poolpath
-                diskthinpool = default_thinpool
-                diskname = None
-                diskwwn = None
-                diskimage = None
-                diskmacosx = False
-                nvme = False
-                dextra = ''
-            elif isinstance(disk, int):
+            disksize = default_disksize
+            diskthin = default_diskthin
+            diskinterface = default_diskinterface
+            diskpool = default_pool
+            diskpooltype = default_pooltype
+            diskpoolpath = default_poolpath
+            diskthinpool = default_thinpool
+            diskname = None
+            diskwwn = None
+            diskimage = None
+            diskmacosx = False
+            nvme = False
+            dextra = ''
+            if isinstance(disk, int):
                 disksize = disk
-                diskthin = default_diskthin
-                diskinterface = default_diskinterface
-                diskpool = default_pool
-                diskpooltype = default_pooltype
-                diskpoolpath = default_poolpath
-                diskthinpool = default_thinpool
-                diskwwn = None
-                diskserial = None
-                diskimage = None
-                diskname = None
-                diskmacosx = False
-                nvme = False
-                dextra = ''
-            elif isinstance(disk, str) and disk.isdigit():
-                disksize = int(disk)
-                diskthin = default_diskthin
-                diskinterface = default_diskinterface
-                diskpool = default_pool
-                diskpooltype = default_pooltype
-                diskpoolpath = default_poolpath
-                diskthinpool = default_thinpool
-                diskwwn = None
-                diskserial = None
-                diskimage = None
-                diskname = None
-                diskmacosx = False
-                nvme = False
-                dextra = ''
+            elif isinstance(disk, str):
+                if disk.isdigit():
+                    disksize = int(disk)
+                else:
+                    diskname = disk
             elif isinstance(disk, dict):
                 disksize = disk.get('size', default_disksize)
                 diskthin = disk.get('thin', default_diskthin)
                 diskinterface = disk.get('interface', default_diskinterface)
-                nvme = False
                 if diskinterface == 'nvme':
                     diskinterface = default_diskinterface
                     if index == 0:
@@ -517,6 +492,7 @@ class Kvirt(object):
                     volsxml[diskpool] = [volxml]
             else:
                 pprint(f"Using existing disk {storagename}...")
+                diskmacosx = diskmacosx or diskname == 'BaseSystem.img'
                 if index == 0 and diskmacosx:
                     macosx = True
                     machine = 'pc-q35-2.11'
