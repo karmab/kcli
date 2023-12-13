@@ -356,7 +356,6 @@ class Kvirt(object):
             nvme = False
             dextra = ''
             diskserial = None
-            diskmacosx = False
             if isinstance(disk, int):
                 disksize = disk
             elif isinstance(disk, str):
@@ -494,10 +493,9 @@ class Kvirt(object):
                     volsxml[diskpool] = [volxml]
             else:
                 pprint(f"Using existing disk {storagename}...")
-                diskmacosx = diskmacosx or diskname == 'BaseSystem.img'
-                if index == 0 and diskmacosx:
+                if diskmacosx or diskname in ['BaseSystem.img', 'OpenCore.qcow2']:
                     macosx = True
-                    machine = 'pc-q35-2.11'
+                    machine = 'q35'
             if diskwwn is None:
                 diskwwn = ''
             elif diskbus not in ['ide', 'scsi']:
@@ -727,6 +725,9 @@ class Kvirt(object):
                 sourcexml += "<driver name='vhost' rx_queue_size='256'/>"
             bootdevxml = f'<boot order="{bootdev}"/>' if boot_order else ''
             bootdev += 1
+            addressxml = ''
+            if index == 0 and macosx:
+                addressxml = """<address type="pci" domain="0x0000" bus="0x00" slot="0x05" function="0x0"/>"""
             netxml = """%s
 <interface type='%s'>
 %s
@@ -738,8 +739,9 @@ class Kvirt(object):
 <model type='%s'/>
 %s
 %s
+%s
 </interface>""" % (netxml, iftype, mtuxml, macxml, sourcexml, ovsxml, nicnumaxml, filterxml, nettype, multiqueuexml,
-                   bootdevxml)
+                   bootdevxml, addressxml)
         if guestagent:
             gcmds = []
             if image is not None and 'cos' not in image and 'fedora-coreos' not in image:
@@ -1023,6 +1025,7 @@ class Kvirt(object):
             vcpuxml = f"<vcpu  placement='static' current='{numcpus}'>64</vcpu>"
         else:
             vcpuxml = f"<vcpu>{numcpus}</vcpu>"
+        clockxml = "<clock offset='utc'/>"
         qemuextraxml = ''
         if ignition or usermode or macosx or tpm or qemuextra is not None or nvmedisks or ssddisks:
             namespace = "xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'"
@@ -1039,6 +1042,11 @@ class Kvirt(object):
 <qemu:arg value='%s,netdev=mynet.0'/>""" % (userport, netmodel)
             macosxml = ""
             if macosx:
+                clockxml = """<clock offset='utc'>
+<timer name='rtc' tickpolicy='catchup'/>
+<timer name='pit' tickpolicy='delay'/>
+<timer name='hpet' present='no'/>
+</clock>"""
                 osk = "ourhardworkbythesewordsguardedpleasedontsteal(c)AppleComputerInc"
                 cpuflags = "+invtsc,vmware-cpuid-freq=on,+pcid,+ssse3,+sse4.2,+popcnt,+avx,+aes,+xsave,+xsaveopt"
                 cpuinfo = f"Penryn,kvm=on,vendor=GenuineIntel,{cpuflags},check"
@@ -1047,7 +1055,12 @@ class Kvirt(object):
 <qemu:arg value='-device'/>
 <qemu:arg value='isa-applesmc,osk=%s'/>
 <qemu:arg value='-smbios'/>
-<qemu:arg value='type=2'/>""" % (cpuinfo, osk)
+<qemu:arg value='type=2'/>
+<qemu:arg value="-usb"/>
+<qemu:arg value='-device'/>
+<qemu:arg value='usb-tablet'/>
+<qemu:arg value='-device'/>
+<qemu:arg value='usb-kbd'/>""" % (cpuinfo, osk)
             if qemuextra is not None:
                 freeformxml = ""
                 freeform = qemuextra.split(" ")
@@ -1169,9 +1182,6 @@ class Kvirt(object):
         videoxml = ""
         firmwarexml = ""
         if macosx:
-            firmwarexml = """<loader readonly='yes' type='pflash'>%s/OVMF_CODE.fd</loader>
-<nvram>%s/OVMF_VARS-1024x768.fd</nvram>""" % (default_poolpath, default_poolpath)
-            videoxml = """<video><model type='qxl' vram='65536'/></video>"""
             guestxml = ""
         hostdevxml = ""
         if pcidevices:
@@ -1287,7 +1297,7 @@ class Kvirt(object):
 {iommufeaturesxml}
 <pae/>
 </features>
-<clock offset='utc'/>
+{clockxml}
 <on_poweroff>destroy</on_poweroff>
 <on_reboot>restart</on_reboot>
 <on_crash>restart</on_crash>
@@ -1321,7 +1331,7 @@ class Kvirt(object):
                     guestxml=guestxml, videoxml=videoxml, hostdevxml=hostdevxml, rngxml=rngxml, tpmxml=tpmxml,
                     cpuxml=cpuxml, qemuextraxml=qemuextraxml, ioapicxml=ioapicxml, acpixml=acpixml, iommuxml=iommuxml,
                     iommumemxml=iommumemxml, iommufeaturesxml=iommufeaturesxml, iommudevicexml=iommudevicexml,
-                    controllerxml=controllerxml)
+                    controllerxml=controllerxml, clockxml=clockxml)
         if self.debug:
             print(vmxml.replace('\n\n', ''))
         conn.defineXML(vmxml)
