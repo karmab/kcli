@@ -1821,6 +1821,7 @@ def openshift_create_app(config, appname, appdir, overrides={}, outputdir=None):
     os.environ["PATH"] += f":{cwd}"
     overrides['cwd'] = cwd
     default_parameter_file = f"{appdir}/{appname}/kcli_default.yml"
+    appdefault = {}
     if os.path.exists(default_parameter_file):
         with open(default_parameter_file, 'r') as entries:
             appdefault = yaml.safe_load(entries)
