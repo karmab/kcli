@@ -355,6 +355,8 @@ class Kvirt(object):
             diskmacosx = False
             nvme = False
             dextra = ''
+            diskserial = None
+            diskmacosx = False
             if isinstance(disk, int):
                 disksize = disk
             elif isinstance(disk, str):
