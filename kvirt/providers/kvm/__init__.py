@@ -1187,7 +1187,11 @@ class Kvirt(object):
         if pcidevices:
             for index, pcidevice in enumerate(pcidevices):
                 pcidevice = str(pcidevice)
-                newdomain = "0000"
+                if pcidevice.startswith('000'):
+                    newdomain = pcidevice.split(':')[0]
+                    pcidevice = pcidevice.replace(f'{newdomain}:', '')
+                else:
+                    newdomain = "0000"
                 if len(pcidevice.split(':')) != 2:
                     return {'result': 'failure', 'reason': f"Incorrect pcidevice entry {index}"}
                 newbus = pcidevice.split(':')[0]
