@@ -1183,6 +1183,7 @@ class Kvirt(object):
         firmwarexml = ""
         if macosx:
             guestxml = ""
+            videoxml = """<video><model type='vmvga' vram='65536'/></video>"""
         hostdevxml = ""
         if pcidevices:
             for index, pcidevice in enumerate(pcidevices):
