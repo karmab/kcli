@@ -2844,7 +2844,7 @@ class Kvirt(object):
             else:
                 virtio_index += 1
             currentdisk += 1
-        if diskname is not None:
+        if diskname is not None and '_' in diskname:
             diskindex = int(os.path.splitext(diskname)[0].split('_')[-1])
             virtio_index, scsi_index, ide_index = diskindex, diskindex, diskindex
         else:
@@ -2862,6 +2862,8 @@ class Kvirt(object):
             error(f"Disk {existing} already in VM {name}")
             return {'result': 'success'}
         else:
+            if '/' not in existing:
+                existing = f"{self.get_pool_path(pool)}/{existing}"
             diskpath = existing
         diskxml = self._xmldisk(diskpath=diskpath, diskdev=diskdev, diskbus=diskbus, diskformat=diskformat,
                                 shareable=shareable)

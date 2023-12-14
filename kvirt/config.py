@@ -1118,20 +1118,29 @@ class Kconfig(Kbaseconfig):
             if len(currentdisks) < len(disks):
                 pprint(f"Adding Disks to {name}")
                 for disk in disks[len(currentdisks):]:
-                    interface = None
+                    diskname = None
+                    size = self.disksize
+                    pool = self.pool
+                    interface = overrides.get('diskinterface') or 'virtio'
                     if isinstance(disk, int):
                         size = disk
-                        pool = self.pool
-                    elif isinstance(disk, str) and disk.isdigit():
-                        size = int(disk)
-                        pool = self.pool
+                    elif isinstance(disk, str):
+                        if disk.isdigit():
+                            size = int(disk)
+                        else:
+                            diskname = disk
                     elif isinstance(disk, dict):
-                        size = disk.get('size', self.disksize)
-                        pool = disk.get('pool', self.pool)
-                        interface = disk.get('interface') or overrides.get('diskinterface')
+                        if 'name' in disk:
+                            diskname = disk['name']
+                        if 'size' in disk:
+                            size = disk['size']
+                        if 'pool' in disk:
+                            pool = disk['pool']
+                        if 'interface' in disk:
+                            interface = disk['interface']
                     else:
                         continue
-                    k.add_disk(name=name, size=size, pool=pool, interface=interface)
+                    k.add_disk(name=name, size=size, pool=pool, interface=interface, existing=diskname)
             if len(currentdisks) > len(disks):
                 pprint(f"Removing Disks of {name}")
                 for disk in currentdisks[len(currentdisks) - len(disks) - 1:]:
