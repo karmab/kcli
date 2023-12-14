@@ -1134,10 +1134,10 @@ class Kconfig(Kbaseconfig):
                     k.add_disk(name=name, size=size, pool=pool, interface=interface)
             if len(currentdisks) > len(disks):
                 pprint(f"Removing Disks of {name}")
-                for disk in currentdisks[len(currentdisks) - len(disks):]:
+                for disk in currentdisks[len(currentdisks) - len(disks) - 1:]:
                     diskname = os.path.basename(disk['path'])
                     diskpool = os.path.dirname(disk['path'])
-                    k.delete_disk(name=name, diskname=diskname, pool=diskpool, interface=interface)
+                    k.delete_disk(name=name, diskname=diskname, pool=diskpool)
         if nets:
             pprint(f"Updating nets of vm {name}")
             if len(currentnets) < len(nets):
