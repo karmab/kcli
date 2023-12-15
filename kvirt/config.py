@@ -1728,9 +1728,9 @@ class Kconfig(Kbaseconfig):
                         f.write(pre_script)
                     pre_run = run(f'bash {tmpdir}/pre.sh', shell=True, stdout=PIPE, stderr=STDOUT,
                                   universal_newlines=True)
+                    print(pre_run.stdout)
                     if pre_run.returncode != 0:
-                        msg = f"Issue when running {pre_script_short} :\n{pre_run.stdout}"
-                        error(msg)
+                        msg = f"Issue when running {pre_script_short}:\n{pre_run.stdout}"
                         return {'result': 'failure', 'reason': msg}
             else:
                 warning(f"Skipping {pre_script_short} as requested")
