@@ -3,9 +3,10 @@ domain: karmalabs.corp
 version: stable
 tag: "4.14"
 api_ip: 192.168.122.247
-sno: true
-sno_wait: true
-sno_ctlplanes: true
+# sno: true
+# sno_wait: true
+# sno_ctlplanes: true
+ctlplanes: 3
 bmc_user: admin
 bmc_password: admin
 baremetal_hosts:
