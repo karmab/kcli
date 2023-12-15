@@ -159,3 +159,5 @@ minimal_capability: False
 additional_capabilities: []
 autologin: false
 coredns_nameserver:
+dual_api_ip:
+dual_ingress_ip:
