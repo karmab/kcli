@@ -5,7 +5,8 @@ sslip: true
 ctlplanes: 3
 workers: 0
 numcpus: 16
-api_ip: 10.19.135.229
+#api_ip: 10.19.135.229
+api_ip: 10.19.32.60
 ctlplane_memory: 65536
 bootstrap_memory: 8192
 disk_size: 40
