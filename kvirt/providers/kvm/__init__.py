@@ -443,7 +443,7 @@ class Kvirt(object):
                     if self.host in ['localhost', '127.0.0.1'] and os.path.exists(diskimage):
                         warning("Using image path although it's not in a pool")
                         manual_disk_path = True
-                        backing = diskimage
+                        backing = os.path.abspath(diskimage)
                         backingxml = """<backingStore type='file' index='1'>
 <format type='qcow2'/>
 <source file='%s'/>
