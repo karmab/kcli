@@ -746,6 +746,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     baremetal_ctlplane = data['workers'] == 0 and baremetal_hosts
     sno_vm = data['sno_vm']
     sno = sno_vm or data['sno'] or baremetal_ctlplane
+    data['sno'] = sno
     sno_wait = data.get('api_ip') is not None or sno_vm or data['sno_wait']
     sno_disk = data['sno_disk']
     sno_ctlplanes = data['sno_ctlplanes'] or baremetal_ctlplane
