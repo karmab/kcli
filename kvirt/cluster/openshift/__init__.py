@@ -743,7 +743,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     overrides['kube'] = data['cluster']
     installparam = overrides.copy()
     installparam['cluster'] = clustervalue
-    baremetal_ctlplane = data['workers'] == 0 and baremetal_hosts
+    baremetal_ctlplane = data['workers'] == 0 and baremetal_hosts and len(baremetal_hosts) > 1
     sno_vm = data['sno_vm']
     sno = sno_vm or data['sno'] or baremetal_ctlplane
     data['sno'] = sno
@@ -1444,9 +1444,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             with open(f"{clusterdir}/openshift/99-localhost-fix-worker.yaml", 'w') as _f:
                 _f.write(localworker)
         if sno_ctlplanes:
+            sno_ctlplanes_number = len(baremetal_hosts) if baremetal_hosts else 3
             ingress = config.process_inputfile(cluster, f"{plandir}/customisation/99-ingress-controller.yaml",
                                                overrides={'role': 'master', 'cluster': cluster, 'domain': domain,
-                                                          'replicas': 3})
+                                                          'replicas': sno_ctlplanes_number})
             with open(f"{clusterdir}/openshift/99-ingress-controller.yaml", 'w') as _f:
                 _f.write(ingress)
         pprint("Generating bootstrap-in-place ignition")
