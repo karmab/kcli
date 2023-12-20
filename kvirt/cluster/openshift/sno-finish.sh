@@ -29,7 +29,7 @@ if [ -f /root/kubeconfig ] ; then
  cat /opt/openshift/master.ign.ori | jq ".storage.files |= . + [{\"mode\": 420, \"path\": \"/etc/kubernetes/kubeconfig.{{ cluster }}\", \"contents\": {\"source\":\"data:text/plain;charset=utf-8;base64,$BASE64\",\"verification\": {}}}]" > /opt/openshift/master.ign
 fi
 
-firstboot_args='console=tty0 rd.neednet=1 {{ extra_args|default("") }}'
+firstboot_args='console=tty0 rd.neednet=1 {{ sno_extra_args|default("") }}'
 echo "Executing coreos-installer with ignition file /opt/openshift/master.ign and device $install_device"
 coreos-installer install --firstboot-args="${firstboot_args}" --ignition=/opt/openshift/master.ign $install_device
 

@@ -3118,8 +3118,10 @@ class Kconfig(Kbaseconfig):
                     isoscript = 'iso.sh'
                 else:
                     isoscript = f'{plandir}/iso.sh'
-                if os.path.exists('macs.txt'):
-                    _files.append({"path": "/root/macs.txt", "origin": 'macs.txt'})
+                clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
+                if os.path.exists(f'{clusterdir}/macs.txt') or os.path.exists('macs.txt'):
+                    macsdir = f'{clusterdir}' if os.path.exists(clusterdir) else '.'
+                    _files.append({"path": "/root/macs.txt", "origin": f'{macsdir}/macs.txt'})
                 iso_overrides = {'scripts': [isoscript], 'files': _files, 'metal_url': metal_url, 'noname': True,
                                  'image': 'rhcos4000'}
                 if metal_url is not None:

@@ -1,23 +1,24 @@
 #!/usr/bin/env python
 
 from base64 import b64encode, b64decode
+from fnmatch import fnmatch
 from glob import glob
-import json
-import os
-import sys
 from ipaddress import ip_network
+import json
 from kvirt.common import error, pprint, success, warning, info2, fix_typos
 from kvirt.common import get_oc, pwd_path, get_oc_mirror
 from kvirt.common import get_latest_fcos, generate_rhcos_iso, olm_app, get_commit_rhcos
 from kvirt.common import get_installer_rhcos, wait_cloud_dns, delete_lastvm
 from kvirt.common import ssh, scp, _ssh_credentials, get_ssh_pub_key, boot_baremetal_hosts, separate_yamls
 from kvirt.defaults import LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG
+import os
 import re
 from random import choice
 from shutil import copy2, move, rmtree, which
 from socket import gethostbyname
 from string import ascii_letters, digits
 from subprocess import call
+import sys
 from tempfile import TemporaryDirectory
 from time import sleep
 from urllib.request import urlopen, Request
@@ -553,6 +554,49 @@ def handle_baremetal_iso_sno(config, plandir, cluster, data, baremetal_hosts=[],
     if baremetal_web_subdir is not None:
         iso_name = f'{baremetal_web_subdir}/{iso_name}'
     return f'http://{host_ip}/{iso_name}'
+
+
+def process_baremetal_rules(config, cluster, baremetal_hosts, vmrules=[], overrides={}):
+    clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
+    default_netmask = overrides.get('netmask') or overrides.get('prefix')
+    default_gateway = overrides.get('gateway')
+    default_nameserver = overrides.get('nameserver')
+    default_domain = overrides.get('domain')
+    baremetal_rules = {}
+    for entry in baremetal_hosts:
+        if isinstance(entry, dict):
+            if 'name' in entry:
+                baremetal_rules[entry['name']] = entry.get('nets')
+            elif 'nets' in entry and ':9000' in entry.get('bmc_url', ''):
+                baremetal_rules[os.path.basename(entry['bmc_url'])] = entry['nets']
+    for name in baremetal_rules:
+        for entry in vmrules:
+            if len(entry) != 1:
+                error(f"Wrong vm rule {entry}")
+                sys.exit(1)
+            rule = list(entry.keys())[0]
+            if (re.match(rule, name) or fnmatch(name, rule)) and isinstance(entry[rule], dict)\
+               and 'nets' in entry[rule] and baremetal_rules[name] is None:
+                baremetal_rules[name] = entry[rule]['nets']
+    with open(f'{clusterdir}/macs.txt', 'w') as f:
+        for name in baremetal_rules:
+            netinfo = baremetal_rules[name]
+            if netinfo is None or not isinstance(netinfo, list) or not isinstance(netinfo[0], dict):
+                continue
+            if len(netinfo) > 1:
+                warning(f"Net entry above the first one will be ignored for {name}")
+            netinfo = netinfo[0]
+            if '.' not in name and default_domain is not None:
+                name += f'.{default_domain}'
+            mac, ip = netinfo.get('mac'), netinfo.get('ip')
+            netmask = netinfo.get('netmask') or default_netmask
+            gateway = netinfo.get('gateway') or default_gateway
+            nameserver = netinfo.get('nameserver') or default_nameserver or gateway
+            if mac is None or ip is None or netmask is None or gateway is None:
+                warning(f"Ignoring incomplete entry {netinfo} for {name}")
+            else:
+                entry = f"{mac};{name};{ip};{netmask};{gateway};{nameserver}\n"
+                f.write(entry)
 
 
 def scale(config, plandir, cluster, overrides):
@@ -1456,10 +1500,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if run != 0:
             msg = "Hit issue when generating bootstrap-in-place ignition"
             return {'result': 'failure', 'reason': msg}
+        vmrules = overrides.get('vmrules') or config.vmrules
+        process_baremetal_rules(config, cluster, baremetal_hosts, vmrules=vmrules, overrides=overrides)
         move(f"{clusterdir}/bootstrap-in-place-for-live-iso.ign", f"./{sno_name}.ign")
         with open("iso.ign", 'w') as f:
             iso_overrides = {'image': 'rhcos4000'}
-            extra_args = overrides.get('extra_args')
+            sno_extra_args = overrides.get('sno_extra_args')
             _files = [{"path": "/root/sno-finish.service", "origin": f"{plandir}/sno-finish.service"},
                       {"path": "/usr/local/bin/sno-finish.sh", "origin": f"{plandir}/sno-finish.sh", "mode": 700}]
             if notify:
@@ -1475,16 +1521,26 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                                "origin": f"{plandir}/relocate-ip-bootstrap.service"})
             iso_overrides['files'] = _files
             iso_overrides.update(data)
+            if os.path.exists(f'{clusterdir}/macs.txt'):
+                bootstrap_data = open(f'{clusterdir}/macs.txt').readlines()[0].strip().split(';')[1:]
+                hostname, ip, netmask, gateway, nameserver = bootstrap_data
+                dev = overrides.get('sno_bootstrap_nic', 'enp1s0')
+                bootstrap_data = f"ip={ip}::{gateway}:{netmask}:{hostname}:{dev}:none nameserver={nameserver}"
+                if sno_extra_args is not None:
+                    sno_extra_args += f" {bootstrap_data}"
+                else:
+                    sno_extra_args = bootstrap_data
+                iso_overrides['sno_extra_args'] = sno_extra_args
             result = config.create_vm(sno_name, overrides=iso_overrides, onlyassets=True)
             pprint("Writing iso.ign to current dir")
             f.write(result['userdata'])
         if provider == 'fake':
             pprint("Storing generated iso in current dir")
-            generate_rhcos_iso(k, f"{cluster}-sno", 'default', installer=True, extra_args=extra_args)
+            generate_rhcos_iso(k, f"{cluster}-sno", 'default', installer=True, extra_args=sno_extra_args)
         else:
             iso_pool = data['pool'] or config.pool
             pprint(f"Storing generated iso in pool {iso_pool}")
-            generate_rhcos_iso(k, f"{cluster}-sno", iso_pool, installer=True, extra_args=extra_args)
+            generate_rhcos_iso(k, f"{cluster}-sno", iso_pool, installer=True, extra_args=sno_extra_args)
         if sno_ctlplanes:
             if api_ip is None:
                 warning("sno ctlplanes requires api vip to be defined. Skipping")

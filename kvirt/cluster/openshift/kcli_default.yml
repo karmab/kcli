@@ -119,6 +119,7 @@ sno_localhost_fix: false
 sno_cpuset:
 sno_relocate: false
 sno_vm: false
+sno_extra_args:
 metal3: false
 baremetal_user: root
 baremetal_password: calvin

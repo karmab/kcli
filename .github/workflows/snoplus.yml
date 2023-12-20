@@ -25,6 +25,10 @@ on:
         description: 'tag'
         required: false
         default: "4.14"
+      PLANFILE:
+        description: 'planfile'
+        required: true
+        default: "openshift-ci-paramfiles/snoplus_plan.yml"
 
 env:
  HOME: /root
@@ -32,11 +36,11 @@ env:
  CLUSTER: ${{github.event.inputs.CLUSTER}}
  INPUTFILE: ${{github.event.inputs.INPUTFILE}}
  PARAMFILE: ${{github.event.inputs.PARAMFILE}}
+ PLANFILE: ${{github.event.inputs.PLANFILE}}
  EXTRAPARAMS: ${{github.event.inputs.EXTRAPARAMS}}
  PULLSECRET: ${{github.event.inputs.PULLSECRET}}
  VERSION: ${{github.event.inputs.VERSION}}
  TAG: ${{github.event.inputs.TAG}}
- PLAN_FILE: openshift-ci-paramfiles/snoplus_plan.yml
 
 jobs:
     requirements:
@@ -56,7 +60,7 @@ jobs:
       runs-on: libvirt
       steps:
       - name: Deploy Baremetal like vms
-        run: kcli create plan -f $PLAN_FILE $CLUSTER
+        run: kcli create plan -f $PLANFILE $CLUSTER
      
     deploy-openshift:
       needs: deploy-baremetal-like-vms
