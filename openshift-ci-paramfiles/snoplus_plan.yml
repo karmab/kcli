@@ -34,7 +34,9 @@ api:
 snoplus-node-{{ num }}:
  numcpus: 16
  memory: 28672
- nets: [default]
+ nets:
+ - name: default
+   mac: aa:aa:aa:bb:bb:0{{ num +1 }}
  disks: [80]
  uefi: true
  start: false
