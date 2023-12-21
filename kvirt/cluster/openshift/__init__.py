@@ -578,6 +578,8 @@ def process_baremetal_rules(config, cluster, baremetal_hosts, vmrules=[], overri
             if (re.match(rule, name) or fnmatch(name, rule)) and isinstance(entry[rule], dict)\
                and 'nets' in entry[rule] and baremetal_rules[name] is None:
                 baremetal_rules[name] = entry[rule]['nets']
+    if not baremetal_rules:
+        return
     with open(f'{clusterdir}/macs.txt', 'w') as f:
         for name in baremetal_rules:
             netinfo = baremetal_rules[name]
