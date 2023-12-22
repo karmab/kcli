@@ -2438,7 +2438,7 @@ def download_oc_mirror(args):
 
 def download_openshift_installer(args):
     overrides = handle_parameters(args.param, args.paramfile)
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     return baseconfig.download_openshift_installer(overrides)
 
 
