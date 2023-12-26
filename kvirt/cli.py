@@ -150,7 +150,7 @@ def start_baremetal_hosts(args):
     overrides = handle_parameters(args.param, args.paramfile)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     iso_url = overrides.get('iso_url')
-    baremetal_hosts = [args.host] if args.host is not None else overrides.get('baremetal_hosts', [])
+    baremetal_hosts = [{'url': args.host}] if args.host is not None else overrides.get('baremetal_hosts', [])
     bmc_url = overrides.get('bmc_url') or overrides.get('url')
     bmc_user = overrides.get('bmc_user') or overrides.get('user') or overrides.get('bmc_username')\
         or overrides.get('username') or baseconfig.bmc_user
@@ -167,7 +167,7 @@ def start_baremetal_hosts(args):
 def stop_baremetal_hosts(args):
     overrides = handle_parameters(args.param, args.paramfile)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
-    baremetal_hosts = [args.host] if args.host is not None else overrides.get('baremetal_hosts', [])
+    baremetal_hosts = [{'url': args.host}] if args.host is not None else overrides.get('baremetal_hosts', [])
     bmc_url = overrides.get('bmc_url') or overrides.get('url')
     bmc_user = overrides.get('bmc_user') or overrides.get('user') or overrides.get('bmc_username')\
         or overrides.get('username') or baseconfig.bmc_user
@@ -3226,7 +3226,7 @@ def info_baremetal_host(args):
     overrides = handle_parameters(args.param, args.paramfile)
     full = overrides.get('full', args.full)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
-    baremetal_hosts = [args.host] if args.host is not None else overrides.get('baremetal_hosts', [])
+    baremetal_hosts = [{'url': args.host}] if args.host is not None else overrides.get('baremetal_hosts', [])
     bmc_url = overrides.get('bmc_url') or overrides.get('url')
     bmc_user = overrides.get('bmc_user') or overrides.get('user') or overrides.get('bmc_username')\
         or overrides.get('username') or baseconfig.bmc_user
