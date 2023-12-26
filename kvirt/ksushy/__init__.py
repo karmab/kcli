@@ -289,12 +289,14 @@ class Ksushy():
                     iso = f"boot-{token_iso}.iso"
                 isos = [os.path.basename(i) for i in config.k.volumes(iso=True)]
                 if iso not in isos:
-                    config.download_image(pool=config.pool, image=iso, url=image)
+                    result = config.download_image(pool=config.pool, image=iso, url=image)
+                    if result['result'] != 'success':
+                        raise Exception(result['reason'])
                 config.update_vm(name, {'iso': iso})
-            except subprocess.CalledProcessError as e:
+            except Exception as e:
                 error(e)
-                response.status = 400
-                return 'Failed to mount virtualcd'
+                response.status = 500
+                return f'Failed to mount virtualcd. Hit {e}'
             response.status = 204
             return ''
 
