@@ -150,7 +150,7 @@ def start_baremetal_hosts(args):
     overrides = handle_parameters(args.param, args.paramfile)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     iso_url = overrides.get('iso_url')
-    baremetal_hosts = overrides.get('baremetal_hosts', [])
+    baremetal_hosts = [args.host] if args.host is not None else overrides.get('baremetal_hosts', [])
     bmc_url = overrides.get('bmc_url') or overrides.get('url')
     bmc_user = overrides.get('bmc_user') or overrides.get('user') or overrides.get('bmc_username')\
         or overrides.get('username') or baseconfig.bmc_user
@@ -167,7 +167,7 @@ def start_baremetal_hosts(args):
 def stop_baremetal_hosts(args):
     overrides = handle_parameters(args.param, args.paramfile)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
-    baremetal_hosts = overrides.get('baremetal_hosts', [])
+    baremetal_hosts = [args.host] if args.host is not None else overrides.get('baremetal_hosts', [])
     bmc_url = overrides.get('bmc_url') or overrides.get('url')
     bmc_user = overrides.get('bmc_user') or overrides.get('user') or overrides.get('bmc_username')\
         or overrides.get('username') or baseconfig.bmc_user
@@ -3226,7 +3226,7 @@ def info_baremetal_host(args):
     overrides = handle_parameters(args.param, args.paramfile)
     full = overrides.get('full', args.full)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
-    baremetal_hosts = overrides.get('baremetal_hosts', [])
+    baremetal_hosts = [args.host] if args.host is not None else overrides.get('baremetal_hosts', [])
     bmc_url = overrides.get('bmc_url') or overrides.get('url')
     bmc_user = overrides.get('bmc_user') or overrides.get('user') or overrides.get('bmc_username')\
         or overrides.get('username') or baseconfig.bmc_user
@@ -4613,8 +4613,9 @@ def cli():
     baremetalhostinfo_parser = info_subparsers.add_parser('baremetal-host', description=baremetalhostinfo_desc,
                                                           help=baremetalhostinfo_desc, parents=[parent_parser],
                                                           epilog=baremetalhostinfo_epilog, formatter_class=rawhelp,
-                                                          aliases=['baremetal-hosts'])
+                                                          aliases=['baremetal-hosts', 'baremetal', 'bm'])
     baremetalhostinfo_parser.add_argument('-f', '--full', action='store_true', help='Provide entire output')
+    baremetalhostinfo_parser.add_argument('host', metavar='HOST', nargs='?')
     baremetalhostinfo_parser.set_defaults(func=info_baremetal_host)
 
     clusterprofileinfo_desc = 'Info Clusterprofile'
@@ -5160,7 +5161,9 @@ def cli():
     starthosts_epilog = f"examples:\n{examples.starthosts}"
     starthosts_parser = start_subparsers.add_parser('baremetal-host', description=starthosts_desc, help=starthosts_desc,
                                                     parents=[parent_parser], epilog=starthosts_epilog,
-                                                    formatter_class=rawhelp, aliases=['baremetal-hosts'])
+                                                    formatter_class=rawhelp,
+                                                    aliases=['baremetal-hosts', 'baremetal', 'bm'])
+    starthosts_parser.add_argument('host', metavar='HOST', nargs='?')
     starthosts_parser.set_defaults(func=start_baremetal_hosts)
 
     vmstart_desc = 'Start Vms'
@@ -5190,7 +5193,9 @@ def cli():
     stophosts_epilog = f"examples:\n{examples.stophosts}"
     stophosts_parser = stop_subparsers.add_parser('baremetal-host', description=stophosts_desc, help=stophosts_desc,
                                                   parents=[parent_parser], epilog=stophosts_epilog,
-                                                  formatter_class=rawhelp, aliases=['baremetal-hosts'])
+                                                  formatter_class=rawhelp,
+                                                  aliases=['baremetal-hosts', 'baremetal', 'bm'])
+    stophosts_parser.add_argument('host', metavar='HOST', nargs='?')
     stophosts_parser.set_defaults(func=stop_baremetal_hosts)
 
     vmstop_desc = 'Stop Vms'

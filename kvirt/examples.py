@@ -479,7 +479,7 @@ $ kcli update network mynetwork --domain superdomain.com
 $ kcli update network mynetwork -P plan=newplan
 """
 
-starthosts = """# Start Baremetal hosts declared in a parameter file from specific ISO url
+starthosts = """# Start bare metal hosts declared in a parameter file from specific ISO url
 
 $ kcli start baremetal-hosts --pf baremetal_hosts.yml -P iso_url=http://192.168.122.1/my.iso
 
@@ -490,13 +490,11 @@ baremetal_hosts:
 - bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/vm1
 - bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/vm2
 
-# Start single host
-$ iso_url=http://192.168.122.1/my.iso
-$ bmc_url=http://192.168.122.1:9000/redfish/v1/Systems/local/vm1
-$ kcli start baremetal-host -P url=$bmc_url -P iso_url=$iso_url -P user=admin -P password=admin
+# Start a single host
+$ kcli start baremetal-host -P user=admin -P password=admin 10.10.10.10
 """
 
-stophosts = """# Stop Baremetal hosts declared in a parameter file
+stophosts = """# Stop bare metal hosts declared in a parameter file
 
 $ kcli stop baremetalhosts --pf baremetal_hosts.yml
 
@@ -507,9 +505,8 @@ baremetal_hosts:
 - bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/vm1
 - bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/vm2
 
-# Stop single host
-$ bmc_url=http://192.168.122.1:9000/redfish/v1/Systems/local/vm1
-$ kcli stop baremetal-host -P url=$bmc_url -P user=admin -P password=admin
+# Stop a single host
+$ kcli stop baremetal-host -P user=admin -P password=admin 10.10.10.10
 """
 
 infohosts = """# Report info on Baremetal hosts declared in a parameter file
@@ -524,8 +521,7 @@ baremetal_hosts:
 - bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/vm2
 
 # Report info on a single host
-$ bmc_url=http://192.168.122.1:9000/redfish/v1/Systems/local/vm1
-$ kcli info baremetal-host -P url=$bmc_url -P user=admin -P password=admin
+$ kcli info baremetal-host -P user=admin -P password=admin 10.10.10.10
 """
 
 ocdownload = """# Download 4.13 stable
