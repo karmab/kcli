@@ -40,7 +40,7 @@ def get_info(url, user, password):
             password = password or 'calvin'
         else:
             print(f"Invalid url {url}")
-            sys.exit(0)
+            sys.exit(1)
     return model, url, user, password
 
 
@@ -118,7 +118,7 @@ class Redfish(object):
         if self.debug:
             print(f"Sending POST to {eject_url} with empty data")
         request = Request(eject_url, headers=headers, method='POST', data=data)
-        urlopen(request)
+        return urlopen(request)
 
     def insert_iso(self, iso_url):
         headers = self.headers.copy()
@@ -139,7 +139,7 @@ class Redfish(object):
             print(f"Sending POST to {insert_url} with data {data}")
         data = json.dumps(data).encode('utf-8')
         request = Request(insert_url, data=data, headers=headers)
-        urlopen(request)
+        return urlopen(request)
 
     def set_iso_once(self):
         request = Request(self.url, headers=self.headers)
@@ -157,7 +157,7 @@ class Redfish(object):
             print(f"Sending PATCH to {self.url} with data {data}")
         data = json.dumps(data).encode('utf-8')
         request = Request(self.url, data=data, headers=self.headers, method='PATCH')
-        urlopen(request)
+        return urlopen(request)
 
     def restart(self):
         request = Request(self.url, headers=self.headers)
@@ -169,7 +169,7 @@ class Redfish(object):
             print(f"Sending POST to {reset_url} with data {data}")
         data = json.dumps(data).encode('utf-8')
         request = Request(reset_url, data=data, headers=self.headers)
-        urlopen(request)
+        return urlopen(request)
 
     def stop(self):
         data = {"ResetType": "ForceOff"}
@@ -178,7 +178,7 @@ class Redfish(object):
             print(f"Sending POST to {reset_url} with data {data}")
         data = json.dumps(data).encode('utf-8')
         request = Request(reset_url, data=data, headers=self.headers)
-        urlopen(request)
+        return urlopen(request)
 
     def start(self):
         data = {"ResetType": "On"}
@@ -187,7 +187,7 @@ class Redfish(object):
             print(f"Sending POST to {reset_url} with {data}")
         data = json.dumps(data).encode('utf-8')
         request = Request(reset_url, data=data, headers=self.headers)
-        urlopen(request)
+        return urlopen(request)
 
     def status(self):
         request = Request(self.url, headers=self.headers)
@@ -196,8 +196,7 @@ class Redfish(object):
 
     def info(self):
         request = Request(self.url, headers=self.headers)
-        response = json.loads(urlopen(request).read())
-        return response
+        return json.loads(urlopen(request).read())
 
     def reset(self):
         manager_url = self.get_manager_url()
@@ -207,14 +206,17 @@ class Redfish(object):
             print(f"Sending POST to {reset_url} with data {data}")
         data = json.dumps(data).encode('utf-8')
         request = Request(reset_url, headers=self.headers, method='POST', data=data)
-        urlopen(request)
+        return urlopen(request)
 
     def set_iso(self, iso_url):
         try:
             self.eject_iso()
         except:
             pass
-        self.insert_iso(iso_url)
+        result = self.insert_iso(iso_url)
+        if result.code not in [200, 204]:
+            print(f"Hit {result.reason} When plugging {iso_url}")
+            sys.exit(1)
         try:
             self.set_iso_once()
         except:
