@@ -432,7 +432,6 @@ def delete_image(args):
     yes = args.yes
     yes_top = args.yes_top
     images = args.images
-    pool = args.pool
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.extraclients:
         allclients = config.extraclients.copy()
@@ -444,16 +443,19 @@ def delete_image(args):
         if not yes and not yes_top:
             common.confirm("Are you sure?")
         codes = []
+        all_pools = k.list_pools() if args.pool is None else [args.pool]
         for image in images:
             pprint(f"Deleting image {image} on {cli}")
-            result = k.delete_image(image, pool=pool)
-            if result['result'] == 'success':
-                success(f"{image} deleted")
-                codes.append(0)
-            else:
-                reason = result['reason']
-                error(f"Could not delete image {image} because {reason}")
-                codes.append(1)
+            for index, pool in enumerate(all_pools):
+                result = k.delete_image(image, pool=pool)
+                if result['result'] == 'success':
+                    success(f"{image} deleted")
+                    codes.append(0)
+                    break
+                elif index == len(all_pools) - 1:
+                    reason = result['reason']
+                    error(f"Could not delete image {image} because {reason}")
+                    codes.append(1)
     sys.exit(1 if 1 in codes else 0)
 
 
