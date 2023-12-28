@@ -283,7 +283,7 @@ class Ksushy():
                 return msg
             try:
                 pprint(f"Setting iso of vm {name} to {image}")
-                iso = os.path.basename(image)
+                iso = config.k.info(name).get('redfish_iso') or os.path.basename(image)
                 token_iso = os.path.basename(image).split('?')[0]
                 if token_iso != iso:
                     iso = f"boot-{token_iso}.iso"
