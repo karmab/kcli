@@ -187,7 +187,7 @@ oEO8BRcXIiXiQqW9KnF99fXOiQ/cKYh3kWBBPnuEOhC77Ke5aMlqMNOPULf3PMix
 -----END CERTIFICATE-----"""
 VIRTTYPE = None
 METADATA_FIELDS = ['dnsclient', 'domain', 'image', 'kube', 'kubetype', 'loadbalancer', 'owner', 'plan', 'profile',
-                   'user']
+                   'user', 'redfish_iso']
 VMRULES = []
 VMRULES_STRICT = False
 SECURITYGROUPS = []

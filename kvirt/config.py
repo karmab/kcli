@@ -887,6 +887,8 @@ class Kconfig(Kbaseconfig):
             warning("Your nets definition contains nic key which won't be used")
         if 'owner' in profile or 'owner' in overrides:
             metadata['owner'] = profile.get('owner') or overrides.get('owner')
+        if 'redfish_iso' in profile or 'redfish_iso' in overrides:
+            metadata['redfish_iso'] = profile.get('redfish_iso') or overrides.get('redfish_iso')
         if 'vmuser' in profile or 'vmuser' in overrides:
             metadata['user'] = profile.get('vmuser') or overrides.get('vmuser')
         elif 'user' in profile or 'user' in overrides:
