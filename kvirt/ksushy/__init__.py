@@ -283,10 +283,14 @@ class Ksushy():
                 return msg
             try:
                 pprint(f"Setting iso of vm {name} to {image}")
-                iso = config.k.info(name).get('redfish_iso') or os.path.basename(image)
-                token_iso = os.path.basename(image).split('?')[0]
-                if token_iso != iso:
-                    iso = f"boot-{token_iso}.iso"
+                info = config.k.info(name)
+                if 'redfish_iso' in info:
+                    iso = info['redfish_iso']
+                else:
+                    iso = os.path.basename(image)
+                    token_iso = os.path.basename(image).split('?')[0]
+                    if token_iso != iso:
+                        iso = f"boot-{token_iso}.iso"
                 isos = [os.path.basename(i) for i in config.k.volumes(iso=True)]
                 if iso not in isos:
                     result = config.download_image(pool=config.pool, image=iso, url=image)
@@ -294,9 +298,10 @@ class Ksushy():
                         raise Exception(result['reason'])
                 config.update_vm(name, {'iso': iso})
             except Exception as e:
-                error(e)
+                msg = f'Failed to mount virtualcd. Hit {e}'
+                error(msg)
                 response.status = 500
-                return f'Failed to mount virtualcd. Hit {e}'
+                return msg
             response.status = 204
             return ''
 
