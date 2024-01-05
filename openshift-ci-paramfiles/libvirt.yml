@@ -8,9 +8,11 @@ version: stable
 tag: "4.14"
 #api_ip: 10.19.135.112
 # api_ip: 10.1.98.87
-api_ip: 10.19.32.58
+# api_ip: 10.19.32.58
+# network: baremetal
+network: baremetalfake
+api_ip: 192.168.254.254
 sslip: true
-network: baremetal
 numcpus: 32
 memory: 49152
 #memory: 32768

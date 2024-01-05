@@ -1,10 +1,12 @@
 cluster: ci-hypershift
 version: latest
 tag: 4.14
-network: baremetal
 # ingress_ip: 10.19.135.130
 # ingress_ip: 10.1.98.106
-ingress_ip: 10.19.32.61
+# ingress_ip: 10.19.32.61
+# network: baremetal
+ingress_ip: 192.168.254.253
+network: baremetalfake
 workers: 2
 numcpus: 16
 memory: 16384
