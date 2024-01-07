@@ -1,10 +1,8 @@
 platform: assisted
 version: latest
 tag: 4.13
-# network: default
-# ingress_ip: 192.168.122.248
-network: baremetalfake
-ingress_ip: 192.168.254.252
+network: default
+ingress_ip: 192.168.122.248
 uefi: true
 workers: 3
 sslip: true
