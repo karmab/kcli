@@ -17,5 +17,5 @@ bash assisted-service.sh
 {% endif %}
 
 {% if acm_hypershift %}
-oc patch mce multiclusterengine --type=merge -p '{"spec":{"overrides":{"components":[{"name":"hypershift-preview","enabled": true}]}}}'
+oc -n open-cluster-management patch multiclusterhub multiclusterhub --type=merge -p '{"spec":{"overrides":{"components":[{"name":"hypershift-preview","enabled": true}]}}}'
 {% endif %}
