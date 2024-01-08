@@ -3475,19 +3475,23 @@ class Kvirt(object):
         networks = {}
         conn = self.conn
         for network in conn.listAllNetworks():
+            dual_cidr = None
             networkname = network.name()
             netxml = network.XMLDesc(0)
             cidr = 'N/A'
             root = ET.fromstring(netxml)
             ip = None
-            for entry in list(root.iter('ip')):
+            for index, entry in enumerate(list(root.iter('ip'))):
                 attributes = entry.attrib
                 firstip = attributes.get('address')
                 netmask = attributes.get('netmask')
                 netmask = attributes.get('prefix') if netmask is None else netmask
                 ipnet = f'{firstip}/{netmask}' if netmask is not None else firstip
                 ipnet = ip_network(ipnet, strict=False)
-                cidr = str(ipnet)
+                if index > 0:
+                    dual_cidr = str(ipnet)
+                else:
+                    cidr = str(ipnet)
             dhcp = list(root.iter('dhcp'))
             if dhcp:
                 dhcp = True
@@ -3506,6 +3510,8 @@ class Kvirt(object):
             else:
                 mode = 'isolated'
             networks[networkname] = {'cidr': cidr, 'dhcp': dhcp, 'domain': domainname, 'type': 'routed', 'mode': mode}
+            if dual_cidr is not None:
+                networks[networkname]['dual_cidr'] = dual_cidr
             plan = 'N/A'
             for element in list(root.iter('{kvirt}info')):
                 e = element.find('{kvirt}ovs')
