@@ -1347,6 +1347,8 @@ class Kazure(object):
                     self.delete_dns(name, domain, name)
                 elif dnsclient is not None:
                     return dnsclient
+                if f"{name}-nsg" in self.list_security_groups():
+                    network_client.network_security_groups.begin_delete(self.resource_group, f"{name}-nsg")
                 return {'result': 'success'}
         error(f"Loadbalancer {name} not found")
         return {'result': 'success'}
