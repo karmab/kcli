@@ -3335,6 +3335,7 @@ class Kvirt(object):
         if cidr is None:
             return {'result': 'failure', 'reason': "Missing Cidr"}
         cidrs = [networks[n]['cidr'] for n in networks]
+        cidrs.extend([networks[n]['dual_cidr'] for n in networks if 'dual_cidr' in networks[n]])
         try:
             cidr_range = ip_network(cidr)
         except:
