@@ -206,31 +206,29 @@ KSUSHYSERVICE = """[Unit]
 Description=Ksushy emulator service
 After=syslog.target
 [Service]
-Environment=HOME={home}
-Environment=PYTHONUNBUFFERED=true
-{port}
-{ipv6}
-{ssl}
-{user}
-{password}
-{bootonce}
 Type=simple
 ExecStart=/usr/bin/ksushy
 StandardOutput=syslog
-StandardError=syslog"""
+StandardError=syslog
+Environment=HOME={home}
+Environment=PYTHONUNBUFFERED=true
+{port}{ipv6}{ssl}{user}{password}{bootonce}
+[Install]
+WantedBy=local.target"""
 
 WEBSERVICE = """[Unit]
 Description=Kweb service
 After=syslog.target
 [Service]
-Environment=HOME={home}
-Environment=PYTHONUNBUFFERED=true
-{port}
-{ipv6}
 Type=simple
 ExecStart=/usr/bin/kweb
 StandardOutput=syslog
-StandardError=syslog"""
+StandardError=syslog
+Environment=HOME={home}
+Environment=PYTHONUNBUFFERED=true
+{port}{ipv6}
+[Install]
+WantedBy=local.target"""
 
 PLANTYPES = ['ansible', 'bucket', 'cluster', 'container', 'disk', 'dns', 'image', 'kube', 'loadbalancer', 'network',
              'plan', 'pool', 'profile', 'securitygroup', 'vm', 'workflow']

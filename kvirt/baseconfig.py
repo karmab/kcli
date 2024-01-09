@@ -1742,12 +1742,12 @@ class Kbaseconfig:
         home = os.environ.get('HOME', '/root')
         if ssl:
             warning("ssl support requires installing manually pyopenssl and cherrypy")
-        port = f"Environment=KSUSHY_PORT={port}" if port != 9000 else ''
-        ssl = "Environment=KSUSHY_SSL=true" if ssl else ''
-        ipv6 = "Environment=KSUSHY_IPV6=true" if ipv6 else ''
-        user = f"Environment=KSUSHY_USER={user}" if user is not None else ''
-        password = f"Environment=KSUSHY_PASSWORD={password}" if password is not None else ''
-        bootonce = "Environment=KSUSHY_BOOTONCE=true" if bootonce else ''
+        port = f"Environment=KSUSHY_PORT={port}\n" if port != 9000 else ''
+        ssl = "Environment=KSUSHY_SSL=true\n" if ssl else ''
+        ipv6 = "Environment=KSUSHY_IPV6=true\n" if ipv6 else ''
+        user = f"Environment=KSUSHY_USER={user}\n" if user is not None else ''
+        password = f"Environment=KSUSHY_PASSWORD={password}\n" if password is not None else ''
+        bootonce = "Environment=KSUSHY_BOOTONCE=true\n" if bootonce else ''
         sushydata = kdefaults.KSUSHYSERVICE.format(home=home, port=port, ipv6=ipv6, ssl=ssl, user=user,
                                                    password=password, bootonce=bootonce)
         with open("/usr/lib/systemd/system/ksushy.service", "w") as f:
@@ -1758,8 +1758,8 @@ class Kbaseconfig:
     def deploy_web_service(self, port=8000, ssl=False, ipv6=False):
         update = os.path.exists("/usr/lib/systemd/system/kweb.service")
         home = os.environ.get('HOME', '/root')
-        port = f"Environment=KWEB_PORT={port}" if port != 8000 else ''
-        ipv6 = "Environment=KWEB_IPV6=true" if ipv6 else ''
+        port = f"Environment=KWEB_PORT={port}\n" if port != 8000 else ''
+        ipv6 = "Environment=KWEB_IPV6=true\n" if ipv6 else ''
         webdata = kdefaults.WEBSERVICE.format(home=home, port=port, ipv6=ipv6, ssl=ssl)
         with open("/usr/lib/systemd/system/kweb.service", "w") as f:
             f.write(webdata)
