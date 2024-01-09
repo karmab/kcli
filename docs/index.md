@@ -855,13 +855,13 @@ By using jinja constructs (whether variables, conditional or loops), we can cust
 Of course, we might not want all files to end up in /root. By using a more accurate spec in our files section, we can indicate where to create the file
 
 ```Shell
-kcli create vm -i centos9stream -P nets=['{"path": "/etc/motd", "origin": "myfile.txt"}']
+kcli create vm -i centos9stream -P files=['{"path": "/etc/motd", "origin": "myfile.txt"}']
 ```
 
 We can also set a specific mode for the file
 
 ```Shell
-kcli create vm -i centos9stream -P nets=['{"path": "/etc/motd", "origin": "myfile.txt", "mode": "644}']
+kcli create vm -i centos9stream -P files=['{"path": "/etc/motd", "origin": "myfile.txt", "mode": "644}']
 ```
 
 #### Injecting cmds/scripts

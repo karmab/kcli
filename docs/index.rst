@@ -895,13 +895,13 @@ Of course, we might not want all files to end up in /root. By using a more accur
 
 .. code:: shell
 
-   kcli create vm -i centos9stream -P nets=['{"path": "/etc/motd", "origin": "myfile.txt"}']
+   kcli create vm -i centos9stream -P files=['{"path": "/etc/motd", "origin": "myfile.txt"}']
 
 We can also set a specific mode for the file
 
 .. code:: shell
 
-   kcli create vm -i centos9stream -P nets=['{"path": "/etc/motd", "origin": "myfile.txt", "mode": "644}']
+   kcli create vm -i centos9stream -P files=['{"path": "/etc/motd", "origin": "myfile.txt", "mode": "644}']
 
 Injecting cmds/scripts
 ^^^^^^^^^^^^^^^^^^^^^^
