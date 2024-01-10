@@ -1,6 +1,8 @@
 CLUSTERDIR={{ clusterdir }}
+CIDR={{ cidr }}
 CILIUM_VERSION={{ 'cilium/cilium'|github_version(cilium_version) }}
 git clone https://github.com/isovalent/olm-for-cilium $CLUSTERDIR/olm-for-cilium
-KUBECONFIG=$CLUSTERDIR/auth/kubeconfig oc create -f $CLUSTERDIR/olm-for-cilium/manifests/$CILIUM_VERSION
+sed -i "/ipam/a\ \ \ \ operator:\n \ \ \ \ \ clusterPoolIPv4PodCIDRList: $CIDR\n \ \ \ \ \ clusterPoolIPv4MaskSize: 23" $CLUSTERDIR/olm-for-cilium/manifests/cilium.$CILIUM_VERSION/cluster-network-07-cilium-ciliumconfig.yaml
+KUBECONFIG=$CLUSTERDIR/auth/kubeconfig oc create -f $CLUSTERDIR/olm-for-cilium/manifests/cilium.$CILIUM_VERSION
 sleep 30
-KUBECONFIG=$CLUSTERDIR/auth/kubeconfig oc create -f $CLUSTERDIR/olm-for-cilium/manifests/$CILIUM_VERSION
+KUBECONFIG=$CLUSTERDIR/auth/kubeconfig oc create -f $CLUSTERDIR/olm-for-cilium/manifests/cilium.$CILIUM_VERSION

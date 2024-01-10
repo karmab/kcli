@@ -801,7 +801,8 @@ def create(config, plandir, cluster, overrides):
             call(f'bash {tmpdir}/calico.sh', shell=True)
     elif network_type == 'Cilium':
         cilium_version = data['cilium_version']
-        cilium_data = {'clusterdir': clusterdir, 'cilium_version': cilium_version}
+        cluster_network_ipv4 = data['cluster_network_ipv4']
+        cilium_data = {'clusterdir': clusterdir, 'cilium_version': cilium_version, 'cidr': cluster_network_ipv4}
         cilium_script = config.process_inputfile('xxx', f'{plandir}/cilium.sh.j2', overrides=cilium_data)
         with open(f"{clusterdir}/cilium.sh", 'w') as f:
             f.write(cilium_script)
