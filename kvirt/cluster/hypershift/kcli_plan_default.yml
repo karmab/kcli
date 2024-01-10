@@ -60,8 +60,12 @@ coredns: true
 sslip: false
 mdns: false
 kubevirt_ingress_service: false
+cluster_networks: []
 cluster_network_ipv4: "10.129.0.0/14"
+cluster_network_ipv6: "fd03::/48"
+service_networks: []
 service_network_ipv4: "172.31.0.0/16"
+service_network_ipv6: "fd04::/112"
 management_api_ip:
 management_ingress_ip:
 hosted_version:
@@ -72,3 +76,5 @@ calico_version:
 cilium_version:
 cloud_storage: true
 image_overrides:
+ipv6: false
+dualstack: false

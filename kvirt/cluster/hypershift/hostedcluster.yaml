@@ -1,3 +1,13 @@
+{% if not cluster_networks %}
+{% set cluster_network_ipv4 = {"cidr": cluster_network_ipv4, "hostPrefix": 23} %}
+{% set cluster_network_ipv6 = {"cidr": cluster_network_ipv6, "hostPrefix": 64} %}
+{% set cluster_networks = [cluster_network_ipv4] + [cluster_network_ipv6] if dualstack|default(False) else [cluster_network_ipv6] if ipv6 else [cluster_network_ipv4] %}
+{% endif %}
+{% if not service_networks %}
+{% set service_network_ipv4 = [service_network_ipv4] %}
+{% set service_network_ipv6 = [service_network_ipv6] %}
+{% set service_networks = service_network_ipv4 + service_network_ipv6 if dualstack|default(False) else service_network_ipv6 if ipv6 else service_network_ipv4 %}
+{% endif %}
 {% set management_address = management_api_ip or "api." + cluster + "." + original_domain %}
 {% if nodeport|default(False) %}
 {% macro service() %}
@@ -63,10 +73,14 @@ spec:
   infrastructureAvailabilityPolicy: {{ 'HighlyAvailable' if hosted_ha else 'SingleReplica' }}
   networking:
     clusterNetwork:
-    - cidr: {{ cluster_network_ipv4 }}
-      hostPrefix: 23
+{% for network in cluster_networks %}
+    - cidr: {{ network['cidr'] }}
+      hostPrefix: {{ network['hostPrefix'] }}
+{% endfor %}
     serviceNetwork:
-    - cidr: {{ service_network_ipv4 }}
+{% for network in service_networks %}
+    - cidr: {{ network }}
+{% endfor %}
     machineNetwork:
     - cidr: {{ cidr|default('') }}
     networkType: {{ network_type }}

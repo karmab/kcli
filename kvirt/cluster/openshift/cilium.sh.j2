@@ -1,6 +1,9 @@
 CLUSTERDIR={{ clusterdir }}
 CIDR={{ cidr }}
+CIDR_LIST={{ 'clusterPoolIPv6PodCIDRList' if ':' in cidr else 'clusterPoolIPv4PodCIDRList' }}
+CIDR_MASK={{ 'clusterPoolIPv6MaskSize' if ':' in cidr else 'clusterPoolIPv4MaskSize' }}
+CIDR_MASK_VALUE={{ 64 if ':' in cidr else 23 }}
 CILIUM_VERSION={{ 'cilium/cilium'|github_version(cilium_version) }}
 git clone https://github.com/isovalent/olm-for-cilium $CLUSTERDIR
-sed -i "/ipam/a\ \ \ \ operator:\n \ \ \ \ \ clusterPoolIPv4PodCIDRList: $CIDR\n \ \ \ \ \ clusterPoolIPv4MaskSize: 23" $CLUSTERDIR/olm-for-cilium/manifests/cilium.$CILIUM_VERSION/cluster-network-07-cilium-ciliumconfig.yaml
+sed -i "/ipam/a\ \ \ \ operator:\n \ \ \ \ \ $CIDR_LIST: $CIDR\n \ \ \ \ \ $CIDR_MASK: $CIDR_MASK_VALUE" $CLUSTERDIR/olm-for-cilium/manifests/cilium.$CILIUM_VERSION/cluster-network-07-cilium-ciliumconfig.yaml
 find $CLUSTERDIR/olm-for-cilium/manifests/cilium.$CILIUM_VERSION -name "*yaml" -exec cp {} $CLUSTERDIR/manifests \;
