@@ -1,8 +1,6 @@
 {% for num in range(0, ctlplanes|int) %}
 {% if extra_ctlplane_networks %}
 {% set extra_networks = extra_ctlplane_networks %}
-{% elif network_type == 'Contrail' %}
-{% set extra_networks = [contrail_ctl_network] %}
 {% endif %}
 {% if extra_ctlplane_disks %}
 {% set extra_disks = extra_ctlplane_disks %}

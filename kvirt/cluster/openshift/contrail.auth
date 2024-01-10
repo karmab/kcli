@@ -1,7 +1,0 @@
-{
-	"auths": {
-		"enterprise-hub.juniper.net": {
-			"auth": "${AUTH}"
-        }
-    }
-}

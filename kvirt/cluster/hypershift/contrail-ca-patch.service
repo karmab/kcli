@@ -1,6 +1,0 @@
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/ca-patch.sh
-
-[Install]
-WantedBy=multi-user.target
