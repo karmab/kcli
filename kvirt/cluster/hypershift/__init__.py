@@ -307,6 +307,9 @@ def create(config, plandir, cluster, overrides):
     if str(tag) == '4.1':
         tag = '4.10'
         data['tag'] = tag
+    network_type = data['network_type']
+    if network_type not in ['Calico', 'OVNKubernetes']:
+        data['network_type'] = 'Other'
     cluster = data.get('cluster')
     namespace = data.get('namespace')
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
@@ -724,16 +727,6 @@ def create(config, plandir, cluster, overrides):
         installparam['ipv6'] = ipv6
         installparam['original_domain'] = data['original_domain']
         yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
-    if 'network_type' in data:
-        if data['network_type'] == 'Calico':
-            calico_version = data['calico_version']
-            with TemporaryDirectory() as tmpdir:
-                calico_data = {'tmpdir': tmpdir, 'namespace': namespace, 'cluster': cluster, 'clusterdir': clusterdir,
-                               'calico_version': calico_version}
-                calico_script = config.process_inputfile('xxx', f'{plandir}/calico.sh.j2', overrides=calico_data)
-                with open(f"{tmpdir}/calico.sh", 'w') as f:
-                    f.write(calico_script)
-                call(f'bash {tmpdir}/calico.sh', shell=True)
     nodepoolfile = config.process_inputfile(cluster, f"{plandir}/nodepool.yaml", overrides=assetsdata)
     with open(f"{clusterdir}/nodepool.yaml", 'w') as f:
         f.write(nodepoolfile)
@@ -796,6 +789,15 @@ def create(config, plandir, cluster, overrides):
     kubeadmin = os.popen(f"oc extract -n {namespace} secret/{cluster}-kubeadmin-password --to=-").read()
     with open(kubeadminpath, 'w') as f:
         f.write(kubeadmin)
+    if network_type == 'Calico':
+        calico_version = data['calico_version']
+        with TemporaryDirectory() as tmpdir:
+            calico_data = {'tmpdir': tmpdir, 'namespace': namespace, 'cluster': cluster, 'clusterdir': clusterdir,
+                           'calico_version': calico_version}
+            calico_script = config.process_inputfile('xxx', f'{plandir}/calico.sh.j2', overrides=calico_data)
+            with open(f"{tmpdir}/calico.sh", 'w') as f:
+                f.write(calico_script)
+            call(f'bash {tmpdir}/calico.sh', shell=True)
     if platform is None and data['workers'] > 0:
         pprint("Deploying workers")
         worker_threaded = data.get('threaded', False) or data.get('workers_threaded', False)

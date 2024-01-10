@@ -5,4 +5,6 @@ mkdir $CALICO_DIR
 curl -Lk https://github.com/projectcalico/calico/releases/download/$CALICO_VERSION/ocp.tgz | tar xvz --strip-components=1 -C $CALICO_DIR
 sed -i "s/tigera-operator/$NAMESPACE/" $CALICO_DIR/00-namespace-tigera-operator.yaml
 sed -i "s/namespace: tigera-operator/namespace: $NAMESPACE/" $CALICO_DIR/*yaml
-oc create -f $CALICO_DIR
+KUBECONFIG={{ clusterdir }}/auth/kubeconfig oc create -f $CALICO_DIR
+sleep 30
+KUBECONFIG={{ clusterdir }}/auth/kubeconfig oc create -f $CALICO_DIR

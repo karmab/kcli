@@ -32,7 +32,7 @@
 {% do files.append(new_file) %}
 {% endif %}
 
-{% if async_files|default([]) and num == 0 %}
+{% if num == 0 and async_files|default([]) %}
 {% set new_file = {'path': '/etc/kubernetes/kubeconfig.%s' % cluster, 'origin': '~/.kcli/clusters/%s/auth/kubeconfig' % cluster} %}
 {% do files.append(new_file) %}
 {% set new_file = {'path': '/usr/local/bin/extras.sh', 'origin': 'extras.sh', 'mode': 700} %}
