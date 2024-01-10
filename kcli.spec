@@ -32,7 +32,7 @@ sed -i "s/, 'libvirt.*/\]/" setup.py
 INSTALL=$(grep -m 1 INSTALL setup.py  | sed 's/INSTALL = //')
 sed -i "s/install_requires=INSTALL/install_requires=$INSTALL/" setup.py
 sed -i '/INSTALL/d' setup.py
-GIT_VERSION="$(curl -s https://github.com/karmab/kcli/commits/main | jq -r .payload.commitGroups[0].commits[0].oid | cut -c1-8) $(date +%Y/%m/%d)"
+GIT_VERSION="$(curl -s https://github.com/karmab/kcli/commits/main | jq -r .payload.commitGroups[0].commits[0].oid | cut -c1-7) $(date +%Y/%m/%d)"
 echo $GIT_VERSION > kvirt/version/git
 %{python3} setup.py build
 
