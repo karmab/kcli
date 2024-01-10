@@ -7,6 +7,8 @@
 {% set net0 = default_network %}
 {% if extra_worker_networks %}
 {% set extra_networks = extra_worker_networks %}
+{% elif network_type == 'Contrail' %}
+{% set extra_networks = [contrail_ctl_network] %}
 {% endif %}
 {% if extra_worker_disks %}
 {% set extra_disks = extra_worker_disks %}
