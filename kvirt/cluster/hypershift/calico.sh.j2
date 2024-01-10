@@ -1,10 +1,11 @@
-CALICO_DIR={{ clusterdir }}/calico-manifests
+CLUSTERDIR={{ clusterdir }}
+CALICO_DIR=$CLUSTERDIR/calico-manifests
 NAMESPACE={{ namespace }}-{{ cluster }}-calico
 CALICO_VERSION={{ 'projectcalico/calico'|github_version(calico_version) }}
 mkdir $CALICO_DIR
 curl -Lk https://github.com/projectcalico/calico/releases/download/$CALICO_VERSION/ocp.tgz | tar xvz --strip-components=1 -C $CALICO_DIR
 sed -i "s/tigera-operator/$NAMESPACE/" $CALICO_DIR/00-namespace-tigera-operator.yaml
 sed -i "s/namespace: tigera-operator/namespace: $NAMESPACE/" $CALICO_DIR/*yaml
-KUBECONFIG={{ clusterdir }}/auth/kubeconfig oc create -f $CALICO_DIR
+KUBECONFIG=$CLUSTERDIR/auth/kubeconfig oc create -f $CALICO_DIR
 sleep 30
-KUBECONFIG={{ clusterdir }}/auth/kubeconfig oc create -f $CALICO_DIR
+KUBECONFIG=$CLUSTERDIR/auth/kubeconfig oc create -f $CALICO_DIR
