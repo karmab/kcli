@@ -214,7 +214,7 @@ Environment=HOME={home}
 Environment=PYTHONUNBUFFERED=true
 {port}{ipv6}{ssl}{user}{password}{bootonce}
 [Install]
-WantedBy=local.target"""
+WantedBy=multi-user.target"""
 
 WEBSERVICE = """[Unit]
 Description=Kweb service
@@ -228,7 +228,7 @@ Environment=HOME={home}
 Environment=PYTHONUNBUFFERED=true
 {port}{ipv6}
 [Install]
-WantedBy=local.target"""
+WantedBy=multi-user.target"""
 
 PLANTYPES = ['ansible', 'bucket', 'cluster', 'container', 'disk', 'dns', 'image', 'kube', 'loadbalancer', 'network',
              'plan', 'pool', 'profile', 'securitygroup', 'vm', 'workflow']
