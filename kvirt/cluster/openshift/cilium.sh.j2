@@ -1,0 +1,4 @@
+CLUSTERDIR={{ clusterdir }}
+CILIUM_VERSION={{ 'cilium/cilium'|github_version(cilium_version) }}
+git clone https://github.com/isovalent/olm-for-cilium $CLUSTERDIR
+find $CLUSTERDIR/olm-for-cilium/manifests/$CILIUM_VERSION -name "*yaml" -exec cp {} $CLUSTERDIR/manifests \;

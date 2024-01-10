@@ -263,6 +263,7 @@ def create(config, plandir, cluster, overrides):
             'mce': True,
             'mce_assisted': False,
             'calico_version': None,
+            'cilium_version': None,
             'contrail_version': '23.1',
             'contrail_ctl_network': 'contrail-ctl',
             'contrail_ctl_create': True,
@@ -803,6 +804,13 @@ def create(config, plandir, cluster, overrides):
             with open(f"{tmpdir}/calico.sh", 'w') as f:
                 f.write(calico_script)
             call(f'bash {tmpdir}/calico.sh', shell=True)
+    elif network_type == 'Cilium':
+        cilium_version = data['cilium_version']
+        cilium_data = {'clusterdir': clusterdir, 'cilium_version': cilium_version}
+        cilium_script = config.process_inputfile('xxx', f'{plandir}/cilium.sh.j2', overrides=cilium_data)
+        with open(f"{clusterdir}/cilium.sh", 'w') as f:
+            f.write(cilium_script)
+        call(f'bash {clusterdir}/cilium.sh', shell=True)
     elif network_type == 'Contrail':
         if which('git') is None:
             return {'result': 'failure', 'reason': "Git is needed when deploying with contrail"}

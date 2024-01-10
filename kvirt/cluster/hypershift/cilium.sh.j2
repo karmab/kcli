@@ -1,0 +1,6 @@
+CLUSTERDIR={{ clusterdir }}
+CILIUM_VERSION={{ 'cilium/cilium'|github_version(cilium_version) }}
+git clone https://github.com/isovalent/olm-for-cilium $CLUSTERDIR
+oc create -f $CLUSTERDIR/olm-for-cilium/manifests/$CILIUM_VERSION
+sleep 30
+oc create -f $CLUSTERDIR/olm-for-cilium/manifests/$CILIUM_VERSION
