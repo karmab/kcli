@@ -754,6 +754,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'retries': 2}
     data.update(overrides)
     fix_typos(data)
+    if data.get('dual_api_ip') is not None:
+        warning("Forcing dualstack")
+        data['dualstack'] = True
     clustervalue = overrides.get('cluster') or cluster or 'myopenshift'
     if data['ctlplanes'] == 1 and data['workers'] == 0\
        and 'ctlplane_memory' not in overrides and 'memory' not in overrides:
