@@ -1663,9 +1663,11 @@ def create_embed_ignition_cmd(name, poolpath, baseiso, podman=False, extra_args=
         coreosinstaller = "coreos-installer"
         destiso = f"{poolpath}/{name}"
         isocmd = f"{coreosinstaller} iso ignition embed -fi {poolpath}/iso.ign -o {destiso} {poolpath}/{baseiso}"
-        if not os.path.exists('coreos-installer'):
+        if which('coreos-installer') is None:
             arch = os.uname().machine if not os.path.exists('/Users') else 'x86_64'
             get_coreos_installer(arch=arch)
+        else:
+            pprint("Using coreos-installer from path")
     if extra_args is not None:
         isocmd += f"; {coreosinstaller} iso kargs modify -a '{extra_args}' {destiso}"
     return isocmd
