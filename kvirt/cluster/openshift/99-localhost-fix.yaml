@@ -1,7 +1,7 @@
 apiVersion: machineconfiguration.openshift.io/v1
 kind: MachineConfig
 metadata:
-  name: localhost-{{ role }}-fix
+  name: 20-localhost-{{ role }}-fix
   labels:
     machineconfiguration.openshift.io/role: {{ role }}
 spec:
