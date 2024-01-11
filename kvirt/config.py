@@ -3287,8 +3287,8 @@ class Kconfig(Kbaseconfig):
         asyncwait = profile.get('asyncwait', False)
         finishfiles = profile.get('finishfiles', [])
         if onlyassets:
-            if 'data' in result:
-                newassets.append(result['data'])
+            if 'userdata' in result:
+                newassets.append(result['userdata'])
             else:
                 error(result['reason'])
         if not asyncwait:
