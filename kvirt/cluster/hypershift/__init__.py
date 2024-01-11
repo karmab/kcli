@@ -259,6 +259,8 @@ def create(config, plandir, cluster, overrides):
             'kubevirt_ingress_service': False,
             'dualstack': False,
             'ipv6': False,
+            'cluster_networks': [],
+            'service_networks': [],
             'cluster_network_ipv4': '10.129.0.0/14',
             'service_network_ipv4': '172.31.0.0/16',
             'cluster_network_ipv6': "fd03::/48",
