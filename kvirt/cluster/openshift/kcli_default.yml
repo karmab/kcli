@@ -107,6 +107,9 @@ cloud_internal: false
 virtual_router_id:
 http_proxy:
 no_proxy:
+localhost_fix: false
+ctlplane_localhost_fix: false
+worker_localhost_fix: false
 sno: false
 sno_disk:
 sno_cloud_remove_lb: true
@@ -115,7 +118,6 @@ sno_ctplanes: false
 sno_workers: false
 sno_wait: false
 sno_nic:
-sno_localhost_fix: false
 sno_cpuset:
 sno_relocate: false
 sno_vm: false

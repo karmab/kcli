@@ -705,12 +705,14 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'mtu': 1400,
             'ovn_hostrouting': False,
             'manifests': 'manifests',
+            'localhost_fix': False,
+            'ctlplane_localhost_fix': False,
+            'worker_localhost_fix': False,
             'sno': False,
             'sno_disk': None,
             'sno_ctlplanes': False,
             'sno_workers': False,
             'sno_wait': False,
-            'sno_localhost_fix': False,
             'sno_disable_nics': [],
             'sno_cpuset': None,
             'sno_relocate': False,
@@ -841,7 +843,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if not keepalived:
         warning("You will need to provide LB for api and ingress on your own")
     mdns = data.get('mdns')
-    sno_localhost_fix = data.get('sno_localhost_fix')
+    localhost_fix = data.get('localhost_fix')
+    ctlplane_localhost_fix = data.get('ctlplane_localhost_fix') or localhost_fix
+    worker_localhost_fix = data.get('worker_localhost_fix') or localhost_fix
     sno_cpuset = data.get('sno_cpuset')
     sno_relocate = data.get('sno_relocate')
     kubevirt_api_service, kubevirt_api_service_node_port = False, False
@@ -1323,10 +1327,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 replicas = ctlplanes
             else:
                 replicas = workers
-            if provider in virt_providers and sslip and ingress_ip is None:
+            bm_workers = len(baremetal_hosts) > 0 and workers > 0
+            if provider in virt_providers and ((sslip and ingress_ip is None) or worker_localhost_fix or bm_workers):
                 replicas = ctlplanes
                 ingressrole = 'master'
-                warning("Forcing router pods on ctlplanes since sslip is set and api_ip will be used for ingress")
+                warning("Forcing router pods on ctlplanes")
                 copy2(f'{plandir}/cluster-scheduler-02-config.yml', f"{clusterdir}/manifests")
             ingressconfig = config.process_inputfile(cluster, f, overrides={'replicas': replicas, 'role': ingressrole,
                                                                             'cluster': cluster, 'domain': domain})
@@ -1384,6 +1389,16 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         appsfile = config.process_inputfile(cluster, appsfile, overrides=apps_data)
         with open(f"{clusterdir}/openshift/99-apps.yaml", 'w') as _f:
             _f.write(appsfile)
+    if ctlplane_localhost_fix:
+        localctlplane = config.process_inputfile(cluster, f"{plandir}/99-localhost-fix.yaml",
+                                                 overrides={'role': 'master'})
+        with open(f"{clusterdir}/openshift/99-localhost-fix-ctlplane.yaml", 'w') as _f:
+            _f.write(localctlplane)
+    if worker_localhost_fix:
+        localworker = config.process_inputfile(cluster, f"{plandir}/99-localhost-fix.yaml",
+                                               overrides={'role': 'worker'})
+        with open(f"{clusterdir}/openshift/99-localhost-fix-worker.yaml", 'w') as _f:
+            _f.write(localworker)
     if metal3:
         copy2(f"{plandir}/99-metal3-provisioning.yaml", f"{clusterdir}/openshift")
         copy2(f"{plandir}/99-metal3-fake-machine.yaml", f"{clusterdir}/openshift")
@@ -1452,15 +1467,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                                                                                               'relocate': sno_relocate})
             with open(f"{clusterdir}/openshift/99-sno.yaml", 'w') as f:
                 f.write(rendered)
-        if sno_localhost_fix:
-            localctlplane = config.process_inputfile(cluster, f"{plandir}/99-localhost-fix.yaml",
-                                                     overrides={'role': 'master'})
-            with open(f"{clusterdir}/openshift/99-localhost-fix-ctlplane.yaml", 'w') as _f:
-                _f.write(localctlplane)
-            localworker = config.process_inputfile(cluster, f"{plandir}/99-localhost-fix.yaml",
-                                                   overrides={'role': 'worker'})
-            with open(f"{clusterdir}/openshift/99-localhost-fix-worker.yaml", 'w') as _f:
-                _f.write(localworker)
         if sno_ctlplanes:
             sno_ctlplanes_number = len(baremetal_hosts) if baremetal_hosts else 3
             ingress = config.process_inputfile(cluster, f"{plandir}/customisation/99-ingress-controller.yaml",

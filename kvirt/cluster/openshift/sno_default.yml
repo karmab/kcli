@@ -9,6 +9,7 @@ info: |
     You can set sno_vm to true to deploy a vm using the ISO and wait for install to finish which is handy if your hypervisor is short on resources
     and can handle having a temporary bootstrap vm such as the one used in regular kcli create cluster openshift workflow
     You can use all the parameters available in the regular workflow, in particular you can set an api_ip to use in the SNO (to ease access)
+localhost_fix: false
 sno_disk:
 sno_cloud_remove_lb: true
 sno_disable_nics: []
@@ -16,7 +17,6 @@ sno_ctplanes: false
 sno_workers: false
 sno_wait: false
 sno_nic:
-sno_localhost_fix: false
 sno_cpuset:
 sno_relocate: false
 sno_vm: false
