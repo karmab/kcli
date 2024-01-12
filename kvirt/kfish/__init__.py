@@ -51,8 +51,6 @@ class Redfish(object):
         if insecure:
             ssl._create_default_https_context = ssl._create_unverified_context
         url = url.replace('idrac-virtualmedia', 'https').replace('ilo5-virtualmedia', 'https')
-        if not url.startswith('http'):
-            url = f'https://{url}'
         self.model, self.url, self.user, self.password = get_info(url, user, password)
         if self.debug:
             print(f"Using base url {self.url}")
