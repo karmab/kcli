@@ -1508,6 +1508,11 @@ def create_vm(args):
             name = name.replace('_', '-')
         if config.type != 'aws' and not onlyassets:
             pprint(f"Using {name} as name of the vm")
+    elif args.force:
+        try:
+            config.k.delete(name)
+        except:
+            pass
     if image is not None:
         if image in config.profiles and not onlyassets:
             pprint(f"Using {image} as profile")
@@ -4110,10 +4115,11 @@ def cli():
     vmcreate_desc = 'Create Vm'
     vmcreate_epilog = f"examples:\n{examples.vmcreate}"
     vmcreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
-    vmcreate_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
     vmcreate_parser.add_argument('--console', help='Directly switch to console after creation', action='store_true')
     vmcreate_parser.add_argument('-c', '--count', help='How many vms to create', type=int, default=0, metavar='COUNT')
+    vmcreate_parser.add_argument('--force', action='store_true', help='Delete existing vm first')
     vmcreate_parser.add_argument('-i', '--image', help='Image to use', metavar='IMAGE')
+    vmcreate_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
     vmcreate_parser.add_argument('--profilefile', help='File to load profiles from', metavar='PROFILEFILE')
     vmcreate_parser.add_argument('-s', '--serial', help='Directly switch to serial console after creation',
                                  action='store_true')
