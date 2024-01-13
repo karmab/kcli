@@ -2167,8 +2167,8 @@ def boot_baremetal_hosts(baremetal_hosts, iso_url, overrides={}, debug=False):
                 red.reset()
                 sleep(240)
             msg = host['name'] if 'name' in host else f"with url {bmc_url}"
-            pprint(f"Booting Host {msg} with {index_iso_url}")
-            if iso_url is not None:
+            if index_iso_url is not None:
+                pprint(f"Booting Host {msg} with {index_iso_url}")
                 try:
                     red.set_iso(index_iso_url)
                 except Exception as e:
@@ -2176,6 +2176,7 @@ def boot_baremetal_hosts(baremetal_hosts, iso_url, overrides={}, debug=False):
                     error(msg)
                     return {'result': 'failure', 'reason': msg}
             else:
+                pprint(f"Booting Host {msg}")
                 red.start()
         else:
             warning(f"Skipping entry {index} because either bmc_url, bmc_user or bmc_password is not set")

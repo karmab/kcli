@@ -492,6 +492,9 @@ baremetal_hosts:
 
 # Start a single host
 $ kcli start baremetal-host -P user=admin -P password=admin 10.10.10.10
+
+# Start a single host with dedicated flags for credentials
+$ kcli start baremetal-host -u admin -p admin 10.10.10.10
 """
 
 stophosts = """# Stop bare metal hosts declared in a parameter file
@@ -507,6 +510,9 @@ baremetal_hosts:
 
 # Stop a single host
 $ kcli stop baremetal-host -P user=admin -P password=admin 10.10.10.10
+
+# Stop a single host with dedicated flags for credentials
+$ kcli stop baremetal-host -u admin -p admin 10.10.10.10
 """
 
 infohosts = """# Report info on Baremetal hosts declared in a parameter file
@@ -522,6 +528,9 @@ baremetal_hosts:
 
 # Report info on a single host
 $ kcli info baremetal-host -P user=admin -P password=admin 10.10.10.10
+
+# Report info on a single host with dedicated flags for credentials
+$ kcli info baremetal-host -u admin -p admin 10.10.10.10
 """
 
 ocdownload = """# Download 4.13 stable

@@ -152,12 +152,12 @@ def start_baremetal_hosts(args):
     iso_url = overrides.get('iso_url')
     baremetal_hosts = [{'url': args.host}] if args.host is not None else overrides.get('baremetal_hosts', [])
     bmc_url = overrides.get('bmc_url') or overrides.get('url')
-    bmc_user = overrides.get('bmc_user') or overrides.get('user') or overrides.get('bmc_username')\
+    user = args.user or overrides.get('bmc_user') or overrides.get('user') or overrides.get('bmc_username')\
         or overrides.get('username') or baseconfig.bmc_user
-    bmc_password = overrides.get('bmc_password') or overrides.get('password') or baseconfig.bmc_password
+    password = args.password or overrides.get('bmc_password') or overrides.get('password') or baseconfig.bmc_password
     if not baremetal_hosts:
         if bmc_url is not None:
-            baremetal_hosts = [{'bmc_url': bmc_url, 'bmc_user': bmc_user, 'bmc_password': bmc_password}]
+            baremetal_hosts = [{'bmc_url': bmc_url, 'bmc_user': user, 'bmc_password': password}]
         else:
             error("Baremetal hosts need to be defined")
             sys.exit(1)
@@ -169,12 +169,12 @@ def stop_baremetal_hosts(args):
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     baremetal_hosts = [{'url': args.host}] if args.host is not None else overrides.get('baremetal_hosts', [])
     bmc_url = overrides.get('bmc_url') or overrides.get('url')
-    bmc_user = overrides.get('bmc_user') or overrides.get('user') or overrides.get('bmc_username')\
+    user = args.user or overrides.get('bmc_user') or overrides.get('user') or overrides.get('bmc_username')\
         or overrides.get('username') or baseconfig.bmc_user
-    bmc_password = overrides.get('bmc_password') or overrides.get('password') or baseconfig.bmc_password
+    password = args.password or overrides.get('bmc_password') or overrides.get('password') or baseconfig.bmc_password
     if not baremetal_hosts:
         if bmc_url is not None:
-            baremetal_hosts = [{'bmc_url': bmc_url, 'bmc_user': bmc_user, 'bmc_password': bmc_password}]
+            baremetal_hosts = [{'bmc_url': bmc_url, 'bmc_user': user, 'bmc_password': password}]
         else:
             error("Baremetal hosts need to be defined")
             sys.exit(1)
@@ -3235,12 +3235,12 @@ def info_baremetal_host(args):
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     baremetal_hosts = [{'url': args.host}] if args.host is not None else overrides.get('baremetal_hosts', [])
     bmc_url = overrides.get('bmc_url') or overrides.get('url')
-    bmc_user = overrides.get('bmc_user') or overrides.get('user') or overrides.get('bmc_username')\
+    user = args.user or overrides.get('bmc_user') or overrides.get('user') or overrides.get('bmc_username')\
         or overrides.get('username') or baseconfig.bmc_user
-    bmc_password = overrides.get('bmc_password') or overrides.get('password') or baseconfig.bmc_password
+    password = args.password or overrides.get('bmc_password') or overrides.get('password') or baseconfig.bmc_password
     if not baremetal_hosts:
         if bmc_url is not None:
-            baremetal_hosts = [{'bmc_url': bmc_url, 'bmc_user': bmc_user, 'bmc_password': bmc_password}]
+            baremetal_hosts = [{'bmc_url': bmc_url, 'bmc_user': user, 'bmc_password': password}]
         else:
             error("Couldnt figure out baremetal_hosts list")
             sys.exit(1)
@@ -4623,6 +4623,8 @@ def cli():
                                                           epilog=baremetalhostinfo_epilog, formatter_class=rawhelp,
                                                           aliases=['baremetal-hosts', 'baremetal', 'bm'])
     baremetalhostinfo_parser.add_argument('-f', '--full', action='store_true', help='Provide entire output')
+    baremetalhostinfo_parser.add_argument('-p', '--password', help='Bmc password')
+    baremetalhostinfo_parser.add_argument('-u', '--user', help='Bmc user')
     baremetalhostinfo_parser.add_argument('host', metavar='HOST', nargs='?')
     baremetalhostinfo_parser.set_defaults(func=info_baremetal_host)
 
@@ -5171,6 +5173,8 @@ def cli():
                                                     parents=[parent_parser], epilog=starthosts_epilog,
                                                     formatter_class=rawhelp,
                                                     aliases=['baremetal-hosts', 'baremetal', 'bm'])
+    starthosts_parser.add_argument('-p', '--password', help='Bmc password')
+    starthosts_parser.add_argument('-u', '--user', help='Bmc user')
     starthosts_parser.add_argument('host', metavar='HOST', nargs='?')
     starthosts_parser.set_defaults(func=start_baremetal_hosts)
 
@@ -5203,6 +5207,8 @@ def cli():
                                                   parents=[parent_parser], epilog=stophosts_epilog,
                                                   formatter_class=rawhelp,
                                                   aliases=['baremetal-hosts', 'baremetal', 'bm'])
+    stophosts_parser.add_argument('-p', '--password', help='Bmc password')
+    stophosts_parser.add_argument('-u', '--user', help='Bmc user')
     stophosts_parser.add_argument('host', metavar='HOST', nargs='?')
     stophosts_parser.set_defaults(func=stop_baremetal_hosts)
 
