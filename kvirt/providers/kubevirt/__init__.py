@@ -113,6 +113,9 @@ class Kubevirt(Kubecommon):
         if image is not None:
             if '/' not in image:
                 image = image.replace('.', '-').replace('_', '-')
+            elif ':' not in image:
+                warning("Adding :latest to image")
+                image += ':latest'
             if image not in self.volumes():
                 if image in ['alpine', 'cirros', 'fedora-cloud']:
                     image = f"kubevirt/{image}-container-disk-demo"
