@@ -1,3 +1,4 @@
+client: kubevirt
 cluster: ci-kubevirt
 domain: karmalabs.corp
 sslip: true
@@ -8,7 +9,7 @@ sslip: true
 tag: "4.15"
 # api_ip: 10.19.135.111
 api_ip: 10.19.32.59
-network: baremetal
+network: br-ex
 ctlplane_memory: 16384
 worker_memory: 16384
 bootstrap_memory: 8192
