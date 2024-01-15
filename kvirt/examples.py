@@ -479,6 +479,24 @@ $ kcli update network mynetwork --domain superdomain.com
 $ kcli update network mynetwork -P plan=newplan
 """
 
+resethosts = """# Reset bare metal hosts declared in a parameter file
+
+$ kcli reset baremetal-hosts --pf baremetal_hosts.yml
+
+baremetal_hosts.yml contains
+bmc_user: admin
+bmc_password: admin
+baremetal_hosts:
+- bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/vm1
+- bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/vm2
+
+# Reset a single host
+$ kcli reset baremetal-host -P user=admin -P password=admin 10.10.10.10
+
+# Reset a single host with dedicated flags for credentials
+$ kcli reset baremetal-host -u admin -p admin 10.10.10.10
+"""
+
 starthosts = """# Start bare metal hosts declared in a parameter file from specific ISO url
 
 $ kcli start baremetal-hosts --pf baremetal_hosts.yml -P iso_url=http://192.168.122.1/my.iso

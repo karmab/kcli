@@ -4,7 +4,7 @@ from base64 import b64encode
 from glob import glob
 from ipaddress import ip_network
 from kvirt.common import success, error, pprint, info2, container_mode, warning, fix_typos
-from kvirt.common import get_oc, pwd_path, get_installer_rhcos, get_ssh_pub_key, boot_baremetal_hosts, olm_app
+from kvirt.common import get_oc, pwd_path, get_installer_rhcos, get_ssh_pub_key, start_baremetal_hosts, olm_app
 from kvirt.common import deploy_cloud_storage
 from kvirt.defaults import OPENSHIFT_TAG
 from kvirt.cluster.openshift import get_ci_installer, get_downstream_installer, get_installer_version
@@ -212,7 +212,7 @@ def scale(config, plandir, cluster, overrides):
                 svcport_cmd = 'oc get svc -n default httpd-kcli-svc -o yaml'
                 svcport = yaml.safe_load(os.popen(svcport_cmd).read())['spec']['ports'][0]['nodePort']
                 iso_url = f'http://{svcip}:{svcport}/{cluster}-worker.iso'
-            boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
+            start_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
             worker_overrides['workers'] = workers - len(new_baremetal_hosts)
     if worker_overrides.get('workers', 2) <= 0:
         return {'result': 'success'}
@@ -780,7 +780,7 @@ def create(config, plandir, cluster, overrides):
                 f.write(json.dumps(new_ignition))
         elif baremetal_iso or baremetal_hosts:
             iso_url = handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts)
-            boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
+            start_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
             data['workers'] = data.get('workers', 2) - len(baremetal_hosts)
     pprint("Waiting for kubeconfig to be available")
     call(f"until oc -n {namespace} get secret {cluster}-admin-kubeconfig >/dev/null 2>&1 ; do sleep 1 ; done",

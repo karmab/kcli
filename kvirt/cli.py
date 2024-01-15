@@ -146,12 +146,11 @@ def get_changelog(args):
     common.get_changelog(args.diff)
 
 
-def start_baremetal_hosts(args):
+def reset_baremetal_hosts(args):
     overrides = handle_parameters(args.param, args.paramfile)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
-    iso_url = overrides.get('iso_url')
-    baremetal_hosts = [{'url': args.host}] if args.host is not None else overrides.get('baremetal_hosts', [])
-    bmc_url = overrides.get('bmc_url') or overrides.get('url')
+    baremetal_hosts = overrides.get('baremetal_hosts', [])
+    bmc_url = args.host or overrides.get('bmc_url') or overrides.get('url')
     user = args.user or overrides.get('bmc_user') or overrides.get('user') or overrides.get('bmc_username')\
         or overrides.get('username') or baseconfig.bmc_user
     password = args.password or overrides.get('bmc_password') or overrides.get('password') or baseconfig.bmc_password
@@ -161,14 +160,32 @@ def start_baremetal_hosts(args):
         else:
             error("Baremetal hosts need to be defined")
             sys.exit(1)
-    common.boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=args.debug)
+    common.reset_baremetal_hosts(baremetal_hosts, overrides=overrides, debug=args.debug)
+
+
+def start_baremetal_hosts(args):
+    overrides = handle_parameters(args.param, args.paramfile)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
+    iso_url = overrides.get('iso_url')
+    baremetal_hosts = overrides.get('baremetal_hosts', [])
+    bmc_url = args.host or overrides.get('bmc_url') or overrides.get('url')
+    user = args.user or overrides.get('bmc_user') or overrides.get('user') or overrides.get('bmc_username')\
+        or overrides.get('username') or baseconfig.bmc_user
+    password = args.password or overrides.get('bmc_password') or overrides.get('password') or baseconfig.bmc_password
+    if not baremetal_hosts:
+        if bmc_url is not None:
+            baremetal_hosts = [{'bmc_url': bmc_url, 'bmc_user': user, 'bmc_password': password}]
+        else:
+            error("Baremetal hosts need to be defined")
+            sys.exit(1)
+    common.start_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=args.debug)
 
 
 def stop_baremetal_hosts(args):
     overrides = handle_parameters(args.param, args.paramfile)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
-    baremetal_hosts = [{'url': args.host}] if args.host is not None else overrides.get('baremetal_hosts', [])
-    bmc_url = overrides.get('bmc_url') or overrides.get('url')
+    baremetal_hosts = overrides.get('baremetal_hosts', [])
+    bmc_url = args.host or overrides.get('bmc_url') or overrides.get('url')
     user = args.user or overrides.get('bmc_user') or overrides.get('user') or overrides.get('bmc_username')\
         or overrides.get('username') or baseconfig.bmc_user
     password = args.password or overrides.get('bmc_password') or overrides.get('password') or baseconfig.bmc_password
@@ -3233,8 +3250,8 @@ def info_baremetal_host(args):
     overrides = handle_parameters(args.param, args.paramfile)
     full = overrides.get('full', args.full)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
-    baremetal_hosts = [{'url': args.host}] if args.host is not None else overrides.get('baremetal_hosts', [])
-    bmc_url = overrides.get('bmc_url') or overrides.get('url')
+    baremetal_hosts = overrides.get('baremetal_hosts', [])
+    bmc_url = args.host or overrides.get('bmc_url') or overrides.get('url')
     user = args.user or overrides.get('bmc_user') or overrides.get('user') or overrides.get('bmc_username')\
         or overrides.get('username') or baseconfig.bmc_user
     password = args.password or overrides.get('bmc_password') or overrides.get('password') or baseconfig.bmc_password
@@ -5025,6 +5042,21 @@ def cli():
     vmrestart_parser.add_argument('names', metavar='VMNAMES', nargs='*')
     vmrestart_parser.set_defaults(func=restart_vm)
 
+    reset_desc = 'Resert Baremetal'
+    reset_parser = subparsers.add_parser('reset', description=reset_desc, help=reset_desc)
+    reset_subparsers = reset_parser.add_subparsers(metavar='', dest='subcommand_resert')
+
+    resethosts_desc = 'Reset Baremetal Hosts'
+    resethosts_epilog = f"examples:\n{examples.resethosts}"
+    resethosts_parser = reset_subparsers.add_parser('baremetal-host', description=resethosts_desc, help=resethosts_desc,
+                                                    parents=[parent_parser], epilog=resethosts_epilog,
+                                                    formatter_class=rawhelp,
+                                                    aliases=['baremetal-hosts', 'baremetal', 'bm'])
+    resethosts_parser.add_argument('-p', '--password', help='Bmc password')
+    resethosts_parser.add_argument('-u', '--user', help='Bmc user')
+    resethosts_parser.add_argument('host', metavar='HOST', nargs='?')
+    resethosts_parser.set_defaults(func=reset_baremetal_hosts)
+
     revert_desc = 'Revert Vm/Plan Snapshot'
     revert_parser = subparsers.add_parser('revert', description=revert_desc, help=revert_desc)
     revert_subparsers = revert_parser.add_subparsers(metavar='', dest='subcommand_revert')
@@ -5150,7 +5182,7 @@ def cli():
     subparsers.add_parser('ssh', parents=[vmssh_parser], description=vmssh_desc, help=vmssh_desc, epilog=vmssh_epilog,
                           formatter_class=rawhelp)
 
-    start_desc = 'Start Vm/Plan/Container'
+    start_desc = 'Start Vm/Plan/Container/Baremetal'
     start_epilog = f"examples:\n{examples.start}"
     start_parser = subparsers.add_parser('start', description=start_desc, help=start_desc, epilog=start_epilog,
                                          formatter_class=rawhelp)
@@ -5185,7 +5217,7 @@ def cli():
     start_subparsers.add_parser('vm', parents=[vmstart_parser], description=vmstart_desc, help=vmstart_desc,
                                 aliases=['vms'])
 
-    stop_desc = 'Stop Vm/Plan/Container'
+    stop_desc = 'Stop Vm/Plan/Container/Baremetal'
     stop_parser = subparsers.add_parser('stop', description=stop_desc, help=stop_desc)
     stop_subparsers = stop_parser.add_subparsers(metavar='', dest='subcommand_stop')
 

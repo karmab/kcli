@@ -9,7 +9,7 @@ from kvirt.common import error, pprint, success, warning, info2, fix_typos
 from kvirt.common import get_oc, pwd_path, get_oc_mirror
 from kvirt.common import get_latest_fcos, generate_rhcos_iso, olm_app, get_commit_rhcos
 from kvirt.common import get_installer_rhcos, wait_cloud_dns, delete_lastvm
-from kvirt.common import ssh, scp, _ssh_credentials, get_ssh_pub_key, boot_baremetal_hosts, separate_yamls
+from kvirt.common import ssh, scp, _ssh_credentials, get_ssh_pub_key, start_baremetal_hosts, separate_yamls
 from kvirt.defaults import LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG
 import os
 import re
@@ -657,7 +657,7 @@ def scale(config, plandir, cluster, overrides):
             svcport_cmd = 'oc get svc -n default httpd-kcli-svc -o yaml'
             svcport = safe_load(os.popen(svcport_cmd).read())['spec']['ports'][0]['nodePort']
             iso_url = f'http://{svcip}:{svcport}/{cluster}-worker.iso'
-        result = boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
+        result = start_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
         if result['result'] != 'success':
             return result
         overrides['workers'] = overrides.get('workers', 0) - len(new_baremetal_hosts)
@@ -1559,7 +1559,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             iso_url = handle_baremetal_iso_sno(config, plandir, cluster, data, baremetal_hosts, iso_pool)
             if len(baremetal_hosts) > 0:
                 overrides['role'] = 'ctlplane' if sno_ctlplanes else 'worker'
-            result = boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
+            result = start_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
             if result['result'] != 'success':
                 return result
         if sno_wait:
@@ -1731,7 +1731,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             if baremetal_hosts:
                 iso_pool = data.get('pool') or config.pool
                 iso_url = handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts, iso_pool)
-                result = boot_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
+                result = start_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
                 if result['result'] != 'success':
                     return result
             if overrides['workers'] > 0:
