@@ -6,21 +6,19 @@ ctlplanes: 3
 workers: 2
 version: nightly
 sslip: true
-tag: "4.15"
+tag: 4.15
 # api_ip: 10.19.135.111
 api_ip: 10.19.32.59
 network: br-ex
-ctlplane_memory: 16384
-worker_memory: 16384
+memory: 16384
 bootstrap_memory: 8192
-disk_size: 40
+disk_size: 100
 extra_disks:
-- 80
+- 100
 numcpus: 16
 async: true
 notify: true
 apps:
-- local-storage-operator
+- lvms-operator
 - odf-operator
-- kubevirt-hyperconverged
 - users
