@@ -20,6 +20,9 @@ apiVersion: v1
 {% if fips %}
 fips: True
 {% endif %}
+{% if cpu_partitioning %}
+CPUPartitioning: AllNodes
+{% endif %}
 {% if minimal_capability or additional_capabilities %}
 capabilities:
   baselineCapabilitySet: None

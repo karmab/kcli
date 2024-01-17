@@ -695,6 +695,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'version': 'stable',
             'macosx': False,
             'fips': False,
+            'cpu_partitioning': False,
             'apps': [],
             'dualstack': False,
             'cluster_network_ipv6': "fd01::/48",
