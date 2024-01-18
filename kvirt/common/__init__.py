@@ -2335,6 +2335,7 @@ def install_provider(provider, pip=False):
             warning("Using pip as this is the only way for this provider")
         cmd = 'pip3 install azure-mgmt-compute azure-mgmt-network azure-mgmt-resource azure-mgmt-core azure-identity'
         cmd += ' azure-mgmt-marketplaceordering azure-storage-blob azure-mgmt-dns azure-mgmt-containerservice'
+        cmd += ' azure-mgmt-authorization azure.mgmt.storage azure.mgmt.msi'
     elif provider == 'gcp':
         if not pip:
             warning("Using pip as this is the only way for this provider")
