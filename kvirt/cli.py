@@ -160,7 +160,8 @@ def reset_baremetal_hosts(args):
         else:
             error("Baremetal hosts need to be defined")
             sys.exit(1)
-    common.reset_baremetal_hosts(baremetal_hosts, overrides=overrides, debug=args.debug)
+    result = common.reset_baremetal_hosts(baremetal_hosts, overrides=overrides, debug=args.debug)
+    sys.exit(0 if result['result'] == 'success' else 1)
 
 
 def start_baremetal_hosts(args):
@@ -178,7 +179,8 @@ def start_baremetal_hosts(args):
         else:
             error("Baremetal hosts need to be defined")
             sys.exit(1)
-    common.start_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=args.debug)
+    result = common.start_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=args.debug)
+    sys.exit(0 if result['result'] == 'success' else 1)
 
 
 def stop_baremetal_hosts(args):
@@ -195,7 +197,8 @@ def stop_baremetal_hosts(args):
         else:
             error("Baremetal hosts need to be defined")
             sys.exit(1)
-    common.stop_baremetal_hosts(baremetal_hosts, overrides=overrides, debug=args.debug)
+    result = common.stop_baremetal_hosts(baremetal_hosts, overrides=overrides, debug=args.debug)
+    sys.exit(0 if result['result'] == 'success' else 1)
 
 
 def start_vm(args):
@@ -3261,7 +3264,8 @@ def info_baremetal_host(args):
         else:
             error("Couldnt figure out baremetal_hosts list")
             sys.exit(1)
-    common.info_baremetal_hosts(baremetal_hosts, overrides=overrides, debug=args.debug, full=full)
+    result = common.info_baremetal_hosts(baremetal_hosts, overrides=overrides, debug=args.debug, full=full)
+    sys.exit(0 if result['result'] == 'success' else 1)
 
 
 def info_host(args):
@@ -3275,10 +3279,7 @@ def switch_host(args):
     host = args.name
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     result = baseconfig.switch_host(host)
-    if result['result'] == 'success':
-        sys.exit(0)
-    else:
-        sys.exit(1)
+    sys.exit(0 if result['result'] == 'success' else 1)
 
 
 def switch_kubeconfig(args):

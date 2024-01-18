@@ -2155,9 +2155,14 @@ def info_baremetal_hosts(baremetal_hosts, overrides={}, debug=False, full=False)
         bmc_password = host.get('password') or host.get('bmc_password') or overrides.get('bmc_password')
         if bmc_url is not None:
             red = Redfish(bmc_url, bmc_user, bmc_password, debug=debug)
-            msg = host['name'] if 'name' in host else f"with url {bmc_url}"
-            pprint(f"Reporting info on Host {msg}")
-            info = red.info()
+            node_name = host['name'] if 'name' in host else f"with url {bmc_url}"
+            pprint(f"Reporting info on Host {node_name}")
+            try:
+                info = red.info()
+            except Exception as e:
+                msg = f'Hit {e} when getting info on host {node_name}'
+                error(msg)
+                return {'result': 'failure', 'reason': msg}
             if full:
                 pretty_print(info)
             else:
@@ -2165,6 +2170,7 @@ def info_baremetal_hosts(baremetal_hosts, overrides={}, debug=False, full=False)
                         'PowerState', 'PartNumber', 'SKU', 'SystemType']
                 data = {key: info[key] for key in keys if key in info}
                 pretty_print(data)
+    return {'result': 'success'}
 
 
 def reset_baremetal_hosts(baremetal_hosts, overrides={}, debug=False):
@@ -2174,9 +2180,15 @@ def reset_baremetal_hosts(baremetal_hosts, overrides={}, debug=False):
         bmc_password = host.get('password') or host.get('bmc_password') or overrides.get('bmc_password')
         if bmc_url is not None:
             red = Redfish(bmc_url, bmc_user, bmc_password, debug=debug)
-            msg = host['name'] if 'name' in host else f"with url {bmc_url}"
-            pprint(f"Resetting Host {msg}")
-            red.reset()
+            node_name = host['name'] if 'name' in host else f"with url {bmc_url}"
+            pprint(f"Resetting Host {node_name}")
+            try:
+                red.reset()
+            except Exception as e:
+                msg = f'Hit {e} when resetting host {node_name}'
+                error(msg)
+                return {'result': 'failure', 'reason': msg}
+    return {'result': 'success'}
 
 
 def start_baremetal_hosts(baremetal_hosts, iso_url, overrides={}, debug=False):
@@ -2197,18 +2209,23 @@ def start_baremetal_hosts(baremetal_hosts, iso_url, overrides={}, debug=False):
             if bmc_reset:
                 red.reset()
                 sleep(240)
-            msg = host['name'] if 'name' in host else f"with url {bmc_url}"
+            node_name = host['name'] if 'name' in host else f"with url {bmc_url}"
             if index_iso_url is not None:
-                pprint(f"Booting Host {msg} with {index_iso_url}")
+                pprint(f"Booting Host {node_name} with {index_iso_url}")
                 try:
                     red.set_iso(index_iso_url)
                 except Exception as e:
-                    msg = f"Hit {e} when plugging iso to host {msg}"
+                    msg = f"Hit {e} when plugging iso to host {node_name}"
                     error(msg)
                     return {'result': 'failure', 'reason': msg}
             else:
-                pprint(f"Booting Host {msg}")
-                red.start()
+                pprint(f"Booting Host {node_name}")
+                try:
+                    red.start()
+                except Exception as e:
+                    msg = f"Hit {e} when starting host {node_name}"
+                    error(msg)
+                    return {'result': 'failure', 'reason': msg}
         else:
             warning(f"Skipping entry {index} because either bmc_url, bmc_user or bmc_password is not set")
     return {'result': 'success'}
@@ -2221,9 +2238,15 @@ def stop_baremetal_hosts(baremetal_hosts, overrides={}, debug=False):
         bmc_password = host.get('password') or host.get('bmc_password') or overrides.get('bmc_password')
         if bmc_url is not None:
             red = Redfish(bmc_url, bmc_user, bmc_password, debug=debug)
-            msg = host['name'] if 'name' in host else f"with url {bmc_url}"
-            pprint(f"Stopping Host {msg}")
-            red.stop()
+            node_name = host['name'] if 'name' in host else f"with url {bmc_url}"
+            pprint(f"Stopping Host {node_name}")
+            try:
+                red.stop()
+            except Exception as e:
+                msg = f'Hit {e} when stopping host {node_name}'
+                error(msg)
+                return {'result': 'failure', 'reason': msg}
+    return {'result': 'success'}
 
 
 def get_changelog(diff, data=False):
