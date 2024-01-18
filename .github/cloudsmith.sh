@@ -13,9 +13,9 @@ fi
 export VERSION="99.0.0.git."
 export MINOR=$(date "+%Y%m%d%H%M").$(git rev-parse --short HEAD)
 find . -name *pyc -exec rm {} \;
-GIT_VERSION="$(curl -s https://github.com/karmab/kcli/commits/main | jq -r .payload.commitGroups[0].commits[0].oid | cut -c1-7) $(date +%Y/%m/%d)"
+GIT_VERSION="$(git ls-remote https://github.com/karmab/kcli | head -1 | cut -c1-7) $(date +%Y/%m/%d)"
 echo $GIT_VERSION > kvirt/version/git
-python3 setup.py --command-packages=stdeb.command sdist_dsc --debian-version $MINOR --depends python3-dateutil,python3-prettytable,python3-libvirt,genisoimage,python3-distutils,jq bdist_deb
+python3 setup.py --command-packages=stdeb.command sdist_dsc --debian-version $MINOR --depends python3-dateutil,python3-prettytable,python3-libvirt,genisoimage,python3-distutils,git bdist_deb
 deb=$(realpath $(find . -name *.deb))
 
 # ugly fix for unknown compression for member 'control.tar.zst'

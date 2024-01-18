@@ -135,7 +135,7 @@ def get_version(args):
         try:
             response = json.loads(urlopen("https://api.github.com/repos/karmab/kcli/commits/main", timeout=5).read())
             upstream_version = response['sha'][:7]
-            update = True if upstream_version != git_version else False
+            update = upstream_version != git_version
         except:
             pass
     full_version += f" Available Updates: {update}"

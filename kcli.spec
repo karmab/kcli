@@ -15,7 +15,7 @@ VCS:            {{{ git_dir_vcs }}}
 Source:         {{{ git_dir_pack }}}
 AutoReq:        no
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
-BuildRequires:  python3-devel rubygem-ronn gzip python3-setuptools jq
+BuildRequires:  python3-devel rubygem-ronn gzip python3-setuptools git
 Requires:       python3 libvirt-python3 genisoimage nmap-ncat python3-prettytable python3-jinja2 python3-PyYAML python3-argcomplete
 
 %description
@@ -32,7 +32,7 @@ sed -i "s/, 'libvirt.*/\]/" setup.py
 INSTALL=$(grep -m 1 INSTALL setup.py  | sed 's/INSTALL = //')
 sed -i "s/install_requires=INSTALL/install_requires=$INSTALL/" setup.py
 sed -i '/INSTALL/d' setup.py
-GIT_VERSION="$(curl -s https://github.com/karmab/kcli/commits/main | jq -r .payload.commitGroups[0].commits[0].oid | cut -c1-7) $(date +%Y/%m/%d)"
+GIT_VERSION="$(git ls-remote https://github.com/karmab/kcli | head -1 | cut -c1-7) $(date +%Y/%m/%d)"
 echo $GIT_VERSION > kvirt/version/git
 %{python3} setup.py build
 
