@@ -7,8 +7,13 @@ spec:
     type: OVNKubernetes
     ovnKubernetesConfig:
       mtu: {{ 1354 if ipsec else mtu }}
-{% if ipsec %}
+{% if ipsec or mode != None %}
+{% if mode != None %}
+      ipsecConfig:
+        mode: {{ mode }}
+{% else %}
       ipsecConfig: {}
+{% endif %}
 {% endif %}
 {% if ovn_hostrouting or relocate %}
       gatewayConfig:

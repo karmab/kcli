@@ -703,6 +703,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'kvm_forcestack': False,
             'kvm_openstack': True,
             'ipsec': False,
+            'ipsec_mode': None,
             'mtu': 1400,
             'ovn_hostrouting': False,
             'manifests': 'manifests',
@@ -834,6 +835,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     disconnected_user = data.get('disconnected_user')
     disconnected_password = data.get('disconnected_password')
     ipsec = data.get('ipsec')
+    ipsec_mode = data.get('ipsec_mode')
     mtu = data.get('mtu')
     ovn_hostrouting = data.get('ovn_hostrouting')
     metal3 = data.get('metal3', False)
@@ -1295,10 +1297,15 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         with open(f"{clusterdir}/cilium.sh", 'w') as f:
             f.write(cilium_script)
         call(f'bash {clusterdir}/cilium.sh', shell=True)
-    if ipsec or ovn_hostrouting or sno_relocate or mtu != 1400:
+    if ipsec or ipsec_mode is not None or ovn_hostrouting or sno_relocate or mtu != 1400:
+        valid_modes = ['Full', 'Disabled', 'External']
+        if ipsec_mode is not None and ipsec_mode not in valid_modes:
+            warning(f"Incorrect ipsec_mode. Choose between {','.join(valid_modes)}")
+            warning("Setting ipsec_mode to Full")
+            ipsec_mode = 'Full'
         ovn_data = config.process_inputfile(cluster, f"{plandir}/99-ovn.yaml",
                                             overrides={'ipsec': ipsec, 'ovn_hostrouting': ovn_hostrouting,
-                                                       'relocate': sno_relocate, 'mtu': mtu})
+                                                       'relocate': sno_relocate, 'mtu': mtu, 'mode': ipsec_mode})
         with open(f"{clusterdir}/openshift/99-ovn.yaml", 'w') as f:
             f.write(ovn_data)
     if workers == 0 or not mdns or kubevirt_api_service:
