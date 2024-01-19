@@ -1635,7 +1635,7 @@ def ignition_version(image):
     return version
 
 
-def get_coreos_installer(version='latest', arch=None):
+def get_coreos_installer(version='v0.17.0-2', arch=None):
     pprint("Downloading coreos-installer in current directory")
     if arch is None and os.path.exists('/Users'):
         error("coreos-installer isn't available on Mac")

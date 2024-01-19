@@ -2435,7 +2435,7 @@ def download_plan(args):
 
 def download_coreos_installer(args):
     overrides = handle_parameters(args.param, args.paramfile)
-    common.get_coreos_installer(version=overrides.get('version', 'latest'), arch=overrides.get('arch'))
+    common.get_coreos_installer(version=overrides.get('version', 'v0.17.0-2'), arch=overrides.get('arch'))
 
 
 def download_kubectl(args):
