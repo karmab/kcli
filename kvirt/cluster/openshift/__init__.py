@@ -1329,12 +1329,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     for f in glob(f"{plandir}/customisation/*.yaml"):
         if '99-ingress-controller.yaml' in f:
             ingressrole = 'master' if workers == 0 or not mdns or kubevirt_api_service else 'worker'
-            if sno:
-                replicas = len(baremetal_hosts) if baremetal_hosts else 1
-            elif workers == 0 or not mdns or kubevirt_api_service:
-                replicas = ctlplanes
-            else:
-                replicas = workers
+            replicas = 1 if sno or len(baremetal_hosts) == 1 else 2
             bm_workers = len(baremetal_hosts) > 0 and workers > 0
             if provider in virt_providers and ((sslip and ingress_ip is None) or worker_localhost_fix or bm_workers):
                 replicas = ctlplanes
