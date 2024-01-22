@@ -20,7 +20,7 @@ def valid_rhn_credentials(config, overrides):
 def create(config, plandir, cluster, overrides, dnsconfig=None):
     data = {'kubetype': 'microshift', 'sslip': True, 'image': 'rhel9', 'pull_secret': 'openshift_pull.json'}
     data.update(overrides)
-    if 'rhel' not in data['image']:
+    if 'rhel' not in data['image'].lower():
         msg = "A rhel image is currently required for deployment"
         return {'result': 'failure', 'reason': msg}
     if not valid_rhn_credentials(config, overrides):

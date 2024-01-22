@@ -2,7 +2,7 @@
 {{ cluster }}-{{ number }}:
  domain: {{ domain }}
  image: {{ image }}
- rhnregister: {{ 'rhel' in image }}
+ rhnregister: {{ 'rhel' in image|lower }}
  noname: {{ noname }}
  disks: {{ [disk_size] + extra_disks }}
  nets: [{{ network }}] 
