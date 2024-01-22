@@ -1002,7 +1002,7 @@ def get_user(image):
         user = 'cirros'
     elif [x for x in UBUNTUS if x in image.lower()] or 'ubuntu' in image.lower():
         user = 'ubuntu'
-    elif 'rhel' in image.lower() and image.count(':') < 2:
+    elif 'rhel' in image.lower() and not image.startswith('RHEL-'):
         user = 'cloud-user'
     elif 'debian' in image.lower():
         user = 'debian'
