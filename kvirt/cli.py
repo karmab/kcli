@@ -1716,7 +1716,7 @@ def delete_dns(args):
     names = args.names
     net = args.net
     allentries = args.all
-    domain = args.domain if args.domain is not None else net
+    domain = args.domain or net
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     for name in names:

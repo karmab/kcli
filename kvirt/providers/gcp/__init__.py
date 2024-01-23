@@ -1281,6 +1281,11 @@ class Kgcp(object):
             cluster = fqdn.split('-')[0]
             name = '.'.join(fqdn.split('.')[:1])
             domain = fqdn.replace(f"{name}.", '').replace(f"{cluster}.", '')
+        if domain is None and (name.startswith('apps.') or name.startswith('api.')):
+            split = name.split('.')
+            domain = '.'.join(split[2:])
+            name = name.replace(f'.{domain}', '')
+            pprint(f"Using domain {domain}")
         dnszones = [z for z in client.list_zones() if z.dns_name == f"{domain}." or z.name == domain]
         if not dnszones:
             error(f"Domain {domain} not found")
@@ -1352,6 +1357,11 @@ class Kgcp(object):
             cluster = fqdn.split('-')[0]
             name = '.'.join(fqdn.split('.')[:1])
             domain = fqdn.replace(f"{name}.", '').replace(f"{cluster}.", '')
+        if domain is None and (name.startswith('apps.') or name.startswith('api.')):
+            split = name.split('.')
+            domain = '.'.join(split[2:])
+            name = name.replace(f'.{domain}', '')
+            pprint(f"Using domain {domain}")
         dnszones = [z for z in client.list_zones() if z.dns_name == f"{domain}." or z.name == domain]
         if not dnszones:
             return
@@ -1555,6 +1565,7 @@ class Kgcp(object):
         if domain is not None:
             if dnsclient is not None:
                 return ip
+            pprint(f"Creating DNS {name}.{domain}")
             self.reserve_dns(name, ip=ip, domain=domain, alias=alias)
         return {'result': 'success'}
 
@@ -1601,8 +1612,11 @@ class Kgcp(object):
             address = conn_beta.addresses().get(project=project, region=region, address=name).execute()
             if 'labels' in address and 'domain' in address['labels'] and 'dnsclient' not in address['labels']:
                 domain = address["labels"]["domain"].replace('-', '.')
+                dns_name = name
+                if name.startswith('api-') or name.startswith('apps-'):
+                    dns_name = name.replace('api-', 'api.').replace('apps-', 'apps.')
                 pprint(f"Deleting DNS {name}.{domain}")
-                self.delete_dns(name, domain=domain)
+                self.delete_dns(dns_name, domain=domain)
             pprint(f"Deleting address {name}")
             operation = conn.addresses().delete(project=project, region=region, address=name).execute()
             self._wait_for_operation(operation)
