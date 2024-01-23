@@ -3416,7 +3416,7 @@ def create_subnet(args):
     isolated = overrides.get('isolated') or args.isolated
     network = overrides.get('network') or args.network
     if network is None and '-' in name:
-        network = name.split('-')[0]
+        network = name.replace(f'-{name.split("-")[-1]}', '')
     if network is not None:
         overrides['network'] = network
     cidr = overrides.get('cidr') or args.cidr
