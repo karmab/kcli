@@ -655,10 +655,11 @@ def create(config, plandir, cluster, overrides):
         if version in ['ci', 'nightly']:
             nightly = version == 'nigthly'
             run = get_ci_installer(pull_secret, tag=tag, nightly=nightly)
-        elif version == 'dev-preview':
-            run = get_downstream_installer(devpreview=True, tag=tag, pull_secret=pull_secret)
+        elif version in ['dev-preview', 'stable', 'latest']:
+            run = get_downstream_installer(version=version, tag=tag, pull_secret=pull_secret)
         else:
-            run = get_downstream_installer(tag=tag, pull_secret=pull_secret)
+            msg = f"Invalid version {version}"
+            return {'result': 'failure', 'reason': msg}
         if run != 0:
             msg = "Couldn't download openshift-install"
             return {'result': 'failure', 'reason': msg}

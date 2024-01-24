@@ -1338,11 +1338,12 @@ class Kbaseconfig:
         elif version in ['ci', 'nightly']:
             nightly = version == 'nightly'
             run = openshift.get_ci_installer(pull_secret, tag=tag, macosx=macosx, debug=self.debug, nightly=nightly)
-        elif version == 'dev-preview':
-            run = openshift.get_downstream_installer(devpreview=True, tag=tag, macosx=macosx, debug=self.debug,
+        elif version in ['dev-preview', 'stable', 'latest']:
+            run = openshift.get_downstream_installer(version=version, tag=tag, macosx=macosx, debug=self.debug,
                                                      pull_secret=pull_secret)
         else:
-            run = openshift.get_downstream_installer(tag=tag, macosx=macosx, debug=self.debug, pull_secret=pull_secret)
+            error(f"Invalid version {version}")
+            return 1
         if run != 0:
             error("Couldn't download openshift-install")
         return run

@@ -288,7 +288,8 @@ def offline_image(version='stable', tag='4.14', pull_secret='openshift_pull.json
         return offline
     ocp_repo = 'ocp-dev-preview' if version == 'dev-preview' else 'ocp'
     if version in ['dev-preview', 'stable']:
-        target = tag if len(str(tag).split('.')) > 2 else f'latest-{tag}'
+        baselink = 'stable' if version == 'stable' else 'latest'
+        target = tag if len(str(tag).split('.')) > 2 else f'{baselink}-{tag}'
         url = f"https://mirror.openshift.com/pub/openshift-v4/clients/{ocp_repo}/{target}/release.txt"
     elif version == 'latest':
         url = f"https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{version}-{tag}/release.txt"
@@ -332,13 +333,15 @@ def get_release_image():
     return release_image
 
 
-def get_downstream_installer(devpreview=False, macosx=False, tag=None, debug=False, pull_secret='openshift_pull.json'):
+def get_downstream_installer(version='stable', macosx=False, tag=None, debug=False,
+                             pull_secret='openshift_pull.json'):
     arch = 'arm64' if os.uname().machine == 'aarch64' else None
-    repo = 'ocp-dev-preview' if devpreview else 'ocp'
+    repo = 'ocp-dev-preview' if version == 'dev-preview' else 'ocp'
     if tag is None:
-        repo += '/latest'
+        repo += '/{version}'
     elif str(tag).count('.') == 1:
-        repo += f'/latest-{tag}'
+        baselink = 'stable' if version == 'stable' else 'latest'
+        repo += f'/{baselink}-{tag}'
     else:
         repo += f"/{tag.replace('-x86_64', '')}"
     INSTALLSYSTEM = 'mac' if os.path.exists('/Users') or macosx else 'linux'
@@ -1001,10 +1004,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if version in ['ci', 'nightly'] or '/' in str(tag):
             nightly = version == 'nightly'
             run = get_ci_installer(pull_secret, tag=tag, nightly=nightly)
-        elif version == 'dev-preview':
-            run = get_downstream_installer(devpreview=True, tag=tag, pull_secret=pull_secret)
+        elif version in ['dev-preview', 'stable', 'latest']:
+            run = get_downstream_installer(version=version, tag=tag, pull_secret=pull_secret)
         else:
-            run = get_downstream_installer(tag=tag, pull_secret=pull_secret)
+            msg = f"Invalid version {version}"
+            return {'result': 'failure', 'reason': msg}
         if run != 0:
             msg = "Couldn't download openshift-install"
             return {'result': 'failure', 'reason': msg}
