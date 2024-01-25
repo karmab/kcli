@@ -1342,13 +1342,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     for f in glob(f"{plandir}/customisation/*.yaml"):
         if '99-ingress-controller.yaml' in f:
             ingressrole = 'master' if workers == 0 or not mdns or kubevirt_api_service else 'worker'
-            # replicas = 1 if sno or len(baremetal_hosts) == 1 else 2
-            if sno:
-                replicas = len(baremetal_hosts) if baremetal_hosts else 1
-            elif workers == 0 or not mdns or kubevirt_api_service:
-                replicas = ctlplanes
-            else:
-                replicas = workers
+            replicas = 1 if sno or len(baremetal_hosts) == 1 else 2
             bm_workers = len(baremetal_hosts) > 0 and workers > 0
             if provider in virt_providers and ((sslip and ingress_ip is None) or worker_localhost_fix or bm_workers):
                 replicas = ctlplanes
@@ -1359,6 +1353,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                                                                             'cluster': cluster, 'domain': domain})
             with open(f"{clusterdir}/openshift/99-ingress-controller.yaml", 'w') as _f:
                 _f.write(ingressconfig)
+            continue
+        if '99-iptables.yaml' in f:
+            if provider not in cloud_providers and workers == 0:
+                iptablesdata = config.process_inputfile(cluster, f, overrides={'ip': ingress_ip or api_ip})
+                with open(f"{clusterdir}/openshift/99-iptables.yaml", 'w') as _f:
+                    _f.write(iptablesdata)
             continue
         if '99-autoapprovercron-cronjob.yaml' in f:
             crondata = config.process_inputfile(cluster, f, overrides=cron_overrides)
@@ -1412,12 +1412,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         with open(f"{clusterdir}/openshift/99-apps.yaml", 'w') as _f:
             _f.write(appsfile)
     if ctlplane_localhost_fix:
-        localctlplane = config.process_inputfile(cluster, f"{plandir}/99-localhost-fix.yaml",
+        localctlplane = config.process_inputfile(cluster, f"{plandir}/20-localhost-fix.yaml",
                                                  overrides={'role': 'master'})
-        with open(f"{clusterdir}/openshift/99-localhost-fix-ctlplane.yaml", 'w') as _f:
+        with open(f"{clusterdir}/openshift/20-localhost-fix-ctlplane.yaml", 'w') as _f:
             _f.write(localctlplane)
     if worker_localhost_fix:
-        localworker = config.process_inputfile(cluster, f"{plandir}/99-localhost-fix.yaml",
+        localworker = config.process_inputfile(cluster, f"{plandir}/20-localhost-fix.yaml",
                                                overrides={'role': 'worker'})
         with open(f"{clusterdir}/openshift/99-localhost-fix-worker.yaml", 'w') as _f:
             _f.write(localworker)
