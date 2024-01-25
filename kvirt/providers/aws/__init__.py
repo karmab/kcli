@@ -1382,8 +1382,12 @@ class Kaws(object):
         zoneid = zone[0]
         dnsentry = name if cluster is None else f"{name}.{cluster}"
         entry = f"{dnsentry}.{domain}."
-        if entry.startswith('api-') or entry.startswith('apps-'):
-            entry = entry.replace('api-int-', 'api-int.').replace('api-', 'api.').replace('apps-', 'apps.')
+        if entry.startswith('api-int'):
+            entry = entry.replace('api-int-', 'api-int.')
+        elif entry.startswith('api-'):
+            entry = entry.replace('api-', 'api.')
+        elif entry.startswith('apps-'):
+            entry = entry.replace('apps-', 'apps.')
         recs = []
         clusterdomain = f"{cluster}.{domain}"
         for record in dns.list_resource_record_sets(HostedZoneId=zoneid)['ResourceRecordSets']:
