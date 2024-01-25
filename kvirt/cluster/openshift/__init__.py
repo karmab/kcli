@@ -334,7 +334,15 @@ def get_release_image():
 
 
 def get_downstream_installer(version='stable', macosx=False, tag=None, debug=False,
-                             pull_secret='openshift_pull.json'):
+                             pull_secret='openshift_pull.json', baremetal=False):
+    if baremetal:
+        offline = offline_image(version=version, tag=tag, pull_secret=pull_secret)
+        binary = 'openshift-baremetal-install'
+        cmd = f"oc adm release extract --registry-config {pull_secret} --command={binary} --to . {offline}"
+        cmd += "; chmod 700 openshift-baremetal-install"
+        if debug:
+            pprint(cmd)
+        return call(cmd, shell=True)
     arch = 'arm64' if os.uname().machine == 'aarch64' else None
     repo = 'ocp-dev-preview' if version == 'dev-preview' else 'ocp'
     if tag is None:
@@ -393,7 +401,7 @@ def get_upstream_installer(tag, version='stable', debug=False):
     return call(cmd, shell=True)
 
 
-def get_ci_installer(pull_secret, tag=None, macosx=False, debug=False, nightly=False):
+def get_ci_installer(pull_secret, tag=None, macosx=False, debug=False, nightly=False, baremetal=False):
     arch = 'arm64' if os.uname().machine == 'aarch64' else None
     base = 'openshift'
     if 'registry.ci.openshift.org' not in open(os.path.expanduser(pull_secret)).read():
@@ -422,8 +430,9 @@ def get_ci_installer(pull_secret, tag=None, macosx=False, debug=False, nightly=F
     os.environ['OPENSHIFT_RELEASE_IMAGE'] = tag
     msg = f'Downloading openshift-install {tag} in current directory'
     pprint(msg)
-    cmd = f"oc adm release extract --registry-config {pull_secret} --command=openshift-install --to . {tag}"
-    cmd += "; chmod 700 openshift-install"
+    binary = 'openshift-baremetal-install' if baremetal else 'openshift-install'
+    cmd = f"oc adm release extract --registry-config {pull_secret} --command={binary} --to . {tag}"
+    cmd += f"; chmod 700 {binary}"
     if debug:
         pprint(cmd)
     return call(cmd, shell=True)

@@ -1331,16 +1331,18 @@ class Kbaseconfig:
         pull_secret = overrides.get('pull_secret', 'openshift_pull.json')
         version = overrides.get('version', 'stable')
         upstream = overrides.get('upstream', False)
+        baremetal = overrides.get('baremetal', False)
         tag = overrides.get('tag', kdefaults.OPENSHIFT_TAG)
         macosx = os.path.exists('/Users')
         if upstream:
             run = openshift.get_upstream_installer(tag, version=version, debug=self.debug)
         elif version in ['ci', 'nightly']:
             nightly = version == 'nightly'
-            run = openshift.get_ci_installer(pull_secret, tag=tag, macosx=macosx, debug=self.debug, nightly=nightly)
+            run = openshift.get_ci_installer(pull_secret, tag=tag, macosx=macosx, debug=self.debug, nightly=nightly,
+                                             baremetal=baremetal)
         elif version in ['dev-preview', 'stable', 'latest']:
             run = openshift.get_downstream_installer(version=version, tag=tag, macosx=macosx, debug=self.debug,
-                                                     pull_secret=pull_secret)
+                                                     pull_secret=pull_secret, baremetal=baremetal)
         else:
             error(f"Invalid version {version}")
             return 1
