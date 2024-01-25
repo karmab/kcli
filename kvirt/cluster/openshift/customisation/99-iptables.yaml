@@ -1,0 +1,26 @@
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  name: 99-iptables
+  labels:
+    machineconfiguration.openshift.io/role: master
+spec:
+  config:
+    ignition:
+      version: 3.2.0
+    systemd:
+      units:
+      - name: iptables-redirect.service
+        enabled: true
+        contents: |
+          [Unit]
+          Description=Redirects ingress to haproxy
+          Wants=network-online.target
+          After=network-online.target ignition-firstboot-complete.service
+          Before=kubelet.service crio.service
+          [Service]
+          Type=oneshot
+          ExecStart=/bin/bash -c "iptables -t nat -I PREROUTING -d {{ ip }} -p tcp --dport 80 -j REDIRECT --to-port 8000 -m comment --comment KCLI_REDIRECT ; iptables -t nat -I PREROUTING -d {{ ip }} -p tcp --dport 443 -j REDIRECT --to-port 1443 -m comment --comment KCLI_REDIRECT"
+          [Install]
+          WantedBy=multi-user.target
+
