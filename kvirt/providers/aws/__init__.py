@@ -1486,9 +1486,11 @@ class Kaws(object):
                         'InstancePort': port}
             Listeners.append(Listener)
         clean_name = name.replace('.', '-')
-        sg_data = {'GroupName': name, 'Description': name, 'VpcId': vpc_id}
-        sg = resource.create_security_group(**sg_data)
-        sg_id = sg.id
+        sg_id = self.get_security_group_id(name, vpc_id)
+        if sg_id is None:
+            sg_data = {'GroupName': name, 'Description': name, 'VpcId': vpc_id}
+            sg = resource.create_security_group(**sg_data)
+            sg_id = sg.id
         sgtags = [{"Key": "Name", "Value": name}]
         sg.create_tags(Tags=sgtags)
         for port in list(set(ports + [checkport])):
