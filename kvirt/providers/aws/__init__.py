@@ -1490,11 +1490,11 @@ class Kaws(object):
         if sg_id is None:
             sg_data = {'GroupName': name, 'Description': name, 'VpcId': vpc_id}
             sg = resource.create_security_group(**sg_data)
+            sgtags = [{"Key": "Name", "Value": name}]
+            sg.create_tags(Tags=sgtags)
             sg_id = sg.id
-        sgtags = [{"Key": "Name", "Value": name}]
-        sg.create_tags(Tags=sgtags)
-        for port in list(set(ports + [checkport])):
-            sg.authorize_ingress(GroupId=sg_id, FromPort=port, ToPort=port, IpProtocol='tcp', CidrIp="0.0.0.0/0")
+            for port in list(set(ports + [checkport])):
+                sg.authorize_ingress(GroupId=sg_id, FromPort=port, ToPort=port, IpProtocol='tcp', CidrIp="0.0.0.0/0")
         lbinfo = {"LoadBalancerName": clean_name, "Listeners": Listeners, "SecurityGroups": [sg_id],
                   'Subnets': lb_subnets}
         lbinfo['Scheme'] = 'internal' if internal else 'internet-facing'
