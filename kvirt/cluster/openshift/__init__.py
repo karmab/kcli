@@ -1356,7 +1356,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             continue
         if '99-iptables.yaml' in f:
             if provider not in cloud_providers and not sno:
-                iptablesdata = config.process_inputfile(cluster, f, overrides={'ip': ingress_ip or api_ip})
+                ip = ingress_ip or api_ip
+                iptables = 'ip6tables' if ':' in ip else 'iptables'
+                iptables_overrides = {'ip': ip, 'iptables': iptables}
+                iptablesdata = config.process_inputfile(cluster, f, overrides=iptables_overrides)
                 with open(f"{clusterdir}/openshift/99-iptables.yaml", 'w') as _f:
                     _f.write(iptablesdata)
             continue
