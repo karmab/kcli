@@ -1399,7 +1399,7 @@ class Kaws(object):
             else:
                 if 'ResourceRecords' in record:
                     for rrdata in record['ResourceRecords']:
-                        if name in rrdata['Value']:
+                        if entry in rrdata['Value']:
                             recs.append(record)
         if recs:
             changes = [{'Action': 'DELETE', 'ResourceRecordSet': record} for record in recs]
