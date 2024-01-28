@@ -400,6 +400,9 @@ class Kaws(object):
                     'KeyName': keypair, 'BlockDeviceMappings': blockdevicemappings,
                     'NetworkInterfaces': networkinterfaces, 'UserData': userdata,
                     'TagSpecifications': vmtags}
+            sourcedestcheck = overrides.get('SourceDestCheck', False) or overrides.get('router', False)
+            if sourcedestcheck:
+                data['SourceDestCheck'] = True
             if az is not None:
                 data['Placement'] = {'AvailabilityZone': az}
             response = conn.run_instances(**data)
