@@ -630,7 +630,7 @@ class Kaws(object):
         state = vm['State']['Name']
         amid = vm['ImageId']
         az = vm['Placement']['AvailabilityZone']
-        yamlinfo['vpcid'] = vm['VpcId']
+        yamlinfo['vpcid'] = vm.get('VpcId', 'N/A')
         image = resource.Image(amid)
         source = os.path.basename(image.image_location)
         yamlinfo['plan'] = ''
