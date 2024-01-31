@@ -1530,6 +1530,7 @@ def create_vm(args):
             pprint(f"Using {name} as name of the vm")
     elif args.force:
         try:
+            pprint(f"Deleting {name} on config.client")
             config.k.delete(name)
         except:
             pass
