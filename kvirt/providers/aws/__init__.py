@@ -124,6 +124,7 @@ class Kaws(object):
                 Filters = [{'Name': _filter, 'Values': [image]}]
             images = conn.describe_images(Filters=Filters)
             if 'Images' in images and images['Images']:
+                minimal_disksize = images['Images'][0]['BlockDeviceMappings'][0]['Ebs']['VolumeSize']
                 imageinfo = images['Images'][0]
                 imageid = imageinfo['ImageId']
                 if _filter == 'name':
@@ -339,6 +340,8 @@ class Kaws(object):
                 disksize = int(disk)
             elif isinstance(disk, dict):
                 disksize = int(disk.get('size', 10))
+                if index == 0 and disksize < minimal_disksize:
+                    disksize = minimal_disksize
                 blockdevicemapping['Ebs']['VolumeType'] = disk.get('type', 'standard')
             blockdevicemapping['Ebs']['VolumeSize'] = disksize
             blockdevicemappings.append(blockdevicemapping)
