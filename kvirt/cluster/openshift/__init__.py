@@ -1589,6 +1589,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             iso_url = handle_baremetal_iso_sno(config, plandir, cluster, data, baremetal_hosts, iso_pool)
             if len(baremetal_hosts) > 0:
                 overrides['role'] = 'ctlplane' if sno_ctlplanes else 'worker'
+            if 'secureboot' in overrides or [h for h in baremetal_hosts if 'secureboot' in h or 'bmc_secureboot' in h]:
+                result = update_baremetal_hosts(baremetal_hosts, overrides=overrides, debug=config.debug)
+                if result['result'] != 'success':
+                    return result
             result = start_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
             if result['result'] != 'success':
                 return result
