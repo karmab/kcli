@@ -112,6 +112,7 @@ ctlplane_localhost_fix: false
 worker_localhost_fix: false
 sno: false
 sno_disk:
+sno_debug: false
 sno_cloud_remove_lb: true
 sno_disable_nics: []
 sno_ctplanes: false

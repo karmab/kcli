@@ -11,7 +11,11 @@ for pv in $(pvs -o name --noheadings) ; do pvremove -y $pv ; done
 {% if sno_disk != None %}
 install_device={{ '/dev/%s' % sno_disk|basename if '/dev/' not in sno_disk else sno_disk }}
 {% else %}
-install_device=/dev/$(lsblk | grep disk | head -1 | cut -d" " -f1)
+install_device=$(lsblk -r | grep rhcos | head -1 | cut -d" " -f1 | sed 's/[0-9]\+$//')
+if [ -z $install_device ] ; then
+install_device=$(lsblk | grep disk | head -1 | cut -d" " -f1)
+fi
+install_device=/dev/$(install_device)
 {% endif %}
 if [ ! -b $install_device ]; then
   echo "Can't find appropriate device to install to. $install_device not found"
@@ -40,4 +44,6 @@ if [ -d /sys/firmware/efi ] ; then
  efibootmgr -d ${install_device} -p 2 -c -L RHCOS -l \\EFI\\BOOT\\BOOTX64.EFI
 fi
 
+{% if not sno_debug %}
 shutdown -r now "Bootstrap completed, restarting node"
+{% endif %}

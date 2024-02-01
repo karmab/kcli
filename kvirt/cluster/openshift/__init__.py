@@ -729,6 +729,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'worker_localhost_fix': False,
             'sno': False,
             'sno_disk': None,
+            'sno_debug': False,
             'sno_ctlplanes': False,
             'sno_workers': False,
             'sno_wait': False,
