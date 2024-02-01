@@ -139,7 +139,7 @@ You can update kcli using the same mechanism used for installation
 For rhel based OS (*fedora*/*rhel or centos*), you can run this:
 
 ```bash
-sudo sudo dnf -y install kcli
+sudo dnf -y install kcli
 ```
 
 If using a debian based distribution:

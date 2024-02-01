@@ -148,7 +148,7 @@ For rhel based OS (*fedora*/*rhel or centos*), you can run this:
 
 .. code:: bash
 
-   sudo sudo dnf -y install kcli
+   sudo dnf -y install kcli
 
 If using a debian based distribution:
 
