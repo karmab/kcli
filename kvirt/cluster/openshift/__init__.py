@@ -9,7 +9,8 @@ from kvirt.common import error, pprint, success, warning, info2, fix_typos
 from kvirt.common import get_oc, pwd_path, get_oc_mirror
 from kvirt.common import get_latest_fcos, generate_rhcos_iso, olm_app, get_commit_rhcos
 from kvirt.common import get_installer_rhcos, wait_cloud_dns, delete_lastvm
-from kvirt.common import ssh, scp, _ssh_credentials, get_ssh_pub_key, start_baremetal_hosts, separate_yamls
+from kvirt.common import ssh, scp, _ssh_credentials, get_ssh_pub_key, separate_yamls
+from kvirt.common import start_baremetal_hosts, update_baremetal_hosts
 from kvirt.defaults import LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG
 import os
 import re
@@ -669,6 +670,10 @@ def scale(config, plandir, cluster, overrides):
             svcport_cmd = 'oc get svc -n default httpd-kcli-svc -o yaml'
             svcport = safe_load(os.popen(svcport_cmd).read())['spec']['ports'][0]['nodePort']
             iso_url = f'http://{svcip}:{svcport}/{cluster}-worker.iso'
+        if 'secureboot' in overrides or [h for h in baremetal_hosts if 'secureboot' in h or 'bmc_secureboot' in h]:
+            result = update_baremetal_hosts(baremetal_hosts, overrides=overrides, debug=config.debug)
+            if result['result'] != 'success':
+                return result
         result = start_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
         if result['result'] != 'success':
             return result

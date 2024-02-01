@@ -2251,6 +2251,32 @@ def stop_baremetal_hosts(baremetal_hosts, overrides={}, debug=False):
     return {'result': 'success'}
 
 
+def update_baremetal_hosts(baremetal_hosts, overrides={}, debug=False):
+    for index, host in enumerate(baremetal_hosts):
+        bmc_url = host.get('url') or host.get('bmc_url')
+        bmc_user = host.get('username') or host.get('user') or host.get('bmc_username') or host.get('bmc_user')\
+            or overrides.get('bmc_user') or overrides.get('bmc_username')\
+            or overrides.get('user') or overrides.get('username')
+        bmc_password = host.get('password') or host.get('bmc_password') or overrides.get('bmc_password')
+        secureboot = host.get('secureboot') or host.get('bmc_secureboot') or overrides.get('secureboot')
+        if bmc_url is not None and secureboot is not None:
+            red = Redfish(bmc_url, bmc_user, bmc_password, debug=debug)
+            node_name = host['name'] if 'name' in host else f"with url {bmc_url}"
+            pprint(f"Updating secureboot in Host {node_name}")
+            try:
+                if secureboot:
+                    red.enable_secureboot()
+                else:
+                    red.disable_secureboot()
+            except Exception as e:
+                msg = f"Hit {e} when updating secureboot in host {node_name}"
+                error(msg)
+                return {'result': 'failure', 'reason': msg}
+        else:
+            warning(f"Skipping entry {index} because either bmc_url, bmc_user or bmc_password is not set")
+    return {'result': 'success'}
+
+
 def get_changelog(diff, data=False):
     if which('git') is None:
         error("git needed for this functionality")

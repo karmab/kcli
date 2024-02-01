@@ -551,6 +551,24 @@ $ kcli info baremetal-host -P user=admin -P password=admin 10.10.10.10
 $ kcli info baremetal-host -u admin -p admin 10.10.10.10
 """
 
+updatehosts = """# Update bare metal hosts declared in a parameter file
+
+$ kcli update baremetal-hosts --pf baremetal_hosts.yml -P secureboot=true
+
+baremetal_hosts.yml contains
+bmc_user: admin
+bmc_password: admin
+baremetal_hosts:
+- bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/vm1
+- bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/vm2
+
+# Update a single host
+$ kcli update baremetal-host -P user=admin -P password=admin 10.10.10.10 -P secureboot=true
+
+# Update a single host with dedicated flags for credentials
+$ kcli update baremetal-host -u admin -p admin 10.10.10.10 -P secureboot=true
+"""
+
 ocdownload = """# Download 4.13 stable
 $ kcli download oc -P version=stable -P tag=4.13
 

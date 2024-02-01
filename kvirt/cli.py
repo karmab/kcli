@@ -201,6 +201,24 @@ def stop_baremetal_hosts(args):
     sys.exit(0 if result['result'] == 'success' else 1)
 
 
+def update_baremetal_hosts(args):
+    overrides = handle_parameters(args.param, args.paramfile)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
+    baremetal_hosts = overrides.get('baremetal_hosts', [])
+    bmc_url = args.host or overrides.get('bmc_url') or overrides.get('url')
+    user = args.user or overrides.get('bmc_user') or overrides.get('user') or overrides.get('bmc_username')\
+        or overrides.get('username') or baseconfig.bmc_user
+    password = args.password or overrides.get('bmc_password') or overrides.get('password') or baseconfig.bmc_password
+    if not baremetal_hosts:
+        if bmc_url is not None:
+            baremetal_hosts = [{'bmc_url': bmc_url, 'bmc_user': user, 'bmc_password': password}]
+        else:
+            error("Baremetal hosts need to be defined")
+            sys.exit(1)
+    result = common.update_baremetal_hosts(baremetal_hosts, overrides=overrides, debug=args.debug)
+    sys.exit(0 if result['result'] == 'success' else 1)
+
+
 def start_vm(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     names = [common.get_lastvm(config.client)] if not args.names else args.names
@@ -5287,6 +5305,17 @@ def cli():
     update_desc = 'Update Vm/Plan/Repo'
     update_parser = subparsers.add_parser('update', description=update_desc, help=update_desc)
     update_subparsers = update_parser.add_subparsers(metavar='', dest='subcommand_update')
+
+    updatehosts_desc = 'Update Baremetal Hosts'
+    updatehosts_epilog = f"examples:\n{examples.updatehosts}"
+    updatehosts_parser = update_subparsers.add_parser('baremetal-host', description=updatehosts_desc,
+                                                      help=updatehosts_desc, parents=[parent_parser],
+                                                      epilog=updatehosts_epilog, formatter_class=rawhelp,
+                                                      aliases=['baremetal-hosts', 'baremetal', 'bm'])
+    updatehosts_parser.add_argument('-p', '--password', help='Bmc password')
+    updatehosts_parser.add_argument('-u', '--user', help='Bmc user')
+    updatehosts_parser.add_argument('host', metavar='HOST', nargs='?')
+    updatehosts_parser.set_defaults(func=update_baremetal_hosts)
 
     clusterprofileupdate_desc = 'Update Clusterprofile'
     clusterprofileupdate_parser = update_subparsers.add_parser('clusterprofile', description=clusterprofileupdate_desc,

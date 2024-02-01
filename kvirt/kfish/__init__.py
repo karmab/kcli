@@ -222,3 +222,33 @@ class Redfish(object):
         except:
             self.set_iso_once()
         self.restart()
+
+    def enable_secureboot(self):
+        secureboot_url = f"{self.url}/SecureBoot"
+        request = Request(secureboot_url, headers=self.headers)
+        response = json.loads(urlopen(request).read())
+        enabled = response['SecureBootEnable']
+        if enabled:
+            print("secureboot already enabled")
+            return
+        data = {"SecureBootEnable": True}
+        if self.debug:
+            print(f"Sending PATCH to {secureboot_url} with data {data}")
+        data = json.dumps(data).encode('utf-8')
+        request = Request(secureboot_url, headers=self.headers, method='PATCH', data=data)
+        return urlopen(request)
+
+    def disable_secureboot(self):
+        secureboot_url = f"{self.url}/SecureBoot"
+        request = Request(secureboot_url, headers=self.headers)
+        response = json.loads(urlopen(request).read())
+        enabled = response['SecureBootEnable']
+        if not enabled:
+            print("secureboot already disabled")
+            return
+        data = {"SecureBootEnable": False}
+        if self.debug:
+            print(f"Sending PATCH to {secureboot_url} with data {data}")
+        data = json.dumps(data).encode('utf-8')
+        request = Request(secureboot_url, headers=self.headers, method='PATCH', data=data)
+        return urlopen(request)
