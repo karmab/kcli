@@ -414,6 +414,10 @@ class Kgcp(object):
                                               'enableSecureBoot': secureboot}
         if 'confidential' in overrides and overrides['confidential']:
             body['confidentialInstanceConfig'] = {'enableConfidentialCompute': True}
+        if overrides.get('spot', False):
+            if 'scheduling' not in body:
+                body['scheduling'] = {}
+            body['scheduling']['provisioningModel'] = 'SPOT'
         try:
             conn.instances().insert(project=project, zone=zone, body=body).execute()
         except Exception as e:
