@@ -1350,7 +1350,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             ingressrole = 'master' if workers == 0 or not mdns or kubevirt_api_service else 'worker'
             replicas = 1 if sno or len(baremetal_hosts) == 1 else 2
             bm_workers = len(baremetal_hosts) > 0 and workers > 0
-            if provider in virt_providers and ((sslip and ingress_ip is None) or worker_localhost_fix or bm_workers):
+            if provider in virt_providers and (worker_localhost_fix or bm_workers):
                 replicas = ctlplanes
                 ingressrole = 'master'
                 warning("Forcing router pods on ctlplanes")
