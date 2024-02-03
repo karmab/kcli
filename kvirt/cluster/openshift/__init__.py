@@ -780,7 +780,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if ctlplanes <= 0:
         return {'result': 'failure', 'reason': f"Invalid number of ctlplanes {ctlplanes}"}
     workers = data['workers']
-    if workers <= 0:
+    if workers < 0:
         return {'result': 'failure', 'reason': f"Invalid number of workers {workers}"}
     if data.get('dual_api_ip') is not None:
         warning("Forcing dualstack")
