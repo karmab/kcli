@@ -776,6 +776,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             'retries': 2}
     data.update(overrides)
     fix_typos(data)
+    ctlplanes = data['ctlplanes']
+    if ctlplanes <= 0:
+        return {'result': 'failure', 'reason': f"Invalid number of ctlplanes {ctlplanes}"}
+    workers = data['workers']
+    if workers <= 0:
+        return {'result': 'failure', 'reason': f"Invalid number of workers {workers}"}
     if data.get('dual_api_ip') is not None:
         warning("Forcing dualstack")
         data['dualstack'] = True
@@ -811,11 +817,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     overrides['kube'] = data['cluster']
     installparam = overrides.copy()
     installparam['cluster'] = clustervalue
-    baremetal_ctlplane = data['workers'] == 0 and baremetal_hosts and len(baremetal_hosts) > 1
+    baremetal_sno = workers == 0 and len(baremetal_hosts) == 1
+    baremetal_ctlplane = data['workers'] == 0 and len(baremetal_hosts) > 1
     sno_vm = data['sno_vm']
-    sno = sno_vm or data['sno'] or baremetal_ctlplane
+    sno = sno_vm or data['sno'] or baremetal_ctlplane or baremetal_sno
     data['sno'] = sno
-    baremetal_sno = baremetal_hosts and len(baremetal_hosts) == 1
     sno_wait = overrides['sno_wait'] or baremetal_sno or data.get('api_ip') is not None or sno_vm
     sno_disk = data['sno_disk']
     sno_ctlplanes = data['sno_ctlplanes'] or baremetal_ctlplane
@@ -832,10 +838,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if data.get('network_type', 'OVNKubernetes') == 'OpenShiftSDN':
             warning("Forcing network_type to OVNKubernetes")
             data['network_type'] = 'OVNKubernetes'
-    ctlplanes = data.get('ctlplanes', 1)
-    if ctlplanes <= 0:
-        msg = "Invalid number of ctlplanes"
-        return {'result': 'failure', 'reason': msg}
     network = data.get('network')
     post_dualstack = False
     if data['dualstack'] and provider in cloud_providers:
