@@ -418,6 +418,10 @@ class Kgcp(object):
             if 'scheduling' not in body:
                 body['scheduling'] = {}
             body['scheduling']['provisioningModel'] = 'SPOT'
+        if overrides.get('preemptible', False):
+            if 'scheduling' not in body:
+                body['scheduling'] = {}
+            body['scheduling']['preemptible'] = True
         try:
             conn.instances().insert(project=project, zone=zone, body=body).execute()
         except Exception as e:
