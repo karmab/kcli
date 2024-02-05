@@ -9,6 +9,10 @@ spec:
   backoffLimit: {{ 20 if sno else 12 }}
   template:
    spec:
+{% if not sno %}
+    nodeSelector:
+      kubernetes.io/hostname: {{ cluster }}-{{ 'worker' if workers > 0 else 'ctlplane' }}-0.{{ domain }}
+{% endif %}
     serviceAccountName: autoapprover
     restartPolicy: OnFailure
     initContainers:
