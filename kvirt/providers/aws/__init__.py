@@ -765,6 +765,9 @@ class Kaws(object):
             vm = conn.describe_instances(**df)['Reservations'][0]['Instances'][0]
         except:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
+        if vm['State']['Name'] == 'terminated':
+            warning(f"VM {name} already deleted")
+            return {'result': 'success', 'reason': f"VM {name} already deleted"}
         instance_id = vm['InstanceId']
         kubetype = None
         if 'Tags' in vm:
