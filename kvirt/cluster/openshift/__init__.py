@@ -344,7 +344,11 @@ def get_downstream_installer(version='stable', macosx=False, tag=None, debug=Fal
         if debug:
             pprint(cmd)
         return call(cmd, shell=True)
-    arch = 'arm64' if os.uname().machine == 'aarch64' else None
+    arch_map = {
+        'aarch64': 'arm64',
+        's390x': 's390x'
+    }
+    arch = arch_map.get(os.uname().machine, None)
     repo = 'ocp-dev-preview' if version == 'dev-preview' else 'ocp'
     if tag is None:
         repo += '/{version}'
@@ -370,7 +374,7 @@ def get_downstream_installer(version='stable', macosx=False, tag=None, debug=Fal
     if version is None:
         error("Couldn't find version")
         return 1
-    if arch == 'arm64':
+    if arch is not None:
         cmd = f"curl -Ls https://mirror.openshift.com/pub/openshift-v4/{arch}/clients/{repo}/"
     else:
         cmd = f"curl -Ls https://mirror.openshift.com/pub/openshift-v4/clients/{repo}/"
