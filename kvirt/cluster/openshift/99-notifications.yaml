@@ -9,8 +9,14 @@ spec:
   backoffLimit: {{ 20 if sno else 12 }}
   template:
    spec:
+{% if not sno %}
     nodeSelector:
-      node-role.kubernetes.io/worker: ""
+      node-role.kubernetes.io/master: ""
+{% endif %}
+    tolerations:
+    - effect: NoSchedule
+      key: node-role.kubernetes.io/master
+      operator: Exists
     serviceAccountName: autoapprover
     restartPolicy: OnFailure
     initContainers:
