@@ -15,6 +15,7 @@ import time
 import yaml
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+from uuid import UUID
 
 DOMAIN = "kubevirt.io"
 CDIDOMAIN = "cdi.kubevirt.io"
@@ -177,6 +178,13 @@ class Kubevirt(Kubecommon):
                 del vm['spec']['template']['spec']['domain']['resources']
         if 'annotations' in overrides:
             vm['metadata']['annotations'] = overrides['annotations']
+        if 'uuid' in overrides:
+            uuid = str(overrides['uuid'])
+            try:
+                UUID(uuid)
+                vm['spec']['template']['spec']['domain']['firmware'] = {'uuid': uuid}
+            except:
+                warning(f"couldn't use {uuid} as uuid")
         if confidential:
             vm['spec']['template']['spec']['domain']['launchSecurity'] = {'sev': {}}
         if 'vsock' in overrides and overrides['vsock']:
