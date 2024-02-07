@@ -18,7 +18,7 @@ spec:
     restartPolicy: OnFailure
     initContainers:
     - name: wait-for-boostrap-cm
-      image: {{ registry }}/karmab/kubectl:latest
+      image: {{ registry }}/karmab/kubectl:multi
       command: ['sh', '-c', 'kubectl get cm -n kube-system bootstrap']
     - name: delete-bootstrap-vm
       image: {{ registry }}/karmab/kcli:latest
@@ -30,7 +30,7 @@ spec:
         name: kcli-ssh
     containers:
     - name: create-kcli-bootstrap-cm
-      image: {{ registry }}/karmab/kubectl:latest
+      image: {{ registry }}/karmab/kubectl:multi
       command: ['sh', '-c', 'kubectl create cm kcli-bootstrap -n kcli-infra --from-literal status=complete']
     volumes:
     - configMap:

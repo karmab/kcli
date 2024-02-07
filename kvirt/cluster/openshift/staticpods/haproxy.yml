@@ -17,7 +17,7 @@ spec:
     empty-dir: {}
   containers:
   - name: haproxy
-    image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/karmab/haproxy:latest
+    image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/karmab/haproxy:multi
     args:
     - "-W"
     - "-f"

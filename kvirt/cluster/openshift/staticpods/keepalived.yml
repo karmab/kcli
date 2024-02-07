@@ -17,7 +17,7 @@ spec:
   - name: fix-keepalived-conf
     securityContext:
       privileged: true
-    image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/karmab/curl:latest
+    image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/karmab/curl:multi
     command:
     - "/bin/sh"
     - "-c"
@@ -55,7 +55,7 @@ spec:
   - name: keepalived
     securityContext:
       privileged: true
-    image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/karmab/origin-keepalived-ipfailover:latest
+    image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/karmab/origin-keepalived-ipfailover:multi
     command:
     - /usr/sbin/keepalived
     args:

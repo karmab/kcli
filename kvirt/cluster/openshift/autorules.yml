@@ -48,6 +48,6 @@ spec:
     spec:
       containers:
       - name: autosigner
-        image: karmab/autosigner:latest
+        image: karmab/autosigner:multi
       - name: autolabeller
-        image: karmab/autolabeller:latest
+        image: karmab/autolabeller:multi

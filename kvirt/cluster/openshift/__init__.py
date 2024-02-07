@@ -165,7 +165,7 @@ def update_disconnected_registry(config, plandir, cluster, data):
     extra_images = data.get('disconnected_extra_images', [])
     kcli_images = ['curl', 'haproxy', 'kubectl', 'mdns-publisher', 'origin-coredns',
                    'origin-keepalived-ipfailover']
-    kcli_images = [f'quay.io/karmab/{image}:latest' for image in kcli_images]
+    kcli_images = [f'quay.io/karmab/{image}:multi' for image in kcli_images]
     extra_images.extend(kcli_images)
     mirror_data['extra_images'] = [*set(extra_images)]
     mirrorconf = config.process_inputfile(cluster, f"{plandir}/disconnected/scripts/mirror-config.yaml.sample",

@@ -21,7 +21,7 @@ spec:
     restartPolicy: OnFailure
     initContainers:
     - name: wait-for-cluster-version
-      image: {{ registry }}/karmab/kubectl:latest
+      image: {{ registry }}/karmab/kubectl:multi
       command:
       - "/bin/sh"
       - "-c"
@@ -40,7 +40,7 @@ spec:
     - name: launch-notify-cmds
       securityContext:
         privileged: true
-      image: {{ registry }}/karmab/curl:latest
+      image: {{ registry }}/karmab/curl:multi
       command:
       - "/bin/sh"
       - "-c"

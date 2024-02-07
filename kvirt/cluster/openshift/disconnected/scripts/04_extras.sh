@@ -1,4 +1,4 @@
-images="quay.io/karmab/curl:latest quay.io/karmab/origin-coredns:latest quay.io/karmab/haproxy:latest quay.io/karmab/origin-keepalived-ipfailover:latest quay.io/karmab/mdns-publisher:latest quay.io/karmab/kubectl:latest {{ 'quay.io/karmab/kcli:latest' if async else '' }}"
+images="quay.io/karmab/curl:multi quay.io/karmab/origin-coredns:multi quay.io/karmab/haproxy:multi quay.io/karmab/origin-keepalived-ipfailover:multi quay.io/karmab/mdns-publisher:multi quay.io/karmab/kubectl:multi {{ 'quay.io/karmab/kcli:latest' if async else '' }}"
 
 for image in $images ; do
  /root/bin/sync_image.sh $image

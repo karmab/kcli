@@ -54,4 +54,4 @@ spec:
         operator: Exists
       containers:
       - name: autolabeller
-        image: quay.io/karmab/autolabeller:latest
+        image: quay.io/karmab/autolabeller:multi

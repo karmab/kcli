@@ -1858,12 +1858,12 @@ The default prefix where the ocp content is expected to be synced is ocp4, but y
 
 Note that you will also need to sync the following images on the registry:
 
-- quay.io/karmab/curl:latest
-- quay.io/karmab/origin-coredns:latest
-- quay.io/karmab/haproxy:latest
-- quay.io/karmab/origin-keepalived-ipfailover:latest
-- quay.io/karmab/mdns-publisher:latest
-- quay.io/karmab/kubectl:latest 
+- quay.io/karmab/curl:multi
+- quay.io/karmab/origin-coredns:multi
+- quay.io/karmab/haproxy:multi
+- quay.io/karmab/origin-keepalived-ipfailover:multi
+- quay.io/karmab/mdns-publisher:multi
+- quay.io/karmab/kubectl:multi
 - quay.io/karmab/kcli:latest
 
 ## Interacting with your clusters
