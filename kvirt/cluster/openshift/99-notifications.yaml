@@ -55,15 +55,9 @@ spec:
 {% for cmd in cmds %}
         {{ cmd }}
 {% endfor %}
-        rm -f /etc/kubernetes/kubeconfig.{{ cluster }}
       volumeMounts:
       - name: shared
         mountPath: /shared
-      - name: conf-dir
-        mountPath: "/etc/kubernetes"
     volumes:
     - name: shared
       emptyDir: {}
-    - name: conf-dir
-      hostPath:
-        path: "/etc/kubernetes"
