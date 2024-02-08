@@ -15,7 +15,7 @@ install_device=$(lsblk -r | grep rhcos | head -1 | cut -d" " -f1 | sed 's/[0-9]\
 if [ -z $install_device ] ; then
 install_device=$(lsblk | grep disk | head -1 | cut -d" " -f1)
 fi
-install_device=/dev/$(install_device)
+install_device=/dev/$install_device
 {% endif %}
 if [ ! -b $install_device ]; then
   echo "Can't find appropriate device to install to. $install_device not found"
