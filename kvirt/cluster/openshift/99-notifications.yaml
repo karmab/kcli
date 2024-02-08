@@ -11,7 +11,7 @@ spec:
    spec:
 {% if not sno %}
     nodeSelector:
-      node-role.kubernetes.io/master: ""
+      kubernetes.io/hostname: {{ cluster }}-ctlplane-0.{{ domain }}
 {% endif %}
     tolerations:
     - effect: NoSchedule
@@ -55,9 +55,15 @@ spec:
 {% for cmd in cmds %}
         {{ cmd }}
 {% endfor %}
+        rm -f /etc/kubernetes/kubeconfig.{{ cluster }}
       volumeMounts:
       - name: shared
         mountPath: /shared
+      - name: conf-dir
+        mountPath: "/etc/kubernetes"
     volumes:
     - name: shared
       emptyDir: {}
+    - name: conf-dir
+      hostPath:
+        path: "/etc/kubernetes"
