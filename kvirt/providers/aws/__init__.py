@@ -1231,6 +1231,9 @@ class Kaws(object):
         results = {}
         private_subnets = []
         for route_table in conn.describe_route_tables()['RouteTables']:
+            if [route for route in route_table['Routes'] if route.get('GatewayId') is not None and
+                    route.get('GatewayId').startswith('igw')]:
+                continue
             for association in (route_table['Associations']):
                 if 'SubnetId' in association:
                     private_subnets.append(association['SubnetId'])
