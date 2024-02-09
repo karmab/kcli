@@ -403,12 +403,10 @@ class Kaws(object):
                     'KeyName': keypair, 'BlockDeviceMappings': blockdevicemappings,
                     'NetworkInterfaces': networkinterfaces, 'UserData': userdata,
                     'TagSpecifications': vmtags}
-            sourcedestcheck = overrides.get('SourceDestCheck', False) or overrides.get('router', False)
-            if sourcedestcheck:
-                data['SourceDestCheck'] = True
             if az is not None:
                 data['Placement'] = {'AvailabilityZone': az}
             response = conn.run_instances(**data)
+            instance_id = response['Instances'][0]['InstanceId']
         if reservedns and domain is not None:
             self.reserve_dns(name, nets=nets, domain=domain, alias=alias, instanceid=name)
         if 'kubetype' in metadata and metadata['kubetype'] == "openshift":
@@ -421,7 +419,6 @@ class Kaws(object):
                 self.create_instance_profile(cluster, iam_role)
                 sleep(15)
             arn = self.get_instance_profile(cluster)['Arn']
-            instance_id = response['Instances'][0]['InstanceId']
             while True:
                 current_status = self.status(name)
                 if current_status == 'running':
@@ -430,6 +427,8 @@ class Kaws(object):
                 sleep(5)
             conn.associate_iam_instance_profile(IamInstanceProfile={'Name': cluster, 'Arn': arn},
                                                 InstanceId=instance_id)
+        if overrides.get('SourceDestCheck', False) or overrides.get('router', False):
+            conn.modify_instance_attribute(instance_id, Attribute='sourceDestCheck', Value=True, DryRun=False)
         return {'result': 'success'}
 
     def start(self, name):
