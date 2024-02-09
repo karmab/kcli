@@ -428,7 +428,8 @@ class Kaws(object):
             conn.associate_iam_instance_profile(IamInstanceProfile={'Name': cluster, 'Arn': arn},
                                                 InstanceId=instance_id)
         if overrides.get('SourceDestCheck', False) or overrides.get('router', False):
-            conn.modify_instance_attribute(instance_id, Attribute='sourceDestCheck', Value=True, DryRun=False)
+            conn.modify_instance_attribute(InstanceId=instance_id, Attribute='sourceDestCheck', Value='false',
+                                           DryRun=False)
         return {'result': 'success'}
 
     def start(self, name):
