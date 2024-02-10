@@ -1454,5 +1454,9 @@ class Kibm(object):
         print("not implemented")
         return {'result': 'success'}
 
+    def update_subnet(self, name, overrides={}):
+        print("not implemented")
+        return {'result': 'success'}
+
     def list_dns_zones(self):
         return [d['name'] for d in self.dns.list_zones().get_result()['result']]

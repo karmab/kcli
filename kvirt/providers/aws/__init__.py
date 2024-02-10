@@ -1998,6 +1998,50 @@ class Kaws(object):
         if matching_subnets:
             self.conn.create_tags(Resources=matching_subnets, Tags=Tags)
 
+    def update_subnet(self, name, overrides={}):
+        conn = self.conn
+        subnets = conn.describe_subnets()
+        matching = [subnet for subnet in subnets['Subnets'] if subnet['SubnetId'] == name or tag_name(subnet) == name]
+        if not matching:
+            return {'result': 'failure', 'reason': f"Subnet {name} not found"}
+        subnet_vpc_id = matching[0]['VpcId']
+        subnet_id = matching[0]['SubnetId']
+        response = conn.describe_route_tables(Filters=[{'Name': 'association.subnet-id', 'Values': [subnet_id]}])
+        if not response.get('RouteTables', []):
+            return {'result': 'failure', 'reason': "Updating a subnet without route table is not supported"}
+        route_table_id = response['RouteTables'][0]['RouteTableId']
+        response = conn.describe_route_tables(RouteTableIds=[route_table_id])
+        routes = response['RouteTables'][0]['Routes']
+        existing_cidrs = [d.get('DestinationCidrBlock') or d.get('DestinationIpv6CidrBlock') for d in routes]
+        if 'cidr' in overrides and 'vm' in overrides:
+            overrides['routes'] = {"cidr": overrides['cidr'], "vm": overrides['vm']}
+        for route in overrides.get('routes', []):
+            cidr = route.get('cidr')
+            vm = route.get('vm')
+            if vm is not None and cidr is not None:
+                if cidr in existing_cidrs:
+                    warning(f"cidr {cidr} already in route table")
+                    continue
+                try:
+                    ip_network(cidr, strict=False)
+                except:
+                    return {'result': 'failure', 'reason': f"Invalid Cidr {cidr}"}
+                df = {'InstanceIds': [vm]} if vm.startswith('i-') else {'Filters': [{'Name': "tag:Name",
+                                                                                     'Values': [vm]}]}
+                try:
+                    vm_data = conn.describe_instances(**df)['Reservations'][0]['Instances'][0]
+                except:
+                    return {'result': 'failure', 'reason': f"Vm {vm} not found"}
+                interface = vm_data['NetworkInterfaces'][0]
+                vm_vpc_id = interface['VpcId']
+                if vm_vpc_id != subnet_vpc_id:
+                    return {'result': 'failure', 'reason': f"Vm {vm} primary nic doesnt belong to same vpc"}
+                nic_id = interface['NetworkInterfaceId']
+                block = 'DestinationIpv6CidrBlock' if ':' in cidr else 'DestinationCidrBlock'
+                data = {block: cidr, 'RouteTableId': route_table_id, 'NetworkInterfaceId': nic_id}
+                conn.create_route(**data)
+        return {'result': 'success'}
+
     def list_dns_zones(self):
         dns = self.dns
         return [z['Name'] for z in dns.list_hosted_zones_by_name()['HostedZones']]

@@ -3474,6 +3474,15 @@ def delete_subnet(args):
         common.handle_response(result, name, element='Subnet', action='deleted')
 
 
+def update_subnet(args):
+    name = args.name
+    overrides = handle_parameters(args.param, args.paramfile)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    k = config.k
+    result = k.update_subnet(name=name, overrides=overrides)
+    common.handle_response(result, name, element='Subnet', action='updated')
+
+
 def cli():
     parent_parser = argparse.ArgumentParser(add_help=False)
     parent_parser.add_argument('-P', '--param', action='append',
@@ -5405,6 +5414,14 @@ def cli():
     repoupdate_parser = update_subparsers.add_parser('repo', description=repoupdate_desc, help=repoupdate_desc)
     repoupdate_parser.add_argument('repo')
     repoupdate_parser.set_defaults(func=update_repo)
+
+    subnetupdate_desc = 'Update Subnet'
+    subnetupdate_epilog = f"examples:\n{examples.subnetupdate}"
+    subnetupdate_parser = update_subparsers.add_parser('subnet', description=subnetupdate_desc,
+                                                       epilog=subnetupdate_epilog, formatter_class=rawhelp,
+                                                       help=subnetupdate_desc, parents=[parent_parser])
+    subnetupdate_parser.add_argument('name', metavar='SUBNET')
+    subnetupdate_parser.set_defaults(func=update_subnet)
 
     vmupdate_desc = 'Update Vm\'s Ip, Memory Or Numcpus'
     vmupdate_epilog = f"examples:\n{examples.vmupdate}"

@@ -1438,6 +1438,10 @@ class Kazure(object):
         result.wait()
         return {'result': 'success'}
 
+    def update_subnet(self, name, overrides={}):
+        print("not implemented")
+        return {'result': 'success'}
+
     def list_dns_zones(self):
         return [os.path.basename(z.id) for z in self.dns_client.zones.list()]
 

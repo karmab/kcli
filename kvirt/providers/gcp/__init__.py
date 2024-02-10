@@ -1952,6 +1952,10 @@ class Kgcp(object):
                and account['displayName'].startswith(name) and account['email'].startswith(name):
                 iam.projects().serviceAccounts().delete(name=account['name']).execute()
 
+    def update_subnet(self, name, overrides={}):
+        print("not implemented")
+        return {'result': 'success'}
+
     def list_dns_zones(self):
         project = self.project
         client = dns.Client(project)

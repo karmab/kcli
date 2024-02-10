@@ -291,6 +291,10 @@ class Kbase(object):
         print("not implemented")
         return {'result': 'success'}
 
+    def update_subnet(self, name, overrides={}):
+        print("not implemented")
+        return {'result': 'success'}
+
     def list_dns_zones(self):
         print("not implemented")
         return []

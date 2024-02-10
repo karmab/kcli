@@ -712,6 +712,10 @@ $ kcli create subnet -c 10.0.1.0/24 -P network=mynetwork -P gateway=false mysubn
 $ kcli create subnet -P cidr=192.168.123.0/24 -P dual_cidr=192.168.124.0/24 -P dual_name=podnetwork mysubnet
 """
 
+subnetupdate = """# Add a route in subnet mysubnet to specific cidr using an intermediate vm (aws specific)
+$ kcli update subnet mysubnet -P routes=['{"cidr": "192.168.125.0/24", "vm": "myvm"}']
+"""
+
 vmupdate = """# Update memory and cpu of a vm
 $ kcli update vm -P memory=8192 -P numcpus=8 myvm
 
