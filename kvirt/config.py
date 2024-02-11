@@ -1179,7 +1179,8 @@ class Kconfig(Kbaseconfig):
                     k.update_nic(name, index, targetnetname)
         if extra_metadata:
             for key in extra_metadata:
-                if key in ['ena', 'EnaSupport', 'sriov', 'SriovNetSupport', 'gpus', 'accelerators']:
+                if key in ['ena', 'EnaSupport', 'sriov', 'SriovNetSupport', 'gpus', 'accelerators', 'router',
+                           'can_ip_forward', 'SourceDestCheck']:
                     continue
                 value = extra_metadata[key]
                 pprint(f"Updating {key} of vm {name} to {value}...")
@@ -1213,6 +1214,10 @@ class Kconfig(Kbaseconfig):
                 else:
                     sriov = 'simple'
                     k.update_attribute(name, 'SriovNetSupport', sriov)
+            if 'router' in overrides or 'SourceDestCheck' in overrides:
+                mode = not overrides.get('SourceDestCheck') or overrides.get('router')
+                pprint(f"Setting router mode in vm {name} to {mode}...")
+                k.set_router_mode(name, mode)
         elif self.type == 'gcp':
             accelerators = overrides.get('accelerators') or overrides.get('gpus') or []
             if accelerators:
@@ -1221,6 +1226,10 @@ class Kconfig(Kbaseconfig):
             if overrides.get('reserveip', False):
                 pprint(f"Updating reserveip of vm {name}")
                 k.update_reserveip(name)
+            if 'router' in overrides or 'can_ip_forward' in overrides:
+                mode = overrides.get('can_ip_forward') or overrides.get('router')
+                pprint(f"Setting router mode in vm {name} to {mode}...")
+                k.set_router_mode(name, mode)
         return {'result': 'success'}
 
     def list_plans(self):

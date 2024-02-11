@@ -53,6 +53,7 @@ class Kgcp(object):
             self.zone = zone
             self.specific_zone = True
         self.router_client = compute_v1.RoutersClient(credentials=credentials)
+        self.routes_client = compute_v1.RoutesClient(credentials=credentials)
         self.iam = build('iam', 'v1', credentials=credentials)
 
     def list_zones(self, project):
@@ -422,6 +423,8 @@ class Kgcp(object):
             if 'scheduling' not in body:
                 body['scheduling'] = {}
             body['scheduling']['preemptible'] = True
+        if overrides.get('router', False) or overrides.get('can_ip_forward', False):
+            body['can_ip_forward'] = True
         try:
             conn.instances().insert(project=project, zone=zone, body=body).execute()
         except Exception as e:
@@ -1953,10 +1956,59 @@ class Kgcp(object):
                 iam.projects().serviceAccounts().delete(name=account['name']).execute()
 
     def update_subnet(self, name, overrides={}):
-        print("not implemented")
+        conn = self.conn
+        project = self.project
+        try:
+            conn.networks().get(project=project, network=name).execute()
+            network_name = name
+        except:
+            subnets = self.list_subnets()
+            if name not in subnets:
+                msg = f'Subnet {name} not found'
+                return {'result': 'failure', 'reason': msg}
+            else:
+                network_name = subnets[name]['network']
+        routes = self.routes_client.list(project=project)
+        network_path = f'projects/{project}/global/networks/{network_name}'
+        existing_cidrs = [route.dest_range for route in routes if route.network.endswith(network_path)]
+        if 'cidr' in overrides and 'vm' in overrides:
+            overrides['routes'] = {"cidr": overrides['cidr'], "vm": overrides['vm']}
+        for route in overrides.get('routes', []):
+            cidr = route.get('cidr')
+            vm = route.get('vm')
+            if vm is not None and cidr is not None:
+                if cidr in existing_cidrs:
+                    warning(f"cidr {cidr} already in route table")
+                    continue
+                try:
+                    ip_network(cidr, strict=False)
+                except:
+                    return {'result': 'failure', 'reason': f"Invalid Cidr {cidr}"}
+                try:
+                    vm = conn.instances().get(zone=self.zone, project=project, instance=vm).execute()
+                except:
+                    return {'result': 'failure', 'reason': f"Vm {vm} not found"}
+                self_link = vm['selfLink']
+                route_name = f"kcli-{cidr.replace('.', '-').replace('/', '-')}"
+                route_resource = {'name': route_name, 'dest_range': cidr, 'network': network_path,
+                                  'next_hop_instance': self_link, 'priority': 100, 'description': route_name}
+                self.routes_client.insert(project=project, route_resource=route_resource)
         return {'result': 'success'}
 
     def list_dns_zones(self):
         project = self.project
         client = dns.Client(project)
         return [z.dns_name for z in client.list_zones()]
+
+    def set_router_mode(self, name, mode=True):
+        conn = self.conn
+        project = self.project
+        zone = self.zone
+        try:
+            vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
+        except:
+            msg = f"VM {name} not found"
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
+        vm['can_ip_forward'] = mode
+        conn.instances().update(zone=zone, project=project, instance=name, body=vm).execute()

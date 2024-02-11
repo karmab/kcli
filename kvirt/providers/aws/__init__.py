@@ -2045,3 +2045,15 @@ class Kaws(object):
     def list_dns_zones(self):
         dns = self.dns
         return [z['Name'] for z in dns.list_hosted_zones_by_name()['HostedZones']]
+
+    def set_router_mode(self, name, mode=True):
+        conn = self.conn
+        df = {'InstanceIds': [name]} if name.startswith('i-') else {'Filters': [{'Name': "tag:Name", 'Values': [name]}]}
+        try:
+            vm = conn.describe_instances(**df)['Reservations'][0]['Instances'][0]
+        except:
+            error(f"VM {name} not found")
+            return {}
+        instance_id = vm['InstanceId']
+        mode = 'false' if mode else 'true'
+        conn.modify_instance_attribute(InstanceId=instance_id, Attribute='sourceDestCheck', Value=mode, DryRun=False)
