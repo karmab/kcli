@@ -6,8 +6,24 @@
 apt-get -y install curl
 {% endif %}
 
-export IP={{ api_ip if cloud_lb else "$(curl -s ifconfig.me)" if config_type in ['aws', 'gcp', 'ibmcloud'] else '$(hostname -I | cut -f1 -d" ")' }}
-curl -sfL https://get.k3s.io | {{ install_k3s_args }} K3S_TOKEN={{ token }} sh -s - server {{ '--cluster-init' if ctlplanes > 1 else '' }} {{ extra_args|join(" ") }} {{ '--tls-san $IP' }}
+# The logic below is to achieve the following
+# - for cloud providers. If the API is internal and
+# this is a HA cluster. Use the IP of the API load-balancer
+# - for cloud providers. If the API is NOT internal.
+# use the external IP. This in both the HA and single ctlplane case
+# - The last to branches is for on-prem. E.g. vSphere/VMWare
+# in HA or single ctlplane scenarios.
+{% if cloud_api_internal and ctlplanes > 1 %}
+export IP={{ api_ip }}
+{% elif config_type in ['aws', 'gcp', 'ibmcloud'] %}
+export IP={{ "$(curl -s ifconfig.me)" }}
+{% elif ctlplanes > 1 %}
+export IP={{ api_ip }}
+{% else %}
+export IP={{ first_ip }}
+{% endif %}
+
+curl -sfL https://get.k3s.io | {{ install_k3s_args }} K3S_TOKEN={{ token }} sh -s - server {{ '--cluster-init' if ctlplanes > 1 else '' }} {{ extra_args|join(" ") }} {{ '--tls-san $IP' if not cloud_lb and config_type in ['aws', 'gcp', 'ibmcloud'] else '' }}
 export K3S_TOKEN=$(cat /var/lib/rancher/k3s/server/node-token)
 sed "s/127.0.0.1/$IP/" /etc/rancher/k3s/k3s.yaml > /root/kubeconfig
 if [ -d /root/manifests ] ; then
