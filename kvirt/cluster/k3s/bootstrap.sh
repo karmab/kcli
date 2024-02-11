@@ -6,11 +6,6 @@
 apt-get -y install curl
 {% endif %}
 
-{% if config_type == 'gcp' %}
-systemctl enable --now gcp-hack
-ufw allow from any to any port 6443,2379,2380 proto tcp
-{% endif %}
-
 # The logic below is to achieve the following
 # - for cloud providers. If the API is internal and
 # this is a HA cluster. Use the IP of the API load-balancer
