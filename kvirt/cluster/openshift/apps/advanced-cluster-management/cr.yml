@@ -5,8 +5,7 @@ metadata:
   namespace: {{ namespace }}
 {% if acm_mce_catalog != None %}
   annotations:
-    installer.open-cluster-management.io/mce-subscription-spec:
-      source: {{ acm_mce_catalog }}
+    installer.open-cluster-management.io/mce-subscription-spec: '{"source": "{{ acm_mce_catalog }}"}'
 {% endif %}
 spec:
   imagePullSecret: open-cluster-management-image-pull-credentials
