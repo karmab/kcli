@@ -2,7 +2,7 @@ from base64 import b64encode
 from glob import glob
 from ipaddress import ip_address, ip_network
 import os
-from distutils.version import LooseVersion
+from packaging.version import parse
 import json
 import sys
 from urllib.request import urlopen
@@ -73,7 +73,7 @@ def github_version(repo, version=None, tag_mode=False):
         data = json.loads(urlopen(f"https://api.github.com/repos/{repo}/{obj}", timeout=5).read())
         if 'message' in data and data['message'] == 'Not Found':
             return ''
-        tags = sorted([x[tag_name] for x in data if stable_release(x, tag_mode)], key=LooseVersion, reverse=True)
+        tags = sorted([x[tag_name] for x in data if stable_release(x, tag_mode)], key=parse, reverse=True)
         if tags:
             tag = tags[0]
         else:

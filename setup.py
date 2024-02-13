@@ -2,7 +2,7 @@
 from setuptools import setup, find_packages
 
 import os
-INSTALL = ['argcomplete', 'PyYAML', 'prettytable', 'jinja2', 'libvirt-python>=2.0.0']
+INSTALL = ['argcomplete', 'PyYAML', 'prettytable', 'jinja2', 'libvirt-python>=2.0.0', 'packaging']
 AWS = ['boto3']
 AZURE = ['azure-mgmt-compute', 'azure-mgmt-network', 'azure-mgmt-core', 'azure-identity', 'azure-mgmt-resource',
          'azure-mgmt-marketplaceordering', 'azure-storage-blob', 'azure-mgmt-dns', 'azure-mgmt-containerservice',

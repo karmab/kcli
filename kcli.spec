@@ -16,7 +16,7 @@ Source:         {{{ git_dir_pack }}}
 AutoReq:        no
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildRequires:  python3-devel rubygem-ronn gzip python3-setuptools git
-Requires:       python3 libvirt-python3 genisoimage nmap-ncat python3-prettytable python3-jinja2 python3-PyYAML python3-argcomplete
+Requires:       python3 libvirt-python3 genisoimage nmap-ncat python3-prettytable python3-jinja2 python3-PyYAML python3-argcomplete python3-packaging
 
 %description
 Kcli is a wrapper for local/remote libvirt, aws, azure, gcp, kubevirt, ovirt, openstack, packet, proxmox and vsphere
