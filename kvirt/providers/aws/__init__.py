@@ -699,6 +699,8 @@ class Kaws(object):
             disks.append({'device': devname, 'size': disksize, 'format': diskformat, 'type': drivertype, 'path': path})
         if disks:
             yamlinfo['disks'] = sorted(disks, key=lambda x: x['device'])
+        if 'SecurityGroups' in vm:
+            yamlinfo['sgs'] = [s['GroupName'] for s in vm.get('SecurityGroups')]
         if debug:
             yamlinfo['debug'] = vm
         return yamlinfo
