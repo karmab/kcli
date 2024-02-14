@@ -595,7 +595,15 @@ class Kaws(object):
     def get_security_group_id(self, name, vpcid):
         conn = self.conn
         for sg in conn.describe_security_groups()['SecurityGroups']:
-            if sg['VpcId'] == vpcid and (sg['GroupName'] == name or sg['GroupId'] == name):
+            group_name = sg['GroupName']
+            group_id = sg['GroupId']
+            group_tag = sg['GroupId']
+            group_name = ''
+            for tag in sg.get('Tags', []):
+                if tag['Key'] == 'Name':
+                    group_name = tag['Value']
+                    break
+            if sg['VpcId'] == vpcid and (group_name == name or group_id == name or group_tag == name):
                 return sg['GroupId']
         return None
 
@@ -1725,7 +1733,12 @@ class Kaws(object):
         for sg in conn.describe_security_groups()['SecurityGroups']:
             if vpcid is not None and sg['VpcId'] != vpcid:
                 continue
-            results.append(sg['GroupName'])
+            group_name = sg['GroupName']
+            for tag in sg.get('Tags', []):
+                if tag['Key'] == 'Name':
+                    group_name = tag['Value']
+                    break
+            results.append(group_name)
         return results
 
     def create_security_group(self, name, overrides={}):
