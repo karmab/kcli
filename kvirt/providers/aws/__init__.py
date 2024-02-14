@@ -1710,7 +1710,11 @@ class Kaws(object):
         if network is not None:
             vpcid = self.get_vpc_id(network, vpcs) if not network.startswith('vpc-') else network
         else:
-            vpcid = [vpc['VpcId'] for vpc in vpcs['Vpcs'] if vpc['IsDefault']][0]
+            vpcids = [vpc['VpcId'] for vpc in vpcs['Vpcs'] if vpc['IsDefault']]
+            if vpcids:
+                vpcid = vpcids[0]
+            else:
+                warning("No default vpc found")
         if vpcid is None:
             error("Couldn't find vpcid")
             sys.exit(1)
