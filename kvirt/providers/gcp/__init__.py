@@ -374,6 +374,8 @@ class Kgcp(object):
                 operation = conn.firewalls().insert(project=project, body=firewall_body).execute()
                 self._wait_for_operation(operation)
             tags.extend([kube])
+        if securitygroups:
+            tags.extend(securitygroups)
         if tags:
             body['tags'] = {'items': tags}
         newval = {'key': 'serial-port-enable', 'value': 1}
