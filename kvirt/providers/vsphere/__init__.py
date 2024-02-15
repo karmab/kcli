@@ -1587,6 +1587,10 @@ class Ksphere:
         print("not implemented")
         return {'result': 'success'}
 
+    def update_security_group(self, name, overrides={}):
+        print("not implemented")
+        return {'result': 'success'}
+
     def list_disks(self):
         print("not implemented")
 

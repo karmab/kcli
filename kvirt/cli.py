@@ -3418,6 +3418,15 @@ def list_securitygroups(args):
     print(securitygroupstable)
 
 
+def update_securitygroup(args):
+    securitygroup = args.name
+    pprint(f"Updating securitygroup {securitygroup}...")
+    overrides = handle_parameters(args.param, args.paramfile)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    result = config.k.update_security_group(name=securitygroup, overrides=overrides)
+    common.handle_response(result, securitygroup, element='SecurityGroup', action='updated')
+
+
 def create_ksushy_service(args):
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     baseconfig.deploy_ksushy_service(port=args.port, ipv6=args.ipv6, ssl=args.ssl, user=args.user,
@@ -3478,8 +3487,7 @@ def update_subnet(args):
     name = args.name
     overrides = handle_parameters(args.param, args.paramfile)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    k = config.k
-    result = k.update_subnet(name=name, overrides=overrides)
+    result = config.k.update_subnet(name=name, overrides=overrides)
     common.handle_response(result, name, element='Subnet', action='updated')
 
 
@@ -4125,7 +4133,8 @@ def cli():
     securitygroupcreate_desc = 'Create Security Group'
     securitygroupcreate_parser = create_subparsers.add_parser('security-group', description=securitygroupcreate_desc,
                                                               help=securitygroupcreate_desc, parents=[parent_parser],
-                                                              aliases=['sg'], epilog=securitygroupcreate_epilog,
+                                                              aliases=['sg', 'firewall'],
+                                                              epilog=securitygroupcreate_epilog,
                                                               formatter_class=rawhelp)
     securitygroupcreate_parser.add_argument('securitygroup')
     securitygroupcreate_parser.set_defaults(func=create_securitygroup)
@@ -4463,7 +4472,10 @@ def cli():
 
     securitygroupdelete_desc = 'Delete Security Group'
     securitygroupdelete_parser = delete_subparsers.add_parser('security-group', description=securitygroupdelete_desc,
-                                                              help=securitygroupdelete_desc, aliases=['sg'])
+                                                              help=securitygroupdelete_desc, aliases=['sg', 'sgs',
+                                                                                                      'security-groups',
+                                                                                                      'firewall',
+                                                                                                      'firewalls'])
     securitygroupdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     securitygroupdelete_parser.add_argument('securitygroups', metavar='SECURITYGROUPS', nargs='+')
     securitygroupdelete_parser.set_defaults(func=delete_securitygroup)
@@ -5019,7 +5031,8 @@ def cli():
     securitygrouplist_desc = 'List Security Groups'
     securitygrouplist_parser = list_subparsers.add_parser('security-group', description=securitygrouplist_desc,
                                                           help=securitygrouplist_desc,
-                                                          aliases=['sg', 'sgs', 'security-groups'],
+                                                          aliases=['sg', 'sgs', 'security-groups', 'firewall',
+                                                                   'firewalls'],
                                                           parents=[output_parser])
     securitygrouplist_parser.add_argument('-n', '--network', help='Use the corresponding network', metavar='NETWORK')
     securitygrouplist_parser.set_defaults(func=list_securitygroups)
@@ -5414,6 +5427,15 @@ def cli():
     repoupdate_parser = update_subparsers.add_parser('repo', description=repoupdate_desc, help=repoupdate_desc)
     repoupdate_parser.add_argument('repo')
     repoupdate_parser.set_defaults(func=update_repo)
+
+    securitygroupupdate_desc = 'Update Securitygroup/Firewall'
+    securitygroupupdate_epilog = f"examples:\n{examples.securitygroupupdate}"
+    securitygroupupdate_parser = update_subparsers.add_parser('security-group', description=securitygroupupdate_desc,
+                                                              epilog=securitygroupupdate_epilog,
+                                                              formatter_class=rawhelp, help=securitygroupupdate_desc,
+                                                              parents=[parent_parser], aliases=['sg', 'firewall'])
+    securitygroupupdate_parser.add_argument('name', metavar='SECURITYGROUP')
+    securitygroupupdate_parser.set_defaults(func=update_securitygroup)
 
     subnetupdate_desc = 'Update Subnet'
     subnetupdate_epilog = f"examples:\n{examples.subnetupdate}"

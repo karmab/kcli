@@ -1262,6 +1262,10 @@ class Kopenstack(object):
             sgs[0].delete()
         return {'result': 'success'}
 
+    def update_security_group(self, name, overrides={}):
+        print("not implemented")
+        return {'result': 'success'}
+
     def provider_network(self, name):
         net = self.nova.neutron.find_network(name=name)
         return True if net.to_dict()['router:external'] else False

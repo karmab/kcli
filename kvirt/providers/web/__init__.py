@@ -459,6 +459,10 @@ class Kwebclient(object):
         print("not implemented")
         return {'result': 'success'}
 
+    def update_security_group(self, name, overrides={}):
+        print("not implemented")
+        return {'result': 'success'}
+
     def create_kube(self, cluster, kubetype, overrides={}):
         kubes_url = f"{self.base}/kubes"
         overrides['cluster'] = cluster

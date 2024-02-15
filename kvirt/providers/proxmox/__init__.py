@@ -1066,3 +1066,19 @@ class Kproxmox(Kbase):
     def list_dns_zones(self):
         print("not implemented")
         return []
+
+    def list_security_groups(self, network=None):
+        print("not implemented")
+        return []
+
+    def create_security_group(self, name, overrides={}):
+        print("not implemented")
+        return {'result': 'success'}
+
+    def delete_security_group(self, name):
+        print("not implemented")
+        return {'result': 'success'}
+
+    def update_security_group(self, name, overrides={}):
+        print("not implemented")
+        return {'result': 'success'}

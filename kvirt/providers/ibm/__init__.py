@@ -1442,6 +1442,10 @@ class Kibm(object):
     def list_security_groups(self, network=None):
         return [x['name'] for x in self.conn.list_security_groups().result['security_groups']]
 
+    def update_security_group(self, name, overrides={}):
+        print("not implemented")
+        return {'result': 'success'}
+
     def info_subnet(self, name):
         print("not implemented")
         return {}

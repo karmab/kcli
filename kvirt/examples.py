@@ -616,6 +616,10 @@ $ kcli create security-group -P ports=['22,25,{"from": "53", "protocol": "udp"}'
 $ kcli create security-group -P ports=['{"from": "8000", "to": "9000"}'] mygroup
 """
 
+securitygroupupdate = """# Add a rule in subnet mysubnet to allow specific cidr to use a given port
+$ kcli update security-group mysg -P rules=['{"cidr": "192.168.125.0/24", "ports": [6443,443]}']
+"""
+
 networkcreate = """# Create a network
 $ kcli create network -c 192.168.123.0/24 mynetwork
 

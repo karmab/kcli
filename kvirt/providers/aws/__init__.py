@@ -1788,10 +1788,46 @@ class Kaws(object):
 
     def delete_security_group(self, name):
         for sg in self.conn.describe_security_groups()['SecurityGroups']:
-            if sg['GroupName'] == name:
-                self.conn.delete_security_group(GroupName=name, GroupId=sg['GroupId'])
+            group_id = sg['GroupId']
+            group_name = sg['GroupName']
+            group_tag = ''
+            for tag in sg.get('Tags', []):
+                if tag['Key'] == 'Name':
+                    group_tag = tag['Value']
+                    break
+            if group_name == name or group_id == name or group_tag == name:
+                self.conn.delete_security_group(GroupName=group_name, GroupId=group_id)
                 return {'result': 'success'}
         return {'result': 'failure', 'reason': f"security group {name} not found"}
+
+    def update_security_group(self, name, overrides={}):
+        found = False
+        for sg in self.conn.describe_security_groups()['SecurityGroups']:
+            group_id = sg['GroupId']
+            group_name = sg['GroupName']
+            group_tag = ''
+            for tag in sg.get('Tags', []):
+                if tag['Key'] == 'Name':
+                    group_tag = tag['Value']
+                    break
+            if group_name == name or group_id == name or group_tag == name:
+                found = True
+                break
+        if not found:
+            return {'result': 'failure', 'reason': f"security group {name} not found"}
+        sg = self.resource.SecurityGroup(group_id)
+        default_cidr = overrides.get('cidr', "0.0.0.0/0")
+        default_protocol = overrides.get('protocol', 'tcp')
+        if 'ports' in overrides:
+            overrides['rules'] = {"cidr": default_cidr, "ports": overrides['ports']}
+        for route in overrides.get('rules', []):
+            cidr = route.get('cidr', default_cidr)
+            protocol = route.get('protocol', default_protocol)
+            ports = route.get('ports', [])
+            for port in ports:
+                pprint(f"Adding rule to port {port} and with protocol {protocol}")
+                sg.authorize_ingress(GroupId=group_id, FromPort=port, ToPort=port, IpProtocol=protocol, CidrIp=cidr)
+        return {'result': 'success'}
 
     def info_subnet(self, name):
         subnets = self.conn.describe_subnets()

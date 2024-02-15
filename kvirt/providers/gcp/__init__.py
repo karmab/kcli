@@ -1818,6 +1818,30 @@ class Kgcp(object):
         self._wait_for_operation(operation)
         return {'result': 'success'}
 
+    def update_security_group(self, name, overrides={}):
+        conn = self.conn
+        project = self.project
+        try:
+            firewall = conn.firewalls().get(project=project, firewall=name).execute()
+        except:
+            msg = f"Firewall {name} not found"
+            return {'result': 'failure', 'reason': msg}
+        existing_ports = []
+        allowed = firewall['allowed']
+        for rule in allowed:
+            existing_ports.extend(int(port) for port in rule['ports'])
+        if 'ports' in overrides:
+            overrides['rules'] = {"cidr": overrides.get('cidr'), "ports": overrides['ports']}
+        for route in overrides.get('rules', []):
+            # cidr = route.get('cidr')
+            ports = [str(port) for port in route.get('ports', []) if port not in existing_ports]
+            if ports:
+                print(ports)
+                allowed.append({"IPProtocol": "tcp", "ports": ports})
+                operation = conn.firewalls().patch(project=project, firewall=name, body={'allowed': allowed}).execute()
+                self._wait_for_operation(operation)
+        return {'result': 'success'}
+
     def update_aliases(self, name, cidr):
         conn = self.conn
         project = self.project

@@ -4081,6 +4081,10 @@ class Kvirt(object):
         print("not implemented")
         return {'result': 'success'}
 
+    def update_security_group(self, name, overrides={}):
+        print("not implemented")
+        return {'result': 'success'}
+
     def info_subnet(self, name):
         print("not implemented")
         return {}

@@ -1217,6 +1217,10 @@ class Kazure(object):
         self.network_client.network_security_groups.begin_delete(self.resource_group, name)
         return {'result': 'success'}
 
+    def update_security_group(self, name, overrides={}):
+        print("not implemented")
+        return {'result': 'success'}
+
     def __evaluate_image(self, image):
         if image.startswith('centos'):
             return 'OpenLogic', 'CentOS', '8_5', 'latest'

@@ -283,6 +283,10 @@ class Kbase(object):
         print("not implemented")
         return {'result': 'success'}
 
+    def update_security_group(self, name, overrides={}):
+        print("not implemented")
+        return {'result': 'success'}
+
     def create_subnet(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
         print("not implemented")
         return {'result': 'success'}
