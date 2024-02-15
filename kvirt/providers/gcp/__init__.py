@@ -1831,14 +1831,18 @@ class Kgcp(object):
         existing_ports = []
         allowed = firewall['allowed']
         for rule in allowed:
-            existing_ports.extend(int(port) for port in rule['ports'])
+            for port in rule.get('ports', []):
+                if '-' in port:
+                    start_port, end_port = port.split('-')
+                    existing_ports.extend([int(port) for port in range(int(start_port), int(end_port) + 1)])
+                else:
+                    existing_ports.append(int(port))
         if 'ports' in overrides:
             overrides['rules'] = {"cidr": overrides.get('cidr'), "ports": overrides['ports']}
         for route in overrides.get('rules', []):
             # cidr = route.get('cidr')
             ports = [str(port) for port in route.get('ports', []) if port not in existing_ports]
             if ports:
-                print(ports)
                 allowed.append({"IPProtocol": "tcp", "ports": ports})
                 operation = conn.firewalls().patch(project=project, firewall=name, body={'allowed': allowed}).execute()
                 self._wait_for_operation(operation)
