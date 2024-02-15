@@ -4927,7 +4927,7 @@ def cli():
     containerprofilelist_parser = list_subparsers.add_parser('container-profile', description=containerprofilelist_desc,
                                                              help=containerprofilelist_desc,
                                                              aliases=['container-profiles'], parents=[output_parser])
-    containerprofilelist_parser.add_argument('--short', action='store_true')
+    containerprofilelist_parser.add_argument('-s', '--short', action='store_true')
     containerprofilelist_parser.set_defaults(func=profilelist_container)
 
     vmdisklist_desc = 'List All Vm Disks'
@@ -4939,7 +4939,7 @@ def cli():
     dnsentrylist_parser = list_subparsers.add_parser('dns-entry', parents=[output_parser],
                                                      description=dnsentrylist_desc, help=dnsentrylist_desc,
                                                      aliases=['dns-entries', 'dns-records', 'dns'])
-    dnsentrylist_parser.add_argument('--short', action='store_true')
+    dnsentrylist_parser.add_argument('-s', '--short', action='store_true')
     dnsentrylist_parser.add_argument('domain', metavar='DOMAIN',
                                      help='Domain where to check entries (network for libvirt)', nargs='?')
     dnsentrylist_parser.set_defaults(func=list_dns_entries)
@@ -4953,7 +4953,7 @@ def cli():
     flavorlist_parser = list_subparsers.add_parser('flavor', description=flavorlist_desc, help=flavorlist_desc,
                                                    aliases=['flavors', 'instance-type', 'instance-types'],
                                                    parents=[output_parser])
-    flavorlist_parser.add_argument('--short', action='store_true')
+    flavorlist_parser.add_argument('-s', '--short', action='store_true')
     flavorlist_parser.set_defaults(func=list_flavors)
 
     imagelist_desc = 'List Images'
@@ -4981,13 +4981,13 @@ def cli():
     lblist_desc = 'List Load Balancers'
     lblist_parser = list_subparsers.add_parser('lb', description=lblist_desc, help=lblist_desc,
                                                aliases=['loadbalancers', 'lbs'], parents=[output_parser])
-    lblist_parser.add_argument('--short', action='store_true')
+    lblist_parser.add_argument('-s', '--short', action='store_true')
     lblist_parser.set_defaults(func=list_lb)
 
     networklist_desc = 'List Networks'
     networklist_parser = list_subparsers.add_parser('network', description=networklist_desc, help=networklist_desc,
                                                     aliases=['net', 'nets', 'networks'], parents=[output_parser])
-    networklist_parser.add_argument('--short', action='store_true')
+    networklist_parser.add_argument('-s', '--short', action='store_true')
     networklist_parser.set_defaults(func=list_networks)
 
     planlist_desc = 'List Plans'
@@ -5004,7 +5004,7 @@ def cli():
     poollist_desc = 'List Pools'
     poollist_parser = list_subparsers.add_parser('pool', description=poollist_desc, help=poollist_desc,
                                                  aliases=['pools'], parents=[output_parser])
-    poollist_parser.add_argument('--short', action='store_true')
+    poollist_parser.add_argument('-s', '--short', action='store_true')
     poollist_parser.set_defaults(func=list_pool)
 
     productlist_desc = 'List Products'
@@ -5020,7 +5020,7 @@ def cli():
     profilelist_desc = 'List Profiles'
     profilelist_parser = list_subparsers.add_parser('profile', description=profilelist_desc, help=profilelist_desc,
                                                     aliases=['profiles'], parents=[output_parser])
-    profilelist_parser.add_argument('--short', action='store_true')
+    profilelist_parser.add_argument('-s', '--short', action='store_true')
     profilelist_parser.set_defaults(func=list_profile)
 
     repolist_desc = 'List Repos'
@@ -5040,7 +5040,7 @@ def cli():
     subnetlist_desc = 'List Subnets'
     subnetlist_parser = list_subparsers.add_parser('subnet', description=subnetlist_desc, help=subnetlist_desc,
                                                    aliases=['subnets'], parents=[output_parser])
-    subnetlist_parser.add_argument('--short', action='store_true')
+    subnetlist_parser.add_argument('-s', '--short', action='store_true')
     subnetlist_parser.set_defaults(func=list_subnets)
 
     vmlist_desc = 'List Vms'
