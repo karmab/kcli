@@ -1591,6 +1591,23 @@ class Kconfig(Kbaseconfig):
             warning("No matching vms found")
         return {'result': 'success'}
 
+    def select_client(self, vmclient, hosts):
+        if vmclient is None:
+            z = self.k
+            vmclient = self.client
+            if vmclient not in hosts:
+                hosts[vmclient] = self
+        elif vmclient in hosts:
+            z = hosts[vmclient].k
+        elif vmclient in self.clients:
+            newclient = Kconfig(client=vmclient)
+            z = newclient.k
+            hosts[vmclient] = newclient
+        else:
+            error(f"Client {vmclient} not found. Skipping")
+            return
+        return vmclient, z
+
     def plan(self, plan, ansible=False, url=None, path=None, container=False, inputfile=None, inputstring=None,
              overrides={}, info=False, update=False, embedded=False, download=False, quiet=False, doc=False,
              onlyassets=False, pre=True, post=True, excludevms=[], basemode=False, threaded=False):
@@ -1782,11 +1799,15 @@ class Kconfig(Kbaseconfig):
                            if 'type' in entries[entry] and entries[entry]['type'] == 'workflow']
         for p in profileentries:
             vmprofiles[p] = entries[p]
+        hosts = {}
         if networkentries and not onlyassets:
             pprint("Deploying Networks...")
             for net in networkentries:
                 netprofile = entries[net]
-                if k.net_exists(net):
+                vmclient, z = self.select_client(netprofile.get('vmclient'), hosts)
+                if z is None:
+                    continue
+                if z.net_exists(net):
                     pprint(f"Network {net} skipped!")
                     continue
                 cidr = netprofile.get('cidr')
@@ -1796,7 +1817,7 @@ class Kconfig(Kbaseconfig):
                     continue
                 dhcp = netprofile.get('dhcp', True)
                 domain = netprofile.get('domain')
-                result = k.create_network(name=net, cidr=cidr, dhcp=dhcp, nat=nat, domain=domain, plan=plan,
+                result = z.create_network(name=net, cidr=cidr, dhcp=dhcp, nat=nat, domain=domain, plan=plan,
                                           overrides=netprofile)
                 common.handle_response(result, net, element='Network')
         if poolentries and not onlyassets:
@@ -1905,12 +1926,10 @@ class Kconfig(Kbaseconfig):
                     result = currentconfig.create_kube(plan, kubetype, overrides=kube_overrides)
                     if 'result' in result and result['result'] != 'success':
                         error(result['reason'])
-        vmclients = []
         if vmentries:
             if not onlyassets:
                 pprint("Deploying Vms...")
             vmcounter = 0
-            hosts = {}
             vms_to_host = {}
             baseplans = []
             vmnames = [name for name in vmentries]
@@ -1985,26 +2004,9 @@ class Kconfig(Kbaseconfig):
                 if vmrules_strict and not rulefound:
                     warning(f"No vmrules found for {name}. Skipping...")
                     continue
-                vmclient = profile.get('client')
-                if vmclient is not None and vmclient not in vmclients:
-                    vmclients.append(vmclient)
-                if vmclient is None:
-                    z = k
-                    vmclient = self.client
-                    if vmclient not in hosts:
-                        hosts[vmclient] = self
-                elif vmclient in hosts:
-                    z = hosts[vmclient].k
-                elif vmclient in self.clients:
-                    newclient = Kconfig(client=vmclient)
-                    z = newclient.k
-                    hosts[vmclient] = newclient
-                else:
-                    warning(f"Client {vmclient} not found. Using default one")
-                    z = k
-                    vmclient = self.client
-                    if vmclient not in hosts:
-                        hosts[vmclient] = self
+                vmclient, z = self.select_client(profile.get('client'), hosts)
+                if z is None:
+                    continue
                 vms_to_host[name] = hosts[vmclient]
                 if 'profile' in profile and profile['profile'] in vmprofiles:
                     customprofile = vmprofiles[profile['profile']]
@@ -2168,6 +2170,7 @@ class Kconfig(Kbaseconfig):
                     break
                 else:
                     sleep(1)
+        vmclients = list(hosts.keys())
         if vmclients:
             yaml.safe_dump(vmclients, open(os.path.expanduser(f'~/.kcli/vmclients_{plan}'), 'w'))
         if diskentries and not onlyassets:
