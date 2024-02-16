@@ -1838,9 +1838,13 @@ class Kgcp(object):
                 else:
                     existing_ports.append(int(port))
         if 'ports' in overrides:
-            overrides['rules'] = {"cidr": overrides.get('cidr'), "ports": overrides['ports']}
+            overrides['rules'] = {"ports": overrides['ports']}
+            if 'cidr' in overrides:
+                overrides['rules']["cidr"] = overrides['cidr']
         for route in overrides.get('rules', []):
-            # cidr = route.get('cidr')
+            cidr = route.get('cidr')
+            if cidr is not None:
+                warning("cidr is not used in GCP firewalls")
             ports = [str(port) for port in route.get('ports', []) if port not in existing_ports]
             if ports:
                 allowed.append({"IPProtocol": "tcp", "ports": ports})
