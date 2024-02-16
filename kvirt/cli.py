@@ -2107,10 +2107,10 @@ def create_plan(args):
             config.delete_plan(plan, unregister=config.rhnunregister)
     result = config.plan(plan, ansible=ansible, url=url, path=path, container=container, inputfile=inputfile,
                          overrides=overrides, pre=pre, post=post, threaded=threaded)
-    if 'result' in result and result['result'] == 'success':
+    if result and result.get('result') == 'success':
         sys.exit(0)
     else:
-        if 'reason' in result:
+        if result and 'reason' in result:
             error(result['reason'])
         sys.exit(1)
 
