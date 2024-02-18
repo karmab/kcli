@@ -27,8 +27,8 @@ jobs:
         oc patch storageclass odf-storagecluster-ceph-rbd -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
     - name: Delete old install
       run: |
-        kcli delete cluster --yes $CLUSTER || true
-        kcli delete plan --yes $CLUSTER-vms || true
+        kcli -C local delete cluster --yes $CLUSTER || true
+        kcli -C local delete plan --yes $CLUSTER-vms || true
 
  deploy-baremetal-like-vms:
    needs: requirements
@@ -53,4 +53,4 @@ jobs:
    - name: Clean everything after success
      run: |
        kcli delete cluster --yes $CLUSTER
-       kcli delete plan --yes $CLUSTER-vms
+       kcli -C local delete plan --yes $CLUSTER-vms

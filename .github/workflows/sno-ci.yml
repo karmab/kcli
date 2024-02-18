@@ -48,7 +48,7 @@ jobs:
            curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
            kcli create sushy-service
        - name: Delete old install
-         run: kcli delete cluster --yes $CLUSTER || true
+         run: kcli -C local delete cluster --yes $CLUSTER || true
 
     deploy-baremetal-like-vm:
       needs: requirements
