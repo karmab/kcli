@@ -2151,6 +2151,7 @@ def get_rhcos_url_from_file(filename, _type='kvm'):
 
 
 def info_baremetal_hosts(baremetal_hosts, overrides={}, debug=False, full=False):
+    failures = []
     for host in baremetal_hosts:
         bmc_url = host.get('url') or host.get('bmc_url')
         bmc_user = host.get('user') or host.get('bmc_user') or overrides.get('bmc_user')
@@ -2164,7 +2165,7 @@ def info_baremetal_hosts(baremetal_hosts, overrides={}, debug=False, full=False)
             except Exception as e:
                 msg = f'Hit {e} when getting info on host {node_name}'
                 error(msg)
-                return {'result': 'failure', 'reason': msg}
+                failures.append(msg)
             if full:
                 pretty_print(info)
             else:
@@ -2172,10 +2173,13 @@ def info_baremetal_hosts(baremetal_hosts, overrides={}, debug=False, full=False)
                         'PowerState', 'PartNumber', 'SKU', 'SystemType']
                 data = {key: info[key] for key in keys if key in info}
                 pretty_print(data)
+    if failures:
+        return {'result': 'failure', 'reason': '\n'.join(failures)}
     return {'result': 'success'}
 
 
 def reset_baremetal_hosts(baremetal_hosts, overrides={}, debug=False):
+    failures = []
     for host in baremetal_hosts:
         bmc_url = host.get('url') or host.get('bmc_url')
         bmc_user = host.get('user') or host.get('bmc_user') or overrides.get('bmc_user')
@@ -2189,11 +2193,14 @@ def reset_baremetal_hosts(baremetal_hosts, overrides={}, debug=False):
             except Exception as e:
                 msg = f'Hit {e} when resetting host {node_name}'
                 error(msg)
-                return {'result': 'failure', 'reason': msg}
+                failures.append(msg)
+    if failures:
+        return {'result': 'failure', 'reason': '\n'.join(failures)}
     return {'result': 'success'}
 
 
 def start_baremetal_hosts(baremetal_hosts, iso_url, overrides={}, debug=False):
+    failures = []
     sno = iso_url is not None and iso_url.endswith('-sno.iso')
     for index, host in enumerate(baremetal_hosts):
         index_iso_url = iso_url
@@ -2227,13 +2234,16 @@ def start_baremetal_hosts(baremetal_hosts, iso_url, overrides={}, debug=False):
                 except Exception as e:
                     msg = f"Hit {e} when starting host {node_name}"
                     error(msg)
-                    return {'result': 'failure', 'reason': msg}
+                    failures.append(msg)
         else:
             warning(f"Skipping entry {index} because either bmc_url, bmc_user or bmc_password is not set")
+    if failures:
+        return {'result': 'failure', 'reason': '\n'.join(failures)}
     return {'result': 'success'}
 
 
 def stop_baremetal_hosts(baremetal_hosts, overrides={}, debug=False):
+    failures = []
     for host in baremetal_hosts:
         bmc_url = host.get('url') or host.get('bmc_url')
         bmc_user = host.get('user') or host.get('bmc_user') or overrides.get('bmc_user')
@@ -2247,11 +2257,14 @@ def stop_baremetal_hosts(baremetal_hosts, overrides={}, debug=False):
             except Exception as e:
                 msg = f'Hit {e} when stopping host {node_name}'
                 error(msg)
-                return {'result': 'failure', 'reason': msg}
+                failures.append(msg)
+    if failures:
+        return {'result': 'failure', 'reason': '\n'.join(failures)}
     return {'result': 'success'}
 
 
 def update_baremetal_hosts(baremetal_hosts, overrides={}, debug=False):
+    failures = []
     for index, host in enumerate(baremetal_hosts):
         bmc_url = host.get('url') or host.get('bmc_url')
         bmc_user = host.get('username') or host.get('user') or host.get('bmc_username') or host.get('bmc_user')\
@@ -2271,9 +2284,11 @@ def update_baremetal_hosts(baremetal_hosts, overrides={}, debug=False):
             except Exception as e:
                 msg = f"Hit {e} when updating secureboot in host {node_name}"
                 error(msg)
-                return {'result': 'failure', 'reason': msg}
+                failures.append(msg)
         else:
             warning(f"Skipping entry {index} because either bmc_url, bmc_user or bmc_password is not set")
+    if failures:
+        return {'result': 'failure', 'reason': '\n'.join(failures)}
     return {'result': 'success'}
 
 
