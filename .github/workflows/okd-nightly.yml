@@ -1,0 +1,31 @@
+name: OKD-NIGHTLY-CI
+on:
+  schedule:
+    - cron: '10 23 * * *'
+
+env:
+ HOME: /root
+ PYTHONUNBUFFERED: true
+ PLAN: ci-okd
+ PULLSECRET: /root/openshift_pull.json
+ PARAMFILE: "openshift-ci-paramfiles/okd.yml"
+ NETWORK: okd-network
+ NETWORK_CIDR: 192.168.131.0/24
+ VERSION: stable
+ TAG: 4.14
+
+jobs:
+    deploy-okd:
+      if: github.repository == 'karmab/kcli'
+      runs-on: libvirt
+      steps:
+       - uses: actions/checkout@v2
+       - run: git pull origin ${GITHUB_REF##*/}
+       - name: Install kcli
+         run: curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
+       - name: Deploy network if needed
+         run: kcli create network -c $NETWORK_CIDR $NETWORK || true
+       - name: Deploy OKD
+         run: kcli create cluster openshift --pf $PARAMFILE $PLAN --force
+       - name: Clean everything after success
+         run: kcli delete plan --yes $PLAN

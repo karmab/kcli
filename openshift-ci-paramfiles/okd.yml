@@ -1,0 +1,14 @@
+cluster: ci-okd
+upstream: true
+domain: karmalabs.corp
+network_type: OVNKubernetes
+ctlplanes: 3
+workers: 0
+version: stable
+tag: "4.14"
+network: okd-network
+sslip: true
+numcpus: 32
+memory: 32768
+bootstrap_memory: 8192
+disk_size: 80
