@@ -988,24 +988,22 @@ def scp(name, ip='', user=None, source=None, destination=None, recursive=None, t
 def get_user(image):
     if 'gke' in image.lower():
         user = getuser()
-    elif 'fedora' in image.lower():
-        user = 'fedora'
+    elif 'rhel' in image.lower() and not image.startswith('RHEL-'):
+        user = 'cloud-user'
+    elif 'centos' in image.lower() and not image.startswith('ibm'):
+        user = 'centos'
     elif 'centos8stream' in image.lower():
         user = 'centos'
     elif 'centos9stream' in image.lower():
         user = 'cloud-user'
-    elif 'centos' in image.lower() and not image.startswith('ibm'):
-        user = 'centos'
     elif 'coreos' in image.lower() or 'rhcos' in image.lower() or 'fcos' in image.lower() or 'ocp-v4' in image:
         user = 'core'
-    elif 'cirros' in image.lower():
-        user = 'cirros'
-    elif [x for x in UBUNTUS if x in image.lower()] or 'ubuntu' in image.lower():
-        user = 'ubuntu'
-    elif 'rhel' in image.lower() and not image.startswith('RHEL-'):
-        user = 'cloud-user'
     elif 'debian' in image.lower():
         user = 'debian'
+    elif [x for x in UBUNTUS if x in image.lower()] or 'ubuntu' in image.lower():
+        user = 'ubuntu'
+    elif 'fedora' in image.lower():
+        user = 'fedora'
     elif 'arch' in image.lower():
         user = 'arch'
     elif 'freebsd' in image.lower():
@@ -1014,6 +1012,8 @@ def get_user(image):
         user = 'netbsd'
     elif 'openbsd' in image.lower():
         user = 'openbsd'
+    elif 'cirros' in image.lower():
+        user = 'cirros'
     else:
         user = 'root'
     return user

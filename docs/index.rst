@@ -2009,6 +2009,11 @@ Note that you will also need to sync the following images on the registry:
 -  quay.io/karmab/kubectl:multi
 -  quay.io/karmab/kcli:latest
 
+OKD
+^^^
+
+By setting ``upstream`` to true, you can deploy OKD (which will use a fake pull secret and fedora coreos as image)
+
 Interacting with your clusters
 ------------------------------
 
