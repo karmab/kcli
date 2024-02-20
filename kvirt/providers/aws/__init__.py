@@ -68,8 +68,9 @@ class Kaws(object):
                                 region_name=region, aws_session_token=session_token)
         self.s3 = boto3.client('s3', aws_access_key_id=access_key_id, aws_secret_access_key=access_key_secret,
                                region_name=region, aws_session_token=session_token)
-        self.ssm = boto3.client('ssm', aws_access_key_id=access_key_id, aws_secret_access_key=access_key_secret,
-                                region_name=region, aws_session_token=session_token)
+        self.iconnect = boto3.client('ec2-instance-connect', aws_access_key_id=access_key_id,
+                                     aws_secret_access_key=access_key_secret, region_name=region,
+                                     aws_session_token=session_token)
         self.access_key_id = access_key_id
         self.access_key_secret = access_key_secret
         self.region = region
@@ -542,7 +543,24 @@ class Kaws(object):
             error(f"VM {name} not found")
             return
         instanceid = vm['InstanceId']
-        response = self.ssm.start_session(Target=instanceid)
+        machinetype = vm['InstanceType']
+        flavor = conn.describe_instance_types(InstanceTypes=[machinetype])['InstanceTypes'][0]
+        processor_info = flavor.get('ProcessorInfo', {}).get('SupportedArchitectures', [])
+        hypervisor = flavor.get('Hypervisor', '')
+        if processor_info == ['x86_64'] and hypervisor == 'nitro':
+            publickeyfile = get_ssh_pub_key()
+            publickeyfile = open(publickeyfile).read()
+            self.iconnect.send_serial_console_ssh_public_key(InstanceId=instanceid, SerialPort=0,
+                                                             SSHPublicKey=publickeyfile)
+            sshcommand = f'ssh {instanceid}.port0@serial-console.ec2-instance-connect.{self.region}.aws'
+            code = os.WEXITSTATUS(os.system(sshcommand))
+            sys.exit(code)
+        else:
+            warning(f"Instance Type {machinetype} of vm {name} doesnt support serial console, only printing output")
+            response = conn.get_console_output(InstanceId=instanceid, DryRun=False, Latest=False)
+            if 'Output' not in response:
+                error(f"VM {name} not ready yet")
+                return
         if web:
             return response['Output']
         else:
