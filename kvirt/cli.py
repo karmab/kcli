@@ -2107,12 +2107,10 @@ def create_plan(args):
             config.delete_plan(plan, unregister=config.rhnunregister)
     result = config.plan(plan, ansible=ansible, url=url, path=path, container=container, inputfile=inputfile,
                          overrides=overrides, pre=pre, post=post, threaded=threaded)
-    if 'result' in result and result['result'] == 'success':
-        sys.exit(0)
-    else:
-        if 'reason' in result:
-            error(result['reason'])
-        sys.exit(1)
+    if result and 'reason' in result:
+        error(result['reason'])
+    code = 0 if result and result.get('result') == 'success' else 1
+    sys.exit(code)
 
 
 def create_playbook(args):

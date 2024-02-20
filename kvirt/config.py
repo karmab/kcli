@@ -2266,7 +2266,7 @@ class Kconfig(Kbaseconfig):
         if ansibleentries and not onlyassets:
             if not newvms:
                 warning("Ansible skipped as no new vm within playbook provisioned")
-                return
+                return {'result': 'success'}
             for entry in sorted(ansibleentries):
                 _ansible = entries[entry]
                 if 'playbook' not in _ansible:
