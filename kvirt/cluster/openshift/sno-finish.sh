@@ -11,7 +11,7 @@ for pv in $(pvs -o name --noheadings) ; do pvremove -y $pv ; done
 {% if sno_disk != None %}
 install_device={{ '/dev/%s' % sno_disk|basename if '/dev/' not in sno_disk else sno_disk }}
 {% else %}
-install_device=$(lsblk -r | grep rhcos | head -1 | cut -d" " -f1 | sed 's/[0-9]\+$//')
+install_device=$(lsblk -f -r | grep xfs | grep root | head -1 | cut -d" " -f1 | sed 's/[0-9]\+$//')
 if [ -z $install_device ] ; then
 install_device=$(lsblk | grep disk | head -1 | cut -d" " -f1)
 fi

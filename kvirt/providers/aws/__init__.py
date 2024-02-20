@@ -68,6 +68,8 @@ class Kaws(object):
                                 region_name=region, aws_session_token=session_token)
         self.s3 = boto3.client('s3', aws_access_key_id=access_key_id, aws_secret_access_key=access_key_secret,
                                region_name=region, aws_session_token=session_token)
+        self.ssm = boto3.client('ssm', aws_access_key_id=access_key_id, aws_secret_access_key=access_key_secret,
+                                region_name=region, aws_session_token=session_token)
         self.access_key_id = access_key_id
         self.access_key_secret = access_key_secret
         self.region = region
@@ -540,10 +542,7 @@ class Kaws(object):
             error(f"VM {name} not found")
             return
         instanceid = vm['InstanceId']
-        response = conn.get_console_output(InstanceId=instanceid, DryRun=False, Latest=False)
-        if 'Output' not in response:
-            error(f"VM {name} not ready yet")
-            return
+        response = self.ssm.start_session(Target=instanceid)
         if web:
             return response['Output']
         else:
