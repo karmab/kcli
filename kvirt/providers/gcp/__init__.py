@@ -417,7 +417,9 @@ class Kgcp(object):
                                               'enableSecureBoot': secureboot}
         if 'confidential' in overrides and overrides['confidential']:
             body['confidentialInstanceConfig'] = {'enableConfidentialCompute': True}
-        if overrides.get('spot', False):
+        if (overrides.get('spot', False) or
+                (overrides.get('spot_ctlplanes', False) and 'ctlplane' in name) or
+                (overrides.get('spot_workers', False) and 'worker' in name)):
             if 'scheduling' not in body:
                 body['scheduling'] = {}
             body['scheduling']['provisioningModel'] = 'SPOT'
