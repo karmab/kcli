@@ -373,7 +373,7 @@ class Kaws(object):
                     userdata += 'cloud-init clean --logs\nreboot'
         else:
             userdata = ''
-        if overrides.get('spot', False):
+        if (overrides.get('spot_ctlplanes', False) and 'ctlplane' in name) or (overrides.get('spot_workers', False) and 'worker' in name):
             userdata_encode = (b64encode(userdata.encode())).decode("utf-8")
             LaunchSpecification = {'SecurityGroups': SecurityGroupIds,
                                    'ImageId': imageid,
