@@ -705,6 +705,9 @@ class Kvirt(object):
                     ovsxml.format(port_name)
                 else:
                     ovsxml.format("")
+            if nettype == 'igb' and machine == 'pc':
+                machine = 'q35'
+                warning(f"Forcing machine type to {machine}")
             if nicnuma is not None:
                 slot = nicslots[nicnuma] + 1
                 nicslots[nicnuma] = slot
