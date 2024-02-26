@@ -645,6 +645,7 @@ def scale(config, plandir, cluster, overrides):
             data.update(installparam)
             plan = installparam.get('plan', plan)
     data.update(overrides)
+    data['scale'] = True
     if os.path.exists(clusterdir):
         with open(f"{clusterdir}/kcli_parameters.yml", 'w') as paramfile:
             safe_dump(data, paramfile)

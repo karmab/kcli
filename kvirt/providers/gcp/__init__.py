@@ -126,6 +126,7 @@ class Kgcp(object):
         region = self.region
         if self.exists(name):
             return {'result': 'failure', 'reason': f"VM {name} already exists"}
+        lb = overrides.get('loadbalancer')
         kubetype = metadata.get('kubetype')
         if flavor is None:
             if numcpus != 1 and numcpus % 2 != 0:
@@ -376,6 +377,8 @@ class Kgcp(object):
             tags.extend([kube])
         if securitygroups:
             tags.extend(securitygroups)
+        if lb is not None and lb not in tags:
+            tags.append(lb)
         if tags:
             body['tags'] = {'items': tags}
         newval = {'key': 'serial-port-enable', 'value': 1}
@@ -435,6 +438,9 @@ class Kgcp(object):
             return {'result': 'failure', 'reason': str(e)}
         if reservedns and domain is not None:
             self.reserve_dns(name, nets=nets, domain=domain, alias=alias)
+        if lb is not None:
+            self.update_metadata(name, 'loadbalancer', lb, append=True)
+            self.add_vm_to_loadbalancer(name, lb)
         return {'result': 'success'}
 
     def start(self, name):
@@ -2048,3 +2054,14 @@ class Kgcp(object):
             return {'result': 'failure', 'reason': msg}
         vm['can_ip_forward'] = mode
         conn.instances().update(zone=zone, project=project, instance=name, body=vm).execute()
+
+    def add_vm_to_loadbalancer(self, vm, lb):
+        sane_name = lb.replace('.', '-')
+        conn = self.conn
+        project = self.project
+        zone = self.zone
+        vmpath = f"https://www.googleapis.com/compute/v1/projects/{project}/zones/{zone}/instances"
+        instances_body = {"instances": [{"instance": f"{vmpath}/{vm}"}]}
+        operation = conn.instanceGroups().addInstances(project=project, zone=zone, instanceGroup=sane_name,
+                                                       body=instances_body).execute()
+        self._wait_for_operation(operation)

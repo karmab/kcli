@@ -49,6 +49,7 @@ def scale(config, plandir, cluster, overrides):
     else:
         data['client'] = config.client
     data.update(overrides)
+    data['scale'] = True
     cloud_native = data.get('cloud_native')
     cloud_lb = data.get('cloud_lb', provider in cloud_providers and data['ctlplanes'] > 1)
     ctlplanes = data['ctlplanes']
@@ -73,7 +74,6 @@ def scale(config, plandir, cluster, overrides):
             if arg.startswith('install_k3s'):
                 install_k3s_args.append(f"{arg.upper()}={data[arg]}")
         overrides = data.copy()
-        overrides['scale'] = True
         threaded = data.get('threaded', False) or data.get(f'{role}_threaded', False)
         if role == 'ctlplanes':
             if ctlplanes == 1:

@@ -10,6 +10,9 @@
 
 {{ cluster }}-ctlplane-{{ num }}:
  domain: {{ domain if config_type != 'azure' else '' }}
+{% if scale|default(False) and cloud_lb %}
+ loadbalancer: api.{{ cluster }}
+{% endif %}
  image: {{ image }}
  pool: {{ pool or config_pool }}
 {% if flavor != None %}

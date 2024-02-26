@@ -186,17 +186,17 @@ class Kaws(object):
             if matching_subnets:
                 subnet_az = matching_subnets[0]['AvailabilityZone']
                 subnet_azs.append(subnet_az)
-                vpcid = matching_subnets[0]['VpcId']
+                vpc_id = matching_subnets[0]['VpcId']
                 netname = matching_subnets[0]['SubnetId']
             elif netname == 'default':
                 if defaultsubnetid is not None:
                     netname = defaultsubnetid
                 else:
-                    vpcid = [vpc['VpcId'] for vpc in vpcs['Vpcs'] if vpc['IsDefault']]
-                    if not vpcid:
+                    vpc_ids = [vpc['VpcId'] for vpc in vpcs['Vpcs'] if vpc['IsDefault']]
+                    if not vpc_ids:
                         return {'result': 'failure', 'reason': "Couldn't find default vpc"}
-                    vpcid = vpcid[0]
-                    default_subnets = [sub for sub in subnets if sub['DefaultForAz'] and sub['VpcId'] == vpcid]
+                    vpc_id = vpc_ids[0]
+                    default_subnets = [sub for sub in subnets if sub['DefaultForAz'] and sub['VpcId'] == vpc_id]
                     if az is None:
                         default_subnet = default_subnets[0]
                     else:
@@ -212,10 +212,10 @@ class Kaws(object):
                     defaultsubnetid = netname
                     pprint(f"Using subnet {defaultsubnetid} as default")
             else:
-                vpcid = self.get_vpc_id(netname, vpcs) if not netname.startswith('vpc-') else netname
-                if vpcid is None:
+                vpc_id = self.get_vpc_id(netname, vpcs) if not netname.startswith('vpc-') else netname
+                if vpc_id is None:
                     return {'result': 'failure', 'reason': f"Couldn't find vpc {netname}"}
-                vpc_subnets = [sub for sub in subnets if sub['VpcId'] == vpcid]
+                vpc_subnets = [sub for sub in subnets if sub['VpcId'] == vpc_id]
                 if az is not None:
                     vpc_subnets = [sub for sub in vpc_subnets if sub['AvailabilityZone'] == az]
                 if vpc_subnets:
@@ -256,77 +256,77 @@ class Kaws(object):
                 networkinterface['AssociatePublicIpAddress'] = netpublic
                 SecurityGroupIds = []
                 for sg in securitygroups:
-                    sgid = self.get_security_group_id(sg, vpcid)
-                    if sgid is not None:
-                        SecurityGroupIds.append(sgid)
+                    sg_id = self.get_security_group_id(sg, vpc_id)
+                    if sg_id is not None:
+                        SecurityGroupIds.append(sg_id)
                 if 'kubetype' in metadata and metadata['kubetype'] == "openshift":
                     kube = metadata['kube']
                     pprint(f"Adding vm to security group {kube}")
-                    kubesgid = self.get_security_group_id(kube, vpcid)
-                    if kubesgid is None:
-                        sg = self.resource.create_security_group(GroupName=kube, Description=kube, VpcId=vpcid)
+                    kube_sg_id = self.get_security_group_id(kube, vpc_id)
+                    if kube_sg_id is None:
+                        sg = self.resource.create_security_group(GroupName=kube, Description=kube, VpcId=vpc_id)
                         sgtags = [{"Key": "Name", "Value": kube}]
                         sg.create_tags(Tags=sgtags)
-                        kubesgid = sg.id
-                        sg.authorize_ingress(GroupId=kubesgid, FromPort=-1, ToPort=-1, IpProtocol='icmp',
+                        kube_sg_id = sg.id
+                        sg.authorize_ingress(GroupId=kube_sg_id, FromPort=-1, ToPort=-1, IpProtocol='icmp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupId=kubesgid, FromPort=22, ToPort=22, IpProtocol='tcp',
+                        sg.authorize_ingress(GroupId=kube_sg_id, FromPort=22, ToPort=22, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupId=kubesgid, FromPort=80, ToPort=80, IpProtocol='tcp',
+                        sg.authorize_ingress(GroupId=kube_sg_id, FromPort=80, ToPort=80, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupId=kubesgid, FromPort=8080, ToPort=8080, IpProtocol='tcp',
+                        sg.authorize_ingress(GroupId=kube_sg_id, FromPort=8080, ToPort=8080, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupId=kubesgid, FromPort=5443, ToPort=5443, IpProtocol='tcp',
+                        sg.authorize_ingress(GroupId=kube_sg_id, FromPort=5443, ToPort=5443, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupId=kubesgid, FromPort=8443, ToPort=8443, IpProtocol='tcp',
+                        sg.authorize_ingress(GroupId=kube_sg_id, FromPort=8443, ToPort=8443, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupId=kubesgid, FromPort=443, ToPort=443, IpProtocol='tcp',
+                        sg.authorize_ingress(GroupId=kube_sg_id, FromPort=443, ToPort=443, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupId=kubesgid, FromPort=6443, ToPort=6443, IpProtocol='tcp',
+                        sg.authorize_ingress(GroupId=kube_sg_id, FromPort=6443, ToPort=6443, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupId=kubesgid, FromPort=22624, ToPort=22624, IpProtocol='tcp',
+                        sg.authorize_ingress(GroupId=kube_sg_id, FromPort=22624, ToPort=22624, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupId=kubesgid, FromPort=2379, ToPort=2380, IpProtocol='tcp',
+                        sg.authorize_ingress(GroupId=kube_sg_id, FromPort=2379, ToPort=2380, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupId=kubesgid, FromPort=30000, ToPort=32767, IpProtocol='tcp',
+                        sg.authorize_ingress(GroupId=kube_sg_id, FromPort=30000, ToPort=32767, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupId=kubesgid, FromPort=30000, ToPort=32767, IpProtocol='udp',
+                        sg.authorize_ingress(GroupId=kube_sg_id, FromPort=30000, ToPort=32767, IpProtocol='udp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupId=kubesgid, FromPort=10250, ToPort=10259, IpProtocol='tcp',
+                        sg.authorize_ingress(GroupId=kube_sg_id, FromPort=10250, ToPort=10259, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupId=kubesgid, FromPort=9000, ToPort=9999, IpProtocol='tcp',
+                        sg.authorize_ingress(GroupId=kube_sg_id, FromPort=9000, ToPort=9999, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupId=kubesgid, FromPort=9000, ToPort=9999, IpProtocol='udp',
+                        sg.authorize_ingress(GroupId=kube_sg_id, FromPort=9000, ToPort=9999, IpProtocol='udp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupId=kubesgid, FromPort=4789, ToPort=4789, IpProtocol='tcp',
+                        sg.authorize_ingress(GroupId=kube_sg_id, FromPort=4789, ToPort=4789, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupId=kubesgid, FromPort=4789, ToPort=4789, IpProtocol='udp',
+                        sg.authorize_ingress(GroupId=kube_sg_id, FromPort=4789, ToPort=4789, IpProtocol='udp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupId=kubesgid, FromPort=6081, ToPort=6081, IpProtocol='tcp',
+                        sg.authorize_ingress(GroupId=kube_sg_id, FromPort=6081, ToPort=6081, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupId=kubesgid, FromPort=6081, ToPort=6081, IpProtocol='udp',
+                        sg.authorize_ingress(GroupId=kube_sg_id, FromPort=6081, ToPort=6081, IpProtocol='udp',
                                              CidrIp="0.0.0.0/0")
-                    SecurityGroupIds.append(kubesgid)
+                    SecurityGroupIds.append(kube_sg_id)
                 elif 'kubetype' in metadata and metadata['kubetype'] == "generic":
                     kube = metadata['kube']
                     pprint(f"Adding vm to security group {kube}")
-                    kubesgid = self.get_security_group_id(kube, vpcid)
-                    if kubesgid is None:
-                        sg = self.resource.create_security_group(GroupName=kube, Description=kube, VpcId=vpcid)
+                    kube_sg_id = self.get_security_group_id(kube, vpc_id)
+                    if kube_sg_id is None:
+                        sg = self.resource.create_security_group(GroupName=kube, Description=kube, VpcId=vpc_id)
                         sgtags = [{"Key": "Name", "Value": kube}]
                         sg.create_tags(Tags=sgtags)
-                        kubesgid = sg.id
-                        sg.authorize_ingress(GroupId=kubesgid, FromPort=-1, ToPort=-1, IpProtocol='icmp',
+                        kube_sg_id = sg.id
+                        sg.authorize_ingress(GroupId=kube_sg_id, FromPort=-1, ToPort=-1, IpProtocol='icmp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupId=kubesgid, FromPort=22, ToPort=22, IpProtocol='tcp',
+                        sg.authorize_ingress(GroupId=kube_sg_id, FromPort=22, ToPort=22, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupId=kubesgid, FromPort=6443, ToPort=6443, IpProtocol='tcp',
+                        sg.authorize_ingress(GroupId=kube_sg_id, FromPort=6443, ToPort=6443, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupId=kubesgid, FromPort=2379, ToPort=2380, IpProtocol='tcp',
+                        sg.authorize_ingress(GroupId=kube_sg_id, FromPort=2379, ToPort=2380, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
-                        sg.authorize_ingress(GroupId=kubesgid, FromPort=2380, ToPort=2380, IpProtocol='tcp',
+                        sg.authorize_ingress(GroupId=kube_sg_id, FromPort=2380, ToPort=2380, IpProtocol='tcp',
                                              CidrIp="0.0.0.0/0")
-                    SecurityGroupIds.append(kubesgid)
+                    SecurityGroupIds.append(kube_sg_id)
                 networkinterface['Groups'] = SecurityGroupIds
             networkinterfaces.append(networkinterface)
         if len(list(dict.fromkeys(subnet_azs))) > 1:
@@ -435,6 +435,10 @@ class Kaws(object):
         if overrides.get('SourceDestCheck', False) or overrides.get('router', False):
             conn.modify_instance_attribute(InstanceId=instance_id, Attribute='sourceDestCheck', Value='false',
                                            DryRun=False)
+        if 'loadbalancer' in overrides:
+            lb = overrides['loadbalancer']
+            self.update_metadata(name, 'loadbalancer', lb, append=True)
+            self.add_vm_to_loadbalancer(name, lb, vpc_id)
         return {'result': 'success'}
 
     def start(self, name):
@@ -611,7 +615,7 @@ class Kaws(object):
             return []
         return vm['SecurityGroups']
 
-    def get_security_group_id(self, name, vpcid):
+    def get_security_group_id(self, name, vpc_id):
         conn = self.conn
         for sg in conn.describe_security_groups()['SecurityGroups']:
             group_name = sg['GroupName']
@@ -622,14 +626,14 @@ class Kaws(object):
                 if tag['Key'] == 'Name':
                     group_name = tag['Value']
                     break
-            if sg['VpcId'] == vpcid and (group_name == name or group_id == name or group_tag == name):
+            if sg['VpcId'] == vpc_id and (group_name == name or group_id == name or group_tag == name):
                 return sg['GroupId']
         return None
 
-    def get_default_security_group_id(self, vpcid):
+    def get_default_security_group_id(self, vpc_id):
         conn = self.conn
         for sg in conn.describe_security_groups()['SecurityGroups']:
-            if sg['VpcId'] == vpcid and (sg['GroupName'] == 'default'):
+            if sg['VpcId'] == vpc_id and (sg['GroupName'] == 'default'):
                 return sg['GroupId']
 
     def get_vpc_id(self, name, vpcs=None):
@@ -733,7 +737,7 @@ class Kaws(object):
         return yamlinfo
 
     def get_vpcid_of_vm(self, name):
-        vcpid = None
+        vcp_id = None
         conn = self.conn
         df = {'InstanceIds': [name]} if name.startswith('i-') else {'Filters': [{'Name': "tag:Name", 'Values': [name]}]}
         try:
@@ -742,9 +746,9 @@ class Kaws(object):
             error(f"VM {name} not found")
             return {}
         for interface in vm['NetworkInterfaces']:
-            vpcid = interface['VpcId']
-            return vpcid
-        return vcpid
+            vpc_id = interface['VpcId']
+            return vpc_id
+        return vcp_id
 
     def ip(self, name):
         conn = self.conn
@@ -979,7 +983,7 @@ class Kaws(object):
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         index = len(vm['NetworkInterfaces'])
         az = vm['Placement']['AvailabilityZone']
-        vpcid = vm['VpcId']
+        vpc_id = vm['VpcId']
         vpcs = conn.describe_vpcs()['Vpcs']
         subnets = conn.describe_subnets()['Subnets']
         matching_subnets = [sub for sub in subnets if sub['SubnetId'] == network or tag_name(sub) == network]
@@ -989,14 +993,14 @@ class Kaws(object):
                 msg = "Couldn't find valid subnet in specified AZ"
                 error(msg)
                 return {'result': 'failure', 'reason': msg}
-            subnet_vpcid = matching_subnets[0]['VpcId']
-            if subnet_vpcid != vpcid:
+            subnet_vpc_id = matching_subnets[0]['VpcId']
+            if subnet_vpc_id != vpc_id:
                 msg = "Couldn't find valid subnet in VPC"
                 error(msg)
                 return {'result': 'failure', 'reason': msg}
             netname = matching_subnets[0]['SubnetId']
         elif network == 'default':
-            default_subnets = [sub for sub in subnets if sub['DefaultForAz'] and sub['VpcId'] == vpcid]
+            default_subnets = [sub for sub in subnets if sub['DefaultForAz'] and sub['VpcId'] == vpc_id]
             az_subnets = [sub for sub in default_subnets if sub['AvailabilityZone'] == az]
             if not az_subnets:
                 msg = "Couldn't find default subnet in specified AZ"
@@ -1004,18 +1008,17 @@ class Kaws(object):
                 return {'result': 'failure', 'reason': msg}
             else:
                 default_subnet = az_subnets[0]
-            subnetid = default_subnet['SubnetId']
+            subnet_id = default_subnet['SubnetId']
             subnet_az = default_subnet['AvailabilityZone']
-            netname = subnetid
-            defaultsubnetid = netname
-            pprint(f"Using subnet {defaultsubnetid} as default")
+            netname = subnet_id
+            pprint(f"Using subnet {netname} as default")
         else:
-            vpcid = self.get_vpc_id(network, vpcs) if not network.startswith('vpc-') else network
-            if vpcid is None:
+            vpc_id = self.get_vpc_id(network, vpcs) if not network.startswith('vpc-') else network
+            if vpc_id is None:
                 msg = f"Couldn't find vpc {network}"
                 error(msg)
                 return {'result': 'failure', 'reason': msg}
-            vpc_subnets = [sub for sub in subnets if sub['VpcId'] == vpcid]
+            vpc_subnets = [sub for sub in subnets if sub['VpcId'] == vpc_id]
             vpc_subnets = [sub for sub in vpc_subnets if sub['AvailabilityZone'] == az]
             if vpc_subnets:
                 subnet = vpc_subnets[0]
@@ -1233,8 +1236,8 @@ class Kaws(object):
             if self.debug:
                 print(vpc)
             plan = None
-            vpcid = vpc['VpcId']
-            networkname = vpcid
+            vpc_id = vpc['VpcId']
+            networkname = vpc_id
             cidr = vpc['CidrBlock']
             if 'Tags' in vpc:
                 for tag in vpc['Tags']:
@@ -1244,7 +1247,7 @@ class Kaws(object):
                         plan = tag['Value']
             mode = 'default' if vpc['IsDefault'] else 'N/A'
             dhcp = vpc['DhcpOptionsId']
-            networks[networkname] = {'cidr': cidr, 'dhcp': dhcp, 'domain': vpcid, 'type': 'routed', 'mode': mode}
+            networks[networkname] = {'cidr': cidr, 'dhcp': dhcp, 'domain': vpc_id, 'type': 'routed', 'mode': mode}
             if plan is not None:
                 networks[networkname]['plan'] = plan
             ipv6_associations = vpc.get('Ipv6CidrBlockAssociationSet', [])
@@ -1734,23 +1737,23 @@ class Kaws(object):
         return {'result': 'success'}
 
     def list_security_groups(self, network=None):
-        vpcid = None
+        vpc_id = None
         vpcs = self.conn.describe_vpcs()
         if network is not None:
-            vpcid = self.get_vpc_id(network, vpcs) if not network.startswith('vpc-') else network
+            vpc_id = self.get_vpc_id(network, vpcs) if not network.startswith('vpc-') else network
         else:
-            vpcids = [vpc['VpcId'] for vpc in vpcs['Vpcs'] if vpc['IsDefault']]
-            if vpcids:
-                vpcid = vpcids[0]
+            vpc_ids = [vpc['VpcId'] for vpc in vpcs['Vpcs'] if vpc['IsDefault']]
+            if vpc_ids:
+                vpc_id = vpc_ids[0]
             else:
                 warning("No default vpc found")
-        if vpcid is None:
-            error("Couldn't find vpcid")
+        if vpc_id is None:
+            error("Couldn't find vpc_id")
             sys.exit(1)
         results = []
         conn = self.conn
         for sg in conn.describe_security_groups()['SecurityGroups']:
-            if vpcid is not None and sg['VpcId'] != vpcid:
+            if vpc_id is not None and sg['VpcId'] != vpc_id:
                 continue
             group_name = sg['GroupName']
             for tag in sg.get('Tags', []):
@@ -1762,32 +1765,31 @@ class Kaws(object):
 
     def create_security_group(self, name, overrides={}):
         ports = overrides.get('ports', [])
-        defaultsubnetid = None
+        default_subnet_id = None
         vpcs = self.conn.describe_vpcs()
         subnets = self.conn.describe_subnets()
         network = overrides.get('network', 'default')
         if network in [subnet['SubnetId'] for subnet in subnets['Subnets']]:
-            vpcid = [subnet['VpcId'] for subnet in subnets['Subnets'] if subnet['SubnetId'] == network][0]
+            vpc_id = [subnet['VpcId'] for subnet in subnets['Subnets'] if subnet['SubnetId'] == network][0]
         elif network == 'default':
-            if defaultsubnetid is not None:
-                network = defaultsubnetid
+            if default_subnet_id is not None:
+                network = default_subnet_id
             else:
-                vpcid = [vpc['VpcId'] for vpc in vpcs['Vpcs'] if vpc['IsDefault']][0]
-                subnetid = [subnet['SubnetId'] for subnet in subnets['Subnets']
-                            if subnet['DefaultForAz'] and subnet['VpcId'] == vpcid][0]
-                network = subnetid
-                defaultsubnetid = network
-                pprint(f"Using subnet {defaultsubnetid} as default")
+                vpc_id = [vpc['VpcId'] for vpc in vpcs['Vpcs'] if vpc['IsDefault']][0]
+                subnet_id = [subnet['SubnetId'] for subnet in subnets['Subnets']
+                             if subnet['DefaultForAz'] and subnet['VpcId'] == vpc_id][0]
+                network = subnet_id
+                pprint(f"Using subnet {network} as default")
         else:
-            vpcid = self.get_vpc_id(network, vpcs) if not network .startswith('vpc-') else network
-            if vpcid is None:
+            vpc_id = self.get_vpc_id(network, vpcs) if not network .startswith('vpc-') else network
+            if vpc_id is None:
                 error(f"Couldn't find vpc {network}")
                 sys.exit(1)
-        sg = self.resource.create_security_group(GroupName=name, Description=name, VpcId=vpcid)
+        sg = self.resource.create_security_group(GroupName=name, Description=name, VpcId=vpc_id)
         sgtags = [{"Key": "Name", "Value": name}]
         sg.create_tags(Tags=sgtags)
-        sgid = sg.id
-        sg.authorize_ingress(GroupId=sgid, FromPort=-1, ToPort=-1, IpProtocol='icmp',
+        sg_id = sg.id
+        sg.authorize_ingress(GroupId=sg_id, FromPort=-1, ToPort=-1, IpProtocol='icmp',
                              CidrIp="0.0.0.0/0")
         for port in ports:
             if isinstance(port, str) or isinstance(port, int):
@@ -1801,7 +1803,7 @@ class Kaws(object):
                     warning(f"Missing from in {ports}. Skipping")
                     continue
             pprint(f"Adding rule from {fromport} to {toport} protocol {protocol}")
-            sg.authorize_ingress(GroupId=sgid, FromPort=int(fromport), ToPort=int(toport), IpProtocol=protocol,
+            sg.authorize_ingress(GroupId=sg_id, FromPort=int(fromport), ToPort=int(toport), IpProtocol=protocol,
                                  CidrIp="0.0.0.0/0")
         return {'result': 'success'}
 
@@ -1851,8 +1853,8 @@ class Kaws(object):
     def info_subnet(self, name):
         subnets = self.conn.describe_subnets()
         for subnet in subnets['Subnets']:
-            subnetid = subnet['SubnetId']
-            if subnetid == name or tag_name(subnet) == name:
+            subnet_id = subnet['SubnetId']
+            if subnet_id == name or tag_name(subnet) == name:
                 return subnet
         msg = f"Subnet {name} not found"
         error(msg)
@@ -1863,29 +1865,29 @@ class Kaws(object):
         vpcs = conn.describe_vpcs()
         subnets = conn.describe_subnets()
         if netname in [subnet['SubnetId'] for subnet in subnets['Subnets']]:
-            subnetid = netname
-            vpcid = [subnet['VpcId'] for subnet in subnets['Subnets'] if subnet['SubnetId'] == netname][0]
+            subnet_id = netname
+            vpc_id = [subnet['VpcId'] for subnet in subnets['Subnets'] if subnet['SubnetId'] == netname][0]
         elif netname == 'default':
-            vpcid = [vpc['VpcId'] for vpc in vpcs['Vpcs'] if vpc['IsDefault']]
-            if not vpcid:
+            vpc_ids = [vpc['VpcId'] for vpc in vpcs['Vpcs'] if vpc['IsDefault']]
+            if not vpc_ids:
                 error("Couldn't find default vpc")
                 sys.exit(1)
-            vpcid = vpcid[0]
-            subnetid = [subnet['SubnetId'] for subnet in subnets['Subnets']
-                        if subnet['DefaultForAz'] and subnet['VpcId'] == vpcid][0]
-            pprint(f"Using subnet {subnetid} as default")
+            vpc_id = vpc_ids[0]
+            subnet_id = [subnet['SubnetId'] for subnet in subnets['Subnets']
+                         if subnet['DefaultForAz'] and subnet['VpcId'] == vpc_id][0]
+            pprint(f"Using subnet {subnet_id} as default")
         else:
-            vpcid = self.get_vpc_id(netname, vpcs) if not netname.startswith('vpc-') else netname
-            if vpcid is None:
+            vpc_id = self.get_vpc_id(netname, vpcs) if not netname.startswith('vpc-') else netname
+            if vpc_id is None:
                 error(f"Couldn't find vpc {netname}")
                 sys.exit(1)
-            subnetids = [subnet['SubnetId'] for subnet in subnets['Subnets'] if subnet['VpcId'] == vpcid]
-            if subnetids:
-                subnetid = subnetids[0]
+            subnet_ids = [subnet['SubnetId'] for subnet in subnets['Subnets'] if subnet['VpcId'] == vpc_id]
+            if subnet_ids:
+                subnet_id = subnet_ids[0]
             else:
                 error(f"Couldn't find valid subnet for vpc {netname}")
                 sys.exit(1)
-        return vpcid, subnetid
+        return vpc_id, subnet_id
 
     def create_instance_profile(self, name, role):
         iam = boto3.client('iam', aws_access_key_id=self.access_key_id, aws_secret_access_key=self.access_key_secret,
@@ -2131,3 +2133,17 @@ class Kaws(object):
         instance_id = vm['InstanceId']
         mode = 'false' if mode else 'true'
         conn.modify_instance_attribute(InstanceId=instance_id, Attribute='sourceDestCheck', Value=mode, DryRun=False)
+
+    def add_vm_to_loadbalancer(self, vm, lb, vpc_id):
+        sg_id = self.get_security_group_id(lb, vpc_id)
+        instance_id = self.get_id(vm)
+        Instances = [{"InstanceId": instance_id}]
+        sgs = self.get_security_groups(lb)
+        sg_names = [x['GroupName'] for x in sgs]
+        if lb not in sg_names:
+            sg_ids = [x['GroupId'] for x in sgs]
+            sg_ids.append(sg_id)
+            nic_id = self.get_nic_id(vm)
+            self.conn.modify_network_interface_attribute(NetworkInterfaceId=nic_id, Groups=sg_ids)
+        clean_name = lb.replace('.', '-')
+        self.elb.register_instances_with_load_balancer(LoadBalancerName=clean_name, Instances=Instances)

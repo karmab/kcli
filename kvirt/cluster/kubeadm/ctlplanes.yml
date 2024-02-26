@@ -15,6 +15,9 @@
  numcpus: {{ ctlplane_numcpus | default(numcpus, numcpus) }}
  memory: {{ ctlplane_memory | default(memory, memory) }}
  domain: {{ domain }}
+{% if scale|default(False) and cloud_lb %}
+ loadbalancer: api.{{ cluster }}
+{% endif %}
  nets: {{ [primary_network] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
  files:

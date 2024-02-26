@@ -62,6 +62,7 @@ def scale(config, plandir, cluster, overrides):
             data.update(installparam)
             plan = installparam.get('plan', plan)
     data.update(overrides)
+    data['scale'] = True
     if os.path.exists(clusterdir):
         with open(f"{clusterdir}/kcli_parameters.yml", 'w') as paramfile:
             yaml.safe_dump(data, paramfile)
@@ -73,7 +74,6 @@ def scale(config, plandir, cluster, overrides):
     os.chdir(os.path.expanduser("~/.kcli"))
     for role in ['ctlplanes', 'workers']:
         overrides = data.copy()
-        overrides['scale'] = True
         if overrides.get(role, 0) == 0:
             continue
         threaded = data.get('threaded', False) or data.get(f'{role}_threaded', False)

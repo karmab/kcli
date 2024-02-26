@@ -363,6 +363,13 @@ class Kazure(object):
             result.wait()
         if reservedns and domain is not None:
             self.reserve_dns(name, nets=nets, domain=domain, alias=alias, instanceid=name)
+        if 'loadbalancer' in overrides:
+            lb = network_client.load_balancers.list(self.resource_group, overrides['loadbalancer'])
+            backend_id = lb.backend_address_pools[0].id
+            rule = lb.inbound_nat_rules[0] if lb.inbound_nat_rules else lb.load_balancing_rules[0]
+            ports = rule.frontend_port_range_start if lb.inbound_nat_rules else rule.frontend_port
+            self.add_vm_to_loadbalancer(name, backend_id, ports)
+            self.update_metadata(name, 'loadbalancer', lb, append=True)
         return {'result': 'success'}
 
     def start(self, name):
@@ -1317,7 +1324,7 @@ class Kazure(object):
         if self.debug:
             print(lb)
         for index, vm in enumerate(vms):
-            self.set_loadbalancer(vm, backend_id, ports, backend_id_dual=backend_id_dual)
+            self.add_vm_to_loadbalancer(vm, backend_id, ports, backend_id_dual=backend_id_dual)
             self.update_metadata(vm, 'loadbalancer', name)
         if domain is not None:
             if not internal:
@@ -1385,7 +1392,8 @@ class Kazure(object):
             results.append([lb.name, ip, protocol, ports, target])
         return results
 
-    def set_loadbalancer(self, name, backend_id, ports, backend_id_dual=None):
+    def add_vm_to_loadbalancer(self, vm, backend_id, ports, backend_id_dual=None):
+        name = vm
         try:
             vm = self.compute_client.virtual_machines.get(self.resource_group, name)
         except:
