@@ -4,15 +4,15 @@
 # Copyright (c) 2017 Karim Boumedhel
 #
 
-Name:           {{{ git_dir_name }}}
-Version:        99.{{{ git_custom_version }}}
+Name:           kcli
+Version:        99.${GIT_CUSTOM_VERSION}
 Release:        0%{?dist}
 Url:            http://github.com/karmab/kcli
 Summary:        Wrapper for libvirt, azure, aws, gcp, kubevirt, ovirt, openstack, packet, proxmox and vsphere
 License:        ASL 2.0
 Group:          Development/Languages/Python
-VCS:            {{{ git_dir_vcs }}}
-Source:         {{{ git_dir_pack }}}
+VCS:            ${GIT_DIR_VCS}
+Source:         kcli.tar.gz
 AutoReq:        no
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildRequires:  python3-devel rubygem-ronn gzip python3-setuptools git
@@ -25,13 +25,10 @@ It easily deploy single vms from cloud images or several using plans or kubernet
 %global debug_package %{nil}
 
 %prep
-{{{ git_dir_setup_macro }}}
+%setup -T -b 0 -q -n kcli
 
 %build
 sed -i "s/, 'libvirt.*/\]/" setup.py
-INSTALL=$(grep -m 1 INSTALL setup.py  | sed 's/INSTALL = //')
-sed -i "s/install_requires=INSTALL/install_requires=$INSTALL/" setup.py
-sed -i '/INSTALL/d' setup.py
 GIT_VERSION="$(git ls-remote https://github.com/karmab/kcli | head -1 | cut -c1-7) $(date +%Y/%m/%d)"
 echo $GIT_VERSION > kvirt/version/git
 %{python3} setup.py build
@@ -63,4 +60,3 @@ rm -rf %{buildroot}
 
 
 %changelog
-{{{ git_dir_changelog }}}

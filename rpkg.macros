@@ -1,6 +1,0 @@
-function git_custom_version {
-    echo -n "0.0.git.$(date "+%Y%m%d%H%M").$(git rev-parse --short HEAD)"
-}
-function git_custom_name {
-    echo -n "kcli-0.0.git.$(date "+%Y%m%d%H%M").$(git rev-parse --short HEAD).tar.gz"
-}
