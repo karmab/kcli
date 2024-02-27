@@ -1,5 +1,5 @@
 #
-# spec file for package kcli
+# spec file for kcli package
 #
 # Copyright (c) 2017 Karim Boumedhel
 #
@@ -29,8 +29,7 @@ It easily deploy single vms from cloud images or several using plans or kubernet
 
 %build
 sed -i "s/, 'libvirt.*/\]/" setup.py
-GIT_VERSION="$(git ls-remote https://github.com/karmab/kcli | head -1 | cut -c1-7) $(date +%Y/%m/%d)"
-echo $GIT_VERSION > kvirt/version/git
+echo "$(git ls-remote https://github.com/karmab/kcli | head -1 | cut -c1-7) $(date +%Y/%m/%d)" > kvirt/version/git
 %{python3} setup.py build
 
 %install
@@ -57,6 +56,5 @@ rm -rf %{buildroot}
 %attr(0755,root,root) %{_bindir}/ignitionmerger
 %attr(0755,root,root) %{_bindir}/ekstoken
 %attr(0755,root,root) %{_bindir}/gketoken
-
 
 %changelog
