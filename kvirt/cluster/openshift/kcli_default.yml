@@ -15,7 +15,7 @@ info: |
     bootstrap in place (which removes the need for a bootstrap vm). This approach is suitable for baremetal single node
     baremetal_hosts can be specified as an array of bmc urls to deploy baremetal workers (or in the case of SNO described before)
 version: stable
-tag: '4.14'
+tag: '4.15'
 pull_secret: openshift_pull.json
 image: rhcos414
 network: default

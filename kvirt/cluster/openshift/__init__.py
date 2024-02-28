@@ -272,7 +272,7 @@ def get_installer_version():
     return installer_version
 
 
-def offline_image(version='stable', tag='4.14', pull_secret='openshift_pull.json'):
+def offline_image(version='stable', tag='4.15', pull_secret='openshift_pull.json'):
     tag = str(tag).split(':')[-1]
     for arch in ['x86_64', 'amd64', 'arm64', 'ppc64le', 's390x', 'x86_64']:
         tag.replace(f'-{arch}', '')
@@ -305,7 +305,7 @@ def offline_image(version='stable', tag='4.14', pull_secret='openshift_pull.json
     return offline
 
 
-def same_release_images(version='stable', tag='4.14', pull_secret='openshift_pull.json', path='.'):
+def same_release_images(version='stable', tag='4.15', pull_secret='openshift_pull.json', path='.'):
     if not os.path.exists(f'{path}/openshift-install'):
         return False
     try:

@@ -1,7 +1,7 @@
 cluster: snoplus
 domain: karmalabs.corp
 version: stable
-tag: "4.14"
+tag: "4.15"
 api_ip: 192.168.122.247
 # sno: true
 # sno_wait: true

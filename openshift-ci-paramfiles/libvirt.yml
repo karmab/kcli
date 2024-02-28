@@ -5,7 +5,7 @@ ovn_hostrouting: true
 ctlplanes: 3
 workers: 0
 version: stable
-tag: "4.14"
+tag: "4.15"
 #api_ip: 10.19.135.112
 # api_ip: 10.1.98.87
 # api_ip: 10.19.32.58

@@ -6,7 +6,7 @@ ctlplanes: 3
 workers: 2
 version: nightly
 sslip: true
-tag: 4.15
+tag: 4.16
 # api_ip: 10.19.135.111
 api_ip: 10.19.32.59
 network: br-ex
