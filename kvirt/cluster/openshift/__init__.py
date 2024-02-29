@@ -384,7 +384,7 @@ def get_downstream_installer(version='stable', macosx=False, tag=None, debug=Fal
 
 
 def get_upstream_installer(tag, version='stable', debug=False):
-    if 'quay.io' not in tag and 'registry.ci.openshift.org' not in tag:
+    if 'quay.io' not in str(tag) and 'registry.ci.openshift.org' not in str(tag):
         if version == 'dev-preview':
             url = "https://amd64.origin.releases.ci.openshift.org/api/v1/releasestream/4-scos-next/latest"
         elif version in ['ci', 'nightly']:
