@@ -314,6 +314,10 @@ def create(config, plandir, cluster, overrides):
     if str(tag) == '4.1':
         tag = '4.10'
         data['tag'] = tag
+    pull_secret = os.path.expanduser(pwd_path(data.get('pull_secret')))
+    if not os.path.exists(pull_secret):
+        msg = f"Missing pull secret file {pull_secret}"
+        return {'result': 'failure', 'reason': msg}
     network_type = data['network_type']
     if network_type not in ['Calico', 'OVNKubernetes']:
         data['network_type'] = 'Other'
@@ -372,12 +376,19 @@ def create(config, plandir, cluster, overrides):
     registry = 'quay.io'
     management_image = os.popen("oc get clusterversion version -o jsonpath='{.status.desired.image}'").read()
     prefixes = ['quay.io', 'registry.ci']
-    if not any(management_image.startswith(p) for p in prefixes):
+    fake_disconnected = overrides.get('fake_disconnected', False)
+    if not fake_disconnected and not any(management_image.startswith(p) for p in prefixes):
         disconnected_url = management_image.split('/')[0]
         data['registry'] = disconnected_url
-        hypershift_info = "oc adm release info --pullspecs | grep hypershift | awk '{print $2'} | cut -d@ -f2"
+        if disconnected_url not in open(pull_secret).read():
+            msg = f"entry for {disconnected_url} missing in pull secret"
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
+        hypershift_info = f"oc adm release info --insecure --pullspecs -a {pull_secret} | "
+        hypershift_info += "grep hypershift | awk '{print $2}' | cut -d@ -f2"
         hypershift_tag = os.popen(hypershift_info).read().strip()
-        mco_info = "oc adm release info --pullspecs | grep machine-config-operator | awk '{print $2'} | cut -d@ -f2"
+        mco_info = f"oc adm release info --insecure --pullspecs -a {pull_secret} | "
+        mco_info += "grep machine-config-operator | awk '{print $2'} | cut -d@ -f2"
         mco_tag = os.popen(mco_info).read().strip()
         disconnected_data = {'disconnected_url': disconnected_url, 'hypershift_tag': hypershift_tag, 'mco_tag': mco_tag}
         disconnectedfile = config.process_inputfile(cluster, f"{plandir}/disconnected.sh", overrides=disconnected_data)
@@ -427,11 +438,6 @@ def create(config, plandir, cluster, overrides):
         data['management_api_ip'] = management_api_ip
     pprint(f"Using {management_api_ip} as management api ip")
     pub_key = data.get('pub_key')
-    pull_secret = pwd_path(data.get('pull_secret'))
-    pull_secret = os.path.expanduser(pull_secret)
-    if not os.path.exists(pull_secret):
-        msg = f"Missing pull secret file {pull_secret}"
-        return {'result': 'failure', 'reason': msg}
     data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
     pub_key = data.get('pub_key') or get_ssh_pub_key()
     keys = data.get('keys', [])
@@ -509,7 +515,7 @@ def create(config, plandir, cluster, overrides):
     cmcmd = f"oc create ns {namespace} -o yaml --dry-run=client | oc apply -f -"
     call(cmcmd, shell=True)
     icsps = yaml.safe_load(os.popen('oc get imagecontentsourcepolicies -o yaml').read())['items']
-    if icsps:
+    if not fake_disconnected and icsps:
         imagecontentsources = []
         for icsp in icsps:
             for mirror_spec in icsp['spec']['repositoryDigestMirrors']:
