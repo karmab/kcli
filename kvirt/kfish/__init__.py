@@ -29,7 +29,8 @@ def get_info(url, user, password):
     p = urlparse(oem_url)
     headers = {'Accept': 'application/json'}
     request = Request(f"https://{p.netloc}/redfish/v1", headers=headers)
-    oem = json.loads(urlopen(request).read())['Oem']
+    v1data = json.loads(urlopen(request).read())
+    oem = v1data['Oem']
     model = "dell" if 'Dell' in oem else "hp" if 'Hpe' in oem else 'supermicro' if 'Supermicro' in oem else 'N/A'
     if '://' not in url:
         if model in ['hp', 'supermicro']:
@@ -45,7 +46,7 @@ def get_info(url, user, password):
 
 
 class Redfish(object):
-    def __init__(self, url, user='root', password='calvin', insecure=True, debug=False, model=None):
+    def __init__(self, url, user='root', password='calvin', insecure=True, debug=False, model=None, legacy=False):
         self.debug = debug
         self.headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
         if insecure:
@@ -59,6 +60,11 @@ class Redfish(object):
         credentials = base64.b64encode(bytes(f'{self.user}:{self.password}', 'ascii')).decode('utf-8')
         self.headers["Authorization"] = f"Basic {credentials}"
         self.manager_url = None
+        self.legacy = False
+        if self.model == 'supermicro':
+            info = self.info()
+            if 'VirtualMedia' not in info or info['VirtualMedia']['@odata.id'] != '/redfish/v1/Managers/1/VirtualMedia':
+                self.legacy = True
 
     def get_manager_url(self):
         request = Request(self.url, headers=self.headers)
@@ -96,7 +102,7 @@ class Redfish(object):
         iso_url = self.get_iso_url()
         request = Request(iso_url, headers=self.headers)
         actions = json.loads(urlopen(request).read())['Actions']
-        target = '#IsoConfig.UnMount' if self.model == 'supermicro' else '#VirtualMedia.EjectMedia'
+        target = '#IsoConfig.UnMount' if self.model == 'supermicro' and self.legacy else '#VirtualMedia.EjectMedia'
         t = actions[target]['target']
         return f"{self.baseurl}{t}"
 
@@ -104,14 +110,14 @@ class Redfish(object):
         iso_url = self.get_iso_url()
         request = Request(iso_url, headers=self.headers)
         actions = json.loads(urlopen(request).read())['Actions']
-        target = '#IsoConfig.Mount' if self.model == 'supermicro' else '#VirtualMedia.InsertMedia'
+        target = '#IsoConfig.Mount' if self.model == 'supermicro' and self.legacy else '#VirtualMedia.InsertMedia'
         t = actions[target]['target']
         return f"{self.baseurl}{t}"
 
     def eject_iso(self):
         headers = self.headers.copy()
         data = json.dumps({}).encode('utf-8')
-        if self.model == 'supermicro':
+        if self.model == 'supermicro' and self.legacy:
             headers['Content-Length'] = 0
             # data = {}
         eject_url = self.get_iso_eject_url()
@@ -122,7 +128,7 @@ class Redfish(object):
 
     def insert_iso(self, iso_url):
         headers = self.headers.copy()
-        if self.model == 'supermicro':
+        if self.model == 'supermicro' and self.legacy:
             p = urlparse(iso_url)
             data = {"Host": f"{p.scheme}://{p.netloc}", "Path": p.path}
             manager_url = self.get_manager_url()
