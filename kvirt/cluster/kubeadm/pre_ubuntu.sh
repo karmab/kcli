@@ -1,14 +1,12 @@
 apt-get update && apt-get -y install apt-transport-https curl git
-curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+
+VERSION={{ version or "$(curl -L -s https://dl.k8s.io/release/stable.txt | cut -d. -f1,2)" }}
+mkdir -p -m 755 /etc/apt/keyrings
+curl -fsSL https://pkgs.k8s.io/core:/stable:/$VERSION/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
-deb http://apt.kubernetes.io/ kubernetes-xenial main
+deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/$VERSION/deb/ /
 EOF
 apt-get update
-{% if version != None %}
-VERSION=$(apt-cache show kubectl | grep Version | grep {{ version }} | head -1 | awk -F: '{print $2}' | xargs)
-{% else %}
-VERSION=$(apt-cache show kubectl | grep Version | head -1 | awk -F: '{print $2}' | xargs)
-{% endif %}
 
 {% if engine == 'docker' %}
 apt-get -y install docker.io
@@ -24,11 +22,7 @@ EOF
 sysctl --system
 {% if engine == 'crio' %}
 OS="xUbuntu_20.04"
-{% if engine_version != None %}
-CRIO_VERSION={{ engine_version }}
-{% else %}
-CRIO_VERSION=$(echo $VERSION | cut -d. -f1,2)
-{% endif %}
+CRIO_VERSION={{ engine_version or "$VERSION" }}
 cat <<EOF | tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
 deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/ /
 EOF
@@ -94,7 +88,7 @@ systemctl daemon-reload
 systemctl restart containerd
 {% endif %}
 {% endif %}
-apt-get -y install kubelet=$VERSION kubectl=$VERSION kubeadm=$VERSION openssl
+apt-get -y install kubelet kubectl kubeadm openssl
 {% if engine == 'crio' %}
 echo KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime-endpoint=unix:///var/run/crio/crio.sock > /etc/default/kubelet
 {% endif %}
