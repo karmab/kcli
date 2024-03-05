@@ -1683,9 +1683,10 @@ def create_vmdisk(args):
     if force:
         diskname = f"{name}_0.img"
         info = k.info(name)
-        size = info['disks'][0]['size']
-        interface = info['disks'][0]['format']
-        pprint(f"Recreating primary disk {diskname}")
+        disks = info['disks']
+        size = disks[0]['size'] if disks else 30
+        interface = disks[0]['format'] if disks else 'virtio'
+        pprint(f"Recreating primary disk {diskname} with size {size} and interface {interface}")
         k.delete_disk(name=name, diskname=diskname, pool=pool)
         k.add_disk(name=name, size=size, pool=pool, interface=interface, diskname=diskname, thin=thin)
     else:
