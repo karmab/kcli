@@ -1,9 +1,9 @@
 echo """[kubernetes]
 name=Kubernetes
-baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+baseurl=https://pkgs.k8s.io/core:/stable:/v1.29/rpm/
 enabled=1
-gpgcheck=0
-repo_gpgcheck=0""" >/etc/yum.repos.d/kubernetes.repo
+gpgcheck=1
+gpgkey=https://pkgs.k8s.io/core:/stable:/v1.29/rpm/repodata/repomd.xml.key""" >/etc/yum.repos.d/kubernetes.repo
 echo net.bridge.bridge-nf-call-iptables=1 >> /etc/sysctl.d/99-sysctl.conf
 modprobe br_netfilter
 sysctl -p
