@@ -2182,7 +2182,7 @@ class Kconfig(Kbaseconfig):
             template = profile.get('template')
             image = profile.get('image', template)
             size = int(profile.get('size', 10))
-            thin = profile.get('thin', False)
+            thin = profile.get('thin', True)
             if pool is None:
                 error(f"Missing Key Pool for disk section {disk}. Not creating it...")
                 continue

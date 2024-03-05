@@ -1661,7 +1661,7 @@ def create_vmdisk(args):
     force = args.force
     novm = args.novm
     size = overrides.get('size') or args.size
-    thin = overrides.get('thin', False)
+    thin = overrides.get('thin', True)
     pool = overrides.get('pool') or args.pool
     image = args.image
     interface = overrides.get('diskinterface') or args.interface
