@@ -29,12 +29,14 @@ net.bridge.bridge-nf-call-ip6tables = 1
 EOF
 sysctl --system
 {% if engine == 'crio' %}
-OS="CentOS_8_Stream"
-CRIO_VERSION={{ engine_version or "$VERSION" }}
-curl -L -o /etc/yum.repos.d/devel:kubic:libcontainers:stable.repo https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/devel:kubic:libcontainers:stable.repo
-curl -L -o /etc/yum.repos.d/devel:kubic:libcontainers:stable:cri-o:$CRIO_VERSION.repo https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable:cri-o:$CRIO_VERSION/$OS/devel:kubic:libcontainers:stable:cri-o:$CRIO_VERSION.repo
-dnf -y install containers-common-1-6.module_el8.6.0+954+963caf36
-dnf -y install cri-o conntrack
+PROJECT_PATH={{ engine_version or 'stable:/$VERSION' }}
+echo """[cri-o]
+name=CRI-O
+baseurl=https://pkgs.k8s.io/addons:/cri-o:/$PROJECT_PATH/rpm
+enabled=1
+gpgcheck=1
+gpgkey=https://pkgs.k8s.io/addons:/cri-o:/$PROJECT_PATH/rpm/repodata/repomd.xml.key""" >/etc/yum.repos.d/cri-o.repo
+dnf -y install container-selinux cri-o conntrack
 sed -i 's@conmon = .*@conmon = "/bin/conmon"@' /etc/crio/crio.conf
 {% if HTTP_PROXY is defined %}
 mkdir /etc/systemd/system/crio.service.d
