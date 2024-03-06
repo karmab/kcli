@@ -16,8 +16,9 @@ jobs:
       fail-fast: false
       matrix:
         # provider: [libvirt, kubevirt, vsphere]
-        provider: [libvirt, kubevirt]
-    runs-on: ${{ matrix.provider }}
+        provider: [libvirt]
+    # runs-on: ${{ matrix.provider }}
+    runs-on: karim01
     steps:
      - uses: actions/checkout@v2
      - run: git pull origin ${GITHUB_REF##*/}

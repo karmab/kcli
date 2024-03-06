@@ -14,7 +14,7 @@ env:
 jobs:
  requirements:
    if: github.repository == 'karmab/kcli'
-   runs-on: libvirt
+   runs-on: karim01
    steps:
     - uses: actions/checkout@v2
     - run: git pull origin ${GITHUB_REF##*/}
@@ -32,7 +32,7 @@ jobs:
 
  deploy-baremetal-like-vms:
    needs: requirements
-   runs-on: libvirt
+   runs-on: karim01
    steps:
    - name: Deploy Baremetal like vm
      run: |
@@ -40,7 +40,7 @@ jobs:
 
  deploy-hypershift:
    needs: deploy-baremetal-like-vms
-   runs-on: libvirt
+   runs-on: karim01
    steps:
    - name: Deploy HYPERSHIFT ASSISTED
      run: |
