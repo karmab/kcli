@@ -220,7 +220,7 @@ class Redfish(object):
         except:
             pass
         result = self.insert_iso(iso_url)
-        if result.code not in [200, 204]:
+        if result.code not in [200, 202, 204]:
             print(f"Hit {result.reason} When plugging {iso_url}")
             sys.exit(1)
         try:
