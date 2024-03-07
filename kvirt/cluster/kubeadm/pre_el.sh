@@ -1,4 +1,6 @@
-VERSION={{ version or "$(curl -L -s https://dl.k8s.io/release/stable.txt | cut -d. -f1,2)" }} 
+VERSION={{ version or "$(curl -L -s https://dl.k8s.io/release/stable.txt)" }}
+# Ensure the version is in the format v<major>.<minor> regardless of the source
+VERSION=$(echo "v${VERSION#v}" | cut -d. -f1,2)
 
 echo """[kubernetes]
 name=Kubernetes
@@ -92,7 +94,8 @@ systemctl restart containerd
 {% endif %}
 {% endif %}
 
-dnf -y install -y kubelet kubectl kubeadm git openssl
+{% set kube_packages = 'kubelet-%s kubectl-%s kubeadm-%s' % (version, version, version) if version != None and version|count('.') == 2 else 'kubelet kubectl kubeadm' %}
+dnf -y install -y {{ kube_packages }} git openssl
 {% if engine == 'crio' %}
 echo KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime-endpoint=unix:///var/run/crio/crio.sock > /etc/sysconfig/kubelet
 {% endif %}

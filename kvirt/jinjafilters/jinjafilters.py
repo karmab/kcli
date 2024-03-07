@@ -189,11 +189,15 @@ def has_ctlplane(_list):
     return False
 
 
+def count(string, char):
+    return string.count(char)
+
+
 jinjafilters = {'basename': basename, 'dirname': dirname, 'ocpnodes': ocpnodes, 'none': none, 'type': _type,
                 'certificate': certificate, 'base64': base64, 'github_version': github_version,
                 'defaultnodes': defaultnodes, 'wait_crd': wait_crd, 'local_ip': local_ip, 'network_ip': network_ip,
                 'kcli_info': kcli_info, 'find_manifests': find_manifests, 'exists': exists, 'ipv6_wrap': ipv6_wrap,
-                'has_ctlplane': has_ctlplane, 'wait_csv': wait_csv}
+                'has_ctlplane': has_ctlplane, 'wait_csv': wait_csv, 'count': count}
 
 
 class FilterModule(object):

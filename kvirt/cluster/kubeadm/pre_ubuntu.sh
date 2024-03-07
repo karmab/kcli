@@ -1,6 +1,8 @@
 apt-get update && apt-get -y install apt-transport-https curl git
 
-VERSION={{ version or "$(curl -L -s https://dl.k8s.io/release/stable.txt | cut -d. -f1,2)" }}
+VERSION={{ version or "$(curl -L -s https://dl.k8s.io/release/stable.txt)" }}
+# Ensure the version is in the format v<major>.<minor> regardless of the source
+VERSION=$(echo "v${VERSION#v}" | cut -d. -f1,2)
 mkdir -p -m 755 /etc/apt/keyrings
 curl -fsSL https://pkgs.k8s.io/core:/stable:/$VERSION/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
@@ -82,7 +84,8 @@ systemctl daemon-reload
 systemctl restart containerd
 {% endif %}
 {% endif %}
-apt-get -y install kubelet kubectl kubeadm openssl
+{% set kube_packages = 'kubelet=%s* kubectl=%s* kubeadm=%s*' % (version, version, version) if version != None and version|count('.') == 2 else 'kubelet kubectl kubeadm' %}
+apt-get -y install {{ kube_packages }} openssl
 {% if engine == 'crio' %}
 echo KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime-endpoint=unix:///var/run/crio/crio.sock > /etc/default/kubelet
 {% endif %}
