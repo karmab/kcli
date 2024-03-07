@@ -2,14 +2,14 @@ name: HYPERSHIFT-NIGHTLY-CI
 
 on:
    schedule:
-    - cron: '31 22 * * *'
+    - cron: '31 01 * * *'
 
 env:
  HOME: /root
  PYTHONUNBUFFERED: true
  PLAN: ci-hypershift
  PULLSECRET: /root/openshift_pull.json
- KUBECONFIG: /root/.kcli/clusters/ci-libvirt/auth/kubeconfig
+ KUBECONFIG: /root/.kcli/clusters/ci-sno/auth/kubeconfig
  PARAMFILE: openshift-ci-paramfiles/hypershift.yml
 
 jobs:
@@ -22,9 +22,6 @@ jobs:
        - name: Install kcli
          run: |
            curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
-       - name: Make sc default one
-         run: |
-           oc patch storageclass odf-storagecluster-ceph-rbd -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
 
     deploy-hypershift-cluster:
       needs: requirements

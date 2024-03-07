@@ -6,24 +6,19 @@ ctlplanes: 3
 workers: 0
 version: stable
 tag: "4.15"
-#api_ip: 10.19.135.112
-# api_ip: 10.1.98.87
-# api_ip: 10.19.32.58
-# network: baremetal
 network: baremetalfake
 api_ip: 192.168.254.254
 sslip: true
 numcpus: 32
-memory: 49152
 #memory: 32768
+memory: 24576
 bootstrap_memory: 8192
 disk_size: 80
 extra_disks:
 - 100
-async: true
-notify: true
 apps:
 - local-storage-operator
 - odf-operator
-- kubevirt-hyperconverged
 - users
+#async: true
+#notify: true

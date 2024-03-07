@@ -1,7 +1,7 @@
 name: SNO-NIGHTLY-CI
 on:
   schedule:
-    - cron: '01 0 * * *'
+    - cron: '01 21 * * *'
 
 env:
  HOME: /root
@@ -32,7 +32,7 @@ jobs:
    steps:
    - name: Deploy Baremetal like vm
      run: |
-       kcli -C local create vm -P uefi=true -P boot_order=true -P start=false -P memory=20480 -P numcpus=16 -P disks=[50,50] -P nets=[default] -P plan=$CLUSTER -P kube=$CLUSTER -P kubetype=openshift $CLUSTER
+       kcli -C local create vm -P uefi=true -P boot_order=true -P start=false -P memory=20480 -P numcpus=16 -P disks=[50,100] -P nets=[default] -P plan=$CLUSTER -P kube=$CLUSTER -P kubetype=openshift $CLUSTER
 
  deploy-openshift:
    needs: deploy-baremetal-like-vm
@@ -42,9 +42,9 @@ jobs:
      run: |
        kcli create cluster openshift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET -P version=$VERSION -P tag="$TAG" -P sno_disk=vdb $CLUSTER
 
- clean-up:
-   needs: deploy-openshift
-   runs-on: karim03
-   steps:
-   - name: Clean everything after success
-     run: kcli -C local delete plan --yes $CLUSTER
+# clean-up:
+#   needs: deploy-openshift
+#   runs-on: karim03
+#   steps:
+#   - name: Clean everything after success
+#     run: kcli -C local delete plan --yes $CLUSTER

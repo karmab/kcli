@@ -1,7 +1,7 @@
 name: OKD-NIGHTLY-CI
 on:
   schedule:
-    - cron: '10 23 * * *'
+    - cron: '10 20 * * *'
 
 env:
  HOME: /root
@@ -27,5 +27,6 @@ jobs:
          run: kcli create network -c $NETWORK_CIDR $NETWORK || true
        - name: Deploy OKD
          run: kcli create cluster openshift --pf $PARAMFILE $PLAN --force
-       - name: Clean everything after success
+       - name: Clean everything
+         if: always()
          run: kcli delete plan --yes $PLAN

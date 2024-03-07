@@ -6,11 +6,11 @@ uefi: true
 workers: 3
 sslip: true
 baremetal_hosts:
-- url: http://192.168.254.1:9000/redfish/v1/Systems/local/ci-hypershift-assisted-0
+- url: http://192.168.254.1:9000/redfish/v1/Systems/karim03/ci-hypershift-assisted-0
   mac: "aa:aa:aa:bb:bb:80"
-- url: http://192.168.254.1:9000/redfish/v1/Systems/local/ci-hypershift-assisted-1
+- url: http://192.168.254.1:9000/redfish/v1/Systems/karim03/ci-hypershift-assisted-1
   mac: "aa:aa:aa:bb:bb:81"
-- url: http://192.168.254.1:9000/redfish/v1/Systems/local/ci-hypershift-assisted-2
+- url: http://192.168.254.1:9000/redfish/v1/Systems/karim03/ci-hypershift-assisted-2
   mac: "aa:aa:aa:bb:bb:82"
 #- url: http://10.19.135.107:9000/redfish/v1/Systems/local/ci-hypershift-assisted-0
 #  mac: "aa:aa:aa:bb:bb:80"

@@ -29,7 +29,7 @@ on:
 env:
  HOME: /root
  PYTHONUNBUFFERED: true
- KUBECONFIG: /root/.kcli/clusters/ci-libvirt/auth/kubeconfig
+ KUBECONFIG: /root/.kcli/clusters/ci-sno/auth/kubeconfig
  CLUSTER: ${{github.event.inputs.CLUSTER}}
  INPUTFILE: ${{github.event.inputs.INPUTFILE}}
  PARAMFILE: ${{github.event.inputs.PARAMFILE}}
@@ -48,9 +48,6 @@ jobs:
          run: |
            curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
            kcli create sushy-service
-       - name: Make sc default one
-         run: |
-           oc patch storageclass odf-storagecluster-ceph-rbd -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
        - name: Delete old install
          run: |
            kcli -C local delete cluster --yes $CLUSTER || true

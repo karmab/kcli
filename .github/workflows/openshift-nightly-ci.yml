@@ -1,7 +1,7 @@
 name: OPENSHIFT-NIGHTLY-CI
 on:
   schedule:
-    - cron: '01 21 * * *'
+    - cron: '01 18 * * *'
 
 env:
  HOME: /root
@@ -26,3 +26,6 @@ jobs:
        run: curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
      - name: Deploy Openshift on ${{ matrix.provider }}
        run: kcli create cluster openshift --paramfile openshift-ci-paramfiles/${{ matrix.provider }}.yml -P pull_secret=$PULLSECRET $PLAN-${{ matrix.provider }} --force
+     - name: Clean everything
+       if: always()
+       run: kcli delete plan --yes $PLAN-${{ matrix.provider }}

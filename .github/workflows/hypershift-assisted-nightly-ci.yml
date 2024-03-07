@@ -1,14 +1,14 @@
 name: HYPERSHIFT-ASSISTED-NIGHTLY-CI
 on:
   schedule:
-    - cron: '59 22 * * *'
+    - cron: '39 22 * * *'
 
 env:
  HOME: /root
  PYTHONUNBUFFERED: true
  CLUSTER: ci-hypershift-assisted
  PULLSECRET: /root/openshift_pull.json
- KUBECONFIG: /root/.kcli/clusters/ci-libvirt/auth/kubeconfig
+ KUBECONFIG: /root/.kcli/clusters/ci-sno/auth/kubeconfig
  PARAMFILE: openshift-ci-paramfiles/hypershift_assisted.yml
 
 jobs:
@@ -22,13 +22,10 @@ jobs:
       run: |
         curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
         kcli create sushy-service
-    - name: Make sc default one
-      run: |
-        oc patch storageclass odf-storagecluster-ceph-rbd -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
     - name: Delete old install
       run: |
-        kcli -C local delete cluster --yes $CLUSTER || true
-        kcli -C local delete plan --yes $CLUSTER-vms || true
+        kcli -C karim delete cluster --yes $CLUSTER || true
+        kcli -C karim03 delete plan --yes $CLUSTER-vms || true
 
  deploy-baremetal-like-vms:
    needs: requirements
@@ -36,7 +33,7 @@ jobs:
    steps:
    - name: Deploy Baremetal like vm
      run: |
-       kcli -C local create vm -P uefi=true -P start=false -P memory=20480 -P numcpus=16 -P disks=['{"size": 200, "interface": "sata"}'] -P nets=['{"name": "baremetalfake", "mac": "aa:aa:aa:bb:bb:80"}'] -P plan=$CLUSTER-vms -P user=core -c 3 $CLUSTER
+       kcli -C karim03 create vm -P uefi=true -P start=false -P memory=20480 -P numcpus=16 -P disks=['{"size": 200, "interface": "sata"}'] -P nets=['{"name": "baremetalfake", "mac": "aa:aa:aa:bb:bb:80"}'] -P plan=$CLUSTER-vms -P user=core -c 3 $CLUSTER
 
  deploy-hypershift:
    needs: deploy-baremetal-like-vms
@@ -53,4 +50,4 @@ jobs:
    - name: Clean everything after success
      run: |
        kcli delete cluster --yes $CLUSTER
-       kcli -C local delete plan --yes $CLUSTER-vms
+       kcli -C karim03 delete plan --yes $CLUSTER-vms
