@@ -30,6 +30,12 @@
     <textarea id="pf" name="pf" rows="4" cols="50"></textarea>
     </div>
     {% endif %}
+    {% if extras|default(False) %}
+    <div class="form-group">
+        <label for="inputName">Extra Parameters, specified as -P param1=value1 -P param2=value2</label><p>
+        <input required="true" class="form-control" name="extra_parameters" id="extra_parameters" value="">
+    </div>
+    {% endif %}
     <button type="submit" class="btn btn-success">Create</button>
 </form>
 </body>

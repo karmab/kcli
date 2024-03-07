@@ -3040,13 +3040,14 @@ class Kconfig(Kbaseconfig):
                             break
                     self.k.delete(vmname)
 
-    def expose_plan(self, plan, inputfile=None, overrides={}, port=9000, pfmode=False, cluster=False):
+    def expose_plan(self, plan, inputfile=None, overrides={}, port=9000, pfmode=False, cluster=False, extras=False):
         inputfile = os.path.expanduser(inputfile)
         if not os.path.exists(inputfile):
             error("No input file found nor default kcli_plan.yml.Leaving....")
             sys.exit(1)
         pprint(f"Handling expose of plan with name {plan} and inputfile {inputfile}")
-        kexposer = Kexposer(self, plan, inputfile, overrides=overrides, port=port, pfmode=pfmode, cluster=cluster)
+        kexposer = Kexposer(self, plan, inputfile, overrides=overrides, port=port, pfmode=pfmode, cluster=cluster,
+                            extras=extras)
         kexposer.run()
 
     def create_openshift_iso(self, cluster, overrides={}, ignitionfile=None, podman=False, installer=False,

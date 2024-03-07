@@ -2186,7 +2186,8 @@ def expose_cluster(args):
         inputfile = temp.name
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
-        config.expose_plan(plan, inputfile=inputfile, overrides=overrides, port=port, pfmode=args.pfmode, cluster=True)
+        config.expose_plan(plan, inputfile=inputfile, overrides=overrides, port=port, pfmode=args.pfmode, cluster=True,
+                           extras=args.extras)
 
 
 def expose_plan(args):
@@ -2200,7 +2201,8 @@ def expose_plan(args):
     if container_mode():
         inputfile = f"/workdir/{inputfile}"
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.expose_plan(plan, inputfile=inputfile, overrides=overrides, port=port, pfmode=args.pfmode)
+    config.expose_plan(plan, inputfile=inputfile, overrides=overrides, port=port, pfmode=args.pfmode,
+                       extras=args.extras)
 
 
 def start_plan(args):
@@ -4635,6 +4637,7 @@ def cli():
     clusterexpose_parser = expose_subparsers.add_parser('cluster', parents=[parent_parser],
                                                         description=clusterexpose_desc, help=clusterexpose_desc,
                                                         epilog=clusterexpose_epilog, formatter_class=rawhelp)
+    clusterexpose_parser.add_argument('--extras', action='store_true', help='Expose extra parameters textbox')
     clusterexpose_parser.add_argument('--pfmode', action='store_true', help='Expose textarea for parameterfile')
     clusterexpose_parser.add_argument('--port', help='Port where to listen', type=int, default=9000, metavar='PORT')
     clusterexpose_parser.add_argument('cluster', metavar='CLUSTER', nargs='?')
@@ -4645,6 +4648,7 @@ def cli():
     planexpose_parser = expose_subparsers.add_parser('plan', parents=[parent_parser], description=planexpose_desc,
                                                      help=planexpose_desc, epilog=planexpose_epilog,
                                                      formatter_class=rawhelp)
+    planexpose_parser.add_argument('--extras', action='store_true', help='Expose extra parameters textbox')
     planexpose_parser.add_argument('-f', '--inputfile', help='Input Plan file')
     planexpose_parser.add_argument('--pfmode', action='store_true', help='Expose textarea for parameterfile')
     planexpose_parser.add_argument('--port', help='Port where to listen', type=int, default=9000, metavar='PORT')

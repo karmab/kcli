@@ -7,6 +7,14 @@ import re
 import yaml
 
 
+def convert_value(value):
+    if value.isdigit():
+        value = int(value)
+    elif value.lower() in ['true', 'false']:
+        value = value.lower() == "true"
+    return value
+
+
 class Kexposer():
 
     def refresh_plans(self, verbose=False):
@@ -40,7 +48,7 @@ class Kexposer():
                     overrides = fileoverrides
         return overrides
 
-    def __init__(self, config, plan, inputfile, overrides={}, port=9000, pfmode=False, cluster=False):
+    def __init__(self, config, plan, inputfile, overrides={}, port=9000, pfmode=False, cluster=False, extras=False):
         app = Bottle()
         basedir = f"{os.path.dirname(Bottle.run.__code__.co_filename)}/expose"
         view = functools.partial(jinja2_view, template_lookup=[f"{basedir}/templates"])
@@ -48,6 +56,7 @@ class Kexposer():
         self.plan = plan
         self.overrides = overrides
         self.pfmode = pfmode
+        self.extras = extras
         self.cluster = cluster
         self.refresh_plans(verbose=True)
         self.inputfile = inputfile
@@ -136,7 +145,7 @@ class Kexposer():
             inputfile = self.overrides.get('inputfile', self.inputfile)
             info = get_parameters(inputfile, planfile=True)
             info = info.get('info', 'N/A')
-            return {'parameters': parameters, 'plan': plan, 'pfmode': self.pfmode, 'info': info}
+            return {'parameters': parameters, 'plan': plan, 'pfmode': self.pfmode, 'info': info, 'extras': self.extras}
 
         def _infoplan(plan):
             currentconfig = self.config
@@ -189,14 +198,18 @@ class Kexposer():
                 pfdata = None
                 parameters = {}
                 for p in json:
-                    if p not in self.overrides:
-                        print(f"Skipping parameter {p}")
                     value = request.json[p]
-                    if value.isdigit():
-                        value = int(value)
-                    elif value.lower() in ['true', 'false']:
-                        value = value.lower() == "true"
-                    parameters[p] = value
+                    if p == 'extras':
+                        extra_parameters = {}
+                        for entry in value.strip().split('-P '):
+                            if entry != '':
+                                new_param, new_value = entry.split('=')
+                                extra_parameters[new_param] = convert_value(new_value)
+                        parameters.update(extra_parameters)
+                    elif p not in self.overrides:
+                        print(f"Skipping parameter {p}")
+                        continue
+                    parameters[p] = convert_value(new_value)
                 if pfdata is not None:
                     try:
                         new_parameters = yaml.safe_load(pfdata)
@@ -204,6 +217,7 @@ class Kexposer():
                         new_parameters = {}
                     new_parameters.update(parameters)
                     parameters = new_parameters
+                print(parameters)
                 try:
                     overrides = self.get_client(plan, currentconfig, overrides=parameters)
                     if 'mail' in currentconfig.notifymethods and 'mail_to' in overrides and overrides['mail_to'] != "":
