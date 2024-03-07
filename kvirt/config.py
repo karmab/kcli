@@ -2171,7 +2171,7 @@ class Kconfig(Kbaseconfig):
                 else:
                     sleep(1)
         vmclients = list(hosts.keys())
-        if vmclients:
+        if len(vmclients) > 1:
             yaml.safe_dump(vmclients, open(os.path.expanduser(f'~/.kcli/vmclients_{plan}'), 'w'))
         if diskentries and not onlyassets:
             pprint("Deploying Disks...")
