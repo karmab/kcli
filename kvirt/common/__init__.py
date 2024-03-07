@@ -990,12 +990,12 @@ def get_user(image):
         user = getuser()
     elif 'rhel' in image.lower() and not image.startswith('RHEL-'):
         user = 'cloud-user'
+    elif 'centos9stream' in image.lower():
+        user = 'cloud-user'
     elif 'centos' in image.lower() and not image.startswith('ibm'):
         user = 'centos'
     elif 'centos8stream' in image.lower():
         user = 'centos'
-    elif 'centos9stream' in image.lower():
-        user = 'cloud-user'
     elif 'coreos' in image.lower() or 'rhcos' in image.lower() or 'fcos' in image.lower() or 'ocp-v4' in image:
         user = 'core'
     elif 'debian' in image.lower():

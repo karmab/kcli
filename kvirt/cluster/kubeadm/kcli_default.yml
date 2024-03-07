@@ -1,7 +1,7 @@
 info: |
     Deploys kubernetes using kubeadm on an arbitrary number of ctlplanes and workers.
     when using more than one ctlplane, a vip is used with keepalived.
-    default image is centos8stream, but there's also support for ubuntu based ones and fedora.
+    default image is centos9stream, but there's also support for ubuntu based ones and fedora.
     version can be let blank to get latest, or specified as x.yy or x.yy.z .
     sdn can be choosen between flannel, weavenet, calico, canal, romana or cilium.
     nfs can be set to deploy an initial set of pvcs on the first ctlplane node.
@@ -10,7 +10,7 @@ info: |
     You can set sslip to true to use $api_ip.sslip.io as base domain.
     container engine defaults to containerd, but crio or docker can be specified instead.
     for crio, engine_version can be indicated to force a specific version.
-image: centos8stream
+image: centos9stream
 network: default
 api_ip:
 cloud_lb: true
