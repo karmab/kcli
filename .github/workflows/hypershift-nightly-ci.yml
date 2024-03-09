@@ -15,7 +15,7 @@ env:
 jobs:
     requirements:
       if: github.repository == 'karmab/kcli'
-      runs-on: karim01
+      runs-on: karim03
       steps:
        - uses: actions/checkout@v2
        - run: git pull origin ${GITHUB_REF##*/}
@@ -25,7 +25,7 @@ jobs:
 
     deploy-hypershift-cluster:
       needs: requirements
-      runs-on: karim01
+      runs-on: karim03
       steps:
       - name: Deploy hypershift cluster
         run: kcli create cluster hypershift --pf $PARAMFILE -P pull_secret=$PULLSECRET $PLAN --force

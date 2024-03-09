@@ -1,4 +1,3 @@
-client: karim03
 cluster: ci-hypershift
 version: latest
 tag: 4.15

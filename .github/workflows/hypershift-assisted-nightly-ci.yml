@@ -14,7 +14,7 @@ env:
 jobs:
  requirements:
    if: github.repository == 'karmab/kcli'
-   runs-on: karim01
+   runs-on: karim03
    steps:
     - uses: actions/checkout@v2
     - run: git pull origin ${GITHUB_REF##*/}
@@ -24,20 +24,20 @@ jobs:
         kcli create sushy-service
     - name: Delete old install
       run: |
-        kcli -C karim delete cluster --yes $CLUSTER || true
-        kcli -C karim03 delete plan --yes $CLUSTER-vms || true
+        kcli delete cluster --yes $CLUSTER || true
+        kcli delete plan --yes $CLUSTER-vms || true
 
  deploy-baremetal-like-vms:
    needs: requirements
-   runs-on: karim01
+   runs-on: karim03
    steps:
    - name: Deploy Baremetal like vm
      run: |
-       kcli -C karim03 create vm -P uefi=true -P start=false -P memory=20480 -P numcpus=16 -P disks=['{"size": 200, "interface": "sata"}'] -P nets=['{"name": "baremetalfake", "mac": "aa:aa:aa:bb:bb:80"}'] -P plan=$CLUSTER-vms -P user=core -c 3 $CLUSTER
+       kcli create vm -P uefi=true -P start=false -P memory=20480 -P numcpus=16 -P disks=['{"size": 200, "interface": "sata"}'] -P nets=['{"name": "baremetalfake", "mac": "aa:aa:aa:bb:bb:80"}'] -P plan=$CLUSTER-vms -P user=core -c 3 $CLUSTER
 
  deploy-hypershift:
    needs: deploy-baremetal-like-vms
-   runs-on: karim01
+   runs-on: karim03
    steps:
    - name: Deploy HYPERSHIFT ASSISTED
      run: |
@@ -45,9 +45,9 @@ jobs:
 
  clean-up:
    needs: deploy-hypershift
-   runs-on: libvirt
+   runs-on: karim03
    steps:
    - name: Clean everything after success
      run: |
        kcli delete cluster --yes $CLUSTER
-       kcli -C karim03 delete plan --yes $CLUSTER-vms
+       kcli delete plan --yes $CLUSTER-vms

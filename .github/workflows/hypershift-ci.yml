@@ -25,12 +25,12 @@ on:
       TAG:
         description: 'tag'
         required: false
-        default: "4.14"
+        default: "latest"
 
 env:
  HOME: /root
  PYTHONUNBUFFERED: true
- KUBECONFIG: /root/.kcli/clusters/ci-libvirt/auth/kubeconfig
+ KUBECONFIG: /root/.kcli/clusters/ci-sno/auth/kubeconfig
  PLAN: ${{github.event.inputs.PLAN}}
  PARAMFILE: ${{github.event.inputs.PARAMFILE}}
  EXTRAPARAMS: ${{github.event.inputs.EXTRAPARAMS}}
@@ -40,7 +40,7 @@ env:
 
 jobs:
     requirements:
-      runs-on: libvirt
+      runs-on: karim03
       steps:
        - uses: actions/checkout@v2
        - run: git pull origin ${GITHUB_REF##*/}
@@ -50,7 +50,7 @@ jobs:
 
     deploy-hypershift-cluster:
       needs: requirements
-      runs-on: libvirt
+      runs-on: karim03
       steps:
       - name: Deploy hypershift cluster
         run: kcli create cluster hypershift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET -P version=$VERSION -P tag="$TAG" $EXTRAPARAMS $PLAN --force
