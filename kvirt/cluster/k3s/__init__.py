@@ -78,7 +78,8 @@ def scale(config, plandir, cluster, overrides):
         if role == 'ctlplanes':
             if ctlplanes == 1:
                 continue
-            if not cloud_lb and 'virtual_router_id' not in overrides or 'auth_pass' not in overrides:
+            if provider not in cloud_providers and not cloud_lb\
+               and ('virtual_router_id' not in overrides or 'auth_pass' not in overrides):
                 warning("Scaling up of ctlplanes won't work without virtual_router_id and auth_pass")
             if sdn is None or sdn != 'flannel':
                 install_k3s_args.append("INSTALL_K3S_EXEC='--flannel-backend=none'")

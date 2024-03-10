@@ -1,18 +1,18 @@
 parameters:
- api_ip: 192.168.122.247
+ api_ip: 192.168.254.247
  kube: snoplus
  kubetype: openshift
  role: ctlplane
  vmrules:
  - snoplus-node-1:
     nets:
-    - name: default
-      ip: 192.168.122.220
+    - name: baremetalfake
+      ip: 192.168.254.220
       reserveip: true
  - snoplus-node-2:
     nets:
-    - name: default
-      ip: 192.168.122.221
+    - name: baremetalfake
+      ip: 192.168.254.221
       reserveip: true
 
 api:
@@ -35,7 +35,7 @@ snoplus-node-{{ num }}:
  numcpus: 16
  memory: 28672
  nets:
- - name: default
+ - name: baremetalfake
    mac: aa:aa:aa:bb:bb:0{{ num +1 }}
  disks: [80]
  uefi: true

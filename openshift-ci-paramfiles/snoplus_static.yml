@@ -2,7 +2,7 @@ cluster: snoplus
 domain: karmalabs.corp
 version: stable
 tag: "4.15"
-api_ip: 192.168.122.247
+api_ip: 192.168.254.247
 # sno: true
 # sno_wait: true
 # sno_ctlplanes: true
@@ -10,20 +10,20 @@ ctlplanes: 3
 bmc_user: admin
 bmc_password: admin
 netmask: 255.255.255.0
-gateway: 192.168.122.1
+gateway: 192.168.254.1
 baremetal_hosts:
 - bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/snoplus-node-0
   name: snoplus-node-0
   nets:
-  - ip: 192.168.122.231
+  - ip: 192.168.254.231
     mac: aa:aa:aa:bb:bb:01
 - bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/snoplus-node-1
   name: snoplus-node-1
   nets:
-  - ip: 192.168.122.232
+  - ip: 192.168.254.232
     mac: aa:aa:aa:bb:bb:02
 - bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/snoplus-node-2
   name: snoplus-node-2
   nets:
-  - ip: 192.168.122.233
+  - ip: 192.168.254.233
     mac: aa:aa:aa:bb:bb:03

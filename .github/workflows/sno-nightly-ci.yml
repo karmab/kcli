@@ -32,7 +32,7 @@ jobs:
    steps:
    - name: Deploy Baremetal like vm
      run: |
-       kcli -C local create vm -P uefi=true -P boot_order=true -P start=false -P memory=32768 -P numcpus=16 -P disks=[50,100] -P nets=[default] -P plan=$CLUSTER -P kube=$CLUSTER -P kubetype=openshift $CLUSTER
+       kcli -C local create vm -P uefi=true -P boot_order=true -P start=false -P memory=32768 -P numcpus=16 -P disks=[50,100] -P nets=[baremetalfake] -P plan=$CLUSTER -P kube=$CLUSTER -P kubetype=openshift $CLUSTER
 
  deploy-openshift:
    needs: deploy-baremetal-like-vm
