@@ -277,13 +277,19 @@ def stop_container(args):
 
 
 def restart_vm(args):
+    hard = args.hard
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     names = [common.get_lastvm(config.client)] if not args.names else args.names
     k = config.k
     codes = []
     for name in names:
-        pprint(f"Restarting vm {name}...")
-        result = k.restart(name)
+        if hard:
+            pprint(f"Stopping and starting vm {name}...")
+            k.stop(name)
+            result = k.stop(name)
+        else:
+            pprint(f"Restarting vm {name}...")
+            result = k.restart(name)
         code = common.handle_response(result, name, element='', action='restarted')
         codes.append(code)
     sys.exit(1 if 1 in codes else 0)
@@ -5084,6 +5090,7 @@ def cli():
 
     vmrestart_desc = 'Restart Vms'
     vmrestart_parser = restart_subparsers.add_parser('vm', description=vmrestart_desc, help=vmrestart_desc)
+    vmrestart_parser.add_argument('--hard', action='store_true', help='Run stop/start')
     vmrestart_parser.add_argument('names', metavar='VMNAMES', nargs='*')
     vmrestart_parser.set_defaults(func=restart_vm)
 

@@ -21,11 +21,11 @@ on:
       VERSION:
         description: 'version'
         required: false
-        default: stable
+        default: latest
       TAG:
         description: 'tag'
         required: false
-        default: "latest"
+        default: "4.14"
 
 env:
  HOME: /root
