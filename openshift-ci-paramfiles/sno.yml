@@ -9,7 +9,7 @@ network: default
 numcpus: 16
 memory: 28672
 disk_size: 80
-api_ip: 192.168.154.246
+api_ip: 192.168.254.246
 bmc_user: admin
 bmc_password: admin
 baremetal_hosts:
