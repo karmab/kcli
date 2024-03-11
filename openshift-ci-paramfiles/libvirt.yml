@@ -1,7 +1,7 @@
 cluster: ci-libvirt
 domain: karmalabs.corp
 network_type: OVNKubernetes
-ovn_hostrouting: true
+#ovn_hostrouting: true
 ctlplanes: 3
 workers: 0
 version: stable
