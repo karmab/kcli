@@ -7,6 +7,7 @@ import ssl
 import re
 import sys
 from uuid import UUID
+import traceback
 
 
 def valid_uuid(uuid):
@@ -28,8 +29,13 @@ def get_info(url, user, password):
     oem_url = f"https://{url}" if '://' not in url else url
     p = urlparse(oem_url)
     headers = {'Accept': 'application/json'}
-    request = Request(f"https://{p.netloc}/redfish/v1", headers=headers)
-    v1data = json.loads(urlopen(request).read())
+    request_url = f"https://{p.netloc}/redfish/v1"
+    request = Request(request_url, headers=headers)
+    try:
+        v1data = json.loads(urlopen(request).read())
+    except Exception as e:
+        print(f"Error: tried accessing URL {request_url}")
+        raise e
     oem = v1data['Oem']
     model = "dell" if 'Dell' in oem else "hp" if 'Hpe' in oem else 'supermicro' if 'Supermicro' in oem else 'N/A'
     if '://' not in url:
@@ -40,7 +46,8 @@ def get_info(url, user, password):
             user = user or 'root'
             password = password or 'calvin'
         else:
-            print(f"Invalid url {url}")
+            print(f"Failed to autodetect redfish URL for '{url}'")
+            print(f"JSON query to {request_url} returned '{model}' as ['Oem'] value")
             sys.exit(1)
     return model, url, user, password
 
@@ -69,7 +76,10 @@ class Redfish(object):
     def get_manager_url(self):
         request = Request(self.url, headers=self.headers)
         response = json.loads(urlopen(request).read())
-        return f"{self.baseurl}{response['Links']['ManagedBy'][0]['@odata.id']}"
+        ret_data = f"{self.baseurl}{response['Links']['ManagedBy'][0]['@odata.id']}"
+        if self.debug:
+            print(f"Manager URL is {ret_data}")
+        return ret_data
 
     def get_iso_url(self):
         manager_url = self.get_manager_url()
@@ -88,7 +98,10 @@ class Redfish(object):
                 odata = member['@odata.id']
                 if odata.endswith('CD') or odata.endswith('Cd') or odata.endswith('2'):
                     break
-        return f'{self.baseurl}{odata}'
+        ret_data = f'{self.baseurl}{odata}'
+        if self.debug:
+            print(f"ISO URL is {ret_data}")
+        return ret_data
 
     def get_iso_status(self):
         iso_url = self.get_iso_url()
@@ -96,7 +109,10 @@ class Redfish(object):
             print(f"Getting {iso_url}")
         request = Request(iso_url, headers=self.headers)
         response = json.loads(urlopen(request).read())
-        return f"{response['Image']}"
+        ret_data = f"{response['Image']}"
+        if self.debug:
+            print(f"ISO status is {ret_data}")
+        return ret_data
 
     def get_iso_eject_url(self):
         iso_url = self.get_iso_url()
@@ -104,7 +120,10 @@ class Redfish(object):
         actions = json.loads(urlopen(request).read())['Actions']
         target = '#IsoConfig.UnMount' if self.model == 'supermicro' and self.legacy else '#VirtualMedia.EjectMedia'
         t = actions[target]['target']
-        return f"{self.baseurl}{t}"
+        ret_data = f"{self.baseurl}{t}"
+        if self.debug:
+            print(f"ISO eject URL is {ret_data}")
+        return ret_data
 
     def get_iso_insert_url(self):
         iso_url = self.get_iso_url()
@@ -112,7 +131,10 @@ class Redfish(object):
         actions = json.loads(urlopen(request).read())['Actions']
         target = '#IsoConfig.Mount' if self.model == 'supermicro' and self.legacy else '#VirtualMedia.InsertMedia'
         t = actions[target]['target']
-        return f"{self.baseurl}{t}"
+        ret_data = f"{self.baseurl}{t}"
+        if self.debug:
+            print(f"ISO insert URL is {ret_data}")
+        return ret_data
 
     def eject_iso(self):
         headers = self.headers.copy()
@@ -215,17 +237,25 @@ class Redfish(object):
         return urlopen(request)
 
     def set_iso(self, iso_url):
+        result = None
         try:
             self.eject_iso()
-        except:
-            pass
-        result = self.insert_iso(iso_url)
+        except Exception as e:
+            if self.debug:
+                traceback.print_exception(e)
+        try:
+            result = self.insert_iso(iso_url)
+        except Exception as e:
+            if self.debug:
+                traceback.print_exception(e)
         if result.code not in [200, 202, 204]:
             print(f"Hit {result.reason} When plugging {iso_url}")
             sys.exit(1)
         try:
             self.set_iso_once()
-        except:
+        except Exception as e:
+            if self.debug:
+                traceback.print_exception(e)
             self.set_iso_once()
         self.restart()
 
