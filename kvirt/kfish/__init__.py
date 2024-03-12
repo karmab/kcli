@@ -36,10 +36,20 @@ def get_info(url, user, password):
     except Exception as e:
         print(f"Error: tried accessing URL {request_url}")
         raise e
-    oem = v1data['Oem']
-    model = "dell" if 'Dell' in oem else "hp" if 'Hpe' in oem else 'supermicro' if 'Supermicro' in oem else 'N/A'
+    if 'Oem' in v1data:
+        oem = v1data['Oem']
+        if 'Dell' in oem:
+            model = 'dell'
+        elif 'Hpe' in oem or 'Hp' in oem:
+            model = 'hp'
+        elif 'Supermicro' in oem:
+            model = 'supermicro'
+        else:
+            model = 'N/A'
+    elif 'Vendor' in v1data:
+        model = v1data['Vendor'].lower()
     if '://' not in url:
-        if model in ['hp', 'supermicro']:
+        if model in ['hp', 'supermicro', 'lenovo']:
             url = f"https://{url}/redfish/v1/Systems/1"
         elif model == 'dell':
             url = f"https://{url}/redfish/v1/Systems/System.Embedded.1"
@@ -117,10 +127,12 @@ class Redfish(object):
     def get_iso_eject_url(self):
         iso_url = self.get_iso_url()
         request = Request(iso_url, headers=self.headers)
-        actions = json.loads(urlopen(request).read())['Actions']
-        target = '#IsoConfig.UnMount' if self.model == 'supermicro' and self.legacy else '#VirtualMedia.EjectMedia'
-        t = actions[target]['target']
-        ret_data = f"{self.baseurl}{t}"
+        if self.model == 'lenovo':
+            ret_data = f"{iso_url}"
+        else:
+            actions = json.loads(urlopen(request).read())['Actions']
+            target = '#IsoConfig.UnMount' if self.model == 'supermicro' and self.legacy else '#VirtualMedia.EjectMedia'
+            ret_data = f"{self.baseurl}{actions[target]['target']}"
         if self.debug:
             print(f"ISO eject URL is {ret_data}")
         return ret_data
@@ -128,24 +140,32 @@ class Redfish(object):
     def get_iso_insert_url(self):
         iso_url = self.get_iso_url()
         request = Request(iso_url, headers=self.headers)
-        actions = json.loads(urlopen(request).read())['Actions']
-        target = '#IsoConfig.Mount' if self.model == 'supermicro' and self.legacy else '#VirtualMedia.InsertMedia'
-        t = actions[target]['target']
-        ret_data = f"{self.baseurl}{t}"
+        if self.model == 'lenovo':
+            ret_data = iso_url
+        else:
+            actions = json.loads(urlopen(request).read())['Actions']
+            target = '#IsoConfig.Mount' if self.model == 'supermicro' and self.legacy else '#VirtualMedia.InsertMedia'
+            ret_data = f"{self.baseurl}{actions[target]['target']}"
         if self.debug:
             print(f"ISO insert URL is {ret_data}")
         return ret_data
 
     def eject_iso(self):
         headers = self.headers.copy()
-        data = json.dumps({}).encode('utf-8')
-        if self.model == 'supermicro' and self.legacy:
-            headers['Content-Length'] = 0
-            # data = {}
         eject_url = self.get_iso_eject_url()
-        if self.debug:
-            print(f"Sending POST to {eject_url} with empty data")
-        request = Request(eject_url, headers=headers, method='POST', data=data)
+        if self.model == 'lenovo':
+            data = {"Inserted": False}
+            data = json.dumps(data).encode('utf-8')
+            request = Request(eject_url, data=data, headers=headers, method='PATCH')
+            if self.debug:
+                print(f"Sending PATCH to {eject_url} with data {data}")
+        else:
+            data = json.dumps({}).encode('utf-8')
+            if self.model == 'supermicro' and self.legacy:
+                headers['Content-Length'] = 0
+            request = Request(eject_url, headers=headers, method='POST', data=data)
+            if self.debug:
+                print(f"Sending POST to {eject_url} with empty data")
         return urlopen(request)
 
     def insert_iso(self, iso_url):
@@ -163,10 +183,15 @@ class Redfish(object):
             headers['Content-Length'] = 0
         data = {"Image": iso_url, "Inserted": True}
         insert_url = self.get_iso_insert_url()
-        if self.debug:
-            print(f"Sending POST to {insert_url} with data {data}")
         data = json.dumps(data).encode('utf-8')
-        request = Request(insert_url, data=data, headers=headers)
+        if self.model == 'lenovo':
+            request = Request(insert_url, data=data, headers=headers, method='PATCH')
+            if self.debug:
+                print(f"Sending PATCH to {insert_url} with data {data}")
+        else:
+            request = Request(insert_url, data=data, headers=headers)
+            if self.debug:
+                print(f"Sending POST to {insert_url} with data {data}")
         return urlopen(request)
 
     def set_iso_once(self):
