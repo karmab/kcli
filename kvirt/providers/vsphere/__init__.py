@@ -5,31 +5,36 @@ from binascii import hexlify
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
+from ipaddress import ip_address, ip_network
+import json
 from kvirt import common
 from kvirt.common import error, pprint, warning
 from kvirt.defaults import UBUNTUS, METADATA_FIELDS
-from pyVmomi import vim, vmodl
-from pyVim import connect
-import json
-import os
-import re
-import random
-import ssl
-from ssl import _create_unverified_context, get_server_certificate
-import sys
-import tarfile
-from shutil import which
-from tempfile import TemporaryDirectory
-from threading import Thread
-import time
-import urllib.request
-import webbrowser
-from zipfile import ZipFile
 from kvirt.providers.vsphere.helpers import find, collectproperties, findvm, createfolder, changecd, convert, waitForMe
 from kvirt.providers.vsphere.helpers import createscsispec, creatediskspec, createdvsnicspec, createclonespec
 from kvirt.providers.vsphere.helpers import createnicspec, createisospec, deletedirectory, dssize, keep_lease_alive
 from kvirt.providers.vsphere.helpers import create_filter_spec, get_all_obj, convert_properties, findvm2, findvmdc
+import os
+from pyVmomi import vim, vmodl
+from pyVim import connect
+import random
+import re
+import ssl
+from ssl import _create_unverified_context, get_server_certificate
+import sys
+from shutil import which
+import tarfile
+from tempfile import TemporaryDirectory
+from threading import Thread
+import time
+import urllib.request
 from uuid import UUID
+import webbrowser
+from zipfile import ZipFile
+
+
+def sdn_ip(ip):
+    return ip_address(ip) in ip_network('10.132.0.0/14')
 
 
 class Ksphere:
@@ -716,7 +721,7 @@ class Ksphere:
             for nic in guest.net:
                 if nic.ipAddress:
                     ip = nic.ipAddress[0]
-                    if not ip.startswith('fe80::'):
+                    if not ip.startswith('fe80::') and not ip.startswith('169.254') and not sdn_ip(ip):
                         ips.append(ip)
                         if 'ip' not in yamlinfo:
                             yamlinfo['ip'] = ip
