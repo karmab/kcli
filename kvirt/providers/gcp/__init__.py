@@ -377,8 +377,8 @@ class Kgcp(object):
             tags.extend([kube])
         if securitygroups:
             tags.extend(securitygroups)
-        if lb is not None and lb not in tags:
-            tags.append(lb)
+        if lb is not None and lb.replace('.', '-') not in tags:
+            tags.append(lb.replace('.', '-'))
         if tags:
             body['tags'] = {'items': tags}
         newval = {'key': 'serial-port-enable', 'value': 1}
@@ -439,7 +439,8 @@ class Kgcp(object):
         if reservedns and domain is not None:
             self.reserve_dns(name, nets=nets, domain=domain, alias=alias)
         if lb is not None:
-            self.update_metadata(name, 'loadbalancer', lb, append=True)
+            sane_lb = lb.replace('.', '-')
+            self.update_metadata(name, 'loadbalancer', sane_lb, append=True)
             self.add_vm_to_loadbalancer(name, lb)
         return {'result': 'success'}
 
