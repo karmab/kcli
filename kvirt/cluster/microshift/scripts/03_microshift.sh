@@ -5,7 +5,7 @@ if [ -d /root/manifests ] ; then
  cp /root/manifests/*y*ml /etc/microshift/manifests
 fi
 
-dnf -y install microshift
+dnf -y install microshift {{ 'microshift-olm' if olm|default(False) else '' }}
 BASEDOMAIN={{ "$(hostname)" if sslip else cluster + '.' + domain }}
 sed -i "s@#baseDomain: .*@baseDomain: $BASEDOMAIN@" /etc/microshift/config.yaml.default
 sed -i "s@#subjectAltNames:.*@subjectAltNames: \[\"api.$BASEDOMAIN\"\]@" /etc/microshift/config.yaml.default

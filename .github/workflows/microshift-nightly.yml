@@ -1,0 +1,40 @@
+name: MICROSHIFT-NIGHTLY-CI
+on:
+  schedule:
+    - cron: '00 18 * * *'
+
+env:
+ HOME: /root
+ PYTHONUNBUFFERED: true
+ CLUSTER: ci-microshift
+ PULLSECRET: /root/openshift_pull.json
+ VERSION: stable
+ TAG: "4.14"
+
+jobs:
+ requirements:
+   if: github.repository == 'karmab/kcli'
+   runs-on: karim02
+   steps:
+    - uses: actions/checkout@v2
+    - run: git pull origin ${GITHUB_REF##*/}
+    - name: Install kcli
+      run: |
+        curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
+        kcli create sushy-service
+    - name: Delete old install
+      run: kcli -C local delete cluster --yes $CLUSTER || true
+
+ deploy-microshift:
+   runs-on: karim02
+   steps:
+   - name: Deploy Microshift
+     run: |
+       kcli -C local create cluster microshift -P pull_secret=$PULLSECRET -P version=$VERSION -P tag="$TAG" $CLUSTER
+
+ clean-up:
+   needs: deploy-microshift
+   runs-on: karim02
+   steps:
+   - name: Clean everything after success
+     run: kcli -C local delete plan --yes $CLUSTER

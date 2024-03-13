@@ -6,14 +6,13 @@ nodes: 1
 cluster: mymicroshift
 domain: karmalabs.corp
 version: stable
-tag: 4.13
+tag: 4.15
 image: rhel9
 network: default
 memory: 4096
 numcpus: 4
 KUBECONFIG: /var/lib/microshift/resources/kubeadmin/kubeconfig
 podman: false
-nightly: false
 pull_secret: openshift_pull.json
 noname: false
 sslip: true
@@ -21,3 +20,4 @@ register_acm: false
 kubeconfig_acm:
 disk_size: 30
 extra_disks: [60]
+olm: false
