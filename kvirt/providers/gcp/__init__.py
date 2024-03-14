@@ -305,12 +305,12 @@ class Kgcp(object):
             value = metadata[entry].replace('.', '-')
             body['labels'][entry] = value
         publickeyfile = get_ssh_pub_key()
-        if publickeyfile is None:
-            warning("neither id_rsa, id_dsa nor id_ed25519 public keys found in your .ssh or .kcli directories, "
-                    "you might have trouble accessing the vm")
-        else:
+        if publickeyfile is not None:
             publickeyfile = open(publickeyfile).read().strip()
             keys = list(set([publickeyfile] + keys)) if not keys else [publickeyfile]
+        elif not keys:
+            warning("neither id_rsa, id_dsa nor id_ed25519 public keys found in your .ssh or .kcli directories, "
+                    "you might have trouble accessing the vm")
         if keys:
             user = common.get_user(image)
             if user == 'root':
