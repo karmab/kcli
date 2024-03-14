@@ -10,6 +10,7 @@ numcpus: 16
 memory: 28672
 disk_size: 80
 api_ip: 192.168.254.246
+sslip: true
 bmc_user: admin
 bmc_password: admin
 baremetal_hosts:

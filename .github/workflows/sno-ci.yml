@@ -39,7 +39,7 @@ env:
 
 jobs:
     requirements:
-      runs-on: libvirt
+      runs-on: karim03
       steps:
        - uses: actions/checkout@v2
        - run: git pull origin ${GITHUB_REF##*/}
@@ -48,19 +48,19 @@ jobs:
            curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
            kcli create sushy-service
        - name: Delete old install
-         run: kcli -C local delete cluster --yes $CLUSTER || true
+         run: kcli delete cluster --yes $CLUSTER || true
 
     deploy-baremetal-like-vm:
       needs: requirements
-      runs-on: libvirt
+      runs-on: karim03
       steps:
       - name: Deploy Baremetal like vm
         run: |
-          kcli -C local create vm -P uefi=true -P boot_order=true -P start=false -P memory=32768 -P numcpus=16 -P disks=[50,100] -P nets=[baremetalfake] -P user=core -P plan=$CLUSTER -P kube=$CLUSTER -P kubetype=openshift $EXTRAPARAMS $CLUSTER
+          kcli create vm -P uefi=true -P boot_order=true -P start=false -P memory=32768 -P numcpus=16 -P disks=[50,100] -P nets=[baremetalfake] -P user=core -P plan=$CLUSTER -P kube=$CLUSTER -P kubetype=openshift $EXTRAPARAMS $CLUSTER
 
     deploy-openshift:
       needs: deploy-baremetal-like-vm
-      runs-on: libvirt
+      runs-on: karim03
       steps:
       - name: Deploy SNO
         run: |
