@@ -23,9 +23,12 @@ jobs:
          run: |
            curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
 
-    deploy-hypershift-cluster:
+    deploy-hypershift:
       needs: requirements
       runs-on: karim03
       steps:
       - name: Deploy hypershift cluster
         run: kcli create cluster hypershift --pf $PARAMFILE -P pull_secret=$PULLSECRET $PLAN --force
+      - name: Clean everything
+        if: always()
+        run: kcli delete plan --yes $PLAN
