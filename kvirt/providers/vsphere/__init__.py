@@ -33,8 +33,8 @@ import webbrowser
 from zipfile import ZipFile
 
 
-def sdn_ip(ip):
-    return ip_address(ip) in ip_network('10.132.0.0/14')
+def sdn_ip(ip, kubetype):
+    return kubetype is not None and kubetype == 'openshift' and ip_address(ip) in ip_network('10.132.0.0/14')
 
 
 class Ksphere:
@@ -715,18 +715,6 @@ class Ksphere:
         yamlinfo['status'] = translation[runtime.powerState]
         yamlinfo['nets'] = []
         yamlinfo['disks'] = []
-        ips = []
-        if runtime.powerState == "poweredOn":
-            yamlinfo['host'] = runtime.host.name
-            for nic in guest.net:
-                if nic.ipAddress:
-                    ip = nic.ipAddress[0]
-                    if not ip.startswith('fe80::') and not ip.startswith('169.254') and not sdn_ip(ip):
-                        ips.append(ip)
-                        if 'ip' not in yamlinfo:
-                            yamlinfo['ip'] = ip
-        if len(ips) > 1:
-            yamlinfo['ips'] = ips
         for entry in config.extraConfig:
             if entry.key in METADATA_FIELDS:
                 yamlinfo[entry.key] = entry.value
@@ -735,9 +723,22 @@ class Ksphere:
                 yamlinfo['user'] = common.get_user(entry.value)
             if entry.key == 'tags':
                 yamlinfo['tags'] = entry.value
+        kubetype = yamlinfo.get('kubetype')
+        ips = []
+        if runtime.powerState == "poweredOn":
+            yamlinfo['host'] = runtime.host.name
+            for nic in guest.net:
+                if nic.ipAddress:
+                    ip = nic.ipAddress[0]
+                    if not ip.startswith('fe80::') and not ip.startswith('169.254') and not sdn_ip(ip, kubetype):
+                        ips.append(ip)
+                        if 'ip' not in yamlinfo:
+                            yamlinfo['ip'] = ip
+        if len(ips) > 1:
+            yamlinfo['ips'] = ips
         if listinfo:
             return yamlinfo
-        if image is None and 'kubetype' in yamlinfo and yamlinfo['kubetype'] == 'openshift':
+        if image is None and kubetype is not None and kubetype == 'openshift':
             yamlinfo['user'] = 'core'
         if debug:
             yamlinfo['debug'] = config
