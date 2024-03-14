@@ -41,7 +41,7 @@ jobs:
    steps:
    - name: Deploy HYPERSHIFT ASSISTED
      run: |
-       kcli create cluster hypershift --pf $PARAMFILE -P pull_secret=$PULLSECRET $CLUSTER
+       kcli create cluster hypershift --pf $PARAMFILE -P pull_secret=$PULLSECRET $CLUSTER --force
 
  clean-up:
    needs: deploy-hypershift
