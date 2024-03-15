@@ -12,7 +12,7 @@ PORT=$(oc -n $NAMESPACE get svc ignition-server-proxy -o jsonpath={.spec.ports[0
 curl -k -H "Authorization: $TOKEN" https://$IP:$PORT/ignition > $CLUSTERDIR/nodepool.ign
 {% else %}
 MANAGEMENT_INGRESS_DOMAIN={{ management_ingress_domain }}
-curl -k -H "Authorization: $TOKEN" https://ignition-server-proxy-$NAMESPACE.$MANAGEMENT_INGRESS_DOMAIN/ignition > $CLUSTERDIR/nodepool.ign
+curl -k -H "Authorization: $TOKEN" https://ignition-server-$NAMESPACE.$MANAGEMENT_INGRESS_DOMAIN/ignition > $CLUSTERDIR/nodepool.ign
 {% endif %}
 
 if [ ! -s $CLUSTERDIR/nodepool.ign ] || [ "$(grep 'Token not found' $CLUSTERDIR/nodepool.ign)" != "" ] || [ "$(grep '503 Service Unavailable' $CLUSTERDIR/nodepool.ign)" != "" ] ; then
