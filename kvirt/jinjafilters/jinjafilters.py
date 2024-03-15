@@ -1,8 +1,9 @@
 from base64 import b64encode
 from glob import glob
 from ipaddress import ip_address, ip_network
-import os
 import json
+import os
+import re
 import sys
 from urllib.request import urlopen
 import yaml
@@ -72,7 +73,8 @@ def github_version(repo, version=None, tag_mode=False):
         data = json.loads(urlopen(f"https://api.github.com/repos/{repo}/{obj}", timeout=5).read())
         if 'message' in data and data['message'] == 'Not Found':
             return ''
-        tags = sorted([x[tag_name] for x in data if stable_release(x, tag_mode)], reverse=True)
+        tags = sorted([x[tag_name] for x in data if stable_release(x, tag_mode)],
+                      key=lambda string: list(map(int, re.findall(r'\d+', string)))[0], reverse=True)
         if tags:
             tag = tags[0]
         else:

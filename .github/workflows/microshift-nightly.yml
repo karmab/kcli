@@ -26,6 +26,7 @@ jobs:
       run: kcli delete cluster --yes $CLUSTER || true
 
  deploy-microshift:
+   needs: requirements
    runs-on: karim02
    steps:
    - name: Deploy Microshift
