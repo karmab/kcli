@@ -16,8 +16,12 @@ cloud_providers = ['aws', 'azure', 'gcp', 'ibm']
 
 
 def update_ip_alias(config, nodes):
+    timeout = 0
     cmd_one = ['kubectl', 'get', 'nodes', '-o=jsonpath={range .items[?(@.spec.podCIDR)]}{.metadata.name}{\'\\n\'}{end}']
     while True:
+        if timeout > 240:
+            error(f"Timeout waiting for {nodes} nodes to have a Pod CIDR assigned")
+            return
         pprint(f"Waiting 5s for {nodes} nodes to have a Pod CIDR assigned")
         result = run(cmd_one, capture_output=True, text=True)
         current_nodes = len(result.stdout.splitlines())
@@ -25,6 +29,7 @@ def update_ip_alias(config, nodes):
             break
         else:
             sleep(5)
+            timeout += 5
     for node in yaml.safe_load(os.popen("kubectl get node -o yaml").read())['items']:
         try:
             name, pod_cidr = node['metadata']['name'], node['spec']['podCIDR']
