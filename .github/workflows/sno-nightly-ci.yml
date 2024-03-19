@@ -10,7 +10,7 @@ env:
  PULLSECRET: /root/openshift_pull.json
  PARAMFILE: openshift-ci-paramfiles/sno.yml
  VERSION: stable
- TAG: "4.14"
+ TAG: "4.15"
 
 jobs:
  requirements:

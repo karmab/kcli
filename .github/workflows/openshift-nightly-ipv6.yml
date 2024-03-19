@@ -13,7 +13,7 @@ env:
  NETWORK: ipv6-network
  NETWORK_CIDR: 2620:52:0:1306::/64
  VERSION: stable
- TAG: 4.14
+ TAG: 4.15
 
 jobs:
     deploy-openshift:

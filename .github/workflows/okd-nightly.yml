@@ -12,7 +12,7 @@ env:
  NETWORK: okd-network
  NETWORK_CIDR: 192.168.131.0/24
  VERSION: stable
- TAG: 4.14
+ TAG: 4.15
 
 jobs:
     deploy-okd:
