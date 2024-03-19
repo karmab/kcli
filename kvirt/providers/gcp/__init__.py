@@ -426,6 +426,8 @@ class Kgcp(object):
             if 'scheduling' not in body:
                 body['scheduling'] = {}
             body['scheduling']['provisioningModel'] = 'SPOT'
+            if overrides.get('spot_delete', False):
+                body['scheduling']['instanceTerminationAction'] = 'DELETE'
         if overrides.get('preemptible', False):
             if 'scheduling' not in body:
                 body['scheduling'] = {}
