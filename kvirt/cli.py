@@ -1533,14 +1533,16 @@ def create_vm(args):
     for key in overrides:
         if key in vars(config) and vars(config)[key] is not None and type(overrides[key]) != type(vars(config)[key]):
             key_type = str(type(vars(config)[key]))
-            if key == 'memory' and isinstance(overrides[key], str) and\
-               (overrides[key].lower().endswith('gb') or overrides[key].lower().endswith('g')):
-                memory = overrides['memory'].lower().replace('gb', '').replace('g', '')
-                try:
+            key_value = overrides[key]
+            if key == 'memory' and isinstance(key_value, str):
+                memory = key_value.lower().replace('gb', '').replace('g', '')
+                if memory.isnumeric():
                     overrides['memory'] = int(memory) * 1024
-                except:
-                    error("Couldnt convert memory")
+                else:
+                    error("Wrong memory {memory}")
                     sys.exit(1)
+            elif key == 'numcpus' and isinstance(key_value, str) and key_value.isnumeric():
+                overrides['numcpus'] = int(key_value)
             else:
                 error(f"The provided parameter {key} has a wrong type, it should be {key_type}")
                 sys.exit(1)

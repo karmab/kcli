@@ -48,6 +48,8 @@ env:
  PULLSECRET: ${{github.event.inputs.PULLSECRET}}
  VERSION: ${{github.event.inputs.VERSION}}
  TAG: ${{github.event.inputs.TAG}}
+ MEMORY: ${{github.event.inputs.MEMORY}}
+ NUMCPUS: ${{github.event.inputs.NUMCPUS}}
 
 jobs:
     requirements:
