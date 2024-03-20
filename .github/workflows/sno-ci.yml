@@ -25,6 +25,18 @@ on:
         description: 'tag'
         required: false
         default: "4.15"
+      DISKS:
+        description: 'disks'
+        required: false
+        default: "[50,100]"
+      NUMCPUS:
+        description: 'numcpus'
+        required: false
+        default: "16"
+      MEMORY:
+        description: 'memory'
+        required: false
+        default: "32768"
 
 env:
  HOME: /root
@@ -56,7 +68,7 @@ jobs:
       steps:
       - name: Deploy Baremetal like vm
         run: |
-          kcli create vm -P uefi=true -P boot_order=true -P start=false -P memory=32768 -P numcpus=16 -P disks=[50,100] -P nets=[baremetalfake] -P user=core -P plan=$CLUSTER -P kube=$CLUSTER -P kubetype=openshift $EXTRAPARAMS $CLUSTER
+          kcli create vm -P uefi=true -P boot_order=true -P start=false -P memory=$MEMORY -P numcpus=$NUMCPUS -P disks=$DISKS -P nets=[baremetalfake] -P user=core -P plan=$CLUSTER -P kube=$CLUSTER -P kubetype=openshift $EXTRAPARAMS $CLUSTER
 
     deploy-openshift:
       needs: deploy-baremetal-like-vm
