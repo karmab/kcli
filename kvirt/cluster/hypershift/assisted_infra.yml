@@ -40,6 +40,8 @@ kind: InfraEnv
 metadata:
   name: {{ cluster }}
   namespace: {{ namespace }}-{{ cluster }}
+  annotations:
+    infraenv.agent-install.openshift.io/enable-ironic-agent: "false"
 spec:
   pullSecretRef:
     name: {{ cluster }}-pull-secret
