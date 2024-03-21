@@ -1859,10 +1859,10 @@ def create_kube(args):
         else:
             initial_apps = overrides.get('apps', [])
             clusterprofile = config.clusterprofiles[clusterprofile]
+            clusterprofiles_apps = clusterprofile.get('apps', [])
             clusterprofile.update(overrides)
             overrides = clusterprofile
-            if 'apps' in overrides:
-                overrides['apps'].extend(initial_apps)
+            overrides['apps'] = list(dict.fromkeys(clusterprofiles_apps + initial_apps))
     result = config.create_kube(cluster, kubetype, overrides=overrides)
     if 'result' in result and result['result'] == 'success':
         sys.exit(0)
