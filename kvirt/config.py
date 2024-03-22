@@ -2865,6 +2865,10 @@ class Kconfig(Kbaseconfig):
             z.delete_dns(f"apps.{cluster}", domain)
         if hypershift:
             kubeconfigmgmt = f"{clusterdir}/kubeconfig.mgmt"
+            if os.path.exists('{clusterdir}/bmcs.yml'):
+                call(f'KUBECONFIG={kubeconfigmgmt} oc delete -f {clusterdir}/bmcs.yml', shell=True)
+            if os.path.exists('{clusterdir}/assisted_infra.yml'):
+                call(f'KUBECONFIG={kubeconfigmgmt} oc delete -f {clusterdir}/assisted_infra.yml', shell=True)
             call(f'KUBECONFIG={kubeconfigmgmt} oc delete -f {clusterdir}/autoapprovercron.yml', shell=True)
             call(f'KUBECONFIG={kubeconfigmgmt} oc delete -f {clusterdir}/nodepool.yaml', shell=True)
             call(f'KUBECONFIG={kubeconfigmgmt} oc delete -f {clusterdir}/hostedcluster.yaml', shell=True)
