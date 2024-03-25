@@ -947,7 +947,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if ingress_ip is not None and api_ip is not None and ingress_ip == api_ip:
         ingress_ip = None
         overrides['ingress_ip'] = None
-    if sslip and provider in virt_providers:
+    if sslip and provider in virt_providers and api_ip is not None:
         original_domain = domain
         domain = f"{api_ip.replace('.', '-').replace(':', '-')}.sslip.io"
         data['domain'] = domain
