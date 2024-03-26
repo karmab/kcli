@@ -13,7 +13,7 @@ version: stable
 tag: '4.13'
 platform: None
 pull_secret: openshift_pull.json
-image: rhcos413
+image:
 network: default
 network_type: OVNKubernetes
 worker_network:

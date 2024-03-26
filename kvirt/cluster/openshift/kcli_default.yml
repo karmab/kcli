@@ -17,7 +17,7 @@ info: |
 version: stable
 tag: '4.15'
 pull_secret: openshift_pull.json
-image: rhcos414
+image: 
 network: default
 worker_network:
 api_ip: 
