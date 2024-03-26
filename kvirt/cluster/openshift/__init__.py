@@ -11,7 +11,7 @@ from kvirt.common import get_latest_fcos, generate_rhcos_iso, olm_app, get_commi
 from kvirt.common import get_installer_rhcos, wait_cloud_dns, delete_lastvm
 from kvirt.common import ssh, scp, _ssh_credentials, get_ssh_pub_key, separate_yamls
 from kvirt.common import start_baremetal_hosts, update_baremetal_hosts
-from kvirt.defaults import LOCAL_OPENSHIFT_APPS
+from kvirt.defaults import LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG
 import os
 import re
 from random import choice
@@ -704,7 +704,78 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     provider = config.type
     arch = k.get_capabilities()['arch'] if provider == 'kvm' else 'x86_64'
     pprint(f"Deploying on client {client}")
-    data = safe_load(open(f'{plandir}/kcli_default.yml'))
+    data = {'domain': 'karmalabs.corp',
+            'network': 'default',
+            'ctlplanes': 3,
+            'workers': 0,
+            'tag': OPENSHIFT_TAG,
+            'ipv6': False,
+            'pull_secret': 'openshift_pull.json',
+            'version': 'stable',
+            'macosx': False,
+            'fips': False,
+            'cpu_partitioning': False,
+            'apps': [],
+            'dualstack': False,
+            'cluster_network_ipv6': "fd01::/48",
+            'service_network_ipv6': "fd02::/112",
+            'kvm_forcestack': False,
+            'kvm_openstack': True,
+            'ipsec': False,
+            'ipsec_mode': None,
+            'mtu': 1400,
+            'ovn_hostrouting': False,
+            'manifests': 'manifests',
+            'localhost_fix': False,
+            'ctlplane_localhost_fix': False,
+            'worker_localhost_fix': False,
+            'sno': False,
+            'sno_disk': None,
+            'sno_debug': False,
+            'sno_ctlplanes': False,
+            'sno_workers': False,
+            'sno_wait': False,
+            'sno_disable_nics': [],
+            'sno_cpuset': None,
+            'sno_relocate': False,
+            'sno_vm': False,
+            'notify': False,
+            'async': False,
+            'kubevirt_api_service': False,
+            'kubevirt_ignore_node_port': False,
+            'baremetal_web': True,
+            'baremetal_web_dir': '/var/www/html',
+            'baremetal_web_port': 80,
+            'baremetal_cidr': None,
+            'keepalived': True,
+            'coredns': True,
+            'mdns': True,
+            'sslip': False,
+            'autoscale': False,
+            'upstream': False,
+            'calico_version': None,
+            'cilium_version': None,
+            'disconnected_vm': False,
+            'disconnected_image': 'centos8stream',
+            'dosconnected_default_network': 'default',
+            'disconnected_update': False,
+            'disconnected_reuse': False,
+            'disconnected_operators_all': False,
+            'disconnected_operators': [],
+            'disconnected_operators_version': None,
+            'disconnected_certified_operators_all': False,
+            'disconnected_certified_operators': [],
+            'disconnected_certified_operators_version': None,
+            'disconnected_community_operators_all': False,
+            'disconnected_community_operators': [],
+            'disconnected_community_operators_version': None,
+            'disconnected_marketplace_operators_all': False,
+            'disconnected_marketplace_operators': [],
+            'disconnected_marketplace_operators_version': None,
+            'disconnected_extra_catalogs': [],
+            'cloud_internal': False,
+            'cloud_lb': True,
+            'retries': 2}
     data.update(overrides)
     fix_typos(data)
     ctlplanes = data['ctlplanes']
