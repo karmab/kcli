@@ -1840,7 +1840,7 @@ class Kaws(object):
         default_cidr = overrides.get('cidr', "0.0.0.0/0")
         default_protocol = overrides.get('protocol', 'tcp')
         if 'ports' in overrides:
-            overrides['rules'] = {"cidr": default_cidr, "ports": overrides['ports']}
+            overrides['rules'] = [{"cidr": default_cidr, "ports": overrides['ports']}]
         for route in overrides.get('rules', []):
             cidr = route.get('cidr', default_cidr)
             protocol = route.get('protocol', default_protocol)
@@ -2090,7 +2090,7 @@ class Kaws(object):
         routes = response['RouteTables'][0]['Routes']
         existing_cidrs = [d.get('DestinationCidrBlock') or d.get('DestinationIpv6CidrBlock') for d in routes]
         if 'cidr' in overrides and 'vm' in overrides:
-            overrides['routes'] = {"cidr": overrides['cidr'], "vm": overrides['vm']}
+            overrides['routes'] = [{"cidr": overrides['cidr'], "vm": overrides['vm']}]
         for route in overrides.get('routes', []):
             cidr = route.get('cidr')
             vm = route.get('vm')
