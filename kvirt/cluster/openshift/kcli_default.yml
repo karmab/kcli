@@ -115,7 +115,7 @@ sno_disk:
 sno_debug: false
 sno_cloud_remove_lb: true
 sno_disable_nics: []
-sno_ctplanes: false
+sno_ctlplanes: false
 sno_workers: false
 sno_wait: false
 sno_nic:
@@ -163,3 +163,5 @@ coredns_nameserver:
 dual_api_ip:
 dual_ingress_ip:
 cpu_partitioning: false
+kubetype: hypershift
+macosx: False

@@ -2,7 +2,7 @@ from kvirt.common import success, info2
 from kvirt.common import get_ssh_pub_key
 import os
 from shutil import copyfile
-import yaml
+from yaml import safe_dump, safe_load
 
 
 def valid_rhn_credentials(config, overrides):
@@ -18,7 +18,7 @@ def valid_rhn_credentials(config, overrides):
 
 
 def create(config, plandir, cluster, overrides, dnsconfig=None):
-    data = {'kubetype': 'microshift', 'sslip': True, 'image': 'rhel9', 'pull_secret': 'openshift_pull.json'}
+    data = safe_load(open(f'{plandir}/kcli_plan_default.yml'))
     data.update(overrides)
     if 'rhel' not in data['image'].lower():
         msg = "A rhel image is currently required for deployment"
@@ -75,7 +75,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             installparam['plan'] = plan
             installparam['cluster'] = cluster
             installparam['kubetype'] = 'microshift'
-            yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
+            safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     threaded = data.get('threaded', False)
     result = config.plan(plan, inputfile=f'{plandir}/kcli_plan.yml', overrides=data, threaded=threaded)
     if result['result'] != 'success':

@@ -13,7 +13,7 @@ from string import ascii_lowercase, ascii_letters, digits
 from subprocess import call
 from tempfile import NamedTemporaryFile
 from time import sleep
-import yaml
+from yaml import safe_dump, safe_load
 
 cloud_providers = ['aws', 'azure', 'gcp', 'ibm']
 
@@ -58,14 +58,14 @@ def scale(config, plandir, cluster, overrides):
         data['first_ip'] = first_ip
     if os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
         with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
-            installparam = yaml.safe_load(install)
+            installparam = safe_load(install)
             data.update(installparam)
             plan = installparam.get('plan', plan)
     data.update(overrides)
     data['scale'] = True
     if os.path.exists(clusterdir):
         with open(f"{clusterdir}/kcli_parameters.yml", 'w') as paramfile:
-            yaml.safe_dump(data, paramfile)
+            safe_dump(data, paramfile)
     client = config.client
     pprint(f"Scaling on client {client}")
     image = data.get('image')
@@ -86,9 +86,7 @@ def scale(config, plandir, cluster, overrides):
 def create(config, plandir, cluster, overrides):
     provider = config.type
     k = config.k
-    data = {'kubetype': 'generic', 'sslip': False, 'domain': 'karmalabs.corp', 'wait_ready': False, 'extra_scripts': [],
-            'calico_version': None, 'autoscale': False, 'token': None, 'async': False, 'cloud_lb': True,
-            'cloud_dns': False, 'cloud_storage': True, 'registry': False}
+    data = safe_load(open(f'{plandir}/kcli_default.yml'))
     async_install = data['async']
     data.update(overrides)
     fix_typos(data)
@@ -201,7 +199,7 @@ def create(config, plandir, cluster, overrides):
         installparam['image'] = image
         installparam['ubuntu'] = 'ubuntu' in image.lower() or len([u for u in UBUNTUS if u in image]) > 1
         installparam['first_ip'] = first_ip
-        yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
+        safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     if ctlplanes > 1:
         ctlplane_threaded = data.get('threaded', False) or data.get('ctlplanes_threaded', False)
         result = config.plan(plan, inputfile=f'{plandir}/ctlplanes.yml', overrides=data, threaded=ctlplane_threaded)

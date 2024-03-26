@@ -6,7 +6,6 @@ from ipaddress import ip_network
 from kvirt.common import success, error, pprint, info2, container_mode, warning, fix_typos
 from kvirt.common import get_oc, pwd_path, get_installer_rhcos, get_ssh_pub_key, start_baremetal_hosts, olm_app
 from kvirt.common import deploy_cloud_storage
-from kvirt.defaults import OPENSHIFT_TAG
 from kvirt.cluster.openshift import get_ci_installer, get_downstream_installer, get_installer_version
 from kvirt.cluster.openshift import same_release_images, process_apps, update_openshift_etc_hosts, offline_image
 import json
@@ -21,7 +20,7 @@ from time import sleep
 from uuid import UUID
 from urllib.parse import urlparse
 from urllib.request import urlopen, Request
-import yaml
+from yaml import safe_dump, safe_load
 
 virt_providers = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere', 'proxmox']
 cloud_providers = ['aws', 'azure', 'gcp', 'ibm']
@@ -131,9 +130,9 @@ def handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts=[]):
         httpdcmd = f"oc create -f {plandir}/httpd.yaml"
         call(httpdcmd, shell=True)
         svcip_cmd = 'oc get node -o yaml'
-        svcip = yaml.safe_load(os.popen(svcip_cmd).read())['items'][0]['status']['addresses'][0]['address']
+        svcip = safe_load(os.popen(svcip_cmd).read())['items'][0]['status']['addresses'][0]['address']
         svcport_cmd = 'oc get svc -n default httpd-kcli-svc -o yaml'
-        svcport = yaml.safe_load(os.popen(svcport_cmd).read())['spec']['ports'][0]['nodePort']
+        svcport = safe_load(os.popen(svcport_cmd).read())['spec']['ports'][0]['nodePort']
         podname = os.popen('oc -n default get pod -l app=httpd-kcli -o name').read().split('/')[1].strip()
         try:
             call(f"oc wait -n default --for=condition=Ready pod/{podname}", shell=True)
@@ -176,14 +175,14 @@ def scale(config, plandir, cluster, overrides):
         call(f'bash {clusterdir}/ignition.sh', shell=True)
     if os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
         with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
-            installparam = yaml.safe_load(install)
+            installparam = safe_load(install)
             data.update(installparam)
             plan = installparam.get('plan', plan)
     data.update(overrides)
     assisted = data['assisted']
     kubevirt = data['kubevirt']
     with open(f"{clusterdir}/kcli_parameters.yml", 'w') as paramfile:
-        yaml.safe_dump(data, paramfile)
+        safe_dump(data, paramfile)
     pprint(f"Scaling on client {config.client}")
     worker_overrides = data.copy()
     workers = worker_overrides.get('workers', 2)
@@ -208,9 +207,9 @@ def scale(config, plandir, cluster, overrides):
                 iso_url = handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts)
             else:
                 svcip_cmd = 'oc get node -o yaml'
-                svcip = yaml.safe_load(os.popen(svcip_cmd).read())['items'][0]['status']['addresses'][0]['address']
+                svcip = safe_load(os.popen(svcip_cmd).read())['items'][0]['status']['addresses'][0]['address']
                 svcport_cmd = 'oc get svc -n default httpd-kcli-svc -o yaml'
-                svcport = yaml.safe_load(os.popen(svcport_cmd).read())['spec']['ports'][0]['nodePort']
+                svcport = safe_load(os.popen(svcport_cmd).read())['spec']['ports'][0]['nodePort']
                 iso_url = f'http://{svcip}:{svcport}/{cluster}-worker.iso'
             start_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
             worker_overrides['workers'] = workers - len(new_baremetal_hosts)
@@ -234,47 +233,7 @@ def create(config, plandir, cluster, overrides):
         if not os.path.exists(os.environ['KUBECONFIG']):
             msg = "Kubeconfig not found. Leaving..."
             return {'result': 'failure', 'reason': msg}
-    data = {'kubetype': 'hypershift',
-            'domain': 'karmalabs.corp',
-            'platform': None,
-            'baremetal_iso': False,
-            'baremetal_hosts': [],
-            'coredns': True,
-            'mdns': False,
-            'network': 'default',
-            'etcd_size': 4,
-            'workers': 2,
-            'apps': [],
-            'async': False,
-            'notify': False,
-            'tag': OPENSHIFT_TAG,
-            'version': 'stable',
-            'network_type': 'OVNKubernetes',
-            'fips': False,
-            'operator_image': 'quay.io/hypershift/hypershift-operator:latest',
-            'mce': True,
-            'namespace': 'clusters',
-            'pull_secret': 'openshift_pull.json',
-            'sslip': False,
-            'kubevirt_ingress_service': False,
-            'dualstack': False,
-            'ipv6': False,
-            'cluster_networks': [],
-            'service_networks': [],
-            'cluster_network_ipv4': '10.129.0.0/14',
-            'service_network_ipv4': '172.31.0.0/16',
-            'cluster_network_ipv6': "fd03::/48",
-            'service_network_ipv6': "fd04::/112",
-            'autoscale': False,
-            'mce': True,
-            'mce_assisted': False,
-            'calico_version': None,
-            'cilium_version': None,
-            'hosted_tag': None,
-            'hosted_ha': False,
-            'hosted_version': None,
-            'image_overrides': None,
-            'retries': 3}
+    data = safe_load(open(f'{plandir}/kcli_plan_default.yml'))
     data.update(overrides)
     fix_typos(data)
     retries = data.get('retries')
@@ -332,7 +291,7 @@ def create(config, plandir, cluster, overrides):
     if which('oc') is None:
         get_oc()
     default_sc = False
-    for sc in yaml.safe_load(os.popen('oc get sc -o yaml').read())['items']:
+    for sc in safe_load(os.popen('oc get sc -o yaml').read())['items']:
         if 'annotations' in sc['metadata']\
            and 'storageclass.kubernetes.io/is-default-class' in sc['metadata']['annotations']\
            and sc['metadata']['annotations']['storageclass.kubernetes.io/is-default-class'] == 'true':
@@ -346,8 +305,8 @@ def create(config, plandir, cluster, overrides):
     kubeconfig = os.path.basename(kubeconfig) if kubeconfig is not None else 'config'
     hosted_crd_cmd = 'oc get crd hostedclusters.hypershift.openshift.io -o yaml 2>/dev/null'
     assisted_crd_cmd = 'oc -n multicluster-engine get pod -l app=assisted-service -o name 2>/dev/null'
-    if yaml.safe_load(os.popen(hosted_crd_cmd).read()) is None\
-       or (assisted and yaml.safe_load(os.popen(assisted_crd_cmd).read()) is None):
+    if safe_load(os.popen(hosted_crd_cmd).read()) is None\
+       or (assisted and safe_load(os.popen(assisted_crd_cmd).read()) is None):
         warning("Hypershift not fully installed. Installing it for you")
         if data['mce'] or assisted:
             mce_assisted = assisted or data['mce_assisted']
@@ -367,10 +326,10 @@ def create(config, plandir, cluster, overrides):
             hypercmd += f" --hypershift-image {data['operator_image']}"
             call(hypercmd, shell=True)
             sleep(120)
-    if yaml.safe_load(os.popen(hosted_crd_cmd).read()) is None:
+    if safe_load(os.popen(hosted_crd_cmd).read()) is None:
         msg = "Couldnt install hypershift properly"
         return {'result': 'failure', 'reason': msg}
-    elif assisted and yaml.safe_load(os.popen(assisted_crd_cmd).read()) is None:
+    elif assisted and safe_load(os.popen(assisted_crd_cmd).read()) is None:
         msg = "Couldnt install assisted properly"
         return {'result': 'failure', 'reason': msg}
     registry = 'quay.io'
@@ -401,11 +360,11 @@ def create(config, plandir, cluster, overrides):
         data['operator_disconnected_image'] = f'{disconnected_url}/openshift/release@{hypershift_tag}'
     data['registry'] = registry
     data['basedir'] = '/workdir' if container_mode() else '.'
-    supported_data = yaml.safe_load(os.popen("oc get cm/supported-versions -o yaml -n hypershift").read())
+    supported_data = safe_load(os.popen("oc get cm/supported-versions -o yaml -n hypershift").read())
     if supported_data is not None:
         supported_data = supported_data['data']
         supported_versions = supported_versions = supported_data['supported-versions']
-        versions = yaml.safe_load(supported_versions)['versions']
+        versions = safe_load(supported_versions)['versions']
         if version == 'latest':
             tag = versions[0]
         elif str(tag) not in versions:
@@ -514,7 +473,7 @@ def create(config, plandir, cluster, overrides):
     pprint("Creating control plane assets")
     cmcmd = f"oc create ns {namespace} -o yaml --dry-run=client | oc apply -f -"
     call(cmcmd, shell=True)
-    icsps = yaml.safe_load(os.popen('oc get imagecontentsourcepolicies -o yaml').read())['items']
+    icsps = safe_load(os.popen('oc get imagecontentsourcepolicies -o yaml').read())['items']
     if not fake_disconnected and icsps:
         imagecontentsources = []
         for icsp in icsps:
@@ -527,7 +486,7 @@ def create(config, plandir, cluster, overrides):
     if os.path.exists(manifestsdir) and os.path.isdir(manifestsdir):
         for f in glob(f"{manifestsdir}/*.y*ml"):
             mc_name = os.path.basename(f).replace('.yaml', '').replace('.yml', '')
-            mc_data = yaml.safe_load(open(f))
+            mc_data = safe_load(open(f))
             if mc_data.get('kind', 'xx') == 'MachineConfig':
                 pprint(f"Injecting manifest {f}")
                 mc_data = json.dumps(mc_data)
@@ -595,7 +554,7 @@ def create(config, plandir, cluster, overrides):
                 else:
                     error(f"Invalid app {a}. Skipping")
             appsfile = f"{plandir}/99-apps.yaml"
-            apps_data = {'registry': registry, 'apps': final_apps, overrides: yaml.dump(overrides)}
+            apps_data = {'registry': registry, 'apps': final_apps, overrides: safe_dump(overrides)}
             appsfile = config.process_inputfile(cluster, appsfile, overrides=apps_data)
             with open(f"{asyncdir}/99-apps.yaml", 'w') as f:
                 f.write(appsfile)
@@ -740,7 +699,7 @@ def create(config, plandir, cluster, overrides):
             installparam['image'] = image
         installparam['ipv6'] = ipv6
         installparam['original_domain'] = data['original_domain']
-        yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
+        safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     nodepoolfile = config.process_inputfile(cluster, f"{plandir}/nodepool.yaml", overrides=assetsdata)
     with open(f"{clusterdir}/nodepool.yaml", 'w') as f:
         f.write(nodepoolfile)

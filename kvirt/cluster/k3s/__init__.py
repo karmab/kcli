@@ -10,7 +10,7 @@ from string import ascii_letters, digits
 from subprocess import call, run
 from tempfile import NamedTemporaryFile
 from time import sleep
-import yaml
+from yaml import safe_dump, safe_load
 
 cloud_providers = ['aws', 'azure', 'gcp', 'ibm']
 
@@ -30,7 +30,7 @@ def update_ip_alias(config, nodes):
         else:
             sleep(5)
             timeout += 5
-    for node in yaml.safe_load(os.popen("kubectl get node -o yaml").read())['items']:
+    for node in safe_load(os.popen("kubectl get node -o yaml").read())['items']:
         try:
             name, pod_cidr = node['metadata']['name'], node['spec']['podCIDR']
             config.k.update_aliases(name, pod_cidr)
@@ -48,7 +48,7 @@ def scale(config, plandir, cluster, overrides):
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
         with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
-            installparam = yaml.safe_load(install)
+            installparam = safe_load(install)
             data.update(installparam)
             plan = installparam.get('plan', plan)
     else:
@@ -69,7 +69,7 @@ def scale(config, plandir, cluster, overrides):
     pprint(f"Scaling on client {client}")
     if os.path.exists(clusterdir):
         with open(f"{clusterdir}/kcli_parameters.yml", 'w') as paramfile:
-            yaml.safe_dump(data, paramfile)
+            safe_dump(data, paramfile)
     vmrules_all_names = []
     if data.get('vmrules', config.vmrules) and data.get('vmrules_strict', config.vmrules_strict):
         vmrules_all_names = [list(entry.keys())[0] for entry in data.get('vmrules', config.vmrules)]
@@ -110,9 +110,7 @@ def scale(config, plandir, cluster, overrides):
 
 def create(config, plandir, cluster, overrides):
     provider = config.type
-    data = {'kubetype': 'k3s', 'domain': 'karmalabs.corp', 'image': 'ubuntu2004', 'ctlplanes': 1, 'workers': 0,
-            'sdn': 'flannel', 'extra_scripts': [], 'autoscale': False, 'network': 'default',
-            'cloud_api_internal': False, 'cloud_dns': False, 'cloud_storage': True, 'cloud_native': False}
+    data = safe_load(open(f'{plandir}/kcli_default.yml'))
     data.update(overrides)
     fix_typos(data)
     cloud_dns = data['cloud_dns']
@@ -208,7 +206,7 @@ def create(config, plandir, cluster, overrides):
         if not cloud_lb and ctlplanes > 1:
             installparam['virtual_router_id'] = virtual_router_id
             installparam['auth_pass'] = auth_pass
-        yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
+        safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     for role in ['ctlplanes', 'workers']:
         if (role == 'ctlplanes' and ctlplanes == 1) or (role == 'workers' and workers == 0):
             continue
