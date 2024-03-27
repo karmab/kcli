@@ -742,9 +742,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     overrides['kubetype'] = 'openshift'
     apps = overrides.get('apps', [])
     disks = overrides.get('disks', [30])
-    if ('lvms-operator' in apps or 'localstorage' in apps or 'ocs' in apps) and 'extra_disks' not in overrides\
-            and 'extra_ctlplane_disks' not in overrides and 'extra_worker_disks' not in overrides and len(disks) == 1:
-        warning("Storage apps require extra disks to be set")
     overrides['kube'] = data['cluster']
     installparam = overrides.copy()
     installparam['cluster'] = clustervalue
@@ -769,6 +766,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if data['network_type'] == 'OpenShiftSDN':
             warning("Forcing network_type to OVNKubernetes")
             data['network_type'] = 'OVNKubernetes'
+    elif ('lvms-operator' in apps or 'localstorage' in apps or 'ocs' in apps) and 'extra_disks' not in overrides\
+            and 'extra_ctlplane_disks' not in overrides and 'extra_worker_disks' not in overrides and len(disks) == 1:
+        warning("Storage apps require extra disks to be set")
     network = data['network']
     post_dualstack = False
     if data['dualstack'] and provider in cloud_providers:
