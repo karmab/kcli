@@ -11,7 +11,7 @@ info: |
     Although the default platform uses the None workflow, you can set it to assisted or kubevirt
 version: stable
 tag: '4.13'
-platform: None
+platform:
 pull_secret: openshift_pull.json
 image:
 network: default

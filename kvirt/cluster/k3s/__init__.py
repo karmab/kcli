@@ -110,9 +110,7 @@ def scale(config, plandir, cluster, overrides):
 
 def create(config, plandir, cluster, overrides):
     provider = config.type
-    data = {'kubetype': 'k3s', 'domain': 'karmalabs.corp', 'image': 'ubuntu2004', 'ctlplanes': 1, 'workers': 0,
-            'sdn': 'flannel', 'extra_scripts': [], 'autoscale': False, 'network': 'default',
-            'cloud_api_internal': False, 'cloud_dns': False, 'cloud_storage': True, 'cloud_native': False}
+    data = safe_load(open(f'{plandir}/kcli_plan_default.yml'))
     data.update(overrides)
     fix_typos(data)
     cloud_dns = data['cloud_dns']

@@ -6,7 +6,6 @@ from ipaddress import ip_network
 from kvirt.common import success, error, pprint, info2, container_mode, warning, fix_typos
 from kvirt.common import get_oc, pwd_path, get_installer_rhcos, get_ssh_pub_key, start_baremetal_hosts, olm_app
 from kvirt.common import deploy_cloud_storage
-from kvirt.defaults import OPENSHIFT_TAG
 from kvirt.cluster.openshift import get_ci_installer, get_downstream_installer, get_installer_version
 from kvirt.cluster.openshift import same_release_images, process_apps, update_openshift_etc_hosts, offline_image
 import json
@@ -234,47 +233,7 @@ def create(config, plandir, cluster, overrides):
         if not os.path.exists(os.environ['KUBECONFIG']):
             msg = "Kubeconfig not found. Leaving..."
             return {'result': 'failure', 'reason': msg}
-    data = {'kubetype': 'hypershift',
-            'domain': 'karmalabs.corp',
-            'platform': None,
-            'baremetal_iso': False,
-            'baremetal_hosts': [],
-            'coredns': True,
-            'mdns': False,
-            'network': 'default',
-            'etcd_size': 4,
-            'workers': 2,
-            'apps': [],
-            'async': False,
-            'notify': False,
-            'tag': OPENSHIFT_TAG,
-            'version': 'stable',
-            'network_type': 'OVNKubernetes',
-            'fips': False,
-            'operator_image': 'quay.io/hypershift/hypershift-operator:latest',
-            'mce': True,
-            'namespace': 'clusters',
-            'pull_secret': 'openshift_pull.json',
-            'sslip': False,
-            'kubevirt_ingress_service': False,
-            'dualstack': False,
-            'ipv6': False,
-            'cluster_networks': [],
-            'service_networks': [],
-            'cluster_network_ipv4': '10.129.0.0/14',
-            'service_network_ipv4': '172.31.0.0/16',
-            'cluster_network_ipv6': "fd03::/48",
-            'service_network_ipv6': "fd04::/112",
-            'autoscale': False,
-            'mce': True,
-            'mce_assisted': False,
-            'calico_version': None,
-            'cilium_version': None,
-            'hosted_tag': None,
-            'hosted_ha': False,
-            'hosted_version': None,
-            'image_overrides': None,
-            'retries': 3}
+    data = safe_load(open(f'{plandir}/kcli_plan_default.yml'))
     data.update(overrides)
     fix_typos(data)
     retries = data.get('retries')
