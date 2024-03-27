@@ -38,6 +38,7 @@ on:
         required: false
         default: "32768"
 
+
 env:
  HOME: /root
  PYTHONUNBUFFERED: true
@@ -48,6 +49,7 @@ env:
  PULLSECRET: ${{github.event.inputs.PULLSECRET}}
  VERSION: ${{github.event.inputs.VERSION}}
  TAG: ${{github.event.inputs.TAG}}
+ DISKS: ${{github.event.inputs.DISKS}}
  MEMORY: ${{github.event.inputs.MEMORY}}
  NUMCPUS: ${{github.event.inputs.NUMCPUS}}
 
