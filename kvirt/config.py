@@ -475,7 +475,7 @@ class Kconfig(Kbaseconfig):
         kubetype = overrides.get('kubetype')
         k = self.k if k is None else k
         tunnel = self.tunnel
-        profile = profile or overrides.get('image', 'kvirt')
+        profile = profile or overrides.get('image') or 'kvirt'
         full_volumes = self.k.volumes()
         volumes = [os.path.basename(v) for v in full_volumes]
         vmprofiles = {k: v for k, v in self.profiles.items() if 'type' not in v or v['type'] == 'vm'}

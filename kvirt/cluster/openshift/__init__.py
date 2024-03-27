@@ -1449,7 +1449,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         process_baremetal_rules(config, cluster, baremetal_hosts, vmrules=vmrules, overrides=overrides)
         move(f"{clusterdir}/bootstrap-in-place-for-live-iso.ign", f"./{sno_name}.ign")
         with open("iso.ign", 'w') as f:
-            iso_overrides = {'image': 'rhcos4000'}
+            iso_overrides = data.copy()
+            iso_overrides['image'] = 'rhcos4000'
             sno_extra_args = overrides.get('sno_extra_args')
             _files = [{"path": "/root/sno-finish.service", "origin": f"{plandir}/sno-finish.service"},
                       {"path": "/usr/local/bin/sno-finish.sh", "origin": f"{plandir}/sno-finish.sh", "mode": 700}]
@@ -1465,7 +1466,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 _files.append({"path": "/root/relocate-ip.service",
                                "origin": f"{plandir}/relocate-ip-bootstrap.service"})
             iso_overrides['files'] = _files
-            iso_overrides.update(data)
             if os.path.exists(f'{clusterdir}/macs.txt'):
                 bootstrap_data = open(f'{clusterdir}/macs.txt').readlines()[0].strip().split(';')[1:]
                 hostname, ip, netmask, gateway, nameserver = bootstrap_data
