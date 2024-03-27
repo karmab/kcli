@@ -11,7 +11,7 @@ from kvirt.common import get_latest_fcos, generate_rhcos_iso, olm_app, get_commi
 from kvirt.common import get_installer_rhcos, wait_cloud_dns, delete_lastvm
 from kvirt.common import ssh, scp, _ssh_credentials, get_ssh_pub_key, separate_yamls
 from kvirt.common import start_baremetal_hosts, update_baremetal_hosts
-from kvirt.defaults import LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG
+from kvirt.defaults import LOCAL_OPENSHIFT_APPS
 import os
 import re
 from random import choice
@@ -704,78 +704,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     provider = config.type
     arch = k.get_capabilities()['arch'] if provider == 'kvm' else 'x86_64'
     pprint(f"Deploying on client {client}")
-    data = {'domain': 'karmalabs.corp',
-            'network': 'default',
-            'ctlplanes': 3,
-            'workers': 0,
-            'tag': OPENSHIFT_TAG,
-            'ipv6': False,
-            'pull_secret': 'openshift_pull.json',
-            'version': 'stable',
-            'macosx': False,
-            'fips': False,
-            'cpu_partitioning': False,
-            'apps': [],
-            'dualstack': False,
-            'cluster_network_ipv6': "fd01::/48",
-            'service_network_ipv6': "fd02::/112",
-            'kvm_forcestack': False,
-            'kvm_openstack': True,
-            'ipsec': False,
-            'ipsec_mode': None,
-            'mtu': 1400,
-            'ovn_hostrouting': False,
-            'manifests': 'manifests',
-            'localhost_fix': False,
-            'ctlplane_localhost_fix': False,
-            'worker_localhost_fix': False,
-            'sno': False,
-            'sno_disk': None,
-            'sno_debug': False,
-            'sno_ctlplanes': False,
-            'sno_workers': False,
-            'sno_wait': False,
-            'sno_disable_nics': [],
-            'sno_cpuset': None,
-            'sno_relocate': False,
-            'sno_vm': False,
-            'notify': False,
-            'async': False,
-            'kubevirt_api_service': False,
-            'kubevirt_ignore_node_port': False,
-            'baremetal_web': True,
-            'baremetal_web_dir': '/var/www/html',
-            'baremetal_web_port': 80,
-            'baremetal_cidr': None,
-            'keepalived': True,
-            'coredns': True,
-            'mdns': True,
-            'sslip': False,
-            'autoscale': False,
-            'upstream': False,
-            'calico_version': None,
-            'cilium_version': None,
-            'disconnected_vm': False,
-            'disconnected_image': 'centos8stream',
-            'dosconnected_default_network': 'default',
-            'disconnected_update': False,
-            'disconnected_reuse': False,
-            'disconnected_operators_all': False,
-            'disconnected_operators': [],
-            'disconnected_operators_version': None,
-            'disconnected_certified_operators_all': False,
-            'disconnected_certified_operators': [],
-            'disconnected_certified_operators_version': None,
-            'disconnected_community_operators_all': False,
-            'disconnected_community_operators': [],
-            'disconnected_community_operators_version': None,
-            'disconnected_marketplace_operators_all': False,
-            'disconnected_marketplace_operators': [],
-            'disconnected_marketplace_operators_version': None,
-            'disconnected_extra_catalogs': [],
-            'cloud_internal': False,
-            'cloud_lb': True,
-            'retries': 2}
+    data = safe_load(open(f'{plandir}/kcli_default.yml'))
     data.update(overrides)
     fix_typos(data)
     ctlplanes = data['ctlplanes']
@@ -784,7 +713,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     workers = data['workers']
     if workers < 0:
         return {'result': 'failure', 'reason': f"Invalid number of workers {workers}"}
-    if data.get('dual_api_ip') is not None:
+    if data['dual_api_ip'] is not None:
         warning("Forcing dualstack")
         data['dualstack'] = True
     clustervalue = overrides.get('cluster') or cluster or 'myopenshift'
@@ -792,22 +721,22 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
        and 'ctlplane_memory' not in overrides and 'memory' not in overrides:
         overrides['ctlplane_memory'] = 32768
         warning("Forcing memory of single ctlplane vm to 32G")
-    retries = data.get('retries')
+    retries = data['retries']
     data['cluster'] = clustervalue
-    domain = data.get('domain')
+    domain = data['domain']
     dns_k = dnsconfig.k if dnsconfig is not None else k
     if provider in cloud_providers:
         dns_zones = dns_k.list_dns_zones()
         if domain not in dns_zones and f'{domain}.' not in dns_zones:
             return {'result': 'failure', 'reason': f'domain {domain} needs to exist'}
     original_domain = None
-    async_install = data.get('async')
-    upstream = data.get('upstream')
-    autoscale = data.get('autoscale')
-    sslip = data.get('sslip')
-    baremetal_hosts = data.get('baremetal_hosts', [])
-    notify = data.get('notify')
-    postscripts = data.get('postscripts', [])
+    async_install = data['async']
+    upstream = data['upstream']
+    autoscale = data['autoscale']
+    sslip = data['sslip']
+    baremetal_hosts = data['baremetal_hosts']
+    notify = data['notify']
+    postscripts = data['postscripts']
     pprint(f"Deploying cluster {clustervalue}")
     plan = cluster if cluster is not None else clustervalue
     overrides['kubetype'] = 'openshift'
@@ -824,11 +753,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     sno_vm = data['sno_vm']
     sno = sno_vm or data['sno'] or baremetal_ctlplane or baremetal_sno
     data['sno'] = sno
-    sno_wait = overrides.get('sno_wait') or baremetal_sno or data.get('api_ip') is not None or sno_vm
+    sno_wait = overrides.get('sno_wait') or baremetal_sno or data['api_ip'] is not None or sno_vm
     sno_disk = data['sno_disk']
     sno_ctlplanes = data['sno_ctlplanes'] or baremetal_ctlplane
     sno_workers = data['sno_workers']
-    ignore_hosts = data.get('ignore_hosts', False)
+    ignore_hosts = data['ignore_hosts']
     if sno:
         if sno_disk is None:
             warning("sno_disk will be discovered")
@@ -837,10 +766,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         data['mdns'] = False
         data['kubetype'] = 'openshift'
         data['kube'] = data['cluster']
-        if data.get('network_type', 'OVNKubernetes') == 'OpenShiftSDN':
+        if data['network_type'] == 'OpenShiftSDN':
             warning("Forcing network_type to OVNKubernetes")
             data['network_type'] = 'OVNKubernetes'
-    network = data.get('network')
+    network = data['network']
     post_dualstack = False
     if data['dualstack'] and provider in cloud_providers:
         warning("Dual stack will be enabled at the end of the install")
@@ -850,34 +779,34 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     disconnected_vm = data['disconnected_vm']
     disconnected_update = data['disconnected_update']
     disconnected_reuse = data['disconnected_reuse']
-    disconnected_operators = data.get('disconnected_operators', [])
+    disconnected_operators = data['disconnected_operators']
     disconnected_certified_operators = data['disconnected_certified_operators']
     disconnected_community_operators = data['disconnected_community_operators']
     disconnected_marketplace_operators = data['disconnected_marketplace_operators']
-    disconnected_url = data.get('disconnected_url')
-    disconnected_user = data.get('disconnected_user')
-    disconnected_password = data.get('disconnected_password')
-    ipsec = data.get('ipsec')
-    ipsec_mode = data.get('ipsec_mode')
-    mtu = data.get('mtu')
-    ovn_hostrouting = data.get('ovn_hostrouting')
-    metal3 = data.get('metal3', False)
-    autologin = data.get('autologin', False)
-    if not data.get('coredns'):
+    disconnected_url = data['disconnected_url']
+    disconnected_user = data['disconnected_user']
+    disconnected_password = data['disconnected_password']
+    ipsec = data['ipsec']
+    ipsec_mode = data['ipsec_mode']
+    mtu = data['mtu']
+    ovn_hostrouting = data['ovn_hostrouting']
+    metal3 = data['metal3']
+    autologin = data['autologin']
+    if not data['coredns']:
         warning("You will need to provide DNS records for api and ingress on your own")
-    keepalived = data.get('keepalived')
+    keepalived = data['keepalived']
     if not keepalived:
         warning("You will need to provide LB for api and ingress on your own")
-    mdns = data.get('mdns')
-    localhost_fix = data.get('localhost_fix')
-    ctlplane_localhost_fix = data.get('ctlplane_localhost_fix') or localhost_fix
-    worker_localhost_fix = data.get('worker_localhost_fix') or localhost_fix
-    sno_cpuset = data.get('sno_cpuset')
-    sno_relocate = data.get('sno_relocate')
+    mdns = data['mdns']
+    localhost_fix = data['localhost_fix']
+    ctlplane_localhost_fix = data['ctlplane_localhost_fix'] or localhost_fix
+    worker_localhost_fix = data['worker_localhost_fix'] or localhost_fix
+    sno_cpuset = data['sno_cpuset']
+    sno_relocate = data['sno_relocate']
     kubevirt_api_service, kubevirt_api_service_node_port = False, False
     kubevirt_ignore_node_port = data['kubevirt_ignore_node_port']
-    version = data.get('version')
-    tag = data.get('tag')
+    version = data['version']
+    tag = data['tag']
     if str(tag) == '4.1':
         tag = '4.10'
         data['tag'] = tag
@@ -890,11 +819,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     else:
         pprint(f"Using {version} version")
     cluster = data.get('cluster')
-    image = data.get('image')
-    api_ip = data.get('api_ip')
+    image = data['image']
+    api_ip = data['api_ip']
     cidr = None
     if provider in virt_providers and keepalived and not sno and api_ip is None:
-        network = data.get('network')
+        network = data['network']
         networkinfo = k.info_network(network)
         if not networkinfo:
             msg = f"Issue getting network {network}"
@@ -930,7 +859,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if provider in virt_providers and keepalived and not sno and ':' in api_ip:
         ipv6 = True
     if ipv6:
-        if data.get('network_type', 'OVNKubernetes') == 'OpenShiftSDN':
+        if data['network_type'] == 'OpenShiftSDN':
             warning("Forcing network_type to OVNKubernetes")
             data['network_type'] = 'OVNKubernetes'
         data['ipv6'] = True
@@ -943,7 +872,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if sno and not data['dualstack'] and 'extra_args' not in overrides:
             warning("Forcing extra_args to ip=dhcp6 for sno to boot with ipv6")
             data['extra_args'] = 'ip=dhcp6'
-    ingress_ip = data.get('ingress_ip')
+    ingress_ip = data['ingress_ip']
     if ingress_ip is not None and api_ip is not None and ingress_ip == api_ip:
         ingress_ip = None
         overrides['ingress_ip'] = None
@@ -953,19 +882,19 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         data['domain'] = domain
         pprint(f"Setting domain to {domain}")
         ignore_hosts = False
-    public_api_ip = data.get('public_api_ip')
+    public_api_ip = data['public_api_ip']
     provider_network = False
-    network = data.get('network')
-    ctlplanes = data.get('ctlplanes')
-    workers = data.get('workers')
-    tag = data.get('tag')
+    network = data['network']
+    ctlplanes = data['ctlplanes']
+    workers = data['workers']
+    tag = data['tag']
     pull_secret = pwd_path(data.get('pull_secret')) if not upstream else f"{plandir}/fake_pull.json"
     pull_secret = os.path.expanduser(pull_secret)
-    macosx = data.get('macosx')
+    macosx = data['macosx']
     if macosx and not os.path.exists('/i_am_a_container'):
         macosx = False
     if provider == 'openstack' and keepalived and not sno:
-        if data.get('flavor') is None:
+        if data['flavor'] is None:
             msg = "Missing flavor in parameter file"
             return {'result': 'failure', 'reason': msg}
         provider_network = k.provider_network(network)
@@ -983,8 +912,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         return {'result': 'failure', 'reason': msg}
     if which('oc') is None:
         get_oc(macosx=macosx)
-    pub_key = data.get('pub_key') or get_ssh_pub_key()
-    keys = data.get('keys', [])
+    pub_key = data['pub_key'] or get_ssh_pub_key()
+    keys = data['keys']
     if pub_key is None:
         if keys:
             warning("Using first key from your keys array")
@@ -1067,7 +996,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         pass
     elif image is None:
         image_type = provider
-        if data.get('kvm_openstack') and provider == 'kvm':
+        if data['kvm_openstack'] and provider == 'kvm':
             image_type = 'openstack'
         if provider == "proxmox":
             image_type = 'kvm'
@@ -1099,7 +1028,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             images = [v for v in k.volumes() if image in v]
             if not images:
                 result = config.download_image(pool=config.pool, image=image, url=image_url,
-                                               size=data.get('kubevirt_disk_size'))
+                                               size=data['kubevirt_disk_size'])
                 if result['result'] != 'success':
                     return result
         pprint(f"Using image {image}")
@@ -1136,7 +1065,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if not os.path.exists(clusterdir):
         os.makedirs(clusterdir)
     if provider in virt_providers and disconnected_vm:
-        disconnected_vm = f"{data.get('disconnected_reuse_name', cluster)}-disconnected"
+        disconnected_vm = f"{data['disconnected_reuse_name'] or cluster}-disconnected"
         pprint(f"Deploying disconnected vm {disconnected_vm}")
         data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
         disconnected_plan = f"{plan}-reuse" if disconnected_reuse else plan
@@ -1163,7 +1092,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                     tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
                     insecure=True, cmd=cacmd, vmport=disconnected_vmport)
         disconnected_ca = os.popen(cacmd).read().strip()
-        if data.get('ca') is not None:
+        if data['ca'] is not None:
             data['ca'] += disconnected_ca
         else:
             data['ca'] = disconnected_ca
@@ -1268,7 +1197,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         os.remove(f)
     for f in glob(f"{clusterdir}/openshift/99_openshift-machine-api_master-control-plane-machine-set.yaml"):
         os.remove(f)
-    ntp_server = data.get('ntp_server')
+    ntp_server = data['ntp_server']
     if ntp_server is not None:
         ntp_data = config.process_inputfile(cluster, f"{plandir}/chrony.conf", overrides={'ntp_server': ntp_server})
         for role in ['master', 'worker']:
@@ -1276,7 +1205,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                                            overrides={'role': role, 'ntp_data': ntp_data})
             with open(f"{clusterdir}/manifests/99-chrony-{role}.yaml", 'w') as f:
                 f.write(ntp)
-    baremetal_cidr = data.get('baremetal_cidr')
+    baremetal_cidr = data['baremetal_cidr']
     if baremetal_cidr is not None:
         node_ip_hint = f"KUBELET_NODEIP_HINT={baremetal_cidr.split('/')[0]}"
         for role in ['master', 'worker']:
@@ -1455,11 +1384,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if sno:
         sno_name = f"{cluster}-sno"
         sno_files = []
-        sno_disable_nics = data.get('sno_disable_nics', [])
+        sno_disable_nics = data['sno_disable_nics']
         if ipv6 or sno_disable_nics:
             nm_data = config.process_inputfile(cluster, f"{plandir}/kcli-ipv6.conf.j2", overrides=data)
             sno_files.append({'path': "/etc/NetworkManager/conf.d/kcli-ipv6.conf", 'data': nm_data})
-        sno_dns = data.get('sno_dns')
+        sno_dns = data['sno_dns']
         if sno_dns is None:
             sno_dns = False
             for entry in [f'api-int.{cluster}.{domain}', f'api.{cluster}.{domain}', f'xxx.apps.{cluster}.{domain}']:
@@ -1478,7 +1407,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                               {"path": "/etc/NetworkManager/dispatcher.d/99-forcedns", "data": forcedns_data,
                                "mode": int('755', 8)}])
         if api_ip is not None:
-            data['virtual_router_id'] = data.get('virtual_router_id') or hash(cluster) % 254 + 1
+            data['virtual_router_id'] = data['virtual_router_id'] or hash(cluster) % 254 + 1
             virtual_router_id = data['virtual_router_id']
             pprint(f"Using keepalived virtual_router_id {virtual_router_id}")
             data['auth_pass'] = ''.join(choice(ascii_letters + digits) for i in range(5))
@@ -1643,7 +1572,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         msg += f"Delete it with kcli delete kube --yes {cluster}"
         return {'result': 'failure', 'reason': msg}
     if provider in virt_providers and keepalived:
-        overrides['virtual_router_id'] = data.get('virtual_router_id') or hash(cluster) % 254 + 1
+        overrides['virtual_router_id'] = data['virtual_router_id'] or hash(cluster) % 254 + 1
         virtual_router_id = overrides['virtual_router_id']
         pprint(f"Using keepalived virtual_router_id {virtual_router_id}")
         installparam['virtual_router_id'] = virtual_router_id
@@ -1689,7 +1618,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if static_networking_ctlplane:
             wait_for_ignition(cluster, domain, role='master')
         pprint("Deploying ctlplanes")
-        threaded = data.get('threaded', False) or data.get('ctlplanes_threaded', False)
+        threaded = data['threaded'] or data['ctlplanes_threaded']
         if baremetal_hosts:
             overrides['workers'] = overrides['workers'] - len(baremetal_hosts)
         result = config.plan(plan, inputfile=f'{plandir}/ctlplanes.yml', overrides=overrides, threaded=threaded)
@@ -1713,7 +1642,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             sedcmd = f'sed -i "s@api-int.{cluster}.{domain}@{api_ip}@" {clusterdir}/ctlplane.ign'
             call(sedcmd, shell=True)
         pprint("Deploying ctlplanes")
-        threaded = data.get('threaded', False) or data.get('ctlplanes_threaded', False)
+        threaded = data['threaded'] or data['ctlplanes_threaded']
         result = config.plan(plan, inputfile=f'{plandir}/cloud_ctlplanes.yml', overrides=overrides, threaded=threaded)
         if result['result'] != 'success':
             return result
@@ -1769,13 +1698,13 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             del overrides['name']
         if provider in virt_providers:
             if baremetal_hosts:
-                iso_pool = data.get('pool') or config.pool
+                iso_pool = data['pool'] or config.pool
                 iso_url = handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts, iso_pool)
                 result = start_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
                 if result['result'] != 'success':
                     return result
             if overrides['workers'] > 0:
-                threaded = data.get('threaded', False) or data.get('workers_threaded', False)
+                threaded = data['threaded'] or data['workers_threaded']
                 result = config.plan(plan, inputfile=f'{plandir}/workers.yml', overrides=overrides, threaded=threaded)
                 if result['result'] != 'success':
                     return result
@@ -1825,7 +1754,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
     process_apps(config, clusterdir, apps, overrides)
     process_postscripts(clusterdir, postscripts)
-    if provider in cloud_providers and ctlplanes == 1 and workers == 0 and data.get('sno_cloud_remove_lb', True):
+    if provider in cloud_providers and ctlplanes == 1 and workers == 0 and data['sno_cloud_remove_lb']:
         pprint("Removing loadbalancers as there is a single ctlplane")
         k.delete_loadbalancer(f"api.{cluster}")
         k.delete_loadbalancer(f"apps.{cluster}")
