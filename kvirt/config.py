@@ -3054,8 +3054,7 @@ class Kconfig(Kbaseconfig):
                             extras=extras)
         kexposer.run()
 
-    def create_openshift_iso(self, cluster, overrides={}, ignitionfile=None, podman=False, installer=False,
-                             direct=False):
+    def create_openshift_iso(self, cluster, overrides={}, ignitionfile=None, installer=False, direct=False):
         metal_url = None
         iso_version = str(overrides.get('version', 'latest'))
         if not installer:
@@ -3161,8 +3160,7 @@ class Kconfig(Kbaseconfig):
                 warning(f"Iso generation not supported on {self.type}")
             else:
                 iso_pool = overrides.get('pool') or self.pool
-                generate_rhcos_iso(self.k, f"{cluster}-{role}", iso_pool, version=iso_version, podman=podman,
-                                   installer=installer)
+                generate_rhcos_iso(self.k, f"{cluster}-{role}", iso_pool, version=iso_version, installer=installer)
 
     def create_openshift_disconnected(self, plan, overrides={}):
         data = overrides

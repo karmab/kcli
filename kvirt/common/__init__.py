@@ -1635,41 +1635,14 @@ def ignition_version(image):
     return version
 
 
-def get_coreos_installer(version='latest', arch=None):
-    pprint("Downloading coreos-installer in current directory")
-    if arch is None and os.path.exists('/Users'):
-        error("coreos-installer isn't available on Mac")
-        sys.exit(1)
-    if version != 'latest' and not version.startswith('v'):
-        version = f"v{version}"
-    coreoscmd = f"curl -LO https://mirror.openshift.com/pub/openshift-v4/clients/coreos-installer/{version}/"
-    arch = arch or os.uname().machine
-    if arch == 'aarch64':
-        coreoscmd += 'coreos-installer_arm64 ; mv coreos-installer_arm64 coreos-installer'
-    else:
-        coreoscmd += 'coreos-installer'
-    coreoscmd += "; chmod 700 coreos-installer"
-    call(coreoscmd, shell=True)
-
-
-def create_embed_ignition_cmd(name, poolpath, baseiso, podman=False, extra_args=None):
-    if podman:
-        coreosinstaller = f"podman run --privileged --rm -w /data -v {poolpath}:/data -v /dev:/dev"
-        if not os.path.exists('/Users'):
-            coreosinstaller += " -v /run/udev:/run/udev"
-        coreosinstaller += " quay.io/coreos/coreos-installer:release"
-        isocmd = f"{coreosinstaller} iso ignition embed -fi iso.ign -o {name} {baseiso}"
-    else:
-        coreosinstaller = "coreos-installer"
-        destiso = f"{poolpath}/{name}"
-        isocmd = f"{coreosinstaller} iso ignition embed -fi {poolpath}/iso.ign -o {destiso} {poolpath}/{baseiso}"
-        if which('coreos-installer') is None:
-            arch = os.uname().machine if not os.path.exists('/Users') else 'x86_64'
-            get_coreos_installer(arch=arch)
-        else:
-            pprint("Using coreos-installer from path")
+def create_embed_ignition_cmd(name, poolpath, baseiso, extra_args=None):
+    coreosinstaller = f"podman run --privileged --rm -w /data -v {poolpath}:/data -v /dev:/dev"
+    if not os.path.exists('/Users'):
+        coreosinstaller += " -v /run/udev:/run/udev"
+    coreosinstaller += " quay.io/coreos/coreos-installer:release"
+    isocmd = f"{coreosinstaller} iso ignition embed -fi iso.ign -o {name} {baseiso}"
     if extra_args is not None:
-        isocmd += f"; {coreosinstaller} iso kargs modify -a '{extra_args}' {destiso}"
+        isocmd += f"; {coreosinstaller} iso kargs modify -a '{extra_args}' {baseiso}"
     return isocmd
 
 
@@ -1951,8 +1924,7 @@ def filter_compression_extension(name):
     return name.replace('.gz', '').replace('.xz', '').replace('.bz2', '')
 
 
-def generate_rhcos_iso(k, cluster, pool, version='latest', podman=False, installer=False, arch='x86_64',
-                       extra_args=None):
+def generate_rhcos_iso(k, cluster, pool, version='latest', installer=False, arch='x86_64', extra_args=None):
     if installer:
         liveiso = get_installer_iso()
         baseiso = os.path.basename(liveiso)
@@ -1981,7 +1953,7 @@ def generate_rhcos_iso(k, cluster, pool, version='latest', podman=False, install
         baseisocmd = f"curl -L {liveiso} -o /tmp/{os.path.basename(liveiso)}"
         call(baseisocmd, shell=True)
         copy2('iso.ign', '/tmp')
-        isocmd = create_embed_ignition_cmd(name, '/tmp', baseiso, podman=podman, extra_args=extra_args)
+        isocmd = create_embed_ignition_cmd(name, '/tmp', baseiso, extra_args=extra_args)
         os.system(isocmd)
         result = k.add_image(f'/tmp/{name}', pool, name=name)
         os.remove(f'/tmp/{os.path.basename(liveiso)}')
@@ -1998,19 +1970,18 @@ def generate_rhcos_iso(k, cluster, pool, version='latest', podman=False, install
             error(f"Corrupted iso {poolpath}/{baseiso}")
             sys.exit(1)
     pprint(f"Creating iso {name}")
-    isocmd = create_embed_ignition_cmd(name, poolpath, baseiso, podman=podman, extra_args=extra_args)
+    isocmd = create_embed_ignition_cmd(name, poolpath, baseiso, extra_args=extra_args)
     os.environ["PATH"] += f":{os.getcwd()}"
     if k.conn == 'fake':
         os.system(isocmd)
     elif k.host in ['localhost', '127.0.0.1']:
-        if podman and which('podman') is None:
+        if which('podman') is None:
             error("podman is required in order to embed iso ignition")
             sys.exit(1)
         copy2('iso.ign', poolpath)
         os.system(isocmd)
     elif k.protocol == 'ssh':
-        if podman:
-            warning("podman is required in the remote hypervisor in order to embed iso ignition")
+        warning("podman is required in the remote hypervisor in order to embed iso ignition")
         createbindircmd = f'ssh {k.identitycommand} -p {k.port} {k.user}@{k.host} "mkdir bin >/dev/null 2>&1"'
         os.system(createbindircmd)
         scpbincmd = f'scp {k.identitycommand} -qP {k.port} coreos-installer {k.user}@{k.host}:bin'

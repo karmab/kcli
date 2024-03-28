@@ -2474,11 +2474,6 @@ def download_plan(args):
     config.plan(plan, url=url, download=True)
 
 
-def download_coreos_installer(args):
-    overrides = handle_parameters(args.param, args.paramfile)
-    common.get_coreos_installer(version=overrides.get('version', 'latest'), arch=overrides.get('arch'))
-
-
 def download_kubectl(args):
     overrides = handle_parameters(args.param, args.paramfile)
     common.get_kubectl(version=overrides.get('version', 'latest'))
@@ -4530,13 +4525,6 @@ def cli():
     bucketfiledownload_parser.set_defaults(func=download_bucketfile)
     download_subparsers.add_parser('bucket-file', parents=[bucketfiledownload_parser],
                                    description=bucketfiledownload_desc, help=bucketfiledownload_desc)
-
-    coreosinstallerdownload_desc = 'Download Coreos Installer'
-    coreosinstallerdownload_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
-    coreosinstallerdownload_parser.set_defaults(func=download_coreos_installer)
-    download_subparsers.add_parser('coreos-installer', parents=[coreosinstallerdownload_parser],
-                                   description=coreosinstallerdownload_desc,
-                                   help=coreosinstallerdownload_desc)
 
     imagedownload_desc = 'Download Cloud Image'
     images_list = '\n'.join(IMAGES.keys())

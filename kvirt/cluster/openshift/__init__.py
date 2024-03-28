@@ -508,8 +508,7 @@ def handle_baremetal_iso(config, plandir, cluster, overrides, baremetal_hosts=[]
     ignitionfile = f'{cluster}-worker'
     with open(ignitionfile, 'w') as f:
         f.write(iso_data)
-    config.create_openshift_iso(cluster, overrides=baremetal_iso_overrides, ignitionfile=ignitionfile, podman=True,
-                                installer=True)
+    config.create_openshift_iso(cluster, overrides=baremetal_iso_overrides, ignitionfile=ignitionfile, installer=True)
     os.remove(ignitionfile)
     if baremetal_hosts:
         iso_pool_path = config.k.get_pool_path(iso_pool)
