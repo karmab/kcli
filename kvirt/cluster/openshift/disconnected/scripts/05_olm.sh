@@ -25,7 +25,7 @@ podman login -u "$RHN_USER" -p "$RHN_PASSWORD" registry.redhat.io
 
 which oc-mirror >/dev/null 2>&1
 if [ "$?" != "0" ] ; then
-  curl -Ls https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/4.13.12/oc-mirror.tar.gz | tar xvz -C /usr/bin
+  curl -Ls https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/4.15.5/oc-mirror.tar.gz | tar xvz -C /usr/bin
   chmod +x /usr/bin/oc-mirror
 fi
 
