@@ -4,6 +4,7 @@ from binascii import hexlify
 from ipaddress import ip_network
 from kvirt.common import success, pprint, warning, info2, container_mode, wait_cloud_dns, update_etc_hosts, fix_typos
 from kvirt.common import get_kubectl, kube_create_app, get_ssh_pub_key, _ssh_credentials, ssh, deploy_cloud_storage
+from kvirt.common import detect_wrong_keys
 from kvirt.defaults import UBUNTUS
 import os
 from random import choice
@@ -87,9 +88,11 @@ def create(config, plandir, cluster, overrides):
     provider = config.type
     k = config.k
     data = safe_load(open(f'{plandir}/kcli_default.yml'))
+    valid_keywords = list(dict.fromkeys({**data, **config.list_keywords()}))
     async_install = data['async']
     data.update(overrides)
     fix_typos(data)
+    detect_wrong_keys(overrides, valid_keywords)
     if 'keys' not in overrides and get_ssh_pub_key() is None:
         msg = "No usable public key found, which is required for the deployment. Create one using ssh-keygen"
         return {'result': 'failure', 'reason': msg}

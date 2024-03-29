@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from kvirt.common import error, success, pprint, warning, get_kubectl, info2, container_mode, kube_create_app
-from kvirt.common import deploy_cloud_storage, wait_cloud_dns, update_etc_hosts, fix_typos
+from kvirt.common import deploy_cloud_storage, wait_cloud_dns, update_etc_hosts, fix_typos, detect_wrong_keys
 import os
 import re
 from random import choice
@@ -111,8 +111,10 @@ def scale(config, plandir, cluster, overrides):
 def create(config, plandir, cluster, overrides):
     provider = config.type
     data = safe_load(open(f'{plandir}/kcli_plan_default.yml'))
+    valid_keywords = list(dict.fromkeys({**data, **config.list_keywords()}))
     data.update(overrides)
     fix_typos(data)
+    detect_wrong_keys(overrides, valid_keywords)
     cloud_dns = data['cloud_dns']
     data['cloud_lb'] = overrides.get('cloud_lb', provider in cloud_providers and data['ctlplanes'] > 1)
     cloud_lb = data['cloud_lb']
