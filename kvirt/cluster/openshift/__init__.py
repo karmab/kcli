@@ -356,8 +356,7 @@ def get_downstream_installer(version='stable', macosx=False, tag=None, debug=Fal
         repo += f"/{tag.replace('-x86_64', '')}"
     INSTALLSYSTEM = 'mac' if os.path.exists('/Users') or macosx else 'linux'
     url = f"https://mirror.openshift.com/pub/openshift-v4/clients/{repo}"
-    msg = f'Downloading openshift-install from {url}'
-    pprint(msg)
+    pprint(f'Downloading openshift-install from {url}')
     try:
         r = urlopen(f"{url}/release.txt").readlines()
     except:
@@ -396,8 +395,7 @@ def get_upstream_installer(tag, version='stable', debug=False):
         tag = json.loads(urlopen(url).read())['pullSpec']
     cmd = f"oc adm release extract --command=openshift-install --to . {tag}"
     cmd += "; chmod 700 openshift-install"
-    msg = f'Downloading openshift-install {tag} in current directory'
-    pprint(msg)
+    pprint(f'Downloading openshift-install {tag} in current directory')
     if debug:
         pprint(cmd)
     return call(cmd, shell=True)
@@ -430,8 +428,7 @@ def get_ci_installer(pull_secret, tag=None, macosx=False, debug=False, nightly=F
             basetag = 'ocp'
             tag = f'registry.ci.openshift.org/{basetag}/release:{tag}'
     os.environ['OPENSHIFT_RELEASE_IMAGE'] = tag
-    msg = f'Downloading openshift-install {tag} in current directory'
-    pprint(msg)
+    pprint(f'Downloading openshift-install {tag} in current directory')
     binary = 'openshift-baremetal-install' if baremetal else 'openshift-install'
     cmd = f"oc adm release extract --registry-config {pull_secret} --command={binary} --to . {tag}"
     cmd += f"; chmod 700 {binary}"
@@ -629,12 +626,10 @@ def scale(config, plandir, cluster, overrides):
         overrides['cluster'] = cluster
         api_ip = overrides.get('api_ip')
         if provider not in cloud_providers and api_ip is None:
-            msg = 'Missing api_ip...'
-            return {'result': 'failure', 'reason': msg}
+            return {'result': 'failure', 'reason': 'Missing api_ip...'}
         domain = overrides.get('domain')
         if domain is None:
-            msg = "Missing domain..."
-            return {'result': 'failure', 'reason': msg}
+            return {'result': 'failure', 'reason': "Missing domain..."}
         os.mkdir(clusterdir)
         ignition_version = overrides['ignition_version']
         create_ignition_files(config, plandir, cluster, domain, api_ip=api_ip, ignition_version=ignition_version)
@@ -652,8 +647,7 @@ def scale(config, plandir, cluster, overrides):
     if image is None:
         cluster_image = k.info(f"{cluster}-ctlplane-0").get('image')
         if cluster_image is None:
-            msg = "Missing image..."
-            return {'result': 'failure', 'reason': msg}
+            return {'result': 'failure', 'reason': "Missing image..."}
         else:
             pprint(f"Using image {cluster_image}")
             image = cluster_image
@@ -815,8 +809,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         pprint("Removing old coreos-installer")
         os.remove('coreos-installer')
     if version not in ['ci', 'dev-preview', 'nightly', 'stable']:
-        msg = f"Incorrect version {version}"
-        return {'result': 'failure', 'reason': msg}
+        return {'result': 'failure', 'reason': f"Incorrect version {version}"}
     else:
         pprint(f"Using {version} version")
     cluster = data.get('cluster')
@@ -827,13 +820,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         network = data['network']
         networkinfo = k.info_network(network)
         if not networkinfo:
-            msg = f"Issue getting network {network}"
-            return {'result': 'failure', 'reason': msg}
+            return {'result': 'failure', 'reason': f"Issue getting network {network}"}
         if provider == 'kvm' and networkinfo['type'] == 'routed':
             cidr = networkinfo['cidr']
             if cidr == 'N/A':
-                msg = "Couldnt gather an api_ip from your specified network"
-                return {'result': 'failure', 'reason': msg}
+                return {'result': 'failure', 'reason': "Couldnt gather an api_ip from your specified network"}
             api_index = 2 if ':' in cidr else -3
             api_ip = str(ip_network(cidr)[api_index])
             warning(f"Using {api_ip} as api_ip")
@@ -846,8 +837,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             api_ip = k.create_service(f"{cluster}-api", k.namespace, selector, _type=service_type,
                                       ports=[6443, 22623, 22624, 80, 443], openshift_hack=True)
             if api_ip is None:
-                msg = "Couldnt gather an api_ip from your specified network"
-                return {'result': 'failure', 'reason': msg}
+                return {'result': 'failure', 'reason': "Couldnt gather an api_ip from your specified network"}
             else:
                 pprint(f"Using api_ip {api_ip}")
                 overrides['api_ip'] = api_ip
@@ -855,8 +845,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 kubevirt_api_service = True
                 overrides['mdns'] = False
         else:
-            msg = "You need to define api_ip in your parameters file"
-            return {'result': 'failure', 'reason': msg}
+            return {'result': 'failure', 'reason': "You need to define api_ip in your parameters file"}
     if provider in virt_providers and keepalived and not sno and ':' in api_ip:
         ipv6 = True
     if ipv6:
@@ -877,7 +866,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if ingress_ip is not None and api_ip is not None and ingress_ip == api_ip:
         ingress_ip = None
         overrides['ingress_ip'] = None
-    if sslip and provider in virt_providers and api_ip is not None:
+    if sslip and provider in virt_providers:
+        if api_ip is None:
+            return {'result': 'failure', 'reason': "Missing api_ip which is required with sslip"}
         original_domain = domain
         domain = f"{api_ip.replace('.', '-').replace(':', '-')}.sslip.io"
         data['domain'] = domain
@@ -896,8 +887,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         macosx = False
     if provider == 'openstack' and keepalived and not sno:
         if data['flavor'] is None:
-            msg = "Missing flavor in parameter file"
-            return {'result': 'failure', 'reason': msg}
+            return {'result': 'failure', 'reason': "Missing flavor in parameter file"}
         provider_network = k.provider_network(network)
         if not provider_network:
             if api_ip is None:
@@ -909,8 +899,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 public_api_ip = config.k.create_network_port(f"{cluster}-vip", network, ip=api_ip,
                                                              floating=True)['floating']
     if not os.path.exists(pull_secret):
-        msg = f"Missing pull secret file {pull_secret}"
-        return {'result': 'failure', 'reason': msg}
+        return {'result': 'failure', 'reason': f"Missing pull secret file {pull_secret}"}
     if which('oc') is None:
         get_oc(macosx=macosx)
     pub_key = data['pub_key'] or get_ssh_pub_key()
@@ -928,13 +917,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     elif os.path.exists(pub_key):
         data['pub_key'] = open(pub_key).read().strip()
     else:
-        msg = f"Publickey file {pub_key} not found"
-        return {'result': 'failure', 'reason': msg}
+        return {'result': 'failure', 'reason': f"Publickey file {pub_key} not found"}
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if os.path.exists(clusterdir):
         if [v for v in config.k.list() if v.get('plan', 'kvirt') == cluster]:
-            msg = f"Remove existing directory {clusterdir} or use --force"
-            return {'result': 'failure', 'reason': msg}
+            return {'result': 'failure', 'reason': f"Remove existing directory {clusterdir} or use --force"}
         else:
             pprint(f"Removing existing directory {clusterdir}")
             rmtree(clusterdir)
@@ -957,11 +944,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         elif version in ['dev-preview', 'stable', 'latest']:
             run = get_downstream_installer(version=version, tag=tag, pull_secret=pull_secret)
         else:
-            msg = f"Invalid version {version}"
-            return {'result': 'failure', 'reason': msg}
+            return {'result': 'failure', 'reason': f"Invalid version {version}"}
         if run != 0:
-            msg = "Couldn't download openshift-install"
-            return {'result': 'failure', 'reason': msg}
+            return {'result': 'failure', 'reason': "Couldn't download openshift-install"}
         pprint("Move downloaded openshift-install somewhere in your PATH if you want to reuse it")
     elif which_openshift is not None:
         pprint("Using existing openshift-install found in your PATH")
@@ -970,11 +955,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     os.environ["PATH"] = f'{os.getcwd()}:{os.environ["PATH"]}'
     if disconnected_url is not None:
         if disconnected_user is None:
-            msg = "disconnected_user needs to be set"
-            return {'result': 'failure', 'reason': msg}
+            return {'result': 'failure', 'reason': "disconnected_user needs to be set"}
         if disconnected_password is None:
-            msg = "disconnected_password needs to be set"
-            return {'result': 'failure', 'reason': msg}
+            return {'result': 'failure', 'reason': "disconnected_password needs to be set"}
         if disconnected_url.startswith('http'):
             warning(f"Removing scheme from {disconnected_url}")
             disconnected_url = disconnected_url.replace('http://', '').replace('https://', '')
@@ -1444,8 +1427,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         run = call(f'openshift-install --dir={clusterdir} --log-level={log_level} create single-node-ignition-config',
                    shell=True)
         if run != 0:
-            msg = "Hit issue when generating bootstrap-in-place ignition"
-            return {'result': 'failure', 'reason': msg}
+            return {'result': 'failure', 'reason': "Hit issue when generating bootstrap-in-place ignition"}
         vmrules = overrides.get('vmrules') or config.vmrules
         process_baremetal_rules(config, cluster, baremetal_hosts, vmrules=vmrules, overrides=overrides)
         move(f"{clusterdir}/bootstrap-in-place-for-live-iso.ign", f"./{sno_name}.ign")
