@@ -3,7 +3,7 @@
 from base64 import b64encode
 from glob import glob
 from ipaddress import ip_network
-from kvirt.common import success, error, pprint, info2, container_mode, warning, fix_typos, detect_wrong_keys
+from kvirt.common import success, error, pprint, info2, container_mode, warning, fix_typos
 from kvirt.common import get_oc, pwd_path, get_installer_rhcos, get_ssh_pub_key, start_baremetal_hosts, olm_app
 from kvirt.common import deploy_cloud_storage
 from kvirt.cluster.openshift import get_ci_installer, get_downstream_installer, get_installer_version
@@ -234,10 +234,8 @@ def create(config, plandir, cluster, overrides):
             msg = "Kubeconfig not found. Leaving..."
             return {'result': 'failure', 'reason': msg}
     data = safe_load(open(f'{plandir}/kcli_plan_default.yml'))
-    valid_keywords = list(dict.fromkeys({**data, **config.list_keywords()}))
     data.update(overrides)
     fix_typos(data)
-    detect_wrong_keys(overrides, valid_keywords)
     retries = data.get('retries')
     if 'cluster' in overrides:
         clustervalue = overrides.get('cluster')

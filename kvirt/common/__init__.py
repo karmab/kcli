@@ -2464,9 +2464,3 @@ def interactive_kube(_type):
             value = int(value)
         overrides[key] = value
     return overrides
-
-
-def detect_wrong_keys(overrides, valid_keys):
-    wrong_keys = [key for key in overrides if key not in valid_keys]
-    if wrong_keys:
-        warning(f"The following parameters are not valid for this workflow: {','.join(wrong_keys)}")

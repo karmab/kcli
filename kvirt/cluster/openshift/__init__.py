@@ -5,7 +5,7 @@ from fnmatch import fnmatch
 from glob import glob
 from ipaddress import ip_network
 import json
-from kvirt.common import error, pprint, success, warning, info2, fix_typos, detect_wrong_keys
+from kvirt.common import error, pprint, success, warning, info2, fix_typos
 from kvirt.common import get_oc, pwd_path, get_oc_mirror
 from kvirt.common import get_latest_fcos, generate_rhcos_iso, olm_app, get_commit_rhcos
 from kvirt.common import get_installer_rhcos, wait_cloud_dns, delete_lastvm
@@ -698,10 +698,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     arch = k.get_capabilities()['arch'] if provider == 'kvm' else 'x86_64'
     pprint(f"Deploying on client {client}")
     data = safe_load(open(f'{plandir}/kcli_default.yml'))
-    valid_keywords = list(dict.fromkeys({**data, **config.list_keywords()}))
     data.update(overrides)
     fix_typos(data)
-    detect_wrong_keys(overrides, valid_keywords)
     ctlplanes = data['ctlplanes']
     if ctlplanes <= 0:
         return {'result': 'failure', 'reason': f"Invalid number of ctlplanes {ctlplanes}"}

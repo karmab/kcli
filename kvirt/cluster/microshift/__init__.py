@@ -1,5 +1,5 @@
 from kvirt.common import success, info2
-from kvirt.common import get_ssh_pub_key, detect_wrong_keys
+from kvirt.common import get_ssh_pub_key
 import os
 from shutil import copyfile
 from yaml import safe_dump, safe_load
@@ -19,9 +19,7 @@ def valid_rhn_credentials(config, overrides):
 
 def create(config, plandir, cluster, overrides, dnsconfig=None):
     data = safe_load(open(f'{plandir}/kcli_plan_default.yml'))
-    valid_keywords = list(dict.fromkeys({**data, **config.list_keywords()}))
     data.update(overrides)
-    detect_wrong_keys(overrides, valid_keywords)
     if 'rhel' not in data['image'].lower():
         msg = "A rhel image is currently required for deployment"
         return {'result': 'failure', 'reason': msg}
