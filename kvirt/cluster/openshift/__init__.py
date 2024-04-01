@@ -131,7 +131,7 @@ def update_disconnected_registry(config, plandir, cluster, data):
     tag = data.get('ori_tag') or data.get('tag')
     arch = data.get('arch', 'x86_64')
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}") if cluster is not None else '.'
-    if 'ca' not in data and 'quay.io' not in disconnected_url:
+    if 'ca' not in data:
         pprint(f"Trying to gather registry ca cert from {disconnected_url}")
         cacmd = f"openssl s_client -showcerts -connect {disconnected_url} </dev/null 2>/dev/null|"
         cacmd += "openssl x509 -outform PEM"
@@ -1140,7 +1140,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = disconnected_version
         pprint(f"Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to {disconnected_version}")
     if disconnected_url is not None:
-        if disconnected_update:
+        if disconnected_update and disconnected_url != 'quay.io':
             update_disconnected_registry(config, plandir, cluster, data)
         key = f"{disconnected_user}:{disconnected_password}"
         key = str(b64encode(key.encode('utf-8')), 'utf-8')
