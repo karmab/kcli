@@ -131,7 +131,7 @@ def update_disconnected_registry(config, plandir, cluster, data):
     tag = data.get('ori_tag') or data.get('tag')
     arch = data.get('arch', 'x86_64')
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}") if cluster is not None else '.'
-    if 'ca' not in data:
+    if data.get('ca') is None:
         pprint(f"Trying to gather registry ca cert from {disconnected_url}")
         cacmd = f"openssl s_client -showcerts -connect {disconnected_url} </dev/null 2>/dev/null|"
         cacmd += "openssl x509 -outform PEM"
