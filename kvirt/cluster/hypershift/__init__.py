@@ -419,6 +419,7 @@ def create(config, plandir, cluster, overrides):
     network = data.get('network')
     ingress_ip = data.get('ingress_ip')
     virtual_router_id = None
+    kubevirt_ingress_svc = False
     if ingress_ip is None:
         networkinfo = k.info_network(network)
         if provider == 'kubevirt' or kubevirt:
@@ -437,6 +438,7 @@ def create(config, plandir, cluster, overrides):
                 service_type = "LoadBalancer" if k.access_mode == 'LoadBalancer' else 'NodePort'
                 ingress_ip = k.create_service(f"{cluster}-ingress", k.namespace, selector, _type=service_type,
                                               ports=[80, 443])
+                kubevirt_ingress_svc = True
                 if service_type == 'NodePort':
                     hostname = f"http.apps.{cluster}.{management_ingress_domain}"
                     route_cmd = f"oc -n {k.namespace} create route passthrough --service={cluster}-ingress "
@@ -456,7 +458,7 @@ def create(config, plandir, cluster, overrides):
             return {'result': 'failure', 'reason': msg}
     elif kubevirt:
         warning(f"Note that ingress_ip {ingress_ip} won't be configured as you're using kubevirt provider")
-    if ingress_ip is not None and data.get('virtual_router_id') is None:
+    if ingress_ip is not None and data.get('virtual_router_id') is None and not kubevirt_ingress_svc:
         virtual_router_id = hash(cluster) % 254 + 1
         data['virtual_router_id'] = virtual_router_id
         pprint(f"Using keepalived virtual_router_id {virtual_router_id}")

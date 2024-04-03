@@ -10,7 +10,7 @@ info: |
     For deploying with baremetal workers, a baremetal_hosts array needs to be configured
     Although the default platform uses the None workflow, you can set it to assisted or kubevirt
 version: stable
-tag: '4.13'
+tag: '4.15'
 platform:
 pull_secret: openshift_pull.json
 image:
