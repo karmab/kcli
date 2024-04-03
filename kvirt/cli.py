@@ -5378,12 +5378,26 @@ def cli():
     kubeupdate_subparsers.add_parser('generic', parents=[kubegenericupdate_parser], description=kubegenericupdate_desc,
                                      help=kubegenericupdate_desc, aliases=['kubeadm'])
 
+    kubehypershiftupdate_desc = 'Update Hypershift Kube'
+    kubehypershiftupdate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
+    kubehypershiftupdate_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='myhypershift')
+    kubehypershiftupdate_parser.set_defaults(func=update_hypershift_kube)
+    kubeupdate_subparsers.add_parser('hypershift', parents=[kubehypershiftupdate_parser],
+                                     description=kubehypershiftupdate_desc, help=kubehypershiftupdate_desc)
+
     kubek3supdate_desc = 'Update K3s Kube'
     kubek3supdate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubek3supdate_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='myk3s')
     kubek3supdate_parser.set_defaults(func=update_k3s_kube)
     kubeupdate_subparsers.add_parser('k3s', parents=[kubek3supdate_parser], description=kubek3supdate_desc,
                                      help=kubek3supdate_desc)
+
+    kubemicroshiftupdate_desc = 'Update Microshift Kube'
+    kubemicroshiftupdate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
+    kubemicroshiftupdate_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='mymicroshift')
+    kubemicroshiftupdate_parser.set_defaults(func=update_microshift_kube)
+    kubeupdate_subparsers.add_parser('microshift', parents=[kubemicroshiftupdate_parser],
+                                     description=kubemicroshiftupdate_desc, help=kubemicroshiftupdate_desc)
 
     kubeopenshiftupdate_desc = 'Update Openshift Kube'
     kubeopenshiftupdate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
