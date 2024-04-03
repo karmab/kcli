@@ -49,5 +49,4 @@ cloud_lb: False
 cloud_storage: true
 cloud_dns: false
 cloud_native: false
-kubetype: k3s
 extra_scripts: []

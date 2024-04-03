@@ -245,6 +245,7 @@ def create(config, plandir, cluster, overrides):
         clustervalue = 'myhypershift'
     data['cluster'] = clustervalue
     data['kube'] = data['cluster']
+    data['kubetype'] = 'hypershift'
     ignore_hosts = data.get('ignore_hosts', False)
     pprint(f"Deploying cluster {clustervalue}")
     plan = cluster if cluster is not None else clustervalue

@@ -121,6 +121,7 @@ def create(config, plandir, cluster, overrides):
     data['cluster'] = overrides.get('cluster') or cluster or 'myk3s'
     plan = cluster if cluster is not None else data['cluster']
     data['kube'] = data['cluster']
+    data['kubetype'] = 'k3s'
     autoscale = data['autoscale']
     ctlplanes = data['ctlplanes']
     workers = data['workers']

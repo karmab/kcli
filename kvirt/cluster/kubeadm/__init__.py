@@ -96,6 +96,7 @@ def create(config, plandir, cluster, overrides):
     data['cluster'] = overrides.get('cluster') or cluster or 'mykube'
     plan = cluster if cluster is not None else data['cluster']
     data['kube'] = data['cluster']
+    data['kubetype'] = 'generic'
     cloud_lb = data['cloud_lb']
     cloud_dns = data['cloud_dns']
     cloud_storage = data['cloud_storage']

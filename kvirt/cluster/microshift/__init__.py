@@ -33,6 +33,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     data['cluster'] = overrides.get('cluster') or cluster or 'mymicroshift'
     plan = cluster if cluster is not None else data['cluster']
     data['kube'] = data['cluster']
+    data['kubetype'] = 'microshift'
     cluster = data.get('cluster')
     nodes = data.get('nodes', 1)
     if nodes == 0:
