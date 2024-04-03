@@ -182,7 +182,7 @@ def scale(config, plandir, cluster, overrides):
     assisted = data['assisted']
     kubevirt = data['kubevirt']
     with open(f"{clusterdir}/kcli_parameters.yml", 'w') as paramfile:
-        safe_dump(data, paramfile)
+        safe_dump(data, paramfile, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     pprint(f"Scaling on client {config.client}")
     worker_overrides = data.copy()
     workers = worker_overrides.get('workers', 2)
@@ -688,6 +688,7 @@ def create(config, plandir, cluster, overrides):
         installparam['cluster'] = cluster
         installparam['kubetype'] = 'hypershift'
         installparam['management_api_ip'] = management_api_ip
+        installparam['management_ingress_domain'] = management_ingress_domain
         if management_ingress_ip is not None:
             installparam['management_ingress_ip'] = management_ingress_ip
         if ingress_ip is not None:
