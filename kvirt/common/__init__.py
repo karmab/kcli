@@ -433,6 +433,7 @@ def process_files(files=[], overrides={}, remediate=False):
             render = True if render.lower() == 'true' else False
         file_overrides = overrides.copy()
         file_overrides.update(fil)
+        file_overrides.update({'env': os.environ})
         if origin is not None:
             origin = os.path.expanduser(origin)
             if overrides and render:
@@ -525,13 +526,15 @@ def process_ignition_files(files=[], overrides={}):
                 print(f"Skipping file {origin} as not found")
                 continue
             elif overrides and render:
+                file_overrides = overrides.copy()
+                file_overrides.update({'env': os.environ})
                 basedir = os.path.dirname(origin) if os.path.dirname(origin) != '' else '.'
                 env = Environment(loader=FileSystemLoader(basedir), undefined=undefined, extensions=['jinja2.ext.do'])
                 for jinjafilter in jinjafilters.jinjafilters:
                     env.filters[jinjafilter] = jinjafilters.jinjafilters[jinjafilter]
                 try:
                     templ = env.get_template(os.path.basename(origin))
-                    fileentries = templ.render(overrides)
+                    fileentries = templ.render(file_overrides)
                     content = [line for line in fileentries.split('\n')]
                 except TemplateNotFound:
                     error(f"Origin file {os.path.basename(origin)} not found")

@@ -718,6 +718,8 @@ class Kconfig(Kbaseconfig):
         if image is not None and cloudinit and iso is not None:
             warning(f"Ignoring iso {iso} as image {image} is set")
         if scripts:
+            scripts_overrides = overrides.copy()
+            scripts_overrides.update({'env': os.environ})
             for script in scripts:
                 if onfly is not None and '~' not in script:
                     destdir = basedir
@@ -742,7 +744,7 @@ class Kconfig(Kbaseconfig):
                         env.filters[jinjafilter] = jinjafilters.jinjafilters[jinjafilter]
                     try:
                         templ = env.get_template(os.path.basename(script))
-                        scriptentries = templ.render(overrides)
+                        scriptentries = templ.render(scripts_overrides)
                     except TemplateNotFound:
                         error(f"Script file {os.path.basename(script)} not found")
                         sys.exit(1)
