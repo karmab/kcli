@@ -709,6 +709,16 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if data['dual_api_ip'] is not None:
         warning("Forcing dualstack")
         data['dualstack'] = True
+    http_proxy = os.environ.get('HTTP_PROXY') or os.environ.get('http_proxy')
+    if 'http_proxy' not in data and http_proxy is not None:
+        pprint("Using proxy settings from environment")
+        data['http_proxy'] = http_proxy
+        https_proxy = os.environ.get('HTTPS_PROXY') or os.environ.get('https_proxy')
+        if 'https_proxy' not in data and https_proxy is not None:
+            data['https_proxy'] = https_proxy
+        no_proxy = os.environ.get('NO_PROXY') or os.environ.get('no_proxy')
+        if 'no_proxy' not in data and no_proxy is not None:
+            data['no_proxy'] = no_proxy
     clustervalue = overrides.get('cluster') or cluster or 'myopenshift'
     if data['ctlplanes'] == 1 and data['workers'] == 0\
        and 'ctlplane_memory' not in overrides and 'memory' not in overrides:
