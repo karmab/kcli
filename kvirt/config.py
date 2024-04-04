@@ -2829,6 +2829,10 @@ class Kconfig(Kbaseconfig):
                 k.delete_service(f"{cluster}-api", k.namespace)
             if f"{cluster}-ingress" in k.list_services(k.namespace):
                 k.delete_service(f"{cluster}-ingress", k.namespace)
+            try:
+                call(f'oc delete -n {k.namespace} route {cluster}-ingress', shell=True)
+            except:
+                pass
         if self.type in ['aws', 'azure', 'gcp', 'ibm'] and not gke and not eks and not aks:
             existing_lbs = [l[0] for l in self.list_loadbalancers() if l[0].endswith(cluster) and
                             (l[0].startswith('api') or l[0].startswith('apps'))]
