@@ -2608,7 +2608,7 @@ class Kconfig(Kbaseconfig):
         oldoutput = ''
         timeout = 0
         while True:
-            sshcmd = common.ssh(name, user='root', ip=ip, tunnel=config.tunnel, tunnelhost=config.tunnelhost,
+            sshcmd = common.ssh(name, user=user, ip=ip, tunnel=config.tunnel, tunnelhost=config.tunnelhost,
                                 vmport=vmport, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
                                 insecure=config.insecure, cmd=cmd, identityfile=identityfile, password=False)
             output = os.popen(sshcmd).read()
