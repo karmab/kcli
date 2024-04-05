@@ -2260,6 +2260,13 @@ class Kvirt(object):
     def clone(self, old, new, full=False, start=False):
         conn = self.conn
         try:
+            conn.lookupByName(new)
+            msg = f"VM {new} already exists"
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
+        except:
+            pass
+        try:
             oldvm = conn.lookupByName(old)
         except:
             msg = f"Base VM {old} not found"
@@ -2280,6 +2287,8 @@ class Kvirt(object):
         for disk in list(tree.iter('disk')):
             if firstdisk or full:
                 source = disk.find('source')
+                if source is None:
+                    continue
                 oldpath = source.get('file')
                 oldvolume = self.conn.storageVolLookupByPath(oldpath)
                 pool = oldvolume.storagePoolLookupByVolume()
