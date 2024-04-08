@@ -104,7 +104,11 @@ class Redfish(object):
         if 'Oem' in results:
             odata = results['Oem']['Supermicro']['VirtualMediaConfig']['@odata.id']
         else:
-            for member in results['Members']:
+            member_list = results['Members']
+            if not member_list:
+                print(f"Error: VirtualMedia Member list in {self.baseurl}{virtual_media_url} is empty")
+                sys.exit(1)
+            for member in member_list:
                 odata = member['@odata.id']
                 if odata.endswith('CD') or odata.endswith('Cd') or odata.endswith('2'):
                     break
