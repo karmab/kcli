@@ -50,3 +50,4 @@ cloud_storage: true
 cloud_dns: false
 cloud_native: false
 extra_scripts: []
+storeparameter: true
