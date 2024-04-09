@@ -953,7 +953,22 @@ class Kgcp(object):
         return {'result': 'success'}
 
     def create_disk(self, name, size, pool=None, thin=True, image=None):
-        print("not implemented")
+        conn = self.conn
+        project = self.project
+        zone = self.zone
+        body = {'sizeGb': size, 'name': name}
+        conn.disks().insert(zone=zone, project=project, body=body).execute()
+        timeout = 0
+        while True:
+            if timeout > 60:
+                return {'result': 'failure', 'reason': 'timeout waiting for new disk to be ready'}
+            newdisk = conn.disks().get(zone=zone, project=project, disk=name).execute()
+            if newdisk['status'] == 'READY':
+                break
+            else:
+                timeout += 5
+                sleep(5)
+                pprint("Waiting for disk to be ready")
         return
 
     def add_disk(self, name, size, pool=None, thin=True, image=None, shareable=False, existing=None,
@@ -988,11 +1003,31 @@ class Kgcp(object):
         conn = self.conn
         project = self.project
         zone = self.zone
+        if novm:
+            try:
+                conn.disks().delete(zone=zone, project=project, disk=diskname).execute()
+            except Exception as e:
+                error(e)
+                return {'result': 'failure', 'reason': e}
+            return {'result': 'success'}
         try:
-            conn.disks().delete(zone=zone, project=project, disk=diskname).execute()
+            vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
         except:
-            return {'result': 'failure', 'reason': f"Disk {diskname} not found"}
-        return
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
+        for disk in vm['disks']:
+            devname = disk['deviceName']
+            source = os.path.basename(disk['source'])
+            if devname == diskname or source == diskname:
+                operation = conn.instances().detachDisk(project=project, zone=zone, instance=name,
+                                                        deviceName=devname).execute()
+                self._wait_for_operation(operation)
+                try:
+                    conn.disks().delete(zone=zone, project=project, disk=diskname).execute()
+                except Exception as e:
+                    error(e)
+                    return {'result': 'failure', 'reason': e}
+                break
+        return {'result': 'success'}
 
     def list_disks(self):
         disks = {}
