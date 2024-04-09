@@ -145,6 +145,7 @@ def handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts=[]):
 
 
 def scale(config, plandir, cluster, overrides):
+    storedparameters = overrides.get('storedparameters', True)
     provider = config.type
     plan = cluster
     data = {'cluster': cluster, 'kube': cluster, 'kubetype': 'hypershift', 'namespace': 'clusters', 'assisted': False,
@@ -173,7 +174,7 @@ def scale(config, plandir, cluster, overrides):
         with open(f"{clusterdir}/ignition.sh", 'w') as f:
             f.write(ignitionscript)
         call(f'bash {clusterdir}/ignition.sh', shell=True)
-    if os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
+    if storedparameters and os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
         with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
             installparam = safe_load(install)
             data.update(installparam)

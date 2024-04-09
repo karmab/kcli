@@ -612,6 +612,7 @@ def process_baremetal_rules(config, cluster, baremetal_hosts, vmrules=[], overri
 
 
 def scale(config, plandir, cluster, overrides):
+    storedparameters = overrides.get('storedparameters', True)
     plan = cluster
     client = config.client
     provider = config.type
@@ -633,7 +634,7 @@ def scale(config, plandir, cluster, overrides):
         os.mkdir(clusterdir)
         ignition_version = overrides['ignition_version']
         create_ignition_files(config, plandir, cluster, domain, api_ip=api_ip, ignition_version=ignition_version)
-    if os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
+    if storedparameters and os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
         with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
             installparam = safe_load(install)
             data.update(installparam)

@@ -80,3 +80,4 @@ cloud_storage: true
 image_overrides:
 ipv6: false
 dualstack: false
+storedparameters: true

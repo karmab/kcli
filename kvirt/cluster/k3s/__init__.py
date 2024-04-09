@@ -39,7 +39,7 @@ def update_ip_alias(config, nodes):
 
 
 def scale(config, plandir, cluster, overrides):
-    storeparameters = overrides.get('storeparameters', True)
+    storedparameters = overrides.get('storedparameters', True)
     provider = config.type
     plan = cluster
     data = {'cluster': cluster, 'domain': 'karmalabs.corp', 'image': 'ubuntu2004', 'kube': cluster, 'kubetype': 'k3s',
@@ -47,7 +47,7 @@ def scale(config, plandir, cluster, overrides):
     data['basedir'] = '/workdir' if container_mode() else '.'
     cluster = data['cluster']
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
-    if storeparameters and os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
+    if storedparameters and os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
         with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
             installparam = safe_load(install)
             data.update(installparam)
@@ -68,7 +68,7 @@ def scale(config, plandir, cluster, overrides):
         first_info = config.k.info(f'{cluster}-ctlplane-0') or config.k.info(f'{cluster}-master-0')
         data['first_ip'] = first_info.get('private_ip') or first_info.get('ip')
     pprint(f"Scaling on client {client}")
-    if storeparameters and os.path.exists(clusterdir):
+    if os.path.exists(clusterdir):
         with open(f"{clusterdir}/kcli_parameters.yml", 'w') as paramfile:
             safe_dump(data, paramfile)
     vmrules_all_names = []
@@ -114,7 +114,6 @@ def create(config, plandir, cluster, overrides):
     data = safe_load(open(f'{plandir}/kcli_plan_default.yml'))
     data.update(overrides)
     fix_typos(data)
-    storeparameter = data['storeparameter']
     cloud_dns = data['cloud_dns']
     data['cloud_lb'] = overrides.get('cloud_lb', provider in cloud_providers and data['ctlplanes'] > 1)
     cloud_lb = data['cloud_lb']
@@ -197,20 +196,19 @@ def create(config, plandir, cluster, overrides):
     first_info = config.k.info(f'{cluster}-ctlplane-0')
     first_ip = first_info.get('private_ip') or first_info.get('ip')
     data['first_ip'] = first_ip
-    if storeparameter:
-        with open(f"{clusterdir}/kcli_parameters.yml", 'w') as p:
-            installparam = overrides.copy()
-            installparam['client'] = config.client
-            installparam['cluster'] = cluster
-            installparam['api_ip'] = api_ip
-            installparam['first_ip'] = first_ip
-            installparam['plan'] = plan
-            installparam['kubetype'] = 'k3s'
-            installparam['image'] = image
-            if not cloud_lb and ctlplanes > 1:
-                installparam['virtual_router_id'] = virtual_router_id
-                installparam['auth_pass'] = auth_pass
-            safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
+    with open(f"{clusterdir}/kcli_parameters.yml", 'w') as p:
+        installparam = overrides.copy()
+        installparam['client'] = config.client
+        installparam['cluster'] = cluster
+        installparam['api_ip'] = api_ip
+        installparam['first_ip'] = first_ip
+        installparam['plan'] = plan
+        installparam['kubetype'] = 'k3s'
+        installparam['image'] = image
+        if not cloud_lb and ctlplanes > 1:
+            installparam['virtual_router_id'] = virtual_router_id
+            installparam['auth_pass'] = auth_pass
+        safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     for role in ['ctlplanes', 'workers']:
         if (role == 'ctlplanes' and ctlplanes == 1) or (role == 'workers' and workers == 0):
             continue

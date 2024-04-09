@@ -19,6 +19,7 @@ cloud_providers = ['aws', 'azure', 'gcp', 'ibm']
 
 
 def scale(config, plandir, cluster, overrides):
+    storedparameters = overrides.get('storedparameters', True)
     plan = cluster
     data = {'cluster': cluster, 'sslip': False, 'kube': cluster, 'kubetype': 'generic', 'image': 'centos8stream',
             'extra_scripts': []}
@@ -56,7 +57,7 @@ def scale(config, plandir, cluster, overrides):
         first_info = config.k.info(f'{cluster}-ctlplane-0')
         first_ip = first_info.get('private_ip') or first_info.get('ip')
         data['first_ip'] = first_ip
-    if os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
+    if storedparameters and os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
         with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
             installparam = safe_load(install)
             data.update(installparam)
