@@ -141,6 +141,23 @@ def create(config, cluster, overrides, dnsconfig=None):
     project, region, zone = project_init(config)
     clusterspec = {'name': cluster, 'enable_kubernetes_alpha': data['alpha']}
     clusterspec['resource_labels'] = {'plan': cluster, 'kube': cluster, 'kubetype': 'gke'}
+    network = data['network']
+    networks = config.k.list_networks()
+    if network != 'default':
+        if network in networks:
+            clusterspec['network'] = network
+            legacy = networks[network]['cidr'] != ''
+        elif network in config.k.list_subnets():
+            clusterspec['subnetwork'] = network
+            legacy = False
+        else:
+            msg = f'Invalid network {network}'
+            return {'result': 'failure', 'reason': msg}
+    elif 'default' in networks:
+        legacy = networks[network]['cidr'] != ''
+    else:
+        msg = f'Invalid network {network}'
+        return {'result': 'failure', 'reason': msg}
     native = data['native']
     cluster_network, service_network = data['cluster_network'], data['service_network']
     cluster_network_ipv4, service_network_ipv4 = data['cluster_network_ipv4'], data['service_network_ipv4']
@@ -155,21 +172,14 @@ def create(config, cluster, overrides, dnsconfig=None):
                                     'services_secondary_range_name': service_network,
                                     'services_ipv4_cidr_block': service_network_ipv4}
             clusterspec['ip_allocation_policy'] = ip_allocation_policy
+    elif legacy:
+        clusterspec['ip_allocation_policy'] = {'use_ip_aliases': False}
     if 'version' in overrides:
         clusterspec['initial_cluster_version'] = overrides['version']
     if beta_apis:
         clusterspec['enable_k8s_beta_apis'] = True
     if autopilot:
         clusterspec['autopilot'] = True
-    network = data['network']
-    if network != 'default':
-        if network in config.k.list_networks():
-            clusterspec['network'] = network
-        elif network in config.k.list_subnets():
-            clusterspec['subnetwork'] = network
-        else:
-            msg = f'Invalid network {network}'
-            return {'result': 'failure', 'reason': msg}
     nodepool = {'name': cluster, 'initial_node_count': workers}
     worker_version = data['worker_version']
     if worker_version is not None:
