@@ -2063,9 +2063,16 @@ class Kaws(object):
         if subnet == 'default':
             default_subnets = [subnets[sub] for sub in subnets if subnets[sub]['default']]
             vpc_id = default_subnets[0]['network']
-        else:
+        elif subnet in subnets:
             vpc_id = subnets[subnet]['network']
-        pprint(f"Tagging vpc with cluster_id {cluster_id}")
+        else:
+            networks = self.list_networks()
+            if subnet not in networks:
+                error(f"Couldnt locate network {subnet}")
+                return 1
+            else:
+                vpc_id = networks[subnet]['domain']
+        pprint(f"Tagging vpc {vpc_id} with cluster_id {cluster_id}")
         Tags = [{"Key": f'kubernetes.io/cluster/{cluster_id}', "Value": 'owned'}]
         conn.create_tags(Resources=[vpc_id], Tags=Tags)
         Tags.append({"Key": 'KubernetesCluster', "Value": cluster})
