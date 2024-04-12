@@ -209,7 +209,7 @@ Description=Ksushy emulator service
 After=syslog.target
 [Service]
 Type=simple
-ExecStart=/usr/bin/ksushy
+ExecStart=ksushy
 StandardOutput=syslog
 StandardError=syslog
 Environment=HOME={home}
@@ -223,7 +223,7 @@ Description=Kweb service
 After=syslog.target
 [Service]
 Type=simple
-ExecStart=/usr/bin/kweb
+ExecStart=kweb
 StandardOutput=syslog
 StandardError=syslog
 Environment=HOME={home}
