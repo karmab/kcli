@@ -17,7 +17,7 @@
  - path: /root/auth.json
    origin: {{ pull_secret }}
 {% endif %}
-{% if kubeconfig_acm != None %}
+{% if kubeconfig_acm != None and kubeconfig_acm|exists %}
  - path: /root/kubeconfig.acm
    origin: {{ kubeconfig_acm }}
 {% endif %}
