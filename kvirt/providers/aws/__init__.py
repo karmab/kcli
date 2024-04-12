@@ -1659,8 +1659,9 @@ class Kaws(object):
         if bucket in self.list_buckets():
             error(f"Bucket {bucket} already there")
             return
-        location = {'LocationConstraint': self.region}
-        args = {'Bucket': bucket, "CreateBucketConfiguration": location}
+        args = {'Bucket': bucket}
+        if self.region != 'us-east-1':
+            args["CreateBucketConfiguration"] = {'LocationConstraint': self.region}
         args['ObjectOwnership'] = 'ObjectWriter'
         s3.create_bucket(**args)
         s3.put_public_access_block(Bucket=bucket, PublicAccessBlockConfiguration={
