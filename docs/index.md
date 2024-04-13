@@ -1318,7 +1318,7 @@ kcli create vm -i $img -P nets=['{"name":"default","ip":"192.168.122.250","netma
 
 ## ip, dns and host Reservations
 
-If you set *reserveip*  to True, a reservation will be made if the corresponding network has dhcp and when the provided IP belongs to the network range.
+If you set *reserveip*  to True, a reservation will be made if the corresponding network has dhcp and when the provided ip belongs to the network range. Note providing such ip is mandatory.
 
 You can set *reservedns* to True to create a dns entry for the vm in the corresponding network ( only done for the first nic).
 
@@ -1544,9 +1544,9 @@ parameters:
 |*dns*|None|Dns server|
 |*domain*|None|Dns search domain|
 |*start*|true||
-|*vnc*|false| if set to true, vnc is used for console instead of spice|
+|*vnc*|false|if set to true, vnc is used for console instead of spice|
 |*cloudinit*|true||
-|*reserveip*|false||
+|*reserveip*|false|if set to true and an ip was provided, create a dhcp reservation in libvirt network|
 |*reservedns*|false||
 |*reservehost*|false||
 |*keys*|[]|Array of ssh public keys to inject to the vm. Whether the actual content or the public key path|

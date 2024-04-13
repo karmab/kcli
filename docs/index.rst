@@ -1422,7 +1422,7 @@ You can also provide network configuration on the command line when creating a s
 ip, dns and host Reservations
 -----------------------------
 
-If you set *reserveip* to True, a reservation will be made if the corresponding network has dhcp and when the provided IP belongs to the network range.
+If you set *reserveip* to True, a reservation will be made if the corresponding network has dhcp and when the provided ip belongs to the network range. Note providing such ip is mandatory.
 
 You can set *reservedns* to True to create a dns entry for the vm in the corresponding network ( only done for the first nic).
 
@@ -1662,7 +1662,7 @@ Parameter          Default Value                        Comments
 *start*            true                                 
 *vnc*              false                                if set to true, vnc is used for console instead of spice
 *cloudinit*        true                                 
-*reserveip*        false                                
+*reserveip*        false                                if set to true and an ip was provided, create a dhcp reservation in libvirt network
 *reservedns*       false                                
 *reservehost*      false                                
 *keys*             []                                   Array of ssh public keys to inject to the vm. Whether the actual content or the public key path

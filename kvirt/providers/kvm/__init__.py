@@ -2340,6 +2340,9 @@ class Kvirt(object):
             reserveip = net.get('reserveip', reserveip)
             if not reserveip or ip is None or netname is None:
                 continue
+            elif reserveip and ip is None:
+                warning("Skipping reserveip because no ip was provided")
+                continue
             if netname not in networks:
                 warning(f"Skipping incorrect network {netname}")
                 continue
@@ -2360,7 +2363,7 @@ class Kvirt(object):
                 currentmac = hostentry.get('mac')
                 if currentip == ip:
                     if currentname == name and currentmac is not None and currentmac == mac:
-                        warning(f"Skipping reserved ip existing entry for ip {ip} and mac {mac}")
+                        warning(f"Skipping reserved ip as there is an existing entry for ip {ip} and mac {mac}")
                         return
                     else:
                         warning(f"Removing old ip entry for ip {ip} and name {currentname}")
