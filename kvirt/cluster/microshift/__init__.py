@@ -8,13 +8,9 @@ from yaml import safe_dump, safe_load
 def valid_rhn_credentials(config, overrides):
     rhnuser = config.rhnuser or overrides.get('rhnuser')
     rhnpassword = config.rhnpassword or overrides.get('rhnpassword')
-    if rhnuser is not None and rhnpassword is not None:
-        return True
-    rhnak = config.rhnak or overrides.get('rhnactivationkey')
+    rhnactivationkey = config.rhnactivationkey or overrides.get('rhnactivationkey')
     rhnorg = config.rhnorg or overrides.get('rhnorg')
-    if rhnak is not None and rhnorg is not None:
-        return True
-    return False
+    return (rhnuser is not None and rhnpassword is not None) or (rhnactivationkey is not None and rhnorg is not None)
 
 
 def create(config, plandir, cluster, overrides, dnsconfig=None):

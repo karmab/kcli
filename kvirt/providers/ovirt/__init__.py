@@ -269,7 +269,8 @@ class KOvirt(object):
         if cloudinit and not custom_properties and initialization is None:
             custom_script = ''
             if storemetadata and overrides:
-                storeoverrides = {k: overrides[k] for k in overrides if k not in ['password', 'rhnpassword', 'rhnak']}
+                storeoverrides = {k: overrides[k] for k in overrides if k not in ['password', 'rhnpassword',
+                                                                                  'rhnactivationkey']}
                 storedata = {'path': '/root/.metadata',
                              'content': yaml.dump(storeoverrides, default_flow_style=False, indent=2)}
                 if files:

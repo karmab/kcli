@@ -401,7 +401,7 @@ class Kbaseconfig:
         self.rhnserver = options.get('rhnserver')
         self.rhnuser = options.get('rhnuser')
         self.rhnpassword = options.get('rhnpassword')
-        self.rhnak = options.get('rhnactivationkey')
+        self.rhnactivationkey = options.get('rhnactivationkey')
         self.rhnorg = options.get('rhnorg')
         self.rhnpool = options.get('rhnpool')
         self.tags = options.get('tags')

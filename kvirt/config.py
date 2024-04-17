@@ -552,7 +552,7 @@ class Kconfig(Kbaseconfig):
         default_rhnserver = father.get('rhnserver', self.rhnserver)
         default_rhnuser = father.get('rhnuser', self.rhnuser)
         default_rhnpassword = father.get('rhnpassword', self.rhnpassword)
-        default_rhnak = father.get('rhnactivationkey', self.rhnak)
+        default_rhnactivationkey = father.get('rhnactivationkey', self.rhnactivationkey)
         default_rhnorg = father.get('rhnorg', self.rhnorg)
         default_rhnpool = father.get('rhnpool', self.rhnpool)
         default_tags = father.get('tags', self.tags)
@@ -666,7 +666,7 @@ class Kconfig(Kbaseconfig):
         rhnserver = profile.get('rhnserver', default_rhnserver)
         rhnuser = profile.get('rhnuser', default_rhnuser)
         rhnpassword = profile.get('rhnpassword', default_rhnpassword)
-        rhnak = profile.get('rhnactivationkey', default_rhnak)
+        rhnactivationkey = profile.get('rhnactivationkey', default_rhnactivationkey)
         rhnorg = profile.get('rhnorg', default_rhnorg)
         rhnpool = profile.get('rhnpool', default_rhnpool)
         flavor = profile.get('flavor', default_flavor)
@@ -705,8 +705,8 @@ class Kconfig(Kbaseconfig):
                 if rhnuser is not None and rhnpassword is not None:
                     overrides['rhnuser'] = rhnuser
                     overrides['rhnpassword'] = rhnpassword
-                elif rhnak is not None and rhnorg is not None:
-                    overrides['rhnactivationkey'] = rhnak
+                elif rhnactivationkey is not None and rhnorg is not None:
+                    overrides['rhnactivationkey'] = rhnactivationkey
                     overrides['rhnorg'] = rhnorg
                 else:
                     msg = "Rhn registration required but missing credentials. "
@@ -763,9 +763,9 @@ class Kconfig(Kbaseconfig):
             if rhnserver != "https://subscription.rhsm.redhat.com" and not valid_ip(rhnserver):
                 fqdn = os.path.basename(rhnserver)
                 rhncommands.append(f'rpm -Uvh http://{fqdn}/pub/katello-ca-consumer-latest.noarch.rpm')
-            if rhnak is not None and rhnorg is not None:
+            if rhnactivationkey is not None and rhnorg is not None:
                 rhncommands.append('subscription-manager register --serverurl=%s --force --activationkey=%s --org=%s'
-                                   % (rhnserver, rhnak, rhnorg))
+                                   % (rhnserver, rhnactivationkey, rhnorg))
                 if image.startswith('rhel-8') or image == 'rhel8':
                     rhncommands.append('subscription-manager repos --enable=rhel-8-for-x86_64-baseos-rpms')
                 elif image.startswith('rhel-server-7') or image == 'rhel7':
