@@ -13,6 +13,7 @@ from string import ascii_lowercase, ascii_letters, digits
 from subprocess import call
 from tempfile import NamedTemporaryFile
 from time import sleep
+from urllib.request import urlopen
 from yaml import safe_dump, safe_load
 
 cloud_providers = ['aws', 'azure', 'gcp', 'ibm']
@@ -166,6 +167,28 @@ def create(config, plandir, cluster, overrides):
     if version is not None and not str(version).startswith('1.'):
         msg = f"Invalid version {version}"
         return {'result': 'failure', 'reason': msg}
+    kube_version = version or urlopen('https://dl.k8s.io/release/stable.txt').read().decode()
+    if not kube_version.startswith('v'):
+        kube_version = f'v{kube_version}'
+    pprint(f"Using version {kube_version}")
+    if kube_version.count('.') > 1:
+        kube_version = '.'.join(kube_version.split('.')[:2])
+    kube_url = f"https://pkgs.k8s.io/core:/stable:/{kube_version}/rpm/repodata/repomd.xml"
+    try:
+        urlopen(kube_url)
+    except:
+        msg = f"Invalid version {kube_version}"
+        return {'result': 'failure', 'reason': msg}
+    if data['engine'] == 'crio':
+        engine_version = data['engine_version'] or kube_version
+        if not engine_version.startswith('v'):
+            engine_version = f'v{engine_version}'
+        engine_url = f"https://pkgs.k8s.io/addons:/cri-o:/stable:/{engine_version}/rpm/repodata/repomd.xml"
+        try:
+            urlopen(engine_url)
+        except:
+            msg = f"Invalid engine_version {engine_version}"
+            return {'result': 'failure', 'reason': msg}
     data['basedir'] = '/workdir' if container_mode() else '.'
     cluster = data.get('cluster')
     image = data.get('image', 'centos8stream')
