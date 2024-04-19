@@ -58,6 +58,7 @@ def scale(config, plandir, cluster, overrides):
     data['scale'] = True
     cloud_native = data.get('cloud_native')
     cloud_lb = data.get('cloud_lb', provider in cloud_providers and data['ctlplanes'] > 1)
+    data['cloud_lb'] = cloud_lb
     ctlplanes = data['ctlplanes']
     workers = data['workers']
     sdn = None if 'sdn' in overrides and overrides['sdn'] is None else data.get('sdn')
