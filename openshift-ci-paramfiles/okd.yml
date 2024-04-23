@@ -5,7 +5,7 @@ network_type: OVNKubernetes
 ctlplanes: 3
 workers: 0
 version: ci
-tag: "4.15"
+tag: 4.16
 network: okd-network
 sslip: true
 numcpus: 32
