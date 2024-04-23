@@ -185,6 +185,7 @@ class Kvirt(object):
         if arch is None:
             host = root.find('host')
             cpu = host.find('cpu')
+            cpuxml = self.conn.baselineCPU([ET.tostring(cpu, encoding='unicode')], 1)
             arch = cpu.find('arch').text
             results['arch'] = arch
         for guest in list(root.iter('guest')):
@@ -198,14 +199,10 @@ class Kvirt(object):
                     break
             for machine in list(guest.iter('machine')):
                 results['machines'].append(machine.text)
-        if results['kvm']:
-            for feature in list(root.iter('feature')):
-                if feature.get('name') == 'vmx':
-                    results['nestedfeature'] = 'vmx'
-                    break
-                if feature.get('name') == 'svm':
-                    results['nestedfeature'] = 'svm'
-                    break
+        if 'vmx' in cpuxml:
+            results['nestedfeature'] = 'vmx'
+        elif 'svm' in cpuxml:
+            results['nestedfeature'] = 'svm'
         return results
 
     def create(self, name, virttype=None, profile='kvirt', flavor=None, plan='kvirt', cpumodel='host-model',
