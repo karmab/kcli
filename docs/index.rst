@@ -1971,10 +1971,10 @@ As an example, the following array will boot 3 workers (based on kvm vms with ks
 Disconnected support
 ~~~~~~~~~~~~~~~~~~~~
 
-To deploy with a disconnected registry, you can set the ``disconnected_deploy`` boolean or specify a ``disconnected_url``
+To deploy with a disconnected registry, you can set the ``disconnected_vm`` boolean or specify a ``disconnected_url``
 
-disconnected_deploy
-^^^^^^^^^^^^^^^^^^^
+disconnected_vm
+^^^^^^^^^^^^^^^
 
 In the first case, an helper vm will be deployed to host your disconnected registry and content will be synced for you
 
@@ -1997,8 +1997,6 @@ You will also need to set disconnected_user and disconnected_password
 
 You can specify disconnected_ca content, or let it undefined for the CA content to be fetched on the fly
 
-The default prefix where the ocp content is expected to be synced is ocp4, but you can use the parameter ``disconnected_prefix``\ to specify a different one
-
 Note that you will also need to sync the following images on the registry:
 
 -  quay.io/karmab/curl:multi
@@ -2008,6 +2006,8 @@ Note that you will also need to sync the following images on the registry:
 -  quay.io/karmab/mdns-publisher:multi
 -  quay.io/karmab/kubectl:multi
 -  quay.io/karmab/kcli:latest
+
+The flag ``disconnected_sync`` allows you to sync content when reusing a given registry
 
 OKD
 ^^^
