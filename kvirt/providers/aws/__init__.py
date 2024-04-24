@@ -460,7 +460,9 @@ class Kaws(object):
         except:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         instanceid = vm['InstanceId']
-        conn.stop_instances(InstanceIds=[instanceid])
+        state = vm['State']['Name']
+        if state != 'terminated':
+            conn.stop_instances(InstanceIds=[instanceid])
         return {'result': 'success'}
 
     def create_snapshot(self, name, base):
