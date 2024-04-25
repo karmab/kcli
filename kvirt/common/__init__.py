@@ -1353,7 +1353,7 @@ def get_latest_rhcos_metal(url):
 def get_latest_fedora(arch='x86_64'):
     request = Request('https://fedoraproject.org/cloud/download/_payload.json', headers={'Accept': 'application/json'})
     for entry in json.loads(urlopen(request).read()):
-        if isinstance(entry, str) and entry.startswith('Cloud') and f'{arch}.qcow2' in entry:
+        if isinstance(entry, str) and entry.startswith('Cloud') and arch in entry and 'qcow2' in entry:
             short = os.path.basename(entry)
             major = short.replace('Fedora-Cloud-Base-', '').split('-')[0]
             return f"https://download.fedoraproject.org/pub/fedora/linux/releases/{major}/Cloud/{arch}/images/{short}"
