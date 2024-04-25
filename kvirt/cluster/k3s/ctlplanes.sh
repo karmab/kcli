@@ -15,7 +15,7 @@ mount /sys/fs/bpf
 # this is a HA cluster. Use the IP of the API load-balancer
 # - for cloud providers. If the API is NOT internal.
 # use the external IP. This in both the HA and single ctlplane case
-# - The last to branches is for on-prem. E.g. vSphere/VMWare
+# - The last two branches is for on-prem. E.g. vSphere/VMWare
 # in HA or single ctlplane scenarios.
 {% if cloud_api_internal and ctlplanes > 1 %}
 export IP={{ api_ip }}
@@ -27,11 +27,16 @@ export IP={{ api_ip }}
 export IP={{ first_ip }}
 {% endif %}
 
-# In the case that we're scaling back in ctlplane-0 we need to use another one of
-# the ctlplane's as the node to join for ctlplane-0. As ctlplane-0 obviously
+# In the case that we're scaling back in ctlplane-0/master-0 it needs to use
+# one of the other ctlplane's as its join node. As control-plane 0 obviously
 # cannot join the cluster 'via' itself.
-{% if scale|default(False) and 'ctlplane-0' in name %}
-{% set first_ip = '{0}-ctlplane-1'.format(cluster)|kcli_info('ip', client ) %}
+{% if scale|default(False) and ('ctlplane-0' in name or 'master-0' in name) %}
+    {% if 'ctlplane-0' in name %}
+        {% set node_suffix = 'ctlplane-1' %}
+    {% elif 'master-0' in name %}
+        {% set node_suffix = 'master-1' %}
+    {% endif %}
+    {% set first_ip = '{}-{}'.format(cluster, node_suffix) | kcli_info('ip', client) %}
 {% endif %}
 
 curl -sfL https://get.k3s.io | {{ install_k3s_args|default("") }} K3S_TOKEN={{ token }} sh -s - server --server https://{{ first_ip }}:6443 {{ extra_args|join(" ") }} --tls-san $IP
