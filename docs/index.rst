@@ -1984,6 +1984,7 @@ You can fine tweak this registry with several parameters:
 -  disconnected_user
 -  disconnected_password
 -  disconnected_operators
+-  disconnected_vm_name
 -  …
 
 Note that this disconnected registry can also be deployed on its own using ``kcli create openshift-registry`` subcommand
