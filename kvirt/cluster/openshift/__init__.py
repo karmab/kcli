@@ -1086,7 +1086,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                     insecure=True, cmd=cacmd, vmport=disconnected_vmport)
         disconnected_ca = os.popen(cacmd).read().strip()
         if data['ca'] is not None:
-            data['ca'] += disconnected_ca
+            data['ca'] += f"\n{disconnected_ca}"
         else:
             data['ca'] = disconnected_ca
         urlcmd = "cat /root/url.txt"
