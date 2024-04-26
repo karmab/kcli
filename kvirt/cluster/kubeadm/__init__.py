@@ -2,6 +2,7 @@
 
 from binascii import hexlify
 from ipaddress import ip_network
+import json
 from kvirt.common import success, pprint, warning, info2, container_mode, wait_cloud_dns, update_etc_hosts, fix_typos
 from kvirt.common import get_kubectl, kube_create_app, get_ssh_pub_key, _ssh_credentials, ssh, deploy_cloud_storage
 from kvirt.defaults import UBUNTUS
@@ -17,6 +18,13 @@ from urllib.request import urlopen
 from yaml import safe_dump, safe_load
 
 cloud_providers = ['aws', 'azure', 'gcp', 'ibm']
+
+
+def get_release(version):
+    releases = json.loads(urlopen('https://api.github.com/repos/kubernetes/kubernetes/releases').read().decode())
+    for release in releases:
+        if version in release['tag_name']:
+            return release['tag_name']
 
 
 def scale(config, plandir, cluster, overrides):
@@ -164,15 +172,21 @@ def create(config, plandir, cluster, overrides):
     cert_key = hexlify(os.urandom(32)).decode()
     data['cert_key'] = hexlify(os.urandom(32)).decode()
     version = data.get('version')
-    if version is not None and not str(version).startswith('1.'):
-        msg = f"Invalid version {version}"
-        return {'result': 'failure', 'reason': msg}
+    if version is not None:
+        if not str(version).startswith('1.'):
+            msg = f"Invalid version {version}"
+            return {'result': 'failure', 'reason': msg}
+        if version.count('.') != 2:
+            original_version = version
+            version = get_release(version)
+            if version is None:
+                msg = f"Invalid version {original_version}"
+                return {'result': 'failure', 'reason': msg}
     kube_version = version or urlopen('https://dl.k8s.io/release/stable.txt').read().decode()
     if not kube_version.startswith('v'):
         kube_version = f'v{kube_version}'
     pprint(f"Using version {kube_version}")
-    if kube_version.count('.') > 1:
-        kube_version = '.'.join(kube_version.split('.')[:2])
+    kube_version = '.'.join(kube_version.split('.')[:2])
     kube_url = f"https://pkgs.k8s.io/core:/stable:/{kube_version}/rpm/repodata/repomd.xml"
     try:
         urlopen(kube_url)
