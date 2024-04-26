@@ -40,6 +40,10 @@ gpgcheck=1
 gpgkey=https://pkgs.k8s.io/addons:/cri-o:/$PROJECT_PATH/rpm/repodata/repomd.xml.key""" >/etc/yum.repos.d/cri-o.repo
 dnf -y install container-selinux cri-o conntrack
 sed -i 's@conmon = .*@conmon = "/bin/conmon"@' /etc/crio/crio.conf
+echo """[crio.network]
+plugin_dirs = [
+  "/opt/cni/bin/", "/usr/libexec/cni"
+]""" > /etc/crio/crio.conf.d/00-plugin-dir.conf
 {% if HTTP_PROXY is defined %}
 mkdir /etc/systemd/system/crio.service.d
 cat > /etc/systemd/system/crio.service.d/http_proxy.conf << EOF
