@@ -4,12 +4,6 @@ storageConfig:
   registry:
     imageURL: {{ disconnected_url or '$LOCAL_REGISTRY' }}/openshift/release/metadata:latest
 mirror:
-  #platform:
-  #  channels:
-  #  - name: stable-4.10
-  #    minVersion: 4.10.24
-  #    maxVersion: 4.10.24
-  #  graph: true
 {% if extra_images is defined %}
   additionalImages:
 {% for image in extra_images %}
@@ -17,7 +11,7 @@ mirror:
 {% endfor %}
 {% endif %}
   operators: # Operators we want to mirror
-{% if disconnected_operators %}
+{% if disconnected_operators|default([]) %}
 {% if disconnected_operators_version %}
   - catalog: registry.redhat.io/redhat/redhat-operator-index:{{ disconnected_operators_version }}
 {% else %}
@@ -44,7 +38,7 @@ mirror:
 {% endif %}
 {% endfor %}
 {% endif %}
-{% if disconnected_certified_operators %}
+{% if disconnected_certified_operators|default([]) %}
 {% if disconnected_certified_operators_version %}
   - catalog: registry.redhat.io/redhat/certified-operator-index:{{ disconnected_certified_operators_version }}
 {% else %}
@@ -71,7 +65,7 @@ mirror:
 {% endif %}
 {% endfor %}
 {% endif %}
-{% if disconnected_community_operators %}
+{% if disconnected_community_operators|default([]) %}
 {% if disconnected_community_operators_version %}
   - catalog: registry.redhat.io/redhat/community-operator-index:{{ disconnected_community_operators_version }}
 {% else %}
@@ -98,7 +92,7 @@ mirror:
 {% endif %}
 {% endfor %}
 {% endif %}
-{% if disconnected_marketplace_operators %}
+{% if disconnected_marketplace_operators|default([]) %}
 {% if disconnected_marketplace_operators_version %}
   - catalog: registry.redhat.io/redhat/redhat-marketplace-index:{{ disconnected_marketplace_operators_version }}
 {% else %}
@@ -125,7 +119,7 @@ mirror:
 {% endif %}
 {% endfor %}
 {% endif %}
-{% if disconnected_extra_catalogs %}
+{% if disconnected_extra_catalogs|default([]) %}
 {% for catalog_image in disconnected_extra_catalogs %}
   - catalog: {{ catalog_image }}
 {% endfor %}
