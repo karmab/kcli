@@ -138,8 +138,10 @@ class Kproxmox(Kbase):
                         for nic in net["ip-addresses"]:
                             if nic["ip-address-type"] == "ipv4":
                                 ips.append(nic["ip-address"])
-
-            vm_config = self.conn.nodes(vm["node"]).qemu(vm["vmid"]).config.get()
+            try:
+                vm_config = self.conn.nodes(vm["node"]).qemu(vm["vmid"]).config.get()
+            except:
+                continue
             metadata = self._parse_notes(vm_config.get("description"))
 
             vms.append(

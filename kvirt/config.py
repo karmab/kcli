@@ -343,7 +343,6 @@ class Kconfig(Kbaseconfig):
                             tunnelhost=self.tunnelhost, tunneluser=self.tunneluser, tunnelport=self.tunnelport,
                             tunneldir=self.tunneldir)
             elif self.type == 'proxmox':
-                warning("Proxmox provider is Work In Progress. Use at your own risk!")
                 user = options.get('user')
                 if user is None:
                     error("Missing user in the configuration. Leaving")
