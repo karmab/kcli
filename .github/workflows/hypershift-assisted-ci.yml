@@ -40,7 +40,7 @@ env:
 
 jobs:
     requirements:
-      runs-on: karim03
+      runs-on: u08
       steps:
        - uses: actions/checkout@v2
        - run: git pull origin ${GITHUB_REF##*/}
@@ -55,7 +55,7 @@ jobs:
 
     deploy-baremetal-like-vms:
       needs: requirements
-      runs-on: karim03
+      runs-on: u08
       steps:
       - name: Deploy Baremetal like vms
         run: |
@@ -63,7 +63,7 @@ jobs:
 
     deploy-hypershift:
       needs: deploy-baremetal-like-vms
-      runs-on: karim03
+      runs-on: u08
       steps:
       - name: Deploy HYPERSHIFT ASSISTED
         run: |

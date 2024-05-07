@@ -55,7 +55,7 @@ env:
 
 jobs:
     requirements:
-      runs-on: karim03
+      runs-on: u08
       steps:
        - uses: actions/checkout@v2
        - run: git pull origin ${GITHUB_REF##*/}
@@ -68,7 +68,7 @@ jobs:
 
     deploy-baremetal-like-vm:
       needs: requirements
-      runs-on: karim03
+      runs-on: u08
       steps:
       - name: Deploy Baremetal like vm
         run: |
@@ -76,7 +76,7 @@ jobs:
 
     deploy-openshift:
       needs: deploy-baremetal-like-vm
-      runs-on: karim03
+      runs-on: u08
       steps:
       - name: Deploy SNO
         run: |

@@ -15,7 +15,7 @@ env:
 jobs:
  requirements:
    if: github.repository == 'karmab/kcli'
-   runs-on: karim03
+   runs-on: u08
    steps:
     - uses: actions/checkout@v2
     - run: git pull origin ${GITHUB_REF##*/}
@@ -28,7 +28,7 @@ jobs:
 
  deploy-baremetal-like-vm:
    needs: requirements
-   runs-on: karim03
+   runs-on: u08
    steps:
    - name: Deploy Baremetal like vm
      run: |
@@ -36,7 +36,7 @@ jobs:
 
  deploy-openshift:
    needs: deploy-baremetal-like-vm
-   runs-on: karim03
+   runs-on: u08
    steps:
    - name: Deploy SNO
      run: |
@@ -44,7 +44,7 @@ jobs:
 
 # clean-up:
 #   needs: deploy-openshift
-#   runs-on: karim03
+#   runs-on: u08
 #   steps:
 #   - name: Clean everything after success
 #     run: kcli -C local delete plan --yes $CLUSTER

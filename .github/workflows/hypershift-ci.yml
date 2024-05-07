@@ -40,7 +40,7 @@ env:
 
 jobs:
     requirements:
-      runs-on: karim03
+      runs-on: u08
       steps:
        - uses: actions/checkout@v2
        - run: git pull origin ${GITHUB_REF##*/}
@@ -50,7 +50,7 @@ jobs:
 
     deploy-hypershift:
       needs: requirements
-      runs-on: karim03
+      runs-on: u08
       steps:
       - name: Deploy hypershift cluster
         run: kcli create cluster hypershift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET -P version=$VERSION -P tag="$TAG" $EXTRAPARAMS $PLAN --force

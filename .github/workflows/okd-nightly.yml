@@ -17,7 +17,7 @@ env:
 jobs:
     deploy-okd:
       if: github.repository == 'karmab/kcli'
-      runs-on: karim02
+      runs-on: u08
       steps:
        - uses: actions/checkout@v2
        - run: git pull origin ${GITHUB_REF##*/}

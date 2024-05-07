@@ -14,7 +14,7 @@ env:
 jobs:
  requirements:
    if: github.repository == 'karmab/kcli'
-   runs-on: karim02
+   runs-on: u08
    steps:
     - uses: actions/checkout@v2
     - run: git pull origin ${GITHUB_REF##*/}
@@ -27,14 +27,14 @@ jobs:
 
  deploy-microshift:
    needs: requirements
-   runs-on: karim02
+   runs-on: u08
    steps:
    - name: Deploy Microshift
      run: kcli create cluster microshift -P pull_secret=$PULLSECRET -P version=$VERSION -P tag="$TAG" $CLUSTER
 
  clean-up:
    needs: deploy-microshift
-   runs-on: karim02
+   runs-on: u08
    steps:
    - name: Clean everything after success
      run: kcli delete cluster --yes $CLUSTER

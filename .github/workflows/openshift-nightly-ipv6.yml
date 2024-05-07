@@ -18,7 +18,7 @@ env:
 jobs:
     deploy-openshift:
       if: github.repository == 'karmab/kcli'
-      runs-on: karim01
+      runs-on: u08
       steps:
        - uses: actions/checkout@v2
        - run: git pull origin ${GITHUB_REF##*/}
