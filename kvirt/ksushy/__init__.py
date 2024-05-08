@@ -53,6 +53,19 @@ class Ksushy():
     def __init__(self):
         app = Bottle()
 
+        @app.hook('after_request')
+        def wsgilog():
+            if 'KSUSHY_SSL' not in os.environ:
+                return
+            ip = request.environ.get('REMOTE_ADDR')
+            time = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+            method = request.environ.get('REQUEST_METHOD')
+            uri = request.environ.get('REQUEST_URI')
+            protocol = request.environ.get('SERVER_PROTOCOL')
+            status = response.status_code
+            length = len(response.body)
+            print(f'{ip} - - [{time}] "{method} {uri} {protocol}" {status} {length}')
+
         @app.route('/redfish/v1')
         @app.route('/redfish/v1/')
         @auth_basic(credentials)
