@@ -68,7 +68,6 @@ class Ksushy():
 
         @app.route('/redfish/v1')
         @app.route('/redfish/v1/')
-        @auth_basic(credentials)
         @view('root.json')
         def root_resource():
             return {}
