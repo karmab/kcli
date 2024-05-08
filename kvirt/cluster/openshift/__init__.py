@@ -338,8 +338,10 @@ def get_downstream_installer(version='stable', macosx=False, tag=None, debug=Fal
                              pull_secret='openshift_pull.json', baremetal=False):
     if baremetal:
         offline = offline_image(version=version, tag=tag, pull_secret=pull_secret)
-        binary = 'openshift-baremetal-install'
+        binary = 'openshift-baremetal-install' if get_installer_minor(tag) < 16 else 'openshift-install'
         cmd = f"oc adm release extract --registry-config {pull_secret} --command={binary} --to . {offline}"
+        if get_installer_minor(tag) >= 16:
+            cmd += '; mv openshift-install openshift-baremetal-install'
         cmd += "; chmod 700 openshift-baremetal-install"
         if debug:
             pprint(cmd)
