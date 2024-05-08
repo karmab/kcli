@@ -193,7 +193,6 @@ class Kbaseconfig:
         defaults['virttype'] = default.get('virttype', kdefaults.VIRTTYPE)
         defaults['tpm'] = default.get('tpm', kdefaults.TPM)
         defaults['rng'] = default.get('rng', kdefaults.RNG)
-        defaults['jenkinsmode'] = default.get('jenkinsmode', kdefaults.JENKINSMODE)
         defaults['vmuser'] = default.get('vmuser', kdefaults.VMUSER)
         defaults['vmport'] = default.get('vmport', kdefaults.VMPORT)
         defaults['vmrules'] = default.get('vmrules', kdefaults.VMRULES)
@@ -367,7 +366,6 @@ class Kbaseconfig:
         self.pcidevices = options.get('pcidevices')
         self.tpm = options.get('tpm')
         self.rng = options.get('rng')
-        self.jenkinsmode = options.get('jenkinsmode')
         self.numcpus = options.get('numcpus')
         self.memory = options.get('memory')
         self.disks = options.get('disks')
@@ -1038,192 +1036,6 @@ class Kbaseconfig:
         return self._update_yaml_file(confpool, self.confpools, 'confpool', overrides=overrides, quiet=quiet,
                                       ignore_aliases=True)
 
-    def create_jenkins_pipeline(self, plan, inputfile, overrides={}, kube=False):
-        _type = 'plan'
-        if kube:
-            _type = 'generic'
-            plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
-            if 'type' in overrides:
-                _type = overrides['type']
-                del overrides['type']
-                if _type == 'openshift':
-                    plandir = os.path.dirname(openshift.create.__code__.co_filename)
-                elif _type != 'generic':
-                    error(f"Incorrect kubernetes type {_type}. Choose between generic or openshift")
-                    sys.exit(1)
-                inputfile = f"{plandir}/ctlplanes.yml"
-        if 'jenkinsmode' in overrides:
-            jenkinsmode = overrides['jenkinsmode']
-            del overrides['jenkinsmode']
-        else:
-            jenkinsmode = self.jenkinsmode
-        if jenkinsmode not in ['docker', 'podman', 'kubernetes']:
-            error(f"Incorrect jenkins mode {self.jenkinsmode}. Choose between docker, podman or kubernetes")
-            sys.exit(1)
-        inputfile = os.path.expanduser(inputfile) if inputfile is not None else 'kcli_plan.yml'
-        basedir = os.path.dirname(inputfile)
-        if basedir == "":
-            basedir = '.'
-        if plan is None:
-            plan = os.path.basename(inputfile).replace('.yml', '').replace('.yaml', '')
-        if not os.path.exists(inputfile):
-            error("No input file found nor default kcli_plan.yml. Leaving....")
-            sys.exit(1)
-        parameters = {}
-        if os.path.exists(f"{basedir}/{plan}_default.yml"):
-            parameterfile = f"{basedir}/{plan}_default.yml"
-            parameters.update(common.get_parameters(parameterfile))
-        if os.path.exists(f"{basedir}/kcli_default.yml"):
-            parameterfile = f"{basedir}/kcli_default.yml"
-            parameters.update(common.get_parameters(parameterfile))
-        inputfile_default = "%s_default%s" % os.path.splitext(inputfile)
-        if os.path.exists(f"{basedir}/{inputfile_default}"):
-            parameterfile = f"{basedir}/{inputfile_default}"
-            parameters.update(common.get_parameters(parameterfile))
-        parameters.update(common.get_parameters(inputfile, planfile=True))
-        parameters.update(overrides)
-        jenkinsdir = os.path.dirname(common.__file__)
-        env = Environment(loader=FileSystemLoader(jenkinsdir), extensions=['jinja2.ext.do'], trim_blocks=True,
-                          lstrip_blocks=True)
-        for jinjafilter in jinjafilters.jinjafilters:
-            env.filters[jinjafilter] = jinjafilters.jinjafilters[jinjafilter]
-        try:
-            templ = env.get_template(os.path.basename("Jenkinsfile.j2"))
-        except TemplateSyntaxError as e:
-            error(f"Error rendering line {e.lineno} of file {e.filename}. Got: {e.message}")
-            sys.exit(1)
-        except TemplateError as e:
-            error(f"Error rendering file {inputfile}. Got: {e.message}")
-            sys.exit(1)
-        parameterline = " ".join(["-P %s=${params.%s}" % (parameter, parameter) for parameter in parameters])
-        jenkinsfile = templ.render(parameters=parameters, parameterline=parameterline, jenkinsmode=jenkinsmode,
-                                   _type=_type)
-        return jenkinsfile
-
-    def create_github_pipeline(self, plan, inputfile, paramfile=None, overrides={}, kube=False, script=False):
-        if not kube:
-            inputfile = os.path.expanduser(inputfile) if inputfile is not None else 'kcli_plan.yml'
-            basedir = os.path.dirname(inputfile)
-            if basedir == "":
-                basedir = '.'
-            if not os.path.exists(inputfile):
-                error("No input file found nor default kcli_plan.yml. Leaving....")
-                sys.exit(1)
-            if plan is None:
-                plan = os.path.basename(inputfile).replace('.yml', '').replace('.yaml', '')
-        else:
-            inputfile = None
-            if plan is None:
-                plan = 'myplan'
-        if 'plan' in overrides:
-            del overrides['plan']
-        runner = 'ubuntu-latest'
-        if 'runner' in overrides:
-            runner = overrides['runner']
-            del overrides['runner']
-        client = 'local'
-        if 'client' in overrides:
-            client = overrides['client']
-            del overrides['client']
-        kubetype = 'generic'
-        if kube:
-            if 'kubetype' in overrides:
-                kubetype = overrides['kubetype']
-                del overrides['kubetype']
-        runscript = 'true'
-        if script:
-            if 'runscript' in overrides:
-                runscript = str(overrides['runscript']).lower()
-                del overrides['runscript']
-        workflowdir = os.path.dirname(common.__file__)
-        env = Environment(loader=FileSystemLoader(workflowdir), extensions=['jinja2.ext.do'], trim_blocks=True,
-                          lstrip_blocks=True)
-        for jinjafilter in jinjafilters.jinjafilters:
-            env.filters[jinjafilter] = jinjafilters.jinjafilters[jinjafilter]
-        try:
-            workflowfile = "workflow_script.yml.j2" if script else "workflow.yml.j2"
-            templ = env.get_template(os.path.basename(workflowfile))
-        except TemplateSyntaxError as e:
-            error(f"Error rendering line {e.lineno} of file {e.filename}. Got: {e.message}")
-            sys.exit(1)
-        except TemplateError as e:
-            error(f"Error rendering file {inputfile}. Got: {e.message}")
-            sys.exit(1)
-        paramline = []
-        for parameter in overrides:
-            newparam = "%s" % parameter.upper()
-            paramline.append(f"-P {parameter}=${newparam}")
-        parameterline = " ".join(paramline)
-        paramfileline = "--paramfile $PARAMFILE" if paramfile is not None else ""
-        gitbase = os.popen('git rev-parse --show-prefix 2>/dev/null').read().strip()
-        workflowfile = templ.render(plan=plan, inputfile=inputfile, parameters=overrides, parameterline=parameterline,
-                                    paramfileline=paramfileline, paramfile=paramfile, gitbase=gitbase, runner=runner,
-                                    client=client, kube=kube, kubetype=kubetype, runscript=runscript)
-        return workflowfile
-
-    def create_tekton_pipeline(self, plan, inputfile, paramfile=None, overrides={}, kube=False):
-        if not kube:
-            inputfile = os.path.expanduser(inputfile) if inputfile is not None else 'kcli_plan.yml'
-            basedir = os.path.dirname(inputfile)
-            if basedir == "":
-                basedir = '.'
-            if not os.path.exists(inputfile):
-                error("No input file found nor default kcli_plan.yml. Leaving....")
-                sys.exit(1)
-            if plan is None:
-                plan = os.path.basename(inputfile).replace('.yml', '').replace('.yaml', '')
-        else:
-            inputfile = None
-            if plan is None:
-                plan = 'myplan'
-        if 'plan' in overrides:
-            del overrides['plan']
-        client = 'local'
-        if 'client' in overrides:
-            client = overrides['client']
-            del overrides['client']
-        kubetype = 'generic'
-        if kube:
-            if 'kubetype' in overrides:
-                kubetype = overrides['kubetype']
-                del overrides['kubetype']
-        workflowdir = os.path.dirname(common.__file__)
-        env = Environment(loader=FileSystemLoader(workflowdir), extensions=['jinja2.ext.do'], trim_blocks=True,
-                          lstrip_blocks=True)
-        for jinjafilter in jinjafilters.jinjafilters:
-            env.filters[jinjafilter] = jinjafilters.jinjafilters[jinjafilter]
-        try:
-            workflowfile = "pipeline_kube.yml.j2" if kube else "pipeline.yml.j2"
-            templ = env.get_template(os.path.basename(workflowfile))
-        except TemplateSyntaxError as e:
-            error(f"Error rendering line {e.lineno} of file {e.filename}. Got: {e.message}")
-            sys.exit(1)
-        except TemplateError as e:
-            error(f"Error rendering file {inputfile}. Got: {e.message}")
-            sys.exit(1)
-        paramline = []
-        for parameter in overrides:
-            paramline.append('-P %s="$%s"' % (parameter, parameter.upper()))
-        parameterline = " ".join(paramline)
-        giturl, gitbase = None, None
-        paramfileline = None
-        if kube:
-            paramfiledata = ''
-            if paramfile is not None:
-                paramfiledata = open(paramfile).read()
-                paramfileline = 'echo -ne """%s""" > kcli_parameters.yml' % paramfiledata
-                paramfileline = paramfileline.replace('\n', '\n      ')
-            if "pull_secret" not in paramfiledata and "pull_secret" not in overrides:
-                parameterline += " -P pull_secret=/home/tekton/.kcli/openshift_pull.json"
-        else:
-            paramfileline = "--paramfile $PARAMFILE" if paramfile is not None else ""
-            giturl = os.popen('git config --get remote.origin.url').read().strip()
-            gitbase = os.popen('git rev-parse --show-prefix 2>/dev/null').read().strip()
-        workflowfile = templ.render(plan=plan, inputfile=inputfile, parameters=overrides, parameterline=parameterline,
-                                    paramfileline=paramfileline, paramfile=paramfile, gitbase=gitbase, giturl=giturl,
-                                    client=client, kube=kube, kubetype=kubetype)
-        return workflowfile
-
     def info_kube_generic(self, quiet, web=False):
         plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
         inputfile = f'{plandir}/ctlplanes.yml'
@@ -1404,48 +1216,6 @@ class Kbaseconfig:
                 f.write(playbookfile)
         else:
             print(playbookfile)
-
-    def create_playbook(self, inputfile, overrides={}, store=False):
-        playbookdir = os.path.dirname(common.__file__)
-        env = Environment(loader=FileSystemLoader(playbookdir), extensions=['jinja2.ext.do'],
-                          trim_blocks=True, lstrip_blocks=True)
-        for jinjafilter in jinjafilters.jinjafilters:
-            env.filters[jinjafilter] = jinjafilters.jinjafilters[jinjafilter]
-        inputfile = os.path.expanduser(inputfile) if inputfile is not None else 'kcli_plan.yml'
-        basedir = os.path.dirname(inputfile)
-        if basedir == "":
-            basedir = '.'
-        pprint(f"Using plan {inputfile}...")
-        pprint("Make sure to export ANSIBLE_JINJA2_EXTENSIONS=jinja2.ext.do")
-        jinjadir = os.path.dirname(jinjafilters.__file__)
-        if not os.path.exists('filter_plugins'):
-            pprint("Creating symlink to kcli jinja filters")
-            os.symlink(jinjadir, 'filter_plugins')
-        if not os.path.exists(inputfile):
-            error("No input file found nor default kcli_plan.yml. Leaving....")
-            sys.exit(1)
-        plan = 'xxx'
-        entries, overrides, basefile, basedir = self.process_inputfile(plan, inputfile, overrides=overrides, full=True)
-        config_data = {}
-        config_data['config_host'] = self.ini[self.client].get('host', '127.0.0.1')
-        config_data['config_type'] = config_data.get('config_type', 'kvm')
-        default_user = getuser() if config_data['config_type'] == 'kvm'\
-            and config_data['config_host'] in ['localhost', '127.0.0.1'] else 'root'
-        config_data['config_user'] = config_data.get('config_user', default_user)
-        overrides.update(config_data)
-        renderfile = self.process_inputfile(plan, inputfile, overrides=overrides, onfly=False, ignore=True)
-        try:
-            data = yaml.safe_load(renderfile)
-        except:
-            error("Couldnt' parse plan. Leaving....")
-            sys.exit(1)
-        for key in data:
-            if 'type' in data[key] and data[key]['type'] != 'kvm':
-                continue
-            elif 'scripts' not in data[key] and 'files' not in data[key] and 'cmds' not in data[key]:
-                continue
-            else:
-                self.create_vm_playbook(key, data[key], overrides=overrides, store=store, env=env)
 
     def create_plan_template(self, directory, overrides, skipfiles=False, skipscripts=False):
         pprint(f"Creating plan template in {directory}...")

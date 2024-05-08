@@ -2135,18 +2135,6 @@ def create_plan(args):
     sys.exit(code)
 
 
-def create_playbook(args):
-    store = args.store
-    overrides = handle_parameters(args.param, args.paramfile)
-    inputfile = overrides.get('inputfile') or args.inputfile or 'kcli_plan.yml'
-    if container_mode():
-        inputfile = f"/workdir/{inputfile}"
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-    _type = baseconfig.ini[baseconfig.client].get('type', 'kvm')
-    overrides.update({'type': _type})
-    baseconfig.create_playbook(inputfile, overrides=overrides, store=store)
-
-
 def update_plan(args):
     plan = args.plan
     url = args.url
@@ -2503,49 +2491,6 @@ def download_openshift_installer(args):
     overrides = handle_parameters(args.param, args.paramfile)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     return baseconfig.download_openshift_installer(overrides)
-
-
-def create_pipeline_github(args):
-    plan = args.plan
-    kube = args.kube
-    script = args.script
-    overrides = handle_parameters(args.param, args.paramfile)
-    inputfile = overrides.get('inputfile') or args.inputfile or 'kcli_plan.yml'
-    if container_mode():
-        inputfile = f"/workdir/{inputfile}"
-    paramfile = args.paramfile[0] if args.paramfile else None
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-    renderfile = baseconfig.create_github_pipeline(plan, inputfile, paramfile=paramfile, overrides=overrides,
-                                                   kube=kube, script=script)
-    print(renderfile)
-
-
-def create_pipeline_jenkins(args):
-    plan = args.plan
-    kube = args.kube
-    overrides = handle_parameters(args.param, args.paramfile)
-    inputfile = overrides.get('inputfile') or args.inputfile or 'kcli_plan.yml'
-    if container_mode():
-        inputfile = f"/workdir/{inputfile}"
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-    if not kube and not os.path.exists(inputfile):
-        error(f"Input file {inputfile} not found")
-        sys.exit(1)
-    renderfile = baseconfig.create_jenkins_pipeline(plan, inputfile, overrides=overrides, kube=kube)
-    print(renderfile)
-
-
-def create_pipeline_tekton(args):
-    overrides = handle_parameters(args.param, args.paramfile)
-    inputfile = overrides.get('inputfile') or args.inputfile or 'kcli_plan.yml'
-    if container_mode():
-        inputfile = f"/workdir/{inputfile}"
-    paramfile = args.paramfile[0] if args.paramfile else None
-    kube = args.kube
-    plan = args.plan
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-    renderfile = baseconfig.create_tekton_pipeline(plan, inputfile, paramfile=paramfile, overrides=overrides, kube=kube)
-    print(renderfile)
 
 
 def render_file(args):
@@ -3940,41 +3885,6 @@ def cli():
                                  description=openshiftsnocreate_desc, help=openshiftsnocreate_desc,
                                  epilog=openshiftsnocreate_epilog, formatter_class=rawhelp)
 
-    pipelinecreate_desc = 'Create Pipeline'
-    pipelinecreate_parser = create_subparsers.add_parser('pipeline', description=pipelinecreate_desc,
-                                                         help=pipelinecreate_desc)
-    pipelinecreate_subparsers = pipelinecreate_parser.add_subparsers(metavar='', dest='subcommand_create_pipeline')
-
-    githubpipelinecreate_desc = 'Create Github Pipeline'
-    githubpipelinecreate_parser = pipelinecreate_subparsers.add_parser('github', description=githubpipelinecreate_desc,
-                                                                       parents=[parent_parser],
-                                                                       help=githubpipelinecreate_desc, aliases=['gha'])
-    githubpipelinecreate_parser.add_argument('-f', '--inputfile', help='Input Plan (or script) file')
-    githubpipelinecreate_parser.add_argument('-k', '--kube', action='store_true', help='Create kube pipeline')
-    githubpipelinecreate_parser.add_argument('-s', '--script', action='store_true', help='Create script pipeline')
-    githubpipelinecreate_parser.add_argument('plan', metavar='PLAN', nargs='?')
-    githubpipelinecreate_parser.set_defaults(func=create_pipeline_github)
-
-    jenkinspipelinecreate_desc = 'Create Jenkins Pipeline'
-    jenkinspipelinecreate_parser = pipelinecreate_subparsers.add_parser('jenkins',
-                                                                        description=jenkinspipelinecreate_desc,
-                                                                        parents=[parent_parser],
-                                                                        help=jenkinspipelinecreate_desc)
-    jenkinspipelinecreate_parser.add_argument('-f', '--inputfile', help='Input Plan file')
-    jenkinspipelinecreate_parser.add_argument('-k', '--kube', action='store_true', help='Create kube pipeline')
-    jenkinspipelinecreate_parser.add_argument('plan', metavar='PLAN', nargs='?')
-    jenkinspipelinecreate_parser.set_defaults(func=create_pipeline_jenkins)
-
-    tektonpipelinecreate_desc = 'Create Tekton Pipeline'
-    tektonpipelinecreate_parser = pipelinecreate_subparsers.add_parser('tekton',
-                                                                       description=tektonpipelinecreate_desc,
-                                                                       parents=[parent_parser],
-                                                                       help=tektonpipelinecreate_desc)
-    tektonpipelinecreate_parser.add_argument('-f', '--inputfile', help='Input Plan file')
-    tektonpipelinecreate_parser.add_argument('-k', '--kube', action='store_true', help='Create kube pipeline')
-    tektonpipelinecreate_parser.add_argument('plan', metavar='PLAN', nargs='?')
-    tektonpipelinecreate_parser.set_defaults(func=create_pipeline_tekton)
-
     plancreate_desc = 'Create Plan'
     plancreate_epilog = f"examples:\n{examples.plancreate}"
     plancreate_parser = create_subparsers.add_parser('plan', description=plancreate_desc, help=plancreate_desc,
@@ -4021,13 +3931,6 @@ def cli():
     plansnapshotcreate_parser.add_argument('-p', '--plan', help='plan name', required=True, metavar='PLAN')
     plansnapshotcreate_parser.add_argument('snapshot', metavar='SNAPSHOT')
     plansnapshotcreate_parser.set_defaults(func=create_snapshot_plan)
-
-    playbookcreate_desc = 'Create playbook from plan'
-    playbookcreate_parser = create_subparsers.add_parser('playbook', description=playbookcreate_desc,
-                                                         help=playbookcreate_desc, parents=[parent_parser])
-    playbookcreate_parser.add_argument('-f', '--inputfile', help='Input Plan/File', default='kcli_plan.yml')
-    playbookcreate_parser.add_argument('-s', '--store', action='store_true', help="Store results in files")
-    playbookcreate_parser.set_defaults(func=create_playbook)
 
     poolcreate_desc = 'Create Pool'
     poolcreate_parser = create_subparsers.add_parser('pool', description=poolcreate_desc, help=poolcreate_desc)
