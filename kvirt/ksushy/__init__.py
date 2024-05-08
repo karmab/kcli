@@ -25,7 +25,7 @@ def credentials(user, password):
         return True
     elif user is None or password is None:
         return False
-    elif user == default_user or password == default_password:
+    elif user == default_user and password == default_password:
         return True
     else:
         return False
