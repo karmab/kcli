@@ -238,12 +238,9 @@ class Kvirt(object):
         default_disksize = disksize
         default_pool = pool
         conn = self.conn
-        if 'arch' not in overrides and image is not None:
-            if ('aarch64' in image or 'arm64' in image):
-                overrides['arch'] = 'aarch64'
-            elif 's390x' in image:
-                overrides['arch'] = 's390x'
         capabilities = self.get_capabilities(overrides.get('arch'))
+        if 'arch' not in overrides:
+            overrides['arch'] = capabilities['arch']
         if 'emulator' in overrides and which(overrides['emulator']) is not None:
             emulator = which(overrides['emulator'])
         elif 'emulator' not in capabilities:
