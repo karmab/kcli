@@ -185,7 +185,10 @@ class Kvirt(object):
         if arch is None:
             host = root.find('host')
             cpu = host.find('cpu')
-            cpuxml = self.conn.baselineCPU([ET.tostring(cpu, encoding='unicode')], 1)
+            try:
+                cpuxml = self.conn.baselineCPU([ET.tostring(cpu, encoding='unicode')], 1)
+            except:
+                cpuxml = ''
             arch = cpu.find('arch').text
             results['arch'] = arch
         for guest in list(root.iter('guest')):
