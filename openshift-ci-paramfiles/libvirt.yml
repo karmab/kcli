@@ -1,7 +1,7 @@
 cluster: ci-libvirt
 domain: karmalabs.corp
 network_type: OVNKubernetes
-#ovn_hostrouting: true
+ovn_hostrouting: true
 ctlplanes: 3
 workers: 0
 version: stable
@@ -10,8 +10,7 @@ network: baremetalfake
 api_ip: 192.168.254.254
 sslip: true
 numcpus: 32
-#memory: 32768
-memory: 24576
+memory: 32768
 bootstrap_memory: 8192
 disk_size: 80
 extra_disks:
@@ -19,6 +18,7 @@ extra_disks:
 apps:
 - local-storage-operator
 - odf-operator
+- kubevirt-hyperconverged
 - users
-#async: true
-#notify: true
+async: true
+notify: true
