@@ -1339,22 +1339,46 @@ class Kubevirt(Kubecommon):
         namespace = self.namespace
         apiversion = f"{MULTUSDOMAIN}/{MULTUSVERSION}"
         vlanconfig = '"vlan": %s' % overrides['vlan'] if 'vlan' in overrides is not None else ''
+        bridge = 'bridge' in overrides and overrides['bridge']
+        ovs = 'ovs' in overrides and overrides['ovs']
+        ovn = 'ovn' in overrides and overrides['ovn']
         if 'type' in overrides:
             _type = overrides['type']
-        elif 'ovs' in overrides and overrides['ovs']:
+        elif ovs:
             _type = 'ovs'
+        elif ovn:
+            _type = 'ovn-k8s-cni-overlay'
         else:
-            pprint("Using default type bridge for network")
+            pprint("Using bridge for network")
             _type = 'bridge'
         config = '{ "cniVersion": "0.3.1", "type": "%s", "bridge": "%s" %s}' % (_type, name, vlanconfig)
         if cidr is not None and dhcp:
-            ipam = '"ipam": { "type": "host-local", "subnet": "%s" }' % cidr
-            details = f'"isDefaultGateway": true, "forceAddress": false, "ipMasq": true, "hairpinMode": true, {ipam}'
-            config = '{ "type": "bridge", "bridge": "%s", %s}' % (name, details)
-        network = {'kind': 'NetworkAttachmentDefinition', 'spec': {'config': config}, 'apiVersion': apiversion,
-                   'metadata': {'name': name}}
+            if bridge:
+                ipam = '"isDefaultGateway": true, "forceAddress": false, "ipMasq": true, "hairpinMode": true'
+                ipam += ', "ipam": { "type": "host-local", "subnet": "%s" }' % cidr
+                config = '{ "type": "bridge", "bridge": "%s", %s }' % (name, ipam)
+            else:
+                nad = overrides.get('nad', f"{namespace}/{name}")
+                layer = overrides.get('layer', "layer2" if not nat else "localnet")
+                if layer == 'localnet' and nat:
+                    bridge = overrides.get('bridge', 'br-ex')
+                    policy = {'apiVersion': 'nmstate.io/v1', 'kind': 'NodeNetworkConfigurationPolicy',
+                              'metadata': {'name': f'{name}-mapping'},
+                              'spec': {'nodeSelector': {'node-role.kubernetes.io/worker': ''},
+                                       'desiredState': {'ovn': {'bridge-mappings':
+                                                                [{'localnet': name,
+                                                                  'bridge': bridge, 'state': 'present'}]}}}}
+                    try:
+                        crds.create_namespaced_custom_object('nmstate.io', 'v1', namespace,
+                                                             'nodenetworkconfigurationpolicies', policy)
+                    except Exception as e:
+                        error(f"Hit {e}. You might need to install kubernetes-nmstate-operator")
+                ipam = f'"name": "{name}", "netAttachDefName": "{nad}", "subnets": "{cidr}, "topology": "{layer}"'
+                config = '{ "cniVersion": "0.3.1", "type": "ovn-k8s-cni-overlay", %s }' % ipam
+        nad = {'kind': 'NetworkAttachmentDefinition', 'spec': {'config': config}, 'apiVersion': apiversion,
+               'metadata': {'name': name}}
         crds.create_namespaced_custom_object(MULTUSDOMAIN, MULTUSVERSION, namespace, 'network-attachment-definitions',
-                                             network)
+                                             nad)
         return {'result': 'success'}
 
     def delete_network(self, name=None, cidr=None, force=False):
@@ -1405,6 +1429,9 @@ class Kubevirt(Kubecommon):
                 elif ipam_type == 'whereabouts':
                     dhcp = True
                     cidr = config['ipam'].get('range', bridge)
+            if 'subnets' in config:
+                dhcp = True
+                cidr = config['subnets']
             networks[name] = {'cidr': cidr, 'dhcp': dhcp, 'type': _type, 'mode': vlan, 'domain': ipam_type}
         return networks
 

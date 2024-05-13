@@ -665,6 +665,15 @@ $ kcli create network -P macvtap=true -P nic=eno2 mytap
 # Create a network with custom dnsmasq options
 $ kcli create network -c 192.168.123.0/24 -P arp-timeout=120 mynetwork
 
+# Create an ovn overlay network (on kubevirt) with a localnet topology and connected to br-ex bridge
+$ kcli create network -c 192.168.126.0/24 mynetwork
+
+# Create an ovn overlay network (on kubevirt) with a layer2 topology
+$ kcli create network -c 192.168.126.0/24 -P type=ovn -P topology=topology mynetwork
+
+# Do the same using an existing network attachment from some specific namespace
+$ kcli create network -c 192.168.126.0/24 -P type=ovn -P nad=default/othernad mynetwork
+
 # Create a br-ex network attachment definition using ovs cni (on kubevirt)
 $ kcli create network -P type=ovs br-ex
 
