@@ -1347,10 +1347,10 @@ class Kubevirt(Kubecommon):
         elif ovs:
             _type = 'ovs'
         elif ovn:
-            _type = 'ovn-k8s-cni-overlay'
-        else:
-            pprint("Using bridge for network")
             _type = 'bridge'
+        else:
+            pprint("Using ovn overlay for network")
+            _type = 'ovn-k8s-cni-overlay'
         config = '{ "cniVersion": "0.3.1", "type": "%s", "bridge": "%s" %s}' % (_type, name, vlanconfig)
         if cidr is not None and dhcp:
             if bridge:
@@ -1360,6 +1360,8 @@ class Kubevirt(Kubecommon):
             else:
                 nad = overrides.get('nad', f"{namespace}/{name}")
                 layer = overrides.get('layer', "layer2" if not nat else "localnet")
+                config = f'"name": "{name}", "netAttachDefName": "{nad}", "subnets": "{cidr}", "topology": "{layer}"'
+                config = '{ "cniVersion": "0.3.1", "type": "ovn-k8s-cni-overlay", %s }' % config
                 if layer == 'localnet' and nat:
                     bridge = overrides.get('bridge', 'br-ex')
                     policy = {'apiVersion': 'nmstate.io/v1', 'kind': 'NodeNetworkConfigurationPolicy',
@@ -1369,12 +1371,10 @@ class Kubevirt(Kubecommon):
                                                                 [{'localnet': name,
                                                                   'bridge': bridge, 'state': 'present'}]}}}}
                     try:
-                        crds.create_namespaced_custom_object('nmstate.io', 'v1', namespace,
-                                                             'nodenetworkconfigurationpolicies', policy)
+                        crds.create_cluster_custom_object('nmstate.io', 'v1', 'nodenetworkconfigurationpolicies',
+                                                          policy)
                     except Exception as e:
                         error(f"Hit {e}. You might need to install kubernetes-nmstate-operator")
-                ipam = f'"name": "{name}", "netAttachDefName": "{nad}", "subnets": "{cidr}, "topology": "{layer}"'
-                config = '{ "cniVersion": "0.3.1", "type": "ovn-k8s-cni-overlay", %s }' % ipam
         nad = {'kind': 'NetworkAttachmentDefinition', 'spec': {'config': config}, 'apiVersion': apiversion,
                'metadata': {'name': name}}
         crds.create_namespaced_custom_object(MULTUSDOMAIN, MULTUSVERSION, namespace, 'network-attachment-definitions',
