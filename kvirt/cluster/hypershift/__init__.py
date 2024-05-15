@@ -7,7 +7,7 @@ from kvirt.common import success, error, pprint, info2, container_mode, warning,
 from kvirt.common import get_oc, pwd_path, get_installer_rhcos, get_ssh_pub_key, start_baremetal_hosts, olm_app
 from kvirt.common import deploy_cloud_storage
 from kvirt.cluster.openshift import get_ci_installer, get_downstream_installer, get_installer_version
-from kvirt.cluster.openshift import same_release_images, process_apps, update_openshift_etc_hosts, offline_image
+from kvirt.cluster.openshift import same_release_images, process_apps, offline_image
 import json
 import os
 import re
@@ -24,6 +24,35 @@ from yaml import safe_dump, safe_load
 
 virt_providers = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere', 'proxmox']
 cloud_providers = ['aws', 'azure', 'gcp', 'ibm']
+
+
+def update_hypershift_etc_hosts(cluster, domain, ingress_ip):
+    console_entry = f"console-openshift-console.apps.{cluster}.{domain}"
+    if not os.path.exists("/i_am_a_container"):
+        hosts = open("/etc/hosts").readlines()
+        wrongingresses = [e for e in hosts if not e.startswith('#') and console_entry in e and ingress_ip not in e]
+        for wrong in wrongingresses:
+            warning(f"Cleaning wrong entry {wrong} in /etc/hosts")
+            call(f"sudo sed -i '/{wrong.strip()}/d' /etc/hosts", shell=True)
+        hosts = open("/etc/hosts").readlines()
+        correct = [e for e in hosts if not e.startswith('#') and console_entry in e and ingress_ip in e]
+        if not correct:
+            entries = [f"{x}.{cluster}.{domain}" for x in ['console-openshift-console.apps',
+                                                           'oauth-openshift.apps',
+                                                           'prometheus-k8s-openshift-monitoring.apps']]
+            entries = ' '.join(entries)
+            call(f"sudo sh -c 'echo {ingress_ip} {entries} >> /etc/hosts'", shell=True)
+    else:
+        entries = [f"{x}.{cluster}.{domain}" for x in ['console-openshift-console.apps',
+                                                       'oauth-openshift.apps',
+                                                       'prometheus-k8s-openshift-monitoring.apps']]
+        entries = ' '.join(entries)
+        call(f"sh -c 'echo {ingress_ip} {entries} >> /etc/hosts'", shell=True)
+        if os.path.exists('/etcdir/hosts'):
+            call(f"sh -c 'echo {ingress_ip} {entries} >> /etcdir/hosts'", shell=True)
+        else:
+            warning("Make sure to have the following entry in your /etc/hosts")
+            warning(f"{ingress_ip} {entries}")
 
 
 def valid_uuid(uuid):
@@ -792,7 +821,7 @@ def create(config, plandir, cluster, overrides):
     if ignore_hosts:
         warning("Not updating /etc/hosts as per your request")
     else:
-        update_openshift_etc_hosts(cluster, domain, management_api_ip, ingress_ip)
+        update_hypershift_etc_hosts(cluster, domain, ingress_ip)
     if provider in cloud_providers:
         result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_apps.yml', overrides=data)
         if result['result'] != 'success':
