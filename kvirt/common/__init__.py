@@ -303,8 +303,9 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             if fqdn:
                 fqdn = f"{name}.{domain}" if domain is not None else name
                 userdata += f"fqdn: {fqdn}\n"
+        userdata += "ssh_pwauth: True\n"
         if enableroot:
-            userdata += "ssh_pwauth: True\ndisable_root: false\n"
+            userdata += "lock_passwd: false\ndisable_root: false\n"
         validkeyfound = False
         if keys or publickeyfile is not None:
             userdata += "ssh_authorized_keys:\n"
@@ -354,7 +355,6 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 userdata += "runcmd:\n"
                 userdata += data
                 userdata += "package_update: false\npackage_upgrade: false\n"
-        userdata += 'ssh_pwauth: True\n'
         if storemetadata and overrides:
             storeoverrides = {key: overrides[key] for key in overrides if not key.startswith('config_')}
             storedata = {'path': '/root/.metadata', 'content': yaml.dump(storeoverrides, default_flow_style=False,
