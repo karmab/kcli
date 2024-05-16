@@ -1272,7 +1272,7 @@ class Ksphere:
         elif not os.path.exists(f'/tmp/{shortimage}'):
             downloaded = True
             pprint(f"Downloading locally {shortimage}")
-            downloadcmd = f"curl -Lo /tmp/{shortimage} -f '{url}'"
+            downloadcmd = f"curl -kLo /tmp/{shortimage} -f '{url}'"
             code = os.system(downloadcmd)
             if code != 0:
                 return {'result': 'failure', 'reason': "Unable to download indicated image"}
