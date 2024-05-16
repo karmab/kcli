@@ -255,4 +255,4 @@ OVIRT = {'datacenter': 'Default', 'cluster': 'Default', 'user': 'admin@internal'
          'filteruser': False}
 
 VSPHERE = {'force_pool': False, 'dvs': True, 'restricted': False, 'import_network': 'VM Network',
-           'filtervms': False, 'filteruser': False, 'category': 'kcli', 'timeout': 2700}
+           'filtervms': False, 'filteruser': False, 'category': 'kcli', 'timeout': 2700, 'serial': False}

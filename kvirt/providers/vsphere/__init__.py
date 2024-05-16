@@ -40,7 +40,7 @@ def sdn_ip(ip, kubetype):
 class Ksphere:
     def __init__(self, host, user, password, datacenter, cluster, debug=False, isofolder=None,
                  filtervms=False, filteruser=False, filtertag=None, category='kcli', basefolder=None, dvs=True,
-                 import_network='VM Network', timeout=2700, force_pool=False, restricted=False):
+                 import_network='VM Network', timeout=2700, force_pool=False, restricted=False, serial=False):
         if timeout < 1:
             smart_stub = connect.SmartStubAdapter(host=host, port=443, sslContext=_create_unverified_context(),
                                                   connectionPoolTimeout=0)
@@ -75,6 +75,7 @@ class Ksphere:
         self.dvs = dvs
         self.portgs = {}
         self.restricted = restricted
+        self.serial = serial
         self.import_network = import_network
         self.force_pool = force_pool
         if basefolder is not None:
@@ -443,6 +444,15 @@ class Ksphere:
             devconfspec.append(cdspec)
             # bootoptions = vim.option.OptionValue(key='bios.bootDeviceClasses',value='allow:hd,cd,fd,net')
             # confspec.bootOptions = vim.vm.BootOptions(bootOrder=[vim.vm.BootOptions.BootableCdromDevice()])
+        serial = overrides.get('serial', self.serial)
+        if serial:
+            serialdevice = vim.vm.device.VirtualSerialPort()
+            backing = vim.vm.device.VirtualSerialPort.URIBackingInfo()
+            backing.serviceURI = f'tcp://:{common.get_free_port()}'
+            backing.direction = 'server'
+            serialdevice.backing = backing
+            serialspec = vim.vm.device.VirtualDeviceSpec(device=serialdevice, operation="add")
+            devconfspec.append(serialspec)
         confspec.deviceChange = devconfspec
         if nested:
             confspec.nestedHVEnabled = True
@@ -628,7 +638,33 @@ class Ksphere:
         return {'result': 'success'}
 
     def serialconsole(self, name, web=False):
-        print("not implemented")
+        si = self.si
+        vmFolder = self.basefolder
+        vm, info = findvm2(si, vmFolder, name)
+        if vm is None:
+            print(f"VM {name} not found")
+            return
+        runtime = info['runtime']
+        config = info['config']
+        if runtime.powerState == "poweredOff":
+            print("VM down")
+        serialfound = False
+        devices = config.hardware.device
+        for dev in devices:
+            if type(dev).__name__ == 'vim.vm.device.VirtualSerialPort':
+                serialfound = True
+                serialport = dev.backing.serviceURI.split(':')[2]
+                break
+        if serialfound:
+            host = runtime.host.name
+            url = f"vnc://{host}:{serialport}"
+            consolecommand = f"nc {url} &"
+            if web:
+                return url
+            if self.debug or os.path.exists("/i_am_a_container"):
+                print(consolecommand)
+            if not os.path.exists("/i_am_a_container"):
+                os.popen(consolecommand)
 
     def console(self, name, tunnel=False, web=False):
         si = self.si

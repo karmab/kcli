@@ -678,6 +678,7 @@ The following parameters are specific to Vsphere:
 - `timeout` Defaults to 2700. Custom connectionPooltimeout
 - `force_pool` Defaults to False. Whether to check source pool of image and relocate when it doesn't match specified pool
 - `restricted` Defaults to False. Prevents create folder operations
+- `serial` Defaults to False. Enables serial console for each vm using an aleatory port on the corresponding host
 
 Note that pool in Vsphere context refers to datastore.
 
