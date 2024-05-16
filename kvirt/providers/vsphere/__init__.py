@@ -23,6 +23,7 @@ import ssl
 from ssl import _create_unverified_context, get_server_certificate
 import sys
 from shutil import which
+from subprocess import call
 import tarfile
 from tempfile import TemporaryDirectory
 from threading import Thread
@@ -657,14 +658,14 @@ class Ksphere:
                 break
         if serialfound:
             host = runtime.host.name
-            url = f"vnc://{host}:{serialport}"
-            consolecommand = f"nc {url} &"
+            url = f"{host} {serialport}"
+            consolecommand = f"nc {url}"
             if web:
                 return url
             if self.debug or os.path.exists("/i_am_a_container"):
                 print(consolecommand)
             if not os.path.exists("/i_am_a_container"):
-                os.popen(consolecommand)
+                call(consolecommand, shell=True)
 
     def console(self, name, tunnel=False, web=False):
         si = self.si
