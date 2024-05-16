@@ -303,9 +303,14 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             if fqdn:
                 fqdn = f"{name}.{domain}" if domain is not None else name
                 userdata += f"fqdn: {fqdn}\n"
-        userdata += "ssh_pwauth: True\n"
+        userdata += "ssh_pwauth: true\n"
         if enableroot:
-            userdata += "lock_passwd: false\ndisable_root: false\n"
+            userdata += "disable_root: false\n"
+            rootpassword = [e for e in cmds if 'root' in e and 'chpasswd' in e]
+            if rootpassword:
+                userdata += "lock_passwd: false\n"
+                cmds.append("sed -i 's/.*PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config")
+                cmds.append("systemctl restart sshd")
         validkeyfound = False
         if keys or publickeyfile is not None:
             userdata += "ssh_authorized_keys:\n"
