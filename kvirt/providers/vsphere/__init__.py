@@ -871,7 +871,6 @@ class Ksphere:
         si = self.si
         clu = find(si, rootFolder, vim.ComputeResource, self.clu)
         isos = []
-        results = {}
         searchspec = vim.host.DatastoreBrowser.SearchSpec()
         filequery = [vim.host.DatastoreBrowser.IsoImageQuery(), vim.host.DatastoreBrowser.FolderQuery()]
         filequeryflags = vim.host.DatastoreBrowser.FileInfo.Details()
@@ -885,23 +884,24 @@ class Ksphere:
         searchspec.searchCaseInsensitive = True
         for dts in clu.datastore:
             datastorename = dts.name
-            datastorepath = "[" + datastorename + "]"
+            datastorepath = f'["{datastorename}"]'
             browser = dts.browser
             t = browser.SearchDatastore_Task(datastorepath, searchspec)
             waitForMe(t)
             result = t.info.result
-            fileinfo = result.file
-            for element in fileinfo:
+            for element in result.file:
+                # if element.path.endswith('.iso'):
+                #    isos.append(f"{datastorepath}/{element.path}/{element.path}")
                 folderpath = element.path
+                if 'iso' not in folderpath.lower():
+                    continue
                 t = browser.SearchDatastoreSubFolders_Task(f"{datastorepath}{folderpath}", searchspec)
                 waitForMe(t)
-                results = t.info.result
-                for r in results:
-                    fileinfo = r.file
-                    for isofile in fileinfo:
-                        path = isofile.path
-                        if path.endswith('.iso'):
-                            isos.append(f"{datastorepath}/{folderpath}/{path}")
+                for r in t.info.result:
+                    for isofile in r.file:
+                        iso_path = isofile.path
+                        if iso_path.endswith('.iso'):
+                            isos.append(f"{datastorepath}/{folderpath}/{iso_path}")
         return isos
 
     def volumes(self, iso=False):
