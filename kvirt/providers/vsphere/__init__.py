@@ -326,7 +326,7 @@ class Ksphere:
             opt2 = vim.option.OptionValue()
             opt2.key = 'RemoteDisplay.vnc.enabled'
             opt2.value = "TRUE"
-            confspec.extraConfig = [opt1, opt2]
+            confspec.extraConfig.extend([opt1, opt2])
         if image is None:
             t = vmfolder.CreateVM_Task(confspec, resourcepool)
             waitForMe(t)
@@ -443,8 +443,6 @@ class Ksphere:
                     return {'result': 'failure', 'reason': f"Iso {iso} not found"}
             cdspec = createisospec(iso)
             devconfspec.append(cdspec)
-            # bootoptions = vim.option.OptionValue(key='bios.bootDeviceClasses',value='allow:hd,cd,fd,net')
-            # confspec.bootOptions = vim.vm.BootOptions(bootOrder=[vim.vm.BootOptions.BootableCdromDevice()])
         serial = overrides.get('serial', self.serial)
         if serial:
             serialdevice = vim.vm.device.VirtualSerialPort()
@@ -452,6 +450,7 @@ class Ksphere:
             backing.serviceURI = f'tcp://:{common.get_free_port()}'
             backing.direction = 'server'
             serialdevice.backing = backing
+            serialdevice.key = len(devconfspec) + 1
             serialspec = vim.vm.device.VirtualDeviceSpec(device=serialdevice, operation="add")
             devconfspec.append(serialspec)
         confspec.deviceChange = devconfspec
