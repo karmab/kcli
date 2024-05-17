@@ -434,15 +434,14 @@ class Ksphere:
             else:
                 return {'result': 'failure', 'reason': f"Invalid network {netname}"}
             devconfspec.append(nicspec)
-        if iso:
-            if '/' not in iso:
-                matchingisos = [i for i in self._getisos() if i.endswith(iso)]
-                if matchingisos:
-                    iso = matchingisos[0]
-                else:
-                    return {'result': 'failure', 'reason': f"Iso {iso} not found"}
-            cdspec = createisospec(iso)
-            devconfspec.append(cdspec)
+        if iso is not None and '/' not in iso:
+            matchingisos = [i for i in self._getisos() if i.endswith(iso)]
+            if matchingisos:
+                iso = matchingisos[0]
+            else:
+                return {'result': 'failure', 'reason': f"Iso {iso} not found"}
+        cdspec = createisospec(iso)
+        devconfspec.append(cdspec)
         serial = overrides.get('serial', self.serial)
         if serial:
             serialdevice = vim.vm.device.VirtualSerialPort()
