@@ -31,9 +31,7 @@ apt-get update
 apt-get -y install cri-o cri-o-runc software-properties-common
 sed -i 's@conmon = .*@conmon = "/bin/conmon"@' /etc/crio/crio.conf
 echo """[crio.network]
-plugin_dirs = [
-  "/opt/cni/bin/", "/usr/libexec/cni"
-]""" > /etc/crio/crio.conf.d/00-plugin-dir.conf
+plugin_dirs = [\"/opt/cni/bin\", \"/usr/libexec/cni\",]""" > /etc/crio/crio.conf.d/00-plugin-dir.conf
 {% if HTTP_PROXY is defined %}
 mkdir /etc/systemd/system/crio.service.d
 cat > /etc/systemd/system/crio.service.d/http_proxy.conf << EOF

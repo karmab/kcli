@@ -41,9 +41,7 @@ gpgkey=https://pkgs.k8s.io/addons:/cri-o:/$PROJECT_PATH/rpm/repodata/repomd.xml.
 dnf -y install container-selinux cri-o conntrack
 sed -i 's@conmon = .*@conmon = "/bin/conmon"@' /etc/crio/crio.conf
 echo """[crio.network]
-plugin_dirs = [
-  "/opt/cni/bin/", "/usr/libexec/cni"
-]""" > /etc/crio/crio.conf.d/00-plugin-dir.conf
+plugin_dirs = [\"/opt/cni/bin\", \"/usr/libexec/cni\",]""" > /etc/crio/crio.conf.d/00-plugin-dir.conf
 {% if HTTP_PROXY is defined %}
 mkdir /etc/systemd/system/crio.service.d
 cat > /etc/systemd/system/crio.service.d/http_proxy.conf << EOF
@@ -102,6 +100,7 @@ systemctl restart containerd
 dnf -y install -y {{ kube_packages }} git openssl
 {% if engine == 'crio' %}
 echo KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime-endpoint=unix:///var/run/crio/crio.sock > /etc/sysconfig/kubelet
+[ "$TARGET" == 'fedora' ] && cp /usr/libexec/cni/* /opt/cni/bin
 {% endif %}
 systemctl enable --now kubelet
 

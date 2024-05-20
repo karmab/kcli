@@ -17,7 +17,7 @@ DOMAIN={{ domain }}
 # initialize cluster
 CERTKEY={{ cert_key }}
 TOKEN={{ token }}
-K8SVERSION='{{ "--kubernetes-version %s" % version if version != None else "" }}'
+K8SVERSION='{{ "--kubernetes-version %s" % minor_version if minor_version is defined else "" }}'
 kubeadm init --control-plane-endpoint "${API_IP}:6443" --pod-network-cidr $CIDR --certificate-key $CERTKEY --upload-certs --token $TOKEN --token-ttl 0 --apiserver-cert-extra-sans ${API_IP} $K8SVERSION
 
 # config cluster credentials

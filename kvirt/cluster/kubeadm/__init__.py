@@ -173,12 +173,14 @@ def create(config, plandir, cluster, overrides):
     data['cert_key'] = hexlify(os.urandom(32)).decode()
     version = data.get('version')
     if version is not None:
+        data['minor_version'] = version
         if not str(version).startswith('1.'):
             msg = f"Invalid version {version}"
             return {'result': 'failure', 'reason': msg}
         if version.count('.') != 2:
             original_version = version
             version = get_release(version)
+            data['minor_version'] = version
             if version is None:
                 msg = f"Invalid version {original_version}"
                 return {'result': 'failure', 'reason': msg}
