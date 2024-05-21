@@ -1391,7 +1391,7 @@ class Kconfig(Kbaseconfig):
 
     def stop_plan(self, plan, soft=False, container=False):
         k = self.k
-        stopfound = True
+        stopfound = False
         pprint(f"Stopping vms from plan {plan}")
         if not self.extraclients:
             stopclients = {self.client: k}
