@@ -6,20 +6,20 @@ SHARE={{ nfs_share or '/var/nfsshare-%s' % cluster }}
 export IP={{ nfs_network|local_ip }}
 if [ "$(which apt-get)" != "" ] ; then
  SERVICE=nfs-kernel-server
- apt-get -y install nfs-kernel-server
+ sudo apt-get -y install nfs-kernel-server
 else
  # Latest nfs-utils 2.3.3-51 is broken
- rpm -qi nfs-utils >/dev/null 2>&1 || dnf -y install nfs-utils
- test ! -f /usr/lib/systemd/system/firewalld.service || systemctl disable --now firewalld
+ rpm -qi nfs-utils >/dev/null 2>&1 || sudo dnf -y install nfs-utils
+ test ! -f /usr/lib/systemd/system/firewalld.service || sudo systemctl disable --now firewalld
  SERVICE=nfs-server
 fi
-systemctl enable --now $SERVICE
+sudo systemctl enable --now $SERVICE
 if [ ! -d $SHARE ] ; then
- mkdir $SHARE
- chcon -t svirt_sandbox_file_t $SHARE
- chmod 777 $SHARE
- echo "$SHARE *(rw,no_root_squash)"  >>  /etc/exports
-exportfs -r
+ sudo mkdir $SHARE
+ sudo chcon -t svirt_sandbox_file_t $SHARE
+ sudo chmod 777 $SHARE
+ echo "$SHARE *(rw,no_root_squash)"  | sudo tee -a /etc/exports
+ sudo exportfs -r
 fi
 {% else %}
 IP={{ nfs_ip }}
