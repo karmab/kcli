@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 from base64 import b64encode, b64decode
 from fnmatch import fnmatch
 from glob import glob

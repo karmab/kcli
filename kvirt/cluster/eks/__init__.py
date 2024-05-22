@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import boto3
 from kvirt.common import success, info2, pprint, error, fix_typos
 import os

@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 from binascii import hexlify
 from ipaddress import ip_network
 import json

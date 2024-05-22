@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 import base64
 from binascii import hexlify
 from cryptography import x509

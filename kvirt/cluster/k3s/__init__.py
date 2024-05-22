@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 from kvirt.common import error, success, pprint, warning, get_kubectl, info2, container_mode, kube_create_app
 from kvirt.common import deploy_cloud_storage, wait_cloud_dns, update_etc_hosts, fix_typos
 import os
