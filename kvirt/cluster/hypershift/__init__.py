@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 from base64 import b64encode
 from glob import glob
 from ipaddress import ip_network

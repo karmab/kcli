@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 from google.cloud import container_v1
 from kvirt.common import error, success, info2, pprint, fix_typos
 import os

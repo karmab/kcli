@@ -13,7 +13,6 @@ Copyright (c) 2009-2018, Marcel Hellkamp.
 License: MIT (see LICENSE for details)
 """
 
-from __future__ import print_function
 import sys
 
 __author__ = 'Marcel Hellkamp'

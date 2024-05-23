@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 from azure.identity import ClientSecretCredential
 from azure.mgmt.containerservice import ContainerServiceClient
 from kvirt.common import success, info2, pprint, error, get_ssh_pub_key, warning, fix_typos

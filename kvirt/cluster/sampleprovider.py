@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 def scale(config, plandir, cluster, overrides):
     return {'result': 'success'}
 
