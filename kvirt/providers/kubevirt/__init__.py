@@ -538,6 +538,10 @@ class Kubevirt(Kubecommon):
                 selector = {'kubevirt.io/provider': 'kcli', 'kubevirt.io/domain': name}
                 self.create_service(f'{name}-ssh', namespace, selector, _type=self.access_mode, ports=[{'port': 22}],
                                     reference=reference)
+        if name.endswith('-sno') and metadata.get('kubetype', '') == 'openshift':
+            selector = {'kubevirt.io/provider': 'kcli', 'kubevirt.io/domain': name}
+            self.create_service(f'{name}-api', namespace, selector, _type=self.access_mode, ports=[{'port': 6443}],
+                                reference=reference)
         self.update_reference(owners, namespace, reference)
         return {'result': 'success'}
 
@@ -877,6 +881,10 @@ class Kubevirt(Kubecommon):
                 yamlinfo['loadbalancerip'] = loadbalancerip
         if image == 'N/A' and 'kubetype' in yamlinfo and yamlinfo['kubetype'] == 'openshift':
             yamlinfo['user'] = 'core'
+            if name.endswith('-sno'):
+                api_port = self.api_node_port(name, namespace)
+                if api_port is not None:
+                    yamlinfo['apiport'] = api_port
         if debug:
             yamlinfo['debug'] = common.pretty_print(vm)
         return yamlinfo
@@ -1326,8 +1334,8 @@ class Kubevirt(Kubecommon):
         core.create_namespaced_pod(namespace, pod)
         completed = self.pod_completed(podname, namespace)
         if not completed:
-            error(f"Using with pod {podname}. Leaving it for debugging purposes")
-            return {'result': 'failure', 'reason': 'timeout waiting for copy to finish'}
+            error(f"Issue with pod {podname}. Leaving it for debugging purposes")
+            return {'result': 'failure', 'reason': f'issue with pod {podname}'}
         else:
             core.delete_namespaced_pod(podname, namespace)
         if configmap is not None:
@@ -1556,6 +1564,13 @@ class Kubevirt(Kubecommon):
         except:
             return None
         return sshservice.spec.ports[0].node_port
+
+    def api_node_port(self, name, namespace):
+        try:
+            apiservice = self.core.read_namespaced_service(f'{name}-api', namespace)
+        except:
+            return None
+        return apiservice.spec.ports[0].node_port
 
     def list_dns(self, domain):
         return []

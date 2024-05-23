@@ -1494,15 +1494,27 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             worker_overrides['image'] = 'rhcos410'
             config.create_openshift_iso(cluster, overrides=worker_overrides, installer=True)
         sno_vm_ip = None
+        sno_vm_port = None
         if sno_vm:
             result = config.plan(plan, inputfile=f'{plandir}/sno.yml', overrides=overrides)
             if result['result'] != 'success':
                 return result
             if api_ip is None:
                 while sno_vm_ip is None:
-                    sno_vm_ip = k.info(f'{cluster}-sno').get('ip')
+                    sno_info = k.info(f'{cluster}-sno')
+                    sno_nets = sno_info.get('nets', [])
+                    if provider == 'kubevirt' and len(sno_nets) == 1 and sno_nets[0]['net'] == 'default':
+                        sno_vm_host = sno_info.get('host')
+                        sno_vm_port = sno_info.get('apiport')
+                        if sno_vm_host is not None and sno_vm_port is not None:
+                            sno_vm_ip = gethostbyname(sno_vm_host)
+                            break
+                    else:
+                        sno_vm_ip = sno_info.get('ip')
                     pprint(f"Waiting for VM {cluster}-sno to get an ip")
                     sleep(5)
+        if sno_vm_port is not None:
+            call(f'sed -i s/:6443/:{sno_vm_port}/ {clusterdir}/auth/kubeconfig', shell=True)
         if ignore_hosts:
             warning("Not updating /etc/hosts as per your request")
         elif api_ip is not None or sno_vm_ip is not None:

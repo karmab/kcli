@@ -8,9 +8,11 @@
 {% set flavor = flavor_ctlplane %}
 {% endif %}
 
+{% set sno_iso = '%s-sno-iso' % cluster if config_type == 'kubevirt' else '%s-sno.iso' % cluster %}
+
 {{ cluster }}-sno:
  domain: {{ domain }}
- iso: {{ cluster }}-sno.iso
+ iso: {{ sno_iso }}
  pool: {{ pool or config_pool }}
  image:
  enableroot: false
