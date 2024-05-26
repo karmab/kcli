@@ -509,13 +509,14 @@ To list the context at your disposal
 
    kubectl config view -o jsonpath='{.contexts[*].name}'
 
-To create a service account and give it privileges to handle vms,
+To create a service account and give it privileges to handle vms on a given namespace,
 
 ::
 
    SERVICEACCOUNT=xxx
-   kubectl create serviceaccount $SERVICEACCOUNT -n default
-   kubectl create clusterrolebinding $SERVICEACCOUNT --clusterrole=cluster-admin --user=system:serviceaccount:default:$SERVICEACCOUNT
+   NAMESPACE=default
+   kubectl create serviceaccount $SERVICEACCOUNT -n $NAMESPACE
+   kubectl create rolebinding $SERVICEACCOUNT --clusterrole=admin --user=system:serviceaccount:$NAMESPACE:$SERVICEACCOUNT
 
 To gather a token (in /tmp/token):
 
