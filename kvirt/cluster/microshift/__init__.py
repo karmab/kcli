@@ -14,7 +14,7 @@ def valid_rhn_credentials(config, overrides):
 
 
 def create(config, plandir, cluster, overrides, dnsconfig=None):
-    data = safe_load(open(f'{plandir}/kcli_plan_default.yml'))
+    data = safe_load(open(f'{plandir}/kcli_default.yml'))
     data.update(overrides)
     if 'rhel' not in data['image'].lower():
         msg = "A rhel image is currently required for deployment"

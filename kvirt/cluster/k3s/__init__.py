@@ -110,7 +110,7 @@ def scale(config, plandir, cluster, overrides):
 
 def create(config, plandir, cluster, overrides):
     provider = config.type
-    data = safe_load(open(f'{plandir}/kcli_plan_default.yml'))
+    data = safe_load(open(f'{plandir}/kcli_default.yml'))
     data.update(overrides)
     fix_typos(data)
     cloud_dns = data['cloud_dns']

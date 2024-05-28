@@ -261,7 +261,7 @@ def create(config, plandir, cluster, overrides):
         if not os.path.exists(os.environ['KUBECONFIG']):
             msg = "Kubeconfig not found. Leaving..."
             return {'result': 'failure', 'reason': msg}
-    data = safe_load(open(f'{plandir}/kcli_plan_default.yml'))
+    data = safe_load(open(f'{plandir}/kcli_default.yml'))
     data.update(overrides)
     fix_typos(data)
     retries = data.get('retries')
