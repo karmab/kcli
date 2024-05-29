@@ -487,7 +487,7 @@ kubectl config view -o jsonpath='{.contexts[*].name}'
 To create a service account and give it privileges to handle vms on a given namespace,
 
 ```
-SERVICEACCOUNT=xxx
+SERVICEACCOUNT=kcli
 NAMESPACE=default
 kubectl create serviceaccount $SERVICEACCOUNT -n $NAMESPACE
 kubectl create rolebinding $SERVICEACCOUNT --clusterrole=admin --user=system:serviceaccount:$NAMESPACE:$SERVICEACCOUNT
@@ -496,12 +496,37 @@ kubectl create rolebinding $SERVICEACCOUNT --clusterrole=admin --user=system:ser
 To gather a token (in /tmp/token):
 
 ```
-SERVICEACCOUNT=xxx
-SECRET=`kubectl get sa $SERVICEACCOUNT -o jsonpath={.secrets[0].name}`
-kubectl get secret $SECRET -o jsonpath={.data.token} | base64 -d
+SERVICEACCOUNT=kcli
+NAMESPACE=default
+SECRET=`kubectl get sa $SERVICEACCOUNT -n $NAMESPACE -o jsonpath={.secrets[0].name}`
+kubectl get secret $SECRET -n $NAMESPACE -o jsonpath={.data.token} | base64 -d
 ```
 
-on OpenShift, you can simply use
+Note that you can shape a kubeconfig providing data as in this sample
+
+```
+apiVersion: v1
+clusters:
+- cluster:
+    insecure-skip-tls-verify: true
+    server: https://${SERVER}:6443
+  name: sa
+contexts:
+- context:
+    cluster: sa
+    namespace: ${NAMESPACE}
+    user: sa
+  name: sa
+current-context: sa
+kind: Config
+preferences: {}
+users:
+- name: sa
+  user:
+    token: ${TOKEN}
+```
+
+On OpenShift, you can simply use
 
 ```
 oc whoami -t

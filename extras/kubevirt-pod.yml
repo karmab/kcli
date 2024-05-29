@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kubevirt-kcli
+spec:
+  restartPolicy: Never
+  serviceAccountName: kcli
+  containers:
+  - name: deploy-cluster
+    image: quay.io/karmab/kcli:latest
+    env:
+    - name: CLUSTER
+      value: "testk8"
+    - name: NUMCPUS
+      value: "16"
+    - name: MEMORY
+      value: "24576"
+    - name: SERVICE_NETWORK_IPV4
+      value: "173.28.0.0/16"
+    - name: CLUSTER_NETWORK_IPV4
+      value: "11.128.0.0/14"
+    - name: PYTHONUNBUFFERED
+      value: "true"
+    volumeMounts:
+    - name: pull-secret
+      mountPath: "/etc/pull-secret"
+      readOnly: true
+    securityContext:
+      allowPrivilegeEscalation: false
+      runAsUser: 0
+    command:
+    - "/bin/bash"
+    - "-c"
+    - |
+      #/bin/bash
+      export HOME=/root
+      ssh-keygen -qt rsa -N '' -f /root/.ssh/id_rsa
+      NAMESPACE=$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)
+      kcli -n $NAMESPACE create cluster openshift -P pull_secret=/etc/pull-secret/pull-secret -P sno_vm=true -P numcpus=$NUMCPUS -P memory=$MEMORY -P service_network_ipv4=$SERVICE_NETWORK_IPV4 -P cluster_network_ipv4=$CLUSTER_NETWORK_IPV4 $CLUSTER
+      ./oc create secret generic kubeconfig-$CLUSTER --from-file=kubeconfig=/root/.kcli/clusters/$CLUSTER/auth/kubeconfig.ext
+  volumes:
+  - name: pull-secret
+    secret:
+      secretName: pull-secret
