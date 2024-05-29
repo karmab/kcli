@@ -1512,7 +1512,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                     pprint(f"Waiting for VM {cluster}-sno to get an ip")
                     sleep(5)
         if sno_vm_port is not None:
-            call(f'sed -i s/:6443/:{sno_vm_port}/ {clusterdir}/auth/kubeconfig', shell=True)
+            if os.path.exists('/i_am_a_container') and os.environ.get('KUBERNETES_SERVICE_HOST') is not None:
+                sno_vm_ip = sno_info.get('ip')
+                cmd = f'sed s/:6443/:{sno_vm_port}/ {clusterdir}/auth/kubeconfig > {clusterdir}/auth/kubeconfig.ext'
+            else:
+                cmd = f'sed -i s/:6443/:{sno_vm_port}/ {clusterdir}/auth/kubeconfig'
+            call(cmd, shell=True)
         if ignore_hosts:
             warning("Not updating /etc/hosts as per your request")
         elif api_ip is not None or sno_vm_ip is not None:
