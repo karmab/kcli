@@ -805,7 +805,8 @@ class Ksphere:
                 disk = {'device': device, 'size': int(disksize), 'format': diskformat, 'type': drivertype,
                         'path': path}
                 yamlinfo['disks'].append(disk)
-            if isinstance(dev, vim.vm.device.VirtualCdrom) and dev.backing.fileName is not None\
+            if isinstance(dev, vim.vm.device.VirtualCdrom)\
+               and hasattr(dev.backing, 'fileName') and dev.backing.fileName is not None\
                and dev.backing.fileName.endswith('.iso'):
                 yamlinfo['iso'] = dev.backing.fileName
         if obj.snapshot is not None and obj.snapshot.currentSnapshot is not None:
