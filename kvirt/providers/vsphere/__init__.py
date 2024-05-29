@@ -432,14 +432,16 @@ class Ksphere:
             else:
                 return {'result': 'failure', 'reason': f"Invalid network {netname}"}
             devconfspec.append(nicspec)
-        if iso is not None and '/' not in iso:
+        need_cdrom = iso is not None or not cloudinit or image is None or common.needs_ignition(image)
+        if iso is not None:
             matchingisos = [i for i in self._getisos() if i.endswith(iso)]
             if matchingisos:
                 iso = matchingisos[0]
             else:
                 return {'result': 'failure', 'reason': f"Iso {iso} not found"}
-        cdspec = createisospec(iso)
-        devconfspec.append(cdspec)
+        if need_cdrom:
+            cdspec = createisospec(iso)
+            devconfspec.append(cdspec)
         serial = overrides.get('serial', self.serial)
         if serial:
             serialdevice = vim.vm.device.VirtualSerialPort()
@@ -882,7 +884,7 @@ class Ksphere:
         searchspec.searchCaseInsensitive = True
         for dts in clu.datastore:
             datastorename = dts.name
-            datastorepath = f'["{datastorename}"]'
+            datastorepath = f'[{datastorename}]'
             browser = dts.browser
             t = browser.SearchDatastore_Task(datastorepath, searchspec)
             waitForMe(t)

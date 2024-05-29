@@ -716,6 +716,7 @@ class Kconfig(Kbaseconfig):
                 warning(f"{name} will require manual subscription to Red Hat Network")
         if image is not None and cloudinit and iso is not None:
             warning(f"Ignoring iso {iso} as image {image} is set")
+            iso = None
         if scripts:
             scripts_overrides = overrides.copy()
             scripts_overrides.update({'env': os.environ})
