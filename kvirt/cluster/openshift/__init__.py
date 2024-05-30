@@ -538,7 +538,7 @@ def handle_baremetal_iso(config, plandir, cluster, overrides, baremetal_hosts=[]
         return f'http://{svcip}:{svcport}/{cluster}-worker.iso'
 
 
-def handle_baremetal_iso_sno(config, plandir, cluster, data, baremetal_hosts=[], iso_pool=None):
+def handle_baremetal_iso_sno(config, plandir, cluster, data, iso_pool=None):
     baremetal_web = data.get('baremetal_web', True)
     baremetal_web_dir = data.get('baremetal_web_dir', '/var/www/html')
     baremetal_web_subdir = data.get('baremetal_web_subdir')
@@ -738,6 +738,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     upstream = data['upstream']
     autoscale = data['autoscale']
     sslip = data['sslip']
+    if 'baremetal_hosts' not in data and 'bmc_url' in data:
+        host = {'bmc_url': data['bmc_url'], 'bmc_user': data.get('bmc_user'), 'bmc_password': data.get('bmc_password')}
+        data['baremetal_hosts'] = [host]
     baremetal_hosts = data['baremetal_hosts']
     notify = data['notify']
     postscripts = data['postscripts']
@@ -1530,7 +1533,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             warning(f"$your_node_ip {dnsentry}")
         if baremetal_hosts:
             iso_pool = data['pool'] or config.pool
-            iso_url = handle_baremetal_iso_sno(config, plandir, cluster, data, baremetal_hosts, iso_pool)
+            iso_url = handle_baremetal_iso_sno(config, plandir, cluster, data, iso_pool)
             if len(baremetal_hosts) > 0:
                 overrides['role'] = 'ctlplane' if sno_ctlplanes else 'worker'
             if 'secureboot' in overrides or [h for h in baremetal_hosts if 'secureboot' in h or 'bmc_secureboot' in h]:
