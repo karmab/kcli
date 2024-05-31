@@ -78,7 +78,7 @@ disconnected_reuse: false
 bootstrap_mac:
 disconnected_reuse_name:
 disconnected_default_network: default
-disconnected_image: centos8stream
+disconnected_image: centos9stream
 disconnected_disk_size: 100
 disconnected_user:
 disconnected_password:
