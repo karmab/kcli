@@ -335,7 +335,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 else:
                     good_keys.append(newkey)
                 userdata += f"- {newkey}\n"
-        if publickeyfile is not None:
+        elif publickeyfile is not None:
             with open(publickeyfile, 'r') as ssh:
                 key = ssh.read().rstrip()
                 if key not in keys:
@@ -1050,10 +1050,6 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     else:
         localhostname = name
     if not nokeys:
-        publickeyfile = get_ssh_pub_key()
-        if publickeyfile is not None:
-            with open(publickeyfile, 'r') as ssh:
-                publickeys.append(ssh.read().strip())
         if keys:
             for key in list(set(keys)):
                 newkey = key
@@ -1065,7 +1061,12 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
                     continue
                 if newkey not in publickeys:
                     publickeys.append(newkey)
-        elif not publickeys and which('ssh-add') is not None:
+        else:
+            publickeyfile = get_ssh_pub_key()
+            if publickeyfile is not None:
+                with open(publickeyfile, 'r') as ssh:
+                    publickeys.append(ssh.read().strip())
+        if not publickeys and which('ssh-add') is not None:
             agent_keys = os.popen('ssh-add -L 2>/dev/null | head -1').readlines()
             if agent_keys:
                 publickeys = agent_keys
