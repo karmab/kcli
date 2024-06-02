@@ -22,14 +22,12 @@ jobs:
         uses: actions/checkout@v2
       - name: Install Dependencies
         run: sudo .github/prep.sh
-        shell: bash
       - name: Lint Code
         run: .github/linting.sh
-        shell: bash
       - name: Test code
         run: .github/testing.sh
-        shell: bash
       - if: github.ref == 'refs/heads/main' && github.repository_owner == 'karmab'
         name: Snapshot container
-        run: .github/container_snapshot.sh
-        shell: bash
+        run: |
+          export TAG="$(date +%y.%m)"
+          .github/container_snapshot.sh

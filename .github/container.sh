@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -ex
-
 TAG="$(git rev-parse --short HEAD)"
 GIT_VERSION="$TAG $(date +%Y/%m/%d)"
 echo $GIT_VERSION > kvirt/version/git

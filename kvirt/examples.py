@@ -270,27 +270,27 @@ $ kcli create openshift-sno --paramfile=myparameters.yml myopenshift
 """
 
 vmdatacreate = """# Generate a basic ignition file for rhcos4.6
-$ kcli create vmdata -i rhcos46
+$ kcli create vm-data -i rhcos46
 
 # Do the same without injecting any hostname
-$ kcli create vmdata -i rhcos46 -P minimal=true
+$ kcli create vm-data -i rhcos46 -P minimal=true
 
 # Do the same but force the name
-$ kcli create vmdata -i rhcos46 myname
+$ kcli create vm-data -i rhcos46 myname
 
 # Inject a custom script and a file in /root
-$ kcli create vmdata -i rhcos -P scripts=[myscript.sh] -P files=[myfile.txt] zzz
+$ kcli create vm-data -i rhcos -P scripts=[myscript.sh] -P files=[myfile.txt] zzz
 
 # Generate a cloudinit userdata
-$ kcli create vmdata -i centos9stream myname
+$ kcli create vm-data -i centos9stream myname
 """
 
 plandatacreate = """# Generate all the ignition/cloudinit userdatas from a plan file
-$ kcli create plandata -f my_plan.yml
+$ kcli create plan-data -f my_plan.yml
 """
 
 plantemplatecreate = """# Create a sample plan template and store it in mydir
-$ kcli create plantemplate mydir
+$ kcli create plan-template mydir
 """
 
 isocreate = """# Generate an openshift iso

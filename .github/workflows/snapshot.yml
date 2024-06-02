@@ -7,6 +7,14 @@ on:
         description: 'commit'
         required: false
         default: ""
+      TAG:
+        description: 'tag'
+        required: false
+        default: ""
+      EGG:
+        description: 'egg'
+        required: false
+        default: ""
 
 env:
  QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
@@ -17,6 +25,8 @@ env:
  COPR_BASE64: ${{ secrets.COPR_BASE64 }}
  PYTHONUNBUFFERED: true
  COMMIT: ${{github.event.inputs.COMMIT}}
+ TAG: ${{github.event.inputs.TAG}}
+ EGG: ${{github.event.inputs.EGG}}
 
 jobs:
 

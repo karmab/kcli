@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -ex
-
 export VERSION=$(date "+%Y%m%d%H%M")
 sed -i "s/99.0/99.0.$VERSION/" setup_kfish.py
 rm -rf build dist
