@@ -303,21 +303,26 @@ class Kgcp(object):
         for entry in [field for field in metadata if field in METADATA_FIELDS]:
             value = metadata[entry].replace('.', '-')
             body['labels'][entry] = value
-        publickeyfile = get_ssh_pub_key()
-        if publickeyfile is not None:
-            publickeyfile = open(publickeyfile).read().strip()
-            keys = list(set([publickeyfile] + keys)) if not keys else [publickeyfile]
-        elif not keys:
-            warning("neither id_rsa, id_dsa nor id_ed25519 public keys found in your .ssh or .kcli directories, "
-                    "you might have trouble accessing the vm")
+        
+        if not keys:
+            publickeyfile = get_ssh_pub_key()
+            if publickeyfile is not None:
+                publickeyfile = open(publickeyfile).read().strip()
+                keys = [publickeyfile]
         if keys:
             user = common.get_user(image)
             if user == 'root':
                 user = getuser()
-            newval = {'key': 'ssh-keys', 'value': f"{user}:{keys[0]}"}
+
+            keysandusers = f"\\n{user}:".join(keys)
+            newval = {'key': 'ssh-keys', 'value': f"{user}:{keysandusers}"}
             body['metadata']['items'].append(newval)
             newval = {'key': 'block-project-ssh-keys', 'value': 'TRUE'}
             body['metadata']['items'].append(newval)
+        else:
+            warning("neither id_rsa, id_dsa nor id_ed25519 public keys found in your .ssh or .kcli directories, "
+                    "you might have trouble accessing the vm")
+
         if enableroot:
             enablerootcmds = ['sed -i "s/.*PermitRootLogin.*/PermitRootLogin yes/" /etc/ssh/sshd_config',
                               'systemctl restart sshd']
