@@ -42,6 +42,7 @@ setup(
     install_requires=INSTALL,
     extras_require={
         'all': ALL,
+        'libvirt': [],
         'aws': AWS,
         'azure': AZURE,
         'gcp': GCP,

@@ -1,10 +1,20 @@
 name: SNAPSHOT
-#on:
-#  schedule:
-#    - cron: '0 0 1 1,4,7,10 *'
 
 on:
   workflow_dispatch:
+    inputs:
+      COMMIT:
+        description: 'commit'
+        required: false
+        default: ""
+      TAG:
+        description: 'tag'
+        required: false
+        default: ""
+      EGG:
+        description: 'egg'
+        required: false
+        default: ""
 
 env:
  QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
@@ -14,6 +24,9 @@ env:
  CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
  COPR_BASE64: ${{ secrets.COPR_BASE64 }}
  PYTHONUNBUFFERED: true
+ COMMIT: ${{github.event.inputs.COMMIT}}
+ TAG: ${{github.event.inputs.TAG}}
+ EGG: ${{github.event.inputs.EGG}}
 
 jobs:
 
@@ -31,14 +44,6 @@ jobs:
         shell: bash
       - name: Test code
         run: .github/testing.sh
-        shell: bash
-      - if: github.ref == 'refs/heads/main' && github.repository_owner == 'karmab'
-        name: Snapshot RPM
-        run: .github/copr_snapshot.sh
-        shell: bash
-      - if: github.ref == 'refs/heads/main' && github.repository_owner == 'karmab'
-        name: Snapshot DEB
-        run: .github/cloudsmith_snapshot.sh
         shell: bash
       - if: github.ref == 'refs/heads/main' && github.repository_owner == 'karmab'
         name: Snapshot Container

@@ -1,7 +1,7 @@
-name: SNAPSHOT-QUARTERLY
+name: SNAPSHOT-MONTHLY
 on:
   schedule:
-    - cron: '0 0 1 1,4,7,10 *'
+    - cron: '0 0 1 * *'
 
 env:
  QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
@@ -22,22 +22,12 @@ jobs:
         uses: actions/checkout@v2
       - name: Install Dependencies
         run: sudo .github/prep.sh
-        shell: bash
       - name: Lint Code
         run: .github/linting.sh
-        shell: bash
       - name: Test code
         run: .github/testing.sh
-        shell: bash
-      - if: github.ref == 'refs/heads/main' && github.repository_owner == 'karmab'
-        name: Snapshot RPM
-        run: .github/copr_snapshot.sh
-        shell: bash
-      - if: github.ref == 'refs/heads/main' && github.repository_owner == 'karmab'
-        name: Snapshot DEB
-        run: .github/cloudsmith_snapshot.sh
-        shell: bash
       - if: github.ref == 'refs/heads/main' && github.repository_owner == 'karmab'
         name: Snapshot container
-        run: .github/container_snapshot.sh
-        shell: bash
+        run: |
+          export TAG="$(date +%y.%m)"
+          .github/container_snapshot.sh
