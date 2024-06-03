@@ -88,8 +88,8 @@ def valid_members(members):
 
 def valid_cluster(name):
     if name is not None:
-        if '/' in name or '_' in name:
-            msg = "Cluster name can't include / or _"
+        if '/' in name or '_' in name or '.' in name:
+            msg = "Cluster name can't include /, . or _"
             raise argparse.ArgumentTypeError(msg)
     return name
 
