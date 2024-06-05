@@ -5001,9 +5001,9 @@ def cli():
     vmrestart_parser.add_argument('names', metavar='VMNAMES', nargs='*')
     vmrestart_parser.set_defaults(func=restart_vm)
 
-    reset_desc = 'Resert Baremetal'
+    reset_desc = 'Reset Baremetal'
     reset_parser = subparsers.add_parser('reset', description=reset_desc, help=reset_desc)
-    reset_subparsers = reset_parser.add_subparsers(metavar='', dest='subcommand_resert')
+    reset_subparsers = reset_parser.add_subparsers(metavar='', dest='subcommand_reset')
 
     resethosts_desc = 'Reset Baremetal Hosts'
     resethosts_epilog = f"examples:\n{examples.resethosts}"
