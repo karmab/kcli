@@ -284,15 +284,16 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
         pprint(f"using cloudinit from existing {existing} for {name}")
         userdata = open(existing).read()
     else:
-        publickeyfile = get_ssh_pub_key() if not overrides.get('tempkey', False) else None
+        publickeyfile = get_ssh_pub_key()
+        publictempkeyfile = None
         tempkeydir = overrides.get('tempkeydir')
-        if tempkeydir is not None:
+        if overrides.get('tempkey', False) and tempkeydir is not None:
             if not keys:
                 warning("No extra keys specified along with tempkey one, you might have trouble accessing the vm")
-            privatekeyfile = f"{tempkeydir.name}/id_rsa"
-            publickeyfile = f"{privatekeyfile}.pub"
-            if not os.path.exists(privatekeyfile):
-                tempkeycmd = f"yes '' | ssh-keygen -q -t rsa -N '' -C 'temp-kcli-key' -f {privatekeyfile}"
+            privatetempkeyfile = f"{tempkeydir.name}/id_rsa"
+            publictempkeyfile = f"{privatetempkeyfile}.pub"
+            if not os.path.exists(privatetempkeyfile):
+                tempkeycmd = f"yes '' | ssh-keygen -q -t rsa -N '' -C 'temp-kcli-key' -f {privatetempkeyfile}"
                 tempkeycmd += " >/dev/null 2>&1 || true"
                 call(tempkeycmd, shell=True)
         userdata = '#cloud-config\n'
@@ -311,7 +312,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 cmds.append("sed -i 's/.*PermitRootLogin .*/PermitRootLogin yes/' /etc/ssh/sshd_config")
                 cmds.append("systemctl restart sshd")
         validkeyfound = False
-        if keys or publickeyfile is not None:
+        if keys or publickeyfile is not None or publictempkeyfile is not None:
             userdata += "ssh_authorized_keys:\n"
             validkeyfound = True
         elif which('ssh-add') is not None:
@@ -336,11 +337,15 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                     good_keys.append(newkey)
                 userdata += f"- {newkey}\n"
         elif publickeyfile is not None:
-            with open(publickeyfile, 'r') as ssh:
-                key = ssh.read().rstrip()
-                if key not in keys:
-                    good_keys.append(key)
-                    userdata += f"- {key}\n"
+            publickey = open(publickeyfile, 'r').read().rstrip()
+            if publickey not in keys:
+                good_keys.append(publickey)
+                userdata += f"- {publickey}\n"
+        if publictempkeyfile is not None:
+            tempkey = open(publictempkeyfile, 'r').read()
+            if tempkey not in keys:
+                good_keys.append(tempkey)
+                userdata += f"- {tempkey}\n"
         if vmuser is not None:
             userdata += """users:
 - name: {vmuser}
