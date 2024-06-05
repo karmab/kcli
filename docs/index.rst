@@ -952,13 +952,13 @@ As always, both cmds and scripts can be specified, in which case cmds are run fi
 Empty vms
 ~~~~~~~~~
 
-So far, our examples have used a cloud image by mean of the ``-i/--image`` flag but it’s not mandatory. For instance, we can create an empty vm with a complete spec
+So far, our examples have used a cloud image via the ``-i/--image`` flag but it’s not mandatory. For instance, we can create an empty vm with a complete spec
 
 .. code:: shell
 
-   kcli local create vm -P uefi=true -P start=false -P memory=20480 -P numcpus=16 -P disks=[50,50] -P nets=[default] vm2
+   kcli create vm -P uefi=true -P start=false -P memory=20480 -P numcpus=16 -P disks=[50,50] -P nets=[default] myvm
 
-Note that when not using a cloud image, cloudinit/ignition wont be used so parameters such as cmds,scripts and files are pointless.
+Note that when not using a cloud image, cloudinit/ignition wont be used.
 
 Profiles configuration
 ----------------------
