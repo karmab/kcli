@@ -1388,7 +1388,9 @@ class Kvirt(object):
                 vm.create()
             except Exception as e:
                 return {'result': 'failure', 'reason': e}
-        self.reserve_dns(name, nets=nets, domain=domain, alias=alias, force=True, primary=reservedns)
+            self.reserve_dns(name, nets=nets, domain=domain, alias=alias, force=True, primary=reservedns)
+        elif reservedns:
+            warning("Ignoring reservedns as vm won't be powered up")
         if reservehost:
             self.reserve_host(name, nets, domain)
         if '<kernel>' in xml:
