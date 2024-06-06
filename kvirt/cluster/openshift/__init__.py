@@ -1039,12 +1039,15 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     overrides['image'] = image
     static_networking_ctlplane, static_networking_worker = False, False
     macentries = []
+    custom_names = {}
     vmrules = overrides.get('vmrules', [])
     for entry in vmrules:
         if isinstance(entry, dict):
             hostname = list(entry.keys())[0]
             if isinstance(entry[hostname], dict):
                 rule = entry[hostname]
+                if 'name' in rule:
+                    custom_names[hostname] = rule['name']
                 if 'nets' in rule and isinstance(rule['nets'], list):
                     netrule = rule['nets'][0]
                     if isinstance(netrule, dict) and 'ip' in netrule and 'netmask' in netrule:
@@ -1057,6 +1060,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                             static_networking_ctlplane = True
                         elif hostname.startswith(f"{cluster}-worker"):
                             static_networking_worker = True
+    if custom_names:
+        overrides['custom_names'] = custom_names
     overrides['cluster'] = cluster
     if not os.path.exists(clusterdir):
         os.makedirs(clusterdir)
