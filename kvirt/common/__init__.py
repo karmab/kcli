@@ -1192,7 +1192,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
         if vmuser is not None:
             data['passwd']['users'].append({'name': vmuser, 'sshAuthorizedKeys': publickeys,
                                             'groups': ['sudo', 'wheel']})
-    role = None
+    role = overrides.get('role')
     if len(name.split('-')) >= 3 and name.split('-')[-2] in ['ctlplane', 'worker']:
         role = name.split('-')[-2]
     elif len(name.split('-')) >= 2 and name.split('-')[-1] == 'bootstrap':

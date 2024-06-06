@@ -2001,8 +2001,11 @@ class Kconfig(Kbaseconfig):
                                     current[key] = profile[key] + current[key]
                             profile.update(entry[rule])
                             if 'name' in entry[rule]:
+                                old_name = name
                                 warning(f"Renaming {name} to {entry[rule]['name']}")
                                 name = entry[rule]['name']
+                                if 'ctlplane' or 'worker' in old_name:
+                                    profile['role'] = 'ctlplane' if 'ctlplane' in old_name else 'worker'
                 if vmrules_strict and not rulefound:
                     warning(f"No vmrules found for {name}. Skipping...")
                     continue
