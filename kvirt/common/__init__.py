@@ -300,6 +300,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
         userdata += 'final_message: kcli boot finished, up $UPTIME seconds\n'
         if not noname:
             userdata += f'hostname: {name}\n'
+            userdata += f'create_hostname_file: true\n'
             if fqdn:
                 fqdn = f"{name}.{domain}" if domain is not None else name
                 userdata += f"fqdn: {fqdn}\n"
