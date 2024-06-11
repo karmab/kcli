@@ -1784,19 +1784,14 @@ def export_vm(args):
 
 
 def create_lb(args):
-    checkpath = args.checkpath
-    checkport = args.checkport
-    ip = args.ip
-    ports = args.ports
-    domain = args.domain
-    internal = args.internal
-    if args.vms is None:
-        vms = []
-    else:
-        good_vms = args.vms[1:-1] if args.vms.startswith('[') and args.vms.endswith(']') else args.vms
-        vms = [v.strip() for v in good_vms.split(',')]
-    good_ports = args.ports[1:-1] if args.ports.startswith('[') and args.ports.endswith(']') else args.ports
-    ports = [p.strip() for p in good_ports.split(',')]
+    overrides = handle_parameters(args.param, args.paramfile)
+    checkpath = overrides.get('checkpath', '/index.html')
+    checkport = overrides.get('checkport', 80)
+    ip = overrides.get('ip')
+    ports = overrides.get('ports', [])
+    domain = overrides.get('domain')
+    internal = overrides.get('internal', False)
+    vms = overrides.get('vms', [])
     name = get_random_name().replace('_', '-') if args.name is None else args.name
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     config.create_loadbalancer(name, ports=ports, checkpath=checkpath, vms=vms, domain=domain, checkport=checkport,
@@ -3828,15 +3823,10 @@ def cli():
                                      formatter_class=rawhelp)
 
     lbcreate_desc = 'Create Load Balancer'
+    lbcreate_epilog = f"examples:\n{examples.lbcreate}"
     lbcreate_parser = create_subparsers.add_parser('lb', description=lbcreate_desc, help=lbcreate_desc,
-                                                   aliases=['loadbalancer'])
-    lbcreate_parser.add_argument('--checkpath', default='/index.html', help="Path to check. Defaults to /index.html")
-    lbcreate_parser.add_argument('--checkport', default=80, help="Port to check. Defaults to 80")
-    lbcreate_parser.add_argument('--domain', help='Domain to create a dns entry associated to the load balancer')
-    lbcreate_parser.add_argument('-i', '--internal', action='store_true')
-    lbcreate_parser.add_argument('--ip', help='Specific ip to associate the load balancer to')
-    lbcreate_parser.add_argument('-p', '--ports', default='443', help='Load Balancer Ports. Defaults to 443')
-    lbcreate_parser.add_argument('-v', '--vms', help='Vms to add to the pool. Can also be a list of ips')
+                                                   epilog=lbcreate_epilog, formatter_class=rawhelp,
+                                                   parents=[parent_parser], aliases=['loadbalancer'])
     lbcreate_parser.add_argument('name', metavar='NAME', nargs='?')
     lbcreate_parser.set_defaults(func=create_lb)
 

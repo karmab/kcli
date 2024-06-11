@@ -623,6 +623,22 @@ $ kcli update security-group mysg -P ports=[6443,443]
 $ kcli update security-group mysg -P rules=['{"cidr": "192.168.125.0/24", "ports": [6443,443]}']
 """
 
+lbcreate = """# Create a lb pointing to specific vms and port 80 and 443
+$ kcli create lb -P ports=[80,443] -P vms=[myvm1,myvm2]
+
+# Do the same but make it internal
+$ kcli create lb -P ports=[80,443] -P vms=[myvm1,myvm2] -P internal=true
+
+# Use a specific network
+$ kcli create lb -P ports=[80,443] -P vms=[myvm1,myvm2] -P nets=[baremetal]
+
+# Create an associated dns entry
+$ kcli create lb -P ports=[80,443] -P vms=[myvm1,myvm2] -P domain=mysuperdomain.com
+
+# Customize check path and checkport
+$ kcli create lb -P ports=[6443] -P vms=[myvm1,myvm2] -P checkport=6080 -P checkpath='/'
+"""
+
 networkcreate = """# Create a network
 $ kcli create network -c 192.168.123.0/24 mynetwork
 

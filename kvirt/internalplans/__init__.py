@@ -1,6 +1,6 @@
 haproxy = """
 parameters:
- image: centos8stream
+ image: centos9stream
  name: haproxy
  nets:
  - default
