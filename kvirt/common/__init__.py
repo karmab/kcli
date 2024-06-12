@@ -1679,8 +1679,23 @@ def get_kubectl(version='latest'):
     if version == 'latest':
         r = urlopen("https://storage.googleapis.com/kubernetes-release/release/stable.txt")
         version = str(r.read(), 'utf-8').strip()
-    elif not version.startswith('v'):
-        version = f'v{version}'
+    else:
+        if not version.startswith('v'):
+            version = f'v{version}'
+        url = "https://api.github.com/repos/kubernetes/kubernetes/releases?per_page=1000"
+        data = json.loads(urlopen(url, timeout=5).read())
+        valid_versions = [line['tag_name'] for line in data]
+        if version.count('.') == 1:
+            latest = [v for v in valid_versions if v.startswith(version)]
+            if latest:
+                version = latest[0]
+                pprint(f"Using version {version}")
+            else:
+                error(f"version {version} not available")
+                return 1
+        elif version not in valid_versions:
+            error(f"version {version} not available")
+            return 1
     kubecmd = "curl -LO https://storage.googleapis.com/kubernetes-release/release/%s/bin/%s/amd64/kubectl" % (version,
                                                                                                               SYSTEM)
     kubecmd += "; chmod 700 kubectl"
