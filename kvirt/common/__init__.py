@@ -1679,6 +1679,8 @@ def get_kubectl(version='latest'):
     if version == 'latest':
         r = urlopen("https://storage.googleapis.com/kubernetes-release/release/stable.txt")
         version = str(r.read(), 'utf-8').strip()
+    elif not version.startswith('v'):
+        version = f'v{version}'
     kubecmd = "curl -LO https://storage.googleapis.com/kubernetes-release/release/%s/bin/%s/amd64/kubectl" % (version,
                                                                                                               SYSTEM)
     kubecmd += "; chmod 700 kubectl"
