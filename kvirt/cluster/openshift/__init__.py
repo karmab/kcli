@@ -490,7 +490,7 @@ def wait_for_ignition(cluster, domain, role='worker'):
                 data = urlopen(req).read()
                 dest.write(data.decode("utf-8"))
         except:
-            pprint(f"Waiting 10s before retrieving {role} ignition data")
+            pprint(f"Waiting 10s before retrieving full {ignitionfile}")
             sleep(10)
 
 
