@@ -5,6 +5,9 @@
 {% if extra_worker_disks %}
  {% set extra_disks = extra_worker_disks %}
 {% endif %}
+{% if worker_disk_type %}
+ {% set disk_type = worker_disk_type %}
+{% endif %}
 
 {{cluster }}-worker-{{ number }}:
  image: {{ image }}
@@ -16,6 +19,9 @@
  domain: {{ domain }}
  nets: {{ [network] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
+{% if disk_type|default(False) %}
+ disk_type: {{disk_type}}
+{% endif %}
  files:
  - path: /root/pre.sh
    origin: pre_{{ 'ubuntu' if ubuntu|default(False) else 'el' }}.sh

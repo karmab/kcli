@@ -28,6 +28,9 @@ kubevirt_disk_size:
 extra_disks: []
 extra_ctlplane_disks: []
 extra_worker_disks: []
+boot_disk_type:
+ctlplane_disk_type:
+worker_disk_type:
 extra_networks: []
 extra_ctlplane_networks: []
 extra_worker_networks: []

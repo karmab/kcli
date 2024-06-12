@@ -6,6 +6,9 @@
 {% if extra_ctlplane_disks %}
  {% set extra_disks = extra_ctlplane_disks %}
 {% endif %}
+{% if ctlplane_disk_type %}
+ {% set disk_type = ctlplane_disk_type %}
+{% endif %}
 
 {{ cluster }}-ctlplane-{{ number }}:
 {% set primary_network = {'name': network} %}
@@ -20,6 +23,9 @@
 {% endif %}
  nets: {{ [primary_network] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
+{% if disk_type|default(False) %}
+ disk_type: {{disk_type}}
+{% endif %}
  files:
 {% if config_type not in ['aws', 'gcp', 'ibm'] %}
  - keepalived.conf

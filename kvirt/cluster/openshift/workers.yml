@@ -10,6 +10,9 @@
 {% if extra_worker_disks %}
 {% set extra_disks = extra_worker_disks %}
 {% endif %}
+{% if worker_disk_type %}
+ {% set disk_type = worker_disk_type %}
+{% endif %}
 {% if flavor_worker != None %}
 {% set flavor = flavor_worker %}
 {% endif %}
@@ -33,6 +36,9 @@
 {% endif %}
  nets: {{ [network] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
+{% if disk_type|default(False) %}
+ disk_type: {{disk_type}}
+{% endif %}
  files:
 {% if coredns %}
   - path: /etc/NetworkManager/dispatcher.d/99-forcedns

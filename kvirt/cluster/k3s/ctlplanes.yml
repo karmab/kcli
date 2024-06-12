@@ -6,6 +6,9 @@
 {% if extra_ctlplane_disks %}
  {% set extra_disks = extra_ctlplane_disks %}
 {% endif %}
+{% if ctlplane_disk_type %}
+ {% set disk_type = ctlplane_disk_type %}
+{% endif %}
 
 {% set all_files = files|default([]) %}
 {% set all_scripts = ["ctlplanes.sh"] %}
@@ -28,6 +31,9 @@
  loadbalancer: api.{{ cluster }}
 {% endif %}
  disks: {{ [disk_size] + extra_disks }}
+{% if disk_type|default(False) %}
+ disk_type: {{disk_type}}
+{% endif %}
  files: {{ all_files }}
  scripts: {{ all_scripts }}
 {% endfor %}

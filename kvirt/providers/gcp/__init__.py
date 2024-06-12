@@ -276,11 +276,17 @@ class Kgcp(object):
                     disksize = 20
                     pprint("Rounding primary disk to to 20Gb")
                 newdisk['initializeParams'] = {'sourceImage': src, 'diskSizeGb': disksize}
+                boot_disk_type = overrides.get('boot_disk_type', None)
+                if boot_disk_type:
+                    newdisk['initializeParams']['diskType'] = f'/compute/v1/projects/{project}/zones/{zone}/diskTypes/{boot_disk_type}'
                 newdisk['boot'] = True
             else:
                 diskname = f"{name}-disk{index}"
                 diskpath = f'/compute/v1/projects/{project}/zones/{zone}/disks/{diskname}'
                 info = {'name': diskname, 'sizeGb': disksize}
+                disk_type = overrides.get('disk_type', None)
+                if disk_type:
+                    info["type"] = f'/compute/v1/projects/{project}/zones/{zone}/diskTypes/{disk_type}'
                 conn.disks().insert(zone=zone, project=project, body=info).execute()
                 timeout = 0
                 while True:

@@ -5,6 +5,9 @@
 {% if extra_worker_disks %}
  {% set extra_disks = extra_worker_disks %}
 {% endif %}
+{% if worker_disk_type %}
+ {% set disk_type = worker_disk_type %}
+{% endif %}
 
 {% set default_worker = cluster + '-worker-' + number|string %}
 {% set worker = vmrules_names[number] if vmrules_names is defined else default_worker %}
@@ -17,6 +20,9 @@
  memory: {{ worker_memory | default(memory, memory) }}
  nets: {{ [network] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
+{% if disk_type|default(False) %}
+ disk_type: {{disk_type}}
+{% endif %}
  files:
  - join.sh
  scripts:
