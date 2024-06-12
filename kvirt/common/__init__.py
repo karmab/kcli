@@ -300,7 +300,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
         userdata += 'final_message: kcli boot finished, up $UPTIME seconds\n'
         if not noname:
             userdata += f'hostname: {name}\n'
-            userdata += f'create_hostname_file: true\n'
+            userdata += 'create_hostname_file: true\n'
             if fqdn:
                 fqdn = f"{name}.{domain}" if domain is not None else name
                 userdata += f"fqdn: {fqdn}\n"
@@ -2081,7 +2081,7 @@ def get_ssh_pub_key():
 
 
 def container_mode():
-    return True if os.path.exists("/i_am_a_container") and os.path.exists('/workdir') else False
+    return os.path.exists("/i_am_a_container") and os.path.exists('/workdir')
 
 
 def netmask_to_prefix(netmask):

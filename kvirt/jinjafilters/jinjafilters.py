@@ -194,11 +194,18 @@ def count(string, char):
     return string.count(char)
 
 
+def pwd_path(path):
+    if path is not None and os.path.exists("/i_am_a_container") and os.path.exists('/workdir'):
+        return f'/workdir/{path}'
+    else:
+        return path
+
+
 jinjafilters = {'basename': basename, 'dirname': dirname, 'ocpnodes': ocpnodes, 'none': none, 'type': _type,
                 'certificate': certificate, 'base64': base64, 'github_version': github_version,
                 'defaultnodes': defaultnodes, 'wait_crd': wait_crd, 'local_ip': local_ip, 'network_ip': network_ip,
                 'kcli_info': kcli_info, 'find_manifests': find_manifests, 'exists': exists, 'ipv6_wrap': ipv6_wrap,
-                'has_ctlplane': has_ctlplane, 'wait_csv': wait_csv, 'count': count}
+                'has_ctlplane': has_ctlplane, 'wait_csv': wait_csv, 'count': count, 'pwd_path': pwd_path}
 
 
 class FilterModule(object):
