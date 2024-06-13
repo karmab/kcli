@@ -251,12 +251,16 @@ class Kgcp(object):
             body['networkInterfaces'].append(newnet)
         body['disks'] = []
         for index, disk in enumerate(disks):
+            disk_type = overrides.get('diskinterface') or overrides.get('disktype')
             if isinstance(disk, int):
                 disksize = disk
             elif isinstance(disk, str) and disk.isdigit():
                 disksize = int(disk)
             elif isinstance(disk, dict):
                 disksize = disk.get('size', '10')
+                disk_type = disk.get('type') or disk.get('interface') or disk_type
+            if disk_type is not None:
+                disk_type = f'/compute/v1/projects/{project}/zones/{zone}/diskTypes/{disk_type}'
             newdisk = {'boot': False, 'autoDelete': True}
             if index == 0 and image is not None:
                 if image.startswith('rhcos'):
@@ -277,11 +281,15 @@ class Kgcp(object):
                     pprint("Rounding primary disk to to 20Gb")
                 newdisk['initializeParams'] = {'sourceImage': src, 'diskSizeGb': disksize}
                 newdisk['boot'] = True
+                if disk_type is not None:
+                    newdisk['initializeParams']['diskType'] = disk_type
             else:
                 diskname = f"{name}-disk{index}"
                 diskpath = f'/compute/v1/projects/{project}/zones/{zone}/disks/{diskname}'
-                info = {'name': diskname, 'sizeGb': disksize}
-                conn.disks().insert(zone=zone, project=project, body=info).execute()
+                init = {'name': diskname, 'sizeGb': disksize}
+                if disk_type is not None:
+                    init['type'] = disk_type
+                conn.disks().insert(zone=zone, project=project, body=init).execute()
                 timeout = 0
                 while True:
                     if timeout > 60:
@@ -303,7 +311,6 @@ class Kgcp(object):
         for entry in [field for field in metadata if field in METADATA_FIELDS]:
             value = metadata[entry].replace('.', '-')
             body['labels'][entry] = value
-        
         if not keys:
             publickeyfile = get_ssh_pub_key()
             if publickeyfile is not None:
@@ -987,6 +994,9 @@ class Kgcp(object):
         numdisks = len(vm['disks']) + 1
         diskname = f"{name}-disk{numdisks}"
         body = {'sizeGb': size, 'name': diskname}
+        disk_type = overrides.get('diskinterface') or overrides.get('disktype')
+        if disk_type is not None:
+            body['diskType'] = disk_type
         conn.disks().insert(zone=zone, project=project, body=body).execute()
         timeout = 0
         while True:
