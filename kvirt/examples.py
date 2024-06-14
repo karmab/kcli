@@ -371,7 +371,7 @@ $ kcli changelog f173cb7e032a5b72092451255c58dfec8b11af35
 $ kcli changelog sha1 sha2
 """
 
-imagedownload = """Download centos9stream image
+imagedownload = """# Download centos9stream image
 $ kcli download image centos9stream
 
 # Download in specific pool
@@ -399,7 +399,7 @@ $ kcli download image rhcoslatest -P installer=true
 $ kcli download image -u http://super.qcow2 super
 """
 
-isodownload = """Download debian iso
+isodownload = """# Download debian iso
 $ kcli download iso -u https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-11.1.0-amd64-netinst.iso
 
 # Download iso to specific pool
