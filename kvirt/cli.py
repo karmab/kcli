@@ -442,32 +442,47 @@ def delete_container(args):
 
 
 def download_image(args):
-    pool = args.pool
-    name = args.name
     image = args.image
-    cmd = args.cmd
-    url = args.url
+    overrides = handle_parameters(args.param, args.paramfile)
+    name = overrides.get('name')
+    cmd = overrides.get('image')
+    url = overrides.get('url')
     if image is None:
         if url is not None:
             image = os.path.basename(url)
         else:
             error("An image or url needs to be specified")
             sys.exit(1)
-    size = args.size
-    arch = args.arch
-    rhcos_installer = args.installer
-    kvm_openstack = not args.qemu
+    arch = overrides.get('arch', 'x86_64')
+    valid_archs = ['x86_64', 'aarch64', 'ppc64le', 's390x']
+    if arch not in valid_archs:
+        error("Arch needs to belong to {','.join(valid_archs)}")
+        sys.exit(1)
+    size = overrides.get('size')
+    if size is not None:
+        if size.isdigit():
+            size = int(size)
+        else:
+            error("Size needs to be an integer")
+            sys.exit(1)
+    rhcos_installer = overrides.get('installer', False)
+    kvm_openstack = not overrides.get('qemu', False)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    pool = overrides.get('pool') or config.pool
     result = config.download_image(pool=pool, image=image, cmd=cmd, url=url, size=size, arch=arch,
                                    kvm_openstack=kvm_openstack, rhcos_installer=rhcos_installer, name=name)
     sys.exit(0 if result['result'] == 'success' else 1)
 
 
 def download_iso(args):
-    pool = args.pool
-    url = args.url
+    overrides = handle_parameters(args.param, args.paramfile)
+    url = overrides.get('url')
+    if url:
+        error("An url needs to be specified")
+        sys.exit(1)
     iso = args.iso or os.path.basename(url)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    pool = overrides.get('pool') or config.pool
     result = config.download_image(pool=pool, image=iso, url=url)
     sys.exit(0 if result['result'] == 'success' else 1)
 
@@ -4421,24 +4436,14 @@ def cli():
                                    description=bucketfiledownload_desc, help=bucketfiledownload_desc)
 
     imagedownload_desc = 'Download Cloud Image'
+    imagedownload_epilog = f"examples:\n{examples.imagedownload}"
     images_list = '\n'.join(IMAGES.keys())
     imagedownload_help = f"Image to download. Choose between \n{images_list}"
-    imagedownload_parser = argparse.ArgumentParser(add_help=False)
-    imagedownload_parser.add_argument('-a', '--arch', help='Arch', choices=['x86_64', 'aarch64', 'ppc64le', 's390x'],
-                                      default='x86_64')
-    imagedownload_parser.add_argument('-c', '--cmd', help='Extra command to launch after downloading', metavar='CMD')
-    imagedownload_parser.add_argument('-i', '--installer', help='Get rhcos url from openshift-installer',
-                                      action='store_true')
-    imagedownload_parser.add_argument('-n', '--name', help='Store image with a specific name', metavar='NAME')
-    imagedownload_parser.add_argument('-q', '--qemu', help='Use qemu variant for rhcos (kvm specific)',
-                                      action='store_true')
-    imagedownload_parser.add_argument('-p', '--pool', help='Pool to use. Defaults to default', metavar='POOL')
-    imagedownload_parser.add_argument('-u', '--url', help='Url to use', metavar='URL', type=valid_url)
-    imagedownload_parser.add_argument('--size', help='Disk size (kubevirt specific)', type=int, metavar='SIZE')
+    imagedownload_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     imagedownload_parser.add_argument('image', help=imagedownload_help, metavar='IMAGE', nargs='?')
     imagedownload_parser.set_defaults(func=download_image)
     download_subparsers.add_parser('image', parents=[imagedownload_parser], description=imagedownload_desc,
-                                   help=imagedownload_desc)
+                                   help=imagedownload_desc, epilog=imagedownload_epilog, formatter_class=rawhelp)
 
     helmdownload_desc = 'Download Helm'
     helmdownload_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
@@ -4454,14 +4459,13 @@ def cli():
                                    description=hypershiftdownload_desc, help=hypershiftdownload_desc)
 
     isodownload_desc = 'Download Iso'
+    isodownload_epilog = f"examples:\n{examples.isodownload}"
     isodownload_help = "Iso name"
-    isodownload_parser = argparse.ArgumentParser(add_help=False)
-    isodownload_parser.add_argument('-p', '--pool', help='Pool to use. Defaults to default', metavar='POOL')
-    isodownload_parser.add_argument('-u', '--url', help='Url to use', metavar='URL', required=True, type=valid_url)
+    isodownload_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     isodownload_parser.add_argument('iso', help=isodownload_help, metavar='ISO', nargs='?')
     isodownload_parser.set_defaults(func=download_iso)
     download_subparsers.add_parser('iso', parents=[isodownload_parser], description=isodownload_desc,
-                                   help=isodownload_desc)
+                                   help=isodownload_desc, epilog=isodownload_epilog, formatter_class=rawhelp)
 
     kubeconfigdownload_desc = 'Download Kubeconfig using web provider'
     kubeconfigdownload_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])

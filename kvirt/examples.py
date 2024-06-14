@@ -371,6 +371,41 @@ $ kcli changelog f173cb7e032a5b72092451255c58dfec8b11af35
 $ kcli changelog sha1 sha2
 """
 
+imagedownload = """Download centos9stream image
+$ kcli download image centos9stream
+
+# Download in specific pool
+$ kcli download image centos9stream -P pool=mypool
+
+# Download specific arch
+$ kcli download image centos9stream -P arch=aarch64
+
+# Execute command after download
+$ kcli download image centos9stream -P cmd='echo welcome here > /etc/motd'
+
+# Download with specific name
+$ kcli download image centos9stream -P name=centos9
+
+# Force the size (kubevirt specific)
+$ kcli download image rhcoslatest -P size=40
+
+# Download qemu variant for rhcos (kvm specific)
+$ kcli download image rhcoslatest -P qemu=true
+
+# Download rhcos associated to current openshift-installer
+$ kcli download image rhcoslatest -P installer=true
+
+# Download image from specific url
+$ kcli download image -u http://super.qcow2 super
+"""
+
+isodownload = """Download debian iso
+$ kcli download iso -u https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-11.1.0-amd64-netinst.iso
+
+# Download iso to specific pool
+$ kcli download iso -u http://super.iso -P pool=mypool
+"""
+
 workflowcreate = """# Run workflow from a single script
 $ kcli run workflow myscript.sh
 

@@ -505,7 +505,7 @@ class Kconfig(Kbaseconfig):
         pimage = profile.get('image', 'XXX')
         if not onlyassets and self.type not in cloudplatforms and pimage in IMAGES and pimage not in volumes:
             pprint(f"Image {pimage} not found. Downloading")
-            pimage_data = {'pool': self.pool, 'image': pimage}
+            pimage_data = {'pool': overrides.get('pool') or self.pool, 'image': pimage}
             pimage_size = profile.get('kubevirt_disk_size') or profile.get('size')
             if pimage_size is not None:
                 pimage_data['size'] = pimage_size
