@@ -1,0 +1,14 @@
+{% for num in range(0, assisted_vms_number) %}
+{{ cluster }}-{{ num }}:
+  user: core
+  uefi: true
+  start: false
+  memory: {{ assisted_vms_memory }}
+  numcpus: {{ assisted_vms_numcpus }}
+  disks:
+  - size: {{ assisted_vms_disksize }}
+  - interface: sata
+  nets:
+  - name: {{ assisted_vms_network }}
+    mac: {{ assisted_vms_prefix }}:{{ 80 + num }}
+{% endfor %}

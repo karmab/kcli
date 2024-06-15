@@ -280,6 +280,7 @@ def create(config, plandir, cluster, overrides):
     platform = data.get('platform')
     assisted = platform == 'assisted'
     data['assisted'] = assisted
+    assisted_vms = data.get('assisted_vms')
     kubevirt = platform == 'kubevirt'
     data['kubevirt'] = kubevirt
     if platform not in [None, 'kubevirt', 'assisted']:
@@ -673,6 +674,17 @@ def create(config, plandir, cluster, overrides):
         nodepool_image = os.popen("openshift-install version | grep 'release image' | cut -f3 -d' '").read().strip()
         assetsdata['nodepool_image'] = nodepool_image
     if assisted:
+        if assisted_vms:
+            pprint("Deploying virtual baremetal hosts")
+            worker_threaded = data.get('threaded', False) or data.get('assisted_vms_threaded', False)
+            config.plan(plan, inputfile=f'{plandir}/kcli_plan_assisted.yml', overrides=data, threaded=worker_threaded)
+            assisted_vms_number = data['assisted_vms_number']
+            assisted_vms_prefix = data['assisted_vms_prefix']
+            ksushy_ip = data['assisted_vms_ksushy_ip']
+            ksushy_url = f'http://{ksushy_ip}:9000/redfish/v1/Systems/{config.client}'
+            virtual_hosts = [{'url': f'{ksushy_url}/{cluster}-{num}', 'mac': f"{assisted_vms_prefix}:{80 + num}"}
+                             for num in range(0, assisted_vms_number)]
+            baremetal_hosts.extend(virtual_hosts)
         create_bmh_objects(config, plandir, cluster, namespace, baremetal_hosts, overrides)
         agents = len(baremetal_hosts)
         if not agents:

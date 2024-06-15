@@ -5,19 +5,16 @@ ingress_ip: 192.168.254.252
 uefi: true
 workers: 2
 sslip: true
-baremetal_hosts:
-- url: http://192.168.254.1:9000/redfish/v1/Systems/local/ci-hypershift-assisted-0
-  mac: "aa:aa:aa:bb:bb:80"
-- url: http://192.168.254.1:9000/redfish/v1/Systems/local/ci-hypershift-assisted-1
-  mac: "aa:aa:aa:bb:bb:81"
-#- url: http://192.168.254.1:9000/redfish/v1/Systems/local/ci-hypershift-assisted-2
-#  mac: "aa:aa:aa:bb:bb:82"
-#- url: http://10.19.135.107:9000/redfish/v1/Systems/local/ci-hypershift-assisted-0
+assisted_vms: true
+assisted_vms_network: baremetalfake
+assisted_vms_ksushy_ip: 192.168.254.1
+
+
+  # baremetal_hosts:
+# - url: http://192.168.254.1:9000/redfish/v1/Systems/local/ci-hypershift-assisted-0
 #  mac: "aa:aa:aa:bb:bb:80"
-#- url: http://10.19.135.107:9000/redfish/v1/Systems/local/ci-hypershift-assisted-1
+# - url: http://192.168.254.1:9000/redfish/v1/Systems/local/ci-hypershift-assisted-1
 #  mac: "aa:aa:aa:bb:bb:81"
-#- url: http://10.19.135.107:9000/redfish/v1/Systems/local/ci-hypershift-assisted-2
-#  mac: "aa:aa:aa:bb:bb:82"
 #- url: http://10.19.135.107:9000/redfish/v1/Systems/local/myclu-3
 #  mac: "aa:aa:aa:bb:bb:93"
 #  dns:

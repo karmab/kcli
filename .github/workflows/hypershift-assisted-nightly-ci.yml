@@ -25,18 +25,8 @@ jobs:
     - name: Delete old install
       run: |
         kcli delete cluster --yes $CLUSTER || true
-        kcli delete plan --yes $CLUSTER-vms || true
-
- deploy-baremetal-like-vms:
-   needs: requirements
-   runs-on: u08
-   steps:
-   - name: Deploy Baremetal like vm
-     run: |
-       kcli create vm -P uefi=true -P start=false -P memory=20480 -P numcpus=16 -P disks=['{"size": 200, "interface": "sata"}'] -P nets=['{"name": "baremetalfake", "mac": "aa:aa:aa:bb:bb:80"}'] -P plan=$CLUSTER-vms -P user=core -c 2 $CLUSTER
 
  deploy-hypershift:
-   needs: deploy-baremetal-like-vms
    runs-on: u08
    steps:
    - name: Deploy HYPERSHIFT ASSISTED
@@ -50,4 +40,3 @@ jobs:
    - name: Clean everything after success
      run: |
        kcli delete cluster --yes $CLUSTER
-       kcli delete plan --yes $CLUSTER-vms
