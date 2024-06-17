@@ -39,6 +39,7 @@ class Kgcp(object):
         self.project = project
         self.region = region
         self.debug = debug
+        self.machine_flavor_cache = {}
         request = self.conn.projects().getXpnHost(project=project)
         response = request.execute()
         self.xproject = response['name'] if response else None
@@ -639,12 +640,13 @@ class Kgcp(object):
         first_nic = vm['networkInterfaces'][0]
         if 'accessConfigs' in first_nic and 'natIP' in first_nic['accessConfigs'][0]:
             yamlinfo['ip'] = first_nic['accessConfigs'][0]['natIP']
-        source = os.path.basename(vm['disks'][0]['source'])
-        source = conn.disks().get(zone=zone, project=self.project, disk=source).execute()
-        if 'sourceImage' in source:
-            yamlinfo['image'] = os.path.basename(source['sourceImage'])
-        elif 'licenses' in vm['disks'][0]:
+        if 'licenses' in vm['disks'][0]:
             yamlinfo['image'] = os.path.basename(vm['disks'][0]['licenses'][-1])
+        else:
+            source = os.path.basename(vm['disks'][0]['source'])
+            source = conn.disks().get(zone=zone, project=self.project, disk=source).execute()
+            if 'sourceImage' in source:
+                yamlinfo['image'] = os.path.basename(source['sourceImage'])
         if 'image' in yamlinfo:
             yamlinfo['user'] = common.get_user(yamlinfo['image'])
         yamlinfo['creationdate'] = dateparser.parse(vm['creationTimestamp']).strftime("%d-%m-%Y %H:%M")
@@ -674,8 +676,7 @@ class Kgcp(object):
             diskformat = disk['interface']
             drivertype = disk['type']
             path = os.path.basename(disk['source'])
-            diskinfo = conn.disks().get(zone=zone, project=project, disk=diskname).execute()
-            disksize = int(diskinfo['sizeGb'])
+            disksize = int(disk['diskSizeGb'])
             disks.append({'device': devname, 'size': disksize, 'format': diskformat, 'type': drivertype, 'path': path})
         if disks:
             yamlinfo['disks'] = disks
@@ -1477,7 +1478,11 @@ class Kgcp(object):
         conn = self.conn
         project = self.project
         zone = self.zone
-        flavor = conn.machineTypes().get(project=project, zone=zone, machineType=name).execute()
+        if name in self.machine_flavor_cache:
+           flavor = self.machine_flavor_cache[name]
+        else: 
+            flavor = conn.machineTypes().get(project=project, zone=zone, machineType=name).execute()
+            self.machine_flavor_cache[name] = flavor
         return {'cpus': flavor['guestCpus'], 'memory': flavor['memoryMb']}
 
     def list_flavors(self):
