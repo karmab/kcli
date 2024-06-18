@@ -195,7 +195,8 @@ def count(string, char):
 
 
 def pwd_path(path):
-    if path is not None and os.path.exists("/i_am_a_container") and os.path.exists('/workdir'):
+    if path is not None and not os.path.isabs(path) and os.path.exists("/i_am_a_container")\
+       and os.path.exists('/workdir'):
         return f'/workdir/{path}'
     else:
         return path
