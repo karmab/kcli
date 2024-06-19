@@ -88,5 +88,4 @@ assisted_vms_memory: 20480
 assisted_vms_numcpus: 16
 assisted_vms_disksize: 200
 assisted_vms_network: default
-assisted_vms_prefix: 'aa:aa:aa:bb:bb'
 assisted_vms_ksushy_ip: 192.168.122.1

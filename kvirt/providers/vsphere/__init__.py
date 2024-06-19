@@ -305,6 +305,8 @@ class Ksphere:
                 confspec.uuid = uuid
             except:
                 warning(f"couldn't use {uuid} as uuid")
+        confspec.flags = vim.vm.FlagInfo()
+        confspec.flags.diskUuidEnabled = True
         confspec.extraConfig = []
         for entry in [field for field in metadata if field in METADATA_FIELDS]:
             opt = vim.option.OptionValue()

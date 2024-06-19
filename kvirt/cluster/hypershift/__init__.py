@@ -675,15 +675,18 @@ def create(config, plandir, cluster, overrides):
         assetsdata['nodepool_image'] = nodepool_image
     if assisted:
         if assisted_vms:
-            pprint("Deploying virtual baremetal hosts")
             worker_threaded = data.get('threaded', False) or data.get('assisted_vms_threaded', False)
-            config.plan(plan, inputfile=f'{plandir}/kcli_plan_assisted.yml', overrides=data, threaded=worker_threaded)
-            assisted_vms_number = data['assisted_vms_number']
-            assisted_vms_prefix = data['assisted_vms_prefix']
+            result = config.plan(plan, inputfile=f'{plandir}/kcli_plan_assisted.yml', overrides=data,
+                                 threaded=worker_threaded)
+            if result['result'] != 'success':
+                return result
+            vms = result['newvms']
             ksushy_ip = data['assisted_vms_ksushy_ip']
             ksushy_url = f'http://{ksushy_ip}:9000/redfish/v1/Systems/{config.client}'
-            virtual_hosts = [{'url': f'{ksushy_url}/{cluster}-{num}', 'mac': f"{assisted_vms_prefix}:{80 + num}"}
-                             for num in range(0, assisted_vms_number)]
+            virtual_hosts = []
+            for vm in vms:
+                new_mac = config.k.info(vm)['nets'][0]['mac']
+                virtual_hosts.append({'url': f'{ksushy_url}/{vm}', 'mac': new_mac})
             baremetal_hosts.extend(virtual_hosts)
         create_bmh_objects(config, plandir, cluster, namespace, baremetal_hosts, overrides)
         agents = len(baremetal_hosts)
@@ -826,7 +829,9 @@ def create(config, plandir, cluster, overrides):
     if platform is None and data['workers'] > 0:
         pprint("Deploying workers")
         worker_threaded = data.get('threaded', False) or data.get('workers_threaded', False)
-        config.plan(plan, inputfile=f'{plandir}/kcli_plan.yml', overrides=data, threaded=worker_threaded)
+        result = config.plan(plan, inputfile=f'{plandir}/kcli_plan.yml', overrides=data, threaded=worker_threaded)
+        if result['result'] != 'success':
+            return result
     async_tempdir.cleanup()
     if ignore_hosts:
         warning("Not updating /etc/hosts as per your request")

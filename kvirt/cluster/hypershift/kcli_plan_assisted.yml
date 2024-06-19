@@ -9,8 +9,6 @@
   numcpus: {{ assisted_vms_numcpus }}
   disks:
   - size: {{ assisted_vms_disksize }}
-  - interface: sata
-  nets:
-  - name: {{ assisted_vms_network }}
-    mac: {{ assisted_vms_prefix }}:{{ 80 + num }}
+    interface: sata
+  nets: [{{ assisted_vms_network }}]
 {% endfor %}
