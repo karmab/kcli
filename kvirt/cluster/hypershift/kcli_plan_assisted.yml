@@ -3,6 +3,8 @@
   user: core
   uefi: true
   start: false
+  kube: {{ cluster }}
+  kubetype: hypershift
   memory: {{ assisted_vms_memory }}
   numcpus: {{ assisted_vms_numcpus }}
   disks:
