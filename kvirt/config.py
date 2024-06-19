@@ -2807,6 +2807,19 @@ class Kconfig(Kbaseconfig):
             deleteclients.update(self.extraclients)
         elif vmclients:
             deleteclients.update({cli: Kconfig(client=cli).k for cli in vmclients if cli != self.client})
+        if hypershift:
+            kubeconfigmgmt = f"{clusterdir}/kubeconfig.mgmt"
+            if os.path.exists(f'{clusterdir}/bmcs.yml'):
+                call(f'KUBECONFIG={kubeconfigmgmt} oc delete -f {clusterdir}/bmcs.yml', shell=True)
+            call(f'KUBECONFIG={kubeconfigmgmt} oc delete -f {clusterdir}/autoapprovercron.yml', shell=True)
+            call(f'KUBECONFIG={kubeconfigmgmt} oc delete -f {clusterdir}/nodepool.yaml', shell=True)
+            call(f'KUBECONFIG={kubeconfigmgmt} oc delete -f {clusterdir}/hostedcluster.yaml', shell=True)
+            if not assisted and ('baremetal_iso' in clusterdata or 'baremetal_hosts' in clusterdata):
+                call(f'KUBECONFIG={kubeconfigmgmt} oc -n default delete all -l app=httpd-kcli', shell=True)
+                call(f'KUBECONFIG={kubeconfigmgmt} oc -n default delete pvc httpd-kcli-pvc', shell=True)
+            ingress_ip = clusterdata.get('ingress_ip')
+            if self.type == 'kubevirt' and clusterdata.get('platform') is None and ingress_ip is None:
+                call(f'KUBECONFIG={kubeconfigmgmt} oc -n {k.namespace} delete route {cluster}-ingress', shell=True)
         for hypervisor in deleteclients:
             c = deleteclients[hypervisor]
             for vm in sorted(c.list(), key=lambda x: x['name']):
@@ -2872,21 +2885,6 @@ class Kconfig(Kbaseconfig):
             z = Kconfig(client=dnsclient).k
             z.delete_dns(f"api.{cluster}", domain)
             z.delete_dns(f"apps.{cluster}", domain)
-        if hypershift:
-            kubeconfigmgmt = f"{clusterdir}/kubeconfig.mgmt"
-            if os.path.exists(f'{clusterdir}/bmcs.yml'):
-                call(f'KUBECONFIG={kubeconfigmgmt} oc delete -f {clusterdir}/bmcs.yml', shell=True)
-            call(f'KUBECONFIG={kubeconfigmgmt} oc delete -f {clusterdir}/autoapprovercron.yml', shell=True)
-            call(f'KUBECONFIG={kubeconfigmgmt} oc delete -f {clusterdir}/nodepool.yaml', shell=True)
-            call(f'KUBECONFIG={kubeconfigmgmt} oc delete -f {clusterdir}/hostedcluster.yaml', shell=True)
-            if os.path.exists(f'{clusterdir}/assisted_infra.yml'):
-                call(f'KUBECONFIG={kubeconfigmgmt} oc delete -f {clusterdir}/assisted_infra.yml', shell=True)
-            if not assisted and ('baremetal_iso' in clusterdata or 'baremetal_hosts' in clusterdata):
-                call(f'KUBECONFIG={kubeconfigmgmt} oc -n default delete all -l app=httpd-kcli', shell=True)
-                call(f'KUBECONFIG={kubeconfigmgmt} oc -n default delete pvc httpd-kcli-pvc', shell=True)
-            ingress_ip = clusterdata.get('ingress_ip')
-            if self.type == 'kubevirt' and clusterdata.get('platform') is None and ingress_ip is None:
-                call(f'KUBECONFIG={kubeconfigmgmt} oc -n {k.namespace} delete route {cluster}-ingress', shell=True)
         if gke:
             gcpclient = None
             if 'client' in clusterdata:
