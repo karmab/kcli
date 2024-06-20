@@ -560,7 +560,7 @@ class Kgcp(object):
             return []
         return sorted(vms, key=lambda x: x['name'])
 
-    def console(self, name, tunnel=False, web=False):
+    def console(self, name, tunnel=False, tunnelhost=None, tunnelport=22, tunneluser='root', web=False):
         project = self.project
         zone = self.zone
         resource = build('cloudresourcemanager', 'v1')
@@ -672,7 +672,6 @@ class Kgcp(object):
         disks = []
         for index, disk in enumerate(vm['disks']):
             devname = disk['deviceName']
-            diskname = os.path.basename(disk['source'])
             diskformat = disk['interface']
             drivertype = disk['type']
             path = os.path.basename(disk['source'])
@@ -1479,8 +1478,8 @@ class Kgcp(object):
         project = self.project
         zone = self.zone
         if name in self.machine_flavor_cache:
-           flavor = self.machine_flavor_cache[name]
-        else: 
+            flavor = self.machine_flavor_cache[name]
+        else:
             flavor = conn.machineTypes().get(project=project, zone=zone, machineType=name).execute()
             self.machine_flavor_cache[name] = flavor
         return {'cpus': flavor['guestCpus'], 'memory': flavor['memoryMb']}

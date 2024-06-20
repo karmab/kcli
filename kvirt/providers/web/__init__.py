@@ -128,7 +128,7 @@ class Kwebclient(object):
         vms = response['vms']
         return vms
 
-    def console(self, name, tunnel=False, web=False):
+    def console(self, name, tunnel=False, tunnelhost=None, tunnelport=22, tunneluser='root', web=False):
         url = f'{self.base}/vmconsole/{name}'
         pprint(f"Opening web console {url}")
         webbrowser.open(url, new=2, autoraise=True)

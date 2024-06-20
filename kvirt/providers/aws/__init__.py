@@ -518,7 +518,7 @@ class Kaws(object):
                 continue
         return sorted(vms, key=lambda x: x['name'])
 
-    def console(self, name, tunnel=False, web=False):
+    def console(self, name, tunnel=False, tunnelhost=None, tunnelport=22, tunneluser='root', web=False):
         df = {'InstanceIds': [name]} if name.startswith('i-') else {'Filters': [{'Name': "tag:Name", 'Values': [name]}]}
         try:
             vm = self.conn.describe_instances(**df)['Reservations'][0]['Instances'][0]

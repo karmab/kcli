@@ -621,7 +621,7 @@ class Kubevirt(Kubecommon):
                 continue
         return sorted(vms, key=lambda x: x['name'])
 
-    def console(self, name, tunnel=False, web=False):
+    def console(self, name, tunnel=False, tunnelhost=None, tunnelport=22, tunneluser='root', web=False):
         if os.path.exists("/i_am_a_container"):
             error("This functionality is not supported in container mode")
             return

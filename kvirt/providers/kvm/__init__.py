@@ -1632,7 +1632,7 @@ class Kvirt(object):
                 continue
         return sorted(vms, key=lambda x: x['name'])
 
-    def console(self, name, tunnel=False, web=False):
+    def console(self, name, tunnel=False, tunnelhost=None, tunnelport=22, tunneluser='root', web=False):
         conn = self.conn
         try:
             vm = conn.lookupByName(name)

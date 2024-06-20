@@ -312,6 +312,9 @@ def console_vm(args):
     name = common.get_lastvm(config.client) if not args.name else args.name
     k = config.k
     tunnel = config.tunnel
+    tunnelhost = config.tunnelhost
+    tunnelport = config.tunnelport or 22
+    tunneluser = config.tunneluser or 'root'
     if serial:
         k.serialconsole(name)
     elif web:
@@ -320,7 +323,7 @@ def console_vm(args):
             sys.exit(1)
         config.webconsole(name)
     else:
-        k.console(name=name, tunnel=tunnel)
+        k.console(name=name, tunnel=tunnel, tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser)
 
 
 def console_container(args):
@@ -2721,8 +2724,8 @@ def ssh_vm(args):
     name = [common.get_lastvm(baseconfig.client)] if not args.name else args.name
     tunnel = baseconfig.tunnel
     tunnelhost = baseconfig.tunnelhost
-    tunneluser = baseconfig.tunneluser
     tunnelport = baseconfig.tunnelport
+    tunneluser = baseconfig.tunneluser
     if tunnel and tunnelhost is None and baseconfig.type != 'kubevirt':
         error("Tunnel requested but no tunnelhost defined")
         sys.exit(1)
@@ -2783,8 +2786,8 @@ def scp_vm(args):
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
     tunnel = baseconfig.tunnel
     tunnelhost = baseconfig.tunnelhost
-    tunneluser = baseconfig.tunneluser
     tunnelport = baseconfig.tunnelport
+    tunneluser = baseconfig.tunneluser
     if tunnel and tunnelhost is None:
         error("Tunnel requested but no tunnelhost defined")
         sys.exit(1)

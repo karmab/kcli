@@ -82,7 +82,7 @@ class Kbase(object):
         print("not implemented")
         return []
 
-    def console(self, name, tunnel=False, web=False):
+    def console(self, name, tunnel=False, tunnelhost=None, tunnelport=22, tunneluser='root', web=False):
         print("not implemented")
 
     def serialconsole(self, name, web=False):

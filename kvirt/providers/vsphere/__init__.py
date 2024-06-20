@@ -667,7 +667,7 @@ class Ksphere:
             if not os.path.exists("/i_am_a_container"):
                 call(consolecommand, shell=True)
 
-    def console(self, name, tunnel=False, web=False):
+    def console(self, name, tunnel=False, tunnelhost=None, tunnelport=22, tunneluser='root', web=False):
         si = self.si
         vcip = self.vcip
         vmFolder = self.basefolder
@@ -691,9 +691,22 @@ class Ksphere:
             else:
                 continue
         if vncfound:
+            consolecommand = ''
             host = runtime.host.name
+            if tunnel and tunnelhost is not None:
+                localport = common.get_free_port()
+                consolecommand += "ssh -o LogLevel=QUIET -f -p "
+                consolecommand += f"{tunnelport} -L {localport}:{host}:{vncport} {tunneluser}@{tunnelhost} sleep 10;"
+                host = '127.0.0.1'
+                vncport = localport
             url = f"vnc://{host}:{vncport}"
-            consolecommand = f"remote-viewer {url} &"
+            if os.path.exists('/Applications'):
+                if os.path.exists('/Applications/VNC Viewer.app'):
+                    consolecommand += f"open -a 'VNC Viewer' --args {url.replace('vnc://', '')} &"
+                else:
+                    consolecommand += f"open -a 'Screen Sharing' {url} &"
+            else:
+                consolecommand += f"remote-viewer {url} &"
             if web:
                 return url
             if self.debug or os.path.exists("/i_am_a_container"):

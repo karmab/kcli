@@ -1083,3 +1083,9 @@ class Kproxmox(Kbase):
     def update_security_group(self, name, overrides={}):
         print("not implemented")
         return {'result': 'success'}
+
+    def console(self, name, tunnel=False, tunnelhost=None, tunnelport=22, tunneluser='root', web=False):
+        print("not implemented")
+
+    def serialconsole(self, name, web=False):
+        print("not implemented")
