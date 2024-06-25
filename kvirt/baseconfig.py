@@ -1511,10 +1511,17 @@ class Kbaseconfig:
         return {'result': 'success'}
 
     def deploy_ksushy_service(self, port=9000, ssl=False, ipv6=False, user=None, password=None, bootonce=False):
-        update = os.path.exists("/usr/lib/systemd/system/ksushy.service")
+        root_user = os.getuid() == 0
+        if root_user:
+            service_file = "/usr/lib/systemd/system/ksushy.service"
+        else:
+            service_file = f"{os.environ.get('HOME')}/.config/systemd/user/ksushy.service"
+        # Check if directory exists
+        if not os.path.exists(os.path.dirname(service_file)):
+            os.makedirs(os.path.dirname(service_file))
+        update = os.path.exists(service_file)
         home = os.environ.get('HOME', '/root')
-        if ssl:
-            warning("ssl support requires installing manually pyopenssl and cherrypy")
+        executable = 'ksushy' if root_user else which('ksushy')
         port = f"Environment=KSUSHY_PORT={port}\n" if port != 9000 else ''
         ssl = "Environment=KSUSHY_SSL=true\n" if ssl else ''
         ipv6 = "Environment=KSUSHY_IPV6=true\n" if ipv6 else ''
@@ -1522,10 +1529,12 @@ class Kbaseconfig:
         password = f"Environment=KSUSHY_PASSWORD={password}\n" if password is not None else ''
         bootonce = "Environment=KSUSHY_BOOTONCE=true\n" if bootonce else ''
         sushydata = kdefaults.KSUSHYSERVICE.format(home=home, port=port, ipv6=ipv6, ssl=ssl, user=user,
-                                                   password=password, bootonce=bootonce)
-        with open("/usr/lib/systemd/system/ksushy.service", "w") as f:
+                                                   password=password, bootonce=bootonce, executable=executable)
+        with open(service_file, "w") as f:
             f.write(sushydata)
         cmd = "systemctl restart ksushy" if update else "systemctl enable --now ksushy"
+        user_space = " --user" if not root_user else ""
+        cmd = f"systemctl{user_space} restart ksushy" if update else f"systemctl{user_space} enable --now ksushy"
         call(cmd, shell=True)
 
     def deploy_web_service(self, port=8000, ssl=False, ipv6=False):
