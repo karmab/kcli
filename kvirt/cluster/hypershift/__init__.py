@@ -330,6 +330,12 @@ def create(config, plandir, cluster, overrides):
     if not default_sc:
         msg = "Default Storage class not found. Leaving..."
         return {'result': 'failure', 'reason': msg}
+    kubevirt_crd_cmd = 'oc get crd hyperconvergeds.hco.kubevirt.io -o yaml 2>/dev/null'
+    if kubevirt and safe_load(os.popen(kubevirt_crd_cmd).read()) is None:
+        warning("Kubevirt not fully installed. Installing it for you")
+        app_name, source, channel, csv, description, x_namespace, channels, crds = olm_app('kubevirt-hyperconverged')
+        app_data = {'name': app_name, 'source': source, 'channel': channel, 'namespace': x_namespace, 'csv': csv}
+        config.create_app_openshift(app_name, app_data)
     kubeconfig = os.environ.get('KUBECONFIG')
     kubeconfigdir = os.path.dirname(kubeconfig) if kubeconfig is not None else os.path.expanduser("~/.kube")
     kubeconfig = os.path.basename(kubeconfig) if kubeconfig is not None else 'config'
