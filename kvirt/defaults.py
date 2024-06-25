@@ -211,7 +211,7 @@ Description=Ksushy emulator service
 After=syslog.target
 [Service]
 Type=simple
-ExecStart=ksushy
+ExecStart={executable}
 StandardOutput=syslog
 StandardError=syslog
 Environment=HOME={home}
