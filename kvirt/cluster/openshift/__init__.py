@@ -387,9 +387,7 @@ def get_upstream_installer(tag, version='stable', debug=False):
         if version == 'dev-preview':
             url = "https://amd64.origin.releases.ci.openshift.org/api/v1/releasestream/4-scos-next/latest"
         elif version in ['ci', 'nightly']:
-            url = f"https://amd64.origin.releases.ci.openshift.org/api/v1/releasestream/{tag}.0-0.okd/latest"
-        elif version == 'scos':
-            url = "https://amd64.origin.releases.ci.openshift.org/api/v1/releasestream/4-scos-stable/latest"
+            url = f"https://amd64.origin.releases.ci.openshift.org/api/v1/releasestream/{tag}.0-0.okd-scos/latest"
         else:
             url = "https://amd64.origin.releases.ci.openshift.org/api/v1/releasestream/4-stable/latest"
         tag = json.loads(urlopen(url).read())['pullSpec']
