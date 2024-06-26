@@ -69,6 +69,7 @@ IMAGES = {'almalinux8': f'{ALMA}/8/cloud/x86_64/images/AlmaLinux-8-GenericCloud-
           'dragonflybsd622': f'{BSD}/dragonflybsd/6.2.2/2022-09-06/hammer2/dragonflybsd-6.2.2-hammer2-2022-09-06.qcow2',
           'gentoo': f'{GENTOO}/gentoo-openstack-amd64-default-latest.qcow2',
           'opensuse155': f'{SUSE}/repositories/Cloud:/Images:/Leap_15.5/images/openSUSE-Leap-15.5.x86_64-NoCloud.qcow2',
+          'opensuse156': f'{SUSE}/repositories/Cloud:/Images:/Leap_15.6/images/openSUSE-Leap-15.6.x86_64-NoCloud.qcow2',
           'rhcos410': f'{RHCOS}/4.10',
           'rhcos411': f'{RHCOS}/4.11',
           'rhcos412': f'{RHCOS}/4.12',
