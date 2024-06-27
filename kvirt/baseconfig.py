@@ -33,6 +33,10 @@ def other_client(profile, clients):
     return False
 
 
+def libvirt_macosx():
+    return which('brew') is not None and 'libvirt started' in os.popen('brew services list').read()
+
+
 class Kbaseconfig:
     def __init__(self, client=None, containerclient=None, debug=False, quiet=False, offline=False):
         self.debug = debug
@@ -75,7 +79,7 @@ class Kbaseconfig:
                and not os.path.exists('/var/run/libvirt/virtqemud-sock'):
                 if os.path.exists('/i_am_a_container') and os.environ.get('KUBERNETES_SERVICE_HOST') is not None:
                     _type = 'kubevirt'
-                else:
+                elif not libvirt_macosx():
                     error("No configuration found nor local hypervisor. Is libvirt running?")
                     sys.exit(1)
             self.ini = {'default': {'client': defaultclient}, defaultclient:
