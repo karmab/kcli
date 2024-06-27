@@ -1,0 +1,24 @@
+{% for number in range(0, workers|int) %}
+{% if extra_worker_networks %}
+ {% set extra_networks = extra_worker_networks %}
+{% endif %}
+{% if extra_worker_disks %}
+ {% set extra_disks = extra_worker_disks %}
+{% endif %}
+
+{{cluster }}-worker-{{ number }}:
+ image: {{ image }}
+ pool: {{ pool or config_pool }}
+ keys: {{ keys }}
+ numcpus: {{ worker_numcpus | default(numcpus, numcpus) }}
+ memory: {{ worker_memory | default(memory, memory) }}
+ reservedns: false
+ domain: {{ domain }}
+ nets: {{ [network] + extra_networks }}
+ disks: {{ [disk_size] + extra_disks }}
+ files:
+ - deploy.sh
+ - join.sh
+ cmds:
+ - bash /root/deploy.sh
+{% endfor %}

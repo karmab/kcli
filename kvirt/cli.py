@@ -1930,6 +1930,11 @@ def create_openshift_sno(args):
     create_kube(args)
 
 
+def create_rke2_kube(args):
+    args.type = 'rke2'
+    create_kube(args)
+
+
 def delete_kube(args):
     clusters = args.cluster
     yes = args.yes
@@ -1999,6 +2004,11 @@ def scale_openshift_kube(args):
     scale_kube(args)
 
 
+def scale_rke2_kube(args):
+    args.type = 'rke2'
+    scale_kube(args)
+
+
 def update_generic_kube(args):
     args.type = 'generic'
     update_kube(args)
@@ -2021,6 +2031,11 @@ def update_microshift_kube(args):
 
 def update_k3s_kube(args):
     args.type = 'k3s'
+    update_kube(args)
+
+
+def update_rke2_kube(args):
+    args.type = 'rke2'
     update_kube(args)
 
 
@@ -2356,6 +2371,8 @@ def info_kube(args):
             baseconfig.info_kube_microshift(quiet=True)
         elif kubetype == 'k3s':
             baseconfig.info_kube_k3s(quiet=True)
+        elif kubetype == 'rke2':
+            baseconfig.info_kube_rke2(quiet=True)
         elif kubetype == 'gke':
             baseconfig.info_kube_gke(quiet=True)
         elif kubetype == 'aks':
@@ -2426,6 +2443,11 @@ def info_openshift_kube(args):
 
 def info_openshift_sno(args):
     args.kubetype = 'openshift-sno'
+    info_kube(args)
+
+
+def info_rke2_kube(args):
+    args.kubetype = 'rke2'
     info_kube(args)
 
 
@@ -3840,6 +3862,19 @@ def cli():
                                      epilog=kubeopenshiftcreate_epilog,
                                      formatter_class=rawhelp)
 
+    kuberke2create_desc = 'Create Rke2 Kube'
+    kuberke2create_epilog = f"Examples:\n\n{examples.kuberke2create}"
+    kuberke2create_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
+    kuberke2create_parser.add_argument('-f', '--force', action='store_true', help='Delete existing cluster first')
+    kuberke2create_parser.add_argument('-t', '--threaded', help='Run threaded', action='store_true')
+    kuberke2create_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
+    kuberke2create_parser.set_defaults(func=create_rke2_kube)
+    kubecreate_subparsers.add_parser('rke2', parents=[kuberke2create_parser],
+                                     description=kuberke2create_desc,
+                                     help=kuberke2create_desc,
+                                     epilog=kuberke2create_epilog,
+                                     formatter_class=rawhelp)
+
     lbcreate_desc = 'Create Load Balancer'
     lbcreate_epilog = f"Examples:\n\n{examples.lbcreate}"
     lbcreate_parser = create_subparsers.add_parser('lb', description=lbcreate_desc, help=lbcreate_desc,
@@ -4694,6 +4729,12 @@ def cli():
     kubeopenshiftinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubeopenshiftinfo_parser.set_defaults(func=info_openshift_kube)
 
+    kuberke2info_desc = 'Info Rke2 Kube'
+    kuberke2info_parser = kubeinfo_subparsers.add_parser('rke2', description=kuberke2info_desc, help=kuberke2info_desc,
+                                                         parents=[output_parser])
+    kuberke2info_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
+    kuberke2info_parser.set_defaults(func=info_rke2_kube)
+
     networkinfo_desc = 'Info Network'
     networkinfo_parser = info_subparsers.add_parser('network', description=networkinfo_desc, help=networkinfo_desc,
                                                     aliases=['net'])
@@ -5109,6 +5150,16 @@ def cli():
                                     help=kubeopenshiftscale_desc,
                                     epilog=kubeopenshiftscale_epilog, formatter_class=rawhelp)
 
+    kuberke2scale_desc = 'Scale Rke2 Kube'
+    kuberke2scale_epilog = f"Examples:\n\n{examples.kuberke2scale}"
+    kuberke2scale_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
+    kuberke2scale_parser.add_argument('-c', '--ctlplanes', help='Total number of ctlplanes', type=int)
+    kuberke2scale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
+    kuberke2scale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='myrke2')
+    kuberke2scale_parser.set_defaults(func=scale_rke2_kube)
+    kubescale_subparsers.add_parser('rke2', parents=[kuberke2scale_parser], description=kuberke2scale_desc,
+                                    help=kuberke2scale_desc, epilog=kuberke2scale_epilog, formatter_class=rawhelp)
+
     vmscp_desc = 'Scp Into Vm'
     vmscp_epilog = None
     vmscp_parser = argparse.ArgumentParser(add_help=False)
@@ -5307,6 +5358,13 @@ def cli():
     kubeupdate_subparsers.add_parser('openshift', parents=[kubeopenshiftupdate_parser],
                                      description=kubeopenshiftupdate_desc,
                                      help=kubeopenshiftupdate_desc)
+
+    kuberke2update_desc = 'Update Rke2 Kube'
+    kuberke2update_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
+    kuberke2update_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='myrke2')
+    kuberke2update_parser.set_defaults(func=update_rke2_kube)
+    kubeupdate_subparsers.add_parser('rke2', parents=[kuberke2update_parser], description=kuberke2update_desc,
+                                     help=kuberke2update_desc)
 
     profileupdate_desc = 'Update Profile'
     profileupdate_parser = update_subparsers.add_parser('profile', description=profileupdate_desc,

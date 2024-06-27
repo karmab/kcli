@@ -1,8 +1,6 @@
-from binascii import hexlify
 from ipaddress import ip_network
-import json
 from kvirt.common import success, pprint, warning, info2, container_mode, wait_cloud_dns, update_etc_hosts, fix_typos
-from kvirt.common import get_kubectl, kube_create_app, get_ssh_pub_key, _ssh_credentials, ssh, deploy_cloud_storage
+from kvirt.common import get_kubectl, get_ssh_pub_key, _ssh_credentials, ssh, deploy_cloud_storage
 from kvirt.defaults import UBUNTUS
 import os
 from random import choice
@@ -12,23 +10,15 @@ from string import ascii_lowercase, ascii_letters, digits
 from subprocess import call
 from tempfile import NamedTemporaryFile
 from time import sleep
-from urllib.request import urlopen
 from yaml import safe_dump, safe_load
 
 cloud_providers = ['aws', 'azure', 'gcp', 'ibm']
 
 
-def get_release(version):
-    releases = json.loads(urlopen('https://api.github.com/repos/kubernetes/kubernetes/releases').read().decode())
-    for release in releases:
-        if version in release['tag_name']:
-            return release['tag_name']
-
-
 def scale(config, plandir, cluster, overrides):
     storedparameters = overrides.get('storedparameters', True)
     plan = cluster
-    data = {'cluster': cluster, 'sslip': False, 'kube': cluster, 'kubetype': 'generic', 'image': 'centos9stream',
+    data = {'cluster': cluster, 'sslip': False, 'kube': cluster, 'kubetype': 'rke2', 'image': 'centos9stream',
             'extra_scripts': []}
     data['basedir'] = '/workdir' if container_mode() else '.'
     cluster = data.get('cluster')
@@ -53,11 +43,6 @@ def scale(config, plandir, cluster, overrides):
                        tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
                        insecure=True, cmd=tokencmd, vmport=first_vmport)
         data['token'] = os.popen(tokencmd).read().strip().split('=')[1]
-        certkeycmd = "grep CERTKEY= /root/bootstrap.sh"
-        certkeycmd = ssh(first_vm, ip=first_ip, user='root', tunnel=config.tunnel,
-                         tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
-                         insecure=True, cmd=certkeycmd, vmport=first_vmport)
-        data['cert_key'] = os.popen(certkeycmd).read().strip().split('=')[1]
     if 'api_ip' not in data:
         data['api_ip'] = None
     if 'first_ip' not in data:
@@ -101,10 +86,15 @@ def create(config, plandir, cluster, overrides):
     if 'keys' not in overrides and get_ssh_pub_key() is None:
         msg = "No usable public key found, which is required for the deployment. Create one using ssh-keygen"
         return {'result': 'failure', 'reason': msg}
+    valid_sdns = ['none', 'canal', 'calico', 'cilium']
+    if data['sdn'].lower() not in valid_sdns:
+        msg = f"Invalid sdn, Choose between {','.join(valid_sdns)}"
+        return {'result': 'failure', 'reason': msg}
     data['cluster'] = overrides.get('cluster') or cluster or 'mykube'
     plan = cluster if cluster is not None else data['cluster']
     data['kube'] = data['cluster']
-    data['kubetype'] = 'generic'
+    data['kubetype'] = 'rke2'
+    autolabel = data['autolabel']
     cloud_lb = data['cloud_lb']
     cloud_dns = data['cloud_dns']
     cloud_storage = data['cloud_storage']
@@ -167,42 +157,6 @@ def create(config, plandir, cluster, overrides):
         token2 = ''.join(choice(valid_characters) for i in range(16))
         token = f'{token1}.{token2}'
         data['token'] = token
-    cert_key = hexlify(os.urandom(32)).decode()
-    data['cert_key'] = hexlify(os.urandom(32)).decode()
-    version = data.get('version')
-    if version is not None:
-        data['minor_version'] = version
-        if not str(version).startswith('1.'):
-            msg = f"Invalid version {version}"
-            return {'result': 'failure', 'reason': msg}
-        if version.count('.') != 2:
-            original_version = version
-            version = get_release(version)
-            data['minor_version'] = version
-            if version is None:
-                msg = f"Invalid version {original_version}"
-                return {'result': 'failure', 'reason': msg}
-    kube_version = version or urlopen('https://dl.k8s.io/release/stable.txt').read().decode()
-    if not kube_version.startswith('v'):
-        kube_version = f'v{kube_version}'
-    pprint(f"Using version {kube_version}")
-    kube_version = '.'.join(kube_version.split('.')[:2])
-    kube_url = f"https://pkgs.k8s.io/core:/stable:/{kube_version}/rpm/repodata/repomd.xml"
-    try:
-        urlopen(kube_url)
-    except:
-        msg = f"Invalid version {kube_version}"
-        return {'result': 'failure', 'reason': msg}
-    if data['engine'] == 'crio':
-        engine_version = data['engine_version'] or kube_version
-        if not engine_version.startswith('v'):
-            engine_version = f'v{engine_version}'
-        engine_url = f"https://pkgs.k8s.io/addons:/cri-o:/stable:/{engine_version}/rpm/repodata/repomd.xml"
-        try:
-            urlopen(engine_url)
-        except:
-            msg = f"Invalid engine_version {engine_version}"
-            return {'result': 'failure', 'reason': msg}
     data['basedir'] = '/workdir' if container_mode() else '.'
     cluster = data.get('cluster')
     image = data.get('image', 'centos9stream')
@@ -232,9 +186,8 @@ def create(config, plandir, cluster, overrides):
         installparam['client'] = config.client
         installparam['plan'] = plan
         installparam['token'] = token
-        installparam['cert_key'] = cert_key
         installparam['cluster'] = cluster
-        installparam['kubetype'] = 'generic'
+        installparam['kubetype'] = 'rke2'
         installparam['image'] = image
         installparam['ubuntu'] = 'ubuntu' in image.lower() or len([u for u in UBUNTUS if u in image]) > 1
         installparam['first_ip'] = first_ip
@@ -259,10 +212,6 @@ def create(config, plandir, cluster, overrides):
         os.chdir(os.path.expanduser("~/.kcli"))
         worker_threaded = data.get('threaded', False) or data.get('workers_threaded', False)
         config.plan(plan, inputfile=f'{plandir}/workers.yml', overrides=data, threaded=worker_threaded)
-    prefile = 'pre_ubuntu.sh' if data['ubuntu'] else 'pre_el.sh'
-    predata = config.process_inputfile(plan, f"{plandir}/{prefile}", overrides=data)
-    with open(f"{clusterdir}/pre.sh", 'w') as f:
-        f.write(predata)
     if async_install:
         success(f"Kubernetes cluster {cluster} deployed!!!")
         info2(f"get kubeconfig from {cluster}-ctlplane-0 /root")
@@ -281,27 +230,6 @@ def create(config, plandir, cluster, overrides):
                     update_etc_hosts(cluster, domain, lb_ip)
                     break
     os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
-    apps = data.get('apps', [])
-    if data.get('metallb', False) and 'metallb' not in apps:
-        apps.append('metallb')
-    if data.get('ingress', False) and 'ingress' not in apps:
-        apps.append('ingress')
-    if data.get('policy_as_code', False) and 'policy_as_code' not in apps:
-        apps.append('policy_as_code')
-    if data.get('autolabeller', True) and 'autolabeller' not in apps:
-        apps.append('autolabeller')
-    if apps:
-        appdir = f"{plandir}/apps"
-        os.environ["PATH"] = f'{os.getcwd()}:{os.environ["PATH"]}'
-        for app in apps:
-            app_data = data.copy()
-            if not os.path.exists(appdir):
-                warning(f"Skipping unsupported app {app}")
-            else:
-                pprint(f"Adding app {app}")
-                if f'{app}_version' not in overrides:
-                    app_data[f'{app}_version'] = 'latest'
-                kube_create_app(config, app, appdir, overrides=app_data)
     if data['wait_ready']:
         pprint("Waiting for all nodes to join cluster")
         while True:
@@ -313,7 +241,7 @@ def create(config, plandir, cluster, overrides):
         config.import_in_kube(network=network, secure=True)
         with NamedTemporaryFile(mode='w+t') as temp:
             commondir = os.path.dirname(pprint.__code__.co_filename)
-            autoscale_overrides = {'cluster': cluster, 'kubetype': 'generic', 'workers': workers, 'replicas': 1}
+            autoscale_overrides = {'cluster': cluster, 'kubetype': 'rke2', 'workers': workers, 'replicas': 1}
             autoscale_data = config.process_inputfile(cluster, f"{commondir}/autoscale.yaml.j2",
                                                       overrides=autoscale_overrides)
             temp.write(autoscale_data)
@@ -323,4 +251,7 @@ def create(config, plandir, cluster, overrides):
         if provider == 'aws':
             pprint("Deploying cloud storage class")
             deploy_cloud_storage(config, cluster)
+    if autolabel:
+        autolabelcmd = 'kubectl apply -f https://raw.githubusercontent.com/karmab/autolabeller/main/autorules.yml'
+        call(autolabelcmd, shell=True)
     return {'result': 'success'}

@@ -1,0 +1,49 @@
+info: |
+    Deploys kubernetes using rke2 on an arbitrary number of ctlplanes and workers.
+    when using more than one ctlplane, a vip is used with keepalived.
+    default image is centos9stream, but there's also support for ubuntu based ones and fedora.
+    version can be let blank to get latest, or specified as x.yy or x.yy.z .
+    You can set sslip to true to use $api_ip.sslip.io as base domain.
+image: centos9stream
+network: default
+api_ip:
+cloud_lb: true
+cloud_storage: true
+ctlplanes: 1
+workers: 0
+version:
+pool: 
+cluster: myrke2
+domain: karmalabs.corp
+numcpus: 4
+worker_numcpus:
+ctlplane_numcpus:
+memory: 6144
+ctlplane_memory:
+worker_memory:
+disk_size: 30
+sdn: canal
+notifycmd: "kubectl get pod -A"
+notify: false
+kubevirt_disk_size:
+extra_disks: []
+extra_ctlplane_disks: []
+extra_worker_disks: []
+extra_networks: []
+extra_ctlplane_networks: []
+extra_worker_networks: []
+sslip: false
+virtual_router_id:
+threaded: false
+ctlplanes_threaded: false
+workers_threaded: false
+keys: []
+tempkey: false
+wait_ready: false
+autoscale: False
+async: false
+cloud_dns: false
+storedparameters: true
+token: supersecret
+multus: true
+autolabel: true

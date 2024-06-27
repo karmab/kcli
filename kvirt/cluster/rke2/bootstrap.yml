@@ -1,0 +1,44 @@
+{% if extra_ctlplane_networks %}
+ {% set extra_networks = extra_ctlplane_networks %}
+{% endif %}
+{% if extra_ctlplane_disks %}
+ {% set extra_disks = extra_ctlplane_disks %}
+{% endif %}
+
+{{ cluster }}-ctlplane-0:
+{% set primary_network = {'name': network} %}
+{% if config_type in ['aws', 'gcp', 'ibm'] %}
+{% set _= primary_network.__setitem__("reservedns", cloud_dns) %}
+{% set _= primary_network.__setitem__("alias", ["api.%s.%s" % (cluster,domain)]) %}
+{% endif %}
+ image: {{ image }}
+ pool: {{ pool or config_pool }}
+ keys: {{ keys }}
+ numcpus: {{ ctlplane_numcpus | default(numcpus, numcpus) }}
+ memory: {{ ctlplane_memory | default(memory, memory) }}
+ enableroot: true
+ domain: {{ domain }}
+ notify: {{ notify }}
+ notifycmd: {{ notifycmd }}
+{% if not async %}
+ wait: true
+ finishfiles:
+ - origin: /root/kubeconfig
+   path: ~/.kcli/clusters/{{ cluster }}/auth/kubeconfig
+{% endif %}
+ nets: {{ [primary_network] + extra_networks }}
+ disks: {{ [disk_size] + extra_disks }}
+ files:
+ - bootstrap.sh
+ - deploy.sh
+{% if config_type not in ['aws', 'gcp', 'ibm'] %}
+ - keepalived.conf
+ - keepalived.sh
+{% endif %}
+{% if 'manifests'|find_manifests %}
+ - path: /root/manifests
+   origin: manifests
+   currentdir: true
+{% endif %}
+ cmds:
+ - bash /root/deploy.sh

@@ -19,6 +19,7 @@ from kvirt.cluster import k3s
 from kvirt.cluster import kubeadm
 from kvirt.cluster import hypershift
 from kvirt.cluster import openshift
+from kvirt.cluster import rke2
 from kvirt.expose import Kexposer
 from kvirt.internalplans import haproxy as haproxyplan
 from kvirt.baseconfig import Kbaseconfig
@@ -1915,7 +1916,8 @@ class Kconfig(Kbaseconfig):
                 if existing_ctlplanes:
                     pprint(f"Cluster {cluster} found. skipped!")
                     continue
-                if kubetype not in ['generic', 'openshift', 'hypershift', 'microshift', 'k3s', 'gke', 'aks', 'eks']:
+                kubetypes = ['generic', 'openshift', 'hypershift', 'microshift', 'k3s', 'gke', 'aks', 'eks', 'rke2']
+                if kubetype not in kubetypes:
                     warning(f"Incorrect kubetype {kubetype} specified. skipped!")
                     continue
                 if kubethreaded:
@@ -2682,6 +2684,8 @@ class Kconfig(Kbaseconfig):
             result = self.create_kube_microshift(cluster, overrides=overrides)
         elif kubetype == 'k3s':
             result = self.create_kube_k3s(cluster, overrides=overrides)
+        elif kubetype == 'rke2':
+            result = self.create_kube_rke2(cluster, overrides=overrides)
         elif kubetype == 'gke':
             result = self.create_kube_gke(cluster, overrides=overrides)
         elif kubetype == 'eks':
@@ -2760,6 +2764,14 @@ class Kconfig(Kbaseconfig):
         dnsconfig = Kconfig(client=dnsclient) if dnsclient is not None else None
         return openshift.create(self, plandir, cluster, overrides, dnsconfig=dnsconfig)
 
+    def create_kube_rke2(self, cluster, overrides={}):
+        if container_mode():
+            os.environ['PATH'] += ':/workdir'
+        else:
+            os.environ['PATH'] += ':%s' % os.getcwd()
+        plandir = os.path.dirname(rke2.create.__code__.co_filename)
+        return rke2.create(self, plandir, cluster, overrides)
+
     def delete_kube(self, cluster, overrides={}):
         k = self.k
         hypershift = overrides.get('kubetype', 'xxx') == 'hypershift'
@@ -2775,8 +2787,8 @@ class Kconfig(Kbaseconfig):
         cluster = overrides.get('cluster', cluster)
         if cluster is None or cluster == '':
             default_clusters = {'generic': 'mykube', 'hypershift': 'myhypershift', 'openshift': 'myopenshift',
-                                'k3s': 'myk3s', 'microshift': 'mymicroshift', 'gke': 'mygke', 'eks': 'myeks',
-                                'aks': 'myaks'}
+                                'k3s': 'myk3s', 'microshift': 'mymicroshift', 'rke2': 'myrke2', 'gke': 'mygke',
+                                'eks': 'myeks', 'aks': 'myaks'}
             cluster = default_clusters[kubetype]
         clusterdata = {}
         clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
@@ -2952,6 +2964,8 @@ class Kconfig(Kbaseconfig):
             result = self.scale_kube_openshift(cluster, overrides=overrides)
         elif kubetype == 'hypershift':
             result = self.scale_kube_hypershift(cluster, overrides=overrides)
+        elif kubetype == 'rke2':
+            result = self.scale_kube_rke2(cluster, overrides=overrides)
         elif kubetype == 'gke':
             result = self.scale_kube_gke(cluster, overrides=overrides)
         elif kubetype == 'eks':
@@ -2988,6 +3002,10 @@ class Kconfig(Kbaseconfig):
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
         return openshift.scale(self, plandir, cluster, overrides)
 
+    def scale_kube_rke2(self, cluster, overrides={}):
+        plandir = os.path.dirname(rke2.create.__code__.co_filename)
+        return rke2.scale(self, plandir, cluster, overrides)
+
     def update_kube(self, cluster, _type, overrides={}, plan=None):
         overrides['skip_files_remediation'] = True
         overrides['scale'] = True
@@ -3011,6 +3029,9 @@ class Kconfig(Kbaseconfig):
             plandir = os.path.dirname(k3s.create.__code__.co_filename)
             roles = ['bootstrap', 'workers'] if overrides.get('ctlplanes', 1) == 1 else ['bootstrap', 'ctlplanes',
                                                                                          'workers']
+        elif _type == 'rke2':
+            roles = ['ctlplanes', 'workers']
+            plandir = os.path.dirname(rke2.create.__code__.co_filename)
         else:
             plandir = os.path.dirname(openshift.create.__code__.co_filename)
             roles = ['ctlplanes', 'workers']

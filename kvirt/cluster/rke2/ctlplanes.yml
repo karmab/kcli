@@ -1,0 +1,32 @@
+{% set first_ctlplane = 0 if scale|default(False) else 1 %}
+{% for number in range(first_ctlplane, ctlplanes|int) %}
+{% if extra_ctlplane_networks %}
+ {% set extra_networks = extra_ctlplane_networks %}
+{% endif %}
+{% if extra_ctlplane_disks %}
+ {% set extra_disks = extra_ctlplane_disks %}
+{% endif %}
+
+{{ cluster }}-ctlplane-{{ number }}:
+{% set primary_network = {'name': network} %}
+ image: {{ image }}
+ pool: {{ pool or config_pool }}
+ keys: {{ keys }}
+ numcpus: {{ ctlplane_numcpus | default(numcpus, numcpus) }}
+ memory: {{ ctlplane_memory | default(memory, memory) }}
+ domain: {{ domain }}
+{% if scale|default(False) and cloud_lb %}
+ loadbalancer: api.{{ cluster }}
+{% endif %}
+ nets: {{ [primary_network] + extra_networks }}
+ disks: {{ [disk_size] + extra_disks }}
+ files:
+{% if config_type not in ['aws', 'gcp', 'ibm'] %}
+ - keepalived.conf
+ - keepalived.sh
+{% endif %}
+ - join.sh
+ - deploy.sh
+ cmds:
+ - bash /root/deploy.sh
+{% endfor %}

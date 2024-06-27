@@ -1,0 +1,18 @@
+api.{{ cluster }}:
+ type: loadbalancer
+{% if cloud_dns %}
+ domain: {{ domain }}
+{% endif %}
+ checkport: 6443
+{% if config_type == 'aws' and network.startswith('subnet-') %}
+ subnetid: {{ network }}
+{% endif %}
+ ports:
+ - 6443
+ - 9445
+ - 2379
+ - 2380
+ vms:
+{% for num in range(0, ctlplanes|int) %}
+ - {{ cluster }}-ctlplane-{{ num }}
+{% endfor %}

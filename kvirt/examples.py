@@ -257,6 +257,16 @@ $ kcli create kube openshift -P ctlplanes=1 -P workers=2 myopenshift
 $ kcli create kube openshift --paramfile=myparameters.yml myopenshift
 """
 
+kuberke2create = """# Create a kube rke2 instance named mykube with default values
+$ kcli create kube rke2 myrke2
+
+# Do the same with workers
+$ kcli create kube rke2 -P workers=2 myrke2
+
+# Use a parameter file
+$ kcli create kube rke2 --paramfile=myparameters.yml myrke2
+"""
+
 openshiftsnocreate = """# Create an SNO openshift iso named mysno with default values
 $ kcli create openshift-sno myopenshift
 
@@ -496,6 +506,22 @@ $ kcli scale cluster openshift --workers 3 myclu
 
 # Alternative way to indicate ctlplanes
 $ kcli scale cluster openshift --ctlplanes 3 myclu
+"""
+
+kuberke2scale = """# Scale workers from rke2 cluster myclu
+$ kcli scale cluster rke2 -P workers=3 myclu
+
+# Scale ctlplanes
+$ kcli scale cluster rke2 -P ctlplanes=3 myclu
+
+# Scale both ctlplanes and workers
+$ kcli scale cluster rke2 -P ctlplanes=3 -P workers=2 myclu
+
+# Alternative way to indicate workers
+$ kcli scale cluster rke2 --workers 3 myclu
+
+# Alternative way to indicate ctlplanes
+$ kcli scale cluster rke2 --ctlplanes 3 myclu
 """
 
 networkupdate = """# Change network to isolated

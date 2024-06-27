@@ -15,6 +15,7 @@ recursive-include kvirt/cluster/kubeadm *
 recursive-include kvirt/cluster/microshift *
 recursive-include kvirt/cluster/openshift *
 recursive-include kvirt/cluster/hypershift *
+recursive-include kvirt/cluster/rke2 *
 recursive-include kvirt/cluster/profiles *
 recursive-include kvirt/version *
 recursive-include kvirt/common *

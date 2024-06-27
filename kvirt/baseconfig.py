@@ -8,6 +8,7 @@ from kvirt.cluster import k3s
 from kvirt.cluster import kubeadm
 from kvirt.cluster import microshift
 from kvirt.cluster import openshift
+from kvirt.cluster import rke2
 from kvirt import common
 from kvirt.common import error, pprint, warning, container_mode, ssh, scp, NoAliasDumper
 from kvirt import defaults as kdefaults
@@ -1061,6 +1062,11 @@ class Kbaseconfig:
 
     def info_kube_openshift(self, quiet, web=False):
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
+        inputfile = f'{plandir}/ctlplanes.yml'
+        self.info_plan(inputfile, quiet=quiet, web=web)
+
+    def info_kube_rke2(self, quiet, web=False):
+        plandir = os.path.dirname(rke2.create.__code__.co_filename)
         inputfile = f'{plandir}/ctlplanes.yml'
         self.info_plan(inputfile, quiet=quiet, web=web)
 
