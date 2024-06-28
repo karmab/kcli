@@ -170,6 +170,9 @@ $ kcli create vm -i ubuntu-minimal-2204-lts -P gpus=['{"type": "nvidia-tesla-t4"
 
 # Create 3 vm to emulate baremetal
 $ kcli create vm -P start=false -P memory=20480 -P numcpus=16 -P disks=[200] -P uefi=true -P nets=[default] -c 3 myclu
+
+# Create an sriov enabled vm (on KVM only)
+$ kcli create vm -i centos9stream -P nets=['{"name": "default"}','{"name": "default", "sriov": "true"}']
 """
 
 vmconsole = """# Open a graphical console for vm ( only shows the command if using container)

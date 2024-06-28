@@ -600,7 +600,9 @@ class Kvirt(object):
             else:
                 _id = cell['id']
                 matchingnics = [nic for nic in nets if isinstance(nic, dict) and 'numa' in nic and nic['numa'] == _id]
-                if 'machine' not in overrides and [nic for nic in matchingnics if 'vfio' in nic and nic['vfio']]:
+                vfio = [nic for nic in matchingnics if 'vfio' in nic and nic['vfio']]
+                sriov = [nic for nic in matchingnics if 'sriov' in nic and nic['sriov']]
+                if 'machine' not in overrides and (vfio or sriov):
                     machine = 'q35'
                     warning(f"Forcing machine type to {machine}")
                 newindex = 1
@@ -631,6 +633,10 @@ class Kvirt(object):
                 nets[index] = {'name': netname}
             elif isinstance(net, dict):
                 netname = net.get('name', 'default')
+                if net.get('sriov', False):
+                    nets[index]['type'] = 'igb'
+                    nets[index]['vfio'] = True
+                    nets[index]['noconf'] = True
                 if 'mac' in nets[index]:
                     mac = nets[index]['mac']
                     macxml = f"<mac address='{mac}'/>"
@@ -654,7 +660,6 @@ class Kvirt(object):
                     mtuxml = f"<mtu size='{nets[index]['mtu']}'/>"
                 if 'vfio' in nets[index] and nets[index]['vfio']:
                     iommuxml = "<iommu model='intel'/>"
-                    # ioapicxml = "<ioapic driver='qemu'/>"
                 if 'multiqueues' in nets[index]:
                     multiqueues = nets[index]['multiqueues']
                     if not isinstance(multiqueues, int):
