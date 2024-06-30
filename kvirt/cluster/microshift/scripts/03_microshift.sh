@@ -5,9 +5,9 @@ if [ -d /root/manifests ] ; then
  cp /root/manifests/*y*ml /etc/microshift/manifests
 fi
 
-dnf -y install microshift {{ 'microshift-olm' if olm|default(False) else '' }}
+dnf -y install microshift {{ 'microshift-olm' if olm|default(False) else '' }} microshift-olm microshift-multus
 BASEDOMAIN={{ "$(hostname)" if sslip else cluster + '.' + domain }}
-sed -i "s@#baseDomain: .*@baseDomain: $BASEDOMAIN@" /etc/microshift/config.yaml.default
-sed -i "s@#subjectAltNames:.*@subjectAltNames: \[\"api.$BASEDOMAIN\"\]@" /etc/microshift/config.yaml.default
-mv /etc/microshift/config.yaml.default /etc/microshift/config.yaml
+
+microshift show-config > /etc/microshift/config.yaml
+python /root/scripts/config.py $BASEDOMAIN
 systemctl enable --now microshift
