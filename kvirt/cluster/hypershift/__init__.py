@@ -95,7 +95,7 @@ def get_info(url, user, password):
 
 def create_bmh_objects(config, plandir, cluster, namespace, baremetal_hosts, overrides={}):
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
-    uefi = overrides.get('uefi', False)
+    uefi = overrides.get('uefi', True)
     nmstatedata = ''
     with open(f"{clusterdir}/bmcs.yml", 'w') as f:
         for index, host in enumerate(baremetal_hosts):
