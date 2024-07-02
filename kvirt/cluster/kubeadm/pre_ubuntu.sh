@@ -28,7 +28,7 @@ curl -fsSL https://pkgs.k8s.io/addons:/cri-o:/$PROJECT_PATH/deb/Release.key | gp
 echo "deb [signed-by=/etc/apt/keyrings/cri-o-apt-keyring.gpg] https://pkgs.k8s.io/addons:/cri-o:/$PROJECT_PATH/deb/ /" > /etc/apt/sources.list.d/cri-o.list
 
 apt-get update
-apt-get -y install cri-o cri-o-runc software-properties-common
+apt-get -y install cri-o runc software-properties-common
 sed -i 's@conmon = .*@conmon = "/bin/conmon"@' /etc/crio/crio.conf
 echo """[crio.network]
 plugin_dirs = [\"/opt/cni/bin\", \"/usr/libexec/cni\",]""" > /etc/crio/crio.conf.d/00-plugin-dir.conf
