@@ -181,13 +181,14 @@ class Kvirt(object):
         results = {'kvm': False, 'nestedfeature': None, 'machines': [], 'arch': arch}
         capabilitiesxml = self.conn.getCapabilities()
         root = ET.fromstring(capabilitiesxml)
+        cpuxml = ''
         if arch is None:
             host = root.find('host')
             cpu = host.find('cpu')
             try:
                 cpuxml = self.conn.baselineCPU([ET.tostring(cpu, encoding='unicode')], 1)
             except:
-                cpuxml = ''
+                pass
             arch = cpu.find('arch').text
             results['arch'] = arch
         for guest in list(root.iter('guest')):
