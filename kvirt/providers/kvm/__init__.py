@@ -89,30 +89,31 @@ class Kvirt(object):
     def __init__(self, host='127.0.0.1', port=None, user='root', protocol='ssh', url=None, debug=False, insecure=False,
                  session=False, remotednsmasq=False):
         if url is None:
-            socketf = '/var/run/libvirt/libvirt-sock' if not session else f'/home/{user}/.cache/libvirt/libvirt-sock'
-            conntype = 'system' if not session else 'session'
+            connectiontype = 'system' if not session else 'session'
             if host == '127.0.0.1' or host == 'localhost':
-                url = f"qemu:///{conntype}"
+                url = f"qemu:///{connectiontype}"
                 if os.path.exists("/i_am_a_container") and not os.path.exists('/var/run/libvirt'):
                     error("You need to add -v /var/run/libvirt:/var/run/libvirt to container alias")
                     self.conn = None
                     return
             elif protocol == 'ssh':
                 if port != 22:
-                    url = f"qemu+{protocol}://{user}@{host}:{port}/{conntype}?socket={socketf}"
+                    url = f"qemu+{protocol}://{user}@{host}:{port}/{connectiontype}"
                 else:
-                    url = f"qemu+{protocol}://{user}@{host}/{conntype}?socket={socketf}"
+                    url = f"qemu+{protocol}://{user}@{host}/{connectiontype}"
             elif port:
-                url = f"qemu+{protocol}://{user}@{host}:{port}/{conntype}?socket={socketf}"
+                url = f"qemu+{protocol}://{user}@{host}:{port}/{connectiontype}"
             else:
-                url = f"qemu:///{conntype}"
+                url = f"qemu:///{connectiontype}"
             if url.startswith('qemu+ssh'):
+                url = f"{url}?no_verify=1"
                 publickeyfile = get_ssh_pub_key()
                 if publickeyfile is not None:
                     privkeyfile = publickeyfile.replace('.pub', '')
-                    url = f"{url}&no_verify=1&keyfile={privkeyfile}"
-                elif insecure:
-                    url = f"{url}&no_verify=1"
+                    url = f"{url}&keyfile={privkeyfile}"
+            elif os.path.exists("/i_am_a_container"):
+                socketdir = '/var/run/libvirt' if not session else f'/home/{user}/.cache/libvirt'
+                url = f"{url}?socketf={socketdir}/libvirt-sock"
         try:
             self.conn = libvirtopen(url)
             self.debug = debug
