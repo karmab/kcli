@@ -1096,7 +1096,7 @@ We can interact using the same constructs with other objects, such as network or
 
 -  Create new pool
 
-   -  ``kcli create pool -t dir -p /hom/images images``
+   -  ``kcli create pool -p /home/images images``
 
 Omitting vm’s name
 ------------------
