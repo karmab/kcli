@@ -1017,7 +1017,7 @@ class Kconfig(Kbaseconfig):
             if not cloudinit or not start or image is None:
                 pprint(f"Skipping wait on {name}")
             else:
-                identityfile = None
+                identityfile = f'{plan}.key' if os.path.exists(f'{plan}.key') else None
                 tempkey_clean = False
                 if overrides.get('tempkeydir') is not None:
                     identityfile = f"{overrides['tempkeydir'].name}/id_rsa"
@@ -2143,7 +2143,6 @@ class Kconfig(Kbaseconfig):
                                             {'path': '/root/.ssh/id_rsa.pub', 'content': publickey}]
                     if vmcounter >= len(vmentries):
                         os.remove(f"{plan}.key.pub")
-                        os.remove(f"{plan}.key")
                 currentoverrides = overrides.copy()
                 if 'image' in profile:
                     for entry in self.list_profiles():

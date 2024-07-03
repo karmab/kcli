@@ -6,6 +6,7 @@ import os
 import re
 import sys
 from urllib.request import urlopen
+from time import sleep
 import yaml
 
 
@@ -149,7 +150,7 @@ def network_ip(network, num=0, version=False):
         sys.exit(1)
 
 
-def kcli_info(name, key=None, client=None):
+def kcli_info(name, key=None, client=None, wait=False):
     client_header = f'-C {client}' if client is not None else ''
     if key is not None:
         c = f"kcli {client_header} info vm -vf {key} {name}"
@@ -157,6 +158,10 @@ def kcli_info(name, key=None, client=None):
     else:
         c = f"kcli {client_header} info vm -o yaml {name}"
         result = yaml.load(os.popen(c).read())
+    if result == '' and wait:
+        sleep(10)
+        print(f"Waiting 10s for info to be available on {name}")
+        return kcli_info(name, key=key, client=client, wait=wait)
     return result
 
 
