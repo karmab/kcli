@@ -2312,8 +2312,7 @@ def info_plan(args):
     if args.plan is not None:
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
-        info_quiet = output is not None
-        _list = config.info_specific_plan(args.plan, quiet=info_quiet)
+        _list = config.info_specific_plan(args.plan, quiet=quiet)
         if output is not None:
             _list_output(_list, output)
         else:
@@ -4766,7 +4765,7 @@ def cli():
     planinfo_parser.add_argument('--doc', action='store_true', help='Render info as markdown table')
     planinfo_parser.add_argument('-f', '--inputfile', help='Input Plan file')
     planinfo_parser.add_argument('-p', '--path', help='Path where to download plans. Defaults to plan', metavar='PATH')
-    planinfo_parser.add_argument('-q', '--quiet', action='store_true', help='Provide parameter file output')
+    planinfo_parser.add_argument('-q', '--quiet', action='store_true', help='Be quiet')
     planinfo_parser.add_argument('-u', '--url', help='Url for plan', metavar='URL', type=valid_url)
     planinfo_parser.add_argument('plan', metavar='PLAN', nargs='?')
     planinfo_parser.set_defaults(func=info_plan)
