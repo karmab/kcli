@@ -1525,7 +1525,7 @@ class Kbaseconfig:
             warning("ssl support requires installing manually pyopenssl and cherrypy")
         root = os.getuid() == 0
         if root:
-            service_file = "/usr/lib/systemd/system/ksushy.service"
+            service_file = "/etc/systemd/system/ksushy.service"
         else:
             service_file = f"{os.environ.get('HOME')}/.config/systemd/user/ksushy.service"
         if not os.path.exists(os.path.dirname(service_file)):

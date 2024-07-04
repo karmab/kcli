@@ -214,8 +214,8 @@ After=syslog.target
 [Service]
 Type=simple
 ExecStart={executable}
-StandardOutput=syslog
-StandardError=syslog
+StandardOutput=journal
+StandardError=journal
 Environment=HOME={home}
 Environment=PYTHONUNBUFFERED=true
 {port}{ipv6}{ssl}{user}{password}{bootonce}
@@ -228,8 +228,8 @@ After=syslog.target
 [Service]
 Type=simple
 ExecStart=kweb
-StandardOutput=syslog
-StandardError=syslog
+StandardOutput=journal
+StandardError=journal
 Environment=HOME={home}
 Environment=PYTHONUNBUFFERED=true
 {port}{ipv6}
