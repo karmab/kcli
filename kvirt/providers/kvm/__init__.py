@@ -1395,9 +1395,7 @@ class Kvirt(object):
                 vm.create()
             except Exception as e:
                 return {'result': 'failure', 'reason': e}
-            self.reserve_dns(name, nets=nets, domain=domain, alias=alias, force=True, primary=reservedns)
-        elif reservedns:
-            warning("Ignoring reservedns as vm won't be powered up")
+        self.reserve_dns(name, nets=nets, domain=domain, alias=alias, force=True, primary=reservedns, start=start)
         if reservehost:
             self.reserve_host(name, nets, domain)
         if '<kernel>' in xml:
@@ -2394,7 +2392,7 @@ class Kvirt(object):
                 except Exception as e:
                     warning(e)
 
-    def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False):
+    def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False, start=True):
         conn = self.conn
         bridged = False
         for index, net in enumerate(nets):
@@ -2419,9 +2417,12 @@ class Kvirt(object):
                     warning(f"Network {netname} can't be used for dns entries")
                     return
             if ip is None:
-                if isinstance(net, dict):
-                    ip = net.get('ip')
-                if ip is None:
+                if isinstance(net, dict) and 'ip' in net:
+                    ip = net['ip']
+                elif not start:
+                    warning("Ignoring reservedns as vm won't be powered up")
+                    continue
+                else:
                     counter = 0
                     while counter != 300:
                         ip = self.ip(name)
@@ -2431,9 +2432,9 @@ class Kvirt(object):
                             counter += 5
                         else:
                             break
-            if ip is None:
-                error(f"Couldn't assign dns entry {name} in net {netname}")
-                continue
+                if ip is None:
+                    error(f"Couldn't figure ip to assign dns entry {name} in net {netname}")
+                    continue
             if bridged:
                 self._create_host_entry(name, ip, netname, domain)
             else:
