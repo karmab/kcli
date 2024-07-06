@@ -2500,3 +2500,32 @@ def interactive_kube(_type):
             value = int(value)
         overrides[key] = value
     return overrides
+
+
+def plan_constructor(loader, node, deep=False):
+    mapping = {}
+    types = []
+    for key_node, value_node in node.value:
+        key = loader.construct_object(key_node, deep=deep)
+        value = loader.construct_object(value_node, deep=deep)
+        if isinstance(value, dict):
+            _type = value.get('type', 'vm')
+            if key == 'parameters':
+                mapping[key] = value
+            elif _type not in types:
+                mapping[_type] = [{key: value}]
+                types.append(_type)
+            elif [entry for entry in mapping[_type] if next(iter(entry)) == key]:
+                raise Exception(f"Duplicate key {key} for type {_type}")
+            else:
+                mapping[_type].append({key: value})
+        else:
+            mapping[key] = value
+    return mapping
+
+
+class PlanLoader(yaml.SafeLoader):
+    pass
+
+
+PlanLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, plan_constructor)

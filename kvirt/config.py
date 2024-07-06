@@ -1725,7 +1725,7 @@ class Kconfig(Kbaseconfig):
             return {'result': 'success'}
         baseentries = {}
         entries, overrides, basefile, basedir = self.process_inputfile(plan, inputfile, overrides=overrides,
-                                                                       onfly=onfly, full=True)
+                                                                       onfly=onfly, full=True, split=True)
         if basefile is not None:
             baseinfo = self.process_inputfile(plan, f"{basedir}/{basefile}", overrides=overrides, full=True)
             baseentries, baseoverrides = baseinfo[0], baseinfo[1]
@@ -1738,8 +1738,9 @@ class Kconfig(Kbaseconfig):
         parameters = entries.get('parameters')
         if parameters is not None:
             del entries['parameters']
-        dict_types = [entry for entry in entries if isinstance(entries[entry], dict)]
-        if not dict_types:
+        valid_plan = [entry for entry in entries if isinstance(entries[entry], list) and
+                      all(isinstance(item, dict) for item in entries[entry])]
+        if not valid_plan:
             if basemode:
                 warning(f"{inputfile} doesn't look like a valid plan.Skipping....")
                 return {"result": "success"}
@@ -1778,35 +1779,30 @@ class Kconfig(Kbaseconfig):
                     sys.exit(1)
                 elif overrides[key] is not None:
                     setattr(self, key, overrides[key])
-        vmentries = [entry for entry in entries if 'type' not in entries[entry] or entries[entry]['type'] == 'vm']
-        diskentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'disk']
-        networkentries = [entry for entry in entries
-                          if 'type' in entries[entry] and entries[entry]['type'] == 'network']
-        containerentries = [entry for entry in entries
-                            if 'type' in entries[entry] and entries[entry]['type'] == 'container']
-        ansibleentries = [entry for entry in entries
-                          if 'type' in entries[entry] and entries[entry]['type'] == 'ansible']
-        profileentries = [entry for entry in entries
-                          if 'type' in entries[entry] and entries[entry]['type'] == 'profile']
-        imageentries = [entry for entry in entries if 'type' in
-                        entries[entry] and (entries[entry]['type'] == 'image' or entries[entry]['type'] == 'template')]
-        poolentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'pool']
-        planentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'plan']
-        dnsentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'dns']
-        kubes = ['kube', 'cluster']
-        kubeentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] in kubes]
-        lbs = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'loadbalancer']
-        sgs = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'securitygroup']
-        bucketentries = [entry for entry in entries if 'type' in entries[entry] and entries[entry]['type'] == 'bucket']
-        workflowentries = [entry for entry in entries
-                           if 'type' in entries[entry] and entries[entry]['type'] == 'workflow']
-        for p in profileentries:
-            vmprofiles[p] = entries[p]
+        vmentries = entries.get('vm', [])
+        diskentries = entries.get('disk', [])
+        networkentries = entries.get('network', [])
+        containerentries = entries.get('container', [])
+        ansibleentries = entries.get('ansible', [])
+        profileentries = entries.get('profile', [])
+        imageentries = entries.get('image', []) + entries.get('template', [])
+        poolentries = entries.get('pool', [])
+        planentries = entries.get('plan', [])
+        dnsentries = entries.get('dns', [])
+        kubeentries = entries.get('kube', []) + entries.get('cluster', [])
+        lbs = entries.get('loadbalancer', [])
+        sgs = entries.get('securitygroup', [])
+        bucketentries = entries.get('bucket', [])
+        workflowentries = entries.get('workflow', [])
+        for entry in profileentries:
+            p = next(iter(entry))
+            vmprofiles[p] = entry[p]
         hosts = {}
         if networkentries and not onlyassets:
             pprint("Deploying Networks...")
-            for net in networkentries:
-                netprofile = entries[net]
+            for entry in networkentries:
+                net = next(iter(entry))
+                netprofile = entry[net]
                 vmclient, z = self.select_client(netprofile.get('vmclient'), hosts)
                 if z is None:
                     continue
@@ -1826,12 +1822,13 @@ class Kconfig(Kbaseconfig):
         if poolentries and not onlyassets:
             pprint("Deploying Pools...")
             pools = k.list_pools()
-            for pool in poolentries:
+            for entry in poolentries:
+                pool = next(iter(entry))
                 if pool in pools:
                     pprint(f"Pool {pool} skipped!")
                     continue
                 else:
-                    poolprofile = entries[pool]
+                    poolprofile = entry[pool]
                     poolpath = poolprofile.get('path')
                     if poolpath is None:
                         warning(f"Pool {pool} skipped as path is missing!")
@@ -1840,8 +1837,9 @@ class Kconfig(Kbaseconfig):
         if imageentries and not onlyassets:
             pprint("Deploying Images...")
             images = [os.path.basename(t) for t in k.volumes()]
-            for image in imageentries:
-                imageprofile = entries[image]
+            for entry in imageentries:
+                image = next(iter(entry))
+                imageprofile = entry[image]
                 pool = imageprofile.get('pool', self.pool)
                 imagesize = imageprofile.get('size')
                 imageurl = imageprofile.get('url')
@@ -1855,8 +1853,9 @@ class Kconfig(Kbaseconfig):
                     self.download_image(pool=pool, image=image, cmd=cmd, url=imageurl, size=imagesize)
         if bucketentries and not onlyassets and self.type in ['aws', 'azure', 'gcp', 'openstack']:
             pprint("Deploying Bucket Entries...")
-            for bucketentry in bucketentries:
-                bucketprofile = entries[bucketentry]
+            for entry in bucketentries:
+                bucketentry = next(iter(entry))
+                bucketprofile = entry[bucketentry]
                 _files = bucketprofile.get('files', [])
                 self.k.create_bucket(bucketentry)
                 for _fil in _files:
@@ -1868,8 +1867,9 @@ class Kconfig(Kbaseconfig):
             overrides['tempkeydirkeep'] = True
         if planentries:
             pprint("Deploying Plans...")
-            for planentry in planentries:
-                details = entries[planentry]
+            for entry in planentries:
+                planentry = next(iter(entry))
+                details = entry[planentry]
                 planurl = details.get('url')
                 planfile = details.get('file')
                 if planurl is None and planfile is None:
@@ -1897,9 +1897,10 @@ class Kconfig(Kbaseconfig):
             kubethreaded = len(kubeentries) > 1
             if kubethreaded:
                 warning("Launching each cluster in a thread as there is more than one...")
-            for cluster in kubeentries:
+            for entry in kubeentries:
+                cluster = next(iter(entry))
                 pprint(f"Deploying Cluster {cluster}...")
-                kubeprofile = entries[cluster]
+                kubeprofile = entry[cluster]
                 kubeclient = kubeprofile.get('client')
                 if kubeclient is None:
                     currentconfig = self
@@ -1948,16 +1949,17 @@ class Kconfig(Kbaseconfig):
                     return result
                 baseplans.append(basefile)
             vmrules_strict = overrides.get('vmrules_strict', self.vmrules_strict)
-            for name in vmentries:
+            for entry in vmentries:
+                name = next(iter(entry))
                 if name in excludevms:
                     continue
                 currentplandir = basedir
                 if len(vmentries) == 1 and 'name' in overrides:
                     newname = overrides['name']
-                    profile = entries[name]
+                    profile = entry[name]
                     name = newname
                 else:
-                    profile = entries[name]
+                    profile = entry[name]
                 if 'name' in profile:
                     name = profile['name']
                 if 'basevm' in profile or 'baseplan' in profile:
@@ -1992,7 +1994,7 @@ class Kconfig(Kbaseconfig):
                     if len(entry) != 1:
                         error(f"Wrong vm rule {entry}")
                         sys.exit(1)
-                    rule = list(entry.keys())[0]
+                    rule = next(iter(entry))
                     if (re.match(rule, name) or fnmatch(name, rule)) and isinstance(entry[rule], dict):
                         rulefound = True
                         listkeys = ['cmds', 'files', 'scripts']
@@ -2181,8 +2183,9 @@ class Kconfig(Kbaseconfig):
             yaml.safe_dump(vmclients, open(os.path.expanduser(f'~/.kcli/vmclients_{plan}'), 'w'))
         if diskentries and not onlyassets:
             pprint("Deploying Disks...")
-        for disk in diskentries:
-            profile = entries[disk]
+        for entry in diskentries:
+            disk = next(iter(entry))
+            profile = entry[disk]
             pool = profile.get('pool')
             vms = profile.get('vms')
             template = profile.get('template')
@@ -2218,11 +2221,12 @@ class Kconfig(Kbaseconfig):
             cont = Kcontainerconfig(self, client=self.containerclient).cont
             pprint("Deploying Containers...")
             label = f"plan={plan}"
-            for container in containerentries:
+            for entry in containerentries:
+                container = next(iter(entry))
                 if cont.exists_container(container):
                     pprint(f"Container {container} skipped!")
                     continue
-                profile = entries[container]
+                profile = entry[container]
                 if 'profile' in profile and profile['profile'] in containerprofiles:
                     customprofile = containerprofiles[profile['profile']]
                 else:
@@ -2244,8 +2248,9 @@ class Kconfig(Kbaseconfig):
         if dnsentries and not onlyassets:
             pprint("Deploying Dns Entries...")
             dnsclients = {}
-            for dnsentry in dnsentries:
-                dnsprofile = entries[dnsentry]
+            for entry in dnsentries:
+                dnsentry = next(iter(entry))
+                dnsprofile = entry[dnsentry]
                 dnsdomain = dnsprofile.get('domain')
                 dnsnet = dnsprofile.get('net', 'default')
                 dnsip = dnsprofile.get('ip')
@@ -2274,7 +2279,8 @@ class Kconfig(Kbaseconfig):
                 warning("Ansible skipped as no new vm within playbook provisioned")
                 return {'result': 'success'}
             for entry in sorted(ansibleentries):
-                _ansible = entries[entry]
+                ansible_name = next(iter(entry))
+                _ansible = entry[ansible_name]
                 if 'playbook' not in _ansible:
                     error("Missing Playbook for ansible.Ignoring...")
                     sys.exit(1)
@@ -2326,8 +2332,9 @@ class Kconfig(Kbaseconfig):
         if lbs and not onlyassets:
             dnsclients = {}
             pprint("Deploying Loadbalancers...")
-            for index, lbentry in enumerate(lbs):
-                details = entries[lbentry]
+            for index, entry in enumerate(lbs):
+                lbentry = next(iter(entry))
+                details = entry[lbentry]
                 ports = details.get('ports', [])
                 if not ports:
                     error("Missing Ports for loadbalancer. Not creating it...")
@@ -2346,8 +2353,9 @@ class Kconfig(Kbaseconfig):
                                          internal=internal, dnsclient=dnsclient, ip=ip)
         if sgs and not onlyassets:
             pprint("Deploying SecurityGroups...")
-            for sg in sgs:
-                details = entries[sg]
+            for entry in sgs:
+                sg = next(iter(entry))
+                details = entry[sg]
                 name
                 ports = details.get('ports', [])
                 if not ports:
@@ -2356,9 +2364,10 @@ class Kconfig(Kbaseconfig):
                 self.create_security_group(sg, {'ports': ports})
         if workflowentries and not onlyassets:
             pprint("Deploying Workflow Entries...")
-            for workflow in workflowentries:
+            for entry in workflowentries:
+                workflow = next(iter(entry))
                 workflow_overrides = overrides.copy()
-                workflow_overrides.update(entries[workflow])
+                workflow_overrides.update(entry[workflow])
                 self.create_workflow(workflow, overrides=workflow_overrides)
         returndata = {'result': 'success', 'plan': plan}
         returndata['newvms'] = newvms if newvms else []
