@@ -11,6 +11,7 @@ from kvirt.cluster import openshift
 from kvirt.cluster import rke2
 from kvirt import common
 from kvirt.common import error, pprint, warning, container_mode, ssh, scp, NoAliasDumper
+from kvirt.common import PlanLoader
 from kvirt import defaults as kdefaults
 from kvirt.jinjafilters import jinjafilters
 import os
@@ -724,7 +725,7 @@ class Kbaseconfig:
                 return {'product': product, 'parameters': parameters}
 
     def process_inputfile(self, plan, inputfile, overrides={}, onfly=None, full=False, ignore=False,
-                          download_mode=False, extra_funcs=[]):
+                          download_mode=False, extra_funcs=[], split=False):
         default_dir = '/workdir' if container_mode() else '.'
         basedir = os.path.dirname(inputfile) if os.path.dirname(inputfile) != '' else default_dir
         basefile = None
@@ -805,7 +806,10 @@ class Kbaseconfig:
                             break
                 return entries
             try:
-                entries = yaml.safe_load(entries)
+                if split:
+                    entries = yaml.load(entries, Loader=PlanLoader)
+                else:
+                    entries = yaml.safe_load(entries)
             except Exception as e:
                 error(f"Couldn't load file. Hit {e}")
                 sys.exit(1)
