@@ -56,8 +56,7 @@ baremetal_hosts: []
 virtual_router_id:
 pub_key:
 operator_image: quay.io/hypershift/hypershift-operator:latest
-mce: true
-mce_assisted: false
+upstream: False
 retries: 3
 coredns: true
 sslip: false

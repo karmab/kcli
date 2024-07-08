@@ -277,6 +277,7 @@ def create(config, plandir, cluster, overrides):
     ignore_hosts = data.get('ignore_hosts', False)
     pprint(f"Deploying cluster {clustervalue}")
     plan = cluster if cluster is not None else clustervalue
+    upstream = data['upstream']
     platform = data.get('platform')
     assisted = platform == 'assisted'
     data['assisted'] = assisted
@@ -341,17 +342,26 @@ def create(config, plandir, cluster, overrides):
     kubeconfig = os.path.basename(kubeconfig) if kubeconfig is not None else 'config'
     hosted_crd_cmd = 'oc get crd hostedclusters.hypershift.openshift.io -o yaml 2>/dev/null'
     assisted_crd_cmd = 'oc -n multicluster-engine get pod -l app=assisted-service -o name 2>/dev/null'
-    if safe_load(os.popen(hosted_crd_cmd).read()) is None\
-       or (assisted and safe_load(os.popen(assisted_crd_cmd).read()) is None):
-        warning("Hypershift not fully installed. Installing it for you")
-        if data['mce'] or assisted:
-            mce_assisted = assisted or data['mce_assisted']
-            app_name, source, channel, csv, description, x_namespace, channels, crds = olm_app('multicluster-engine')
-            app_data = {'name': app_name, 'source': source, 'channel': channel, 'namespace': x_namespace, 'csv': csv,
-                        'mce_hypershift': True, 'assisted': mce_assisted, 'version': version, 'tag': tag}
-            config.create_app_openshift(app_name, app_data)
-            sleep(240)
-        elif which('podman') is None:
+    need_hypershift = safe_load(os.popen(hosted_crd_cmd).read()) is None
+    need_assisted = assisted and safe_load(os.popen(assisted_crd_cmd).read()) is None
+    need_mce = (need_hypershift and not upstream) or need_assisted
+    if need_mce:
+        mce_hypershift = need_hypershift and not upstream
+        if mce_hypershift:
+            warning("Hypershift needed. Installing it for you")
+        if need_assisted:
+            warning("Also installing assisted")
+        app_name, source, channel, csv, description, x_namespace, channels, crds = olm_app('multicluster-engine')
+        app_data = {'name': app_name, 'source': source, 'channel': channel, 'namespace': x_namespace, 'csv': csv,
+                    'mce_hypershift': mce_hypershift, 'assisted': need_assisted, 'version': version, 'tag': tag}
+        config.create_app_openshift(app_name, app_data)
+        sleep(240)
+        if assisted and safe_load(os.popen(assisted_crd_cmd).read()) is None:
+            msg = "Couldnt install assisted via mce properly"
+            return {'result': 'failure', 'reason': msg}
+    if need_hypershift and upstream:
+        warning("Hypershift needed. Installing it for you")
+        if which('podman') is None:
             msg = "Please install podman first in order to install hypershift"
             return {'result': 'failure', 'reason': msg}
         else:
@@ -364,9 +374,6 @@ def create(config, plandir, cluster, overrides):
             sleep(120)
     if safe_load(os.popen(hosted_crd_cmd).read()) is None:
         msg = "Couldnt install hypershift properly"
-        return {'result': 'failure', 'reason': msg}
-    elif assisted and safe_load(os.popen(assisted_crd_cmd).read()) is None:
-        msg = "Couldnt install assisted properly"
         return {'result': 'failure', 'reason': msg}
     registry = 'quay.io'
     management_image = os.popen("oc get clusterversion version -o jsonpath='{.status.desired.image}'").read()
