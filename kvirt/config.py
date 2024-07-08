@@ -1937,7 +1937,7 @@ class Kconfig(Kbaseconfig):
             vmcounter = 0
             vms_to_host = {}
             baseplans = []
-            vmnames = [name for name in vmentries]
+            vmnames = [next(iter(entry)) for entry in vmentries]
             if basefile is not None:
                 basedir = os.path.dirname(inputfile) if os.path.isabs(inputfile) else '.'
                 baseinputfile = f"{basedir}/{basefile}"
