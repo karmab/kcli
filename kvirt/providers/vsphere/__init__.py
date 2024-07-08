@@ -938,7 +938,8 @@ class Ksphere:
             devices = v.config.hardware.device
             for number, dev in enumerate(devices):
                 if type(dev).__name__ == 'vim.vm.device.VirtualDisk':
-                    results.append(f'{dev.backing.datastore.name}/{v.name}')
+                    prefix = '' if self.restricted else f'{dev.backing.datastore.name}/'
+                    results.append(f'{prefix}{v.name}')
         return sorted(results)
 
     def update_metadata(self, name, metatype, metavalue, append=False):
