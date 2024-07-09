@@ -1,7 +1,7 @@
 {% for num in range(0, assisted_vms_number) %}
 {{ cluster }}-{{ num }}:
   user: core
-  uefi: true
+  uefi: {{ uefi|default(True) }}
   start: false
   kube: {{ cluster }}
   kubetype: hypershift
