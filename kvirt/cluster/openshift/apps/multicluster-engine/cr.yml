@@ -9,7 +9,7 @@ spec:
 {% endif %}
   overrides:
     components:
-    - name: hypershift-preview
+    - name: hypershift
       enabled: true
 {% else %}
 {% if not mce_ha_config %}
