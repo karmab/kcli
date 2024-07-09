@@ -1,4 +1,4 @@
-FROM quay.io/karmab/python:3.11-slim-bookworm
+FROM quay.io/karmab/python:3.12-slim-bookworm
 
 MAINTAINER Karim Boumedhel <karimboumedhel@gmail.com>
 
