@@ -2,7 +2,6 @@ apiVersion: multicluster.openshift.io/v1
 kind: MultiClusterEngine
 metadata:
   name: multiclusterengine
-{% if mce_hypershift %}
 spec:
 {% if not mce_ha_config %}
   availabilityConfig: Basic
@@ -10,12 +9,4 @@ spec:
   overrides:
     components:
     - name: hypershift
-      enabled: true
-{% else %}
-{% if not mce_ha_config %}
-spec:
-  availabilityConfig: Basic
-{% else %}
-spec: {}
-{% endif %}
-{% endif %}
+      enabled: {{ mce_hypershift }}

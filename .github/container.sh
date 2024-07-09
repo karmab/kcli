@@ -5,7 +5,7 @@ GIT_VERSION="$TAG $(date +%Y/%m/%d)"
 echo $GIT_VERSION > kvirt/version/git
 
 # temp ci fix
-sed -i 's/ + OPENSTACK//' extras/debian
+sed -i 's/ + OPENSTACK//' setup.py
 
 podman build -t quay.io/karmab/kcli:latest -f extras/debian .
 podman login -u $QUAY_USERNAME -p $QUAY_PASSWORD quay.io
