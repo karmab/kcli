@@ -19,7 +19,7 @@ VSPHERE = ['pyvmomi', 'cryptography']
 IBMCLOUD = ['google-crc32c==1.1.2', 'ibm_vpc', 'ibm-cos-sdk', 'ibm-platform-services', 'ibm-cloud-networking-services']
 #           'cos-aspera']
 EXTRAS = ['pyghmi']
-ALL = ['docker>=2.0'] + ['podman'] + ['websockify'] + EXTRAS + AWS + GCP + KUBEVIRT + OPENSTACK + OVIRT\
+ALL = ['podman'] + ['websockify'] + EXTRAS + AWS + GCP + KUBEVIRT + OPENSTACK + OVIRT\
     + PACKET + VSPHERE + IBMCLOUD + AZURE
 
 description = 'Provisioner/Manager for Libvirt/Vsphere/Aws/Gcp/Kubevirt/Ovirt/Openstack/IBM Cloud and containers'
