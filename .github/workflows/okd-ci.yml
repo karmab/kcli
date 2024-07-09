@@ -1,15 +1,15 @@
-name: HYPERSHIFT-ASSISTED-CI
+name: OKD-CI
 on:
   workflow_dispatch:
     inputs:
-      CLUSTER:
-        description: 'Cluster'
+      PLAN:
+        description: 'Plan Name'
         required: true
-        default: ci-hypershift-assisted
+        default: ci-okd
       PARAMFILE:
         description: 'paramfile'
         required: false
-        default: openshift-ci-paramfiles/hypershift_assisted.yml
+        default: openshift-ci-paramfiles/okd.yml
       EXTRAPARAMS:
         description: 'Extra params'
         default: ''
@@ -17,10 +17,18 @@ on:
         description: 'Pull Secret'
         required: false
         default: /root/openshift_pull.json
+      NETWORK:
+        description: 'network'
+        required: false
+        default: okd-network
+      NETWORK_CIDR:
+        description: 'network_cidr'
+        required: false
+        default: 192.168.131.0/24
       VERSION:
         description: 'version'
         required: false
-        default: latest
+        default: stable
       TAG:
         description: 'tag'
         required: false
@@ -29,33 +37,25 @@ on:
 env:
  HOME: /root
  PYTHONUNBUFFERED: true
- KUBECONFIG: /root/.kcli/clusters/ci-sno/auth/kubeconfig
- CLUSTER: ${{github.event.inputs.CLUSTER}}
+ PLAN: ${{github.event.inputs.PLAN}}
  INPUTFILE: ${{github.event.inputs.INPUTFILE}}
  PARAMFILE: ${{github.event.inputs.PARAMFILE}}
  EXTRAPARAMS: ${{github.event.inputs.EXTRAPARAMS}}
  PULLSECRET: ${{github.event.inputs.PULLSECRET}}
+ NETWORK: ${{github.event.inputs.NETWORK}}
+ NETWORK_CIDR: ${{github.event.inputs.NETWORK_CIDR}}
  VERSION: ${{github.event.inputs.VERSION}}
  TAG: ${{github.event.inputs.TAG}}
 
 jobs:
-    requirements:
+    deploy-okd:
       runs-on: u08
       steps:
        - uses: actions/checkout@v2
        - run: git pull origin ${GITHUB_REF##*/}
        - name: Install kcli
-         run: |
-           curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
-           kcli create sushy-service
-       - name: Delete old install
-         run: |
-           kcli delete cluster --yes $CLUSTER || true
-
-    deploy-hypershift:
-      needs: requirements
-      runs-on: u08
-      steps:
-      - name: Deploy HYPERSHIFT ASSISTED
-        run: |
-          kcli create cluster hypershift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET -P version=$VERSION -P tag="$TAG" $EXTRAPARAMS $CLUSTER
+         run: curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
+       - name: Deploy network if needed
+         run: kcli create network -c $NETWORK_CIDR $NETWORK || true
+       - name: Deploy OKD on libvirt
+         run: kcli create cluster openshift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET -P version=$VERSION -P tag="$TAG" $EXTRAPARAMS $PLAN --force
