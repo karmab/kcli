@@ -1281,7 +1281,7 @@ class Kvirt(object):
         controllerxml = ''
         if uefi or uefi_legacy:
             controllerxml = "<controller type='pci' model='pcie-root'/>"
-            controllerxml += ''.join(["<controller type='pci' model='pcie-root-port'/>" for i in range(20)])
+            controllerxml += ''.join(["<controller type='pci' model='pcie-root-port'/>" for i in range(5)])
         vmxml = """<domain type='{virttype}' {namespace}>
 <name>{name}</name>
 {uuidxml}
