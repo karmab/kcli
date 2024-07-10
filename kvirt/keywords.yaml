@@ -153,4 +153,3 @@ vnc: when set to true, vnc is used for console. On kvm, spice will be used when 
 wait: Whether to wait for cloudinit/ignition to fully apply
 waitcommand: a specific command to use to validate that vm is ready
 waittimeout: Timeout when waiting for a vm to be ready. Default zero value means the wait wont timeout
-yamlinventory: Ansible generated inventory for single vms or for plans containing ansible entries will be yaml based.

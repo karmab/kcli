@@ -8,7 +8,6 @@ from jinja2 import Environment, FileSystemLoader
 from jinja2 import StrictUndefined as undefined
 from jinja2.exceptions import TemplateSyntaxError, TemplateError, TemplateNotFound
 from kvirt.defaults import IMAGES, IMAGESCOMMANDS, OPENSHIFT_TAG
-from kvirt import ansibleutils
 from kvirt.jinjafilters import jinjafilters
 from kvirt import nameutils
 from kvirt import common
@@ -577,7 +576,6 @@ class Kconfig(Kbaseconfig):
         default_initrd = father.get('initrd', self.initrd)
         default_cmdline = father.get('cmdline', self.cmdline)
         default_placement = father.get('placement', self.placement)
-        default_yamlinventory = father.get('yamlinventory', self.yamlinventory)
         default_cpuhotplug = father.get('cpuhotplug', self.cpuhotplug)
         default_memoryhotplug = father.get('memoryhotplug', self.memoryhotplug)
         default_numa = father.get('numa', self.numa)
@@ -686,7 +684,6 @@ class Kconfig(Kbaseconfig):
         initrd = profile.get('initrd', default_initrd)
         cmdline = profile.get('cmdline', default_cmdline)
         placement = profile.get('placement', default_placement)
-        yamlinventory = profile.get('yamlinventory', default_yamlinventory)
         cpuhotplug = profile.get('cpuhotplug', default_cpuhotplug)
         memoryhotplug = profile.get('memoryhotplug', default_memoryhotplug)
         rootpassword = profile.get('rootpassword', default_rootpassword)
@@ -1003,15 +1000,25 @@ class Kconfig(Kbaseconfig):
                 warning("ansible-playbook executable not found. Skipping ansible play")
             else:
                 for element in ansibleprofile:
-                    if 'playbook' not in element:
+                    playbook = element.get('playbook')
+                    if playbook is None:
                         continue
-                    playbook = element['playbook']
-                    variables = element.get('variables', {})
+                    if not os.path.exists(playbook):
+                        warning(f"{playbook} not found. Skipping ansible play")
+                        continue
+                    ansiblecommand = "ansible-playbook"
                     verbose = element.get('verbose', False)
-                    user = element.get('user')
-                    ansibleutils.play(k, name, playbook=playbook, variables=variables, verbose=verbose, user=user,
-                                      tunnel=self.tunnel, tunnelhost=self.host, tunnelport=self.port,
-                                      tunneluser=self.user, yamlinventory=yamlinventory, insecure=self.insecure)
+                    if verbose:
+                        ansiblecommand += " -vvv"
+                    variables = element.get('variables', {})
+                    if variables:
+                        varsfile = f"@{name}_vars.yaml"
+                        with open(varsfile, 'w') as f:
+                            yaml.safe_dump(variables, f)
+                        ansiblecommand += f' -e "@{varsfile}"'
+                    ansiblecommand += f" -T 20 -i {which('klist.py')} -l {name} {playbook}"
+                    pprint(f"Running: {ansiblecommand}")
+                    os.system(ansiblecommand)
         unplugcd = overrides.get('unplugcd', False)
         if wait or unplugcd:
             if not cloudinit or not start or image is None:
@@ -1541,9 +1548,6 @@ class Kconfig(Kbaseconfig):
         for keyfile in glob.glob("%s.key*" % plan):
             success(f"file {keyfile} from {plan} deleted!")
             os.remove(keyfile)
-        for ansiblefile in glob.glob("/tmp/%s*inv*" % plan):
-            success(f"file {ansiblefile} from {plan} deleted!")
-            os.remove(ansiblefile)
         if deletedlbs and self.type in ['aws', 'azure', 'gcp']:
             for lb in deletedlbs:
                 self.delete_loadbalancer(lb)
@@ -2286,8 +2290,6 @@ class Kconfig(Kbaseconfig):
                     sys.exit(1)
                 playbook = _ansible['playbook']
                 verbose = _ansible['verbose'] if 'verbose' in _ansible else False
-                groups = _ansible.get('groups', {})
-                user = _ansible.get('user')
                 variables = _ansible.get('variables', {})
                 targetvms = [vm for vm in _ansible['vms'] if vm in newvms] if 'vms' in _ansible else newvms
                 if not targetvms:
@@ -2296,39 +2298,14 @@ class Kconfig(Kbaseconfig):
                 ansiblecommand = "ansible-playbook"
                 if verbose:
                     ansiblecommand += " -vvv"
-                inventoryfile = f"/tmp/{plan}.inv.yaml" if self.yamlinventory else f"/tmp/{plan}.inv"
-                ansibleutils.make_plan_inventory(vms_to_host, plan, targetvms, groups=groups, user=user,
-                                                 yamlinventory=self.yamlinventory, tunnel=self.tunnel,
-                                                 tunnelhost=self.tunnelhost, tunneluser=self.tunneluser,
-                                                 tunnelport=self.tunnelport, insecure=self.insecure)
-                if not os.path.exists('~/.ansible.cfg'):
-                    ansibleconfig = os.path.expanduser('~/.ansible.cfg')
-                    with open(ansibleconfig, "w") as f:
-                        f.write("[ssh_connection]\nretries=10\n")
                 if variables:
-                    varsfile = f"/tmp/{plan}.vars.yml"
+                    varsfile = f"{plan}_vars.yml"
                     with open(varsfile, 'w') as f:
-                        yaml.dump(variables, f, default_flow_style=False)
-                    ansiblecommand += f" --extra-vars @{varsfile}"
-                ansiblecommand += f" -i {inventoryfile} {playbook}"
+                        yaml.safe_dump(variables, f)
+                    ansiblecommand += f" -e @{varsfile}"
+                ansiblecommand += f" -i {which('klist.py')} {playbook} -l {','.join(targetvms)}"
                 pprint(f"Running: {ansiblecommand}")
                 os.system(ansiblecommand)
-        if ansible and not onlyassets:
-            pprint("Deploying Ansible Inventory...")
-            inventoryfile = f"/tmp/{plan}.inv.yaml" if self.yamlinventory else f"/tmp/{plan}.inv"
-            if os.path.exists(inventoryfile):
-                pprint(f"Inventory in {inventoryfile} skipped!")
-            else:
-                pprint(f"Creating ansible inventory for plan {plan} in {inventoryfile}")
-                vms = []
-                for vm in sorted(k.list(), key=lambda x: x['name']):
-                    name = vm['name']
-                    description = vm['plan']
-                    if description == plan:
-                        vms.append(name)
-                ansibleutils.make_plan_inventory(vms_to_host, plan, vms, yamlinventory=self.yamlinventory,
-                                                 insecure=self.insecure)
-                return {'result': 'success', 'plan': plan}
         if lbs and not onlyassets:
             dnsclients = {}
             pprint("Deploying Loadbalancers...")
