@@ -11,5 +11,7 @@ echo {{ api_ip }} api.{{ cluster }}.{{ domain }} >> /etc/hosts
 kubeadm join {{ api_ip }}:6443 --token $TOKEN --discovery-token-unsafe-skip-ca-verification $CTLPLANES
 
 {% if registry %}
-echo api.{{ cluster }}.{{ domain }} > /etc/containers/registries.conf.d/003-{{ cluster }}.conf
+echo """[[registry]]
+location=\"{{ api_ip }}:5000\"
+insecure=true""" > /etc/containers/registries.conf.d/003-{{ cluster }}.conf
 {% endif %}
