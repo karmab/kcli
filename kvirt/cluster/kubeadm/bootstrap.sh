@@ -73,5 +73,7 @@ kubectl apply -f https://raw.githubusercontent.com/k8snetworkplumbingwg/multus-c
 
 {% if registry %}
 kubectl create -f /root/registry.yml
-echo $API_IP > /etc/containers/registries.conf.d/003-{{ cluster }}.conf
+echo """[[registry]]
+location="$API_IP:5000"
+insecure=true""" > /etc/containers/registries.conf.d/003-{{ cluster }}.conf
 {% endif %}
