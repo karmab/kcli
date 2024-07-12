@@ -1739,8 +1739,8 @@ class Kconfig(Kbaseconfig):
             entries = {}
         if self.debug:
             print(yaml.dump(entries))
-        parameters = entries.get('parameters')
-        if parameters is not None:
+        parameters = entries.get('parameters', {})
+        if parameters:
             del entries['parameters']
         valid_plan = [entry for entry in entries if isinstance(entries[entry], list) and
                       all(isinstance(item, dict) for item in entries[entry])]
