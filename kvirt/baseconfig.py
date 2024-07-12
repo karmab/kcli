@@ -782,7 +782,7 @@ class Kbaseconfig:
             for parameter in parameters:
                 if parameter in overrides:
                     correct_type = type(parameters[parameter])
-                    if type(overrides[parameter]) != correct_type:
+                    if parameters[parameter] is not None and type(overrides[parameter]) != correct_type:
                         error(f"Parameter {parameter} doesnt have type {correct_type}")
                         sys.exit(1)
                     continue
