@@ -53,6 +53,13 @@ EOF
 {% endif %}
 systemctl daemon-reload
 rm -f /etc/cni/net.d/100-crio-bridge.conf
+
+{% if registry %}
+echo """[[registry]]
+insecure = true
+location = \"{{ api_ip }}\"""" >> /etc/containers/registries.conf
+{% endif %}
+
 systemctl restart crio
 systemctl enable crio
 {% else %}
@@ -82,6 +89,11 @@ EOF
 {% endif %}
 {% endif %}
 {% endif %}
+
+{% if registry %}
+sed -i "/registry.mirrors/a\        [plugins.\"io.containerd.grpc.v1.cri\".registry.mirrors.\"{{ api_ip }}:5000\"]\n          endpoint = [\"http://{{ api_ip }}:5000\"]\n          insecure_skip_verify = true" /etc/containerd/config.toml
+{% endif %}
+
 systemctl daemon-reload
 systemctl restart containerd
 {% endif %}

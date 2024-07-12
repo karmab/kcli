@@ -62,6 +62,13 @@ EOF
 {% endif %}
 {% endif %}
 rm -f /etc/cni/net.d/100-crio-bridge.conf
+
+{% if registry %}
+echo """[[registry]]
+insecure = true
+location = \"{{ api_ip }}\"""" >> /etc/containers/registries.conf
+{% endif %}
+
 systemctl enable --now crio
 {% else %}
 dnf install -y yum-utils device-mapper-persistent-data lvm2
@@ -91,6 +98,11 @@ EOF
 {% endif %}
 {% endif %}
 {% endif %}
+
+{% if registry %}
+sed -i "/registry.mirrors/a\        [plugins.\"io.containerd.grpc.v1.cri\".registry.mirrors.\"{{ api_ip }}:5000\"]\n          endpoint = [\"http://{{ api_ip }}:5000\"]\n          insecure_skip_verify = true" /etc/containerd/config.toml
+{% endif %}
+
 systemctl enable --now containerd
 systemctl restart containerd
 {% endif %}
