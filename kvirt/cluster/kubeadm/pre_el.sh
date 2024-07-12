@@ -98,9 +98,12 @@ systemctl restart containerd
 
 {% set kube_packages = 'kubelet-%s kubectl-%s kubeadm-%s' % (version, version, version) if version != None and version|count('.') == 2 else 'kubelet kubectl kubeadm' %}
 dnf -y install -y {{ kube_packages }} git openssl
+if [ "$TARGET" == 'fedora' ] ; then
+  [ -d /opt/cni/bin ] || mkdir -p /opt/cni/bin
+  cp /usr/libexec/cni/* /opt/cni/bin
+fi
 {% if engine == 'crio' %}
 echo KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime-endpoint=unix:///var/run/crio/crio.sock > /etc/sysconfig/kubelet
-[ "$TARGET" == 'fedora' ] && cp /usr/libexec/cni/* /opt/cni/bin
 {% endif %}
 systemctl enable --now kubelet
 
