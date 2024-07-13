@@ -783,6 +783,8 @@ class Kbaseconfig:
                 if parameter in overrides:
                     parameter_type = type(parameters[parameter])
                     override_type = type(overrides[parameter])
+                    if parameter_type == str and override_type == type(None):
+                        continue
                     if parameters[parameter] is not None and override_type != parameter_type:
                         msg = f"Parameter {parameter} doesn't have type {parameter_type}"
                         if parameter_type == str and override_type in [int, float]:
