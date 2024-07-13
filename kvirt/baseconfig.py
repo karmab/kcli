@@ -781,10 +781,19 @@ class Kbaseconfig:
                             overrides[baseparameter] = baseparameters[baseparameter]
             for parameter in parameters:
                 if parameter in overrides:
-                    correct_type = type(parameters[parameter])
-                    if parameters[parameter] is not None and type(overrides[parameter]) != correct_type:
-                        error(f"Parameter {parameter} doesnt have type {correct_type}")
-                        sys.exit(1)
+                    parameter_type = type(parameters[parameter])
+                    override_type = type(overrides[parameter])
+                    if parameters[parameter] is not None and override_type != parameter_type:
+                        msg = f"Parameter {parameter} doesn't have type {parameter_type}"
+                        if parameter_type == str and override_type in [int, float]:
+                            try:
+                                float(overrides[parameter])
+                            except:
+                                error(msg)
+                                sys.exit(1)
+                        else:
+                            error(msg)
+                            sys.exit(1)
                     continue
                 currentparameter = parameters[parameter]
                 if isinstance(currentparameter, bool) and download_mode:
