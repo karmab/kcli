@@ -2529,3 +2529,22 @@ class PlanLoader(yaml.SafeLoader):
 
 
 PlanLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, plan_constructor)
+
+
+def get_cluster_api_vips():
+    data = {}
+    clustersdir = os.path.expanduser('~/.kcli/clusters')
+    if os.path.exists(clustersdir):
+        for kube in next(os.walk(clustersdir))[1]:
+            if kube in data:
+                continue
+            clusterdir = f'{clustersdir}/{kube}'
+            if os.path.exists(f'{clusterdir}/kcli_parameters.yml'):
+                with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
+                    installparam = yaml.safe_load(install)
+                    network = installparam.get('network')
+                    api_ip = installparam.get('api_ip')
+                    automatic = installparam.get('automatic_api_ip', False)
+                    if automatic and network is not None and api_ip is not None:
+                        data[network] = 1 if network not in data else data[kube] + 1
+    return data

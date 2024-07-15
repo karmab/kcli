@@ -3,6 +3,7 @@ from ipaddress import ip_network
 import json
 from kvirt.common import success, pprint, warning, info2, container_mode, wait_cloud_dns, update_etc_hosts, fix_typos
 from kvirt.common import get_kubectl, kube_create_app, get_ssh_pub_key, _ssh_credentials, ssh, deploy_cloud_storage
+from kvirt.common import get_cluster_api_vips
 from kvirt.defaults import UBUNTUS
 import os
 from random import choice
@@ -127,14 +128,18 @@ def create(config, plandir, cluster, overrides):
             msg = f"Issue getting network {network}"
             return {'result': 'failure', 'reason': msg}
         if provider == 'kvm' and networkinfo['type'] == 'routed':
+            vip_mappings = get_cluster_api_vips()
             cidr = networkinfo['cidr']
             if cidr == 'N/A':
                 msg = "Couldnt gather an api_ip from your specified network"
                 return {'result': 'failure', 'reason': msg}
             api_index = 2 if ':' in cidr else -3
+            if network in vip_mappings:
+                api_index -= api_index + vip_mappings[network] if ':' in cidr else api_index - vip_mappings[network]
             api_ip = str(ip_network(cidr)[api_index])
             warning(f"Using {api_ip} as api_ip")
             data['api_ip'] = api_ip
+            data['automatic_api_ip'] = True
         elif provider == 'kubevirt':
             selector = {'kcli/plan': plan, 'kcli/role': 'ctlplane'}
             service_type = "LoadBalancer" if k.access_mode == 'LoadBalancer' else 'ClusterIP'
@@ -238,6 +243,8 @@ def create(config, plandir, cluster, overrides):
         installparam['image'] = image
         installparam['ubuntu'] = 'ubuntu' in image.lower() or len([u for u in UBUNTUS if u in image]) > 1
         installparam['first_ip'] = first_ip
+        if 'automatic_api_ip' in data:
+            installparam['automatic_api_ip'] = True
         safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     if ctlplanes > 1:
         ctlplane_threaded = data.get('threaded', False) or data.get('ctlplanes_threaded', False)

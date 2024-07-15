@@ -1,5 +1,6 @@
+from ipaddress import ip_network
 from kvirt.common import error, success, pprint, warning, get_kubectl, info2, container_mode, kube_create_app
-from kvirt.common import deploy_cloud_storage, wait_cloud_dns, update_etc_hosts, fix_typos
+from kvirt.common import deploy_cloud_storage, wait_cloud_dns, update_etc_hosts, fix_typos, get_cluster_api_vips
 import os
 import re
 from random import choice
@@ -110,6 +111,7 @@ def scale(config, plandir, cluster, overrides):
 
 def create(config, plandir, cluster, overrides):
     provider = config.type
+    k = config.k
     data = safe_load(open(f'{plandir}/kcli_default.yml'))
     data.update(overrides)
     fix_typos(data)
@@ -139,10 +141,20 @@ def create(config, plandir, cluster, overrides):
                 api_ip = f"api.{cluster}.{domain}"
                 data['api_ip'] = api_ip
         elif api_ip is None:
-            if network == 'default' and provider == 'kvm':
-                warning("Using 192.168.122.253 as api_ip")
-                data['api_ip'] = "192.168.122.253"
-                api_ip = "192.168.122.253"
+            networkinfo = k.info_network(network)
+            if provider == 'kvm' and networkinfo['type'] == 'routed':
+                vip_mappings = get_cluster_api_vips()
+                cidr = networkinfo['cidr']
+                if cidr == 'N/A':
+                    msg = "Couldnt gather an api_ip from your specified network"
+                    return {'result': 'failure', 'reason': msg}
+                api_index = 2 if ':' in cidr else -3
+                if network in vip_mappings:
+                    api_index -= api_index + vip_mappings[network] if ':' in cidr else api_index - vip_mappings[network]
+                api_ip = str(ip_network(cidr)[api_index])
+                warning(f"Using {api_ip} as api_ip")
+                data['api_ip'] = api_ip
+                data['automatic_api_ip'] = True
             elif provider == 'kubevirt':
                 selector = {'kcli/plan': plan, 'kcli/role': 'ctlplane'}
                 api_ip = config.k.create_service(f"{cluster}-api", config.k.namespace, selector,
@@ -207,6 +219,8 @@ def create(config, plandir, cluster, overrides):
         if not cloud_lb and ctlplanes > 1:
             installparam['virtual_router_id'] = virtual_router_id
             installparam['auth_pass'] = auth_pass
+        if 'automatic_api_ip' in data:
+            installparam['automatic_api_ip'] = True
         safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     for role in ['ctlplanes', 'workers']:
         if (role == 'ctlplanes' and ctlplanes == 1) or (role == 'workers' and workers == 0):
