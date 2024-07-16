@@ -1,5 +1,5 @@
 # coding=utf-8
-from setuptools import setup, find_namespace_packages
+from setuptools import setup, find_packages
 
 import os
 INSTALL = ['argcomplete', 'PyYAML', 'prettytable', 'jinja2', 'libvirt-python>=2.0.0']
@@ -31,7 +31,7 @@ setup(
     name='kcli',
     version='99.0',
     include_package_data=True,
-    packages=find_namespace_packages('kvirt'),
+    packages=find_packages(),
     zip_safe=False,
     description=description,
     long_description=long_description,
