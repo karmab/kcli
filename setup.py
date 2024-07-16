@@ -31,7 +31,7 @@ setup(
     name='kcli',
     version='99.0',
     include_package_data=True,
-    packages=find_namespace_packages(),
+    packages=find_namespace_packages('kvirt'),
     zip_safe=False,
     description=description,
     long_description=long_description,
