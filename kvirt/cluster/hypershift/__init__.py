@@ -208,6 +208,10 @@ def scale(config, plandir, cluster, overrides):
             plan = installparam.get('plan', plan)
             old_assisted_vms_number = installparam.get('assisted_vms_number', old_assisted_vms_number)
     data.update(overrides)
+    if os.path.exists(f"{clusterdir}/kubeconfig.mgmt"):
+        os.environ['KUBECONFIG'] = f"{clusterdir}/kubeconfig.mgmt"
+    if 'KUBECONFIG' not in os.environ:
+        warning("KUBECONFIG not set...Using .kube/config instead")
     platform = data.get('platform')
     assisted = platform == 'assisted'
     assisted_vms = data.get('assisted_vms')
@@ -218,8 +222,6 @@ def scale(config, plandir, cluster, overrides):
     worker_overrides = data.copy()
     workers = worker_overrides.get('workers', 2)
     if kubevirt:
-        # kubeconfig = data['kubeconfig']
-        # os.environ['KUBECONFIG'] = kubeconfig
         cmcmd = f"oc -n {namespace}-{cluster} scale nodepool {cluster} --replicas {workers}"
         call(cmcmd, shell=True)
         return {'result': 'success'}
