@@ -230,6 +230,9 @@ def scale(config, plandir, cluster, overrides):
     new_baremetal_hosts = overrides.get('baremetal_hosts', [])
     assisted_vms_number = data['assisted_vms_number']
     if assisted_vms and assisted_vms_number != old_assisted_vms_number:
+        if assisted_vms_number < old_assisted_vms_number:
+            msg = "New assisted_vms_number should be greater than old one"
+            return {'result': 'failure', 'reason': msg}
         worker_threaded = data.get('threaded', False) or data.get('assisted_vms_threaded', False)
         result = config.plan(plan, inputfile=f'{plandir}/kcli_plan_assisted.yml', overrides=data,
                              threaded=worker_threaded)
@@ -261,6 +264,8 @@ def scale(config, plandir, cluster, overrides):
                 iso_url = f'http://{svcip}:{svcport}/{cluster}-worker.iso'
             start_baremetal_hosts(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
             worker_overrides['workers'] = workers - len(new_baremetal_hosts)
+    if platform is not None:
+        return {'result': 'success'}
     if worker_overrides.get('workers', 2) <= 0:
         return {'result': 'success'}
     threaded = data.get('threaded', False) or data.get('workers_threaded', False)
@@ -779,6 +784,8 @@ def create(config, plandir, cluster, overrides):
             installparam['image'] = image
         installparam['ipv6'] = ipv6
         installparam['original_domain'] = data['original_domain']
+        if baremetal_hosts:
+            installparam['baremetal_hosts'] = baremetal_hosts
         safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     nodepoolfile = config.process_inputfile(cluster, f"{plandir}/nodepool.yaml", overrides=assetsdata)
     with open(f"{clusterdir}/nodepool.yaml", 'w') as f:
