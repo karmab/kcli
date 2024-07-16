@@ -175,8 +175,7 @@ def scale(config, plandir, cluster, overrides):
     storedparameters = overrides.get('storedparameters', True)
     provider = config.type
     plan = cluster
-    data = {'cluster': cluster, 'kube': cluster, 'kubetype': 'hypershift', 'namespace': 'clusters', 'assisted': False,
-            'kubevirt': False}
+    data = {'cluster': cluster, 'kube': cluster, 'kubetype': 'hypershift', 'namespace': 'clusters'}
     data['basedir'] = '/workdir' if container_mode() else '.'
     cluster = data['cluster']
     namespace = data['namespace']
@@ -201,14 +200,18 @@ def scale(config, plandir, cluster, overrides):
         with open(f"{clusterdir}/ignition.sh", 'w') as f:
             f.write(ignitionscript)
         call(f'bash {clusterdir}/ignition.sh', shell=True)
+    old_assisted_vms_number = 2
     if storedparameters and os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
         with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
             installparam = safe_load(install)
             data.update(installparam)
             plan = installparam.get('plan', plan)
+            old_assisted_vms_number = installparam.get('assisted_vms_number', old_assisted_vms_number)
     data.update(overrides)
-    assisted = data['assisted']
-    kubevirt = data['kubevirt']
+    platform = data.get('platform')
+    assisted = platform == 'assisted'
+    assisted_vms = data.get('assisted_vms')
+    kubevirt = platform == 'kubevirt'
     with open(f"{clusterdir}/kcli_parameters.yml", 'w') as paramfile:
         safe_dump(data, paramfile, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     pprint(f"Scaling on client {config.client}")
@@ -223,6 +226,21 @@ def scale(config, plandir, cluster, overrides):
     os.chdir(os.path.expanduser("~/.kcli"))
     old_baremetal_hosts = installparam.get('baremetal_hosts', [])
     new_baremetal_hosts = overrides.get('baremetal_hosts', [])
+    assisted_vms_number = data['assisted_vms_number']
+    if assisted_vms and assisted_vms_number != old_assisted_vms_number:
+        worker_threaded = data.get('threaded', False) or data.get('assisted_vms_threaded', False)
+        result = config.plan(plan, inputfile=f'{plandir}/kcli_plan_assisted.yml', overrides=data,
+                             threaded=worker_threaded)
+        if result['result'] != 'success':
+            return result
+        vms = result['newvms']
+        ksushy_ip = data['assisted_vms_ksushy_ip']
+        ksushy_url = f'http://{ksushy_ip}:9000/redfish/v1/Systems/{config.client}'
+        virtual_hosts = []
+        for vm in vms:
+            new_mac = config.k.info(vm)['nets'][0]['mac']
+            virtual_hosts.append({'url': f'{ksushy_url}/{vm}', 'mac': new_mac})
+        new_baremetal_hosts.extend(virtual_hosts)
     baremetal_hosts = [entry for entry in new_baremetal_hosts if entry not in old_baremetal_hosts]
     if baremetal_hosts:
         if assisted:
