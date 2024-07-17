@@ -208,6 +208,8 @@ class Kubevirt(Kubecommon):
             machine = overrides['machine']
             warning(f"Forcing machine type to {machine}")
         vm['spec']['template']['spec']['domain']['machine'] = {'type': machine}
+        if cpuhotplug:
+            vm['spec']['template']['spec']['domain']['cpu'] = {'cores': 1, 'sockets': int(numcpus), 'maxSockets': 64}
         if memoryhotplug:
             del vm['spec']['template']['spec']['domain']['resources']['requests']
             del vm['spec']['template']['spec']['domain']['resources']['limits']
@@ -784,7 +786,10 @@ class Kubevirt(Kubecommon):
         yamlinfo = {'name': name, 'nets': [], 'disks': [], 'status': state, 'creationdate': creationdate, 'host': host,
                     'namespace': namespace, 'id': uid}
         if 'cpu' in spectemplate['spec']['domain']:
-            numcpus = spectemplate['spec']['domain']['cpu']['cores']
+            cores = spectemplate['spec']['domain']['cpu'].get('cores', 1)
+            sockets = spectemplate['spec']['domain']['cpu'].get('sockets', 1)
+            threads = spectemplate['spec']['domain']['cpu'].get('threads', 1)
+            numcpus = cores * sockets * threads
             yamlinfo['cpus'] = numcpus
         memory = None
         if 'resources' in spectemplate['spec']['domain'] and 'requests' in spectemplate['spec']['domain']['resources']:
@@ -993,7 +998,7 @@ class Kubevirt(Kubecommon):
         t = 'Template' if 'Template' in vm['spec'] else 'template'
         domain = vm['spec'][t]['spec']['domain']
         if 'memory' in domain and 'maxGuest' in domain['memory']:
-            vm['spec'][t]['spec']['domain']['memory']['maxGuest'] = f"{memory}Mi"
+            vm['spec'][t]['spec']['domain']['memory']['guest'] = f"{memory}Mi"
             crds.patch_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
         else:
             vm['spec'][t]['spec']['domain']['resources']['requests']['memory'] = f"{memory}M"
@@ -1011,9 +1016,14 @@ class Kubevirt(Kubecommon):
             error(f"VM {name} not found")
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         t = 'Template' if 'Template' in vm['spec'] else 'template'
-        vm['spec'][t]['spec']['domain']['cpu']['cores'] = int(numcpus)
-        warning("Change will only appear next full lifeclyclereboot")
-        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
+        domain = vm['spec'][t]['spec']['domain']
+        if 'cpu' in domain and 'maxSockets' in domain['cpu']:
+            vm['spec'][t]['spec']['domain']['cpu']['sockets'] = numcpus
+            crds.patch_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
+        else:
+            vm['spec'][t]['spec']['domain']['cpu']['cores'] = int(numcpus)
+            warning("Change will only appear next full lifeclyclereboot")
+            crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
         return {'result': 'success'}
 
     def update_start(self, name, start=True):
