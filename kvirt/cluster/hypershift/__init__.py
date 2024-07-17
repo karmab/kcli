@@ -228,7 +228,7 @@ def scale(config, plandir, cluster, overrides):
     os.chdir(os.path.expanduser("~/.kcli"))
     old_baremetal_hosts = installparam.get('baremetal_hosts', [])
     new_baremetal_hosts = overrides.get('baremetal_hosts', [])
-    assisted_vms_number = data['assisted_vms_number']
+    assisted_vms_number = overrides.get('workers') or data['assisted_vms_number']
     if assisted_vms and assisted_vms_number != old_assisted_vms_number:
         if assisted_vms_number < old_assisted_vms_number:
             msg = "New assisted_vms_number should be greater than old one"
@@ -249,8 +249,9 @@ def scale(config, plandir, cluster, overrides):
     baremetal_hosts = [entry for entry in new_baremetal_hosts if entry not in old_baremetal_hosts]
     if baremetal_hosts:
         if assisted:
-            create_bmh_objects(config, plandir, cluster, namespace, baremetal_hosts, overrides)
-            cmcmd = f"oc -n {namespace}-{cluster} scale nodepool {cluster} --replicas {workers}"
+            all_baremetal_hosts = old_baremetal_hosts + baremetal_hosts
+            create_bmh_objects(config, plandir, cluster, namespace, all_baremetal_hosts, overrides)
+            cmcmd = f"oc -n {data['namespace']} scale nodepool {cluster} --replicas {len(all_baremetal_hosts)}"
             call(cmcmd, shell=True)
             return {'result': 'success'}
         else:
