@@ -208,10 +208,10 @@ class Kubevirt(Kubecommon):
             machine = overrides['machine']
             warning(f"Forcing machine type to {machine}")
         vm['spec']['template']['spec']['domain']['machine'] = {'type': machine}
-        if overrides.get('guest_memory', False):
+        if memoryhotplug:
             del vm['spec']['template']['spec']['domain']['resources']['requests']
             del vm['spec']['template']['spec']['domain']['resources']['limits']
-            vm['spec']['template']['spec']['domain']['memory'] = {'guest': f'{memory}Mi'}
+            vm['spec']['template']['spec']['domain']['memory'] = {'guest': f'{memory}Mi', 'maxGuest': '102400Mi'}
         if cpumodel != 'host-model':
             vm['spec']['template']['spec']['domain']['cpu']['model'] = cpumodel
         if 'rng' in overrides and overrides['rng']:
@@ -991,11 +991,16 @@ class Kubevirt(Kubecommon):
             error(f"VM {name} not found")
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         t = 'Template' if 'Template' in vm['spec'] else 'template'
-        vm['spec'][t]['spec']['domain']['resources']['requests']['memory'] = f"{memory}M"
-        vm['spec'][t]['spec']['domain']['resources']['limits']['memory'] = f"{memory}M"
-        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
-        warning("Change will only appear next full lifeclyclereboot")
-        return
+        domain = vm['spec'][t]['spec']['domain']
+        if 'memory' in domain and 'maxGuest' in domain['memory']:
+            vm['spec'][t]['spec']['domain']['memory']['maxGuest'] = f"{memory}Mi"
+            crds.patch_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
+        else:
+            vm['spec'][t]['spec']['domain']['resources']['requests']['memory'] = f"{memory}M"
+            vm['spec'][t]['spec']['domain']['resources']['limits']['memory'] = f"{memory}M"
+            warning("Change will only appear next full lifeclyclereboot")
+            crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
+        return {'result': 'success'}
 
     def update_cpus(self, name, numcpus):
         crds = self.crds
@@ -1009,7 +1014,7 @@ class Kubevirt(Kubecommon):
         vm['spec'][t]['spec']['domain']['cpu']['cores'] = int(numcpus)
         warning("Change will only appear next full lifeclyclereboot")
         crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
-        return
+        return {'result': 'success'}
 
     def update_start(self, name, start=True):
         print("not implemented")

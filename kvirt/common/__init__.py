@@ -2542,9 +2542,9 @@ def get_cluster_api_vips():
             if os.path.exists(f'{clusterdir}/kcli_parameters.yml'):
                 with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
                     installparam = yaml.safe_load(install)
-                    network = installparam.get('network')
+                    network = installparam.get('network', 'default')
                     api_ip = installparam.get('api_ip')
                     automatic = installparam.get('automatic_api_ip', False)
-                    if automatic and network is not None and api_ip is not None:
+                    if automatic and api_ip is not None:
                         data[network] = 1 if network not in data else data[network] + 1
     return data
