@@ -615,7 +615,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             pass
         yamlinfo['memory'] = int(vm._memory / 1024 / 1024)
         cpus = vm.cpu.topology.cores * vm.cpu.topology.sockets
-        yamlinfo['cpus'] = cpus
+        yamlinfo['numcpus'] = cpus
         yamlinfo['creationdate'] = vm._creation_time.strftime("%d-%m-%Y %H:%M")
         devices = self.vms_service.vm_service(vm.id).reported_devices_service().list()
         ips = []

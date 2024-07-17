@@ -680,7 +680,7 @@ class Kaws(object):
         yamlinfo['az'] = az
         machinetype = vm['InstanceType']
         flavor = conn.describe_instance_types(InstanceTypes=[machinetype])['InstanceTypes'][0]
-        yamlinfo['cpus'] = flavor['VCpuInfo']['DefaultVCpus']
+        yamlinfo['numcpus'] = flavor['VCpuInfo']['DefaultVCpus']
         yamlinfo['memory'] = flavor['MemoryInfo']['SizeInMiB']
         yamlinfo['flavor'] = machinetype
         yamlinfo['image'] = source

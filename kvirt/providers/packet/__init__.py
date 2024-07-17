@@ -406,7 +406,7 @@ class Kpacket(object):
         memory = int(flavor['specs']['memory']['total'].replace('GB', '')) * 1024
         creationdate = device.created_at
         yamlinfo = {'name': name, 'instanceid': deviceid, 'status': state, 'ip': ip, 'nets': nets, 'disks': disks,
-                    'flavor': flavorname, 'cpus': numcpus, 'memory': memory, 'creationdate': creationdate}
+                    'flavor': flavorname, 'numcpus': numcpus, 'memory': memory, 'creationdate': creationdate}
         if ip is not None:
             yamlinfo['ip'] = ip
         yamlinfo['user'] = common.get_user(kernel) if kernel is not None else 'root'

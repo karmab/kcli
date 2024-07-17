@@ -631,10 +631,10 @@ class Kgcp(object):
         machinetype = os.path.basename(vm['machineType'])
         yamlinfo['flavor'] = machinetype
         if 'custom' in machinetype:
-            yamlinfo['cpus'], yamlinfo['memory'] = machinetype.split('-')[1:]
+            yamlinfo['numcpus'], yamlinfo['memory'] = machinetype.split('-')[1:]
         else:
             flavor_info = self.info_flavor(machinetype)
-            yamlinfo['cpus'], yamlinfo['memory'] = flavor_info['cpus'], flavor_info['memory']
+            yamlinfo['numcpus'], yamlinfo['memory'] = flavor_info['cpus'], flavor_info['memory']
         yamlinfo['autostart'] = vm['scheduling']['automaticRestart']
         yamlinfo['az'] = zone
         first_nic = vm['networkInterfaces'][0]

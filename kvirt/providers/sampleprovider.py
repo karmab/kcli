@@ -100,7 +100,7 @@ class Kbase(object):
 # image
 # ip
 # memory
-# cpus
+# numcpus
 # creationdate
 # nets list  of
 # {'device': device, 'mac': mac, 'net': network, 'type': network_type}

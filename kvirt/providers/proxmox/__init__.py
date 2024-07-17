@@ -655,7 +655,7 @@ class Kproxmox(Kbase):
             "node": vm_info["node"],
             "vmid": vm_info["vmid"],
             "status": VM_STATUS.get(vm_info["status"]),
-            "cpus": vm_info["maxcpu"],
+            "numcpus": vm_info["maxcpu"],
             "memory": int(vm_info["maxmem"] / 1024 / 1024),
         }
         vm_config = vm.config.get()

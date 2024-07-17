@@ -413,7 +413,7 @@ class Kopenstack(object):
         flavor = nova.flavors.get(vm.flavor['id'])
         yamlinfo['flavor'] = flavor.name
         yamlinfo['memory'] = flavor.ram
-        yamlinfo['cpus'] = flavor.vcpus
+        yamlinfo['numcpus'] = flavor.vcpus
         yamlinfo['nets'] = []
         index = 0
         for key in list(vm.addresses):

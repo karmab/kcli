@@ -790,7 +790,7 @@ class Kubevirt(Kubecommon):
             sockets = spectemplate['spec']['domain']['cpu'].get('sockets', 1)
             threads = spectemplate['spec']['domain']['cpu'].get('threads', 1)
             numcpus = cores * sockets * threads
-            yamlinfo['cpus'] = numcpus
+            yamlinfo['numcpus'] = numcpus
         memory = None
         if 'resources' in spectemplate['spec']['domain'] and 'requests' in spectemplate['spec']['domain']['resources']:
             memory = spectemplate['spec']['domain']['resources']['requests']['memory'].replace('M', '').replace('G', '')

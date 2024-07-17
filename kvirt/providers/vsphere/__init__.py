@@ -760,7 +760,7 @@ class Ksphere:
         guest = vm['guest']
         yamlinfo['name'] = name
         yamlinfo['id'] = summary.config.instanceUuid
-        yamlinfo['cpus'] = config.hardware.numCPU
+        yamlinfo['numcpus'] = config.hardware.numCPU
         yamlinfo['memory'] = config.hardware.memoryMB
         yamlinfo['status'] = translation[runtime.powerState]
         yamlinfo['nets'] = []

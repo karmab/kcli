@@ -447,7 +447,7 @@ class Kibm(object):
         yamlinfo['ip'] = ip
         # yamlinfo['bandwidth'] = vm['bandwidth']
         yamlinfo['flavor'] = vm['profile']['name']
-        yamlinfo['cpus'] = vm['vcpu']['count']
+        yamlinfo['numcpus'] = vm['vcpu']['count']
         yamlinfo['memory'] = vm['memory']
         yamlinfo['image'] = image
         yamlinfo['user'] = common.get_user(image)
