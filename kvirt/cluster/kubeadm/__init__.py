@@ -135,7 +135,7 @@ def create(config, plandir, cluster, overrides):
                 return {'result': 'failure', 'reason': msg}
             api_index = 2 if ':' in cidr else -3
             if network in vip_mappings:
-                api_index -= api_index + vip_mappings[network] if ':' in cidr else api_index - vip_mappings[network]
+                api_index = api_index + vip_mappings[network] if ':' in cidr else api_index - vip_mappings[network]
             api_ip = str(ip_network(cidr)[api_index])
             warning(f"Using {api_ip} as api_ip")
             data['api_ip'] = api_ip

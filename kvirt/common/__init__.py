@@ -2546,5 +2546,5 @@ def get_cluster_api_vips():
                     api_ip = installparam.get('api_ip')
                     automatic = installparam.get('automatic_api_ip', False)
                     if automatic and network is not None and api_ip is not None:
-                        data[network] = 1 if network not in data else data[kube] + 1
+                        data[network] = 1 if network not in data else data[network] + 1
     return data
