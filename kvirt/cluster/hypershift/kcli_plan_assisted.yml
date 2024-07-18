@@ -5,10 +5,10 @@
   start: false
   kube: {{ cluster }}
   kubetype: hypershift
-  memory: {{ assisted_vms_memory }}
-  numcpus: {{ assisted_vms_numcpus }}
+  memory: {{ memory }}
+  numcpus: {{ numcpus }}
   disks:
-  - size: {{ assisted_vms_disksize }}
+  - size: {{ disk_size }}
     interface: sata
-  nets: [{{ assisted_vms_network }}]
+  nets: [{{ network }}]
 {% endfor %}

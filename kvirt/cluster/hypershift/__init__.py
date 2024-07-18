@@ -714,6 +714,12 @@ def create(config, plandir, cluster, overrides):
         assetsdata['nodepool_image'] = nodepool_image
     if assisted:
         if assisted_vms:
+            if data['disk_size'] < 200:
+                data['disk_size'] = 200
+            if data['numcpus'] < 16:
+                data['numcpus'] = 16
+            if data['memory'] < 20480:
+                data['memory'] = 20480
             worker_threaded = data.get('threaded', False) or data.get('assisted_vms_threaded', False)
             result = config.plan(plan, inputfile=f'{plandir}/kcli_plan_assisted.yml', overrides=data,
                                  threaded=worker_threaded)
@@ -727,11 +733,9 @@ def create(config, plandir, cluster, overrides):
                 new_mac = config.k.info(vm)['nets'][0]['mac']
                 virtual_hosts.append({'url': f'{ksushy_url}/{vm}', 'mac': new_mac})
             baremetal_hosts.extend(virtual_hosts)
+            data['assisted_vms_number'] = len(virtual_hosts)
         create_bmh_objects(config, plandir, cluster, namespace, baremetal_hosts, overrides)
-        agents = len(baremetal_hosts)
-        if not agents:
-            warning("No baremetal hosts were defined. Setting agent count to 2")
-            agents = 2
+        agents = len(baremetal_hosts) or 2
         pprint(f"Waiting for {agents} agents to appear")
         agent_ns = f"{namespace}-{cluster}"
         call(f'until [ "$(oc -n {agent_ns} get agent -o name | wc -l | xargs)" -eq "{agents}" ] ; do sleep 1 ; done',
@@ -787,6 +791,7 @@ def create(config, plandir, cluster, overrides):
         installparam['original_domain'] = data['original_domain']
         if baremetal_hosts:
             installparam['baremetal_hosts'] = baremetal_hosts
+        installparam['assisted_vms_number'] = data['assisted_vms_number']
         safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     nodepoolfile = config.process_inputfile(cluster, f"{plandir}/nodepool.yaml", overrides=assetsdata)
     with open(f"{clusterdir}/nodepool.yaml", 'w') as f:
