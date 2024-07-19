@@ -233,6 +233,12 @@ def scale(config, plandir, cluster, overrides):
         if assisted_vms_number < old_assisted_vms_number:
             msg = "New assisted_vms_number should be greater than old one"
             return {'result': 'failure', 'reason': msg}
+        if data['disk_size'] < 200:
+            data['disk_size'] = 200
+        if data['numcpus'] < 16:
+            data['numcpus'] = 16
+        if data['memory'] < 20480:
+            data['memory'] = 20480
         worker_threaded = data.get('threaded', False) or data.get('assisted_vms_threaded', False)
         result = config.plan(plan, inputfile=f'{plandir}/kcli_plan_assisted.yml', overrides=data,
                              threaded=worker_threaded)
