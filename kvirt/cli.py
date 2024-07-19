@@ -348,7 +348,12 @@ def delete_vm(args):
             sys.exit(1)
     else:
         allclients = {config.client: config.k}
-        names = [common.get_lastvm(config.client)] if not args.names else args.names
+        if args.all:
+            names = [vm['name'] for vm in config.k.list()]
+        elif args.names:
+            names = args.names
+        else:
+            names = [common.get_lastvm(config.client)]
     if count != 0:
         if len(args.names) == 1:
             names = [f"{args.names[0]}-{number}" for number in range(count)]
@@ -1936,13 +1941,13 @@ def create_rke2_kube(args):
 
 
 def delete_kube(args):
-    clusters = args.cluster
     yes = args.yes
     yes_top = args.yes_top
     if not yes and not yes_top:
         common.confirm("Are you sure?")
     overrides = handle_parameters(args.param, args.paramfile)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    clusters = [c for c in config.list_kubes()] if args.all else args.cluster
     for cluster in clusters:
         config.delete_kube(cluster, overrides=overrides)
 
@@ -2191,9 +2196,9 @@ def delete_plan(args):
     yes_top = args.yes_top
     if not yes and not yes_top:
         common.confirm("Are you sure?")
-    plans = args.plans
     codes = []
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    plans = [p[0] for p in config.list_plans()] if args.all else args.plans
     for plan in plans:
         result = config.delete_plan(plan, unregister=config.rhnunregister)
         if 'result' in result and result['result'] == 'success':
@@ -4331,6 +4336,7 @@ def cli():
 
     kubedelete_desc = 'Delete Kube'
     kubedelete_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
+    kubedelete_parser.add_argument('-a', '--all', action='store_true', help='Delete all clusters')
     kubedelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     kubedelete_parser.add_argument('cluster', metavar='CLUSTER', nargs='+')
     kubedelete_parser.set_defaults(func=delete_kube)
@@ -4354,6 +4360,7 @@ def cli():
 
     plandelete_desc = 'Delete Plan'
     plandelete_parser = delete_subparsers.add_parser('plan', description=plandelete_desc, help=plandelete_desc)
+    plandelete_parser.add_argument('-a', '--all', action='store_true', help='Delete all plans')
     plandelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     plandelete_parser.add_argument('plans', metavar='PLAN', nargs='*')
     plandelete_parser.set_defaults(func=delete_plan)
@@ -4401,6 +4408,7 @@ def cli():
 
     vmdelete_desc = 'Delete Vm'
     vmdelete_parser = argparse.ArgumentParser(add_help=False)
+    vmdelete_parser.add_argument('-a', '--all', action='store_true', help='Delete all vms')
     vmdelete_parser.add_argument('-c', '--count', help='How many vms to delete', type=int, default=0, metavar='COUNT')
     vmdelete_parser.add_argument('-s', '--snapshots', action='store_true', help='Remove snapshots if needed')
     vmdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
