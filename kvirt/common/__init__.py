@@ -1848,14 +1848,14 @@ def openshift_create_app(config, appname, appdir, overrides={}, outputdir=None):
         app_files = [os.path.basename(_fic) for _fic in app_files]
         for app_file in app_files:
             rendered = config.process_inputfile(cluster, f"{appdir}/{appname}/{app_file}", overrides=appdata)
-            destfile = f"{outputdir if outputdir is not None else tmpdir}/{app_file}"
+            destfile = f"{outputdir or tmpdir}/{app_file}"
             with open(destfile, 'w') as g:
                 g.write(rendered)
-        destfile = f"{outputdir if outputdir is not None else tmpdir}/install.yml"
+        destfile = f"{outputdir or tmpdir}/install.yml"
         with open(destfile, 'w') as g:
             rendered = config.process_inputfile(cluster, f"{appdir}/install.yml.j2", overrides=appdata)
             g.write(rendered)
-        destfile = f"{outputdir if outputdir is not None else tmpdir}/install.sh"
+        destfile = f"{outputdir or tmpdir}/install.sh"
         with open(destfile, 'w') as f:
             f.write("oc create -f install.yml\n")
             if os.path.exists(f"{appdir}/{appname}/pre.sh"):

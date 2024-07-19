@@ -32,3 +32,9 @@ spec:
 {% if installplan is defined %}
   installPlanApproval: {{ installplan }}
 {% endif %}
+{% if name == 'sriov-network-operator' and devmode is defined and devmode %}
+  config:
+   env:
+   - name: "DEV_MODE"
+     value: {{ devmode }}
+{% endif %}
