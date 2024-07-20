@@ -25,11 +25,11 @@ jobs:
        - name: Wait for default storage class
          run: |
            TIMEOUT=0
-           while [ $(TIMEOUT) < 240 ] ; do
+           while [ "$TIMEOUT" -lt "240" ] ; do
              STORAGECLASSES=$(oc get storageclass -o jsonpath='{range .items[?(@.metadata.annotations.storageclass\.kubernetes\.io/is-default-class=="true")]}{.metadata.name}{"\n"}{end}')
              [ ! -z $STORAGECLASSES ] && exit 0
              sleep 20
-             TIMEOUT = $$( $TIMEOUT + 20))
+             TIMEOUT = $(( $TIMEOUT + 20 ))
              break
            done
            exit 1
