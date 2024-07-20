@@ -485,7 +485,7 @@ def download_image(args):
 def download_iso(args):
     overrides = handle_parameters(args.param, args.paramfile)
     url = overrides.get('url')
-    if url:
+    if url is None:
         error("An url needs to be specified")
         sys.exit(1)
     iso = args.iso or os.path.basename(url)
