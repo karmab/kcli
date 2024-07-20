@@ -354,7 +354,7 @@ def create(config, plandir, cluster, overrides):
     if which('oc') is None:
         get_oc()
     default_sc = False
-    for sc in safe_load(os.popen('oc get sc -o yaml').read())['items']:
+    for sc in safe_load(os.popen('oc get sc -o yaml').read()).get('items', []):
         if 'annotations' in sc['metadata']\
            and 'storageclass.kubernetes.io/is-default-class' in sc['metadata']['annotations']\
            and sc['metadata']['annotations']['storageclass.kubernetes.io/is-default-class'] == 'true':
