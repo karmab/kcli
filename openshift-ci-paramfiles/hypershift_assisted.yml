@@ -6,11 +6,11 @@ uefi: true
 workers: 2
 sslip: true
 assisted_vms: true
-assisted_vms_network: baremetalfake
+assisted_vms_number: 2
 assisted_vms_ksushy_ip: 192.168.254.1
+network: baremetalfake
 
-
-  # baremetal_hosts:
+# baremetal_hosts:
 # - url: http://192.168.254.1:9000/redfish/v1/Systems/local/ci-hypershift-assisted-0
 #  mac: "aa:aa:aa:bb:bb:80"
 # - url: http://192.168.254.1:9000/redfish/v1/Systems/local/ci-hypershift-assisted-1
