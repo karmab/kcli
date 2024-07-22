@@ -67,4 +67,5 @@ token:
 async: false
 cloud_dns: false
 registry: false
+registry_size: 20
 storedparameters: true

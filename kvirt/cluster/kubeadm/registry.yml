@@ -14,7 +14,7 @@ spec:
   volumeMode: Filesystem
   resources:
     requests:
-      storage: 20Gi
+      storage: {{ registry_size|default(20) }}Gi
 ---
 apiVersion: apps/v1
 kind: DaemonSet
