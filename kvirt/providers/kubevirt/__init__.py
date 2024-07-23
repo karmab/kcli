@@ -1360,10 +1360,10 @@ class Kubevirt(Kubecommon):
         crds = self.crds
         namespace = self.namespace
         apiversion = f"{MULTUSDOMAIN}/{MULTUSVERSION}"
-        vlanconfig = '"vlan": %s' % overrides['vlan'] if 'vlan' in overrides is not None else ''
-        bridge = 'bridge' in overrides and overrides['bridge']
-        ovs = 'ovs' in overrides and overrides['ovs']
-        ovn = 'ovn' in overrides and overrides['ovn']
+        vlanconfig = ', "vlan": %s' % overrides['vlan'] if 'vlan' in overrides is not None else ''
+        bridge = overrides.get('bridge', False)
+        ovs = overrides.get('ovs', False)
+        ovn = overrides.get('ovn', False)
         if 'type' in overrides:
             _type = overrides['type']
         elif ovs:
@@ -1378,12 +1378,12 @@ class Kubevirt(Kubecommon):
             if bridge:
                 ipam = '"isDefaultGateway": true, "forceAddress": false, "ipMasq": true, "hairpinMode": true'
                 ipam += ', "ipam": { "type": "host-local", "subnet": "%s" }' % cidr
-                config = '{ "type": "bridge", "bridge": "%s", %s }' % (name, ipam)
+                config = '{ "type": "bridge", "bridge": "%s", %s %s}' % (name, ipam, vlanconfig)
             else:
                 nad = overrides.get('nad', f"{namespace}/{name}")
                 layer = overrides.get('layer', "layer2" if not nat else "localnet")
                 config = f'"name": "{name}", "netAttachDefName": "{nad}", "subnets": "{cidr}", "topology": "{layer}"'
-                config = '{ "cniVersion": "0.3.1", "type": "ovn-k8s-cni-overlay", %s }' % config
+                config = '{ "cniVersion": "0.3.1", "type": "ovn-k8s-cni-overlay", %s %s}' % (config, vlanconfig)
                 if layer == 'localnet' and nat:
                     bridge = overrides.get('bridge', 'br-ex')
                     policy = {'apiVersion': 'nmstate.io/v1', 'kind': 'NodeNetworkConfigurationPolicy',
