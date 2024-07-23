@@ -1,0 +1,3 @@
+sriov_kvm: false
+sriov_kvm_nic: enp41s0
+sriov_kvm_vfs: 5
