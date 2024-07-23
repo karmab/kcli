@@ -1,15 +1,7 @@
-{% if ubuntu %} 
-apt-get -y install nfs-kernel-server
-{% else %}
-dnf -y install nfs-utils
-{% endif %}
-systemctl start nfs-server ; systemctl enable nfs-server
+apt-get -y install nfs-kernel-server || dnf -y install nfs-utils
+systemctl enable --now nfs-server
 
-{% if ctlplanes > 1 %}
-IP="{{ api_ip }}"
-{% else %}
 IP=$(hostname -I | cut -d" " -f1)
-{% endif%}
 
 {% if nfs_dynamic %}
 
@@ -21,7 +13,6 @@ exportfs -r
 
 NAMESPACE="nfs"
 BASEDIR="/root/nfs-subdir"
-apt-get -y install nfs-kernel-server || dnf -y install nfs-utils
 kubectl create namespace $NAMESPACE
 git clone https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner.git $BASEDIR
 kubectl project $NAMESPACE

@@ -10,6 +10,10 @@ deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io
 EOF
 apt-get update
 
+{% if nfs %}
+apt-get -y install nfs-common
+{% endif %}
+
 {% if engine == 'docker' %}
 apt-get -y install docker.io
 systemctl enable --now docker

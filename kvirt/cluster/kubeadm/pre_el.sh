@@ -14,6 +14,10 @@ sysctl -p
 setenforce 0
 sed -i "s/SELINUX=enforcing/SELINUX=permissive/" /etc/selinux/config
 
+{% if nfs %}
+dnf -y install nfs-utils
+{% endif %}
+
 TARGET={{ 'fedora' if 'fedora' in image|lower else 'centos' }}
 [ "$TARGET" == 'fedora' ] && dnf -y remove zram-generator-defaults && swapoff -a
 {% if engine == 'docker' %}
