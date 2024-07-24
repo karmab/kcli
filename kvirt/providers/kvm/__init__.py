@@ -1445,7 +1445,15 @@ class Kvirt(object):
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         if status[vm.isActive()] != "down":
             if soft:
+                timeout = 0
                 vm.shutdown()
+                while status[vm.isActive()] != "down":
+                    if timeout > 240:
+                        pprint(f"Timeout waiting for {name} to gracefully shutdown")
+                        break
+                    pprint(f"Waiting for {name} to gracefully shutdown")
+                    time.sleep(5)
+                    timeout += 5
             else:
                 vm.destroy()
         return {'result': 'success'}
