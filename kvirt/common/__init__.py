@@ -1493,15 +1493,15 @@ def _ssh_credentials(k, name):
     user, ip, status = info.get('user', 'root'), info.get('ip'), info.get('status')
     if status in ['down', 'suspended', 'unknown']:
         error(f"{name} down")
-    if 'nodeport' in info:
+    if 'loadbalancerip' in info:
+        ip = info['loadbalancerip']
+    elif 'nodeport' in info:
         vmport = info['nodeport']
         nodehost = info.get('host')
         ip = k.node_host(name=nodehost)
         if ip is None:
             warning(f"Connecting to {name} using node fqdn")
             ip = nodehost
-    elif 'loadbalancerip' in info:
-        ip = info['loadbalancerip']
     if ip is None:
         error(f"No ip found for {name}")
     return user, ip, vmport

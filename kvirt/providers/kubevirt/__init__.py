@@ -107,7 +107,8 @@ class Kubevirt(Kubecommon):
                metadata={}, securitygroups=[], vmuser=None):
         owners = []
         container_disk = overrides.get('container_disk', False)
-        guestagent = False
+        guest_agent = False
+        need_ssh_service = not tunnel and self.access_mode != 'External'
         if self.exists(name):
             return {'result': 'failure', 'reason': f"VM {name} already exists"}
         if image is not None:
@@ -313,7 +314,9 @@ class Kubevirt(Kubecommon):
                     return {'result': 'failure', 'reason': f"network {netname} not found"}
                 else:
                     newnet['multus'] = {'networkName': netname}
-                    guestagent = True
+                    guest_agent = True
+                    if index == 0:
+                        need_ssh_service = False
             else:
                 newnet['pod'] = {}
             interfaces.append(newif)
@@ -401,7 +404,7 @@ class Kubevirt(Kubecommon):
             vm['spec']['template']['spec']['domain']['devices']['disks'].append(newdisk)
             vm['spec']['template']['spec']['volumes'].append(myvolume)
             cloudinit = False
-        if guestagent:
+        if guest_agent:
             gcmds = []
             if image is not None and common.need_guest_agent(image):
                 gcmds.append('yum -y install qemu-guest-agent')
@@ -532,7 +535,7 @@ class Kubevirt(Kubecommon):
                            'spec': {'selector': {'subdomain': newdomain}, 'clusterIP': 'None',
                                     'ports': [{'name': 'foo', 'port': 1234, 'targetPort': 1234}]}}
                 core.create_namespaced_service(namespace, dnsspec)
-        if not tunnel and self.access_mode != 'External':
+        if need_ssh_service:
             try:
                 core.read_namespaced_service(f'{name}-ssh', namespace)
             except:
