@@ -434,7 +434,7 @@ class Kubevirt(Kubecommon):
                                                                files=files, enableroot=enableroot,
                                                                overrides=overrides, storemetadata=storemetadata,
                                                                image=image, machine=machine, vmuser=vmuser)
-                if 'static' in metadata:
+                if 'static' in metadata and 'static' not in name:
                     warning("Legacy network not supported in kubevirt. Ignoring")
                     netdata = None
             embed_userdata = overrides.get('embed_userdata', self.embed_userdata)
