@@ -2,7 +2,7 @@
 #
 oc create -f 99-metal3-provisioning.yaml >/dev/null 2>&1 || oc patch provisioning provisioning-configuration --type merge -p '{"spec":{"watchAllNamespaces": true}}'
 
-oc wait --for=condition=complete multiclusterhub/multiclusterhub --timeout=10m
+oc -n open-cluster-management wait --for=condition=complete multiclusterhub/multiclusterhub --timeout=10m
 
 until oc get crd/agentserviceconfigs.agent-install.openshift.io >/dev/null 2>&1 ; do sleep 1 ; done
 until oc get crd/clusterimagesets.hive.openshift.io >/dev/null 2>&1 ; do sleep 1 ; done
