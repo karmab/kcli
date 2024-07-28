@@ -1255,7 +1255,7 @@ class Kvirt(object):
         hugepagesxml = ""
         hugepages = overrides.get('hugepages', 0)
         if isinstance(hugepages, int) and hugepages > 0:
-            if hugepages > memory:
+            if hugepages * 1024 > memory:
                 return {'result': 'failure', 'reason': "Cant allocate more hugepages memory than the memory of the VM"}
             hugepages = 1024 * hugepages
             hugepagesxml = """<memoryBacking>
