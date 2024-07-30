@@ -87,7 +87,7 @@ IMAGES = {'almalinux8': f'{ALMA}/8/cloud/x86_64/images/AlmaLinux-8-GenericCloud-
           'ubuntu2304': f'{UBUNTU}/23.04/release/ubuntu-23.04-server-cloudimg-amd64.img',
           'ubuntu2310': f'{UBUNTU}/23.10/release/ubuntu-23.10-server-cloudimg-amd64.img',
           'ubuntu2404': f'{UBUNTU}/24.04/release/ubuntu-24.04-server-cloudimg-amd64.img',
-          'rockylinux8': f'{ROCKY}/8/images/Rocky-8-GenericCloud.latest.x86_64.qcow2',
+          'rockylinux8': f'{ROCKY}/8/images/x86_64/Rocky-8-GenericCloud.latest.x86_64.qcow2',
           'rockylinux9': f'{ROCKY}/9/images/x86_64/Rocky-9-GenericCloud.latest.x86_64.qcow2'}
 
 IMAGESCOMMANDS = {'debian8': 'echo datasource_list: [NoCloud, ConfigDrive, Openstack, Ec2] > /etc/cloud/cloud.cfg.d/'
