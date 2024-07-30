@@ -185,7 +185,7 @@ class Ksphere:
             if imageobj is None:
                 return {'result': 'failure', 'reason': f"Image {image} not found"}
             datastores = self._datastores_datacenters()
-            if datastores[pool] != self.dc.name:
+            if os.path.basename(datastores[pool]) != self.dc.name:
                 return {'result': 'failure', 'reason': f"Pool {pool} doesn't belong to Datacenter {self.dc.name}"}
             if imagepool is None:
                 devices = imageobj.config.hardware.device
