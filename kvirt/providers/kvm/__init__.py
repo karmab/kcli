@@ -254,12 +254,13 @@ class Kvirt(object):
         aarch64 = capabilities['arch'] == 'aarch64'
         aarch64_full = aarch64 and capabilities['kvm']
         as390x = capabilities['arch'] == 's390x'
-        if aarch64 and not aarch64_full:
+        if aarch64:
             if 'machine' not in overrides:
                 virtmachines = [m for m in sorted(capabilities['machines']) if m.startswith('virt-')]
                 if not virtmachines:
                     return {'result': 'failure', 'reason': "Couldn't find a valid machine"}
                 else:
+                    warning(f"Using machine {virtmachines[-1]}")
                     overrides['machine'] = virtmachines[-1]
             if 'cpumodel' not in overrides:
                 cpumodel = 'cortex-a57'
@@ -1264,7 +1265,7 @@ class Kvirt(object):
 </hugepages>
 <locked/>
 </memoryBacking>""" % hugepages
-        machine = "" if aarch64_full else f"machine='{machine}'"
+        machine = f"machine='{machine}'"
         emulatorxml = f"<emulator>{emulator}</emulator>"
         uuidxml = ""
         if 'uuid' in overrides:
