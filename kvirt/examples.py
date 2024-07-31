@@ -92,6 +92,9 @@ $ kcli create plan -f multi.yml -P ctlplanes=1 -P nodes=2 -P crio=true
 
 # Create a plan from a remote url, customizing some parameters
 $ kcli create plan -u https://github.com/karmab/kcli-plans/blob/main/kubernetes/kubernetes.yml -P ctlplanes=3
+
+# Run plan treating vm with installer in its name as a workflow
+$ kcli create plan -P installer_workflow=true
 """
 
 planinfo = """# Get info from a local plan file
@@ -444,7 +447,7 @@ $ kcli run workflow myscript.sh -P target=192.168.1.1
 $ kcli run workflow myworkflow -P cmds=[hostname]
 
 # Only output assets to dir without running
-$ kcli run workflow myscript.sh -do mydir
+$ kcli run workflow myscript.sh -o mydir
 
 """
 

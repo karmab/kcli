@@ -1783,6 +1783,7 @@ class Kconfig(Kbaseconfig):
                     sys.exit(1)
                 elif overrides[key] is not None:
                     setattr(self, key, overrides[key])
+        baseplans = []
         vmentries = entries.get('vm', [])
         diskentries = entries.get('disk', [])
         networkentries = entries.get('network', [])
@@ -1798,6 +1799,12 @@ class Kconfig(Kbaseconfig):
         sgs = entries.get('securitygroup', [])
         bucketentries = entries.get('bucket', [])
         workflowentries = entries.get('workflow', [])
+        if overrides.get('installer_workflow', False):
+            for index, entry in enumerate(vmentries):
+                if 'installer' in next(iter(entry)):
+                    workflowentries.append(vmentries[index])
+                    del vmentries[index]
+                    break
         for entry in profileentries:
             p = next(iter(entry))
             vmprofiles[p] = entry[p]
@@ -1940,7 +1947,6 @@ class Kconfig(Kbaseconfig):
                 pprint("Deploying Vms...")
             vmcounter = 0
             vms_to_host = {}
-            baseplans = []
             vmnames = [next(iter(entry)) for entry in vmentries]
             if basefile is not None:
                 basedir = os.path.dirname(inputfile) if os.path.isabs(inputfile) else '.'
@@ -2343,8 +2349,18 @@ class Kconfig(Kbaseconfig):
             pprint("Deploying Workflow Entries...")
             for entry in workflowentries:
                 workflow = next(iter(entry))
+                pprint(f"Deploying workflow {workflow}")
                 workflow_overrides = overrides.copy()
                 workflow_overrides.update(entry[workflow])
+                baseplan = workflow_overrides.get('baseplan')
+                if baseplan is not None and baseplan not in baseplans:
+                    pprint(f"Deploying baseplan {baseplan}")
+                    basedir = os.path.dirname(inputfile) if '/' in inputfile else '.'
+                    baseinputfile = f"{basedir}/{baseplan}"
+                    if container_mode() and not os.path.isabs(baseplan) and '/workdir' not in basedir:
+                        baseinputfile = f"/workdir/{basedir}/{baseplan}"
+                    self.plan(plan, inputfile=baseinputfile, overrides=overrides)
+                    baseplans.append(baseplan)
                 self.create_workflow(workflow, overrides=workflow_overrides)
         returndata = {'result': 'success', 'plan': plan}
         returndata['newvms'] = newvms if newvms else []

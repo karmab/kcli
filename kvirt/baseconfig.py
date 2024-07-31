@@ -1312,6 +1312,7 @@ class Kbaseconfig:
                 f.write(myfile01data)
 
     def create_workflow(self, workflow, overrides={}, outputdir=None, run=True):
+        cwd = os.getcwd()
         target = overrides.get('target')
         if target is not None:
             if isinstance(target, str):
@@ -1352,80 +1353,116 @@ class Kbaseconfig:
                 msg = "No scripts provided"
                 error(msg)
                 return {'result': 'failure', 'reason': msg}
+        default_destdir = outputdir or '/root'
+        directoryfiles = []
+        directories = []
+        for entry in files:
+            if not isinstance(entry, dict):
+                entry = {'origin': entry}
+            origin = os.path.expanduser(entry.get('origin'))
+            destdir = os.path.dirname(entry.get('path')) if 'path' in entry else default_destdir
+            content = entry.get('content')
+            if origin in directories:
+                continue
+            elif not os.path.exists(origin):
+                msg = f"Origin file {origin} not found"
+                error(msg)
+                return {'result': 'failure', 'reason': msg}
+            elif os.path.isdir(origin):
+                origin = entry.get('origin')
+                if not os.path.exists(f"{destdir}/{origin}"):
+                    os.makedirs(f"{destdir}/{origin}")
+                    directories.append(origin)
+                for _fic in os.listdir(origin):
+                    directoryfiles.append(f'{origin}/{_fic}')
+                continue
+            filename = os.path.basename(origin)
+            rendered = content or self.process_inputfile(workflow, origin, overrides=overrides)
+            destfile = f"{destdir}/{filename}"
+            if 'path' in entry:
+                destfile = entry['path']
+            if not os.path.exists(os.path.dirname(destfile)):
+                msg = f"Destination directory {os.path.dirname(destfile)} not found"
+                error(msg)
+                return {'result': 'failure', 'reason': msg}
+            with open(destfile, 'w') as f:
+                pprint(f"Copying rendered file {filename} to {destfile}")
+                f.write(rendered)
+        for entry in directoryfiles:
+            entrydir = os.path.basename(entry)
+            rendered = self.process_inputfile(workflow, entry, overrides=overrides)
+            destfile = f"{destdir}/{entrydir}"
+            with open(destfile, 'w') as f:
+                f.write(rendered)
         finalscripts = []
-        with TemporaryDirectory() as tmpdir:
-            destdir = outputdir or tmpdir
-            directoryfiles = []
-            directories = []
-            for index, entry in enumerate(scripts + files):
-                if isinstance(entry, dict):
-                    origin = os.path.expanduser(entry.get('origin') or entry.get('path'))
-                    content = entry.get('content')
-                else:
-                    origin = os.path.expanduser(entry)
-                    content = None
-                if origin in directories:
-                    continue
-                elif not os.path.exists(origin):
-                    msg = f"Origin file {origin} not found"
+        tmpdir = None
+        if outputdir is None:
+            tmpdir = TemporaryDirectory()
+        destdir = outputdir or tmpdir.name
+        for entry in scripts:
+            origin = os.path.expanduser(entry)
+            if not os.path.exists(origin):
+                msg = f"Origin file {origin} not found"
+                error(msg)
+                return {'result': 'failure', 'reason': msg}
+            elif os.path.isdir(origin):
+                origin = entry.get('origin')
+                if not os.path.exists(f"{destdir}/{origin}"):
+                    os.makedirs(f"{destdir}/{origin}")
+                    directories.append(origin)
+                for _fic in os.listdir(origin):
+                    directoryfiles.append(f'{origin}/{_fic}')
+                continue
+            scriptname = os.path.basename(origin)
+            rendered = content or self.process_inputfile(workflow, origin, overrides=overrides)
+            destfile = f"{destdir}/{scriptname}"
+            if 'path' in destfile:
+                destfile = entry.get('path')
+            if not os.path.exists(os.path.dirname(destfile)):
+                msg = f"Destination directory {os.path.dirname(destfile)} not found"
+                error(msg)
+                return {'result': 'failure', 'reason': msg}
+            with open(destfile, 'w') as f:
+                f.write(rendered)
+            finalscripts.append(scriptname)
+        if cmds:
+            cmdscontent = '\n'.join(cmds)
+            destfile = f"{destdir}/cmds.sh"
+            with open(destfile, 'w') as f:
+                f.write(cmdscontent)
+            finalscripts.append('cmds.sh')
+        if not run:
+            pprint("Not running as dry mode was requested")
+            return {'result': 'success'}
+        if target is not None:
+            remotedir = f"/tmp/{os.path.basename(tmpdir)}"
+            scpcmd = scp(hostname, ip=ip, user=user, source=tmpdir, destination=remotedir, download=False,
+                         insecure=True, tunnel=tunnel, tunnelhost=tunnelhost, tunnelport=tunnelport,
+                         tunneluser=tunneluser, vmport=vmport)
+            os.system(scpcmd)
+            cmd = [f"cd {remotedir}"]
+            for script in finalscripts:
+                cmd.append(f'bash {script}' if script.endswith('.sh') else f'./{script}')
+            cmd.append(f"rm -rf {remotedir}")
+            cmd = ';'.join(cmd)
+            pprint(f"Running script {script} on {hostname}")
+            sshcommand = ssh(hostname, ip=ip, user=user, cmd=cmd, tunnel=tunnel, tunnelhost=tunnelhost,
+                             tunnelport=tunnelport, tunneluser=tunneluser, vmport=vmport)
+            os.system(sshcommand)
+        else:
+            os.chdir(destdir)
+            for script in finalscripts:
+                os.chmod(script, 0o700)
+                pprint(f"Running script {script} locally")
+                command = f'bash {script}' if script.endswith('.sh') else f'./{script}'
+                result = call(command, shell=True)
+                if result != 0:
+                    msg = f"Failure in script {script}"
                     error(msg)
                     return {'result': 'failure', 'reason': msg}
-                elif os.path.isdir(origin):
-                    origindir = entry if not isinstance(entry, dict) else entry.get('origin') or entry.get('path')
-                    if not os.path.exists(f"{destdir}/{origindir}"):
-                        os.makedirs(f"{destdir}/{origindir}")
-                        directories.append(origin)
-                        for _fic in os.listdir(origindir):
-                            directoryfiles.append(f'{origindir}/{_fic}')
-                    continue
-                path = os.path.basename(origin)
-                rendered = content or self.process_inputfile(workflow, origin, overrides=overrides)
-                destfile = f"{destdir}/{path}"
-                with open(destfile, 'w') as f:
-                    f.write(rendered)
-                if index < len(scripts):
-                    finalscripts.append(path)
-            for entry in directoryfiles:
-                path = os.path.basename(entry)
-                rendered = self.process_inputfile(workflow, entry, overrides=overrides)
-                destfile = f"{destdir}/{path}"
-                with open(destfile, 'w') as f:
-                    f.write(rendered)
-            if cmds:
-                cmdscontent = '\n'.join(cmds)
-                destfile = f"{destdir}/cmds.sh"
-                with open(destfile, 'w') as f:
-                    f.write(cmdscontent)
-                finalscripts.append('cmds.sh')
-            if not run:
-                pprint("Not running as dry mode was requested")
-                return {'result': 'success'}
-            if target is not None:
-                remotedir = f"/tmp/{os.path.basename(tmpdir)}"
-                scpcmd = scp(hostname, ip=ip, user=user, source=tmpdir, destination=remotedir, download=False,
-                             insecure=True, tunnel=tunnel, tunnelhost=tunnelhost, tunnelport=tunnelport,
-                             tunneluser=tunneluser, vmport=vmport)
-                os.system(scpcmd)
-                cmd = [f"cd {remotedir}"]
-                for script in finalscripts:
-                    cmd.append(f'bash {script}' if script.endswith('.sh') else f'./{script}')
-                cmd.append(f"rm -rf {remotedir}")
-                cmd = ';'.join(cmd)
-                pprint(f"Running script {script} on {hostname}")
-                sshcommand = ssh(hostname, ip=ip, user=user, cmd=cmd, tunnel=tunnel, tunnelhost=tunnelhost,
-                                 tunnelport=tunnelport, tunneluser=tunneluser, vmport=vmport)
-                os.system(sshcommand)
-            else:
-                os.chdir(destdir)
-                for script in finalscripts:
-                    os.chmod(script, 0o700)
-                    pprint(f"Running script {script} locally")
-                    command = f'bash {script}' if script.endswith('.sh') else f'./{script}'
-                    result = call(command, shell=True)
-                    if result != 0:
-                        msg = f"Failure in script {script}"
-                        error(msg)
-                        return {'result': 'failure', 'reason': msg}
+        if tmpdir is not None:
+            tmpdir.cleanup()
+        os.chdir(cwd)
         return {'result': 'success'}
 
     def info_keyword(self, keyword):
