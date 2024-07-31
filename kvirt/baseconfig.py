@@ -1383,15 +1383,14 @@ class Kbaseconfig:
                 continue
             filename = os.path.basename(origin)
             if not render:
-                content = open(origin, 'r').readlines()
+                content = open(origin, 'r').read()
             rendered = content or self.process_inputfile(workflow, origin, overrides=overrides)
             destfile = f"{destdir}/{filename}"
             if 'path' in entry:
                 destfile = entry['path']
             if not os.path.exists(os.path.dirname(destfile)):
-                msg = f"Destination directory {os.path.dirname(destfile)} not found"
-                error(msg)
-                return {'result': 'failure', 'reason': msg}
+                pprint(f"Creating directory {os.path.dirname(destfile)}")
+                os.makedirs(os.path.dirname(destfile))
             with open(destfile, 'w') as f:
                 pprint(f"Copying rendered file {filename} to {destfile}")
                 f.write(rendered)

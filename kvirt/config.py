@@ -1954,7 +1954,7 @@ class Kconfig(Kbaseconfig):
                 if container_mode() and not os.path.isabs(basefile) and '/workdir' not in basedir:
                     baseinputfile = f"/workdir/{basedir}/{basefile}"
                 result = self.plan(plan, inputfile=baseinputfile, overrides=overrides, excludevms=vmnames,
-                                   basemode=True, onlyassets=onlyassets)
+                                   basemode=True, onlyassets=onlyassets, pre=pre, post=post)
                 if result['result'] != 'success':
                     return result
                 baseplans.append(basefile)
@@ -1984,7 +1984,7 @@ class Kconfig(Kbaseconfig):
                         basevm = profile['basevm'] if 'basevm' in profile else name
                         if baseplan not in baseplans:
                             self.plan(plan, inputfile=baseinputfile, overrides=overrides, excludevms=vmnames,
-                                      basemode=True, onlyassets=onlyassets)
+                                      basemode=True, onlyassets=onlyassets, pre=pre, post=post)
                             baseplans.append(baseplan)
                         baseinfo = self.process_inputfile(plan, baseinputfile, overrides=overrides, full=True)
                         baseprofile = baseinfo[0][basevm] if basevm in baseinfo[0] else {}
@@ -2359,7 +2359,7 @@ class Kconfig(Kbaseconfig):
                     baseinputfile = f"{basedir}/{baseplan}"
                     if container_mode() and not os.path.isabs(baseplan) and '/workdir' not in basedir:
                         baseinputfile = f"/workdir/{basedir}/{baseplan}"
-                    self.plan(plan, inputfile=baseinputfile, overrides=overrides)
+                    self.plan(plan, inputfile=baseinputfile, overrides=overrides, pre=pre, post=post)
                     baseplans.append(baseplan)
                 self.create_workflow(workflow, overrides=workflow_overrides)
         returndata = {'result': 'success', 'plan': plan}

@@ -2147,7 +2147,9 @@ def create_plan(args):
     client = overrides.get('client', args.client)
     region = overrides.get('region', args.region)
     zone = overrides.get('zone', args.zone)
-    config = Kconfig(client=client, debug=args.debug, region=region, zone=zone, namespace=args.namespace)
+    offline = overrides.get('offline', False)
+    config = Kconfig(client=client, debug=args.debug, region=region, zone=zone, namespace=args.namespace,
+                     offline=offline)
     _type = config.ini[config.client].get('type', 'kvm')
     overrides.update({'type': _type})
     plan = overrides.get('plan', args.plan)
