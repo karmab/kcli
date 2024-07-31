@@ -144,6 +144,12 @@ $ kcli create vm -i centos9stream -P nets=['{"name": "default", "mtu": 1400}']
 $ img=centos9stream
 $ kcli create vm -i $img -P nets=['{"name":"default","ip":"192.168.122.250","netmask":"24","gateway":"192.168.122.1"}']
 
+# Create a vm with a dns entry
+$ kcli create vm -i centos9stream -P nets=['{"name":"default","reservedns":"true"}']
+
+# Create a vm with a dhcp reservation
+$ kcli create vm -i centos9stream -P nets=['{"name":"default","ip":"192.168.122.250","reserveip":"true"}']
+
 # Use more advanced information for disks
 $ kcli create vm -i centos9stream -P disks=['{"size": 10, "interface": "sata"}']
 
