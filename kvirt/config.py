@@ -1617,7 +1617,8 @@ class Kconfig(Kbaseconfig):
 
     def plan(self, plan, ansible=False, url=None, path=None, container=False, inputfile=None, inputstring=None,
              overrides={}, info=False, update=False, embedded=False, download=False, quiet=False, doc=False,
-             onlyassets=False, pre=True, post=True, excludevms=[], basemode=False, threaded=False):
+             onlyassets=False, excludevms=[], basemode=False, threaded=False):
+        pre = overrides.get('pre', True)
         k = self.k
         no_overrides = not overrides
         threads = []
@@ -1954,7 +1955,7 @@ class Kconfig(Kbaseconfig):
                 if container_mode() and not os.path.isabs(basefile) and '/workdir' not in basedir:
                     baseinputfile = f"/workdir/{basedir}/{basefile}"
                 result = self.plan(plan, inputfile=baseinputfile, overrides=overrides, excludevms=vmnames,
-                                   basemode=True, onlyassets=onlyassets, pre=pre, post=post)
+                                   basemode=True, onlyassets=onlyassets)
                 if result['result'] != 'success':
                     return result
                 baseplans.append(basefile)
@@ -1984,7 +1985,7 @@ class Kconfig(Kbaseconfig):
                         basevm = profile['basevm'] if 'basevm' in profile else name
                         if baseplan not in baseplans:
                             self.plan(plan, inputfile=baseinputfile, overrides=overrides, excludevms=vmnames,
-                                      basemode=True, onlyassets=onlyassets, pre=pre, post=post)
+                                      basemode=True, onlyassets=onlyassets)
                             baseplans.append(baseplan)
                         baseinfo = self.process_inputfile(plan, baseinputfile, overrides=overrides, full=True)
                         baseprofile = baseinfo[0][basevm] if basevm in baseinfo[0] else {}
@@ -2359,7 +2360,7 @@ class Kconfig(Kbaseconfig):
                     baseinputfile = f"{basedir}/{baseplan}"
                     if container_mode() and not os.path.isabs(baseplan) and '/workdir' not in basedir:
                         baseinputfile = f"/workdir/{basedir}/{baseplan}"
-                    self.plan(plan, inputfile=baseinputfile, overrides=overrides, pre=pre, post=post)
+                    self.plan(plan, inputfile=baseinputfile, overrides=overrides)
                     baseplans.append(baseplan)
                 self.create_workflow(workflow, overrides=workflow_overrides)
         returndata = {'result': 'success', 'plan': plan}
@@ -2384,22 +2385,6 @@ class Kconfig(Kbaseconfig):
             self.wait_finish(name, waitcommand=waitcommand, waittimeout=waittimeout, vmclient=vmclient)
             if finishfiles:
                 self.handle_finishfiles(name, finishfiles, vmclient=vmclient)
-        post_script = f'{inputdir}/kcli_post.sh'
-        if os.path.exists(post_script):
-            if post:
-                pprint("Running kcli_post.sh")
-                with TemporaryDirectory() as tmpdir:
-                    post_script = self.process_inputfile('xxx', post_script, overrides=overrides)
-                    with open(f"{tmpdir}/post.sh", 'w') as f:
-                        f.write(post_script)
-                    post_run = run(f'bash {tmpdir}/post.sh', shell=True, stdout=PIPE, stderr=STDOUT,
-                                   universal_newlines=True)
-                    if post_run.returncode != 0:
-                        msg = f"Issue when running kcli_post.sh :\n{post_run.stdout}"
-                        error(msg)
-                        return {'result': 'failure', 'reason': msg}
-            else:
-                warning("Skipping kcli_post.sh as requested")
         if overrides.get('tempkeydir') is not None:
             overrides.get('tempkeydir').cleanup()
         return returndata

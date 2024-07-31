@@ -2128,8 +2128,6 @@ def create_plan(args):
     url = args.url
     path = args.path
     container = args.container
-    pre = not args.skippre
-    post = not args.skippost
     overrides = handle_parameters(args.param, args.paramfile)
     threaded = overrides.get('threaded') or args.threaded
     inputfile = overrides.get('inputfile') or args.inputfile or 'kcli_plan.yml'
@@ -2163,7 +2161,7 @@ def create_plan(args):
         else:
             config.delete_plan(plan, unregister=config.rhnunregister)
     result = config.plan(plan, ansible=ansible, url=url, path=path, container=container, inputfile=inputfile,
-                         overrides=overrides, pre=pre, post=post, threaded=threaded)
+                         overrides=overrides, threaded=threaded)
     if result and 'reason' in result:
         error(result['reason'])
     code = 0 if result and result.get('result') == 'success' else 1
@@ -2577,7 +2575,6 @@ def create_vmdata(args):
 
 def create_plandata(args):
     plan = None
-    pre = not args.skippre
     outputdir = args.outputdir
     overrides = handle_parameters(args.param, args.paramfile)
     inputfile = overrides.get('inputfile') or args.inputfile or 'kcli_plan.yml'
@@ -2591,7 +2588,7 @@ def create_plandata(args):
     if not os.path.exists(inputfile):
         error(f"Input file {inputfile} not found")
         sys.exit(1)
-    results = config.plan(plan, inputfile=inputfile, overrides=overrides, onlyassets=True, pre=pre)
+    results = config.plan(plan, inputfile=inputfile, overrides=overrides, onlyassets=True)
     if results.get('assets'):
         for num, asset in enumerate(results['assets']):
             if outputdir is None:
@@ -3947,8 +3944,6 @@ def cli():
     plancreate_parser.add_argument('-c', '--container', action='store_true', help='Handle container')
     plancreate_parser.add_argument('--force', action='store_true', help='Delete existing vms first')
     plancreate_parser.add_argument('-f', '--inputfile', help='Input Plan file')
-    plancreate_parser.add_argument('-k', '--skippre', action='store_true', help='Skip pre script')
-    plancreate_parser.add_argument('-z', '--skippost', action='store_true', help='Skip post script')
     plancreate_parser.add_argument('-t', '--threaded', help='Run threaded', action='store_true')
     plancreate_parser.add_argument('plan', metavar='PLAN', nargs='?')
     plancreate_parser.set_defaults(func=create_plan)
@@ -3959,7 +3954,6 @@ def cli():
                                                          help=plandatacreate_desc, parents=[parent_parser],
                                                          epilog=plandatacreate_epilog, formatter_class=rawhelp)
     plandatacreate_parser.add_argument('-f', '--inputfile', help='Input Plan file', default='kcli_plan.yml')
-    plandatacreate_parser.add_argument('-k', '--skippre', action='store_true', help='Skip pre script')
     plandatacreate_parser.add_argument('--outputdir', '-o', help='Output directory', metavar='OUTPUTDIR')
     plandatacreate_parser.add_argument('name', metavar='VMNAME', nargs='?', type=valid_fqdn)
     plandatacreate_parser.set_defaults(func=create_plandata)

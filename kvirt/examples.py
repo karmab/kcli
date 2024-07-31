@@ -93,6 +93,9 @@ $ kcli create plan -f multi.yml -P ctlplanes=1 -P nodes=2 -P crio=true
 # Create a plan from a remote url, customizing some parameters
 $ kcli create plan -u https://github.com/karmab/kcli-plans/blob/main/kubernetes/kubernetes.yml -P ctlplanes=3
 
+# Skip pre check
+$ kcli create plan -f multi.yml -P pre=false
+
 # Run plan treating vm with installer in its name as a workflow
 $ kcli create plan -P installer_workflow=true
 """
