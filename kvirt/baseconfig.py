@@ -2,30 +2,31 @@
 
 from getpass import getuser
 from ipaddress import ip_address, ip_network
-from random import choice
+from jinja2 import Environment, FileSystemLoader
+from jinja2 import StrictUndefined as strictundefined
+from jinja2.runtime import Undefined as defaultundefined
+from jinja2.exceptions import TemplateSyntaxError, TemplateError, TemplateNotFound
+from kvirt import common
+from kvirt.common import error, pprint, warning, container_mode, ssh, scp, NoAliasDumper
+from kvirt.common import PlanLoader
+from kvirt import defaults as kdefaults
 from kvirt.cluster import hypershift
 from kvirt.cluster import k3s
 from kvirt.cluster import kubeadm
 from kvirt.cluster import microshift
 from kvirt.cluster import openshift
 from kvirt.cluster import rke2
-from kvirt import common
-from kvirt.common import error, pprint, warning, container_mode, ssh, scp, NoAliasDumper
-from kvirt.common import PlanLoader
-from kvirt import defaults as kdefaults
 from kvirt.jinjafilters import jinjafilters
 import os
-from shutil import copytree, rmtree, which, copy2
-import yaml
-from jinja2 import Environment, FileSystemLoader
-from jinja2 import StrictUndefined as strictundefined
-from jinja2.runtime import Undefined as defaultundefined
-from jinja2.exceptions import TemplateSyntaxError, TemplateError, TemplateNotFound
+from random import choice
 import re
-import sys
+import stat
 from subprocess import call
+import sys
+from shutil import copytree, rmtree, which, copy2
 from tempfile import TemporaryDirectory
 from time import sleep
+import yaml
 
 
 def other_client(profile, clients):
@@ -1394,6 +1395,7 @@ class Kbaseconfig:
             with open(destfile, 'w') as f:
                 pprint(f"Copying rendered file {filename} to {destfile}")
                 f.write(rendered)
+                os.chmod(destfile, stat.S_IMODE(os.stat(origin).st_mode))
             treatedfiles.append(origin)
         for entry in directoryfiles:
             if entry in treatedfiles:
@@ -1404,6 +1406,7 @@ class Kbaseconfig:
             destfile = f"{destdir}/{entrydir}/{entryname}"
             with open(destfile, 'w') as f:
                 f.write(rendered)
+                os.chmod(destfile, stat.S_IMODE(os.stat(entry).st_mode))
         finalscripts = []
         tmpdir = None
         if outputdir is None:

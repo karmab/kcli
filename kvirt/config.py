@@ -1799,7 +1799,7 @@ class Kconfig(Kbaseconfig):
         sgs = entries.get('securitygroup', [])
         bucketentries = entries.get('bucket', [])
         workflowentries = entries.get('workflow', [])
-        if overrides.get('installer_workflow', False):
+        if overrides.get('workflow_installer', False):
             for index, entry in enumerate(vmentries):
                 if 'installer' in next(iter(entry)):
                     workflowentries.append(vmentries[index])
