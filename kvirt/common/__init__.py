@@ -440,7 +440,7 @@ def process_files(files=[], overrides={}, remediate=False):
         permissions = fil.get('permissions', mode)
         render = fil.get('render', True)
         if isinstance(render, str):
-            render = True if render.lower() == 'true' else False
+            render = render.lower() == 'true'
         file_overrides = overrides.copy()
         file_overrides.update(fil)
         file_overrides.update({'env': os.environ})

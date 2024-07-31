@@ -1355,6 +1355,7 @@ class Kbaseconfig:
                 return {'result': 'failure', 'reason': msg}
         default_destdir = outputdir or '/root'
         directoryfiles = []
+        treatedfiles = []
         directories = []
         for entry in files:
             if not isinstance(entry, dict):
@@ -1362,6 +1363,9 @@ class Kbaseconfig:
             origin = os.path.expanduser(entry.get('origin'))
             destdir = os.path.dirname(entry.get('path')) if 'path' in entry else default_destdir
             content = entry.get('content')
+            render = entry.get('render', True)
+            if isinstance(render, str):
+                render = render.lower() == 'true'
             if origin in directories:
                 continue
             elif not os.path.exists(origin):
@@ -1377,6 +1381,8 @@ class Kbaseconfig:
                     directoryfiles.append(f'{origin}/{_fic}')
                 continue
             filename = os.path.basename(origin)
+            if not render:
+                content = open(origin, 'r').readlines()
             rendered = content or self.process_inputfile(workflow, origin, overrides=overrides)
             destfile = f"{destdir}/{filename}"
             if 'path' in entry:
@@ -1388,10 +1394,14 @@ class Kbaseconfig:
             with open(destfile, 'w') as f:
                 pprint(f"Copying rendered file {filename} to {destfile}")
                 f.write(rendered)
+            treatedfiles.append(origin)
         for entry in directoryfiles:
-            entrydir = os.path.basename(entry)
+            if entry in treatedfiles:
+                continue
+            entrydir = os.path.dirname(entry)
+            entryname = os.path.basename(entry)
             rendered = self.process_inputfile(workflow, entry, overrides=overrides)
-            destfile = f"{destdir}/{entrydir}"
+            destfile = f"{destdir}/{entrydir}/{entryname}"
             with open(destfile, 'w') as f:
                 f.write(rendered)
         finalscripts = []
@@ -1419,9 +1429,8 @@ class Kbaseconfig:
             if 'path' in destfile:
                 destfile = entry.get('path')
             if not os.path.exists(os.path.dirname(destfile)):
-                msg = f"Destination directory {os.path.dirname(destfile)} not found"
-                error(msg)
-                return {'result': 'failure', 'reason': msg}
+                pprint(f"Creating directory {os.path.dirname(destfile)}")
+                os.makedirs(os.path.exists(os.path.dirname(destfile)))
             with open(destfile, 'w') as f:
                 f.write(rendered)
             finalscripts.append(scriptname)
