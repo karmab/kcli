@@ -1361,8 +1361,14 @@ class Kbaseconfig:
         for entry in files:
             if not isinstance(entry, dict):
                 entry = {'origin': entry}
-            origin = os.path.expanduser(entry.get('origin'))
-            destdir = os.path.dirname(entry.get('path')) if 'path' in entry else default_destdir
+            origin = os.path.expanduser(entry['origin'])
+            if 'path' in entry:
+                destdir = os.path.dirname(entry['path'])
+            else:
+                destdir = f"{default_destdir}/{os.path.dirname(entry['origin'])}"
+            if not os.path.exists(destdir):
+                pprint(f"Creating directory {destdir}")
+                os.makedirs(destdir)
             content = entry.get('content')
             render = entry.get('render', True)
             if isinstance(render, str):
@@ -1375,8 +1381,9 @@ class Kbaseconfig:
                 return {'result': 'failure', 'reason': msg}
             elif os.path.isdir(origin):
                 origin = entry.get('origin')
-                if not os.path.exists(f"{destdir}/{origin}"):
-                    os.makedirs(f"{destdir}/{origin}")
+                if not os.path.exists(f"{destdir}/{os.path.basename(origin)}"):
+                    pprint(f"Creating directory {destdir}/{os.path.basename(origin)}")
+                    os.makedirs(f"{destdir}/{os.path.basename(origin)}")
                     directories.append(origin)
                 for _fic in os.listdir(origin):
                     directoryfiles.append(f'{origin}/{_fic}')
@@ -1402,7 +1409,7 @@ class Kbaseconfig:
             entrydir = os.path.dirname(entry)
             entryname = os.path.basename(entry)
             rendered = self.process_inputfile(workflow, entry, overrides=overrides)
-            destfile = f"{destdir}/{entrydir}/{entryname}"
+            destfile = f"{default_destdir}/{entrydir}/{entryname}"
             with open(destfile, 'w') as f:
                 f.write(rendered)
                 os.chmod(destfile, stat.S_IMODE(os.stat(entry).st_mode))
