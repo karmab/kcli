@@ -49,8 +49,7 @@ class Kopenstack(object):
         self.cinder = cinderclient.Client('3', session=sess, region_name=region_name)
         self.neutron = neutronclient(session=sess, region_name=region_name)
         os_options = {'user_domain_name': domain, 'project_domain_name': domain, 'project_name': project}
-        self.swift = swiftclient.Connection(authurl=auth_url, user=user, key=password, os_options=os_options,
-                                            auth_version='3')
+        self.swift = swiftclient.Connection(session=sess, os_options=os_options)
         self.conn = self.nova
         self.project = project
         self.external_network = external_network
