@@ -2543,7 +2543,8 @@ def render_file(args):
     inputfile = overrides.get('inputfile') or args.inputfile or 'kcli_plan.yml'
     if container_mode():
         inputfile = f"/workdir/{inputfile}"
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
+    offline = overrides.get('offline', False)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=offline)
     default_data = {f'config_{k}': baseconfig.default[k] for k in baseconfig.default}
     client_data = {f'config_{k}': baseconfig.ini[baseconfig.client][k] for k in baseconfig.ini[baseconfig.client]}
     client_data['config_type'] = client_data.get('config_type', 'kvm')

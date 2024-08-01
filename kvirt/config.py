@@ -234,27 +234,17 @@ class Kconfig(Kbaseconfig):
                            debug=debug, datacenter=datacenter, cluster=cluster, ca_file=ca_file, org=org,
                            filtervms=filtervms, filteruser=filteruser, filtertag=filtertag)
             elif self.type == 'openstack':
-                version = options.get('version', kdefaults.OPENSTACK['version'])
-                domain = next((e for e in [options.get('domain'),
-                                           os.environ.get("OS_USER_DOMAIN_NAME")] if e is not None),
-                              kdefaults.OPENSTACK['domain'])
-                auth_url = next((e for e in [options.get('auth_url'),
-                                             os.environ.get("OS_AUTH_URL")] if e is not None),
-                                None)
+                version = options.get('version') or kdefaults.OPENSTACK['version']
+                domain = options.get('domain') or os.environ.get("OS_USER_DOMAIN_NAME") or kdefaults.OPENSTACK['domain']
+                auth_url = options.get('auth_url') or os.environ.get("OS_AUTH_URL")
                 if auth_url is None:
                     error("Missing auth_url in the configuration. Leaving")
                     sys.exit(1)
-                user = next((e for e in [options.get('user'),
-                                         os.environ.get("OS_USERNAME")] if e is not None), kdefaults.OPENSTACK['user'])
-                project = next((e for e in [options.get('project'),
-                                            os.environ.get("OS_PROJECT_NAME")] if e is not None),
-                               kdefaults.OPENSTACK['project'])
-                password = next((e for e in [options.get('password'),
-                                             os.environ.get("OS_PASSWORD")] if e is not None), None)
-                ca_file = next((e for e in [options.get('ca_file'),
-                                            os.environ.get("OS_CACERT")] if e is not None), None)
-                region_name = next((e for e in [options.get('region_name'),
-                                    os.environ.get("OS_REGION_NAME")] if e is not None), None)
+                user = options.get('user') or os.environ.get("OS_USERNAME") or kdefaults.OPENSTACK['user']
+                project = options.get('project') or os.environ.get("OS_PROJECT_NAME") or kdefaults.OPENSTACK['project']
+                password = options.get('password') or os.environ.get("OS_PASSWORD")
+                ca_file = options.get('ca_file') or os.environ.get("OS_CACERT")
+                region_name = options.get('region_name') or os.environ.get("OS_REGION_NAME")
                 external_network = options.get('external_network')
                 if auth_url.endswith('v2.0'):
                     domain = None
@@ -262,14 +252,21 @@ class Kconfig(Kbaseconfig):
                     error(f"Indicated ca_file {ca_file} not found. Leaving")
                     sys.exit(1)
                 glance_disk = options.get('glance_disk', False)
-                auth_token = next((e for e in [options.get('token'),
-                                               os.environ.get("OS_TOKEN")] if e is not None), None)
-                auth_type = 'token' if auth_token is not None else 'password'
+                auth_token = options.get('token') or os.environ.get("OS_TOKEN") or 'password'
+                default_auth_type = 'token' if auth_token is not None else 'password'
+                auth_type = options.get('auth_type') or os.environ.get("OS_AUTH_TYPE") or default_auth_type
                 if auth_type == 'password' and password is None:
                     error("Missing password in the configuration. Leaving")
                     sys.exit(1)
                 if auth_type == 'token':
                     user, password, domain = None, None, None
+                if auth_type == 'v3applicationcredential':
+                    options_credential_id = options.get('application_credential_id')
+                    env_application_credential_id = os.environ.get("OS_APPLICATION_CREDENTIAL_ID")
+                    application_credential_id = options_credential_id or env_application_credential_id
+                    options_credential_secret = options.get('application_credential_secret')
+                    env_application_credential_secret = os.environ.get("OS_APPLICATION_CREDENTIAL_SECRET")
+                    application_credential_secret = options_credential_secret or env_application_credential_secret
                 try:
                     from kvirt.providers.openstack import Kopenstack
                 except Exception as e:
@@ -278,7 +275,9 @@ class Kconfig(Kbaseconfig):
                 k = Kopenstack(host=self.host, port=self.port, user=user, password=password, version=version,
                                debug=debug, project=project, domain=domain, auth_url=auth_url, ca_file=ca_file,
                                external_network=external_network, region_name=region_name, glance_disk=glance_disk,
-                               auth_type=auth_type, auth_token=auth_token)
+                               auth_type=auth_type, auth_token=auth_token,
+                               application_credential_id=application_credential_id,
+                               application_credential_secret=application_credential_secret)
             elif self.type == 'vsphere':
                 user = options.get('user')
                 if user is None:
