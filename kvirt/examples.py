@@ -105,6 +105,18 @@ $ kcli info plan -f multi.yml
 
 # Get info of a plan with a remote url
 $ kcli info plan -u https://github.com/karmab/kcli-plans/blob/main/kubernetes/kubernetes.yml
+
+# Get info for a specific running plan
+$ kcli info plan myplan
+
+# Filter information for a specific plan
+$ kcli info plan myplan -P field=status
+
+# Filter information for a specific plan and a specific vm
+$ kcli info plan myplan -P field=status -P name=myvm01
+
+# Get all vms of a specific plan which are down
+$ kcli info plan myplan -P field=status -P value=down
 """
 
 productinfo = """# Get info from product kubernetes

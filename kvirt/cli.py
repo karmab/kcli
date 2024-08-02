@@ -694,10 +694,14 @@ def sync_config(args):
 
 
 def _list_output(_list, output):
-    if output == 'yaml':
+    if isinstance(_list, str):
+        print(_list)
+    elif output == 'yaml':
         print(yaml.dump(_list, indent=2))
     elif output == 'json':
         print(json.dumps(_list, indent=2))
+    elif output == 'jsoncompact':
+        print(json.dumps(_list, indent=None, separators=(',', ':')))
     elif output == 'name':
         if isinstance(_list, list):
             for entry in sorted(_list, key=lambda x: x['name'] if isinstance(x, dict) else x):
@@ -708,9 +712,43 @@ def _list_output(_list, output):
     sys.exit(0)
 
 
-def _parse_vms_list(_list):
-    vmstable = PrettyTable(["Name", "Status", "Ips", "Source", "Plan", "Profile"])
+def _filter_info_plan(_list, overrides={}):
+    new_list = []
+    name = overrides.get('name')
+    field = overrides.get('field')
+    value = overrides.get('value')
+    for entry in _list:
+        new_entry = entry
+        if field is not None:
+            if field not in entry:
+                continue
+            if name is not None:
+                if entry['name'] == name:
+                    return entry[field]
+                else:
+                    continue
+            if value is not None and entry[field] != value:
+                continue
+            new_entry = {entry['name']: entry[field]}
+        new_list.append(new_entry)
+    return new_list
+
+
+def _parse_vms_list(_list, overrides={}):
+    if isinstance(_list, str):
+        print(_list)
+        return
+    field = overrides.get('field')
+    if field is not None:
+        vmstable = PrettyTable(["Name", field.capitalize()])
+    else:
+        vmstable = PrettyTable(["Name", "Status", "Ips", "Source", "Plan", "Profile"])
     for vm in _list:
+        if field is not None:
+            name = next(iter(vm))
+            vminfo = [name, vm[name]]
+            vmstable.add_row(vminfo)
+            continue
         name = vm.get('name')
         status = vm.get('status')
         ip = vm.get('ip', '')
@@ -2306,6 +2344,7 @@ def info_openshift_app(args):
 
 
 def info_plan(args):
+    overrides = handle_parameters(args.param, args.paramfile)
     output = args.global_output or args.output
     doc = args.doc
     quiet = args.quiet
@@ -2318,10 +2357,12 @@ def info_plan(args):
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace)
         _list = config.info_specific_plan(args.plan, quiet=quiet)
+        if overrides:
+            _list = _filter_info_plan(_list, overrides)
         if output is not None:
             _list_output(_list, output)
         else:
-            _parse_vms_list(_list)
+            _parse_vms_list(_list, overrides)
     elif url is None:
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
         baseconfig.info_plan(inputfile, quiet=quiet, doc=doc)
@@ -3500,15 +3541,16 @@ def cli():
                                metavar='PARAM')
     parent_parser.add_argument('--paramfile', '--pf', help='Parameters file', metavar='PARAMFILE', action='append')
     output_parser = argparse.ArgumentParser(add_help=False)
-    output_parser.add_argument('-o', '-O', '--output', choices=['json', 'name', 'yaml'], help='Format of the output')
+    output_parser.add_argument('-o', '-O', '--output', choices=['json', 'jsoncompact', 'name', 'yaml'],
+                               help='Format of the output')
     parser = argparse.ArgumentParser(description='Libvirt/Ovirt/Vsphere/Gcp/Aws/Openstack/Kubevirt Wrapper/Ibm Cloud')
     parser.add_argument('-C', '-c', '--client')
     parser.add_argument('--containerclient', help='Containerclient to use')
     parser.add_argument('--dnsclient', help='Dnsclient to use')
     parser.add_argument('-d', '-D', '--debug', action='store_true')
     parser.add_argument('-n', '-N', '--namespace', help='Namespace to use. specific to kubevirt')
-    parser.add_argument('-o', '-O', '--output', choices=['json', 'name', 'yaml'], help='Format of the output',
-                        dest='global_output')
+    parser.add_argument('-o', '-O', '--output', choices=['json', 'jsoncompact', 'name', 'yaml'],
+                        help='Format of the output', dest='global_output')
     parser.add_argument('-r', '-R', '--region', help='Region to use. specific to aws/gcp/ibm')
     parser.add_argument('-z', '-Z', '--zone', help='Zone to use. specific to gcp/ibm')
 
@@ -4766,7 +4808,7 @@ def cli():
     planinfo_epilog = f"Examples:\n\n{examples.planinfo}"
     planinfo_parser = info_subparsers.add_parser('plan', description=planinfo_desc, help=planinfo_desc,
                                                  epilog=planinfo_epilog,
-                                                 formatter_class=rawhelp, parents=[output_parser])
+                                                 formatter_class=rawhelp, parents=[parent_parser, output_parser])
     planinfo_parser.add_argument('--doc', action='store_true', help='Render info as markdown table')
     planinfo_parser.add_argument('-f', '--inputfile', help='Input Plan file')
     planinfo_parser.add_argument('-p', '--path', help='Path where to download plans. Defaults to plan', metavar='PATH')
