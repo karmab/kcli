@@ -722,13 +722,13 @@ def _filter_info_plan(_list, overrides={}):
         if field is not None:
             if field not in entry:
                 continue
+            if value is not None and entry[field] != value:
+                continue
             if name is not None:
                 if entry['name'] == name:
                     return entry[field]
                 else:
                     continue
-            if value is not None and entry[field] != value:
-                continue
             new_entry = {entry['name']: entry[field]}
         new_list.append(new_entry)
     return new_list

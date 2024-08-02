@@ -574,7 +574,10 @@ class Kvirt(object):
 <readonly/>
 %s
 <address type='drive' controller='0' bus='0' target='0' unit='0'/>
-</disk>""" % (isosourcexml, isobus, bootdevxml)
+</disk>
+<controller type='scsi' index='0' model='virtio-scsi'>
+<alias name='scsi0'/>
+</controller>""" % (isosourcexml, isobus, bootdevxml)
         floppyxml = ''
         floppy = overrides.get('floppy')
         if floppy is not None:
@@ -828,7 +831,10 @@ class Kvirt(object):
 <target dev='hdd' bus='%s'/>
 <readonly/>
 %s
-</disk>""" % (dtype, dsource, cloudinitiso, isobus, bootdevxml)
+</disk>
+<controller type='scsi' index='0' model='virtio-scsi'>
+<alias name='scsi0'/>
+</controller>""" % (dtype, dsource, cloudinitiso, isobus, bootdevxml)
                 dest_machine = 'q99' if aarch64_full else machine
                 if ignitiondata is not None:
                     userdata, metadata, netdata = ignitiondata, '', None
