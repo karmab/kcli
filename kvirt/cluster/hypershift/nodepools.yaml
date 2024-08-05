@@ -11,10 +11,11 @@ data:
 {% endfor %}
 {% endif %}
 ---
+{% for nodepool in nodepools %}
 apiVersion: hypershift.openshift.io/v1beta1
 kind: NodePool
 metadata:
-  name: {{ cluster }}
+  name: {{ nodepool['name'] }}
   namespace: {{ namespace }}
 spec:
   clusterName: {{ cluster }}
@@ -22,7 +23,7 @@ spec:
     autoRepair: false
     upgradeType: InPlace
   platform:
-{% if kubevirt %}
+{% if platform == 'kubevirt' %}
     kubevirt:
       compute:
         cores: {{ numcpus|default(8) }}
@@ -33,12 +34,12 @@ spec:
         type: Persistent
     type: KubeVirt
 {% else %}
-    type: {{ 'Agent' if assisted else 'None' }}
+    type: {{ 'Agent' if platform == 'assisted' else 'None' }}
 {% endif %}
   release:
-    image: "{{ nodepool_image }}"
+    image: {{ nodepool['image']|default(nodepool_image) }}
   replicas: {{ workers }}
-{% if manifests|default([]) %}
+{% if loop.index0 == 0 and manifests|default([]) %}
   config:
 {% for entry in manifests %}
   - name: {{ entry['name'] }}
@@ -47,3 +48,5 @@ spec:
 status:
   conditions: null
   replicas: {{ workers }}
+---
+{% endfor %}

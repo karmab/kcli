@@ -17,7 +17,7 @@ spec:
   - name: mdns-render-config
     securityContext:
       privileged: true
-    image: {{ registry }}/karmab/curl:latest
+    image: {{ registry|default('quay.io') }}/karmab/curl:latest
     command:
     - "/bin/sh"
     - "-c"
@@ -41,7 +41,7 @@ spec:
     imagePullPolicy: IfNotPresent
   containers:
   - name: mdns-publish
-    image: {{ registry }}/karmab/mdns-publisher:latest
+    image: {{ registry|default('quay.io') }}/karmab/mdns-publisher:latest
     args:
     - "--debug"
     resources:

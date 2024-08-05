@@ -84,3 +84,4 @@ storedparameters: true
 assisted_vms: False
 assisted_vms_number: 2
 assisted_vms_ksushy_ip: 192.168.122.1
+extra_nodepools: []

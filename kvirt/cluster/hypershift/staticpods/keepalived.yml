@@ -17,7 +17,7 @@ spec:
   - name: fix-keepalived-conf
     securityContext:
       privileged: true
-    image: {{ registry }}/karmab/curl:{{ arch_tag }}
+    image: {{ registry|default('quay.io') }}/karmab/curl:{{ arch_tag }}
     command:
     - "/bin/sh"
     - "-c"
@@ -49,7 +49,7 @@ spec:
   - name: keepalived
     securityContext:
       privileged: true
-    image: {{ registry }}/karmab/origin-keepalived-ipfailover:{{ arch_tag }}
+    image: {{ registry|default('quay.io') }}/karmab/origin-keepalived-ipfailover:{{ arch_tag }}
     command:
     - /usr/sbin/keepalived
     args:

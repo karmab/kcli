@@ -171,6 +171,47 @@ def handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts=[]):
         return f'http://{svcip}:{svcport}/{cluster}-worker.iso'
 
 
+def process_nodepools(config, plandir, namespace, cluster, platform, nodepools, nodepool_image, manifests, overrides):
+    clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
+    nodepools = [{'name': entry} if isinstance(entry, str) else entry for entry in nodepools]
+    nodepool_data = {'nodepools': nodepools, 'namespace': namespace, 'cluster': cluster,
+                     'nodepool_image': nodepool_image, 'platform': platform, 'workers': overrides.get('workers', 2)}
+    kubevirt_data = {'numcpus': overrides.get('numcpus', 8), 'memory': overrides.get('memory', 6144),
+                     'disk_size': overrides.get('disk_size', 30)}
+    nodepool_data.update(kubevirt_data)
+    if manifests:
+        nodepool_data['manifests'] = manifests
+    nodepoolfile = config.process_inputfile(cluster, f"{plandir}/nodepools.yaml", overrides=nodepool_data)
+    with open(f"{clusterdir}/nodepools.yaml", 'w') as f:
+        f.write(nodepoolfile)
+    cmcmd = f"oc create -f {clusterdir}/nodepools.yaml"
+    call(cmcmd, shell=True)
+    if platform is not None:
+        return
+    for entry in nodepools:
+        nodepool = entry['name']
+        pprint(f"Waiting before ignition data for nodepool {nodepool} is available")
+        user_data = f"user-data-{cluster}"
+        cmd = f"until oc -n {namespace}-{cluster} get secret | grep {user_data} >/dev/null 2>&1 ; do sleep 1 ; done"
+        call(cmd, shell=True)
+        ignition_data = {'namespace': namespace, 'cluster': cluster, 'nodepool': nodepool}
+        ignitionscript = config.process_inputfile(cluster, f"{plandir}/ignition.sh", overrides=ignition_data)
+        with open(f"{clusterdir}/ignition_{nodepool}.sh", 'w') as f:
+            f.write(ignitionscript)
+        ignition_worker = f"{clusterdir}/nodepool_{nodepool}.ign"
+        timeout = 0
+        while True:
+            if os.path.exists(ignition_worker):
+                break
+            else:
+                sleep(30)
+                timeout += 30
+                if timeout > 300:
+                    msg = "Timeout trying to retrieve worker ignition"
+                    return {'result': 'failure', 'reason': msg}
+            call(f'bash {clusterdir}/ignition_{nodepool}.sh', shell=True)
+
+
 def scale(config, plandir, cluster, overrides):
     storedparameters = overrides.get('storedparameters', True)
     provider = config.type
@@ -208,6 +249,7 @@ def scale(config, plandir, cluster, overrides):
             plan = installparam.get('plan', plan)
             old_assisted_vms_number = installparam.get('assisted_vms_number', old_assisted_vms_number)
     data.update(overrides)
+    nodepool = overrides.get('nodepool') or cluster
     if os.path.exists(f"{clusterdir}/kubeconfig.mgmt"):
         os.environ['KUBECONFIG'] = f"{clusterdir}/kubeconfig.mgmt"
     if 'KUBECONFIG' not in os.environ:
@@ -222,7 +264,7 @@ def scale(config, plandir, cluster, overrides):
     worker_overrides = data.copy()
     workers = worker_overrides.get('workers', 2)
     if kubevirt:
-        cmcmd = f"oc -n {namespace}-{cluster} scale nodepool {cluster} --replicas {workers}"
+        cmcmd = f"oc -n {namespace}-{cluster} scale nodepool {nodepool} --replicas {workers}"
         call(cmcmd, shell=True)
         return {'result': 'success'}
     os.chdir(os.path.expanduser("~/.kcli"))
@@ -257,7 +299,7 @@ def scale(config, plandir, cluster, overrides):
         if assisted:
             all_baremetal_hosts = old_baremetal_hosts + baremetal_hosts
             create_bmh_objects(config, plandir, cluster, namespace, all_baremetal_hosts, overrides)
-            cmcmd = f"oc -n {data['namespace']} scale nodepool {cluster} --replicas {len(all_baremetal_hosts)}"
+            cmcmd = f"oc -n {data['namespace']} scale nodepool {nodepool} --replicas {len(all_baremetal_hosts)}"
             call(cmcmd, shell=True)
             return {'result': 'success'}
         else:
@@ -590,8 +632,6 @@ def create(config, plandir, cluster, overrides):
         assisted_data = config.process_inputfile(cluster, f'{plandir}/assisted_ingress.yml', overrides=assisted_data)
         assisted_data = json.dumps(assisted_data)
         manifests.append({'name': f'assisted-ingress-{cluster}', 'data': assisted_data})
-    if manifests:
-        assetsdata['manifests'] = manifests
     async_files = []
     async_tempdir = TemporaryDirectory()
     asyncdir = async_tempdir.name
@@ -714,10 +754,9 @@ def create(config, plandir, cluster, overrides):
     INSTALLER_VERSION = get_installer_version()
     pprint(f"Using installer version {INSTALLER_VERSION}")
     if 'OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE' in os.environ:
-        assetsdata['nodepool_image'] = os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE']
+        nodepool_image = os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE']
     else:
         nodepool_image = os.popen("openshift-install version | grep 'release image' | cut -f3 -d' '").read().strip()
-        assetsdata['nodepool_image'] = nodepool_image
     if assisted:
         if assisted_vms:
             if data['disk_size'] < 200:
@@ -799,32 +838,8 @@ def create(config, plandir, cluster, overrides):
             installparam['baremetal_hosts'] = baremetal_hosts
         installparam['assisted_vms_number'] = data['assisted_vms_number']
         safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
-    nodepoolfile = config.process_inputfile(cluster, f"{plandir}/nodepool.yaml", overrides=assetsdata)
-    with open(f"{clusterdir}/nodepool.yaml", 'w') as f:
-        f.write(nodepoolfile)
-    cmcmd = f"oc create -f {clusterdir}/nodepool.yaml"
-    call(cmcmd, shell=True)
-    assetsdata['clusterdir'] = clusterdir
-    if platform is None:
-        ignitionscript = config.process_inputfile(cluster, f"{plandir}/ignition.sh", overrides=assetsdata)
-        with open(f"{clusterdir}/ignition.sh", 'w') as f:
-            f.write(ignitionscript)
-        pprint("Waiting before ignition data is available")
-        user_data = f"user-data-{cluster}"
-        call(f"until oc -n {namespace}-{cluster} get secret | grep {user_data} >/dev/null 2>&1 ; do sleep 1 ; done",
-             shell=True)
-        ignition_worker = f"{clusterdir}/nodepool.ign"
-        timeout = 0
-        while True:
-            if os.path.exists(ignition_worker):
-                break
-            else:
-                sleep(30)
-                timeout += 30
-                if timeout > 300:
-                    msg = "Timeout trying to retrieve worker ignition"
-                    return {'result': 'failure', 'reason': msg}
-            call(f'bash {clusterdir}/ignition.sh', shell=True)
+    nodepools = [cluster] + data.get('extra_nodepools', [])
+    process_nodepools(config, plandir, namespace, cluster, platform, nodepools, nodepool_image, manifests, overrides)
     if 'name' in data:
         del data['name']
     autoapproverpath = f'{clusterdir}/autoapprovercron.yml'
@@ -834,14 +849,14 @@ def create(config, plandir, cluster, overrides):
     call(f"oc apply -f {autoapproverpath}", shell=True)
     if platform is None:
         if provider in cloud_providers + ['openstack']:
-            copy2(f"{clusterdir}/nodepool.ign", f"{clusterdir}/nodepool.ign.ori")
+            copy2(f"{clusterdir}/nodepool_{cluster}.ign", f"{clusterdir}/nodepool_{cluster}.ign.ori")
             bucket = f"{cluster}-{domain.replace('.', '-')}"
             if bucket not in config.k.list_buckets():
                 config.k.create_bucket(bucket)
-            config.k.upload_to_bucket(bucket, f"{clusterdir}/nodepool.ign", public=True)
-            bucket_url = config.k.public_bucketfile_url(bucket, "nodepool.ign")
+            config.k.upload_to_bucket(bucket, f"{clusterdir}/nodepool_{cluster}.ign", public=True)
+            bucket_url = config.k.public_bucketfile_url(bucket, "nodepool_{cluster}.ign")
             new_ignition = {'ignition': {'config': {'merge': [{'source': bucket_url}]}, 'version': '3.2.0'}}
-            with open(f"{clusterdir}/nodepool.ign", 'w') as f:
+            with open(f"{clusterdir}/nodepool_{cluster}.ign", 'w') as f:
                 f.write(json.dumps(new_ignition))
         elif baremetal_iso or baremetal_hosts:
             iso_url = handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts)

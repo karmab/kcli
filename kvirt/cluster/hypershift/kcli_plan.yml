@@ -48,6 +48,7 @@
  domain: {{ original_domain|default('karmalabs.corp') }}
  image: {{ image }}
  pool: {{ pool or config_pool }}
+ nodepool: {{ nodepool|default(cluster) }}
  notify: false
  keys: {{ keys }}
  flavor: {{ flavor }}
