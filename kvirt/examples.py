@@ -437,7 +437,7 @@ $ kcli download image -u http://super.qcow2 super
 """
 
 isodownload = """# Download debian iso
-$ kcli download iso -P url=https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-11.1.0-amd64-netinst.iso
+$ kcli download iso -P url=https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-12.6.0-amd64-netinst.iso
 
 # Download iso to specific pool
 $ kcli download iso -P url=http://super.iso -P pool=mypool
