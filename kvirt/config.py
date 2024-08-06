@@ -2809,7 +2809,7 @@ class Kconfig(Kbaseconfig):
             if os.path.exists(f'{clusterdir}/bmcs.yml'):
                 call(f'KUBECONFIG={kubeconfigmgmt} oc delete -f {clusterdir}/bmcs.yml', shell=True)
             call(f'KUBECONFIG={kubeconfigmgmt} oc delete -f {clusterdir}/autoapprovercron.yml', shell=True)
-            call(f'KUBECONFIG={kubeconfigmgmt} oc delete -f {clusterdir}/nodepool.yaml', shell=True)
+            call(f'KUBECONFIG={kubeconfigmgmt} oc delete -f {clusterdir}/nodepools.yaml', shell=True)
             call(f'KUBECONFIG={kubeconfigmgmt} oc delete -f {clusterdir}/hostedcluster.yaml', shell=True)
             if not assisted and ('baremetal_iso' in clusterdata or 'baremetal_hosts' in clusterdata):
                 call(f'KUBECONFIG={kubeconfigmgmt} oc -n default delete all -l app=httpd-kcli', shell=True)
