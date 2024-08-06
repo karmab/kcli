@@ -160,7 +160,7 @@ class Ksushy():
                 pprint('Forcing to boot from ISO by deleting primary disk')
                 try:
                     pool = config.pool
-                    diskname = f"{name}_0.img"
+                    diskname = os.path.basename(info['disks'][0]['path'])
                     size = info['disks'][0]['size']
                     interface = info['disks'][0]['format']
                     k.stop(name)
