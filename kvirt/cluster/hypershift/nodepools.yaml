@@ -3,10 +3,10 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ entry['name'] }}
+  name: {{ entry.name }}
   namespace: {{ namespace }}
 data:
-  config: {{ entry["data"] }}
+  config: {{ entry.data }}
 ---
 {% endfor %}
 {% endif %}
@@ -15,7 +15,7 @@ data:
 apiVersion: hypershift.openshift.io/v1beta1
 kind: NodePool
 metadata:
-  name: {{ nodepool['name'] }}
+  name: {{ nodepool.name }}
   namespace: {{ namespace }}
 spec:
   clusterName: {{ cluster }}
@@ -37,16 +37,16 @@ spec:
     type: {{ 'Agent' if platform == 'assisted' else 'None' }}
 {% endif %}
   release:
-    image: {{ nodepool['image']|default(nodepool_image) }}
-  replicas: {{ workers }}
-{% if loop.index0 == 0 and manifests|default([]) %}
+    image: {{ nodepool.image|default(nodepool_image) }}
+  replicas: {{ workers if nodepool.name == cluster else 0 }}
+{% if nodepool.name == cluster and manifests|default([]) %}
   config:
 {% for entry in manifests %}
-  - name: {{ entry['name'] }}
+  - name: {{ entry.name }}
 {% endfor %}
 {% endif %}
 status:
   conditions: null
-  replicas: {{ workers }}
+  replicas: {{ workers if nodepool.name == cluster else 0 }}
 ---
 {% endfor %}

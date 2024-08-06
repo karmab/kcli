@@ -171,11 +171,11 @@ def handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts=[]):
         return f'http://{svcip}:{svcport}/{cluster}-worker.iso'
 
 
-def process_nodepools(config, plandir, namespace, cluster, platform, nodepools, nodepool_image, manifests, overrides):
+def process_nodepools(config, plandir, namespace, cluster, platform, nodepools, image, overrides, manifests=[]):
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     nodepools = [{'name': entry} if isinstance(entry, str) else entry for entry in nodepools]
     nodepool_data = {'nodepools': nodepools, 'namespace': namespace, 'cluster': cluster,
-                     'nodepool_image': nodepool_image, 'platform': platform, 'workers': overrides.get('workers', 2)}
+                     'nodepool_image': image, 'platform': platform, 'workers': overrides.get('workers', 2)}
     kubevirt_data = {'numcpus': overrides.get('numcpus', 8), 'memory': overrides.get('memory', 6144),
                      'disk_size': overrides.get('disk_size', 30)}
     nodepool_data.update(kubevirt_data)
@@ -219,7 +219,6 @@ def scale(config, plandir, cluster, overrides):
     data = {'cluster': cluster, 'kube': cluster, 'kubetype': 'hypershift', 'namespace': 'clusters'}
     data['basedir'] = '/workdir' if container_mode() else '.'
     cluster = data['cluster']
-    namespace = data['namespace']
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if not os.path.exists(clusterdir):
         warning(f"Creating {clusterdir} from your input (auth creds will be missing)")
@@ -241,6 +240,7 @@ def scale(config, plandir, cluster, overrides):
         with open(f"{clusterdir}/ignition.sh", 'w') as f:
             f.write(ignitionscript)
         call(f'bash {clusterdir}/ignition.sh', shell=True)
+    old_extra_nodepools = []
     old_assisted_vms_number = 2
     if storedparameters and os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
         with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
@@ -248,8 +248,19 @@ def scale(config, plandir, cluster, overrides):
             data.update(installparam)
             plan = installparam.get('plan', plan)
             old_assisted_vms_number = installparam.get('assisted_vms_number', old_assisted_vms_number)
+            old_extra_nodepools = installparam.get('extra_nodepools', old_extra_nodepools)
     data.update(overrides)
+    namespace = data['namespace']
+    nodepools = [p for p in data.get('extra_nodepools') if p not in old_extra_nodepools]
+    if nodepools:
+        platform = data.get('platform')
+        nodepool_cmd = "oc get nodepool -n %s %s -o jsonpath='{.spec.release.image}'" % (namespace, cluster)
+        nodepool_image = os.popen(nodepool_cmd).read()
+        process_nodepools(config, plandir, namespace, cluster, platform, nodepools, nodepool_image, overrides)
     nodepool = overrides.get('nodepool') or cluster
+    if os.popen(f"oc get nodepool -n {namespace} {nodepool} -o name").read() == "":
+        msg = f"Issue with nodepool {nodepool}..."
+        return {'result': 'failure', 'reason': msg}
     if os.path.exists(f"{clusterdir}/kubeconfig.mgmt"):
         os.environ['KUBECONFIG'] = f"{clusterdir}/kubeconfig.mgmt"
     if 'KUBECONFIG' not in os.environ:
@@ -299,7 +310,12 @@ def scale(config, plandir, cluster, overrides):
         if assisted:
             all_baremetal_hosts = old_baremetal_hosts + baremetal_hosts
             create_bmh_objects(config, plandir, cluster, namespace, all_baremetal_hosts, overrides)
-            cmcmd = f"oc -n {data['namespace']} scale nodepool {nodepool} --replicas {len(all_baremetal_hosts)}"
+            total = f'oc get nodepool -n {namespace} -o jsonpath='
+            total += '"{range .items[?(@.spec.clusterName==\\"%s\\")]}{.spec.replicas}{\'\\n\'}{end}"' % cluster
+            total += " | awk '{sum += $1} END {print sum}'"
+            total_replicas = int(os.popen(total).read())
+            number = overrides.get('workers', 2) - total_replicas if nodepool != cluster else len(all_baremetal_hosts)
+            cmcmd = f"oc -n {data['namespace']} scale nodepool {nodepool} --replicas {number}"
             call(cmcmd, shell=True)
             return {'result': 'success'}
         else:
@@ -815,6 +831,11 @@ def create(config, plandir, cluster, overrides):
             if not images:
                 msg = f"Missing {image}. Indicate correct image in your parameters file..."
                 return {'result': 'failure', 'reason': msg}
+    extra_nodepools = data.get('extra_nodepools', [])
+    nodepools = [cluster] + extra_nodepools
+    process_nodepools(config, plandir, namespace, cluster, platform, nodepools, nodepool_image, overrides, manifests)
+    if 'name' in data:
+        del data['name']
     with open(f"{clusterdir}/kcli_parameters.yml", 'w') as p:
         installparam = overrides.copy()
         installparam['client'] = config.client
@@ -837,11 +858,9 @@ def create(config, plandir, cluster, overrides):
         if baremetal_hosts:
             installparam['baremetal_hosts'] = baremetal_hosts
         installparam['assisted_vms_number'] = data['assisted_vms_number']
+        installparam['registry'] = data.get('registry', 'quay.io')
+        installparam['extra_nodepools'] = extra_nodepools
         safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
-    nodepools = [cluster] + data.get('extra_nodepools', [])
-    process_nodepools(config, plandir, namespace, cluster, platform, nodepools, nodepool_image, manifests, overrides)
-    if 'name' in data:
-        del data['name']
     autoapproverpath = f'{clusterdir}/autoapprovercron.yml'
     autoapprover = config.process_inputfile(cluster, f"{plandir}/autoapprovercron.yml", overrides=data)
     with open(autoapproverpath, 'w') as f:
