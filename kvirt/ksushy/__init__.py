@@ -123,7 +123,7 @@ class Ksushy():
                 error(msg)
                 return msg
             status = 'On' if info['status'] == 'up' else 'Off'
-            data = {'client': client, 'name': name, 'status': status, 'memory': info['memory'], 'cpus': info['cpus'],
+            data = {'client': client, 'name': name, 'status': status, 'memory': info['memory'], 'cpus': info['numcpus'],
                     'virt_type': config.type}
             if 'id' in info:
                 data['uuid'] = info['id']
