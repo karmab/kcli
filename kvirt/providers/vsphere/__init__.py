@@ -10,7 +10,8 @@ from kvirt.common import error, pprint, warning
 from kvirt.defaults import UBUNTUS, METADATA_FIELDS
 from kvirt.providers.vsphere.helpers import find, collectproperties, findvm, createfolder, changecd, convert, waitForMe
 from kvirt.providers.vsphere.helpers import createscsispec, creatediskspec, createdvsnicspec, createclonespec
-from kvirt.providers.vsphere.helpers import createnicspec, createisospec, deletedirectory, dssize, keep_lease_alive
+from kvirt.providers.vsphere.helpers import createnicspec, createisospec, createcdspec, deletedirectory
+from kvirt.providers.vsphere.helpers import dssize, keep_lease_alive
 from kvirt.providers.vsphere.helpers import create_filter_spec, get_all_obj, convert_properties, findvm2, findvmdc
 import os
 from pyVmomi import vim, vmodl
@@ -105,6 +106,7 @@ class Ksphere:
                     return
         else:
             self.basefolder = self.dc.vmFolder
+        self.esx = '.' in cluster and datacenter == 'ha-datacenter'
 
     def set_networks(self):
         si = self.si
@@ -442,7 +444,7 @@ class Ksphere:
             else:
                 return {'result': 'failure', 'reason': f"Iso {iso} not found"}
         if need_cdrom:
-            cdspec = createisospec(iso)
+            cdspec = createcdspec() if self.esx else createisospec(iso)
             devconfspec.append(cdspec)
         serial = overrides.get('serial', self.serial)
         if serial:

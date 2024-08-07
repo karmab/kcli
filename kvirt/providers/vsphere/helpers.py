@@ -239,11 +239,11 @@ def creatediskspec(unit_number, disksize, ds, diskmode, thin=False):
 
 
 def createcdspec():
-    # http://books.google.es/books?id=SdsnGmhF0QEC&pg=PA145&lpg=PA145&dq=VirtualCdrom%2Bspec&source=bl&ots=s8O2mw437-&sig=JpEo-AqmDV42b3fxpTcCt4xknEA&hl=es&sa=X&ei=KgGfT_DqApOy8QOl07X6Dg&redir_esc=y#v=onepage&q=VirtualCdrom%2Bspec&f=false
     cdspec = vim.vm.device.VirtualDeviceSpec()
     cdspec.setOperation(vim.vm.device.VirtualDeviceSpec.Operation.add)
     cd = vim.vm.device.VirtualCdrom()
     cdbacking = vim.vm.device.VirtualCdrom.AtapiBackingInfo()
+    cdbacking.useAutoDetect = True
     cd.backing = cdbacking
     cd.controllerKey = 201
     cd.unitNumber = 0
