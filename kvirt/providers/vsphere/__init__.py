@@ -1025,13 +1025,15 @@ class Ksphere:
         return {'result': 'success'}
 
     def convert_to_template(self, name):
+        if self.esx:
+            return {'result': 'failure', 'reason': "Operation not supported on single ESX"}
         si = self.si
         dc = self.dc
         vmFolder = dc.vmFolder
         vm = findvm(si, vmFolder, name)
         if vm is None:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
-        else:
+        elif not self.esx:
             vm.MarkAsTemplate()
 
     def convert_to_vm(self, name):
@@ -1402,7 +1404,8 @@ class Ksphere:
             elif lease.state == vim.HttpNfcLease.State.error:
                 error(f"Lease error: {lease.error}")
                 sys.exit(1)
-        self.convert_to_template(name)
+        if not self.esx:
+            self.convert_to_template(name)
         if downloaded:
             os.remove(f'/tmp/{shortimage}')
         return {'result': 'success'}
