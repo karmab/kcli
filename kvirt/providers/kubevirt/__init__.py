@@ -1271,7 +1271,7 @@ class Kubevirt(Kubecommon):
                 return {'result': 'success'}
         return {'result': 'failure', 'reason': f'image {image} not found'}
 
-    def add_image(self, url, pool, short=None, cmd=None, name=None, size=None, convert=False):
+    def add_image(self, url, pool, short=None, cmds=[], name=None, size=None, convert=False):
         if size is None:
             size = _base_image_size(url)
             warning(f"Setting size of image to {size}G. This will be the size of primary disks using this")

@@ -417,8 +417,8 @@ $ kcli download image centos9stream -P pool=mypool
 # Download specific arch
 $ kcli download image centos9stream -P arch=aarch64
 
-# Execute command after download
-$ kcli download image centos9stream -P cmd='echo welcome here > /etc/motd'
+# Execute commands after download
+$ kcli download image centos9stream -P cmds=['echo welcome here > /etc/motd']
 
 # Download with specific name
 $ kcli download image centos9stream -P name=centos9

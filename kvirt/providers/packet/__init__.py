@@ -576,7 +576,7 @@ class Kpacket(object):
         print("not implemented")
         return {'result': 'success'}
 
-    def add_image(self, url, pool, short=None, cmd=None, name=None, size=None, convert=False):
+    def add_image(self, url, pool, short=None, cmds=[], name=None, size=None, convert=False):
         return {'result': 'failure', 'reason': "not implemented"}
 
     def _create_network(self, name, facility, vlan=None, vxlan=None):

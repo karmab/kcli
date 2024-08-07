@@ -186,7 +186,7 @@ class Kproxmox(Kbase):
                 ret = s
         return ret
 
-    def add_image(self, url, pool, cmd=None, name=None, size=None, convert=False):
+    def add_image(self, url, pool, cmds=[], name=None, size=None, convert=False):
         if self.imagepool:
             pool = self.imagepool
 

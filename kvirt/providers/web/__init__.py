@@ -289,13 +289,13 @@ class Kwebclient(object):
         response = json.loads(urlopen(request, context=self.context).read())
         return response
 
-    def add_image(self, url, pool, short=None, cmd=None, name=None, size=None, convert=False):
+    def add_image(self, url, pool, short=None, cmds=[], name=None, size=None, convert=False):
         image_url = f"{self.base}/images"
         data = {'url': url, 'pool': pool, 'convert': convert}
         if name is not None:
             data['image'] = name
-        if cmd is not None:
-            data['cmd'] = cmd
+        if cmds:
+            data['cmds'] = cmds
         if size is not None:
             data['size'] = size
         data = json.dumps(data).encode('utf-8')

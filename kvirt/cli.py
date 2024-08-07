@@ -453,7 +453,7 @@ def download_image(args):
     image = args.image
     overrides = handle_parameters(args.param, args.paramfile)
     name = overrides.get('name')
-    cmd = overrides.get('image')
+    cmds = overrides.get('cmds')
     url = overrides.get('url')
     if image is None:
         if url is not None:
@@ -477,7 +477,7 @@ def download_image(args):
     kvm_openstack = not overrides.get('qemu', False)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     pool = overrides.get('pool') or config.pool
-    result = config.download_image(pool=pool, image=image, cmd=cmd, url=url, size=size, arch=arch,
+    result = config.download_image(pool=pool, image=image, cmds=cmds, url=url, size=size, arch=arch,
                                    kvm_openstack=kvm_openstack, rhcos_installer=rhcos_installer, name=name)
     sys.exit(0 if result['result'] == 'success' else 1)
 

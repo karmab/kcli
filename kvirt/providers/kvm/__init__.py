@@ -3209,7 +3209,7 @@ class Kvirt(object):
                     continue
         return {'result': 'failure', 'reason': f'Image {image} not found'}
 
-    def add_image(self, url, pool, cmd=None, name=None, size=None, convert=False):
+    def add_image(self, url, pool, cmds=[], name=None, size=None, convert=False):
         poolname = pool
         shortimage = os.path.basename(url).split('?')[0]
         need_uncompress = any(shortimage.endswith(suffix) for suffix in ['.gz', '.xz', '.bz2', '.zst'])
@@ -3270,17 +3270,19 @@ class Kvirt(object):
                 uncompresscmd = 'ssh %s -p %s %s@%s "%s %s %s/%s"' % (self.identitycommand, self.port, self.user,
                                                                       self.host, executable, flag, poolpath, full_name)
                 os.system(uncompresscmd)
-        if cmd is not None:
+        if cmds:
             if self.host == 'localhost' or self.host == '127.0.0.1':
                 if which('virt-customize') is not None:
-                    cmd = f"virt-customize -a {poolpath}/{name} --run-command '{cmd}'"
-                    os.system(cmd)
+                    for cmd in cmds:
+                        cmd = f"virt-customize -a {poolpath}/{name} --run-command '{cmd}'"
+                        os.system(cmd)
             elif self.protocol == 'ssh':
-                cmd = 'ssh %s -p %s %s@%s "virt-customize -a %s/%s --run-command \'%s\'"' % (self.identitycommand,
-                                                                                             self.port, self.user,
-                                                                                             self.host, poolpath,
-                                                                                             name, cmd)
-                os.system(cmd)
+                for cmd in cmds:
+                    cmd = 'ssh %s -p %s %s@%s "virt-customize -a %s/%s --run-command \'%s\'"' % (self.identitycommand,
+                                                                                                 self.port, self.user,
+                                                                                                 self.host, poolpath,
+                                                                                                 name, cmd)
+                    os.system(cmd)
         if convert:
             name = name.replace('.raw', '')
             cmd = f"qemu-img convert -O qcow2 {poolpath}/{name}.raw {poolpath}/{name}"

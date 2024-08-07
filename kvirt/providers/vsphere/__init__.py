@@ -1268,7 +1268,7 @@ class Ksphere:
     def vm_ports(self, name):
         return ['default']
 
-    def add_image(self, url, pool, short=None, cmd=None, name=None, size=None, convert=False):
+    def add_image(self, url, pool, short=None, cmds=[], name=None, size=None, convert=False):
         downloaded = False
         si = self.si
         rootFolder = self.rootFolder
@@ -1351,6 +1351,10 @@ class Ksphere:
             extension = os.path.splitext(shortimage)[1].replace('.', '')
             vmdk_file = shortimage.replace(extension, 'vmdk')
             vmdk_path = f"/tmp/{vmdk_file}"
+            if cmds and shortimage.endswith('qcow2') and which('virt-customize') is not None:
+                for cmd in cmds:
+                    cmd = f"virt-customize -a /tmp/{shortimage} --run-command '{cmd}'"
+                    os.system(cmd)
             if not os.path.exists(vmdk_path):
                 pprint("Converting qcow2 file to vmdk")
                 os.popen(f"qemu-img convert -O vmdk -o subformat=streamOptimized /tmp/{shortimage} {vmdk_path}").read()
