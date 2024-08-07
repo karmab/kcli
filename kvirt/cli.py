@@ -1573,6 +1573,7 @@ def create_vm(args):
     image = args.image
     count = args.count
     overrides = handle_parameters(args.param, args.paramfile)
+    force = overrides.get('force', False) or args.force
     profile = overrides.get('profile') or args.profile
     if name is None and image is None and profile is None and not overrides:
         pprint("Launching vm interactive mode")
@@ -1628,9 +1629,9 @@ def create_vm(args):
             name = name.replace('_', '-')
         if config.type != 'aws' and not onlyassets:
             pprint(f"Using {name} as name of the vm")
-    elif args.force:
+    elif force:
         try:
-            pprint(f"Deleting {name} on config.client")
+            pprint(f"Deleting {name} on {config.client}")
             config.k.delete(name)
         except:
             pass
