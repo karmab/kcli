@@ -1892,7 +1892,7 @@ class Kvirt(object):
         yamlinfo['status'] = states.get(state)
         yamlinfo['autostart'] = starts[vm.autostart()]
         memory = int(float(memory) / 1024)
-        yamlinfo['cpus'] = numcpus
+        yamlinfo['numcpus'] = numcpus
         yamlinfo['memory'] = memory
         for element in list(root.iter('disk')):
             disktype = element.get('device')
