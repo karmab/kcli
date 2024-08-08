@@ -823,7 +823,7 @@ class Kconfig(Kbaseconfig):
                     cmds.extend(notifycmds)
         ips = [overrides[key] for key in overrides if re.match('ip[0-9]+', key)]
         netmasks = [overrides[key] for key in overrides if re.match('netmask[0-9]+', key)]
-        if privatekey and self.type == 'kvm':
+        if privatekey:
             privatekeyfile = None
             publickeyfile = common.get_ssh_pub_key()
             if publickeyfile is not None:
