@@ -1176,6 +1176,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if '-' in network:
             vnet = network.split('-')[0]
             data['machine_cidr'] = k.info_network(vnet)['cidr']
+    data['esx'] = config.type == 'vsphere' and config.k.esx
     installconfig = config.process_inputfile(cluster, f"{plandir}/install-config.yaml", overrides=data)
     with open(f"{clusterdir}/install-config.yaml", 'w') as f:
         f.write(installconfig)

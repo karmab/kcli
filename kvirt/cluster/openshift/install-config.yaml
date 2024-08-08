@@ -68,7 +68,7 @@ networking:
   - {{ network }}
 {% endfor %}
 platform:
-{% if config_type == 'vsphere' %}
+{% if config_type == 'vsphere'  and not esx|default(False) %}
 {% set vmfolder = 'vm/%s' % config_basefolder if config_basefolder is defined else 'vm/%s' % cluster %}
 {% if not config_restricted|default(False) %}
 {% set vmfolder = vmfolder + '/' + cluster %}

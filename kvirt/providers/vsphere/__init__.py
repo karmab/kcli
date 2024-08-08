@@ -184,7 +184,9 @@ class Ksphere:
             clonespec = createclonespec(resourcepool)
             rootFolder = self.rootFolder
             imageobj, imagedc = findvmdc(si, rootFolder, image, self.dc)
-            if imageobj is None:
+            if self.esx:
+                imagepool = pool
+            elif imageobj is None:
                 return {'result': 'failure', 'reason': f"Image {image} not found"}
             datastores = self._datastores_datacenters()
             if os.path.basename(datastores[pool]) != self.dc.name:
@@ -272,7 +274,11 @@ class Ksphere:
                     guestopt.value = overrides[key]
                     extraconfig.append(guestopt)
             confspec.extraConfig = extraconfig
-            t = imageobj.CloneVM_Task(folder=vmfolder, name=name, spec=clonespec)
+            if not self.esx:
+                t = imageobj.CloneVM_Task(folder=vmfolder, name=name, spec=clonespec)
+            else:
+                vm = findvm(si, vmFolder, name)
+                t = vm.ReconfigVM_Task(confspec)
             waitForMe(t)
             if cloudinitiso is not None:
                 with TemporaryDirectory() as tmpdir:
@@ -283,13 +289,12 @@ class Ksphere:
                                 combustionfile.write(cmdsdata)
                     common.make_iso(name, tmpdir, userdata, meta, netdata, openstack=False, combustion=combustion)
                     cloudinitisofile = f"{tmpdir}/{name}.ISO"
+                    isopool = default_pool
+                    isofolder = None
                     if self.isofolder is not None:
                         isofolder = self.isofolder.split('/')
                         isopool = re.sub(r"[\[\]]", '', isofolder[0])
                         isofolder = isofolder[1]
-                    else:
-                        isopool = default_pool
-                        isofolder = None
                     self._uploadimage(isopool, cloudinitisofile, name, isofolder=isofolder)
                 vm = findvm(si, vmFolder, name)
                 c = changecd(self.si, vm, cloudinitiso)
@@ -444,7 +449,7 @@ class Ksphere:
             else:
                 return {'result': 'failure', 'reason': f"Iso {iso} not found"}
         if need_cdrom:
-            cdspec = createcdspec() if self.esx else createisospec(iso)
+            cdspec = createcdspec() if iso is None and self.esx else createisospec(iso)
             devconfspec.append(cdspec)
         serial = overrides.get('serial', self.serial)
         if serial:
@@ -715,6 +720,21 @@ class Ksphere:
                 print(consolecommand)
             if not os.path.exists("/i_am_a_container"):
                 os.popen(consolecommand)
+        elif self.esx:
+            vmnumber = None
+            devices = config.hardware.device
+            for dev in devices:
+                if type(dev).__name__ == 'vim.vm.device.VirtualDisk':
+                    vmnumber = dev.diskObjectId.split('-')[0]
+                    break
+            if vmnumber is not None:
+                vmurl = f"https://{self.vcip}/ui/#/console/{vmnumber}"
+                if self.debug or os.path.exists("/i_am_a_container"):
+                    msg = f"Open the following url:\n{vmurl}" if os.path.exists("/i_am_a_container") else vmurl
+                    pprint(msg)
+                else:
+                    pprint(f"Opening url {vmurl}")
+                    webbrowser.open(vmurl, new=2, autoraise=True)
         else:
             content = si.RetrieveContent()
             sgid = content.about.instanceUuid
@@ -1412,6 +1432,8 @@ class Ksphere:
             self.convert_to_template(name)
         if downloaded:
             os.remove(f'/tmp/{shortimage}')
+            if os.path.exists(vmdk_path):
+                os.remove(vmdk_path)
         return {'result': 'success'}
 
     def _get_hosts(self, cluster):

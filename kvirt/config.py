@@ -511,6 +511,8 @@ class Kconfig(Kbaseconfig):
             if profilename.startswith('rhcos-4') and profilename.endswith('qcow2'):
                 pimage_data['image'] = profilename.split('.')[0].replace('rhcos-4', 'rhcos4')
                 pimage_data['url'] = get_rhcos_url_from_file(profilename, _type=self.type)
+            if self.type == 'vsphere' and self.k.esx:
+                pimage_data['name'] = name
             self.download_image(**pimage_data)
         if not customprofile:
             profile.update(overrides)

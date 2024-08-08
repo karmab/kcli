@@ -240,7 +240,7 @@ def creatediskspec(unit_number, disksize, ds, diskmode, thin=False):
 
 def createcdspec():
     cdspec = vim.vm.device.VirtualDeviceSpec()
-    cdspec.setOperation(vim.vm.device.VirtualDeviceSpec.Operation.add)
+    cdspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
     cd = vim.vm.device.VirtualCdrom()
     cdbacking = vim.vm.device.VirtualCdrom.AtapiBackingInfo()
     cdbacking.useAutoDetect = True
