@@ -944,18 +944,15 @@ class Ksphere:
             waitForMe(t)
             result = t.info.result
             for element in result.file:
-                # if element.path.endswith('.iso'):
-                #    isos.append(f"{datastorepath}/{element.path}/{element.path}")
                 folderpath = element.path
-                if 'iso' not in folderpath.lower():
-                    continue
-                t = browser.SearchDatastoreSubFolders_Task(f"{datastorepath}{folderpath}", searchspec)
-                waitForMe(t)
-                for r in t.info.result:
-                    for isofile in r.file:
-                        iso_path = isofile.path
-                        if iso_path.endswith('.iso'):
-                            isos.append(f"{datastorepath}/{folderpath}/{iso_path}")
+                if 'iso' in folderpath.lower():
+                    t = browser.SearchDatastoreSubFolders_Task(f"{datastorepath}{folderpath}", searchspec)
+                    waitForMe(t)
+                    for r in t.info.result:
+                        for isofile in r.file:
+                            iso_path = f"{datastorepath}/{folderpath}/{isofile.path}"
+                            if iso_path.endswith('.iso') and iso_path not in isos:
+                                isos.append(iso_path)
         return isos
 
     def volumes(self, iso=False):
@@ -1498,9 +1495,17 @@ class Ksphere:
         return data
 
     def delete_image(self, image, pool=None):
+        si = self.si
+        if image.endswith('.iso'):
+            matching_isos = [iso for iso in self._getisos() if iso.endswith(image)]
+            if not matching_isos:
+                return {'result': 'failure', 'reason': f'Iso {image} not found'}
+            else:
+                isopath = matching_isos[0]
+                deletedirectory(si, self.dc, isopath)
+                return {'result': 'success'}
         if '/' in image:
             pool, image = image.split('/')
-        si = self.si
         vmFolder = self.basefolder
         vm, info = findvm2(si, vmFolder, image)
         if vm is None or not info['config'].template:
