@@ -1558,7 +1558,7 @@ class Ksphere:
         elif 'debian' in image.lower():
             guestid = 'debian10_64Guest'
         else:
-            guestid = 'rhel7_64Guest'
+            guestid = 'genericLinuxGuest'
         return guestid
 
     def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False):
