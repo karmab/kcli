@@ -20,7 +20,7 @@ export IP={{ "$(curl -s ifconfig.me)" }}
 {% elif ctlplanes > 1 %}
 export IP={{ api_ip }}
 {% else %}
-export IP={{ first_ip }}
+export IP=$(hostname -I | cut -f1 -d" ")
 {% endif %}
 
 curl -sfL https://get.k3s.io | {{ install_k3s_args }} K3S_TOKEN={{ token }} sh -s - server {{ '--cluster-init' if ctlplanes > 1 else '' }} {{ extra_args|join(" ") }} {{ '--tls-san $IP' if not cloud_lb and config_type in ['aws', 'gcp', 'ibmcloud'] else '' }}
