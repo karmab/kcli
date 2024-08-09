@@ -159,7 +159,7 @@ def makecuspec(name, nets=[], gateway=None, dns=None, domain=None):
     return customspec
 
 
-def createnicspec(nicname, netname, nictype=None, mac=None):
+def createnicspec(nicname, netname, nictype=None):
     nicspec = vim.vm.device.VirtualDeviceSpec()
     nicspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
     if nictype == 'pcnet32':
@@ -176,9 +176,6 @@ def createnicspec(nicname, netname, nictype=None, mac=None):
     desc.summary = netname
     nicbacking.deviceName = netname
     nic.backing = nicbacking
-    if mac is not None:
-        nic.addressType = vim.vm.device.VirtualEthernetCardOption.MacTypes.manual
-        nic.macAddress = mac
     # nic.key = 0
     nic.deviceInfo = desc
     nic.addressType = 'generated'
@@ -186,7 +183,7 @@ def createnicspec(nicname, netname, nictype=None, mac=None):
     return nicspec
 
 
-def createdvsnicspec(nicname, netname, switchuuid, portgroupkey, nictype=None, mac=None):
+def createdvsnicspec(nicname, netname, switchuuid, portgroupkey, nictype=None):
     nicspec = vim.vm.device.VirtualDeviceSpec()
     nicspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
     if nictype == 'pcnet32':
@@ -203,10 +200,6 @@ def createdvsnicspec(nicname, netname, switchuuid, portgroupkey, nictype=None, m
     dvconnection.portgroupKey = portgroupkey
     dnicbacking.port = dvconnection
     nic.backing = dnicbacking
-    if mac is not None:
-        nic.addressType = vim.vm.device.VirtualEthernetCardOption.MacTypes.manual
-        nic.madAddress = mac
-    nicspec.device = nic
     return nicspec
 
 

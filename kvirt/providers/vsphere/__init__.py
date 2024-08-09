@@ -394,17 +394,13 @@ class Ksphere:
         # NICSPEC
         if not self.networks:
             self.set_networks()
+        macs = {}
         for index, net in enumerate(nets):
             netname = net['name'] if isinstance(net, dict) else net
-            mac = net['mac'] if isinstance(net, dict) and 'mac' in net else None
+            if isinstance(net, dict) and 'mac' in net:
+                macs[index] = net['mac']
             if netname == 'default':
                 if image is not None:
-                    if mac is not None and len(currentnics) >= index:
-                        currentnic = currentnics[index]
-                        currentnic.macAddress = mac
-                        currentnic.addressType = vim.vm.device.VirtualEthernetCardOption.MacTypes.manual
-                        nicspec = vim.vm.device.VirtualDeviceSpec(device=currentnic, operation="edit")
-                        devconfspec.append(nicspec)
                     continue
                 else:
                     netname = 'VM Network'
@@ -420,11 +416,9 @@ class Ksphere:
                         if self.portgs[dvsnet][0] == currentswitchuuid and\
                                 self.portgs[dvsnet][1] == currentportgroupkey:
                             currentnetwork = dvsnet
-                modified = False
                 if currentnetwork is None:
                     warning(f"Couldn't figure out network associated to nic {index}")
                 elif currentnetwork != netname:
-                    modified = True
                     if netname in self.portgs:
                         switchuuid = self.portgs[netname][0]
                         portgroupkey = self.portgs[netname][1]
@@ -435,11 +429,6 @@ class Ksphere:
                         currentnic.backing.deviceName = netname
                     else:
                         return {'result': 'failure', 'reason': f"Invalid network {netname}"}
-                if mac is not None:
-                    modified = True
-                    currentnic.addressType = vim.vm.device.VirtualEthernetCardOption.MacTypes.manual
-                    currentnic.macAddress = mac
-                if modified:
                     nicspec = vim.vm.device.VirtualDeviceSpec(device=currentnic, operation="edit")
                     devconfspec.append(nicspec)
                 continue
@@ -448,9 +437,9 @@ class Ksphere:
             if netname in self.portgs:
                 switchuuid = self.portgs[netname][0]
                 portgroupkey = self.portgs[netname][1]
-                nicspec = createdvsnicspec(nicname, netname, switchuuid, portgroupkey, nictype=nictype, mac=mac)
+                nicspec = createdvsnicspec(nicname, netname, switchuuid, portgroupkey, nictype=nictype)
             elif netname in self.networks:
-                nicspec = createnicspec(nicname, netname, nictype=nictype, mac=mac)
+                nicspec = createnicspec(nicname, netname, nictype=nictype)
             else:
                 return {'result': 'failure', 'reason': f"Invalid network {netname}"}
             devconfspec.append(nicspec)
@@ -479,6 +468,8 @@ class Ksphere:
             confspec.nestedHVEnabled = True
         t = vm.Reconfigure(confspec)
         waitForMe(t)
+        if macs:
+            self.set_macs(name, macs)
         if 'vmgroup' in overrides:
             vmgroup = overrides['vmgroup']
             vmgroups = {}
@@ -1759,3 +1750,19 @@ class Ksphere:
     def list_dns_zones(self):
         print("not implemented")
         return []
+
+    def set_macs(self, name, macs):
+        vm = find(self.si, self.dc.vmFolder, vim.VirtualMachine, name)
+        currentdevices = vm.config.hardware.device
+        currentnics = [d for d in currentdevices if isinstance(d, vim.vm.device.VirtualEthernetCard)]
+        confspec = vim.vm.ConfigSpec()
+        devconfspec = []
+        for index in macs:
+            currentnic = currentnics[index]
+            currentnic.macAddress = macs[index]
+            currentnic.addressType = vim.vm.device.VirtualEthernetCardOption.MacTypes.manual
+            nicspec = vim.vm.device.VirtualDeviceSpec(device=currentnic, operation="edit")
+            devconfspec.append(nicspec)
+        confspec.deviceChange = devconfspec
+        t = vm.Reconfigure(confspec)
+        waitForMe(t)
