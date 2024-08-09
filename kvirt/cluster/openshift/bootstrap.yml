@@ -41,7 +41,7 @@
     origin: staticpods/haproxy.yml
   - path: /etc/kubernetes/haproxy.cfg
     origin: haproxy.cfg.kubevirt
-{% else %}
+{% elif keepalived %}
   - path: /etc/kubernetes/manifests/keepalived.yml
     origin: staticpods/keepalived.yml
   - path: /etc/kubernetes/keepalived.conf

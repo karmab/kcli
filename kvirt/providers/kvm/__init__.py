@@ -1260,17 +1260,11 @@ class Kvirt(object):
         else:
             acpixml = ''
         hugepagesxml = ""
-        hugepages = overrides.get('hugepages', 0)
-        if isinstance(hugepages, int) and hugepages > 0:
-            if hugepages * 1024 > memory:
-                return {'result': 'failure', 'reason': "Cant allocate more hugepages memory than the memory of the VM"}
-            hugepages = 1024 * hugepages
-            hugepagesxml = """<memoryBacking>
-<hugepages>
-<page size='%s' unit='KiB' nodeset='0'/>
-</hugepages>
-<locked/>
-</memoryBacking>""" % hugepages
+        hugepages = overrides.get('hugepages', False)
+        hugepages_1gb = overrides.get('hugepages_1gb', False)
+        if hugepages or hugepages_1gb:
+            sizexml = "<hugepages><page size='1048576' unit='KiB'/></hugepages>" if hugepages_1gb else '<hugepages/>'
+            hugepagesxml = f"<memoryBacking>{sizexml}<locked/></memoryBacking>"
         machine = f"machine='{machine}'"
         emulatorxml = f"<emulator>{emulator}</emulator>"
         uuidxml = ""
