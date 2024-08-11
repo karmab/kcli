@@ -11,3 +11,4 @@ odf_public_network:
 odf_public_interface: ens4
 odf_cluster_network:
 odf_cluster_interface: ens5
+odf_cephtools: false
