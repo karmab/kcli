@@ -10,10 +10,14 @@ spec:
         - key: kubernetes.io/hostname
           operator: In
           values:
-{% if not localstorage_nodes %}
-{% set localstorage_nodes = 99|defaultnodes(cluster, domain, ctlplanes,workers) %}
+{% if localstorage_nodes %}
+{% set nodes = localstorage_nodes %}
+{% elif odf_nodes is defined %}
+{% set nodes = odf_nodes %}
+{% else %}
+{% set nodes = 99|defaultnodes(cluster, domain, ctlplanes,workers) %}
 {% endif %}
-{% for node in localstorage_nodes %}
+{% for node in nodes %}
           - {{ node }}
 {% endfor %}
   storageClassDevices:
