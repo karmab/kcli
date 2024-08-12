@@ -39,7 +39,7 @@ from time import sleep
 import webbrowser
 import yaml
 
-cloudplatforms = ['aws', 'azure', 'gcp', 'packet', 'ibmcloud']
+cloudplatforms = ['aws', 'azure', 'gcp', 'packet', 'ibmcloud', 'hcloud']
 
 
 def dependency_error(provider, exception=None):
@@ -131,6 +131,21 @@ class Kconfig(Kbaseconfig):
                     dependency_error('gcp', exception)
                 k = Kgcp(project, region=region, zone=zone, debug=debug)
                 self.overrides.update({'project': project})
+            elif self.type == 'hcloud':
+                apikey = options.get('apikey')
+                if apikey is None:
+                    error("Missing apikey in the hcloud configuration. Leaving")
+                    sys.exit(1)
+                location = options.get('location')
+                if location is None:
+                    error("Missing location in the hcloud configuration. Leaving")
+                    sys.exit(1)
+                try:
+                    from kvirt.providers.hcloud import Khcloud
+                except Exception as e:
+                    exception = e if debug else None
+                    dependency_error('hcloud', exception)
+                k = Khcloud(api_key=apikey, location=location)
             elif self.type == 'azure':
                 try:
                     from kvirt.providers.azure import Kazure
