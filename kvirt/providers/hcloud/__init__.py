@@ -88,7 +88,7 @@ class Khcloud():
                                             domain=domain, files=files, enableroot=enableroot,
                                             overrides=overrides, fqdn=True, storemetadata=storemetadata,
                                             vmuser=vmuser)[0]
-        
+               
         servertype = self.conn.server_types.get_by_name(flavor)
         if "snapshot_id" in overrides:
             hetzner_image = self.conn.images.get_by_id(overrides.get("snapshot_id"))
@@ -138,7 +138,7 @@ class Khcloud():
         yamlinfo['name'] = vm.name
         yamlinfo['status'] = vm.status
         yamlinfo['flavor'] = vm.server_type
-        flavor_info = self.info_flavor(vm.server_type)
+        flavor_info = self.info_flavor(vm.server_type.name)
         yamlinfo['numcpus'], yamlinfo['memory'] = flavor_info['cpus'], flavor_info['memory']
         yamlinfo['image'] = vm.image.id_or_name
         yamlinfo['user'] = common.get_user(vm.image.name or vm.image.description)
@@ -176,9 +176,10 @@ class Khcloud():
             disks.append({'device': devname, 'size': disksize, 'path': path})
         if disks:
             yamlinfo['disks'] = disks
-        for key, value in vm.labels:
-            if key in METADATA_FIELDS:
-                yamlinfo[key] = value
+        if vm.labels:
+            for key, value in vm.labels.items():
+                if key in METADATA_FIELDS:
+                    yamlinfo[key] = value
         if debug:
             yamlinfo['debug'] = vm
         return yamlinfo
@@ -212,4 +213,12 @@ class Khcloud():
         return '.'
 
     def list(self):
-        return [{}]
+        vms = []
+        instances = self.conn.servers.get_all(label_selector="kcli-managed")
+        for instance in instances:
+            vminfo = self.info(instance.name, instance)
+            if vminfo:
+                vms.append(vminfo)
+        if not vms:
+            return []
+        return sorted(vms, key=lambda x: x['name'])
