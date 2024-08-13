@@ -1262,9 +1262,16 @@ class Kvirt(object):
         hugepagesxml = ""
         hugepages = overrides.get('hugepages', False)
         hugepages_1gb = overrides.get('hugepages_1gb', False)
-        if hugepages or hugepages_1gb:
-            sizexml = "<hugepages><page size='1048576' unit='KiB'/></hugepages>" if hugepages_1gb else '<hugepages/>'
-            hugepagesxml = f"<memoryBacking>{sizexml}<locked/></memoryBacking>"
+        hugepages_2mb = overrides.get('hugepages_1gb', False)
+        need_hugepages = hugepages or hugepages_1gb or hugepages_2mb
+        if need_hugepages:
+            if hugepages_1gb:
+                sizexml = "<hugepages><page size='1048576' unit='KiB'/></hugepages>"
+            elif hugepages_2mb:
+                sizexml = "<hugepages><page size='2' unit='MiB'/></hugepages>"
+            else:
+                sizexml = '<hugepages/>'
+            hugepagesxml = f"<memoryBacking>{sizexml}</memoryBacking>"
         machine = f"machine='{machine}'"
         emulatorxml = f"<emulator>{emulator}</emulator>"
         uuidxml = ""
