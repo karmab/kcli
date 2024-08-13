@@ -117,6 +117,11 @@ class Khcloud():
             response = created_vm.attach_to_network(self.conn.networks.get_by_name(net["name"]), net["ip"])
             response.wait_until_finished(100)
 
+        response = self.start(created_vm.name)
+
+        if response["result"] == "failure":
+            return {'result': 'failure', 'reason': f"Could not start VM {created_vm.name}, after creation"}
+
         return {'result': 'success'}
     
     def start(self, name):
@@ -137,7 +142,7 @@ class Khcloud():
             return {}
         yamlinfo['name'] = vm.name
         yamlinfo['status'] = vm.status
-        yamlinfo['flavor'] = vm.server_type
+        yamlinfo['flavor'] = vm.server_type.name
         flavor_info = self.info_flavor(vm.server_type.name)
         yamlinfo['numcpus'], yamlinfo['memory'] = flavor_info['cpus'], flavor_info['memory']
         yamlinfo['image'] = vm.image.id_or_name
@@ -146,9 +151,11 @@ class Khcloud():
         nets = []
         ips = []
         if vm.public_net:
-            yamlinfo['ip'] = vm.public_net.primary_ipv4
-            ips.append(vm.public_net.primary_ipv4)
-            ips.append(vm.public_net.primary_ipv6)
+            if vm.public_net.primary_ipv4:
+                yamlinfo['ip'] = vm.public_net.primary_ipv4
+                ips.append(vm.public_net.primary_ipv4)
+            if vm.public_net.primary_ipv6:
+                ips.append(vm.public_net.primary_ipv6)
             for floating_ip in vm.public_net.floating_ips:
                 ips.append(floating_ip.ip)
             nets.append({'type': "public"})
