@@ -11,7 +11,7 @@ from tempfile import NamedTemporaryFile
 from time import sleep
 from yaml import safe_dump, safe_load
 
-cloud_providers = ['aws', 'azure', 'gcp', 'ibm']
+cloud_providers = ['aws', 'azure', 'gcp', 'ibm', 'hcloud']
 
 
 def update_ip_alias(config, nodes):

@@ -5,8 +5,8 @@ from kvirt.common import pprint, error, warning, get_ssh_pub_key
 from kvirt.defaults import UBUNTUS, METADATA_FIELDS
 from getpass import getuser
 from hcloud import Client
-from hcloud.server_types import ServerType
 from hcloud.servers import ServerCreatePublicNetwork
+from hcloud.load_balancers import LoadBalancerAlgorithm, LoadBalancerService, LoadBalancerHealthCheck, LoadBalancerTarget
 
 
 class Khcloud():
@@ -25,7 +25,7 @@ class Khcloud():
                sharedfolders=[], kernel=None, initrd=None, cmdline=None, placement=[], autostart=False,
                cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False,
                metadata={}, securitygroups=[], vmuser=None):
-        if self.conn.servers.get_by_name(name):
+        if self.exists(name):
             return {'result': 'failure', 'reason': f"VM {name} already exists"}
                      
         # Discard the boot disk since hetzner includes a boot disk in their VM's
@@ -169,7 +169,7 @@ class Khcloud():
             for alias_ip in private_net.alias_ips:
                 ips.append(alias_ip)
 
-            nets.append({'mac': private_net.mac_address, 'net': private_net.network.name, 'type': "private"})
+            nets.append({'mac': private_net.mac_address, 'net': private_net.network.name, 'type': "private", "ip": private_net.ip})
                 
         if nets:
             yamlinfo['nets'] = nets
@@ -207,6 +207,84 @@ class Khcloud():
             return True
         return False
 
+    def list(self):
+        vms = []
+        instances = self.conn.servers.get_all(label_selector="kcli-managed")
+        for instance in instances:
+            vminfo = self.info(instance.name, instance)
+            if vminfo:
+                vms.append(vminfo)
+        if not vms:
+            return []
+        return sorted(vms, key=lambda x: x['name'])
+    
+    def create_loadbalancer(self, name, ports=[], checkpath='/index.html', vms=[], domain=None, checkport=80, alias=[],
+                            internal=False, dnsclient=None, ip=None):
+        sane_name = name.replace('.', '-')
+        ports = [int(port) for port in ports]
+        load_balancer_type = self.conn.load_balancer_types.get_by_name("lb11")
+        load_balancer_algorithm = LoadBalancerAlgorithm("round_robin")
+        load_balancer_services = []
+        for port in ports:
+            load_balancer_health_check = LoadBalancerHealthCheck(protocol="tcp", 
+                                                                 port=checkport,
+                                                                 interval=10,
+                                                                 timeout=10,
+                                                                 retries=3)
+            load_balancer_service = LoadBalancerService(protocol="tcp",
+                                                        listen_port=port,
+                                                        destination_port=port,
+                                                        health_check=load_balancer_health_check)
+            load_balancer_services.append(load_balancer_service)
+
+        response = self.conn.load_balancers.create(name=sane_name, 
+                                        load_balancer_type=load_balancer_type, 
+                                        algorithm=load_balancer_algorithm,
+                                        services=load_balancer_services,
+                                        labels={"kcli-managed": ""},
+                                        location=self.location,
+                                        public_interface=(not internal))
+        
+        response.action.wait_until_finished(100)
+        created_load_balancer = response.load_balancer
+
+        private_network_name = ""
+        load_balancer_targets = []
+        for vm in vms:
+            info = self.info(vm, debug=True)
+            use_private_ip = False
+            for net in info['nets']:
+                if net["type"] == "private":
+                    private_network_name = net['net']
+                    use_private_ip = True
+            vm_object = info["debug"]
+            load_balancer_target = LoadBalancerTarget(type="server", 
+                                                      server=vm_object,
+                                                      use_private_ip=use_private_ip)
+            
+            load_balancer_targets.append(load_balancer_target)
+
+        if private_network_name:
+            response = created_load_balancer.attach_to_network(self.conn.networks.get_by_name(private_network_name), ip)
+            response.wait_until_finished(100)
+
+        responses = []
+        for load_balancer_target in load_balancer_targets:
+            response = created_load_balancer.add_target(load_balancer_target)
+            responses.append(response)
+        
+        for response in responses:
+            response.wait_until_finished(100)
+
+        return {'result': 'success'}
+    
+    def ip(self, name):
+        info = self.info(name)
+        if not info:
+            return None
+        
+        return info["ip"]
+
     def volumes(self, iso=True):
         return glob.glob('*.iso')
 
@@ -218,14 +296,3 @@ class Khcloud():
 
     def get_pool_path(self, pool):
         return '.'
-
-    def list(self):
-        vms = []
-        instances = self.conn.servers.get_all(label_selector="kcli-managed")
-        for instance in instances:
-            vminfo = self.info(instance.name, instance)
-            if vminfo:
-                vms.append(vminfo)
-        if not vms:
-            return []
-        return sorted(vms, key=lambda x: x['name'])
