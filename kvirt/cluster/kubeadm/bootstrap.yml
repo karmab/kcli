@@ -29,7 +29,7 @@
  nets: {{ [primary_network] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
  files:
-{% if config_type not in ['aws', 'gcp', 'ibm'] %}
+{% if config_type not in ['aws', 'gcp', 'ibm', 'hcloud'] %}
  - keepalived.conf
  - keepalived.sh
 {% endif %}

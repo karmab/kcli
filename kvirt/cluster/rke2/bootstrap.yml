@@ -31,7 +31,7 @@
  files:
  - bootstrap.sh
  - deploy.sh
-{% if config_type not in ['aws', 'gcp', 'ibm'] %}
+{% if config_type not in ['aws', 'gcp', 'ibm', 'hcloud'] %}
  - keepalived.conf
  - keepalived.sh
 {% endif %}
