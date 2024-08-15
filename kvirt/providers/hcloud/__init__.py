@@ -1,8 +1,8 @@
-import glob, os, base64, hashlib, string, random
+import glob, os, base64, hashlib
 from dateutil import parser as dateparser
 from kvirt import common
 from kvirt.common import pprint, error, warning, get_ssh_pub_key
-from kvirt.defaults import UBUNTUS, METADATA_FIELDS
+from kvirt.defaults import METADATA_FIELDS
 from getpass import getuser
 from hcloud import Client
 from hcloud.servers import ServerCreatePublicNetwork
@@ -44,11 +44,6 @@ class Khcloud():
             diskname = f"{name}-disk{index}"
             volumeresponse = self.conn.volumes.create(disksize, diskname, location=self.location, labels={"kcli-managed": ""})
             volumeresponses.append(volumeresponse)
-
-        volumes = []
-        for volumeresponse in volumeresponses:
-            volumeresponse.action.wait_until_finished(100)
-            volumes.append(volumeresponse.volume)
 
         if not keys:
             publickeyfile = get_ssh_pub_key()
@@ -101,7 +96,7 @@ class Khcloud():
             image=hetzner_image,
             start_after_create=False,
             user_data=userdata,
-            volumes=volumes,
+            volumes=[],
             ssh_keys=hetzner_ssh_keys,
             location=self.location,
             public_net=ServerCreatePublicNetwork(enable_ipv4=False, enable_ipv6=False),
@@ -111,11 +106,16 @@ class Khcloud():
         created_vm.action.wait_until_finished(300)
         created_vm = created_vm.server
 
+        for volumeresponse in volumeresponses:
+            volumeresponse.action.wait_until_finished(300)
+            response = volumeresponse.volume.attach(server=created_vm, automount=False)
+            response.wait_until_finished(300)
+
         for net in nets:
             if net["public"]:
                 continue
             response = created_vm.attach_to_network(self.conn.networks.get_by_name(net["name"]), net["ip"])
-            response.wait_until_finished(100)
+            response.wait_until_finished(300)
 
         response = self.start(created_vm.name)
 
@@ -129,7 +129,7 @@ class Khcloud():
         if response.error:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         else:
-            response.wait_until_finished(100)
+            response.wait_until_finished(300)
             return {'result': 'success'}
 
     def info(self, name, vm=None, debug=False):
@@ -143,7 +143,7 @@ class Khcloud():
         yamlinfo['name'] = vm.name
         yamlinfo['status'] = vm.status
         yamlinfo['flavor'] = vm.server_type.name
-        flavor_info = self.info_flavor(vm.server_type.name)
+        flavor_info = self.info_flavor(yamlinfo['flavor'], vm.server_type)
         yamlinfo['numcpus'], yamlinfo['memory'] = flavor_info['cpus'], flavor_info['memory']
         yamlinfo['image'] = vm.image.id_or_name
         yamlinfo['user'] = common.get_user(vm.image.name or vm.image.description)
@@ -151,25 +151,27 @@ class Khcloud():
         nets = []
         ips = []
         if vm.public_net:
-            if vm.public_net.primary_ipv4:
-                yamlinfo['ip'] = vm.public_net.primary_ipv4
-                ips.append(vm.public_net.primary_ipv4)
-            if vm.public_net.primary_ipv6:
-                ips.append(vm.public_net.primary_ipv6)
+            ipv4 = vm.public_net.primary_ipv4
+            if ipv4:
+                yamlinfo['ip'] = ipv4
+                ips.append(ipv4)
+            ipv6 = vm.public_net.primary_ipv6
+            if ipv6:
+                ips.append(ipv6)
             for floating_ip in vm.public_net.floating_ips:
                 ips.append(floating_ip.ip)
             nets.append({'type': "public"})
 
         for private_net in vm.private_net:
             yamlinfo['private_ip'] = private_net.ip
-            ips.append(private_net.ip)
+            ips.append(yamlinfo['private_ip'])
             if 'ip' not in yamlinfo:
-                yamlinfo['ip'] = private_net.ip
+                yamlinfo['ip'] = yamlinfo['private_ip']
 
             for alias_ip in private_net.alias_ips:
                 ips.append(alias_ip)
 
-            nets.append({'mac': private_net.mac_address, 'net': private_net.network.name, 'type': "private", "ip": private_net.ip})
+            nets.append({'mac': private_net.mac_address, 'net': private_net.network.name, 'type': "private", "ip": yamlinfo['private_ip']})
                 
         if nets:
             yamlinfo['nets'] = nets
@@ -177,6 +179,7 @@ class Khcloud():
             yamlinfo['ips'] = ips
         disks = []
         for volume in vm.volumes:
+            volume = self.conn.volumes.get_by_id(volume.id)
             devname = volume.name
             path = os.path.basename(volume.linux_device)
             disksize = volume.size
@@ -191,13 +194,14 @@ class Khcloud():
             yamlinfo['debug'] = vm
         return yamlinfo
 
-    def info_flavor(self, name):
+    def info_flavor(self, name, flavor=None):
         conn = self.conn
-        if name in self.machine_flavor_cache:
-            flavor = self.machine_flavor_cache[name]
-        else:
-            flavor = conn.server_types.get_by_name(name)
-            self.machine_flavor_cache[name] = flavor
+        if not flavor:
+            if name in self.machine_flavor_cache:
+                flavor = self.machine_flavor_cache[name]
+            else:
+                flavor = conn.server_types.get_by_name(name)
+                self.machine_flavor_cache[name] = flavor
         return {'cpus': flavor.cores, 'memory': flavor.memory}
     
     def exists(self, name):
@@ -245,7 +249,7 @@ class Khcloud():
                                         location=self.location,
                                         public_interface=(not internal))
         
-        response.action.wait_until_finished(100)
+        response.action.wait_until_finished(300)
         created_load_balancer = response.load_balancer
 
         private_network_name = ""
@@ -266,7 +270,7 @@ class Khcloud():
 
         if private_network_name:
             response = created_load_balancer.attach_to_network(self.conn.networks.get_by_name(private_network_name), ip)
-            response.wait_until_finished(100)
+            response.wait_until_finished(300)
 
         responses = []
         for load_balancer_target in load_balancer_targets:
@@ -274,7 +278,7 @@ class Khcloud():
             responses.append(response)
         
         for response in responses:
-            response.wait_until_finished(100)
+            response.wait_until_finished(300)
 
         return {'result': 'success'}
     
