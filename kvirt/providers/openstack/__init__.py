@@ -810,7 +810,7 @@ class Kopenstack(object):
                 return {'result': 'success'}
         return {'result': 'failure', 'reason': f"Image {image} not found"}
 
-    def add_image(self, url, pool, short=None, cmd=None, name=None, size=None, convert=False):
+    def add_image(self, url, pool, short=None, cmds=[], name=None, size=None, convert=False):
         downloaded = False
         shortimage = os.path.basename(url).split('?')[0]
         if name is not None and name.endswith('iso'):
@@ -842,15 +842,16 @@ class Kopenstack(object):
             shortimage = shortimage.replace('.gz', '').replace('.xz', '').replace('.bz2', '').replace('.zst', '')
             image_path = image_path.replace('.gz', '').replace('.xz', '').replace('.bz2', '').replace('.zst', '')
         disk_format = 'iso' if shortimage.endswith('iso') else 'qcow2'
-        if cmd is not None:
-            pprint(f"Running {cmd} on {image_path}")
-            if disk_format == 'iso':
-                if image_path not in cmd:
-                    cmd += f" {image_path}"
-                os.system(cmd)
-            elif which('virt-customize') is not None:
-                cmd = f"virt-customize -a {image_path} --run-command '{cmd}'"
-                os.system(cmd)
+        if cmds:
+            for cmd in cmds:
+                pprint(f"Running {cmd} on {image_path}")
+                if disk_format == 'iso':
+                    if image_path not in cmd:
+                        cmd += f" {image_path}"
+                    os.system(cmd)
+                elif which('virt-customize') is not None:
+                    cmd = f"virt-customize -a {image_path} --run-command '{cmd}'"
+                    os.system(cmd)
         glanceimage = self.glance.images.create(name=shortimage, disk_format=disk_format, container_format='bare')
         self.glance.images.upload(glanceimage.id, open(image_path, 'rb'))
         if downloaded:

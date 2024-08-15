@@ -184,7 +184,10 @@ class Ksphere:
             clonespec = createclonespec(resourcepool)
             rootFolder = self.rootFolder
             imageobj, imagedc = findvmdc(si, rootFolder, image, self.dc)
-            if imageobj is None:
+            if self.esx:
+                imagepool = pool
+                imagedc = self.dc.name
+            elif imageobj is None:
                 return {'result': 'failure', 'reason': f"Image {image} not found"}
             datastores = self._datastores_datacenters()
             if os.path.basename(datastores[pool]) != self.dc.name:
@@ -272,7 +275,11 @@ class Ksphere:
                     guestopt.value = overrides[key]
                     extraconfig.append(guestopt)
             confspec.extraConfig = extraconfig
-            t = imageobj.CloneVM_Task(folder=vmfolder, name=name, spec=clonespec)
+            if not self.esx:
+                t = imageobj.CloneVM_Task(folder=vmfolder, name=name, spec=clonespec)
+            else:
+                vm = findvm(si, vmFolder, name)
+                t = vm.ReconfigVM_Task(confspec)
             waitForMe(t)
             if cloudinitiso is not None:
                 with TemporaryDirectory() as tmpdir:
@@ -283,13 +290,12 @@ class Ksphere:
                                 combustionfile.write(cmdsdata)
                     common.make_iso(name, tmpdir, userdata, meta, netdata, openstack=False, combustion=combustion)
                     cloudinitisofile = f"{tmpdir}/{name}.ISO"
+                    isopool = default_pool
+                    isofolder = None
                     if self.isofolder is not None:
                         isofolder = self.isofolder.split('/')
                         isopool = re.sub(r"[\[\]]", '', isofolder[0])
                         isofolder = isofolder[1]
-                    else:
-                        isopool = default_pool
-                        isofolder = None
                     self._uploadimage(isopool, cloudinitisofile, name, isofolder=isofolder)
                 vm = findvm(si, vmFolder, name)
                 c = changecd(self.si, vm, cloudinitiso)
@@ -388,8 +394,11 @@ class Ksphere:
         # NICSPEC
         if not self.networks:
             self.set_networks()
+        macs = {}
         for index, net in enumerate(nets):
             netname = net['name'] if isinstance(net, dict) else net
+            if isinstance(net, dict) and 'mac' in net:
+                macs[index] = net['mac']
             if netname == 'default':
                 if image is not None:
                     continue
@@ -416,16 +425,14 @@ class Ksphere:
                         currentnic.backing.port.switchUuid = switchuuid
                         currentnic.backing.port.portgroupKey = portgroupkey
                         currentnic.backing.port.portKey = None
-                        nicspec = vim.vm.device.VirtualDeviceSpec(device=currentnic, operation="edit")
-                        devconfspec.append(nicspec)
                     elif netname in self.networks:
                         currentnic.backing.deviceName = netname
-                        nicspec = vim.vm.device.VirtualDeviceSpec(device=currentnic, operation="edit")
-                        devconfspec.append(nicspec)
                     else:
                         return {'result': 'failure', 'reason': f"Invalid network {netname}"}
+                    nicspec = vim.vm.device.VirtualDeviceSpec(device=currentnic, operation="edit")
+                    devconfspec.append(nicspec)
                 continue
-            nicname = 'Network Adapter %d' % (index + 1)
+            nicname = f'Network Adapter {index + 1}'
             nictype = net['type'] if isinstance(net, dict) and 'type' in net else None
             if netname in self.portgs:
                 switchuuid = self.portgs[netname][0]
@@ -444,7 +451,7 @@ class Ksphere:
             else:
                 return {'result': 'failure', 'reason': f"Iso {iso} not found"}
         if need_cdrom:
-            cdspec = createcdspec() if self.esx else createisospec(iso)
+            cdspec = createcdspec() if iso is None and self.esx else createisospec(iso)
             devconfspec.append(cdspec)
         serial = overrides.get('serial', self.serial)
         if serial:
@@ -461,6 +468,8 @@ class Ksphere:
             confspec.nestedHVEnabled = True
         t = vm.Reconfigure(confspec)
         waitForMe(t)
+        if macs:
+            self.set_macs(name, macs)
         if 'vmgroup' in overrides:
             vmgroup = overrides['vmgroup']
             vmgroups = {}
@@ -715,6 +724,21 @@ class Ksphere:
                 print(consolecommand)
             if not os.path.exists("/i_am_a_container"):
                 os.popen(consolecommand)
+        elif self.esx:
+            vmnumber = None
+            devices = config.hardware.device
+            for dev in devices:
+                if type(dev).__name__ == 'vim.vm.device.VirtualDisk':
+                    vmnumber = dev.diskObjectId.split('-')[0]
+                    break
+            if vmnumber is not None:
+                vmurl = f"https://{self.vcip}/ui/#/console/{vmnumber}"
+                if self.debug or os.path.exists("/i_am_a_container"):
+                    msg = f"Open the following url:\n{vmurl}" if os.path.exists("/i_am_a_container") else vmurl
+                    pprint(msg)
+                else:
+                    pprint(f"Opening url {vmurl}")
+                    webbrowser.open(vmurl, new=2, autoraise=True)
         else:
             content = si.RetrieveContent()
             sgid = content.about.instanceUuid
@@ -911,18 +935,15 @@ class Ksphere:
             waitForMe(t)
             result = t.info.result
             for element in result.file:
-                # if element.path.endswith('.iso'):
-                #    isos.append(f"{datastorepath}/{element.path}/{element.path}")
                 folderpath = element.path
-                if 'iso' not in folderpath.lower():
-                    continue
-                t = browser.SearchDatastoreSubFolders_Task(f"{datastorepath}{folderpath}", searchspec)
-                waitForMe(t)
-                for r in t.info.result:
-                    for isofile in r.file:
-                        iso_path = isofile.path
-                        if iso_path.endswith('.iso'):
-                            isos.append(f"{datastorepath}/{folderpath}/{iso_path}")
+                if 'iso' in folderpath.lower():
+                    t = browser.SearchDatastoreSubFolders_Task(f"{datastorepath}{folderpath}", searchspec)
+                    waitForMe(t)
+                    for r in t.info.result:
+                        for isofile in r.file:
+                            iso_path = f"{datastorepath}/{folderpath}/{isofile.path}"
+                            if iso_path.endswith('.iso') and iso_path not in isos:
+                                isos.append(iso_path)
         return isos
 
     def volumes(self, iso=False):
@@ -1025,13 +1046,15 @@ class Ksphere:
         return {'result': 'success'}
 
     def convert_to_template(self, name):
+        if self.esx:
+            return {'result': 'failure', 'reason': "Operation not supported on single ESX"}
         si = self.si
         dc = self.dc
         vmFolder = dc.vmFolder
         vm = findvm(si, vmFolder, name)
         if vm is None:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
-        else:
+        elif not self.esx:
             vm.MarkAsTemplate()
 
     def convert_to_vm(self, name):
@@ -1266,7 +1289,7 @@ class Ksphere:
     def vm_ports(self, name):
         return ['default']
 
-    def add_image(self, url, pool, short=None, cmd=None, name=None, size=None, convert=False):
+    def add_image(self, url, pool, short=None, cmds=[], name=None, size=None, convert=False):
         downloaded = False
         si = self.si
         rootFolder = self.rootFolder
@@ -1349,6 +1372,10 @@ class Ksphere:
             extension = os.path.splitext(shortimage)[1].replace('.', '')
             vmdk_file = shortimage.replace(extension, 'vmdk')
             vmdk_path = f"/tmp/{vmdk_file}"
+            if cmds and shortimage.endswith('qcow2') and which('virt-customize') is not None:
+                for cmd in cmds:
+                    cmd = f"virt-customize -a /tmp/{shortimage} --run-command '{cmd}'"
+                    os.system(cmd)
             if not os.path.exists(vmdk_path):
                 pprint("Converting qcow2 file to vmdk")
                 os.popen(f"qemu-img convert -O vmdk -o subformat=streamOptimized /tmp/{shortimage} {vmdk_path}").read()
@@ -1402,9 +1429,12 @@ class Ksphere:
             elif lease.state == vim.HttpNfcLease.State.error:
                 error(f"Lease error: {lease.error}")
                 sys.exit(1)
-        self.convert_to_template(name)
+        if not self.esx:
+            self.convert_to_template(name)
         if downloaded:
             os.remove(f'/tmp/{shortimage}')
+            if os.path.exists(vmdk_path):
+                os.remove(vmdk_path)
         return {'result': 'success'}
 
     def _get_hosts(self, cluster):
@@ -1456,9 +1486,17 @@ class Ksphere:
         return data
 
     def delete_image(self, image, pool=None):
+        si = self.si
+        if image.endswith('.iso'):
+            matching_isos = [iso for iso in self._getisos() if iso.endswith(image)]
+            if not matching_isos:
+                return {'result': 'failure', 'reason': f'Iso {image} not found'}
+            else:
+                isopath = matching_isos[0]
+                deletedirectory(si, self.dc, isopath)
+                return {'result': 'success'}
         if '/' in image:
             pool, image = image.split('/')
-        si = self.si
         vmFolder = self.basefolder
         vm, info = findvm2(si, vmFolder, image)
         if vm is None or not info['config'].template:
@@ -1520,7 +1558,7 @@ class Ksphere:
         elif 'debian' in image.lower():
             guestid = 'debian10_64Guest'
         else:
-            guestid = 'rhel7_64Guest'
+            guestid = 'genericLinuxGuest'
         return guestid
 
     def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False):
@@ -1712,3 +1750,19 @@ class Ksphere:
     def list_dns_zones(self):
         print("not implemented")
         return []
+
+    def set_macs(self, name, macs):
+        vm = find(self.si, self.dc.vmFolder, vim.VirtualMachine, name)
+        currentdevices = vm.config.hardware.device
+        currentnics = [d for d in currentdevices if isinstance(d, vim.vm.device.VirtualEthernetCard)]
+        confspec = vim.vm.ConfigSpec()
+        devconfspec = []
+        for index in macs:
+            currentnic = currentnics[index]
+            currentnic.macAddress = macs[index]
+            currentnic.addressType = vim.vm.device.VirtualEthernetCardOption.MacTypes.manual
+            nicspec = vim.vm.device.VirtualDeviceSpec(device=currentnic, operation="edit")
+            devconfspec.append(nicspec)
+        confspec.deviceChange = devconfspec
+        t = vm.Reconfigure(confspec)
+        waitForMe(t)

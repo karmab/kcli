@@ -526,6 +526,8 @@ class Kconfig(Kbaseconfig):
             if profilename.startswith('rhcos-4') and profilename.endswith('qcow2'):
                 pimage_data['image'] = profilename.split('.')[0].replace('rhcos-4', 'rhcos4')
                 pimage_data['url'] = get_rhcos_url_from_file(profilename, _type=self.type)
+            if self.type == 'vsphere' and self.k.esx:
+                pimage_data['name'] = name
             self.download_image(**pimage_data)
         if not customprofile:
             profile.update(overrides)
@@ -836,7 +838,7 @@ class Kconfig(Kbaseconfig):
                     cmds.extend(notifycmds)
         ips = [overrides[key] for key in overrides if re.match('ip[0-9]+', key)]
         netmasks = [overrides[key] for key in overrides if re.match('netmask[0-9]+', key)]
-        if privatekey and self.type == 'kvm':
+        if privatekey:
             privatekeyfile = None
             publickeyfile = common.get_ssh_pub_key()
             if publickeyfile is not None:
@@ -1875,8 +1877,8 @@ class Kconfig(Kbaseconfig):
                 else:
                     if isinstance(imageurl, str) and imageurl == "None":
                         imageurl = None
-                    cmd = imageprofile.get('cmd')
-                    self.download_image(pool=pool, image=image, cmd=cmd, url=imageurl, size=imagesize)
+                    cmds = imageprofile.get('cmds', [])
+                    self.download_image(pool=pool, image=image, cmds=cmds, url=imageurl, size=imagesize)
         if bucketentries and not onlyassets and self.type in ['aws', 'azure', 'gcp', 'openstack']:
             pprint("Deploying Bucket Entries...")
             for entry in bucketentries:
@@ -2403,7 +2405,7 @@ class Kconfig(Kbaseconfig):
             overrides.get('tempkeydir').cleanup()
         return returndata
 
-    def download_image(self, pool=None, image=None, url=None, cmd=None, size=None, arch='x86_64',
+    def download_image(self, pool=None, image=None, url=None, cmds=[], size=None, arch='x86_64',
                        kvm_openstack=True, rhcos_commit=None, rhcos_installer=False, name=None):
         k = self.k
         if pool is None:
@@ -2449,8 +2451,8 @@ class Kconfig(Kbaseconfig):
                     if url.strip() == '':
                         error("Missing proper url.Leaving...")
                         return {'result': 'failure', 'reason': "Missing image"}
-            if cmd is None and image != '' and image in IMAGESCOMMANDS:
-                cmd = IMAGESCOMMANDS[image]
+            if not cmds and image != '' and image in IMAGESCOMMANDS:
+                cmds = [IMAGESCOMMANDS[image]]
             pprint(f"Grabbing image {image} from url {url}")
             need_iso = 'api/assisted-images/images' in url
             shortname = os.path.basename(url).split('?')[0]
@@ -2458,15 +2460,15 @@ class Kconfig(Kbaseconfig):
                 image = f'boot-{shortname}.iso'
             try:
                 convert = '.raw.' in url
-                result = k.add_image(url, pool, cmd=cmd, name=image, size=size, convert=convert)
+                result = k.add_image(url, pool, cmds=cmds, name=name or image, size=size, convert=convert)
             except Exception as e:
                 error(f"Got {e}")
-                error(f"Please run kcli delete image --yes {shortname}")
+                error(f"Please run kcli delete image --yes {name}")
                 return {'result': 'failure', 'reason': "User interruption"}
             found = 'found' in result
             if found:
                 return {'result': 'success'}
-            common.handle_response(result, image, element='Image', action='Added')
+            common.handle_response(result, name or image, element='Image', action='Added')
             if result['result'] != 'success':
                 return {'result': 'failure', 'reason': result['reason']}
         return {'result': 'success'}

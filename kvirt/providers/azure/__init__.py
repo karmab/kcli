@@ -789,7 +789,7 @@ class Kazure(object):
         else:
             return {'result': 'failure', 'reason': f'Image {image} not found'}
 
-    def add_image(self, url, pool, short=None, cmd=None, name=None, size=None, convert=False):
+    def add_image(self, url, pool, short=None, cmds=[], name=None, size=None, convert=False):
         bucket = None
         # if 'blob.core.windows.net' not in url:
         if self.storage_account not in url:

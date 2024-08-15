@@ -30,3 +30,6 @@ spec:
     name: odf-deviceset
     portable: {{ odf_portable }}
     replica: {{ odf_replicas or 3 }}
+{% if odf_cephtools %}
+  enableCephTools: true
+{% endif %}

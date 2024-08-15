@@ -1,21 +1,25 @@
 {{ "storagecluster" | wait_crd }}
 sleep 10
-{% if not odf_nodes %}
-{% set odf_nodes = odf_replicas|defaultnodes(cluster, domain, ctlplanes, workers) %}
+{% if odf_nodes %}
+{% set nodes = odf_nodes %}
+{% elif localstorage_nodes is defined %}
+{% set nodes = localstorage_nodes %}
+{% else %}
+{% set nodes = odf_replicas|defaultnodes(cluster, domain, ctlplanes, workers) %}
 {% endif %}
 
-{% if odf_nodes|length < odf_replicas %}
+{% if nodes|length < odf_replicas %}
 echo "Number of available nodes is lower than expected number of replicas"
 exit 1
 {% endif %}
 
-{% if odf_nodes|has_ctlplane %}
+{% if nodes|has_ctlplane %}
 echo "Marking all ctlplane nodes as schedulable since one of them will be used for storage"
 oc patch scheduler cluster -p '{"spec":{"mastersSchedulable": true}}' --type merge
 {% endif %}
 
 
-{% for node in odf_nodes %}
+{% for node in nodes %}
 oc label node {{ node }} cluster.ocs.openshift.io/openshift-storage=''
 oc label node {{ node }} topology.rook.io/rack=rack{{ loop.index }}
 {% endfor %}
