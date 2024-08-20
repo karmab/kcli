@@ -127,11 +127,9 @@ imageContentSources:
   source: registry.build01.ci.openshift.org/{{ release }}/stable
 {% else %}
 - mirrors:
-  - {{ disconnected_url }}/openshift/release
   - {{ disconnected_url }}/openshift-release-dev/ocp-v4.0-art-dev
   source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
 - mirrors:
-  - {{ disconnected_url }}/openshift/release-images
   - {{ disconnected_url }}/openshift-release-dev/ocp-release
 {% if ':' in tag|string %}
   source: {{ openshift_release_image.split('/')[0] }}/{{ (tag|string).split(':')[0] }}
