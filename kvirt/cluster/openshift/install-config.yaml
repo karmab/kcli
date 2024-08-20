@@ -136,7 +136,7 @@ imageContentSources:
 {% elif 'registry.ci' in openshift_release_image %}
   source: registry.ci.openshift.org/ocp/release
 {% else %}
-  source: quay.io/ocp-release
+  source: quay.io/openshift-release-dev/ocp-release
 {% endif %}
 {% endif %}
 {% elif imagecontentsources %}
