@@ -141,7 +141,7 @@ def update_disconnected_registry(config, plandir, cluster, data):
     pprint("Updating disconnected registry")
     synccmd = f"oc adm release mirror -a {pull_secret} --from={get_release_image()} "
     synccmd += f"--to-release-image={disconnected_url}/openshift-release-dev/ocp-release:{tag}-{arch} "
-    synccmd += f"--to={disconnected_url}/openshift/release"
+    synccmd += f"--to={disconnected_url}/openshift-release-dev/ocp-release"
     pprint(f"Running {synccmd}")
     call(synccmd, shell=True)
     extra_releases = data.get('disconnected_extra_releases', [])
@@ -151,7 +151,7 @@ def update_disconnected_registry(config, plandir, cluster, data):
             tag_and_arch = re.search(r":(.+)$", extra_release).group(1)
             synccmd = f"oc adm release mirror -a {pull_secret} --from={extra_release} "
             synccmd += f"--to-release-image={disconnected_url}/openshift-release-dev/ocp-release:{tag_and_arch} "
-            synccmd += f"--to={disconnected_url}/openshift/release"
+            synccmd += f"--to={disconnected_url}/openshift-release-dev/ocp-release"
             pprint(f"Running {synccmd}")
             call(synccmd, shell=True)
     if which('oc-mirror') is None:
