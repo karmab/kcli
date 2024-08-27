@@ -578,6 +578,28 @@ class Kvirt(object):
 <controller type='scsi' index='0' model='virtio-scsi'>
 <alias name='scsi0'/>
 </controller>""" % (isosourcexml, isobus, bootdevxml)
+        extraisoxml = ''
+        extra_iso = overrides.get('extra_iso')
+        if iso is not None and extra_iso is not None:
+            if extra_iso not in volumes:
+                if 'http' in extra_iso:
+                    if os.path.basename(extra_iso) in volumes:
+                        self.delete_image(os.path.basename(extra_iso))
+                    pprint(f"Trying to gather {extra_iso}")
+                    self.add_image(extra_iso, pool=default_pool)
+                    conn.storagePoolLookupByName(default_pool).refresh()
+                    floppy = f"{default_poolpath}/{os.path.basename(extra_iso)}"
+                elif not extra_iso.startswith('/'):
+                    return {'result': 'failure', 'reason': f"Extra iso {extra_iso} not found"}
+            else:
+                extra_iso_volume = volumes[extra_iso]['object']
+                extra_iso = extra_iso_volume.path()
+            extraisoxml = """  <disk type='file' device='cdrom'>
+<driver name='qemu' type='raw'/>
+<source file='%s'/>
+<target dev='hde' bus='%s'/>
+<address type='drive' controller='0' bus='0' target='0' unit='1'/>
+</disk>""" % (extra_iso, isobus)
         floppyxml = ''
         floppy = overrides.get('floppy')
         if floppy is not None:
@@ -1327,6 +1349,7 @@ class Kvirt(object):
 {busxml}
 {netxml}
 {isoxml}
+{extraisoxml}
 {floppyxml}
 {displayxml}
 {serialxml}
@@ -1346,11 +1369,12 @@ class Kvirt(object):
                     hugepagesxml=hugepagesxml, memory=memory, vcpuxml=vcpuxml, osfirmware=osfirmware, arch=arch,
                     machine=machine, ramxml=ramxml, firmwarexml=firmwarexml, bootxml=bootxml, kernelxml=kernelxml,
                     smmxml=smmxml, emulatorxml=emulatorxml, disksxml=disksxml, busxml=busxml, netxml=netxml,
-                    isoxml=isoxml, floppyxml=floppyxml, displayxml=displayxml, serialxml=serialxml, sharedxml=sharedxml,
-                    guestxml=guestxml, videoxml=videoxml, hostdevxml=hostdevxml, rngxml=rngxml, tpmxml=tpmxml,
-                    cpuxml=cpuxml, qemuextraxml=qemuextraxml, ioapicxml=ioapicxml, acpixml=acpixml, iommuxml=iommuxml,
-                    iommumemxml=iommumemxml, iommufeaturesxml=iommufeaturesxml, iommudevicexml=iommudevicexml,
-                    controllerxml=controllerxml, clockxml=clockxml)
+                    isoxml=isoxml, extraisoxml=extraisoxml, floppyxml=floppyxml, displayxml=displayxml,
+                    serialxml=serialxml, sharedxml=sharedxml, guestxml=guestxml, videoxml=videoxml,
+                    hostdevxml=hostdevxml, rngxml=rngxml, tpmxml=tpmxml, cpuxml=cpuxml, qemuextraxml=qemuextraxml,
+                    ioapicxml=ioapicxml, acpixml=acpixml, iommuxml=iommuxml, iommumemxml=iommumemxml,
+                    iommufeaturesxml=iommufeaturesxml, iommudevicexml=iommudevicexml, controllerxml=controllerxml,
+                    clockxml=clockxml)
         if self.debug:
             print(vmxml.replace('\n\n', ''))
         conn.defineXML(vmxml)
