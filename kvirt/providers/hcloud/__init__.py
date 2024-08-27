@@ -1,4 +1,4 @@
-import glob, os, base64, hashlib
+import glob, os, base64, hashlib, json
 from dateutil import parser as dateparser
 from kvirt import common
 from kvirt.common import pprint, error, warning, get_ssh_pub_key
@@ -121,16 +121,79 @@ class Khcloud():
 
         if response["result"] == "failure":
             return {'result': 'failure', 'reason': f"Could not start VM {created_vm.name}, after creation"}
+        
+        lb = overrides.get('loadbalancer')
+        if lb is not None:
+            self.add_vm_to_loadbalancer(name, lb)
 
         return {'result': 'success'}
     
-    def start(self, name):
-        response = self.conn.servers.get_by_name(name).power_on()
-        if response.error:
+    def delete(self, name, snapshots=False):
+        server = self.conn.servers.get_by_name(name)
+        if server is None:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
+    
+        response = server.delete()
+
+        if response.error:
+            return {'result': 'failure', 'reason': json.dumps(response.error)}
         else:
             response.wait_until_finished(300)
             return {'result': 'success'}
+    
+    def start(self, name):
+        server = self.conn.servers.get_by_name(name)
+        if server is None:
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
+        
+        response = server.power_on()
+        if response.error:
+            return {'result': 'failure', 'reason': json.dumps(response.error)}
+        else:
+            response.wait_until_finished(300)
+            return {'result': 'success'}
+        
+    def stop(self, name, soft=False):
+        server = self.conn.servers.get_by_name(name)
+        if server is None:
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
+        
+        if soft:
+            response = server.shutdown()
+        else:
+            response = server.power_off()
+        
+        if response.error:
+            return {'result': 'failure', 'reason': json.dumps(response.error)}
+        else:
+            response.wait_until_finished(300)
+            return {'result': 'success'}
+        
+    def restart(self, name):
+        server = self.conn.servers.get_by_name(name)
+        if server is None:
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
+    
+        response = server.reboot()
+
+        if response.error:
+            return {'result': 'failure', 'reason': json.dumps(response.error)}
+        else:
+            response.wait_until_finished(300)
+            return {'result': 'success'}
+        
+    def dnsinfo(self, name):
+        server = self.conn.servers.get_by_name(name)
+        if server is None:
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
+
+        dnsclient, domain = None, None
+        for key, value in server.labels.items():
+            if key == 'dnsclient':
+                dnsclient = value
+            if key == 'domain':
+                domain = value
+        return dnsclient, domain
 
     def info(self, name, vm=None, debug=False):
         yamlinfo = {}
@@ -282,6 +345,28 @@ class Khcloud():
 
         return {'result': 'success'}
     
+    def add_vm_to_loadbalancer(self, vm, lb):
+        sane_name = lb.replace('.', '-')
+
+        load_balancer = self.conn.load_balancers.get_by_name(sane_name)
+        if load_balancer is None:
+            error(f"load balancer {sane_name} not found")
+
+        info = self.info(vm, debug=True)
+        use_private_ip = False
+        for net in info['nets']:
+            if net["type"] == "private":
+                use_private_ip = True
+        vm_object = info["debug"]
+        load_balancer_target = LoadBalancerTarget(type="server", 
+                                                    server=vm_object,
+                                                    use_private_ip=use_private_ip)
+
+        response = load_balancer.add_target(load_balancer_target)
+        response.wait_until_finished(300)
+        if response.error:
+            error(json.dumps(response.error))
+    
     def ip(self, name):
         info = self.info(name)
         if not info:
@@ -300,3 +385,57 @@ class Khcloud():
 
     def get_pool_path(self, pool):
         return '.'
+    
+    def create_disk(self, name, size, pool=None, thin=True, image=None):
+        response = self.conn.volumes.create(size=size, name=name, location=self.location, labels={"kcli-managed": ""})
+        response.action.wait_until_finished(300)
+
+        if response.action.error:
+            return {'result': 'failure', 'reason': json.dumps(response.error)}
+        
+        return {'result': 'success'}
+    
+    def delete_disk(self, name=None, diskname=None, pool=None, novm=False):
+        if novm:
+            volume = self.conn.volumes.get_by_name(diskname)
+            if volume is None:
+                return {'result': 'failure', 'reason': f"volume {diskname} not found"}
+            
+            if volume.server:
+                return {'result': 'failure', 'reason': f"volume {diskname} is attached to a server"}
+            success = volume.delete()
+
+            if not success:
+                    return {'result': 'failure', 'reason': f"failed to delete volume {diskname}"}
+            
+            return {'result': 'success'}
+
+        server = self.conn.servers.get_by_name(name)
+        if server is None:
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
+
+        for volume in server.volumes:
+            devname = volume.name
+            source = os.path.basename(volume.linux_device)
+            if devname == diskname or source == diskname:
+                response = volume.detach()
+                response.wait_until_finished(300)
+                
+                if response.error:
+                    return {'result': 'failure', 'reason': json.dumps(response.error)}
+                
+                success = volume.delete()
+
+                if not success:
+                    return {'result': 'failure', 'reason': f"failed to delete volume {diskname}"}
+                break
+        return {'result': 'success'}
+    
+    def list_disks(self):
+        disks = {}
+        alldisks = self.conn.volumes.get_all(label_selector="kcli-managed")
+        for disk in alldisks:
+            if self.debug:
+                print(disk)
+            disks[disk.name] = {'pool': "", 'path': self.location}
+        return disks
