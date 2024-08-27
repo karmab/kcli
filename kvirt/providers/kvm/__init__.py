@@ -1284,7 +1284,7 @@ class Kvirt(object):
         hugepagesxml = ""
         hugepages = overrides.get('hugepages', False)
         hugepages_1gb = overrides.get('hugepages_1gb', False)
-        hugepages_2mb = overrides.get('hugepages_1gb', False)
+        hugepages_2mb = overrides.get('hugepages_2mb', False)
         need_hugepages = hugepages or hugepages_1gb or hugepages_2mb
         if need_hugepages:
             if hugepages_1gb:

@@ -522,6 +522,10 @@ class Kbaseconfig:
         results = {}
         for keyword in self.default:
             results[keyword] = vars(self)[keyword] if keyword in vars(self) else self.default[keyword]
+        kvirt_dir = os.path.dirname(self.__init__.__code__.co_filename)
+        extra_keywords = yaml.safe_load(open(f'{kvirt_dir}/extra_keywords.yaml'))
+        for keyword in extra_keywords:
+            results[keyword] = None
         return results
 
     def list_repos(self):
@@ -1490,14 +1494,14 @@ class Kbaseconfig:
             error(f"Keyword {keyword} not found")
             return 1
         else:
-            print("Default value: %s" % default[keyword])
-            print("Current value: %s" % keywords[keyword])
+            print(f"Default value: {default.get(keyword)}")
+            print(f"Current value: {keywords[keyword]}")
             kvirt_dir = os.path.dirname(self.__init__.__code__.co_filename)
-            with open(f'{kvirt_dir}/keywords.yaml') as f:
-                keywords_info = yaml.safe_load(f)
-                if keyword in keywords_info and keywords_info[keyword] is not None:
-                    pprint("Detailed information:")
-                    print(keywords_info[keyword].strip())
+            keywords_info = yaml.safe_load(open(f'{kvirt_dir}/keywords.yaml'))
+            keywords_info.update(yaml.safe_load(open(f'{kvirt_dir}/extra_keywords.yaml')))
+            if keyword in keywords_info and keywords_info[keyword] is not None:
+                pprint("Detailed information:")
+                print(keywords_info[keyword].strip())
         return 0
 
     def info_plantype(self, plantype):

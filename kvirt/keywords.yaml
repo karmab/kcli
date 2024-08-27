@@ -47,9 +47,9 @@ insecure: Handles all the ssh option details so you don't get any warnings about
 iso: |
   Iso to plug to the node
   Can either be 
-    an iso stored in one of the pools
-    a remote url which will get downloaded on the fly
-    a local path to the hypervisor or a non existent one (to allow precreating the vm before ISO is available)
+  - an iso stored in one of the pools
+  - a remote url which will get downloaded on the fly
+  - a local path to the hypervisor or a non existent one (to allow precreating the vm before ISO is available)
 jenkinsmode: How to format the jenkins pipeline
 keep_networks: Whether to keep networks when deleting a plan which created them
 kernel: Kernel location to pass to the vm. Needs to be local to the hypervisor

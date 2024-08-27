@@ -3395,7 +3395,7 @@ def list_keyword(args):
         _list_output(keywords, output)
     for keyword in sorted(keywords):
         value = keywords[keyword]
-        default_value = default[keyword]
+        default_value = default.get(keyword)
         keywordstable.add_row([keyword, default_value, value])
     print(keywordstable)
 
@@ -4980,7 +4980,7 @@ def cli():
                                                 parents=[output_parser])
     isolist_parser.set_defaults(func=list_iso)
 
-    keywordlist_desc = 'List Keyword'
+    keywordlist_desc = 'List Keywords'
     keywordlist_parser = list_subparsers.add_parser('keyword', description=keywordlist_desc, help=keywordlist_desc,
                                                     aliases=['keywords', 'parameter', 'parameters'],
                                                     parents=[output_parser])
