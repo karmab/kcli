@@ -90,6 +90,23 @@ class Khcloud():
         else:
             hetzner_image = self.conn.images.get_by_name_and_architecture(image, servertype.architecture)
 
+        labels={"kcli-managed": ""}
+        for entry in [field for field in metadata if field in METADATA_FIELDS]:
+            value = metadata[entry].replace('.', '-')
+            labels[entry] = value
+
+        placement_group_name = f"kcli-{labels['plan']}"
+        placement_group = self.conn.placement_groups.get_by_name(placement_group_name)
+        if not placement_group:
+            response = self.conn.placement_groups.create(name=placement_group_name, type="spread", labels={"kcli-managed": "", "plan": labels["plan"]})
+            if response.action:
+                response.action.wait_until_finished(300)
+
+            if response.action.error:
+                return {'result': 'failure', 'reason': json.dumps(response.error)}
+            
+            placement_group = response.placement_group
+
         created_vm = self.conn.servers.create(
             name=name,
             server_type=servertype,
@@ -100,7 +117,8 @@ class Khcloud():
             ssh_keys=hetzner_ssh_keys,
             location=self.location,
             public_net=ServerCreatePublicNetwork(enable_ipv4=False, enable_ipv6=False),
-            labels={"kcli-managed": ""}
+            labels=labels,
+            placement_group=placement_group
         )
 
         created_vm.action.wait_until_finished(300)
