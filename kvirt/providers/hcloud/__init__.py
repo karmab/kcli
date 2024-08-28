@@ -133,13 +133,18 @@ class Khcloud():
         if server is None:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
     
+        volumes = server.volumes
         response = server.delete()
 
         if response.error:
             return {'result': 'failure', 'reason': json.dumps(response.error)}
-        else:
-            response.wait_until_finished(300)
-            return {'result': 'success'}
+        
+        response.wait_until_finished(300)
+        for volume in volumes:
+            success = volume.delete()
+            if not success:
+                    return {'result': 'failure', 'reason': f"failed to delete volume {volume.name}"}
+        return {'result': 'success'}
     
     def start(self, name):
         server = self.conn.servers.get_by_name(name)
