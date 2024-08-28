@@ -1320,6 +1320,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 _f.write(monitoringfile)
             continue
         copy2(f, f"{clusterdir}/openshift")
+    if 'quay.io/openshift-cnv' in open(os.path.expanduser(pull_secret)).read():
+        pprint("Adding custom catalog for OpenShift Virtualization Nightly")
+        copy2(f'{plandir}/99-openshift-virtualization-catalog.yaml', f"{clusterdir}/openshift")
     registry = disconnected_url or 'quay.io'
     if async_install or autoscale:
         config.import_in_kube(network=network, dest=f"{clusterdir}/openshift", secure=True)
