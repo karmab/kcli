@@ -598,8 +598,8 @@ class Kvirt(object):
 <driver name='qemu' type='raw'/>
 <source file='%s'/>
 <target dev='hde' bus='%s'/>
-<address type='drive' controller='0' bus='0' target='0' unit='1'/>
-</disk>""" % (extra_iso, isobus)
+<address type='drive' controller='0' bus='0' target='0' unit='%s'/>
+</disk>""" % (extra_iso, isobus, scsi_index + 1)
         floppyxml = ''
         floppy = overrides.get('floppy')
         if floppy is not None:
