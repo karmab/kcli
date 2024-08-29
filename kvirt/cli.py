@@ -765,8 +765,7 @@ def list_vm(args):
     overrides = handle_parameters(args.param, args.paramfile)
     filter_keys = ['name', 'ip', 'status', 'image', 'plan', 'profile']
     if [key for key in overrides if key not in filter_keys]:
-        warning(f"Ignoring wrong filters. key should be part of {filter_keys}")
-        overrides = {key: overrides[key] for key in filter_keys if key in overrides}
+        overrides = {}
     if args.client is not None and args.client == 'all':
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
         args.client = ','.join(baseconfig.clients)
