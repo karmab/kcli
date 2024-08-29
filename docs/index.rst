@@ -581,6 +581,7 @@ Openstack
 
 The following parameters are specific to openstack:
 
+-  ``envrc`` (Optional) Path to an envrc file
 -  ``auth_url``
 -  ``project``
 -  ``domain`` Defaults to *Default*

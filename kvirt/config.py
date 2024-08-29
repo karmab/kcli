@@ -234,6 +234,19 @@ class Kconfig(Kbaseconfig):
                            debug=debug, datacenter=datacenter, cluster=cluster, ca_file=ca_file, org=org,
                            filtervms=filtervms, filteruser=filteruser, filtertag=filtertag)
             elif self.type == 'openstack':
+                envrc = options.get('envrc')
+                if envrc is not None:
+                    envrc = os.path.expanduser(envrc)
+                    if not os.path.exists(envrc):
+                        error(f"Envrc {envrc} not found. Leaving")
+                        sys.exit(1)
+                    else:
+                        for line in open(envrc).readlines():
+                            if line.startswith('export '):
+                                new_key, new_variable = line.split('=')
+                                new_key = new_key.replace('export ', '')
+                                new_variable = new_variable.strip().replace('"', '').replace("'", '')
+                                os.environ[new_key] = new_variable
                 version = options.get('version') or kdefaults.OPENSTACK['version']
                 domain = options.get('domain') or os.environ.get("OS_USER_DOMAIN_NAME") or kdefaults.OPENSTACK['domain']
                 auth_url = options.get('auth_url') or os.environ.get("OS_AUTH_URL")
