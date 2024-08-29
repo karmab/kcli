@@ -897,6 +897,10 @@ class Kconfig(Kbaseconfig):
         if kube is not None and kubetype is not None:
             metadata['kubetype'] = kubetype
             metadata['kube'] = kube
+            cluster_networks = overrides.get('cluster_networks', [])
+            cluster_network = cluster_networks[0] if cluster_networks else overrides.get('cluster_network_ipv4')
+            if cluster_network is not None:
+                metadata['cluster_network'] = cluster_network
         if tempkey:
             if overrides.get('tempkeydir') is None:
                 tempkeydir = TemporaryDirectory()
