@@ -751,7 +751,7 @@ class Kvirt(object):
             if vhost:
                 iftype = 'vhostuser'
                 vhostindex += 1
-                vhostdir = '/var/lib/libvirt/images'
+                vhostdir = default_poolpath
                 vhostpath = nets[index].get('vhostpath', f"{vhostdir}/vhost-user{vhostindex}")
                 sourcexml = f"<source type='unix' path='{vhostpath}' mode='client'/>"
                 sourcexml += "<driver name='vhost' rx_queue_size='256'/>"
@@ -801,7 +801,7 @@ class Kvirt(object):
                 combustion = common.needs_combustion(image)
                 openstack = not ignition
                 localhosts = ['localhost', '127.0.0.1']
-                ignitiondir = '/var/lib/libvirt/images'
+                ignitiondir = default_poolpath
                 if self.protocol == 'ssh' and self.host not in localhosts:
                     ignitiontmpdir = TemporaryDirectory()
                     ignitiondir = ignitiontmpdir.name
@@ -831,13 +831,14 @@ class Kvirt(object):
                         identitycommand = f"-i {identityfile}"
                     else:
                         identitycommand = ""
-                    ignitioncmd1 = 'scp %s -qP %s %s/%s.ign %s@%s:/var/lib/libvirt/images' % (identitycommand,
-                                                                                              self.port, ignitiondir,
-                                                                                              name, self.user,
-                                                                                              self.host)
+                    ignitioncmd1 = 'scp %s -qP %s %s/%s.ign %s@%s:%s' % (identitycommand,
+                                                                         self.port, ignitiondir,
+                                                                         name, self.user,
+                                                                         self.host,
+                                                                         default_poolpath)
                     code = os.system(ignitioncmd1)
                     if code != 0:
-                        msg = "Unable to create ignition data file in /var/lib/libvirt/images"
+                        msg = f"Unable to create ignition data file in {default_poolpath}"
                         return {'result': 'failure', 'reason': msg}
                     ignitiontmpdir.cleanup()
             if image is not None and not ignition and diskpath is not None:
@@ -1067,7 +1068,7 @@ class Kvirt(object):
             ignitionxml = ""
             if ignition:
                 ignitionxml = """<qemu:arg value='-fw_cfg' />
-<qemu:arg value='name=opt/com.coreos/config,file=/var/lib/libvirt/images/%s.ign' />""" % name
+<qemu:arg value='name=opt/com.coreos/config,file=%s/%s.ign' />""" % (default_poolpath, name)
             usermodexml = ""
             if usermode:
                 netmodel = 'virtio-net-pci' if not macosx else 'e1000-82545em'
