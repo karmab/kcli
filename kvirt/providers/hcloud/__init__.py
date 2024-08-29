@@ -101,8 +101,8 @@ class Khcloud():
             if response.action:
                 response.action.wait_until_finished(300)
 
-            if response.action.error:
-                return {'result': 'failure', 'reason': json.dumps(response.error)}
+                if response.action.error:
+                    return {'result': 'failure', 'reason': json.dumps(response.error)}
             
             placement_group = response.placement_group
 
