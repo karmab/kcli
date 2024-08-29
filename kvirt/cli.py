@@ -2784,6 +2784,7 @@ def ssh_vm(args):
     D = args.D
     X = args.X
     Y = args.Y
+    force_pty = args.t
     identityfile = args.identityfile
     user = args.user
     vmport = args.port
@@ -2831,7 +2832,7 @@ def ssh_vm(args):
         sshcommand = common.ssh(name, ip=ip, user=user, local=local, remote=remote, tunnel=tunnel,
                                 tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser,
                                 insecure=insecure, cmd=cmd, X=X, Y=Y, D=D, debug=args.debug, vmport=vmport,
-                                identityfile=identityfile)
+                                identityfile=identityfile, force_pty=force_pty)
     if sshcommand is not None:
         if which('ssh') is not None:
             code = os.WEXITSTATUS(os.system(sshcommand))
@@ -5249,6 +5250,7 @@ def cli():
     vmssh_parser.add_argument('-Y', action='store_true', help='Enable X11 Forwarding(Insecure)')
     vmssh_parser.add_argument('-i', '--identityfile', help='Identity file')
     vmssh_parser.add_argument('-p', '--port', '--port', help='Port for ssh')
+    vmssh_parser.add_argument('-t', action='store_true', help='Force pseudo-terminal allocation')
     vmssh_parser.add_argument('-u', '-l', '--user', help='User for ssh')
     vmssh_parser.add_argument('name', metavar='VMNAME', nargs='*')
     vmssh_parser.set_defaults(func=ssh_vm)

@@ -913,7 +913,7 @@ def print_info(yamlinfo, output='plain', fields=[], values=False, pretty=True):
 
 def ssh(name, ip='', user=None, local=None, remote=None, tunnel=False, tunnelhost=None, tunnelport=22,
         tunneluser='root', insecure=False, cmd=None, X=False, Y=False, debug=False, D=None, vmport=None,
-        identityfile=None, password=True):
+        identityfile=None, password=True, force_pty=False):
     if ip == '':
         return None
     else:
@@ -932,6 +932,8 @@ def ssh(name, ip='', user=None, local=None, remote=None, tunnel=False, tunnelhos
             sshcommand = f"-X {sshcommand}"
         if Y:
             sshcommand = f"-Y {sshcommand}"
+        if force_pty:
+            sshcommand = f"-t {sshcommand}"
         if cmd:
             sshcommand = f'{sshcommand} "{cmd}"'
         if tunnelhost is not None and tunnelhost not in ['localhost', '127.0.0.1'] and tunnel and\
