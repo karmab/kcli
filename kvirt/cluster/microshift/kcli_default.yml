@@ -21,3 +21,4 @@ kubeconfig_acm:
 disk_size: 30
 extra_disks: [60]
 olm: false
+multus: false

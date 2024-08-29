@@ -14,6 +14,7 @@ with open('/etc/microshift/config.yaml', 'r+') as f:
     data = yaml.safe_load(f)
     data['dns']['baseDomain'] = domain
     data['apiServer']['subjectAltNames'] = [f'api.{domain}']
-    data['ingress']['listenAddress'] = ['eth0']
+    if 'ingress' in data:
+        data['ingress']['listenAddress'] = ['eth0']
     data['apiServer']['advertiseAddress'] = ip
     yaml.safe_dump(data, f)
