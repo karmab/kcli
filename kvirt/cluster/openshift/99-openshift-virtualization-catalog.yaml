@@ -1,0 +1,13 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: cnv-nightly-catalog-source
+  namespace: openshift-marketplace
+spec:
+  sourceType: grpc
+  image: quay.io/openshift-cnv/nightly-catalog:latest
+  displayName: OpenShift Virtualization Nightly Index
+  publisher: Red Hat
+  updateStrategy:
+    registryPoll:
+      interval: 8h

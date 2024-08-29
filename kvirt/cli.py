@@ -3213,7 +3213,7 @@ def snapshotlist_vm(args):
     name = args.name
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
-    pprint(f"Listing snapshots of {name}...")
+    pprint(f"Listing snapshots of Vm {name}...")
     snapshots = k.list_snapshots(name)
     if isinstance(snapshots, dict):
         error(f"Vm {name} not found")
@@ -3221,6 +3221,19 @@ def snapshotlist_vm(args):
     else:
         for snapshot in snapshots:
             print(snapshot)
+
+
+def snapshotlist_plan(args):
+    plan = args.name
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    k = config.k
+    pprint(f"Listing snapshots of Plan {plan}...")
+    _list = config.info_specific_plan(plan, quiet=True)
+    if not _list:
+        error(f"Plan {plan} not found")
+        sys.exit(1)
+    for snapshot in k.list_snapshots(_list[0]['name']):
+        print(snapshot)
 
 
 def create_bucket(args):
@@ -3382,7 +3395,7 @@ def list_keyword(args):
         _list_output(keywords, output)
     for keyword in sorted(keywords):
         value = keywords[keyword]
-        default_value = default[keyword]
+        default_value = default.get(keyword)
         keywordstable.add_row([keyword, default_value, value])
     print(keywordstable)
 
@@ -4967,7 +4980,7 @@ def cli():
                                                 parents=[output_parser])
     isolist_parser.set_defaults(func=list_iso)
 
-    keywordlist_desc = 'List Keyword'
+    keywordlist_desc = 'List Keywords'
     keywordlist_parser = list_subparsers.add_parser('keyword', description=keywordlist_desc, help=keywordlist_desc,
                                                     aliases=['keywords', 'parameter', 'parameters'],
                                                     parents=[output_parser])
@@ -5050,6 +5063,13 @@ def cli():
                                                help=vmlist_desc, aliases=['vms'], epilog=vmlist_epilog,
                                                formatter_class=rawhelp)
     vmlist_parser.set_defaults(func=list_vm)
+
+    plansnapshotlist_desc = 'List Snapshots Of a Plan'
+    plansnapshotlist_parser = list_subparsers.add_parser('plan-snapshot', description=plansnapshotlist_desc,
+                                                         help=plansnapshotlist_desc, aliases=['plan-snapshots'],
+                                                         parents=[output_parser])
+    plansnapshotlist_parser.add_argument('name', metavar='PLAN')
+    plansnapshotlist_parser.set_defaults(func=snapshotlist_plan)
 
     vmsnapshotlist_desc = 'List Snapshots Of Vm'
     vmsnapshotlist_parser = list_subparsers.add_parser('vm-snapshot', description=vmsnapshotlist_desc,

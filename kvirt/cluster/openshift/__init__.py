@@ -1158,15 +1158,16 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             os.system(scpcmd)
         os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = disconnected_version
         pprint(f"Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to {disconnected_version}")
+    data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
     if disconnected_url is not None:
         if disconnected_update and disconnected_url != 'quay.io':
             update_disconnected_registry(config, plandir, cluster, data)
         key = f"{disconnected_user}:{disconnected_password}"
         key = str(b64encode(key.encode('utf-8')), 'utf-8')
-        auths = {'auths': {disconnected_url: {'auth': key, 'email': 'jhendrix@karmalabs.corp'}}}
-        data['pull_secret'] = json.dumps(auths)
-    else:
-        data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
+        auths = json.loads(data['pull_secret'])['auths']
+        if disconnected_url not in auths or auths[disconnected_url]['auth'] != key:
+            auths[disconnected_url] = {'auth': key, 'email': 'jhendrix@karmalabs.corp'}
+            data['pull_secret'] = json.dumps({"auths": auths})
     if provider == 'aws':
         aws_credentials(config)
     elif provider == 'gcp':
@@ -1319,6 +1320,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 _f.write(monitoringfile)
             continue
         copy2(f, f"{clusterdir}/openshift")
+    if 'quay.io/openshift-cnv' in open(os.path.expanduser(pull_secret)).read():
+        pprint("Adding custom catalog for OpenShift Virtualization Nightly")
+        copy2(f'{plandir}/99-openshift-virtualization-catalog.yaml', f"{clusterdir}/openshift")
     registry = disconnected_url or 'quay.io'
     if async_install or autoscale:
         config.import_in_kube(network=network, dest=f"{clusterdir}/openshift", secure=True)

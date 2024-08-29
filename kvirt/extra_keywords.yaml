@@ -1,0 +1,45 @@
+arch: Architecture (KVM specific)
+emulator: Custom emulator (KVM specific)
+extra_iso: Extra Iso to plug to the node (KVM specific)
+floppy: Floppy to plug to the node (KVM specific)
+hugepages: hugepages flag (KVM specific)
+hugepages_1gb: 1gb hugepages flag (KVM specific)
+hugepages_2mb: 2mb hugepages flag (KVM specific)
+iommu: iommu flag (KVM specific)
+machine: Custom machine type (KVM specific)
+qemuextra: Extra cmdline for qemu (KVM specific)
+secureboot: Secureboot flag  (KVM specific)
+uefi: Uefi flag (KVM specific)
+uefi_legacy: Uefi flag for rhel8 hypervisors (KVM specific)
+uuid: Uuid (KVM specific)
+
+az: Force availability zone (Cloud specific)
+router: Disable sourceDestCheck (Aws specific)
+
+accelerators: Define a list of accelerators (GCP specific)
+confidential: Enable Confidential compute (GCP specific)
+gpus: Define a list of accelerators (GCP specific)
+preemptible: Make vm preemptible (GCP specific)
+secondary_cidr: Define secondary cidr (GCP specific)
+serviceaccounts: Define a list of sercice accounts (GCP specific)
+
+public: Force vm to have a public ip (Cloud specific)
+spot: Make the vm a spot instance (Cloud specific)
+spot_ctlplanes: Make the ctlplane vm a spot instance (Cloud specific)
+spot_workers: Make the worker vm a spot instance (Cloud specific)
+zone: Force availability zone (Cloud specific)
+
+antipeers: Create anti affinity rules between members (Vsphere specific)
+distributed: Use dvs networks (Vsphere specific)
+force_pool: Relocate vn from one pool to another (Vsphere specific)
+serial: Inject a serial console (Vsphere specific)
+
+cloudinit_file: Use specific cloudinit file
+ignition_file: Use specific ignition file
+install_cr: Prevents injecting CR when deploying an openshift app
+namespace: Force namespace when deploying an openshift app
+noname: Dont force hostname
+nodepool: Force nodepool
+nokeys: Dont inject ssh public keys
+role: Force openshift role
+tempkey: Use a temporary keypair during vm deployment
