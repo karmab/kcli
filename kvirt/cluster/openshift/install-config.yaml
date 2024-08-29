@@ -83,7 +83,7 @@ platform:
         datacenter: {{ config_datacenter }}
         datastore: /{{ config_datacenter }}/datastore/{{ config_pool }}
         networks:
-        - VM Network
+        - {{ network or 'VM Network' }}
         folder: /{{ config_datacenter}}/{{ vmfolder }}
       zone: default
     vcenters:
