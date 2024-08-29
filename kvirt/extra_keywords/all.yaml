@@ -1,0 +1,9 @@
+cloudinit_file: Use specific cloudinit file
+ignition_file: Use specific ignition file
+install_cr: Prevents injecting CR when deploying an openshift app
+namespace: Force namespace when deploying an openshift app
+noname: Dont force hostname
+nodepool: Force nodepool
+nokeys: Dont inject ssh public keys
+role: Force openshift role
+tempkey: Use a temporary keypair during vm deployment

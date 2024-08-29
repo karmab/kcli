@@ -1,0 +1,4 @@
+antipeers: Create anti affinity rules between members
+distributed: Use dvs networks
+force_pool: Relocate vn from one pool to another
+serial: Inject a serial console
