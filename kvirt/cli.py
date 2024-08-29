@@ -4085,6 +4085,12 @@ def cli():
     azureprovidercreate_parser.add_argument('-p', '--pip', action='store_true', help='Force pip installation')
     azureprovidercreate_parser.set_defaults(func=install_provider)
 
+    hcloudprovidercreate_desc = 'Install Hcloud Provider'
+    hcloudprovidercreate_parser = providercreate_subparsers.add_parser('hcloud', help=hcloudprovidercreate_desc,
+                                                                    description=hcloudprovidercreate_desc)
+    hcloudprovidercreate_parser.add_argument('-p', '--pip', action='store_true', help='Force pip installation')
+    hcloudprovidercreate_parser.set_defaults(func=install_provider)
+
     gcpprovidercreate_desc = 'Install Gcp Provider'
     gcpprovidercreate_parser = providercreate_subparsers.add_parser('gcp', help=gcpprovidercreate_desc,
                                                                     description=gcpprovidercreate_desc)

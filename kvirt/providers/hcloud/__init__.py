@@ -1,7 +1,6 @@
 import glob, os, base64, hashlib, json
-from dateutil import parser as dateparser
 from kvirt import common
-from kvirt.common import pprint, error, warning, get_ssh_pub_key
+from kvirt.common import error, warning, get_ssh_pub_key
 from kvirt.defaults import METADATA_FIELDS
 from getpass import getuser
 from hcloud import Client
