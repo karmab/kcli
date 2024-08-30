@@ -24,7 +24,7 @@ import os
 from prettytable import PrettyTable
 import random
 import re
-from shutil import which, copy2
+from shutil import copy2, rmtree, which
 from subprocess import call
 import sys
 from tempfile import NamedTemporaryFile
@@ -390,14 +390,18 @@ def delete_vm(args):
                     with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
                         installparam = yaml.safe_load(install)
                         kubetype = installparam.get('kubetype', 'generic')
-                        binary = 'oc' if kubetype == 'openshift' else 'kubectl'
-                        nodescmd = f'{binary} get node -o name'
-                        nodes = [n.strip().replace('node/', '') for n in os.popen(nodescmd).readlines()]
-                        for node in nodes:
-                            if node.split('.')[0] == name:
-                                pprint(f"Deleting node {node} from your {kubetype} cluster")
-                                call(f'{binary} delete node {node}', shell=True)
-                                break
+                        if kubetype == 'microshift':
+                            pprint(f"Deleting directory {clusterdir}")
+                            rmtree(clusterdir)
+                        else:
+                            binary = 'oc' if kubetype == 'openshift' else 'kubectl'
+                            nodescmd = f'{binary} get node -o name'
+                            nodes = [n.strip().replace('node/', '') for n in os.popen(nodescmd).readlines()]
+                            for node in nodes:
+                                if node.split('.')[0] == name:
+                                    pprint(f"Deleting node {node} from your {kubetype} cluster")
+                                    call(f'{binary} delete node {node}', shell=True)
+                                    break
             for confpool in config.confpools:
                 ip_reservations = config.confpools[confpool].get('ip_reservations', {})
                 if name in ip_reservations:
