@@ -1,5 +1,4 @@
-{% for number in range(0, nodes|int) %}
-{{ cluster }}-{{ number }}:
+{{ cluster }}-0:
  domain: {{ domain }}
  image: {{ image }}
  rhnregister: {{ 'rhel' in image|lower }}
@@ -23,4 +22,3 @@
 {% endif %}
  scripts:
  - scripts/deploy.sh
-{% endfor %}

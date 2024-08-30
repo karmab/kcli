@@ -2488,6 +2488,12 @@ def interactive_kube(_type):
         default_parameters.update({'pull_secret': 'openshift_pull.json', 'version': 'stable', 'tag': OPENSHIFT_TAG,
                                    'memory': 20480, 'sno_disk': None, 'sno_vm': False, 'sno_wait': False,
                                    'sno_cpuset': None})
+    elif _type == 'microshift':
+        del default_parameters['ctlplanes']
+        del default_parameters['workers']
+        default_parameters.update({'pull_secret': 'openshift_pull.json', 'memory': 4096, 'image': 'rhel9',
+                                   'podman': True, 'olm': False, 'multus': False, 'sslip': True, 'version': 'stable',
+                                   'tag': OPENSHIFT_TAG})
     pprint("Override the following items or accept default values:")
     for key in default_parameters:
         default_value = default_parameters[key]

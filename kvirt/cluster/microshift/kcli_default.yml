@@ -1,8 +1,7 @@
 info: |
-  Deploy kubernetes using microshift on $nodes vms
+  Deploy kubernetes using microshift on one vm
   Image defaults to rhel8, which requires valid credentials (rhnuser/rhnpassword or rhnorg/rhnactivationkey)
-  The nodes can also be registered to an ACM instance by stting register_acm to true and providing kubeconfig_acm 
-nodes: 1
+  The node can also be registered to an ACM instance by setting register_acm to true and providing kubeconfig_acm 
 cluster: mymicroshift
 domain: karmalabs.corp
 version: stable

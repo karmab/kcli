@@ -19,6 +19,4 @@ dnf -y install microshift {{ extra_packages|join(", ") }}
 BASEDOMAIN={{ "$(hostname)" if sslip else cluster + '.' + domain }}
 IP=$(hostname -I | cut -d' ' -f1)
 
-microshift show-config > /etc/microshift/config.yaml
-python /root/scripts/config.py $BASEDOMAIN $IP
 systemctl enable --now microshift
