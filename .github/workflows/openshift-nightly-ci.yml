@@ -15,8 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # provider: [libvirt, kubevirt, vsphere]
-        provider: [libvirt]
+        provider: [libvirt, vsphere]
     # runs-on: ${{ matrix.provider }}
     runs-on: u08
     steps:
