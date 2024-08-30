@@ -396,6 +396,7 @@ def process_files(files=[], overrides={}, remediate=False):
         else:
             todelete.append(directory)
             origin_unexpanded = directory.get('origin')
+            render = directory.get('render', True)
             origin = os.path.expanduser(origin_unexpanded)
             path = directory.get('path')
             entries = os.listdir(origin)
@@ -416,11 +417,11 @@ def process_files(files=[], overrides={}, remediate=False):
                                     subpath = subpath.replace('//', '/')
                                     mode = oct(os.stat(f"{origin}/{entry}/{subentry}").st_mode)[-3:]
                                     files.append({'path': subpath, 'origin': f"{origin}/{entry}/{subentry}",
-                                                  'mode': mode})
+                                                  'mode': mode, 'render': render})
                     else:
                         subpath = f"{path}/{entry}"
                         subpath = subpath.replace('//', '/')
-                        files.append({'path': subpath, 'origin': f"{origin}/{entry}"})
+                        files.append({'path': subpath, 'origin': f"{origin}/{entry}", 'render': render})
     for directory in todelete:
         files.remove(directory)
     processed_files = []
