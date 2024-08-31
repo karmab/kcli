@@ -7,7 +7,7 @@ on:
 env:
  HOME: /root
  PYTHONUNBUFFERED: true
- PLAN: ci-hypershift
+ CLUSTER: ci-hypershift
  PULLSECRET: /root/openshift_pull.json
  KUBECONFIG: /root/.kcli/clusters/ci-sno/auth/kubeconfig
  PARAMFILE: openshift-ci-paramfiles/hypershift.yml
@@ -39,7 +39,7 @@ jobs:
       runs-on: u08
       steps:
       - name: Deploy hypershift cluster
-        run: kcli create cluster hypershift --pf $PARAMFILE -P pull_secret=$PULLSECRET $PLAN --force
+        run: kcli create cluster hypershift --pf $PARAMFILE -P pull_secret=$PULLSECRET $CLUSTER --force
       - name: Clean everything
         if: always()
-        run: kcli delete plan --yes $PLAN
+        run: kcli delete cluster --yes $CLUSTER
