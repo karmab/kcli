@@ -741,7 +741,11 @@ def create(config, plandir, cluster, overrides):
     else:
         hosted_version = data['hosted_version'] or version
         hosted_tag = data['hosted_tag'] or tag
-        assetsdata['hosted_image'] = offline_image(version=hosted_version, tag=hosted_tag, pull_secret=pull_secret)
+        if hosted_version == 'cluster':
+            cmd = "oc get clusterversion version -o jsonpath={'.status.desired.image'}"
+            assetsdata['hosted_image'] = os.popen(cmd).read()
+        else:
+            assetsdata['hosted_image'] = offline_image(version=hosted_version, tag=hosted_tag, pull_secret=pull_secret)
     hostedclusterfile = config.process_inputfile(cluster, f"{plandir}/hostedcluster.yaml", overrides=assetsdata)
     with open(f"{clusterdir}/hostedcluster.yaml", 'w') as f:
         f.write(hostedclusterfile)

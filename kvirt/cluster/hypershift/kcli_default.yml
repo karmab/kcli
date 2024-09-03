@@ -1,7 +1,8 @@
 info: |
     Deploys an hypershift cluster with an arbitray number of workers
     It relies on a valid KUBECONFIG env variable pointing to a cluster where hypershift operator is running
-    version can be latest, stable, dev-preview, nightly, ci or cluster (which means picking the version from top cluster).
+    version can be latest, stable, dev-preview, nightly, ci or cluster.
+    you can also set version for hosted_cluster to cluster so that it uses the top cluster version.
     A mandatory default storage class is checked at the beginning of the workflow
     Hypershift will also be installed on the management cluster if missing, either from latest container using podman or through MCE
     autosigning csrs for workers is handled with a cronjob running on the top cluster in the dedicated namespace
