@@ -292,6 +292,9 @@ def offline_image(version='stable', tag='4.16', pull_secret='openshift_pull.json
         url = f"https://mirror.openshift.com/pub/openshift-v4/clients/{ocp_repo}/{target}/release.txt"
     elif version == 'latest':
         url = f"https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{version}-{tag}/release.txt"
+    else:
+        error(f"Invalid version {version}")
+        return offline
     try:
         lines = urlopen(url).readlines()
         for line in lines:
