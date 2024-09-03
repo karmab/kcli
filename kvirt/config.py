@@ -3036,6 +3036,9 @@ class Kconfig(Kbaseconfig):
         elif _type == 'rke2':
             roles = ['ctlplanes', 'workers']
             plandir = os.path.dirname(rke2.create.__code__.co_filename)
+        elif _type == 'hypershift':
+            roles = ['workers']
+            plandir = os.path.dirname(hypershift.create.__code__.co_filename)
         else:
             plandir = os.path.dirname(openshift.create.__code__.co_filename)
             roles = ['ctlplanes', 'workers']
