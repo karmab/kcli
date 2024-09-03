@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 export HOME=${HOME:-/root}
+export PULL_SECRET=$(cat {{ pull_secret|default('$HOME/openshift_pull.json')|pwd_path }} | tr -d [:space:])
 
 oc create -f 99-metal3-provisioning.yaml >/dev/null 2>&1 || oc patch provisioning provisioning-configuration --type merge -p '{"spec":{"watchAllNamespaces": true}}'
 
@@ -12,7 +13,7 @@ until oc get crd/clusterimagesets.hive.openshift.io >/dev/null 2>&1 ; do sleep 1
 if [ "$(which openshift-install)" == "" ] ; then 
   VERSION={{ version|default('stable') }}
   TAG={{ tag|default('4.16') }}
-  kcli download openshift-install -P version=$VERSION -P tag=$TAG
+  kcli download openshift-install -P version=$VERSION -P tag=$TAG -P pull_secret=$PULL_SECRET
   export PATH=.:$PATH
 fi
 
@@ -29,7 +30,6 @@ export RHCOS_ROOTFS=http://${BAREMETAL_IP}/rhcos-live-rootfs.x86_64.img
 
 export MINOR=$(openshift-install version | head -1 | cut -d' ' -f2 | cut -d. -f1,2)
 
-export PULLSECRET=$(cat {{ pull_secret|default('$HOME/openshift_pull.json')|pwd_path }} | tr -d [:space:])
 export SSH_PRIV_KEY=$(cat {{ pub_key|default('$HOME/.ssh/id_rsa') }} |sed "s/^/    /")
 export VERSION=$(openshift-install coreos print-stream-json | jq -r '.["architectures"]["x86_64"]["artifacts"]["metal"]["release"]')
 export RELEASE=$(openshift-install version | grep 'release image' | cut -d' ' -f3)

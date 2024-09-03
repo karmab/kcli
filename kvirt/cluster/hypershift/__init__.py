@@ -440,10 +440,11 @@ def create(config, plandir, cluster, overrides):
         if mce_hypershift:
             warning("Hypershift needed. Installing it for you")
         if need_assisted:
-            warning("Also installing assisted")
+            warning("Assisted needed. Installing it for you")
         app_name, source, channel, csv, description, x_namespace, channels, crds = olm_app('multicluster-engine')
         app_data = {'name': app_name, 'source': source, 'channel': channel, 'namespace': x_namespace, 'csv': csv,
-                    'mce_hypershift': mce_hypershift, 'assisted': need_assisted, 'version': version, 'tag': tag}
+                    'mce_hypershift': mce_hypershift, 'assisted': need_assisted, 'version': version, 'tag': tag,
+                    'pull_secret': pull_secret}
         config.create_app_openshift(app_name, app_data)
         sleep(240)
         if assisted and safe_load(os.popen(assisted_crd_cmd).read()) is None:

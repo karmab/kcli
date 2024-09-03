@@ -73,7 +73,7 @@ metadata:
   name: assisted-deployment-pull-secret
   namespace: multicluster-engine
 stringData:
-  .dockerconfigjson: '${PULLSECRET}'
+  .dockerconfigjson: '${PULL_SECRET}'
   type: kubernetes.io/dockerconfigjson
 {% if disconnected_url != None %}
 ---
