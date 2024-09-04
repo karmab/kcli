@@ -5519,7 +5519,7 @@ def cli():
                           epilog=version_epilog, formatter_class=rawhelp)
 
     argcomplete.autocomplete(parser)
-    if len(sys.argv) == 1 or (len(sys.argv) == 3 and sys.argv[1] == '-C'):
+    if len(sys.argv) == 1 or (len(sys.argv) == 3 and sys.argv[1] in ['-c', '-C']):
         parser.print_help()
         sys.exit(0)
     args = parser.parse_args()
