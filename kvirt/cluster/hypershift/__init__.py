@@ -388,7 +388,14 @@ def create(config, plandir, cluster, overrides):
     data['original_domain'] = domain
     apps = overrides.get('apps', [])
     workers = data.get('workers')
+    use_management_version = False
     version = data.get('version')
+    if version not in ['dev-preview', 'stable', 'ci', 'nightly', 'latest', 'cluster']:
+        msg = f"Invalid version {version}"
+        return {'result': 'failure', 'reason': msg}
+    elif version == 'cluster':
+        use_management_version = True
+        version = 'stable'
     coredns = data.get('coredns')
     tag = data.get('tag')
     if str(tag) == '4.1':
@@ -495,7 +502,12 @@ def create(config, plandir, cluster, overrides):
     data['registry'] = registry
     data['basedir'] = '/workdir' if container_mode() else '.'
     supported_data = safe_load(os.popen("oc get cm/supported-versions -o yaml -n hypershift").read())
-    if supported_data is not None:
+    if use_management_version:
+        tag = os.popen("oc get clusterversion version -o jsonpath='{.status.desired.version}'").read()
+        pprint(f"Using tag {tag}")
+        if 'ec' in tag:
+            version = 'dev-preview'
+    elif supported_data is not None:
         supported_data = supported_data['data']
         supported_versions = supported_versions = supported_data['supported-versions']
         versions = safe_load(supported_versions)['versions']
@@ -740,15 +752,12 @@ def create(config, plandir, cluster, overrides):
     if 'OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE' in os.environ:
         assetsdata['hosted_image'] = os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE']
     else:
-        hosted_version = data['hosted_version'] or version
-        hosted_tag = data['hosted_tag'] or tag
-        if hosted_version == 'cluster':
-            cmd = "oc get clusterversion version -o jsonpath={'.status.desired.image'}"
-            assetsdata['hosted_image'] = os.popen(cmd).read()
-        elif hosted_version in ['dev-preview', 'stable', 'ci', 'nightly', 'latest']:
-            assetsdata['hosted_image'] = offline_image(version=hosted_version, tag=hosted_tag, pull_secret=pull_secret)
+        if use_management_version:
+            assetsdata['hosted_image'] = management_image
+        elif version in ['dev-preview', 'stable', 'ci', 'nightly', 'latest']:
+            assetsdata['hosted_image'] = offline_image(version=version, tag=tag, pull_secret=pull_secret)
         else:
-            msg = f"Invalid hosted_version {hosted_version}"
+            msg = f"Invalid version {version}"
             return {'result': 'failure', 'reason': msg}
     hostedclusterfile = config.process_inputfile(cluster, f"{plandir}/hostedcluster.yaml", overrides=assetsdata)
     with open(f"{clusterdir}/hostedcluster.yaml", 'w') as f:
@@ -775,11 +784,13 @@ def create(config, plandir, cluster, overrides):
     else:
         pprint("Reusing matching openshift-install")
     os.environ["PATH"] = f'{os.getcwd()}:{os.environ["PATH"]}'
-    INSTALLER_VERSION = get_installer_version()
-    pprint(f"Using installer version {INSTALLER_VERSION}")
     if 'OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE' in os.environ:
         nodepool_image = os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE']
+    elif use_management_version:
+        nodepool_image = management_image
     else:
+        INSTALLER_VERSION = get_installer_version()
+        pprint(f"Using installer version {INSTALLER_VERSION}")
         nodepool_image = os.popen("openshift-install version | grep 'release image' | cut -f3 -d' '").read().strip()
     if assisted:
         if assisted_vms:
