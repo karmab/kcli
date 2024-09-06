@@ -388,7 +388,14 @@ def create(config, plandir, cluster, overrides):
     data['original_domain'] = domain
     apps = overrides.get('apps', [])
     workers = data.get('workers')
+    use_management_version = False
     version = data.get('version')
+    if version not in ['dev-preview', 'stable', 'ci', 'nightly', 'latest', 'cluster']:
+        msg = f"Invalid version {version}"
+        return {'result': 'failure', 'reason': msg}
+    elif version == 'cluster':
+        use_management_version = True
+        version = 'stable'
     coredns = data.get('coredns')
     tag = data.get('tag')
     if str(tag) == '4.1':
@@ -440,10 +447,11 @@ def create(config, plandir, cluster, overrides):
         if mce_hypershift:
             warning("Hypershift needed. Installing it for you")
         if need_assisted:
-            warning("Also installing assisted")
+            warning("Assisted needed. Installing it for you")
         app_name, source, channel, csv, description, x_namespace, channels, crds = olm_app('multicluster-engine')
         app_data = {'name': app_name, 'source': source, 'channel': channel, 'namespace': x_namespace, 'csv': csv,
-                    'mce_hypershift': mce_hypershift, 'assisted': need_assisted, 'version': version, 'tag': tag}
+                    'mce_hypershift': mce_hypershift, 'assisted': need_assisted, 'version': version, 'tag': tag,
+                    'pull_secret': pull_secret}
         config.create_app_openshift(app_name, app_data)
         sleep(240)
         if assisted and safe_load(os.popen(assisted_crd_cmd).read()) is None:
@@ -494,7 +502,12 @@ def create(config, plandir, cluster, overrides):
     data['registry'] = registry
     data['basedir'] = '/workdir' if container_mode() else '.'
     supported_data = safe_load(os.popen("oc get cm/supported-versions -o yaml -n hypershift").read())
-    if supported_data is not None:
+    if use_management_version:
+        tag = os.popen("oc get clusterversion version -o jsonpath='{.status.desired.version}'").read()
+        pprint(f"Using tag {tag}")
+        if 'ec' in tag:
+            version = 'dev-preview'
+    elif supported_data is not None:
         supported_data = supported_data['data']
         supported_versions = supported_versions = supported_data['supported-versions']
         versions = safe_load(supported_versions)['versions']
@@ -739,9 +752,13 @@ def create(config, plandir, cluster, overrides):
     if 'OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE' in os.environ:
         assetsdata['hosted_image'] = os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE']
     else:
-        hosted_version = data['hosted_version'] or version
-        hosted_tag = data['hosted_tag'] or tag
-        assetsdata['hosted_image'] = offline_image(version=hosted_version, tag=hosted_tag, pull_secret=pull_secret)
+        if use_management_version:
+            assetsdata['hosted_image'] = management_image
+        elif version in ['dev-preview', 'stable', 'ci', 'nightly', 'latest']:
+            assetsdata['hosted_image'] = offline_image(version=version, tag=tag, pull_secret=pull_secret)
+        else:
+            msg = f"Invalid version {version}"
+            return {'result': 'failure', 'reason': msg}
     hostedclusterfile = config.process_inputfile(cluster, f"{plandir}/hostedcluster.yaml", overrides=assetsdata)
     with open(f"{clusterdir}/hostedcluster.yaml", 'w') as f:
         f.write(hostedclusterfile)
@@ -767,11 +784,13 @@ def create(config, plandir, cluster, overrides):
     else:
         pprint("Reusing matching openshift-install")
     os.environ["PATH"] = f'{os.getcwd()}:{os.environ["PATH"]}'
-    INSTALLER_VERSION = get_installer_version()
-    pprint(f"Using installer version {INSTALLER_VERSION}")
     if 'OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE' in os.environ:
         nodepool_image = os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE']
+    elif use_management_version:
+        nodepool_image = management_image
     else:
+        INSTALLER_VERSION = get_installer_version()
+        pprint(f"Using installer version {INSTALLER_VERSION}")
         nodepool_image = os.popen("openshift-install version | grep 'release image' | cut -f3 -d' '").read().strip()
     if assisted:
         if assisted_vms:

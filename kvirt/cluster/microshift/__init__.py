@@ -1,7 +1,6 @@
 from kvirt.common import success, info2
 from kvirt.common import get_ssh_pub_key
 import os
-from shutil import copyfile
 from yaml import safe_dump, safe_load
 
 
@@ -31,10 +30,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     data['kube'] = data['cluster']
     data['kubetype'] = 'microshift'
     cluster = data.get('cluster')
-    nodes = data.get('nodes', 1)
-    if nodes == 0:
-        msg = "Invalid number of nodes"
-        return {'result': 'failure', 'reason': msg}
     register_acm = data.get('register_acm', False)
     pull_secret = data.get('pull_secret')
     if not os.path.isabs(pull_secret):
@@ -78,16 +73,13 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if result['result'] != 'success':
         return result
     KUBECONFIG = '/root/kubeconfig'
-    for index in range(nodes):
-        name = f"{cluster}-{index}"
-        config.wait_finish(name)
-        finishfiles = [{'origin': KUBECONFIG, 'path': f"~/.kcli/clusters/{cluster}/auth/kubeconfig.{index}"}]
-        config.handle_finishfiles(name, finishfiles)
-        ip = config.k.info(name).get('ip')
-        destination = f"{clusterdir}/auth/kubeconfig.{index}"
-        os.system(f"sed -i -e 's/127.0.0.1/{ip}/' {destination}")
-        if index == 0:
-            copyfile(f"{clusterdir}/auth/kubeconfig.0", f"{clusterdir}/auth/kubeconfig")
+    name = f"{cluster}-0"
+    config.wait_finish(name)
+    finishfiles = [{'origin': KUBECONFIG, 'path': f"~/.kcli/clusters/{cluster}/auth/kubeconfig"}]
+    config.handle_finishfiles(name, finishfiles)
+    ip = config.k.info(name).get('ip')
+    destination = f"{clusterdir}/auth/kubeconfig"
+    os.system(f"sed -i -e 's/127.0.0.1/{ip}/' {destination}")
     success(f"Kubernetes cluster {cluster} deployed!!!")
     info2(f"export KUBECONFIG=$HOME/.kcli/clusters/{cluster}/auth/kubeconfig")
     info2("export PATH=$PWD:$PATH")

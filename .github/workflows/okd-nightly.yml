@@ -6,7 +6,7 @@ on:
 env:
  HOME: /root
  PYTHONUNBUFFERED: true
- PLAN: ci-okd
+ CLUSTER: ci-okd
  PULLSECRET: /root/openshift_pull.json
  PARAMFILE: "openshift-ci-paramfiles/okd.yml"
  NETWORK: okd-network
@@ -26,7 +26,7 @@ jobs:
        - name: Deploy network if needed
          run: kcli create network -c $NETWORK_CIDR $NETWORK || true
        - name: Deploy OKD
-         run: kcli create cluster openshift --pf $PARAMFILE $PLAN --force
+         run: kcli create cluster openshift --pf $PARAMFILE $CLUSTER --force
        - name: Clean everything
          if: always()
-         run: kcli delete plan --yes $PLAN
+         run: kcli delete cluster --yes $CLUSTER

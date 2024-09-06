@@ -396,6 +396,7 @@ def process_files(files=[], overrides={}, remediate=False):
         else:
             todelete.append(directory)
             origin_unexpanded = directory.get('origin')
+            render = directory.get('render', True)
             origin = os.path.expanduser(origin_unexpanded)
             path = directory.get('path')
             entries = os.listdir(origin)
@@ -416,11 +417,11 @@ def process_files(files=[], overrides={}, remediate=False):
                                     subpath = subpath.replace('//', '/')
                                     mode = oct(os.stat(f"{origin}/{entry}/{subentry}").st_mode)[-3:]
                                     files.append({'path': subpath, 'origin': f"{origin}/{entry}/{subentry}",
-                                                  'mode': mode})
+                                                  'mode': mode, 'render': render})
                     else:
                         subpath = f"{path}/{entry}"
                         subpath = subpath.replace('//', '/')
-                        files.append({'path': subpath, 'origin': f"{origin}/{entry}"})
+                        files.append({'path': subpath, 'origin': f"{origin}/{entry}", 'render': render})
     for directory in todelete:
         files.remove(directory)
     processed_files = []
@@ -443,7 +444,7 @@ def process_files(files=[], overrides={}, remediate=False):
             render = render.lower() == 'true'
         file_overrides = overrides.copy()
         file_overrides.update(fil)
-        file_overrides.update({'env': os.environ})
+        file_overrides.update(os.environ)
         if origin is not None:
             origin = os.path.expanduser(origin)
             if overrides and render:
@@ -537,7 +538,7 @@ def process_ignition_files(files=[], overrides={}):
                 continue
             elif overrides and render:
                 file_overrides = overrides.copy()
-                file_overrides.update({'env': os.environ})
+                file_overrides.update(os.environ)
                 basedir = os.path.dirname(origin) if os.path.dirname(origin) != '' else '.'
                 env = Environment(loader=FileSystemLoader(basedir), undefined=undefined, extensions=['jinja2.ext.do'])
                 for jinjafilter in jinjafilters.jinjafilters:
@@ -913,7 +914,7 @@ def print_info(yamlinfo, output='plain', fields=[], values=False, pretty=True):
 
 def ssh(name, ip='', user=None, local=None, remote=None, tunnel=False, tunnelhost=None, tunnelport=22,
         tunneluser='root', insecure=False, cmd=None, X=False, Y=False, debug=False, D=None, vmport=None,
-        identityfile=None, password=True):
+        identityfile=None, password=True, pty=False):
     if ip == '':
         return None
     else:
@@ -932,6 +933,8 @@ def ssh(name, ip='', user=None, local=None, remote=None, tunnel=False, tunnelhos
             sshcommand = f"-X {sshcommand}"
         if Y:
             sshcommand = f"-Y {sshcommand}"
+        if pty:
+            sshcommand = f"-t {sshcommand}"
         if cmd:
             sshcommand = f'{sshcommand} "{cmd}"'
         if tunnelhost is not None and tunnelhost not in ['localhost', '127.0.0.1'] and tunnel and\
@@ -2491,6 +2494,12 @@ def interactive_kube(_type):
         default_parameters.update({'pull_secret': 'openshift_pull.json', 'version': 'stable', 'tag': OPENSHIFT_TAG,
                                    'memory': 20480, 'sno_disk': None, 'sno_vm': False, 'sno_wait': False,
                                    'sno_cpuset': None})
+    elif _type == 'microshift':
+        del default_parameters['ctlplanes']
+        del default_parameters['workers']
+        default_parameters.update({'pull_secret': 'openshift_pull.json', 'memory': 4096, 'image': 'rhel9',
+                                   'podman': True, 'olm': False, 'multus': False, 'sslip': True, 'version': 'stable',
+                                   'tag': OPENSHIFT_TAG})
     pprint("Override the following items or accept default values:")
     for key in default_parameters:
         default_value = default_parameters[key]

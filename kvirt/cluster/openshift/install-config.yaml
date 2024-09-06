@@ -74,12 +74,25 @@ platform:
 {% set vmfolder = vmfolder + '/' + cluster %}
 {% endif  %}
   vsphere:
-    vcenter: {{ config_host }}
-    username: {{ config_user }}
-    password: {{ config_password }}
-    datacenter: {{ config_datacenter }}
-    defaultDatastore: {{ config_pool }}
-    folder: /{{ config_datacenter}}/{{ vmfolder }}
+    failureDomains:
+    - name: default
+      region: default
+      server: {{ config_host }}
+      topology:
+        computeCluster: /{{ config_datacenter }}/host/{{ config_cluster }}
+        datacenter: {{ config_datacenter }}
+        datastore: /{{ config_datacenter }}/datastore/{{ config_pool }}
+        networks:
+        - {{ network|replace('default', 'VM Network') }}
+        folder: /{{ config_datacenter}}/{{ vmfolder }}
+      zone: default
+    vcenters:
+    - datacenters:
+      - {{ config_datacenter }}
+      server: {{ config_host }}
+      user: {{ config_user }}
+      password: {{ config_password }}
+      port: 443
 {% elif config_type == 'aws' %}
   aws:
     region: {{ config_region }}

@@ -21,7 +21,6 @@ jobs:
     - name: Install kcli
       run: |
         curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
-        kcli create sushy-service
     - name: Delete old install
       run: kcli delete cluster --yes $CLUSTER || true
 
@@ -32,8 +31,18 @@ jobs:
    - name: Deploy Microshift
      run: kcli create cluster microshift -P pull_secret=$PULLSECRET -P version=$VERSION -P tag="$TAG" $CLUSTER
 
- clean-up:
+ verify-microshift:
    needs: deploy-microshift
+   runs-on: u08
+   steps:
+   - name: Verify Microshift
+     run: |
+       sleep 240
+       export KUBECONFIG=$HOME/.kcli/clusters/$CLUSTER/auth/kubeconfig
+       [ "$(oc get pods -A --field-selector=status.phase!=Running -o name | wc -l)" == "0" ] || exit 1
+
+ clean-up:
+   needs: verify-microshift
    runs-on: u08
    steps:
    - name: Clean everything after success

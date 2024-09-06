@@ -249,6 +249,19 @@ class Kconfig(Kbaseconfig):
                            debug=debug, datacenter=datacenter, cluster=cluster, ca_file=ca_file, org=org,
                            filtervms=filtervms, filteruser=filteruser, filtertag=filtertag)
             elif self.type == 'openstack':
+                envrc = options.get('envrc')
+                if envrc is not None:
+                    envrc = os.path.expanduser(envrc)
+                    if not os.path.exists(envrc):
+                        error(f"Envrc {envrc} not found. Leaving")
+                        sys.exit(1)
+                    else:
+                        for line in open(envrc).readlines():
+                            if line.startswith('export '):
+                                new_key, new_variable = line.split('=')
+                                new_key = new_key.replace('export ', '')
+                                new_variable = new_variable.strip().replace('"', '').replace("'", '')
+                                os.environ[new_key] = new_variable
                 version = options.get('version') or kdefaults.OPENSTACK['version']
                 domain = options.get('domain') or os.environ.get("OS_USER_DOMAIN_NAME") or kdefaults.OPENSTACK['domain']
                 auth_url = options.get('auth_url') or os.environ.get("OS_AUTH_URL")
@@ -733,7 +746,7 @@ class Kconfig(Kbaseconfig):
             iso = None
         if scripts:
             scripts_overrides = overrides.copy()
-            scripts_overrides.update({'env': os.environ})
+            scripts_overrides.update(os.environ)
             for script in scripts:
                 if onfly is not None and '~' not in script:
                     destdir = basedir
@@ -912,6 +925,10 @@ class Kconfig(Kbaseconfig):
         if kube is not None and kubetype is not None:
             metadata['kubetype'] = kubetype
             metadata['kube'] = kube
+            cluster_networks = overrides.get('cluster_networks', [])
+            cluster_network = cluster_networks[0] if cluster_networks else overrides.get('cluster_network_ipv4')
+            if cluster_network is not None:
+                metadata['cluster_network'] = cluster_network
         if tempkey:
             if overrides.get('tempkeydir') is None:
                 tempkeydir = TemporaryDirectory()
@@ -3034,6 +3051,9 @@ class Kconfig(Kbaseconfig):
         elif _type == 'rke2':
             roles = ['ctlplanes', 'workers']
             plandir = os.path.dirname(rke2.create.__code__.co_filename)
+        elif _type == 'hypershift':
+            roles = ['workers']
+            plandir = os.path.dirname(hypershift.create.__code__.co_filename)
         else:
             plandir = os.path.dirname(openshift.create.__code__.co_filename)
             roles = ['ctlplanes', 'workers']

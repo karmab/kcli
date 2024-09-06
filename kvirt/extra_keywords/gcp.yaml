@@ -1,0 +1,8 @@
+accelerators: Define a list of accelerators
+confidential: Enable Confidential compute
+gpus: Define a list of accelerators
+preemptible: Make vm preemptible
+secondary_cidr: Define secondary cidr
+serviceaccounts: Define a list of sercice accounts
+az: Force availability zone
+router: allow can_ip_forward

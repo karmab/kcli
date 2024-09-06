@@ -22,5 +22,5 @@ recursive-include kvirt/common *
 recursive-include kvirt/expose *
 recursive-include kvirt/providers/aws *
 recursive-include kvirt/providers/gcp *
+recursive-include kvirt/extra_keywords *
 include kvirt/keywords.yaml
-include kvirt/extra_keywords.yaml

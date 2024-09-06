@@ -24,7 +24,7 @@ import os
 from prettytable import PrettyTable
 import random
 import re
-from shutil import which, copy2
+from shutil import copy2, rmtree, which
 from subprocess import call
 import sys
 from tempfile import NamedTemporaryFile
@@ -390,14 +390,18 @@ def delete_vm(args):
                     with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
                         installparam = yaml.safe_load(install)
                         kubetype = installparam.get('kubetype', 'generic')
-                        binary = 'oc' if kubetype == 'openshift' else 'kubectl'
-                        nodescmd = f'{binary} get node -o name'
-                        nodes = [n.strip().replace('node/', '') for n in os.popen(nodescmd).readlines()]
-                        for node in nodes:
-                            if node.split('.')[0] == name:
-                                pprint(f"Deleting node {node} from your {kubetype} cluster")
-                                call(f'{binary} delete node {node}', shell=True)
-                                break
+                        if kubetype == 'microshift':
+                            pprint(f"Deleting directory {clusterdir}")
+                            rmtree(clusterdir)
+                        else:
+                            binary = 'oc' if kubetype == 'openshift' else 'kubectl'
+                            nodescmd = f'{binary} get node -o name'
+                            nodes = [n.strip().replace('node/', '') for n in os.popen(nodescmd).readlines()]
+                            for node in nodes:
+                                if node.split('.')[0] == name:
+                                    pprint(f"Deleting node {node} from your {kubetype} cluster")
+                                    call(f'{binary} delete node {node}', shell=True)
+                                    break
             for confpool in config.confpools:
                 ip_reservations = config.confpools[confpool].get('ip_reservations', {})
                 if name in ip_reservations:
@@ -765,8 +769,7 @@ def list_vm(args):
     overrides = handle_parameters(args.param, args.paramfile)
     filter_keys = ['name', 'ip', 'status', 'image', 'plan', 'profile']
     if [key for key in overrides if key not in filter_keys]:
-        warning(f"Ignoring wrong filters. key should be part of {filter_keys}")
-        overrides = {key: overrides[key] for key in filter_keys if key in overrides}
+        overrides = {}
     if args.client is not None and args.client == 'all':
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
         args.client = ','.join(baseconfig.clients)
@@ -2785,6 +2788,7 @@ def ssh_vm(args):
     D = args.D
     X = args.X
     Y = args.Y
+    pty = args.t
     identityfile = args.identityfile
     user = args.user
     vmport = args.port
@@ -2832,7 +2836,7 @@ def ssh_vm(args):
         sshcommand = common.ssh(name, ip=ip, user=user, local=local, remote=remote, tunnel=tunnel,
                                 tunnelhost=tunnelhost, tunnelport=tunnelport, tunneluser=tunneluser,
                                 insecure=insecure, cmd=cmd, X=X, Y=Y, D=D, debug=args.debug, vmport=vmport,
-                                identityfile=identityfile)
+                                identityfile=identityfile, pty=pty)
     if sshcommand is not None:
         if which('ssh') is not None:
             code = os.WEXITSTATUS(os.system(sshcommand))
@@ -5256,6 +5260,7 @@ def cli():
     vmssh_parser.add_argument('-Y', action='store_true', help='Enable X11 Forwarding(Insecure)')
     vmssh_parser.add_argument('-i', '--identityfile', help='Identity file')
     vmssh_parser.add_argument('-p', '--port', '--port', help='Port for ssh')
+    vmssh_parser.add_argument('-t', action='store_true', help='Force pseudo-terminal allocation')
     vmssh_parser.add_argument('-u', '-l', '--user', help='User for ssh')
     vmssh_parser.add_argument('name', metavar='VMNAME', nargs='*')
     vmssh_parser.set_defaults(func=ssh_vm)
@@ -5520,7 +5525,7 @@ def cli():
                           epilog=version_epilog, formatter_class=rawhelp)
 
     argcomplete.autocomplete(parser)
-    if len(sys.argv) == 1 or (len(sys.argv) == 3 and sys.argv[1] == '-C'):
+    if len(sys.argv) == 1 or (len(sys.argv) == 3 and sys.argv[1] in ['-c', '-C']):
         parser.print_help()
         sys.exit(0)
     args = parser.parse_args()

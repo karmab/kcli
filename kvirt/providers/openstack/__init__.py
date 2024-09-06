@@ -423,12 +423,15 @@ class Kopenstack(object):
         yamlinfo['numcpus'] = flavor.vcpus
         yamlinfo['nets'] = []
         index = 0
+        ips = []
         for key in list(vm.addresses):
             entry1 = vm.addresses[key]
             for entry2 in entry1:
                 mac = entry2['OS-EXT-IPS-MAC:mac_addr']
                 if entry2['OS-EXT-IPS:type'] == 'floating':
-                    yamlinfo['ip'] = entry2['addr']
+                    publicip = entry2['addr']
+                    yamlinfo['ip'] = publicip
+                    ips.append(publicip)
                 else:
                     net = {'device': f'eth{index}', 'mac': mac, 'net': key, 'type': entry2['addr']}
                     if index == 0:
@@ -436,7 +439,11 @@ class Kopenstack(object):
                     yamlinfo['nets'].append(net)
                     index += 1
         if 'ip' not in yamlinfo and 'privateip' in yamlinfo:
-            yamlinfo['ip'] = yamlinfo['privateip']
+            privateip = yamlinfo['privateip']
+            yamlinfo['ip'] = privateip
+            ips.append(privateip)
+        if len(ips) > 1:
+            yamlinfo['ips'] = ips
         disks = []
         for disk in vm._info['os-extended-volumes:volumes_attached']:
             diskid = disk['id']

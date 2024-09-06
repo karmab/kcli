@@ -1,0 +1,14 @@
+arch: Architecture
+emulator: Custom emulator
+extra_iso: Extra Iso to plug to the node
+floppy: Floppy to plug to the node
+hugepages: hugepages flag
+hugepages_1gb: 1gb hugepages flag
+hugepages_2mb: 2mb hugepages flag
+iommu: iommu flag
+machine: Custom machine type
+qemuextra: Extra cmdline for qemu
+secureboot: Secureboot flag
+uefi: Uefi flag
+uefi_legacy: Uefi flag for rhel8 hypervisors
+uuid: Uuid

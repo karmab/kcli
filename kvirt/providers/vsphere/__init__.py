@@ -33,8 +33,10 @@ import webbrowser
 from zipfile import ZipFile
 
 
-def sdn_ip(ip, kubetype):
-    return kubetype is not None and kubetype == 'openshift' and ip_address(ip) in ip_network('10.132.0.0/14')
+def sdn_ip(ip, kubetype, cluster_network):
+    if cluster_network is None:
+        cluster_network = '10.132.0.0/14'
+    return kubetype is not None and kubetype == 'openshift' and ip_address(ip) in ip_network(cluster_network)
 
 
 class Ksphere:
@@ -800,13 +802,15 @@ class Ksphere:
             if entry.key == 'tags':
                 yamlinfo['tags'] = entry.value
         kubetype = yamlinfo.get('kubetype')
+        cluster_network = yamlinfo.get('cluster_network')
         ips = []
         if runtime.powerState == "poweredOn":
             yamlinfo['host'] = runtime.host.name
             for nic in guest.net:
                 if nic.ipAddress:
                     ip = nic.ipAddress[0]
-                    if not ip.startswith('fe80::') and not ip.startswith('169.254') and not sdn_ip(ip, kubetype):
+                    if not ip.startswith('fe80::') and not ip.startswith('169.254') and not sdn_ip(ip, kubetype,
+                                                                                                   cluster_network):
                         ips.append(ip)
                         if 'ip' not in yamlinfo:
                             yamlinfo['ip'] = ip
@@ -1400,7 +1404,7 @@ class Ksphere:
                 network = networks[0]
                 break
         if network is None:
-            error("Couldn't find any esxi host in the cluster with network {self.import_network}")
+            error(f"Couldn't find any esxi host in the cluster with network {self.import_network}")
             error("Set import_network to a valid value")
             sys.exit(1)
         networkmapping = vim.OvfManager.NetworkMapping.Array()

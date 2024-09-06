@@ -72,12 +72,10 @@ class Kbaseconfig:
                 except yaml.scanner.ScannerError as err:
                     error(f"Couldn't parse yaml in {secretsfile}. Got {err}")
                     sys.exit(1)
-        if offline:
-            self.ini = {'default': {'client': 'fake'}, 'fake': {'pool': 'default', 'type': 'fake'}}
-        elif inifile is None:
+        if inifile is None:
             defaultclient = 'local'
             _type = 'kvm'
-            if not os.path.exists('/var/run/libvirt/libvirt-sock')\
+            if not offline and not os.path.exists('/var/run/libvirt/libvirt-sock')\
                and not os.path.exists('/var/run/libvirt/libvirt-admin-sock')\
                and not os.path.exists('/var/run/libvirt/virtqemud-sock'):
                 if os.path.exists('/i_am_a_container') and os.environ.get('KUBERNETES_SERVICE_HOST') is not None:
@@ -523,7 +521,8 @@ class Kbaseconfig:
         for keyword in self.default:
             results[keyword] = vars(self)[keyword] if keyword in vars(self) else self.default[keyword]
         kvirt_dir = os.path.dirname(self.__init__.__code__.co_filename)
-        extra_keywords = yaml.safe_load(open(f'{kvirt_dir}/extra_keywords.yaml'))
+        extra_keywords_file = f'{kvirt_dir}/extra_keywords/{self.type}.yaml'
+        extra_keywords = yaml.safe_load(open(extra_keywords_file)) if os.path.exists(extra_keywords_file) else []
         for keyword in extra_keywords:
             results[keyword] = None
         return results
@@ -809,7 +808,7 @@ class Kbaseconfig:
         with open(inputfile, 'r') as entries:
             overrides.update(self.overrides)
             overrides.update({'plan': plan})
-            overrides.update({'env': os.environ})
+            overrides.update(os.environ)
             try:
                 entries = templ.render(overrides)
             except TemplateError as e:
@@ -1498,7 +1497,9 @@ class Kbaseconfig:
             print(f"Current value: {keywords[keyword]}")
             kvirt_dir = os.path.dirname(self.__init__.__code__.co_filename)
             keywords_info = yaml.safe_load(open(f'{kvirt_dir}/keywords.yaml'))
-            keywords_info.update(yaml.safe_load(open(f'{kvirt_dir}/extra_keywords.yaml')))
+            extra_keywords_file = f'{kvirt_dir}/extra_keywords/{self.type}.yaml'
+            if os.path.exists(extra_keywords_file):
+                keywords_info.update(yaml.safe_load(open(extra_keywords_file)))
             if keyword in keywords_info and keywords_info[keyword] is not None:
                 pprint("Detailed information:")
                 print(keywords_info[keyword].strip())
