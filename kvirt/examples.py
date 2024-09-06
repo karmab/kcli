@@ -192,14 +192,14 @@ $ kcli create vm -P iso=xxx.iso myvm
 # Create a GCP vm with 2 nvidia-tesla-t4 gpus
 $ kcli create vm -i ubuntu-minimal-2204-lts -P gpus=['{"type": "nvidia-tesla-t4", "count": 2}'] myvm
 
-# Create 3 vm to emulate baremetal
+# Create 3 vms to emulate baremetal
 $ kcli create vm -P start=false -P memory=20480 -P numcpus=16 -P disks=[200] -P uefi=true -P nets=[default] -c 3 myclu
 
 # Create an sriov enabled vm (on KVM only)
 $ kcli create vm -i centos9stream -P nets=['{"name": "default"}','{"name": "default", "sriov": "true"}']
 """
 
-vmconsole = """# Open a graphical console for vm ( only shows the command if using container)
+vmconsole = """# Open a graphical console for vm (only show the command if using container)
 $ kcli console myvm
 
 # Get a serial console to the vm
