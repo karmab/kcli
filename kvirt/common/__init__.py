@@ -444,7 +444,6 @@ def process_files(files=[], overrides={}, remediate=False):
             render = render.lower() == 'true'
         file_overrides = overrides.copy()
         file_overrides.update(fil)
-        file_overrides.update(os.environ)
         if origin is not None:
             origin = os.path.expanduser(origin)
             if overrides and render:
@@ -538,7 +537,6 @@ def process_ignition_files(files=[], overrides={}):
                 continue
             elif overrides and render:
                 file_overrides = overrides.copy()
-                file_overrides.update(os.environ)
                 basedir = os.path.dirname(origin) if os.path.dirname(origin) != '' else '.'
                 env = Environment(loader=FileSystemLoader(basedir), undefined=undefined, extensions=['jinja2.ext.do'])
                 for jinjafilter in jinjafilters.jinjafilters:

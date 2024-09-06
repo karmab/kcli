@@ -731,7 +731,6 @@ class Kconfig(Kbaseconfig):
             iso = None
         if scripts:
             scripts_overrides = overrides.copy()
-            scripts_overrides.update(os.environ)
             for script in scripts:
                 if onfly is not None and '~' not in script:
                     destdir = basedir

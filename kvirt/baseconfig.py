@@ -808,7 +808,6 @@ class Kbaseconfig:
         with open(inputfile, 'r') as entries:
             overrides.update(self.overrides)
             overrides.update({'plan': plan})
-            overrides.update(os.environ)
             try:
                 entries = templ.render(overrides)
             except TemplateError as e:
