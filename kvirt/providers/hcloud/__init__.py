@@ -367,6 +367,19 @@ class Khcloud():
 
         return {'result': 'success'}
     
+    def delete_loadbalancer(self, name):
+        sane_name = name.replace('.', '-')
+
+        load_balancer = self.conn.load_balancers.get_by_name(sane_name)
+        if load_balancer is None:
+            error(f"load balancer {sane_name} not found")
+
+        deleted = load_balancer.delete()
+        if not deleted:
+            return {'result': 'failure', 'reason': f"Could not delete loadbalancer {name}"}
+        
+        return {'result': 'success'}
+    
     def add_vm_to_loadbalancer(self, vm, lb):
         sane_name = lb.replace('.', '-')
 
