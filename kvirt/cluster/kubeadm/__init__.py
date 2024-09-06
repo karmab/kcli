@@ -310,12 +310,22 @@ def create(config, plandir, cluster, overrides):
                     app_data[f'{app}_version'] = 'latest'
                 kube_create_app(config, app, appdir, overrides=app_data)
     if data['wait_ready']:
-        pprint("Waiting for all nodes to join cluster")
+        timeout = 600
+        counter = 0
+        ready = False
         while True:
             if len(os.popen("kubectl get node -o name").readlines()) == ctlplanes + workers:
+                ready = True
+                break
+            elif counter > timeout:
                 break
             else:
-                sleep(10)
+                pprint("Waiting 30s for all nodes to join")
+                sleep(30)
+                counter += 30
+        if not ready:
+            msg = "Timeout waiting for all nodes to join"
+            return {'result': 'failure', 'reason': msg}
     else:
         warning("Not waiting on all nodes to join the cluster")
     if autoscale:
