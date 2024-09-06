@@ -41,7 +41,7 @@ class Khcloud():
                 disksize = disk.get('size', '10')
 
             diskname = f"{name}-disk{index}"
-            volumeresponse = self.conn.volumes.create(disksize, diskname, location=self.location, labels={"kcli-managed": ""})
+            volumeresponse = self.conn.volumes.create(disksize, diskname, location=self.location, labels={"kcli-managed": "volume"})
             volumeresponses.append(volumeresponse)
 
         if not keys:
@@ -89,7 +89,7 @@ class Khcloud():
         else:
             hetzner_image = self.conn.images.get_by_name_and_architecture(image, servertype.architecture)
 
-        labels={"kcli-managed": ""}
+        labels={"kcli-managed": "vm"}
         for entry in [field for field in metadata if field in METADATA_FIELDS]:
             value = metadata[entry].replace('.', '-')
             labels[entry] = value
@@ -97,7 +97,7 @@ class Khcloud():
         placement_group_name = f"kcli-{labels['plan']}"
         placement_group = self.conn.placement_groups.get_by_name(placement_group_name)
         if not placement_group:
-            response = self.conn.placement_groups.create(name=placement_group_name, type="spread", labels={"kcli-managed": "", "plan": labels["plan"]})
+            response = self.conn.placement_groups.create(name=placement_group_name, type="spread", labels={"kcli-managed": "placement-group", "plan": labels["plan"]})
             if response.action:
                 response.action.wait_until_finished(300)
 
@@ -330,7 +330,7 @@ class Khcloud():
                                         load_balancer_type=load_balancer_type, 
                                         algorithm=load_balancer_algorithm,
                                         services=load_balancer_services,
-                                        labels={"kcli-managed": ""},
+                                        labels={"kcli-managed": "loadbalancer"},
                                         location=self.location,
                                         public_interface=(not internal))
         
@@ -409,7 +409,7 @@ class Khcloud():
         return '.'
     
     def create_disk(self, name, size, pool=None, thin=True, image=None):
-        response = self.conn.volumes.create(size=size, name=name, location=self.location, labels={"kcli-managed": ""})
+        response = self.conn.volumes.create(size=size, name=name, location=self.location, labels={"kcli-managed": "volume"})
         response.action.wait_until_finished(300)
 
         if response.action.error:
