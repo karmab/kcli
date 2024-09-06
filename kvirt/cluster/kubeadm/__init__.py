@@ -316,6 +316,8 @@ def create(config, plandir, cluster, overrides):
                 break
             else:
                 sleep(10)
+    else:
+        warning("Not waiting on all nodes to join the cluster")
     if autoscale:
         config.import_in_kube(network=network, secure=True)
         with NamedTemporaryFile(mode='w+t') as temp:
