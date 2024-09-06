@@ -76,7 +76,8 @@ class Ksphere:
         self.networks = []
         self.dvs = dvs
         self.portgs = {}
-        self.restricted = restricted
+        self.esx = '.' in cluster and datacenter == 'ha-datacenter'
+        self.restricted = restricted or self.esx
         self.serial = serial
         self.import_network = import_network
         self.force_pool = force_pool
@@ -108,7 +109,6 @@ class Ksphere:
                     return
         else:
             self.basefolder = self.dc.vmFolder
-        self.esx = '.' in cluster and datacenter == 'ha-datacenter'
 
     def set_networks(self):
         si = self.si
