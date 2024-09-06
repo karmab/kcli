@@ -484,3 +484,6 @@ class Khcloud():
                 print(disk)
             disks[disk.name] = {'pool': "", 'path': self.location}
         return disks
+    
+    def list_buckets(self):
+        return []
