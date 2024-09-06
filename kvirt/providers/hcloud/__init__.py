@@ -380,6 +380,16 @@ class Khcloud():
         
         return {'result': 'success'}
     
+    def list_loadbalancers(self):
+        load_balancers = self.conn.load_balancers.get_all(label_selector="kcli-managed")
+        
+        result = []
+        for load_balancer in load_balancers:
+            ip = load_balancer.public_net.ipv4 if load_balancer.public_net.enabled else load_balancer.private_net[0].ip
+            result.append([load_balancer.name, ip, '', '', ''])
+
+        return result
+    
     def add_vm_to_loadbalancer(self, vm, lb):
         sane_name = lb.replace('.', '-')
 
