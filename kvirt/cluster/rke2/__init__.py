@@ -1,6 +1,6 @@
 from ipaddress import ip_network
 from kvirt.common import success, pprint, warning, info2, container_mode, wait_cloud_dns, update_etc_hosts, fix_typos
-from kvirt.common import get_kubectl, get_ssh_pub_key, _ssh_credentials, ssh, deploy_cloud_storage
+from kvirt.common import get_kubectl, get_ssh_pub_key, _ssh_credentials, ssh, deploy_cloud_storage, wait_for_nodes
 from kvirt.defaults import UBUNTUS
 import os
 from random import choice
@@ -9,7 +9,6 @@ from shutil import which
 from string import ascii_lowercase, ascii_letters, digits
 from subprocess import call
 from tempfile import NamedTemporaryFile
-from time import sleep
 from yaml import safe_dump, safe_load
 
 cloud_providers = ['aws', 'azure', 'gcp', 'ibm']
@@ -73,6 +72,8 @@ def scale(config, plandir, cluster, overrides):
         result = config.plan(plan, inputfile=f'{plandir}/{role}.yml', overrides=overrides, threaded=threaded)
         if result['result'] != 'success':
             return result
+        else:
+            pprint(f"{role.capitalize()} Nodes will join the cluster in the following minutes")
     return {'result': 'success'}
 
 
@@ -230,13 +231,11 @@ def create(config, plandir, cluster, overrides):
                     update_etc_hosts(cluster, domain, lb_ip)
                     break
     os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
-    if data['wait_ready']:
-        pprint("Waiting for all nodes to join cluster")
-        while True:
-            if len(os.popen("kubectl get node -o name").readlines()) == ctlplanes + workers:
-                break
-            else:
-                sleep(10)
+    if ctlplanes + workers > 1:
+        ready = wait_for_nodes(ctlplanes + workers)
+        if not ready:
+            msg = "Timeout waiting for all nodes to join"
+            return {'result': 'failure', 'reason': msg}
     if autoscale:
         config.import_in_kube(network=network, secure=True)
         with NamedTemporaryFile(mode='w+t') as temp:

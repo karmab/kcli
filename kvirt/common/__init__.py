@@ -2557,3 +2557,18 @@ def get_cluster_api_vips():
                     if automatic and api_ip is not None:
                         data[network] = 1 if network not in data else data[network] + 1
     return data
+
+
+def wait_for_nodes(number):
+    timeout = 480
+    counter = 0
+    while True:
+        if len(os.popen("kubectl get node -o name").readlines()) == number:
+            return True
+        elif counter > timeout:
+            return False
+        else:
+            pprint("Waiting 30s for all nodes to join")
+            sleep(30)
+            counter += 30
+    return False

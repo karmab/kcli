@@ -3,7 +3,7 @@ from ipaddress import ip_network
 import json
 from kvirt.common import success, pprint, warning, info2, container_mode, wait_cloud_dns, update_etc_hosts, fix_typos
 from kvirt.common import get_kubectl, kube_create_app, get_ssh_pub_key, _ssh_credentials, ssh, deploy_cloud_storage
-from kvirt.common import get_cluster_api_vips
+from kvirt.common import get_cluster_api_vips, wait_for_nodes
 from kvirt.defaults import UBUNTUS
 import os
 from random import choice
@@ -12,7 +12,6 @@ from shutil import which
 from string import ascii_lowercase, ascii_letters, digits
 from subprocess import call
 from tempfile import NamedTemporaryFile
-from time import sleep
 from urllib.request import urlopen
 from yaml import safe_dump, safe_load
 
@@ -89,6 +88,8 @@ def scale(config, plandir, cluster, overrides):
         result = config.plan(plan, inputfile=f'{plandir}/{role}.yml', overrides=overrides, threaded=threaded)
         if result['result'] != 'success':
             return result
+        else:
+            pprint(f"{role.capitalize()} Nodes will join the cluster in the following minutes")
     return {'result': 'success'}
 
 
@@ -309,25 +310,11 @@ def create(config, plandir, cluster, overrides):
                 if f'{app}_version' not in overrides:
                     app_data[f'{app}_version'] = 'latest'
                 kube_create_app(config, app, appdir, overrides=app_data)
-    if data['wait_ready']:
-        timeout = 600
-        counter = 0
-        ready = False
-        while True:
-            if len(os.popen("kubectl get node -o name").readlines()) == ctlplanes + workers:
-                ready = True
-                break
-            elif counter > timeout:
-                break
-            else:
-                pprint("Waiting 30s for all nodes to join")
-                sleep(30)
-                counter += 30
+    if ctlplanes + workers > 1:
+        ready = wait_for_nodes(ctlplanes + workers)
         if not ready:
             msg = "Timeout waiting for all nodes to join"
             return {'result': 'failure', 'reason': msg}
-    else:
-        warning("Not waiting on all nodes to join the cluster")
     if autoscale:
         config.import_in_kube(network=network, secure=True)
         with NamedTemporaryFile(mode='w+t') as temp:
