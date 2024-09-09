@@ -124,7 +124,7 @@ def update_pull_secret(pull_secret, registry, user, password):
 
 def update_disconnected_registry(config, plandir, cluster, data):
     disconnected_url = data['disconnected_url']
-    pull_secret = data['pull_secret']
+    pull_secret_path = data['pull_secret_path']
     version = data['version']
     tag = data.get('ori_tag') or data.get('tag')
     arch = data.get('arch', 'x86_64')
@@ -139,7 +139,7 @@ def update_disconnected_registry(config, plandir, cluster, data):
     call(f'sudo cp {clusterdir}/ca.crt /etc/pki/ca-trust/source/anchors ; sudo update-ca-trust extract',
          shell=True)
     pprint("Updating disconnected registry")
-    synccmd = f"oc adm release mirror -a {pull_secret} --from={get_release_image()} "
+    synccmd = f"oc adm release mirror -a {pull_secret_path} --from={get_release_image()} "
     synccmd += f"--to-release-image={disconnected_url}/openshift/release-images:{tag}-{arch} "
     synccmd += f"--to={disconnected_url}/openshift/release"
     pprint(f"Running {synccmd}")
@@ -149,7 +149,7 @@ def update_disconnected_registry(config, plandir, cluster, data):
         pprint("Mirroring extra releases")
         for extra_release in extra_releases:
             tag_and_arch = re.search(r":(.+)$", extra_release).group(1)
-            synccmd = f"oc adm release mirror -a {pull_secret} --from={extra_release} "
+            synccmd = f"oc adm release mirror -a {pull_secret_path} --from={extra_release} "
             synccmd += f"--to-release-image={disconnected_url}/openshift/release-images:{tag_and_arch} "
             synccmd += f"--to={disconnected_url}/openshift/release"
             pprint(f"Running {synccmd}")
@@ -173,7 +173,7 @@ def update_disconnected_registry(config, plandir, cluster, data):
     dockerdir = os.path.expanduser('~/.docker')
     if not os.path.isdir(dockerdir):
         os.mkdir(dockerdir)
-    copy2(pull_secret, f"{dockerdir}/config.json")
+    copy2(pull_secret_path, f"{dockerdir}/config.json")
     olmcmd = f"oc-mirror --ignore-history --config {clusterdir}/mirror-config.yaml docker://{disconnected_url}"
     olmcmd = ' || '.join([olmcmd for x in range(3)])
     pprint(f"Running {olmcmd}")
@@ -1161,6 +1161,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             os.system(scpcmd)
         os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = disconnected_version
         pprint(f"Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to {disconnected_version}")
+    data['pull_secret_path'] = pull_secret
     data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
     if disconnected_url is not None:
         if disconnected_update and disconnected_url != 'quay.io':
