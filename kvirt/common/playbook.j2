@@ -1,0 +1,47 @@
+---
+- hosts: {{ hostname }}
+  become: yes
+  vars:
+{% for override in overrides %}
+    {{ override }}: {{ overrides[override] if overrides[override] != None else ''}}
+{% endfor %}
+  tasks:
+{% for dir in dirs %}
+  - name: Creates directory {{ dir }}
+    file:
+      path: {{ dir }}
+      state: directory
+{% endfor %}
+{% for file in files %}
+  - name: Template file {{ file['origin'] }}
+    {{ 'template' if file['render']|default(True) else 'copy' }}:
+      src: {{ file['origin'] }}
+      dest: {{ file['path'] }}
+      owner: {{ file['owner']|default('root') }} 
+      mode: '{{ file['mode']|default(700 if file['origin'].endswith('.py') or file['origin'].endswith('.sh') else 600) }}'
+{% endfor %}
+{% if cmds != None %}
+  - name: Copy cmds
+    copy:
+      content: {{ cmds }}
+      dest: /root/.cmds.sh
+      mode: '700'
+  - name: Run cmds script
+    shell: /root/.cmds.sh
+    register: out
+  - name: Result of cmds script
+    debug: var=out.stdout_lines
+{% endif %}
+{% for script in scripts %}
+  - name: Template script {{ script }}
+    template:
+      src: {{ script }}
+      dest: /root/.{{ script }}
+      owner: 'root'
+      mode: '700'
+  - name: Run script {{ script }} and log in /root/.{{ script }}.log
+    shell: /root/.{{ script }} > /root/.{{ script }}.log 2>&1
+#    register: out
+#  - name: Result of script {{ script }}
+#    debug: var=out.stdout_lines
+{% endfor %}
