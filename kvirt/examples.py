@@ -681,14 +681,20 @@ $ kcli download oc-mirror -P version=nightly -P tag=4.14
 
 """
 
-openshiftdownload = """# Download 4.13 stable
-$ kcli download openshift-install -P version=stable -P tag=4.13
+openshiftdownload = """# Download latest stable
+$ kcli download openshift-install
+
+# Download older stable version
+$ kcli download openshift-install -P version=tag -P tag=4.15
 
 # Download specific tag
 $ kcli download openshift-install -P version=tag -P tag=4.11.16
 
 # Download nightly
 $ kcli download openshift-install -P version=nightly -P tag=4.14
+
+# Download dev-preview version
+$ kcli download openshift-install -P version=dev-preview -P tag=4.17
 
 # Download older version from CI
 $ kcli download openshift-install -P version=ci -P tag=4.10
