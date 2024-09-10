@@ -468,8 +468,22 @@ class Ksphere:
         confspec.deviceChange = devconfspec
         if nested:
             confspec.nestedHVEnabled = True
+        uefi = overrides.get('uefi', False)
+        uefi_legacy = overrides.get('uefi_legacy', False)
+        secureboot = overrides.get('secureboot', False)
+        if secureboot or uefi or uefi_legacy:
+            confspec.firmware = 'efi'
+            if secureboot:
+                confspec.bootOptions = vim.vm.BootOptions(efiSecureBootEnabled=True)
         t = vm.Reconfigure(confspec)
         waitForMe(t)
+        if overrides.get('boot_order', False):
+            key_disks = [d.key for d in vm.config.hardware.device if isinstance(d, vim.vm.device.VirtualDisk)]
+            boot_disks = [vim.vm.BootOptions.BootableDiskDevice(deviceKey=key) for key in key_disks]
+            confspec = vim.vm.ConfigSpec()
+            confspec.bootOptions = vim.vm.BootOptions(bootOrder=boot_disks)
+            t = vm.Reconfigure(confspec)
+            waitForMe(t)
         if macs:
             self.set_macs(name, macs)
         if 'vmgroup' in overrides:

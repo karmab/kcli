@@ -2,3 +2,6 @@ antipeers: Create anti affinity rules between members
 distributed: Use dvs networks
 force_pool: Relocate vn from one pool to another
 serial: Inject a serial console
+secureboot: Enable secureboot
+boot_order: Set boot order on all disks to allow to boot from any of them
+uefi: Enable uefi
