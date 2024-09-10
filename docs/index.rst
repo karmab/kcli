@@ -1284,26 +1284,6 @@ profile
       - default
      pool: default
 
-ansible
-~~~~~~~
-
-.. code:: yaml
-
-   myplay:
-    type: ansible
-    verbose: false
-    playbook: prout.yml
-    groups:
-      nodes:
-      - node1
-      - node2
-      ctlplanes:
-      - ctlplane1
-      - ctlplane2
-      - ctlplane3
-
-An inventory will be created for you in /tmp and that *group_vars* and *host_vars* directory are taken into account. You can optionally define your own groups, as in this example. The playbooks are launched in alphabetical order
-
 .. _container-1:
 
 container
@@ -1735,7 +1715,6 @@ Parameter          Default Value                        Comments
 *mailserver*       None                                 Mail server where to send the notification (on port 25)
 *mailfrom*         None                                 Mail address to send mail from
 *mailto*           []                                   List of mail addresses to send mail to
-*playbook*         False                                Generates a playbook for the vm of the plan instead of creating it. Useful to run parts of a plan on baremetal
 *vmrules*          []                                   List of rules with an associated dict to apply for the corresponding entry, if a regex on the entry name is matched. The profile of the matching vm will be updated with the content of the rule
 *wait*             False                                Whether to wait for cloudinit/ignition to fully apply
 *waitcommand*      None                                 a specific command to use to validate that vm is ready

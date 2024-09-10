@@ -2054,25 +2054,6 @@ class Kconfig(Kbaseconfig):
                 if customprofile:
                     customprofile.update(profile)
                     profile = customprofile
-                if 'playbook' in profile and profile['playbook']:
-                    if 'scripts' not in profile and 'files' not in profile and 'cmds' not in profile:
-                        pprint(f"Skipping empty playbook for {name}")
-                    else:
-                        if 'image' in profile and 'rhel' in profile['image']\
-                                and 'rhnregister' in profile and profile['rhnregister']:
-                            warning(f"Make sure to subscribe {name} to Red Hat network")
-                        if 'privatekey' in profile and profile['privatekey']:
-                            warning(f"Copy your private key to {name}")
-                        for net in profile.get('nets', []):
-                            if 'ip' in net and 'mask' in net and 'gateway' in net:
-                                ip, mask, gateway = net['ip'], net['mask'], net['gateway']
-                                warning(f"Add manually this network {ip}/{mask} with gateway {gateway}")
-                            if 'vips' in net:
-                                vips = ','.join(net['vips'])
-                                warning(f"Add manually vips {vips}")
-                        pprint("Make sure to export ANSIBLE_JINJA2_EXTENSIONS=jinja2.ext.do")
-                        self.create_vm_playbook(name, profile, overrides=overrides, store=True)
-                        continue
                 if z.exists(name) and not onlyassets:
                     if not update:
                         pprint(f"{name} skipped on {vmclient}!")
