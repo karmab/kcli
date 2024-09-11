@@ -356,6 +356,7 @@ class Ksphere:
         devconfspec = []
         unit_number = 1
         for index, disk in enumerate(disks):
+            diskuuid = None
             if disk is None:
                 disksize = default_disksize
                 diskthin = default_diskthin
@@ -376,6 +377,13 @@ class Ksphere:
                 diskthin = disk.get('thin', default_diskthin)
                 diskinterface = disk.get('interface', default_diskinterface)
                 diskpool = disk.get('pool', default_pool)
+                diskuuid = disk.get('uuid') or disk.get('wwn')
+                if diskuuid is not None:
+                    try:
+                        UUID(diskuuid)
+                    except:
+                        warning(f"{diskuuid} it not a valid disk uuid")
+                        diskuuid = None
             if index < len(currentdisks) and image is not None:
                 currentdisk = currentdisks[index]
                 currentsize = convert(1000 * currentdisk.capacityInKB, GB=False)
@@ -398,7 +406,7 @@ class Ksphere:
                 devconfspec.append(scsispec)
             if unit_number == 7:
                 unit_number = 8
-            diskspec = creatediskspec(unit_number, disksize, datastore, diskmode, diskthin)
+            diskspec = creatediskspec(unit_number, disksize, datastore, diskmode, diskthin, diskuuid)
             devconfspec.append(diskspec)
             unit_number += 1
         # NICSPEC
