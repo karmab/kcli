@@ -143,6 +143,9 @@ $ kcli create vm -i centos9stream
 # Create a centos vm named myvm customizing its memory and cpus
 $ kcli create vm -i centos9stream -P memory=4096 -P numcpus=4 myvm
 
+# Create a centos vm named myvm with specific cpu topology
+$ kcli create vm -i centos9stream -P cores=4 -P sockets=2 -P threads=2 myvm
+
 # Pass disks, networks and even cmds
 $ kcli create vm -i centos9stream -P disks=[10,20] -P nets=[default] -P cmds=['yum -y install nc']
 

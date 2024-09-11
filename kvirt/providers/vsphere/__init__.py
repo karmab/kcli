@@ -211,6 +211,14 @@ class Ksphere:
             confspec.annotation = name
             confspec.memoryMB = memory
             confspec.memoryHotAddEnabled = memoryhotplug
+            cores = overrides.get('cores')
+            sockets, cores = overrides.get('sockets', 1), overrides.get('cores')
+            if cores is not None and isinstance(cores, int) and isinstance(sockets, int):
+                confspec.numCoresPerSocket = cores
+                numcpus = cores * sockets
+            threads = overrides.get('threads')
+            if threads is not None and isinstance(threads, int):
+                confspec.simultaneousThreads = threads
             confspec.numCPUs = numcpus
             confspec.cpuHotAddEnabled = cpuhotplug
             confspec.cpuHotRemoveEnabled = cpuhotplug
