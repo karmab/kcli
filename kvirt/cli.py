@@ -2548,27 +2548,27 @@ def download_plan(args):
 
 def download_kubectl(args):
     overrides = handle_parameters(args.param, args.paramfile)
-    common.get_kubectl(version=overrides.get('version', 'latest'))
+    common.get_kubectl(version=overrides.get('version', 'latest'), debug=args.debug)
 
 
 def download_helm(args):
     overrides = handle_parameters(args.param, args.paramfile)
-    common.get_helm(version=overrides.get('version', 'latest'))
+    common.get_helm(version=overrides.get('version', 'latest'), debug=args.debug)
 
 
 def download_hypershift(args):
     overrides = handle_parameters(args.param, args.paramfile)
-    common.get_hypershift(version=overrides.get('version', 'latest'))
+    common.get_hypershift(version=overrides.get('version', 'latest'), debug=args.debug)
 
 
 def download_oc(args):
     overrides = handle_parameters(args.param, args.paramfile)
-    common.get_oc(version=overrides.get('version', 'stable'), tag=overrides.get('tag', '4.16'))
+    common.get_oc(version=overrides.get('version', 'stable'), tag=overrides.get('tag', '4.16'), debug=args.debug)
 
 
 def download_oc_mirror(args):
     overrides = handle_parameters(args.param, args.paramfile)
-    common.get_oc_mirror(version=overrides.get('version', 'stable'), tag=overrides.get('tag', '4.16'))
+    common.get_oc_mirror(version=overrides.get('version', 'stable'), tag=overrides.get('tag', '4.16'), debug=args.debug)
 
 
 def download_openshift_installer(args):

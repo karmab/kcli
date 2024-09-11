@@ -1663,7 +1663,7 @@ def create_embed_ignition_cmd(name, poolpath, baseiso, extra_args=None):
     return isocmd
 
 
-def get_hypershift(version='latest', macosx=False):
+def get_hypershift(version='latest', macosx=False, debug=False):
     if which('podman') is None:
         error("Please install podman first in order to install hypershift")
         return 1
@@ -1673,10 +1673,12 @@ def get_hypershift(version='latest', macosx=False):
     hypercmd += "podman cp hypershift-copy:/usr/bin/hypershift . ;"
     hypercmd += "chmod 700 hypershift ;"
     hypercmd += "podman rm -f hypershift-copy"
+    if debug:
+        print(hypercmd)
     call(hypercmd, shell=True)
 
 
-def get_kubectl(version='latest'):
+def get_kubectl(version='latest', debug=False):
     SYSTEM = 'darwin' if os.path.exists('/Users') else 'linux'
     pprint("Downloading kubectl in current directory")
     if version == 'latest':
@@ -1702,10 +1704,12 @@ def get_kubectl(version='latest'):
     kubecmd = "curl -LO https://storage.googleapis.com/kubernetes-release/release/%s/bin/%s/amd64/kubectl" % (version,
                                                                                                               SYSTEM)
     kubecmd += "; chmod 700 kubectl"
+    if debug:
+        print(kubecmd)
     call(kubecmd, shell=True)
 
 
-def get_oc(version='stable', tag='4.13', macosx=False):
+def get_oc(version='stable', tag='4.16', macosx=False, debug=False):
     SYSTEM = 'mac' if os.path.exists('/Users') else 'linux'
     arch = 'arm64' if os.uname().machine == 'aarch64' else 'x86_64'
     pprint("Downloading oc in current directory")
@@ -1719,6 +1723,8 @@ def get_oc(version='stable', tag='4.13', macosx=False):
     occmd += f"https://mirror.openshift.com/pub/openshift-v4/{arch}/clients/ocp/{tag}/openshift-client-{SYSTEM}.tar.gz"
     occmd += "| tar zxf - oc"
     occmd += "; chmod 700 oc"
+    if debug:
+        print(occmd)
     call(occmd, shell=True)
     if container_mode():
         if macosx:
@@ -1731,7 +1737,7 @@ def get_oc(version='stable', tag='4.13', macosx=False):
             move('oc', '/workdir/oc')
 
 
-def get_oc_mirror(version='stable', tag='4.13', macosx=False):
+def get_oc_mirror(version='stable', tag='4.16', macosx=False, debug=False):
     if os.path.exists('/Users'):
         error("oc-mirror is not available on Mac")
         sys.exit(1)
@@ -1743,12 +1749,14 @@ def get_oc_mirror(version='stable', tag='4.13', macosx=False):
     mirrorcmd += f"https://mirror.openshift.com/pub/openshift-v4/{arch}/clients/ocp/{tag}/oc-mirror.tar.gz"
     mirrorcmd += "| tar zxf - oc-mirror"
     mirrorcmd += "; chmod 700 oc-mirror"
+    if debug:
+        print(mirrorcmd)
     call(mirrorcmd, shell=True)
     if container_mode():
         move('oc-mirror', '/workdir/oc-mirror')
 
 
-def get_helm(version='latest'):
+def get_helm(version='latest', debug=False):
     SYSTEM = 'darwin' if os.path.exists('/Users') else 'linux'
     pprint("Downloading helm in current directory")
     if version == 'latest':
@@ -1758,6 +1766,8 @@ def get_helm(version='latest'):
     helmcmd = f"curl -Ls https://get.helm.sh/helm-{version}-{SYSTEM}-amd64.tar.gz |"
     helmcmd += f"tar zxf - --strip-components 1 {SYSTEM}-amd64/helm;"
     helmcmd += "chmod 700 helm"
+    if debug:
+        print(helmcmd)
     call(helmcmd, shell=True)
 
 
