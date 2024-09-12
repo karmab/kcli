@@ -845,7 +845,6 @@ class Kvirt(object):
                 cloudinitiso = f"{default_poolpath}/{name}.ISO"
                 dtype = 'block' if diskpath.startswith('/dev') else 'file'
                 dsource = 'dev' if diskpath.startswith('/dev') else 'file'
-                isobus = 'scsi' if aarch64_full else 'sata'
                 isobus = 'scsi' if (aarch64_full or as390x) else 'sata'
                 bootdevxml = f'<boot order="{bootdev_iso}"/>' if boot_order else ''
                 isoxml = """<disk type='%s' device='cdrom'>
