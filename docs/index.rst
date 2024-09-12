@@ -732,7 +732,7 @@ The following parameters are specific to Vsphere:
 -  ``isofolder`` Optional folder where to keep ISOs
 -  ``dvs`` Whether to gather DVS networks. Enabled by default, but can be set to False to speed up operations if you don’t have dvs networks
 -  ``import_network`` Defaults to ‘VM Network’. Network to use as part of the template created when downloading image
--  ``timeout`` Defaults to 2700. Custom connectionPooltimeout
+-  ``timeout`` Defaults to 3600. Custom connectionPooltimeout
 -  ``force_pool`` Defaults to False. Whether to check source pool of image and relocate when it doesn’t match specified pool
 -  ``restricted`` Defaults to False. Prevents create folder operations
 -  ``serial`` Defaults to False. Enables serial console for each vm using an aleatory port on the corresponding host (This requires to add the firewall rule set named *VM serial port connected over network*)

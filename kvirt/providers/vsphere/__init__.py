@@ -42,7 +42,7 @@ def sdn_ip(ip, kubetype, cluster_network):
 class Ksphere:
     def __init__(self, host, user, password, datacenter, cluster, debug=False, isofolder=None,
                  filtervms=False, filteruser=False, filtertag=None, category='kcli', basefolder=None, dvs=True,
-                 import_network='VM Network', timeout=2700, force_pool=False, restricted=False, serial=False):
+                 import_network='VM Network', timeout=3600, force_pool=False, restricted=False, serial=False):
         if timeout < 1:
             smart_stub = connect.SmartStubAdapter(host=host, port=443, sslContext=_create_unverified_context(),
                                                   connectionPoolTimeout=0)
