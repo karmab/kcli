@@ -2399,7 +2399,10 @@ class Kconfig(Kbaseconfig):
             pprint(f"Using pool {pool}")
         if image is not None:
             if url is None:
-                if arch != 'x86_64':
+                if arch == 'aarch64':
+                    IMAGES.update({i: IMAGES[i].replace('x86_64', arch).replace('amd64', 'arm64')
+                                   for i in IMAGES})
+                elif arch != 'x86_64':
                     IMAGES.update({i: IMAGES[i].replace('x86_64', arch).replace('amd64', arch)
                                    for i in IMAGES})
                 if image not in IMAGES:
