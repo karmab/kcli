@@ -914,8 +914,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 data['api_ip'] = api_ip
                 warning(f"Using {api_ip} as api_ip")
             if public_api_ip is None:
-                public_api_ip = config.k.create_network_port(f"{cluster}-vip", network, ip=api_ip,
-                                                             floating=True)['floating']
+                public_api_ip = k.create_network_port(f"{cluster}-vip", network, ip=api_ip, floating=True)['floating']
     if not os.path.exists(pull_secret):
         return {'result': 'failure', 'reason': f"Missing pull secret file {pull_secret}"}
     if which('oc') is None:
@@ -938,7 +937,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         return {'result': 'failure', 'reason': f"Publickey file {pub_key} not found"}
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if os.path.exists(clusterdir):
-        if [v for v in config.k.list() if v.get('plan', 'kvirt') == cluster]:
+        if [v for v in k.list() if v.get('plan', 'kvirt') == cluster]:
             return {'result': 'failure', 'reason': f"Remove existing directory {clusterdir} or use --force"}
         else:
             pprint(f"Removing existing directory {clusterdir}")
@@ -1002,7 +1001,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             image_type = 'openstack'
         if provider == "proxmox":
             image_type = 'kvm'
-        region = config.k.region if provider == 'aws' else None
+        region = k.region if provider == 'aws' else None
         try:
             if upstream:
                 fcos_url = 'https://builds.coreos.fedoraproject.org/streams/stable.json'
@@ -1016,8 +1015,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             msg = f"Couldn't gather the {provider} image associated to commit {COMMIT_ID}. "
             msg += "Force an image in your parameter file"
             return {'result': 'failure', 'reason': msg}
+        esx = config.type == 'vsphere' and k.esx
         if provider in ['aws', 'gcp']:
             image = image_url
+        elif esx:
+            image = image_url
+            overrides['image_url'] = image
         else:
             if image_url.endswith('.vhd'):
                 image = os.path.basename(image_url)
@@ -1182,7 +1185,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if '-' in network:
             vnet = network.split('-')[0]
             data['machine_cidr'] = k.info_network(vnet)['cidr']
-    data['esx'] = config.type == 'vsphere' and config.k.esx
+    data['esx'] = esx
     installconfig = config.process_inputfile(cluster, f"{plandir}/install-config.yaml", overrides=data)
     with open(f"{clusterdir}/install-config.yaml", 'w') as f:
         f.write(installconfig)
@@ -1617,10 +1620,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     bucket_url = None
     if provider in cloud_providers + ['openstack']:
         bucket = f"{cluster}-{domain.replace('.', '-')}"
-        if bucket not in config.k.list_buckets():
-            config.k.create_bucket(bucket)
-        config.k.upload_to_bucket(bucket, f"{clusterdir}/bootstrap.ign", public=True)
-        bucket_url = config.k.public_bucketfile_url(bucket, "bootstrap.ign")
+        if bucket not in k.list_buckets():
+            k.create_bucket(bucket)
+        k.upload_to_bucket(bucket, f"{clusterdir}/bootstrap.ign", public=True)
+        bucket_url = k.public_bucketfile_url(bucket, "bootstrap.ign")
     move(f"{clusterdir}/master.ign", f"{clusterdir}/master.ign.ori")
     move(f"{clusterdir}/worker.ign", f"{clusterdir}/worker.ign.ori")
     with open(f"{clusterdir}/worker.ign.ori") as f:
@@ -1767,9 +1770,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     k.delete(f"{cluster}-bootstrap")
     if provider in cloud_providers:
         bucket = f"{cluster}-{domain.replace('.', '-')}"
-        config.k.delete_bucket(bucket)
+        k.delete_bucket(bucket)
         if provider == 'aws':
-            config.k.spread_cluster_tag(cluster, network)
+            k.spread_cluster_tag(cluster, network)
             pprint("Creating secret for aws-load-balancer-operator")
             lbcmd = "oc create secret generic aws-load-balancer-operator -n openshift-operators "
             lbcmd += f"--from-file=credentials={os.path.expanduser('~/.aws/credentials')}"

@@ -486,6 +486,7 @@ class Kconfig(Kbaseconfig):
         kubetype = overrides.get('kubetype')
         k = self.k if k is None else k
         tunnel = self.tunnel
+        esx = self.type == 'vsphere' and self.k.esx
         profile = profile or overrides.get('image') or 'kvirt'
         full_volumes = self.k.volumes()
         volumes = [os.path.basename(v) for v in full_volumes]
@@ -502,7 +503,7 @@ class Kconfig(Kbaseconfig):
             new_profile = os.path.basename(profile)
             vmprofiles[new_profile] = {'image': profile}
             profile = new_profile
-        elif profile in IMAGES or profile == 'rhcos4000':
+        elif profile in IMAGES or profile == 'rhcos4000' or esx:
             vmprofiles[profile] = {'image': profile}
         elif profile.startswith('rhcos-4') and profile.endswith('qcow2') and self.type not in cloudplatforms:
             vmprofiles[profile] = {'image': profile}
@@ -515,7 +516,9 @@ class Kconfig(Kbaseconfig):
         profilename = profile
         profile = vmprofiles[profile]
         pimage = profile.get('image', 'XXX')
-        if not onlyassets and self.type not in cloudplatforms and pimage in IMAGES and pimage not in volumes:
+        pimage_missing = pimage in IMAGES and pimage not in volumes
+        esx_image = esx and 'image_url' in overrides
+        if not onlyassets and self.type not in cloudplatforms and (pimage_missing or esx_image):
             pprint(f"Image {pimage} not found. Downloading")
             pimage_data = {'pool': overrides.get('pool') or self.pool, 'image': pimage}
             pimage_size = profile.get('kubevirt_disk_size') or profile.get('size')
@@ -524,8 +527,9 @@ class Kconfig(Kbaseconfig):
             if profilename.startswith('rhcos-4') and profilename.endswith('qcow2'):
                 pimage_data['image'] = profilename.split('.')[0].replace('rhcos-4', 'rhcos4')
                 pimage_data['url'] = get_rhcos_url_from_file(profilename, _type=self.type)
-            if self.type == 'vsphere' and self.k.esx:
+            if esx:
                 pimage_data['name'] = name
+                pimage_data['url'] = overrides.get('image_url')
             self.download_image(**pimage_data)
         if not customprofile:
             profile.update(overrides)

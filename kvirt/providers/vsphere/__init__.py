@@ -1324,7 +1324,6 @@ class Ksphere:
         return ['default']
 
     def add_image(self, url, pool, short=None, cmds=[], name=None, size=None, convert=False):
-        downloaded = False
         si = self.si
         rootFolder = self.rootFolder
         clu = find(si, rootFolder, vim.ComputeResource, self.clu)
@@ -1347,7 +1346,6 @@ class Ksphere:
         if os.path.exists(url):
             pprint(f"Using {url} as path")
         elif not os.path.exists(f'/tmp/{shortimage}'):
-            downloaded = True
             pprint(f"Downloading locally {shortimage}")
             downloadcmd = f"curl -kLo /tmp/{shortimage} -f '{url}'"
             code = os.system(downloadcmd)
@@ -1465,8 +1463,8 @@ class Ksphere:
                 sys.exit(1)
         if not self.esx:
             self.convert_to_template(name)
-        if downloaded:
-            os.remove(f'/tmp/{shortimage}')
+            if os.path.exists(f'/tmp/{shortimage}'):
+                os.remove(f'/tmp/{shortimage}')
             if os.path.exists(vmdk_path):
                 os.remove(vmdk_path)
         return {'result': 'success'}
