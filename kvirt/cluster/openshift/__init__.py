@@ -703,6 +703,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     data = safe_load(open(f'{plandir}/kcli_default.yml'))
     data.update(overrides)
     fix_typos(data)
+    esx = config.type == 'vsphere' and k.esx
+    data['esx'] = esx
     ctlplanes = data['ctlplanes']
     if ctlplanes <= 0:
         return {'result': 'failure', 'reason': f"Invalid number of ctlplanes {ctlplanes}"}
@@ -1015,7 +1017,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             msg = f"Couldn't gather the {provider} image associated to commit {COMMIT_ID}. "
             msg += "Force an image in your parameter file"
             return {'result': 'failure', 'reason': msg}
-        esx = config.type == 'vsphere' and k.esx
         if provider in ['aws', 'gcp']:
             image = image_url
         elif esx:
@@ -1185,7 +1186,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if '-' in network:
             vnet = network.split('-')[0]
             data['machine_cidr'] = k.info_network(vnet)['cidr']
-    data['esx'] = esx
     installconfig = config.process_inputfile(cluster, f"{plandir}/install-config.yaml", overrides=data)
     with open(f"{clusterdir}/install-config.yaml", 'w') as f:
         f.write(installconfig)
