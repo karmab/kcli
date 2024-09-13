@@ -1186,6 +1186,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if '-' in network:
             vnet = network.split('-')[0]
             data['machine_cidr'] = k.info_network(vnet)['cidr']
+    elif provider == 'vsphere' and get_installer_minor(INSTALLER_VERSION) < 13:
+        data['vsphere_legacy'] = True
     installconfig = config.process_inputfile(cluster, f"{plandir}/install-config.yaml", overrides=data)
     with open(f"{clusterdir}/install-config.yaml", 'w') as f:
         f.write(installconfig)
