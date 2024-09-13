@@ -4627,14 +4627,17 @@ def cli():
     hostenable_parser.add_argument('name', metavar='NAME')
     hostenable_parser.set_defaults(func=enable_host)
 
-    vmexport_desc = 'Export Vm'
-    vmexport_epilog = f"Examples:\n\n{examples.vmexport}"
-    vmexport_parser = subparsers.add_parser('export', description=vmexport_desc, help=vmexport_desc,
-                                            epilog=vmexport_epilog,
-                                            formatter_class=rawhelp)
+    export_desc = 'Export Object'
+    export_parser = subparsers.add_parser('export', description=export_desc, help=export_desc)
+    export_subparsers = export_parser.add_subparsers(metavar='', dest='subcommand_export')
+
+    vmexport_desc = 'Export vm'
+    vmexport_epilog = None
+    vmexport_parser = export_subparsers.add_parser('vm', description=vmexport_desc, help=vmexport_desc,
+                                                   epilog=vmexport_epilog, formatter_class=rawhelp)
     vmexport_parser.add_argument('-i', '--image', help='Name for the generated image. Uses the vm name otherwise',
                                  metavar='IMAGE')
-    vmexport_parser.add_argument('names', metavar='VMNAMES', nargs='*')
+    vmexport_parser.add_argument('vm', metavar='VM', nargs='?')
     vmexport_parser.set_defaults(func=export_vm)
 
     expose_desc = 'Expose Object'
