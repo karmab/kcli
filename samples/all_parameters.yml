@@ -1,0 +1,248 @@
+mydns:
+ type: dns
+ ip: 192.168.1.35
+ net: default
+ alias:
+ - console-openshift-console.apps.lab.karmalabs.corp
+
+mydisk.img:
+ type: disk
+ size: 5
+ pool: default
+ vms:
+ - myvm1
+ - myvm2
+
+myimage:
+ type: image
+ url: https://cloud.centos.org/centos/8-stream/x86_64/images/CentOS-Stream-GenericCloud-8-20210603.0.x86_64.qcow2
+
+mynetwork:
+ type: network
+ cidr: 10.0.0.0/24
+ dhcp: true
+ nat: true
+
+mybucket:
+ type: bucket
+ files:
+ - bucket_file1.txt
+
+mycontainer:
+ type: container
+ environment:
+  - LDAP_ROOTPASS: mypassword
+ cmds:
+ - echo prout
+ - echo mypassword >> /tmp/result
+ image: docker.io/library/alpine:3.10
+ ports:
+ - 389
+
+mykube:
+ type: kube
+ kubetype: generic
+ api_ip: 192.168.122.253
+ async: false
+ apps:
+ - myapp1
+ - myapp2
+ cloud_lb: true
+ ctlplanes: 3
+ ctlplane_memory: 32768
+ ctlplane_numcpus: 16
+ cluster: mykube
+ disk_size: 80
+ domain: karmalabs.corp
+ extra_ctlplane_disks:
+ - 20
+ extra_disks:
+ - 20
+ extra_networks:
+ - default
+ extra_worker_disks:
+ - 20
+ ingress_ip: 192.168.122.252
+ network: default
+ memory: 32768
+ numcpus: 16
+ pool: default
+ sslip: false
+ version: stable
+ workers: 2
+ worker_memory: 32768
+ worker_numcpus: 16
+
+myloadbalancer:
+ type: loadbalancer
+ nets:
+ - name: default
+   alias:
+   - vm3.default
+ ports:
+ - 80
+ - 443
+ vms:
+ - myvm1
+ - myvm2
+
+myplan:
+  type: plan
+  file: plan_of_plans/plan1.yml
+  url: https://github.com/karmab/kcli-plan-ovirt/blob/main/ovirt/kcli_plan.yml
+
+myprofile:
+  type: profile
+  disks:
+   - size: 15
+  image: centos9stream
+  memory: 3072
+  numcpus: 1
+   - default
+
+myvm:
+  type: vm
+  az: myavailabilityzone
+  autostart: true
+  baseplan: mybaseplan.yml
+  boot_order: false
+  client: myclient
+  cloudinit: true
+  cloudinit_file: myspecific.cloudinit
+  cmds:
+  -  echo "I am the king of the world" >/etc/motd
+  cmdline: "ip=192.168.1.2 myparam=xxx"
+  cpuflags:
+  - acpi
+  - name: arat
+    enable: false
+  - hyperv:
+     relaxed:
+      enabled: true
+  cpuhotplug: galse
+  cpumodel: core2duo
+  cpupinning:
+  - vcpus: 0-6
+    hostcpus: 0
+  - vcpus: 7
+    hostcpus: 0
+  enableroot: true
+  finishfiles:
+  - vm2.ign
+  flavor: m1.small
+  ignition_file: myspecific.ign
+  image: centos9stream
+  iso: super.iso
+  memory: 2048
+  memoryhotplug: false
+  numamode: preferred
+  nodepool: mynodepool
+  nokeys: false
+  numcpus: 8
+  pool: default
+  disks:
+  - 20
+  - size: 30
+    interface: scsi
+    thin: true
+    image: whatever.qcow2
+    source: xx.img
+    name: blabla.qcow2
+    wwn: 5000c50015ea71ad
+  files:
+  - myfile1.txt
+  - mydirectory
+  - path: /root/coco1
+    origin: coco1.txt
+    render: true
+    mode: 600
+    owner: root
+    content:  |
+       this is a cool
+       feature
+  insecure: true
+  keys:
+  - ssh-rsa mysuperkey
+  - ~/.ssh/mykey2.pub
+  mailfrom: john_mayer@karmalabs.local
+  mailserver: superserver.com
+  mailto:
+  - jimi_hendrix@karmalabs.local
+  - eric_clapton@karmalabs.local
+  nets:
+  - default
+  - name: default
+    mac: 52:54:00:00:01:b4
+    noconf: false
+    numa: 0
+    ovs: false
+    sriov: false
+    type: e1000
+    ip: 192.168.8.2
+    mask: 255.255.255.0
+    gateway: 192.168.8.1
+    dns: 1.1.1.1
+    reserveip: false
+    reservedns: false
+  networkwait: 30
+  nested: true
+  notify: true
+  notifymethods:
+  - slack
+  notifyscript: info.sh
+  numa:
+  - id: 0
+    vcpus: 0-1
+    memory: 2048
+  - id: 1
+    vcpus: 2-3
+    memory: 5120
+  pcidevices:
+  - "01:00.0"
+  profile: myprofile
+  pushbullettoken: aaaa
+  redfish_iso: specific.iso
+  reservedns: false
+  reservehost: false
+  role: worker
+  rootpassword: blabla
+  router: false
+  privatekey: false
+  rhnuser: john
+  rhnactivationkey: myak
+  rhnorg: myorg
+  rhnpassword: doe
+  rhnpool: mypool
+  rng: false
+  scripts:
+  - vm1.sh
+  - /root/vm2.sh
+  secureboot: false
+  sharedfolders:
+  - /tmp/xxx
+  slackchannel: mychannel
+  slacktoken: aaaa
+  start: true
+  storemetadata: false
+  tags:
+  - mytag1
+  - mytag2
+  tempkey: false
+  tpm: false
+  uefi: true
+  uefi_legacy: false
+  vmrules:
+  - myworker-.*:
+     nets:
+     - supernet
+  vnc: true
+  wait: false
+
+myworkflow:
+ type: workflow
+ files:
+ - file1.yml
+ - file2.yml
+ scripts:
+ - 01_script.sh
+ - 02_script.sh

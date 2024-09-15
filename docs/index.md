@@ -1603,6 +1603,8 @@ parameters:
 |*waitcommand*|None|a specific command to use to validate that vm is ready|
 |*waittimeout*|0|Timeout when waiting for a vm to be ready. Default zero value means the wait wont timeout|
 
+You can refer to the sample file [all_parameters.yml](https://github.com/karmab/kcli/blob/main/samples/all_parameters.yml) to see all those parameters in context
+
 # Deploying Kubernetes/OpenShift clusters
 
 You can deploy generic Kubernetes (based on Kubeadm), K3s, OpenShift/OKD, Hypershift, Microshift and GKE on any platform and on an arbitrary number of control plane nodes and workers.

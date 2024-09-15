@@ -1721,6 +1721,8 @@ Parameter          Default Value                        Comments
 *waittimeout*      0                                    Timeout when waiting for a vm to be ready. Default zero value means the wait wont timeout
 ================== ==================================== =====================================================================================================================================================================================================================================================================================================================
 
+You can refer to the sample file `all_parameters.yml <https://github.com/karmab/kcli/blob/main/samples/all_parameters.yml>`__ to see all those parameters in context
+
 Deploying Kubernetes/OpenShift clusters
 =======================================
 
