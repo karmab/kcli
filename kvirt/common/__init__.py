@@ -2582,3 +2582,30 @@ def wait_for_nodes(number):
             sleep(30)
             counter += 30
     return False
+
+
+def convert_yaml_to_cmd(data):
+    for name in data:
+        cmd = 'kcli create '
+        profile = data[name]
+        if 'type' in profile:
+            cmd += profile['type']
+            del profile['type']
+        else:
+            cmd += 'vm'
+        for key in profile:
+            if key == 'image':
+                if profile["image"] is not None:
+                    cmd += f' -i {profile["image"]}'
+            elif isinstance(profile[key], list):
+                need_quotes = len(profile[key]) > 0
+                new_value = json.dumps(profile[key])
+                if need_quotes:
+                    new_value = new_value.replace("[", "['").replace("]", "']")
+                cmd += f' -P {key}={new_value}'
+            else:
+                new_value = json.dumps(profile[key])
+                new_value = new_value.replace("'", "").replace('"', '')
+                cmd += f' -P {key}={new_value}'
+        cmd += f' {name}'
+        print(cmd)

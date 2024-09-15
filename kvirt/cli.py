@@ -16,7 +16,7 @@ from kvirt import examples
 from kvirt.nameutils import get_random_name
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.common import error, pprint, success, warning, ssh, _ssh_credentials, container_mode
-from kvirt.common import get_git_version, compare_git_versions, interactive_kube, interactive_vm
+from kvirt.common import get_git_version, compare_git_versions, interactive_kube, interactive_vm, convert_yaml_to_cmd
 from kvirt.config import Kconfig
 from kvirt.containerconfig import Kcontainerconfig
 from kvirt.defaults import IMAGES, VERSION, LOCAL_OPENSHIFT_APPS, SSH_PUB_LOCATIONS, PLANTYPES
@@ -2605,7 +2605,10 @@ def render_file(args):
         error(f"Input file {inputfile} not found")
         sys.exit(1)
     renderfile = baseconfig.process_inputfile(plan, inputfile, overrides=overrides, ignore=ignore)
-    print(renderfile)
+    if args.cmd:
+        convert_yaml_to_cmd(yaml.safe_load(renderfile))
+    else:
+        print(renderfile)
 
 
 def create_vmdata(args):
@@ -5087,6 +5090,7 @@ def cli():
 
     render_desc = 'Render file'
     render_parser = subparsers.add_parser('render', description=render_desc, help=render_desc, parents=[parent_parser])
+    render_parser.add_argument('-c', '--cmd', action='store_true', help='Convert to command line')
     render_parser.add_argument('-f', '--inputfile', help='Input Plan/File', default='kcli_plan.yml')
     render_parser.add_argument('-i', '--ignore', action='store_true', help='Ignore missing variables')
     render_parser.set_defaults(func=render_file)
