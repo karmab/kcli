@@ -522,7 +522,7 @@ class Kconfig(Kbaseconfig):
         pimage = profile.get('image', 'XXX')
         pimage_missing = pimage in IMAGES and pimage not in volumes
         esx_image = esx and 'image_url' in overrides
-        download_needed = pimage.startswith('http')
+        download_needed = pimage is not None and pimage.startswith('http')
         if not onlyassets and self.type not in cloudplatforms and (pimage_missing or esx_image or download_needed):
             pprint(f"Image {pimage} not found. Downloading")
             pimage_data = {'pool': overrides.get('pool') or self.pool, 'image': pimage}
