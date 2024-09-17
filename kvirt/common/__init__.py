@@ -1010,7 +1010,8 @@ def get_user(image):
         user = 'centos'
     elif 'centos8stream' in image.lower():
         user = 'centos'
-    elif 'coreos' in image.lower() or 'rhcos' in image.lower() or 'fcos' in image.lower() or 'ocp-v4' in image:
+    elif 'coreos' in image.lower() or 'rhcos' in image.lower() or 'fcos' in image.lower() or 'ocp-v4' in image\
+            or 'scos' in image.lower():
         user = 'core'
     elif 'debian' in image.lower():
         user = 'debian'
@@ -1633,7 +1634,7 @@ def is_7(image):
 
 def needs_ignition(image):
     return 'coreos' in image or 'rhcos' in image or 'fcos' in image or 'fedora-coreos' in image\
-        or needs_combustion(image) or 'art-dev' in image
+        or needs_combustion(image) or 'art-dev' in image or 'scos' in image
 
 
 def needs_combustion(image):
