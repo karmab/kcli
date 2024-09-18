@@ -1761,8 +1761,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         return {'result': 'success'}
     else:
         installcommand = f'openshift-install --dir={clusterdir} --log-level={log_level} wait-for install-complete'
-        installcommand += f" || {installcommand}"
-        pprint("Launching install-complete step. It will be retried one extra time in case of timeouts")
+        installcommand += f" || {installcommand} || {installcommand}"
+        pprint("Launching install-complete step. It will be retried twice in case of timeout")
         run = call(installcommand, shell=True)
         if run != 0:
             msg = "Leaving environment for debugging purposes. "
