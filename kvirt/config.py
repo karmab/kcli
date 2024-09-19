@@ -58,27 +58,17 @@ class Kconfig(Kbaseconfig):
             k = None
         else:
             if self.type == 'kubevirt':
-                if namespace is None:
-                    namespace = options.get('namespace')
+                kubeconfig_file = options.get('kubeconfig')
+                if kubeconfig_file is None:
+                    error("Missing kubeconfig in the configuration. Leaving")
+                    sys.exit(1)
+                elif not os.path.exists(os.path.expanduser(kubeconfig_file)):
+                    error("Kubeconfig file path doesn't exist. Leaving")
+                    sys.exit(1)
+                namespace = namespace or options.get('namespace')
                 context = options.get('context')
                 readwritemany = options.get('readwritemany', kdefaults.KUBEVIRT['readwritemany'])
-                ca_file = options.get('ca_file')
-                if ca_file is not None:
-                    ca_file = os.path.expanduser(ca_file)
-                    if not os.path.exists(ca_file):
-                        error(f"Ca file {ca_file} doesn't exist. Leaving")
-                        sys.exit(1)
                 disk_hotplug = options.get('disk_hotplug', kdefaults.KUBEVIRT['disk_hotplug'])
-                kubeconfig_file = options.get('kubeconfig')
-                token = options.get('token')
-                token_file = options.get('token_file')
-                if token_file is not None:
-                    token_file = os.path.expanduser(token_file)
-                    if not os.path.exists(token_file):
-                        error("Token file path doesn't exist. Leaving")
-                        sys.exit(1)
-                    else:
-                        token = open(token_file).read()
                 access_mode = options.get('access_mode', kdefaults.KUBEVIRT['access_mode'])
                 if access_mode not in ['External', 'LoadBalancer', 'NodePort']:
                     msg = f"Incorrect access_mode {access_mode}. Should be External, NodePort or LoadBalancer"
@@ -102,13 +92,10 @@ class Kconfig(Kbaseconfig):
                 except Exception as e:
                     exception = e if debug else None
                     dependency_error('kubevirt', exception)
-                k = Kubevirt(context=context, token=token, ca_file=ca_file, host=self.host,
-                             port=6443, user=self.user, debug=debug, namespace=namespace,
-                             disk_hotplug=disk_hotplug, readwritemany=readwritemany,
-                             access_mode=access_mode, volume_mode=volume_mode,
-                             volume_access=volume_access, harvester=harvester, embed_userdata=embed_userdata,
-                             first_consumer=first_consumer, kubeconfig_file=kubeconfig_file)
-                self.host = k.host
+                k = Kubevirt(kubeconfig_file, context=context, debug=debug, namespace=namespace,
+                             disk_hotplug=disk_hotplug, readwritemany=readwritemany, access_mode=access_mode,
+                             volume_mode=volume_mode, volume_access=volume_access, harvester=harvester,
+                             embed_userdata=embed_userdata, first_consumer=first_consumer)
             elif self.type == 'gcp':
                 credentials = options.get('credentials')
                 if credentials is not None:
@@ -2461,7 +2448,7 @@ class Kconfig(Kbaseconfig):
                 result = k.add_image(url, pool, cmds=cmds, name=name or image, size=size, convert=convert)
             except Exception as e:
                 error(f"Got {e}")
-                error(f"Please run kcli delete image --yes {name}")
+                error(f"Please run kcli delete image --yes {name or image}")
                 return {'result': 'failure', 'reason': "User interruption"}
             found = 'found' in result
             if found:

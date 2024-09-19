@@ -2399,7 +2399,7 @@ def separate_yamls(origin):
 
 
 def install_provider(provider, pip=False):
-    if provider == 'kvm':
+    if provider in ['kvm', 'kubevirt']:
         warning("Nothing needed")
         sys.exit(0)
     if os.path.exists('/Users'):
@@ -2432,8 +2432,6 @@ def install_provider(provider, pip=False):
         if not pip:
             warning("Using pip as this is the only way for this provider")
         cmd = 'pip3 install ibm_vpc ibm-cos-sdk ibm-platform-services ibm-cloud-networking-services'
-    elif provider == 'kubevirt':
-        cmd = 'pip3 install kubernetes' if pip else f'{pkgmgr} -y install python3-kubernetes'
     elif provider == 'openstack':
         if pip:
             cmd = 'pip3 install python-cinderclient python-neutronclient python-glanceclient python-keystoneclient '

@@ -1,21 +1,27 @@
 # -*- coding: utf-8 -*-
 
-import os
-from kvirt.cluster.kubecommon import Kubecommon
 from kvirt.common import error
+from kvirt.kubecommon import _create_resource, _delete_resource, _get_resource, _get_all_resources
 from kubernetes import client
+import os
+from shutil import which
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 class Kubernetes():
-    def __init__(self, host='127.0.0.1', user='root', port=443, token=None, ca_file=None, context=None,
+    def __init__(self, kubeconfig_file, host='127.0.0.1', context=None,
                  namespace='default', readwritemany=False, debug=False, insecure=False):
-        Kubecommon.__init__(self, token=token, ca_file=ca_file, context=context, host=host, port=port,
-                            namespace=namespace, readwritemany=readwritemany)
+        self.namespace = namespace or 'default'
+        self.kubectl = which('kubectl') or which('oc')
+        if self.kubectl is None:
+            error("Kubectl is required. Use kcli download kubectl and put in your path")
+            self.conn = None
+            return
+        elif context is not None:
+            self.kubectl += f' --context {context}'
+        os.environ['KUBECONFIG'] = os.path.expanduser(kubeconfig_file)
         self.host = host
-        self.user = user
-        self.port = port
         self.debug = debug
         self.insecure = insecure
 
@@ -34,9 +40,10 @@ class Kubernetes():
         :param overrides:
         :return:
         """
+        kubectl = self.kubectl
         namespace = self.namespace
         if ':' not in image:
-            image = '%s:latest' % image
+            image = f'{image}:latest'
         replicas = overrides.get('replicas', 1)
         if label is not None:
             if isinstance(label, str) and len(label.split('=')) == 2:
@@ -75,7 +82,7 @@ class Kubernetes():
         if ports:
             finalports = []
             for port in ports:
-                finalports.append({'containerPort': port, 'name': 'port-%s' % port, 'protocol': 'TCP'})
+                finalports.append({'containerPort': port, 'name': f'port-{port}', 'protocol': 'TCP'})
             ports = finalports
         if environment:
             containers[0]['env'] = []
@@ -103,39 +110,44 @@ class Kubernetes():
                                                                                  'restartPolicy': 'Always'}}}}
         if volumes:
             deploy['spec']['template']['spec']['volumes'] = vols
-        self.appsv1.create_namespaced_deployment(namespace=namespace, body=deploy)
+        _create_resource(kubectl, deploy, namespace)
+
         return {'result': 'success'}
 
     def delete_container(self, name):
+        kubectl = self.kubectl
+        namespace = self.namespace
         try:
             pods = []
             rsname = None
-            for rs in self.appsv1.list_namespaced_replica_set(self.namespace).items:
-                owner_references = rs.metadata.owner_references
+            items = _get_all_resources(kubectl, 'rs', namespace)
+            for rs in items:
+                owner_references = rs['metadata']['ownerReferences']
                 if owner_references is None:
                     continue
-                ownerkind = owner_references[0].kind
-                ownername = owner_references[0].name
+                ownerkind = owner_references[0]['kind']
+                ownername = owner_references[0]['name']
                 if ownerkind == 'Deployment' and ownername == name:
-                    rsname = rs.metadata.name
-                    for pod in self.core.list_namespaced_pod(self.namespace).items:
-                        owner_references = pod.metadata.owner_references
+                    rsname = rs['metadata']['name']
+                    items = _get_all_resources(kubectl, 'pod', namespace)
+                    for pod in items:
+                        owner_references = pod['metadata']['ownerReferences']
                         if owner_references is None:
                             continue
-                        ownerkind = owner_references[0].kind
-                        ownername = owner_references[0].name
+                        ownerkind = owner_references[0]['kind']
+                        ownername = owner_references[0]['name']
                         if ownerkind == 'ReplicaSet' and ownername == rsname:
-                            pods.append(pod.metadata.name)
-            self.appsv1.delete_namespaced_deployment(name, self.namespace, client.V1DeleteOptions())
+                            pods.append(pod['metadata']['name'])
+            _delete_resource(kubectl, 'deploy', name, namespace)
             if rsname is not None:
-                self.appsv1.delete_namespaced_replica_set(rs.metadata.name, self.namespace, client.V1DeleteOptions())
+                _delete_resource(kubectl, 'rs', name, rs['metadata']['name'])
             for pod in pods:
-                self.core.delete_namespaced_pod(pod, self.namespace, client.V1DeleteOptions())
+                _delete_resource(kubectl, 'pod', pod, namespace)
         except client.rest.ApiException:
             try:
-                self.core.delete_namespaced_pod(name, self.namespace, client.V1DeleteOptions())
+                _delete_resource(kubectl, 'pod', pod, namespace)
             except client.rest.ApiException:
-                error("Container %s not found" % name)
+                error(f"Container {name} not found")
                 return {'result': 'failure', 'reason': "Missing template"}
         return {'result': 'success'}
 
@@ -143,47 +155,55 @@ class Kubernetes():
         return {'result': 'success'}
 
     def stop_container(self, name):
-        self.core.delete_namespaced_pod(name, self.namespace, client.V1DeleteOptions())
+        kubectl = self.kubectl
+        namespace = self.namespace
+        _delete_resource(kubectl, 'pod', name, namespace)
         return {'result': 'success'}
 
     def console_container(self, name):
-        command = "kubectl exec -it %s /bin/sh" % name
-        os.system(command)
+        kubectl = self.kubectl
+        os.system(f"{kubectl} exec -it {name} /bin/sh")
         return {'result': 'success'}
 
     def list_containers(self):
+        kubectl = self.kubectl
+        namespace = self.namespace
         containers = []
-        for pod in self.core.list_namespaced_pod(self.namespace).items:
-            name = pod.metadata.name
-            state = pod.status.phase
-            source = pod.spec.containers[0].image
+        items = _get_all_resources(kubectl, 'pod', namespace)
+        for pod in items:
+            name = pod['metadata']['name']
+            state = pod['status']['phase']
+            source = pod['spec']['containers'][0].image
             plan = ''
-            labels = pod.metadata.labels
+            labels = pod['metadata']['labels']
             if labels is not None and 'kcli/plan' in labels:
-                plan = pod.metadata.labels['kcli/plan']
-            command = pod.spec.containers[0].command
+                plan = pod['metadata']['labels']['kcli/plan']
+            command = pod['spec']['containers'][0]['command']
             if command is not None:
                 command = ' '.join(command)
-            portinfo = pod.spec.node_name
-            owner_references = pod.metadata.owner_references
+            portinfo = pod['spec']['nodeName']
+            owner_references = pod['metadata']['ownerReferences']
             deploy = ''
             if owner_references is not None:
-                ownerkind = owner_references[0].kind
-                ownername = owner_references[0].name
+                ownerkind = owner_references[0]['kind']
+                ownername = owner_references[0]['name']
                 if ownerkind == 'ReplicaSet':
-                    rs = self.appsv1.read_namespaced_replica_set(ownername, self.namespace)
-                    owner_references = rs.metadata.owner_references
+                    rs = _get_resource(kubectl, 'rs', ownername, namespace)
+                    owner_references = rs['metadata']['ownerReferences']
                     if owner_references is not None:
-                        ownerkind = owner_references[0].kind
-                        ownername = owner_references[0].name
+                        ownerkind = owner_references[0]['kind']
+                        ownername = owner_references[0]['name']
                         if ownerkind == 'Deployment':
                             deploy = ownername
             containers.append([name, state, source, plan, command, portinfo, deploy])
         return containers
 
     def exists_container(self, name):
-        for pod in self.core.list_namespaced_pod(self.namespace).items:
-            if pod.metadata.name == name:
+        kubectl = self.kubectl
+        namespace = self.namespace
+        items = _get_all_resources(kubectl, 'pod', namespace)
+        for pod in items:
+            if pod['metadata']['name'] == name:
                 return True
         return False
 

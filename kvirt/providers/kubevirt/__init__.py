@@ -2,19 +2,21 @@
 
 import base64
 from ipaddress import ip_address
-from kubernetes import client
 from kvirt.cluster.kubecommon import Kubecommon
 from kvirt import common
 from kvirt.common import error, pprint, warning
+from kvirt.kubecommon import _create_resource, _delete_resource, _patch_resource, _replace_resource
+from kvirt.kubecommon import _get_resource, _get_all_resources, _put
 from kvirt.defaults import IMAGES, UBUNTUS, METADATA_FIELDS
 import datetime
 import os
+from shutil import which
 import sys
 import time
-import yaml
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 from uuid import UUID
+from yaml import safe_load
 
 DOMAIN = "kubevirt.io"
 CDIDOMAIN = "cdi.kubevirt.io"
@@ -52,15 +54,22 @@ def _base_image_size(image):
 
 
 class Kubevirt(Kubecommon):
-    def __init__(self, token=None, ca_file=None, context=None, host='127.0.0.1', port=6443, user='root', debug=False,
-                 namespace=None, disk_hotplug=False, readwritemany=False, access_mode='NodePort',
-                 volume_mode='Filesystem', volume_access='ReadWriteOnce', harvester=False, embed_userdata=False,
-                 first_consumer=False, kubeconfig_file=None):
-        Kubecommon.__init__(self, token=token, ca_file=ca_file, context=context, host=host, port=port,
-                            namespace=namespace, readwritemany=readwritemany, kubeconfig_file=kubeconfig_file)
-        self.crds = client.CustomObjectsApi(api_client=self.api_client)
-        self.debug = debug
+    def __init__(self, kubeconfig_file, context=None, debug=False, namespace=None,
+                 disk_hotplug=False, readwritemany=False, access_mode='NodePort', volume_mode='Filesystem',
+                 volume_access='ReadWriteOnce', harvester=False, embed_userdata=False, first_consumer=False):
+        self.namespace = namespace or 'default'
+        self.kubectl = which('kubectl') or which('oc')
+        if self.kubectl is None:
+            error("Kubectl is required. Use kcli download kubectl and put in your path")
+            self.conn = None
+            return
+        elif context is not None:
+            self.kubectl += f' --context {context}'
+        os.environ['KUBECONFIG'] = os.path.expanduser(kubeconfig_file)
+        # self.accessmode = 'ReadWriteMany' if readwritemany else 'ReadWriteOnce'
         self.access_mode = access_mode
+        self.conn = 'OK'
+        self.debug = debug
         self.volume_mode = volume_mode
         self.volume_access = volume_access
         self.disk_hotplug = disk_hotplug
@@ -74,23 +83,18 @@ class Kubevirt(Kubecommon):
         return
 
     def exists(self, name):
-        crds = self.crds
+        kubectl = self.kubectl
         namespace = self.namespace
-        allvms = crds.list_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines')["items"]
+        allvms = _get_all_resources(kubectl, 'vm', namespace, debug=self.debug)
         for vm in allvms:
             if vm.get("metadata")["namespace"] == namespace and vm.get("metadata")["name"] == name:
                 return True
         return False
 
     def net_exists(self, name):
-        crds = self.crds
+        kubectl = self.kubectl
         namespace = self.namespace
-        try:
-            crds.get_namespaced_custom_object(MULTUSDOMAIN, MULTUSVERSION, namespace,
-                                              'network-attachment-definitions', name)
-        except:
-            return False
-        return True
+        return _get_resource(kubectl, 'net-attach-def', name, namespace, debug=self.debug) is not None
 
     def disk_exists(self, pool, name):
         print("not implemented")
@@ -105,6 +109,7 @@ class Kubevirt(Kubecommon):
                sharedfolders=[], kernel=None, initrd=None, cmdline=None, placement=[], autostart=False,
                cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False,
                metadata={}, securitygroups=[], vmuser=None):
+        kubectl = self.kubectl
         owners = []
         container_disk = overrides.get('container_disk', False)
         guest_agent = False
@@ -131,15 +136,11 @@ class Kubevirt(Kubecommon):
         default_disksize = disksize
         default_diskinterface = diskinterface
         default_pool = pool
-        crds = self.crds
-        core = self.core
         harvester = self.harvester
         namespace = self.namespace
         if harvester:
             harvester_images = {}
-            virtualimages = crds.list_namespaced_custom_object(HDOMAIN, HVERSION, namespace,
-                                                               'virtualmachineimages')["items"]
-            for img in virtualimages:
+            for img in _get_all_resources(kubectl, 'virtualmachineimage', namespace, debug=self.debug):
                 imagename = img['metadata']['name']
                 harvester_images[common.filter_compression_extension(os.path.basename(img['spec']['url']))] = imagename
         confidential = 'confidential' in overrides and overrides['confidential']
@@ -363,9 +364,9 @@ class Kubevirt(Kubecommon):
                 elif harvester:
                     myvolume['dataVolume'] = {'name': diskname}
                 else:
-                    base_image_pvc = core.read_namespaced_persistent_volume_claim(image, namespace)
-                    disksize = base_image_pvc.spec.resources.requests['storage']
-                    volume_mode = base_image_pvc.spec.volume_mode
+                    base_image_pvc = _get_resource(kubectl, 'pvc', image, namespace, debug=self.debug)
+                    disksize = base_image_pvc['spec']['resources']['requests']['storage']
+                    volume_mode = base_image_pvc['spec']['volumeMode']
                     myvolume['dataVolume'] = {'name': diskname}
             if index > 0 or image is None:
                 myvolume['persistentVolumeClaim'] = {'claimName': diskname}
@@ -465,12 +466,8 @@ class Kubevirt(Kubecommon):
             pvcname = pvc['metadata']['name']
             if not pvcname.endswith('iso'):
                 owners.append(pvcname)
-            try:
-                core.read_namespaced_persistent_volume_claim(pvcname, namespace)
+            if _get_resource(kubectl, 'pvc', pvcname, namespace, debug=self.debug) is not None:
                 pprint(f"Using existing pvc {pvcname}")
-                continue
-            except:
-                pass
             pvcsize = pvc['spec']['resources']['requests']['storage'].replace('Gi', '')
             pvc_volume_mode = pvc['spec']['volumeMode']
             pvc_access_mode = pvc['spec']['accessModes']
@@ -500,7 +497,7 @@ class Kubevirt(Kubecommon):
                     dvt['spec']['storage'] = {'resources': {'requests': {'storage': f'{pvcsize}Gi'}}}
                 vm['spec']['dataVolumeTemplates'] = [dvt]
                 continue
-            core.create_namespaced_persistent_volume_claim(namespace, pvc)
+            _create_resource(kubectl, pvc, namespace, debug=self.debug)
             bound = self.pvc_bound(pvcname, namespace, first_consumer=self.first_consumer)
             if not bound:
                 error(f'timeout waiting for pvc {pvcname} to get bound')
@@ -519,26 +516,22 @@ class Kubevirt(Kubecommon):
                 readinessprobe[checktype]['path'] = checkpath
                 readinessprobe[checktype]['scheme'] = checkscheme
             vm['spec']['template']['spec']['readinessProbe'] = readinessprobe
-        vminfo = crds.create_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', vm)
+        vminfo = _create_resource(kubectl, vm, namespace, debug=self.debug)
         uid = vminfo.get("metadata")['uid']
         api_version = f"{DOMAIN}/{VERSION}"
         reference = {'apiVersion': api_version, 'kind': 'VirtualMachine', 'name': name, 'uid': uid}
         if reservedns and domain is not None:
             newdomain = domain.replace('.', '-')
-            try:
-                core.read_namespaced_service(newdomain, namespace)
-            except:
+            if _get_resource(kubectl, 'svc', newdomain, namespace, debug=self.debug) is not None:
                 if newdomain != domain:
                     warning(f"converting dns domain {domain} to {newdomain}")
                 dnsspec = {'apiVersion': 'v1', 'kind': 'Service', 'metadata': {'name': newdomain,
                                                                                'ownerReferences': [reference]},
                            'spec': {'selector': {'subdomain': newdomain}, 'clusterIP': 'None',
                                     'ports': [{'name': 'foo', 'port': 1234, 'targetPort': 1234}]}}
-                core.create_namespaced_service(namespace, dnsspec)
+                _create_resource(kubectl, dnsspec, namespace, debug=self.debug)
         if need_ssh_service:
-            try:
-                core.read_namespaced_service(f'{name}-ssh', namespace)
-            except:
+            if os.popen(f'{kubectl} get svc -n {namespace} {name}-ssh >/dev/null 2>&1').read() == '':
                 selector = {'kubevirt.io/provider': 'kcli', 'kubevirt.io/domain': name}
                 self.create_service(f'{name}-ssh', namespace, selector, _type=self.access_mode, ports=[{'port': 22}],
                                     reference=reference)
@@ -550,25 +543,23 @@ class Kubevirt(Kubecommon):
         return {'result': 'success'}
 
     def start(self, name):
-        crds = self.crds
+        kubectl = self.kubectl
         namespace = self.namespace
-        try:
-            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
-        except:
+        vm = _get_resource(kubectl, 'vm', name, namespace, debug=self.debug)
+        if vm is None:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         vm['spec']['running'] = True
-        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
+        _replace_resource(kubectl, vm, namespace, debug=self.debug)
         return {'result': 'success'}
 
     def stop(self, name, soft=False):
-        crds = self.crds
+        kubectl = self.kubectl
         namespace = self.namespace
-        try:
-            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
-        except:
+        vm = _get_resource(kubectl, 'vm', name, namespace, debug=self.debug)
+        if vm is None:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         vm["spec"]['running'] = False
-        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
+        _replace_resource(kubectl, vm, namespace, debug=self.debug)
         return {'result': 'success'}
 
     def create_snapshot(self, name, base):
@@ -591,33 +582,30 @@ class Kubevirt(Kubecommon):
         return self.start(name)
 
     def info_host(self):
+        kubectl = self.kubectl
         data = {}
-        if self.token is not None:
-            data['connection'] = f"https://{self.host}:{self.port}"
-        else:
-            data['context'] = self.contextname
+        cmd = '%s config view --minify --output jsonpath="{.clusters[*].cluster.server}"' % kubectl
+        data['connection'] = os.popen(cmd).read()
         data['namespace'] = self.namespace
         return data
 
     def status(self, name):
-        crds = self.crds
+        kubectl = self.kubectl
         namespace = self.namespace
-        try:
-            crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
-        except Exception:
+        if os.popen(f'{kubectl} get vm -n {namespace} {name}').read() == '':
             return None
-        allvms = crds.list_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachineinstance')["items"]
-        vms = [vm for vm in allvms if 'labels' in vm.get("metadata") and 'kubevirt-vm' in
-               vm["metadata"]['labels'] and vm["metadata"]['labels']['kubevirt-vm'] == name]
-        if vms:
+        items = _get_all_resources(kubectl, 'vmi', namespace, debug=self.debug)
+        vmis = [vm for vm in items if 'labels' in vm.get("metadata") and 'kubevirt-vm' in
+                vm["metadata"]['labels'] and vm["metadata"]['labels']['kubevirt-vm'] == name]
+        if vmis:
             return 'up'
         return 'down'
 
     def list(self):
-        crds = self.crds
+        kubectl = self.kubectl
         namespace = self.namespace
         vms = []
-        for vm in crds.list_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines')["items"]:
+        for vm in _get_all_resources(kubectl, 'vm', namespace, debug=self.debug):
             metadata = vm.get("metadata")
             name = metadata["name"]
             try:
@@ -627,23 +615,20 @@ class Kubevirt(Kubecommon):
         return sorted(vms, key=lambda x: x['name'])
 
     def console(self, name, tunnel=False, tunnelhost=None, tunnelport=22, tunneluser='root', web=False):
+        kubectl = self.kubectl
         if os.path.exists("/i_am_a_container"):
             error("This functionality is not supported in container mode")
             return
-        kubectl = common.get_binary('kubectl', KUBECTL_LINUX, KUBECTL_MACOSX, compressed=True)
-        crds = self.crds
-        core = self.core
         namespace = self.namespace
-        try:
-            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachineinstances', name)
-        except:
+        vm = _get_resource(kubectl, 'vmi', name, namespace, debug=self.debug)
+        if vm is None:
             error(f"VM {name} not found")
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         uid = vm.get("metadata")['uid']
-        for pod in core.list_namespaced_pod(namespace).items:
-            if pod.metadata.name.startswith(f"virt-launcher-{name}-") and\
-                    pod.metadata.labels['kubevirt.io/domain'] == name:
-                podname = pod.metadata.name
+        for pod in _get_all_resources(kubectl, 'pod', namespace, debug=self.debug):
+            if pod['metadata']['name'].startswith(f"virt-launcher-{name}-") and\
+                    pod['metadata']['labels']['kubevirt.io/domain'] == name:
+                podname = pod['metadata']['name']
                 localport = common.get_free_port()
                 break
         nccmd = f'KUBECONFIG={self.kubeconfig_file} ' if self.kubeconfig_file is not None else ''
@@ -673,20 +658,17 @@ class Kubevirt(Kubecommon):
         return
 
     def serialconsole(self, name, web=False):
-        kubectl = common.get_binary('kubectl', KUBECTL_LINUX, KUBECTL_MACOSX, compressed=True)
-        crds = self.crds
-        core = self.core
+        kubectl = self.kubectl
         namespace = self.namespace
-        try:
-            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachineinstances', name)
-        except:
+        vm = _get_resource(kubectl, 'vm', name, namespace, debug=self.debug)
+        if vm is None:
             error(f"VM {name} not found")
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         uid = vm.get("metadata")['uid']
-        for pod in core.list_namespaced_pod(namespace).items:
-            if pod.metadata.name.startswith(f"virt-launcher-{name}-") and\
-                    pod.metadata.labels['kubevirt.io/domain'] == name:
-                podname = pod.metadata.name
+        for pod in _get_all_resources(kubectl, 'pod', namespace, debug=self.debug):
+            if pod['metadata']['name'].startswith(f"virt-launcher-{name}-") and\
+                    pod['metadata']['labels']['kubevirt.io/domain'] == name:
+                podname = pod['metadata']['name']
                 break
         nccmd = "%s exec -n %s -it %s -- /bin/sh -c 'nc -U /var/run/kubevirt-private/%s/virt-serial0'" % (kubectl,
                                                                                                           namespace,
@@ -698,12 +680,10 @@ class Kubevirt(Kubecommon):
         return
 
     def dnsinfo(self, name):
-        crds = self.crds
+        kubectl = self.kubectl
         namespace = self.namespace
-        crds = self.crds
-        try:
-            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
-        except:
+        vm = _get_resource(kubectl, 'vm', name, namespace, debug=self.debug)
+        if vm is None:
             return None, None
         if self.debug:
             common.pretty_print(vm)
@@ -718,17 +698,14 @@ class Kubevirt(Kubecommon):
         return dnsclient, domain
 
     def info(self, name, vm=None, debug=False):
+        kubectl = self.kubectl
         yamlinfo = {}
-        core = self.core
-        crds = self.crds
         namespace = self.namespace
         harvester = self.harvester
-        crds = self.crds
         if vm is None:
             listinfo = False
-            try:
-                vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
-            except:
+            vm = _get_resource(kubectl, 'vm', name, namespace, debug=self.debug)
+            if vm is None:
                 error(f"VM {name} not found")
                 return {}
         else:
@@ -763,7 +740,7 @@ class Kubevirt(Kubecommon):
         ips = []
         if running:
             try:
-                runvm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachineinstances', name)
+                runvm = _get_resource(kubectl, 'vmi', name, namespace, debug=self.debug)
                 status = runvm.get('status')
                 if status:
                     state = status.get('phase').replace('Running', 'up')
@@ -846,8 +823,8 @@ class Kubevirt(Kubecommon):
                     continue
                 _type = 'pvc'
                 try:
-                    pvc = core.read_namespaced_persistent_volume_claim(pvcname, namespace)
-                    size = pvc.status.capacity['storage'].replace('Gi', '')
+                    pvc = _get_resource(kubectl, 'pvc', pvcname, namespace, debug=self.debug)
+                    size = pvc['status']['capacity']['storage'].replace('Gi', '')
                 except:
                     warning(f"pvc {pvcname} not found. That can't be good")
                     pvc = 'N/A'
@@ -897,49 +874,45 @@ class Kubevirt(Kubecommon):
         return yamlinfo
 
     def ip(self, name):
-        crds = self.crds
+        kubectl = self.kubectl
         namespace = self.namespace
         ip = None
-        try:
-            vmi = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachineinstances', name)
-            try:
-                vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
-                metadata = vm.get("metadata")
-                annotations = metadata.get("annotations")
-                if annotations is not None and 'kcli/ip' in annotations:
-                    return vm['metadata']['annotations']['kcli/ip']
-            except:
-                pass
-            status = vmi['status']
-            if 'interfaces' in status:
-                interfaces = vmi['status']['interfaces']
-                for interface in interfaces:
-                    if 'ipAddress' in interface and ip_address(interface['ipAddress'].split('/')[0]).version == 4:
-                        ip = interface['ipAddress'].split('/')[0]
-                        break
-        except Exception:
+        vmi = _get_resource(kubectl, 'vmi', name, namespace, debug=self.debug)
+        if vmi is None:
             error(f"VM {name} not found")
             sys.exit(1)
+        vm = _get_resource(kubectl, 'vm', name, namespace, debug=self.debug)
+        if vm is not None:
+            metadata = vm.get("metadata")
+            annotations = metadata.get("annotations")
+            if annotations is not None and 'kcli/ip' in annotations:
+                return vm['metadata']['annotations']['kcli/ip']
+        status = vmi['status']
+        if 'interfaces' in status:
+            interfaces = vmi['status']['interfaces']
+            for interface in interfaces:
+                if 'ipAddress' in interface and ip_address(interface['ipAddress'].split('/')[0]).version == 4:
+                    ip = interface['ipAddress'].split('/')[0]
+                    break
         return ip
 
     def volumes(self, iso=False):
-        core = self.core
+        kubectl = self.kubectl
         namespace = self.namespace
-        crds = self.crds
         isos = []
         allimages = []
         allimages = []
         harvester = self.harvester
         if harvester:
-            virtualimages = crds.list_namespaced_custom_object(HDOMAIN, HVERSION, namespace,
-                                                               'virtualmachineimages')["items"]
-            allimages = [os.path.basename(image['spec']['url']) for image in virtualimages]
+            items = _get_all_resources(kubectl, 'virtualmachineimage', namespace, debug=self.debug)
+            allimages = [os.path.basename(image['spec']['url']) for image in items]
         else:
-            pvc = core.list_namespaced_persistent_volume_claim(namespace)
-            allimages = [p.metadata.name for p in pvc.items if p.metadata.annotations is not None and
-                         'cdi.kubevirt.io/storage.import.endpoint' in p.metadata.annotations and
-                         'cdi.kubevirt.io/storage.condition.running.reason' in p.metadata.annotations and
-                         p.metadata.annotations['cdi.kubevirt.io/storage.condition.running.reason'] == 'Completed']
+            items = _get_all_resources(kubectl, 'pvc', namespace, debug=self.debug)
+            completed = 'Completed'
+            allimages = [p['metadata']['name'] for p in items if p['metadata']['annotations'] is not None and
+                         'cdi.kubevirt.io/storage.import.endpoint' in p['metadata']['annotations'] and
+                         'cdi.kubevirt.io/storage.condition.running.reason' in p['metadata']['annotations'] and
+                         p['metadata']['annotations']['cdi.kubevirt.io/storage.condition.running.reason'] == completed]
         if iso:
             isos = [i for i in allimages if i.endswith('iso')]
             return isos
@@ -948,21 +921,19 @@ class Kubevirt(Kubecommon):
             return sorted(images + CONTAINERDISKS)
 
     def delete(self, name, snapshots=False):
-        crds = self.crds
-        core = self.core
+        kubectl = self.kubectl
         namespace = self.namespace
-        try:
-            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
-        except:
+        vm = _get_resource(kubectl, 'vm', name, namespace, debug=self.debug)
+        if vm is None:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
-        crds.delete_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
+        _delete_resource(kubectl, 'vm', name, namespace, debug=self.debug)
         dvvolumes = [v['dataVolume']['name'] for v in vm['spec']['template']['spec']['volumes'] if
                      'dataVolume' in v]
         if dvvolumes:
             timeout = 0
             while True:
-                dvpvcs = [pvc for pvc in core.list_namespaced_persistent_volume_claim(namespace).items
-                          if pvc.metadata.name in dvvolumes]
+                items = _get_all_resources(kubectl, 'pvc', namespace, debug=self.debug)
+                dvpvcs = [pvc for pvc in items if pvc['metadata']['name'] in dvvolumes]
                 if not dvpvcs or timeout > 60:
                     break
                 else:
@@ -976,57 +947,54 @@ class Kubevirt(Kubecommon):
         return
 
     def update_metadata(self, name, metatype, metavalue, append=False):
-        crds = self.crds
+        kubectl = self.kubectl
         namespace = self.namespace
-        try:
-            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
-        except:
+        vm = _get_resource(kubectl, 'vm', name, namespace, debug=self.debug)
+        if vm is None:
             error(f"VM {name} not found")
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         if append and f"kcli/{metatype}" in vm["metadata"]["annotations"]:
             oldvalue = vm["metadata"]["annotations"][f"kcli/{metatype}"]
             metavalue = f"{oldvalue},{metavalue}"
         vm["metadata"]["annotations"][f"kcli/{metatype}"] = metavalue
-        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
+        _replace_resource(kubectl, vm, namespace, debug=self.debug)
         return
 
     def update_memory(self, name, memory):
-        crds = self.crds
+        kubectl = self.kubectl
         namespace = self.namespace
-        try:
-            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
-        except:
+        vm = _get_resource(kubectl, 'vm', name, namespace, debug=self.debug)
+        if vm is None:
             error(f"VM {name} not found")
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         t = 'Template' if 'Template' in vm['spec'] else 'template'
         domain = vm['spec'][t]['spec']['domain']
         if 'memory' in domain and 'maxGuest' in domain['memory']:
             vm['spec'][t]['spec']['domain']['memory']['guest'] = f"{memory}Mi"
-            crds.patch_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
+            _patch_resource(kubectl, 'vm', name, vm, namespace, debug=self.debug)
         else:
             vm['spec'][t]['spec']['domain']['resources']['requests']['memory'] = f"{memory}M"
             vm['spec'][t]['spec']['domain']['resources']['limits']['memory'] = f"{memory}M"
-            warning("Change will only appear next full lifeclyclereboot")
-            crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
+            warning("Change will only appear after next full lifeclycle reboot")
+            _replace_resource(kubectl, vm, namespace, debug=self.debug)
         return {'result': 'success'}
 
     def update_cpus(self, name, numcpus):
-        crds = self.crds
+        kubectl = self.kubectl
         namespace = self.namespace
-        try:
-            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
-        except:
+        vm = _get_resource(kubectl, 'vm', name, namespace, debug=self.debug)
+        if vm is None:
             error(f"VM {name} not found")
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         t = 'Template' if 'Template' in vm['spec'] else 'template'
         domain = vm['spec'][t]['spec']['domain']
         if 'cpu' in domain and 'maxSockets' in domain['cpu']:
             vm['spec'][t]['spec']['domain']['cpu']['sockets'] = numcpus
-            crds.patch_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
+            _patch_resource(kubectl, 'vm', name, vm, namespace, debug=self.debug)
         else:
             vm['spec'][t]['spec']['domain']['cpu']['cores'] = int(numcpus)
-            warning("Change will only appear next full lifeclyclereboot")
-            crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
+            warning("Change will only appear after next full lifeclycle reboot")
+            _replace_resource(kubectl, vm, namespace, debug=self.debug)
         return {'result': 'success'}
 
     def update_start(self, name, start=True):
@@ -1038,11 +1006,10 @@ class Kubevirt(Kubecommon):
         return
 
     def update_iso(self, name, iso):
-        crds = self.crds
+        kubectl = self.kubectl
         namespace = self.namespace
-        try:
-            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
-        except:
+        vm = _get_resource(kubectl, 'vm', name, namespace, debug=self.debug)
+        if vm is None:
             error(f"VM {name} not found")
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         if iso is not None:
@@ -1070,24 +1037,21 @@ class Kubevirt(Kubecommon):
             myvolume = {'name': diskname, 'persistentVolumeClaim': {'claimName': good_iso}}
             vm['spec']['template']['spec']['domain']['devices']['disks'].append(newdisk)
             vm['spec']['template']['spec']['volumes'].append(myvolume)
-        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
+        _replace_resource(kubectl, vm, namespace, debug=self.debug)
 
     def update_flavor(self, name, flavor):
         print("Not implemented")
         return {'result': 'success'}
 
     def create_disk(self, name, size, pool=None, thin=True, image=None, overrides={}):
-        core = self.core
+        kubectl = self.kubectl
         namespace = self.namespace
-        pvc = core.list_namespaced_persistent_volume_claim(namespace)
-        images = {p.metadata.annotations['kcli/image']: p.metadata.name for p in pvc.items
-                  if p.metadata.annotations is not None and 'kcli/image' in p.metadata.annotations}
-        try:
-            pvc = core.read_namespaced_persistent_volume(name, namespace)
+        items = _get_all_resources(kubectl, 'pvc', namespace, debug=self.debug)
+        images = {p['metadata']['annotations']['kcli/image']: p['metadata']['name'] for p in items
+                  if p['metadata']['annotations'] is not None and 'kcli/image' in p['metadata']['annotations']}
+        if _get_resource(kubectl, 'pvc', name, namespace, debug=self.debug) is not None:
             error(f"Disk {name} already there")
             return 1
-        except:
-            pass
         volume_mode = overrides.get('volume_mode', self.volume_mode)
         volume_access = overrides.get('volume_access', self.volume_access)
         pvc = {'kind': 'PersistentVolumeClaim', 'spec': {'storageClassName': pool,
@@ -1097,16 +1061,15 @@ class Kubevirt(Kubecommon):
                'apiVersion': 'v1', 'metadata': {'name': name}}
         if image is not None:
             pvc['metadata']['annotations'] = {'k8s.io/CloneRequest': images[image]}
-        core.create_namespaced_persistent_volume_claim(namespace, pvc)
+        _create_resource(kubectl, pvc, namespace, debug=self.debug)
         return
 
     def add_disk(self, name, size, pool=None, thin=True, image=None, shareable=False, existing=None,
                  interface='virtio', novm=False, overrides={}, diskname=None):
-        crds = self.crds
+        kubectl = self.kubectl
         namespace = self.namespace
-        try:
-            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
-        except:
+        vm = _get_resource(kubectl, 'vm', name, namespace, debug=self.debug)
+        if vm is None:
             error(f"VM {name} not found")
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         t = 'Template' if 'Template' in vm['spec'] else 'template'
@@ -1125,13 +1088,16 @@ class Kubevirt(Kubecommon):
                                    'accessModes': [volume_access],
                                    'resources': {'requests': {'storage': f'{size}Gi'}}},
                            'source': {'blank': {}}}, 'status': {}}
-            crds.create_namespaced_custom_object(CDIDOMAIN, CDIVERSION, namespace, 'datavolumes', dv)
-            subresource = f"/apis/subresources.kubevirt.io/v1alpha3/namespaces/{namespace}"
+            _create_resource(kubectl, dv, namespace, debug=self.debug)
+            subresource = f"apis/subresources.kubevirt.io/v1alpha3/namespaces/{namespace}"
             subresource += f"/virtualmachines/{name}/addvolume"
-            body = {"name": diskname, "volumesource": myvolume, "disk": {"disk": {"bus": "scsi"}}}
+            bus = overrides.get('interface', 'scsi')
+            if bus != 'scsi':
+                warning("Forcing interface to scsi for disk hotplugging")
+            body = {"name": diskname, "volumesource": myvolume, "disk": {"disk": {"bus": 'scsi'}}}
             if 'serial' in overrides:
                 body['disk']['serial'] = str(overrides['serial'])
-            self.core.api_client.call_api(subresource, 'PUT', body=body)
+            _put(subresource, body, debug=self.debug)
         else:
             disk_overrides = overrides.copy()
             disk_overrides['volume_mode'] = volume_mode
@@ -1144,19 +1110,18 @@ class Kubevirt(Kubecommon):
             newdisk = {'disk': {'bus': bus}, 'name': diskname}
             vm['spec'][t]['spec']['domain']['devices']['disks'].append(newdisk)
             vm['spec'][t]['spec']['volumes'].append(myvolume)
-            crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
+            warning("Change will only appear after next full lifeclycle reboot")
+            _replace_resource(kubectl, vm, namespace, debug=self.debug)
         return
 
     def delete_disk(self, name=None, diskname=None, pool=None, novm=False):
-        crds = self.crds
-        core = self.core
+        kubectl = self.kubectl
         namespace = self.namespace
         if name is None:
             volname = diskname
         else:
-            try:
-                vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
-            except:
+            vm = _get_resource(kubectl, 'vm', name, namespace, debug=self.debug)
+            if vm is None:
                 error(f"VM {name} not found")
                 return {'result': 'failure', 'reason': f"VM {name} not found"}
             t = 'Template' if 'Template' in vm['spec'] else 'template'
@@ -1169,14 +1134,12 @@ class Kubevirt(Kubecommon):
             if self.disk_hotplug:
                 pprint(f"Hotunplugging disk {diskname}")
                 myvolume = {'name': diskname, 'persistentVolumeClaim': {'claimName': diskname}}
-                subresource = f"/apis/subresources.kubevirt.io/v1alpha3/namespaces/{namespace}"
+                subresource = f"apis/subresources.kubevirt.io/v1alpha3/namespaces/{namespace}"
                 subresource += f"/virtualmachines/{name}/removevolume"
                 bus = 'scsi'
                 body = {"name": diskname, "volumesource": myvolume, "disk": {"disk": {"bus": bus}}}
-                self.core.api_client.call_api(subresource, 'PUT', body=body)
-                try:
-                    crds.delete_namespaced_custom_object(CDIDOMAIN, CDIVERSION, namespace, 'datavolumes', diskname)
-                except:
+                _put(subresource, body, debug=self.debug)
+                if _delete_resource(kubectl, 'dv', diskname, namespace, debug=self.debug) == '':
                     error(f"Disk {diskname} not found")
                     return 1
                 return
@@ -1186,37 +1149,34 @@ class Kubevirt(Kubecommon):
                 volindex = volindex[0]
                 del vm['spec'][t]['spec']['volumes'][volindex]
             del vm['spec'][t]['spec']['domain']['devices']['disks'][diskindex]
-            crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
-        try:
-            core.delete_namespaced_persistent_volume_claim(volname, namespace)
-        except:
+            warning("Change will only appear after next full lifeclycle reboot")
+            _replace_resource(kubectl, vm, namespace, debug=self.debug)
+        if _delete_resource(kubectl, 'pvc', volname, namespace, debug=self.debug) == '':
             error(f"Disk {volname} not found")
             return 1
         return
 
     def list_disks(self):
+        kubectl = self.kubectl
         disks = {}
         namespace = self.namespace
-        core = self.core
-        pvc = core.list_namespaced_persistent_volume_claim(namespace)
-        for p in pvc.items:
-            metadata = p.metadata
-            annotations = p.metadata.annotations
+        for p in _get_all_resources(kubectl, 'pvc', namespace, debug=self.debug):
+            metadata = p['metadata']
+            annotations = p['metadata']['annotations']
             if annotations is not None and 'kcli/image' in annotations:
                 continue
             else:
-                name = metadata.name
-                storageclass = p.spec.storage_class_name
-                pv = p.spec.volume_name
+                name = metadata['name']
+                storageclass = p['spec']['storageClassName']
+                pv = p['spec']['volumeName']
                 disks[name] = {'pool': storageclass, 'path': pv}
         return disks
 
     def add_nic(self, name, network, model='virtio'):
-        crds = self.crds
+        kubectl = self.kubectl
         namespace = self.namespace
-        try:
-            vm = crds.get_namespaced_custom_object(DOMAIN, VERSION, namespace, 'virtualmachines', name)
-        except:
+        vm = _get_resource(kubectl, 'vm', name, namespace, debug=self.debug)
+        if vm is None:
             error(f"VM {name} not found")
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         newif = {'bridge': {}, 'name': network}
@@ -1236,7 +1196,7 @@ class Kubevirt(Kubecommon):
             newnet['pod'] = {}
         vm['spec']['template']['spec']['domain']['devices']['interfaces'].append(newif)
         vm['spec']['template']['spec']['networks'].append(newnet)
-        crds.replace_namespaced_custom_object(DOMAIN, VERSION, namespace, "virtualmachines", name, vm)
+        _replace_resource(kubectl, vm, namespace, debug=self.debug)
         return
 
     def delete_nic(self, name, interface):
@@ -1248,35 +1208,32 @@ class Kubevirt(Kubecommon):
         return
 
     def delete_image(self, image, pool=None):
-        core = self.core
-        crds = self.crds
+        kubectl = self.kubectl
+        namespace = self.namespace
         harvester = self.harvester
         if harvester:
-            virtualimages = crds.list_namespaced_custom_object(HDOMAIN, HVERSION, self.namespace,
-                                                               'virtualmachineimages')["items"]
-            images = [img['metadata']['name'] for img in virtualimages if
+            items = _get_all_resources(kubectl, 'virtualmachineimage', namespace, debug=self.debug)
+            images = [img['metadata']['name'] for img in items if
                       os.path.basename(img['spec']['url']) == image]
             if images:
-                crds.delete_namespaced_custom_object(HDOMAIN, HVERSION, self.namespace, 'virtualmachineimages',
-                                                     images[0])
+                _delete_resource(kubectl, 'virtualmachineimage', images[0], namespace, debug=self.debug)
                 return {'result': 'success'}
         else:
-            pvc = core.list_namespaced_persistent_volume_claim(self.namespace)
-            images = [p.metadata.name for p in pvc.items if p.metadata.annotations is not None and
-                      'cdi.kubevirt.io/storage.import.endpoint' in p.metadata.annotations and
-                      self.get_image_name(p.metadata.annotations['cdi.kubevirt.io/storage.import.endpoint']) ==
+            items = _get_all_resources(kubectl, 'pvc', namespace, debug=self.debug)
+            images = [p['metadata']['name'] for p in items if p['metadata'].get('annotations') is not None and
+                      'cdi.kubevirt.io/storage.import.endpoint' in p['metadata']['annotations'] and
+                      self.get_image_name(p['metadata']['annotations']['cdi.kubevirt.io/storage.import.endpoint']) ==
                       image]
             if images:
-                core.delete_namespaced_persistent_volume_claim(images[0], self.namespace)
+                _delete_resource(kubectl, 'pvc', images[0], namespace, debug=self.debug)
                 return {'result': 'success'}
         return {'result': 'failure', 'reason': f'image {image} not found'}
 
     def add_image(self, url, pool, short=None, cmds=[], name=None, size=None, convert=False):
+        kubectl = self.kubectl
         if size is None:
             size = _base_image_size(url)
             warning(f"Setting size of image to {size}G. This will be the size of primary disks using this")
-        core = self.core
-        crds = self.crds
         pool = self.check_pool(pool)
         namespace = self.namespace
         harvester = self.harvester
@@ -1291,8 +1248,7 @@ class Kubevirt(Kubecommon):
         if harvester:
             virtualmachineimage = {'kind': 'VirtualMachineImage', 'spec': {'url': url, "displayName": uncompressed},
                                    'apiVersion': f'{HDOMAIN}/{HVERSION}', 'metadata': {'name': volname}}
-            crds.create_namespaced_custom_object(HDOMAIN, HVERSION, self.namespace, 'virtualmachineimages',
-                                                 virtualmachineimage)
+            _create_resource(kubectl, virtualmachineimage, namespace, debug=self.debug)
             return {'result': 'success'}
         pool, volume_mode, volume_access = self.get_default_storage(pool, self.volume_mode, self.volume_access)
         pvc = {'kind': 'PersistentVolumeClaim', 'spec': {'storageClassName': pool,
@@ -1302,11 +1258,10 @@ class Kubevirt(Kubecommon):
                'apiVersion': 'v1', 'metadata': {'name': volname, 'annotations': {'kcli/image': uncompressed}}}
         pprint(f"Cloning in namespace {namespace}")
         pvc['metadata']['annotations'] = {'cdi.kubevirt.io/storage.import.endpoint': url}
-        try:
-            core.read_namespaced_persistent_volume_claim(volname, namespace)
+        if _get_resource(kubectl, 'pvc', volname, namespace, debug=self.debug) is not None:
             pprint("Using existing pvc")
-        except:
-            core.create_namespaced_persistent_volume_claim(namespace, pvc)
+        else:
+            _create_resource(kubectl, pvc, namespace, debug=self.debug)
             bound = self.pvc_bound(volname, namespace, first_consumer=self.first_consumer)
             if not bound:
                 return {'result': 'failure', 'reason': 'timeout waiting for pvc to get bound'}
@@ -1317,7 +1272,7 @@ class Kubevirt(Kubecommon):
         return {'result': 'success'}
 
     def patch_pvc(self, pvc, command, image="quay.io/karmab/curl", files=[]):
-        core = self.core
+        kubectl = self.kubectl
         namespace = self.namespace
         now = datetime.datetime.now().strftime("%Y%M%d%H%M")
         podname = f'{now}-{pvc}-patch'
@@ -1332,7 +1287,7 @@ class Kubevirt(Kubecommon):
                 else:
                     warning(f"Skipping {entry} as it's not present")
             configmap = {'kind': 'ConfigMap', 'data': data, 'apiVersion': 'v1', 'metadata': {'name': podname}}
-            core.create_namespaced_config_map(namespace, configmap)
+            _create_resource(kubectl, configmap, namespace, debug=self.debug)
         container = {'image': image, 'name': 'patch', 'command': ['/bin/sh', '-c']}
         if self.volume_mode == 'Filesystem':
             container['volumeMounts'] = [{'mountPath': '/storage', 'name': 'storage'}]
@@ -1348,19 +1303,19 @@ class Kubevirt(Kubecommon):
                'apiVersion': 'v1', 'metadata': {'name': podname}}
         if configmap is not None:
             pod['spec']['volumes'].append({'name': 'files', 'configMap': {'name': podname}})
-        core.create_namespaced_pod(namespace, pod)
+        _create_resource(kubectl, pod, namespace, debug=self.debug)
         completed = self.pod_completed(podname, namespace)
         if not completed:
             error(f"Issue with pod {podname}. Leaving it for debugging purposes")
             return {'result': 'failure', 'reason': f'issue with pod {podname}'}
         else:
-            core.delete_namespaced_pod(podname, namespace)
+            _delete_resource(kubectl, 'pod', podname, namespace, debug=self.debug)
         if configmap is not None:
-            core.delete_namespaced_config_map(podname, namespace)
+            _delete_resource(kubectl, 'cm', podname, namespace, debug=self.debug)
         return {'result': 'success'}
 
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
-        crds = self.crds
+        kubectl = self.kubectl
         namespace = self.namespace
         apiversion = f"{MULTUSDOMAIN}/{MULTUSVERSION}"
         vlanconfig = ', "vlan": %s' % overrides['vlan'] if 'vlan' in overrides is not None else ''
@@ -1396,49 +1351,42 @@ class Kubevirt(Kubecommon):
                                                                 [{'localnet': name,
                                                                   'bridge': bridge, 'state': 'present'}]}}}}
                     try:
-                        crds.create_cluster_custom_object('nmstate.io', 'v1', 'nodenetworkconfigurationpolicies',
-                                                          policy)
+                        _create_resource(kubectl, policy, debug=self.debug)
                     except Exception as e:
                         error(f"Hit {e}. You might need to install kubernetes-nmstate-operator")
         nad = {'kind': 'NetworkAttachmentDefinition', 'spec': {'config': config}, 'apiVersion': apiversion,
                'metadata': {'name': name}}
-        crds.create_namespaced_custom_object(MULTUSDOMAIN, MULTUSVERSION, namespace, 'network-attachment-definitions',
-                                             nad)
+        _create_resource(kubectl, nad, namespace, debug=self.debug)
         return {'result': 'success'}
 
     def delete_network(self, name=None, cidr=None, force=False):
-        crds = self.crds
+        kubectl = self.kubectl
         namespace = self.namespace
-        try:
-            crds.delete_namespaced_custom_object(MULTUSDOMAIN, MULTUSVERSION, namespace,
-                                                 'network-attachment-definitions', name)
-        except:
+        if _delete_resource(kubectl, 'net-attach-def', name, namespace, debug=self.debug) == '':
             return {'result': 'failure', 'reason': f"network {name} not found"}
         return {'result': 'success'}
 
     def list_pools(self):
-        storageapi = self.storageapi
-        pools = [x.metadata.name for x in storageapi.list_storage_class().items]
+        kubectl = self.kubectl
+        pools = [x['metadata']['name'] for x in _get_all_resources(kubectl, 'sc', debug=self.debug)]
         return pools
 
     def list_networks(self):
-        core = self.core
+        kubectl = self.kubectl
         try:
-            for node in core.list_node().items:
-                cidr = node.spec.pod_cidr
+            for node in _get_all_resources(kubectl, 'node', debug=self.debug):
+                cidr = node['spec']['podCidr']
                 break
         except:
             cidr = 'N/A'
         networks = {'default': {'cidr': cidr, 'dhcp': True, 'type': 'bridge', 'mode': 'N/A'}}
-        crds = self.crds
         namespace = self.namespace
         try:
-            nafs = crds.list_namespaced_custom_object(MULTUSDOMAIN, MULTUSVERSION, namespace,
-                                                      'network-attachment-definitions')["items"]
+            nafs = _get_all_resources(kubectl, 'net-attach-def', namespace, debug=self.debug)
         except:
             nafs = []
         for naf in nafs:
-            config = yaml.safe_load(naf['spec']['config'])
+            config = safe_load(naf['spec']['config'])
             name = naf['metadata']['name']
             _type = config.get('type', 'N/A')
             bridge = config.get('bridge')
@@ -1480,11 +1428,12 @@ class Kubevirt(Kubecommon):
         return []
 
     def get_pool_path(self, pool):
-        storageapi = self.storageapi
-        storageclass = storageapi.read_storage_class(pool)
-        return storageclass.provisioner
+        kubectl = self.kubectl
+        storageclass = _get_resource(kubectl, 'sc', pool, debug=self.debug)
+        return storageclass['provisioner']
 
     def pvc_bound(self, volname, namespace, first_consumer=False):
+        kubectl = self.kubectl
         if first_consumer:
             job_name = f"temp-{volname}"
             container = {'name': 'hello', 'image': 'quay.io/karmab/kubectl', 'command': ["echo", "hello"]}
@@ -1493,77 +1442,74 @@ class Kubevirt(Kubecommon):
                         'spec': {'containers': [container], 'volumes': [volume], 'restartPolicy': "Never"}}
             spec = {'template': template, 'backoff_limit': 0, 'ttlSecondsAfterFinished': 10}
             job = {'api_version': 'batch/v1', 'kind': 'Job', 'metadata': {'name': job_name}, 'spec': spec}
-            self.batch_v1.create_namespaced_job(body=job, namespace=namespace)
+            _create_resource(kubectl, job, namespace, debug=self.debug)
             completed = False
             while not completed:
-                response = self.batch_v1.read_namespaced_job_status(name=job_name, namespace=namespace)
-                if response.status.succeeded is not None or response.status.failed is not None:
+                response = _get_resource(kubectl, 'job', job_name, namespace, debug=self.debug)
+                if response['status']['succeeded'] is not None or response['status']['failed'] is not None:
                     completed = True
-        core = self.core
         pvctimeout = 120
         pvcruntime = 0
         pvcstatus = ''
         while pvcstatus != 'Bound':
             if pvcruntime >= pvctimeout:
                 return False
-            pvc = core.read_namespaced_persistent_volume_claim(volname, namespace)
-            pvcstatus = pvc.status.phase
+            pvc = _get_resource(kubectl, 'pvc', volname, namespace, debug=self.debug)
+            pvcstatus = pvc['status']['phase']
             time.sleep(2)
             pprint(f"Waiting for pvc {volname} to get bound...")
             pvcruntime += 2
         return True
 
     def import_completed(self, volname, namespace):
-        core = self.core
+        kubectl = self.kubectl
         pvctimeout = 1200
         pvcruntime = 0
         phase = ''
         while phase != 'Succeeded':
             if pvcruntime >= pvctimeout:
                 return False
-            pvc = core.read_namespaced_persistent_volume_claim(volname, namespace)
-            # pod = pvc.metadata.annotations['cdi.kubevirt.io/storage.import.importPodName']
-            if 'cdi.kubevirt.io/storage.pod.phase' not in pvc.metadata.annotations:
+            pvc = _get_resource(kubectl, 'pvc', volname, namespace, debug=self.debug)
+            if 'cdi.kubevirt.io/storage.pod.phase' not in pvc['metadata']['annotations']:
                 phase = 'Pending'
             else:
-                phase = pvc.metadata.annotations['cdi.kubevirt.io/storage.pod.phase']
+                phase = pvc['metadata']['annotations']['cdi.kubevirt.io/storage.pod.phase']
             time.sleep(5)
             pprint("Waiting for import to complete...")
             pvcruntime += 5
         return True
 
     def pod_completed(self, podname, namespace):
-        core = self.core
+        kubectl = self.kubectl
         podtimeout = 1200
         podruntime = 0
         podstatus = ''
         while podstatus != 'Succeeded':
             if podruntime >= podtimeout or podstatus == 'Error' or podstatus == 'Failed':
                 return False
-            pod = core.read_namespaced_pod(podname, namespace)
-            podstatus = pod.status.phase
+            pod = _get_resource(kubectl, 'pod', podname, namespace, debug=self.debug)
+            podstatus = pod['status']['phase']
             time.sleep(5)
             pprint(f"Waiting for pod {podname} to complete...")
             podruntime += 5
         return True
 
     def check_pool(self, pool):
-        storageapi = self.storageapi
-        storageclasses = storageapi.list_storage_class().items
-        if storageclasses:
-            storageclasses = [s.metadata.name for s in storageclasses]
+        kubectl = self.kubectl
+        items = _get_all_resources(kubectl, 'sc', debug=self.debug)
+        if items:
+            storageclasses = [s['metadata']['name'] for s in items]
             if pool in storageclasses:
                 return pool
         return None
 
     def list_flavors(self):
-        crds = self.crds
+        kubectl = self.kubectl
         try:
-            flavors = crds.list_cluster_custom_object(FLAVORDOMAIN, FLAVORVERSION,
-                                                      'virtualmachineclusterinstancetypes')["items"]
+            items = _get_all_resources(kubectl, 'virtualmachineclusterinstancetype', debug=self.debug)
         except:
             return []
-        return [[f['metadata']['name'], f['spec']['cpu']['guest'], f['spec']['memory']['guest']] for f in flavors]
+        return [[f['metadata']['name'], f['spec']['cpu']['guest'], f['spec']['memory']['guest']] for f in items]
 
     def get_image_name(self, name, pvcname=None):
         if name.endswith('.gz'):
@@ -1576,32 +1522,32 @@ class Kubevirt(Kubecommon):
             return os.path.basename(name)
 
     def ssh_node_port(self, name, namespace):
-        try:
-            sshservice = self.core.read_namespaced_service(f'{name}-ssh', namespace)
-        except:
+        kubectl = self.kubectl
+        ssh_service = _get_resource(kubectl, 'svc', f'{name}-ssh', namespace, debug=self.debug)
+        if ssh_service is None:
             return None
-        return sshservice.spec.ports[0].node_port
+        return ssh_service['spec']['ports'][0]['nodePort']
 
     def api_node_port(self, name, namespace):
-        try:
-            apiservice = self.core.read_namespaced_service(f'{name}-api', namespace)
-        except:
+        kubectl = self.kubectl
+        api_service = _get_resource(kubectl, 'svc', f'{name}-api', namespace, debug=self.debug)
+        if api_service is None:
             return None
-        return apiservice.spec.ports[0].node_port
+        return api_service['spec']['ports'][0]['nodePort']
 
     def list_dns(self, domain):
         return []
 
     def node_host(self, name=None):
+        kubectl = self.kubectl
         ip = None
-        try:
-            nodesinfo = self.core.list_node().items
-        except:
+        items = _get_all_resources(kubectl, 'node', debug=self.debug)
+        if items is None:
             return ip
-        for node in nodesinfo:
-            if name is not None and node.metadata.name != name:
+        for node in items:
+            if name is not None and node['metadata']['name'] != name:
                 continue
-            addresses = [x.address for x in node.status.addresses if x.type == 'InternalIP']
+            addresses = [x['address'] for x in node['status']['addresses'] if x['type'] == 'InternalIP']
             if addresses:
                 ip = addresses[0]
                 break
@@ -1609,6 +1555,7 @@ class Kubevirt(Kubecommon):
 
     def create_service(self, name, namespace, selector, _type="NodePort", ports=[], wait=True, reference=None,
                        openshift_hack=False):
+        kubectl = self.kubectl
         spec = {'kind': 'Service', 'apiVersion': 'v1', 'metadata': {'namespace': namespace, 'name': f'{name}'},
                 'spec': {'sessionAffinity': 'None', 'selector': selector}}
         if reference is not None:
@@ -1638,7 +1585,7 @@ class Kubevirt(Kubecommon):
                 newportspec['name'] = f"port-{port}"
             portspec.append(newportspec)
         spec['spec']['ports'] = portspec
-        self.core.create_namespaced_service(namespace, spec)
+        _create_resource(kubectl, spec, namespace, debug=self.debug)
         if _type == 'LoadBalancer' and wait:
             ipassigned = False
             timeout = 60
@@ -1649,54 +1596,56 @@ class Kubevirt(Kubecommon):
                     return
                 else:
                     try:
-                        api_service = self.core.read_namespaced_service(f'{name}', namespace)
-                        return api_service.status.load_balancer.ingress[0].ip
+                        api_service = _get_resource(kubectl, 'svc', name, namespace, debug=self.debug)
+                        return api_service['status']['loadBalancer']['ingress'][0]['ip']
                     except:
                         time.sleep(5)
                         pprint(f"Waiting to get a loadbalancer ip for service {name}...")
                         runtime += 5
         else:
-            api_service = self.core.read_namespaced_service(f'{name}', namespace)
-            return api_service.spec.cluster_ip
+            api_service = _get_resource(kubectl, 'svc', name, namespace, debug=self.debug)
+            return api_service['spec']['clusterIP']
 
     def get_node_ports(self, service, namespace):
+        kubectl = self.kubectl
         results = {}
-        api_service = self.core.read_namespaced_service(service, namespace)
-        for port in api_service.spec.ports:
-            results[port.port] = port.node_port
+        api_service = _get_resource(kubectl, 'svc', service, namespace, debug=self.debug)
+        for port in api_service['spec']['ports']:
+            results[port['port']] = port['NodePort']
         return results
 
     def list_services(self, namespace):
+        kubectl = self.kubectl
         services = []
-        for s in self.core.list_namespaced_service(namespace).items:
-            services.append(s.metadata.name)
+        for s in _get_all_resources(kubectl, 'svc', namespace, debug=self.debug):
+            services.append(s['metadata']['name'])
         return services
 
     def delete_service(self, name, namespace):
-        try:
-            self.core.delete_namespaced_service(name, namespace)
-        except Exception as e:
-            error(f"Couldn't delete service {name}. Hit {e}")
+        kubectl = self.kubectl
+        if _delete_resource(kubectl, 'svc', name, namespace, debug=self.debug) == '':
+            error(f"Couldn't delete service {name}")
 
     def ssh_loadbalancer_ip(self, name, namespace):
+        kubectl = self.kubectl
         try:
-            api_service = self.core.read_namespaced_service(f'{name}-ssh', namespace)
-            return api_service.status.load_balancer.ingress[0].ip
+            ssh_service = _get_resource(kubectl, 'svc', f'{name}-ssh', namespace, debug=self.debug)
+            return ssh_service['status']['loadBalancer']['ingress'][0]['ip']
         except:
             return None
 
     def create_secret(self, name, namespace, data, field='userdata'):
+        kubectl = self.kubectl
         data = base64.b64encode(data.encode()).decode("UTF-8")
         data = {field: data}
         spec = {'kind': 'Secret', 'apiVersion': 'v1', 'metadata': {'namespace': namespace, 'name': name},
                 'data': data, 'type': 'Opaque'}
-        self.core.create_namespaced_secret(namespace, spec)
+        _create_resource(kubectl, spec, namespace, debug=self.debug)
 
     def delete_secret(self, name, namespace):
-        try:
-            self.core.delete_namespaced_secret(name, namespace)
-        except Exception as e:
-            error(f"Couldn't delete service {name}. Hit {e}")
+        kubectl = self.kubectl
+        if _delete_resource(kubectl, 'secret', name, namespace, debug=self.debug) == '':
+            error(f"Couldn't delete secret {name}")
 
     def create_bucket(self, bucket, public=False):
         print("not implemented")
@@ -1731,19 +1680,18 @@ class Kubevirt(Kubecommon):
         return
 
     def get_default_sc(self):
+        kubectl = self.kubectl
         default_sc = None
-        storageapi = self.storageapi
-        for sc in storageapi.list_storage_class().items:
-            annotations = sc.metadata.annotations
+        for sc in _get_all_resources(kubectl, 'sc', debug=self.debug):
+            annotations = sc['metadata'].get('annotations')
             if annotations is not None and DEFAULT_SC in annotations and annotations[DEFAULT_SC] == 'true':
-                default_sc = sc.metadata.name
+                default_sc = sc['metadata']['name']
         return default_sc
 
     def get_sc_details(self, name):
+        kubectl = self.kubectl
         volume_mode, volume_access = None, None
-        crds = self.crds
-        storageprofiles = crds.list_cluster_custom_object(CDIDOMAIN, CDIVERSION, 'storageprofiles')["items"]
-        for entry in storageprofiles:
+        for entry in _get_all_resources(kubectl, 'storageprofile', debug=self.debug):
             if entry['metadata']['name'] == name and 'claimPropertySets' in entry['status']:
                 claimset = entry['status']['claimPropertySets'][0]
                 volume_mode, volume_access = claimset['volumeMode'], claimset['accessModes'][0]
@@ -1761,21 +1709,21 @@ class Kubevirt(Kubecommon):
         return pool, volume_mode, volume_access
 
     def update_reference(self, owners, namespace, reference):
-        core = self.core
+        kubectl = self.kubectl
+        namespace = self.namespace
         body = {'metadata': {'ownerReferences': [reference]}}
         for entry in owners:
-            if 'disk' in entry:
-                core.patch_namespaced_persistent_volume_claim(entry, namespace, body)
-            elif 'secret' in entry:
-                core.patch_namespaced_secret(entry, namespace, body)
+            resource = 'pvc' if 'disk' in entry else 'secret'
+            _patch_resource(kubectl, resource, entry, body, namespace, debug=self.debug)
 
     def update_nic(self, name, index, network):
         print("not implemented")
 
     def update_cdi_endpoint(self, pvc, endpoint):
-        core = self.core
+        kubectl = self.kubectl
+        namespace = self.namespace
         body = {'metadata': {'annotations': {"cdi.kubevirt.io/storage.import.endpoint": endpoint}}}
-        core.patch_namespaced_persistent_volume_claim(pvc, self.namespace, body)
+        _patch_resource(kubectl, 'pvc', pvc, body, namespace, debug=self.debug)
 
     def update_network(self, name, dhcp=None, nat=None, domain=None, plan=None, overrides={}):
         print("not implemented")
@@ -1802,14 +1750,13 @@ class Kubevirt(Kubecommon):
         return {}
 
     def list_sriov_networks(self):
+        kubectl = self.kubectl
         namespace = self.namespace
-        crds = self.crds
         try:
-            items = crds.list_namespaced_custom_object(SRIOVDOMAIN, SRIOVVERSION, namespace, 'sriovnetworks')["items"]
-            sriov_networks = [n['metadata']['name'] for n in items]
+            return [n['metadata']['name'] for n in _get_all_resources(kubectl, 'sriovnetwork', namespace,
+                                                                      debug=self.debug)]
         except:
-            sriov_networks = []
-        return sriov_networks
+            return []
 
     def create_subnet(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
         print("not implemented")

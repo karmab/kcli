@@ -450,13 +450,12 @@ The following parameters are specific to Libvirt:
 
 ## Kubevirt
 
-For Kubevirt, you will need to define one (or several!) sections with the type Kubevirt in your *~/.kcli/config.yml*
-
-Authentication is either handled by your local ~/.kube/config (kcli will try to connect to your current Kubernetes/OpenShift context) or with specific token:
+For Kubevirt, you will need to define one (or several) sections with the type Kubevirt in your *~/.kcli/config.yml*
 
 ```
 kubevirt:
  type: kubevirt
+ kubeconfig: _path_to_kubeconfig
 ```
 
 You can use additional parameters for the Kubevirt section:
@@ -464,11 +463,7 @@ You can use additional parameters for the Kubevirt section:
 - `kubeconfig` kubeconfig file path
 - `context` the k8s context to use.
 - `pool` your default storageclass. can also be set as blank, if no storage class should try to bind pvcs.
-- `host` k8s api node .Also used for tunneling ssh.
-- `port` k8s api port.
-- `ca_file` optional certificate path.
 - `namespace` target namespace.
-- `token` token, either from user or service account.
 - `tags` additional list of tags in a key=value format to put to all created vms in their *nodeSelector*. Can be further indicated at profile or plan level in which case values are combined. This provides an easy way to force vms to run on specific nodes, by matching labels.
 - `access_mode` Way to access vms other ssh. Defaults to NodePort,in which case a svc with a nodeport pointing to the ssh port of the vm will be created. Otherpossible values are LoadBalancer to create a svc of type loadbalancer to point to the vm or External to connect using the sdn ip of the vm. If tunnel options are set, they take precedence
 - `volume_mode` Volume Mode. Defaults to Filesystem (Block can be specified instead).
@@ -502,7 +497,7 @@ SECRET=`kubectl get sa $SERVICEACCOUNT -n $NAMESPACE -o jsonpath={.secrets[0].na
 kubectl get secret $SECRET -n $NAMESPACE -o jsonpath={.data.token} | base64 -d
 ```
 
-Note that you can shape a kubeconfig providing data as in this sample
+You can then shape a kubeconfig providing data as in this sample
 
 ```
 apiVersion: v1
@@ -532,13 +527,7 @@ On OpenShift, you can simply use
 oc whoami -t
 ```
 
-*kubectl* is currently a hard requirement for consoles
-
-To use this provider with kcli rpm, you'll need to install 
-
-```
-dnf -y install python3-kubernetes
-```
+*kubectl* (or *oc*) is the only requirement
 
 ## Openstack
 
