@@ -765,7 +765,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     sno_disk = data['sno_disk']
     sno_ctlplanes = data['sno_ctlplanes'] or baremetal_ctlplane
     sno_workers = data['sno_workers']
-    ignore_hosts = data['ignore_hosts']
+    ignore_hosts = data['ignore_hosts'] or sslip
     if sno:
         if sno_disk is None:
             warning("sno_disk will be discovered")
