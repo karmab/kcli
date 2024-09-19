@@ -19,6 +19,7 @@ recursive-include kvirt/cluster/rke2 *
 recursive-include kvirt/cluster/profiles *
 recursive-include kvirt/version *
 recursive-include kvirt/common *
+recursive-include kvirt/kubecommon *
 recursive-include kvirt/expose *
 recursive-include kvirt/providers/aws *
 recursive-include kvirt/providers/gcp *

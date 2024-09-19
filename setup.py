@@ -9,7 +9,6 @@ AZURE = ['azure-mgmt-compute', 'azure-mgmt-network', 'azure-mgmt-core', 'azure-i
          'azure-mgmt-storage', 'azure-mgmt-msi', 'azure-mgmt-authorization']
 GCP = ['google-api-python-client', 'google-auth-httplib2', 'google-cloud-dns', 'google-cloud-storage',
        'google-cloud-container', 'google-cloud-compute']
-KUBEVIRT = ['kubernetes']
 OPENSTACK = ['python-cinderclient', 'python-neutronclient', 'python-glanceclient', 'python-keystoneclient',
              'python-novaclient', 'python-swiftclient']
 OVIRT = ['ovirt-engine-sdk-python']
@@ -19,8 +18,7 @@ VSPHERE = ['pyvmomi', 'cryptography']
 IBMCLOUD = ['google-crc32c==1.1.2', 'ibm_vpc', 'ibm-cos-sdk', 'ibm-platform-services', 'ibm-cloud-networking-services']
 #           'cos-aspera']
 EXTRAS = ['pyghmi']
-ALL = ['podman'] + ['websockify'] + EXTRAS + AWS + GCP + KUBEVIRT + OPENSTACK + OVIRT\
-    + PACKET + VSPHERE + IBMCLOUD + AZURE
+ALL = ['podman'] + ['websockify'] + EXTRAS + AWS + GCP + OPENSTACK + OVIRT + PACKET + VSPHERE + IBMCLOUD + AZURE
 
 description = 'Provisioner/Manager for Libvirt/Vsphere/Aws/Gcp/Kubevirt/Ovirt/Openstack/IBM Cloud and containers'
 long_description = description
@@ -47,7 +45,6 @@ setup(
         'azure': AZURE,
         'gcp': GCP,
         'ibm': IBMCLOUD,
-        'kubevirt': KUBEVIRT,
         'openstack': OPENSTACK,
         'ovirt': OVIRT,
         'packet': PACKET,
