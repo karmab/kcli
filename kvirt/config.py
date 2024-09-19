@@ -2077,7 +2077,7 @@ class Kconfig(Kbaseconfig):
                         currentmemory = currentvm['memory']
                         currentimage = currentvm.get('template')
                         currentimage = currentvm.get('image', currentimage)
-                        currentcpus = int(currentvm['cpus'])
+                        currentcpus = int(currentvm['numcpus'])
                         currentnets = currentvm['nets']
                         currentdisks = currentvm['disks']
                         currentflavor = currentvm.get('flavor')
