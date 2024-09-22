@@ -1772,7 +1772,7 @@ def get_helm(version='latest', debug=False):
     call(helmcmd, shell=True)
 
 
-def kube_create_app(config, appname, appdir, overrides={}, outputdir=None):
+def create_app_kube(config, appname, appdir, overrides={}, outputdir=None):
     appdata = {'name': appname, 'cluster': 'mykube', 'domain': 'karmalabs.corp', 'ctlplanes': 1, 'workers': 0}
     cwd = os.getcwd()
     os.environ["PATH"] += f":{cwd}"
@@ -1804,7 +1804,7 @@ def kube_create_app(config, appname, appdir, overrides={}, outputdir=None):
     return result
 
 
-def kube_delete_app(config, appname, appdir, overrides={}):
+def delete_app_kube(config, appname, appdir, overrides={}):
     appdata = {'name': appname, 'cluster': 'mykube', 'domain': 'karmalabs.corp', 'ctlplanes': 1, 'workers': 0}
     found = False
     cwd = os.getcwd()
@@ -1838,7 +1838,7 @@ def kube_delete_app(config, appname, appdir, overrides={}):
     return result
 
 
-def openshift_create_app(config, appname, appdir, overrides={}, outputdir=None):
+def create_app_openshift(config, appname, appdir, overrides={}, outputdir=None):
     appdata = {'name': appname, 'cluster': 'myopenshift', 'domain': 'karmalabs.corp', 'ctlplanes': 1, 'workers': 0}
     install_cr = overrides.get('install_cr', True)
     cwd = os.getcwd()
@@ -1891,7 +1891,7 @@ def openshift_create_app(config, appname, appdir, overrides={}, outputdir=None):
     return result
 
 
-def openshift_delete_app(config, appname, appdir, overrides={}):
+def delete_app_openshift(config, appname, appdir, overrides={}):
     appdata = {'name': appname, 'cluster': 'myopenshift', 'domain': 'karmalabs.corp', 'ctlplanes': 1, 'workers': 0}
     cwd = os.getcwd()
     os.environ["PATH"] += f":{cwd}"

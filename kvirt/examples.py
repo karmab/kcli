@@ -660,27 +660,27 @@ $ kcli update baremetal-host -P user=admin -P password=admin 10.10.10.10 -P secu
 $ kcli update baremetal-host -u admin -p admin 10.10.10.10 -P secureboot=true
 """
 
-ocdownload = """# Download 4.13 stable
-$ kcli download oc -P version=stable -P tag=4.13
+ocdownload = """# Download 4.16 stable
+$ kcli download oc -P version=stable -P tag=4.16
 
 # Download specific tag
-$ kcli download oc -P version=tag -P tag=4.11.16
+$ kcli download oc -P version=tag -P tag=4.16.4
 
 # Download nightly
-$ kcli download oc -P version=nightly -P tag=4.14
+$ kcli download oc -P version=nightly -P tag=4.16
 
 # Download older version from CI
-$ kcli download oc -P version=ci -P tag=4.10
+$ kcli download oc -P version=ci -P tag=4.14
 """
 
-ocmirrordownload = """# Download 4.13 stable
-$ kcli download oc-mirror -P version=stable -P tag=4.13
+ocmirrordownload = """# Download 4.16 stable
+$ kcli download oc-mirror -P version=stable -P tag=4.16
 
 # Download specific tag
-$ kcli download oc-mirror -P version=tag -P tag=4.11.16
+$ kcli download oc-mirror -P version=tag -P tag=4.16.4
 
 # Download nightly
-$ kcli download oc-mirror -P version=nightly -P tag=4.14
+$ kcli download oc-mirror -P version=nightly -P tag=4.16
 
 """
 
@@ -688,19 +688,19 @@ openshiftdownload = """# Download latest stable
 $ kcli download openshift-install
 
 # Download older stable version
-$ kcli download openshift-install -P version=tag -P tag=4.15
+$ kcli download openshift-install -P version=tag -P tag=4.14
 
 # Download specific tag
-$ kcli download openshift-install -P version=tag -P tag=4.11.16
+$ kcli download openshift-install -P version=tag -P tag=4.16.4
 
 # Download nightly
-$ kcli download openshift-install -P version=nightly -P tag=4.14
+$ kcli download openshift-install -P version=nightly -P tag=4.16
 
 # Download dev-preview version
 $ kcli download openshift-install -P version=dev-preview -P tag=4.17
 
 # Download older version from CI
-$ kcli download openshift-install -P version=ci -P tag=4.10
+$ kcli download openshift-install -P version=ci -P tag=4.14
 """
 
 securitygroupcreate = """# Create a security group named mygroup and opening tcp ports 22 and 25

@@ -1,5 +1,5 @@
 from ipaddress import ip_network
-from kvirt.common import error, success, pprint, warning, get_kubectl, info2, container_mode, kube_create_app
+from kvirt.common import error, success, pprint, warning, get_kubectl, info2, container_mode, create_app_kube
 from kvirt.common import deploy_cloud_storage, wait_cloud_dns, update_etc_hosts, fix_typos, get_cluster_api_vips
 from kvirt.common import wait_for_nodes
 import os
@@ -277,7 +277,7 @@ def create(config, plandir, cluster, overrides):
                 pprint(f"Adding app {app}")
                 if f'{app}_version' not in overrides:
                     app_data[f'{app}_version'] = 'latest'
-                kube_create_app(config, app, appdir, overrides=app_data)
+                create_app_kube(config, app, appdir, overrides=app_data)
     if ctlplanes + workers > 1:
         ready = wait_for_nodes(ctlplanes + workers)
         if not ready:
