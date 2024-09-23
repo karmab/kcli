@@ -1,9 +1,10 @@
-from kvirt.common import error
+from kvirt.common import warning, error
 from math import ceil
+import pyVmomi
 from pyVmomi import vim, vmodl
 import sys
 import time
-import pyVmomi
+from uuid import UUID
 
 
 def waitForMe(t):
@@ -217,7 +218,7 @@ def createscsispec():
     return scsispec
 
 
-def creatediskspec(unit_number, disksize, ds, diskmode, thin=False):
+def creatediskspec(unit_number, disksize, ds, diskmode, thin=False, uuid=None):
     ckey = 1000
     diskspec = vim.vm.device.VirtualDeviceSpec()
     diskspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
@@ -233,6 +234,13 @@ def creatediskspec(unit_number, disksize, ds, diskmode, thin=False):
     diskfilebacking.fileName = filename
     diskfilebacking.diskMode = diskmode
     diskfilebacking.thinProvisioned = True if thin else False
+    if uuid is not None:
+        if uuid is not None:
+            try:
+                UUID(uuid)
+                diskfilebacking.uuid = uuid
+            except:
+                warning(f"{uuid} it not a valid disk uuid")
     vd.backing = diskfilebacking
     return diskspec
 

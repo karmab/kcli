@@ -501,6 +501,7 @@ class Kconfig(Kbaseconfig):
         kubetype = overrides.get('kubetype')
         k = self.k if k is None else k
         tunnel = self.tunnel
+        esx = self.type == 'vsphere' and self.k.esx
         profile = profile or overrides.get('image') or 'kvirt'
         full_volumes = self.k.volumes()
         volumes = [os.path.basename(v) for v in full_volumes]
@@ -517,8 +518,12 @@ class Kconfig(Kbaseconfig):
             new_profile = os.path.basename(profile)
             vmprofiles[new_profile] = {'image': profile}
             profile = new_profile
-        elif profile in IMAGES or profile == 'rhcos4000':
+        elif profile in IMAGES or profile == 'rhcos4000' or esx:
             vmprofiles[profile] = {'image': profile}
+        elif profile.startswith('http'):
+            new_profile = os.path.basename(profile)
+            vmprofiles[new_profile] = {'image': profile}
+            profile = new_profile
         elif profile.startswith('rhcos-4') and profile.endswith('qcow2') and self.type not in cloudplatforms:
             vmprofiles[profile] = {'image': profile}
         elif profile == 'kvirt':
@@ -530,7 +535,10 @@ class Kconfig(Kbaseconfig):
         profilename = profile
         profile = vmprofiles[profile]
         pimage = profile.get('image', 'XXX')
-        if not onlyassets and self.type not in cloudplatforms and pimage in IMAGES and pimage not in volumes:
+        pimage_missing = pimage in IMAGES and pimage not in volumes
+        esx_image = esx and 'image_url' in overrides
+        download_needed = pimage is not None and pimage.startswith('http')
+        if not onlyassets and self.type not in cloudplatforms and (pimage_missing or esx_image or download_needed):
             pprint(f"Image {pimage} not found. Downloading")
             pimage_data = {'pool': overrides.get('pool') or self.pool, 'image': pimage}
             pimage_size = profile.get('kubevirt_disk_size') or profile.get('size')
@@ -539,8 +547,13 @@ class Kconfig(Kbaseconfig):
             if profilename.startswith('rhcos-4') and profilename.endswith('qcow2'):
                 pimage_data['image'] = profilename.split('.')[0].replace('rhcos-4', 'rhcos4')
                 pimage_data['url'] = get_rhcos_url_from_file(profilename, _type=self.type)
-            if self.type == 'vsphere' and self.k.esx:
+            if esx:
                 pimage_data['name'] = name
+                pimage_data['url'] = overrides.get('image_url')
+            if download_needed:
+                pimage_data['name'] = profilename
+                pimage_data['url'] = pimage
+                vmprofiles[profilename]['image'] = profilename
             self.download_image(**pimage_data)
         if not customprofile:
             profile.update(overrides)
@@ -746,7 +759,6 @@ class Kconfig(Kbaseconfig):
             iso = None
         if scripts:
             scripts_overrides = overrides.copy()
-            scripts_overrides.update(os.environ)
             for script in scripts:
                 if onfly is not None and '~' not in script:
                     destdir = basedir
@@ -2070,25 +2082,6 @@ class Kconfig(Kbaseconfig):
                 if customprofile:
                     customprofile.update(profile)
                     profile = customprofile
-                if 'playbook' in profile and profile['playbook']:
-                    if 'scripts' not in profile and 'files' not in profile and 'cmds' not in profile:
-                        pprint(f"Skipping empty playbook for {name}")
-                    else:
-                        if 'image' in profile and 'rhel' in profile['image']\
-                                and 'rhnregister' in profile and profile['rhnregister']:
-                            warning(f"Make sure to subscribe {name} to Red Hat network")
-                        if 'privatekey' in profile and profile['privatekey']:
-                            warning(f"Copy your private key to {name}")
-                        for net in profile.get('nets', []):
-                            if 'ip' in net and 'mask' in net and 'gateway' in net:
-                                ip, mask, gateway = net['ip'], net['mask'], net['gateway']
-                                warning(f"Add manually this network {ip}/{mask} with gateway {gateway}")
-                            if 'vips' in net:
-                                vips = ','.join(net['vips'])
-                                warning(f"Add manually vips {vips}")
-                        pprint("Make sure to export ANSIBLE_JINJA2_EXTENSIONS=jinja2.ext.do")
-                        self.create_vm_playbook(name, profile, overrides=overrides, store=True)
-                        continue
                 if z.exists(name) and not onlyassets:
                     if not update:
                         pprint(f"{name} skipped on {vmclient}!")
@@ -2099,7 +2092,7 @@ class Kconfig(Kbaseconfig):
                         currentmemory = currentvm['memory']
                         currentimage = currentvm.get('template')
                         currentimage = currentvm.get('image', currentimage)
-                        currentcpus = int(currentvm['cpus'])
+                        currentcpus = int(currentvm['numcpus'])
                         currentnets = currentvm['nets']
                         currentdisks = currentvm['disks']
                         currentflavor = currentvm.get('flavor')
@@ -2430,7 +2423,10 @@ class Kconfig(Kbaseconfig):
             pprint(f"Using pool {pool}")
         if image is not None:
             if url is None:
-                if arch != 'x86_64':
+                if arch == 'aarch64':
+                    IMAGES.update({i: IMAGES[i].replace('x86_64', arch).replace('amd64', 'arm64')
+                                   for i in IMAGES})
+                elif arch != 'x86_64':
                     IMAGES.update({i: IMAGES[i].replace('x86_64', arch).replace('amd64', arch)
                                    for i in IMAGES})
                 if image not in IMAGES:

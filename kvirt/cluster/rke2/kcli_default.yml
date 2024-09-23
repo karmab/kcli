@@ -39,7 +39,6 @@ ctlplanes_threaded: false
 workers_threaded: false
 keys: []
 tempkey: false
-wait_ready: false
 autoscale: False
 async: false
 cloud_dns: false

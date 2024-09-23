@@ -143,6 +143,9 @@ $ kcli create vm -i centos9stream
 # Create a centos vm named myvm customizing its memory and cpus
 $ kcli create vm -i centos9stream -P memory=4096 -P numcpus=4 myvm
 
+# Create a centos vm named myvm with specific cpu topology
+$ kcli create vm -i centos9stream -P cores=4 -P sockets=2 -P threads=2 myvm
+
 # Pass disks, networks and even cmds
 $ kcli create vm -i centos9stream -P disks=[10,20] -P nets=[default] -P cmds=['yum -y install nc']
 
@@ -192,14 +195,14 @@ $ kcli create vm -P iso=xxx.iso myvm
 # Create a GCP vm with 2 nvidia-tesla-t4 gpus
 $ kcli create vm -i ubuntu-minimal-2204-lts -P gpus=['{"type": "nvidia-tesla-t4", "count": 2}'] myvm
 
-# Create 3 vm to emulate baremetal
+# Create 3 vms to emulate baremetal
 $ kcli create vm -P start=false -P memory=20480 -P numcpus=16 -P disks=[200] -P uefi=true -P nets=[default] -c 3 myclu
 
 # Create an sriov enabled vm (on KVM only)
 $ kcli create vm -i centos9stream -P nets=['{"name": "default"}','{"name": "default", "sriov": "true"}']
 """
 
-vmconsole = """# Open a graphical console for vm ( only shows the command if using container)
+vmconsole = """# Open a graphical console for vm (only show the command if using container)
 $ kcli console myvm
 
 # Get a serial console to the vm
@@ -657,41 +660,47 @@ $ kcli update baremetal-host -P user=admin -P password=admin 10.10.10.10 -P secu
 $ kcli update baremetal-host -u admin -p admin 10.10.10.10 -P secureboot=true
 """
 
-ocdownload = """# Download 4.13 stable
-$ kcli download oc -P version=stable -P tag=4.13
+ocdownload = """# Download 4.16 stable
+$ kcli download oc -P version=stable -P tag=4.16
 
 # Download specific tag
-$ kcli download oc -P version=tag -P tag=4.11.16
+$ kcli download oc -P version=tag -P tag=4.16.4
 
 # Download nightly
-$ kcli download oc -P version=nightly -P tag=4.14
+$ kcli download oc -P version=nightly -P tag=4.16
 
 # Download older version from CI
-$ kcli download oc -P version=ci -P tag=4.10
+$ kcli download oc -P version=ci -P tag=4.14
 """
 
-ocmirrordownload = """# Download 4.13 stable
-$ kcli download oc-mirror -P version=stable -P tag=4.13
+ocmirrordownload = """# Download 4.16 stable
+$ kcli download oc-mirror -P version=stable -P tag=4.16
 
 # Download specific tag
-$ kcli download oc-mirror -P version=tag -P tag=4.11.16
+$ kcli download oc-mirror -P version=tag -P tag=4.16.4
 
 # Download nightly
-$ kcli download oc-mirror -P version=nightly -P tag=4.14
+$ kcli download oc-mirror -P version=nightly -P tag=4.16
 
 """
 
-openshiftdownload = """# Download 4.13 stable
-$ kcli download openshift-install -P version=stable -P tag=4.13
+openshiftdownload = """# Download latest stable
+$ kcli download openshift-install
+
+# Download older stable version
+$ kcli download openshift-install -P version=tag -P tag=4.14
 
 # Download specific tag
-$ kcli download openshift-install -P version=tag -P tag=4.11.16
+$ kcli download openshift-install -P version=tag -P tag=4.16.4
 
 # Download nightly
-$ kcli download openshift-install -P version=nightly -P tag=4.14
+$ kcli download openshift-install -P version=nightly -P tag=4.16
+
+# Download dev-preview version
+$ kcli download openshift-install -P version=dev-preview -P tag=4.17
 
 # Download older version from CI
-$ kcli download openshift-install -P version=ci -P tag=4.10
+$ kcli download openshift-install -P version=ci -P tag=4.14
 """
 
 securitygroupcreate = """# Create a security group named mygroup and opening tcp ports 22 and 25

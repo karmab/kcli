@@ -42,7 +42,7 @@ def sdn_ip(ip, kubetype, cluster_network):
 class Ksphere:
     def __init__(self, host, user, password, datacenter, cluster, debug=False, isofolder=None,
                  filtervms=False, filteruser=False, filtertag=None, category='kcli', basefolder=None, dvs=True,
-                 import_network='VM Network', timeout=2700, force_pool=False, restricted=False, serial=False):
+                 import_network='VM Network', timeout=3600, force_pool=False, restricted=False, serial=False):
         if timeout < 1:
             smart_stub = connect.SmartStubAdapter(host=host, port=443, sslContext=_create_unverified_context(),
                                                   connectionPoolTimeout=0)
@@ -76,7 +76,8 @@ class Ksphere:
         self.networks = []
         self.dvs = dvs
         self.portgs = {}
-        self.restricted = restricted
+        self.esx = '.' in cluster and datacenter == 'ha-datacenter'
+        self.restricted = restricted or self.esx
         self.serial = serial
         self.import_network = import_network
         self.force_pool = force_pool
@@ -108,7 +109,6 @@ class Ksphere:
                     return
         else:
             self.basefolder = self.dc.vmFolder
-        self.esx = '.' in cluster and datacenter == 'ha-datacenter'
 
     def set_networks(self):
         si = self.si
@@ -211,6 +211,14 @@ class Ksphere:
             confspec.annotation = name
             confspec.memoryMB = memory
             confspec.memoryHotAddEnabled = memoryhotplug
+            cores = overrides.get('cores')
+            sockets, cores = overrides.get('sockets', 1), overrides.get('cores')
+            if cores is not None and isinstance(cores, int) and isinstance(sockets, int):
+                confspec.numCoresPerSocket = cores
+                numcpus = cores * sockets
+            threads = overrides.get('threads')
+            if threads is not None and isinstance(threads, int):
+                confspec.simultaneousThreads = threads
             confspec.numCPUs = numcpus
             confspec.cpuHotAddEnabled = cpuhotplug
             confspec.cpuHotRemoveEnabled = cpuhotplug
@@ -348,6 +356,7 @@ class Ksphere:
         devconfspec = []
         unit_number = 1
         for index, disk in enumerate(disks):
+            diskuuid = None
             if disk is None:
                 disksize = default_disksize
                 diskthin = default_diskthin
@@ -368,6 +377,13 @@ class Ksphere:
                 diskthin = disk.get('thin', default_diskthin)
                 diskinterface = disk.get('interface', default_diskinterface)
                 diskpool = disk.get('pool', default_pool)
+                diskuuid = disk.get('uuid') or disk.get('wwn')
+                if diskuuid is not None:
+                    try:
+                        UUID(diskuuid)
+                    except:
+                        warning(f"{diskuuid} it not a valid disk uuid")
+                        diskuuid = None
             if index < len(currentdisks) and image is not None:
                 currentdisk = currentdisks[index]
                 currentsize = convert(1000 * currentdisk.capacityInKB, GB=False)
@@ -390,7 +406,7 @@ class Ksphere:
                 devconfspec.append(scsispec)
             if unit_number == 7:
                 unit_number = 8
-            diskspec = creatediskspec(unit_number, disksize, datastore, diskmode, diskthin)
+            diskspec = creatediskspec(unit_number, disksize, datastore, diskmode, diskthin, diskuuid)
             devconfspec.append(diskspec)
             unit_number += 1
         # NICSPEC
@@ -468,8 +484,22 @@ class Ksphere:
         confspec.deviceChange = devconfspec
         if nested:
             confspec.nestedHVEnabled = True
+        uefi = overrides.get('uefi', False)
+        uefi_legacy = overrides.get('uefi_legacy', False)
+        secureboot = overrides.get('secureboot', False)
+        if secureboot or uefi or uefi_legacy:
+            confspec.firmware = 'efi'
+            if secureboot:
+                confspec.bootOptions = vim.vm.BootOptions(efiSecureBootEnabled=True)
         t = vm.Reconfigure(confspec)
         waitForMe(t)
+        if overrides.get('boot_order', False):
+            key_disks = [d.key for d in vm.config.hardware.device if isinstance(d, vim.vm.device.VirtualDisk)]
+            boot_disks = [vim.vm.BootOptions.BootableDiskDevice(deviceKey=key) for key in key_disks]
+            confspec = vim.vm.ConfigSpec()
+            confspec.bootOptions = vim.vm.BootOptions(bootOrder=boot_disks)
+            t = vm.Reconfigure(confspec)
+            waitForMe(t)
         if macs:
             self.set_macs(name, macs)
         if 'vmgroup' in overrides:
@@ -1294,7 +1324,6 @@ class Ksphere:
         return ['default']
 
     def add_image(self, url, pool, short=None, cmds=[], name=None, size=None, convert=False):
-        downloaded = False
         si = self.si
         rootFolder = self.rootFolder
         clu = find(si, rootFolder, vim.ComputeResource, self.clu)
@@ -1317,7 +1346,6 @@ class Ksphere:
         if os.path.exists(url):
             pprint(f"Using {url} as path")
         elif not os.path.exists(f'/tmp/{shortimage}'):
-            downloaded = True
             pprint(f"Downloading locally {shortimage}")
             downloadcmd = f"curl -kLo /tmp/{shortimage} -f '{url}'"
             code = os.system(downloadcmd)
@@ -1435,8 +1463,8 @@ class Ksphere:
                 sys.exit(1)
         if not self.esx:
             self.convert_to_template(name)
-        if downloaded:
-            os.remove(f'/tmp/{shortimage}')
+            if os.path.exists(f'/tmp/{shortimage}'):
+                os.remove(f'/tmp/{shortimage}')
             if os.path.exists(vmdk_path):
                 os.remove(vmdk_path)
         return {'result': 'success'}

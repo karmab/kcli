@@ -808,7 +808,6 @@ class Kbaseconfig:
         with open(inputfile, 'r') as entries:
             overrides.update(self.overrides)
             overrides.update({'plan': plan})
-            overrides.update(os.environ)
             try:
                 entries = templ.render(overrides)
             except TemplateError as e:
@@ -1138,16 +1137,16 @@ class Kbaseconfig:
     def create_app_openshift(self, app, overrides={}, outputdir=None):
         appdir = f"{os.path.dirname(openshift.create.__code__.co_filename)}/apps"
         if app in kdefaults.LOCAL_OPENSHIFT_APPS:
-            common.kube_create_app(self, app, appdir, overrides=overrides, outputdir=outputdir)
+            common.create_app_kube(self, app, appdir, overrides=overrides, outputdir=outputdir)
         else:
-            common.openshift_create_app(self, app, appdir, overrides=overrides, outputdir=outputdir)
+            common.create_app_openshift(self, app, appdir, overrides=overrides, outputdir=outputdir)
 
     def delete_app_openshift(self, app, overrides={}):
         appdir = f"{os.path.dirname(openshift.create.__code__.co_filename)}/apps"
         if app in kdefaults.LOCAL_OPENSHIFT_APPS:
-            common.kube_delete_app(self, app, appdir, overrides=overrides)
+            common.delete_app_kube(self, app, appdir, overrides=overrides)
         else:
-            common.openshift_delete_app(self, app, appdir, overrides=overrides)
+            common.delete_app_openshift(self, app, appdir, overrides=overrides)
 
     def info_app_openshift(self, app):
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
@@ -1172,10 +1171,13 @@ class Kbaseconfig:
 
     def download_openshift_installer(self, overrides={}):
         pull_secret = overrides.get('pull_secret', 'openshift_pull.json')
-        version = overrides.get('version', 'stable')
         upstream = overrides.get('upstream', False)
         baremetal = overrides.get('baremetal', False)
         tag = overrides.get('tag', kdefaults.OPENSHIFT_TAG)
+        default_version = 'dev-preview' if 'ec' in tag else 'stable'
+        version = overrides.get('version', default_version)
+        if 'rc' in tag:
+            version = 'stable'
         macosx = os.path.exists('/Users')
         if upstream:
             run = openshift.get_upstream_installer(tag, version=version, debug=self.debug)
@@ -1192,60 +1194,6 @@ class Kbaseconfig:
         if run != 0:
             error("Couldn't download openshift-install")
         return run
-
-    def create_vm_playbook(self, name, profile, overrides={}, store=False, env=None):
-        jinjadir = os.path.dirname(jinjafilters.__file__)
-        if not os.path.exists('filter_plugins'):
-            pprint("Creating symlink to kcli jinja filters")
-            os.symlink(jinjadir, 'filter_plugins')
-        if env is None:
-            playbookdir = os.path.dirname(common.__file__)
-            env = Environment(loader=FileSystemLoader(playbookdir), extensions=['jinja2.ext.do'],
-                              trim_blocks=True, lstrip_blocks=True)
-            for jinjafilter in jinjafilters.jinjafilters:
-                env.filters[jinjafilter] = jinjafilters.jinjafilters[jinjafilter]
-        dirs = []
-        if 'scripts' not in profile:
-            profile['scripts'] = []
-        profile['cmds'] = '\n'.join(profile['cmds']) if 'cmds' in profile else None
-        if 'files' in profile:
-            files = []
-            for _file in profile['files']:
-                if isinstance(_file, str):
-                    entry = {'path': f'/root/{_file}', 'origin': _file, 'mode': 700}
-                else:
-                    entry = _file
-                if os.path.isdir(entry['origin']):
-                    dirs.append(entry['origin'])
-                    continue
-                if entry['path'].count('/') > 2 and os.path.dirname(entry['path']) not in dirs:
-                    dirs.append(os.path.dirname(entry['path']))
-                files.append(entry)
-            profile['files'] = files
-        else:
-            profile['files'] = []
-        try:
-            templ = env.get_template(os.path.basename("playbook.j2"))
-        except TemplateSyntaxError as e:
-            error(f"Error rendering line {e.lineno} of file {e.filename}. Got: {e.message}")
-            sys.exit(1)
-        except TemplateError as e:
-            error(f"Error rendering playbook. Got: {e.message}")
-            sys.exit(1)
-        hostname = overrides.get('hostname', name)
-        profile['hostname'] = hostname
-        if 'info' in overrides:
-            del overrides['info']
-        profile['overrides'] = overrides
-        profile['dirs'] = dirs
-        playbookfile = templ.render(**profile)
-        playbookfile = '\n'.join([line for line in playbookfile.split('\n') if line.strip() != ""])
-        if store:
-            pprint(f"Generating playbook_{hostname}.yml")
-            with open(f"playbook_{hostname}.yml", 'w') as f:
-                f.write(playbookfile)
-        else:
-            print(playbookfile)
 
     def create_plan_template(self, directory, overrides, skipfiles=False, skipscripts=False):
         pprint(f"Creating plan template in {directory}...")

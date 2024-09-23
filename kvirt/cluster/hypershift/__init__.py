@@ -364,7 +364,7 @@ def create(config, plandir, cluster, overrides):
     data['cluster'] = clustervalue
     data['kube'] = data['cluster']
     data['kubetype'] = 'hypershift'
-    ignore_hosts = data.get('ignore_hosts', False)
+    ignore_hosts = data['ignore_hosts'] or data['sslip']
     pprint(f"Deploying cluster {clustervalue}")
     plan = cluster if cluster is not None else clustervalue
     upstream = data['upstream']
@@ -611,7 +611,6 @@ def create(config, plandir, cluster, overrides):
         domain = f"{ingress_ip.replace('.', '-').replace(':', '-')}.sslip.io"
         data['domain'] = domain
         pprint(f"Setting domain to {domain}")
-        ignore_hosts = False
     assetsdata = data.copy()
     copy2(f'{kubeconfigdir}/{kubeconfig}', f"{clusterdir}/kubeconfig.mgmt")
     cidr = data.get('cidr', '192.168.122.0/24')

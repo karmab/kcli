@@ -16,7 +16,7 @@ from kvirt import examples
 from kvirt.nameutils import get_random_name
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.common import error, pprint, success, warning, ssh, _ssh_credentials, container_mode
-from kvirt.common import get_git_version, compare_git_versions, interactive_kube, interactive_vm
+from kvirt.common import get_git_version, compare_git_versions, interactive_kube, interactive_vm, convert_yaml_to_cmd
 from kvirt.config import Kconfig
 from kvirt.containerconfig import Kcontainerconfig
 from kvirt.defaults import IMAGES, VERSION, LOCAL_OPENSHIFT_APPS, SSH_PUB_LOCATIONS, PLANTYPES
@@ -2548,27 +2548,27 @@ def download_plan(args):
 
 def download_kubectl(args):
     overrides = handle_parameters(args.param, args.paramfile)
-    common.get_kubectl(version=overrides.get('version', 'latest'))
+    common.get_kubectl(version=overrides.get('version', 'latest'), debug=args.debug)
 
 
 def download_helm(args):
     overrides = handle_parameters(args.param, args.paramfile)
-    common.get_helm(version=overrides.get('version', 'latest'))
+    common.get_helm(version=overrides.get('version', 'latest'), debug=args.debug)
 
 
 def download_hypershift(args):
     overrides = handle_parameters(args.param, args.paramfile)
-    common.get_hypershift(version=overrides.get('version', 'latest'))
+    common.get_hypershift(version=overrides.get('version', 'latest'), debug=args.debug)
 
 
 def download_oc(args):
     overrides = handle_parameters(args.param, args.paramfile)
-    common.get_oc(version=overrides.get('version', 'stable'), tag=overrides.get('tag', '4.16'))
+    common.get_oc(version=overrides.get('version', 'stable'), tag=overrides.get('tag', '4.16'), debug=args.debug)
 
 
 def download_oc_mirror(args):
     overrides = handle_parameters(args.param, args.paramfile)
-    common.get_oc_mirror(version=overrides.get('version', 'stable'), tag=overrides.get('tag', '4.16'))
+    common.get_oc_mirror(version=overrides.get('version', 'stable'), tag=overrides.get('tag', '4.16'), debug=args.debug)
 
 
 def download_openshift_installer(args):
@@ -2605,7 +2605,10 @@ def render_file(args):
         error(f"Input file {inputfile} not found")
         sys.exit(1)
     renderfile = baseconfig.process_inputfile(plan, inputfile, overrides=overrides, ignore=ignore)
-    print(renderfile)
+    if args.cmd:
+        convert_yaml_to_cmd(yaml.safe_load(renderfile))
+    else:
+        print(renderfile)
 
 
 def create_vmdata(args):
@@ -4633,14 +4636,17 @@ def cli():
     hostenable_parser.add_argument('name', metavar='NAME')
     hostenable_parser.set_defaults(func=enable_host)
 
-    vmexport_desc = 'Export Vm'
-    vmexport_epilog = f"Examples:\n\n{examples.vmexport}"
-    vmexport_parser = subparsers.add_parser('export', description=vmexport_desc, help=vmexport_desc,
-                                            epilog=vmexport_epilog,
-                                            formatter_class=rawhelp)
+    export_desc = 'Export Object'
+    export_parser = subparsers.add_parser('export', description=export_desc, help=export_desc)
+    export_subparsers = export_parser.add_subparsers(metavar='', dest='subcommand_export')
+
+    vmexport_desc = 'Export vm'
+    vmexport_epilog = None
+    vmexport_parser = export_subparsers.add_parser('vm', description=vmexport_desc, help=vmexport_desc,
+                                                   epilog=vmexport_epilog, formatter_class=rawhelp)
     vmexport_parser.add_argument('-i', '--image', help='Name for the generated image. Uses the vm name otherwise',
                                  metavar='IMAGE')
-    vmexport_parser.add_argument('names', metavar='VMNAMES', nargs='*')
+    vmexport_parser.add_argument('vm', metavar='VM', nargs='?')
     vmexport_parser.set_defaults(func=export_vm)
 
     expose_desc = 'Expose Object'
@@ -5090,6 +5096,7 @@ def cli():
 
     render_desc = 'Render file'
     render_parser = subparsers.add_parser('render', description=render_desc, help=render_desc, parents=[parent_parser])
+    render_parser.add_argument('-c', '--cmd', action='store_true', help='Convert to command line')
     render_parser.add_argument('-f', '--inputfile', help='Input Plan/File', default='kcli_plan.yml')
     render_parser.add_argument('-i', '--ignore', action='store_true', help='Ignore missing variables')
     render_parser.set_defaults(func=render_file)

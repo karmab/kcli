@@ -124,7 +124,7 @@ def update_pull_secret(pull_secret, registry, user, password):
 
 def update_disconnected_registry(config, plandir, cluster, data):
     disconnected_url = data['disconnected_url']
-    pull_secret = data['pull_secret']
+    pull_secret_path = data['pull_secret_path']
     version = data['version']
     tag = data.get('ori_tag') or data.get('tag')
     arch = data.get('arch', 'x86_64')
@@ -139,7 +139,7 @@ def update_disconnected_registry(config, plandir, cluster, data):
     call(f'sudo cp {clusterdir}/ca.crt /etc/pki/ca-trust/source/anchors ; sudo update-ca-trust extract',
          shell=True)
     pprint("Updating disconnected registry")
-    synccmd = f"oc adm release mirror -a {pull_secret} --from={get_release_image()} "
+    synccmd = f"oc adm release mirror -a {pull_secret_path} --from={get_release_image()} "
     synccmd += f"--to-release-image={disconnected_url}/openshift/release-images:{tag}-{arch} "
     synccmd += f"--to={disconnected_url}/openshift/release"
     pprint(f"Running {synccmd}")
@@ -149,7 +149,7 @@ def update_disconnected_registry(config, plandir, cluster, data):
         pprint("Mirroring extra releases")
         for extra_release in extra_releases:
             tag_and_arch = re.search(r":(.+)$", extra_release).group(1)
-            synccmd = f"oc adm release mirror -a {pull_secret} --from={extra_release} "
+            synccmd = f"oc adm release mirror -a {pull_secret_path} --from={extra_release} "
             synccmd += f"--to-release-image={disconnected_url}/openshift/release-images:{tag_and_arch} "
             synccmd += f"--to={disconnected_url}/openshift/release"
             pprint(f"Running {synccmd}")
@@ -173,7 +173,7 @@ def update_disconnected_registry(config, plandir, cluster, data):
     dockerdir = os.path.expanduser('~/.docker')
     if not os.path.isdir(dockerdir):
         os.mkdir(dockerdir)
-    copy2(pull_secret, f"{dockerdir}/config.json")
+    copy2(pull_secret_path, f"{dockerdir}/config.json")
     olmcmd = f"oc-mirror --ignore-history --config {clusterdir}/mirror-config.yaml docker://{disconnected_url}"
     olmcmd = ' || '.join([olmcmd for x in range(3)])
     pprint(f"Running {olmcmd}")
@@ -335,8 +335,8 @@ def get_release_image():
     return release_image
 
 
-def get_downstream_installer(version='stable', macosx=False, tag=None, debug=False,
-                             pull_secret='openshift_pull.json', baremetal=False):
+def get_downstream_installer(version='stable', macosx=False, tag=None, debug=False, pull_secret='openshift_pull.json',
+                             baremetal=False):
     if baremetal:
         offline = offline_image(version=version, tag=tag, pull_secret=pull_secret)
         binary = 'openshift-baremetal-install' if get_installer_minor(tag) < 16 else 'openshift-install'
@@ -347,13 +347,14 @@ def get_downstream_installer(version='stable', macosx=False, tag=None, debug=Fal
         if debug:
             pprint(cmd)
         return call(cmd, shell=True)
+    baselinks = {'stable': 'stable', 'dev-preview': 'candidate'}
     arch_map = {'aarch64': 'arm64', 's390x': 's390x'}
     arch = arch_map.get(os.uname().machine)
     repo = 'ocp-dev-preview' if version == 'dev-preview' else 'ocp'
     if tag is None:
         repo += '/{version}'
     elif str(tag).count('.') == 1:
-        baselink = 'stable' if version == 'stable' else 'latest'
+        baselink = baselinks.get(version, 'latest')
         repo += f'/{baselink}-{tag}'
     else:
         repo += f"/{tag.replace('-x86_64', '')}"
@@ -702,6 +703,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     data = safe_load(open(f'{plandir}/kcli_default.yml'))
     data.update(overrides)
     fix_typos(data)
+    esx = config.type == 'vsphere' and k.esx
+    data['esx'] = esx
     ctlplanes = data['ctlplanes']
     if ctlplanes <= 0:
         return {'result': 'failure', 'reason': f"Invalid number of ctlplanes {ctlplanes}"}
@@ -762,7 +765,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     sno_disk = data['sno_disk']
     sno_ctlplanes = data['sno_ctlplanes'] or baremetal_ctlplane
     sno_workers = data['sno_workers']
-    ignore_hosts = data['ignore_hosts']
+    ignore_hosts = data['ignore_hosts'] or sslip
     if sno:
         if sno_disk is None:
             warning("sno_disk will be discovered")
@@ -913,8 +916,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 data['api_ip'] = api_ip
                 warning(f"Using {api_ip} as api_ip")
             if public_api_ip is None:
-                public_api_ip = config.k.create_network_port(f"{cluster}-vip", network, ip=api_ip,
-                                                             floating=True)['floating']
+                public_api_ip = k.create_network_port(f"{cluster}-vip", network, ip=api_ip, floating=True)['floating']
     if not os.path.exists(pull_secret):
         return {'result': 'failure', 'reason': f"Missing pull secret file {pull_secret}"}
     if which('oc') is None:
@@ -937,7 +939,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         return {'result': 'failure', 'reason': f"Publickey file {pub_key} not found"}
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if os.path.exists(clusterdir):
-        if [v for v in config.k.list() if v.get('plan', 'kvirt') == cluster]:
+        if [v for v in k.list() if v.get('plan', 'kvirt') == cluster]:
             return {'result': 'failure', 'reason': f"Remove existing directory {clusterdir} or use --force"}
         else:
             pprint(f"Removing existing directory {clusterdir}")
@@ -1001,7 +1003,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             image_type = 'openstack'
         if provider == "proxmox":
             image_type = 'kvm'
-        region = config.k.region if provider == 'aws' else None
+        region = k.region if provider == 'aws' else None
         try:
             if upstream:
                 fcos_url = 'https://builds.coreos.fedoraproject.org/streams/stable.json'
@@ -1017,6 +1019,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             return {'result': 'failure', 'reason': msg}
         if provider in ['aws', 'gcp']:
             image = image_url
+        elif esx:
+            image = image_url
+            overrides['image_url'] = image
         else:
             if image_url.endswith('.vhd'):
                 image = os.path.basename(image_url)
@@ -1161,6 +1166,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             os.system(scpcmd)
         os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = disconnected_version
         pprint(f"Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to {disconnected_version}")
+    data['pull_secret_path'] = pull_secret
     data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
     if disconnected_url is not None:
         if disconnected_update and disconnected_url != 'quay.io':
@@ -1180,7 +1186,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if '-' in network:
             vnet = network.split('-')[0]
             data['machine_cidr'] = k.info_network(vnet)['cidr']
-    data['esx'] = config.type == 'vsphere' and config.k.esx
+    elif provider == 'vsphere' and get_installer_minor(INSTALLER_VERSION) < 13:
+        data['vsphere_legacy'] = True
     installconfig = config.process_inputfile(cluster, f"{plandir}/install-config.yaml", overrides=data)
     with open(f"{clusterdir}/install-config.yaml", 'w') as f:
         f.write(installconfig)
@@ -1615,10 +1622,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     bucket_url = None
     if provider in cloud_providers + ['openstack']:
         bucket = f"{cluster}-{domain.replace('.', '-')}"
-        if bucket not in config.k.list_buckets():
-            config.k.create_bucket(bucket)
-        config.k.upload_to_bucket(bucket, f"{clusterdir}/bootstrap.ign", public=True)
-        bucket_url = config.k.public_bucketfile_url(bucket, "bootstrap.ign")
+        if bucket not in k.list_buckets():
+            k.create_bucket(bucket)
+        k.upload_to_bucket(bucket, f"{clusterdir}/bootstrap.ign", public=True)
+        bucket_url = k.public_bucketfile_url(bucket, "bootstrap.ign")
     move(f"{clusterdir}/master.ign", f"{clusterdir}/master.ign.ori")
     move(f"{clusterdir}/worker.ign", f"{clusterdir}/worker.ign.ori")
     with open(f"{clusterdir}/worker.ign.ori") as f:
@@ -1754,8 +1761,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         return {'result': 'success'}
     else:
         installcommand = f'openshift-install --dir={clusterdir} --log-level={log_level} wait-for install-complete'
-        installcommand += f" || {installcommand}"
-        pprint("Launching install-complete step. It will be retried one extra time in case of timeouts")
+        installcommand += f" || {installcommand} || {installcommand}"
+        pprint("Launching install-complete step. It will be retried twice in case of timeout")
         run = call(installcommand, shell=True)
         if run != 0:
             msg = "Leaving environment for debugging purposes. "
@@ -1765,9 +1772,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     k.delete(f"{cluster}-bootstrap")
     if provider in cloud_providers:
         bucket = f"{cluster}-{domain.replace('.', '-')}"
-        config.k.delete_bucket(bucket)
+        k.delete_bucket(bucket)
         if provider == 'aws':
-            config.k.spread_cluster_tag(cluster, network)
+            k.spread_cluster_tag(cluster, network)
             pprint("Creating secret for aws-load-balancer-operator")
             lbcmd = "oc create secret generic aws-load-balancer-operator -n openshift-operators "
             lbcmd += f"--from-file=credentials={os.path.expanduser('~/.aws/credentials')}"

@@ -702,7 +702,7 @@ The following parameters are specific to Vsphere:
 - `isofolder` Optional folder where to keep ISOs
 - `dvs` Whether to gather DVS networks. Enabled by default, but can be set to False to speed up operations if you don't have dvs networks
 - `import_network` Defaults to 'VM Network'. Network to use as part of the template created when downloading image
-- `timeout` Defaults to 2700. Custom connectionPooltimeout
+- `timeout` Defaults to 3600. Custom connectionPooltimeout
 - `force_pool` Defaults to False. Whether to check source pool of image and relocate when it doesn't match specified pool
 - `restricted` Defaults to False. Prevents create folder operations
 - `serial` Defaults to False. Enables serial console for each vm using an aleatory port on the corresponding host (This requires to add the firewall rule set named *VM serial port connected over network*)
@@ -1190,27 +1190,6 @@ myprofile:
   pool: default
 ```
 
-### ansible
-
-```YAML
-myplay:
- type: ansible
- verbose: false
- playbook: prout.yml
- groups:
-   nodes:
-   - node1
-   - node2
-   ctlplanes:
-   - ctlplane1
-   - ctlplane2
-   - ctlplane3
-```
-
-An inventory will be created for you in /tmp and that *group_vars* and *host_vars* directory are taken into account.
-You can optionally define your own groups, as in this example.
-The playbooks are launched in alphabetical order
-
 ### container
 
 ```YAML
@@ -1619,11 +1598,12 @@ parameters:
 |*mailserver*|None|Mail server where to send the notification (on port 25)|
 |*mailfrom*|None|Mail address to send mail from|
 |*mailto*|[]|List of mail addresses to send mail to|
-|*playbook*|False|Generates a playbook for the vm of the plan instead of creating it. Useful to run parts of a plan on baremetal|
 |*vmrules*|[]|List of rules with an associated dict to apply for the corresponding entry, if a regex on the entry name is matched. The profile of the matching vm will be updated with the content of the rule|
 |*wait*|False|Whether to wait for cloudinit/ignition to fully apply|
 |*waitcommand*|None|a specific command to use to validate that vm is ready|
 |*waittimeout*|0|Timeout when waiting for a vm to be ready. Default zero value means the wait wont timeout|
+
+You can refer to the sample file [all_parameters.yml](https://github.com/karmab/kcli/blob/main/samples/all_parameters.yml) to see all those parameters in context
 
 # Deploying Kubernetes/OpenShift clusters
 

@@ -444,7 +444,6 @@ def process_files(files=[], overrides={}, remediate=False):
             render = render.lower() == 'true'
         file_overrides = overrides.copy()
         file_overrides.update(fil)
-        file_overrides.update(os.environ)
         if origin is not None:
             origin = os.path.expanduser(origin)
             if overrides and render:
@@ -538,7 +537,6 @@ def process_ignition_files(files=[], overrides={}):
                 continue
             elif overrides and render:
                 file_overrides = overrides.copy()
-                file_overrides.update(os.environ)
                 basedir = os.path.dirname(origin) if os.path.dirname(origin) != '' else '.'
                 env = Environment(loader=FileSystemLoader(basedir), undefined=undefined, extensions=['jinja2.ext.do'])
                 for jinjafilter in jinjafilters.jinjafilters:
@@ -1012,7 +1010,8 @@ def get_user(image):
         user = 'centos'
     elif 'centos8stream' in image.lower():
         user = 'centos'
-    elif 'coreos' in image.lower() or 'rhcos' in image.lower() or 'fcos' in image.lower() or 'ocp-v4' in image:
+    elif 'coreos' in image.lower() or 'rhcos' in image.lower() or 'fcos' in image.lower() or 'ocp-v4' in image\
+            or 'scos' in image.lower():
         user = 'core'
     elif 'debian' in image.lower():
         user = 'debian'
@@ -1635,7 +1634,7 @@ def is_7(image):
 
 def needs_ignition(image):
     return 'coreos' in image or 'rhcos' in image or 'fcos' in image or 'fedora-coreos' in image\
-        or needs_combustion(image) or 'art-dev' in image
+        or needs_combustion(image) or 'art-dev' in image or 'scos' in image
 
 
 def needs_combustion(image):
@@ -1665,7 +1664,7 @@ def create_embed_ignition_cmd(name, poolpath, baseiso, extra_args=None):
     return isocmd
 
 
-def get_hypershift(version='latest', macosx=False):
+def get_hypershift(version='latest', macosx=False, debug=False):
     if which('podman') is None:
         error("Please install podman first in order to install hypershift")
         return 1
@@ -1675,10 +1674,12 @@ def get_hypershift(version='latest', macosx=False):
     hypercmd += "podman cp hypershift-copy:/usr/bin/hypershift . ;"
     hypercmd += "chmod 700 hypershift ;"
     hypercmd += "podman rm -f hypershift-copy"
+    if debug:
+        print(hypercmd)
     call(hypercmd, shell=True)
 
 
-def get_kubectl(version='latest'):
+def get_kubectl(version='latest', debug=False):
     SYSTEM = 'darwin' if os.path.exists('/Users') else 'linux'
     pprint("Downloading kubectl in current directory")
     if version == 'latest':
@@ -1704,10 +1705,12 @@ def get_kubectl(version='latest'):
     kubecmd = "curl -LO https://storage.googleapis.com/kubernetes-release/release/%s/bin/%s/amd64/kubectl" % (version,
                                                                                                               SYSTEM)
     kubecmd += "; chmod 700 kubectl"
+    if debug:
+        print(kubecmd)
     call(kubecmd, shell=True)
 
 
-def get_oc(version='stable', tag='4.13', macosx=False):
+def get_oc(version='stable', tag='4.16', macosx=False, debug=False):
     SYSTEM = 'mac' if os.path.exists('/Users') else 'linux'
     arch = 'arm64' if os.uname().machine == 'aarch64' else 'x86_64'
     pprint("Downloading oc in current directory")
@@ -1721,6 +1724,8 @@ def get_oc(version='stable', tag='4.13', macosx=False):
     occmd += f"https://mirror.openshift.com/pub/openshift-v4/{arch}/clients/ocp/{tag}/openshift-client-{SYSTEM}.tar.gz"
     occmd += "| tar zxf - oc"
     occmd += "; chmod 700 oc"
+    if debug:
+        print(occmd)
     call(occmd, shell=True)
     if container_mode():
         if macosx:
@@ -1733,7 +1738,7 @@ def get_oc(version='stable', tag='4.13', macosx=False):
             move('oc', '/workdir/oc')
 
 
-def get_oc_mirror(version='stable', tag='4.13', macosx=False):
+def get_oc_mirror(version='stable', tag='4.16', macosx=False, debug=False):
     if os.path.exists('/Users'):
         error("oc-mirror is not available on Mac")
         sys.exit(1)
@@ -1745,12 +1750,14 @@ def get_oc_mirror(version='stable', tag='4.13', macosx=False):
     mirrorcmd += f"https://mirror.openshift.com/pub/openshift-v4/{arch}/clients/ocp/{tag}/oc-mirror.tar.gz"
     mirrorcmd += "| tar zxf - oc-mirror"
     mirrorcmd += "; chmod 700 oc-mirror"
+    if debug:
+        print(mirrorcmd)
     call(mirrorcmd, shell=True)
     if container_mode():
         move('oc-mirror', '/workdir/oc-mirror')
 
 
-def get_helm(version='latest'):
+def get_helm(version='latest', debug=False):
     SYSTEM = 'darwin' if os.path.exists('/Users') else 'linux'
     pprint("Downloading helm in current directory")
     if version == 'latest':
@@ -1760,10 +1767,12 @@ def get_helm(version='latest'):
     helmcmd = f"curl -Ls https://get.helm.sh/helm-{version}-{SYSTEM}-amd64.tar.gz |"
     helmcmd += f"tar zxf - --strip-components 1 {SYSTEM}-amd64/helm;"
     helmcmd += "chmod 700 helm"
+    if debug:
+        print(helmcmd)
     call(helmcmd, shell=True)
 
 
-def kube_create_app(config, appname, appdir, overrides={}, outputdir=None):
+def create_app_kube(config, appname, appdir, overrides={}, outputdir=None):
     appdata = {'name': appname, 'cluster': 'mykube', 'domain': 'karmalabs.corp', 'ctlplanes': 1, 'workers': 0}
     cwd = os.getcwd()
     os.environ["PATH"] += f":{cwd}"
@@ -1795,7 +1804,7 @@ def kube_create_app(config, appname, appdir, overrides={}, outputdir=None):
     return result
 
 
-def kube_delete_app(config, appname, appdir, overrides={}):
+def delete_app_kube(config, appname, appdir, overrides={}):
     appdata = {'name': appname, 'cluster': 'mykube', 'domain': 'karmalabs.corp', 'ctlplanes': 1, 'workers': 0}
     found = False
     cwd = os.getcwd()
@@ -1829,7 +1838,7 @@ def kube_delete_app(config, appname, appdir, overrides={}):
     return result
 
 
-def openshift_create_app(config, appname, appdir, overrides={}, outputdir=None):
+def create_app_openshift(config, appname, appdir, overrides={}, outputdir=None):
     appdata = {'name': appname, 'cluster': 'myopenshift', 'domain': 'karmalabs.corp', 'ctlplanes': 1, 'workers': 0}
     install_cr = overrides.get('install_cr', True)
     cwd = os.getcwd()
@@ -1882,7 +1891,7 @@ def openshift_create_app(config, appname, appdir, overrides={}, outputdir=None):
     return result
 
 
-def openshift_delete_app(config, appname, appdir, overrides={}):
+def delete_app_openshift(config, appname, appdir, overrides={}):
     appdata = {'name': appname, 'cluster': 'myopenshift', 'domain': 'karmalabs.corp', 'ctlplanes': 1, 'workers': 0}
     cwd = os.getcwd()
     os.environ["PATH"] += f":{cwd}"
@@ -2562,3 +2571,45 @@ def get_cluster_api_vips():
                     if automatic and api_ip is not None:
                         data[network] = 1 if network not in data else data[network] + 1
     return data
+
+
+def wait_for_nodes(number):
+    timeout = 480
+    counter = 0
+    while True:
+        if len(os.popen("kubectl get node -o name").readlines()) == number:
+            return True
+        elif counter > timeout:
+            return False
+        else:
+            pprint("Waiting 30s for all nodes to join")
+            sleep(30)
+            counter += 30
+    return False
+
+
+def convert_yaml_to_cmd(data):
+    for name in data:
+        cmd = 'kcli create '
+        profile = data[name]
+        if 'type' in profile:
+            cmd += profile['type']
+            del profile['type']
+        else:
+            cmd += 'vm'
+        for key in profile:
+            if key == 'image':
+                if profile["image"] is not None:
+                    cmd += f' -i {profile["image"]}'
+            elif isinstance(profile[key], list):
+                need_quotes = len(profile[key]) > 0
+                new_value = json.dumps(profile[key])
+                if need_quotes:
+                    new_value = new_value.replace("[", "['").replace("]", "']")
+                cmd += f' -P {key}={new_value}'
+            else:
+                new_value = json.dumps(profile[key])
+                new_value = new_value.replace("'", "").replace('"', '')
+                cmd += f' -P {key}={new_value}'
+        cmd += f' {name}'
+        print(cmd)

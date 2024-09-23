@@ -42,12 +42,9 @@ def _type(value):
 
 
 def ocpnodes(cluster, platform, ctlplanes, workers):
-    ctlplanes = ['%s-ctlplane-%d' % (cluster, num) for num in range(ctlplanes)]
-    workers = ['%s-worker-%d' % (cluster, num) for num in range(workers)]
-    if platform in ['kubevirt', 'openstack', 'vsphere', 'packet']:
-        return ["%s-bootstrap-helper" % cluster] + ["%s-bootstrap" % cluster] + ctlplanes + workers
-    else:
-        return ["%s-bootstrap" % cluster] + ctlplanes + workers
+    ctlplanes = [f'{cluster}-ctlplane-{num}' for num in range(ctlplanes)]
+    workers = [f'{cluster}-worker-{num}' for num in range(workers)]
+    return [f"{cluster}-bootstrap"] + ctlplanes + workers
 
 
 def certificate(value):
@@ -128,10 +125,10 @@ fi """ % (timeout, namespace, csv, csv, csv)
 
 
 def local_ip(net, wrap=False):
-    c = "ip a s %s 2>/dev/null | egrep 'inet6?[[:space:]][^fe]' | head -1 | awk '{print $2}' | cut -d '/' -f 1" % net
+    c = "ip a s %s 2>/dev/null | grep -E 'inet6?[[:space:]][^fe]' |head -1| awk '{print $2}' | cut -d '/' -f 1" % net
     result = os.popen(c).read().strip()
     if result == '' and net == 'default':
-        c = "ip a s virbr0 2>/dev/null | egrep 'inet6?[[:space:]][^fe]' | head -1 | awk '{print $2}' | cut -d '/' -f 1"
+        c = "ip a s virbr0 2>/dev/null | grep -E 'inet6?[[:space:]][^fe]' |head -1| awk '{print $2}' | cut -d '/' -f 1"
         result = os.popen(c).read().strip()
     if wrap and ':' in result:
         result = '[%s]' % result
@@ -142,11 +139,11 @@ def network_ip(network, num=0, version=False):
     try:
         ip = str(ip_network(network)[num])
         if version and ':' in network:
-            return "[%s]" % ip
+            return f"[{ip}]"
         else:
             return ip
     except Exception as e:
-        print("Error processing filter network_ip with %s and %s. Got %s" % (network, num, e))
+        print(f"Error processing filter network_ip with {network} and {num}. Got {e}")
         sys.exit(1)
 
 

@@ -74,6 +74,14 @@ platform:
 {% set vmfolder = vmfolder + '/' + cluster %}
 {% endif  %}
   vsphere:
+{% if vsphere_legacy|default(False) %}
+    vcenter: {{ config_host }}
+    username: {{ config_user }}
+    password: {{ config_password }}
+    datacenter: {{ config_datacenter }}
+    defaultDatastore: {{ config_pool }}
+    folder: /{{ config_datacenter}}/{{ vmfolder }}
+{% else %}
     failureDomains:
     - name: default
       region: default
@@ -93,6 +101,7 @@ platform:
       user: {{ config_user }}
       password: {{ config_password }}
       port: 443
+{% endif %}
 {% elif config_type == 'aws' %}
   aws:
     region: {{ config_region }}
