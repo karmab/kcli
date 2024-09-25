@@ -2,7 +2,6 @@
 
 import base64
 from ipaddress import ip_address
-from kvirt.cluster.kubecommon import Kubecommon
 from kvirt import common
 from kvirt.common import error, pprint, warning
 from kvirt.kubecommon import _create_resource, _delete_resource, _patch_resource, _replace_resource
@@ -53,7 +52,7 @@ def _base_image_size(image):
     return size
 
 
-class Kubevirt(Kubecommon):
+class Kubevirt():
     def __init__(self, kubeconfig_file, context=None, debug=False, namespace=None,
                  disk_hotplug=False, readwritemany=False, access_mode='NodePort', volume_mode='Filesystem',
                  volume_access='ReadWriteOnce', harvester=False, embed_userdata=False, first_consumer=False):
