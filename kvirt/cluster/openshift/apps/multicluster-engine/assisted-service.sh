@@ -20,8 +20,8 @@ fi
 export RHCOS_ISO=$(openshift-install coreos print-stream-json | jq -r '.["architectures"]["x86_64"]["artifacts"]["metal"]["formats"]["iso"]["disk"]["location"]')
 export RHCOS_ROOTFS=$(openshift-install coreos print-stream-json | jq -r '.["architectures"]["x86_64"]["artifacts"]["metal"]["formats"]["pxe"]["rootfs"]["location"]')
 {% if disconnected_url != None %}
-curl -Lk $RHCOS_ISO > /var/www/html/rhcos-live.x86_64.iso
-curl -Lk $RHCOS_ROOTFS > /var/www/html/rhcos-live-rootfs.x86_64.img
+[ -f /var/www/html/rhcos-live.x86_64.iso ] || curl -Lk $RHCOS_ISO > /var/www/html/rhcos-live.x86_64.iso
+[ -f /var/www/html/rhcos-live-rootfs.x86_64.img ] || curl -Lk $RHCOS_ROOTFS > /var/www/html/rhcos-live-rootfs.x86_64.img
 BAREMETAL_IP=$(ip -o addr show {{ assisted_download_nic }} | head -1 | awk '{print $4}' | cut -d'/' -f1)
 echo $BAREMETAL_IP | grep -q ':' && BAREMETAL_IP=[$BAREMETAL_IP]
 export RHCOS_ISO=http://${BAREMETAL_IP}/rhcos-live.x86_64.iso
