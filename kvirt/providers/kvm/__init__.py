@@ -6,7 +6,7 @@ from urllib.request import urlopen
 from kvirt.defaults import IMAGES
 from kvirt.defaults import UBUNTUS, METADATA_FIELDS
 from kvirt import common
-from kvirt.common import error, pprint, warning, get_ssh_pub_key
+from kvirt.common import error, pprint, warning, get_ssh_pub_key, success
 from kvirt.providers.kvm.helpers import DHCPKEYWORDS
 from ipaddress import ip_address, ip_network
 from libvirt import open as libvirtopen, registerErrorHandler, libvirtError
@@ -3785,7 +3785,8 @@ class Kvirt(object):
         os.system(command)
 
     def export(self, name, image=None):
-        newname = image if image is not None else "image-%s" % name
+        self.stop(name, soft=True)
+        newname = image if image is not None else f"image-{name}"
         conn = self.conn
         oldvm = conn.lookupByName(name)
         oldxml = oldvm.XMLDesc(0)
@@ -3809,6 +3810,7 @@ class Kvirt(object):
             newvolumexml = self._xmlvolume(newpath, oldvolumesize, backing=backing)
             pool.createXMLFrom(newvolumexml, oldvolume, 0)
             break
+        success(f"{newpath} generated")
         return {'result': 'success'}
 
     def _create_host_entry(self, name, ip, netname, domain):

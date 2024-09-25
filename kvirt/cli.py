@@ -1833,7 +1833,7 @@ def delete_dns(args):
 def export_vm(args):
     image = args.image
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    names = [common.get_lastvm(config.client)] if not args.names else args.names
+    names = [common.get_lastvm(config.client)] if not args.name else args.name
     k = config.k
     codes = []
     for name in names:
@@ -4640,7 +4640,7 @@ def cli():
                                                    epilog=vmexport_epilog, formatter_class=rawhelp)
     vmexport_parser.add_argument('-i', '--image', help='Name for the generated image. Uses the vm name otherwise',
                                  metavar='IMAGE')
-    vmexport_parser.add_argument('vm', metavar='VM', nargs='?')
+    vmexport_parser.add_argument('name', metavar='VM', nargs='*')
     vmexport_parser.set_defaults(func=export_vm)
 
     expose_desc = 'Expose Object'
