@@ -1111,7 +1111,7 @@ vm2:
 
 This looks similar to the first example, but now we have a parameters section where we define default values for a set of variables that is then used within the plan, through jinja.
 
-When creating the plan, any of those parameter can we overriden by using `-P key=value`, or providing a parameter file.
+When creating the plan, any of those parameter can be overriden by using `-P key=value`, or providing a parameter file.
 
 For instance, we would run `kcli create plan -f my_plan.yml -P numcpus=16 -P memory=4096 -P motd="Welcome to the cool world` to create the two same vms with different hardware values and with a custom motd in vm1
 
