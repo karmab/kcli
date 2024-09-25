@@ -1,7 +1,7 @@
 from base64 import b64encode, b64decode
 from fnmatch import fnmatch
 from glob import glob
-from ipaddress import ip_network
+from ipaddress import ip_address, ip_network
 import json
 from kvirt.common import error, pprint, success, warning, info2, fix_typos
 from kvirt.common import get_oc, pwd_path, get_oc_mirror
@@ -866,6 +866,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 overrides['mdns'] = False
         else:
             return {'result': 'failure', 'reason': "You need to define api_ip in your parameters file"}
+    if api_ip is not None:
+        try:
+            ip_address(api_ip)
+        except:
+            return {'result': 'failure', 'reason': f"Invalid api_ip {api_ip}"}
     if provider in virt_providers and keepalived and not sno and ':' in api_ip:
         ipv6 = True
     if ipv6:
@@ -883,9 +888,15 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             warning("Forcing extra_args to ip=dhcp6 for sno to boot with ipv6")
             data['extra_args'] = 'ip=dhcp6'
     ingress_ip = data['ingress_ip']
-    if ingress_ip is not None and api_ip is not None and ingress_ip == api_ip:
-        ingress_ip = None
-        overrides['ingress_ip'] = None
+    if ingress_ip is not None:
+        if api_ip is not None and ingress_ip == api_ip:
+            ingress_ip = None
+            overrides['ingress_ip'] = None
+        else:
+            try:
+                ip_address(ingress_ip)
+            except:
+                return {'result': 'failure', 'reason': f"Invalid ingress_ip {ingress_ip}"}
     if sslip and provider in virt_providers:
         if api_ip is None:
             return {'result': 'failure', 'reason': "Missing api_ip which is required with sslip"}
