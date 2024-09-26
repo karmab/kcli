@@ -1371,26 +1371,27 @@ class Ksphere:
             return {'result': 'success'}
         vmdk_path = None
         ovf_path = None
+        basedir = os.path.dirname(url) if os.path.exists(url) else '/tmp'
         if url.endswith('zip'):
-            with ZipFile(f"/tmp/{shortimage}") as zipf:
+            with ZipFile(f"{basedir}/{shortimage}") as zipf:
                 for _fil in zipf.namelist():
                     if _fil.endswith('vmdk'):
-                        vmdk_path = f'/tmp/{_fil}'
+                        vmdk_path = f'{basedir}/{_fil}'
                     elif _fil.endswith('ovf'):
-                        ovf_path = f'/tmp/{_fil}'
+                        ovf_path = f'{basedir}/{_fil}'
                 if vmdk_path is None or ovf_path is None:
                     return {'result': 'failure', 'reason': "Incorrect ova file"}
-                zipf.extractall('/tmp')
+                zipf.extractall(basedir)
         elif url.endswith('ova'):
-            with tarfile.open(f"/tmp/{shortimage}") as tar:
+            with tarfile.open(f"{basedir}/{shortimage}") as tar:
                 for _fil in [x.name for x in tar.getmembers()]:
                     if _fil.endswith('vmdk'):
-                        vmdk_path = f'/tmp/{_fil}'
+                        vmdk_path = f'{basedir}/{_fil}'
                     elif _fil.endswith('ovf'):
-                        ovf_path = f'/tmp/{_fil}'
+                        ovf_path = f'{basedir}/{_fil}'
                 if vmdk_path is None or ovf_path is None:
                     return {'result': 'failure', 'reason': "Incorrect ova file"}
-                tar.extractall('/tmp')
+                tar.extractall(basedir)
         else:
             need_uncompress = any(shortimage.endswith(suffix) for suffix in ['.gz', '.xz', '.bz2', '.zst'])
             if need_uncompress:
@@ -1398,20 +1399,21 @@ class Ksphere:
                 executable = {'xz': 'unxz', 'gz': 'gunzip', 'bz2': 'bunzip2', 'zst': 'zstd'}
                 flag = '--decompress' if extension == 'zstd' else '-f'
                 executable = executable[extension]
-                uncompresscmd = f"{executable} {flag} /tmp/{shortimage}"
+                uncompresscmd = f"{executable} {flag} {basedir}/{shortimage}"
                 os.system(uncompresscmd)
                 shortimage = shortimage.replace(f'.{extension}', '')
             extension = os.path.splitext(shortimage)[1].replace('.', '')
             vmdk_file = shortimage.replace(extension, 'vmdk')
-            vmdk_path = f"/tmp/{vmdk_file}"
+            vmdk_path = f"{basedir}/{vmdk_file}"
             if cmds and shortimage.endswith('qcow2') and which('virt-customize') is not None:
                 for cmd in cmds:
-                    cmd = f"virt-customize -a /tmp/{shortimage} --run-command '{cmd}'"
+                    cmd = f"virt-customize -a {basedir}/{shortimage} --run-command '{cmd}'"
                     os.system(cmd)
             if not os.path.exists(vmdk_path):
                 pprint("Converting qcow2 file to vmdk")
-                os.popen(f"qemu-img convert -O vmdk -o subformat=streamOptimized /tmp/{shortimage} {vmdk_path}").read()
-            ovf_path = "/tmp/%s" % shortimage.replace(extension, 'ovf')
+                cmd = f"qemu-img convert -O vmdk -o subformat=streamOptimized {basedir}/{shortimage} {vmdk_path}"
+                os.popen(cmd).read()
+            ovf_path = f"{basedir}/{shortimage.replace(extension, 'ovf')}"
             commondir = os.path.dirname(common.pprint.__code__.co_filename)
             vmdk_info = json.loads(os.popen(f"qemu-img info {vmdk_path} --output json").read())
             virtual_size = vmdk_info['virtual-size']
@@ -1463,8 +1465,8 @@ class Ksphere:
                 sys.exit(1)
         if not self.esx:
             self.convert_to_template(name)
-            if os.path.exists(f'/tmp/{shortimage}'):
-                os.remove(f'/tmp/{shortimage}')
+            if os.path.exists(f'{basedir}/{shortimage}'):
+                os.remove(f'{basedir}/{shortimage}')
             if os.path.exists(vmdk_path):
                 os.remove(vmdk_path)
         return {'result': 'success'}
