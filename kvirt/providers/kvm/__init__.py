@@ -87,7 +87,7 @@ registerErrorHandler(f=libvirt_callback, ctx=None)
 
 class Kvirt(object):
     def __init__(self, host='127.0.0.1', port=None, user='root', protocol='ssh', url=None, debug=False, insecure=False,
-                 session=False, remotednsmasq=False):
+                 session=False, remotednsmasq=False, legacy=False):
         if url is None:
             connectiontype = 'system' if not session else 'session'
             if host == '127.0.0.1' or host == 'localhost':
@@ -111,9 +111,11 @@ class Kvirt(object):
                 if publickeyfile is not None:
                     privkeyfile = publickeyfile.replace('.pub', '')
                     url = f"{url}&keyfile={privkeyfile}"
+                if legacy:
+                    url += '&socket=/var/run/libvirt/libvirt-sock'
             elif os.path.exists("/i_am_a_container"):
                 socketdir = '/var/run/libvirt' if not session else f'/home/{user}/.cache/libvirt'
-                url = f"{url}?socketf={socketdir}/libvirt-sock"
+                url += f"?socket={socketdir}/libvirt-sock"
         try:
             self.conn = libvirtopen(url)
             self.debug = debug

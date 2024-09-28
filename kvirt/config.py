@@ -392,13 +392,15 @@ class Kconfig(Kbaseconfig):
                     sys.exit(1)
                 session = options.get('session', False)
                 remotednsmasq = options.get('remotednsmasq', False)
+                legacy = options.get('legacy', False)
                 try:
                     from kvirt.providers.kvm import Kvirt
                 except Exception as e:
                     exception = e if debug else None
                     dependency_error('libvirt', exception)
                 k = Kvirt(host=self.host, port=self.port, user=self.user, protocol=self.protocol, url=self.url,
-                          debug=debug, insecure=self.insecure, session=session, remotednsmasq=remotednsmasq)
+                          debug=debug, insecure=self.insecure, session=session, remotednsmasq=remotednsmasq,
+                          legacy=legacy)
             if k.conn is None:
                 error(f"Couldn't connect to client {self.client}. Leaving...")
                 sys.exit(1)
