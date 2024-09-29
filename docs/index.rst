@@ -469,7 +469,6 @@ The following parameters are specific to Libvirt:
 
 -  ``url`` custom qemu uri.
 -  ``session`` Defaults to ``False`` If you want to use qemu:///session (locally or remotely). Not recommended as it complicates access to the vm and is said to have lower performance.
--  ``remotednsmasq`` Defaults to ``False``. Allow to create entries in a dedicated dnsmasq instance running on a remote hypervisor to provide DNS resolution for vms using bridged networks.
 -  ``legacy`` Defaults to ``False``. Add extra socket information to libvirt uri as needed on some old hypervisors.
 
 Kubevirt
