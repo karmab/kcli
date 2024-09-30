@@ -797,7 +797,7 @@ class Kvirt(object):
         if cloudinit:
             ignitiondata = None
             openstack = False
-            if image is not None and common.needs_ignition(image):
+            if image is not None and (common.needs_ignition(image) or 'ignition_file' in overrides):
                 ignition = 'qemu' in image
                 combustion = common.needs_combustion(image)
                 openstack = not ignition
