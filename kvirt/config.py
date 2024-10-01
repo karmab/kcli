@@ -587,8 +587,6 @@ class Kconfig(Kbaseconfig):
         default_pushbullettoken = father.get('pushbullettoken', self.pushbullettoken)
         default_slacktoken = father.get('slacktoken', self.slacktoken)
         default_sharedfolders = father.get('sharedfolders', self.sharedfolders)
-        default_kernel = father.get('kernel', self.kernel)
-        default_initrd = father.get('initrd', self.initrd)
         default_cmdline = father.get('cmdline', self.cmdline)
         default_placement = father.get('placement', self.placement)
         default_cpuhotplug = father.get('cpuhotplug', self.cpuhotplug)
@@ -696,8 +694,6 @@ class Kconfig(Kbaseconfig):
         mailfrom = profile.get('mailfrom', default_mailfrom)
         mailto = profile.get('mailto', default_mailto)
         sharedfolders = profile.get('sharedfolders', default_sharedfolders)
-        kernel = profile.get('kernel', default_kernel)
-        initrd = profile.get('initrd', default_initrd)
         cmdline = profile.get('cmdline', default_cmdline)
         placement = profile.get('placement', default_placement)
         cpuhotplug = profile.get('cpuhotplug', default_cpuhotplug)
@@ -981,10 +977,9 @@ class Kconfig(Kbaseconfig):
                           start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns,
                           domain=domain, nested=bool(nested), tunnel=tunnel, files=files, enableroot=enableroot,
                           overrides=overrides, tags=tags, storemetadata=storemetadata,
-                          sharedfolders=sharedfolders, kernel=kernel, initrd=initrd, cmdline=cmdline,
-                          placement=placement, autostart=autostart, cpuhotplug=cpuhotplug, memoryhotplug=memoryhotplug,
-                          pcidevices=pcidevices, tpm=tpm, rng=rng, metadata=metadata, securitygroups=securitygroups,
-                          vmuser=vmuser, guestagent=guestagent)
+                          sharedfolders=sharedfolders, cmdline=cmdline, placement=placement, autostart=autostart,
+                          cpuhotplug=cpuhotplug, memoryhotplug=memoryhotplug, pcidevices=pcidevices, tpm=tpm, rng=rng,
+                          metadata=metadata, securitygroups=securitygroups, vmuser=vmuser, guestagent=guestagent)
         if result['result'] != 'success':
             return result
         if reservedns and dnsclient is not None and domain is not None:

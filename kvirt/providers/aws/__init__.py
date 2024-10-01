@@ -106,7 +106,7 @@ class Kaws(object):
                vnc=True, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=[],
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
                files=[], enableroot=True, alias=[], overrides={}, tags=[], storemetadata=False,
-               sharedfolders=[], kernel=None, initrd=None, cmdline=None, placement=[], autostart=False,
+               sharedfolders=[], cmdline=None, placement=[], autostart=False,
                cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False,
                metadata={}, securitygroups=[], vmuser=None, guestagent=True):
         conn = self.conn

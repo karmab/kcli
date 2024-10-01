@@ -410,8 +410,6 @@ class Kproxmox(Kbase):
         tags=[],
         storemetadata=False,
         sharedfolders=[],
-        kernel=None,
-        initrd=None,
         cmdline=None,
         placement=[],
         autostart=False,

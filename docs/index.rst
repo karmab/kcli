@@ -1688,8 +1688,6 @@ Parameter          Default Value                        Comments
 *sharedfolders*    []                                   List of paths to share between hypervisor and vm. You will also need to make sure that the path is accessible as qemu user (typically with id 107) and use an hypervisor and a guest with 9p support (centos/rhel lack it for instance)
 *yamlinventory*    false                                Ansible generated inventory for single vms or for plans containing ansible entries will be yaml based.
 *autostart*        false                                Autostarts vm (Libvirt specific)
-*kernel*           None                                 Kernel location to pass to the vm. Needs to be local to the hypervisor
-*initrd*           None                                 Initrd location to pass to the vm. Needs to be local to the hypervisor
 *cmdline*          None                                 Cmdline to pass to the vm
 *pcidevices*       []                                   array of pcidevices to passthrough to the first worker only. Check `here <https://github.com/karmab/kcli-plan-samples/blob/main/pcipassthrough/pci.yml>`__ for an example
 *tpm*              false                                Enables a TPM device in the vm, using emulator mode. Requires swtpm in the host

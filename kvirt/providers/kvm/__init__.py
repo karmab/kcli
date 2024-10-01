@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from getpass import getuser
-# from urllib.request import urlopen, urlretrieve
-from urllib.request import urlopen
 from kvirt.defaults import IMAGES
 from kvirt.defaults import UBUNTUS, METADATA_FIELDS
 from kvirt import common
@@ -216,7 +214,7 @@ class Kvirt(object):
                vnc=True, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=[],
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
                files=[], enableroot=True, overrides={}, tags=[], storemetadata=False, sharedfolders=[],
-               kernel=None, initrd=None, cmdline=None, placement=[], autostart=False, cpuhotplug=False,
+               cmdline=None, placement=[], autostart=False, cpuhotplug=False,
                memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False, metadata={},
                securitygroups=[], vmuser=None, guestagent=True):
         bootdev = 1
@@ -1154,77 +1152,6 @@ class Kvirt(object):
                     foldercmd = 'ssh %s -p %s %s@%s "test -d %s || (%s)"' % (self.identitycommand, self.port,
                                                                              self.user, self.host, folder, foldercmd)
                     code = os.system(foldercmd)
-        kernelxml = ""
-        if kernel is not None:
-            existing_kernel = os.path.basename(kernel) in [os.path.basename(v) for v in self.volumes()]
-            locationdir = os.path.basename(kernel)
-            locationdir = f"{default_poolpath}/{locationdir}"
-            if existing_kernel:
-                pass
-            elif self.host == 'localhost' or self.host == '127.0.0.1':
-                os.mkdir(locationdir)
-            elif self.protocol == 'ssh':
-                locationcmd = 'ssh %s -p %s %s@%s "mkdir %s"' % (self.identitycommand, self.port, self.user,
-                                                                 self.host, locationdir)
-                code = os.system(locationcmd)
-            else:
-                return {'result': 'failure', 'reason': "Couldn't create dir to hold kernel and initrd"}
-            if kernel.startswith('http') or kernel.startswith('ftp'):
-                if existing_kernel:
-                    pass
-                elif 'rhcos' in kernel:
-                    if self.host == 'localhost' or self.host == '127.0.0.1':
-                        kernelcmd = f"curl -Lo {locationdir}/vmlinuz -f '{kernel}'"
-                        initrdcmd = f"curl -Lo {locationdir}/initrd.img -f '{initrd}'"
-                    elif self.protocol == 'ssh':
-                        kernelcmd = 'ssh %s -p %s %s@%s "curl -Lo %s/vmlinuz -f \'%s\'"' % (self.identitycommand,
-                                                                                            self.port, self.user,
-                                                                                            self.host, locationdir,
-                                                                                            kernel)
-                        initrdcmd = 'ssh %s -p %s %s@%s "curl -Lo %s/initrd.img -f \'%s\'"' % (self.identitycommand,
-                                                                                               self.port, self.user,
-                                                                                               self.host, locationdir,
-                                                                                               initrd)
-                    code = os.system(kernelcmd)
-                    code = os.system(initrdcmd)
-                else:
-                    try:
-                        location = urlopen(kernel).readlines()
-                    except Exception as e:
-                        return {'result': 'failure', 'reason': e}
-                    for line in location:
-                        if 'init' in str(line):
-                            p = re.compile(r'.*<a href="(.*)">\1.*')
-                            m = p.match(str(line))
-                            if m is not None and initrd is None:
-                                initrdfile = m.group(1)
-                                initrdurl = f"{kernel}/{initrdfile}"
-                                initrd = f"{locationdir}/initrd"
-                                if self.host == 'localhost' or self.host == '127.0.0.1':
-                                    initrdcmd = f"curl -Lo {initrd} -f '{initrdurl}'"
-                                elif self.protocol == 'ssh':
-                                    initrdcmd = 'ssh %s -p %s %s@%s "curl -Lo %s -f \'%s\'"' % (self.identitycommand,
-                                                                                                self.port, self.user,
-                                                                                                self.host, initrd,
-                                                                                                initrdurl)
-                                code = os.system(initrdcmd)
-                    kernelurl = f'{kernel}/vmlinuz'
-                    kernel = f"{locationdir}/vmlinuz"
-                    if self.host == 'localhost' or self.host == '127.0.0.1':
-                        kernelcmd = f"curl -Lo {kernel} -f '{kernelurl}'"
-                    elif self.protocol == 'ssh':
-                        kernelcmd = 'ssh %s -p %s %s@%s "curl -Lo %s -f \'%s\'"' % (self.identitycommand,
-                                                                                    self.port, self.user, self.host,
-                                                                                    kernel, kernelurl)
-                    code = os.system(kernelcmd)
-            elif initrd is None:
-                return {'result': 'failure', 'reason': "Missing initrd"}
-            warning("kernel and initrd will only be available during first boot")
-            kernel = f"{locationdir}/vmlinuz"
-            initrd = f"{locationdir}/initrd.img"
-            kernelxml = f"<kernel>{kernel}</kernel><initrd>{initrd}</initrd>"
-            if cmdline is not None:
-                kernelxml += f"<cmdline>{cmdline}</cmdline>"
         memoryhotplugxml = "<maxMemory slots='16' unit='MiB'>1524288</maxMemory>" if memoryhotplug else ""
         videoxml = ""
         firmwarexml = ""
@@ -1340,7 +1267,6 @@ class Kvirt(object):
 {ramxml}
 {firmwarexml}
 {bootxml}
-{kernelxml}
 <bootmenu enable="yes" timeout="60"/>
 </os>
 <features>
@@ -1379,7 +1305,7 @@ class Kvirt(object):
 </domain>""".format(virttype=virttype, namespace=namespace, name=name, uuidxml=uuidxml, metadataxml=metadataxml,
                     memoryhotplugxml=memoryhotplugxml, cpupinningxml=cpupinningxml, numatunexml=numatunexml,
                     hugepagesxml=hugepagesxml, memory=memory, vcpuxml=vcpuxml, osfirmware=osfirmware, arch=arch,
-                    machine=machine, ramxml=ramxml, firmwarexml=firmwarexml, bootxml=bootxml, kernelxml=kernelxml,
+                    machine=machine, ramxml=ramxml, firmwarexml=firmwarexml, bootxml=bootxml,
                     smmxml=smmxml, emulatorxml=emulatorxml, disksxml=disksxml, busxml=busxml, netxml=netxml,
                     isoxml=isoxml, extraisoxml=extraisoxml, floppyxml=floppyxml, displayxml=displayxml,
                     serialxml=serialxml, sharedxml=sharedxml, guestxml=guestxml, videoxml=videoxml,
