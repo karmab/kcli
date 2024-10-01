@@ -11,6 +11,8 @@ if [  -n "${EGG}"  ] ; then
   TAG="${EGG}-${TAG}"
 fi
 
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+
 podman build -t quay.io/karmab/kcli:$TAG -f extras/debian .
 podman login -u $QUAY_USERNAME -p $QUAY_PASSWORD quay.io
 podman push quay.io/karmab/kcli:$TAG
