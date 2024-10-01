@@ -1710,7 +1710,7 @@ def get_kubectl(version='latest', debug=False):
     call(kubecmd, shell=True)
 
 
-def get_oc(version='stable', tag='4.16', macosx=False, debug=False):
+def get_oc(version='stable', tag=OPENSHIFT_TAG, macosx=False, debug=False):
     SYSTEM = 'mac' if os.path.exists('/Users') else 'linux'
     arch = 'arm64' if os.uname().machine == 'aarch64' else 'x86_64'
     pprint("Downloading oc in current directory")
@@ -1738,7 +1738,7 @@ def get_oc(version='stable', tag='4.16', macosx=False, debug=False):
             move('oc', '/workdir/oc')
 
 
-def get_oc_mirror(version='stable', tag='4.16', macosx=False, debug=False):
+def get_oc_mirror(version='stable', tag=OPENSHIFT_TAG, macosx=False, debug=False):
     if os.path.exists('/Users'):
         error("oc-mirror is not available on Mac")
         sys.exit(1)

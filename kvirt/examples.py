@@ -359,24 +359,24 @@ $ kcli create openshift-iso -P nets=['{"ip":"192.168.0.8","netmask":"24","gatewa
 $ kcli create openshift-iso -P extra_args="super_string_of_args" myopenshift.karmalabs.corp
 """
 
-disconnectedcreate = """# Generate an openshift disconnected vm for 4.16
-$ kcli create openshift-registry -P version=stable -P tag='4.16'
+disconnectedcreate = """# Generate an openshift disconnected vm for 4.17
+$ kcli create openshift-registry -P version=stable -P tag='4.17'
 
 # Do the same over an ipv4 network
-$ kcli create openshift-registry -P version=nightly -P tag='4.16' -P disconnected_ipv6_network=false
+$ kcli create openshift-registry -P version=nightly -P tag='4.17' -P disconnected_ipv6_network=false
 
-# Use specific version and add extra operators (from 4.16)
-$ kcli create openshift-registry -P version=nightly -P tag=4.16 -P disconnected_operators=[sriov-network-operator]
+# Use specific version and add extra operators (from 4.17)
+$ kcli create openshift-registry -P version=nightly -P tag='4.17' -P disconnected_operators=[sriov-network-operator]
 
 # Deploy registry without content
 $ kcli create openshift-registry -P disconnected_sync=false
 """
 
-disconnectedupdate = """# Update openshift disconnected registry for 4.16
-$ kcli update openshift-registry -P version=stable -P tag='4.16' -P disconnected_url=192.168.122.200.sslip.io:5000 myreg
+disconnectedupdate = """# Update openshift disconnected registry for 4.17
+$ kcli update openshift-registry -P version=stable -P tag='4.17' -P disconnected_url=192.168.122.200.sslip.io:5000 myreg
 
 # Update openshift disconnected registry taking parameter from existing cluster install named myopenshift
-$ kcli update openshift-registry -P tag='4.16.0' myopenshift
+$ kcli update openshift-registry -P tag='4.17.0' myopenshift
 """
 
 appopenshiftcreate = """# Deploy sriov network operator
@@ -660,27 +660,27 @@ $ kcli update baremetal-host -P user=admin -P password=admin 10.10.10.10 -P secu
 $ kcli update baremetal-host -u admin -p admin 10.10.10.10 -P secureboot=true
 """
 
-ocdownload = """# Download 4.16 stable
-$ kcli download oc -P version=stable -P tag=4.16
+ocdownload = """# Download 4.17 stable
+$ kcli download oc -P version=stable -P tag=4.17
 
 # Download specific tag
 $ kcli download oc -P version=tag -P tag=4.16.4
 
 # Download nightly
-$ kcli download oc -P version=nightly -P tag=4.16
+$ kcli download oc -P version=nightly -P tag=4.17
 
 # Download older version from CI
 $ kcli download oc -P version=ci -P tag=4.14
 """
 
-ocmirrordownload = """# Download 4.16 stable
-$ kcli download oc-mirror -P version=stable -P tag=4.16
+ocmirrordownload = """# Download 4.17 stable
+$ kcli download oc-mirror -P version=stable -P tag=4.17
 
 # Download specific tag
 $ kcli download oc-mirror -P version=tag -P tag=4.16.4
 
 # Download nightly
-$ kcli download oc-mirror -P version=nightly -P tag=4.16
+$ kcli download oc-mirror -P version=nightly -P tag=4.17
 
 """
 

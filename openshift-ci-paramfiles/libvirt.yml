@@ -5,7 +5,7 @@ ovn_hostrouting: true
 ctlplanes: 3
 workers: 0
 version: stable
-tag: "4.16"
+tag: "4.17"
 network: baremetalfake
 api_ip: 192.168.254.254
 sslip: true

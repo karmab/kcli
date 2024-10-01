@@ -9,7 +9,7 @@ from kvirt.common import get_latest_fcos, generate_rhcos_iso, olm_app, get_commi
 from kvirt.common import get_installer_rhcos, wait_cloud_dns, delete_lastvm
 from kvirt.common import ssh, scp, _ssh_credentials, get_ssh_pub_key, separate_yamls
 from kvirt.common import start_baremetal_hosts, update_baremetal_hosts, get_cluster_api_vips
-from kvirt.defaults import LOCAL_OPENSHIFT_APPS
+from kvirt.defaults import LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG
 import os
 import re
 from random import choice
@@ -270,7 +270,7 @@ def get_installer_version():
     return installer_version
 
 
-def offline_image(version='stable', tag='4.16', pull_secret='openshift_pull.json'):
+def offline_image(version='stable', tag=OPENSHIFT_TAG, pull_secret='openshift_pull.json'):
     tag = str(tag).split(':')[-1]
     for arch in ['x86_64', 'amd64', 'arm64', 'ppc64le', 's390x', 'x86_64']:
         tag.replace(f'-{arch}', '')
@@ -306,7 +306,7 @@ def offline_image(version='stable', tag='4.16', pull_secret='openshift_pull.json
     return offline
 
 
-def same_release_images(version='stable', tag='4.16', pull_secret='openshift_pull.json', path='.'):
+def same_release_images(version='stable', tag=OPENSHIFT_TAG, pull_secret='openshift_pull.json', path='.'):
     if not os.path.exists(f'{path}/openshift-install'):
         return False
     try:
