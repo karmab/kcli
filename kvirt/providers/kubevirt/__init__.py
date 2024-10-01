@@ -107,7 +107,7 @@ class Kubevirt():
                files=[], enableroot=True, alias=[], overrides={}, tags=[], storemetadata=False,
                sharedfolders=[], kernel=None, initrd=None, cmdline=None, placement=[], autostart=False,
                cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False,
-               metadata={}, securitygroups=[], vmuser=None):
+               metadata={}, securitygroups=[], vmuser=None, guestagent=True):
         kubectl = self.kubectl
         owners = []
         container_disk = overrides.get('container_disk', False)

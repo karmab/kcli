@@ -537,6 +537,7 @@ class Kconfig(Kbaseconfig):
         default_nets = father.get('nets', self.nets)
         default_image = father.get('image', self.image)
         default_cloudinit = father.get('cloudinit', self.cloudinit)
+        default_guestagent = father.get('guestagent', self.guestagent)
         default_nested = father.get('nested', self.nested)
         default_reservedns = father.get('reservedns', self.reservedns)
         default_reservehost = father.get('reservehost', self.reservehost)
@@ -639,6 +640,7 @@ class Kconfig(Kbaseconfig):
         if cloudinit and self.type == 'kvm' and\
                 which('mkisofs') is None and which('genisoimage') and which('xorrisofs') is None:
             return {'result': 'failure', 'reason': "Missing mkisofs/genisoimage/xorrisofs needed for cloudinit"}
+        guestagent = profile.get('guestagent', default_guestagent)
         reserveip = profile.get('reserveip', default_reserveip)
         reservedns = profile.get('reservedns', default_reservedns)
         reservehost = profile.get('reservehost', default_reservehost)
@@ -982,7 +984,7 @@ class Kconfig(Kbaseconfig):
                           sharedfolders=sharedfolders, kernel=kernel, initrd=initrd, cmdline=cmdline,
                           placement=placement, autostart=autostart, cpuhotplug=cpuhotplug, memoryhotplug=memoryhotplug,
                           pcidevices=pcidevices, tpm=tpm, rng=rng, metadata=metadata, securitygroups=securitygroups,
-                          vmuser=vmuser)
+                          vmuser=vmuser, guestagent=guestagent)
         if result['result'] != 'success':
             return result
         if reservedns and dnsclient is not None and domain is not None:

@@ -218,7 +218,7 @@ class Kvirt(object):
                files=[], enableroot=True, overrides={}, tags=[], storemetadata=False, sharedfolders=[],
                kernel=None, initrd=None, cmdline=None, placement=[], autostart=False, cpuhotplug=False,
                memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False, metadata={},
-               securitygroups=[], vmuser=None):
+               securitygroups=[], vmuser=None, guestagent=True):
         bootdev = 1
         namespace = ''
         ignition = False
@@ -644,7 +644,7 @@ class Kvirt(object):
         nicslots = {k: 0 for k in range(0, 20)}
         alias = []
         vhostindex = 0
-        guestagent = False
+        need_guestagent = False
         for index, net in enumerate(nets):
             if usermode:
                 continue
@@ -709,7 +709,7 @@ class Kvirt(object):
                 iftype = 'network'
                 sourcexml = f"<source network='{netname}'/>"
                 if netname in forward_bridges:
-                    guestagent = True
+                    need_guestagent = True
                 if index == 0 and not allnetworks[netname]['dhcp']:
                     metadataxml += "\n<kvirt:nodhcp>True</kvirt:nodhcp>"
             elif netname in bridges or ovs:
@@ -717,7 +717,7 @@ class Kvirt(object):
                     overrides['config_host'] = allnetworks[netname]['ip']
                 iftype = 'bridge'
                 sourcexml = f"<source bridge='{netname}'/>"
-                guestagent = True
+                need_guestagent = True
                 if reservedns and index == 0 and dns is not None:
                     dnscmd = f"sed -i 's/nameserver .*/nameserver {dns}/' /etc/resolv.conf"
                     cmds = cmds[:index] + [dnscmd] + cmds[index:]
@@ -775,7 +775,7 @@ class Kvirt(object):
 %s
 </interface>""" % (netxml, iftype, mtuxml, macxml, sourcexml, ovsxml, nicnumaxml, filterxml, nettype, multiqueuexml,
                    bootdevxml, addressxml)
-        if guestagent:
+        if need_guestagent and guestagent:
             gcmds = []
             if image is not None and 'cos' not in image and 'fedora-coreos' not in image:
                 lower = image.lower()

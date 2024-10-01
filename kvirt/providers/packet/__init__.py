@@ -64,7 +64,7 @@ class Kpacket(object):
                tunnel=False, files=[], enableroot=True, alias=[], overrides={},
                tags=[], storemetadata=False, sharedfolders=[], kernel=None, initrd=None,
                cmdline=None, cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False,
-               placement=[], autostart=False, rng=False, metadata={}, securitygroups=[], vmuser=None):
+               placement=[], autostart=False, rng=False, metadata={}, securitygroups=[], vmuser=None, guestagent=True):
         reservation_id = overrides.get('hardware_reservation_id')
         if reservation_id is not None:
             reservations = self.conn.list_hardware_reservations(self.project)

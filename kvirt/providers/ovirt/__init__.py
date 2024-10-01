@@ -107,7 +107,8 @@ class KOvirt(object):
                tunnel=False, files=[], enableroot=True, alias=[], overrides={},
                tags=[], storemetadata=False, sharedfolders=[], kernel=None, initrd=None,
                cmdline=None, placement=[], autostart=False, cpuhotplug=False, memoryhotplug=False, numamode=None,
-               numa=[], pcidevices=[], tpm=False, rng=False, metadata={}, securitygroups=[], vmuser=None):
+               numa=[], pcidevices=[], tpm=False, rng=False, metadata={}, securitygroups=[], vmuser=None,
+               guestagent=True):
         ip = None
         initialization = None
         memory = memory * 1024 * 1024

@@ -425,6 +425,7 @@ class Kproxmox(Kbase):
         metadata={},
         securitygroups=[],
         vmuser=None,
+        guestagent=True,
     ):
         # pp(locals())
 

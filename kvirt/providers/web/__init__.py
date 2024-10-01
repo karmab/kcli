@@ -45,7 +45,7 @@ class Kwebclient(object):
                files=[], enableroot=True, overrides={}, tags=[], storemetadata=False, sharedfolders=[], kernel=None,
                initrd=None, cmdline=None, placement=[], autostart=False, cpuhotplug=False, memoryhotplug=False,
                numamode=None, numa=[], pcidevices=[], tpm=False, rng=False, metadata={}, securitygroups=[],
-               vmuser=None):
+               vmuser=None, guestagent=True):
         vms_url = f"{self.base}/vms"
         sig = signature(Kwebclient.create)
         data = dict(sig.bind(self, name, virttype, profile, flavor, plan, cpumodel, cpuflags, cpupinning, numcpus,

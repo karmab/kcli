@@ -39,7 +39,7 @@ class Kbase(object):
                files=[], enableroot=True, overrides={}, tags=[], storemetadata=False, sharedfolders=[], kernel=None,
                initrd=None, cmdline=None, placement=[], autostart=False, cpuhotplug=False, memoryhotplug=False,
                numamode=None, numa=[], pcidevices=[], tpm=False, rng=False, metadata={}, securitygroups=[],
-               vmuser=None):
+               vmuser=None, guestagent=True):
         print("not implemented")
         return {'result': 'success'}
 

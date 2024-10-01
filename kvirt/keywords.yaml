@@ -1,14 +1,14 @@
-autostart: Autostart vm (libvirt)
+autostart: Autostart vm
 base: |
   Allows you to point to a parent profile so that values are taken from parent when not found in the current profile.
   Scripts and commands are rather concatenated between default, father and children
 client: Allows to target a different client/host for the corresponding entry
 cloudinit: |
   Generate cloudinit data to inject to the vm.
-  On libvirt, the data is provided through a $vm.ISO iso plugged to the node.
+  On non cloud platforms, the data is provided through a $vm.ISO iso plugged to the node.
   On other platforms, the corresponding field is used to pass this information
 cmdline: |
-  Cmdline to pass to the vm (libvirt)
+  Cmdline to pass to the vm
   This is used along with a combination of kernel and initrd parameter to allow kickstarting a node.
   If doing so, the kernel and initrd will have to be removed from vm domain definition
   Alternatively, it can be applied by itself to rhcos nodes to force the cmdline through virt-edit.
@@ -17,7 +17,7 @@ cmds: Array of commands to run through cloudinit or ignition
 cpuflags: |
   You can specify a list of strings with features to enable or use dict entries with name of the feature and policy either set to require,disable, optional or force.
   The value for vmx is ignored, as it's handled by the nested flag
-cpuhotplug: Whether to allow cpu hotplugging(libvirt)
+cpuhotplug: Whether to allow cpu hotplugging
 cpumodel: Specific cpu model to apply to the vm
 cpupinning: Cpupinning configuration
 dnsclient: Dns client to use when reserving dns entries for the vm. Allows to create a libvirt vm but use aws or gcp for DNS, provided they are configured as providers
@@ -37,7 +37,8 @@ files: |
 flavor: |
   Flavor, represents machine-type in GCP, instancetype in AWS, virtualmachineclusterinstancetypes in Kubevirt, plans in Packet or flavors in Openstack
 gateway: Gateway server to use in cloudinit/ignition with static networking
-guestid: Guest id (libvirt)
+guestagent: Whether to inject rpm/apt related commands to install guestagent package, as needed to report vm ip in bridged networks
+guestid: Guest id
 image: |
   Image to boot the vm from
   You can either specify short name or complete path.
@@ -60,7 +61,7 @@ mailto: List of mail addresses to send mail to
 memory: |
   Memory, in Mb
   Allow overcommitting, but make sure the total memory of all your running VMS doesn't exceed your hypervisor one
-memoryhotplug: Whether to allow Memory hotplugging (libvirt)
+memoryhotplug: Whether to allow Memory hotplugging
 nested: Whether to allow nested
 netmasks: netmasks to use in cloudinit/ignition with static networking
 nets: |
@@ -93,7 +94,7 @@ profile: name of a specific profile to use to create the vm
 pushbullettoken: Token to use when notifying through pushbullet
 reservedns: Whether to create a dns entry for the vm
 reservehost: Whether to create a local entry in /etc/hosts for the vm
-reserveip: Whether to create a dhcp reservation associated to the specific provided ip of the vm(libvirt)
+reserveip: Whether to create a dhcp reservation associated to the specific provided ip of the vm
 rhnactivationkey: Red Hat Network activation key
 rhnorg: Red Hat Network organization
 rhnpassword: Red Hat Network password
@@ -133,8 +134,8 @@ tempkey: |
   Temporary priv and pub key to use when deploying a plan or a cluster, which gets deleted at the end of the process
   Used for hardening purposes where the vms are beeing injected additional public keys (or use a base image containing them)
 tpm: Enables a TPM device in the vm, using emulator mode. Requires swtpm in the host
-tunnel: Whether to tunnel console, ssh and scp commands through the hypervisor (libvirt)
-tunneldir: Specific directory on the tunnel host where to store ignition files (packet)
+tunnel: Whether to tunnel console, ssh and scp commands through the hypervisor
+tunneldir: Specific directory on the tunnel host where to store ignition files
 tunnelhost: Specific host to use for tunneling console, ssh and scp commands
 tunnelport: Specific port to use for tunneling console, ssh and scp commands
 tunneluser: Specific user to use for tunneling console, ssh and scp commands

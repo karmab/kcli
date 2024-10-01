@@ -18,6 +18,7 @@ DISKS = [{'size': DISKSIZE, 'default': True}]
 GUESTID = 'guestrhel764'
 VNC = True
 CLOUDINIT = True
+GUESTAGENT = True
 RESERVEIP = False
 RESERVEDNS = False
 RESERVEHOST = False

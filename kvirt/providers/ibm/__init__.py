@@ -114,7 +114,7 @@ class Kibm(object):
                tunnel=False, files=[], enableroot=True, alias=[], overrides={},
                tags=[], storemetadata=False, sharedfolders=[], kernel=None, initrd=None, cmdline=None,
                cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False,
-               placement=[], autostart=False, rng=False, metadata={}, securitygroups=[], vmuser=None):
+               placement=[], autostart=False, rng=False, metadata={}, securitygroups=[], vmuser=None, guestagent=True):
         try:
             vpcs = self.conn.list_vpcs().result['vpcs']
             for vpc in vpcs:
