@@ -139,7 +139,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 else:
                     nicname = f"{prefix}{index}"
             ip = net.get('ip')
-            netmask = next((e for e in [net.get('mask'), net.get('netmask')] if e is not None), None)
+            netmask = net.get('mask') or net.get('netmask') or net.get('prefix')
             noconf = net.get('noconf')
             vips = net.get('vips', [])
             enableipv6 = net.get('ipv6', False)
@@ -1120,7 +1120,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
                 nicname = net.get('nic', default_nicname)
                 ip = net.get('ip')
                 gateway = net.get('gateway')
-                netmask = next((e for e in [net.get('mask'), net.get('netmask')] if e is not None), None)
+                netmask = net.get('mask') or net.get('netmask') or net.get('prefix')
                 noconf = net.get('noconf')
                 vlan = net.get('vlan')
                 vips = net.get('vips')

@@ -227,6 +227,7 @@ class Kvirt(object):
         diskpath = None
         qemuextra = overrides.get('qemuextra')
         enableiommu = overrides.get('iommu', False)
+        needs_ignition = image is not None and (common.needs_ignition(image) or 'ignition_file' in overrides)
         iommuxml = ""
         ioapicxml = ""
         if 'session' in self.url:
@@ -678,6 +679,15 @@ class Kvirt(object):
                     ovs = True
                 if 'ip' in nets[index] and index == 0:
                     metadataxml += f"<kvirt:ip >{nets[index]['ip']}</kvirt:ip>"
+                    ip = nets[index].get('ip')
+                    netmask = net.get('mask') or net.get('netmask') or net.get('prefix')
+                    gateway = nets[index].get('gateway')
+                    nameserver = nets[index].get('dns') or gateway
+                    nic = nets[index].get('nic', 'ens3')
+                    if needs_ignition and ip is not None and netmask is not None and gateway is not None:
+                        warning("Injecting static networking via cmdline")
+                        cmdline = f'ip={ip}::{gateway}:{netmask}::{nic}:none nameserver={nameserver}'
+                        del nets[index]['ip']
                 if 'numa' in nets[index] and numa:
                     nicnuma = nets[index]['numa']
                 if 'filter' in nets[index]:
@@ -797,7 +807,7 @@ class Kvirt(object):
         if cloudinit:
             ignitiondata = None
             openstack = False
-            if image is not None and (common.needs_ignition(image) or 'ignition_file' in overrides):
+            if needs_ignition:
                 ignition = 'qemu' in image
                 combustion = common.needs_combustion(image)
                 openstack = not ignition
