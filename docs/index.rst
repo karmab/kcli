@@ -5,7 +5,7 @@ About
 
 This tool is meant to provide a unified user experience when interacting with the following virtualization providers:
 
--  Libvirt/Vsphere/Kubevirt/Aws/Azure/Gcp/Ibmcloud/oVirt/Openstack/Packet/Proxmox
+-  Libvirt/Vsphere/Kubevirt/Aws/Azure/Gcp/Hcloud/Ibmcloud/oVirt/Openstack/Packet/Proxmox
 
 Beyond handling virtual machines, Kubernetes clusters can also be managed for the following types:
 
@@ -415,6 +415,27 @@ To use this provider, you’ll need to install (from pip):
    pip3 install google-api-python-client google-auth-httplib2 google-cloud-dns
 
 If you want to deploy GKE clusters, you will also need ``google-cloud-container`` library
+
+Hetzner Cloud
+-------------
+
+::
+
+   myhetzner:
+     type: hcloud
+     apikey: xxxx
+     location: eu-gb
+
+The following parameters are specific to hetzner cloud:
+
+-  apikey.
+-  location
+
+To use this provider with kcli rpm, you’ll need to install the following packets (from pip):
+
+::
+
+   pip3 install hcloud
 
 IBM Cloud
 ---------

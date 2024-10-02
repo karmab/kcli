@@ -7,7 +7,7 @@
 
 {{ cluster }}-ctlplane-0:
 {% set primary_network = {'name': network} %}
-{% if config_type in ['aws', 'gcp', 'ibm'] %}
+{% if config_type in ['aws', 'azure', 'gcp', 'ibm', 'hcloud'] %}
 {% set _= primary_network.__setitem__("reservedns", cloud_dns) %}
 {% set _= primary_network.__setitem__("alias", ["api.%s.%s" % (cluster,domain)]) %}
 {% endif %}
@@ -31,7 +31,7 @@
  files:
  - bootstrap.sh
  - deploy.sh
-{% if config_type not in ['aws', 'gcp', 'ibm'] %}
+{% if config_type not in ['aws', 'azure', 'gcp', 'ibm', 'hcloud'] %}
  - keepalived.conf
  - keepalived.sh
 {% endif %}

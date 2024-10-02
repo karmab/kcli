@@ -7,6 +7,7 @@ AWS = ['boto3']
 AZURE = ['azure-mgmt-compute', 'azure-mgmt-network', 'azure-mgmt-core', 'azure-identity', 'azure-mgmt-resource',
          'azure-mgmt-marketplaceordering', 'azure-storage-blob', 'azure-mgmt-dns', 'azure-mgmt-containerservice',
          'azure-mgmt-storage', 'azure-mgmt-msi', 'azure-mgmt-authorization']
+HCLOUD = ['hcloud']
 GCP = ['google-api-python-client', 'google-auth-httplib2', 'google-cloud-dns', 'google-cloud-storage',
        'google-cloud-container', 'google-cloud-compute']
 OPENSTACK = ['python-cinderclient', 'python-neutronclient', 'python-glanceclient', 'python-keystoneclient',
@@ -18,9 +19,9 @@ VSPHERE = ['pyvmomi', 'cryptography']
 IBMCLOUD = ['google-crc32c==1.1.2', 'ibm_vpc', 'ibm-cos-sdk', 'ibm-platform-services', 'ibm-cloud-networking-services']
 #           'cos-aspera']
 EXTRAS = ['pyghmi']
-ALL = ['podman'] + ['websockify'] + EXTRAS + AWS + GCP + OPENSTACK + OVIRT + PACKET + VSPHERE + IBMCLOUD + AZURE
+ALL = ['podman'] + ['websockify'] + EXTRAS + AWS + GCP + OPENSTACK + OVIRT + PACKET + VSPHERE + IBMCLOUD + AZURE + HCLOUD
 
-description = 'Provisioner/Manager for Libvirt/Vsphere/Aws/Gcp/Kubevirt/Ovirt/Openstack/IBM Cloud and containers'
+description = 'Provisioner/Manager for Libvirt/Vsphere/Aws/Gcp/Hcloud/Kubevirt/Ovirt/Openstack/IBM Cloud and containers'
 long_description = description
 if os.path.exists('README.rst'):
     long_description = open('README.rst').read()
@@ -44,6 +45,7 @@ setup(
         'aws': AWS,
         'azure': AZURE,
         'gcp': GCP,
+        'hcloud': HCLOUD,
         'ibm': IBMCLOUD,
         'openstack': OPENSTACK,
         'ovirt': OVIRT,

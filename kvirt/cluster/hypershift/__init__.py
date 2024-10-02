@@ -21,7 +21,7 @@ from urllib.request import urlopen, Request
 from yaml import safe_dump, safe_load
 
 virt_providers = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere', 'proxmox']
-cloud_providers = ['aws', 'azure', 'gcp', 'ibm']
+cloud_providers = ['aws', 'azure', 'gcp', 'ibm', 'hcloud']
 
 
 def update_hypershift_etc_hosts(cluster, domain, ingress_ip):

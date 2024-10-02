@@ -2,7 +2,7 @@
 
 export PATH=/root:$PATH
 test -f /etc/profile.d/kcli.sh && source /etc/profile.d/kcli.sh
-{% if config_type not in ['aws', 'gcp', 'ibm'] and '%s-ctlplane' % cluster in name %}
+{% if config_type not in ['aws', 'azure', 'gcp', 'ibm', 'hcloud'] and '%s-ctlplane' % cluster in name %}
 keepalived.sh
 {% endif %}
 

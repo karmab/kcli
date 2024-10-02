@@ -1,6 +1,6 @@
 {% set all_files = files|default([]) %}
 {% set all_scripts = ["bootstrap.sh"] %}
-{% if config_type not in ['aws', 'gcp', 'ibm'] and api_ip != None %}
+{% if config_type not in ['aws', 'azure', 'gcp', 'ibm', 'hcloud'] and api_ip != None %}
 {% do all_files.append("keepalived.conf") %}
 {% do all_scripts.append("keepalived.sh") %}
 {% endif %}

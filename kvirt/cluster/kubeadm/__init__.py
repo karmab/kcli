@@ -15,7 +15,7 @@ from tempfile import NamedTemporaryFile
 from urllib.request import urlopen
 from yaml import safe_dump, safe_load
 
-cloud_providers = ['aws', 'azure', 'gcp', 'ibm']
+cloud_providers = ['aws', 'azure', 'gcp', 'ibm', 'hcloud']
 
 
 def get_release(version):

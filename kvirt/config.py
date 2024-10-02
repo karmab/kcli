@@ -39,7 +39,7 @@ from time import sleep
 import webbrowser
 import yaml
 
-cloudplatforms = ['aws', 'azure', 'gcp', 'packet', 'ibmcloud']
+cloudplatforms = ['aws', 'azure', 'gcp', 'packet', 'ibmcloud', 'hcloud']
 
 
 def dependency_error(provider, exception=None):
@@ -118,6 +118,21 @@ class Kconfig(Kbaseconfig):
                     dependency_error('gcp', exception)
                 k = Kgcp(project, region=region, zone=zone, debug=debug)
                 self.overrides.update({'project': project})
+            elif self.type == 'hcloud':
+                apikey = options.get('apikey')
+                if apikey is None:
+                    error("Missing apikey in the hcloud configuration. Leaving")
+                    sys.exit(1)
+                location = options.get('location')
+                if location is None:
+                    error("Missing location in the hcloud configuration. Leaving")
+                    sys.exit(1)
+                try:
+                    from kvirt.providers.hcloud import Khcloud
+                except Exception as e:
+                    exception = e if debug else None
+                    dependency_error('hcloud', exception)
+                k = Khcloud(api_key=apikey, location=location)
             elif self.type == 'azure':
                 try:
                     from kvirt.providers.azure import Kazure
@@ -2478,7 +2493,7 @@ class Kconfig(Kbaseconfig):
     def delete_loadbalancer(self, name, domain=None):
         k = self.k
         pprint(f"Deleting loadbalancer {name}")
-        if self.type in ['aws', 'azure', 'gcp', 'ibm']:
+        if self.type in ['aws', 'azure', 'gcp', 'ibm', 'hcloud']:
             dnsclient = k.delete_loadbalancer(name)
             if domain is not None and dnsclient is not None and isinstance(dnsclient, str):
                 if dnsclient in self.clients:
@@ -2494,7 +2509,7 @@ class Kconfig(Kbaseconfig):
         name = nameutils.get_random_name().replace('_', '-') if name is None else name
         pprint(f"Deploying loadbalancer {name}")
         k = self.k
-        if self.type in ['aws', 'azure', 'gcp', 'ibm']:
+        if self.type in ['aws', 'azure', 'gcp', 'ibm', 'hcloud']:
             lb_ip = k.create_loadbalancer(name, ports=ports, checkpath=checkpath, vms=vms, domain=domain,
                                           checkport=checkport, alias=alias, internal=internal,
                                           dnsclient=dnsclient, ip=ip)
@@ -2533,7 +2548,7 @@ class Kconfig(Kbaseconfig):
 
     def list_loadbalancers(self):
         k = self.k
-        if self.type not in ['aws', 'azure', 'gcp', 'ibm']:
+        if self.type not in ['aws', 'azure', 'gcp', 'ibm', 'hcloud']:
             results = []
             for vm in k.list():
                 if vm['profile'].startswith('loadbalancer') and len(vm['profile'].split('-')) == 2:
@@ -2845,7 +2860,7 @@ class Kconfig(Kbaseconfig):
                 call(f'oc delete -n {k.namespace} route {cluster}-ingress', shell=True)
             except:
                 pass
-        if self.type in ['aws', 'azure', 'gcp', 'ibm'] and not gke and not eks and not aks:
+        if self.type in ['aws', 'azure', 'gcp', 'ibm', 'hcloud'] and not gke and not eks and not aks:
             existing_lbs = [l[0] for l in self.list_loadbalancers() if l[0].endswith(cluster) and
                             (l[0].startswith('api') or l[0].startswith('apps'))]
             for lb in existing_lbs:

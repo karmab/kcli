@@ -11,7 +11,7 @@
 
 # Description
 
-This tool is meant to interact with existing virtualization providers (libvirt, KubeVirt, oVirt, OpenStack, VMware vSphere, GCP and AWS) and to easily deploy and customize VMs from cloud images.
+This tool is meant to interact with existing virtualization providers (libvirt, KubeVirt, oVirt, OpenStack, VMware vSphere, Packet, AWS, Azure, GCP, IBM cloud and Hcloud) and to easily deploy and customize VMs from cloud images.
 
 You can also interact with those VMs (list, info, ssh, start, stop, delete, console, serialconsole, add/delete disk, add/delete nic, ...).
 
