@@ -18,20 +18,14 @@ def _create_resource(kubectl, data, namespace=None, debug=False):
 
 
 def _delete_resource(kubectl, resource, name, namespace, debug=False):
-    if debug:
-        print(f"DELETE {resource} {name}")
     return os.popen(f'{kubectl} delete -n {namespace} {resource} {name} 2>/dev/null').read()
 
 
 def _get_resource(kubectl, resource, name, namespace, debug=False):
-    if debug:
-        print(f"GET {resource} {name}")
     return yaml.safe_load(os.popen(f'{kubectl} get {resource} -n {namespace} -o yaml {name} 2>/dev/null').read())
 
 
 def _get_all_resources(kubectl, resource, namespace=None, debug=False):
-    if debug:
-        print(f"GET all {resource}")
     namespace = f" -n {namespace}" if namespace is not None else ''
     cmd = f"{kubectl} get {resource} {namespace} -o yaml 2>/dev/null"
     return yaml.safe_load(os.popen(cmd).read())['items']
